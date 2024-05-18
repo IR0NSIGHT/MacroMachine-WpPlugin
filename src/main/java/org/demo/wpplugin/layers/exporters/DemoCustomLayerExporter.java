@@ -1,6 +1,6 @@
 package org.demo.wpplugin.layers.exporters;
 
-import org.demo.wpplugin.layers.DemoCustomLayer;
+import org.demo.wpplugin.layers.BezierPathLayer;
 import org.demo.wpplugin.layers.DemoLayer;
 import org.pepsoft.minecraft.Chunk;
 import org.pepsoft.worldpainter.Dimension;
@@ -35,8 +35,8 @@ import static org.pepsoft.worldpainter.exporting.SecondPassLayerExporter.Stage.C
  * arguments) constructor. You could also override the {@link Layer#getRenderer()} method if you want to do something
  * more complicated.
  */
-public class DemoCustomLayerExporter extends AbstractLayerExporter<DemoCustomLayer> implements FirstPassLayerExporter, SecondPassLayerExporter, IncidentalLayerExporter {
-    public DemoCustomLayerExporter(Dimension dimension, Platform platform, ExporterSettings settings, DemoCustomLayer layer) {
+public class DemoCustomLayerExporter extends AbstractLayerExporter<BezierPathLayer> implements FirstPassLayerExporter, SecondPassLayerExporter, IncidentalLayerExporter {
+    public DemoCustomLayerExporter(Dimension dimension, Platform platform, ExporterSettings settings, BezierPathLayer layer) {
         super(dimension, platform, settings, layer);
     }
 

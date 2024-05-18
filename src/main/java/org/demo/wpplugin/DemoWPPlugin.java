@@ -1,6 +1,6 @@
 package org.demo.wpplugin;
 
-import org.demo.wpplugin.layers.DemoCustomLayer;
+import org.demo.wpplugin.layers.BezierPathLayer;
 import org.demo.wpplugin.layers.DemoLayer;
 import org.demo.wpplugin.layers.editors.DemoCustomLayerEditor;
 import org.demo.wpplugin.operations.DemoOperation;
@@ -68,7 +68,7 @@ public class DemoWPPlugin extends AbstractPlugin implements
     @SuppressWarnings("unchecked") // Guaranteed by if statement
     @Override
     public <L extends Layer> LayerEditor<L> createLayerEditor(Platform platform, Class<L> layerType) {
-        if (layerType == DemoCustomLayer.class) {
+        if (layerType == BezierPathLayer.class) {
             return (LayerEditor<L>) new DemoCustomLayerEditor(platform);
         } else {
             return null;
@@ -105,6 +105,6 @@ public class DemoWPPlugin extends AbstractPlugin implements
     static final String NAME = "Demo WP Plugin";
 
     private static final List<Layer> LAYERS = singletonList(DemoLayer.INSTANCE);
-    private static final List<Class<? extends CustomLayer>> CUSTOM_LAYERS = singletonList(DemoCustomLayer.class);
+    private static final List<Class<? extends CustomLayer>> CUSTOM_LAYERS = singletonList(BezierPathLayer.class);
     private static final List<Operation> OPERATIONS = singletonList(new DemoOperation());
 }

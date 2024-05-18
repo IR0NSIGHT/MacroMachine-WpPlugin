@@ -4,7 +4,7 @@ import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.exporters.ExporterSettings;
 
 public class DemoCustomLayerSettings implements ExporterSettings {
-    public DemoCustomLayerSettings(DemoCustomLayer layer) {
+    public DemoCustomLayerSettings(BezierPathLayer layer) {
         this.layer = layer;
     }
 
@@ -25,5 +25,5 @@ public class DemoCustomLayerSettings implements ExporterSettings {
         return this;
     }
 
-    private final DemoCustomLayer layer;
+    private final BezierPathLayer layer;
 }

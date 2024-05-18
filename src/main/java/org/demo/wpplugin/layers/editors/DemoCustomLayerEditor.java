@@ -1,19 +1,19 @@
 package org.demo.wpplugin.layers.editors;
 
-import org.demo.wpplugin.layers.DemoCustomLayer;
+import org.demo.wpplugin.layers.BezierPathLayer;
 import org.demo.wpplugin.layers.DemoCustomLayerSettings;
 import org.pepsoft.worldpainter.Platform;
 import org.pepsoft.worldpainter.layers.AbstractLayerEditor;
 import org.pepsoft.worldpainter.layers.exporters.ExporterSettings;
 
-public class DemoCustomLayerEditor extends AbstractLayerEditor<DemoCustomLayer> {
+public class DemoCustomLayerEditor extends AbstractLayerEditor<BezierPathLayer> {
     public DemoCustomLayerEditor(Platform platform) {
         this.platform = platform;
     }
 
     @Override
-    public DemoCustomLayer createLayer() {
-        return new DemoCustomLayer();
+    public BezierPathLayer createLayer() {
+        return new BezierPathLayer();
     }
 
     @Override

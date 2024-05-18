@@ -12,8 +12,8 @@ import java.awt.*;
 
 import static org.pepsoft.worldpainter.layers.Layer.DataSize.NIBBLE;
 
-public class DemoCustomLayer extends CustomLayer {
-    public DemoCustomLayer() {
+public class BezierPathLayer extends CustomLayer {
+    public BezierPathLayer() {
         super(NAME, DESCRIPTION, DATA_SIZE, PRIORITY, COLOUR);
     }
 
