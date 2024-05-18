@@ -51,7 +51,7 @@ public class DemoOperation extends MouseOrTabletOperation implements
     void DrawPathLayer(Point[] path) {
         DemoLayer layer = DemoLayer.INSTANCE;
         for (Point p : path) {
-            markPoint(p, layer, 15, 5);
+            markPoint(p, layer, 14, 5);
         }
 
         for (int i = 0; i < path.length - 3; i++) {

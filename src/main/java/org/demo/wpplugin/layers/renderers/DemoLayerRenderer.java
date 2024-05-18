@@ -28,4 +28,28 @@ public class DemoLayerRenderer extends TransparentColourRenderer {
     public DemoLayerRenderer() {
         super(0xFF0000); // Colour in 24-bit RGB format
     }
+
+    @Override
+    public int getPixelColour(int x, int y, int underlyingColour, int value) {
+        int[] colors = {
+                0xFF0000, // Red
+                0x8B0000, // Dark Red
+                0x00FF00, // Lime
+                0x008000, // Dark Green
+                0x0000FF, // Blue
+                0x000080, // Navy
+                0x00FFFF, // Cyan
+                0x008B8B, // Dark Cyan
+                0xFF00FF, // Magenta
+                0x8B008B, // Dark Magenta
+                0xFFFF00, // Yellow
+                0xBDB76B, // Dark Yellow
+                0xFFA500, // Orange
+                0xFF8C00, // Dark Orange
+                0x800080, // Purple
+                0x4B0082  // Dark Purple
+        };
+
+        return colors[value];
+    }
 }
