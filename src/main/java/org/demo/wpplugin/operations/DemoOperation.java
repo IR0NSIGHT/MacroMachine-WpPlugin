@@ -1,5 +1,6 @@
 package org.demo.wpplugin.operations;
 
+import org.demo.wpplugin.CubicBezierSpline;
 import org.demo.wpplugin.layers.DemoLayer;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -9,8 +10,6 @@ import org.pepsoft.worldpainter.painting.Paint;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
-
-import static org.demo.wpplugin.PointUtils.*;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -49,34 +48,6 @@ public class DemoOperation extends MouseOrTabletOperation implements
 
     private Collection<Point> path = new ArrayList<>();
 
-    public static Collection<Point> calculateCubicBezier(Point startPoint, Point handle0, Point handle1, Point endPoint, int numPoints) {
-        Collection<Point> points = new ArrayList<>();
-        for (int i = 0; i <= numPoints; i++) {
-            double t = (double) i / numPoints;
-            double x = Math.pow(1 - t, 3) * startPoint.x
-                    + 3 * Math.pow(1 - t, 2) * t * handle0.x
-                    + 3 * (1 - t) * Math.pow(t, 2) * handle1.x
-                    + Math.pow(t, 3) * endPoint.x;
-            double y = Math.pow(1 - t, 3) * startPoint.y
-                    + 3 * Math.pow(1 - t, 2) * t * handle0.y
-                    + 3 * (1 - t) * Math.pow(t, 2) * handle1.y
-                    + Math.pow(t, 3) * endPoint.y;
-            points.add(new Point((int) Math.round(x), (int) Math.round(y)));
-        }
-        return points;
-    }
-
-    public static double calculatePathLength(Point[] path) {
-        if (path == null || path.length < 2) {
-            throw new IllegalArgumentException("Path must contain at least two points.");
-        }
-        double totalLength = 0.0;
-        for (int i = 1; i < path.length; i++) {
-            totalLength += path[i - 1].distance(path[i]);
-        }
-        return totalLength;
-    }
-
     void DrawPathLayer(Point[] path) {
         DemoLayer layer = DemoLayer.INSTANCE;
         for (Point p : path) {
@@ -84,27 +55,9 @@ public class DemoOperation extends MouseOrTabletOperation implements
         }
 
         for (int i = 0; i < path.length - 3; i++) {
-            for (Point p : getSplinePathFor(path[i], path[i + 1], path[i + 2], path[i + 3], 5))
+            for (Point p : CubicBezierSpline.getSplinePathFor(path[i], path[i + 1], path[i + 2], path[i + 3], 5))
                 markPoint(p, DemoLayer.INSTANCE, 15, 1);
         }
-    }
-
-    /**
-     * get spline connecting B and C. A and D are the points before and after BC in the path
-     *
-     * @param A
-     * @param B
-     * @param C
-     * @param D
-     */
-    Collection<Point> getSplinePathFor(Point A, Point B, Point C, Point D, int metersBetweenPoints) {
-        float factor = (float) B.distance(C) / 2f;
-        Point handle1 = add(multiply(normalize(divide(subtract(C, A), 2)), factor), B); // (AC)/2+B
-        Point handle2 = subtract(C, multiply(normalize(divide(subtract(D, B), 2)), factor)); //(C-(BD/2))
-        Collection<Point> path = calculateCubicBezier(B, handle1, handle2, C, 50);
-        double length = calculatePathLength(path.toArray(new Point[0]));
-        path = calculateCubicBezier(B, handle1, handle2, C, (int) (length / metersBetweenPoints));
-        return path;
     }
 
     void markPoint(Point p, Layer layer, int value, int size) {

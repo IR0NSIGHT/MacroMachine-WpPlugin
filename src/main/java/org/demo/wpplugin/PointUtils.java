@@ -35,4 +35,15 @@ public class PointUtils {
         }
         return divide(p, magnitude);
     }
+
+    public static double calculatePathLength(Point[] path) {
+        if (path == null || path.length < 2) {
+            throw new IllegalArgumentException("Path must contain at least two points.");
+        }
+        double totalLength = 0.0;
+        for (int i = 1; i < path.length; i++) {
+            totalLength += path[i - 1].distance(path[i]);
+        }
+        return totalLength;
+    }
 }
