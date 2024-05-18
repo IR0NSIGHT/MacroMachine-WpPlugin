@@ -80,12 +80,12 @@ public class DemoOperation extends MouseOrTabletOperation implements
     void DrawPathLayer(Point[] path) {
         DemoLayer layer = DemoLayer.INSTANCE;
         for (Point p : path) {
-            markPoint(p, layer, 15, 10);
+            markPoint(p, layer, 15, 5);
         }
 
         for (int i = 0; i < path.length - 3; i++) {
-            for (Point p : getSplineFor(path[i], path[i + 1], path[i + 2], path[i + 3]))
-                markPoint(p, DemoLayer.INSTANCE, 15, 2);
+            for (Point p : getSplinePathFor(path[i], path[i + 1], path[i + 2], path[i + 3], 5))
+                markPoint(p, DemoLayer.INSTANCE, 15, 1);
         }
     }
 
@@ -97,13 +97,12 @@ public class DemoOperation extends MouseOrTabletOperation implements
      * @param C
      * @param D
      */
-    Collection<Point> getSplineFor(Point A, Point B, Point C, Point D) {
+    Collection<Point> getSplinePathFor(Point A, Point B, Point C, Point D, int metersBetweenPoints) {
         float factor = (float) B.distance(C) / 2f;
         Point handle1 = add(multiply(normalize(divide(subtract(C, A), 2)), factor), B); // (AC)/2+B
         Point handle2 = subtract(C, multiply(normalize(divide(subtract(D, B), 2)), factor)); //(C-(BD/2))
         Collection<Point> path = calculateCubicBezier(B, handle1, handle2, C, 50);
         double length = calculatePathLength(path.toArray(new Point[0]));
-        float metersBetweenPoints = 10;
         path = calculateCubicBezier(B, handle1, handle2, C, (int) (length / metersBetweenPoints));
         return path;
     }
