@@ -29,12 +29,12 @@ public class DemoCustomLayer extends CustomLayer {
     /**
      * Human-readable short name of the plugin.
      */
-    static final String NAME = "Demo Custom Layer";
+    static final String NAME = "Bezier Preview Layer";
 
     /**
      * Human-readable description of the plugin. This is used e.g. in the tooltip of the layer selection button.
      */
-    static final String DESCRIPTION = "A demonstration of creating a custom layer plugin for WorldPainter";
+    static final String DESCRIPTION = "Displaying the current Bezier Path Preview";
 
     /**
      * The data size (number of possible values) for this layer. If this changes, the ID must also change.

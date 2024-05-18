@@ -55,8 +55,12 @@ public class DemoOperation extends MouseOrTabletOperation implements
         }
 
         for (int i = 0; i < path.length - 3; i++) {
-            for (Point p : CubicBezierSpline.getSplinePathFor(path[i], path[i + 1], path[i + 2], path[i + 3], 5))
-                markPoint(p, DemoLayer.INSTANCE, 15, 1);
+            Point previous = null;
+            for (Point p : CubicBezierSpline.getSplinePathFor(path[i], path[i + 1], path[i + 2], path[i + 3], 5)) {
+                if (previous != null)
+                    markLine(previous, p, DemoLayer.INSTANCE, 15);
+                previous = p;
+            }
         }
     }
 
@@ -64,6 +68,15 @@ public class DemoOperation extends MouseOrTabletOperation implements
         for (int i = -size; i <= size; i++) {
             getDimension().setLayerValueAt(layer, p.x + i, p.y - i, value);
             getDimension().setLayerValueAt(layer, p.x + i, p.y + i, value);
+        }
+    }
+
+    void markLine(Point p0, Point p1, Layer layer, int value) {
+        double length = p0.distance(p1);
+        for (double i = 0; i <= length; i++) {
+            double factor = i / length;
+            Point inter = new Point((int) (p0.x * factor + p1.x * (1 - factor)), (int) (p0.y * factor + p1.y * (1 - factor)));
+            getDimension().setLayerValueAt(layer, inter.x, inter.y, value);
         }
     }
 
@@ -107,8 +120,6 @@ public class DemoOperation extends MouseOrTabletOperation implements
             System.out.println("path = " + path);
             DrawPathLayer(path.toArray(new Point[0]));
         }
-
-
     }
 
 
@@ -139,15 +150,15 @@ public class DemoOperation extends MouseOrTabletOperation implements
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
      */
-    static final String ID = "org.demo.wpplugin.DemoOperation.v1";
+    static final String ID = "org.demo.wpplugin.BezierPathTool.v1";
 
     /**
      * Human-readable short name of the operation.
      */
-    static final String NAME = "Demo Operation";
+    static final String NAME = "Bezier Path Tool";
 
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
-    static final String DESCRIPTION = "A demonstration of creating a custom operation plugin for WorldPainter";
+    static final String DESCRIPTION = "Draw smooth, connected curves with C1 continuity.";
 }
