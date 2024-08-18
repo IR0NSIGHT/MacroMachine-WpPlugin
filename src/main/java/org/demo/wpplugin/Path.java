@@ -20,15 +20,22 @@ public class Path implements Iterable<Point> {
         this.handles.addAll(handles);
     }
 
-    public Path addPoint(Path path, Point point) {
-        Path sum = new Path(path.handles);
+    public Path addPoint(Point point) {
+        Path sum = new Path(this.handles);
         sum.handles.add(point);
         return sum;
     }
 
-    public Path removePoint(Path path, Point point) {
-        Path sum = new Path(path.handles);
+    public Path removePoint(Point point) {
+        Path sum = new Path(this.handles);
         sum.handles.remove(point);
+        return sum;
+    }
+
+    public Path movePoint(Point point, Point newPosition) {
+        Path sum = new Path(this.handles);
+        int idx = sum.handles.lastIndexOf(point);
+        sum.handles.set(idx, newPosition);
         return sum;
     }
 
@@ -67,5 +74,20 @@ public class Path implements Iterable<Point> {
                     1));
         }
         return new ArrayList<>(curvePoints);
+    }
+
+    public Point getClosestHandleTo(Point coord) throws IllegalAccessException {
+        if (amountHandles() == 0)
+            throw new IllegalAccessException("can not find closest handle on zero-handle-path");
+        Point closest = null;
+        double distMinSquared = Double.MAX_VALUE;
+        for (Point p: this) {
+            double distanceSq = p.distanceSq(coord);
+            if (distanceSq < distMinSquared) {
+                distMinSquared = distanceSq;
+                closest = p;
+            }
+        }
+        return closest;
     }
 }
