@@ -72,15 +72,6 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         // super(NAME, DESCRIPTION, delay, ID);
     }
 
-    void markLine(Point p0, Point p1, Layer layer, int color) {
-        double length = p0.distance(p1);
-        for (double i = 0; i <= length; i++) {
-            double factor = i / length;
-            Point inter = new Point((int) (p0.x * factor + p1.x * (1 - factor)), (int) (p0.y * factor + p1.y * (1 - factor)));
-            getDimension().setLayerValueAt(layer, inter.x, inter.y, color);
-        }
-    }
-
     /**
      * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
      * this is invoked once per {@code delay} ms while the mouse button is down, with the first invocation having
@@ -117,8 +108,13 @@ public class AddPointOperation extends MouseOrTabletOperation implements
             //SELECT POINT
             Point userClickedCoord = new Point(centreX, centreY);
             try {
-                if (path.amountHandles() != 0)
-                    selectedPoint = path.getClosestHandleTo(userClickedCoord);
+                if (path.amountHandles() != 0) {
+                    Point closest = path.getClosestHandleTo(userClickedCoord);
+                    //dont allow very far away clicks
+                    if (closest.distance(userClickedCoord) < 50) {
+                        selectedPoint = closest;
+                    }
+                }
                 if (selectedPoint == previousSelected)  //user clicked selected again, unselect.
                     selectedPoint = null;
             } catch (IllegalAccessException e) {
@@ -131,7 +127,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
                     if (path.amountHandles() != 0) {
                         Point toBeRemoved = path.getClosestHandleTo(userClickedCoord);
                         path = path.removePoint(toBeRemoved);
-                        if (selectedPoint == toBeRemoved )
+                        if (selectedPoint == toBeRemoved)
                             selectedPoint = null;
                     }
                 } catch (IllegalAccessException e) {
@@ -140,7 +136,12 @@ public class AddPointOperation extends MouseOrTabletOperation implements
 
             } else {
                 Point next = new Point(centreX, centreY);
-                path = path.addPoint(next);
+                if (selectedPoint != null) {
+                    path = path.movePoint(selectedPoint, next);
+                    selectedPoint = null;
+                } else {
+                    path = path.addPoint(next);
+                }
             }
         }
 
@@ -162,21 +163,6 @@ public class AddPointOperation extends MouseOrTabletOperation implements
     }
 
     /**
-     * draws an X on the map in given color and size
-     *
-     * @param p
-     * @param layer
-     * @param color
-     * @param size, 0 size = single dot on map
-     */
-    void markPoint(Point p, Layer layer, int color, int size) {
-        for (int i = -size; i <= size; i++) {
-            getDimension().setLayerValueAt(layer, p.x + i, p.y - i, color);
-            getDimension().setLayerValueAt(layer, p.x + i, p.y + i, color);
-        }
-    }
-
-    /**
      * draws this path onto the map
      *
      * @param path
@@ -195,8 +181,32 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         if (path.amountHandles() >= 2)
             markLine(path.handleByIndex(0), path.handleByIndex(1), layer, COLOR_HANDLE);
         if (path.amountHandles() >= 3)
-            markLine(path.handleByIndex(path.amountHandles()-1), path.handleByIndex(path.amountHandles()-2), layer, COLOR_HANDLE);
+            markLine(path.handleByIndex(path.amountHandles() - 1), path.handleByIndex(path.amountHandles() - 2), layer, COLOR_HANDLE);
 
+    }
+
+    /**
+     * draws an X on the map in given color and size
+     *
+     * @param p
+     * @param layer
+     * @param color
+     * @param size, 0 size = single dot on map
+     */
+    void markPoint(Point p, Layer layer, int color, int size) {
+        for (int i = -size; i <= size; i++) {
+            getDimension().setLayerValueAt(layer, p.x + i, p.y - i, color);
+            getDimension().setLayerValueAt(layer, p.x + i, p.y + i, color);
+        }
+    }
+
+    void markLine(Point p0, Point p1, Layer layer, int color) {
+        double length = p0.distance(p1);
+        for (double i = 0; i <= length; i++) {
+            double factor = i / length;
+            Point inter = new Point((int) (p0.x * factor + p1.x * (1 - factor)), (int) (p0.y * factor + p1.y * (1 - factor)));
+            getDimension().setLayerValueAt(layer, inter.x, inter.y, color);
+        }
     }
 
     @Override
