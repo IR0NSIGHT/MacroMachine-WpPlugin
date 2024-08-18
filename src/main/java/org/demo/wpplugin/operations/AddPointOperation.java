@@ -1,6 +1,8 @@
 package org.demo.wpplugin.operations;
 
 import org.demo.wpplugin.CubicBezierSpline;
+import org.demo.wpplugin.Path;
+import org.demo.wpplugin.PathManager;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -10,6 +12,7 @@ import org.pepsoft.worldpainter.painting.Paint;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -38,6 +41,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
     final int COLOR_RED = 1;
     final int COLOR_BLUE = 2;
     final int SIZE_DOT = 0;
+    final int SIZE_MEDIUM_CROSS = 3;
     public AddPointOperation() {
         // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
         // once for every time the user clicks the mouse or presses on the tablet:
@@ -49,26 +53,21 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         // super(NAME, DESCRIPTION, delay, ID);
     }
 
-    private Collection<Point> path = new ArrayList<>();
+    private Path path = new Path(Collections.emptyList());
 
     /**
      * draws this path onto the map
      * @param path
      */
-    void DrawPathLayer(Point[] path) {
+    void DrawPathLayer(Path path) {
         PathPreviewLayer layer = PathPreviewLayer.INSTANCE;
-        for (Point p : path) {
-            markPoint(p, layer, COLOR_RED, SIZE_DOT);
+
+        for (Point p: path.continousCurve()) {
+            markPoint(p, layer, COLOR_BLUE, SIZE_DOT);
         }
 
-        //iterate all handles, calculate coordinates on curve
-        for (int i = 0; i < path.length - 3; i++) {
-            Point previous = null;
-            for (Point p : CubicBezierSpline.getSplinePathFor(path[i], path[i + 1], path[i + 2], path[i + 3], 5)) {
-                if (previous != null)
-                    markLine(previous, p, PathPreviewLayer.INSTANCE, COLOR_BLUE);
-                previous = p;
-            }
+        for (Point p : path) {
+            markPoint(p, layer, COLOR_RED, SIZE_MEDIUM_CROSS);
         }
     }
 
@@ -128,15 +127,17 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         // * paint - the currently selected paint
 
         if (inverse) {
-            path.clear();
+            path = new Path();
             getDimension().clearLayerData(PathPreviewLayer.INSTANCE);
             //TODO erase closest point
         } else {
             Point next = new Point(centreX, centreY);
-            path.add(next);
-            System.out.println("path = " + path);
-            DrawPathLayer(path.toArray(new Point[0]));
+            path = path.addPoint(path, next);
+            DrawPathLayer(path);
         }
+        //update path
+        final int PATH_ID = 1;
+        PathManager.instance.setPathBy(PATH_ID, path);
     }
 
 
