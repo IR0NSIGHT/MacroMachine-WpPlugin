@@ -1,6 +1,6 @@
 package org.demo.wpplugin.layers.exporters;
 
-import org.demo.wpplugin.layers.DemoLayer;
+import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.pepsoft.minecraft.Chunk;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Platform;
@@ -34,9 +34,9 @@ import static org.pepsoft.worldpainter.exporting.SecondPassLayerExporter.Stage.C
  * more complicated.
  */
 @SuppressWarnings("unused") // Instantiated by the Layer class
-public class DemoLayerExporter extends AbstractLayerExporter<DemoLayer> implements FirstPassLayerExporter, SecondPassLayerExporter, IncidentalLayerExporter {
+public class DemoLayerExporter extends AbstractLayerExporter<PathPreviewLayer> implements FirstPassLayerExporter, SecondPassLayerExporter, IncidentalLayerExporter {
     public DemoLayerExporter(Dimension dimension, Platform platform) {
-        super(dimension, platform, null, DemoLayer.INSTANCE);
+        super(dimension, platform, null, PathPreviewLayer.INSTANCE);
     }
 
     // TODO: add explanation of ExporterSettings
@@ -66,7 +66,7 @@ public class DemoLayerExporter extends AbstractLayerExporter<DemoLayer> implemen
         for (int xInChunk = 0; xInChunk < 16; xInChunk++) {
             for (int zInChunk = 0; zInChunk < 16; zInChunk++) {
                 final int xInTile = xOffset + xInChunk, zInTile = zOffset + zInChunk;
-                final int layerValue = tile.getLayerValue(DemoLayer.INSTANCE, xInTile, zInTile);
+                final int layerValue = tile.getLayerValue(PathPreviewLayer.INSTANCE, xInTile, zInTile);
                 // TODO: modify the Chunk as required according to the layer value
             }
         }
@@ -136,7 +136,7 @@ public class DemoLayerExporter extends AbstractLayerExporter<DemoLayer> implemen
         final long seed = (dimension.getSeed() << 8) ^ ((long) exportedArea.x << 4) ^ exportedArea.y;
         for (int x = area.x; x < (area.x + area.width); x++) {
             for (int y = area.y; y < (area.y + area.height); y++) {
-                final int layerValue = dimension.getLayerValueAt(DemoLayer.INSTANCE, x, y);
+                final int layerValue = dimension.getLayerValueAt(PathPreviewLayer.INSTANCE, x, y);
                 // TODO: modify the MinecraftWorld as required according to the layer value
             }
         }
@@ -179,7 +179,7 @@ public class DemoLayerExporter extends AbstractLayerExporter<DemoLayer> implemen
         final long seed = (dimension.getSeed() << 8) ^ ((long) exportedArea.x << 4) ^ exportedArea.y;
         for (int x = area.x; x < (area.x + area.width); x++) {
             for (int y = area.y; y < (area.y + area.height); y++) {
-                final int layerValue = dimension.getLayerValueAt(DemoLayer.INSTANCE, x, y);
+                final int layerValue = dimension.getLayerValueAt(PathPreviewLayer.INSTANCE, x, y);
                 // TODO: modify the MinecraftWorld as required according to the layer value
             }
         }

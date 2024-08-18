@@ -52,4 +52,6 @@ public class DemoLayerRenderer extends TransparentColourRenderer {
 
         return colors[value];
     }
+
+    public static final DemoLayerRenderer instance = new DemoLayerRenderer();
 }

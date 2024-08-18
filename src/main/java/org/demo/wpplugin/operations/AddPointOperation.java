@@ -1,7 +1,7 @@
 package org.demo.wpplugin.operations;
 
 import org.demo.wpplugin.CubicBezierSpline;
-import org.demo.wpplugin.layers.DemoLayer;
+import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
@@ -31,11 +31,14 @@ import java.util.Collection;
  *
  * <p><strong>Note</strong> that for now WorldPainter only supports operations that
  */
-public class DemoOperation extends MouseOrTabletOperation implements
+public class AddPointOperation extends MouseOrTabletOperation implements
         PaintOperation, // Implement this if you need access to the currently selected paint; note that some base classes already provide this
         BrushOperation // Implement this if you need access to the currently selected brush; note that some base classes already provide this
 {
-    public DemoOperation() {
+    final int COLOR_RED = 1;
+    final int COLOR_BLUE = 2;
+    final int SIZE_DOT = 0;
+    public AddPointOperation() {
         // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
         // once for every time the user clicks the mouse or presses on the tablet:
         super(NAME, DESCRIPTION, ID);
@@ -48,35 +51,48 @@ public class DemoOperation extends MouseOrTabletOperation implements
 
     private Collection<Point> path = new ArrayList<>();
 
+    /**
+     * draws this path onto the map
+     * @param path
+     */
     void DrawPathLayer(Point[] path) {
-        DemoLayer layer = DemoLayer.INSTANCE;
+        PathPreviewLayer layer = PathPreviewLayer.INSTANCE;
         for (Point p : path) {
-            markPoint(p, layer, 14, 5);
+            markPoint(p, layer, COLOR_RED, SIZE_DOT);
         }
 
+        //iterate all handles, calculate coordinates on curve
         for (int i = 0; i < path.length - 3; i++) {
             Point previous = null;
             for (Point p : CubicBezierSpline.getSplinePathFor(path[i], path[i + 1], path[i + 2], path[i + 3], 5)) {
                 if (previous != null)
-                    markLine(previous, p, DemoLayer.INSTANCE, 15);
+                    markLine(previous, p, PathPreviewLayer.INSTANCE, COLOR_BLUE);
                 previous = p;
             }
         }
     }
 
-    void markPoint(Point p, Layer layer, int value, int size) {
+    /**
+     * draws an X on the map in given color and size
+     *
+     * @param p
+     * @param layer
+     * @param color
+     * @param size, 0 size = single dot on map
+     */
+    void markPoint(Point p, Layer layer, int color, int size) {
         for (int i = -size; i <= size; i++) {
-            getDimension().setLayerValueAt(layer, p.x + i, p.y - i, value);
-            getDimension().setLayerValueAt(layer, p.x + i, p.y + i, value);
+            getDimension().setLayerValueAt(layer, p.x + i, p.y - i, color);
+            getDimension().setLayerValueAt(layer, p.x + i, p.y + i, color);
         }
     }
 
-    void markLine(Point p0, Point p1, Layer layer, int value) {
+    void markLine(Point p0, Point p1, Layer layer, int color) {
         double length = p0.distance(p1);
         for (double i = 0; i <= length; i++) {
             double factor = i / length;
             Point inter = new Point((int) (p0.x * factor + p1.x * (1 - factor)), (int) (p0.y * factor + p1.y * (1 - factor)));
-            getDimension().setLayerValueAt(layer, inter.x, inter.y, value);
+            getDimension().setLayerValueAt(layer, inter.x, inter.y, color);
         }
     }
 
@@ -113,7 +129,8 @@ public class DemoOperation extends MouseOrTabletOperation implements
 
         if (inverse) {
             path.clear();
-            getDimension().clearLayerData(DemoLayer.INSTANCE);
+            getDimension().clearLayerData(PathPreviewLayer.INSTANCE);
+            //TODO erase closest point
         } else {
             Point next = new Point(centreX, centreY);
             path.add(next);

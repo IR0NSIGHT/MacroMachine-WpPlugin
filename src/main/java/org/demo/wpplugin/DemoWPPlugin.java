@@ -1,7 +1,7 @@
 package org.demo.wpplugin;
 
-import org.demo.wpplugin.layers.DemoLayer;
-import org.demo.wpplugin.operations.DemoOperation;
+import org.demo.wpplugin.layers.PathPreviewLayer;
+import org.demo.wpplugin.operations.AddPointOperation;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.AbstractPlugin;
@@ -58,6 +58,6 @@ public class DemoWPPlugin extends AbstractPlugin implements
      */
     static final String NAME = "Demo WP Plugin";
 
-    private static final List<Layer> LAYERS = singletonList(DemoLayer.INSTANCE);
-    private static final List<Operation> OPERATIONS = singletonList(new DemoOperation());
+    private static final List<Layer> LAYERS = singletonList(PathPreviewLayer.INSTANCE);
+    private static final List<Operation> OPERATIONS = singletonList(new AddPointOperation());
 }
