@@ -4,6 +4,7 @@ import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.renderers.LayerRenderer;
 
+import java.awt.image.BufferedImage;
 import java.io.Serializable;
 
 import static org.pepsoft.worldpainter.layers.Layer.DataSize.NIBBLE;

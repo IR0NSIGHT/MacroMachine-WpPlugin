@@ -7,6 +7,7 @@ import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
+import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.awt.*;
 import java.util.Collections;
@@ -37,6 +38,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         PaintOperation, // Implement this if you need access to the currently selected paint; note that some base classes already provide this
         BrushOperation // Implement this if you need access to the currently selected brush; note that some base classes already provide this
 {
+
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
@@ -108,12 +110,14 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         Path previous = path;
 
 
+        this.getDimension().setEventsInhibited(true);
         Point previousSelected = selectedPoint;
         Point userClickedCoord = new Point(centreX, centreY);
 
-        if (selectedPoint == null)
+        if (selectedPoint == null) {
             selectedPoint = userClickedCoord;
-        else if (isCtrlDown()) {
+            path = path.addPoint(userClickedCoord);
+        } else if (isCtrlDown()) {
             //SELECT POINT
             try {
                 if (path.amountHandles() != 0) {
@@ -123,15 +127,24 @@ public class AddPointOperation extends MouseOrTabletOperation implements
                         selectedPoint = closest;
                     }
                 }
-                if (selectedPoint == previousSelected)  //user clicked selected again, ignore.
-                    return;
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         } else if (isShiftDown()) {
-            // MOVE SELECTED POINT TO
+            if (inverse) {
+                path = new Path();
+                selectedPoint = null;
+            } else {
+                // MOVE SELECTED POINT TO
+                applyAsSelection();
+
+            }
+
+        } else if (isAltDown()) {
             path = path.movePoint(selectedPoint, userClickedCoord);
             selectedPoint = userClickedCoord;
+
+
         } else if (inverse) {
             //REMOVE SELECTED POINT
             if (path.amountHandles() > 1) {
@@ -153,7 +166,6 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         //update path
         final int PATH_ID = 1;
 
-        this.getDimension().setEventsInhibited(true);
         //is selection was deleted or something.
         if (!path.isHandle(selectedPoint))
             selectedPoint = null;
@@ -170,6 +182,12 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         this.getDimension().setEventsInhibited(false);
     }
 
+    private void applyAsSelection() {
+        Layer select = SelectionBlock.INSTANCE;
+        for (Point p : path.continousCurve()) {
+            getDimension().setBitLayerValueAt(select, p.x, p.y, true);
+        }
+    }
 
     /**
      * draws this path onto the map
