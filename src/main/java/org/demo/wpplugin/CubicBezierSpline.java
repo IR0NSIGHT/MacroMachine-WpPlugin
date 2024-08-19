@@ -1,5 +1,6 @@
 package org.demo.wpplugin;
 
+import javax.vecmath.Vector2f;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,6 +35,23 @@ public class CubicBezierSpline {
         return points;
     }
 
+    public static Point getCubicBezierHandles(Point A, Point B, Point C) {
+        float factor = (float) B.distance(C) / 2f;
+        final Vector2f av,bv,cv,dv;
+        av = new Vector2f(A.x,A.y);
+        bv = new Vector2f(B.x,B.y);
+        cv = new Vector2f(C.x,C.y);
+
+        // (AC)/2+B
+        Vector2f handle1 = new Vector2f(cv);
+        handle1.sub(av);
+        handle1.normalize();
+        handle1.scale(factor);
+        handle1.add(bv);
+
+        return new Point((int) handle1.x, (int) handle1.y);
+    }
+
     /**
      * get spline connecting B and C. A and D are the points before and after BC in the path
      *
@@ -43,12 +61,15 @@ public class CubicBezierSpline {
      * @param D
      */
     public static Collection<Point> getSplinePathFor(Point A, Point B, Point C, Point D, int metersBetweenPoints) {
-        float factor = (float) B.distance(C) / 2f;
-        Point handle1 = add(multiply(normalize(divide(subtract(C, A), 2)), factor), B); // (AC)/2+B
-        Point handle2 = subtract(C, multiply(normalize(divide(subtract(D, B), 2)), factor)); //(C-(BD/2))
-        Collection<Point> path = calculateCubicBezier(B, handle1, handle2, C, 50);
+
+        Point handle1p = getCubicBezierHandles(A,B,C);
+        Point handle2P =getCubicBezierHandles(D,C,B);
+
+        //estimate length by measuring rough curve with 50 points
+        Collection<Point> path = calculateCubicBezier(B, handle1p, handle2P, C, 50);
         double length = calculatePathLength(path.toArray(new Point[0]));
-        path = calculateCubicBezier(B, handle1, handle2, C, (int) (length / metersBetweenPoints));
+
+        path = calculateCubicBezier(B, handle1p, handle2P, C, (int) (length / metersBetweenPoints));
         return path;
     }
 }

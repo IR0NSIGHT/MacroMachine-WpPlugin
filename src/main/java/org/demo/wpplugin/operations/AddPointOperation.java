@@ -11,6 +11,8 @@ import org.pepsoft.worldpainter.painting.Paint;
 import java.awt.*;
 import java.util.Collections;
 
+import static org.demo.wpplugin.CubicBezierSpline.getCubicBezierHandles;
+
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
  * by clicking or dragging with a mouse or pressing down on a tablet, it makes sense to subclass
@@ -71,6 +73,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         // invocation:
         // super(NAME, DESCRIPTION, delay, ID);
     }
+
 
     /**
      * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
@@ -168,6 +171,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         this.getDimension().setEventsInhibited(false);
     }
 
+
     /**
      * draws this path onto the map
      *
@@ -184,11 +188,22 @@ public class AddPointOperation extends MouseOrTabletOperation implements
             markPoint(p, layer, erase ? 0 : COLOR_HANDLE, SIZE_MEDIUM_CROSS);
         }
 
-        if (path.amountHandles() >= 2)
-            markLine(path.handleByIndex(0), path.handleByIndex(1), layer, COLOR_HANDLE);
-        if (path.amountHandles() >= 3)
-            markLine(path.handleByIndex(path.amountHandles() - 1), path.handleByIndex(path.amountHandles() - 2), layer, COLOR_HANDLE);
+        for (int i = 1; i < path.amountHandles() - 1; i++) {
+            Point p = new Point(path.handleByIndex(i));
+            Point handle = getCubicBezierHandles(
+                    path.handleByIndex(i + 1),
+                    p,
+                    path.handleByIndex(i - 1)
+            );
+            markLine(p, handle, PathPreviewLayer.INSTANCE, COLOR_SELECTED);
 
+            Point handleReversed = getCubicBezierHandles(
+                    path.handleByIndex(i - 1),
+                    p,
+                    path.handleByIndex(i + 1)
+            );
+            markLine(p, handleReversed, PathPreviewLayer.INSTANCE, COLOR_SELECTED);
+        }
     }
 
     /**
