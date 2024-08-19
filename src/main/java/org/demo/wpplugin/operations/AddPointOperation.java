@@ -104,9 +104,9 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         // * paint - the currently selected paint
         Path previous = path;
         Point previousSelected = selectedPoint;
+        Point userClickedCoord = new Point(centreX, centreY);
         if (isCtrlDown()) {
             //SELECT POINT
-            Point userClickedCoord = new Point(centreX, centreY);
             try {
                 if (path.amountHandles() != 0) {
                     Point closest = path.getClosestHandleTo(userClickedCoord);
@@ -120,9 +120,12 @@ public class AddPointOperation extends MouseOrTabletOperation implements
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
+        } else if (isShiftDown()) {
+            if (selectedPoint != null)
+                path = path.insertPointAfter(selectedPoint, userClickedCoord);
         } else {
+
             if (inverse) {
-                Point userClickedCoord = new Point(centreX, centreY);
                 try {
                     if (path.amountHandles() != 0) {
                         Point toBeRemoved = path.getClosestHandleTo(userClickedCoord);
@@ -138,7 +141,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
                 Point next = new Point(centreX, centreY);
                 if (selectedPoint != null) {
                     path = path.movePoint(selectedPoint, next);
-                    selectedPoint = null;
+                    selectedPoint = next;
                 } else {
                     path = path.addPoint(next);
                 }
@@ -149,6 +152,9 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         final int PATH_ID = 1;
 
         this.getDimension().setEventsInhibited(true);
+        //is selection was deleted or something.
+        if (!path.isHandle(selectedPoint))
+            selectedPoint = null;
 
         //erase old
         this.getDimension().clearLayerData(PathPreviewLayer.INSTANCE);

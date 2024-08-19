@@ -39,12 +39,23 @@ public class Path implements Iterable<Point> {
         return sum;
     }
 
+    public Path insertPointAfter(Point point, Point newPosition) {
+        Path sum = new Path(this.handles);
+        int idx = sum.handles.lastIndexOf(point);
+        sum.handles.add(idx + 1, newPosition);
+        return sum;
+    }
+
     public Point handleByIndex(int index) throws IndexOutOfBoundsException {
         return handles.get(index);
     }
 
     public int amountHandles() {
         return handles.size();
+    }
+
+    public boolean isHandle(Point point) {
+        return handles.contains(point);
     }
 
     @Override
