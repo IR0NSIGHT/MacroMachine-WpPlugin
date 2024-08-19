@@ -1,11 +1,8 @@
 package org.demo.wpplugin;
 
-import org.checkerframework.checker.units.qual.A;
-import org.demo.wpplugin.layers.PathPreviewLayer;
-
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class Path implements Iterable<Point> {
@@ -39,19 +36,26 @@ public class Path implements Iterable<Point> {
         return sum;
     }
 
+    public Point getPreviousPoint(Point point) throws IllegalAccessException {
+        if (amountHandles() < 2)
+            throw new IllegalAccessException("can not find previous point on path with less than 2 points.");
+        int idx = handles.indexOf(point);
+        if (idx == -1)
+            throw new IllegalAccessException("this point is not part of the path.");
+        if (idx == 0)
+            return handles.get(1);
+        return handles.get(idx - 1);
+    }
+
+    public int amountHandles() {
+        return handles.size();
+    }
+
     public Path insertPointAfter(Point point, Point newPosition) {
         Path sum = new Path(this.handles);
         int idx = sum.handles.lastIndexOf(point);
         sum.handles.add(idx + 1, newPosition);
         return sum;
-    }
-
-    public Point handleByIndex(int index) throws IndexOutOfBoundsException {
-        return handles.get(index);
-    }
-
-    public int amountHandles() {
-        return handles.size();
     }
 
     public boolean isHandle(Point point) {
@@ -87,12 +91,16 @@ public class Path implements Iterable<Point> {
         return new ArrayList<>(curvePoints);
     }
 
+    public Point handleByIndex(int index) throws IndexOutOfBoundsException {
+        return handles.get(index);
+    }
+
     public Point getClosestHandleTo(Point coord) throws IllegalAccessException {
         if (amountHandles() == 0)
             throw new IllegalAccessException("can not find closest handle on zero-handle-path");
         Point closest = null;
         double distMinSquared = Double.MAX_VALUE;
-        for (Point p: this) {
+        for (Point p : this) {
             double distanceSq = p.distanceSq(coord);
             if (distanceSq < distMinSquared) {
                 distMinSquared = distanceSq;

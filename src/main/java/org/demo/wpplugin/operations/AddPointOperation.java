@@ -106,9 +106,14 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         // * brush - the currently selected brush
         // * paint - the currently selected paint
         Path previous = path;
+
+
         Point previousSelected = selectedPoint;
         Point userClickedCoord = new Point(centreX, centreY);
-        if (isCtrlDown()) {
+
+        if (selectedPoint == null)
+            selectedPoint = userClickedCoord;
+        else if (isCtrlDown()) {
             //SELECT POINT
             try {
                 if (path.amountHandles() != 0) {
@@ -118,38 +123,32 @@ public class AddPointOperation extends MouseOrTabletOperation implements
                         selectedPoint = closest;
                     }
                 }
-                if (selectedPoint == previousSelected)  //user clicked selected again, unselect.
-                    selectedPoint = null;
+                if (selectedPoint == previousSelected)  //user clicked selected again, ignore.
+                    return;
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         } else if (isShiftDown()) {
-            if (selectedPoint != null)
-                path = path.insertPointAfter(selectedPoint, userClickedCoord);
-        } else {
-
-            if (inverse) {
+            // MOVE SELECTED POINT TO
+            path = path.movePoint(selectedPoint, userClickedCoord);
+            selectedPoint = userClickedCoord;
+        } else if (inverse) {
+            //REMOVE SELECTED POINT
+            if (path.amountHandles() > 1) {
                 try {
-                    if (path.amountHandles() != 0) {
-                        Point toBeRemoved = path.getClosestHandleTo(userClickedCoord);
-                        path = path.removePoint(toBeRemoved);
-                        if (selectedPoint == toBeRemoved)
-                            selectedPoint = null;
-                    }
+                    Point pointBeforeSelected = path.getPreviousPoint(selectedPoint);
+                    path = path.removePoint(selectedPoint);
+                    selectedPoint = pointBeforeSelected;
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
-
-            } else {
-                Point next = new Point(centreX, centreY);
-                if (selectedPoint != null) {
-                    path = path.movePoint(selectedPoint, next);
-                    selectedPoint = next;
-                } else {
-                    path = path.addPoint(next);
-                }
             }
+        } else {
+            //add new point after selected
+            path = path.insertPointAfter(selectedPoint, userClickedCoord);
+            selectedPoint = userClickedCoord;
         }
+
 
         //update path
         final int PATH_ID = 1;
