@@ -52,6 +52,10 @@ public class AddPointOperation extends MouseOrTabletOperation implements
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
     static final String DESCRIPTION = "Draw smooth, connected curves with C1 continuity.";
+
+    //update path
+    static final int PATH_ID = 1;
+
     final int COLOR_NONE = 0;
     final int COLOR_HANDLE = 1;
     final int COLOR_CURVE = 2;
@@ -63,6 +67,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
     private Point selectedPoint;
     private Brush brush;
     private Paint paint;
+
 
 
     public AddPointOperation() {
@@ -163,8 +168,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         }
 
 
-        //update path
-        final int PATH_ID = 1;
+
 
         //is selection was deleted or something.
         if (!path.isHandle(selectedPoint))

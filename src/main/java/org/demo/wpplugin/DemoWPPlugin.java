@@ -2,12 +2,14 @@ package org.demo.wpplugin;
 
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.AddPointOperation;
+import org.demo.wpplugin.operations.ApplyPathOperation;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.AbstractPlugin;
 import org.pepsoft.worldpainter.plugins.LayerProvider;
 import org.pepsoft.worldpainter.plugins.OperationProvider;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -30,13 +32,22 @@ public class DemoWPPlugin extends AbstractPlugin implements
         OperationProvider      // Implement this to provide one or more custom operations for the Tools panel
 {
     /**
+     * Short, human-readble name of the plugin.
+     */
+    static final String NAME = "Demo WP Plugin";
+
+    // LayerProvider
+    private static final List<Layer> LAYERS = singletonList(PathPreviewLayer.INSTANCE);
+
+    // OperationProvider
+    private static final List<Operation> OPERATIONS = Arrays.asList(new AddPointOperation(), new ApplyPathOperation());
+
+    /**
      * The plugin class must have a default (public, no arguments) constructor.
      */
     public DemoWPPlugin() {
         super(NAME, VERSION);
     }
-
-    // LayerProvider
 
     /**
      * Get the list of custom {@link Layer}s provided by this plugin.
@@ -46,18 +57,8 @@ public class DemoWPPlugin extends AbstractPlugin implements
         return LAYERS;
     }
 
-    // OperationProvider
-
     @Override
     public List<Operation> getOperations() {
         return OPERATIONS;
     }
-
-    /**
-     * Short, human-readble name of the plugin.
-     */
-    static final String NAME = "Demo WP Plugin";
-
-    private static final List<Layer> LAYERS = singletonList(PathPreviewLayer.INSTANCE);
-    private static final List<Operation> OPERATIONS = singletonList(new AddPointOperation());
 }
