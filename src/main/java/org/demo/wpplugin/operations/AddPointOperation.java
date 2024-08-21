@@ -179,6 +179,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
             markPoint(selectedPoint, PathPreviewLayer.INSTANCE, COLOR_SELECTED, SIZE_SELECTED);
 
         PathManager.instance.setPathBy(PATH_ID, path);
+        assert path == PathManager.instance.getPathBy(PATH_ID);
         this.getDimension().setEventsInhibited(false);
     }
 
