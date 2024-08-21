@@ -5,8 +5,10 @@ import org.demo.wpplugin.PathManager;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
+import org.pepsoft.worldpainter.selection.CopySelectionOperationOptionsPanel;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
 
@@ -37,6 +39,19 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
     public ApplyPathOperation() {
         super(NAME, DESCRIPTION, ID);
     }
+
+
+    @Override
+    public JPanel getOptionsPanel() {
+        return optionsPanel;
+    }
+    private final ApplyPathOperationOptions options = new ApplyPathOperationOptions();
+    private final StandardOptionsPanel optionsPanel = new StandardOptionsPanel(getName(), getDescription()) {
+        @Override
+        protected void addAdditionalComponents(GridBagConstraints constraints) {
+            add(new ApplyPathOperationOptionsPanel(options), constraints);
+        }
+    };
 
     /**
      * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
