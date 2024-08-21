@@ -89,6 +89,7 @@
                                 <classpath/>
                                 <!-- Uncomment this to enable debugging. Change suspend=n to suspend=y if you want to debug plugin loading or initialisation: -->
                                 <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005</argument>
+                                <argLine>-ea</argLine> <!-- Enable assertions -->
                                 <!-- These exports are needed from Java 9+ to make the JIDE GUI framework work: -->
                                 <argument>--add-exports</argument>
                                 <argument>java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED</argument>
