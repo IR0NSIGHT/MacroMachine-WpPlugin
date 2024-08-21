@@ -5,14 +5,14 @@ import org.pepsoft.worldpainter.selection.CopySelectionOperation;
 import org.pepsoft.worldpainter.selection.SelectionOptions;
 
 public class ApplyPathOperationOptions extends SelectionOptions implements OperationOptions<CopySelectionOperation> {
-    public float getGrowthPerStep() {
-        return growthPerStep;
+    private int stepsPerGrowth = 0;
+
+    public int getStepsPerGrowth() {
+        return stepsPerGrowth;
     }
 
-    public void setGrowthPerStep(float growthPerStep) {
-        this.growthPerStep = growthPerStep;
+    public void setStepsPerGrowth(int stepsPerGrowth) {
+        this.stepsPerGrowth = stepsPerGrowth;
     }
-
-    private float growthPerStep = 0.0f;
 
 }

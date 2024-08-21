@@ -4,13 +4,10 @@ package org.demo.wpplugin.operations;//
 //
 
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.*;
-import javax.swing.GroupLayout.Alignment;
-import javax.swing.LayoutStyle.ComponentPlacement;
 
 public class ApplyPathOperationOptionsPanel extends JPanel {
+    private JLabel labelGrowthPerStep;
     private JSpinner spinnerGrowthPerStep;
     private ApplyPathOperationOptions options;
 
@@ -25,25 +22,27 @@ public class ApplyPathOperationOptionsPanel extends JPanel {
     }
 
     private void initComponents() {
+        labelGrowthPerStep = new JLabel();
+        labelGrowthPerStep.setText("steps per growth");
+        labelGrowthPerStep.setToolTipText("how many steps it along the path it takes for an increase of 1 in width. Zero for ignore");
+
         spinnerGrowthPerStep = new javax.swing.JSpinner();
         spinnerGrowthPerStep.setFont(spinnerGrowthPerStep.getFont().deriveFont(spinnerGrowthPerStep.getFont().getSize() - 1f));
-        spinnerGrowthPerStep.setModel(new javax.swing.SpinnerNumberModel(0, 0, 255, .01));
-        spinnerGrowthPerStep.setEnabled(false);
-        spinnerGrowthPerStep.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                options.setGrowthPerStep((float) spinnerGrowthPerStep.getValue());
-            }
-        });
+        spinnerGrowthPerStep.setModel(new javax.swing.SpinnerNumberModel(0, 0, 1000, 1));
+        spinnerGrowthPerStep.setEnabled(true);
+        spinnerGrowthPerStep.addChangeListener(evt -> options.setStepsPerGrowth((int) spinnerGrowthPerStep.getValue()));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(labelGrowthPerStep)
                         .addComponent(spinnerGrowthPerStep)
         );
         layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
+                                .addComponent(labelGrowthPerStep)
                                 .addComponent(spinnerGrowthPerStep)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGap(0, 0, 0))

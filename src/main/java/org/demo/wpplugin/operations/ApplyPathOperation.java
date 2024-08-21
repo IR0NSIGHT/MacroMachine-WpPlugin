@@ -5,7 +5,6 @@ import org.demo.wpplugin.PathManager;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
-import org.pepsoft.worldpainter.selection.CopySelectionOperationOptionsPanel;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
@@ -92,9 +91,9 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         Path path = PathManager.instance.getPathBy(AddPointOperation.PATH_ID);
         assert path != null : "Pathmanager delivered null path";
         float baseRadius = 1;
-        float increment = 0.005f;
-        float randomPercent = 0.06f;
-        Random rand = new Random();
+        float increment = options.getStepsPerGrowth() == 0 ? 0 : (float) (1d/ options.getStepsPerGrowth());
+        float randomPercent = 0f;//0.06f;
+        Random rand = new Random(420);
         for (Point p: path.continousCurve()) {
             if (rand.nextBoolean()) {
                 baseRadius *= (float)(1d + (rand.nextBoolean() ? 1 : -1) * (rand.nextFloat()*randomPercent));
