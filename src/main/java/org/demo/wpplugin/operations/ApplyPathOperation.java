@@ -3,12 +3,14 @@ package org.demo.wpplugin.operations;
 import org.demo.wpplugin.Path;
 import org.demo.wpplugin.PathManager;
 import org.pepsoft.worldpainter.brushes.Brush;
+import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Random;
 
 /**
@@ -90,26 +92,45 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
         Path path = PathManager.instance.getPathBy(AddPointOperation.PATH_ID);
         assert path != null : "Pathmanager delivered null path";
-        float baseRadius = 1;
-        float increment = options.getStepsPerGrowth() == 0 ? 0 : (float) (1d/ options.getStepsPerGrowth());
-        float randomPercent = 0f;//0.06f;
+
+        ArrayList<Point> curve = path.continousCurve();
+
+        float baseRadius = options.getStartWidth();
+        float increment = (options.getFinalWidth() - baseRadius)/curve.size();
+        float randomPercent = (float) options.getRandomFluctuate();
+
         Random rand = new Random(420);
-        for (Point p: path.continousCurve()) {
-            if (rand.nextBoolean()) {
-                baseRadius *= (float)(1d + (rand.nextBoolean() ? 1 : -1) * (rand.nextFloat()*randomPercent));
-            }
-            float radius =baseRadius;
+        float[] randomEdge = new float[curve.size()];
+        float randomWidth = 0;
+        for(int i = 0; i < randomEdge.length; i++) {
+            randomWidth += ((rand.nextBoolean() ? 1f : -1f) * rand.nextFloat() * 0.1f);
+            randomWidth = Math.max(randomWidth, -1);
+            randomWidth = Math.min(randomWidth, 1);
+            randomEdge[i] = randomWidth;
+        }
+
+        double fluctuationSpeed = options.getFluctuationSpeed();
+
+        int i = 0;
+        for (Point p: curve) {
+            float radius =baseRadius + randomEdge[(int)((i++)/fluctuationSpeed)] * baseRadius * randomPercent;
+
             for (int x = (int) -radius; x < radius; x++) {
                 for (int y = (int) -radius; y < radius; y++) {
                     Point nearby = new Point(p.x + x, p.y + y);
                     if (nearby.distanceSq(p) < (radius*radius))
-                        getDimension().setBitLayerValueAt(SelectionBlock.INSTANCE,nearby.x, nearby.y,true);
+                        markPoint(nearby);
                 }
             }
             baseRadius += increment;
         }
 
         this.getDimension().setEventsInhibited(false);
+    }
+
+    private void markPoint(Point p) {
+        getDimension().setBitLayerValueAt(SelectionBlock.INSTANCE,p.x, p.y,true);
+        getDimension().setLayerValueAt(Annotations.INSTANCE,p.x, p.y,9 /*cyan*/);
     }
 
     @Override

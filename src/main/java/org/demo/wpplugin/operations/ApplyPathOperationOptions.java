@@ -2,13 +2,12 @@ package org.demo.wpplugin.operations;
 
 import org.pepsoft.worldpainter.operations.OperationOptions;
 import org.pepsoft.worldpainter.selection.CopySelectionOperation;
-import org.pepsoft.worldpainter.selection.SelectionOptions;
 
 public class ApplyPathOperationOptions implements OperationOptions<CopySelectionOperation> {
-    private int stepsPerGrowth = 0;
+    private int finalWidth = 0;
 
     private double randomFluctuate = 0f;
-
+    private double fluctuationSpeed = 1f;
     public double getRandomFluctuate() {
         return randomFluctuate;
     }
@@ -17,22 +16,29 @@ public class ApplyPathOperationOptions implements OperationOptions<CopySelection
         this.randomFluctuate = randomFluctuate;
     }
 
-    public int getBaseRadius() {
-        return baseRadius;
+    public int getStartWidth() {
+        return startWidth;
     }
 
-    public void setBaseRadius(int baseRadius) {
-        this.baseRadius = baseRadius;
+    public void setStartWidth(int startWidth) {
+        this.startWidth = startWidth;
     }
 
-    private int baseRadius = 1;
+    private int startWidth = 1;
 
-    public int getStepsPerGrowth() {
-        return stepsPerGrowth;
+    public int getFinalWidth() {
+        return finalWidth;
     }
 
-    public void setStepsPerGrowth(int stepsPerGrowth) {
-        this.stepsPerGrowth = stepsPerGrowth;
+    public void setFinalWidth(int finalWidth) {
+        this.finalWidth = finalWidth;
     }
 
+    public double getFluctuationSpeed() {
+        return fluctuationSpeed;
+    }
+
+    public void setFluctuationSpeed(double fluctuationSpeed) {
+        this.fluctuationSpeed = fluctuationSpeed;
+    }
 }
