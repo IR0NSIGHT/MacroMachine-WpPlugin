@@ -3,6 +3,7 @@ package org.demo.wpplugin;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.AddPointOperation;
 import org.demo.wpplugin.operations.ApplyPathOperation;
+import org.demo.wpplugin.operations.FlattenPathOperation;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.AbstractPlugin;
@@ -40,7 +41,7 @@ public class DemoWPPlugin extends AbstractPlugin implements
     private static final List<Layer> LAYERS = singletonList(PathPreviewLayer.INSTANCE);
 
     // OperationProvider
-    private static final List<Operation> OPERATIONS = Arrays.asList(new AddPointOperation(), new ApplyPathOperation());
+    private static final List<Operation> OPERATIONS = Arrays.asList(new AddPointOperation(), new ApplyPathOperation(), new FlattenPathOperation());
 
     /**
      * The plugin class must have a default (public, no arguments) constructor.
