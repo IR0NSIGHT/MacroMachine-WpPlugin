@@ -4,6 +4,13 @@ import org.pepsoft.worldpainter.operations.OperationOptions;
 import org.pepsoft.worldpainter.selection.CopySelectionOperation;
 
 public class ApplyPathOperationOptions implements OperationOptions<CopySelectionOperation> {
+    public ApplyPathOperationOptions(int finalWidth, double randomFluctuate, double fluctuationSpeed, int startWidth) {
+        this.finalWidth = finalWidth;
+        this.randomFluctuate = randomFluctuate;
+        this.fluctuationSpeed = fluctuationSpeed;
+        this.startWidth = startWidth;
+    }
+
     private int finalWidth = 0;
 
     private double randomFluctuate = 0f;

@@ -5,126 +5,119 @@ package org.demo.wpplugin.operations;//
 
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class ApplyPathOperationOptionsPanel extends JPanel {
     private JLabel labelRandomPercent;
     private JSpinner spinnerRandomPercent;
     private JLabel labelfluctuationSpeed;
     private JSpinner spinnerfluctuationSpeed;
-    private JLabel labelBaseRadius;
-    private JSpinner spinnerBaseRadius;
 
     private JLabel labelGrowthPerStep;
     private JSpinner spinnerStepPerGrowth;
     private ApplyPathOperationOptions options;
+    private ArrayList<OptionsLabel> inputs = new ArrayList<>();
 
     public ApplyPathOperationOptionsPanel(ApplyPathOperationOptions options) {
-        this();
-        this.setOptions(options);
-    }
-
-    public ApplyPathOperationOptionsPanel() {
-        this.options = new ApplyPathOperationOptions();
+        this.options = options;
         this.initComponents();
     }
 
-
-
     private void initComponents() {
-        labelRandomPercent = new JLabel();
-        labelRandomPercent.setText("random fluctuation");
-        labelRandomPercent.setToolTipText("each step the rivers radius will randomly increase or decrease. It will stay within +/- percent of the normal width.");
-
-        spinnerRandomPercent = new javax.swing.JSpinner();
-        spinnerRandomPercent.setModel(new javax.swing.SpinnerNumberModel(2, 0, 100, 1));
-        spinnerRandomPercent.setEnabled(true);
-        spinnerRandomPercent.addChangeListener(evt -> options.setRandomFluctuate(((int) spinnerRandomPercent.getValue()) / 100d));
-
-        labelfluctuationSpeed = new JLabel();
-        labelfluctuationSpeed.setText("fluctuation speed");
-        labelfluctuationSpeed.setToolTipText("how fast the random fluctuation appears. low number = less extreme change");
-
-        spinnerfluctuationSpeed = new javax.swing.JSpinner();
-        spinnerfluctuationSpeed.setModel(new javax.swing.SpinnerNumberModel(1, 0, 100, 1f));
-        spinnerfluctuationSpeed.setEnabled(true);
-        spinnerfluctuationSpeed.addChangeListener(evt -> options.setFluctuationSpeed(((double) spinnerfluctuationSpeed.getValue())));
 
 
-        labelBaseRadius = new JLabel();
-        labelBaseRadius.setText("start width");
-        labelBaseRadius.setToolTipText("width of the path at start.");
+        inputs.add(numericInput("final width",
+                "width of the path at the end.",
+                new SpinnerNumberModel(7, 0, 100, 1f),
+                w -> options.setFinalWidth(w.intValue()),
+                () -> (float) options.getFinalWidth()));
 
-        spinnerBaseRadius = new javax.swing.JSpinner();
-        spinnerBaseRadius.setModel(new javax.swing.SpinnerNumberModel(3, 0, 100, 1));
-        spinnerBaseRadius.setEnabled(true);
-        spinnerBaseRadius.addChangeListener(evt -> options.setStartWidth((int) spinnerBaseRadius.getValue()));
+        inputs.add(numericInput("start width",
+                "width of the path at start.",
+                new SpinnerNumberModel(3, 0, 100, 1f),
+                w -> options.setStartWidth(w.intValue()),
+                () -> (float) options.getStartWidth()
+        ));
+
+        inputs.add(numericInput("random width",
+                "each step the rivers radius will randomly increase or decrease. It will stay within +/- percent of the normal width.",
+                new SpinnerNumberModel(3, 0, 100, 1f),
+                w -> options.setRandomFluctuate(w.intValue()),
+                () -> (float) options.getRandomFluctuate()));
+
+        inputs.add(numericInput("fluctuation speed",
+                "how fast the random fluctuation appears. low number = less extreme change",
+                new SpinnerNumberModel(1, 0, 100, 1f),
+                w -> options.setFluctuationSpeed(w.intValue()),
+                () -> (float) options.getFluctuationSpeed()));
 
 
-        labelGrowthPerStep = new JLabel();
-        labelGrowthPerStep.setText("final width");
-        labelGrowthPerStep.setToolTipText("width of the path at the end.");
-
-        spinnerStepPerGrowth = new javax.swing.JSpinner();
-        spinnerStepPerGrowth.setModel(new javax.swing.SpinnerNumberModel(7, 0, 100, 1));
-        spinnerStepPerGrowth.setEnabled(true);
-        spinnerStepPerGrowth.addChangeListener(evt -> options.setFinalWidth((int) spinnerStepPerGrowth.getValue()));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(labelBaseRadius)
-                        .addComponent(spinnerBaseRadius)
-                        .addComponent(labelGrowthPerStep)
-                        .addComponent(spinnerStepPerGrowth)
-                        .addComponent(labelRandomPercent)
-                        .addComponent(spinnerRandomPercent)
-                        .addComponent(labelfluctuationSpeed)
-                        .addComponent(spinnerfluctuationSpeed)
+        GroupLayout.ParallelGroup group = layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING);
+        for (OptionsLabel l : inputs)
+            group.addComponent(l.getLabel()).addComponent(l.getSpinner());
+        layout.setHorizontalGroup(group);
+
+        GroupLayout.SequentialGroup sequentialGroup = layout.createSequentialGroup();
+        for (OptionsLabel l : inputs)
+            sequentialGroup.addComponent(l.getLabel()).addComponent(l.getSpinner()).addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED);
+
+        layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(sequentialGroup
+                .addGap(0, 0, 0))
         );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addComponent(labelBaseRadius)
-                                .addComponent(spinnerBaseRadius)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
 
-                                .addComponent(labelGrowthPerStep)
-                                .addComponent(spinnerStepPerGrowth)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+        updateGuiFromOptions();
+    }
 
-                                .addComponent(labelRandomPercent)
-                                .addComponent(spinnerRandomPercent)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+    private OptionsLabel numericInput(String text, String tooltip, SpinnerNumberModel number, Consumer<Float> setOptionValue, Supplier<Float> getOptionValue) {
+        JLabel textL = new JLabel();
+        textL.setText(text);
+        textL.setToolTipText(tooltip);
 
-                                .addComponent(labelfluctuationSpeed)
-                                .addComponent(spinnerfluctuationSpeed)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-
-                                .addGap(0, 0, 0))
+        JSpinner spinner = new JSpinner();
+        spinner.setModel(number);
+        spinner.setEnabled(true);
+        spinner.addChangeListener(
+                evt -> {
+                    setOptionValue.accept(((Double) spinner.getValue()).floatValue());
+                    updateGuiFromOptions();
+                }
         );
+
+        OptionsLabel oL = new OptionsLabel() {
+            @Override
+            public JLabel getLabel() {
+                return textL;
+            }
+
+            @Override
+            public JSpinner getSpinner() {
+                return spinner;
+            }
+
+            @Override
+            public void updateValueFromOption() {
+                spinner.setValue(getOptionValue.get().doubleValue());
+            }
+        };
+        return oL;
     }
 
-    private void setControlStates() {
-        //this.checkBoxRemoveExistingLayers.setEnabled(this.checkBoxLayers.isSelected());
+    private void updateGuiFromOptions() {
+        for (OptionsLabel l : inputs)
+            l.updateValueFromOption();
     }
 
-    public ApplyPathOperationOptions getOptions() {
-        return this.options;
-    }
+    interface OptionsLabel {
+        JLabel getLabel();
 
-    public void setOptions(ApplyPathOperationOptions options) {
-        this.options = options;
-        //this.checkBoxHeight.setSelected(options.isCopyHeights());
-        //this.checkBoxTerrain.setSelected(options.isCopyTerrain());
-        //this.checkBoxFluids.setSelected(options.isCopyFluids());
-        //this.checkBoxLayers.setSelected(options.isCopyLayers());
-        //this.checkBoxRemoveExistingLayers.setSelected(options.isRemoveExistingLayers());
-        //this.checkBoxBiomes.setSelected(options.isCopyBiomes());
-        //this.checkBoxAnnotations.setSelected(options.isCopyAnnotations());
-        //this.checkBoxFeather.setSelected(options.isDoBlending());
-        //this.checkBoxCreateNewTiles.setSelected(options.isCreateNewTiles());
-        //this.setControlStates();
+        JSpinner getSpinner();
+
+        void updateValueFromOption();
     }
 
 }

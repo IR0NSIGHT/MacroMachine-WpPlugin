@@ -46,7 +46,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
     public JPanel getOptionsPanel() {
         return optionsPanel;
     }
-    private final ApplyPathOperationOptions options = new ApplyPathOperationOptions();
+    private final ApplyPathOperationOptions options = new ApplyPathOperationOptions(3,0,1,3);
     private final StandardOptionsPanel optionsPanel = new StandardOptionsPanel(getName(), getDescription()) {
         @Override
         protected void addAdditionalComponents(GridBagConstraints constraints) {
@@ -97,13 +97,13 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
         float baseRadius = options.getStartWidth();
         float increment = (options.getFinalWidth() - baseRadius)/curve.size();
-        float randomPercent = (float) options.getRandomFluctuate();
+        float randomPercent = (float) options.getRandomFluctuate() / 100f;
 
         Random rand = new Random(420);
         float[] randomEdge = new float[curve.size()];
         float randomWidth = 0;
         for(int i = 0; i < randomEdge.length; i++) {
-            randomWidth += ((rand.nextBoolean() ? 1f : -1f) * rand.nextFloat() * 0.1f);
+            randomWidth += ((rand.nextBoolean() ? 1f : -1f) * rand.nextFloat() * 0.3f);
             randomWidth = Math.max(randomWidth, -1);
             randomWidth = Math.min(randomWidth, 1);
             randomEdge[i] = randomWidth;
