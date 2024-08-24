@@ -13,6 +13,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
 
+import static org.demo.wpplugin.PointUtils.pointExtent;
+
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
  * by clicking or dragging with a mouse or pressing down on a tablet, it makes sense to subclass
@@ -93,7 +95,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         Path path = PathManager.instance.getPathBy(AddPointOperation.PATH_ID);
         assert path != null : "Pathmanager delivered null path";
 
-        ArrayList<Point> curve = path.continousCurve(point -> !getDimension().getExtent().contains(point));
+        ArrayList<Point> curve = path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point));
 
         float baseRadius = options.getStartWidth();
         float increment = (options.getFinalWidth() - baseRadius)/curve.size();

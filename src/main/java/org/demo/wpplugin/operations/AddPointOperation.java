@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.function.Predicate;
 
 import static org.demo.wpplugin.CubicBezierSpline.getCubicBezierHandles;
+import static org.demo.wpplugin.PointUtils.pointExtent;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -191,7 +192,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
     private void applyAsSelection() {
         Layer select = SelectionBlock.INSTANCE;
 
-        for (Point p : path.continousCurve(point -> !getDimension().getExtent().contains(point))) {
+        for (Point p : path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
             getDimension().setBitLayerValueAt(select, p.x, p.y, true);
         }
     }
@@ -204,7 +205,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
     void DrawPathLayer(Path path, boolean erase) {
         PathPreviewLayer layer = PathPreviewLayer.INSTANCE;
 
-        for (Point p : path.continousCurve(point -> !getDimension().getExtent().contains(point))) {
+        for (Point p : path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
             markPoint(p, layer, erase ? 0 : COLOR_CURVE, SIZE_DOT);
         }
 

@@ -2,7 +2,6 @@ package org.demo.wpplugin.operations;
 
 import org.demo.wpplugin.Path;
 import org.demo.wpplugin.PathManager;
-import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
@@ -11,11 +10,13 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
-import static org.demo.wpplugin.CubicBezierSpline.getCubicBezierHandles;
+import static org.demo.wpplugin.PointUtils.pointExtent;
 import static org.demo.wpplugin.operations.AddPointOperation.PATH_ID;
 
 /**
@@ -73,6 +74,39 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         // super(NAME, DESCRIPTION, delay, ID);
     }
 
+    static float[] getPathHeight(Point[] curve, Function<Point,Float> getHeight) {
+        float[] heights = new float[curve.length];
+        int i=0;
+        for (Point p: curve)
+            heights[i++] = getHeight.apply(p);
+
+        return heights;
+    }
+
+    static float[] smoothPathHeight(float[] heights) {
+        float[] smoothedHeight = heights.clone();
+        float[] kernel = new float[50];
+        Arrays.fill(kernel, 1);
+        float kernelSum = 0;
+        for (Float f: kernel)
+            kernelSum += f;
+
+        for (int i = 0; i < heights.length-kernel.length; i++) {
+            float sum = 0;
+            for (int y = 0; y < kernel.length; y++) {
+                sum += kernel[y] * heights[i+y];
+            }
+            sum /= kernelSum;
+            smoothedHeight[i+ (kernel.length /2)] = sum;
+        }
+
+        return smoothedHeight;
+    }
+
+    public static void main(String[] args) {
+        float[] heights = new float[]{0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0};
+        float[] smooth = smoothPathHeight(heights);
+    }
 
     /**
      * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
@@ -105,14 +139,14 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         // * brush - the currently selected brush
         // * paint - the currently selected paint
         this.getDimension().setEventsInhibited(true);
-        int pathWidth = 3;
+        int pathWidth = 2;
         int transitionDist = 0;
         int totalRadius = pathWidth + transitionDist;
-        float maxHeightDiff = 0.5f;
+        float maxHeightDiff = 0.7f;
         Path path = PathManager.instance.getPathBy(PATH_ID);
 
         HashSet<Point> seen = new HashSet<>();
-        ArrayList<Point> curve = path.continousCurve(point -> !getDimension().getExtent().contains(point));
+        ArrayList<Point> curve = path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point));
         LinkedList<Point> edge = new LinkedList<>();
         int totalRadiusSq = totalRadius*totalRadius;
         //collect all points within rough radius
@@ -130,28 +164,11 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
             }
         }
 
-        float[] curveHeights = new float[curve.size()];
-        int INVALID_HEIGHT = Integer.MIN_VALUE;
-        float lastHeight = INVALID_HEIGHT;
-        for (int i = 0; i < curveHeights.length; i++) {
-            float curvePointHeight = getDimension().getHeightAt(curve.get(i));
-
-            float targetHeight = curvePointHeight;
-            if (lastHeight != INVALID_HEIGHT) {
-                if (targetHeight > maxHeightDiff + lastHeight)
-                    targetHeight = maxHeightDiff + lastHeight;
-                if (targetHeight < lastHeight - maxHeightDiff)
-                    targetHeight = lastHeight - maxHeightDiff;
-            }
-            lastHeight = targetHeight;
-            curveHeights[i] = targetHeight;
-        }
-
+        float[] curveHeights = getPathHeight(curve.toArray(new Point[0]), p -> getDimension().getHeightAt(p));
+        curveHeights = smoothPathHeight(curveHeights);
 
         for (Point e: edge) {
-            //set to same height //TODO smooth transition
             int curveIdx = getClosestPointIndexOnCurveTo(curve, e);
-
             getDimension().setHeightAt(e, curveHeights[curveIdx]);
         }
 
@@ -179,7 +196,7 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
 
     private void applyAsSelection(Path path) {
         Layer select = SelectionBlock.INSTANCE;
-        for (Point p : path.continousCurve(point -> !getDimension().getExtent().contains(point))) {
+        for (Point p : path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
             getDimension().setBitLayerValueAt(select, p.x, p.y, true);
         }
     }
