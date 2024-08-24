@@ -106,12 +106,13 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         // * paint - the currently selected paint
         this.getDimension().setEventsInhibited(true);
         int pathWidth = 3;
-        int transitionDist = 25;
+        int transitionDist = 0;
         int totalRadius = pathWidth + transitionDist;
+        float maxHeightDiff = 0.5f;
         Path path = PathManager.instance.getPathBy(PATH_ID);
 
         HashSet<Point> seen = new HashSet<>();
-        ArrayList<Point> curve = path.continousCurve();
+        ArrayList<Point> curve = path.continousCurve(point -> !getDimension().getExtent().contains(point));
         LinkedList<Point> edge = new LinkedList<>();
         int totalRadiusSq = totalRadius*totalRadius;
         //collect all points within rough radius
@@ -129,33 +130,56 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
             }
         }
 
+        float[] curveHeights = new float[curve.size()];
+        int INVALID_HEIGHT = Integer.MIN_VALUE;
+        float lastHeight = INVALID_HEIGHT;
+        for (int i = 0; i < curveHeights.length; i++) {
+            float curvePointHeight = getDimension().getHeightAt(curve.get(i));
+
+            float targetHeight = curvePointHeight;
+            if (lastHeight != INVALID_HEIGHT) {
+                if (targetHeight > maxHeightDiff + lastHeight)
+                    targetHeight = maxHeightDiff + lastHeight;
+                if (targetHeight < lastHeight - maxHeightDiff)
+                    targetHeight = lastHeight - maxHeightDiff;
+            }
+            lastHeight = targetHeight;
+            curveHeights[i] = targetHeight;
+        }
+
+
         for (Point e: edge) {
-            Point curvePoint = getClosestPointOnCurveTo(curve, e);
             //set to same height //TODO smooth transition
-            getDimension().setHeightAt(e, getDimension().getHeightAt(curvePoint));
+            int curveIdx = getClosestPointIndexOnCurveTo(curve, e);
+
+            getDimension().setHeightAt(e, curveHeights[curveIdx]);
         }
 
 
         this.getDimension().setEventsInhibited(false);
     }
 
-    private Point getClosestPointOnCurveTo(ArrayList<Point> curve, Point nearby) {
+    private int getClosestPointIndexOnCurveTo(ArrayList<Point> curve, Point nearby) {
         assert !curve.isEmpty();
         Point closest = null;
+        int closestIdx = -1;
         double minDistSq = Double.MAX_VALUE;
+        int i = 0;
         for (Point p: curve) {
             double thisDistSq = p.distanceSq(nearby);
             if (thisDistSq < minDistSq) {
                 closest = p;
                 minDistSq = thisDistSq;
+                closestIdx = i;
             }
+            i++;
         }
-        return closest;
+        return closestIdx;
     }
 
     private void applyAsSelection(Path path) {
         Layer select = SelectionBlock.INSTANCE;
-        for (Point p : path.continousCurve()) {
+        for (Point p : path.continousCurve(point -> !getDimension().getExtent().contains(point))) {
             getDimension().setBitLayerValueAt(select, p.x, p.y, true);
         }
     }

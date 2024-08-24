@@ -93,7 +93,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         Path path = PathManager.instance.getPathBy(AddPointOperation.PATH_ID);
         assert path != null : "Pathmanager delivered null path";
 
-        ArrayList<Point> curve = path.continousCurve();
+        ArrayList<Point> curve = path.continousCurve(point -> !getDimension().getExtent().contains(point));
 
         float baseRadius = options.getStartWidth();
         float increment = (options.getFinalWidth() - baseRadius)/curve.size();
@@ -110,6 +110,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         }
 
         double fluctuationSpeed = options.getFluctuationSpeed();
+        fluctuationSpeed = Math.max(1,fluctuationSpeed);    //no divide by zero
 
         int i = 0;
         for (Point p: curve) {

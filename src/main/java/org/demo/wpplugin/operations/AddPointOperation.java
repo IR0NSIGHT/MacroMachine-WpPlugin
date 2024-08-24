@@ -11,6 +11,7 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.awt.*;
 import java.util.Collections;
+import java.util.function.Predicate;
 
 import static org.demo.wpplugin.CubicBezierSpline.getCubicBezierHandles;
 
@@ -80,7 +81,6 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         // invocation:
         // super(NAME, DESCRIPTION, delay, ID);
     }
-
 
     /**
      * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
@@ -187,9 +187,11 @@ public class AddPointOperation extends MouseOrTabletOperation implements
         this.getDimension().setEventsInhibited(false);
     }
 
+
     private void applyAsSelection() {
         Layer select = SelectionBlock.INSTANCE;
-        for (Point p : path.continousCurve()) {
+
+        for (Point p : path.continousCurve(point -> !getDimension().getExtent().contains(point))) {
             getDimension().setBitLayerValueAt(select, p.x, p.y, true);
         }
     }
@@ -202,7 +204,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
     void DrawPathLayer(Path path, boolean erase) {
         PathPreviewLayer layer = PathPreviewLayer.INSTANCE;
 
-        for (Point p : path.continousCurve()) {
+        for (Point p : path.continousCurve(point -> !getDimension().getExtent().contains(point))) {
             markPoint(p, layer, erase ? 0 : COLOR_CURVE, SIZE_DOT);
         }
 

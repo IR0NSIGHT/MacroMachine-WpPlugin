@@ -4,6 +4,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class Path implements Iterable<Point> {
     private final ArrayList<Point> handles;
@@ -77,7 +78,7 @@ public class Path implements Iterable<Point> {
         return Iterable.super.spliterator();
     }
 
-    public ArrayList<Point> continousCurve() {
+    public ArrayList<Point> continousCurve(Predicate<Point> pointOnMap) {
         LinkedList<Point> curvePoints = new LinkedList<>();
         //iterate all handles, calculate coordinates on curve
         for (int i = 0; i < this.amountHandles() - 3; i++) {
@@ -86,9 +87,53 @@ public class Path implements Iterable<Point> {
                     this.handleByIndex(i + 1),
                     this.handleByIndex(i + 2),
                     this.handleByIndex(i + 3),
-                    1));
+                    .5f));
         }
+
+        assert curveIsContinous(curvePoints) : "path has gaps inbetween";
+
+        if (curvePoints.size() == 0)
+            return new ArrayList<>(0);
+
+        Point previous = null;
+        int size = curvePoints.size();
+        for (int i = 0; i < size; i++) {
+            //KILL ALL POINTS THAT ARE OUTSIDE THE map
+            while (i < curvePoints.size() && !pointOnMap.test(curvePoints.get(i)))
+                curvePoints.remove(i);
+            //kill all successive points that are the same
+            while (i < curvePoints.size() && curvePoints.get(i).equals(previous))
+                curvePoints.remove(i);
+            size = curvePoints.size();
+            if (i < size)
+                previous = curvePoints.get(i);
+        }
+
+        assert curveHasNoClones(curvePoints) : "curve still contains clones";
+
         return new ArrayList<>(curvePoints);
+    }
+
+    private boolean curveIsContinous(List<Point> curve) {
+        Point previous = null;
+        for (Point p: curve) {
+            if (previous != null && p.distanceSq(previous) > 2) {
+                return false;
+            }
+            previous = p;
+        }
+        return true;
+    }
+
+    private boolean curveHasNoClones(List<Point> curve) {
+        Point previous = null;
+        for (Point p: curve) {
+            if (p.equals(previous)) {
+                return false;
+            }
+            previous = p;
+        }
+        return true;
     }
 
     public Point handleByIndex(int index) throws IndexOutOfBoundsException {

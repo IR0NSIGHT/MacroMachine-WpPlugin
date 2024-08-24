@@ -4,6 +4,7 @@ import javax.vecmath.Vector2f;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 
 import static org.demo.wpplugin.PointUtils.*;
 
@@ -60,7 +61,7 @@ public class CubicBezierSpline {
      * @param C
      * @param D
      */
-    public static Collection<Point> getSplinePathFor(Point A, Point B, Point C, Point D, int metersBetweenPoints) {
+    public static Collection<Point> getSplinePathFor(Point A, Point B, Point C, Point D, float metersBetweenPoints) {
 
         Point handle1p = getCubicBezierHandles(A,B,C);
         Point handle2P =getCubicBezierHandles(D,C,B);
@@ -70,6 +71,7 @@ public class CubicBezierSpline {
         double length = calculatePathLength(path.toArray(new Point[0]));
 
         path = calculateCubicBezier(B, handle1p, handle2P, C, (int) (length / metersBetweenPoints));
+
         return path;
     }
 }

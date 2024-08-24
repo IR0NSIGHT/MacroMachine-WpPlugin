@@ -28,6 +28,8 @@ public class ApplyPathOperationOptionsPanel extends JPanel {
         this.initComponents();
     }
 
+
+
     private void initComponents() {
         labelRandomPercent = new JLabel();
         labelRandomPercent.setText("random fluctuation");
