@@ -14,7 +14,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static org.demo.wpplugin.PointUtils.pointExtent;
 import static org.demo.wpplugin.operations.AddPointOperation.PATH_ID;
@@ -83,7 +82,7 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         return heights;
     }
 
-    static float[] smoothPathHeight(float[] heights) {
+    static float[] applyMeanFilter(float[] heights) {
         float[] smoothedHeight = heights.clone();
         float[] kernel = new float[50];
         Arrays.fill(kernel, 1);
@@ -103,9 +102,45 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         return smoothedHeight;
     }
 
+    /**
+     * Applies a median filter to a float array.
+     *
+     * @param input The input array of floats to be filtered.
+     * @param windowSize The size of the median filter window (should be odd).
+     * @return A new float array containing the filtered values.
+     */
+    public static float[] applyMedianFilter(float[] input, int windowSize) {
+        if (windowSize <= 0 || windowSize % 2 == 0) {
+            throw new IllegalArgumentException("Window size must be a positive odd integer.");
+        }
+
+        int n = input.length;
+        float[] output = new float[n];
+        int halfWindow = windowSize / 2;
+
+        for (int i = 0; i < n; i++) {
+            float[] window = new float[windowSize];
+            int count = 0;
+
+            // Collect values for the current window
+            for (int j = -halfWindow; j <= halfWindow; j++) {
+                int index = i + j;
+                if (index >= 0 && index < n) {
+                    window[count++] = input[index];
+                }
+            }
+
+            // Sort the window and find the median
+            Arrays.sort(window, 0, count);
+            output[i] = window[count / 2];
+        }
+
+        return output;
+    }
+
     public static void main(String[] args) {
         float[] heights = new float[]{0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0};
-        float[] smooth = smoothPathHeight(heights);
+        float[] smooth = applyMeanFilter(heights);
     }
 
     /**
@@ -165,8 +200,8 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         }
 
         float[] curveHeights = getPathHeight(curve.toArray(new Point[0]), p -> getDimension().getHeightAt(p));
-        curveHeights = smoothPathHeight(curveHeights);
-
+        curveHeights = applyMeanFilter(curveHeights);
+        curveHeights = applyMedianFilter(curveHeights, 5);
         for (Point e: edge) {
             int curveIdx = getClosestPointIndexOnCurveTo(curve, e);
             getDimension().setHeightAt(e, curveHeights[curveIdx]);
