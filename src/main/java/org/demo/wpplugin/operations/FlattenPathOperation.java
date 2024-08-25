@@ -84,8 +84,13 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
 
     static float[] applyMeanFilter(float[] heights) {
         float[] smoothedHeight = heights.clone();
+
+        float[] gaussKernel = new float[]{0.003f,0.023f,0.093f,0.231f,0.306f,0.231f,0.093f,0.023f,0.003f};
+
         float[] kernel = new float[50];
         Arrays.fill(kernel, 1);
+
+        kernel = gaussKernel;
         float kernelSum = 0;
         for (Float f: kernel)
             kernelSum += f;
@@ -138,9 +143,78 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         return output;
     }
 
+    /**
+     * Applies a minimum filter to a float array.
+     *
+     * @param input The input array of floats to be filtered.
+     * @param windowSize The size of the min filter window (should be odd).
+     * @return A new float array containing the filtered values.
+     */
+    public static float[] applyMinFilter(float[] input, int windowSize) {
+        if (windowSize <= 0 || windowSize % 2 == 0) {
+            throw new IllegalArgumentException("Window size must be a positive odd integer.");
+        }
+
+        int n = input.length;
+        float[] output = new float[n];
+        int halfWindow = windowSize / 2;
+
+        for (int i = 0; i < n; i++) {
+            float minValue = Float.MAX_VALUE; // Initialize to a very large value
+
+            // Collect values for the current window and find the minimum
+            for (int j = -halfWindow; j <= halfWindow; j++) {
+                int index = i + j;
+                if (index >= 0 && index < n) {
+                    minValue = Math.min(minValue, input[index]);
+                }
+            }
+
+            output[i] = minValue; // Assign the minimum value to the output
+        }
+
+        return output;
+    }
+
+    /**
+     * Calculates the difference between each neighboring float in the input array and returns the index
+     * and the maximum difference.
+     *
+     * @param input The input array of floats.
+     * @return An array where the first element is the index of the maximum difference and the second element is the maximum difference.
+     */
+    public static float[] findMaxDifference(float[] input) {
+        if (input == null || input.length < 2) {
+            throw new IllegalArgumentException("Input array must have at least two elements.");
+        }
+
+        int maxDiffIndex = 0;
+        float maxDiff = 0;
+
+        for (int i = 0; i < input.length - 1; i++) {
+            // Calculate the absolute difference between neighboring elements
+            float diff = Math.abs(input[i + 1] - input[i]);
+
+            // Update maxDiff and maxDiffIndex if a larger difference is found
+            if (diff > maxDiff) {
+                maxDiff = diff;
+                maxDiffIndex = i;
+            }
+        }
+
+        // Return both the index and the maximum difference
+        return new float[]{maxDiffIndex, maxDiff};
+    }
+
     public static void main(String[] args) {
-        float[] heights = new float[]{0,0,0,0,0,0,0,0,0,5,0,0,0,0,0,0,0,0};
-        float[] smooth = applyMeanFilter(heights);
+        float[] heights = new float[]{0,0,0,0,0,0,0,0,0,0,0,0,3,3,0,0,0,0,0,5,10,17,25,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,};
+        float[] diffs = findMaxDifference(heights);
+        while (diffs[1] > 1) {
+            heights = applyMeanFilter(heights);
+            diffs = findMaxDifference(heights);
+        }
+        heights = applyMinFilter(heights, 5);
+        float[] smooth = applyMinFilter(heights, 5);
     }
 
     /**
@@ -200,8 +274,16 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         }
 
         float[] curveHeights = getPathHeight(curve.toArray(new Point[0]), p -> getDimension().getHeightAt(p));
-        curveHeights = applyMeanFilter(curveHeights);
-        curveHeights = applyMedianFilter(curveHeights, 5);
+        curveHeights = applyMedianFilter(curveHeights,11);
+        float[] diffs = findMaxDifference(curveHeights);
+        int safety = 0;
+        while (diffs[1] > 1 && safety < 20) {
+            curveHeights = applyMeanFilter(curveHeights);
+            diffs = findMaxDifference(curveHeights);
+            safety ++;
+        }
+        curveHeights = applyMinFilter(curveHeights, 5);
+
         for (Point e: edge) {
             int curveIdx = getClosestPointIndexOnCurveTo(curve, e);
             getDimension().setHeightAt(e, curveHeights[curveIdx]);
