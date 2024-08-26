@@ -5,9 +5,9 @@ import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.PineForest;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
-import org.pepsoft.worldpainter.selection.SelectionBlock;
-import org.pepsoft.worldpainter.selection.SelectionChunk;
-import org.pepsoft.worldpainter.selection.SelectionHelper;
+
+import java.awt.*;
+import java.util.function.Function;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
@@ -58,40 +58,70 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
         super(NAME, DESCRIPTION, ID);
     }
 
+    public static void main(String[] args) {
+        Function<Point, Float> getHeight = p -> (float)0.5* p.y;
+        double slope = getSlopeAt(new Point(4, 4), getHeight);
+        System.out.println(slope);
+    }
+
+    /**
+     * returns slope of that point as defined: normal on a plane defined by the surrounding blocks
+     * in degrees
+     * @param p must be 1 block away from any edge!
+     * @param getHeightAt
+     * @return
+     */
+    private static double getSlopeAt(Point p, Function<Point, Float> getHeightAt) {
+        int size = 1;
+        double[][] heights = new double[size * 2 + 1][];
+        for (int y = -size; y <= size; y++) {
+            heights[y + size] = new double[size * 2 + 1];
+            for (int x = -size; x <= size; x++) {
+                heights[y + size][x + size] = getHeightAt.apply(new Point(p.x+x, p.y+y));
+            }
+        }
+
+        double slope = calculateSlopeInDegrees(heights);
+        return slope;
+    }
+
     /**
      * Calculates the slope in degrees at a given point in a 2D array of heights using a 5x5 kernel.
      *
      * @param heights The 2D array of heights (elevation data).
-     * @param x       The x-coordinate (column) of the point.
-     * @param y       The y-coordinate (row) of the point.
      * @return The slope at the point (x, y) in degrees.
      */
-    public static double calculateSlopeInDegrees(double[][] heights, int x, int y) {
-        int rows = heights.length;
-        int cols = heights[0].length;
+    public static double calculateSlopeInDegrees(double[][] heights) {
+        double[][] sobelKernel = {
+                {-1,0,1},
+                {-2,0,2},
+                {-1,0,1}
+        };
 
-        // Ensure the point is within bounds to apply the 5x5 kernel
-        if (x <= 1 || x >= cols - 2 || y <= 1 || y >= rows - 2) {
-            throw new IllegalArgumentException("Point is on the edge or out of bounds for a 5x5 kernel.");
+        double sumHorizontal = 0;
+        double sumVertical = 0;
+        double sumKernel = 0;
+        for (int y = 0; y < sobelKernel.length; y++) {
+            for (int x = 0; x < sobelKernel.length; x++) {
+                sumHorizontal += heights[y][x] * sobelKernel[y][x];
+                sumVertical += heights[y][x] * sobelKernel[x][y];
+                sumKernel += Math.abs(sobelKernel[x][y]);
+            }
         }
 
-        // Define the 5x5 kernel to approximate the slope in x and y directions
-        double dzdx = (
-                -1 * heights[y - 2][x - 2] - 2 * heights[y - 2][x - 1] - 4 * heights[y - 2][x] - 2 * heights[y - 2][x + 1] - 1 * heights[y - 2][x + 2] +
-                        1 * heights[y + 2][x - 2] + 2 * heights[y + 2][x - 1] + 4 * heights[y + 2][x] + 2 * heights[y + 2][x + 1] + 1 * heights[y + 2][x + 2]
-        ) / 16.0;
-
-        double dzdy = (
-                -1 * heights[y - 2][x - 2] - 2 * heights[y - 1][x - 2] - 4 * heights[y][x - 2] - 2 * heights[y + 1][x - 2] - 1 * heights[y + 2][x - 2] +
-                        1 * heights[y - 2][x + 2] + 2 * heights[y - 1][x + 2] + 4 * heights[y][x + 2] + 2 * heights[y + 1][x + 2] + 1 * heights[y + 2][x + 2]
-        ) / 16.0;
+        sumHorizontal /= sumKernel;
+        sumVertical /= sumKernel;
 
         // Calculate the magnitude of the gradient (slope)
-        double gradient = Math.sqrt(dzdx * dzdx + dzdy * dzdy);
+        double gradient = Math.sqrt(sumVertical*sumVertical+sumHorizontal*sumHorizontal);
 
         // Convert slope to degrees
         double slopeInDegrees = Math.toDegrees(Math.atan(gradient));
 
+    /*    gaga
+        hhag
+        scta
+*/
         return slopeInDegrees;
     }
 
@@ -129,7 +159,7 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
         try {
             float minAngle = 10;
             float maxAngle = 90;
-            int[] valueByBand = new int[]{1,2,4,8,12,6,3,0};
+            int[] valueByBand = new int[]{1, 2, 4, 8, 12, 6, 3, 0};
             Terrain[] terrainByBand = new Terrain[]{
                     Terrain.GRASS,
                     Terrain.GRASS,
@@ -149,13 +179,13 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
                         boolean isSelected = true; //getDimension().getBitLayerValueAt(SelectionChunk.INSTANCE, xWorld, yWorld) || getDimension().getBitLayerValueAt(SelectionBlock.INSTANCE, xWorld, yWorld);
                         if (isSelected) {
                             float slope = getDimension().getSlope(xWorld, yWorld);
-                            slope = (float)(Math.atan(slope) * 180 / Math.PI);
+                            slope = (float) (Math.atan(slope) * 180 / Math.PI);
                             float slopeNormalized = (slope - minAngle) / (maxAngle - minAngle);
                             if (slopeNormalized < 0 || slopeNormalized >= 1)
                                 continue;
-                            int slopeIdx = (int)(slopeNormalized * valueByBand.length);
+                            int slopeIdx = (int) (slopeNormalized * valueByBand.length);
                             tile.setLayerValue(PineForest.INSTANCE, x, y, valueByBand[slopeIdx]);
-                            tile.setTerrain(x,y,terrainByBand[slopeIdx]);
+                            tile.setTerrain(x, y, terrainByBand[slopeIdx]);
                         }
                     }
                 }
