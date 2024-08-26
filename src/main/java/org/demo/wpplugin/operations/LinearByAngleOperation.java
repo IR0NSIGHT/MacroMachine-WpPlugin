@@ -9,6 +9,7 @@ import org.pepsoft.worldpainter.painting.Paint;
 import java.awt.*;
 import java.util.function.Function;
 
+import static org.demo.wpplugin.PointUtils.pointExtent;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 /**
@@ -170,6 +171,10 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
                     Terrain.MOSSY_COBBLESTONE,
                     Terrain.BASALT};
             assert valueByBand.length == terrainByBand.length;
+            Rectangle pExt = pointExtent(getDimension().getExtent());
+
+            //1 smaller
+            pExt.setBounds(pExt.x+1, pExt.y+1,pExt.width-1, pExt.height-1);
             getDimension().visitTilesForEditing().forSelection().andDo(tile -> {
                 for (int x = 0; x < TILE_SIZE; x++) {
                     for (int y = 0; y < TILE_SIZE; y++) {
@@ -177,7 +182,8 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
                         xWorld = tile.getX() * TILE_SIZE + x;
                         yWorld = tile.getY() * TILE_SIZE + y;
                         boolean isSelected = true; //getDimension().getBitLayerValueAt(SelectionChunk.INSTANCE, xWorld, yWorld) || getDimension().getBitLayerValueAt(SelectionBlock.INSTANCE, xWorld, yWorld);
-                        if (isSelected) {
+
+                        if (pExt.contains(xWorld,yWorld) && isSelected) {
                             float slope = getDimension().getSlope(xWorld, yWorld);
                             slope = (float) (Math.atan(slope) * 180 / Math.PI);
                             float slopeNormalized = (slope - minAngle) / (maxAngle - minAngle);
