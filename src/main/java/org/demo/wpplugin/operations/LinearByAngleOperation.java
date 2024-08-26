@@ -60,7 +60,7 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
     }
 
     public static void main(String[] args) {
-        Function<Point, Float> getHeight = p -> (float)0.5* p.y;
+        Function<Point, Float> getHeight = p -> (float) p.y;
         double slope = getSlopeAt(new Point(4, 4), getHeight);
         System.out.println(slope);
     }
@@ -68,17 +68,18 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
     /**
      * returns slope of that point as defined: normal on a plane defined by the surrounding blocks
      * in degrees
-     * @param p must be 1 block away from any edge!
+     *
+     * @param p           must be 1 block away from any edge!
      * @param getHeightAt
      * @return
      */
     private static double getSlopeAt(Point p, Function<Point, Float> getHeightAt) {
-        int size = 1;
+        int size = 2;
         double[][] heights = new double[size * 2 + 1][];
         for (int y = -size; y <= size; y++) {
             heights[y + size] = new double[size * 2 + 1];
             for (int x = -size; x <= size; x++) {
-                heights[y + size][x + size] = getHeightAt.apply(new Point(p.x+x, p.y+y));
+                heights[y + size][x + size] = getHeightAt.apply(new Point(p.x + x, p.y + y));
             }
         }
 
@@ -93,20 +94,26 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
      * @return The slope at the point (x, y) in degrees.
      */
     public static double calculateSlopeInDegrees(double[][] heights) {
+        //DONT change any hardcoded values here. it works and it did somewhat make sense when i calculated htem.
         double[][] sobelKernel = {
-                {-1,0,1},
-                {-2,0,2},
-                {-1,0,1}
+                {-5, -4, 0, 4, 5},
+                {-8, -10, 0, 10, 8},
+                {-10, -20, 0, 20, 10},
+                {-8, -10, 0, 10, 8},
+                {-5, -4, 0, 4, 5},
         };
 
         double sumHorizontal = 0;
         double sumVertical = 0;
         double sumKernel = 0;
         for (int y = 0; y < sobelKernel.length; y++) {
+            sumKernel += 2 * sobelKernel[y][4] * 2; //step size 4 requires weighing them twice as much in nomralisation
+            sumKernel += 2 * sobelKernel[y][3];
+        }
+        for (int y = 0; y < sobelKernel.length; y++) {
             for (int x = 0; x < sobelKernel.length; x++) {
                 sumHorizontal += heights[y][x] * sobelKernel[y][x];
                 sumVertical += heights[y][x] * sobelKernel[x][y];
-                sumKernel += Math.abs(sobelKernel[x][y]);
             }
         }
 
@@ -114,7 +121,7 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
         sumVertical /= sumKernel;
 
         // Calculate the magnitude of the gradient (slope)
-        double gradient = Math.sqrt(sumVertical*sumVertical+sumHorizontal*sumHorizontal);
+        double gradient = Math.sqrt(sumVertical * sumVertical + sumHorizontal * sumHorizontal);
 
         // Convert slope to degrees
         double slopeInDegrees = Math.toDegrees(Math.atan(gradient));
@@ -158,40 +165,26 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
         // * paint - the currently selected paint
         this.getDimension().setEventsInhibited(true);
         try {
-            float minAngle = 10;
-            float maxAngle = 90;
-            int[] valueByBand = new int[]{1, 2, 4, 8, 12, 6, 3, 0};
-            Terrain[] terrainByBand = new Terrain[]{
-                    Terrain.GRASS,
-                    Terrain.GRASS,
-                    Terrain.GRANITE,
-                    Terrain.DIORITE,
-                    Terrain.COBBLESTONE,
-                    Terrain.STONE,
-                    Terrain.MOSSY_COBBLESTONE,
-                    Terrain.BASALT};
-            assert valueByBand.length == terrainByBand.length;
             Rectangle pExt = pointExtent(getDimension().getExtent());
-
+            ApplyAction action = getApplyAction();
             //1 smaller
-            pExt.setBounds(pExt.x+1, pExt.y+1,pExt.width-1, pExt.height-1);
-            getDimension().visitTilesForEditing().forSelection().andDo(tile -> {
+            pExt.setBounds(pExt.x + 1, pExt.y + 1, pExt.width - 1, pExt.height - 1);
+            getDimension().visitTilesForEditing().forFilter(paint.getFilter()).forSelection().andDo(tile -> {
                 for (int x = 0; x < TILE_SIZE; x++) {
                     for (int y = 0; y < TILE_SIZE; y++) {
                         int xWorld, yWorld;
                         xWorld = tile.getX() * TILE_SIZE + x;
                         yWorld = tile.getY() * TILE_SIZE + y;
                         boolean isSelected = true; //getDimension().getBitLayerValueAt(SelectionChunk.INSTANCE, xWorld, yWorld) || getDimension().getBitLayerValueAt(SelectionBlock.INSTANCE, xWorld, yWorld);
-
-                        if (pExt.contains(xWorld,yWorld) && isSelected) {
+                        float minAngle = 0;
+                        float maxAngle = 90;
+                        if (pExt.contains(xWorld, yWorld) && isSelected) {
                             float slope = getDimension().getSlope(xWorld, yWorld);
                             slope = (float) (Math.atan(slope) * 180 / Math.PI);
                             float slopeNormalized = (slope - minAngle) / (maxAngle - minAngle);
                             if (slopeNormalized < 0 || slopeNormalized >= 1)
                                 continue;
-                            int slopeIdx = (int) (slopeNormalized * valueByBand.length);
-                            tile.setLayerValue(PineForest.INSTANCE, x, y, valueByBand[slopeIdx]);
-                            tile.setTerrain(x, y, terrainByBand[slopeIdx]);
+                            action.applyWithStrength(slopeNormalized, new Point(xWorld, yWorld));
                         }
                     }
                 }
@@ -202,6 +195,31 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
             this.getDimension().setEventsInhibited(false);
         }
 
+    }
+
+    private ApplyAction getApplyAction() {
+        return new ApplyAction() {
+            int[] valueByBand = new int[]{0, 1, 2, 4, 8, 12, 4, 1, 0};
+            Terrain[] terrainByBand = new Terrain[]{
+                    null,
+                    Terrain.GRASS,
+                    Terrain.GRASS,
+                    Terrain.GRANITE,
+                    Terrain.DIORITE,
+                    Terrain.COBBLESTONE,
+                    Terrain.STONE,
+                    Terrain.MOSSY_COBBLESTONE,
+                    Terrain.BASALT};
+
+            @Override
+            public void applyWithStrength(float strengthNormalized, Point p) {
+                int slopeIdx = (int) (strengthNormalized * valueByBand.length);
+                if (valueByBand[slopeIdx] != -1)
+                    getDimension().setLayerValueAt(PineForest.INSTANCE, p.x, p.y, valueByBand[slopeIdx]);
+                if (terrainByBand[slopeIdx] != null)
+                    getDimension().setTerrainAt(p.x, p.y, terrainByBand[slopeIdx]);
+            }
+        };
     }
 
     @Override
