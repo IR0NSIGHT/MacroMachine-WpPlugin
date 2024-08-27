@@ -1,4 +1,4 @@
-package org.demo.wpplugin.operations;
+package org.demo.wpplugin.operations.EditPath;
 
 import org.demo.wpplugin.Path;
 import org.demo.wpplugin.PathManager;
@@ -11,7 +11,6 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.awt.*;
 import java.util.Collections;
-import java.util.function.Predicate;
 
 import static org.demo.wpplugin.CubicBezierSpline.getCubicBezierHandles;
 import static org.demo.wpplugin.PointUtils.pointExtent;
@@ -36,7 +35,7 @@ import static org.demo.wpplugin.PointUtils.pointExtent;
  *
  * <p><strong>Note</strong> that for now WorldPainter only supports operations that
  */
-public class AddPointOperation extends MouseOrTabletOperation implements
+public class EditPathOperation extends MouseOrTabletOperation implements
         PaintOperation, // Implement this if you need access to the currently selected paint; note that some base classes already provide this
         BrushOperation // Implement this if you need access to the currently selected brush; note that some base classes already provide this
 {
@@ -56,7 +55,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
     static final String DESCRIPTION = "Draw smooth, connected curves with C1 continuity.";
 
     //update path
-    static final int PATH_ID = 1;
+    public static final int PATH_ID = 1;
 
     final int COLOR_NONE = 0;
     final int COLOR_HANDLE = 1;
@@ -72,7 +71,7 @@ public class AddPointOperation extends MouseOrTabletOperation implements
 
 
 
-    public AddPointOperation() {
+    public EditPathOperation() {
         // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
         // once for every time the user clicks the mouse or presses on the tablet:
         super(NAME, DESCRIPTION, ID);

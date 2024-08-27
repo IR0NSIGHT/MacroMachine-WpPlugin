@@ -16,7 +16,7 @@ import java.util.LinkedList;
 import java.util.function.Function;
 
 import static org.demo.wpplugin.PointUtils.pointExtent;
-import static org.demo.wpplugin.operations.AddPointOperation.PATH_ID;
+import static org.demo.wpplugin.operations.EditPath.EditPathOperation.PATH_ID;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user

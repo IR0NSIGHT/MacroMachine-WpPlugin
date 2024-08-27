@@ -1,4 +1,4 @@
-package org.demo.wpplugin.operations;
+package org.demo.wpplugin.operations.ApplyPath;
 
 import org.pepsoft.worldpainter.operations.OperationOptions;
 import org.pepsoft.worldpainter.selection.CopySelectionOperation;

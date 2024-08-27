@@ -1,7 +1,8 @@
-package org.demo.wpplugin.operations;
+package org.demo.wpplugin.operations.ApplyPath;
 
 import org.demo.wpplugin.Path;
 import org.demo.wpplugin.PathManager;
+import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.*;
@@ -92,7 +93,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         Brush brush = this.getBrush();
         Paint paint = this.getPaint();
 
-        Path path = PathManager.instance.getPathBy(AddPointOperation.PATH_ID);
+        Path path = PathManager.instance.getPathBy(EditPathOperation.PATH_ID);
         assert path != null : "Pathmanager delivered null path";
 
         ArrayList<Point> curve = path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point));

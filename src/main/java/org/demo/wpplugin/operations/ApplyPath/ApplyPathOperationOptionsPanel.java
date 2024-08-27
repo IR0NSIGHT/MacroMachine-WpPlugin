@@ -1,22 +1,16 @@
-package org.demo.wpplugin.operations;//
+package org.demo.wpplugin.operations.ApplyPath;//
 // Source code recreated from a .class file by IntelliJ IDEA
 // (powered by FernFlower decompiler)
 //
 
+import org.demo.wpplugin.operations.OptionsLabel;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+
+import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
 
 public class ApplyPathOperationOptionsPanel extends JPanel {
-    private JLabel labelRandomPercent;
-    private JSpinner spinnerRandomPercent;
-    private JLabel labelfluctuationSpeed;
-    private JSpinner spinnerfluctuationSpeed;
-
-    private JLabel labelGrowthPerStep;
-    private JSpinner spinnerStepPerGrowth;
     private ApplyPathOperationOptions options;
     private ArrayList<OptionsLabel> inputs = new ArrayList<>();
 
@@ -32,28 +26,30 @@ public class ApplyPathOperationOptionsPanel extends JPanel {
                 "width of the path at the end.",
                 new SpinnerNumberModel(7, 0, 100, 1f),
                 w -> options.setFinalWidth(w.intValue()),
-                () -> (float) options.getFinalWidth()));
+                () -> (float) options.getFinalWidth(),
+                this::updateGuiFromOptions));
 
         inputs.add(numericInput("start width",
                 "width of the path at start.",
                 new SpinnerNumberModel(3, 0, 100, 1f),
                 w -> options.setStartWidth(w.intValue()),
-                () -> (float) options.getStartWidth()
+                () -> (float) options.getStartWidth(),
+                this::updateGuiFromOptions
         ));
 
         inputs.add(numericInput("random width",
                 "each step the rivers radius will randomly increase or decrease. It will stay within +/- percent of the normal width.",
                 new SpinnerNumberModel(3, 0, 100, 1f),
                 w -> options.setRandomFluctuate(w.intValue()),
-                () -> (float) options.getRandomFluctuate()));
+                () -> (float) options.getRandomFluctuate(),
+                this::updateGuiFromOptions));
 
         inputs.add(numericInput("fluctuation speed",
                 "how fast the random fluctuation appears. low number = less extreme change",
                 new SpinnerNumberModel(1, 0, 100, 1f),
                 w -> options.setFluctuationSpeed(w.intValue()),
-                () -> (float) options.getFluctuationSpeed()));
-
-
+                () -> (float) options.getFluctuationSpeed(),
+                this::updateGuiFromOptions));
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -73,51 +69,8 @@ public class ApplyPathOperationOptionsPanel extends JPanel {
         updateGuiFromOptions();
     }
 
-    private OptionsLabel numericInput(String text, String tooltip, SpinnerNumberModel number, Consumer<Float> setOptionValue, Supplier<Float> getOptionValue) {
-        JLabel textL = new JLabel();
-        textL.setText(text);
-        textL.setToolTipText(tooltip);
-
-        JSpinner spinner = new JSpinner();
-        spinner.setModel(number);
-        spinner.setEnabled(true);
-        spinner.addChangeListener(
-                evt -> {
-                    setOptionValue.accept(((Double) spinner.getValue()).floatValue());
-                    updateGuiFromOptions();
-                }
-        );
-
-        OptionsLabel oL = new OptionsLabel() {
-            @Override
-            public JLabel getLabel() {
-                return textL;
-            }
-
-            @Override
-            public JSpinner getSpinner() {
-                return spinner;
-            }
-
-            @Override
-            public void updateValueFromOption() {
-                spinner.setValue(getOptionValue.get().doubleValue());
-            }
-        };
-        return oL;
-    }
-
     private void updateGuiFromOptions() {
         for (OptionsLabel l : inputs)
             l.updateValueFromOption();
     }
-
-    interface OptionsLabel {
-        JLabel getLabel();
-
-        JSpinner getSpinner();
-
-        void updateValueFromOption();
-    }
-
 }
