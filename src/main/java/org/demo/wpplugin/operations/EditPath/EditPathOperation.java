@@ -3,13 +3,20 @@ package org.demo.wpplugin.operations.EditPath;
 import org.demo.wpplugin.Path;
 import org.demo.wpplugin.PathManager;
 import org.demo.wpplugin.layers.PathPreviewLayer;
+import org.demo.wpplugin.operations.ApplyPath.OperationOptionsPanel;
+import org.demo.wpplugin.operations.OptionsLabel;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 
+import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 
 import static org.demo.wpplugin.CubicBezierSpline.getCubicBezierHandles;
@@ -40,6 +47,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         BrushOperation // Implement this if you need access to the currently selected brush; note that some base classes already provide this
 {
 
+    //update path
+    public static int PATH_ID = 1;
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
@@ -53,10 +62,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
     static final String DESCRIPTION = "Draw smooth, connected curves with C1 continuity.";
-
-    //update path
-    public static final int PATH_ID = 1;
-
     final int COLOR_NONE = 0;
     final int COLOR_HANDLE = 1;
     final int COLOR_CURVE = 2;
@@ -64,12 +69,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     final int SIZE_SELECTED = 5;
     final int SIZE_DOT = 0;
     final int SIZE_MEDIUM_CROSS = 3;
-    private Path path = new Path(Collections.emptyList());
     private Point selectedPoint;
     private Brush brush;
     private Paint paint;
-
-
+    private EditPathOptions options = new EditPathOptions();
 
     public EditPathOperation() {
         // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
@@ -80,6 +83,11 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // parameter will be true for the first invocation per mouse button press and false for every subsequent
         // invocation:
         // super(NAME, DESCRIPTION, delay, ID);
+        this.options.selectedPathId = PathManager.instance.getAnyValidId();
+    }
+
+    Path getSelectedPath() {
+        return PathManager.instance.getPathBy(options.selectedPathId);
     }
 
     /**
@@ -112,10 +120,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // In addition you have the following fields in this class:
         // * brush - the currently selected brush
         // * paint - the currently selected paint
+        Path path = getSelectedPath();
         Path previous = path;
 
-
-        this.getDimension().setEventsInhibited(true);
         Point previousSelected = selectedPoint;
         Point userClickedCoord = new Point(centreX, centreY);
 
@@ -168,30 +175,33 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         }
 
 
-
-
         //is selection was deleted or something.
         if (!path.isHandle(selectedPoint))
             selectedPoint = null;
 
+        PathManager.instance.setPathBy(options.selectedPathId, path);
+        assert path == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull setting path in manager";
+
+        redrawSelectedPathLayer();
+    }
+
+    void redrawSelectedPathLayer() {
+        this.getDimension().setEventsInhibited(true);
         //erase old
         this.getDimension().clearLayerData(PathPreviewLayer.INSTANCE);
 
         //redraw new
-        DrawPathLayer(path, false);
+        DrawPathLayer(getSelectedPath(), false);
         if (selectedPoint != null)
             markPoint(selectedPoint, PathPreviewLayer.INSTANCE, COLOR_SELECTED, SIZE_SELECTED);
-
-        PathManager.instance.setPathBy(PATH_ID, path);
-        assert path == PathManager.instance.getPathBy(PATH_ID);
         this.getDimension().setEventsInhibited(false);
-    }
 
+    }
 
     private void applyAsSelection() {
         Layer select = SelectionBlock.INSTANCE;
 
-        for (Point p : path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
+        for (Point p : getSelectedPath().continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
             getDimension().setBitLayerValueAt(select, p.x, p.y, true);
         }
     }
@@ -272,5 +282,67 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     @Override
     public void setPaint(Paint paint) {
         this.paint = paint;
+    }
+
+    @Override
+    public JPanel getOptionsPanel() {
+        return new StandardOptionsPanel(getName(), getDescription()) {
+            @Override
+            protected void addAdditionalComponents(GridBagConstraints constraints) {
+                add(new EditPathOptionsPanel(options), constraints);
+            }
+        };
+    }
+
+    private static class EditPathOptions {
+        int owo = 0;
+        int selectedPathId = -1;
+    }
+
+    private class EditPathOptionsPanel extends OperationOptionsPanel<EditPathOptions> {
+        public EditPathOptionsPanel(EditPathOptions editPathOptions) {
+            super(editPathOptions);
+        }
+
+        @Override
+        protected ArrayList<OptionsLabel> addComponents(EditPathOptions editPathOptions, Runnable onOptionsReconfigured) {
+            ArrayList<OptionsLabel> inputs = new ArrayList<>();
+            inputs.add(
+                    OptionsLabel.numericInput(
+                            "hello world",
+                            "im a tooltip",
+                            new SpinnerNumberModel(editPathOptions.owo, 0, 5, 1.f),
+                            f -> editPathOptions.owo = f.intValue(),
+                            onOptionsReconfigured));
+
+            // Create a JComboBox (dropdown selector)
+            Collection<PathManager.NamedId> availablePaths = PathManager.instance.allPathNamedIds();
+
+            JComboBox<Object> comboBox = new JComboBox<>(availablePaths.toArray());
+            comboBox.setSelectedItem(PathManager.instance.getPathName(editPathOptions.selectedPathId));
+            comboBox.addActionListener(e -> {
+                editPathOptions.selectedPathId = ((PathManager.NamedId) comboBox.getSelectedItem()).id;
+
+                selectedPoint = null;
+                redrawSelectedPathLayer();
+                onOptionsReconfigured.run();
+            });
+            inputs.add(() -> new JComponent[]{comboBox});
+
+            // ADD BUTTON
+            // Create a JButton with text
+            JButton button = new JButton("Add empty path");
+            // Add an ActionListener to handle button clicks
+            button.addActionListener(e -> {
+                editPathOptions.selectedPathId = PathManager.instance.addPath(new Path());
+
+                selectedPoint = null;
+                redrawSelectedPathLayer();
+                onOptionsReconfigured.run();
+            });
+            inputs.add(() -> new JComponent[]{button});
+
+            return inputs;
+        }
     }
 }
