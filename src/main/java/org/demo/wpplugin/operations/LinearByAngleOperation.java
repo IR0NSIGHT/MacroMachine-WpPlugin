@@ -34,8 +34,8 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
  */
 public class LinearByAngleOperation extends MouseOrTabletOperation implements
         PaintOperation, // Implement this if you need access to the currently selected paint; note that some base classes already provide this
-        BrushOperation // Implement this if you need access to the currently selected brush; note that some base classes already provide this
-{
+        BrushOperation, // Implement this if you need access to the currently selected brush; note that some base classes already provide this
+        FilteredOperation {
 
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
@@ -53,7 +53,7 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
 
     private Brush brush;
     private Paint paint;
-
+    private Filter filter;
 
     public LinearByAngleOperation() {
         super(NAME, DESCRIPTION, ID);
@@ -169,16 +169,16 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
             ApplyAction action = getApplyAction();
             //1 smaller
             pExt.setBounds(pExt.x + 1, pExt.y + 1, pExt.width - 1, pExt.height - 1);
-            getDimension().visitTilesForEditing().forFilter(paint.getFilter()).forSelection().andDo(tile -> {
+            Filter filter = getFilter();
+            getDimension().visitTilesForEditing().andDo(tile -> {
                 for (int x = 0; x < TILE_SIZE; x++) {
                     for (int y = 0; y < TILE_SIZE; y++) {
                         int xWorld, yWorld;
                         xWorld = tile.getX() * TILE_SIZE + x;
                         yWorld = tile.getY() * TILE_SIZE + y;
-                        boolean isSelected = true; //getDimension().getBitLayerValueAt(SelectionChunk.INSTANCE, xWorld, yWorld) || getDimension().getBitLayerValueAt(SelectionBlock.INSTANCE, xWorld, yWorld);
                         float minAngle = 0;
                         float maxAngle = 90;
-                        if (pExt.contains(xWorld, yWorld) && isSelected) {
+                        if (pExt.contains(xWorld, yWorld)) {
                             float slope = getDimension().getSlope(xWorld, yWorld);
                             slope = (float) (Math.atan(slope) * 180 / Math.PI);
                             float slopeNormalized = (slope - minAngle) / (maxAngle - minAngle);
@@ -220,6 +220,16 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
                     getDimension().setTerrainAt(p.x, p.y, terrainByBand[slopeIdx]);
             }
         };
+    }
+
+    @Override
+    public Filter getFilter() {
+        return filter;
+    }
+
+    @Override
+    public void setFilter(Filter filter) {
+        this.filter = filter;
     }
 
     @Override
