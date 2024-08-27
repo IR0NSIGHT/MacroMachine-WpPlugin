@@ -3,6 +3,7 @@ package org.demo.wpplugin.operations.ApplyPath;
 import org.demo.wpplugin.Path;
 import org.demo.wpplugin.PathManager;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
+import org.demo.wpplugin.operations.OptionsLabel;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.*;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import static org.demo.wpplugin.PointUtils.pointExtent;
+import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -49,11 +51,11 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
     public JPanel getOptionsPanel() {
         return optionsPanel;
     }
-    private final ApplyPathOperationOptions options = new ApplyPathOperationOptions(3,0,1,3);
+    private final ApplyPathOptions options = new ApplyPathOptions(3,0,1,3);
     private final StandardOptionsPanel optionsPanel = new StandardOptionsPanel(getName(), getDescription()) {
         @Override
         protected void addAdditionalComponents(GridBagConstraints constraints) {
-            add(new ApplyPathOperationOptionsPanel(options), constraints);
+            add(new ApplyPathOptionsPanel(options), constraints);
         }
     };
 
@@ -175,4 +177,42 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
     static final String DESCRIPTION = "Apply path to this world";
+
+    private static class ApplyPathOptionsPanel extends OperationOptionsPanel<ApplyPathOptions> {
+        public ApplyPathOptionsPanel(ApplyPathOptions panelOptions) {
+            super(panelOptions);
+        }
+
+        @Override
+        protected ArrayList<OptionsLabel> addComponents(ApplyPathOptions options, Runnable onOptionsReconfigured) {
+            ArrayList<OptionsLabel> inputs = new ArrayList<>();
+
+            inputs.add(numericInput("final width",
+                    "width of the path at the end.",
+                    new SpinnerNumberModel(options.getFinalWidth(), 0, 100, 1f),
+                    w -> options.setFinalWidth(w.intValue()),
+                    onOptionsReconfigured));
+
+            inputs.add(numericInput("start width",
+                    "width of the path at start.",
+                    new SpinnerNumberModel(options.getStartWidth(), 0, 100, 1f),
+                    w -> options.setStartWidth(w.intValue()),
+                    onOptionsReconfigured
+            ));
+
+            inputs.add(numericInput("random width",
+                    "each step the rivers radius will randomly increase or decrease. It will stay within +/- percent of the normal width.",
+                    new SpinnerNumberModel(options.getRandomFluctuate(), 0, 100, 1f),
+                    w -> options.setRandomFluctuate(w.intValue()),
+                    onOptionsReconfigured));
+
+            inputs.add(numericInput("fluctuation speed",
+                    "how fast the random fluctuation appears. low number = less extreme change",
+                    new SpinnerNumberModel(options.getFluctuationSpeed(), 0, 100, 1f),
+                    w -> options.setFluctuationSpeed(w.intValue()),
+                    onOptionsReconfigured));
+
+            return inputs;
+        }
+    }
 }
