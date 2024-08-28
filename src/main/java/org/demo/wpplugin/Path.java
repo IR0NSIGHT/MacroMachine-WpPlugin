@@ -37,6 +37,12 @@ public class Path implements Iterable<Point> {
         return sum;
     }
 
+    public Point getTail() {
+        if (amountHandles() == 0)
+            throw new IllegalArgumentException("can not access tail of zero-length path!");
+        return handles.get(amountHandles()-1);
+    }
+
     public Point getPreviousPoint(Point point) throws IllegalAccessException {
         if (amountHandles() < 2)
             throw new IllegalAccessException("can not find previous point on path with less than 2 points.");

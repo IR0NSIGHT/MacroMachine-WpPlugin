@@ -27,12 +27,12 @@ public class PathManager {
             throw new IllegalArgumentException("this path doesnt exist.");
 
         pathById.put(id, path);
-        pathNames.put(id, "Path-" + id);
     }
 
     public int addPath(Path path) {
         pathById.put(++nextPathId, path);
         setPathBy(nextPathId, path);
+        nameExistingPath(nextPathId,"Path-"+nextPathId);
         return nextPathId;
     }
 
@@ -40,8 +40,8 @@ public class PathManager {
         return pathById.keySet().iterator().next();
     }
 
-    public void renamePath(int id, String name) throws IllegalArgumentException {
-        if (!pathNames.containsKey(id))
+    public void nameExistingPath(int id, String name) throws IllegalArgumentException {
+        if (!pathById.containsKey(id))
             throw new IllegalArgumentException("can not rename non existent path");
         pathNames.put(id, name);
     }

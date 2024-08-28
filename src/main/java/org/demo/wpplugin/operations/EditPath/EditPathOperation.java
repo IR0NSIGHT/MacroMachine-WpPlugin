@@ -13,11 +13,8 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 
 import static org.demo.wpplugin.CubicBezierSpline.getCubicBezierHandles;
 import static org.demo.wpplugin.PointUtils.pointExtent;
@@ -116,15 +113,16 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // In addition you have the following fields in this class:
         // * brush - the currently selected brush
         // * paint - the currently selected paint
-        Path path = getSelectedPath();
+        final Path path = getSelectedPath();
         Path previous = path;
+        PathManager.NamedId pathId = PathManager.instance.getPathName(getSelectedPathId());
 
         Point previousSelected = selectedPoint;
         Point userClickedCoord = new Point(centreX, centreY);
 
         if (selectedPoint == null) {
             selectedPoint = userClickedCoord;
-            path = path.addPoint(userClickedCoord);
+            overwriteSelectedPath(path.addPoint(userClickedCoord));
         } else if (isCtrlDown()) {
             //SELECT POINT
             try {
@@ -140,25 +138,22 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             }
         } else if (isShiftDown()) {
             if (inverse) {
-                path = new Path();
+                overwriteSelectedPath(new Path());
                 selectedPoint = null;
             } else {
                 // MOVE SELECTED POINT TO
                 applyAsSelection();
 
             }
-
         } else if (isAltDown()) {
-            path = path.movePoint(selectedPoint, userClickedCoord);
+            overwriteSelectedPath(path.movePoint(selectedPoint, userClickedCoord));
             selectedPoint = userClickedCoord;
-
-
         } else if (inverse) {
             //REMOVE SELECTED POINT
             if (path.amountHandles() > 1) {
                 try {
                     Point pointBeforeSelected = path.getPreviousPoint(selectedPoint);
-                    path = path.removePoint(selectedPoint);
+                    overwriteSelectedPath(path.removePoint(selectedPoint));
                     selectedPoint = pointBeforeSelected;
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
@@ -166,7 +161,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             }
         } else {
             //add new point after selected
-            path = path.insertPointAfter(selectedPoint, userClickedCoord);
+            overwriteSelectedPath(path.insertPointAfter(selectedPoint, userClickedCoord));
             selectedPoint = userClickedCoord;
         }
 
@@ -175,15 +170,24 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         if (!path.isHandle(selectedPoint))
             selectedPoint = null;
 
-        PathManager.instance.setPathBy(options.selectedPathId, path);
+
         assert path == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull setting path in manager";
 
         redrawSelectedPathLayer();
     }
 
-    Path getSelectedPath() {
-        return PathManager.instance.getPathBy(options.selectedPathId);
+    private void overwriteSelectedPath(Path p) {
+        PathManager.instance.setPathBy(getSelectedPathId(), p);
+
     }
+
+    Path getSelectedPath() {
+        return PathManager.instance.getPathBy(getSelectedPathId());
+    }
+
+    int getSelectedPathId() {
+        return options.selectedPathId;
+    };
 
     private void applyAsSelection() {
         Layer select = SelectionBlock.INSTANCE;
@@ -323,7 +327,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             comboBox.addActionListener(e -> {
                 editPathOptions.selectedPathId = ((PathManager.NamedId) comboBox.getSelectedItem()).id;
 
-                selectedPoint = null;
+                selectedPoint = getSelectedPath().amountHandles() == 0 ? null : getSelectedPath().getTail();
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
             });
@@ -353,7 +357,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             submitNameChangeButton.addActionListener(e -> {
                 // Get the text from the text field and display it in the label
                 String inputText = textField.getText();
-                PathManager.instance.renamePath(options.selectedPathId, inputText);
+                PathManager.instance.nameExistingPath(options.selectedPathId, inputText);
                 onOptionsReconfigured.run();
             });
 
