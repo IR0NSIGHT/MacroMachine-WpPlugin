@@ -52,7 +52,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     /**
      * Human-readable short name of the operation.
      */
-    static final String NAME = "Bezier Path Tool";
+    static final String NAME = "Edit Path Operation";
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
@@ -167,11 +167,11 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
 
         //is selection was deleted or something.
-        if (!path.isHandle(selectedPoint))
+        if (!getSelectedPath().isHandle(selectedPoint))
             selectedPoint = null;
 
 
-        assert path == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull setting path in manager";
+        assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull setting path in manager";
 
         redrawSelectedPathLayer();
     }
@@ -311,15 +311,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         @Override
         protected ArrayList<OptionsLabel> addComponents(EditPathOptions editPathOptions, Runnable onOptionsReconfigured) {
             ArrayList<OptionsLabel> inputs = new ArrayList<>();
-            inputs.add(
-                    OptionsLabel.numericInput(
-                            "hello world",
-                            "im a tooltip",
-                            new SpinnerNumberModel(editPathOptions.owo, 0, 5, 1.f),
-                            f -> editPathOptions.owo = f.intValue(),
-                            onOptionsReconfigured));
 
-            // Create a JComboBox (dropdown selector)
+            //select path dropdown
             Collection<PathManager.NamedId> availablePaths = PathManager.instance.allPathNamedIds();
 
             JComboBox<Object> comboBox = new JComboBox<>(availablePaths.toArray());
@@ -331,7 +324,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
             });
-            inputs.add(() -> new JComponent[]{comboBox});
+            JLabel comboBoxLabel = new JLabel("Selected path");
+            inputs.add(() -> new JComponent[]{comboBoxLabel,comboBox});
 
             // ADD BUTTON
             // Create a JButton with text
@@ -362,7 +356,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             });
 
             inputs.add(() -> new JComponent[]{textField, submitNameChangeButton});
-
 
             return inputs;
         }
