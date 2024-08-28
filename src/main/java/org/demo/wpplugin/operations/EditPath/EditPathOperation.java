@@ -47,8 +47,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         BrushOperation // Implement this if you need access to the currently selected brush; note that some base classes already provide this
 {
 
-    //update path
-    public static int PATH_ID = 1;
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
@@ -62,6 +60,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
     static final String DESCRIPTION = "Draw smooth, connected curves with C1 continuity.";
+    //update path
+    public static int PATH_ID = 1;
     final int COLOR_NONE = 0;
     final int COLOR_HANDLE = 1;
     final int COLOR_CURVE = 2;
@@ -84,10 +84,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // invocation:
         // super(NAME, DESCRIPTION, delay, ID);
         this.options.selectedPathId = PathManager.instance.getAnyValidId();
-    }
-
-    Path getSelectedPath() {
-        return PathManager.instance.getPathBy(options.selectedPathId);
     }
 
     /**
@@ -185,6 +181,18 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         redrawSelectedPathLayer();
     }
 
+    Path getSelectedPath() {
+        return PathManager.instance.getPathBy(options.selectedPathId);
+    }
+
+    private void applyAsSelection() {
+        Layer select = SelectionBlock.INSTANCE;
+
+        for (Point p : getSelectedPath().continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
+            getDimension().setBitLayerValueAt(select, p.x, p.y, true);
+        }
+    }
+
     void redrawSelectedPathLayer() {
         this.getDimension().setEventsInhibited(true);
         //erase old
@@ -196,14 +204,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             markPoint(selectedPoint, PathPreviewLayer.INSTANCE, COLOR_SELECTED, SIZE_SELECTED);
         this.getDimension().setEventsInhibited(false);
 
-    }
-
-    private void applyAsSelection() {
-        Layer select = SelectionBlock.INSTANCE;
-
-        for (Point p : getSelectedPath().continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
-            getDimension().setBitLayerValueAt(select, p.x, p.y, true);
-        }
     }
 
     /**
@@ -341,6 +341,24 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                 onOptionsReconfigured.run();
             });
             inputs.add(() -> new JComponent[]{button});
+
+
+            // Create a JTextField for text input
+            JTextField textField = new JTextField(20);
+
+            // Create a JButton to trigger an action
+            JButton submitNameChangeButton = new JButton("Change Name");
+            textField.setText(PathManager.instance.getPathName(options.selectedPathId).name);
+            // Add ActionListener to handle button click
+            submitNameChangeButton.addActionListener(e -> {
+                // Get the text from the text field and display it in the label
+                String inputText = textField.getText();
+                PathManager.instance.renamePath(options.selectedPathId, inputText);
+                onOptionsReconfigured.run();
+            });
+
+            inputs.add(() -> new JComponent[]{textField, submitNameChangeButton});
+
 
             return inputs;
         }
