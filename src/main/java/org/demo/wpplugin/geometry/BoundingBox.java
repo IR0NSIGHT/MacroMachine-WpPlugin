@@ -5,5 +5,4 @@ import java.awt.*;
 public interface BoundingBox {
     boolean contains(Point p);
     BoundingBox expand(double size);
-    BoundingBox fromPoints(Point... points);
 }

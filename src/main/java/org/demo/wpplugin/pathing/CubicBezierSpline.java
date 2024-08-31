@@ -57,7 +57,7 @@ public class CubicBezierSpline {
     public static BoundingBox boundingBoxCurveSegment(Point controlA, Point controlB, Point controlC, Point controlD) {
         Point handle1p = getCubicBezierHandles(controlA,controlB,controlC);
         Point handle2P =getCubicBezierHandles(controlD,controlC,controlB);
-        return new AxisAlignedBoundingBox2d(null, null).fromPoints(controlB, handle1p, handle2P, controlD);
+        return AxisAlignedBoundingBox2d.fromPoints(Arrays.asList(controlB, handle1p, handle2P, controlD));
     }
 
     /**
