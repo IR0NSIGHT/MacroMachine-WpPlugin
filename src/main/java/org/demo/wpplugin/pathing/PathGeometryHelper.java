@@ -37,10 +37,10 @@ public class PathGeometryHelper implements BoundingBox{
     @Override
     public boolean contains(Point p) {
         for (BoundingBox bb : boundingBoxes) {
-            if (!bb.contains(p))
-                return false;
+            if (bb.contains(p))
+                return true;
         }
-        return true;
+        return false;
     }
 
     @Override
