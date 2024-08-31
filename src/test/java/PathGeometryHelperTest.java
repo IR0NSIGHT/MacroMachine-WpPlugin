@@ -10,8 +10,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class PathGeometryHelperTest {
     @Test
@@ -84,9 +83,11 @@ public class PathGeometryHelperTest {
                 new Point(-9,9)
         ));
         double radius = 5;
-        PathGeometryHelper geo = new PathGeometryHelper(p,  p.continousCurve(point -> true), radius);
+        ArrayList<Point> curve = p.continousCurve(point -> true);
+        PathGeometryHelper geo = new PathGeometryHelper(p,  curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
-        assertTrue(parentage.get(p).contains(new Point(0,0)));
+        assertEquals(parentage.size(), curve.size());
+        assertTrue(parentage.get(new Point(-2,5)).contains(new Point(-2,5)));
 
     }
 }

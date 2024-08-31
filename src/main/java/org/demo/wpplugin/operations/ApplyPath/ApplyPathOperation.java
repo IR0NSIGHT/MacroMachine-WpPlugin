@@ -1,6 +1,8 @@
 package org.demo.wpplugin.operations.ApplyPath;
 
+import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.pathing.Path;
+import org.demo.wpplugin.pathing.PathGeometryHelper;
 import org.demo.wpplugin.pathing.PathManager;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
@@ -12,8 +14,7 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
 
 import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
@@ -117,6 +118,15 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         double fluctuationSpeed = options.getFluctuationSpeed();
         fluctuationSpeed = Math.max(1,fluctuationSpeed);    //no divide by zero
 
+        PathGeometryHelper helper  = new PathGeometryHelper(path, curve, baseRadius);
+        HashMap<Point, Collection<Point>> parentage = helper.getParentage(baseRadius);
+        for (Map.Entry<Point, Collection<Point>> entry : parentage.entrySet()) {
+            for (Point point : entry.getValue()) {
+                getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y,( (int)point.distance(entry.getKey())) % 16);
+            }
+        };
+/*
+
         int i = 0;
         for (Point p: curve) {
             float radius =baseRadius + randomEdge[(int)((i++)/fluctuationSpeed)] * baseRadius * randomPercent;
@@ -130,7 +140,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             }
             baseRadius += increment;
         }
-
+*/
         this.getDimension().setEventsInhibited(false);
     }
 

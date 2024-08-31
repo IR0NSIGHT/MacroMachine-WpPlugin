@@ -65,4 +65,11 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
             }
         };
     }
+
+    @Override
+    public String toString() {
+        return "AxisAlignedBoundingBox2d{" +
+                "area ="+(maxPoint.x-minPoint.x * maxPoint.y-minPoint.y)+
+                '}';
+    }
 }
