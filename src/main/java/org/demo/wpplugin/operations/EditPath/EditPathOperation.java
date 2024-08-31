@@ -1,7 +1,7 @@
 package org.demo.wpplugin.operations.EditPath;
 
-import org.demo.wpplugin.Path;
-import org.demo.wpplugin.PathManager;
+import org.demo.wpplugin.pathing.Path;
+import org.demo.wpplugin.pathing.PathManager;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.ApplyPath.OperationOptionsPanel;
 import org.demo.wpplugin.operations.OptionsLabel;
@@ -16,8 +16,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static org.demo.wpplugin.CubicBezierSpline.getCubicBezierHandles;
-import static org.demo.wpplugin.PointUtils.pointExtent;
+import static org.demo.wpplugin.pathing.CubicBezierSpline.getCubicBezierHandles;
+import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user

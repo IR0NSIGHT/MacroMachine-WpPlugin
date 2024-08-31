@@ -1,7 +1,7 @@
 package org.demo.wpplugin.operations.ApplyPath;
 
-import org.demo.wpplugin.Path;
-import org.demo.wpplugin.PathManager;
+import org.demo.wpplugin.pathing.Path;
+import org.demo.wpplugin.pathing.PathManager;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.pepsoft.worldpainter.brushes.Brush;
@@ -15,7 +15,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Random;
 
-import static org.demo.wpplugin.PointUtils.pointExtent;
+import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
 
 /**

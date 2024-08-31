@@ -1,4 +1,4 @@
-package org.demo.wpplugin;
+package org.demo.wpplugin.pathing;
 
 import java.util.Collection;
 import java.util.HashMap;

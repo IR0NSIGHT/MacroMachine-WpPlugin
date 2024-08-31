@@ -9,7 +9,7 @@ import org.pepsoft.worldpainter.painting.Paint;
 import java.awt.*;
 import java.util.function.Function;
 
-import static org.demo.wpplugin.PointUtils.pointExtent;
+import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 /**

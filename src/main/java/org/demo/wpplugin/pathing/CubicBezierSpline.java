@@ -1,12 +1,13 @@
-package org.demo.wpplugin;
+package org.demo.wpplugin.pathing;
+
+import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
+import org.demo.wpplugin.geometry.BoundingBox;
 
 import javax.vecmath.Vector2f;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
+import java.util.*;
 
-import static org.demo.wpplugin.PointUtils.*;
+import static org.demo.wpplugin.pathing.PointUtils.*;
 
 public class CubicBezierSpline {
     /**
@@ -51,6 +52,12 @@ public class CubicBezierSpline {
         handle1.add(bv);
 
         return new Point((int) handle1.x, (int) handle1.y);
+    }
+
+    public static BoundingBox boundingBoxCurveSegment(Point controlA, Point controlB, Point controlC, Point controlD) {
+        Point handle1p = getCubicBezierHandles(controlA,controlB,controlC);
+        Point handle2P =getCubicBezierHandles(controlD,controlC,controlB);
+        return new AxisAlignedBoundingBox2d(null, null).fromPoints(controlB, handle1p, handle2P, controlD);
     }
 
     /**

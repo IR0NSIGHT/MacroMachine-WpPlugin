@@ -1,7 +1,7 @@
 package org.demo.wpplugin.operations;
 
-import org.demo.wpplugin.Path;
-import org.demo.wpplugin.PathManager;
+import org.demo.wpplugin.pathing.Path;
+import org.demo.wpplugin.pathing.PathManager;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
@@ -15,7 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.function.Function;
 
-import static org.demo.wpplugin.PointUtils.pointExtent;
+import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 import static org.demo.wpplugin.operations.EditPath.EditPathOperation.PATH_ID;
 
 /**
