@@ -2,6 +2,7 @@ package org.demo.wpplugin.geometry;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.Iterator;
 
 public class AxisAlignedBoundingBox2d implements BoundingBox {
     private final Point minPoint;
@@ -38,6 +39,30 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
     @Override
     public BoundingBox expand(double size) {
         return new AxisAlignedBoundingBox2d(new Point((int) (minPoint.x - size), (int) (minPoint.y - size)),
-                new Point((int) (maxPoint.x + size), (int) (maxPoint.y + size)));
+                new Point((int) Math.ceil(maxPoint.x + size), (int) Math.ceil(maxPoint.y + size)));
+    }
+
+    public Iterator<Point> areaIterator() {
+        return new Iterator<Point>() {
+            int x = minPoint.x;
+            int y = minPoint.y;
+
+            @Override
+            public boolean hasNext() {
+                return x <= maxPoint.x && y <= maxPoint.y;
+            }
+
+            @Override
+            public Point next() {
+                Point p = new Point(x, y);
+                if (x == maxPoint.x) {
+                    x = minPoint.x;
+                    y++;
+                } else {
+                    x++;
+                }
+                return p;
+            }
+        };
     }
 }
