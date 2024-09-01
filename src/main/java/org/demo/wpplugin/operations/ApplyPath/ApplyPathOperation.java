@@ -140,9 +140,11 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         double fluctuationSpeed = options.getFluctuationSpeed();
         fluctuationSpeed = Math.max(1, fluctuationSpeed);    //no divide by zero
 
-        PathGeometryHelper helper = new PathGeometryHelper(path, curve, baseRadius);
+        PathGeometryHelper helper = new PathGeometryHelper(path, curve, Math.max(options.getFinalWidth(),
+                options.getStartWidth()));
         HashMap<Point, Collection<Point>> parentage = helper.getParentage(baseRadius);
         int curveIndex = 0;
+        int[] heightProfile = {60, 60, 61, 62, 63, 63, 64, 64, 65, 65};
         for (Point curvePoint : curve) {
             Collection<Point> nearby = parentage.get(curvePoint);
             double interpol = curveIndex / (1f * curve.size());
@@ -155,6 +157,13 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
                 if (distSq < radiusSq)
                     getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 1);
+                double dist = Math.sqrt(distSq);
+                double profileInterpolate = dist / (1f * baseRadiusAtIdx);
+                if (profileInterpolate < 1) {
+                    assert profileInterpolate >= 0 && profileInterpolate < 1;
+                    int profileIdx = (int) (profileInterpolate * heightProfile.length);
+                    getDimension().setHeightAt(point.x, point.y, heightProfile[profileIdx]);
+                }
             }
             curveIndex++;
         }
