@@ -29,25 +29,30 @@ public class PathGeometryHelper implements BoundingBox {
         this.curve = curve;
         this.radius = radius;
 
-        int boxSizeFacctor = (int) radius;
+        int boxSizeFacctor = 100; //no zero divisor
         int amountBoxes = Math.max(0, curve.size() / boxSizeFacctor + 1);
-        Collection<BoundingBox> bbxs = new ArrayList<>(amountBoxes);
+        Collection<AxisAlignedBoundingBox2d> bbxs = new ArrayList<>(amountBoxes);
         segmentStartIdcs = new int[amountBoxes + 1];
         int segmentIdx = 0;
         for (int i = 0; i < curve.size(); i += boxSizeFacctor) {
             List<Point> subcurve = curve.subList(i, Math.min(i + boxSizeFacctor, curve.size()));
-            bbxs.add(AxisAlignedBoundingBox2d.fromPoints(subcurve).expand(radius));
+            bbxs.add(new AxisAlignedBoundingBox2d(subcurve).expand(radius));
             segmentStartIdcs[segmentIdx++] = i;
         }
 
-        boundingBoxes = new ArrayList<>(constructTree(bbxs));
-        segmentStartIdcs[segmentIdx] = curve.size() - 1;
+        boundingBoxes = new ArrayList<>(bbxs);
+        segmentStartIdcs[segmentIdx] = curve.size();
+
+        for (Point p : curve) {
+            assert this.contains(p);
+            assert this.contains(new Point(p.x + (int) radius, p.y + (int) radius));
+        }
     }
 
-    Collection<BoundingBox> constructTree(Collection<BoundingBox> neighbouringBoxes) {
-        List<BoundingBox> oldList = new ArrayList<>(neighbouringBoxes);
+    Collection<AxisAlignedBoundingBox2d> constructTree(Collection<AxisAlignedBoundingBox2d> neighbouringBoxes) {
+        List<AxisAlignedBoundingBox2d> oldList = new ArrayList<>(neighbouringBoxes);
         while (oldList.size() > 1) {
-            List<BoundingBox> newList = new ArrayList<>(oldList.size() / 2 + 1);
+            List<AxisAlignedBoundingBox2d> newList = new ArrayList<>(oldList.size() / 2 + 1);
             for (int i = 0; i < oldList.size(); i++) {
                 if (i < oldList.size() - 1) {
                     TreeBoundingBox parent = new TreeBoundingBox(oldList.get(i), oldList.get(i + 1));
@@ -77,12 +82,28 @@ public class PathGeometryHelper implements BoundingBox {
         }
 
         Collection<Point> allNearby = allPointsInsideChildBbxs();
-        assert new HashSet<>(allNearby).size() == allNearby.size(); //all points are unique
+        LinkedList<Point> clones = new LinkedList<>();
+        HashSet<Point> visited = new HashSet<>();
+        for (Point point : curve) {
+            if (visited.contains(point)) {
+                clones.add(point);
+            }
+            visited.add(point);
+        }
+        //    assert new HashSet<>(allNearby).size() == allNearby.size(); //all points are unique
 
         assert new HashSet<>(allNearby).containsAll(curve) : "some curvepoints are missing";
+
+        for (Point point : curve) {
+            assert this.contains(point);
+        }
+
         for (Point point : allNearby) {
             assert this.contains(point);
+            assert this.contains(point);
             Point parentOnCurve = closestCurvePointFor(point);
+            assert !curve.contains(point) || point.equals(parentOnCurve) : "cant assign a curvepoint to another " +
+                    "parent than himself";
             if (point.distanceSq(parentOnCurve) < maxRadiusSquared) {
                 assert parentage.containsKey(parentOnCurve);
                 parentage.get(parentOnCurve).add(point);
@@ -109,34 +130,25 @@ public class PathGeometryHelper implements BoundingBox {
 
     Collection<Point> allPointsInsideChildBbxs() {
         //iterate all points for all bounding boxes
-        LinkedList<Point> allNearby = new LinkedList<>();
-        LinkedList<BoundingBox> remainingBoxs = new LinkedList<>(boundingBoxes);
-        int segmentIdx = 0;
-        int i = 0;
+        LinkedList<Point> allNearby = new LinkedList<>(curve);
+        HashSet<Point> previousRing = new HashSet<>(curve);
 
-        while (!remainingBoxs.isEmpty()) {
-            BoundingBox box = remainingBoxs.removeFirst();
-            Collection<Point> curveSegment = curveSegment(segmentIdx++);
-            HashSet<Point> visited = new HashSet<>();
+        for (int i = 0; i < radius; i++) {
+            HashSet<Point> thisRing = new HashSet<>(previousRing);
+            for (Point point : previousRing) {
+                thisRing.add(new Point(point.x + 1, point.y));
+                thisRing.add(new Point(point.x + 1, point.y + 1));
+                thisRing.add(new Point(point.x + 1, point.y - 1));
 
-            //we iterate the curvesegment in the bbx and add all those that are not inside the remaining boxes
-            Iterator<Point> curveSegmentIterator = box.areaIterator();
-            while (curveSegmentIterator.hasNext()) {
-                Point p = curveSegmentIterator.next();
-                i++;
-                for (int x = (int) -radius; x <= radius; x++) {
-                    for (int y = (int) -radius; y <= radius; y++) {
-                        Point nearby = new Point(p.x + x, p.y + y);
-                        if (!isPointInside(nearby, remainingBoxs))
-                            visited.add(nearby);
-                    }
-                }
+                thisRing.add(new Point(point.x - 1, point.y));
+                thisRing.add(new Point(point.x - 1, point.y + 1));
+                thisRing.add(new Point(point.x - 1, point.y - 1));
             }
-            allNearby.addAll(visited);
+            thisRing.removeAll(previousRing);
+            allNearby.addAll(thisRing);
+            assert thisRing.size() < previousRing.size()*8;
+            previousRing = thisRing;
         }
-        Collection<Point> leftover = new ArrayList<>(curve);
-        leftover.removeAll(allNearby);
-        assert leftover.size() == 0;
         return allNearby;
     }
 

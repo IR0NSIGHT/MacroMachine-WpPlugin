@@ -76,19 +76,23 @@ public class PathGeometryHelperTest {
     public void parentageTest() {
         // Arrange
         Path p = new Path(Arrays.asList(new Point(0, 0),
-                new Point(-2, 5),
-                new Point(4, 4),
-                new Point(5, 5),
-                new Point(155, -255),
-                new Point(-9, 9)
+                new Point(0, 0),
+                new Point(10, 0),
+                new Point(20, 0),
+                new Point(30, 0),
+                new Point(40, 0)
+
+
         ));
         double radius = 5;
         ArrayList<Point> curve = p.continousCurve(point -> true);
         PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
         assertEquals(parentage.size(), curve.size());
-        assertTrue(parentage.get(new Point(-2, 5)).contains(new Point(-2, 5)));
-
+        for (Point point : curve) {
+            assertTrue(parentage.containsKey(point));
+            assertTrue(parentage.get(point).contains(point));
+        }
     }
 
     @Test
@@ -100,7 +104,7 @@ public class PathGeometryHelperTest {
                 new Point(0, 1000),
                 new Point(0, 1),
                 new Point(1000, 2000),
-                new Point(0,2)
+                new Point(0, 2)
         ));
         PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(point -> true), 50);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage(50);

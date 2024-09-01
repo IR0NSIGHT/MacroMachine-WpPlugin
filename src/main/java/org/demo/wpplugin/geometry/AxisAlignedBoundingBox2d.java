@@ -5,8 +5,8 @@ import java.util.Collection;
 import java.util.Iterator;
 
 public class AxisAlignedBoundingBox2d implements BoundingBox {
-    private final Point minPoint;
-    private final Point maxPoint;
+    final Point maxPoint;
+    final Point minPoint;
 
     /**
      * axis aligned boundingbox. will contain min and maxpoint.
@@ -22,7 +22,7 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
         assert maxPoint.y >= minPoint.y;
     }
 
-    public static BoundingBox fromPoints(Collection<Point> points) {
+    public AxisAlignedBoundingBox2d(Collection<Point> points) {
         int xMin = Integer.MAX_VALUE, xMax = Integer.MIN_VALUE,
                 yMin = Integer.MAX_VALUE, yMax = Integer.MIN_VALUE;
         for (Point p : points) {
@@ -31,7 +31,13 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
             yMin = Math.min(yMin, p.y);
             yMax = Math.max(yMax, p.y);
         }
-        return new AxisAlignedBoundingBox2d(new Point(xMin, yMin), new Point(xMax, yMax));
+        this.minPoint = new Point(xMin, yMin);
+        this.maxPoint = new Point(xMax, yMax);
+    }
+
+    public static AxisAlignedBoundingBox2d fromPoints(Collection<Point> points) {
+
+        return new AxisAlignedBoundingBox2d(points);
     }
 
     @Override
@@ -40,19 +46,19 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
     }
 
     @Override
-    public BoundingBox expand(double size) {
+    public AxisAlignedBoundingBox2d expand(double size) {
         return new AxisAlignedBoundingBox2d(new Point((int) (minPoint.x - size), (int) (minPoint.y - size)),
                 new Point((int) Math.ceil(maxPoint.x + size), (int) Math.ceil(maxPoint.y + size)));
     }
 
     public Iterator<Point> areaIterator() {
         return new Iterator<Point>() {
-            int x = minPoint.x;
-            int y = minPoint.y;
             final int maxX = maxPoint.x;
             final int maxY = maxPoint.y;
             final int minX = minPoint.x;
             final int minY = minPoint.y;
+            int x = minPoint.x;
+            int y = minPoint.y;
 
             @Override
             public boolean hasNext() {

@@ -1,14 +1,16 @@
 package org.demo.wpplugin.geometry;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Iterator;
 
-public class TreeBoundingBox implements BoundingBox {
+public class TreeBoundingBox extends AxisAlignedBoundingBox2d {
     final int sumChilds;
-    private final BoundingBox leftChild;
-    private final BoundingBox rightChild;
+    private final AxisAlignedBoundingBox2d leftChild;
+    private final AxisAlignedBoundingBox2d rightChild;
 
-    public TreeBoundingBox(BoundingBox leftChild, BoundingBox rightChild) {
+    public TreeBoundingBox(AxisAlignedBoundingBox2d leftChild, AxisAlignedBoundingBox2d rightChild) {
+        super(Arrays.asList(leftChild.minPoint, leftChild.maxPoint, rightChild.minPoint, rightChild.maxPoint));
         this.leftChild = leftChild;
         this.rightChild = rightChild;
         this.sumChilds =
@@ -17,11 +19,15 @@ public class TreeBoundingBox implements BoundingBox {
 
     @Override
     public boolean contains(Point p) {
-        return leftChild.contains(p) || rightChild.contains(p);
+        if (!super.contains(p)) {
+            return false;
+        }
+        boolean isInChildren = (leftChild.contains(p) || rightChild.contains(p));
+        return isInChildren;
     }
 
     @Override
-    public BoundingBox expand(double size) {
+    public TreeBoundingBox expand(double size) {
         return new TreeBoundingBox(leftChild.expand(size), rightChild.expand(size));
     }
 
@@ -50,6 +56,7 @@ public class TreeBoundingBox implements BoundingBox {
     @Override
     public String toString() {
         return "TreeBoundingBox{" +
+                super.toString() +
                 "childs=" + sumChilds +
                 '}';
     }
