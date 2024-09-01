@@ -82,21 +82,8 @@ public class PathGeometryHelper implements BoundingBox {
         }
 
         Collection<Point> allNearby = allPointsInsideChildBbxs();
-        LinkedList<Point> clones = new LinkedList<>();
-        HashSet<Point> visited = new HashSet<>();
-        for (Point point : curve) {
-            if (visited.contains(point)) {
-                clones.add(point);
-            }
-            visited.add(point);
-        }
-        //    assert new HashSet<>(allNearby).size() == allNearby.size(); //all points are unique
 
         assert new HashSet<>(allNearby).containsAll(curve) : "some curvepoints are missing";
-
-        for (Point point : curve) {
-            assert this.contains(point);
-        }
 
         for (Point point : allNearby) {
             assert this.contains(point);
@@ -130,22 +117,22 @@ public class PathGeometryHelper implements BoundingBox {
 
     Collection<Point> allPointsInsideChildBbxs() {
         //iterate all points for all bounding boxes
-        LinkedList<Point> allNearby = new LinkedList<>(curve);
-        HashSet<Point> previousRing = new HashSet<>(curve);
+        HashSet<Point> allNearby = new HashSet<>(curve);
+        Collection<Point> previousRing = new ArrayList<>(curve);
 
         for (int i = 0; i < radius; i++) {
-            HashSet<Point> thisRing = new HashSet<>(previousRing);
+            Collection<Point> thisRing = new ArrayList<>(previousRing.size()*3);
             for (Point point : previousRing) {
-                thisRing.add(new Point(point.x + 1, point.y));
-                thisRing.add(new Point(point.x + 1, point.y + 1));
-                thisRing.add(new Point(point.x + 1, point.y - 1));
-
-                thisRing.add(new Point(point.x - 1, point.y));
-                thisRing.add(new Point(point.x - 1, point.y + 1));
-                thisRing.add(new Point(point.x - 1, point.y - 1));
+                for (int x = -1; x <= 1; x++) {
+                    for (int y = -1; y <= 1; y++) {
+                        Point nearby = new Point(point.x + x, point.y + y);
+                        if (!allNearby.contains(nearby)) {
+                            thisRing.add(nearby);
+                            allNearby.add(nearby);
+                        }
+                    }
+                }
             }
-            thisRing.removeAll(previousRing);
-            allNearby.addAll(thisRing);
             assert thisRing.size() < previousRing.size()*8;
             previousRing = thisRing;
         }

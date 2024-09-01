@@ -97,16 +97,26 @@ public class PathGeometryHelperTest {
 
     @Test
     public void testSubotpimalAABBXPath() {
+        int size = 10000;
         // Arrange
-        Path p = new Path(Arrays.asList(new Point(0, 0),
+        Path p = new Path(Arrays.asList(
+                new Point(-1, 0),
                 new Point(0, 0),
-                new Point(1000, 1000),
-                new Point(0, 1000),
-                new Point(0, 1),
-                new Point(1000, 2000),
-                new Point(0, 2)
+                new Point(size, 0),
+                new Point(2*size, 0),
+                new Point(3*size, 0),
+                new Point(3*size+1, 0)
         ));
-        PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(point -> true), 50);
-        HashMap<Point, Collection<Point>> parentage = geo.getParentage(50);
+        ArrayList<Point> curve = p.continousCurve(point -> true);
+        assertEquals(3*size+1, curve.size());
+        int radius = 50;
+        PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
+        HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
+        assertEquals(parentage.size(), curve.size());
+        int totalNearby = 0;
+        for (Point point : curve) {
+            totalNearby += parentage.get(point).size();
+        }
+        assertTrue(totalNearby < 1.1*2*radius*(3*size+1));
     }
 }
