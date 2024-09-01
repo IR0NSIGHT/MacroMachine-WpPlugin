@@ -1,5 +1,6 @@
 package org.demo.wpplugin.pathing;
 
+import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.BoundingBox;
 
 import java.awt.*;
@@ -13,58 +14,31 @@ public class PathGeometryHelper implements BoundingBox {
     private final int[] segmentStartIdcs;
     private final double radius;
 
-    private PathGeometryHelper(Path path, ArrayList<BoundingBox> boundingBoxes, ArrayList<Point> curve, double radius) {
+    private PathGeometryHelper(Path path, ArrayList<BoundingBox> boundingBoxes, ArrayList<Point> curve, double radius
+            , int[] segmentStartIdcs) {
         this.path = path;
         this.boundingBoxes = boundingBoxes;
         this.curve = curve;
-        this.segmentStartIdcs = calculateSegmentStartIdcs(path, curve);
+        this.segmentStartIdcs = segmentStartIdcs;
         this.radius = radius;
     }
 
     public PathGeometryHelper(Path path, ArrayList<Point> curve, double radius) {
         this.path = path;
-        boundingBoxes = new ArrayList<>(Math.max(0, path.amountHandles() - 3));
-        for (int i = 0; i < path.amountHandles() - 3; i++) {
-            BoundingBox box = CubicBezierSpline.boundingBoxCurveSegment(path.handleByIndex(i),
-                    path.handleByIndex(i + 1), path.handleByIndex(i + 2), path.handleByIndex(i + 3));
-            if (radius > 0) {
-                box = box.expand(radius);
-            }
-            boundingBoxes.add(box);
-        }
         this.curve = curve;
-        this.segmentStartIdcs = calculateSegmentStartIdcs(path, curve);
         this.radius = radius;
-    }
 
-    int[] calculateSegmentStartIdcs(Path p, ArrayList<Point> curve) {
-        Iterator<Point> handles = p.iterator();
-        int[] startIdcs = new int[p.amountHandles() - 2];
-        int startIdcIndex = 0;
-
-        handles.next(); //ignore the very first handle, its not on the curve
-        Point controlPoint = handles.next();
-        for (int i = 0; i < curve.size(); i++) {
-            Point curvePoint = curve.get(i);
-            if (controlPoint.equals(curvePoint)) {
-                //curve reached this curvepoint, a new segment starts
-                startIdcs[startIdcIndex++] = i;
-                controlPoint = handles.next();
-            }
+        int boxSizeFacctor = 100;
+        int amountBoxes = Math.max(0, curve.size() / boxSizeFacctor + 1);
+        boundingBoxes = new ArrayList<>(amountBoxes);
+        segmentStartIdcs = new int[amountBoxes + 1];
+        int segmentIdx = 0;
+        for (int i = 0; i < curve.size(); i += boxSizeFacctor) {
+            List<Point> subcurve = curve.subList(i, Math.min(i + boxSizeFacctor, curve.size()));
+            boundingBoxes.add(AxisAlignedBoundingBox2d.fromPoints(subcurve).expand(radius));
+            segmentStartIdcs[segmentIdx++] = i;
         }
-        return startIdcs;
-    }
-
-    private ArrayList<Point> getCurveSegmentForIdx(int bbxIdx) {
-        assert bbxIdx >= 0 && bbxIdx < path.amountHandles() - 3;
-        List<Point> segmentHandles = Arrays.asList(
-                path.handleByIndex(bbxIdx),
-                path.handleByIndex(bbxIdx + 1),
-                path.handleByIndex(bbxIdx + 2),
-                path.handleByIndex(bbxIdx + 3)
-        );
-        Path segment = new Path(segmentHandles);
-        return segment.continousCurve(p -> true);
+        segmentStartIdcs[segmentIdx] = curve.size() - 1;
     }
 
     /**
@@ -80,7 +54,7 @@ public class PathGeometryHelper implements BoundingBox {
             parentage.put(point, new LinkedList<>());
         }
 
-        Collection<Point> allNearby = collectPointsAroundPath();// allPointsInsideChildBbxs();
+        Collection<Point> allNearby = allPointsInsideChildBbxs();
         assert new HashSet<>(allNearby).size() == allNearby.size(); //all points are unique
         for (Point point : allNearby) {
             assert this.contains(point);
@@ -125,11 +99,12 @@ public class PathGeometryHelper implements BoundingBox {
                 for (int x = (int) -radius; x <= radius; x++) {
                     for (int y = (int) -radius; y <= radius; y++) {
                         Point nearby = new Point(p.x + x, p.y + y);
-                        if (!isPointInside(nearby, remainingBoxs) &&  nearby.distanceSq(p) < radiusSq)
+                        if (!isPointInside(nearby, remainingBoxs) && nearby.distanceSq(p) < radiusSq)
                             visited.add(nearby);
                     }
                 }
             }
+            allNearby.addAll(visited);
         }
         return allNearby;
     }
@@ -208,7 +183,7 @@ public class PathGeometryHelper implements BoundingBox {
             newBoundingBoxes.add(bb.expand(size));
         }
 
-        return new PathGeometryHelper(path, newBoundingBoxes, curve, radius);
+        return new PathGeometryHelper(path, newBoundingBoxes, curve, radius, segmentStartIdcs);
     }
 
     @Override
