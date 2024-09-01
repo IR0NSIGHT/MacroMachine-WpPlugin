@@ -20,10 +20,10 @@ public class PathGeometryHelperTest {
                 new Point(-2, 5),
                 new Point(4, 4),
                 new Point(5, 5),
-                new Point(155,-255),
-                new Point(-9,9)
+                new Point(155, -255),
+                new Point(-9, 9)
         ));
-        PathGeometryHelper o = new PathGeometryHelper(p,  p.continousCurve(point -> true), 0);
+        PathGeometryHelper o = new PathGeometryHelper(p, p.continousCurve(point -> true), 0);
 
         // Act
         ArrayList<Point> curve = p.continousCurve(point -> true);
@@ -38,38 +38,38 @@ public class PathGeometryHelperTest {
 
     @Test
     public void testExpanding() {
-        BoundingBox bbx = new AxisAlignedBoundingBox2d(new Point(-100,-200),new Point(200,500));
-        assertTrue(bbx.contains(new Point(-100,-200)));
-        assertTrue(bbx.contains(new Point(200,500)));
+        BoundingBox bbx = new AxisAlignedBoundingBox2d(new Point(-100, -200), new Point(200, 500));
+        assertTrue(bbx.contains(new Point(-100, -200)));
+        assertTrue(bbx.contains(new Point(200, 500)));
 
-        assertFalse(bbx.contains(new Point(-101,-200)));
-        assertFalse(bbx.contains(new Point(-100,-201)));
-        assertFalse(bbx.contains(new Point(-101,-201)));
+        assertFalse(bbx.contains(new Point(-101, -200)));
+        assertFalse(bbx.contains(new Point(-100, -201)));
+        assertFalse(bbx.contains(new Point(-101, -201)));
 
-        assertFalse(bbx.contains(new Point(201,500)));
-        assertFalse(bbx.contains(new Point(200,501)));
-        assertFalse(bbx.contains(new Point(201,501)));
+        assertFalse(bbx.contains(new Point(201, 500)));
+        assertFalse(bbx.contains(new Point(200, 501)));
+        assertFalse(bbx.contains(new Point(201, 501)));
 
         bbx = bbx.expand(1);
-        assertTrue(bbx.contains(new Point(-101,-200)));
-        assertTrue(bbx.contains(new Point(-100,-201)));
-        assertTrue(bbx.contains(new Point(-101,-201)));
+        assertTrue(bbx.contains(new Point(-101, -200)));
+        assertTrue(bbx.contains(new Point(-100, -201)));
+        assertTrue(bbx.contains(new Point(-101, -201)));
 
-        assertTrue(bbx.contains(new Point(201,500)));
-        assertTrue(bbx.contains(new Point(200,501)));
-        assertTrue(bbx.contains(new Point(201,501)));
+        assertTrue(bbx.contains(new Point(201, 500)));
+        assertTrue(bbx.contains(new Point(200, 501)));
+        assertTrue(bbx.contains(new Point(201, 501)));
 
         bbx = bbx.expand(-2);
-        assertFalse(bbx.contains(new Point(-101,-200)));
-        assertFalse(bbx.contains(new Point(-100,-201)));
-        assertFalse(bbx.contains(new Point(-101,-201)));
+        assertFalse(bbx.contains(new Point(-101, -200)));
+        assertFalse(bbx.contains(new Point(-100, -201)));
+        assertFalse(bbx.contains(new Point(-101, -201)));
 
-        assertFalse(bbx.contains(new Point(201,500)));
-        assertFalse(bbx.contains(new Point(200,501)));
-        assertFalse(bbx.contains(new Point(201,501)));
+        assertFalse(bbx.contains(new Point(201, 500)));
+        assertFalse(bbx.contains(new Point(200, 501)));
+        assertFalse(bbx.contains(new Point(201, 501)));
 
-        assertFalse(bbx.contains(new Point(-100,-200)));
-        assertFalse(bbx.contains(new Point(200,500)));
+        assertFalse(bbx.contains(new Point(-100, -200)));
+        assertFalse(bbx.contains(new Point(200, 500)));
     }
 
     @Test
@@ -79,15 +79,30 @@ public class PathGeometryHelperTest {
                 new Point(-2, 5),
                 new Point(4, 4),
                 new Point(5, 5),
-                new Point(155,-255),
-                new Point(-9,9)
+                new Point(155, -255),
+                new Point(-9, 9)
         ));
         double radius = 5;
         ArrayList<Point> curve = p.continousCurve(point -> true);
-        PathGeometryHelper geo = new PathGeometryHelper(p,  curve, radius);
+        PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
         assertEquals(parentage.size(), curve.size());
-        assertTrue(parentage.get(new Point(-2,5)).contains(new Point(-2,5)));
+        assertTrue(parentage.get(new Point(-2, 5)).contains(new Point(-2, 5)));
 
+    }
+
+    @Test
+    public void testSubotpimalAABBXPath() {
+        // Arrange
+        Path p = new Path(Arrays.asList(new Point(0, 0),
+                new Point(0, 0),
+                new Point(1000, 1000),
+                new Point(0, 1000),
+                new Point(0, 1),
+                new Point(1000, 2000),
+                new Point(0,2)
+        ));
+        PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(point -> true), 50);
+        HashMap<Point, Collection<Point>> parentage = geo.getParentage(50);
     }
 }
