@@ -56,6 +56,8 @@ public class PathGeometryHelper implements BoundingBox {
 
         Collection<Point> allNearby = allPointsInsideChildBbxs();
         assert new HashSet<>(allNearby).size() == allNearby.size(); //all points are unique
+
+        assert new HashSet<>(allNearby).containsAll(curve) : "some curvepoints are missing";
         for (Point point : allNearby) {
             assert this.contains(point);
             Point parentOnCurve = closestCurvePointFor(point);
@@ -86,27 +88,33 @@ public class PathGeometryHelper implements BoundingBox {
     Collection<Point> allPointsInsideChildBbxs() {
         //iterate all points for all bounding boxes
         LinkedList<Point> allNearby = new LinkedList<>();
-        double radiusSq = radius * radius;
         LinkedList<BoundingBox> remainingBoxs = new LinkedList<>(boundingBoxes);
         int segmentIdx = 0;
         while (!remainingBoxs.isEmpty()) {
             BoundingBox box = remainingBoxs.removeFirst();
-            Iterator<Point> curveSegment = curveSegmentIterator(segmentIdx++);
+            Collection<Point> curveSegment = curveSegment(segmentIdx++);
             HashSet<Point> visited = new HashSet<>();
+
             //we iterate the curvesegment in the bbx and add all those that are not inside the remaining boxes
-            while (curveSegment.hasNext()) {
-                Point p = curveSegment.next();
+            for (Point p : curveSegment) {
                 for (int x = (int) -radius; x <= radius; x++) {
                     for (int y = (int) -radius; y <= radius; y++) {
                         Point nearby = new Point(p.x + x, p.y + y);
-                        if (!isPointInside(nearby, remainingBoxs) && nearby.distanceSq(p) < radiusSq)
+                        if (!isPointInside(nearby, remainingBoxs))
                             visited.add(nearby);
                     }
                 }
             }
             allNearby.addAll(visited);
         }
+        Collection<Point> leftover = new ArrayList<>(curve);
+        leftover.removeAll(allNearby);
+        assert leftover.size() == 0;
         return allNearby;
+    }
+
+    Collection<Point> curveSegment(int segmentIdx) {
+        return curve.subList(segmentStartIdcs[segmentIdx], segmentStartIdcs[segmentIdx + 1]);
     }
 
     Iterator<Point> curveSegmentIterator(int segmentIdx) {
