@@ -2,6 +2,7 @@ package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.BoundingBox;
+import org.demo.wpplugin.geometry.TreeBoundingBox;
 
 import java.awt.*;
 import java.util.List;
@@ -28,17 +29,38 @@ public class PathGeometryHelper implements BoundingBox {
         this.curve = curve;
         this.radius = radius;
 
-        int boxSizeFacctor = 100;
+        int boxSizeFacctor = (int) radius;
         int amountBoxes = Math.max(0, curve.size() / boxSizeFacctor + 1);
-        boundingBoxes = new ArrayList<>(amountBoxes);
+        Collection<BoundingBox> bbxs = new ArrayList<>(amountBoxes);
         segmentStartIdcs = new int[amountBoxes + 1];
         int segmentIdx = 0;
         for (int i = 0; i < curve.size(); i += boxSizeFacctor) {
             List<Point> subcurve = curve.subList(i, Math.min(i + boxSizeFacctor, curve.size()));
-            boundingBoxes.add(AxisAlignedBoundingBox2d.fromPoints(subcurve).expand(radius));
+            bbxs.add(AxisAlignedBoundingBox2d.fromPoints(subcurve).expand(radius));
             segmentStartIdcs[segmentIdx++] = i;
         }
+
+        boundingBoxes = new ArrayList<>(constructTree(bbxs));
         segmentStartIdcs[segmentIdx] = curve.size() - 1;
+    }
+
+    Collection<BoundingBox> constructTree(Collection<BoundingBox> neighbouringBoxes) {
+        List<BoundingBox> oldList = new ArrayList<>(neighbouringBoxes);
+        while (oldList.size() > 1) {
+            List<BoundingBox> newList = new ArrayList<>(oldList.size() / 2 + 1);
+            for (int i = 0; i < oldList.size(); i++) {
+                if (i < oldList.size() - 1) {
+                    TreeBoundingBox parent = new TreeBoundingBox(oldList.get(i), oldList.get(i + 1));
+                    newList.add(parent);
+                    i++;
+                } else {
+                    newList.add(oldList.get(i));
+                }
+            }
+            oldList = newList;
+        }
+        assert oldList.size() == 1;
+        return oldList;
     }
 
     /**
@@ -90,13 +112,18 @@ public class PathGeometryHelper implements BoundingBox {
         LinkedList<Point> allNearby = new LinkedList<>();
         LinkedList<BoundingBox> remainingBoxs = new LinkedList<>(boundingBoxes);
         int segmentIdx = 0;
+        int i = 0;
+
         while (!remainingBoxs.isEmpty()) {
             BoundingBox box = remainingBoxs.removeFirst();
             Collection<Point> curveSegment = curveSegment(segmentIdx++);
             HashSet<Point> visited = new HashSet<>();
 
             //we iterate the curvesegment in the bbx and add all those that are not inside the remaining boxes
-            for (Point p : curveSegment) {
+            Iterator<Point> curveSegmentIterator = box.areaIterator();
+            while (curveSegmentIterator.hasNext()) {
+                Point p = curveSegmentIterator.next();
+                i++;
                 for (int x = (int) -radius; x <= radius; x++) {
                     for (int y = (int) -radius; y <= radius; y++) {
                         Point nearby = new Point(p.x + x, p.y + y);

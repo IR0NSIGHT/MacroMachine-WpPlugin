@@ -17,6 +17,9 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
     public AxisAlignedBoundingBox2d(Point minPoint, Point maxPoint) {
         this.minPoint = minPoint;
         this.maxPoint = maxPoint;
+
+        assert maxPoint.x >= minPoint.x;
+        assert maxPoint.y >= minPoint.y;
     }
 
     public static BoundingBox fromPoints(Collection<Point> points) {
@@ -46,17 +49,21 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
         return new Iterator<Point>() {
             int x = minPoint.x;
             int y = minPoint.y;
+            final int maxX = maxPoint.x;
+            final int maxY = maxPoint.y;
+            final int minX = minPoint.x;
+            final int minY = minPoint.y;
 
             @Override
             public boolean hasNext() {
-                return x <= maxPoint.x && y <= maxPoint.y;
+                return x <= maxX && y <= maxY;
             }
 
             @Override
             public Point next() {
                 Point p = new Point(x, y);
-                if (x == maxPoint.x) {
-                    x = minPoint.x;
+                if (x >= maxX) {
+                    x = minX;
                     y++;
                 } else {
                     x++;
@@ -69,7 +76,8 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
     @Override
     public String toString() {
         return "AxisAlignedBoundingBox2d{" +
-                "area ="+(maxPoint.x-minPoint.x * maxPoint.y-minPoint.y)+
+                "width =" + (maxPoint.x - minPoint.x) +
+                "height =" + (maxPoint.y - minPoint.y) +
                 '}';
     }
 }
