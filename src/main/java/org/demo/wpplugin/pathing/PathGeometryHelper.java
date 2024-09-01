@@ -12,6 +12,7 @@ public class PathGeometryHelper implements BoundingBox {
     private final ArrayList<Point> curve;
     private final int[] segmentStartIdcs;
     private final double radius;
+
     private PathGeometryHelper(Path path, ArrayList<BoundingBox> boundingBoxes, ArrayList<Point> curve, double radius) {
         this.path = path;
         this.boundingBoxes = boundingBoxes;
@@ -38,7 +39,7 @@ public class PathGeometryHelper implements BoundingBox {
 
     int[] calculateSegmentStartIdcs(Path p, ArrayList<Point> curve) {
         Iterator<Point> handles = p.iterator();
-        int[] startIdcs = new int[p.amountHandles()-2];
+        int[] startIdcs = new int[p.amountHandles() - 2];
         int startIdcIndex = 0;
 
         handles.next(); //ignore the very first handle, its not on the curve
@@ -60,8 +61,8 @@ public class PathGeometryHelper implements BoundingBox {
                 path.handleByIndex(bbxIdx),
                 path.handleByIndex(bbxIdx + 1),
                 path.handleByIndex(bbxIdx + 2),
-                path.handleByIndex(bbxIdx + 3 )
-                );
+                path.handleByIndex(bbxIdx + 3)
+        );
         Path segment = new Path(segmentHandles);
         return segment.continousCurve(p -> true);
     }
@@ -111,20 +112,44 @@ public class PathGeometryHelper implements BoundingBox {
     Collection<Point> allPointsInsideChildBbxs() {
         //iterate all points for all bounding boxes
         LinkedList<Point> allNearby = new LinkedList<>();
+        double radiusSq = radius * radius;
         LinkedList<BoundingBox> remainingBoxs = new LinkedList<>(boundingBoxes);
+        int segmentIdx = 0;
         while (!remainingBoxs.isEmpty()) {
             BoundingBox box = remainingBoxs.removeFirst();
-            Iterator<Point> pointsInBox = box.areaIterator();
-
-            //we iterate all points in the box, and add all those that are not inside the remaining boxes
-            while (pointsInBox.hasNext()) {
-                Point point = pointsInBox.next();
-                if (isPointInside(point, remainingBoxs))    //will be handled later by that box.
-                    continue;
-                allNearby.add(point);
+            Iterator<Point> curveSegment = curveSegmentIterator(segmentIdx++);
+            HashSet<Point> visited = new HashSet<>();
+            //we iterate the curvesegment in the bbx and add all those that are not inside the remaining boxes
+            while (curveSegment.hasNext()) {
+                Point p = curveSegment.next();
+                for (int x = (int) -radius; x <= radius; x++) {
+                    for (int y = (int) -radius; y <= radius; y++) {
+                        Point nearby = new Point(p.x + x, p.y + y);
+                        if (!isPointInside(nearby, remainingBoxs) &&  nearby.distanceSq(p) < radiusSq)
+                            visited.add(nearby);
+                    }
+                }
             }
         }
         return allNearby;
+    }
+
+    Iterator<Point> curveSegmentIterator(int segmentIdx) {
+        return new Iterator<Point>() {
+            final int startIdx = segmentStartIdcs[segmentIdx];
+            final int endIdx = segmentStartIdcs[segmentIdx + 1];
+            int currentIdx = startIdx;
+
+            @Override
+            public boolean hasNext() {
+                return currentIdx < endIdx;
+            }
+
+            @Override
+            public Point next() {
+                return curve.get(currentIdx++);
+            }
+        };
     }
 
     boolean isPointInside(Point point, Collection<BoundingBox> boundingBoxes) {
@@ -141,7 +166,7 @@ public class PathGeometryHelper implements BoundingBox {
         double minDistSq = Double.MAX_VALUE;
         Collection<Integer> containingBoxIdcs = getContainingIdcs(nearby);
         for (int idx : containingBoxIdcs) {
-            for (int i = segmentStartIdcs[idx]; i < segmentStartIdcs[idx+1]; i++) {
+            for (int i = segmentStartIdcs[idx]; i < segmentStartIdcs[idx + 1]; i++) {
                 Point curveP = curve.get(i);
                 double distSq = curveP.distanceSq(nearby);
                 if (distSq < minDistSq) {
