@@ -11,12 +11,13 @@ public class PathGeometryHelper implements BoundingBox {
     private final ArrayList<BoundingBox> boundingBoxes;
     private final ArrayList<Point> curve;
     private final int[] segmentStartIdcs;
-
-    private PathGeometryHelper(Path path, ArrayList<BoundingBox> boundingBoxes, ArrayList<Point> curve) {
+    private final double radius;
+    private PathGeometryHelper(Path path, ArrayList<BoundingBox> boundingBoxes, ArrayList<Point> curve, double radius) {
         this.path = path;
         this.boundingBoxes = boundingBoxes;
         this.curve = curve;
         this.segmentStartIdcs = calculateSegmentStartIdcs(path, curve);
+        this.radius = radius;
     }
 
     public PathGeometryHelper(Path path, ArrayList<Point> curve, double radius) {
@@ -32,6 +33,7 @@ public class PathGeometryHelper implements BoundingBox {
         }
         this.curve = curve;
         this.segmentStartIdcs = calculateSegmentStartIdcs(path, curve);
+        this.radius = radius;
     }
 
     int[] calculateSegmentStartIdcs(Path p, ArrayList<Point> curve) {
@@ -74,10 +76,10 @@ public class PathGeometryHelper implements BoundingBox {
         double maxRadiusSquared = radius * radius;
         HashMap<Point, Collection<Point>> parentage = new HashMap<>();
         for (Point point : curve) {
-            parentage.putIfAbsent(point, new LinkedList<>());
+            parentage.put(point, new LinkedList<>());
         }
 
-        Collection<Point> allNearby = allPointsInsideChildBbxs();
+        Collection<Point> allNearby = collectPointsAroundPath();// allPointsInsideChildBbxs();
         assert new HashSet<>(allNearby).size() == allNearby.size(); //all points are unique
         for (Point point : allNearby) {
             assert this.contains(point);
@@ -89,6 +91,21 @@ public class PathGeometryHelper implements BoundingBox {
         }
 
         return parentage;
+    }
+
+    Collection<Point> collectPointsAroundPath() {
+        double radiusSq = radius * radius;
+        HashSet<Point> visited = new HashSet<>();
+        for (Point p : curve) {
+            for (int x = (int) -radius; x < radius; x++) {
+                for (int y = (int) -radius; y < radius; y++) {
+                    Point nearby = new Point(p.x + x, p.y + y);
+                    if (nearby.distanceSq(p) < radiusSq)
+                        visited.add(nearby);
+                }
+            }
+        }
+        return visited;
     }
 
     Collection<Point> allPointsInsideChildBbxs() {
@@ -166,7 +183,7 @@ public class PathGeometryHelper implements BoundingBox {
             newBoundingBoxes.add(bb.expand(size));
         }
 
-        return new PathGeometryHelper(path, newBoundingBoxes, curve);
+        return new PathGeometryHelper(path, newBoundingBoxes, curve, radius);
     }
 
     @Override
