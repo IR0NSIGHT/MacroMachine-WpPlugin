@@ -1,11 +1,11 @@
 package org.demo.wpplugin.operations.ApplyPath;
 
 import org.demo.wpplugin.layers.PathPreviewLayer;
+import org.demo.wpplugin.operations.EditPath.EditPathOperation;
+import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
 import org.demo.wpplugin.pathing.PathManager;
-import org.demo.wpplugin.operations.EditPath.EditPathOperation;
-import org.demo.wpplugin.operations.OptionsLabel;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.*;
@@ -14,10 +14,13 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Random;
 
-import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
+import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -40,37 +43,56 @@ import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
  * <p><strong>Note</strong> that for now WorldPainter only supports operations that
  */
 public class ApplyPathOperation extends MouseOrTabletOperation implements
-        PaintOperation, // Implement this if you need access to the currently selected paint; note that some base classes already provide this
-        BrushOperation // Implement this if you need access to the currently selected brush; note that some base classes already provide this
+        PaintOperation, // Implement this if you need access to the currently selected paint; note that some base
+        // classes already provide this
+        BrushOperation // Implement this if you need access to the currently selected brush; note that some base
+        // classes already provide this
 {
-    public ApplyPathOperation() {
-        super(NAME, DESCRIPTION, ID);
-    }
-
-
-    @Override
-    public JPanel getOptionsPanel() {
-        return optionsPanel;
-    }
-    private final ApplyPathOptions options = new ApplyPathOptions(3,0,1,3);
+    /**
+     * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
+     * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
+     */
+    static final String ID = "org.demo.wpplugin.ApplyPathOperation.v1";
+    /**
+     * Human-readable short name of the operation.
+     */
+    static final String NAME = "Apply Path Operation";
+    /**
+     * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
+     */
+    static final String DESCRIPTION = "Apply path to this world";
+    private final ApplyPathOptions options = new ApplyPathOptions(3, 0, 1, 3);
     private final StandardOptionsPanel optionsPanel = new StandardOptionsPanel(getName(), getDescription()) {
         @Override
         protected void addAdditionalComponents(GridBagConstraints constraints) {
             add(new ApplyPathOptionsPanel(options), constraints);
         }
     };
+    private Brush brush;
+    private Paint paint;
+
+    public ApplyPathOperation() {
+        super(NAME, DESCRIPTION, ID);
+    }
+
+    @Override
+    public JPanel getOptionsPanel() {
+        return optionsPanel;
+    }
 
     /**
      * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
      * this is invoked once per {@code delay} ms while the mouse button is down, with the first invocation having
      * {@code first} be {@code true} and subsequent invocations having it be {@code false}.
      *
-     * @param centreX The x coordinate where the operation should be applied, in world coordinates.
-     * @param centreY The y coordinate where the operation should be applied, in world coordinates.
-     * @param inverse Whether to perform the "inverse" operation instead of the regular operation, if applicable. If the
-     *                operation has no inverse it should just apply the normal operation.
-     * @param first Whether this is the first tick of a continuous operation. For a one shot operation this will always
-     *              be {@code true}.
+     * @param centreX      The x coordinate where the operation should be applied, in world coordinates.
+     * @param centreY      The y coordinate where the operation should be applied, in world coordinates.
+     * @param inverse      Whether to perform the "inverse" operation instead of the regular operation, if applicable
+     *                     . If the
+     *                     operation has no inverse it should just apply the normal operation.
+     * @param first        Whether this is the first tick of a continuous operation. For a one shot operation this
+     *                     will always
+     *                     be {@code true}.
      * @param dynamicLevel The dynamic level (from 0.0f to 1.0f inclusive) to apply in addition to the {@code level}
      *                     property, for instance due to a pressure sensitive stylus being used. In other words,
      *                     <strong>not</strong> the total level at which to apply the operation! Operations are free to
@@ -102,13 +124,13 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         ArrayList<Point> curve = path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point));
 
         float baseRadius = options.getStartWidth();
-        float increment = (options.getFinalWidth() - baseRadius)/curve.size();
+        float increment = (options.getFinalWidth() - baseRadius) / curve.size();
         float randomPercent = (float) options.getRandomFluctuate() / 100f;
 
         Random rand = new Random(420);
         float[] randomEdge = new float[curve.size()];
         float randomWidth = 0;
-        for(int i = 0; i < randomEdge.length; i++) {
+        for (int i = 0; i < randomEdge.length; i++) {
             randomWidth += ((rand.nextBoolean() ? 1f : -1f) * rand.nextFloat() * 0.3f);
             randomWidth = Math.max(randomWidth, -1);
             randomWidth = Math.min(randomWidth, 1);
@@ -116,15 +138,26 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         }
 
         double fluctuationSpeed = options.getFluctuationSpeed();
-        fluctuationSpeed = Math.max(1,fluctuationSpeed);    //no divide by zero
+        fluctuationSpeed = Math.max(1, fluctuationSpeed);    //no divide by zero
 
-        PathGeometryHelper helper  = new PathGeometryHelper(path, curve, baseRadius);
+        PathGeometryHelper helper = new PathGeometryHelper(path, curve, baseRadius);
         HashMap<Point, Collection<Point>> parentage = helper.getParentage(baseRadius);
-        for (Map.Entry<Point, Collection<Point>> entry : parentage.entrySet()) {
-            for (Point point : entry.getValue()) {
-                getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y,( (int)point.distance(entry.getKey())) % 16);
+        int curveIndex = 0;
+        for (Point curvePoint : curve) {
+            Collection<Point> nearby = parentage.get(curvePoint);
+            double interpol = curveIndex / (1f * curve.size());
+            double baseRadiusAtIdx = interpol * options.getStartWidth() + (1 - interpol) * options.getFinalWidth();
+            double radiusSq =
+                    baseRadiusAtIdx + randomEdge[(int) ((curveIndex) / fluctuationSpeed)] * baseRadiusAtIdx * randomPercent;
+            radiusSq *= radiusSq;
+            for (Point point : nearby) {
+                double distSq = point.distanceSq(curvePoint);
+
+                if (distSq < radiusSq)
+                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 1);
             }
-        };
+            curveIndex++;
+        }
 /*
 
         int i = 0;
@@ -145,8 +178,8 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
     }
 
     private void markPoint(Point p) {
-        getDimension().setBitLayerValueAt(SelectionBlock.INSTANCE,p.x, p.y,true);
-        getDimension().setLayerValueAt(Annotations.INSTANCE,p.x, p.y,9 /*cyan*/);
+        getDimension().setBitLayerValueAt(SelectionBlock.INSTANCE, p.x, p.y, true);
+        getDimension().setLayerValueAt(Annotations.INSTANCE, p.x, p.y, 9 /*cyan*/);
     }
 
     @Override
@@ -168,25 +201,6 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
     public void setPaint(Paint paint) {
         this.paint = paint;
     }
-
-    private Brush brush;
-    private Paint paint;
-
-    /**
-     * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
-     * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
-     */
-    static final String ID = "org.demo.wpplugin.ApplyPathOperation.v1";
-
-    /**
-     * Human-readable short name of the operation.
-     */
-    static final String NAME = "Apply Path Operation";
-
-    /**
-     * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
-     */
-    static final String DESCRIPTION = "Apply path to this world";
 
     private static class ApplyPathOptionsPanel extends OperationOptionsPanel<ApplyPathOptions> {
         public ApplyPathOptionsPanel(ApplyPathOptions panelOptions) {
@@ -211,7 +225,8 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             ));
 
             inputs.add(numericInput("random width",
-                    "each step the rivers radius will randomly increase or decrease. It will stay within +/- percent of the normal width.",
+                    "each step the rivers radius will randomly increase or decrease. It will stay within +/- percent " +
+                            "of the normal width.",
                     new SpinnerNumberModel(options.getRandomFluctuate(), 0, 100, 1f),
                     w -> options.setRandomFluctuate(w.intValue()),
                     onOptionsReconfigured));

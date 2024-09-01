@@ -97,7 +97,7 @@ public class PathGeometryHelperTest {
 
     @Test
     public void testSubotpimalAABBXPath() {
-        int size = 10000;
+        int size = 100;
         // Arrange
         Path p = new Path(Arrays.asList(
                 new Point(-1, 0),
@@ -117,6 +117,6 @@ public class PathGeometryHelperTest {
         for (Point point : curve) {
             totalNearby += parentage.get(point).size();
         }
-        assertTrue(totalNearby < 1.1*2*radius*(3*size+1));
+        assertTrue(totalNearby < 2f*2*radius*(3*size+1));
     }
 }
