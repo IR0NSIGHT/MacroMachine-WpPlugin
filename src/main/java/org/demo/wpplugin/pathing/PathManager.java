@@ -1,13 +1,11 @@
 package org.demo.wpplugin.pathing;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.awt.*;
+import java.util.*;
 
 public class PathManager {
     public PathManager() {
-        addPath(new Path());
+        addPath(new Path(Arrays.asList(new Point(0, 0), new Point(1, 1), new Point(100, 50), new Point(100, 150), new Point(101, 151))));
     }
     private int nextPathId = 0;
     public static final PathManager instance = new PathManager();

@@ -1,5 +1,6 @@
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.BoundingBox;
+import org.demo.wpplugin.geometry.TreeBoundingBox;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
 import org.junit.jupiter.api.Test;
@@ -118,5 +119,29 @@ public class PathGeometryHelperTest {
             totalNearby += parentage.get(point).size();
         }
         assertTrue(totalNearby < 2f*2*radius*(3*size+1));
+    }
+
+    @Test
+    public void treeBoundingBoxTest() {
+        Path p = new Path(Arrays.asList(
+                new Point(-1, 0),
+                new Point(0, 0),
+                new Point(500, 500),
+                new Point(-500, 500),
+                new Point(250, 250),
+                new Point(500,-250)
+        ));
+
+        Collection<AxisAlignedBoundingBox2d> boxes = PathGeometryHelper.toBoundingBoxes(p.continousCurve(point -> true), 100, 50);
+        BoundingBox treeBox = PathGeometryHelper.constructTree(boxes);
+
+        for (int i = 0; i < 1000; i++) {
+            Point point = new Point((int)(Math.random() * 1000), (int)(Math.random() * 1000));
+            boolean insideList = false;
+            for (BoundingBox box : boxes)
+                insideList = insideList || box.contains(point);
+            System.out.println("inside:" + insideList);
+            assertEquals(insideList, treeBox.contains(point));
+        }
     }
 }

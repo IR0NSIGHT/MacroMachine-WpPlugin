@@ -31,17 +31,14 @@ public class PathGeometryHelper implements BoundingBox {
 
         int boxSizeFacctor = 100; //no zero divisor
         int amountBoxes = Math.max(0, curve.size() / boxSizeFacctor + 1);
-        Collection<AxisAlignedBoundingBox2d> bbxs = new ArrayList<>(amountBoxes);
         segmentStartIdcs = new int[amountBoxes + 1];
         int segmentIdx = 0;
         for (int i = 0; i < curve.size(); i += boxSizeFacctor) {
-            List<Point> subcurve = curve.subList(i, Math.min(i + boxSizeFacctor, curve.size()));
-            bbxs.add(new AxisAlignedBoundingBox2d(subcurve).expand(radius));
             segmentStartIdcs[segmentIdx++] = i;
         }
-
-        boundingBoxes = new ArrayList<>(bbxs);
         segmentStartIdcs[segmentIdx] = curve.size();
+
+        boundingBoxes =new ArrayList<>(toBoundingBoxes(curve, boxSizeFacctor, radius));
 
         for (Point p : curve) {
             assert this.contains(p);
@@ -49,7 +46,17 @@ public class PathGeometryHelper implements BoundingBox {
         }
     }
 
-    Collection<AxisAlignedBoundingBox2d> constructTree(Collection<AxisAlignedBoundingBox2d> neighbouringBoxes) {
+    public static ArrayList<AxisAlignedBoundingBox2d> toBoundingBoxes(ArrayList<Point> curve, int boxSizeFactor, double radius) {
+        ArrayList<AxisAlignedBoundingBox2d> bbxs = new ArrayList<>(curve.size()/boxSizeFactor+1);
+        for (int i = 0; i < curve.size(); i += boxSizeFactor) {
+            List<Point> subcurve = curve.subList(i, Math.min(i + boxSizeFactor, curve.size()));
+            bbxs.add(new AxisAlignedBoundingBox2d(subcurve).expand(radius));
+        }
+        return bbxs;
+    }
+
+    public static BoundingBox constructTree(Collection<AxisAlignedBoundingBox2d> neighbouringBoxes) {
+
         List<AxisAlignedBoundingBox2d> oldList = new ArrayList<>(neighbouringBoxes);
         while (oldList.size() > 1) {
             List<AxisAlignedBoundingBox2d> newList = new ArrayList<>(oldList.size() / 2 + 1);
@@ -65,7 +72,7 @@ public class PathGeometryHelper implements BoundingBox {
             oldList = newList;
         }
         assert oldList.size() == 1;
-        return oldList;
+        return oldList.get(0);
     }
 
     /**
