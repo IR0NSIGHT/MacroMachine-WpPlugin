@@ -1,6 +1,5 @@
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.BoundingBox;
-import org.demo.wpplugin.geometry.TreeBoundingBox;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
 import org.junit.jupiter.api.Test;
@@ -104,12 +103,12 @@ public class PathGeometryHelperTest {
                 new Point(-1, 0),
                 new Point(0, 0),
                 new Point(size, 0),
-                new Point(2*size, 0),
-                new Point(3*size, 0),
-                new Point(3*size+1, 0)
+                new Point(2 * size, 0),
+                new Point(3 * size, 0),
+                new Point(3 * size + 1, 0)
         ));
         ArrayList<Point> curve = p.continousCurve(point -> true);
-        assertEquals(3*size+1, curve.size());
+        assertEquals(3 * size + 1, curve.size());
         int radius = 50;
         PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
@@ -118,7 +117,7 @@ public class PathGeometryHelperTest {
         for (Point point : curve) {
             totalNearby += parentage.get(point).size();
         }
-        assertTrue(totalNearby < 2f*2*radius*(3*size+1));
+        assertTrue(totalNearby < 2f * 2 * radius * (3 * size + 1));
     }
 
     @Test
@@ -129,14 +128,15 @@ public class PathGeometryHelperTest {
                 new Point(500, 500),
                 new Point(-500, 500),
                 new Point(250, 250),
-                new Point(500,-250)
+                new Point(500, -250)
         ));
 
-        Collection<AxisAlignedBoundingBox2d> boxes = PathGeometryHelper.toBoundingBoxes(p.continousCurve(point -> true), 100, 50);
+        Collection<AxisAlignedBoundingBox2d> boxes =
+                PathGeometryHelper.toBoundingBoxes(p.continousCurve(point -> true), 100, 50);
         BoundingBox treeBox = PathGeometryHelper.constructTree(boxes);
 
         for (int i = 0; i < 1000; i++) {
-            Point point = new Point((int)(Math.random() * 1000), (int)(Math.random() * 1000));
+            Point point = new Point((int) (Math.random() * 1000), (int) (Math.random() * 1000));
             boolean insideList = false;
             for (BoundingBox box : boxes)
                 insideList = insideList || box.contains(point);
