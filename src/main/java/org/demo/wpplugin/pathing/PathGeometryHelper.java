@@ -38,7 +38,7 @@ public class PathGeometryHelper implements BoundingBox {
         }
         segmentStartIdcs[segmentIdx] = curve.size();
 
-        boundingBoxes =new ArrayList<>(toBoundingBoxes(curve, boxSizeFacctor, radius));
+        boundingBoxes = new ArrayList<>(toBoundingBoxes(curve, boxSizeFacctor, radius));
 
         for (Point p : curve) {
             assert this.contains(p);
@@ -46,8 +46,9 @@ public class PathGeometryHelper implements BoundingBox {
         }
     }
 
-    public static ArrayList<AxisAlignedBoundingBox2d> toBoundingBoxes(ArrayList<Point> curve, int boxSizeFactor, double radius) {
-        ArrayList<AxisAlignedBoundingBox2d> bbxs = new ArrayList<>(curve.size()/boxSizeFactor+1);
+    public static ArrayList<AxisAlignedBoundingBox2d> toBoundingBoxes(ArrayList<Point> curve, int boxSizeFactor,
+                                                                      double radius) {
+        ArrayList<AxisAlignedBoundingBox2d> bbxs = new ArrayList<>(curve.size() / boxSizeFactor + 1);
         for (int i = 0; i < curve.size(); i += boxSizeFactor) {
             List<Point> subcurve = curve.subList(i, Math.min(i + boxSizeFactor, curve.size()));
             bbxs.add(new AxisAlignedBoundingBox2d(subcurve).expand(radius));
@@ -94,7 +95,6 @@ public class PathGeometryHelper implements BoundingBox {
 
         for (Point point : allNearby) {
             assert this.contains(point);
-            assert this.contains(point);
             Point parentOnCurve = closestCurvePointFor(point);
             assert !curve.contains(point) || point.equals(parentOnCurve) : "cant assign a curvepoint to another " +
                     "parent than himself";
@@ -125,25 +125,27 @@ public class PathGeometryHelper implements BoundingBox {
     Collection<Point> allPointsInsideChildBbxs() {
         //iterate all points for all bounding boxes
         HashSet<Point> allNearby = new HashSet<>(curve);
-        Collection<Point> previousRing = new ArrayList<>(curve);
-
-        for (int i = 0; i < radius; i++) {
-            Collection<Point> thisRing = new ArrayList<>(previousRing.size()*3);
-            for (Point point : previousRing) {
-                for (int x = -1; x <= 1; x++) {
-                    for (int y = -1; y <= 1; y++) {
-                        Point nearby = new Point(point.x + x, point.y + y);
-                        if (!allNearby.contains(nearby)) {
-                            thisRing.add(nearby);
-                            allNearby.add(nearby);
-                        }
-                    }
-                }
-            }
-            assert thisRing.size() < previousRing.size()*8;
-            previousRing = thisRing;
+        int[] factors = {1, -1};
+        for (Point c : curve) {
+            allNearby.add(c);
+            for (Integer f : factors)
+                expandX(c, (int) radius, f, allNearby, false);
         }
+
+        for (Point c : new HashSet<>(allNearby))
+            for (Integer f : factors)
+                expandX(c, (int) radius, f, allNearby, true);
         return allNearby;
+    }
+
+    void expandX(Point base, int radius, int f, HashSet<Point> allNearby, boolean onY) {
+        for (int i = 1; i < radius; i++) {
+            Point nearby = onY ? new Point(base.x, base.y + i * f) : new Point(base.x + i * f, base.y);
+            if (allNearby.contains(nearby)) {
+                return;
+            }
+            allNearby.add(nearby);
+        }
     }
 
     Collection<Point> curveSegment(int segmentIdx) {
