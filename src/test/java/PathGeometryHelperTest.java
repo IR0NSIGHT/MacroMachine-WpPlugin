@@ -1,14 +1,12 @@
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.BoundingBox;
+import org.demo.wpplugin.geometry.TreeBoundingBox;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,7 +36,7 @@ public class PathGeometryHelperTest {
 
     @Test
     public void testExpanding() {
-        BoundingBox bbx = new AxisAlignedBoundingBox2d(new Point(-100, -200), new Point(200, 500));
+        BoundingBox bbx = new AxisAlignedBoundingBox2d(new Point(-100, -200), new Point(200, 500),0);
         assertTrue(bbx.contains(new Point(-100, -200)));
         assertTrue(bbx.contains(new Point(200, 500)));
 
@@ -97,7 +95,7 @@ public class PathGeometryHelperTest {
 
     @Test
     public void testSubotpimalAABBXPath() {
-        int size = 100;
+        int size = 1000;
         // Arrange
         Path p = new Path(Arrays.asList(
                 new Point(-1, 0),
@@ -117,6 +115,7 @@ public class PathGeometryHelperTest {
         for (Point point : curve) {
             totalNearby += parentage.get(point).size();
         }
+        assertTrue(radius * (3 * size + 1) < totalNearby);
         assertTrue(totalNearby < 2f * 2 * radius * (3 * size + 1));
     }
 
@@ -142,6 +141,37 @@ public class PathGeometryHelperTest {
                 insideList = insideList || box.contains(point);
             System.out.println("inside:" + insideList);
             assertEquals(insideList, treeBox.contains(point));
+        }
+    }
+
+    @Test
+    public void treeBoundingBoxCollectIds() {
+        Path p = new Path(Arrays.asList(
+                new Point(-1, 0),
+                new Point(0, 0),
+                new Point(500, 500),
+                new Point(-500, 500),
+                new Point(250, 250),
+                new Point(500, -250),
+                new Point(1000,1000),
+                new Point(1000,-1000),
+                new Point(1000,-1001),
+                new Point(0,0),
+                new Point(1,1)
+        ));
+
+        Collection<AxisAlignedBoundingBox2d> boxes =
+                PathGeometryHelper.toBoundingBoxes(p.continousCurve(point -> true), 100, 50);
+        TreeBoundingBox treeBox = PathGeometryHelper.constructTree(boxes);
+
+        for (int i = 0; i < 1000; i++) {
+            Point point = new Point((int) (Math.random() * 1000), (int) (Math.random() * 1000));
+            Collection<Integer> treeOut = new LinkedList<>(), loopOut = new LinkedList<>();
+            for (AxisAlignedBoundingBox2d box : boxes)
+                if (box.contains(point))
+                    loopOut.add(box.id);
+            treeBox.collectContainingAABBxsIds(point, treeOut);
+            assertIterableEquals(loopOut, treeOut);
         }
     }
 }

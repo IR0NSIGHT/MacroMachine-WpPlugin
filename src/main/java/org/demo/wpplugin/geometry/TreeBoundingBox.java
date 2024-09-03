@@ -2,6 +2,7 @@ package org.demo.wpplugin.geometry;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 
 public class TreeBoundingBox extends AxisAlignedBoundingBox2d {
@@ -10,7 +11,7 @@ public class TreeBoundingBox extends AxisAlignedBoundingBox2d {
     private final AxisAlignedBoundingBox2d rightChild;
 
     public TreeBoundingBox(AxisAlignedBoundingBox2d leftChild, AxisAlignedBoundingBox2d rightChild) {
-        super(Arrays.asList(leftChild.minPoint, leftChild.maxPoint, rightChild.minPoint, rightChild.maxPoint));
+        super(Arrays.asList(leftChild.minPoint, leftChild.maxPoint, rightChild.minPoint, rightChild.maxPoint),-1);
         this.leftChild = leftChild;
         this.rightChild = rightChild;
         this.sumChilds =
@@ -24,6 +25,20 @@ public class TreeBoundingBox extends AxisAlignedBoundingBox2d {
         }
         boolean isInChildren = (leftChild.contains(p) || rightChild.contains(p));
         return isInChildren;
+    }
+
+    public void collectContainingAABBxsIds(Point p, Collection<Integer> out) {
+        if (!super.contains(p))
+            return;
+        if (leftChild instanceof TreeBoundingBox) {
+            ((TreeBoundingBox) leftChild).collectContainingAABBxsIds(p, out);
+        } else if (leftChild.contains(p))
+            out.add(leftChild.id);
+
+        if (rightChild instanceof TreeBoundingBox) {
+            ((TreeBoundingBox) rightChild).collectContainingAABBxsIds(p, out);
+        } else if (rightChild.contains(p))
+            out.add(rightChild.id);
     }
 
     @Override

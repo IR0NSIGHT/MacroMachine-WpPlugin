@@ -7,22 +7,24 @@ import java.util.Iterator;
 public class AxisAlignedBoundingBox2d implements BoundingBox {
     final Point maxPoint;
     final Point minPoint;
-
+    public final int id;
     /**
      * axis aligned boundingbox. will contain min and maxpoint.
      *
      * @param minPoint
      * @param maxPoint
      */
-    public AxisAlignedBoundingBox2d(Point minPoint, Point maxPoint) {
+    public AxisAlignedBoundingBox2d(Point minPoint, Point maxPoint, int id) {
         this.minPoint = minPoint;
         this.maxPoint = maxPoint;
+        this.id = id;
 
         assert maxPoint.x >= minPoint.x;
         assert maxPoint.y >= minPoint.y;
     }
 
-    public AxisAlignedBoundingBox2d(Collection<Point> points) {
+    public AxisAlignedBoundingBox2d(Collection<Point> points, int id) {
+        this.id = id;
         int xMin = Integer.MAX_VALUE, xMax = Integer.MIN_VALUE,
                 yMin = Integer.MAX_VALUE, yMax = Integer.MIN_VALUE;
         for (Point p : points) {
@@ -37,7 +39,7 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
 
     public static AxisAlignedBoundingBox2d fromPoints(Collection<Point> points) {
 
-        return new AxisAlignedBoundingBox2d(points);
+        return new AxisAlignedBoundingBox2d(points,0);
     }
 
     @Override
@@ -48,7 +50,7 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
     @Override
     public AxisAlignedBoundingBox2d expand(double size) {
         return new AxisAlignedBoundingBox2d(new Point((int) (minPoint.x - size), (int) (minPoint.y - size)),
-                new Point((int) Math.ceil(maxPoint.x + size), (int) Math.ceil(maxPoint.y + size)));
+                new Point((int) Math.ceil(maxPoint.x + size), (int) Math.ceil(maxPoint.y + size)),id);
     }
 
     public Iterator<Point> areaIterator() {
