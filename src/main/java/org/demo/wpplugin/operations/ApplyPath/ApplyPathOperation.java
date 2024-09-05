@@ -170,22 +170,6 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             }
             curveIndex++;
         }
-/*
-
-        int i = 0;
-        for (Point p: curve) {
-            float radius =baseRadius + randomEdge[(int)((i++)/fluctuationSpeed)] * baseRadius * randomPercent;
-
-            for (int x = (int) -radius; x < radius; x++) {
-                for (int y = (int) -radius; y < radius; y++) {
-                    Point nearby = new Point(p.x + x, p.y + y);
-                    if (nearby.distanceSq(p) < (radius*radius))
-                        markPoint(nearby);
-                }
-            }
-            baseRadius += increment;
-        }
-*/
         this.getDimension().setEventsInhibited(false);
     }
 
