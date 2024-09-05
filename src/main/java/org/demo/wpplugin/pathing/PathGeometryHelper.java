@@ -11,18 +11,17 @@ import java.util.*;
 
 public class PathGeometryHelper implements BoundingBox {
     private final Path path;
-    private final ArrayList<AxisAlignedBoundingBox2d> boundingBoxes;
-    private TreeBoundingBox treeBoundingBox;
     private final ArrayList<Point> curve;
     private final int[] segmentStartIdcs;
     private final double radius;
+    private TreeBoundingBox treeBoundingBox;
 
-    private PathGeometryHelper(Path path, ArrayList<AxisAlignedBoundingBox2d> boundingBoxes, ArrayList<Point> curve,
+    private PathGeometryHelper(Path path, TreeBoundingBox boundingBoxes, ArrayList<Point> curve,
                                double radius
             , int[] segmentStartIdcs) {
         this.path = path;
-        this.boundingBoxes = boundingBoxes;
         this.curve = curve;
+        this.treeBoundingBox = boundingBoxes;
         this.segmentStartIdcs = segmentStartIdcs;
         this.radius = radius;
     }
@@ -41,7 +40,7 @@ public class PathGeometryHelper implements BoundingBox {
         }
         segmentStartIdcs[segmentIdx] = curve.size();
 
-        boundingBoxes = new ArrayList<>(toBoundingBoxes(curve, boxSizeFacctor, radius));
+        ArrayList<AxisAlignedBoundingBox2d> boundingBoxes = new ArrayList<>(toBoundingBoxes(curve, boxSizeFacctor, radius));
         treeBoundingBox = constructTree(boundingBoxes);
         for (Point p : curve) {
             assert this.contains(p);
@@ -53,7 +52,7 @@ public class PathGeometryHelper implements BoundingBox {
                                                                       double radius) {
         ArrayList<AxisAlignedBoundingBox2d> bbxs = new ArrayList<>(curve.size() / boxSizeFactor + 1);
         for (int i = 0; i < curve.size(); i += boxSizeFactor) {
-            int boxId = i/boxSizeFactor;
+            int boxId = i / boxSizeFactor;
             List<Point> subcurve = curve.subList(i, Math.min(i + boxSizeFactor, curve.size()));
             AxisAlignedBoundingBox2d box = new AxisAlignedBoundingBox2d(subcurve, boxId).expand(radius);
             bbxs.add(box);
@@ -63,7 +62,7 @@ public class PathGeometryHelper implements BoundingBox {
     }
 
     public static TreeBoundingBox constructTree(Collection<AxisAlignedBoundingBox2d> neighbouringBoxes) {
-        if (neighbouringBoxes.size() == 1 ) {
+        if (neighbouringBoxes.size() == 1) {
             neighbouringBoxes.add(new NeverBoundingBox(-1));
         } else if (neighbouringBoxes.size() == 0) {
             throw new IllegalArgumentException("will not construct tree for zero length list");
@@ -118,20 +117,6 @@ public class PathGeometryHelper implements BoundingBox {
         return parentage;
     }
 
-    Collection<Point> collectPointsAroundPath() {
-        double radiusSq = radius * radius;
-        HashSet<Point> visited = new HashSet<>();
-        for (Point p : curve) {
-            for (int x = (int) -radius; x < radius; x++) {
-                for (int y = (int) -radius; y < radius; y++) {
-                    Point nearby = new Point(p.x + x, p.y + y);
-                    if (nearby.distanceSq(p) < radiusSq)
-                        visited.add(nearby);
-                }
-            }
-        }
-        return visited;
-    }
 
     Collection<Point> allPointsInsideChildBbxs() {
         //iterate all points for all bounding boxes
@@ -159,44 +144,13 @@ public class PathGeometryHelper implements BoundingBox {
         }
     }
 
-    Collection<Point> curveSegment(int segmentIdx) {
-        return curve.subList(segmentStartIdcs[segmentIdx], segmentStartIdcs[segmentIdx + 1]);
-    }
-
-    Iterator<Point> curveSegmentIterator(int segmentIdx) {
-        return new Iterator<Point>() {
-            final int startIdx = segmentStartIdcs[segmentIdx];
-            final int endIdx = segmentStartIdcs[segmentIdx + 1];
-            int currentIdx = startIdx;
-
-            @Override
-            public boolean hasNext() {
-                return currentIdx < endIdx;
-            }
-
-            @Override
-            public Point next() {
-                return curve.get(currentIdx++);
-            }
-        };
-    }
-
-    boolean isPointInside(Point point, Collection<BoundingBox> boundingBoxes) {
-        for (BoundingBox boundingBox : boundingBoxes) {
-            if (boundingBox.contains(point)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     Point closestCurvePointFor(Point nearby) {
         Point closestPoint = null;
         double minDistSq = Double.MAX_VALUE;
         Collection<Integer> containingBoxIdcs = getContainingIdcs(nearby);
         for (int idx : containingBoxIdcs) {
             assert idx >= 0;
-            assert idx < boundingBoxes.size();
+            assert idx < segmentStartIdcs.length: "box idx is out of bounds";
             for (int i = segmentStartIdcs[idx]; i < segmentStartIdcs[idx + 1]; i++) {
                 Point curveP = curve.get(i);
                 double distSq = curveP.distanceSq(nearby);
@@ -224,12 +178,7 @@ public class PathGeometryHelper implements BoundingBox {
 
     @Override
     public BoundingBox expand(double size) {
-        ArrayList<AxisAlignedBoundingBox2d> newBoundingBoxes = new ArrayList<>(boundingBoxes.size());
-        for (BoundingBox bb : boundingBoxes) {
-            newBoundingBoxes.add((AxisAlignedBoundingBox2d) bb.expand(size));
-        }
-
-        return new PathGeometryHelper(path, newBoundingBoxes, curve, radius, segmentStartIdcs);
+        return new PathGeometryHelper(path, treeBoundingBox.expand(size), curve, radius, segmentStartIdcs);
     }
 
     @Override
