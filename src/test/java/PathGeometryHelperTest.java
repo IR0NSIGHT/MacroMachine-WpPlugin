@@ -3,6 +3,7 @@ import org.demo.wpplugin.geometry.BoundingBox;
 import org.demo.wpplugin.geometry.TreeBoundingBox;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
+import org.demo.wpplugin.pathing.PointUtils;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
@@ -131,8 +132,8 @@ public class PathGeometryHelperTest {
         ));
 
         Collection<AxisAlignedBoundingBox2d> boxes =
-                PathGeometryHelper.toBoundingBoxes(p.continousCurve(point -> true), 100, 50);
-        BoundingBox treeBox = PathGeometryHelper.constructTree(boxes);
+                PointUtils.toBoundingBoxes(p.continousCurve(point -> true), 100, 50);
+        BoundingBox treeBox = TreeBoundingBox.constructTree(boxes);
 
         for (int i = 0; i < 1000; i++) {
             Point point = new Point((int) (Math.random() * 1000), (int) (Math.random() * 1000));
@@ -161,8 +162,8 @@ public class PathGeometryHelperTest {
         ));
 
         Collection<AxisAlignedBoundingBox2d> boxes =
-                PathGeometryHelper.toBoundingBoxes(p.continousCurve(point -> true), 100, 50);
-        TreeBoundingBox treeBox = PathGeometryHelper.constructTree(boxes);
+                PointUtils.toBoundingBoxes(p.continousCurve(point -> true), 100, 50);
+        TreeBoundingBox treeBox = TreeBoundingBox.constructTree(boxes);
 
         for (int i = 0; i < 1000; i++) {
             Point point = new Point((int) (Math.random() * 1000), (int) (Math.random() * 1000));

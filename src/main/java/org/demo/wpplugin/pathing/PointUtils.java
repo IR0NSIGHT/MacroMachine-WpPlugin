@@ -1,6 +1,10 @@
 package org.demo.wpplugin.pathing;
 
+import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
+
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PointUtils {
 
@@ -51,5 +55,18 @@ public class PointUtils {
             totalLength += path[i - 1].distance(path[i]);
         }
         return totalLength;
+    }
+
+    public static ArrayList<AxisAlignedBoundingBox2d> toBoundingBoxes(ArrayList<Point> curve, int boxSizeFactor,
+                                                                      double radius) {
+        ArrayList<AxisAlignedBoundingBox2d> bbxs = new ArrayList<>(curve.size() / boxSizeFactor + 1);
+        for (int i = 0; i < curve.size(); i += boxSizeFactor) {
+            int boxId = i / boxSizeFactor;
+            List<Point> subcurve = curve.subList(i, Math.min(i + boxSizeFactor, curve.size()));
+            AxisAlignedBoundingBox2d box = new AxisAlignedBoundingBox2d(subcurve, boxId).expand(radius);
+            bbxs.add(box);
+            assert box.id == boxId;
+        }
+        return bbxs;
     }
 }

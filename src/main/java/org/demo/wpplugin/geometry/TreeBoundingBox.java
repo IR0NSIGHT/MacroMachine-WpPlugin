@@ -1,9 +1,11 @@
 package org.demo.wpplugin.geometry;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public class TreeBoundingBox extends AxisAlignedBoundingBox2d {
     final int sumChilds;
@@ -16,6 +18,31 @@ public class TreeBoundingBox extends AxisAlignedBoundingBox2d {
         this.rightChild = rightChild;
         this.sumChilds =
                 (leftChild instanceof TreeBoundingBox ? ((TreeBoundingBox) leftChild).sumChilds : 1) + (rightChild instanceof TreeBoundingBox ? ((TreeBoundingBox) rightChild).sumChilds : 1);
+    }
+
+    public static TreeBoundingBox constructTree(Collection<AxisAlignedBoundingBox2d> neighbouringBoxes) {
+        if (neighbouringBoxes.size() == 1) {
+            neighbouringBoxes.add(new NeverBoundingBox(-1));
+        } else if (neighbouringBoxes.size() == 0) {
+            throw new IllegalArgumentException("will not construct tree for zero length list");
+        }
+        assert neighbouringBoxes.size() >= 2;
+        java.util.List<AxisAlignedBoundingBox2d> oldList = new ArrayList<>(neighbouringBoxes);
+        while (oldList.size() > 1) {
+            List<AxisAlignedBoundingBox2d> newList = new ArrayList<>(oldList.size() / 2 + 1);
+            for (int i = 0; i < oldList.size(); i++) {
+                if (i < oldList.size() - 1) {
+                    TreeBoundingBox parent = new TreeBoundingBox(oldList.get(i), oldList.get(i + 1));
+                    newList.add(parent);
+                    i++;
+                } else {
+                    newList.add(oldList.get(i));
+                }
+            }
+            oldList = newList;
+        }
+        assert oldList.size() == 1;
+        return (TreeBoundingBox) oldList.get(0);
     }
 
     @Override

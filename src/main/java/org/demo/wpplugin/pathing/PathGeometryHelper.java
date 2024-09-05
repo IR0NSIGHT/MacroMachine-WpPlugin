@@ -2,11 +2,9 @@ package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.BoundingBox;
-import org.demo.wpplugin.geometry.NeverBoundingBox;
 import org.demo.wpplugin.geometry.TreeBoundingBox;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
 
 public class PathGeometryHelper implements BoundingBox {
@@ -40,50 +38,12 @@ public class PathGeometryHelper implements BoundingBox {
         }
         segmentStartIdcs[segmentIdx] = curve.size();
 
-        ArrayList<AxisAlignedBoundingBox2d> boundingBoxes = new ArrayList<>(toBoundingBoxes(curve, boxSizeFacctor, radius));
-        treeBoundingBox = constructTree(boundingBoxes);
+        ArrayList<AxisAlignedBoundingBox2d> boundingBoxes = new ArrayList<>(PointUtils.toBoundingBoxes(curve, boxSizeFacctor, radius));
+        treeBoundingBox = TreeBoundingBox.constructTree(boundingBoxes);
         for (Point p : curve) {
             assert this.contains(p);
             assert this.contains(new Point(p.x + (int) radius, p.y + (int) radius));
         }
-    }
-
-    public static ArrayList<AxisAlignedBoundingBox2d> toBoundingBoxes(ArrayList<Point> curve, int boxSizeFactor,
-                                                                      double radius) {
-        ArrayList<AxisAlignedBoundingBox2d> bbxs = new ArrayList<>(curve.size() / boxSizeFactor + 1);
-        for (int i = 0; i < curve.size(); i += boxSizeFactor) {
-            int boxId = i / boxSizeFactor;
-            List<Point> subcurve = curve.subList(i, Math.min(i + boxSizeFactor, curve.size()));
-            AxisAlignedBoundingBox2d box = new AxisAlignedBoundingBox2d(subcurve, boxId).expand(radius);
-            bbxs.add(box);
-            assert box.id == boxId;
-        }
-        return bbxs;
-    }
-
-    public static TreeBoundingBox constructTree(Collection<AxisAlignedBoundingBox2d> neighbouringBoxes) {
-        if (neighbouringBoxes.size() == 1) {
-            neighbouringBoxes.add(new NeverBoundingBox(-1));
-        } else if (neighbouringBoxes.size() == 0) {
-            throw new IllegalArgumentException("will not construct tree for zero length list");
-        }
-        assert neighbouringBoxes.size() >= 2;
-        List<AxisAlignedBoundingBox2d> oldList = new ArrayList<>(neighbouringBoxes);
-        while (oldList.size() > 1) {
-            List<AxisAlignedBoundingBox2d> newList = new ArrayList<>(oldList.size() / 2 + 1);
-            for (int i = 0; i < oldList.size(); i++) {
-                if (i < oldList.size() - 1) {
-                    TreeBoundingBox parent = new TreeBoundingBox(oldList.get(i), oldList.get(i + 1));
-                    newList.add(parent);
-                    i++;
-                } else {
-                    newList.add(oldList.get(i));
-                }
-            }
-            oldList = newList;
-        }
-        assert oldList.size() == 1;
-        return (TreeBoundingBox) oldList.get(0);
     }
 
     /**
@@ -117,7 +77,6 @@ public class PathGeometryHelper implements BoundingBox {
         return parentage;
     }
 
-
     Collection<Point> allPointsInsideChildBbxs() {
         //iterate all points for all bounding boxes
         HashSet<Point> allNearby = new HashSet<>(curve);
@@ -134,7 +93,7 @@ public class PathGeometryHelper implements BoundingBox {
         return allNearby;
     }
 
-    void expandX(Point base, int radius, int f, HashSet<Point> allNearby, boolean onY) {
+    private void expandX(Point base, int radius, int f, HashSet<Point> allNearby, boolean onY) {
         for (int i = 1; i < radius; i++) {
             Point nearby = onY ? new Point(base.x, base.y + i * f) : new Point(base.x + i * f, base.y);
             if (allNearby.contains(nearby)) {
@@ -144,7 +103,7 @@ public class PathGeometryHelper implements BoundingBox {
         }
     }
 
-    Point closestCurvePointFor(Point nearby) {
+    public Point closestCurvePointFor(Point nearby) {
         Point closestPoint = null;
         double minDistSq = Double.MAX_VALUE;
         Collection<Integer> containingBoxIdcs = getContainingIdcs(nearby);
