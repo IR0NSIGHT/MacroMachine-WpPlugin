@@ -14,10 +14,7 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
 
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
 import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
@@ -117,14 +114,13 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
         Brush brush = this.getBrush();
         Paint paint = this.getPaint();
-
+        int transitionFactor = 3;
         Path path = PathManager.instance.getPathBy(EditPathOperation.PATH_ID);
         assert path != null : "Pathmanager delivered null path";
 
         ArrayList<Point> curve = path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point));
 
         float baseRadius = options.getStartWidth();
-        float increment = (options.getFinalWidth() - baseRadius) / curve.size();
         float randomPercent = (float) options.getRandomFluctuate() / 100f;
 
         Random rand = new Random(420);
@@ -139,37 +135,80 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
         double fluctuationSpeed = options.getFluctuationSpeed();
         fluctuationSpeed = Math.max(1, fluctuationSpeed);    //no divide by zero
+        double maxRadius = Math.max(options.getFinalWidth(), options.getStartWidth()) * (1 + randomPercent);
+        double transition = maxRadius * transitionFactor;
+        maxRadius += transition;
 
-        PathGeometryHelper helper = new PathGeometryHelper(path, curve, Math.max(options.getFinalWidth(),
-                options.getStartWidth()));
-        HashMap<Point, Collection<Point>> parentage = helper.getParentage(baseRadius);
+        PathGeometryHelper helper = new PathGeometryHelper(path, curve, maxRadius);
+        HashMap<Point, Collection<Point>> parentage = helper.getParentage(maxRadius);
         int curveIndex = 0;
-        int[] heightProfile = {60, 61,61, 62, 62, 63, 63, 64, 64, 65, 65};
+        int[] heightProfile = {60, 61, 61, 62, 62, 63, 63, 64, 64, 65, 65};
         for (int i = 0; i < heightProfile.length; i++)
             heightProfile[i] -= 3;
+        LinkedList<Point> transitionPoints = new LinkedList<>();
         for (Point curvePoint : curve) {
             Collection<Point> nearby = parentage.get(curvePoint);
             double interpol = curveIndex / (1f * curve.size());
             double baseRadiusAtIdx = interpol * options.getStartWidth() + (1 - interpol) * options.getFinalWidth();
-            float randomFluxAtIdx = randomEdge[(int) ((curveIndex) / fluctuationSpeed)] ;
+            float randomFluxAtIdx = randomEdge[(int) ((curveIndex) / fluctuationSpeed)];
             double totalRadiusAtIdx =
-                    baseRadiusAtIdx +  randomFluxAtIdx * randomPercent* baseRadiusAtIdx ;
+                    baseRadiusAtIdx * (1 + randomFluxAtIdx * randomPercent);
             double radiusSq = totalRadiusAtIdx * totalRadiusAtIdx;
             for (Point point : nearby) {
                 double distSq = point.distanceSq(curvePoint);
 
-                if (distSq < radiusSq)
-                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 1);
                 double dist = Math.sqrt(distSq);
                 double profileInterpolate = dist / (1f * totalRadiusAtIdx);
-                if (profileInterpolate < 1) {
-                    assert profileInterpolate >= 0 && profileInterpolate < 1;
-                    int profileIdx = (int) (profileInterpolate * heightProfile.length);
-                    getDimension().setHeightAt(point.x, point.y, heightProfile[profileIdx] + randomFluxAtIdx );
+                if (distSq < radiusSq) {
+                    //its part of the river profile
+                    if (profileInterpolate < 1) {
+                        assert profileInterpolate >= 0 && profileInterpolate < 1;
+                        int profileIdx = (int) (profileInterpolate * heightProfile.length);
+                        getDimension().setHeightAt(point.x, point.y, heightProfile[profileIdx]);
+                    }
+                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 1);
+                } else if (distSq <= maxRadius * maxRadius) {
+                    //its part of the transition
+                    transitionPoints.add(point);
+                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 2);
+
                 }
             }
             curveIndex++;
         }
+
+        int maxX = (int) maxRadius;
+        HashMap<Point, Float> myMap = new HashMap<>(transitionPoints.size());
+        //smooth in x dir
+        for (Point curvePoint : transitionPoints) {
+            float sum = getDimension().getHeightAt(curvePoint.x , curvePoint.y) * maxX;
+            int i = maxX;
+            for (int x = 1; x < maxX; x++) {
+                int factor = maxX - x;
+                sum += getDimension().getHeightAt(curvePoint.x + x, curvePoint.y) * factor;
+                sum += getDimension().getHeightAt(curvePoint.x - x, curvePoint.y) * factor;
+                i += factor + factor;
+            }
+            sum /= i;
+            myMap.put(curvePoint, sum);
+            //getDimension().setHeightAt(curvePoint.x, curvePoint.y, sum);
+        }
+
+        //smooth in y dir
+        for (Point curvePoint : transitionPoints) {
+            float sum = myMap.get(curvePoint)*maxX;
+            int i = maxX;
+            for (int x = 1; x < maxX; x++ ) {
+                int factor = maxX-x;
+                sum += myMap.getOrDefault(new Point(curvePoint.x, curvePoint.y+x), getDimension().getHeightAt(curvePoint.x, curvePoint.y+x))*factor;
+                sum += myMap.getOrDefault(new Point(curvePoint.x, curvePoint.y-x), getDimension().getHeightAt(curvePoint.x, curvePoint.y-x))*factor;
+                i+= factor+factor;
+            }
+            sum /= i;
+            getDimension().setHeightAt(curvePoint.x, curvePoint.y, sum);
+        }
+
+
         this.getDimension().setEventsInhibited(false);
     }
 
