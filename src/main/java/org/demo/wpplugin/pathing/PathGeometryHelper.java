@@ -29,7 +29,7 @@ public class PathGeometryHelper implements BoundingBox {
         this.curve = curve;
         this.radius = radius;
 
-        int boxSizeFacctor = 100; //no zero divisor
+        int boxSizeFacctor = 10; //no zero divisor
         int amountBoxes = Math.max(0, curve.size() / boxSizeFacctor + 1);
         segmentStartIdcs = new int[amountBoxes + 1];
         int segmentIdx = 0;
