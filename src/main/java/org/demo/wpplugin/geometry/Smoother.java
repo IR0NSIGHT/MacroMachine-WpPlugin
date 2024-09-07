@@ -4,18 +4,25 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class Smoother {
     final HashMap<Point, Float> xSmoothedPoints;
     final int radius;
     final HeightDimension dimension;
-    final Collection<Point> points;
-
+    final HashSet<Point> points;
+    final Collection<Point> corePoints;
     public Smoother(Collection<Point> points, int radius, HeightDimension dimension) {
         this.radius = radius;
         this.xSmoothedPoints = new HashMap<>(points.size());
         this.dimension = dimension;
-        this.points = points;
+        this.points = new HashSet<>(points);
+        this.corePoints = points;
+        for (Point point : points) {
+            for (int y = -radius; y <= radius; y++) {
+                this.points.add(new Point(point.x, point.y + y));
+            }
+        }
     }
 
     public void smoothAverage() {
@@ -23,6 +30,44 @@ public class Smoother {
         float sum = kernel.length;
         Arrays.fill(kernel, 1);
 
+        smoothPoints(kernel, sum);
+    }
+
+    /**
+     * Generates a Gaussian curve as a float array.
+     *
+     * @param size   Number of points in the curve
+     * @param maxHeight Maximum height of the curve (A in the Gaussian function)
+     * @param mean   The mean (center) of the curve (μ in the Gaussian function)
+     * @param stdDev The standard deviation (width) of the curve (σ in the Gaussian function)
+     * @return A float array representing the Gaussian curve
+     */
+    public static float[] generateGaussianCurve(int size, float maxHeight, float mean, float stdDev) {
+        float[] curve = new float[size];
+
+        // Generate the Gaussian curve
+        for (int i = 0; i < size; i++) {
+            // Calculate the x value for each point
+            float x = i;
+
+            // Apply the Gaussian formula
+            float value = (float) (maxHeight * Math.exp(-Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2))));
+
+            // Store the value in the curve array
+            curve[i] = value;
+        }
+
+        return curve;
+    }
+
+    public void smoothGauss() {
+        float[] kernel = generateGaussianCurve(2*radius+1,10,radius,radius/2f);
+        float sum = 0;
+        for (float v : kernel) {
+            System.out.println("#".repeat((int)v));
+            sum += v;
+        }
+        System.out.println(Arrays.toString(kernel));
         smoothPoints(kernel, sum);
     }
 
@@ -34,43 +79,21 @@ public class Smoother {
                 float factor = kernel[x];
                 int xPos = curvePoint.x + x - radius;
                 int yPos = curvePoint.y;
-                if (curvePoint.equals(new Point(5,-10))) {
-                    System.out.println("smooth x: ("+xPos + "," + yPos+ "), z="+dimension.getHeight(xPos, yPos)+ " factor="+factor);
-                }
                 sum += dimension.getHeight(xPos, yPos) * factor;
             }
             sum /= kernelSum;
-            if (curvePoint.equals(new Point(5,-10))) {
-                System.out.println("final z: "+sum);
-            }
             xSmoothedPoints.put(curvePoint, sum);
         }
 
-        //write back x smoothed points to dimension
-        for (Point point : points) {
-            dimension.setHeight(point.x, point.y, xSmoothedPoints.get(point));
-        }
-        xSmoothedPoints.clear();
-
-        //smooth in x dir
-        for (Point curvePoint : points) {
+        //smooth in y dir using precalculated smoothed x values
+        for (Point curvePoint : corePoints) {
             float sum = 0;
             for (int y = 0; y < kernel.length; y++) {
                 float factor = kernel[y];
-                if (curvePoint.equals(new Point(5,-10))) {
-                    System.out.println("smooth y: ("+curvePoint.x + "," + (curvePoint.y + y - radius)+ "), z="+dimension.getHeight(curvePoint.x, curvePoint.y + y - radius)+ " factor="+factor);
-                }
-                sum += dimension.getHeight(curvePoint.x, curvePoint.y + y - radius) * factor;
+                sum += xSmoothedPoints.get(new Point(curvePoint.x, curvePoint.y + y - radius))* factor;
             }
             sum /= kernelSum;
-            if (curvePoint.equals(new Point(5,-10))) {
-                System.out.println("final z: "+sum);
-            }
-            xSmoothedPoints.put(curvePoint, sum);
-        }
-        //write back x smoothed points to dimension
-        for (Point point : points) {
-            dimension.setHeight(point.x, point.y, xSmoothedPoints.get(point));
+            dimension.setHeight(curvePoint.x, curvePoint.y, sum);
         }
     }
 }

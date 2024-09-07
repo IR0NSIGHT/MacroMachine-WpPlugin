@@ -1,5 +1,7 @@
 package org.demo.wpplugin.operations.ApplyPath;
 
+import org.demo.wpplugin.geometry.HeightDimension;
+import org.demo.wpplugin.geometry.Smoother;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
@@ -114,7 +116,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
         Brush brush = this.getBrush();
         Paint paint = this.getPaint();
-        int transitionFactor = 3;
+        int transitionFactor = 5;
         Path path = PathManager.instance.getPathBy(EditPathOperation.PATH_ID);
         assert path != null : "Pathmanager delivered null path";
 
@@ -136,8 +138,8 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         double fluctuationSpeed = options.getFluctuationSpeed();
         fluctuationSpeed = Math.max(1, fluctuationSpeed);    //no divide by zero
         double maxRadius = Math.max(options.getFinalWidth(), options.getStartWidth()) * (1 + randomPercent);
-        double transition = maxRadius * transitionFactor;
-        maxRadius += transition;
+        int transitionRadius = (int)(maxRadius * transitionFactor);
+        maxRadius += transitionRadius;
 
         PathGeometryHelper helper = new PathGeometryHelper(path, curve, maxRadius);
         HashMap<Point, Collection<Point>> parentage = helper.getParentage(maxRadius);
@@ -171,12 +173,24 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
                     //its part of the transition
                     transitionPoints.add(point);
                     getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 2);
-
                 }
             }
             curveIndex++;
         }
 
+        HeightDimension dim = new HeightDimension() {
+            @Override
+            public float getHeight(int x, int y) {
+                return getDimension().getHeightAt(x, y);
+            }
+
+            @Override
+            public void setHeight(int x, int y, float z) {
+                getDimension().setHeightAt(x, y, z);
+            }
+        };
+        Smoother smoother = new Smoother(transitionPoints,transitionRadius, dim);
+        smoother.smoothGauss();
         this.getDimension().setEventsInhibited(false);
     }
 
