@@ -228,12 +228,111 @@ public class PathGeometryHelperTest {
         Point point = new Point(3, 3);
         float pointHeightOriginal = 10.3f;
         dimension.setHeight(point.x, point.y, pointHeightOriginal);
-        assertEquals(pointHeightOriginal, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
+        assertEquals(pointHeightOriginal, dimension.getHeight(point.x, point.y),
+                "point is not correct height:" + point);
 
         Smoother smoother = new Smoother(Collections.singleton(new Point(3, 3)), 50, dimension);
         smoother.smoothAverage();
 
         //single towering point on map was smoothed out and is now roughly the height as the fixedHeight of the terrain
-        assertEquals(fixedHeight, dimension.getHeight(point.x,point.y), 0.2f);
+        assertEquals(fixedHeight, dimension.getHeight(point.x, point.y), 0.2f);
+    }
+
+    @Test
+    public void smoothingTestAngledUniform() {
+        float fixedHeight = 7.57f;
+        //terrain is z=x => 45° angle on x axis
+        //since terrain is uniformly angled, no change should occur with smoothing
+        HeightDimension dimension = new HeightDimension() {
+            final HashMap<Point, Float> heights = new HashMap<>();
+
+            @Override
+            public float getHeight(int x, int y) {
+                return heights.getOrDefault(new Point(x, y), (float) x);
+            }
+
+            @Override
+            public void setHeight(int x, int y, float z) {
+                heights.put(new Point(x, y), z);
+            }
+        };
+
+        Collection<Point> toBeSmoothed = new LinkedList<>();
+        int squareLength = 4;
+        for (int x = -squareLength; x < squareLength; x++)
+            for (int y = -squareLength; y < squareLength; y++) {
+                toBeSmoothed.add(new Point(x, y));
+            }
+
+        Smoother smoother = new Smoother(toBeSmoothed, 3, dimension);
+        for (Point point : toBeSmoothed) {
+            assertEquals(point.x, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
+        }
+        smoother.smoothAverage();
+        for (Point point : toBeSmoothed) {
+            assertEquals(point.x, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
+        }
+    }
+
+    @Test
+    public void smoothingTestLine() {
+        float fixedHeight = 8f;
+        //terrain is flat but has a 15 tall wall on x=5
+        //wall will be smmoothed out
+        HeightDimension dimension = new HeightDimension() {
+            final HashMap<Point, Float> heights = new HashMap<>();
+
+            @Override
+            public float getHeight(int x, int y) {
+                return heights.getOrDefault(new Point(x, y), x == 5 ? 15 : fixedHeight);
+            }
+
+            @Override
+            public void setHeight(int x, int y, float z) {
+                heights.put(new Point(x, y), z);
+            }
+        };
+
+        Collection<Point> toBeSmoothed = new LinkedList<>();
+        int squareLength = 10;
+        for (int x = -squareLength; x <= squareLength; x++)
+            for (int y = -squareLength; y <= squareLength; y++) {
+                toBeSmoothed.add(new Point(x, y));
+            }
+
+        int smoothRadius = 3;
+
+        Smoother smoother = new Smoother(toBeSmoothed, smoothRadius, dimension);
+        for (Point point : toBeSmoothed) {
+            if (point.x == 5) //sharp line at x = 5
+                assertEquals(15, dimension.getHeight(point.x, point.y));
+            else
+                assertEquals(fixedHeight, dimension.getHeight(point.x, point.y),
+                        "point is not correct height:" + point);
+        }
+
+        smoother.smoothAverage();
+
+        float heightAtX5 = 9;
+        for (Point point : toBeSmoothed) {
+
+            if (2 <= point.x && point.x <= 8)
+                //near wall
+                if (Math.abs(point.y) <= squareLength - smoothRadius)
+                    //not near y edge
+                    assertEquals(heightAtX5, dimension.getHeight(point.x, point.y), "point" + point + " has wrong " +
+                            "height");
+                else
+                    //near y edge
+                    assertTrue(8 <= dimension.getHeight(point.x, point.y) && dimension.getHeight(point.x, point.y) < 15
+                            , "point" + point + " has wrong height:"+dimension.getHeight(point.x, point.y));
+
+            else if (Math.abs(point.y) <= squareLength - smoothRadius)
+                //point is not near the wall
+                assertEquals(fixedHeight, dimension.getHeight(point.x, point.y),
+                        "point is not correct height:" + point);
+            else //a point on the y axis edge with wierd values
+                assertTrue(8 <= dimension.getHeight(point.x, point.y) && dimension.getHeight(point.x, point.y) <= 15
+                        , "point" + point + " has wrong height:"+dimension.getHeight(point.x, point.y));        }
     }
 }

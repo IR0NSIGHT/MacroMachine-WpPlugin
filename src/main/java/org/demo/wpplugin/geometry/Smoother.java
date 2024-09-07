@@ -34,9 +34,15 @@ public class Smoother {
                 float factor = kernel[x];
                 int xPos = curvePoint.x + x - radius;
                 int yPos = curvePoint.y;
+                if (curvePoint.equals(new Point(5,-10))) {
+                    System.out.println("smooth x: ("+xPos + "," + yPos+ "), z="+dimension.getHeight(xPos, yPos)+ " factor="+factor);
+                }
                 sum += dimension.getHeight(xPos, yPos) * factor;
             }
             sum /= kernelSum;
+            if (curvePoint.equals(new Point(5,-10))) {
+                System.out.println("final z: "+sum);
+            }
             xSmoothedPoints.put(curvePoint, sum);
         }
 
@@ -51,9 +57,15 @@ public class Smoother {
             float sum = 0;
             for (int y = 0; y < kernel.length; y++) {
                 float factor = kernel[y];
+                if (curvePoint.equals(new Point(5,-10))) {
+                    System.out.println("smooth y: ("+curvePoint.x + "," + (curvePoint.y + y - radius)+ "), z="+dimension.getHeight(curvePoint.x, curvePoint.y + y - radius)+ " factor="+factor);
+                }
                 sum += dimension.getHeight(curvePoint.x, curvePoint.y + y - radius) * factor;
             }
             sum /= kernelSum;
+            if (curvePoint.equals(new Point(5,-10))) {
+                System.out.println("final z: "+sum);
+            }
             xSmoothedPoints.put(curvePoint, sum);
         }
         //write back x smoothed points to dimension
