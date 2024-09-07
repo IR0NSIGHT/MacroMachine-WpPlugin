@@ -63,11 +63,16 @@ public class Smoother {
     public void smoothGauss() {
         float[] kernel = generateGaussianCurve(2*radius+1,10,radius,radius/2f);
         float sum = 0;
-        for (float v : kernel) {
-            System.out.println("#".repeat((int)v));
-            sum += v;
+
+        for (int i = 0; i < kernel.length; i++) {
+            kernel[i] = (float)Math.sqrt(kernel[i]);
+        }
+        for (int i = 0; i < kernel.length; i++) {
+            for (int j = 0; j < kernel.length; j++)
+                sum += kernel[i]*kernel[j];
         }
         System.out.println(Arrays.toString(kernel));
+
         smoothPoints(kernel, sum);
     }
 
@@ -81,7 +86,6 @@ public class Smoother {
                 int yPos = curvePoint.y;
                 sum += dimension.getHeight(xPos, yPos) * factor;
             }
-            sum /= kernelSum;
             xSmoothedPoints.put(curvePoint, sum);
         }
 

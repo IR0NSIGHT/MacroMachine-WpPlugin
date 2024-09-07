@@ -138,7 +138,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         double fluctuationSpeed = options.getFluctuationSpeed();
         fluctuationSpeed = Math.max(1, fluctuationSpeed);    //no divide by zero
         double maxRadius = Math.max(options.getFinalWidth(), options.getStartWidth()) * (1 + randomPercent);
-        int transitionRadius = (int)(maxRadius * transitionFactor);
+        int transitionRadius = (int) (maxRadius * transitionFactor);
         maxRadius += transitionRadius;
 
         PathGeometryHelper helper = new PathGeometryHelper(path, curve, maxRadius);
@@ -189,7 +189,16 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
                 getDimension().setHeightAt(x, y, z);
             }
         };
-        Smoother smoother = new Smoother(transitionPoints,transitionRadius, dim);
+
+    /*    //DEBUG
+        transitionPoints.clear();
+        int r = 100;
+        for (int x = -r; x <= r; x++)
+            for (int y = -r; y <= r; y++)
+                transitionPoints.add(new Point(x, y));
+
+     */
+        Smoother smoother = new Smoother(transitionPoints, 25, dim);
         smoother.smoothGauss();
         this.getDimension().setEventsInhibited(false);
     }
