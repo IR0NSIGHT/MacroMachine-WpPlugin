@@ -1,6 +1,4 @@
-import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
-import org.demo.wpplugin.geometry.BoundingBox;
-import org.demo.wpplugin.geometry.TreeBoundingBox;
+import org.demo.wpplugin.geometry.*;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
 import org.demo.wpplugin.pathing.PointUtils;
@@ -37,7 +35,7 @@ public class PathGeometryHelperTest {
 
     @Test
     public void testExpanding() {
-        BoundingBox bbx = new AxisAlignedBoundingBox2d(new Point(-100, -200), new Point(200, 500),0);
+        BoundingBox bbx = new AxisAlignedBoundingBox2d(new Point(-100, -200), new Point(200, 500), 0);
         assertTrue(bbx.contains(new Point(-100, -200)));
         assertTrue(bbx.contains(new Point(200, 500)));
 
@@ -154,11 +152,11 @@ public class PathGeometryHelperTest {
                 new Point(-500, 500),
                 new Point(250, 250),
                 new Point(500, -250),
-                new Point(1000,1000),
-                new Point(1000,-1000),
-                new Point(1000,-1001),
-                new Point(0,0),
-                new Point(1,1)
+                new Point(1000, 1000),
+                new Point(1000, -1000),
+                new Point(1000, -1001),
+                new Point(0, 0),
+                new Point(1, 1)
         ));
 
         Collection<AxisAlignedBoundingBox2d> boxes =
@@ -174,5 +172,68 @@ public class PathGeometryHelperTest {
             treeBox.collectContainingAABBxsIds(point, treeOut);
             assertIterableEquals(loopOut, treeOut);
         }
+    }
+
+    @Test
+    public void smoothingTestFlatArea() {
+        float fixedHeight = 7.57f;
+        HeightDimension dimension = new HeightDimension() {
+            final HashMap<Point, Float> heights = new HashMap<>();
+
+            @Override
+            public float getHeight(int x, int y) {
+                return heights.getOrDefault(new Point(x, y), fixedHeight);
+            }
+
+            @Override
+            public void setHeight(int x, int y, float z) {
+                heights.put(new Point(x, y), z);
+            }
+        };
+
+        Collection<Point> toBeSmoothed = new LinkedList<>();
+        int squareLength = 4;
+        for (int x = -squareLength; x < squareLength; x++)
+            for (int y = -squareLength; y < squareLength; y++) {
+                toBeSmoothed.add(new Point(x, y));
+            }
+
+        Smoother smoother = new Smoother(toBeSmoothed, 3, dimension);
+        for (Point point : toBeSmoothed) {
+            assertEquals(fixedHeight, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
+        }
+        smoother.smoothAverage();
+        for (Point point : toBeSmoothed) {
+            assertEquals(fixedHeight, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
+        }
+    }
+
+    @Test
+    public void smoothingTest() {
+        float fixedHeight = 7.57f;
+        HeightDimension dimension = new HeightDimension() {
+            final HashMap<Point, Float> heights = new HashMap<>();
+
+            @Override
+            public float getHeight(int x, int y) {
+                return heights.getOrDefault(new Point(x, y), fixedHeight);
+            }
+
+            @Override
+            public void setHeight(int x, int y, float z) {
+                heights.put(new Point(x, y), z);
+            }
+        };
+
+        Point point = new Point(3, 3);
+        float pointHeightOriginal = 10.3f;
+        dimension.setHeight(point.x, point.y, pointHeightOriginal);
+        assertEquals(pointHeightOriginal, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
+
+        Smoother smoother = new Smoother(Collections.singleton(new Point(3, 3)), 50, dimension);
+        smoother.smoothAverage();
+
+        //single towering point on map was smoothed out and is now roughly the height as the fixedHeight of the terrain
+        assertEquals(fixedHeight, dimension.getHeight(point.x,point.y), 0.2f);
     }
 }

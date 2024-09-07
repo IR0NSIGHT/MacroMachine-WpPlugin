@@ -177,38 +177,6 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             curveIndex++;
         }
 
-        int maxX = (int) maxRadius;
-        HashMap<Point, Float> myMap = new HashMap<>(transitionPoints.size());
-        //smooth in x dir
-        for (Point curvePoint : transitionPoints) {
-            float sum = getDimension().getHeightAt(curvePoint.x , curvePoint.y) * maxX;
-            int i = maxX;
-            for (int x = 1; x < maxX; x++) {
-                int factor = maxX - x;
-                sum += getDimension().getHeightAt(curvePoint.x + x, curvePoint.y) * factor;
-                sum += getDimension().getHeightAt(curvePoint.x - x, curvePoint.y) * factor;
-                i += factor + factor;
-            }
-            sum /= i;
-            myMap.put(curvePoint, sum);
-            //getDimension().setHeightAt(curvePoint.x, curvePoint.y, sum);
-        }
-
-        //smooth in y dir
-        for (Point curvePoint : transitionPoints) {
-            float sum = myMap.get(curvePoint)*maxX;
-            int i = maxX;
-            for (int x = 1; x < maxX; x++ ) {
-                int factor = maxX-x;
-                sum += myMap.getOrDefault(new Point(curvePoint.x, curvePoint.y+x), getDimension().getHeightAt(curvePoint.x, curvePoint.y+x))*factor;
-                sum += myMap.getOrDefault(new Point(curvePoint.x, curvePoint.y-x), getDimension().getHeightAt(curvePoint.x, curvePoint.y-x))*factor;
-                i+= factor+factor;
-            }
-            sum /= i;
-            getDimension().setHeightAt(curvePoint.x, curvePoint.y, sum);
-        }
-
-
         this.getDimension().setEventsInhibited(false);
     }
 
