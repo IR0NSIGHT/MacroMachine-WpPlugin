@@ -158,32 +158,31 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             double radiusSq = totalRadiusAtIdx * totalRadiusAtIdx;
             for (Point point : nearby) {
                 double distSq = point.distanceSq(curvePoint);
-
-                double distance = Math.sqrt(distSq);
-
                 if (distSq < radiusSq) {
                     //its part of the river profile
-                    double profileInterpolate = distance / (1f * totalRadiusAtIdx);
-                    if (profileInterpolate < 1) {
-                        assert profileInterpolate >= 0 && profileInterpolate < 1;
-                        int profileIdx = (int) (profileInterpolate * heightProfile.length);
-                        getDimension().setHeightAt(point.x, point.y, heightProfile[profileIdx]);
-                    }
+                    float interpolatedValue = modifyValue(
+                            (float) point.distance(curvePoint),
+                            0f,
+                            (float) totalRadiusAtIdx,
+                            0,
+                            heightProfile.length-1
+                    );  //interpolate between original terrain height and outermost
+
+                    getDimension().setHeightAt(point.x, point.y, heightProfile[(int)interpolatedValue]);
                     getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 12);
-                } else if (distSq <= maxRadius * maxRadius) {
+
+                } else if (distSq <= (totalRadiusAtIdx * (1f + transitionFactor))*(totalRadiusAtIdx * (1f + transitionFactor))) {
                     //its part of the transition
 
-                    distance = point.distance(curvePoint)- totalRadiusAtIdx; //transitionDistance
-                    //calculate strength at which new height is applied based on distance
-                    float profileInterpolate = (float) (distance / (1f * totalRadiusAtIdx*transitionFactor-1/*verzweiflungswert*/));
-                    profileInterpolate = Math.min(1,profileInterpolate);
-                    assert profileInterpolate >= 0 && profileInterpolate <= 1;
-
-                    float interpolatedValue =   //interpolate between original terrain height and outermost riverprofile height
-                            heightProfile[heightProfile.length-1] * (1 - profileInterpolate) + getDimension().getHeightAt(point) * profileInterpolate;
+                    float interpolatedValue = modifyValue(
+                            (float) point.distance(curvePoint),
+                            (float) totalRadiusAtIdx,
+                            (float) totalRadiusAtIdx * (1f + transitionFactor),
+                            heightProfile[heightProfile.length - 1],
+                            getDimension().getHeightAt(point)
+                    );  //interpolate between original terrain height and outermost
                     getDimension().setHeightAt(point.x, point.y, interpolatedValue);
-                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y,
-                            (int) (profileInterpolate == 1 ? 5 : 7));
+                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 7);
 
                     transitionPoints.add(point);
                 }
@@ -204,9 +203,36 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         };
 
         Smoother smoother = new Smoother(transitionPoints, 25, dim);
-        //smoother.smoothGauss();
+        //  smoother.smoothGauss();
 
         this.getDimension().setEventsInhibited(false);
+    }
+
+    /**
+     * return v1 if point = min, v2 if point = max, linear interpolate otherwise
+     *
+     * @param point
+     * @param min
+     * @param max
+     * @param v1
+     * @param v2
+     * @return
+     */
+    private float modifyValue(float point, float min, float max, float v1, float v2) {
+        float y = getCubicInterpolation(point, min, max);
+        return (1-y) * v1 + (y) * v2;
+    }
+
+    /**
+     * @param point
+     * @param min
+     * @param max
+     * @return 1 if point = max, 0 if point = min, else linear interpolate
+     */
+    private float getCubicInterpolation(float point, float min, float max) {
+        float x = (point - min);
+        float width = max - min;
+        return x / width;
     }
 
     private void markPoint(Point p) {
