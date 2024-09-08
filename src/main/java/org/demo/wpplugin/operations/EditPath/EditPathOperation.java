@@ -114,6 +114,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // * brush - the currently selected brush
         // * paint - the currently selected paint
         final Path path = getSelectedPath();
+        EditPathOperation.PATH_ID = getSelectedPathId();
+
         Path previous = path;
         PathManager.NamedId pathId = PathManager.instance.getPathName(getSelectedPathId());
 
