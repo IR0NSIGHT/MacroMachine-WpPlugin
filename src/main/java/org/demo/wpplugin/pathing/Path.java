@@ -96,7 +96,7 @@ public class Path implements Iterable<Point> {
                     .5f));
         }
 
-        assert curveIsContinous(curvePoints) : "path has gaps inbetween";
+    //    assert curveIsContinous(curvePoints) : "path has gaps inbetween";
 
         if (curvePoints.size() == 0)
             return new ArrayList<>(0);

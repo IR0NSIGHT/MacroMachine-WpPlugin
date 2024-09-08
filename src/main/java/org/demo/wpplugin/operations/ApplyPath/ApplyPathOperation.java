@@ -148,6 +148,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         for (int i = 0; i < heightProfile.length; i++)
             heightProfile[i] -= 3;
         LinkedList<Point> transitionPoints = new LinkedList<>();
+        HashMap<Point,Float> transitionPointDistances = new HashMap<>();
         for (Point curvePoint : curve) {
             Collection<Point> nearby = parentage.get(curvePoint);
             double interpol = curveIndex / (1f * curve.size());
@@ -171,39 +172,61 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
                     getDimension().setHeightAt(point.x, point.y, heightProfile[(int)interpolatedValue]);
                     getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 12);
 
-                } else if (distSq <= (totalRadiusAtIdx * (1f + transitionFactor))*(totalRadiusAtIdx * (1f + transitionFactor))) {
+                } else if (distSq <= (baseRadiusAtIdx * (1f + transitionFactor))*(baseRadiusAtIdx * (1f + transitionFactor))) {
                     //its part of the transition
 
                     float interpolatedValue = modifyValue(
                             (float) point.distance(curvePoint),
-                            (float) totalRadiusAtIdx,
-                            (float) totalRadiusAtIdx * (1f + transitionFactor),
-                            heightProfile[heightProfile.length - 1],
-                            getDimension().getHeightAt(point)
+                            (float) baseRadiusAtIdx ,
+                            (float) baseRadiusAtIdx * (1f + transitionFactor),
+                            0,
+                            1f
                     );  //interpolate between original terrain height and outermost
-                    getDimension().setHeightAt(point.x, point.y, interpolatedValue);
-                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 7);
-
+                    transitionPointDistances.put(point, Math.min(1, Math.max(1, interpolatedValue)));
                     transitionPoints.add(point);
+
+                    interpolatedValue = modifyValue(
+                            (float) point.distance(curvePoint),
+                            (float) baseRadiusAtIdx,
+                            (float) baseRadiusAtIdx * (1f + transitionFactor),
+                            heightProfile[heightProfile.length-1],
+                            getDimension().getHeightAt(point)
+                    );  //interpolate between original terrain height and outermost;
+                    getDimension().setHeightAt(point.x, point.y, interpolatedValue);
+
                 }
             }
             curveIndex++;
         }
 
+        HashMap<Point, Float> setZValues = new HashMap<>();
         HeightDimension dim = new HeightDimension() {
             @Override
             public float getHeight(int x, int y) {
-                return getDimension().getHeightAt(x, y);
+                return setZValues.getOrDefault(new Point(x,y), getDimension().getHeightAt(x, y));
             }
 
             @Override
             public void setHeight(int x, int y, float z) {
-                getDimension().setHeightAt(x, y, z);
+                setZValues.put(new Point(x, y), z);
             }
         };
 
-        Smoother smoother = new Smoother(transitionPoints, 25, dim);
-        //  smoother.smoothGauss();
+        Smoother smoother = new Smoother(transitionPoints, 3, dim);
+        smoother.smoothGauss();
+
+        for (Point p: setZValues.keySet()) {
+            float interpolatedValue = modifyValue(
+                    (float) transitionPointDistances.get(p),
+                    0f,
+                    1f,
+                    dim.getHeight(p.x,p.y),
+                    getDimension().getHeightAt(p)
+            );  //interpolate between original terrain height and outermost
+            getDimension().setHeightAt(p.x, p.y, interpolatedValue);
+            getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, p.x, p.y, (int)(transitionPointDistances.get(p)*15));
+
+        }
 
         this.getDimension().setEventsInhibited(false);
     }
