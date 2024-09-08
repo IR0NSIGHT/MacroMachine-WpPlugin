@@ -153,26 +153,39 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             double interpol = curveIndex / (1f * curve.size());
             double baseRadiusAtIdx = interpol * options.getStartWidth() + (1 - interpol) * options.getFinalWidth();
             float randomFluxAtIdx = randomEdge[(int) ((curveIndex) / fluctuationSpeed)];
-            double totalRadiusAtIdx =
+            final double totalRadiusAtIdx =
                     baseRadiusAtIdx * (1 + randomFluxAtIdx * randomPercent);
             double radiusSq = totalRadiusAtIdx * totalRadiusAtIdx;
             for (Point point : nearby) {
                 double distSq = point.distanceSq(curvePoint);
 
-                double dist = Math.sqrt(distSq);
-                double profileInterpolate = dist / (1f * totalRadiusAtIdx);
+                double distance = Math.sqrt(distSq);
+
                 if (distSq < radiusSq) {
                     //its part of the river profile
+                    double profileInterpolate = distance / (1f * totalRadiusAtIdx);
                     if (profileInterpolate < 1) {
                         assert profileInterpolate >= 0 && profileInterpolate < 1;
                         int profileIdx = (int) (profileInterpolate * heightProfile.length);
                         getDimension().setHeightAt(point.x, point.y, heightProfile[profileIdx]);
                     }
-                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 1);
+                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 12);
                 } else if (distSq <= maxRadius * maxRadius) {
                     //its part of the transition
+
+                    distance = point.distance(curvePoint)- totalRadiusAtIdx; //transitionDistance
+                    //calculate strength at which new height is applied based on distance
+                    float profileInterpolate = (float) (distance / (1f * totalRadiusAtIdx*transitionFactor-1/*verzweiflungswert*/));
+                    profileInterpolate = Math.min(1,profileInterpolate);
+                    assert profileInterpolate >= 0 && profileInterpolate <= 1;
+
+                    float interpolatedValue =   //interpolate between original terrain height and outermost riverprofile height
+                            heightProfile[heightProfile.length-1] * (1 - profileInterpolate) + getDimension().getHeightAt(point) * profileInterpolate;
+                    getDimension().setHeightAt(point.x, point.y, interpolatedValue);
+                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y,
+                            (int) (profileInterpolate == 1 ? 5 : 7));
+
                     transitionPoints.add(point);
-                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, point.x, point.y, 2);
                 }
             }
             curveIndex++;
@@ -190,16 +203,9 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             }
         };
 
-    /*    //DEBUG
-        transitionPoints.clear();
-        int r = 100;
-        for (int x = -r; x <= r; x++)
-            for (int y = -r; y <= r; y++)
-                transitionPoints.add(new Point(x, y));
-
-     */
         Smoother smoother = new Smoother(transitionPoints, 25, dim);
-        smoother.smoothGauss();
+        //smoother.smoothGauss();
+
         this.getDimension().setEventsInhibited(false);
     }
 

@@ -237,7 +237,7 @@ public class PathGeometryHelperTest {
         smoother.smoothAverage();
 
         //single towering point on map was smoothed out and is now roughly the height as the fixedHeight of the terrain
-     //   assertEquals(fixedHeight, dimension.getHeight(point.x, point.y), 0.2f);
+        //   assertEquals(fixedHeight, dimension.getHeight(point.x, point.y), 0.2f);
     }
 
     @Test
@@ -285,8 +285,8 @@ public class PathGeometryHelperTest {
 
 
     @Test
-    public void viewGaussKernel() {
-        float fixedHeight = 0f;
+    public void basicGaussKernel() {
+        float fixedHeight = 12f;
         //terrain is z=x => 45° angle on x axis
         //since terrain is uniformly angled, no change should occur with smoothing
         HeightDimension dimension = new HeightDimension() {
@@ -303,24 +303,56 @@ public class PathGeometryHelperTest {
             }
         };
 
-        dimension.setHeight(0,0,1f);
+        dimension.setHeight(0, 0, 101f);
 
         Collection<Point> toBeSmoothed = new LinkedList<>();
-        int squareLength = 4;
-        for (int x = -squareLength; x < squareLength; x++)
-            for (int y = -squareLength; y < squareLength; y++) {
+        int squareLength = 10;
+        for (int x = -squareLength; x <= squareLength; x++)
+            for (int y = -squareLength; y <= squareLength; y++) {
                 toBeSmoothed.add(new Point(x, y));
             }
 
-        int radius = 3;
+        int radius = 5;
         Smoother smoother = new Smoother(toBeSmoothed, radius, dimension);
-        smoother.smoothGauss();
-        radius *= 2;
-        for (int x = -radius; x <= radius; x++) {
-            for (int y = -radius; y <= radius; y++) {
-                System.out.print("\t" + Math.round(100*dimension.getHeight(x, y)));
+
+        float[] kernel = Smoother.generateGaussianCurve(2 * radius + 1, 10, radius, radius / 2f);
+        float kernelSum = 0;
+        for (int i = 0; i < kernel.length; i++)
+            kernel[i] = (float) Math.sqrt(kernel[i]);
+
+        for (float v1 : kernel) {
+            for (float v2 : kernel) kernelSum += v1 * v2;
+        }
+        HashMap<Point, Float> naiveGauss = new HashMap<>();
+        for (Point point : toBeSmoothed) {
+            //calculate naive n² gauss
+            float pointValue = 0;
+            for (int xIdx = 0; xIdx < kernel.length; xIdx++) {
+                System.out.println(" x = " + xIdx);
+                for (int yIdx = 0; yIdx < kernel.length; yIdx++) {
+                    int xPos = point.x + xIdx - radius;
+                    int yPos = point.y + yIdx - radius;
+                    float f1 = kernel[xIdx], f2 = kernel[yIdx];
+                    float z = dimension.getHeight(xPos, yPos);
+                    pointValue += z * f1 * f2;
+                    if (point.x == -10 && point.y == -10) {
+                        System.out.println("sum += " + z + " *" + f1 + "*" + f2);
+                    }
+                }
             }
-            System.out.println();
+            if (point.x == -10 && point.y == -10) {
+                System.out.println("total sum = " + pointValue + " kernelSum = " + kernelSum + " final =" + (pointValue / kernelSum));
+            }
+            pointValue /= kernelSum;
+            naiveGauss.put(point, pointValue);
+        }
+
+        smoother.smoothGauss();
+
+        for (Point point : toBeSmoothed) {
+            assertEquals(naiveGauss.get(point), dimension.getHeight(point.x, point.y), 0.1f, "gauss smoothed point is" +
+                    " equal to naive " +
+                    "gauss smoothed value:" + point);
         }
     }
 
@@ -355,9 +387,9 @@ public class PathGeometryHelperTest {
             assertEquals(point.x, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
         }
         smoother.smoothAverage();
-    //    for (Point point : toBeSmoothed) {
-    //        assertEquals(point.x, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
-    //    }
+        //    for (Point point : toBeSmoothed) {
+        //        assertEquals(point.x, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
+        //    }
     }
 
     @Test
