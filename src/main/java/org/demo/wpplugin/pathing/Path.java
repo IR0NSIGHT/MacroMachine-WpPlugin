@@ -79,6 +79,18 @@ public class Path implements Iterable<Point> {
         Iterable.super.forEach(action);
     }
 
+    public Point byIndex(int index) {
+        return handles.get(index);
+    }
+
+    public int indexOf(Point p) {
+        for (int i = 0; i < handles.size(); i++) {
+            if (p.equals(handles.get(i)))
+                return i;
+        }
+        return -1;
+    }
+
     @Override
     public Spliterator<Point> spliterator() {
         return Iterable.super.spliterator();

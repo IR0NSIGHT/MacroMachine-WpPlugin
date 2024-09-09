@@ -1,17 +1,21 @@
 package org.demo.wpplugin.pathing;
 
+import org.demo.wpplugin.operations.River.RiverPath;
+
 import java.awt.*;
 import java.util.*;
 
 public class PathManager {
-    public PathManager() {
-        addPath(new Path(Arrays.asList(new Point(0, 0), new Point(1, 1), new Point(100, 50), new Point(100, 150), new Point(101, 151))));
-    }
-    private int nextPathId = 0;
     public static final PathManager instance = new PathManager();
-    private HashMap<Integer, Path> pathById = new HashMap<>();
-    private HashMap<Integer, String> pathNames = new HashMap<>();
-    private HashMap<Integer, InformedPath> pathInformation = new HashMap<>();
+    private final HashMap<Integer, Path> pathById = new HashMap<>();
+    private final HashMap<Integer, String> pathNames = new HashMap<>();
+    private final HashMap<Integer, PathInformation> pathInformation = new HashMap<>();
+    private int nextPathId = 0;
+
+    public PathManager() {
+        addPath(new Path(Arrays.asList(new Point(0, 0), new Point(1, 1), new Point(100, 50), new Point(100, 150),
+                new Point(101, 151))));
+    }
 
     public Path getPathBy(int id) throws IllegalArgumentException {
         if (!pathById.containsKey(id))
@@ -31,15 +35,17 @@ public class PathManager {
     public int addPath(Path path) {
         pathById.put(++nextPathId, path);
         setPathBy(nextPathId, path);
-        nameExistingPath(nextPathId,"Path-"+nextPathId);
+        nameExistingPath(nextPathId, "Path-" + nextPathId);
+        setInformedPath(new RiverPath(path.amountHandles()),
+                nextPathId);
         return nextPathId;
     }
 
-    public void setInformedPath(InformedPath info, int id) {
+    public void setInformedPath(PathInformation info, int id) {
         pathInformation.put(id, info);
     }
 
-    public InformedPath getInformationForPath(int id) {
+    public PathInformation getInformationForPath(int id) {
         return pathInformation.get(id);
     }
 

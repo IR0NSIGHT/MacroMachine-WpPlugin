@@ -1,10 +1,13 @@
 package org.demo.wpplugin.operations.EditPath;
 
-import org.demo.wpplugin.pathing.Path;
-import org.demo.wpplugin.pathing.PathManager;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.ApplyPath.OperationOptionsPanel;
 import org.demo.wpplugin.operations.OptionsLabel;
+import org.demo.wpplugin.operations.River.RiverHandleInformation;
+import org.demo.wpplugin.operations.River.RiverPath;
+import org.demo.wpplugin.pathing.Path;
+import org.demo.wpplugin.pathing.PathInformation;
+import org.demo.wpplugin.pathing.PathManager;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
@@ -40,8 +43,10 @@ import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
  * <p><strong>Note</strong> that for now WorldPainter only supports operations that
  */
 public class EditPathOperation extends MouseOrTabletOperation implements
-        PaintOperation, // Implement this if you need access to the currently selected paint; note that some base classes already provide this
-        BrushOperation // Implement this if you need access to the currently selected brush; note that some base classes already provide this
+        PaintOperation, // Implement this if you need access to the currently selected paint; note that some base
+        // classes already provide this
+        BrushOperation // Implement this if you need access to the currently selected brush; note that some base
+        // classes already provide this
 {
 
     /**
@@ -66,10 +71,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     final int SIZE_SELECTED = 5;
     final int SIZE_DOT = 0;
     final int SIZE_MEDIUM_CROSS = 3;
+    private final EditPathOptions options = new EditPathOptions();
     private Point selectedPoint;
     private Brush brush;
     private Paint paint;
-    private EditPathOptions options = new EditPathOptions();
 
     public EditPathOperation() {
         // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
@@ -90,9 +95,11 @@ public class EditPathOperation extends MouseOrTabletOperation implements
      *
      * @param centreX      The x coordinate where the operation should be applied, in world coordinates.
      * @param centreY      The y coordinate where the operation should be applied, in world coordinates.
-     * @param inverse      Whether to perform the "inverse" operation instead of the regular operation, if applicable. If the
+     * @param inverse      Whether to perform the "inverse" operation instead of the regular operation, if applicable
+     *                     . If the
      *                     operation has no inverse it should just apply the normal operation.
-     * @param first        Whether this is the first tick of a continuous operation. For a one shot operation this will always
+     * @param first        Whether this is the first tick of a continuous operation. For a one shot operation this
+     *                     will always
      *                     be {@code true}.
      * @param dynamicLevel The dynamic level (from 0.0f to 1.0f inclusive) to apply in addition to the {@code level}
      *                     property, for instance due to a pressure sensitive stylus being used. In other words,
@@ -164,6 +171,12 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         } else {
             //add new point after selected
             overwriteSelectedPath(path.insertPointAfter(selectedPoint, userClickedCoord));
+            PathInformation info = PathManager.instance.getInformationForPath(getSelectedPathId());
+            if (info instanceof RiverPath)
+                info.setInformationByIndex(
+                        new RiverHandleInformation((int) Math.round(10 * Math.random() + 3), 2, 3, 4),
+                        getSelectedPath().indexOf(userClickedCoord)
+                );
             selectedPoint = userClickedCoord;
         }
 
@@ -173,7 +186,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             selectedPoint = null;
 
 
-        assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull setting path in manager";
+        assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull setting " +
+                "path in manager";
 
         redrawSelectedPathLayer();
     }
@@ -189,12 +203,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
     int getSelectedPathId() {
         return options.selectedPathId;
-    };
+    }
 
     private void applyAsSelection() {
         Layer select = SelectionBlock.INSTANCE;
 
-        for (Point p : getSelectedPath().continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
+        for (Point p :
+                getSelectedPath().continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
             getDimension().setBitLayerValueAt(select, p.x, p.y, true);
         }
     }
@@ -243,6 +258,28 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                     path.handleByIndex(i + 1)
             );
             markLine(p, handleReversed, PathPreviewLayer.INSTANCE, COLOR_SELECTED);
+
+        }
+
+        PathInformation info = PathManager.instance.getInformationForPath(getSelectedPathId());
+        if (info instanceof RiverPath) {
+            for (int i = 0; i < path.amountHandles(); i++) {
+                RiverHandleInformation handleInfo = ((RiverPath) info).informationByIndex(i);
+                if (handleInfo != null)
+                    drawCircle(path.byIndex(i), handleInfo.riverRadius);
+            }
+        }
+    }
+
+    void drawCircle(Point center, float radius) {
+        int radiusI = Math.round(radius);
+        for (int x = -radiusI; x <= radiusI; x++) {
+            for (int y = -radiusI; y <= radiusI; y++) {
+                Point p = new Point(center.x + x, center.y + y);
+                if (center.distance(p) <= radius && center.distance(p) >= radiusI - 1) {
+                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, p.x, p.y, 15);
+                }
+            }
         }
     }
 
@@ -265,7 +302,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         double length = p0.distance(p1);
         for (double i = 0; i <= length; i++) {
             double factor = i / length;
-            Point inter = new Point((int) (p0.x * factor + p1.x * (1 - factor)), (int) (p0.y * factor + p1.y * (1 - factor)));
+            Point inter = new Point((int) (p0.x * factor + p1.x * (1 - factor)),
+                    (int) (p0.y * factor + p1.y * (1 - factor)));
             getDimension().setLayerValueAt(layer, inter.x, inter.y, color);
         }
     }
@@ -311,7 +349,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         }
 
         @Override
-        protected ArrayList<OptionsLabel> addComponents(EditPathOptions editPathOptions, Runnable onOptionsReconfigured) {
+        protected ArrayList<OptionsLabel> addComponents(EditPathOptions editPathOptions,
+                                                        Runnable onOptionsReconfigured) {
             ArrayList<OptionsLabel> inputs = new ArrayList<>();
 
             //select path dropdown
@@ -327,7 +366,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                 onOptionsReconfigured.run();
             });
             JLabel comboBoxLabel = new JLabel("Selected path");
-            inputs.add(() -> new JComponent[]{comboBoxLabel,comboBox});
+            inputs.add(() -> new JComponent[]{comboBoxLabel, comboBox});
 
             // ADD BUTTON
             // Create a JButton with text
@@ -335,7 +374,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             // Add an ActionListener to handle button clicks
             button.addActionListener(e -> {
                 editPathOptions.selectedPathId = PathManager.instance.addPath(new Path());
-
                 selectedPoint = null;
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
