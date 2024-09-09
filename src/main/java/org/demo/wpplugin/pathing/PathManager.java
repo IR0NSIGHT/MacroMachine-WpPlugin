@@ -11,6 +11,7 @@ public class PathManager {
     public static final PathManager instance = new PathManager();
     private HashMap<Integer, Path> pathById = new HashMap<>();
     private HashMap<Integer, String> pathNames = new HashMap<>();
+    private HashMap<Integer, InformedPath> pathInformation = new HashMap<>();
 
     public Path getPathBy(int id) throws IllegalArgumentException {
         if (!pathById.containsKey(id))
@@ -32,6 +33,14 @@ public class PathManager {
         setPathBy(nextPathId, path);
         nameExistingPath(nextPathId,"Path-"+nextPathId);
         return nextPathId;
+    }
+
+    public void setInformedPath(InformedPath info, int id) {
+        pathInformation.put(id, info);
+    }
+
+    public InformedPath getInformationForPath(int id) {
+        return pathInformation.get(id);
     }
 
     public int getAnyValidId() {
