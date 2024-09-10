@@ -1,5 +1,6 @@
 package org.demo.wpplugin.pathing;
 
+import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.operations.River.RiverPath;
 
 import java.awt.*;
@@ -13,8 +14,9 @@ public class PathManager {
     private int nextPathId = 0;
 
     public PathManager() {
-        addPath(new Path(Arrays.asList(new Point(0, 0), new Point(1, 1), new Point(100, 50), new Point(100, 150),
-                new Point(101, 151))));
+        addPath(new Path(Arrays.asList(
+                RiverHandleInformation.riverInformation(0, 0), RiverHandleInformation.riverInformation(1, 1), RiverHandleInformation.riverInformation(100, 50), RiverHandleInformation.riverInformation(100, 150),
+                RiverHandleInformation.riverInformation(101, 151))));
     }
 
     public Path getPathBy(int id) throws IllegalArgumentException {

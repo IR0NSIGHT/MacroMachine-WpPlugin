@@ -15,6 +15,15 @@ public class RiverHandleInformation implements Interpolatable {
         this.transitionRadius = transitionRadius;
     }
 
+    public static float[] riverInformation(int x, int y, float riverRadius, float riverDepth, int beachRadius,
+                                           int transitionRadius) {
+        return new float[]{x, y, riverRadius, riverDepth, beachRadius, transitionRadius};
+    }
+
+    public static float[] riverInformation(int x, int y) {
+        return new float[]{x, y, 1, 2, 3, 4};
+    }
+
     @Override
     public Interpolatable interpolateWith(float t, Interpolatable other) {
         if (other instanceof RiverHandleInformation) {
@@ -26,5 +35,27 @@ public class RiverHandleInformation implements Interpolatable {
         }
 
         throw new IllegalArgumentException("can not interpolate with this" + this + " other type" + other);
+    }
+
+    public enum RiverInformation {
+        RIVER_RADIUS(0),
+        RIVER_DEPTH(1),
+        BEACH_RADIUS(2),
+        TRANSITION_RADIUS(3);
+        public final int idx;
+
+        RiverInformation(int idx) {
+            this.idx = idx;
+        }
+    }
+    public enum PositionSize {
+        SIZE_1_D(1),
+        SIZE_2_D(2),
+        SIZE_3_D(3);
+        public final int value;
+
+        PositionSize(int idx) {
+            this.value = idx;
+        }
     }
 }

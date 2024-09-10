@@ -1,4 +1,5 @@
 import org.demo.wpplugin.geometry.*;
+import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
 import org.demo.wpplugin.pathing.PointUtils;
@@ -8,6 +9,7 @@ import java.awt.*;
 import java.util.*;
 
 import static org.demo.wpplugin.pathing.CubicBezierSpline.point2DfromNVectorArr;
+import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
 import static org.demo.wpplugin.pathing.Path.curveIsContinous;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -15,12 +17,14 @@ public class PathGeometryHelperTest {
     @Test
     public void testPathGeometry() {
         // Arrange
-        Path p = new Path(Arrays.asList(new Point(0, 0),
-                new Point(-2, 5),
-                new Point(4, 4),
-                new Point(5, 5),
-                new Point(155, -255),
-                new Point(-9, 9)
+        Path p = new Path(Arrays.asList(RiverHandleInformation.riverInformation(0,0),
+
+                RiverHandleInformation.riverInformation(0, 0),
+                RiverHandleInformation.riverInformation(-2, 5),
+                RiverHandleInformation.riverInformation(4, 4),
+                RiverHandleInformation.riverInformation(5, 5),
+                RiverHandleInformation.riverInformation(155, -255),
+                RiverHandleInformation.riverInformation(-9, 9)
         ));
         PathGeometryHelper o = new PathGeometryHelper(p, p.continousCurve(), 0);
 
@@ -74,12 +78,12 @@ public class PathGeometryHelperTest {
     @Test
     public void parentageTest() {
         // Arrange
-        Path p = new Path(Arrays.asList(new Point(0, 0),
-                new Point(0, 0),
-                new Point(10, 0),
-                new Point(20, 0),
-                new Point(30, 0),
-                new Point(40, 0)
+        Path p = new Path(Arrays.asList(RiverHandleInformation.riverInformation(0, 0),
+                RiverHandleInformation.riverInformation(0, 0),
+                RiverHandleInformation.riverInformation(10, 0),
+                RiverHandleInformation.riverInformation(20, 0),
+                RiverHandleInformation.riverInformation(30, 0),
+                RiverHandleInformation.riverInformation(40, 0)
 
 
         ));
@@ -99,18 +103,18 @@ public class PathGeometryHelperTest {
         int size = 1000;
         // Arrange
         Path p = new Path(Arrays.asList(
-                new Point(-1, 0),
-                new Point(0, 0),
-                new Point(size, 0),
-                new Point(2 * size, 0),
-                new Point(3 * size, 0),
-                new Point(3 * size + 1, 0)
+                RiverHandleInformation.riverInformation(-1, 0),
+                RiverHandleInformation.riverInformation(0, 0),
+                RiverHandleInformation.riverInformation(size, 0),
+                RiverHandleInformation.riverInformation(2 * size, 0),
+                RiverHandleInformation.riverInformation(3 * size, 0),
+                RiverHandleInformation.riverInformation(3 * size + 1, 0)
         ));
         ArrayList<float[]> curveF = p.continousCurve();
         ArrayList<Point> curve = point2DfromNVectorArr(curveF);
-        assert curveIsContinous(curve);
+        assert curveIsContinous(curveF);
         for (int i = 1; i < p.amountHandles()-1; i++) {
-            Point point = p.handleByIndex(i);
+            Point point = point2dFromN_Vector(p.handleByIndex(i));
             assertTrue(curve.contains(point),"final curve is missing a control point:"+point);
         }
         assertTrue(3 * size + 1 <= curve.size());
@@ -129,12 +133,12 @@ public class PathGeometryHelperTest {
     @Test
     public void treeBoundingBoxTest() {
         Path p = new Path(Arrays.asList(
-                new Point(-1, 0),
-                new Point(0, 0),
-                new Point(500, 500),
-                new Point(-500, 500),
-                new Point(250, 250),
-                new Point(500, -250)
+                RiverHandleInformation.riverInformation(-1, 0),
+                RiverHandleInformation.riverInformation(0, 0),
+                RiverHandleInformation.riverInformation(500, 500),
+                RiverHandleInformation.riverInformation(-500, 500),
+                RiverHandleInformation.riverInformation(250, 250),
+                RiverHandleInformation.riverInformation(500, -250)
         ));
 
         Collection<AxisAlignedBoundingBox2d> boxes =
@@ -154,17 +158,17 @@ public class PathGeometryHelperTest {
     @Test
     public void treeBoundingBoxCollectIds() {
         Path p = new Path(Arrays.asList(
-                new Point(-1, 0),
-                new Point(0, 0),
-                new Point(500, 500),
-                new Point(-500, 500),
-                new Point(250, 250),
-                new Point(500, -250),
-                new Point(1000, 1000),
-                new Point(1000, -1000),
-                new Point(1000, -1001),
-                new Point(0, 0),
-                new Point(1, 1)
+                RiverHandleInformation.riverInformation(-1, 0),
+                RiverHandleInformation.riverInformation(0, 0),
+                RiverHandleInformation.riverInformation(500, 500),
+                RiverHandleInformation.riverInformation(-500, 500),
+                RiverHandleInformation.riverInformation(250, 250),
+                RiverHandleInformation.riverInformation(500, -250),
+                RiverHandleInformation.riverInformation(1000, 1000),
+                RiverHandleInformation.riverInformation(1000, -1000),
+                RiverHandleInformation.riverInformation(1000, -1001),
+                RiverHandleInformation.riverInformation(0, 0),
+                RiverHandleInformation.riverInformation(1, 1)
         ));
 
         Collection<AxisAlignedBoundingBox2d> boxes =

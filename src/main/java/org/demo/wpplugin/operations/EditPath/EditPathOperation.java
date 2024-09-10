@@ -19,6 +19,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static org.demo.wpplugin.pathing.CubicBezierSpline.getPositionalDistance;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
 import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 
@@ -72,7 +73,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     final int SIZE_DOT = 0;
     final int SIZE_MEDIUM_CROSS = 3;
     private final EditPathOptions options = new EditPathOptions();
-    private Point selectedPoint;
+    private float[] selectedPoint;
     private Brush brush;
     private Paint paint;
 
@@ -123,11 +124,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         final Path path = getSelectedPath();
         EditPathOperation.PATH_ID = getSelectedPathId();
 
-        Path previous = path;
-        PathManager.NamedId pathId = PathManager.instance.getPathName(getSelectedPathId());
-
-        Point previousSelected = selectedPoint;
-        Point userClickedCoord = new Point(centreX, centreY);
+        float[] userClickedCoord = RiverHandleInformation.riverInformation (centreX, centreY);
 
         if (selectedPoint == null) {
             selectedPoint = userClickedCoord;
@@ -136,9 +133,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             //SELECT POINT
             try {
                 if (path.amountHandles() != 0) {
-                    Point closest = path.getClosestHandleTo(userClickedCoord);
+                    float[] closest = path.getClosestHandleTo(userClickedCoord);
                     //dont allow very far away clicks
-                    if (closest.distance(userClickedCoord) < 50) {
+                    if (getPositionalDistance(closest, userClickedCoord, RiverHandleInformation.PositionSize.SIZE_2_D.value)< 50) {
                         selectedPoint = closest;
                     }
                 }
@@ -161,7 +158,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             //REMOVE SELECTED POINT
             if (path.amountHandles() > 1) {
                 try {
-                    Point pointBeforeSelected = path.getPreviousPoint(selectedPoint);
+                    float[] pointBeforeSelected = path.getPreviousPoint(selectedPoint);
                     overwriteSelectedPath(path.removePoint(selectedPoint));
                     selectedPoint = pointBeforeSelected;
                 } catch (IllegalAccessException e) {
@@ -223,9 +220,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         //redraw new
         DrawPathLayer(getSelectedPath(), false);
         if (selectedPoint != null)
-            markPoint(selectedPoint, PathPreviewLayer.INSTANCE, COLOR_SELECTED, SIZE_SELECTED);
+            markPoint(point2dFromN_Vector(selectedPoint), PathPreviewLayer.INSTANCE, COLOR_SELECTED, SIZE_SELECTED);
         this.getDimension().setEventsInhibited(false);
-
     }
 
     /**
@@ -240,8 +236,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             markPoint(point2dFromN_Vector(p), layer, erase ? 0 : COLOR_CURVE, SIZE_DOT);
         }
 
-        for (Point p : path) {
-            markPoint(p, layer, erase ? 0 : COLOR_HANDLE, SIZE_MEDIUM_CROSS);
+        for (float[] p : path) {
+            markPoint(point2dFromN_Vector(p), layer, erase ? 0 : COLOR_HANDLE, SIZE_MEDIUM_CROSS);
         }
 
     /*    for (int i = 1; i < path.amountHandles() - 1; i++) {
@@ -267,7 +263,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             for (int i = 0; i < path.amountHandles(); i++) {
                 RiverHandleInformation handleInfo = ((RiverPath) info).informationByIndex(i);
                 if (handleInfo != null)
-                    drawCircle(path.byIndex(i), handleInfo.riverRadius);
+                    drawCircle(point2dFromN_Vector(path.byIndex(i)), handleInfo.riverRadius);
             }
         }
     }

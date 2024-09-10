@@ -1,28 +1,30 @@
 package org.demo.wpplugin.pathing;
 
-import java.awt.*;
-import java.util.List;
+import org.demo.wpplugin.operations.River.RiverHandleInformation;
+
 import java.util.*;
 import java.util.function.Consumer;
 
 import static org.demo.wpplugin.pathing.CubicBezierSpline.arePositionalsEqual;
+import static org.demo.wpplugin.pathing.CubicBezierSpline.getPositionalDistance;
 
-public class Path implements Iterable<Point> {
-    private final ArrayList<Point> handles;
+public class Path implements Iterable<float[]> {
+    private final ArrayList<float[]> handles;
 
     public Path() {
         handles = new ArrayList<>(0);
     }
 
-    public Path(List<Point> handles) {
+    public Path(List<float[]> handles) {
         this.handles = new ArrayList<>(handles.size());
         this.handles.addAll(handles);
     }
 
-    public static boolean curveIsContinous(List<Point> curve) {
-        Point previous = null;
-        for (Point p : curve) {
-            if (previous != null && p.distanceSq(previous) > 2) {
+    public static boolean curveIsContinous(List<float[]> curve) {
+        float[] previous = null;
+        for (float[] p : curve) {
+            if (previous != null && getPositionalDistance(p, previous,
+                    RiverHandleInformation.PositionSize.SIZE_2_D.value) > 2) {
                 return false;
             }
             previous = p;
@@ -30,32 +32,32 @@ public class Path implements Iterable<Point> {
         return true;
     }
 
-    public Path addPoint(Point point) {
+    public Path addPoint(float[] point) {
         Path sum = new Path(this.handles);
         sum.handles.add(point);
         return sum;
     }
 
-    public Path removePoint(Point point) {
+    public Path removePoint(float[] point) {
         Path sum = new Path(this.handles);
         sum.handles.remove(point);
         return sum;
     }
 
-    public Path movePoint(Point point, Point newPosition) {
+    public Path movePoint(float[] point, float[] newPosition) {
         Path sum = new Path(this.handles);
-        int idx = sum.handles.lastIndexOf(point);
+        int idx = indexOf(point);
         sum.handles.set(idx, newPosition);
         return sum;
     }
 
-    public Point getTail() {
+    public float[] getTail() {
         if (amountHandles() == 0)
             throw new IllegalArgumentException("can not access tail of zero-length path!");
         return handles.get(amountHandles() - 1);
     }
 
-    public Point getPreviousPoint(Point point) throws IllegalAccessException {
+    public float[] getPreviousPoint(float[] point) throws IllegalAccessException {
         if (amountHandles() < 2)
             throw new IllegalAccessException("can not find previous point on path with less than 2 points.");
         int idx = handles.indexOf(point);
@@ -70,32 +72,32 @@ public class Path implements Iterable<Point> {
         return handles.size();
     }
 
-    public Path insertPointAfter(Point point, Point newPosition) {
+    public Path insertPointAfter(float[] point, float[] newPosition) {
         Path sum = new Path(this.handles);
         int idx = sum.handles.lastIndexOf(point);
         sum.handles.add(idx + 1, newPosition);
         return sum;
     }
 
-    public boolean isHandle(Point point) {
-        return handles.contains(point);
+    public boolean isHandle(float[] point) {
+        return indexOf(point) != -1;
     }
 
     @Override
-    public Iterator<Point> iterator() {
+    public Iterator<float[]> iterator() {
         return handles.iterator();
     }
 
     @Override
-    public void forEach(Consumer<? super Point> action) {
+    public void forEach(Consumer<? super float[]> action) {
         Iterable.super.forEach(action);
     }
 
-    public Point byIndex(int index) {
+    public float[] byIndex(int index) {
         return handles.get(index);
     }
 
-    public int indexOf(Point p) {
+    public int indexOf(float[] p) {
         for (int i = 0; i < handles.size(); i++) {
             if (p.equals(handles.get(i)))
                 return i;
@@ -104,7 +106,7 @@ public class Path implements Iterable<Point> {
     }
 
     @Override
-    public Spliterator<Point> spliterator() {
+    public Spliterator<float[]> spliterator() {
         return Iterable.super.spliterator();
     }
 
@@ -113,14 +115,13 @@ public class Path implements Iterable<Point> {
         //iterate all handles, calculate coordinates on curve
         for (int i = 0; i < this.amountHandles() - 3; i++) {
             float[][] curveSegment = CubicBezierSpline.getSplinePathFor(
-                    new float[]{this.handleByIndex(i).x, this.handleByIndex(i).y},
-                    new float[]{this.handleByIndex(i + 1).x, this.handleByIndex(i + 1).y},
-                    new float[]{this.handleByIndex(i + 2).x, this.handleByIndex(i + 2).y},
-                    new float[]{this.handleByIndex(i + 3).x, this.handleByIndex(i + 3).y},
-                    2);
+                    this.handleByIndex(i),
+                    this.handleByIndex(i + 1),
+                    this.handleByIndex(i + 2),
+                    this.handleByIndex(i + 3),
+                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
             curvePoints.addAll(Arrays.asList(curveSegment));
         }
-
         //FIXME reactivate    assert curveIsContinous(curvePoints) : "path has gaps inbetween";
 
         if (curvePoints.isEmpty())
@@ -143,13 +144,13 @@ public class Path implements Iterable<Point> {
         return new ArrayList<>(curvePoints);
     }
 
-    public Point handleByIndex(int index) throws IndexOutOfBoundsException {
+    public float[] handleByIndex(int index) throws IndexOutOfBoundsException {
         return handles.get(index);
     }
 
-    private boolean curveHasNoClones(List<Point> curve) {
-        Point previous = null;
-        for (Point p : curve) {
+    private boolean curveHasNoClones(List<float[]> curve) {
+        float[] previous = null;
+        for (float[] p : curve) {
             if (p.equals(previous)) {
                 return false;
             }
@@ -158,13 +159,14 @@ public class Path implements Iterable<Point> {
         return true;
     }
 
-    public Point getClosestHandleTo(Point coord) throws IllegalAccessException {
+    public float[] getClosestHandleTo(float[] coord) throws IllegalAccessException {
         if (amountHandles() == 0)
             throw new IllegalAccessException("can not find closest handle on zero-handle-path");
-        Point closest = null;
+        float[] closest = null;
         double distMinSquared = Double.MAX_VALUE;
-        for (Point p : this) {
-            double distanceSq = p.distanceSq(coord);
+        for (float[] p : this) {
+            double distanceSq = CubicBezierSpline.getPositionalDistance(p, coord,
+                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
             if (distanceSq < distMinSquared) {
                 distMinSquared = distanceSq;
                 closest = p;

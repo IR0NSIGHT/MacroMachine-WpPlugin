@@ -47,7 +47,7 @@ public class CubicBezierSpline {
         assert A.length == B.length;
         assert B.length == C.length;
         assert C.length == D.length;
-        assert A.length <= positionDigits;
+        assert A.length >= positionDigits;
 
         int vectorSize = A.length;
 
@@ -85,7 +85,9 @@ public class CubicBezierSpline {
         return dist;
     }
 
-    private static float getPositionalDistance(float[] pointA, float[] pointB, int positionDigits) {
+
+
+    public static float getPositionalDistance(float[] pointA, float[] pointB, int positionDigits) {
         //euclidian distance of B and C positions
         float dist = 0;
         for (int i = 0; i < positionDigits; i++) {
