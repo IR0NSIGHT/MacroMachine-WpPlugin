@@ -51,7 +51,8 @@ public class CubicBezierSpline {
         float distance = getPositionalDistance(B, C, positionDigits);
 
         //prepare output array of n-vectors
-        int pointsInCurve = (int)(Math.pow(distance,1.5));
+        //FIXME use estimate of curvelength
+        int pointsInCurve = (int) (Math.pow(distance, 1.5));
         float[][] path = new float[pointsInCurve][];
         for (int i = 0; i < pointsInCurve; i++) {
             path[i] = new float[vectorSize];    //new n-vector
@@ -67,13 +68,6 @@ public class CubicBezierSpline {
             }
         }
 
-        //    pathX = calculateCubicBezier(B.x, handle1p.x, handle2P.x, C.x, (int) (length / metersBetweenPoints));
-        //    pathY = calculateCubicBezier(B.y, handle1p.y, handle2P.y, C.y, (int) (length / metersBetweenPoints));
-
-        //    path = new Point[pathX.length];
-        //    for (int i = 0; i < pathX.length; i++) {
-        //        path[i] = new Point(Math.round(pathX[i]), Math.round(pathY[i]));
-        //    }
         return path;
     }
 
@@ -103,14 +97,14 @@ public class CubicBezierSpline {
                                            float distance) {
         float[] out = new float[pointA.length];
         for (int n = 0; n < pointA.length; n++) {
-            out[n] =  (pointC[n] - pointA[n]) / 2f;
+            out[n] = (pointC[n] - pointA[n]) / 2f;
         }
 
         //normalize and scale positions based on distance, so the catmull rom spline doesnt act crazy
         //equal to handle.normalize.scale(distance/2)
         float length = getPositionalLength(out, positionDigits);
         for (int i = 0; i < positionDigits; i++) {
-            out[i] = out[i] / length * distance/2f;
+            out[i] = out[i] / length * distance / 2f;
         }
 
         for (int n = 0; n < pointA.length; n++) {
