@@ -100,25 +100,26 @@ public class Path implements Iterable<Point> {
         LinkedList<Point> curvePoints = new LinkedList<>();
         //iterate all handles, calculate coordinates on curve
         for (int i = 0; i < this.amountHandles() - 3; i++) {
-            curvePoints.addAll(CubicBezierSpline.getSplinePathFor(
+            Point[] curveSegment = CubicBezierSpline.getSplinePathFor(
                     this.handleByIndex(i),
                     this.handleByIndex(i + 1),
                     this.handleByIndex(i + 2),
                     this.handleByIndex(i + 3),
-                    .5f));
+                    .25f);
+            curvePoints.addAll(Arrays.asList(curveSegment));
         }
 
-    //    assert curveIsContinous(curvePoints) : "path has gaps inbetween";
+        assert curveIsContinous(curvePoints) : "path has gaps inbetween";
 
-        if (curvePoints.size() == 0)
+        if (curvePoints.isEmpty())
             return new ArrayList<>(0);
 
         Point previous = null;
         int size = curvePoints.size();
         for (int i = 0; i < size; i++) {
             //KILL ALL POINTS THAT ARE OUTSIDE THE map
-            while (i < curvePoints.size() && !pointOnMap.test(curvePoints.get(i)))
-                curvePoints.remove(i);
+        //    while (i < curvePoints.size() && !pointOnMap.test(curvePoints.get(i)))
+        //        curvePoints.remove(i);
             //kill all successive points that are the same
             while (i < curvePoints.size() && curvePoints.get(i).equals(previous))
                 curvePoints.remove(i);
@@ -128,7 +129,7 @@ public class Path implements Iterable<Point> {
         }
 
         assert curveHasNoClones(curvePoints) : "curve still contains clones";
-
+        assert curveIsContinous(curvePoints);
         return new ArrayList<>(curvePoints);
     }
 
@@ -136,7 +137,7 @@ public class Path implements Iterable<Point> {
         return handles.get(index);
     }
 
-    private boolean curveIsContinous(List<Point> curve) {
+    public static boolean curveIsContinous(List<Point> curve) {
         Point previous = null;
         for (Point p : curve) {
             if (previous != null && p.distanceSq(previous) > 2) {

@@ -243,7 +243,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             markPoint(p, layer, erase ? 0 : COLOR_HANDLE, SIZE_MEDIUM_CROSS);
         }
 
-        for (int i = 1; i < path.amountHandles() - 1; i++) {
+    /*    for (int i = 1; i < path.amountHandles() - 1; i++) {
             Point p = new Point(path.handleByIndex(i));
             Point handle = getCubicBezierHandles(
                     path.handleByIndex(i + 1),
@@ -259,7 +259,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             );
             markLine(p, handleReversed, PathPreviewLayer.INSTANCE, COLOR_SELECTED);
 
-        }
+        } */
 
         PathInformation info = PathManager.instance.getInformationForPath(getSelectedPathId());
         if (info instanceof RiverPath) {

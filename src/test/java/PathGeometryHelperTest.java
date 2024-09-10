@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.awt.*;
 import java.util.*;
 
+import static org.demo.wpplugin.pathing.Path.curveIsContinous;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class PathGeometryHelperTest {
@@ -105,7 +106,12 @@ public class PathGeometryHelperTest {
                 new Point(3 * size + 1, 0)
         ));
         ArrayList<Point> curve = p.continousCurve(point -> true);
-        assertEquals(3 * size + 1, curve.size());
+        assert curveIsContinous(curve);
+        for (int i = 1; i < p.amountHandles()-1; i++) {
+            Point point = p.handleByIndex(i);
+            assertTrue(curve.contains(point),"final curve is missing a control point:"+point);
+        }
+        assertTrue(3 * size + 1 <= curve.size());
         int radius = 50;
         PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
