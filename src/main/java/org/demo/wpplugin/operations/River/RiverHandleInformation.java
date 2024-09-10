@@ -21,7 +21,7 @@ public class RiverHandleInformation implements Interpolatable {
     }
 
     public static float[] riverInformation(int x, int y) {
-        return new float[]{x, y, 1, 2, 3, 4};
+        return new float[]{x, y, 10, 3, 5, 25};
     }
 
     @Override

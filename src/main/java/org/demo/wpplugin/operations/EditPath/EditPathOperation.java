@@ -21,7 +21,6 @@ import java.util.Collection;
 
 import static org.demo.wpplugin.pathing.CubicBezierSpline.getPositionalDistance;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
-import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -124,7 +123,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         final Path path = getSelectedPath();
         EditPathOperation.PATH_ID = getSelectedPathId();
 
-        float[] userClickedCoord = RiverHandleInformation.riverInformation (centreX, centreY);
+        float[] userClickedCoord = RiverHandleInformation.riverInformation(centreX, centreY);
 
         if (selectedPoint == null) {
             selectedPoint = userClickedCoord;
@@ -135,14 +134,15 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                 if (path.amountHandles() != 0) {
                     float[] closest = path.getClosestHandleTo(userClickedCoord);
                     //dont allow very far away clicks
-                    if (getPositionalDistance(closest, userClickedCoord, RiverHandleInformation.PositionSize.SIZE_2_D.value)< 50) {
+                    if (getPositionalDistance(closest, userClickedCoord,
+                            RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
                         selectedPoint = closest;
                     }
                 }
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
-        } else if (isShiftDown()) {
+        } else if (isAltDown()) {
             if (inverse) {
                 overwriteSelectedPath(new Path());
                 selectedPoint = null;
@@ -151,7 +151,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                 applyAsSelection();
 
             }
-        } else if (isAltDown()) {
+        } else if (isShiftDown()) {
             overwriteSelectedPath(path.movePoint(selectedPoint, userClickedCoord));
             selectedPoint = userClickedCoord;
         } else if (inverse) {
@@ -261,9 +261,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         PathInformation info = PathManager.instance.getInformationForPath(getSelectedPathId());
         if (info instanceof RiverPath) {
             for (int i = 0; i < path.amountHandles(); i++) {
-                RiverHandleInformation handleInfo = ((RiverPath) info).informationByIndex(i);
-                if (handleInfo != null)
-                    drawCircle(point2dFromN_Vector(path.byIndex(i)), handleInfo.riverRadius);
+                float[] point = path.handleByIndex(i);
+                drawCircle(point2dFromN_Vector(point),
+                        point[RiverHandleInformation.PositionSize.SIZE_2_D.value + RiverHandleInformation.RiverInformation.RIVER_RADIUS.idx]);
             }
         }
     }
