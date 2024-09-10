@@ -208,7 +208,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         Layer select = SelectionBlock.INSTANCE;
 
         for (Point p :
-                getSelectedPath().continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
+                getSelectedPath().continousCurve()) {
             getDimension().setBitLayerValueAt(select, p.x, p.y, true);
         }
     }
@@ -234,7 +234,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     void DrawPathLayer(Path path, boolean erase) {
         PathPreviewLayer layer = PathPreviewLayer.INSTANCE;
 
-        for (Point p : path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
+        for (Point p : path.continousCurve()) {
             markPoint(p, layer, erase ? 0 : COLOR_CURVE, SIZE_DOT);
         }
 

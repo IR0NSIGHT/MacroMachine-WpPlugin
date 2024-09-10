@@ -1,10 +1,5 @@
 package org.demo.wpplugin.pathing;
 
-import javax.vecmath.Vector2f;
-import java.awt.*;
-
-import static org.demo.wpplugin.pathing.PointUtils.calculatePathLength;
-
 public class CubicBezierSpline {
     /**
      * calculate a cubic bezier curve connection start and endpoint with 2 control handles.
@@ -45,39 +40,82 @@ public class CubicBezierSpline {
      * @param C
      * @param D
      */
-    public static Point[] getSplinePathFor(Point A, Point B, Point C, Point D, float metersBetweenPoints) {
-        float dist = (float)B.distance(C);
-        Vector2f handle1p = new Vector2f(
-                getHalfWay(A.x, C.x),
-                getHalfWay(A.y, C.y));
-        handle1p.normalize();
-        handle1p.scale(dist/2f);
-        handle1p.add(new Vector2f(B.x,B.y));
+    public static float[][] getSplinePathFor(float[] A, float[] B, float[] C, float[] D, int positionDigits) {
+        assert A.length == B.length;
+        assert B.length == C.length;
+        assert C.length == D.length;
+        assert A.length <= positionDigits;
 
-        Vector2f handle2P = new Vector2f(
-                getHalfWay(D.x, B.x),
-                getHalfWay(D.y, B.y));
-        handle2P.normalize();
-        handle2P.scale(dist/2f);
-        handle2P.add(new Vector2f(C.x,C.y));
+        int vectorSize = A.length;
 
-        //estimate length by measuring rough curve with 50 points
-        float[] pathX = calculateCubicBezier(B.x, handle1p.x, handle2P.x, C.x, 50);
-        float[] pathY = calculateCubicBezier(B.y, handle1p.y, handle2P.y, C.y, 50);
+        float distance = getPositionalDistance(B, C, positionDigits);
 
-        Point[] path = new Point[pathX.length];
-        for (int i = 0; i < pathX.length; i++) {
-            path[i] = new Point(Math.round(pathX[i]), Math.round(pathY[i]));
+        //prepare output array of n-vectors
+        int pointsInCurve = (int)(Math.pow(distance,1.5));
+        float[][] path = new float[pointsInCurve][];
+        for (int i = 0; i < pointsInCurve; i++) {
+            path[i] = new float[vectorSize];    //new n-vector
         }
-        double length = calculatePathLength(path);
 
-        pathX = calculateCubicBezier(B.x, handle1p.x, handle2P.x, C.x, (int) (length / metersBetweenPoints));
-        pathY = calculateCubicBezier(B.y, handle1p.y, handle2P.y, C.y, (int) (length / metersBetweenPoints));
+        float[] handle1p = getBezierHandle(A, B, C, positionDigits, distance);
+        float[] handle2P = getBezierHandle(D, C, B, positionDigits, distance);
 
-        path = new Point[pathX.length];
-        for (int i = 0; i < pathX.length; i++) {
-            path[i] = new Point(Math.round(pathX[i]), Math.round(pathY[i]));
+        for (int n = 0; n < vectorSize; n++) {
+            float[] nThPositionCurve = calculateCubicBezier(B[n], handle1p[n], handle2P[n], C[n], pointsInCurve);
+            for (int i = 0; i < pointsInCurve; i++) {
+                path[i][n] = nThPositionCurve[i];
+            }
         }
+
+        //    pathX = calculateCubicBezier(B.x, handle1p.x, handle2P.x, C.x, (int) (length / metersBetweenPoints));
+        //    pathY = calculateCubicBezier(B.y, handle1p.y, handle2P.y, C.y, (int) (length / metersBetweenPoints));
+
+        //    path = new Point[pathX.length];
+        //    for (int i = 0; i < pathX.length; i++) {
+        //        path[i] = new Point(Math.round(pathX[i]), Math.round(pathY[i]));
+        //    }
         return path;
+    }
+
+    private static float getPositionalLength(float[] pointA, int positionDigits) {
+        //euclidian distance of B and C positions
+        float dist = 0;
+        for (int i = 0; i < positionDigits; i++) {
+            float distI = pointA[i];
+            dist += distI * distI;
+        }
+        dist = (float) Math.sqrt(dist);
+        return dist;
+    }
+
+    private static float getPositionalDistance(float[] pointA, float[] pointB, int positionDigits) {
+        //euclidian distance of B and C positions
+        float dist = 0;
+        for (int i = 0; i < positionDigits; i++) {
+            float distI = pointA[i] - pointB[i];
+            dist += distI * distI;
+        }
+        dist = (float) Math.sqrt(dist);
+        return dist;
+    }
+
+    private static float[] getBezierHandle(float[] pointA, float[] pointB, float[] pointC, int positionDigits,
+                                           float distance) {
+        float[] out = new float[pointA.length];
+        for (int n = 0; n < pointA.length; n++) {
+            out[n] =  (pointC[n] - pointA[n]) / 2f;
+        }
+
+        //normalize and scale positions based on distance, so the catmull rom spline doesnt act crazy
+        //equal to handle.normalize.scale(distance/2)
+        float length = getPositionalLength(out, positionDigits);
+        for (int i = 0; i < positionDigits; i++) {
+            out[i] = out[i] / length * distance/2f;
+        }
+
+        for (int n = 0; n < pointA.length; n++) {
+            out[n] += pointB[n];
+        }
+        return out;
     }
 }

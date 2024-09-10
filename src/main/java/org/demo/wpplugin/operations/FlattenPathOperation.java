@@ -246,7 +246,7 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
             Path path = PathManager.instance.getPathBy(PATH_ID);
 
             HashSet<Point> seen = new HashSet<>();
-            ArrayList<Point> curve = path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point));
+            ArrayList<Point> curve = path.continousCurve();
             LinkedList<Point> edge = new LinkedList<>();
             int totalRadiusSq = totalRadius * totalRadius;
             //collect all points within rough radius
@@ -363,7 +363,7 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
 
     private void applyAsSelection(Path path) {
         Layer select = SelectionBlock.INSTANCE;
-        for (Point p : path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point))) {
+        for (Point p : path.continousCurve()) {
             getDimension().setBitLayerValueAt(select, p.x, p.y, true);
         }
     }

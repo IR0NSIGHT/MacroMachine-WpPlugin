@@ -21,10 +21,10 @@ public class PathGeometryHelperTest {
                 new Point(155, -255),
                 new Point(-9, 9)
         ));
-        PathGeometryHelper o = new PathGeometryHelper(p, p.continousCurve(point -> true), 0);
+        PathGeometryHelper o = new PathGeometryHelper(p, p.continousCurve(), 0);
 
         // Act
-        ArrayList<Point> curve = p.continousCurve(point -> true);
+        ArrayList<Point> curve = p.continousCurve();
         BoundingBox curveBox = AxisAlignedBoundingBox2d.fromPoints(curve);
 
         // Assert
@@ -83,7 +83,7 @@ public class PathGeometryHelperTest {
 
         ));
         double radius = 5;
-        ArrayList<Point> curve = p.continousCurve(point -> true);
+        ArrayList<Point> curve = p.continousCurve();
         PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
         assertEquals(parentage.size(), curve.size());
@@ -105,7 +105,7 @@ public class PathGeometryHelperTest {
                 new Point(3 * size, 0),
                 new Point(3 * size + 1, 0)
         ));
-        ArrayList<Point> curve = p.continousCurve(point -> true);
+        ArrayList<Point> curve = p.continousCurve();
         assert curveIsContinous(curve);
         for (int i = 1; i < p.amountHandles()-1; i++) {
             Point point = p.handleByIndex(i);
@@ -136,7 +136,7 @@ public class PathGeometryHelperTest {
         ));
 
         Collection<AxisAlignedBoundingBox2d> boxes =
-                PointUtils.toBoundingBoxes(p.continousCurve(point -> true), 100, 50);
+                PointUtils.toBoundingBoxes(p.continousCurve(), 100, 50);
         BoundingBox treeBox = TreeBoundingBox.constructTree(boxes);
 
         for (int i = 0; i < 1000; i++) {
@@ -166,7 +166,7 @@ public class PathGeometryHelperTest {
         ));
 
         Collection<AxisAlignedBoundingBox2d> boxes =
-                PointUtils.toBoundingBoxes(p.continousCurve(point -> true), 100, 50);
+                PointUtils.toBoundingBoxes(p.continousCurve(), 100, 50);
         TreeBoundingBox treeBox = TreeBoundingBox.constructTree(boxes);
 
         for (int i = 0; i < 1000; i++) {

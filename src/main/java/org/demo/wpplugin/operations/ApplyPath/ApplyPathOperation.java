@@ -120,7 +120,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         Path path = PathManager.instance.getPathBy(EditPathOperation.PATH_ID);
         assert path != null : "Pathmanager delivered null path";
 
-        ArrayList<Point> curve = path.continousCurve(point -> pointExtent(getDimension().getExtent()).contains(point));
+        ArrayList<Point> curve = path.continousCurve();
 
         float baseRadius = options.getStartWidth();
         float randomPercent = (float) options.getRandomFluctuate() / 100f;

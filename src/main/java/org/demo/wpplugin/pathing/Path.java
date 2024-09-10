@@ -96,17 +96,19 @@ public class Path implements Iterable<Point> {
         return Iterable.super.spliterator();
     }
 
-    public ArrayList<Point> continousCurve(Predicate<Point> pointOnMap) {
+    public ArrayList<Point> continousCurve() {
         LinkedList<Point> curvePoints = new LinkedList<>();
         //iterate all handles, calculate coordinates on curve
         for (int i = 0; i < this.amountHandles() - 3; i++) {
-            Point[] curveSegment = CubicBezierSpline.getSplinePathFor(
-                    this.handleByIndex(i),
-                    this.handleByIndex(i + 1),
-                    this.handleByIndex(i + 2),
-                    this.handleByIndex(i + 3),
-                    .25f);
-            curvePoints.addAll(Arrays.asList(curveSegment));
+            float[][] curveSegment = CubicBezierSpline.getSplinePathFor(
+                    new float[]{this.handleByIndex(i).x, this.handleByIndex(i).y},
+                    new float[]{this.handleByIndex(i + 1).x, this.handleByIndex(i + 1).y},
+                    new float[]{this.handleByIndex(i + 2).x, this.handleByIndex(i + 2).y},
+                    new float[]{this.handleByIndex(i + 3).x, this.handleByIndex(i+ 3).y},
+                    2);
+            for (float[] point : curveSegment) {
+                curvePoints.add(new Point(Math.round(point[0]),Math.round(point[1])));
+            }
         }
 
         assert curveIsContinous(curvePoints) : "path has gaps inbetween";
