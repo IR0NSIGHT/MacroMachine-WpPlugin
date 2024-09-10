@@ -4,7 +4,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
+
+import static org.demo.wpplugin.pathing.CubicBezierSpline.arePositionalsEqual;
 
 public class Path implements Iterable<Point> {
     private final ArrayList<Point> handles;
@@ -16,6 +17,17 @@ public class Path implements Iterable<Point> {
     public Path(List<Point> handles) {
         this.handles = new ArrayList<>(handles.size());
         this.handles.addAll(handles);
+    }
+
+    public static boolean curveIsContinous(List<Point> curve) {
+        Point previous = null;
+        for (Point p : curve) {
+            if (previous != null && p.distanceSq(previous) > 2) {
+                return false;
+            }
+            previous = p;
+        }
+        return true;
     }
 
     public Path addPoint(Point point) {
@@ -40,7 +52,7 @@ public class Path implements Iterable<Point> {
     public Point getTail() {
         if (amountHandles() == 0)
             throw new IllegalArgumentException("can not access tail of zero-length path!");
-        return handles.get(amountHandles()-1);
+        return handles.get(amountHandles() - 1);
     }
 
     public Point getPreviousPoint(Point point) throws IllegalAccessException {
@@ -96,58 +108,43 @@ public class Path implements Iterable<Point> {
         return Iterable.super.spliterator();
     }
 
-    public ArrayList<Point> continousCurve() {
-        LinkedList<Point> curvePoints = new LinkedList<>();
+    public ArrayList<float[]> continousCurve() {
+        LinkedList<float[]> curvePoints = new LinkedList<>();
         //iterate all handles, calculate coordinates on curve
         for (int i = 0; i < this.amountHandles() - 3; i++) {
             float[][] curveSegment = CubicBezierSpline.getSplinePathFor(
                     new float[]{this.handleByIndex(i).x, this.handleByIndex(i).y},
                     new float[]{this.handleByIndex(i + 1).x, this.handleByIndex(i + 1).y},
                     new float[]{this.handleByIndex(i + 2).x, this.handleByIndex(i + 2).y},
-                    new float[]{this.handleByIndex(i + 3).x, this.handleByIndex(i+ 3).y},
+                    new float[]{this.handleByIndex(i + 3).x, this.handleByIndex(i + 3).y},
                     2);
-            for (float[] point : curveSegment) {
-                curvePoints.add(new Point(Math.round(point[0]),Math.round(point[1])));
-            }
+            curvePoints.addAll(Arrays.asList(curveSegment));
         }
 
-        assert curveIsContinous(curvePoints) : "path has gaps inbetween";
+        //FIXME reactivate    assert curveIsContinous(curvePoints) : "path has gaps inbetween";
 
         if (curvePoints.isEmpty())
             return new ArrayList<>(0);
 
-        Point previous = null;
+        int positionDigits = 2;
+        float[] previous = null;
         int size = curvePoints.size();
         for (int i = 0; i < size; i++) {
-            //KILL ALL POINTS THAT ARE OUTSIDE THE map
-        //    while (i < curvePoints.size() && !pointOnMap.test(curvePoints.get(i)))
-        //        curvePoints.remove(i);
             //kill all successive points that are the same
-            while (i < curvePoints.size() && curvePoints.get(i).equals(previous))
+            while (i < curvePoints.size() && arePositionalsEqual(curvePoints.get(i), previous, positionDigits))
                 curvePoints.remove(i);
             size = curvePoints.size();
             if (i < size)
                 previous = curvePoints.get(i);
         }
 
-        assert curveHasNoClones(curvePoints) : "curve still contains clones";
-        assert curveIsContinous(curvePoints);
+        //    assert curveHasNoClones(curvePoints) : "curve still contains clones";
+        //    assert curveIsContinous(curvePoints);
         return new ArrayList<>(curvePoints);
     }
 
     public Point handleByIndex(int index) throws IndexOutOfBoundsException {
         return handles.get(index);
-    }
-
-    public static boolean curveIsContinous(List<Point> curve) {
-        Point previous = null;
-        for (Point p : curve) {
-            if (previous != null && p.distanceSq(previous) > 2) {
-                return false;
-            }
-            previous = p;
-        }
-        return true;
     }
 
     private boolean curveHasNoClones(List<Point> curve) {

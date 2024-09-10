@@ -19,6 +19,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
 import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 
 /**
@@ -207,9 +208,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     private void applyAsSelection() {
         Layer select = SelectionBlock.INSTANCE;
 
-        for (Point p :
+        for (float[] p :
                 getSelectedPath().continousCurve()) {
-            getDimension().setBitLayerValueAt(select, p.x, p.y, true);
+            Point point = point2dFromN_Vector(p);
+            getDimension().setBitLayerValueAt(select, point.x, point.y, true);
         }
     }
 
@@ -234,8 +236,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     void DrawPathLayer(Path path, boolean erase) {
         PathPreviewLayer layer = PathPreviewLayer.INSTANCE;
 
-        for (Point p : path.continousCurve()) {
-            markPoint(p, layer, erase ? 0 : COLOR_CURVE, SIZE_DOT);
+        for (float[] p : path.continousCurve()) {
+            markPoint(point2dFromN_Vector(p), layer, erase ? 0 : COLOR_CURVE, SIZE_DOT);
         }
 
         for (Point p : path) {

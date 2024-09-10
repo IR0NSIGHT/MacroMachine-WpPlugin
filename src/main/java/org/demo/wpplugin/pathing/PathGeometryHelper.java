@@ -7,6 +7,8 @@ import org.demo.wpplugin.geometry.TreeBoundingBox;
 import java.awt.*;
 import java.util.*;
 
+import static org.demo.wpplugin.pathing.CubicBezierSpline.point2DfromNVectorArr;
+
 public class PathGeometryHelper implements BoundingBox {
     private final Path path;
     private final ArrayList<Point> curve;
@@ -24,9 +26,9 @@ public class PathGeometryHelper implements BoundingBox {
         this.radius = radius;
     }
 
-    public PathGeometryHelper(Path path, ArrayList<Point> curve, double radius) {
+    public PathGeometryHelper(Path path, ArrayList<float[]> curve, double radius) {
         this.path = path;
-        this.curve = curve;
+        this.curve = point2DfromNVectorArr(curve);
         this.radius = radius;
 
         int boxSizeFacctor = 10; //no zero divisor
@@ -38,9 +40,9 @@ public class PathGeometryHelper implements BoundingBox {
         }
         segmentStartIdcs[segmentIdx] = curve.size();
 
-        ArrayList<AxisAlignedBoundingBox2d> boundingBoxes = new ArrayList<>(PointUtils.toBoundingBoxes(curve, boxSizeFacctor, radius));
+        ArrayList<AxisAlignedBoundingBox2d> boundingBoxes = new ArrayList<>(PointUtils.toBoundingBoxes(this.curve, boxSizeFacctor, radius));
         treeBoundingBox = TreeBoundingBox.constructTree(boundingBoxes);
-        for (Point p : curve) {
+        for (Point p : this.curve) {
             assert this.contains(p);
             assert this.contains(new Point(p.x + (int) radius, p.y + (int) radius));
         }

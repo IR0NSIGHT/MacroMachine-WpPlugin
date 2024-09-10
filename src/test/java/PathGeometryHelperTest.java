@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.awt.*;
 import java.util.*;
 
+import static org.demo.wpplugin.pathing.CubicBezierSpline.point2DfromNVectorArr;
 import static org.demo.wpplugin.pathing.Path.curveIsContinous;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,7 +25,7 @@ public class PathGeometryHelperTest {
         PathGeometryHelper o = new PathGeometryHelper(p, p.continousCurve(), 0);
 
         // Act
-        ArrayList<Point> curve = p.continousCurve();
+        ArrayList<Point> curve = point2DfromNVectorArr(p.continousCurve());
         BoundingBox curveBox = AxisAlignedBoundingBox2d.fromPoints(curve);
 
         // Assert
@@ -83,8 +84,8 @@ public class PathGeometryHelperTest {
 
         ));
         double radius = 5;
-        ArrayList<Point> curve = p.continousCurve();
-        PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
+        ArrayList<Point> curve = point2DfromNVectorArr(p.continousCurve());
+        PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(), radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
         assertEquals(parentage.size(), curve.size());
         for (Point point : curve) {
@@ -105,7 +106,8 @@ public class PathGeometryHelperTest {
                 new Point(3 * size, 0),
                 new Point(3 * size + 1, 0)
         ));
-        ArrayList<Point> curve = p.continousCurve();
+        ArrayList<float[]> curveF = p.continousCurve();
+        ArrayList<Point> curve = point2DfromNVectorArr(curveF);
         assert curveIsContinous(curve);
         for (int i = 1; i < p.amountHandles()-1; i++) {
             Point point = p.handleByIndex(i);
@@ -113,7 +115,7 @@ public class PathGeometryHelperTest {
         }
         assertTrue(3 * size + 1 <= curve.size());
         int radius = 50;
-        PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
+        PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(), radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
         assertEquals(parentage.size(), curve.size());
         int totalNearby = 0;
@@ -136,7 +138,7 @@ public class PathGeometryHelperTest {
         ));
 
         Collection<AxisAlignedBoundingBox2d> boxes =
-                PointUtils.toBoundingBoxes(p.continousCurve(), 100, 50);
+                PointUtils.toBoundingBoxes(point2DfromNVectorArr(p.continousCurve()), 100, 50);
         BoundingBox treeBox = TreeBoundingBox.constructTree(boxes);
 
         for (int i = 0; i < 1000; i++) {
@@ -166,7 +168,7 @@ public class PathGeometryHelperTest {
         ));
 
         Collection<AxisAlignedBoundingBox2d> boxes =
-                PointUtils.toBoundingBoxes(p.continousCurve(), 100, 50);
+                PointUtils.toBoundingBoxes(point2DfromNVectorArr(p.continousCurve()), 100, 50);
         TreeBoundingBox treeBox = TreeBoundingBox.constructTree(boxes);
 
         for (int i = 0; i < 1000; i++) {

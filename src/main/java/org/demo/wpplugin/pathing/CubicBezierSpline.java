@@ -1,5 +1,8 @@
 package org.demo.wpplugin.pathing;
 
+import java.awt.*;
+import java.util.ArrayList;
+
 public class CubicBezierSpline {
     /**
      * calculate a cubic bezier curve connection start and endpoint with 2 control handles.
@@ -93,6 +96,10 @@ public class CubicBezierSpline {
         return dist;
     }
 
+    public static boolean arePositionalsEqual(float[] pointA, float[] pointB, int positionDigits) {
+        return point2dFromN_Vector(pointA).equals(point2dFromN_Vector(pointB));
+    }
+
     private static float[] getBezierHandle(float[] pointA, float[] pointB, float[] pointC, int positionDigits,
                                            float distance) {
         float[] out = new float[pointA.length];
@@ -109,6 +116,20 @@ public class CubicBezierSpline {
 
         for (int n = 0; n < pointA.length; n++) {
             out[n] += pointB[n];
+        }
+        return out;
+    }
+
+    public static Point point2dFromN_Vector(float[] nVector) {
+        if (nVector == null)
+            return null;
+        return new Point(Math.round(nVector[0]), Math.round(nVector[1]));
+    }
+
+    public static ArrayList<Point> point2DfromNVectorArr(ArrayList<float[]> points ) {
+        ArrayList<Point> out = new ArrayList<>(points.size());
+        for (int i = 0; i < points.size(); i++) {
+            out.add(point2dFromN_Vector(points.get(i)));
         }
         return out;
     }

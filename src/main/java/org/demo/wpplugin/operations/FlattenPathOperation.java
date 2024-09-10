@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.function.Function;
 
+import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
 import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 import static org.demo.wpplugin.operations.EditPath.EditPathOperation.PATH_ID;
 
@@ -246,11 +247,12 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
             Path path = PathManager.instance.getPathBy(PATH_ID);
 
             HashSet<Point> seen = new HashSet<>();
-            ArrayList<Point> curve = path.continousCurve();
+            ArrayList<float[]> curve = path.continousCurve();
             LinkedList<Point> edge = new LinkedList<>();
             int totalRadiusSq = totalRadius * totalRadius;
             //collect all points within rough radius
-            for (Point p : curve) {
+            for (float[] pF : curve) {
+                Point p = point2dFromN_Vector(pF);
                 for (int x = -totalRadius; x < totalRadius; x++) {
                     for (int y = -totalRadius; y < totalRadius; y++) {
                         Point edgePoint = new Point(p.x + x, p.y + y);
@@ -278,7 +280,7 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
             //curveHeights = applyDownslopeFilter(curveHeights);
             for (Point e : edge) {
                 int curveIdx = getClosestPointIndexOnCurveTo(curve, e);
-                Point closestCurvePoint = curve.get(curveIdx);
+                Point closestCurvePoint = point2dFromN_Vector(curve.get(curveIdx));
 
                 float interpolatedHeight = getHeightByDistanceToCurve(e.distance(closestCurvePoint),
                         getDimension().getHeightAt(e),
@@ -327,13 +329,14 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         return smoothedHeight;
     }
 
-    private int getClosestPointIndexOnCurveTo(ArrayList<Point> curve, Point nearby) {
+    private int getClosestPointIndexOnCurveTo(ArrayList<float[]> curve, Point nearby) {
         assert !curve.isEmpty() : "can not get point from empty curve";
         Point closest = null;
         int closestIdx = -1;
         double minDistSq = Double.MAX_VALUE;
         int i = 0;
-        for (Point p : curve) {
+        for (float[] pF : curve) {
+            Point p = point2dFromN_Vector(pF);
             double thisDistSq = p.distanceSq(nearby);
             if (thisDistSq < minDistSq) {
                 closest = p;
@@ -363,7 +366,8 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
 
     private void applyAsSelection(Path path) {
         Layer select = SelectionBlock.INSTANCE;
-        for (Point p : path.continousCurve()) {
+        for (float[] pF : path.continousCurve()) {
+            Point p = point2dFromN_Vector(pF);
             getDimension().setBitLayerValueAt(select, p.x, p.y, true);
         }
     }

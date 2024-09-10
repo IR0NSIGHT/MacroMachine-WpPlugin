@@ -19,6 +19,7 @@ import java.awt.*;
 import java.util.*;
 
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
+import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
 import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 
 /**
@@ -120,7 +121,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         Path path = PathManager.instance.getPathBy(EditPathOperation.PATH_ID);
         assert path != null : "Pathmanager delivered null path";
 
-        ArrayList<Point> curve = path.continousCurve();
+        ArrayList<float[]> curve = path.continousCurve();
 
         float baseRadius = options.getStartWidth();
         float randomPercent = (float) options.getRandomFluctuate() / 100f;
@@ -149,7 +150,8 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             heightProfile[i] -= 3;
         LinkedList<Point> transitionPoints = new LinkedList<>();
         HashMap<Point,Float> transitionPointDistances = new HashMap<>();
-        for (Point curvePoint : curve) {
+        for (float[] curvePointF : curve) {
+            Point curvePoint = point2dFromN_Vector(curvePointF);
             Collection<Point> nearby = parentage.get(curvePoint);
             double interpol = curveIndex / (1f * curve.size());
             double baseRadiusAtIdx = interpol * options.getStartWidth() + (1 - interpol) * options.getFinalWidth();
