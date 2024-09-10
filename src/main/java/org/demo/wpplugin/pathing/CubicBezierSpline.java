@@ -1,10 +1,7 @@
 package org.demo.wpplugin.pathing;
 
-import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
-import org.demo.wpplugin.geometry.BoundingBox;
-
+import javax.vecmath.Vector2f;
 import java.awt.*;
-import java.util.Arrays;
 
 import static org.demo.wpplugin.pathing.PointUtils.calculatePathLength;
 
@@ -35,19 +32,9 @@ public class CubicBezierSpline {
         return points;
     }
 
-    public static float getCubicBezierHandles(float A, float B, float C) {
+    public static float getHalfWay(float A, float C) {
         // (AC)/2+B
-        return B + (C - A) / 2;
-    }
-
-    public static BoundingBox boundingBoxCurveSegment(Point controlA, Point controlB, Point controlC, Point controlD) {
-        Point handle1p = new Point(
-                Math.round(getCubicBezierHandles(controlA.x, controlB.x, controlC.x)),
-                Math.round(getCubicBezierHandles(controlA.y, controlB.y, controlC.y)));
-        Point handle2P = new Point(
-                Math.round(getCubicBezierHandles(controlD.x, controlC.x, controlB.x)),
-                Math.round(getCubicBezierHandles(controlD.y, controlC.y, controlB.y)));
-        return AxisAlignedBoundingBox2d.fromPoints(Arrays.asList(controlB, handle1p, handle2P, controlD));
+        return (C - A) / 2;
     }
 
     /**
@@ -59,13 +46,20 @@ public class CubicBezierSpline {
      * @param D
      */
     public static Point[] getSplinePathFor(Point A, Point B, Point C, Point D, float metersBetweenPoints) {
+        float dist = (float)B.distance(C);
+        Vector2f handle1p = new Vector2f(
+                getHalfWay(A.x, C.x),
+                getHalfWay(A.y, C.y));
+        handle1p.normalize();
+        handle1p.scale(dist/2f);
+        handle1p.add(new Vector2f(B.x,B.y));
 
-        Point handle1p = new Point(
-                Math.round(getCubicBezierHandles(A.x, B.x, C.x)),
-                Math.round(getCubicBezierHandles(A.y, B.y, C.y)));
-        Point handle2P = new Point(
-                Math.round(getCubicBezierHandles(D.x, C.x, B.x)),
-                Math.round(getCubicBezierHandles(D.y, C.y, B.y)));
+        Vector2f handle2P = new Vector2f(
+                getHalfWay(D.x, B.x),
+                getHalfWay(D.y, B.y));
+        handle2P.normalize();
+        handle2P.scale(dist/2f);
+        handle2P.add(new Vector2f(C.x,C.y));
 
         //estimate length by measuring rough curve with 50 points
         float[] pathX = calculateCubicBezier(B.x, handle1p.x, handle2P.x, C.x, 50);
@@ -73,7 +67,7 @@ public class CubicBezierSpline {
 
         Point[] path = new Point[pathX.length];
         for (int i = 0; i < pathX.length; i++) {
-            path[i] = new Point(Math.round(pathX[i]),Math.round(pathY[i]));
+            path[i] = new Point(Math.round(pathX[i]), Math.round(pathY[i]));
         }
         double length = calculatePathLength(path);
 
@@ -82,7 +76,7 @@ public class CubicBezierSpline {
 
         path = new Point[pathX.length];
         for (int i = 0; i < pathX.length; i++) {
-            path[i] = new Point(Math.round(pathX[i]),Math.round(pathY[i]));
+            path[i] = new Point(Math.round(pathX[i]), Math.round(pathY[i]));
         }
         return path;
     }

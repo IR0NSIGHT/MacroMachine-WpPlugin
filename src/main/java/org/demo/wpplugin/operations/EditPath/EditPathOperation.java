@@ -19,7 +19,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static org.demo.wpplugin.pathing.CubicBezierSpline.getCubicBezierHandles;
 import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
 
 /**
