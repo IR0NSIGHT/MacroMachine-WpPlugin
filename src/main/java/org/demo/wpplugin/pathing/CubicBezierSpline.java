@@ -55,7 +55,7 @@ public class CubicBezierSpline {
 
         //prepare output array of n-vectors
         //FIXME use estimate of curvelength
-        int pointsInCurve = (int) (Math.pow(distance, 1.5));
+        int pointsInCurve = (int)(estimateCurveSize(A,B,C,D, positionDigits)*2);
         float[][] path = new float[pointsInCurve][];
         for (int i = 0; i < pointsInCurve; i++) {
             path[i] = new float[vectorSize];    //new n-vector
@@ -85,6 +85,14 @@ public class CubicBezierSpline {
         return dist;
     }
 
+    private static float estimateCurveSize(float[] pointA, float[] pointB, float[] pointC, float[] pointD, int positionDigits) {
+        float chord = getPositionalDistance(pointD, pointA, positionDigits);
+        float cont_net = getPositionalDistance(pointA, pointB, positionDigits)+
+                getPositionalDistance(pointC, pointB, positionDigits)+
+                getPositionalDistance(pointC, pointD, positionDigits);
+        float app_arc_length = (cont_net+chord)/2f;
+        return app_arc_length;
+    }
 
 
     public static float getPositionalDistance(float[] pointA, float[] pointB, int positionDigits) {

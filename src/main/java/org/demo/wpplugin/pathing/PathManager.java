@@ -1,16 +1,13 @@
 package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
-import org.demo.wpplugin.operations.River.RiverPath;
 
-import java.awt.*;
 import java.util.*;
 
 public class PathManager {
     public static final PathManager instance = new PathManager();
     private final HashMap<Integer, Path> pathById = new HashMap<>();
     private final HashMap<Integer, String> pathNames = new HashMap<>();
-    private final HashMap<Integer, PathInformation> pathInformation = new HashMap<>();
     private int nextPathId = 0;
 
     public PathManager() {
@@ -38,17 +35,7 @@ public class PathManager {
         pathById.put(++nextPathId, path);
         setPathBy(nextPathId, path);
         nameExistingPath(nextPathId, "Path-" + nextPathId);
-        setInformedPath(new RiverPath(path.amountHandles()),
-                nextPathId);
         return nextPathId;
-    }
-
-    public void setInformedPath(PathInformation info, int id) {
-        pathInformation.put(id, info);
-    }
-
-    public PathInformation getInformationForPath(int id) {
-        return pathInformation.get(id);
     }
 
     public int getAnyValidId() {

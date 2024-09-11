@@ -1,18 +1,14 @@
 package org.demo.wpplugin.operations.River;
 
-import org.demo.wpplugin.pathing.Interpolatable;
+public class RiverHandleInformation {
+    public static float getValue(float[] point, RiverInformation information) {
+        return point[PositionSize.SIZE_2_D.value + information.idx];
+    }
 
-public class RiverHandleInformation implements Interpolatable {
-    public final int riverRadius;
-    public final float riverDepth;
-    public final int beachRadius;
-    public final int transitionRadius;
-
-    public RiverHandleInformation(int riverRadius, float riverDepth, int beachRadius, int transitionRadius) {
-        this.riverRadius = riverRadius;
-        this.riverDepth = riverDepth;
-        this.beachRadius = beachRadius;
-        this.transitionRadius = transitionRadius;
+    public static float[] setValue(float[] point, RiverInformation information, float value) {
+        float[] out = point.clone();
+        out[PositionSize.SIZE_2_D.value +information.idx] = value;
+        return out;
     }
 
     public static float[] riverInformation(int x, int y, float riverRadius, float riverDepth, int beachRadius,
@@ -22,19 +18,6 @@ public class RiverHandleInformation implements Interpolatable {
 
     public static float[] riverInformation(int x, int y) {
         return new float[]{x, y, 10, 3, 5, 25};
-    }
-
-    @Override
-    public Interpolatable interpolateWith(float t, Interpolatable other) {
-        if (other instanceof RiverHandleInformation) {
-            return new RiverHandleInformation(
-                    Math.round((t - 1) * riverRadius + t * ((RiverHandleInformation) other).riverRadius),
-                    (t - 1) * riverDepth + t * ((RiverHandleInformation) other).riverDepth,
-                    Math.round((t - 1) * beachRadius + t * ((RiverHandleInformation) other).beachRadius),
-                    Math.round((t - 1) * transitionRadius + t * ((RiverHandleInformation) other).transitionRadius));
-        }
-
-        throw new IllegalArgumentException("can not interpolate with this" + this + " other type" + other);
     }
 
     public enum RiverInformation {
@@ -48,6 +31,7 @@ public class RiverHandleInformation implements Interpolatable {
             this.idx = idx;
         }
     }
+
     public enum PositionSize {
         SIZE_1_D(1),
         SIZE_2_D(2),

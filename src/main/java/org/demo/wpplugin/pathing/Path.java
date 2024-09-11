@@ -93,10 +93,6 @@ public class Path implements Iterable<float[]> {
         Iterable.super.forEach(action);
     }
 
-    public float[] byIndex(int index) {
-        return handles.get(index);
-    }
-
     public int indexOf(float[] p) {
         for (int i = 0; i < handles.size(); i++) {
             if (p.equals(handles.get(i)))

@@ -4,9 +4,7 @@ import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.ApplyPath.OperationOptionsPanel;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
-import org.demo.wpplugin.operations.River.RiverPath;
 import org.demo.wpplugin.pathing.Path;
-import org.demo.wpplugin.pathing.PathInformation;
 import org.demo.wpplugin.pathing.PathManager;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -19,6 +17,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.getPositionalDistance;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
 
@@ -168,12 +168,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         } else {
             //add new point after selected
             overwriteSelectedPath(path.insertPointAfter(selectedPoint, userClickedCoord));
-            PathInformation info = PathManager.instance.getInformationForPath(getSelectedPathId());
-            if (info instanceof RiverPath)
-                info.setInformationByIndex(
-                        new RiverHandleInformation((int) Math.round(10 * Math.random() + 3), 2, 3, 4),
-                        getSelectedPath().indexOf(userClickedCoord)
-                );
             selectedPoint = userClickedCoord;
         }
 
@@ -258,13 +252,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
         } */
 
-        PathInformation info = PathManager.instance.getInformationForPath(getSelectedPathId());
-        if (info instanceof RiverPath) {
-            for (int i = 0; i < path.amountHandles(); i++) {
-                float[] point = path.handleByIndex(i);
-                drawCircle(point2dFromN_Vector(point),
-                        point[RiverHandleInformation.PositionSize.SIZE_2_D.value + RiverHandleInformation.RiverInformation.RIVER_RADIUS.idx]);
-            }
+        for (int i = 0; i < path.amountHandles(); i++) {
+            float[] point = path.handleByIndex(i);
+            drawCircle(point2dFromN_Vector(point), getValue(point, RIVER_RADIUS));
         }
     }
 
