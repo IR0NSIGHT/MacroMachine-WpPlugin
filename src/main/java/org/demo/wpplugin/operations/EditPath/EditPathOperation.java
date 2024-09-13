@@ -72,6 +72,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     final int SIZE_DOT = 0;
     final int SIZE_MEDIUM_CROSS = 3;
     private final EditPathOptions options = new EditPathOptions();
+    EditPathOptionsPanel eOptionsPanel;
     private float[] selectedPoint;
     private Brush brush;
     private Paint paint;
@@ -144,7 +145,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             }
         } else if (isAltDown()) {
             if (inverse) {
-                overwriteSelectedPath(new Path());
+                overwriteSelectedPath(path.newEmpty());
                 selectedPoint = null;
             } else {
                 // MOVE SELECTED POINT TO
@@ -181,6 +182,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                 "path in manager";
 
         redrawSelectedPathLayer();
+        if (this.eOptionsPanel != null)
+            this.eOptionsPanel.onOptionsReconfigured();
     }
 
     private void overwriteSelectedPath(Path p) {
@@ -320,7 +323,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         return new StandardOptionsPanel(getName(), getDescription()) {
             @Override
             protected void addAdditionalComponents(GridBagConstraints constraints) {
-                add(new EditPathOptionsPanel(options), constraints);
+                eOptionsPanel = new EditPathOptionsPanel(options);
+                add(eOptionsPanel, constraints);
             }
         };
     }
@@ -360,7 +364,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             JButton button = new JButton("Add empty path");
             // Add an ActionListener to handle button clicks
             button.addActionListener(e -> {
-                editPathOptions.selectedPathId = PathManager.instance.addPath(new Path());
+                editPathOptions.selectedPathId = PathManager.instance.addPath(getSelectedPath().newEmpty());
                 selectedPoint = null;
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
@@ -369,7 +373,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
 
             // Create a JTextField for text input
-            JTextField textField = new JTextField(20);
+            final JTextField textField = new JTextField(20);
 
             // Create a JButton to trigger an action
             JButton submitNameChangeButton = new JButton("Change Name");
@@ -384,6 +388,31 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
             inputs.add(() -> new JComponent[]{textField, submitNameChangeButton});
 
+            {// Create a JTextField for text input
+                final JTextField textField1 = new JTextField(20);
+
+                // Create a JButton to trigger an action
+                JButton submitNameChangeButton1 = new JButton("increase width");
+                textField1.setText(PathManager.instance.getPathName(options.selectedPathId).name);
+                // Add ActionListener to handle button click
+                submitNameChangeButton1.addActionListener(e -> {
+                    // Get the text from the text field and display it in the label
+                    String inputText = textField1.getText();
+                    PathManager.instance.nameExistingPath(options.selectedPathId, inputText);
+                    onOptionsReconfigured.run();
+                    redrawSelectedPathLayer();
+                });
+
+                inputs.add(() -> new JComponent[]{textField1, submitNameChangeButton1});
+            }
+
+            if (selectedPoint != null)
+                inputs.add(RiverHandleInformation.Editor(selectedPoint, point -> {
+                    overwriteSelectedPath(getSelectedPath().movePoint(selectedPoint, point));
+                    redrawSelectedPathLayer();
+                    onOptionsReconfigured.run();
+
+                }));
             return inputs;
         }
     }

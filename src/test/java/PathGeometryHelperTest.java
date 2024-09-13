@@ -2,6 +2,7 @@ import org.demo.wpplugin.geometry.*;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
+import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +26,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.riverInformation(5, 5),
                 RiverHandleInformation.riverInformation(155, -255),
                 RiverHandleInformation.riverInformation(-9, 9)
-        ));
+        ), PointInterpreter.PointType.RIVER);
         PathGeometryHelper o = new PathGeometryHelper(p, p.continousCurve(), 0);
 
         // Act
@@ -86,7 +87,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.riverInformation(40, 0)
 
 
-        ));
+        ), PointInterpreter.PointType.RIVER);
         double radius = 5;
         ArrayList<Point> curve = point2DfromNVectorArr(p.continousCurve());
         PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(), radius);
@@ -109,7 +110,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.riverInformation(2 * size, 0),
                 RiverHandleInformation.riverInformation(3 * size, 0),
                 RiverHandleInformation.riverInformation(3 * size + 1, 0)
-        ));
+        ), PointInterpreter.PointType.RIVER);
         ArrayList<float[]> curveF = p.continousCurve();
         ArrayList<Point> curve = point2DfromNVectorArr(curveF);
         assert curveIsContinous(curveF);
@@ -139,7 +140,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.riverInformation(-500, 500),
                 RiverHandleInformation.riverInformation(250, 250),
                 RiverHandleInformation.riverInformation(500, -250)
-        ));
+        ), PointInterpreter.PointType.RIVER);
 
         Collection<AxisAlignedBoundingBox2d> boxes =
                 PointUtils.toBoundingBoxes(point2DfromNVectorArr(p.continousCurve()), 100, 50);
@@ -169,7 +170,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.riverInformation(1000, -1001),
                 RiverHandleInformation.riverInformation(0, 0),
                 RiverHandleInformation.riverInformation(1, 1)
-        ));
+        ), PointInterpreter.PointType.RIVER);
 
         Collection<AxisAlignedBoundingBox2d> boxes =
                 PointUtils.toBoundingBoxes(point2DfromNVectorArr(p.continousCurve()), 100, 50);

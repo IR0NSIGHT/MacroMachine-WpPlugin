@@ -12,8 +12,9 @@ public class PathManager {
 
     public PathManager() {
         addPath(new Path(Arrays.asList(
-                RiverHandleInformation.riverInformation(0, 0), RiverHandleInformation.riverInformation(1, 1), RiverHandleInformation.riverInformation(100, 50), RiverHandleInformation.riverInformation(100, 150),
-                RiverHandleInformation.riverInformation(101, 151))));
+                RiverHandleInformation.riverInformation(0, 0), RiverHandleInformation.riverInformation(1, 1),
+                RiverHandleInformation.riverInformation(100, 50), RiverHandleInformation.riverInformation(100, 150),
+                RiverHandleInformation.riverInformation(101, 151)), PointInterpreter.PointType.RIVER));
     }
 
     public Path getPathBy(int id) throws IllegalArgumentException {
@@ -51,7 +52,7 @@ public class PathManager {
     public Collection<NamedId> allPathNamedIds() {
         Collection<NamedId> names = new LinkedList<>();
         for (Map.Entry<Integer, String> e : pathNames.entrySet()) {
-            names.add(new NamedId(e.getKey(), e.getValue()));
+            names.add(new NamedId(e.getKey(), e.getValue(), getPathBy(e.getKey()).type));
         }
         return names;
     }
@@ -59,15 +60,17 @@ public class PathManager {
     public NamedId getPathName(int pathId) {
         if (!pathNames.containsKey(pathId))
             throw new IllegalArgumentException("can not get name of non existent path");
-        return new NamedId(pathId, pathNames.get(pathId));
+        return new NamedId(pathId, pathNames.get(pathId), getPathBy(pathId).type);
     }
 
     public static class NamedId {
         public final int id;
         public final String name;
+        public final PointInterpreter.PointType type;
 
-        public NamedId(int id, String name) {
+        public NamedId(int id, String name, PointInterpreter.PointType type) {
             this.id = id;
+            this.type = type;
             this.name = name;
         }
 
@@ -78,7 +81,7 @@ public class PathManager {
 
         @Override
         public String toString() {
-            return name + "(" + id + ")";
+            return name + ": " + type + "";
         }
     }
 }

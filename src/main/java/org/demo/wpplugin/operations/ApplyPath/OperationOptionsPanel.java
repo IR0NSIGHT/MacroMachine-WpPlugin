@@ -55,7 +55,7 @@ public abstract class OperationOptionsPanel<Options> extends JPanel {
         }
     }
 
-    private void onOptionsReconfigured() {
+    public void onOptionsReconfigured() {
         removeComponentsAndCleanup(inputs);
         displayOptions(options);
     }

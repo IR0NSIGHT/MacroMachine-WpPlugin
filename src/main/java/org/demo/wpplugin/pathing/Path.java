@@ -2,7 +2,9 @@ package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.demo.wpplugin.pathing.CubicBezierSpline.arePositionalsEqual;
@@ -10,14 +12,17 @@ import static org.demo.wpplugin.pathing.CubicBezierSpline.getPositionalDistance;
 
 public class Path implements Iterable<float[]> {
     private final ArrayList<float[]> handles;
+    public final PointInterpreter.PointType type;
 
-    public Path() {
+    private Path() {
+        this.type = PointInterpreter.PointType.POSITION;
         handles = new ArrayList<>(0);
     }
 
-    public Path(List<float[]> handles) {
+    public Path(List<float[]> handles, PointInterpreter.PointType type) {
         this.handles = new ArrayList<>(handles.size());
         this.handles.addAll(handles);
+        this.type = type;
     }
 
     public static boolean curveIsContinous(List<float[]> curve) {
@@ -33,20 +38,28 @@ public class Path implements Iterable<float[]> {
     }
 
     public Path addPoint(float[] point) {
-        Path sum = new Path(this.handles);
+        Path sum = new Path(this.handles, this.type);
         sum.handles.add(point);
         return sum;
     }
 
+    public Path newEmpty() {
+        return new Path(Collections.EMPTY_LIST, this.type);
+    }
+
     public Path removePoint(float[] point) {
-        Path sum = new Path(this.handles);
+        Path sum = new Path(this.handles, this.type);
         sum.handles.remove(point);
         return sum;
     }
 
     public Path movePoint(float[] point, float[] newPosition) {
-        Path sum = new Path(this.handles);
+        Path sum = new Path(this.handles, this.type);
         int idx = indexOf(point);
+        float[] copy = point.clone();
+        //use meta info from point and position of newPosition
+        for (int i = 0; i < RiverHandleInformation.PositionSize.SIZE_2_D.value; i++)
+            copy[i] = newPosition[i];
         sum.handles.set(idx, newPosition);
         return sum;
     }
@@ -73,7 +86,7 @@ public class Path implements Iterable<float[]> {
     }
 
     public Path insertPointAfter(float[] point, float[] newPosition) {
-        Path sum = new Path(this.handles);
+        Path sum = new Path(this.handles, this.type);
         int idx = sum.handles.lastIndexOf(point);
         sum.handles.add(idx + 1, newPosition);
         return sum;
@@ -95,7 +108,7 @@ public class Path implements Iterable<float[]> {
 
     public int indexOf(float[] p) {
         for (int i = 0; i < handles.size(); i++) {
-            if (p.equals(handles.get(i)))
+            if (arePositionalsEqual(p,handles.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value))
                 return i;
         }
         return -1;
