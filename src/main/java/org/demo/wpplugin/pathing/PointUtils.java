@@ -76,8 +76,10 @@ public class PointUtils {
     public static void drawCircle(Point center, float radius, Dimension dimension, Layer layer, boolean dotted) {
         int radiusI = Math.round(radius);
         int inc = dotted ? 2 : 1;
-        for (int x = -radiusI; x <= radiusI; x+= inc) {
+        for (int x = -radiusI; x <= radiusI; x++) {
             for (int y = -radiusI; y <= radiusI; y++) {
+                if (dotted && (x+y)%2 == 0)
+                    continue;
                 Point p = new Point(center.x + x, center.y + y);
                 if (center.distance(p) <= radius && center.distance(p) >= radiusI - 1) {
                     dimension.setLayerValueAt(layer, p.x, p.y, 15);

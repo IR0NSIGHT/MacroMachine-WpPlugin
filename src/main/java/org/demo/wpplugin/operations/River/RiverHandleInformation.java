@@ -34,9 +34,9 @@ public class RiverHandleInformation {
         int i = 0;
         for (RiverInformation information : RiverInformation.values()) {
             SpinnerNumberModel model = new SpinnerNumberModel(getValue(point,information),INHERIT_VALUE,100,1f);
-            
-            options[i++] = numericInput("river radius",
-                    "radius of the river at this handle",
+
+            options[i++] = numericInput(information.displayName,
+                    information.toolTip,
                     model,
                     newValue -> {
                         onSubmitCallback.accept(setValue(point, information, newValue));
@@ -48,13 +48,16 @@ public class RiverHandleInformation {
     }
 
     public enum RiverInformation {
-        RIVER_RADIUS(0),
-        RIVER_DEPTH(1),
-        BEACH_RADIUS(2),
-        TRANSITION_RADIUS(3);
+        RIVER_RADIUS(0,"river radius", "radius of the river "),
+        RIVER_DEPTH(1, "river depth", "depth of the river "),
+        BEACH_RADIUS(2, "beach radius", "radius of the beach "),
+        TRANSITION_RADIUS(3,"transition radius", "radius of the transition blending with original terrain "),;
         public final int idx;
-
-        RiverInformation(int idx) {
+        public final String displayName;
+        public final String toolTip;
+        RiverInformation(int idx, String displayName, String toolTip) {
+            this.displayName = displayName;
+            this.toolTip = toolTip;
             this.idx = idx;
         }
     }

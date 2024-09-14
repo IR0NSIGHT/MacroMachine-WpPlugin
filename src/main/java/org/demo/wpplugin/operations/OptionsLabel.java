@@ -21,7 +21,6 @@ public interface OptionsLabel {
             public JFormattedTextField.AbstractFormatter getFormatter(JFormattedTextField tf) {
                 // return your formatter
                 return new JFormattedTextField.AbstractFormatter() {
-
                     @Override
                     public Object stringToValue(String text) throws ParseException {
                         if (text.equals("INHERIT")) {
@@ -38,7 +37,6 @@ public interface OptionsLabel {
             }
         });
 
-
         spinner.setEnabled(true);
         spinner.addChangeListener(
                 evt -> {
@@ -47,7 +45,13 @@ public interface OptionsLabel {
                 }
         );
 
-        return () -> new JComponent[]{textL, spinner};
+        // Create a horizontal Box to hold the label and spinner on the same line
+        Box horizontalBox = Box.createHorizontalBox();
+        horizontalBox.add(textL);
+        horizontalBox.add(Box.createHorizontalStrut(5)); // add spacing between label and spinner
+        horizontalBox.add(spinner);
+
+        return () -> new JComponent[]{horizontalBox};
     }
 
     JComponent[] getLabels();
