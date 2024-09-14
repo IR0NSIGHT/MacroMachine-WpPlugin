@@ -6,6 +6,7 @@ import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathManager;
+import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -16,6 +17,7 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
@@ -208,7 +210,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
     private void overwriteSelectedPath(Path p) {
         PathManager.instance.setPathBy(getSelectedPathId(), p);
-
     }
 
     Path getSelectedPath() {
@@ -259,9 +260,16 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                     getDimension());
         }
 
+        float lastValidRadius = 0;
         for (int i = 0; i < path.amountHandles(); i++) {
             float[] point = path.handleByIndex(i);
-            PointUtils.drawCircle(point2dFromN_Vector(point), getValue(point, RIVER_RADIUS), getDimension(),
+            float thisRadius = getValue(point, RIVER_RADIUS);
+            if (thisRadius == RiverHandleInformation.INHERIT_VALUE) {
+                thisRadius = lastValidRadius;
+            } else {
+                lastValidRadius = thisRadius;
+            }
+            PointUtils.drawCircle(point2dFromN_Vector(point), thisRadius, getDimension(),
                     PathPreviewLayer.INSTANCE);
         }
     }
@@ -356,13 +364,22 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
             inputs.add(() -> new JComponent[]{textField, submitNameChangeButton});
 
-            if (getSelectedPoint() != null)
-                inputs.add(RiverHandleInformation.Editor(getSelectedPoint(), point -> {
-                    overwriteSelectedPath(getSelectedPath().movePoint(getSelectedPoint(), point));
-                    redrawSelectedPathLayer();
-                    onOptionsReconfigured.run();
 
-                }));
+            if (getSelectedPoint() != null) {
+                if (getSelectedPath().type == PointInterpreter.PointType.RIVER_2D) {
+                    OptionsLabel[] riverInputs = RiverHandleInformation.Editor(
+                            getSelectedPoint(),
+                            point -> {
+                                overwriteSelectedPath(getSelectedPath().movePoint(getSelectedPoint(), point));
+                                redrawSelectedPathLayer();
+                            },
+                            onOptionsReconfigured);
+
+                    inputs.addAll(Arrays.asList(riverInputs));
+                }
+
+
+            }
             return inputs;
         }
     }

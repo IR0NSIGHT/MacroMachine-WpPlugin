@@ -3,12 +3,13 @@ package org.demo.wpplugin.operations.River;
 import org.demo.wpplugin.operations.OptionsLabel;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 
+import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
+
 public class RiverHandleInformation {
+    public static final float INHERIT_VALUE = -1;
+
     public static float getValue(float[] point, RiverInformation information) {
         return point[PositionSize.SIZE_2_D.value + information.idx];
     }
@@ -25,58 +26,60 @@ public class RiverHandleInformation {
     }
 
     public static float[] riverInformation(int x, int y) {
-        return new float[]{x, y, 10, 3, 5, 25};
+        return new float[]{x, y, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE};
     }
 
-    public static OptionsLabel Editor(float[] point, Consumer<float[]> onSubmitCallback) {
-        // Create the panel for input fields and submit button
-        JPanel panel = new JPanel(new GridLayout(5, 2));
+    public static OptionsLabel[] Editor(float[] point, Consumer<float[]> onSubmitCallback, Runnable onChanged) {
+        OptionsLabel[] options = new OptionsLabel[4];
 
-        // Initialize input fields
-        JTextField riverRadiusField = new JTextField(""+getValue(point, RiverInformation.RIVER_RADIUS), 10);
-        JTextField riverDepthField = new JTextField(""+getValue(point, RiverInformation.RIVER_DEPTH), 10);
-        JTextField beachRadiusField = new JTextField(""+getValue(point, RiverInformation.BEACH_RADIUS), 10);
-        JTextField transitionRadiusField = new JTextField(""+getValue(point, RiverInformation.TRANSITION_RADIUS), 10);
+        {
+            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, RiverInformation.RIVER_RADIUS),INHERIT_VALUE,100,1f);
+            options[0] = numericInput("river radius",
+                    "radius of the river at this handle",
+                    model,
+                    newValue -> {
+                        onSubmitCallback.accept(setValue(point, RiverInformation.RIVER_RADIUS, newValue));
+                    },
+                    onChanged
+            );
+        }
 
-        // Add labels and text fields to the panel
-        panel.add(new JLabel("RIVER_RADIUS:"));
-        panel.add(riverRadiusField);
-        panel.add(new JLabel("RIVER_DEPTH:"));
-        panel.add(riverDepthField);
-        panel.add(new JLabel("BEACH_RADIUS:"));
-        panel.add(beachRadiusField);
-        panel.add(new JLabel("TRANSITION_RADIUS:"));
-        panel.add(transitionRadiusField);
+        {
+            SpinnerNumberModel model = new SpinnerNumberModel(0f,INHERIT_VALUE,100,1f);
+            model.setValue(getValue(point, RiverInformation.RIVER_DEPTH));
+            options[1] = numericInput("river depth",
+                    "water depth of the river at this handle",
+                    model, newValue -> {
+                        onSubmitCallback.accept(setValue(point, RiverInformation.RIVER_DEPTH, newValue));
+                    },
+                    onChanged
+            );
+        }
 
-        // Create and add the submit button
-        JButton submitButton = new JButton("Submit");
-        submitButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("submit button pressed");
-                try {
-                    // Parse the float values from the text fields
-                    float riverRadius = Float.parseFloat(riverRadiusField.getText());
-                    float riverDepth = Float.parseFloat(riverDepthField.getText());
-                    float beachRadius = Float.parseFloat(beachRadiusField.getText());
-                    float transitionRadius = Float.parseFloat(transitionRadiusField.getText());
-
-                    float[] out = point.clone();
-                    out = setValue(out, RiverInformation.RIVER_RADIUS, riverRadius);
-                    out = setValue(out, RiverInformation.RIVER_DEPTH, riverDepth);
-                    out = setValue(out, RiverInformation.BEACH_RADIUS, beachRadius);
-                    out = setValue(out, RiverInformation.TRANSITION_RADIUS, transitionRadius);
-                    onSubmitCallback.accept (out);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(null, "Please enter valid float values.", "Error",
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        });
-
-        // Add the submit button to the panel
-        panel.add(submitButton);
-        return () -> new JComponent[]{panel};
+        {
+            SpinnerNumberModel model = new SpinnerNumberModel(0f,INHERIT_VALUE,100,1f);
+            model.setValue(getValue(point, RiverInformation.BEACH_RADIUS));
+            options[2] = numericInput("beach radius",
+                    "radius of the beach around the river at this handle",
+                    model,
+                    newValue -> {
+                        onSubmitCallback.accept(setValue(point, RiverInformation.BEACH_RADIUS, newValue));
+                    },
+                    onChanged
+            );
+        }
+        {
+            SpinnerNumberModel model = new SpinnerNumberModel(0f,INHERIT_VALUE,100,1f);
+            model.setValue(getValue(point, RiverInformation.TRANSITION_RADIUS));
+            options[3] = numericInput("transition radius",
+                    "radius of the smooth transition into the original landscape at this handle",
+                    model, newValue -> {
+                        onSubmitCallback.accept(setValue(point, RiverInformation.TRANSITION_RADIUS, newValue));
+                    },
+                    onChanged
+            );
+        }
+        return options;
     }
 
     public enum RiverInformation {
