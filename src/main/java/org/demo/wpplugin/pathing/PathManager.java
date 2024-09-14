@@ -14,7 +14,7 @@ public class PathManager {
         addPath(new Path(Arrays.asList(
                 RiverHandleInformation.riverInformation(0, 0), RiverHandleInformation.riverInformation(1, 1),
                 RiverHandleInformation.riverInformation(100, 50), RiverHandleInformation.riverInformation(100, 150),
-                RiverHandleInformation.riverInformation(101, 151)), PointInterpreter.PointType.RIVER));
+                RiverHandleInformation.riverInformation(101, 151)), PointInterpreter.PointType.RIVER_2D));
     }
 
     public Path getPathBy(int id) throws IllegalArgumentException {

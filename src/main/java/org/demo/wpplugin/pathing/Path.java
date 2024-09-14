@@ -3,18 +3,17 @@ package org.demo.wpplugin.pathing;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 
 import java.util.*;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static org.demo.wpplugin.pathing.PointUtils.arePositionalsEqual;
 import static org.demo.wpplugin.pathing.PointUtils.getPositionalDistance;
 
 public class Path implements Iterable<float[]> {
-    private final ArrayList<float[]> handles;
     public final PointInterpreter.PointType type;
+    private final ArrayList<float[]> handles;
 
     private Path() {
-        this.type = PointInterpreter.PointType.POSITION;
+        this.type = PointInterpreter.PointType.POSITION_2D;
         handles = new ArrayList<>(0);
     }
 
@@ -36,9 +35,23 @@ public class Path implements Iterable<float[]> {
         return true;
     }
 
+    private boolean invariant() {
+        boolean okay = true;
+        for (float[] handle : handles) {
+            if (handle.length != type.size) {
+                System.err.println("path has a handle with wrong size for type " + type +
+                        " expected " + type.size +
+                        " but got " + Arrays.toString(handle));
+                okay = false;
+            }
+        }
+        return okay;
+    }
+
     public Path addPoint(float[] point) {
         Path sum = new Path(this.handles, this.type);
         sum.handles.add(point);
+        assert invariant();
         return sum;
     }
 
@@ -49,17 +62,19 @@ public class Path implements Iterable<float[]> {
     public Path removePoint(float[] point) {
         Path sum = new Path(this.handles, this.type);
         sum.handles.remove(point);
+        assert invariant();
         return sum;
     }
 
     public Path movePoint(float[] point, float[] newPosition) {
         Path sum = new Path(this.handles, this.type);
-        int idx = indexOf(point);
+        int idx = indexOfPosition(point);
         float[] copy = point.clone();
         //use meta info from point and position of newPosition
-        for (int i = 0; i < RiverHandleInformation.PositionSize.SIZE_2_D.value; i++)
-            copy[i] = newPosition[i];
+        if (RiverHandleInformation.PositionSize.SIZE_2_D.value >= 0)
+            System.arraycopy(newPosition, 0, copy, 0, RiverHandleInformation.PositionSize.SIZE_2_D.value);
         sum.handles.set(idx, newPosition);
+        assert invariant();
         return sum;
     }
 
@@ -72,7 +87,7 @@ public class Path implements Iterable<float[]> {
     public float[] getPreviousPoint(float[] point) throws IllegalAccessException {
         if (amountHandles() < 2)
             throw new IllegalAccessException("can not find previous point on path with less than 2 points.");
-        int idx = indexOf(point);
+        int idx = indexOfPosition(point);
         if (idx == -1)
             throw new IllegalAccessException("this point is not part of the path.");
         if (idx == 0)
@@ -86,13 +101,16 @@ public class Path implements Iterable<float[]> {
 
     public Path insertPointAfter(float[] point, float[] newPosition) {
         Path sum = new Path(this.handles, this.type);
-        int idx = sum.handles.lastIndexOf(point);
+        int idx = indexOfPosition(point);
+        if (idx == -1)
+            throw new IllegalArgumentException("can not find point " + point + "in path");
         sum.handles.add(idx + 1, newPosition);
+        assert invariant();
         return sum;
     }
 
     public boolean isHandle(float[] point) {
-        return indexOf(point) != -1;
+        return indexOfPosition(point) != -1;
     }
 
     @Override
@@ -105,9 +123,9 @@ public class Path implements Iterable<float[]> {
         Iterable.super.forEach(action);
     }
 
-    public int indexOf(float[] p) {
+    public int indexOfPosition(float[] p) {
         for (int i = 0; i < handles.size(); i++) {
-            if (arePositionalsEqual(p,handles.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value))
+            if (arePositionalsEqual(p, handles.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value))
                 return i;
         }
         return -1;
@@ -147,6 +165,7 @@ public class Path implements Iterable<float[]> {
                 previous = curvePoints.get(i);
         }
 
+        assert invariant();
         //    assert curveHasNoClones(curvePoints) : "curve still contains clones";
         //    assert curveIsContinous(curvePoints);
         return new ArrayList<>(curvePoints);
@@ -180,6 +199,7 @@ public class Path implements Iterable<float[]> {
                 closest = p;
             }
         }
+        assert invariant();
         return closest;
     }
 }

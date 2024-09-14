@@ -1,17 +1,26 @@
 package org.demo.wpplugin.pathing;
 
+import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.LinkedList;
 
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.setValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PathTest {
     private Path newFilledPath(int length) {
-        Path p = new Path(Collections.EMPTY_LIST, PointInterpreter.PointType.POSITION);
+        return newFilledPath(length, PointInterpreter.PointType.POSITION_2D);
+    }
+
+    private Path newFilledPath(int length, PointInterpreter.PointType type) {
+        Path p = new Path(Collections.EMPTY_LIST, type);
         for (int i = 0; i < length; i++) {
-            float[] newHandle = new float[]{3.9f * i, -2.7f * i};
+            float[] newHandle = new float[type.size];
+            newHandle[0] = 3.9f * i;
+            newHandle[1] = -2.7f * i;
             p = p.addPoint(newHandle.clone());
         }
         return p;
@@ -19,7 +28,7 @@ class PathTest {
 
     @Test
     void addPoint() {
-        Path p = new Path(Collections.EMPTY_LIST, PointInterpreter.PointType.POSITION);
+        Path p = new Path(Collections.EMPTY_LIST, PointInterpreter.PointType.POSITION_2D);
         assertEquals(0, p.amountHandles());
         LinkedList<float[]> addedHandles = new LinkedList<>();
         for (int i = 0; i < 50; i++) {
@@ -92,13 +101,25 @@ class PathTest {
         assertEquals(length, path.amountHandles());
 
         float[] thisPoint = path.handleByIndex(length / 2).clone();
-        float[] previousPoint = path.handleByIndex((length / 2) -1 ).clone();
+        float[] previousPoint = path.handleByIndex((length / 2) - 1).clone();
         float[] fromPath = path.getPreviousPoint(thisPoint);
         assertArrayEquals(previousPoint, fromPath);
     }
 
     @Test
     void insertPointAfter() {
+        int length = 50;
+        Path path = newFilledPath(length);
+        assertEquals(length, path.amountHandles());
+
+        float[] thisPoint = path.handleByIndex(length / 2).clone();
+        float[] newPoint = new float[path.type.size];
+        newPoint[0] = 12345f;
+        newPoint[1] = -123456f;
+        Path inserted = path.insertPointAfter(thisPoint, newPoint);
+        assertEquals(length+1, inserted.amountHandles());
+        assertArrayEquals(newPoint, inserted.handleByIndex(length / 2 + 1), "inserted point not as expected");
+        assertArrayEquals(thisPoint, inserted.handleByIndex(length / 2), "this point is not untouched");
     }
 
     @Test
@@ -112,11 +133,26 @@ class PathTest {
     @Test
     void indexOf() {
         int length = 10;
-        Path p = newFilledPath(length);
-        assertEquals(length, p.amountHandles());
+        {   //most basic path, position only
+            Path p = newFilledPath(length);
+            assertEquals(length, p.amountHandles());
 
-        float[] somePoint = p.handleByIndex(length/2).clone();
-        int idxFound = p.indexOf(somePoint);
-        assertEquals(length/2, idxFound);
+            float[] somePoint = p.handleByIndex(length / 2).clone();
+            int idxFound = p.indexOfPosition(somePoint);
+            assertEquals(length / 2, idxFound);
+        }
+
+        {  //make sure meta data is ignored for indexOf
+            Path p = newFilledPath(length, PointInterpreter.PointType.RIVER_2D);
+            assertEquals(length, p.amountHandles());
+            assertTrue(p.type == PointInterpreter.PointType.RIVER_2D);
+
+            float[] somePoint = p.handleByIndex(length / 2).clone();
+            somePoint = setValue(somePoint, RiverHandleInformation.RiverInformation.RIVER_RADIUS, 345f);
+            assertEquals(345f, getValue(somePoint, RiverHandleInformation.RiverInformation.RIVER_RADIUS));
+
+            int idxFound = p.indexOfPosition(somePoint);
+            assertEquals(length / 2, idxFound);
+        }
     }
 }

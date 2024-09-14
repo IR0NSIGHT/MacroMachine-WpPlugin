@@ -26,7 +26,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.riverInformation(5, 5),
                 RiverHandleInformation.riverInformation(155, -255),
                 RiverHandleInformation.riverInformation(-9, 9)
-        ), PointInterpreter.PointType.RIVER);
+        ), PointInterpreter.PointType.RIVER_2D);
         PathGeometryHelper o = new PathGeometryHelper(p, p.continousCurve(), 0);
 
         // Act
@@ -87,7 +87,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.riverInformation(40, 0)
 
 
-        ), PointInterpreter.PointType.RIVER);
+        ), PointInterpreter.PointType.RIVER_2D);
         double radius = 5;
         ArrayList<Point> curve = point2DfromNVectorArr(p.continousCurve());
         PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(), radius);
@@ -110,7 +110,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.riverInformation(2 * size, 0),
                 RiverHandleInformation.riverInformation(3 * size, 0),
                 RiverHandleInformation.riverInformation(3 * size + 1, 0)
-        ), PointInterpreter.PointType.RIVER);
+        ), PointInterpreter.PointType.RIVER_2D);
         ArrayList<float[]> curveF = p.continousCurve();
         ArrayList<Point> curve = point2DfromNVectorArr(curveF);
         assert curveIsContinous(curveF);
@@ -140,7 +140,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.riverInformation(-500, 500),
                 RiverHandleInformation.riverInformation(250, 250),
                 RiverHandleInformation.riverInformation(500, -250)
-        ), PointInterpreter.PointType.RIVER);
+        ), PointInterpreter.PointType.RIVER_2D);
 
         Collection<AxisAlignedBoundingBox2d> boxes =
                 PointUtils.toBoundingBoxes(point2DfromNVectorArr(p.continousCurve()), 100, 50);
@@ -151,7 +151,6 @@ public class PathGeometryHelperTest {
             boolean insideList = false;
             for (BoundingBox box : boxes)
                 insideList = insideList || box.contains(point);
-            System.out.println("inside:" + insideList);
             assertEquals(insideList, treeBox.contains(point));
         }
     }
@@ -170,7 +169,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.riverInformation(1000, -1001),
                 RiverHandleInformation.riverInformation(0, 0),
                 RiverHandleInformation.riverInformation(1, 1)
-        ), PointInterpreter.PointType.RIVER);
+        ), PointInterpreter.PointType.RIVER_2D);
 
         Collection<AxisAlignedBoundingBox2d> boxes =
                 PointUtils.toBoundingBoxes(point2DfromNVectorArr(p.continousCurve()), 100, 50);
@@ -341,20 +340,13 @@ public class PathGeometryHelperTest {
             //calculate naive n² gauss
             float pointValue = 0;
             for (int xIdx = 0; xIdx < kernel.length; xIdx++) {
-                System.out.println(" x = " + xIdx);
                 for (int yIdx = 0; yIdx < kernel.length; yIdx++) {
                     int xPos = point.x + xIdx - radius;
                     int yPos = point.y + yIdx - radius;
                     float f1 = kernel[xIdx], f2 = kernel[yIdx];
                     float z = dimension.getHeight(xPos, yPos);
                     pointValue += z * f1 * f2;
-                    if (point.x == -10 && point.y == -10) {
-                        System.out.println("sum += " + z + " *" + f1 + "*" + f2);
-                    }
                 }
-            }
-            if (point.x == -10 && point.y == -10) {
-                System.out.println("total sum = " + pointValue + " kernelSum = " + kernelSum + " final =" + (pointValue / kernelSum));
             }
             pointValue /= kernelSum;
             naiveGauss.put(point, pointValue);
