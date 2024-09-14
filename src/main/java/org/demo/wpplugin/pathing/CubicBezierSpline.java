@@ -16,15 +16,19 @@ public class CubicBezierSpline {
                                                int numPoints) {
         float[] points = new float[numPoints];
         for (int i = 0; i < numPoints; i++) {
-            double t = (double) i / numPoints;
-            double tSq = t * t, tCub = tSq * t;
-            double x = Math.pow(1 - t, 3) * startPoint
-                    + 3 * Math.pow(1 - t, 2) * t * handle0
-                    + 3 * (1 - t) * tSq * handle1
-                    + tCub * endPoint;
-            points[i] = (float) x;
+            float t = (float) i / numPoints;
+            points[i] = calcuateCubicBezier(startPoint, handle0, handle1, endPoint, t);
         }
         return points;
+    }
+
+    public static float calcuateCubicBezier(float startPoint, float handle0, float handle1, float endPoint, float t) {
+        double tSq = t * t, tCub = tSq * t;
+        double x = Math.pow(1 - t, 3) * startPoint
+                + 3 * Math.pow(1 - t, 2) * t * handle0
+                + 3 * (1 - t) * tSq * handle1
+                + tCub * endPoint;
+        return (float) x;
     }
 
     public static float getHalfWay(float A, float C) {
