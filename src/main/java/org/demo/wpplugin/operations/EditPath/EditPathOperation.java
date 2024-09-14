@@ -260,17 +260,22 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                     getDimension());
         }
 
-        float lastValidRadius = 0;
-        for (int i = 0; i < path.amountHandles(); i++) {
-            float[] point = path.handleByIndex(i);
-            float thisRadius = getValue(point, RIVER_RADIUS);
-            if (thisRadius == RiverHandleInformation.INHERIT_VALUE) {
-                thisRadius = lastValidRadius;
-            } else {
-                lastValidRadius = thisRadius;
+        if (path.type == PointInterpreter.PointType.RIVER_2D) {
+            float lastValidRadius = 0;
+            for (int i = 0; i < path.amountHandles(); i++) {
+                float[] point = path.handleByIndex(i);
+
+                float thisRadius = getValue(point, RIVER_RADIUS);
+
+                boolean isInherit = thisRadius == RiverHandleInformation.INHERIT_VALUE;
+                if (isInherit) {
+                    thisRadius = lastValidRadius;
+                } else {
+                    lastValidRadius = thisRadius;
+                }
+                PointUtils.drawCircle(point2dFromN_Vector(point), thisRadius, getDimension(),
+                        PathPreviewLayer.INSTANCE, isInherit);
             }
-            PointUtils.drawCircle(point2dFromN_Vector(point), thisRadius, getDimension(),
-                    PathPreviewLayer.INSTANCE);
         }
     }
 

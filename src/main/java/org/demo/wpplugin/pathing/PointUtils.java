@@ -73,9 +73,10 @@ public class PointUtils {
         return bbxs;
     }
 
-    public static void drawCircle(Point center, float radius, Dimension dimension, Layer layer) {
+    public static void drawCircle(Point center, float radius, Dimension dimension, Layer layer, boolean dotted) {
         int radiusI = Math.round(radius);
-        for (int x = -radiusI; x <= radiusI; x++) {
+        int inc = dotted ? 2 : 1;
+        for (int x = -radiusI; x <= radiusI; x+= inc) {
             for (int y = -radiusI; y <= radiusI; y++) {
                 Point p = new Point(center.x + x, center.y + y);
                 if (center.distance(p) <= radius && center.distance(p) >= radiusI - 1) {

@@ -30,51 +30,16 @@ public class RiverHandleInformation {
     }
 
     public static OptionsLabel[] Editor(float[] point, Consumer<float[]> onSubmitCallback, Runnable onChanged) {
-        OptionsLabel[] options = new OptionsLabel[4];
-
-        {
-            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, RiverInformation.RIVER_RADIUS),INHERIT_VALUE,100,1f);
-            options[0] = numericInput("river radius",
+        OptionsLabel[] options = new OptionsLabel[RiverInformation.values().length];
+        int i = 0;
+        for (RiverInformation information : RiverInformation.values()) {
+            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point,information),INHERIT_VALUE,100,1f);
+            
+            options[i++] = numericInput("river radius",
                     "radius of the river at this handle",
                     model,
                     newValue -> {
-                        onSubmitCallback.accept(setValue(point, RiverInformation.RIVER_RADIUS, newValue));
-                    },
-                    onChanged
-            );
-        }
-
-        {
-            SpinnerNumberModel model = new SpinnerNumberModel(0f,INHERIT_VALUE,100,1f);
-            model.setValue(getValue(point, RiverInformation.RIVER_DEPTH));
-            options[1] = numericInput("river depth",
-                    "water depth of the river at this handle",
-                    model, newValue -> {
-                        onSubmitCallback.accept(setValue(point, RiverInformation.RIVER_DEPTH, newValue));
-                    },
-                    onChanged
-            );
-        }
-
-        {
-            SpinnerNumberModel model = new SpinnerNumberModel(0f,INHERIT_VALUE,100,1f);
-            model.setValue(getValue(point, RiverInformation.BEACH_RADIUS));
-            options[2] = numericInput("beach radius",
-                    "radius of the beach around the river at this handle",
-                    model,
-                    newValue -> {
-                        onSubmitCallback.accept(setValue(point, RiverInformation.BEACH_RADIUS, newValue));
-                    },
-                    onChanged
-            );
-        }
-        {
-            SpinnerNumberModel model = new SpinnerNumberModel(0f,INHERIT_VALUE,100,1f);
-            model.setValue(getValue(point, RiverInformation.TRANSITION_RADIUS));
-            options[3] = numericInput("transition radius",
-                    "radius of the smooth transition into the original landscape at this handle",
-                    model, newValue -> {
-                        onSubmitCallback.accept(setValue(point, RiverInformation.TRANSITION_RADIUS, newValue));
+                        onSubmitCallback.accept(setValue(point, information, newValue));
                     },
                     onChanged
             );
