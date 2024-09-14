@@ -72,7 +72,7 @@ public class Path implements Iterable<float[]> {
     public float[] getPreviousPoint(float[] point) throws IllegalAccessException {
         if (amountHandles() < 2)
             throw new IllegalAccessException("can not find previous point on path with less than 2 points.");
-        int idx = handles.indexOf(point);
+        int idx = indexOf(point);
         if (idx == -1)
             throw new IllegalAccessException("this point is not part of the path.");
         if (idx == 0)
