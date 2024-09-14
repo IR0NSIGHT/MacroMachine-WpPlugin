@@ -1,6 +1,7 @@
 package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
+import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 
@@ -145,6 +146,14 @@ public class PointUtils {
         ArrayList<Point> out = new ArrayList<>(points.size());
         for (int i = 0; i < points.size(); i++) {
             out.add(point2dFromN_Vector(points.get(i)));
+        }
+        return out;
+    }
+
+    public static float[] setPosition2D(float[] point, float[] position) {
+        float[] out = point.clone();
+        for (int i = 0; i < RiverHandleInformation.PositionSize.SIZE_2_D.value; i++) {
+            out[i] = position[i];
         }
         return out;
     }

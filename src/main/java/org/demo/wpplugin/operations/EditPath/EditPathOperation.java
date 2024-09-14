@@ -20,8 +20,7 @@ import java.util.Collection;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
-import static org.demo.wpplugin.pathing.PointUtils.getPositionalDistance;
-import static org.demo.wpplugin.pathing.PointUtils.point2dFromN_Vector;
+import static org.demo.wpplugin.pathing.PointUtils.*;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -74,7 +73,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     final int SIZE_MEDIUM_CROSS = 3;
     private final EditPathOptions options = new EditPathOptions();
     EditPathOptionsPanel eOptionsPanel;
-    private float[] selectedPoint;
+    private int selectedPointIdx;
     private Brush brush;
     private Paint paint;
 
@@ -88,6 +87,18 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // invocation:
         // super(NAME, DESCRIPTION, delay, ID);
         this.options.selectedPathId = PathManager.instance.getAnyValidId();
+    }
+
+    float[] getSelectedPoint() {
+        if (selectedPointIdx == -1)
+            return null;
+        if (selectedPointIdx < 0 || selectedPointIdx > getSelectedPath().amountHandles() - 1)
+            return null;
+        return getSelectedPath().handleByIndex(selectedPointIdx);
+    }
+
+    void setSelectedPointIdx(int selectedPointIdx) {
+        this.selectedPointIdx = selectedPointIdx;
     }
 
     /**
@@ -125,20 +136,27 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         final Path path = getSelectedPath();
         EditPathOperation.PATH_ID = getSelectedPathId();
 
+        System.out.println("coord=" + centreX + "," + centreY);
+        System.out.println("alt=" + isAltDown());
+        System.out.println("shift=" + isShiftDown());
+        System.out.println("ctrl=" + isCtrlDown());
+        System.out.println("---------");
+
         float[] userClickedCoord = RiverHandleInformation.riverInformation(centreX, centreY);
 
-        if (selectedPoint == null) {
-            selectedPoint = userClickedCoord;
+        if (getSelectedPoint() == null) {
             overwriteSelectedPath(path.addPoint(userClickedCoord));
+            setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
         } else if (isCtrlDown()) {
             //SELECT POINT
             try {
                 if (path.amountHandles() != 0) {
-                    float[] closest = path.getClosestHandleTo(userClickedCoord);
+                    int clostestIdx = path.getClosestHandleIdxTo(userClickedCoord);
+                    float[] closest = path.handleByIndex(clostestIdx);
                     //dont allow very far away clicks
                     if (getPositionalDistance(closest, userClickedCoord,
                             RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
-                        selectedPoint = closest;
+                        setSelectedPointIdx(clostestIdx);
                     }
                 }
             } catch (IllegalAccessException e) {
@@ -147,35 +165,37 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         } else if (isAltDown()) {
             if (inverse) {
                 overwriteSelectedPath(path.newEmpty());
-                selectedPoint = null;
+                setSelectedPointIdx(-1);
             } else {
                 // MOVE SELECTED POINT TO
                 applyAsSelection();
             }
         } else if (isShiftDown()) {
-            overwriteSelectedPath(path.movePoint(selectedPoint, userClickedCoord));
-            selectedPoint = userClickedCoord;
+            float[] movedPoint = setPosition2D(getSelectedPoint(), userClickedCoord);
+            int idx = path.indexOfPosition(getSelectedPoint());
+            overwriteSelectedPath(path.movePoint(getSelectedPoint(), movedPoint));
+            setSelectedPointIdx(idx);
+
         } else if (inverse) {
             //REMOVE SELECTED POINT
             if (path.amountHandles() > 1) {
                 try {
-                    float[] pointBeforeSelected = path.getPreviousPoint(selectedPoint);
-                    overwriteSelectedPath(path.removePoint(selectedPoint));
-                    selectedPoint = pointBeforeSelected;
+                    float[] pointBeforeSelected = path.getPreviousPoint(getSelectedPoint());
+                    overwriteSelectedPath(path.removePoint(getSelectedPoint()));
+                    int idx = getSelectedPath().indexOfPosition(pointBeforeSelected);
+                    setSelectedPointIdx(idx);
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
             }
         } else {
             //add new point after selected
-            overwriteSelectedPath(path.insertPointAfter(selectedPoint, userClickedCoord));
-            selectedPoint = userClickedCoord;
+            overwriteSelectedPath(path.insertPointAfter(getSelectedPoint(), userClickedCoord));
+            setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
         }
 
 
-        //is selection was deleted or something.
-        if (!getSelectedPath().isHandle(selectedPoint))
-            selectedPoint = null;
+        assert getSelectedPath().amountHandles() == 0 || getSelectedPoint() != null;
 
 
         assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull setting " +
@@ -216,8 +236,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
         //redraw new
         DrawPathLayer(getSelectedPath(), false);
-        if (selectedPoint != null)
-            PointUtils.markPoint(point2dFromN_Vector(selectedPoint), PathPreviewLayer.INSTANCE, COLOR_SELECTED,
+        if (getSelectedPoint() != null)
+            PointUtils.markPoint(point2dFromN_Vector(getSelectedPoint()), PathPreviewLayer.INSTANCE, COLOR_SELECTED,
                     SIZE_SELECTED, getDimension());
         this.getDimension().setEventsInhibited(false);
     }
@@ -299,8 +319,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             comboBox.setSelectedItem(PathManager.instance.getPathName(editPathOptions.selectedPathId));
             comboBox.addActionListener(e -> {
                 editPathOptions.selectedPathId = ((PathManager.NamedId) comboBox.getSelectedItem()).id;
-
-                selectedPoint = getSelectedPath().amountHandles() == 0 ? null : getSelectedPath().getTail();
+                setSelectedPointIdx(getSelectedPath().amountHandles() == 0 ? -1 :
+                        getSelectedPath().amountHandles() - 1);
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
             });
@@ -313,7 +333,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             // Add an ActionListener to handle button clicks
             button.addActionListener(e -> {
                 editPathOptions.selectedPathId = PathManager.instance.addPath(getSelectedPath().newEmpty());
-                selectedPoint = null;
+                setSelectedPointIdx(-1);
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
             });
@@ -336,9 +356,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
             inputs.add(() -> new JComponent[]{textField, submitNameChangeButton});
 
-            if (selectedPoint != null)
-                inputs.add(RiverHandleInformation.Editor(selectedPoint, point -> {
-                    overwriteSelectedPath(getSelectedPath().movePoint(selectedPoint, point));
+            if (getSelectedPoint() != null)
+                inputs.add(RiverHandleInformation.Editor(getSelectedPoint(), point -> {
+                    overwriteSelectedPath(getSelectedPath().movePoint(getSelectedPoint(), point));
                     redrawSelectedPathLayer();
                     onOptionsReconfigured.run();
 

@@ -186,17 +186,18 @@ public class Path implements Iterable<float[]> {
         return true;
     }
 
-    public float[] getClosestHandleTo(float[] coord) throws IllegalAccessException {
+    public int getClosestHandleIdxTo(float[] coord) throws IllegalAccessException {
         if (amountHandles() == 0)
             throw new IllegalAccessException("can not find closest handle on zero-handle-path");
-        float[] closest = null;
+        int closest = -1;
         double distMinSquared = Double.MAX_VALUE;
-        for (float[] p : this) {
+        for (int i = 0; i < handles.size(); i++) {
+            float[] p = handleByIndex(i);
             double distanceSq = PointUtils.getPositionalDistance(p, coord,
                     RiverHandleInformation.PositionSize.SIZE_2_D.value);
             if (distanceSq < distMinSquared) {
                 distMinSquared = distanceSq;
-                closest = p;
+                closest = i;
             }
         }
         assert invariant();

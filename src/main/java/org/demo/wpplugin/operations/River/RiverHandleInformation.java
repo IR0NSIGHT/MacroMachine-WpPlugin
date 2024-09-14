@@ -53,6 +53,7 @@ public class RiverHandleInformation {
         submitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                System.out.println("submit button pressed");
                 try {
                     // Parse the float values from the text fields
                     float riverRadius = Float.parseFloat(riverRadiusField.getText());
