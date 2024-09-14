@@ -22,7 +22,7 @@ import java.util.Collection;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
-import static org.demo.wpplugin.pathing.CubicBezierSpline.calcuateCubicBezier;
+import static org.demo.wpplugin.pathing.Path.interpolateHandles;
 import static org.demo.wpplugin.pathing.PointUtils.*;
 
 /**
@@ -100,58 +100,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             }
         }
 
-        //collect a map of all handles that are NOT interpolated and carry values
-        int[] setValueIdcs = new int[radii.length];
-        int setValueIdcsLength;
-        {
-            int setValueIdx = 0;
-            for (int i = 0; i < radii.length; i++) {
-                if (radii[i] != RiverHandleInformation.INHERIT_VALUE) {
-                    setValueIdcs[setValueIdx++] = i;
-                }
-            }
-            setValueIdcsLength = setValueIdx;
-        }
-
         int[] curveIdcs = path.handleToCurveIdx();
-        {
-            int setValueIdx = 0;
-            for (int i = 0; i < radii.length - 2; i++) {
-                if (radii[i] == RiverHandleInformation.INHERIT_VALUE) {
-                    //is not set and needs to be interpolated
-                    if (setValueIdcsLength < 4 || setValueIdx < 2 || setValueIdx >= setValueIdcsLength)
-                        continue;
-                    else {
-                        int pA = setValueIdcs[setValueIdx - 2];
-                        int pB = setValueIdcs[setValueIdx - 1];
-                        int pC = setValueIdcs[setValueIdx];
-                        int pD = setValueIdcs[setValueIdx + 1];
-                        int length = curveIdcs[pC] - curveIdcs[pB];
-                        float vA, vB, vC, vD;
-                        vA = getValue(path.handleByIndex(pA), RIVER_RADIUS);
-                        vB = getValue(path.handleByIndex(pB), RIVER_RADIUS);
-                        vC = getValue(path.handleByIndex(pC), RIVER_RADIUS);
-                        vD = getValue(path.handleByIndex(pD), RIVER_RADIUS);
-
-                        float start, end, handle0, handle1;
-                        start = vB;
-                        end = vC;
-                        handle0 = (vC - vA) / 2f + vB;
-                        handle1 = (vB - vD) / 2f + vC;
-
-                        int ownSegmentIdx = (curveIdcs[i] - curveIdcs[pB]);
-                        float t = ownSegmentIdx / (length * 1f);
-                        float interpolatedV = calcuateCubicBezier(start, handle0, handle1, end, t);
-                        radii[i] = interpolatedV;
-                    }
-                } else {
-                    //set parents for future indices that need interpolation
-                    setValueIdx++;
-                }
-            }
-        }
-
-        return radii;
+        return interpolateHandles(radii, curveIdcs);
     }
 
     float[] getSelectedPoint() {

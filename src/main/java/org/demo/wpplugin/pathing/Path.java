@@ -2,10 +2,10 @@ package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static org.demo.wpplugin.pathing.CubicBezierSpline.calcuateCubicBezier;
 import static org.demo.wpplugin.pathing.PointUtils.arePositionalsEqual;
 import static org.demo.wpplugin.pathing.PointUtils.getPositionalDistance;
 
@@ -34,6 +34,53 @@ public class Path implements Iterable<float[]> {
             previous = p;
         }
         return true;
+    }
+
+    public static float[] interpolateHandles(float[] handles, int[] curveIdxByHandle) {
+        float[] outHandles = handles.clone();
+        //collect a map of all handles that are NOT interpolated and carry values
+        int amountHandlesWithValues = 0;
+        for (int i = 0; i < handles.length; i++)
+            if (handles[i] != RiverHandleInformation.INHERIT_VALUE)
+                amountHandlesWithValues++;
+
+        int[] setValueIdcs = new int[amountHandlesWithValues];
+        {
+            int setValueIdx = 0;
+            for (int i = 0; i < handles.length; i++)
+                if (handles[i] != RiverHandleInformation.INHERIT_VALUE)
+                    setValueIdcs[setValueIdx++] = i;
+        }
+
+        for (int i = 0; i < setValueIdcs.length - 3; i++) {
+            //interpolate all unknown handles within the segment ranging from B to C
+            int handleIdxA = setValueIdcs[i];
+            int handleIdxB = setValueIdcs[i + 1];
+            int handleIdxC = setValueIdcs[i + 2];
+            int handleIdxD = setValueIdcs[i + 3];
+
+            float vA, vB, vC, vD;
+            vA = handles[handleIdxA];
+            vB = handles[handleIdxB];
+            vC = handles[handleIdxC];
+            vD = handles[handleIdxD];
+
+            int length = curveIdxByHandle[handleIdxC] - curveIdxByHandle[handleIdxB];
+            float start, end, handle0, handle1;
+            start = vB;
+            end = vC;
+            handle0 = length/2f*(vC - vA)/(curveIdxByHandle[handleIdxC]-curveIdxByHandle[handleIdxA]) / 2f + vB;
+            handle1 =  length/2f*(vB - vD)/(curveIdxByHandle[handleIdxB]-curveIdxByHandle[handleIdxD]) / 2f + vC;
+
+            //find all handles that are between b and c and are interpolated
+            for (int unknownHandleIdx = handleIdxB+1; unknownHandleIdx < handleIdxC; unknownHandleIdx++) {
+                int handlePositionInSegment = (curveIdxByHandle[unknownHandleIdx] - curveIdxByHandle[handleIdxB]);
+                float t = handlePositionInSegment / (length * 1f);
+                float interpolatedV = calcuateCubicBezier(start, handle0, handle1, end, t);
+                outHandles[unknownHandleIdx] = interpolatedV;
+            }
+        }
+        return outHandles;
     }
 
     private boolean invariant() {
@@ -192,7 +239,8 @@ public class Path implements Iterable<float[]> {
         int[] handleIdcs = new int[amountHandles()];
         int handleIdx = 1;
         for (int i = 0; i < curve.size(); i++) {
-            if (arePositionalsEqual(handleByIndex(handleIdx), curve.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value)) {
+            if (arePositionalsEqual(handleByIndex(handleIdx), curve.get(i),
+                    RiverHandleInformation.PositionSize.SIZE_2_D.value)) {
                 handleIdcs[handleIdx] = i;
                 handleIdx++;
             }
