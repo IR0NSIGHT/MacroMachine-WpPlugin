@@ -1,8 +1,5 @@
 package org.demo.wpplugin.pathing;
 
-import java.awt.*;
-import java.util.ArrayList;
-
 public class CubicBezierSpline {
     /**
      * calculate a cubic bezier curve connection start and endpoint with 2 control handles.
@@ -31,7 +28,7 @@ public class CubicBezierSpline {
     }
 
     public static float getHalfWay(float A, float C) {
-        // (AC)/2+B
+        // (AC)/2
         return (C - A) / 2;
     }
 
@@ -51,10 +48,9 @@ public class CubicBezierSpline {
 
         int vectorSize = A.length;
 
-        float distance = getPositionalDistance(B, C, positionDigits);
+        float distance = PointUtils.getPositionalDistance(B, C, positionDigits);
 
         //prepare output array of n-vectors
-        //FIXME use estimate of curvelength
         int pointsInCurve = (int)(estimateCurveSize(A,B,C,D, positionDigits)*2);
         float[][] path = new float[pointsInCurve][];
         for (int i = 0; i < pointsInCurve; i++) {
@@ -74,40 +70,13 @@ public class CubicBezierSpline {
         return path;
     }
 
-    private static float getPositionalLength(float[] pointA, int positionDigits) {
-        //euclidian distance of B and C positions
-        float dist = 0;
-        for (int i = 0; i < positionDigits; i++) {
-            float distI = pointA[i];
-            dist += distI * distI;
-        }
-        dist = (float) Math.sqrt(dist);
-        return dist;
-    }
-
     private static float estimateCurveSize(float[] pointA, float[] pointB, float[] pointC, float[] pointD, int positionDigits) {
-        float chord = getPositionalDistance(pointD, pointA, positionDigits);
-        float cont_net = getPositionalDistance(pointA, pointB, positionDigits)+
-                getPositionalDistance(pointC, pointB, positionDigits)+
-                getPositionalDistance(pointC, pointD, positionDigits);
+        float chord = PointUtils.getPositionalDistance(pointD, pointA, positionDigits);
+        float cont_net = PointUtils.getPositionalDistance(pointA, pointB, positionDigits)+
+                PointUtils.getPositionalDistance(pointC, pointB, positionDigits)+
+                PointUtils.getPositionalDistance(pointC, pointD, positionDigits);
         float app_arc_length = (cont_net+chord)/2f;
         return app_arc_length;
-    }
-
-
-    public static float getPositionalDistance(float[] pointA, float[] pointB, int positionDigits) {
-        //euclidian distance of B and C positions
-        float dist = 0;
-        for (int i = 0; i < positionDigits; i++) {
-            float distI = pointA[i] - pointB[i];
-            dist += distI * distI;
-        }
-        dist = (float) Math.sqrt(dist);
-        return dist;
-    }
-
-    public static boolean arePositionalsEqual(float[] pointA, float[] pointB, int positionDigits) {
-        return point2dFromN_Vector(pointA).equals(point2dFromN_Vector(pointB));
     }
 
     private static float[] getBezierHandle(float[] pointA, float[] pointB, float[] pointC, int positionDigits,
@@ -119,7 +88,7 @@ public class CubicBezierSpline {
 
         //normalize and scale positions based on distance, so the catmull rom spline doesnt act crazy
         //equal to handle.normalize.scale(distance/2)
-        float length = getPositionalLength(out, positionDigits);
+        float length = PointUtils.getPositionalLength(out, positionDigits);
         for (int i = 0; i < positionDigits; i++) {
             out[i] = out[i] / length * distance / 2f;
         }
@@ -130,17 +99,4 @@ public class CubicBezierSpline {
         return out;
     }
 
-    public static Point point2dFromN_Vector(float[] nVector) {
-        if (nVector == null)
-            return null;
-        return new Point(Math.round(nVector[0]), Math.round(nVector[1]));
-    }
-
-    public static ArrayList<Point> point2DfromNVectorArr(ArrayList<float[]> points ) {
-        ArrayList<Point> out = new ArrayList<>(points.size());
-        for (int i = 0; i < points.size(); i++) {
-            out.add(point2dFromN_Vector(points.get(i)));
-        }
-        return out;
-    }
 }

@@ -7,7 +7,7 @@ import org.demo.wpplugin.geometry.TreeBoundingBox;
 import java.awt.*;
 import java.util.*;
 
-import static org.demo.wpplugin.pathing.CubicBezierSpline.point2DfromNVectorArr;
+import static org.demo.wpplugin.pathing.PointUtils.point2DfromNVectorArr;
 
 public class PathGeometryHelper implements BoundingBox {
     private final Path path;

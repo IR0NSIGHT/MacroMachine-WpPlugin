@@ -2,13 +2,12 @@ package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static org.demo.wpplugin.pathing.CubicBezierSpline.arePositionalsEqual;
-import static org.demo.wpplugin.pathing.CubicBezierSpline.getPositionalDistance;
+import static org.demo.wpplugin.pathing.PointUtils.arePositionalsEqual;
+import static org.demo.wpplugin.pathing.PointUtils.getPositionalDistance;
 
 public class Path implements Iterable<float[]> {
     private final ArrayList<float[]> handles;
@@ -174,7 +173,7 @@ public class Path implements Iterable<float[]> {
         float[] closest = null;
         double distMinSquared = Double.MAX_VALUE;
         for (float[] p : this) {
-            double distanceSq = CubicBezierSpline.getPositionalDistance(p, coord,
+            double distanceSq = PointUtils.getPositionalDistance(p, coord,
                     RiverHandleInformation.PositionSize.SIZE_2_D.value);
             if (distanceSq < distMinSquared) {
                 distMinSquared = distanceSq;

@@ -6,6 +6,7 @@ import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathManager;
+import org.demo.wpplugin.pathing.PointUtils;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
@@ -19,8 +20,8 @@ import java.util.Collection;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
-import static org.demo.wpplugin.pathing.CubicBezierSpline.getPositionalDistance;
-import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
+import static org.demo.wpplugin.pathing.PointUtils.getPositionalDistance;
+import static org.demo.wpplugin.pathing.PointUtils.point2dFromN_Vector;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -150,7 +151,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             } else {
                 // MOVE SELECTED POINT TO
                 applyAsSelection();
-
             }
         } else if (isShiftDown()) {
             overwriteSelectedPath(path.movePoint(selectedPoint, userClickedCoord));
@@ -217,7 +217,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         //redraw new
         DrawPathLayer(getSelectedPath(), false);
         if (selectedPoint != null)
-            markPoint(point2dFromN_Vector(selectedPoint), PathPreviewLayer.INSTANCE, COLOR_SELECTED, SIZE_SELECTED);
+            PointUtils.markPoint(point2dFromN_Vector(selectedPoint), PathPreviewLayer.INSTANCE, COLOR_SELECTED,
+                    SIZE_SELECTED, getDimension());
         this.getDimension().setEventsInhibited(false);
     }
 
@@ -230,71 +231,18 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         PathPreviewLayer layer = PathPreviewLayer.INSTANCE;
 
         for (float[] p : path.continousCurve()) {
-            markPoint(point2dFromN_Vector(p), layer, erase ? 0 : COLOR_CURVE, SIZE_DOT);
+            PointUtils.markPoint(point2dFromN_Vector(p), layer, erase ? 0 : COLOR_CURVE, SIZE_DOT, getDimension());
         }
 
         for (float[] p : path) {
-            markPoint(point2dFromN_Vector(p), layer, erase ? 0 : COLOR_HANDLE, SIZE_MEDIUM_CROSS);
+            PointUtils.markPoint(point2dFromN_Vector(p), layer, erase ? 0 : COLOR_HANDLE, SIZE_MEDIUM_CROSS,
+                    getDimension());
         }
-
-    /*    for (int i = 1; i < path.amountHandles() - 1; i++) {
-            Point p = new Point(path.handleByIndex(i));
-            Point handle = getCubicBezierHandles(
-                    path.handleByIndex(i + 1),
-                    p,
-                    path.handleByIndex(i - 1)
-            );
-            markLine(p, handle, PathPreviewLayer.INSTANCE, COLOR_SELECTED);
-
-            Point handleReversed = getCubicBezierHandles(
-                    path.handleByIndex(i - 1),
-                    p,
-                    path.handleByIndex(i + 1)
-            );
-            markLine(p, handleReversed, PathPreviewLayer.INSTANCE, COLOR_SELECTED);
-
-        } */
 
         for (int i = 0; i < path.amountHandles(); i++) {
             float[] point = path.handleByIndex(i);
-            drawCircle(point2dFromN_Vector(point), getValue(point, RIVER_RADIUS));
-        }
-    }
-
-    void drawCircle(Point center, float radius) {
-        int radiusI = Math.round(radius);
-        for (int x = -radiusI; x <= radiusI; x++) {
-            for (int y = -radiusI; y <= radiusI; y++) {
-                Point p = new Point(center.x + x, center.y + y);
-                if (center.distance(p) <= radius && center.distance(p) >= radiusI - 1) {
-                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, p.x, p.y, 15);
-                }
-            }
-        }
-    }
-
-    /**
-     * draws an X on the map in given color and size
-     *
-     * @param p
-     * @param layer
-     * @param color
-     * @param size, 0 size = single dot on map
-     */
-    void markPoint(Point p, Layer layer, int color, int size) {
-        for (int i = -size; i <= size; i++) {
-            getDimension().setLayerValueAt(layer, p.x + i, p.y - i, color);
-            getDimension().setLayerValueAt(layer, p.x + i, p.y + i, color);
-        }
-    }
-
-    void markLine(Point p0, Point p1, Layer layer, int color) {
-        double length = p0.distance(p1);
-        for (double i = 0; i <= length; i++) {
-            double factor = i / length;
-            Point inter = new Point((int) (p0.x * factor + p1.x * (1 - factor)),
-                    (int) (p0.y * factor + p1.y * (1 - factor)));
-            getDimension().setLayerValueAt(layer, inter.x, inter.y, color);
+            PointUtils.drawCircle(point2dFromN_Vector(point), getValue(point, RIVER_RADIUS), getDimension(),
+                    PathPreviewLayer.INSTANCE);
         }
     }
 
@@ -387,24 +335,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             });
 
             inputs.add(() -> new JComponent[]{textField, submitNameChangeButton});
-
-            {// Create a JTextField for text input
-                final JTextField textField1 = new JTextField(20);
-
-                // Create a JButton to trigger an action
-                JButton submitNameChangeButton1 = new JButton("increase width");
-                textField1.setText(PathManager.instance.getPathName(options.selectedPathId).name);
-                // Add ActionListener to handle button click
-                submitNameChangeButton1.addActionListener(e -> {
-                    // Get the text from the text field and display it in the label
-                    String inputText = textField1.getText();
-                    PathManager.instance.nameExistingPath(options.selectedPathId, inputText);
-                    onOptionsReconfigured.run();
-                    redrawSelectedPathLayer();
-                });
-
-                inputs.add(() -> new JComponent[]{textField1, submitNameChangeButton1});
-            }
 
             if (selectedPoint != null)
                 inputs.add(RiverHandleInformation.Editor(selectedPoint, point -> {

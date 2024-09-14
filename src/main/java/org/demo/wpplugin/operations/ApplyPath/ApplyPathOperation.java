@@ -19,8 +19,7 @@ import java.awt.*;
 import java.util.*;
 
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
-import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
-import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
+import static org.demo.wpplugin.pathing.PointUtils.point2dFromN_Vector;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user

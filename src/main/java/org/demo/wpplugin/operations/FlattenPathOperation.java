@@ -15,8 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.function.Function;
 
-import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
-import static org.demo.wpplugin.pathing.PointUtils.pointExtent;
+import static org.demo.wpplugin.pathing.PointUtils.point2dFromN_Vector;
 import static org.demo.wpplugin.operations.EditPath.EditPathOperation.PATH_ID;
 
 /**

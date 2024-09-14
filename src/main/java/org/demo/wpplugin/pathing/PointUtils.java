@@ -1,6 +1,8 @@
 package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -68,5 +70,82 @@ public class PointUtils {
             assert box.id == boxId;
         }
         return bbxs;
+    }
+
+    public static void drawCircle(Point center, float radius, Dimension dimension, Layer layer) {
+        int radiusI = Math.round(radius);
+        for (int x = -radiusI; x <= radiusI; x++) {
+            for (int y = -radiusI; y <= radiusI; y++) {
+                Point p = new Point(center.x + x, center.y + y);
+                if (center.distance(p) <= radius && center.distance(p) >= radiusI - 1) {
+                    dimension.setLayerValueAt(layer, p.x, p.y, 15);
+                }
+            }
+        }
+    }
+
+    /**
+     * draws an X on the map in given color and size
+     *
+     * @param p
+     * @param layer
+     * @param color
+     * @param size, 0 size = single dot on map
+     */
+    public static void markPoint(Point p, Layer layer, int color, int size, Dimension dim) {
+        for (int i = -size; i <= size; i++) {
+            dim.setLayerValueAt(layer, p.x + i, p.y - i, color);
+            dim.setLayerValueAt(layer, p.x + i, p.y + i, color);
+        }
+    }
+
+    public static void markLine(Point p0, Point p1, Layer layer, int color, Dimension dim) {
+        double length = p0.distance(p1);
+        for (double i = 0; i <= length; i++) {
+            double factor = i / length;
+            Point inter = new Point((int) (p0.x * factor + p1.x * (1 - factor)),
+                    (int) (p0.y * factor + p1.y * (1 - factor)));
+            dim.setLayerValueAt(layer, inter.x, inter.y, color);
+        }
+    }
+
+    static float getPositionalLength(float[] pointA, int positionDigits) {
+        //euclidian distance of B and C positions
+        float dist = 0;
+        for (int i = 0; i < positionDigits; i++) {
+            float distI = pointA[i];
+            dist += distI * distI;
+        }
+        dist = (float) Math.sqrt(dist);
+        return dist;
+    }
+
+    public static float getPositionalDistance(float[] pointA, float[] pointB, int positionDigits) {
+        //euclidian distance of B and C positions
+        float dist = 0;
+        for (int i = 0; i < positionDigits; i++) {
+            float distI = pointA[i] - pointB[i];
+            dist += distI * distI;
+        }
+        dist = (float) Math.sqrt(dist);
+        return dist;
+    }
+
+    public static boolean arePositionalsEqual(float[] pointA, float[] pointB, int positionDigits) {
+        return point2dFromN_Vector(pointA).equals(point2dFromN_Vector(pointB));
+    }
+
+    public static Point point2dFromN_Vector(float[] nVector) {
+        if (nVector == null)
+            return null;
+        return new Point(Math.round(nVector[0]), Math.round(nVector[1]));
+    }
+
+    public static ArrayList<Point> point2DfromNVectorArr(ArrayList<float[]> points ) {
+        ArrayList<Point> out = new ArrayList<>(points.size());
+        for (int i = 0; i < points.size(); i++) {
+            out.add(point2dFromN_Vector(points.get(i)));
+        }
+        return out;
     }
 }

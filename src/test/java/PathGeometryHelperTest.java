@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 import java.awt.*;
 import java.util.*;
 
-import static org.demo.wpplugin.pathing.CubicBezierSpline.point2DfromNVectorArr;
-import static org.demo.wpplugin.pathing.CubicBezierSpline.point2dFromN_Vector;
+import static org.demo.wpplugin.pathing.PointUtils.point2DfromNVectorArr;
+import static org.demo.wpplugin.pathing.PointUtils.point2dFromN_Vector;
 import static org.demo.wpplugin.pathing.Path.curveIsContinous;
 import static org.junit.jupiter.api.Assertions.*;
 
