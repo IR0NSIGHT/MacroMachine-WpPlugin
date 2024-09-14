@@ -69,11 +69,11 @@ public class Path implements Iterable<float[]> {
             float start, end, handle0, handle1;
             start = vB;
             end = vC;
-            handle0 = length/2f*(vC - vA)/(curveIdxByHandle[handleIdxC]-curveIdxByHandle[handleIdxA]) / 2f + vB;
-            handle1 =  length/2f*(vB - vD)/(curveIdxByHandle[handleIdxB]-curveIdxByHandle[handleIdxD]) / 2f + vC;
+            handle0 = length / 2f * (vC - vA) / (curveIdxByHandle[handleIdxC] - curveIdxByHandle[handleIdxA]) / 2f + vB;
+            handle1 = length / 2f * (vB - vD) / (curveIdxByHandle[handleIdxB] - curveIdxByHandle[handleIdxD]) / 2f + vC;
 
             //find all handles that are between b and c and are interpolated
-            for (int unknownHandleIdx = handleIdxB+1; unknownHandleIdx < handleIdxC; unknownHandleIdx++) {
+            for (int unknownHandleIdx = handleIdxB + 1; unknownHandleIdx < handleIdxC; unknownHandleIdx++) {
                 int handlePositionInSegment = (curveIdxByHandle[unknownHandleIdx] - curveIdxByHandle[handleIdxB]);
                 float t = handlePositionInSegment / (length * 1f);
                 float interpolatedV = calcuateCubicBezier(start, handle0, handle1, end, t);
@@ -81,6 +81,39 @@ public class Path implements Iterable<float[]> {
             }
         }
         return outHandles;
+    }
+
+    public static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles) {
+        LinkedList<float[]> curvePoints = new LinkedList<>();
+
+        //iterate all handles, calculate coordinates on curve
+        for (int i = 0; i < handles.size() - 3; i++) {
+            float[][] curveSegment = CubicBezierSpline.getSplinePathFor(
+                    handles.get(i),
+                    handles.get(i + 1),
+                    handles.get(i + 2),
+                    handles.get(i + 3),
+                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
+            curvePoints.addAll(Arrays.asList(curveSegment));
+        }
+        //FIXME reactivate    assert curveIsContinous(curvePoints) : "path has gaps inbetween";
+
+        if (curvePoints.isEmpty())
+            return new ArrayList<>(0);
+
+        int positionDigits = 2;
+        float[] previous = null;
+        int size = curvePoints.size();
+        for (int i = 0; i < size; i++) {
+            //kill all successive points that are the same
+            while (i < curvePoints.size() && arePositionalsEqual(curvePoints.get(i), previous, positionDigits))
+                curvePoints.remove(i);
+            size = curvePoints.size();
+            if (i < size)
+                previous = curvePoints.get(i);
+        }
+
+        return new ArrayList<>(curvePoints);
     }
 
     private boolean invariant() {
@@ -185,38 +218,19 @@ public class Path implements Iterable<float[]> {
     }
 
     public ArrayList<float[]> continousCurve() {
-        LinkedList<float[]> curvePoints = new LinkedList<>();
-        //iterate all handles, calculate coordinates on curve
-        for (int i = 0; i < this.amountHandles() - 3; i++) {
-            float[][] curveSegment = CubicBezierSpline.getSplinePathFor(
-                    this.handleByIndex(i),
-                    this.handleByIndex(i + 1),
-                    this.handleByIndex(i + 2),
-                    this.handleByIndex(i + 3),
-                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
-            curvePoints.addAll(Arrays.asList(curveSegment));
+        ArrayList<float[]> handles = (ArrayList<float[]>) this.handles.clone();
+        int[] handleToCurveIdx = this.handleToCurveIdx();
+        for (int n = 2; n < this.type.size; n++) {
+            float[] informationArr = new float[handles.size()];
+            for (int i = 0; i < handles.size(); i++) {
+                informationArr[i] = handles.get(i)[n];
+            }
+            informationArr = interpolateHandles(informationArr, handleToCurveIdx );
+            for (int i = 0; i < handles.size(); i++) {
+                handles.get(i)[n] = informationArr[i];
+            }
         }
-        //FIXME reactivate    assert curveIsContinous(curvePoints) : "path has gaps inbetween";
-
-        if (curvePoints.isEmpty())
-            return new ArrayList<>(0);
-
-        int positionDigits = 2;
-        float[] previous = null;
-        int size = curvePoints.size();
-        for (int i = 0; i < size; i++) {
-            //kill all successive points that are the same
-            while (i < curvePoints.size() && arePositionalsEqual(curvePoints.get(i), previous, positionDigits))
-                curvePoints.remove(i);
-            size = curvePoints.size();
-            if (i < size)
-                previous = curvePoints.get(i);
-        }
-
-        assert invariant();
-        //    assert curveHasNoClones(curvePoints) : "curve still contains clones";
-        //    assert curveIsContinous(curvePoints);
-        return new ArrayList<>(curvePoints);
+        return continousCurveFromHandles(handles);
     }
 
     public float[] handleByIndex(int index) throws IndexOutOfBoundsException {
@@ -235,7 +249,7 @@ public class Path implements Iterable<float[]> {
     }
 
     public int[] handleToCurveIdx() {
-        ArrayList<float[]> curve = continousCurve();
+        ArrayList<float[]> curve = continousCurveFromHandles(this.handles);
         int[] handleIdcs = new int[amountHandles()];
         int handleIdx = 1;
         for (int i = 0; i < curve.size(); i++) {

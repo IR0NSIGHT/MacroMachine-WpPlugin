@@ -5,6 +5,7 @@ import org.demo.wpplugin.geometry.Smoother;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
+import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
 import org.demo.wpplugin.pathing.PathManager;
@@ -19,6 +20,7 @@ import java.awt.*;
 import java.util.*;
 
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
 import static org.demo.wpplugin.pathing.PointUtils.point2dFromN_Vector;
 
 /**
@@ -153,7 +155,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             Point curvePoint = point2dFromN_Vector(curvePointF);
             Collection<Point> nearby = parentage.get(curvePoint);
             double interpol = curveIndex / (1f * curve.size());
-            double baseRadiusAtIdx = interpol * options.getStartWidth() + (1 - interpol) * options.getFinalWidth();
+            double baseRadiusAtIdx = getValue(curvePointF, RiverHandleInformation.RiverInformation.RIVER_RADIUS);
             float randomFluxAtIdx = randomEdge[(int) ((curveIndex) / fluctuationSpeed)];
             final double totalRadiusAtIdx =
                     baseRadiusAtIdx * (1 + randomFluxAtIdx * randomPercent);
