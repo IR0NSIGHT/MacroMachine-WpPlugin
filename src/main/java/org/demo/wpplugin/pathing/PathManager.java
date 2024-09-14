@@ -11,10 +11,17 @@ public class PathManager {
     private int nextPathId = 0;
 
     public PathManager() {
+        int i = 3;
         addPath(new Path(Arrays.asList(
-                RiverHandleInformation.riverInformation(0, 0), RiverHandleInformation.riverInformation(1, 1),
-                RiverHandleInformation.riverInformation(100, 50), RiverHandleInformation.riverInformation(100, 150),
-                RiverHandleInformation.riverInformation(101, 151)), PointInterpreter.PointType.RIVER_2D));
+                RiverHandleInformation.riverInformation(i*0, 0, 20, 0,0,0),
+                RiverHandleInformation.riverInformation(i*10, 0, 20,0,0,0),
+                RiverHandleInformation.riverInformation(i*20, 0),
+                RiverHandleInformation.riverInformation(i*30, 0),
+                RiverHandleInformation.riverInformation(i*40, 0),
+                RiverHandleInformation.riverInformation(i*50, 0),
+                RiverHandleInformation.riverInformation(i*60, 0,20,0,0,0),
+                RiverHandleInformation.riverInformation(i*70, 0,20,0,0,0)
+                ), PointInterpreter.PointType.RIVER_2D));
     }
 
     public Path getPathBy(int id) throws IllegalArgumentException {

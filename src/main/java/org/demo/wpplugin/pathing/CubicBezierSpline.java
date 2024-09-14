@@ -70,7 +70,7 @@ public class CubicBezierSpline {
         return path;
     }
 
-    private static float estimateCurveSize(float[] pointA, float[] pointB, float[] pointC, float[] pointD, int positionDigits) {
+    public static float estimateCurveSize(float[] pointA, float[] pointB, float[] pointC, float[] pointD, int positionDigits) {
         float chord = PointUtils.getPositionalDistance(pointD, pointA, positionDigits);
         float cont_net = PointUtils.getPositionalDistance(pointA, pointB, positionDigits)+
                 PointUtils.getPositionalDistance(pointC, pointB, positionDigits)+

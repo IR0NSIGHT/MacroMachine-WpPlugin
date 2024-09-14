@@ -2,6 +2,7 @@ package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -184,6 +185,23 @@ public class Path implements Iterable<float[]> {
             previous = p;
         }
         return true;
+    }
+
+    public int[] handleToCurveIdx() {
+        ArrayList<float[]> curve = continousCurve();
+        int[] handleIdcs = new int[amountHandles()];
+        int handleIdx = 1;
+        for (int i = 0; i < curve.size(); i++) {
+            if (arePositionalsEqual(handleByIndex(handleIdx), curve.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value)) {
+                handleIdcs[handleIdx] = i;
+                handleIdx++;
+            }
+        }
+        handleIdx--;
+        for (int i = handleIdx; i < handleIdcs.length; i++) {
+            handleIdcs[i] = handleIdcs[handleIdx];
+        }
+        return handleIdcs;
     }
 
     public int getClosestHandleIdxTo(float[] coord) throws IllegalAccessException {

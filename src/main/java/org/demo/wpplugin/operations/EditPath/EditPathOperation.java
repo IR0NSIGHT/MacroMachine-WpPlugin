@@ -4,10 +4,7 @@ import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.ApplyPath.OperationOptionsPanel;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
-import org.demo.wpplugin.pathing.Path;
-import org.demo.wpplugin.pathing.PathManager;
-import org.demo.wpplugin.pathing.PointInterpreter;
-import org.demo.wpplugin.pathing.PointUtils;
+import org.demo.wpplugin.pathing.*;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
@@ -22,6 +19,7 @@ import java.util.Collection;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
+import static org.demo.wpplugin.pathing.CubicBezierSpline.estimateCurveSize;
 import static org.demo.wpplugin.pathing.PointUtils.*;
 
 /**
@@ -89,6 +87,74 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // invocation:
         // super(NAME, DESCRIPTION, delay, ID);
         this.options.selectedPathId = PathManager.instance.getAnyValidId();
+    }
+
+    public static float[] interpolateRadii(Path path) {
+        float[] radii = new float[path.amountHandles()];
+        {
+            for (int i = 0; i < path.amountHandles(); i++) {
+                radii[i] = getValue(path.handleByIndex(i), RIVER_RADIUS);
+            }
+        }
+
+        //collect a map of all handles that are NOT interpolated and carry values
+        int[] setValueIdcs = new int[radii.length];
+        int setValueIdcsLength;
+        {
+            int setValueIdx = 0;
+            for (int i = 0; i < radii.length; i++) {
+                if (radii[i] != RiverHandleInformation.INHERIT_VALUE) {
+                    setValueIdcs[setValueIdx++] = i;
+                }
+            }
+            setValueIdcsLength = setValueIdx;
+        }
+
+        int[] curveIdcs = path.handleToCurveIdx();
+        {
+            int setValueIdx = 0;
+            for (int i = 0; i < radii.length-2; i++) {
+                if (radii[i] == RiverHandleInformation.INHERIT_VALUE) {
+                    //is not set and needs to be interpolated
+                    if (setValueIdcsLength < 4 || setValueIdx < 2 || setValueIdx >= setValueIdcsLength)
+                        continue;
+                    else {
+                        int pA = setValueIdcs[setValueIdx - 2];
+                        int pB = setValueIdcs[setValueIdx-1];
+                        int pC = setValueIdcs[setValueIdx ];
+                        int pD = setValueIdcs[setValueIdx + 1];
+                        int length = curveIdcs[pC]-curveIdcs[pB ];
+                        float vA,vB,vC,vD;
+                        vA = getValue(path.handleByIndex(pA),RIVER_RADIUS);
+                        vB = getValue(path.handleByIndex(pB),RIVER_RADIUS);
+                        vC = getValue(path.handleByIndex(pC),RIVER_RADIUS);
+                        vD = getValue(path.handleByIndex(pD), RIVER_RADIUS);
+
+                        float start, end, handle0, handle1;
+                        start = vB;
+                        end = vC;
+                        handle0 = (vC-vA)/2f+vB;
+                        handle1 = (vB-vD)/2f+vC;
+
+
+                        float[] segmentValues = CubicBezierSpline.calculateCubicBezier(
+                                start, handle0, handle1, end, length);
+                        assert segmentValues.length == length;
+                        int ownSegmentIdx = (curveIdcs[i] - curveIdcs[pB]);
+                        if (ownSegmentIdx >= segmentValues.length) {
+                            System.err.println("fuckup");
+                            ownSegmentIdx = segmentValues.length-1;
+                        }
+                        radii[i] = segmentValues[ownSegmentIdx];
+                    }
+                } else {
+                    //set parents for future indices that need interpolation
+                    setValueIdx++;
+                }
+            }
+        }
+
+        return radii;
     }
 
     float[] getSelectedPoint() {
@@ -235,12 +301,19 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         //erase old
         this.getDimension().clearLayerData(PathPreviewLayer.INSTANCE);
 
-        //redraw new
-        DrawPathLayer(getSelectedPath(), false);
-        if (getSelectedPoint() != null)
-            PointUtils.markPoint(point2dFromN_Vector(getSelectedPoint()), PathPreviewLayer.INSTANCE, COLOR_SELECTED,
-                    SIZE_SELECTED, getDimension());
-        this.getDimension().setEventsInhibited(false);
+        try {
+            //redraw new
+            DrawPathLayer(getSelectedPath(), false);
+            if (getSelectedPoint() != null)
+                PointUtils.markPoint(point2dFromN_Vector(getSelectedPoint()), PathPreviewLayer.INSTANCE, COLOR_SELECTED,
+                        SIZE_SELECTED, getDimension());
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
+        } finally {
+            this.getDimension().setEventsInhibited(false);
+
+        }
+
     }
 
     /**
@@ -261,20 +334,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         }
 
         if (path.type == PointInterpreter.PointType.RIVER_2D) {
-            float lastValidRadius = 0;
+            float[] radii = interpolateRadii(path);
             for (int i = 0; i < path.amountHandles(); i++) {
                 float[] point = path.handleByIndex(i);
-
-                float thisRadius = getValue(point, RIVER_RADIUS);
-
-                boolean isInherit = thisRadius == RiverHandleInformation.INHERIT_VALUE;
-                if (isInherit) {
-                    thisRadius = lastValidRadius;
-                } else {
-                    lastValidRadius = thisRadius;
-                }
+                float thisRadius = radii[i];
                 PointUtils.drawCircle(point2dFromN_Vector(point), thisRadius, getDimension(),
-                        PathPreviewLayer.INSTANCE, isInherit);
+                        PathPreviewLayer.INSTANCE,
+                        getValue(point, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
             }
         }
     }
