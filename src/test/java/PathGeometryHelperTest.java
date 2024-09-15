@@ -91,7 +91,7 @@ public class PathGeometryHelperTest {
         double radius = 5;
         ArrayList<Point> curve = point2DfromNVectorArr(p.continousCurve());
         PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(), radius);
-        HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
+        HashMap<Point, Collection<Point>> parentage = geo.getParentage();
         assertEquals(parentage.size(), curve.size());
         for (Point point : curve) {
             assertTrue(parentage.containsKey(point));
@@ -121,7 +121,7 @@ public class PathGeometryHelperTest {
         assertTrue(3 * size + 1 <= curve.size());
         int radius = 50;
         PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(), radius);
-        HashMap<Point, Collection<Point>> parentage = geo.getParentage(radius);
+        HashMap<Point, Collection<Point>> parentage = geo.getParentage();
         assertEquals(parentage.size(), curve.size());
         int totalNearby = 0;
         for (Point point : curve) {

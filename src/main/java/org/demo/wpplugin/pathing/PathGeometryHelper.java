@@ -51,10 +51,9 @@ public class PathGeometryHelper implements BoundingBox {
     /**
      * get all points closer than radius mapped to the point on curve they are closest to
      *
-     * @param radius
      * @return map: key=points on continuous curve, value: list of points withint radius that are closest to the key
      */
-    public HashMap<Point, Collection<Point>> getParentage(double radius) {
+    public HashMap<Point, Collection<Point>> getParentage() {
         double maxRadiusSquared = radius * radius;
         HashMap<Point, Collection<Point>> parentage = new HashMap<>();
         for (Point point : curve) {

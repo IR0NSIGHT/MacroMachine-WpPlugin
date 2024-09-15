@@ -9,16 +9,15 @@ import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
 import org.demo.wpplugin.pathing.PathManager;
 import org.pepsoft.worldpainter.brushes.Brush;
-import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
-import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 
@@ -75,12 +74,9 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         super(NAME, DESCRIPTION, ID);
     }
 
-    public static void applyRiverPath(Path path, ApplyPathOptions options, HeightDimension dimension) {
-        int transitionFactor = 5;
-        ArrayList<float[]> curve = path.continousCurve();
-        float randomPercent = (float) options.getRandomFluctuate() / 100f;
+    public static float[] randomEdge(int length) {
         Random rand = new Random(420);
-        float[] randomEdge = new float[curve.size()];
+        float[] randomEdge = new float[length];
         float randomWidth = 0;
         for (int i = 0; i < randomEdge.length; i++) {
             randomWidth += ((rand.nextBoolean() ? 1f : -1f) * rand.nextFloat() * 0.3f);
@@ -88,55 +84,72 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             randomWidth = Math.min(randomWidth, 1);
             randomEdge[i] = randomWidth;
         }
+        return randomEdge;
+    }
+
+    /**
+     * collect all max values into a single point
+     * out[n] = Max(handles[all i][n])
+     *
+     * @param handles
+     * @return
+     */
+    public static float[] getMaxValues(Iterable<float[]> handles, int handleSize) {
+        float[] maxHandleValues = new float[handleSize];
+        for (float[] handle : handles) {
+            for (int n = RiverHandleInformation.PositionSize.SIZE_2_D.value; n < handle.length; n++) {
+                maxHandleValues[n] = Math.max(maxHandleValues[n], handle[n]);
+            }
+        }
+        return maxHandleValues;
+    }
+
+    public static void applyRiverPath(Path path, ApplyPathOptions options, HeightDimension dimension) {
+        ArrayList<float[]> curve = path.continousCurve();
+        float randomPercent = (float) options.getRandomFluctuate() / 100f;
+        float[] randomEdge = randomEdge(curve.size());
 
         double fluctuationSpeed = options.getFluctuationSpeed();
         fluctuationSpeed = Math.max(1, fluctuationSpeed);    //no divide by zero
-        double maxRadius = 0;
-        for (float[] point : curve) {
-            float thisTotalR =
-                    getValue(point, RiverHandleInformation.RiverInformation.RIVER_RADIUS) * (1 + transitionFactor);
-            maxRadius = Math.max(maxRadius, thisTotalR);
-        }
 
-        int transitionRadius = (int) (maxRadius * transitionFactor);
-        maxRadius += transitionRadius;
+        float[] maxHandleValues = getMaxValues(path, path.type.size);
 
-        PathGeometryHelper helper = new PathGeometryHelper(path, curve, maxRadius);
-        HashMap<Point, Collection<Point>> parentage = helper.getParentage(maxRadius);
-        int curveIndex = 0;
-        int[] heightProfile = {60, 61, 61, 62, 62, 63, 63, 64, 64, 65, 65};
-        for (int i = 0; i < heightProfile.length; i++)
-            heightProfile[i] -= 3;
+        PathGeometryHelper helper = new PathGeometryHelper(path, curve,
+                getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS) + getValue(maxHandleValues, TRANSITION_RADIUS));
+        HashMap<Point, Collection<Point>> parentage = helper.getParentage();
+
         LinkedList<Point> transitionPoints = new LinkedList<>();
         HashMap<Point, Float> transitionPointDistances = new HashMap<>();
-        for (float[] curvePointF : curve) {
+        for (int curveIdx = 0; curveIdx < curve.size(); curveIdx++) {
+            float[] curvePointF = curve.get(curveIdx);
             Point curvePoint = getPoint2D(curvePointF);
             Collection<Point> nearby = parentage.get(curvePoint);
-            double baseRadiusAtIdx = getValue(curvePointF, RiverHandleInformation.RiverInformation.RIVER_RADIUS);
-            float randomFluxAtIdx = randomEdge[(int) ((curveIndex) / fluctuationSpeed)];
-            final double totalRadiusAtIdx =
-                    baseRadiusAtIdx * (1 + randomFluxAtIdx * randomPercent);
-            double radiusSq = totalRadiusAtIdx * totalRadiusAtIdx;
+
+            float randomFluxAtIdx = randomEdge[(int) ((curveIdx) / fluctuationSpeed)];
+            double riverRadius = getValue(curvePointF, RIVER_RADIUS) * (1 + randomFluxAtIdx * randomPercent);
+            double riverRadiusSq = riverRadius * riverRadius;
+
+            double beachRadius = getValue(curvePointF, BEACH_RADIUS);
+            double beachRadiusSq = beachRadius * beachRadius
+                    ;
+            double transitionRadius = getValue(curvePointF, TRANSITION_RADIUS);
+            double transitionRadiusSq = transitionRadius * transitionRadius;
+
+            float beachHeight = 62; //base height of the river. riverDepth = 1 <=> beachHeight-1
+
             for (Point point : nearby) {
                 double distSq = point.distanceSq(curvePoint);
-                if (distSq < radiusSq) {
-                    //its part of the river profile
-                    float interpolatedValue = modifyValue(
-                            (float) point.distance(curvePoint),
-                            0f,
-                            (float) totalRadiusAtIdx,
-                            0,
-                            heightProfile.length - 1
-                    );  //interpolate between original terrain height and outermost
+                if (distSq < riverRadiusSq) {
+                    dimension.setHeight(point.x, point.y, beachHeight - getValue(curvePointF, RIVER_DEPTH));
+                } else if (distSq - riverRadiusSq <= beachRadiusSq) {
+                    dimension.setHeight(point.x, point.y, beachHeight);
+                } else if (distSq - riverRadiusSq - beachRadiusSq <= transitionRadiusSq) {
 
-                    dimension.setHeight(point.x, point.y, heightProfile[(int) interpolatedValue]);
-                } else if (distSq <= (baseRadiusAtIdx * (1f + transitionFactor)) * (baseRadiusAtIdx * (1f + transitionFactor))) {
                     //its part of the transition
-
                     float interpolatedValue = modifyValue(
                             (float) point.distance(curvePoint),
-                            (float) baseRadiusAtIdx,
-                            (float) baseRadiusAtIdx * (1f + transitionFactor),
+                            (float) riverRadius,
+                            (float) (riverRadius + beachRadius + transitionRadius),
                             0,
                             1f
                     );  //interpolate between original terrain height and outermost
@@ -145,16 +158,15 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
                     interpolatedValue = modifyValue(
                             (float) point.distance(curvePoint),
-                            (float) baseRadiusAtIdx,
-                            (float) baseRadiusAtIdx * (1f + transitionFactor),
-                            heightProfile[heightProfile.length - 1],
+                            (float) riverRadius,
+                            (float) (riverRadius + beachRadius + transitionRadius),
+                            beachHeight,
                             dimension.getHeight(point.x, point.y)
                     );  //interpolate between original terrain height and outermost;
                     dimension.setHeight(point.x, point.y, interpolatedValue);
 
                 }
             }
-            curveIndex++;
         }
 
         HashMap<Point, Float> setZValues = new HashMap<>();
@@ -266,18 +278,11 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
                 }
             };
             applyRiverPath(path, options, dim);
-        } catch (Exception ignored) {
-
+        } catch (Exception ex) {
+            System.err.println(ex);
         } finally {
             this.getDimension().setEventsInhibited(false);
         }
-
-
-    }
-
-    private void markPoint(Point p) {
-        getDimension().setBitLayerValueAt(SelectionBlock.INSTANCE, p.x, p.y, true);
-        getDimension().setLayerValueAt(Annotations.INSTANCE, p.x, p.y, 9 /*cyan*/);
     }
 
     @Override
