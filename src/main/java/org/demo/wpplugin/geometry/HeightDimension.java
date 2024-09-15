@@ -5,3 +5,4 @@ public interface HeightDimension {
 
     void setHeight(int x, int y, float z);
 }
+

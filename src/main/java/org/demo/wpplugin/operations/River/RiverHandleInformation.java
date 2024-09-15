@@ -1,13 +1,21 @@
 package org.demo.wpplugin.operations.River;
 
+import org.demo.wpplugin.geometry.PaintDimension;
+import org.demo.wpplugin.layers.PathPreviewLayer;
+import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
+import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
+import static org.demo.wpplugin.operations.EditPath.EditPathOperation.*;
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
+import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 
 public class RiverHandleInformation {
     public static final float INHERIT_VALUE = -1;
@@ -90,5 +98,37 @@ public class RiverHandleInformation {
         PositionSize(int idx) {
             this.value = idx;
         }
+    }
+
+    public static void DrawRiverPath(Path path, PaintDimension dim) {
+        Path clone = path.clone();
+        if (path.type != PointInterpreter.PointType.RIVER_2D)
+            throw new IllegalArgumentException("path is not river: " + path.type);
+        assert path.equals(clone);
+        ArrayList<float[]> curve = path.continousCurve();
+        assert path.equals(clone);
+
+        for (float[] p : path.continousCurve()) {
+            PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
+        }
+
+        assert path.equals(clone);
+        float[] radii = interpolateRadii(path);
+        assert path.equals(clone);
+
+        for (int i = 0; i < path.amountHandles(); i++) {
+            float[] handle = path.handleByIndex(i);
+            PointUtils.markPoint(getPoint2D(handle), COLOR_HANDLE, SIZE_MEDIUM_CROSS,
+                    dim);
+
+            //RIVER RADIUS
+            float thisRadius = radii[i];
+            PointUtils.drawCircle(getPoint2D(handle), thisRadius, dim,
+                    PathPreviewLayer.INSTANCE,
+                    getValue(handle, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
+
+        }
+        assert path.equals(clone);
+
     }
 }

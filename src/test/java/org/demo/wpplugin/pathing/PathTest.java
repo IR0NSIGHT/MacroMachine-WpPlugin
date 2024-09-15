@@ -31,6 +31,31 @@ class PathTest {
     }
 
     @Test
+    void clonePath() {
+        Path p = newFilledPath(4, RIVER_2D);
+        Path clone = p.clone();
+        assertEquals(p, clone);
+        assertNotSame(p, clone);
+
+        int idx = p.amountHandles()/2;
+        float[] someHandle = p.handleByIndex(idx).clone();
+        p = p.setHandleByIdx(someHandle, idx);
+        assertArrayEquals(p.handleByIndex(idx), someHandle);
+
+        assertNotSame(p, clone);
+        assertEquals(p, clone);
+
+        float[] newHandle = someHandle.clone();
+        newHandle = setValue(newHandle, RIVER_RADIUS, 127);
+        assertNotSame(newHandle, someHandle);
+        p = p.setHandleByIdx(newHandle, idx);
+        assertArrayEquals(p.handleByIndex(idx), newHandle);
+        assertNotSame(p, clone);
+        assertNotEquals(p, clone);
+
+    }
+
+    @Test
     void addPoint() {
         Path p = new Path(Collections.EMPTY_LIST, PointInterpreter.PointType.POSITION_2D);
         assertEquals(0, p.amountHandles());

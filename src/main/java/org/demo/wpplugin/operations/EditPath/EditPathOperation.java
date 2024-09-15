@@ -1,5 +1,6 @@
 package org.demo.wpplugin.operations.EditPath;
 
+import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.ApplyPath.OperationOptionsPanel;
 import org.demo.wpplugin.operations.OptionsLabel;
@@ -19,7 +20,10 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
+import java.util.function.Consumer;
 
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.DrawRiverPath;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
 import static org.demo.wpplugin.pathing.Path.interpolateHandles;
@@ -67,13 +71,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     static final String DESCRIPTION = "Draw smooth, connected curves with C1 continuity.";
     //update path
     public static int PATH_ID = 1;
-    final int COLOR_NONE = 0;
-    final int COLOR_HANDLE = 1;
-    final int COLOR_CURVE = 2;
-    final int COLOR_SELECTED = 4;
-    final int SIZE_SELECTED = 5;
-    final int SIZE_DOT = 0;
-    final int SIZE_MEDIUM_CROSS = 3;
+    public static final int COLOR_NONE = 0;
+    public static final int COLOR_HANDLE = 1;
+    public static final int COLOR_CURVE = 2;
+    public static final int COLOR_SELECTED = 4;
+    public static final int SIZE_SELECTED = 5;
+    public static final int SIZE_DOT = 0;
+    public static final int SIZE_MEDIUM_CROSS = 3;
     private final EditPathOptions options = new EditPathOptions();
     EditPathOptionsPanel eOptionsPanel;
     private int selectedPointIdx;
@@ -151,11 +155,11 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         final Path path = getSelectedPath();
         EditPathOperation.PATH_ID = getSelectedPathId();
 
-        System.out.println("coord=" + centreX + "," + centreY);
+        /*System.out.println("coord=" + centreX + "," + centreY);
         System.out.println("alt=" + isAltDown());
         System.out.println("shift=" + isShiftDown());
         System.out.println("ctrl=" + isCtrlDown());
-        System.out.println("---------");
+        System.out.println("---------"); */
 
         float[] userClickedCoord = RiverHandleInformation.riverInformation(centreX, centreY);
 
@@ -207,7 +211,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             //add new point after selected
             overwriteSelectedPath(path.insertPointAfter(getSelectedPoint(), userClickedCoord));
             setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
-            System.out.println("add point after selected: " + Arrays.toString(getSelectedPoint() ));
         }
 
 
@@ -217,9 +220,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull setting " +
                 "path in manager";
 
-        System.out.println("selectedPoint" + Arrays.toString(getSelectedPoint()));
         redrawSelectedPathLayer();
-        System.out.println("selectedPoint" + Arrays.toString(getSelectedPoint()));
 
         if (this.eOptionsPanel != null)
             this.eOptionsPanel.onOptionsReconfigured();
@@ -251,13 +252,23 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         this.getDimension().setEventsInhibited(true);
         //erase old
         this.getDimension().clearLayerData(PathPreviewLayer.INSTANCE);
+        PaintDimension dim = new PaintDimension() {
+            @Override
+            public int getValue(int x, int y) {
+                return getDimension().getLayerValueAt(PathPreviewLayer.INSTANCE, x, y);
+            }
 
+            @Override
+            public void setValue(int x, int y, int v) {
+                getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, v);
+            }
+        };
         try {
             //redraw new
-            DrawPathLayer(getSelectedPath().clone(), false);
+            DrawPathLayer(getSelectedPath().clone(), dim);
             if (getSelectedPoint() != null)
-                PointUtils.markPoint(getPoint2D(getSelectedPoint()), PathPreviewLayer.INSTANCE, COLOR_SELECTED,
-                        SIZE_SELECTED, getDimension());
+                PointUtils.markPoint(getPoint2D(getSelectedPoint()), COLOR_SELECTED,
+                        SIZE_SELECTED, dim);
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
         } finally {
@@ -270,32 +281,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements
      *
      * @param path
      */
-    void DrawPathLayer(Path path, boolean erase) {
+    static void DrawPathLayer(Path path, PaintDimension dim) {
         Path clone = path.clone();
-        PathPreviewLayer layer = PathPreviewLayer.INSTANCE;
-
-        for (float[] p : path.continousCurve()) {
-            PointUtils.markPoint(getPoint2D(p), layer, erase ? 0 : COLOR_CURVE, SIZE_DOT, getDimension());
-        }
-
-        for (float[] p : path) {
-            PointUtils.markPoint(getPoint2D(p), layer, erase ? 0 : COLOR_HANDLE, SIZE_MEDIUM_CROSS,
-                    getDimension());
-        }
-
+        //nothing
         if (path.type == PointInterpreter.PointType.RIVER_2D) {
-            float[] radii = interpolateRadii(path);
-
-            for (int i = 0; i < path.amountHandles(); i++) {
-                float[] point = path.handleByIndex(i);
-                float thisRadius = radii[i];
-                PointUtils.drawCircle(getPoint2D(point), thisRadius, getDimension(),
-                        PathPreviewLayer.INSTANCE,
-                        getValue(point, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
-            }
-
+            DrawRiverPath(path, dim);
         }
-        assert clone.equals(path.clone()): "something mutated the path";
+        assert clone.equals(path): "something mutated the path";
     }
 
     @Override

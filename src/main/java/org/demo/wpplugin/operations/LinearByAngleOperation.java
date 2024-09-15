@@ -62,7 +62,6 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
     public static void main(String[] args) {
         Function<Point, Float> getHeight = p -> (float) p.y;
         double slope = getSlopeAt(new Point(4, 4), getHeight);
-        System.out.println(slope);
     }
 
     /**

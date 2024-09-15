@@ -1,8 +1,8 @@
 package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
+import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
-import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
@@ -13,7 +13,7 @@ public class PointUtils {
 
     public static Rectangle pointExtent(Rectangle extent) {
         Rectangle rect = new Rectangle(extent);
-        rect.setBounds(extent.x*128,extent.y*128,extent.width*128,extent.height*128);
+        rect.setBounds(extent.x * 128, extent.y * 128, extent.width * 128, extent.height * 128);
         return rect;
     }
 
@@ -42,7 +42,7 @@ public class PointUtils {
 
     // Method to normalize a point
     public static Point normalize(Point p) {
-        float magnitude = (float)Math.sqrt(p.x * p.x + p.y * p.y);
+        float magnitude = (float) Math.sqrt(p.x * p.x + p.y * p.y);
         if (magnitude == 0) {
             throw new IllegalArgumentException("Cannot normalize a point at the origin (0,0).");
         }
@@ -73,16 +73,15 @@ public class PointUtils {
         return bbxs;
     }
 
-    public static void drawCircle(Point center, float radius, Dimension dimension, Layer layer, boolean dotted) {
+    public static void drawCircle(Point center, float radius, PaintDimension dimension, Layer layer, boolean dotted) {
         int radiusI = Math.round(radius);
-        int inc = dotted ? 2 : 1;
         for (int x = -radiusI; x <= radiusI; x++) {
             for (int y = -radiusI; y <= radiusI; y++) {
-                if (dotted && (x+y)%2 == 0)
+                if (dotted && (x + y) % 2 == 0)
                     continue;
                 Point p = new Point(center.x + x, center.y + y);
                 if (center.distance(p) <= radius && center.distance(p) >= radiusI - 1) {
-                    dimension.setLayerValueAt(layer, p.x, p.y, 15);
+                    dimension.setValue(p.x, p.y, 15);
                 }
             }
         }
@@ -96,20 +95,20 @@ public class PointUtils {
      * @param color
      * @param size, 0 size = single dot on map
      */
-    public static void markPoint(Point p, Layer layer, int color, int size, Dimension dim) {
+    public static void markPoint(Point p, int color, int size, PaintDimension dim) {
         for (int i = -size; i <= size; i++) {
-            dim.setLayerValueAt(layer, p.x + i, p.y - i, color);
-            dim.setLayerValueAt(layer, p.x + i, p.y + i, color);
+            dim.setValue(p.x + i, p.y - i, color);
+            dim.setValue(p.x + i, p.y + i, color);
         }
     }
 
-    public static void markLine(Point p0, Point p1, Layer layer, int color, Dimension dim) {
+    public static void markLine(Point p0, Point p1, Layer layer, int color, PaintDimension dim) {
         double length = p0.distance(p1);
         for (double i = 0; i <= length; i++) {
             double factor = i / length;
             Point inter = new Point((int) (p0.x * factor + p1.x * (1 - factor)),
                     (int) (p0.y * factor + p1.y * (1 - factor)));
-            dim.setLayerValueAt(layer, inter.x, inter.y, color);
+            dim.setValue(inter.x, inter.y, color);
         }
     }
 
@@ -145,7 +144,7 @@ public class PointUtils {
         return new Point(Math.round(nVector[0]), Math.round(nVector[1]));
     }
 
-    public static ArrayList<Point> point2DfromNVectorArr(ArrayList<float[]> points ) {
+    public static ArrayList<Point> point2DfromNVectorArr(ArrayList<float[]> points) {
         ArrayList<Point> out = new ArrayList<>(points.size());
         for (int i = 0; i < points.size(); i++) {
             out.add(getPoint2D(points.get(i)));
@@ -155,9 +154,8 @@ public class PointUtils {
 
     public static float[] setPosition2D(float[] point, float[] position) {
         float[] out = point.clone();
-        for (int i = 0; i < RiverHandleInformation.PositionSize.SIZE_2_D.value; i++) {
-            out[i] = position[i];
-        }
+        if (RiverHandleInformation.PositionSize.SIZE_2_D.value >= 0)
+            System.arraycopy(position, 0, out, 0, RiverHandleInformation.PositionSize.SIZE_2_D.value);
         return out;
     }
 }

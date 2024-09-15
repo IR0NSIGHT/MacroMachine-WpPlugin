@@ -71,8 +71,6 @@ public class Smoother {
             for (int j = 0; j < kernel.length; j++)
                 sum += kernel[i]*kernel[j];
         }
-        System.out.println(Arrays.toString(kernel));
-
         smoothPoints(kernel, sum);
     }
 
