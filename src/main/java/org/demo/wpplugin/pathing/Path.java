@@ -217,9 +217,18 @@ public class Path implements Iterable<float[]> {
         return Iterable.super.spliterator();
     }
 
+    public Path setHandleByIdx(float[] handle, int idx) {
+        ArrayList<float[]> newHandles = new ArrayList<>(handles);
+        newHandles.set(idx, handle);
+        Path sum = new Path(newHandles, this.type);
+        assert invariant();
+        return sum;
+    }
+
     public ArrayList<float[]> continousCurve() {
-        ArrayList<float[]> handles = (ArrayList<float[]>) this.handles.clone();
+        ArrayList<float[]> handles = new ArrayList<>(this.handles);
         int[] handleToCurveIdx = this.handleToCurveIdx();
+        //fill handles that are marked as "to be interpolated"
         for (int n = 2; n < this.type.size; n++) {
             float[] informationArr = new float[handles.size()];
             for (int i = 0; i < handles.size(); i++) {

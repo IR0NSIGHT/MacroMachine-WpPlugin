@@ -139,7 +139,12 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
         double fluctuationSpeed = options.getFluctuationSpeed();
         fluctuationSpeed = Math.max(1, fluctuationSpeed);    //no divide by zero
-        double maxRadius = Math.max(options.getFinalWidth(), options.getStartWidth()) * (1 + randomPercent);
+        double maxRadius = 0;
+        for (float[] point: curve) {
+            float thisTotalR = getValue(point, RiverHandleInformation.RiverInformation.RIVER_RADIUS) * (1+transitionFactor);
+            maxRadius = Math.max(maxRadius, thisTotalR);
+        }
+
         int transitionRadius = (int) (maxRadius * transitionFactor);
         maxRadius += transitionRadius;
 

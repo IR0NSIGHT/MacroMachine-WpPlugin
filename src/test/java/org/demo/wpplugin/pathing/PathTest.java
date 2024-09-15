@@ -1,13 +1,14 @@
 package org.demo.wpplugin.pathing;
 
-import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.setValue;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
+import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PathTest {
@@ -117,7 +118,7 @@ class PathTest {
         newPoint[0] = 12345f;
         newPoint[1] = -123456f;
         Path inserted = path.insertPointAfter(thisPoint, newPoint);
-        assertEquals(length+1, inserted.amountHandles());
+        assertEquals(length + 1, inserted.amountHandles());
         assertArrayEquals(newPoint, inserted.handleByIndex(length / 2 + 1), "inserted point not as expected");
         assertArrayEquals(thisPoint, inserted.handleByIndex(length / 2), "this point is not untouched");
     }
@@ -143,16 +144,44 @@ class PathTest {
         }
 
         {  //make sure meta data is ignored for indexOf
-            Path p = newFilledPath(length, PointInterpreter.PointType.RIVER_2D);
+            Path p = newFilledPath(length, RIVER_2D);
             assertEquals(length, p.amountHandles());
-            assertTrue(p.type == PointInterpreter.PointType.RIVER_2D);
+            assertSame(p.type, RIVER_2D);
 
             float[] somePoint = p.handleByIndex(length / 2).clone();
-            somePoint = setValue(somePoint, RiverHandleInformation.RiverInformation.RIVER_RADIUS, 345f);
-            assertEquals(345f, getValue(somePoint, RiverHandleInformation.RiverInformation.RIVER_RADIUS));
+            somePoint = setValue(somePoint, RIVER_RADIUS, 345f);
+            assertEquals(345f, getValue(somePoint, RIVER_RADIUS));
 
             int idxFound = p.indexOfPosition(somePoint);
             assertEquals(length / 2, idxFound);
+        }
+    }
+
+    @Test
+    void continuousCurve() {
+        Path p = newFilledPath(1000, RIVER_2D);
+
+        float startV = 3;
+        p = p.setHandleByIdx(setValue(p.handleByIndex(0), RIVER_RADIUS, startV), 0);
+        assertEquals(startV, getValue(p.handleByIndex(0), RIVER_RADIUS));
+
+        p = p.setHandleByIdx(setValue(p.handleByIndex(1), RIVER_RADIUS, startV), 1);
+        assertEquals(startV, getValue(p.handleByIndex(1), RIVER_RADIUS));
+
+
+        p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles()-1), RIVER_RADIUS, 17), p.amountHandles() - 1);
+        assertEquals(17, getValue(p.handleByIndex(p.amountHandles()-1), RIVER_RADIUS));
+        p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles()-2), RIVER_RADIUS, 17), p.amountHandles() - 2);
+        assertEquals(17, getValue(p.handleByIndex(p.amountHandles()-2), RIVER_RADIUS));
+
+        for (int i = 2; i < p.amountHandles() - 2; i++) {
+            p = p.setHandleByIdx(setValue(p.handleByIndex(i), RIVER_RADIUS, INHERIT_VALUE), i);
+            assertEquals(INHERIT_VALUE, getValue(p.handleByIndex(i), RIVER_RADIUS));
+        }
+
+        ArrayList<float[]> curve = p.continousCurve();
+        for (float[] point : curve) {
+            System.out.println("#".repeat(Math.round(getValue(point, RIVER_RADIUS))));
         }
     }
 }
