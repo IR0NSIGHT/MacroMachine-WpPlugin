@@ -131,27 +131,25 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
             float randomFluxAtIdx = randomEdge[(int) ((curveIdx) / fluctuationSpeed)];
             double riverRadius = getValue(curvePointF, RIVER_RADIUS) * (1 + randomFluxAtIdx * randomPercent);
-            double riverRadiusSq = riverRadius;
-
             double beachRadius = getValue(curvePointF, BEACH_RADIUS);
-            double beachRadiusSq = beachRadius;
             double transitionRadius = getValue(curvePointF, TRANSITION_RADIUS);
-            double transitionRadiusSq = transitionRadius ;
 
             float beachHeight = 62; //base height of the river. riverDepth = 1 <=> beachHeight-1
 
 
             for (Point point : nearby) {
                 double distSq = point.distance(curvePoint);
-                if (distSq < riverRadiusSq) {
+                if (distSq < riverRadius) {
                     //    dimension.setHeight(point.x, point.y, beachHeight - getValue(curvePointF, RIVER_DEPTH));
-                    applyStrengthMap.put(point, 16f);
-                } else if (distSq - riverRadiusSq <= beachRadiusSq) {
+                    applyStrengthMap.put(point, 15f);
+                } else if (distSq - riverRadius <= beachRadius) {
                     //    dimension.setHeight(point.x, point.y, beachHeight);
-                    applyStrengthMap.put(point, 16f);
-                } else if (distSq - riverRadiusSq - beachRadiusSq <= transitionRadiusSq) {
-                    applyStrengthMap.put(point, 16f);
-
+                    applyStrengthMap.put(point, 15f);
+                } else if (distSq - riverRadius - beachRadius <= transitionRadius) {
+                    if (distSq - riverRadius - beachRadius <= transitionRadius / 2f)
+                        applyStrengthMap.put(point, 15f);
+                    else
+                        applyStrengthMap.put(point, 0f);
                     //its part of the transition
                     float interpolatedValue = modifyValue(
                             (float) point.distance(curvePoint),
@@ -179,7 +177,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         HeightDimension dim = new HeightDimension() {
             @Override
             public float getHeight(int x, int y) {
-                return applyStrengthMap.getOrDefault(new Point(x, y), 1f);
+                return applyStrengthMap.getOrDefault(new Point(x, y), 0f);
             }
 
             @Override
@@ -187,9 +185,9 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
                 applyStrengthMap.put(new Point(x, y), z);
             }
         };
-
-        Smoother smoother = new Smoother(applyStrengthMap.keySet(), (int) (getValue(maxHandleValues,
-                TRANSITION_RADIUS)), dim);
+        float maxTransition = (getValue(maxHandleValues,
+                TRANSITION_RADIUS));
+        Smoother smoother = new Smoother(applyStrengthMap.keySet(), (int) (maxTransition/2f), dim);
         smoother.smoothGauss();
 
         for (Point p : applyStrengthMap.keySet()) {
