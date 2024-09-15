@@ -43,7 +43,10 @@ class RiverHandleInformationTest {
             }
         };
         Path clone = p.clone();
-        DrawRiverPath(p, dim);
+        try {
+            DrawRiverPath(p, dim);
+        } catch (IllegalAccessException ignored) {
+        }
         for (float[] handle : handles) {
             assertEquals(INHERIT_VALUE, getValue(handle,RIVER_RADIUS), "final values were changed");
         }

@@ -2,7 +2,6 @@ package org.demo.wpplugin.operations.River;
 
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.PathPreviewLayer;
-import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
@@ -16,6 +15,7 @@ import static org.demo.wpplugin.operations.EditPath.EditPathOperation.*;
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
+import static org.demo.wpplugin.pathing.PointUtils.markLine;
 
 public class RiverHandleInformation {
     public static final float INHERIT_VALUE = -1;
@@ -61,7 +61,7 @@ public class RiverHandleInformation {
         OptionsLabel[] options = new OptionsLabel[RiverInformation.values().length];
         int i = 0;
         for (RiverInformation information : RiverInformation.values()) {
-            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point,information),INHERIT_VALUE,100,1f);
+            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), INHERIT_VALUE, 100, 1f);
 
             options[i++] = numericInput(information.displayName,
                     information.toolTip,
@@ -75,16 +75,46 @@ public class RiverHandleInformation {
         return options;
     }
 
+    public static void DrawRiverPath(Path path, PaintDimension dim) throws IllegalAccessException {
+        if (path.type != PointInterpreter.PointType.RIVER_2D)
+            throw new IllegalArgumentException("path is not river: " + path.type);
+        ArrayList<float[]> curve = path.continousCurve();
+        for (float[] p : curve) {
+            PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
+        }
+
+        if (path.amountHandles() > 1) {
+            markLine(getPoint2D(path.handleByIndex(0)), getPoint2D(path.handleByIndex(1)), COLOR_HANDLE, dim);
+            markLine(getPoint2D(path.getTail()), getPoint2D(path.getPreviousPoint(path.getTail())), COLOR_HANDLE, dim);
+        }
+        float[] radii = interpolateRadii(path);
+
+        for (int i = 0; i < path.amountHandles(); i++) {
+            float[] handle = path.handleByIndex(i);
+            PointUtils.markPoint(getPoint2D(handle), COLOR_HANDLE, SIZE_MEDIUM_CROSS,
+                    dim);
+
+            //RIVER RADIUS
+            float thisRadius = radii[i];
+            PointUtils.drawCircle(getPoint2D(handle), thisRadius, dim,
+                    PathPreviewLayer.INSTANCE,
+                    getValue(handle, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
+
+        }
+    }
+
     public enum RiverInformation {
-        RIVER_RADIUS(0,"river radius", "radius of the river ",0,50),
-        RIVER_DEPTH(1, "river depth", "depth of the river ",0,20),
-        BEACH_RADIUS(2, "beach radius", "radius of the beach ",0,20),
-        TRANSITION_RADIUS(3,"transition radius", "radius of the transition blending with original terrain ",0,50),;
+        RIVER_RADIUS(0, "river radius", "radius of the river ", 0, 50),
+        RIVER_DEPTH(1, "river depth", "depth of the river ", 0, 20),
+        BEACH_RADIUS(2, "beach radius", "radius of the beach ", 0, 20),
+        TRANSITION_RADIUS(3, "transition radius", "radius of the transition blending with original terrain ", 0, 50),
+        ;
         public final int idx;
         public final String displayName;
         public final String toolTip;
         public final float min;
         public final float max;
+
         RiverInformation(int idx, String displayName, String toolTip, float min, float max) {
             this.min = min;
             this.max = max;
@@ -103,37 +133,5 @@ public class RiverHandleInformation {
         PositionSize(int idx) {
             this.value = idx;
         }
-    }
-
-    public static void DrawRiverPath(Path path, PaintDimension dim) {
-        Path clone = path.clone();
-        if (path.type != PointInterpreter.PointType.RIVER_2D)
-            throw new IllegalArgumentException("path is not river: " + path.type);
-        assert path.equals(clone);
-        ArrayList<float[]> curve = path.continousCurve();
-        assert path.equals(clone);
-
-        for (float[] p : path.continousCurve()) {
-            PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
-        }
-
-        assert path.equals(clone);
-        float[] radii = interpolateRadii(path);
-        assert path.equals(clone);
-
-        for (int i = 0; i < path.amountHandles(); i++) {
-            float[] handle = path.handleByIndex(i);
-            PointUtils.markPoint(getPoint2D(handle), COLOR_HANDLE, SIZE_MEDIUM_CROSS,
-                    dim);
-
-            //RIVER RADIUS
-            float thisRadius = radii[i];
-            PointUtils.drawCircle(getPoint2D(handle), thisRadius, dim,
-                    PathPreviewLayer.INSTANCE,
-                    getValue(handle, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
-
-        }
-        assert path.equals(clone);
-
     }
 }

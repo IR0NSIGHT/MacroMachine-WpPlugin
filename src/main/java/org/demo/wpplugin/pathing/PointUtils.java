@@ -91,7 +91,6 @@ public class PointUtils {
      * draws an X on the map in given color and size
      *
      * @param p
-     * @param layer
      * @param color
      * @param size, 0 size = single dot on map
      */
@@ -102,7 +101,7 @@ public class PointUtils {
         }
     }
 
-    public static void markLine(Point p0, Point p1, Layer layer, int color, PaintDimension dim) {
+    public static void markLine(Point p0, Point p1, int color, PaintDimension dim) {
         double length = p0.distance(p1);
         for (double i = 0; i <= length; i++) {
             double factor = i / length;

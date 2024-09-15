@@ -50,16 +50,16 @@ public class Path implements Iterable<float[]> {
         if (handles.length < 4) {
             return handles;
         }
-        float[] outHandles = handles.clone();
 
-        //manually: copy values of first and last handle to second and second last, to allow inteprolation along comelte curve
+        //manually: copy values of first and last handle to second and second last, to allow inteprolation along
+        // comelte curve
         if (handles[0] != INHERIT_VALUE && handles[1] == INHERIT_VALUE) {
             handles[1] = handles[0];
         }
-
-        if (handles[handles.length-1] != INHERIT_VALUE && handles[handles.length-2] == INHERIT_VALUE) {
-            handles[handles.length-2] = handles[handles.length-1];
+        if (handles[handles.length - 1] != INHERIT_VALUE && handles[handles.length - 2] == INHERIT_VALUE) {
+            handles[handles.length - 2] = handles[handles.length - 1];
         }
+        float[] outHandles = handles.clone();
 
         //collect a map of all handles that are NOT interpolated and carry values
         int amountHandlesWithValues = 0;
@@ -265,7 +265,7 @@ public class Path implements Iterable<float[]> {
     public ArrayList<float[]> continousCurve() {
         Path clone = this.clone();
         ArrayList<float[]> handles = new ArrayList<>(this.handles.size());
-        for (float[] handle: this.handles)
+        for (float[] handle : this.handles)
             handles.add(handle.clone());
 
         int[] handleToCurveIdx = this.handleToCurveIdx();
@@ -347,9 +347,9 @@ public class Path implements Iterable<float[]> {
 
     @Override
     public String toString() {
-        return "Path{\n"+
-                "type"+type+"\n"+
-                "handles"+handlesToString()+"\n}";
+        return "Path{\n" +
+                "type" + type + "\n" +
+                "handles" + handlesToString() + "\n}";
     }
 
     @Override

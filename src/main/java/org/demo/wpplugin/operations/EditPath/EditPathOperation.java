@@ -110,7 +110,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
      *
      * @param path
      */
-    static void DrawPathLayer(Path path, PaintDimension dim) {
+    static void DrawPathLayer(Path path, PaintDimension dim) throws IllegalAccessException {
         Path clone = path.clone();
         //nothing
         if (path.type == PointInterpreter.PointType.RIVER_2D) {
@@ -387,8 +387,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
                     inputs.addAll(Arrays.asList(riverInputs));
                 }
-
-
             }
             return inputs;
         }
