@@ -10,7 +10,7 @@ import java.awt.*;
 import java.util.*;
 
 import static org.demo.wpplugin.pathing.PointUtils.point2DfromNVectorArr;
-import static org.demo.wpplugin.pathing.PointUtils.point2dFromN_Vector;
+import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 import static org.demo.wpplugin.pathing.Path.curveIsContinous;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -115,7 +115,7 @@ public class PathGeometryHelperTest {
         ArrayList<Point> curve = point2DfromNVectorArr(curveF);
         assert curveIsContinous(curveF);
         for (int i = 1; i < p.amountHandles()-1; i++) {
-            Point point = point2dFromN_Vector(p.handleByIndex(i));
+            Point point = getPoint2D(p.handleByIndex(i));
             assertTrue(curve.contains(point),"final curve is missing a control point:"+point);
         }
         assertTrue(3 * size + 1 <= curve.size());

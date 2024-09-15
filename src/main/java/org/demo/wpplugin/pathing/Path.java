@@ -26,10 +26,16 @@ public class Path implements Iterable<float[]> {
 
     public static boolean curveIsContinous(List<float[]> curve) {
         float[] previous = null;
+        float root2 = (float)Math.sqrt(2) + 0.001f; //allow delta
         for (float[] p : curve) {
-            if (previous != null && getPositionalDistance(p, previous,
-                    RiverHandleInformation.PositionSize.SIZE_2_D.value) > 2) {
-                return false;
+            if (previous != null) {
+                float dist = getPositionalDistance(p, previous,
+                        RiverHandleInformation.PositionSize.SIZE_2_D.value);
+                if (arePositionalsEqual(p,previous,RiverHandleInformation.PositionSize.SIZE_2_D.value))
+                    return false; //point has clone
+                if (dist >= root2){
+                    return false; //point is not connected
+                }
             }
             previous = p;
         }
@@ -101,19 +107,24 @@ public class Path implements Iterable<float[]> {
         if (curvePoints.isEmpty())
             return new ArrayList<>(0);
 
-        int positionDigits = 2;
-        float[] previous = null;
-        int size = curvePoints.size();
-        for (int i = 0; i < size; i++) {
-            //kill all successive points that are the same
-            while (i < curvePoints.size() && arePositionalsEqual(curvePoints.get(i), previous, positionDigits))
-                curvePoints.remove(i);
-            size = curvePoints.size();
-            if (i < size)
-                previous = curvePoints.get(i);
-        }
+        int positionDigits = PointInterpreter.PointType.POSITION_2D.size;   //FIXME thats the wrong constant
+        assert curvePoints.size() > 2;
 
-        return new ArrayList<>(curvePoints);
+        ArrayList<float[]> result = new ArrayList<>(curvePoints.size());
+        float[] previousPoint = curvePoints.get(0);
+        result.add(previousPoint);
+        for (float[] point: curvePoints) {
+            assert point != null : "whats going on?";
+            if (arePositionalsEqual(point, previousPoint, positionDigits)) {
+                continue;
+            } else {
+                previousPoint = point;
+                result.add(previousPoint);
+            }
+        }
+        result.trimToSize();
+        assert curveIsContinous(result);
+        return result;
     }
 
     private boolean invariant() {

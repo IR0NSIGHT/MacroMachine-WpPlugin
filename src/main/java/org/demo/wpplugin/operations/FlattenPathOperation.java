@@ -15,7 +15,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.function.Function;
 
-import static org.demo.wpplugin.pathing.PointUtils.point2dFromN_Vector;
+import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 import static org.demo.wpplugin.operations.EditPath.EditPathOperation.PATH_ID;
 
 /**
@@ -251,7 +251,7 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
             int totalRadiusSq = totalRadius * totalRadius;
             //collect all points within rough radius
             for (float[] pF : curve) {
-                Point p = point2dFromN_Vector(pF);
+                Point p = getPoint2D(pF);
                 for (int x = -totalRadius; x < totalRadius; x++) {
                     for (int y = -totalRadius; y < totalRadius; y++) {
                         Point edgePoint = new Point(p.x + x, p.y + y);
@@ -279,7 +279,7 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
             //curveHeights = applyDownslopeFilter(curveHeights);
             for (Point e : edge) {
                 int curveIdx = getClosestPointIndexOnCurveTo(curve, e);
-                Point closestCurvePoint = point2dFromN_Vector(curve.get(curveIdx));
+                Point closestCurvePoint = getPoint2D(curve.get(curveIdx));
 
                 float interpolatedHeight = getHeightByDistanceToCurve(e.distance(closestCurvePoint),
                         getDimension().getHeightAt(e),
@@ -335,7 +335,7 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         double minDistSq = Double.MAX_VALUE;
         int i = 0;
         for (float[] pF : curve) {
-            Point p = point2dFromN_Vector(pF);
+            Point p = getPoint2D(pF);
             double thisDistSq = p.distanceSq(nearby);
             if (thisDistSq < minDistSq) {
                 closest = p;
@@ -366,7 +366,7 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
     private void applyAsSelection(Path path) {
         Layer select = SelectionBlock.INSTANCE;
         for (float[] pF : path.continousCurve()) {
-            Point p = point2dFromN_Vector(pF);
+            Point p = getPoint2D(pF);
             getDimension().setBitLayerValueAt(select, p.x, p.y, true);
         }
     }

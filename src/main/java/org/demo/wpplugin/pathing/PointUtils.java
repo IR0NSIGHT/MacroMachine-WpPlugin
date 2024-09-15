@@ -136,10 +136,10 @@ public class PointUtils {
     }
 
     public static boolean arePositionalsEqual(float[] pointA, float[] pointB, int positionDigits) {
-        return point2dFromN_Vector(pointA).equals(point2dFromN_Vector(pointB));
+        return getPoint2D(pointA).equals(getPoint2D(pointB));
     }
 
-    public static Point point2dFromN_Vector(float[] nVector) {
+    public static Point getPoint2D(float[] nVector) {
         if (nVector == null)
             return null;
         return new Point(Math.round(nVector[0]), Math.round(nVector[1]));
@@ -148,7 +148,7 @@ public class PointUtils {
     public static ArrayList<Point> point2DfromNVectorArr(ArrayList<float[]> points ) {
         ArrayList<Point> out = new ArrayList<>(points.size());
         for (int i = 0; i < points.size(); i++) {
-            out.add(point2dFromN_Vector(points.get(i)));
+            out.add(getPoint2D(points.get(i)));
         }
         return out;
     }

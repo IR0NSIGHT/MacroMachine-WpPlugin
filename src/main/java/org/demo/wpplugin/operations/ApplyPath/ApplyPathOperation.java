@@ -21,7 +21,7 @@ import java.util.*;
 
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
-import static org.demo.wpplugin.pathing.PointUtils.point2dFromN_Vector;
+import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -157,7 +157,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         LinkedList<Point> transitionPoints = new LinkedList<>();
         HashMap<Point,Float> transitionPointDistances = new HashMap<>();
         for (float[] curvePointF : curve) {
-            Point curvePoint = point2dFromN_Vector(curvePointF);
+            Point curvePoint = getPoint2D(curvePointF);
             Collection<Point> nearby = parentage.get(curvePoint);
             double interpol = curveIndex / (1f * curve.size());
             double baseRadiusAtIdx = getValue(curvePointF, RiverHandleInformation.RiverInformation.RIVER_RADIUS);

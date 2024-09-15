@@ -2,6 +2,7 @@ package org.demo.wpplugin.pathing;
 
 import org.junit.jupiter.api.Test;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -9,6 +10,8 @@ import java.util.LinkedList;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
+import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
+import static org.demo.wpplugin.pathing.PointUtils.setPosition2D;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PathTest {
@@ -20,8 +23,8 @@ class PathTest {
         Path p = new Path(Collections.EMPTY_LIST, type);
         for (int i = 0; i < length; i++) {
             float[] newHandle = new float[type.size];
-            newHandle[0] = 3.9f * i;
-            newHandle[1] = -2.7f * i;
+            newHandle[0] = 3 * i;
+            newHandle[1] = 4 * i;
             p = p.addPoint(newHandle.clone());
         }
         return p;
@@ -159,7 +162,7 @@ class PathTest {
 
     @Test
     void continuousCurve() {
-        Path p = newFilledPath(1000, RIVER_2D);
+        Path p = newFilledPath(10+2+1, RIVER_2D);
 
         float startV = 3;
         p = p.setHandleByIdx(setValue(p.handleByIndex(0), RIVER_RADIUS, startV), 0);
@@ -179,7 +182,25 @@ class PathTest {
             assertEquals(INHERIT_VALUE, getValue(p.handleByIndex(i), RIVER_RADIUS));
         }
 
+        //set position for all points
+        for (int i = 0; i < p.amountHandles(); i++) {
+            float[] newHandle = setPosition2D(p.handleByIndex(i), new float[]{i*10,37});
+            p = p.setHandleByIdx(newHandle, i);
+
+            assertEquals(new Point(i*10,37), getPoint2D(p.handleByIndex(i)));
+        }
+
         ArrayList<float[]> curve = p.continousCurve();
+        ArrayList<Point> curveP = PointUtils.point2DfromNVectorArr(curve);
+
+        int curvePointIdx = 0;
+        for (int curveX = getPoint2D(p.handleByIndex(1)).x; curveX <= getPoint2D(p.handleByIndex(p.amountHandles()-2)).x; curveX++) {
+            //iterate from first handle where curve starts to last handle where curve ends
+            assertEquals(curveX, curveP.get(curvePointIdx).x,"Point " + curveP.get(curvePointIdx) );
+            assertEquals(37, curveP.get(curvePointIdx).y,"Point " + curveP.get(curvePointIdx) );
+
+            curvePointIdx++;
+        }
         for (float[] point : curve) {
             System.out.println("#".repeat(Math.round(getValue(point, RIVER_RADIUS))));
         }

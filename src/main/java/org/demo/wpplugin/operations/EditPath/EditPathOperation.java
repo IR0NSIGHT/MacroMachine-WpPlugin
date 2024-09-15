@@ -238,7 +238,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
         for (float[] p :
                 getSelectedPath().continousCurve()) {
-            Point point = point2dFromN_Vector(p);
+            Point point = getPoint2D(p);
             getDimension().setBitLayerValueAt(select, point.x, point.y, true);
         }
     }
@@ -252,7 +252,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             //redraw new
             DrawPathLayer(getSelectedPath(), false);
             if (getSelectedPoint() != null)
-                PointUtils.markPoint(point2dFromN_Vector(getSelectedPoint()), PathPreviewLayer.INSTANCE, COLOR_SELECTED,
+                PointUtils.markPoint(getPoint2D(getSelectedPoint()), PathPreviewLayer.INSTANCE, COLOR_SELECTED,
                         SIZE_SELECTED, getDimension());
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
@@ -272,11 +272,11 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         PathPreviewLayer layer = PathPreviewLayer.INSTANCE;
 
         for (float[] p : path.continousCurve()) {
-            PointUtils.markPoint(point2dFromN_Vector(p), layer, erase ? 0 : COLOR_CURVE, SIZE_DOT, getDimension());
+            PointUtils.markPoint(getPoint2D(p), layer, erase ? 0 : COLOR_CURVE, SIZE_DOT, getDimension());
         }
 
         for (float[] p : path) {
-            PointUtils.markPoint(point2dFromN_Vector(p), layer, erase ? 0 : COLOR_HANDLE, SIZE_MEDIUM_CROSS,
+            PointUtils.markPoint(getPoint2D(p), layer, erase ? 0 : COLOR_HANDLE, SIZE_MEDIUM_CROSS,
                     getDimension());
         }
 
@@ -285,7 +285,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             for (int i = 0; i < path.amountHandles(); i++) {
                 float[] point = path.handleByIndex(i);
                 float thisRadius = radii[i];
-                PointUtils.drawCircle(point2dFromN_Vector(point), thisRadius, getDimension(),
+                PointUtils.drawCircle(getPoint2D(point), thisRadius, getDimension(),
                         PathPreviewLayer.INSTANCE,
                         getValue(point, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
             }
