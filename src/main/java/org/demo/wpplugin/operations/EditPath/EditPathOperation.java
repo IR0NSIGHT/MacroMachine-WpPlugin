@@ -20,12 +20,9 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Objects;
-import java.util.function.Consumer;
 
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.DrawRiverPath;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
 import static org.demo.wpplugin.pathing.Path.interpolateHandles;
 import static org.demo.wpplugin.pathing.PointUtils.*;
 
@@ -56,6 +53,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // classes already provide this
 {
 
+    public static final int COLOR_NONE = 0;
+    public static final int COLOR_HANDLE = 1;
+    public static final int COLOR_CURVE = 2;
+    public static final int COLOR_SELECTED = 4;
+    public static final int SIZE_SELECTED = 5;
+    public static final int SIZE_DOT = 0;
+    public static final int SIZE_MEDIUM_CROSS = 3;
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
@@ -71,13 +75,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     static final String DESCRIPTION = "Draw smooth, connected curves with C1 continuity.";
     //update path
     public static int PATH_ID = 1;
-    public static final int COLOR_NONE = 0;
-    public static final int COLOR_HANDLE = 1;
-    public static final int COLOR_CURVE = 2;
-    public static final int COLOR_SELECTED = 4;
-    public static final int SIZE_SELECTED = 5;
-    public static final int SIZE_DOT = 0;
-    public static final int SIZE_MEDIUM_CROSS = 3;
     private final EditPathOptions options = new EditPathOptions();
     EditPathOptionsPanel eOptionsPanel;
     private int selectedPointIdx;
@@ -106,6 +103,20 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
         int[] curveIdcs = path.handleToCurveIdx();
         return interpolateHandles(radii, curveIdcs);
+    }
+
+    /**
+     * draws this path onto the map
+     *
+     * @param path
+     */
+    static void DrawPathLayer(Path path, PaintDimension dim) {
+        Path clone = path.clone();
+        //nothing
+        if (path.type == PointInterpreter.PointType.RIVER_2D) {
+            DrawRiverPath(path, dim);
+        }
+        assert clone.equals(path) : "something mutated the path";
     }
 
     float[] getSelectedPoint() {
@@ -155,13 +166,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         final Path path = getSelectedPath();
         EditPathOperation.PATH_ID = getSelectedPathId();
 
-        /*System.out.println("coord=" + centreX + "," + centreY);
-        System.out.println("alt=" + isAltDown());
-        System.out.println("shift=" + isShiftDown());
-        System.out.println("ctrl=" + isCtrlDown());
-        System.out.println("---------"); */
-
         float[] userClickedCoord = RiverHandleInformation.riverInformation(centreX, centreY);
+
+        assert getSelectedPoint() != null;
 
         if (getSelectedPoint() == null) {
             overwriteSelectedPath(path.addPoint(userClickedCoord));
@@ -276,20 +283,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         }
     }
 
-    /**
-     * draws this path onto the map
-     *
-     * @param path
-     */
-    static void DrawPathLayer(Path path, PaintDimension dim) {
-        Path clone = path.clone();
-        //nothing
-        if (path.type == PointInterpreter.PointType.RIVER_2D) {
-            DrawRiverPath(path, dim);
-        }
-        assert clone.equals(path): "something mutated the path";
-    }
-
     @Override
     public Brush getBrush() {
         return brush;
@@ -356,8 +349,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             JButton button = new JButton("Add empty path");
             // Add an ActionListener to handle button clicks
             button.addActionListener(e -> {
-                editPathOptions.selectedPathId = PathManager.instance.addPath(getSelectedPath().newEmpty());
-                setSelectedPointIdx(-1);
+                editPathOptions.selectedPathId =
+                        PathManager.instance.addPath(getSelectedPath().newEmpty().addPoint(riverInformation(0, 0)));
+                setSelectedPointIdx(0);
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
             });

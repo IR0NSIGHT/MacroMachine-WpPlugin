@@ -35,6 +35,11 @@ public class RiverHandleInformation {
         return new float[]{x, y, riverRadius, riverDepth, beachRadius, transitionRadius};
     }
 
+    /**
+     * @param x
+     * @param y
+     * @return a handle with given position and the rest of meta values set to INHERIT
+     */
     public static float[] riverInformation(int x, int y) {
         return new float[]{x, y, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE};
     }

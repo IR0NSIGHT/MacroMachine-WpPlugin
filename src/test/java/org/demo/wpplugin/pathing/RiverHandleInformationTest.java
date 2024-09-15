@@ -27,6 +27,10 @@ class RiverHandleInformationTest {
             assertEquals(INHERIT_VALUE, getValue(handle,RIVER_RADIUS));
         }
 
+        p = p.setHandleByIdx(setValue(p.handleByIndex(0),RIVER_RADIUS, 15), 0);
+        p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles()-1),RIVER_RADIUS, 15), p.amountHandles()-1);
+
+
         PaintDimension dim = new PaintDimension() {
             @Override
             public int getValue(int x, int y) {
