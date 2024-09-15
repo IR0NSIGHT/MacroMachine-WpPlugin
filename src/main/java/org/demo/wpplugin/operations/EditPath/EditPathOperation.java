@@ -207,6 +207,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             //add new point after selected
             overwriteSelectedPath(path.insertPointAfter(getSelectedPoint(), userClickedCoord));
             setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
+            System.out.println("add point after selected: " + Arrays.toString(getSelectedPoint() ));
         }
 
 
@@ -216,7 +217,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull setting " +
                 "path in manager";
 
+        System.out.println("selectedPoint" + Arrays.toString(getSelectedPoint()));
         redrawSelectedPathLayer();
+        System.out.println("selectedPoint" + Arrays.toString(getSelectedPoint()));
+
         if (this.eOptionsPanel != null)
             this.eOptionsPanel.onOptionsReconfigured();
     }
@@ -250,7 +254,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
         try {
             //redraw new
-            DrawPathLayer(getSelectedPath(), false);
+            DrawPathLayer(getSelectedPath().clone(), false);
             if (getSelectedPoint() != null)
                 PointUtils.markPoint(getPoint2D(getSelectedPoint()), PathPreviewLayer.INSTANCE, COLOR_SELECTED,
                         SIZE_SELECTED, getDimension());
@@ -258,7 +262,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             System.err.println(ex.getMessage());
         } finally {
             this.getDimension().setEventsInhibited(false);
-
         }
 
     }

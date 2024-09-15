@@ -1,6 +1,8 @@
 package org.demo.wpplugin.operations.River;
 
 import org.demo.wpplugin.operations.OptionsLabel;
+import org.demo.wpplugin.pathing.PointInterpreter;
+import org.demo.wpplugin.pathing.PointUtils;
 
 import javax.swing.*;
 import java.util.function.Consumer;
@@ -29,6 +31,19 @@ public class RiverHandleInformation {
         return new float[]{x, y, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE};
     }
 
+    public static boolean validateRiver2D(float[] handle) {
+        if (handle.length != PointInterpreter.PointType.RIVER_2D.size) {
+            return false;
+        }
+        for (RiverInformation information : RiverInformation.values()) {
+            float value = getValue(handle, information);
+            if (value != INHERIT_VALUE && (value < information.min || value > information.max)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public static OptionsLabel[] Editor(float[] point, Consumer<float[]> onSubmitCallback, Runnable onChanged) {
         OptionsLabel[] options = new OptionsLabel[RiverInformation.values().length];
         int i = 0;
@@ -48,14 +63,18 @@ public class RiverHandleInformation {
     }
 
     public enum RiverInformation {
-        RIVER_RADIUS(0,"river radius", "radius of the river "),
-        RIVER_DEPTH(1, "river depth", "depth of the river "),
-        BEACH_RADIUS(2, "beach radius", "radius of the beach "),
-        TRANSITION_RADIUS(3,"transition radius", "radius of the transition blending with original terrain "),;
+        RIVER_RADIUS(0,"river radius", "radius of the river ",0,50),
+        RIVER_DEPTH(1, "river depth", "depth of the river ",0,20),
+        BEACH_RADIUS(2, "beach radius", "radius of the beach ",0,20),
+        TRANSITION_RADIUS(3,"transition radius", "radius of the transition blending with original terrain ",0,50),;
         public final int idx;
         public final String displayName;
         public final String toolTip;
-        RiverInformation(int idx, String displayName, String toolTip) {
+        public final float min;
+        public final float max;
+        RiverInformation(int idx, String displayName, String toolTip, float min, float max) {
+            this.min = min;
+            this.max = max;
             this.displayName = displayName;
             this.toolTip = toolTip;
             this.idx = idx;

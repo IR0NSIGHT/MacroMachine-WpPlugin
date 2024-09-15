@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.INHERIT_VALUE;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.validateRiver2D;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.calcuateCubicBezier;
 import static org.demo.wpplugin.pathing.PointUtils.*;
 
@@ -22,7 +23,9 @@ public class Path implements Iterable<float[]> {
 
     public Path(List<float[]> handles, PointInterpreter.PointType type) {
         this.handles = new ArrayList<>(handles.size());
-        this.handles.addAll(handles);
+        for (float[] handle : handles) {
+            this.handles.add(handle.clone());
+        }
         this.type = type;
     }
 
@@ -152,8 +155,14 @@ public class Path implements Iterable<float[]> {
                         " but got " + Arrays.toString(handle));
                 okay = false;
             }
+            if (type == PointInterpreter.PointType.RIVER_2D && !validateRiver2D(handle))
+                okay = false;
         }
         return okay;
+    }
+
+    public Path clone() {
+        return new Path(this.handles, this.type);
     }
 
     public Path addPoint(float[] point) {
@@ -169,7 +178,8 @@ public class Path implements Iterable<float[]> {
 
     public Path removePoint(float[] point) {
         Path sum = new Path(this.handles, this.type);
-        sum.handles.remove(point);
+        int idx = sum.indexOfPosition(point);
+        sum.handles.remove(idx);
         assert invariant();
         return sum;
     }
