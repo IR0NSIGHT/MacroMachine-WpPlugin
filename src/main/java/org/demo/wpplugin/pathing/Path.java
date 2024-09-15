@@ -2,12 +2,14 @@ package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 
+import java.awt.*;
+import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.INHERIT_VALUE;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.calcuateCubicBezier;
-import static org.demo.wpplugin.pathing.PointUtils.arePositionalsEqual;
-import static org.demo.wpplugin.pathing.PointUtils.getPositionalDistance;
+import static org.demo.wpplugin.pathing.PointUtils.*;
 
 public class Path implements Iterable<float[]> {
     public final PointInterpreter.PointType type;
@@ -24,16 +26,15 @@ public class Path implements Iterable<float[]> {
         this.type = type;
     }
 
-    public static boolean curveIsContinous(List<float[]> curve) {
-        float[] previous = null;
-        float root2 = (float)Math.sqrt(2) + 0.001f; //allow delta
-        for (float[] p : curve) {
+    public static boolean curveIsContinous(ArrayList<float[]> curve) {
+        Point previous = null;
+        float root2 = (float) Math.sqrt(2) + 0.001f; //allow delta
+        for (Point p : point2DfromNVectorArr(curve)) {
             if (previous != null) {
-                float dist = getPositionalDistance(p, previous,
-                        RiverHandleInformation.PositionSize.SIZE_2_D.value);
-                if (arePositionalsEqual(p,previous,RiverHandleInformation.PositionSize.SIZE_2_D.value))
+                float dist = (float) p.distance(previous);
+                if (p.equals(previous))
                     return false; //point has clone
-                if (dist >= root2){
+                if (dist >= root2) {
                     return false; //point is not connected
                 }
             }
@@ -43,18 +44,31 @@ public class Path implements Iterable<float[]> {
     }
 
     public static float[] interpolateHandles(float[] handles, int[] curveIdxByHandle) {
+        if (handles.length < 4) {
+            return handles;
+        }
         float[] outHandles = handles.clone();
+
+        //manually: copy values of first and last handle to second and second last, to allow inteprolation along comelte curve
+        if (handles[0] != INHERIT_VALUE && handles[1] == INHERIT_VALUE) {
+            handles[1] = handles[0];
+        }
+
+        if (handles[handles.length-1] != INHERIT_VALUE && handles[handles.length-2] == INHERIT_VALUE) {
+            handles[handles.length-2] = handles[handles.length-1];
+        }
+
         //collect a map of all handles that are NOT interpolated and carry values
         int amountHandlesWithValues = 0;
         for (int i = 0; i < handles.length; i++)
-            if (handles[i] != RiverHandleInformation.INHERIT_VALUE)
+            if (handles[i] != INHERIT_VALUE)
                 amountHandlesWithValues++;
 
         int[] setValueIdcs = new int[amountHandlesWithValues];
         {
             int setValueIdx = 0;
             for (int i = 0; i < handles.length; i++)
-                if (handles[i] != RiverHandleInformation.INHERIT_VALUE)
+                if (handles[i] != INHERIT_VALUE)
                     setValueIdcs[setValueIdx++] = i;
         }
 
@@ -113,13 +127,15 @@ public class Path implements Iterable<float[]> {
         ArrayList<float[]> result = new ArrayList<>(curvePoints.size());
         float[] previousPoint = curvePoints.get(0);
         result.add(previousPoint);
-        for (float[] point: curvePoints) {
+        for (float[] point : curvePoints) {
             assert point != null : "whats going on?";
             if (arePositionalsEqual(point, previousPoint, positionDigits)) {
                 continue;
             } else {
                 previousPoint = point;
                 result.add(previousPoint);
+                assert getPositionalDistance(point, previousPoint,
+                        RiverHandleInformation.PositionSize.SIZE_2_D.value) <= Math.sqrt(2) + 0.01f;
             }
         }
         result.trimToSize();
@@ -245,7 +261,7 @@ public class Path implements Iterable<float[]> {
             for (int i = 0; i < handles.size(); i++) {
                 informationArr[i] = handles.get(i)[n];
             }
-            informationArr = interpolateHandles(informationArr, handleToCurveIdx );
+            informationArr = interpolateHandles(informationArr, handleToCurveIdx);
             for (int i = 0; i < handles.size(); i++) {
                 handles.get(i)[n] = informationArr[i];
             }
