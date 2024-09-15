@@ -60,7 +60,7 @@ public class PathGeometryHelper implements BoundingBox {
             parentage.put(point, new LinkedList<>());
         }
 
-        Collection<Point> allNearby = allPointsInsideChildBbxs();
+        Collection<Point> allNearby = allNearbyPoints();
 
         assert new HashSet<>(allNearby).containsAll(curve) : "some curvepoints are missing";
 
@@ -78,7 +78,7 @@ public class PathGeometryHelper implements BoundingBox {
         return parentage;
     }
 
-    Collection<Point> allPointsInsideChildBbxs() {
+    Collection<Point> allNearbyPoints() {
         //iterate all points for all bounding boxes
         HashSet<Point> allNearby = new HashSet<>(curve);
         int[] factors = {1, -1};
@@ -95,11 +95,11 @@ public class PathGeometryHelper implements BoundingBox {
     }
 
     private void expandX(Point base, int radius, int f, HashSet<Point> allNearby, boolean onY) {
-        for (int i = 1; i < radius; i++) {
+        for (int i = 1; i <= radius; i++) {
             Point nearby = onY ? new Point(base.x, base.y + i * f) : new Point(base.x + i * f, base.y);
-            if (allNearby.contains(nearby)) {
-                return;
-            }
+        //    if (allNearby.contains(nearby)) {
+        //        return;
+        //    }
             allNearby.add(nearby);
         }
     }
@@ -143,6 +143,6 @@ public class PathGeometryHelper implements BoundingBox {
 
     @Override
     public Iterator<Point> areaIterator() {
-        return allPointsInsideChildBbxs().iterator();
+        return allNearbyPoints().iterator();
     }
 }

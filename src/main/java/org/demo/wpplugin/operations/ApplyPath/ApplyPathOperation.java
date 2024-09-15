@@ -2,6 +2,7 @@ package org.demo.wpplugin.operations.ApplyPath;
 
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.Smoother;
+import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
@@ -114,12 +115,15 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
         float[] maxHandleValues = getMaxValues(path, path.type.size);
 
-        PathGeometryHelper helper = new PathGeometryHelper(path, curve,
-                getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS) + getValue(maxHandleValues, TRANSITION_RADIUS));
+        double totalSearchRadius =
+                getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS) + getValue(maxHandleValues, TRANSITION_RADIUS);
+        PathGeometryHelper helper = new PathGeometryHelper(path, curve, totalSearchRadius);
         HashMap<Point, Collection<Point>> parentage = helper.getParentage();
 
         LinkedList<Point> transitionPoints = new LinkedList<>();
         HashMap<Point, Float> transitionPointDistances = new HashMap<>();
+        HashMap<Point, Float> applyStrengthMap = new HashMap<>();
+
         for (int curveIdx = 0; curveIdx < curve.size(); curveIdx++) {
             float[] curvePointF = curve.get(curveIdx);
             Point curvePoint = getPoint2D(curvePointF);
@@ -127,23 +131,26 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
             float randomFluxAtIdx = randomEdge[(int) ((curveIdx) / fluctuationSpeed)];
             double riverRadius = getValue(curvePointF, RIVER_RADIUS) * (1 + randomFluxAtIdx * randomPercent);
-            double riverRadiusSq = riverRadius * riverRadius;
+            double riverRadiusSq = riverRadius;
 
             double beachRadius = getValue(curvePointF, BEACH_RADIUS);
-            double beachRadiusSq = beachRadius * beachRadius
-                    ;
+            double beachRadiusSq = beachRadius;
             double transitionRadius = getValue(curvePointF, TRANSITION_RADIUS);
-            double transitionRadiusSq = transitionRadius * transitionRadius;
+            double transitionRadiusSq = transitionRadius ;
 
             float beachHeight = 62; //base height of the river. riverDepth = 1 <=> beachHeight-1
 
+
             for (Point point : nearby) {
-                double distSq = point.distanceSq(curvePoint);
+                double distSq = point.distance(curvePoint);
                 if (distSq < riverRadiusSq) {
-                    dimension.setHeight(point.x, point.y, beachHeight - getValue(curvePointF, RIVER_DEPTH));
+                    //    dimension.setHeight(point.x, point.y, beachHeight - getValue(curvePointF, RIVER_DEPTH));
+                    applyStrengthMap.put(point, 16f);
                 } else if (distSq - riverRadiusSq <= beachRadiusSq) {
-                    dimension.setHeight(point.x, point.y, beachHeight);
+                    //    dimension.setHeight(point.x, point.y, beachHeight);
+                    applyStrengthMap.put(point, 16f);
                 } else if (distSq - riverRadiusSq - beachRadiusSq <= transitionRadiusSq) {
+                    applyStrengthMap.put(point, 16f);
 
                     //its part of the transition
                     float interpolatedValue = modifyValue(
@@ -169,31 +176,25 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             }
         }
 
-        HashMap<Point, Float> setZValues = new HashMap<>();
         HeightDimension dim = new HeightDimension() {
             @Override
             public float getHeight(int x, int y) {
-                return setZValues.getOrDefault(new Point(x, y), dimension.getHeight(x, y));
+                return applyStrengthMap.getOrDefault(new Point(x, y), 1f);
             }
 
             @Override
             public void setHeight(int x, int y, float z) {
-                setZValues.put(new Point(x, y), z);
+                applyStrengthMap.put(new Point(x, y), z);
             }
         };
 
-        Smoother smoother = new Smoother(transitionPoints, 3, dim);
+        Smoother smoother = new Smoother(applyStrengthMap.keySet(), (int) (getValue(maxHandleValues,
+                TRANSITION_RADIUS)), dim);
         smoother.smoothGauss();
 
-        for (Point p : setZValues.keySet()) {
-            float interpolatedValue = modifyValue(
-                    transitionPointDistances.get(p),
-                    0f,
-                    1f,
-                    dim.getHeight(p.x, p.y),
-                    dimension.getHeight(p.x, p.y)
-            );  //interpolate between original terrain height and outermost
-            dimension.setHeight(p.x, p.y, interpolatedValue);
+        for (Point p : applyStrengthMap.keySet()) {
+            float strength = dim.getHeight(p.x, p.y);
+            dimension.setHeight(p.x, p.y, strength);
         }
     }
 
@@ -274,7 +275,8 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
                 @Override
                 public void setHeight(int x, int y, float z) {
-                    getDimension().setHeightAt(x, y, z);
+                    //getDimension().setHeightAt(x, y, z);
+                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, ((int) z) % 16);
                 }
             };
             applyRiverPath(path, options, dim);

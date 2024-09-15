@@ -263,13 +263,11 @@ public class Path implements Iterable<float[]> {
     }
 
     public ArrayList<float[]> continousCurve() {
-        Path clone = this.clone();
         ArrayList<float[]> handles = new ArrayList<>(this.handles.size());
         for (float[] handle : this.handles)
             handles.add(handle.clone());
 
         int[] handleToCurveIdx = this.handleToCurveIdx();
-        assert clone.equals(this);
         //fill handles that are marked as "to be interpolated"
         for (int n = 2; n < this.type.size; n++) {
             float[] informationArr = new float[handles.size()];
@@ -281,7 +279,6 @@ public class Path implements Iterable<float[]> {
                 handles.get(i)[n] = informationArr[i];
             }
         }
-        assert clone.equals(this);
         return continousCurveFromHandles(handles);
     }
 
