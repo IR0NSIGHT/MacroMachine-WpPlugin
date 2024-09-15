@@ -263,7 +263,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         } finally {
             this.getDimension().setEventsInhibited(false);
         }
-
     }
 
     /**
@@ -272,6 +271,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
      * @param path
      */
     void DrawPathLayer(Path path, boolean erase) {
+        Path clone = path.clone();
         PathPreviewLayer layer = PathPreviewLayer.INSTANCE;
 
         for (float[] p : path.continousCurve()) {
@@ -285,6 +285,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
         if (path.type == PointInterpreter.PointType.RIVER_2D) {
             float[] radii = interpolateRadii(path);
+
             for (int i = 0; i < path.amountHandles(); i++) {
                 float[] point = path.handleByIndex(i);
                 float thisRadius = radii[i];
@@ -292,7 +293,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                         PathPreviewLayer.INSTANCE,
                         getValue(point, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
             }
+
         }
+        assert clone.equals(path.clone()): "something mutated the path";
     }
 
     @Override

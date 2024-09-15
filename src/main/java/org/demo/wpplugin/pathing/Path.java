@@ -329,4 +329,38 @@ public class Path implements Iterable<float[]> {
         assert invariant();
         return closest;
     }
+
+    public String handlesToString() {
+        StringBuilder sb = new StringBuilder("handles:[");
+        for (float[] handle : handles) {
+            sb.append("\n").append(Arrays.toString(handle));
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        return "Path{\n"+
+                "type"+type+"\n"+
+                "handles"+handlesToString()+"\n}";
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Path) {
+            if (this.type != ((Path) obj).type)
+                return false;
+            for (int i = 0; i < handles.size(); i++) {
+                float[] own = handleByIndex(i);
+                float[] theirs = ((Path) obj).handleByIndex(i);
+                for (int n = 0; n < own.length; n++) {
+                    if (own[n] != theirs[n])
+                        return false;
+                }
+            }
+            return true;
+        } else
+            return false;
+    }
 }
