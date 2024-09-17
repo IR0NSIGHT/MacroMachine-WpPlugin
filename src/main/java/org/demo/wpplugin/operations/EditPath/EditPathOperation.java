@@ -110,11 +110,11 @@ public class EditPathOperation extends MouseOrTabletOperation implements
      *
      * @param path
      */
-    static void DrawPathLayer(Path path, PaintDimension dim) throws IllegalAccessException {
+    static void DrawPathLayer(Path path, PaintDimension dim, int selectedPointIdx) throws IllegalAccessException {
         Path clone = path.clone();
         //nothing
         if (path.type == PointInterpreter.PointType.RIVER_2D) {
-            DrawRiverPath(path, dim);
+            DrawRiverPath(path, dim, selectedPointIdx);
         }
         assert clone.equals(path) : "something mutated the path";
     }
@@ -272,7 +272,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         };
         try {
             //redraw new
-            DrawPathLayer(getSelectedPath().clone(), dim);
+            DrawPathLayer(getSelectedPath().clone(), dim, getSelectedPath().indexOfPosition(getSelectedPoint()));
             if (getSelectedPoint() != null)
                 PointUtils.markPoint(getPoint2D(getSelectedPoint()), COLOR_SELECTED,
                         SIZE_SELECTED, dim);

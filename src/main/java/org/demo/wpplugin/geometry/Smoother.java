@@ -61,7 +61,7 @@ public class Smoother {
     }
 
     public void smoothGauss() {
-        float[] kernel = generateGaussianCurve(2*radius+1,10,radius,radius/2f);
+        float[] kernel = radius <= 0 ? new float[]{1} : generateGaussianCurve(2*radius+1,10,radius,radius/2f);
         float sum = 0;
 
         for (int i = 0; i < kernel.length; i++) {

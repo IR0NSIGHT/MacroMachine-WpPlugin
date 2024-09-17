@@ -1,5 +1,7 @@
 package org.demo.wpplugin.pathing;
 
+import java.util.Arrays;
+
 public class CubicBezierSpline {
     /**
      * calculate a cubic bezier curve connection start and endpoint with 2 control handles.
@@ -68,6 +70,9 @@ public class CubicBezierSpline {
             float[] nThPositionCurve = calculateCubicBezier(B[n], handle1p[n], handle2P[n], C[n], pointsInCurve);
             for (int i = 0; i < pointsInCurve; i++) {
                 path[i][n] = nThPositionCurve[i];
+                if (Float.isNaN(nThPositionCurve[i]))
+                    System.out.println("NaN");
+                assert !Float.isNaN(nThPositionCurve[i]): "position is Nan: " + Arrays.toString(path[i]);
             }
         }
 
@@ -93,6 +98,8 @@ public class CubicBezierSpline {
         //normalize and scale positions based on distance, so the catmull rom spline doesnt act crazy
         //equal to handle.normalize.scale(distance/2)
         float length = PointUtils.getPositionalLength(out, positionDigits);
+        if (length == 0)
+            length = distance;
         for (int i = 0; i < positionDigits; i++) {
             out[i] = out[i] / length * distance / 2f;
         }

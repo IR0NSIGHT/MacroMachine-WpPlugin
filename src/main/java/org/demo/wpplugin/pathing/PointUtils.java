@@ -3,10 +3,10 @@ package org.demo.wpplugin.pathing;
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
-import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class PointUtils {
@@ -73,17 +73,11 @@ public class PointUtils {
         return bbxs;
     }
 
-    public static void drawCircle(Point center, float radius, PaintDimension dimension, Layer layer, boolean dotted) {
-        int radiusI = Math.round(radius);
-        for (int x = -radiusI; x <= radiusI; x++) {
-            for (int y = -radiusI; y <= radiusI; y++) {
-                if (dotted && (x + y) % 2 == 0)
-                    continue;
-                Point p = new Point(center.x + x, center.y + y);
-                if (center.distance(p) <= radius && center.distance(p) >= radiusI - 1) {
-                    dimension.setValue(p.x, p.y, 15);
-                }
-            }
+    public static void drawCircle(Point center, float radius, PaintDimension dimension, boolean dotted) {
+        for (int theta = 0; theta < 360; theta += 10) {
+            int x = (int) Math.round(radius * Math.cos(theta));
+            int y = (int) Math.round(radius * Math.sin(theta));
+            dimension.setValue(center.x + x, center.y + y, 15);
         }
     }
 
@@ -123,6 +117,8 @@ public class PointUtils {
     }
 
     public static float getPositionalDistance(float[] pointA, float[] pointB, int positionDigits) {
+        assert pointA != null;
+        assert pointB != null;
         //euclidian distance of B and C positions
         float dist = 0;
         for (int i = 0; i < positionDigits; i++) {
@@ -130,6 +126,7 @@ public class PointUtils {
             dist += distI * distI;
         }
         dist = (float) Math.sqrt(dist);
+        assert !Float.isNaN(dist) : "distance between " + Arrays.toString(pointA) + " and " + Arrays.toString(pointB);
         return dist;
     }
 

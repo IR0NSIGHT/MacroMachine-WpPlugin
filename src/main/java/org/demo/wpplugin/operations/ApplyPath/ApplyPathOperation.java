@@ -1,6 +1,7 @@
 package org.demo.wpplugin.operations.ApplyPath;
 
 import org.demo.wpplugin.geometry.HeightDimension;
+import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.geometry.Smoother;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
@@ -15,8 +16,13 @@ import org.pepsoft.worldpainter.painting.Paint;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Random;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
@@ -81,8 +87,8 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         float randomWidth = 0;
         for (int i = 0; i < randomEdge.length; i++) {
             randomWidth += ((rand.nextBoolean() ? 1f : -1f) * rand.nextFloat() * 0.3f);
-            randomWidth = Math.max(randomWidth, -1);
-            randomWidth = Math.min(randomWidth, 1);
+            randomWidth = max(randomWidth, -1);
+            randomWidth = min(randomWidth, 1);
             randomEdge[i] = randomWidth;
         }
         return randomEdge;
@@ -99,19 +105,20 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         float[] maxHandleValues = new float[handleSize];
         for (float[] handle : handles) {
             for (int n = RiverHandleInformation.PositionSize.SIZE_2_D.value; n < handle.length; n++) {
-                maxHandleValues[n] = Math.max(maxHandleValues[n], handle[n]);
+                maxHandleValues[n] = max(maxHandleValues[n], handle[n]);
             }
         }
         return maxHandleValues;
     }
 
-    public static void applyRiverPath(Path path, ApplyPathOptions options, HeightDimension dimension) {
+    public static void applyRiverPath(Path path, ApplyPathOptions options, HeightDimension dimension,
+                                      PaintDimension paintDimension) {
         ArrayList<float[]> curve = path.continousCurve();
         float randomPercent = (float) options.getRandomFluctuate() / 100f;
         float[] randomEdge = randomEdge(curve.size());
 
         double fluctuationSpeed = options.getFluctuationSpeed();
-        fluctuationSpeed = Math.max(1, fluctuationSpeed);    //no divide by zero
+        fluctuationSpeed = max(1, fluctuationSpeed);    //no divide by zero
 
         float[] maxHandleValues = getMaxValues(path, path.type.size);
 
@@ -120,8 +127,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         PathGeometryHelper helper = new PathGeometryHelper(path, curve, totalSearchRadius);
         HashMap<Point, Collection<Point>> parentage = helper.getParentage();
 
-        LinkedList<Point> transitionPoints = new LinkedList<>();
-        HashMap<Point, Float> transitionPointDistances = new HashMap<>();
+        HashMap<Point, Float> finalHeightmap = new HashMap<>();
         HashMap<Point, Float> applyStrengthMap = new HashMap<>();
 
         for (int curveIdx = 0; curveIdx < curve.size(); curveIdx++) {
@@ -132,36 +138,30 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             float randomFluxAtIdx = randomEdge[(int) ((curveIdx) / fluctuationSpeed)];
             double riverRadius = getValue(curvePointF, RIVER_RADIUS) * (1 + randomFluxAtIdx * randomPercent);
             double beachRadius = getValue(curvePointF, BEACH_RADIUS);
-            double transitionRadius = getValue(curvePointF, TRANSITION_RADIUS);
+            double transitionRadius = getValue(maxHandleValues, TRANSITION_RADIUS); //FIXME has to be fixed at max
+            // Transition, becuase the gauss smoother can only do one value
 
             float beachHeight = 62; //base height of the river. riverDepth = 1 <=> beachHeight-1
 
-
+            //FIXME: parentage is problematic: clostest point doenst guarentee to be the right parent on rivers that
+            // grow fast and are very curvy
+            // -> point in the transition layer chose the wrong parent. instead we need to test for the closest point
+            // on outermost beach layer!
             for (Point point : nearby) {
                 double distSq = point.distance(curvePoint);
                 if (distSq < riverRadius) {
-                    //    dimension.setHeight(point.x, point.y, beachHeight - getValue(curvePointF, RIVER_DEPTH));
-                    applyStrengthMap.put(point, 15f);
+                    applyStrengthMap.put(point, 1f);
+                    finalHeightmap.put(point, beachHeight - getValue(curvePointF, RIVER_DEPTH));
                 } else if (distSq - riverRadius <= beachRadius) {
-                    //    dimension.setHeight(point.x, point.y, beachHeight);
-                    applyStrengthMap.put(point, 15f);
+                    finalHeightmap.put(point, beachHeight);
+                    applyStrengthMap.put(point, 0.5f);
                 } else if (distSq - riverRadius - beachRadius <= transitionRadius) {
                     if (distSq - riverRadius - beachRadius <= transitionRadius / 2f)
-                        applyStrengthMap.put(point, 15f);
+                        applyStrengthMap.put(point, 0.25f);
                     else
-                        applyStrengthMap.put(point, 0f);
+                        applyStrengthMap.put(point, 0.1f);
                     //its part of the transition
                     float interpolatedValue = modifyValue(
-                            (float) point.distance(curvePoint),
-                            (float) riverRadius,
-                            (float) (riverRadius + beachRadius + transitionRadius),
-                            0,
-                            1f
-                    );  //interpolate between original terrain height and outermost
-                    transitionPointDistances.put(point, Math.min(1, Math.max(1, interpolatedValue)));
-                    transitionPoints.add(point);
-
-                    interpolatedValue = modifyValue(
                             (float) point.distance(curvePoint),
                             (float) riverRadius,
                             (float) (riverRadius + beachRadius + transitionRadius),
@@ -174,7 +174,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             }
         }
 
-        HeightDimension dim = new HeightDimension() {
+        HeightDimension applyStrengthMask = new HeightDimension() {
             @Override
             public float getHeight(int x, int y) {
                 return applyStrengthMap.getOrDefault(new Point(x, y), 0f);
@@ -187,13 +187,68 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         };
         float maxTransition = (getValue(maxHandleValues,
                 TRANSITION_RADIUS));
-        Smoother smoother = new Smoother(applyStrengthMap.keySet(), (int) (maxTransition/2f), dim);
-        smoother.smoothGauss();
+        Smoother smoother = new Smoother(applyStrengthMap.keySet(), (int) (maxTransition / 2f * 0.9f),
+                applyStrengthMask);
+        //    smoother.smoothGauss();
+        int offset = 10;
+        for (int i = offset; i < curve.size() - offset; i++) {
+            float[] curvePoint = curve.get(i);
+            float radius = getValue(curvePoint, RIVER_RADIUS);
+            Point curvePointP = getPoint2D(curvePoint);
+            Point previous = getPoint2D(curve.get(i - offset));
+            Point next = getPoint2D(curve.get(i + offset));
+            int tangentX = next.x - previous.x;
+            int tangentY = next.y - previous.y;
+            double tangentAngle = angleOf(tangentX, tangentY);
+
+                int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
+                int y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(90)));
+                int color = ((int) Math.abs(Math.toDegrees(tangentAngle))) % 15 + 1;
+                paintDimension.setValue(curvePointP.x + x, curvePointP.y + y, color);
+                paintDimension.setValue(curvePointP.x, curvePointP.y, color);
+
+                x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(-90)));
+                y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(-90)));
+                paintDimension.setValue(curvePointP.x + x, curvePointP.y + y, color);
+
+                //    x = (int) Math.round(radius * Math.cos(thetaFrom +Math.toRadians(-90)));
+                //    y = (int) Math.round(radius * Math.sin(thetaFrom +Math.toRadians(-90)));
+                //    paintDimension.setValue(curvePointP.x+x, curvePointP.y+y, 15);
+         /*
+            for (float theta = 0; theta < 2 * Math.PI; theta += 0.1f) {
+                int x = (int) Math.round(radius * Math.cos(theta));
+                int y = (int) Math.round(radius * Math.sin(theta));
+                Point thisP = new Point(curvePointP.x + x, curvePointP.y + y);
+                double dist = thisP.distanceSq(curvePointP);
+                boolean draw = true;
+                for (int j = 1; j < 10; j++)
+                    if (dist > thisP.distanceSq(getPoint2D(curve.get(i + j))) || dist > thisP.distanceSq(getPoint2D
+                    (curve.get(i - j)))) {
+                        draw = false;
+                        break;
+                    }
+                if (draw)
+                    paintDimension.setValue(thisP.x, thisP.y, 15);
+            }
+
+          */
+        }
+        //a²+b²=c², a=1,b=radius,c=MindistNeigh
 
         for (Point p : applyStrengthMap.keySet()) {
-            float strength = dim.getHeight(p.x, p.y);
-            dimension.setHeight(p.x, p.y, strength);
+
+            float strength = applyStrengthMask.getHeight(p.x, p.y);
+            //TODO
+            //    paintDimension.setValue(p.x, p.y, (int) (strength * 14f + 1f));
+            dimension.setHeight(p.x, p.y,
+                    dimension.getHeight(p.x, p.y) * (1 - strength) + finalHeightmap.getOrDefault(p, 62f) * strength);
+            //    float color = strength < .05 ? 1 : 2;
+            //    dimension.setHeight(p.x,p.y,color);
         }
+    }
+
+    public static double angleOf(int x, int y) {
+        return Math.atan(1f * y / x);
     }
 
     /**
@@ -273,11 +328,22 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
 
                 @Override
                 public void setHeight(int x, int y, float z) {
-                    //getDimension().setHeightAt(x, y, z);
-                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, ((int) z) % 16);
+                    getDimension().setHeightAt(x, y, z);
+                    //    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, ((int) z) % 16);
                 }
             };
-            applyRiverPath(path, options, dim);
+            PaintDimension paint = new PaintDimension() {
+                @Override
+                public int getValue(int x, int y) {
+                    return getDimension().getLayerValueAt(PathPreviewLayer.INSTANCE, x, y);
+                }
+
+                @Override
+                public void setValue(int x, int y, int v) {
+                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, v);
+                }
+            };
+            applyRiverPath(path, options, dim, paint);
         } catch (Exception ex) {
             System.err.println(ex);
         } finally {

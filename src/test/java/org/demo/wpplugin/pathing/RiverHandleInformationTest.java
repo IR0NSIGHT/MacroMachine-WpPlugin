@@ -1,7 +1,6 @@
 package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.geometry.PaintDimension;
-import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -44,7 +43,7 @@ class RiverHandleInformationTest {
         };
         Path clone = p.clone();
         try {
-            DrawRiverPath(p, dim);
+            DrawRiverPath(p, dim,-1);
         } catch (IllegalAccessException ignored) {
         }
         for (float[] handle : handles) {

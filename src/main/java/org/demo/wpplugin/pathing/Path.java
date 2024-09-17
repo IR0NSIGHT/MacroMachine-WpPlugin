@@ -138,7 +138,8 @@ public class Path implements Iterable<float[]> {
                 previousPoint = point;
                 result.add(previousPoint);
                 assert getPositionalDistance(point, previousPoint,
-                        RiverHandleInformation.PositionSize.SIZE_2_D.value) <= Math.sqrt(2) + 0.01f;
+                        RiverHandleInformation.PositionSize.SIZE_2_D.value) <= Math.sqrt(2) + 0.01f: "distance between curvepoints is to large:"+getPositionalDistance(point, previousPoint,
+                        RiverHandleInformation.PositionSize.SIZE_2_D.value);
             }
         }
         result.trimToSize();
@@ -149,6 +150,11 @@ public class Path implements Iterable<float[]> {
     private boolean invariant() {
         boolean okay = true;
         for (float[] handle : handles) {
+            for (int n = 0; n < type.size; n++) {
+                if (Float.isNaN(handle[n]))
+                    return false;
+            }
+
             if (handle.length != type.size) {
                 System.err.println("path has a handle with wrong size for type " + type +
                         " expected " + type.size +
