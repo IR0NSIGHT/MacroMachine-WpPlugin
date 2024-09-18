@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.function.Function;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -130,6 +131,14 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         HashMap<Point, Float> finalHeightmap = new HashMap<>();
         HashMap<Point, Float> applyStrengthMap = new HashMap<>();
 
+        Function<float[], Float> riverDepthByDistance = (depthAndDist) -> {
+            float depth = depthAndDist[0];
+            float dist = depthAndDist[1];
+            float maxDist = depthAndDist[2];
+            float x = 2 * dist / maxDist;
+            return (x * x) - depth;
+        };
+
         for (int curveIdx = 0; curveIdx < curve.size(); curveIdx++) {
             float[] curvePointF = curve.get(curveIdx);
             Point curvePoint = getPoint2D(curvePointF);
@@ -148,18 +157,20 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             // -> point in the transition layer chose the wrong parent. instead we need to test for the closest point
             // on outermost beach layer!
             for (Point point : nearby) {
-                double distSq = point.distance(curvePoint);
-                if (distSq < riverRadius) {
+                double distance = point.distance(curvePoint);
+                if (distance < riverRadius) {
                     applyStrengthMap.put(point, 1f);
-                    finalHeightmap.put(point, beachHeight - getValue(curvePointF, RIVER_DEPTH));
-                } else if (distSq - riverRadius <= beachRadius) {
+                    finalHeightmap.put(point,
+                            beachHeight + riverDepthByDistance.apply(new float[]{getValue(curvePointF, RIVER_DEPTH),
+                                    (float) distance, (float) riverRadius}));
+                } else if (distance - riverRadius <= beachRadius) {
                     finalHeightmap.put(point, beachHeight);
-                    applyStrengthMap.put(point, 0.5f);
-                } else if (distSq - riverRadius - beachRadius <= transitionRadius) {
-                    if (distSq - riverRadius - beachRadius <= transitionRadius / 2f)
-                        applyStrengthMap.put(point, 0.25f);
+                    applyStrengthMap.put(point, 1f);
+                } else if (distance - riverRadius - beachRadius <= transitionRadius) {
+                    if (distance - riverRadius - beachRadius <= transitionRadius / 2f)
+                        applyStrengthMap.put(point, 1f);
                     else
-                        applyStrengthMap.put(point, 0.1f);
+                        applyStrengthMap.put(point, 0f);
                     //its part of the transition
                     float interpolatedValue = modifyValue(
                             (float) point.distance(curvePoint),
@@ -187,15 +198,20 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         };
         float maxTransition = (getValue(maxHandleValues,
                 TRANSITION_RADIUS));
+
         Smoother smoother = new Smoother(applyStrengthMap.keySet(), (int) (maxTransition / 2f * 0.9f),
                 applyStrengthMask);
-            smoother.smoothGauss();
+        smoother.smoothGauss();
 
         for (Point p : applyStrengthMap.keySet()) {
 
             float strength = applyStrengthMask.getHeight(p.x, p.y);
             dimension.setHeight(p.x, p.y,
                     dimension.getHeight(p.x, p.y) * (1 - strength) + finalHeightmap.getOrDefault(p, 62f) * strength);
+        }
+
+        for (Point p : finalHeightmap.keySet()) {
+            dimension.setHeight(p.x, p.y, finalHeightmap.get(p));
         }
     }
 
