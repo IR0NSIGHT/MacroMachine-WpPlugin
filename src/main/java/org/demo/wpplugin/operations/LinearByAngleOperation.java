@@ -34,8 +34,7 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
  */
 public class LinearByAngleOperation extends MouseOrTabletOperation implements
         PaintOperation, // Implement this if you need access to the currently selected paint; note that some base classes already provide this
-        BrushOperation, // Implement this if you need access to the currently selected brush; note that some base classes already provide this
-        FilteredOperation {
+        BrushOperation{
 
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
@@ -221,12 +220,10 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
         };
     }
 
-    @Override
     public Filter getFilter() {
         return filter;
     }
 
-    @Override
     public void setFilter(Filter filter) {
         this.filter = filter;
     }
