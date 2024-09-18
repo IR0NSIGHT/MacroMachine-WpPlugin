@@ -189,61 +189,13 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
                 TRANSITION_RADIUS));
         Smoother smoother = new Smoother(applyStrengthMap.keySet(), (int) (maxTransition / 2f * 0.9f),
                 applyStrengthMask);
-        //    smoother.smoothGauss();
-        int offset = 10;
-        for (int i = offset; i < curve.size() - offset; i++) {
-            float[] curvePoint = curve.get(i);
-            float radius = getValue(curvePoint, RIVER_RADIUS);
-            Point curvePointP = getPoint2D(curvePoint);
-            Point previous = getPoint2D(curve.get(i - offset));
-            Point next = getPoint2D(curve.get(i + offset));
-            int tangentX = next.x - previous.x;
-            int tangentY = next.y - previous.y;
-            double tangentAngle = angleOf(tangentX, tangentY);
-
-                int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
-                int y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(90)));
-                int color = ((int) Math.abs(Math.toDegrees(tangentAngle))) % 15 + 1;
-                paintDimension.setValue(curvePointP.x + x, curvePointP.y + y, color);
-                paintDimension.setValue(curvePointP.x, curvePointP.y, color);
-
-                x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(-90)));
-                y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(-90)));
-                paintDimension.setValue(curvePointP.x + x, curvePointP.y + y, color);
-
-                //    x = (int) Math.round(radius * Math.cos(thetaFrom +Math.toRadians(-90)));
-                //    y = (int) Math.round(radius * Math.sin(thetaFrom +Math.toRadians(-90)));
-                //    paintDimension.setValue(curvePointP.x+x, curvePointP.y+y, 15);
-         /*
-            for (float theta = 0; theta < 2 * Math.PI; theta += 0.1f) {
-                int x = (int) Math.round(radius * Math.cos(theta));
-                int y = (int) Math.round(radius * Math.sin(theta));
-                Point thisP = new Point(curvePointP.x + x, curvePointP.y + y);
-                double dist = thisP.distanceSq(curvePointP);
-                boolean draw = true;
-                for (int j = 1; j < 10; j++)
-                    if (dist > thisP.distanceSq(getPoint2D(curve.get(i + j))) || dist > thisP.distanceSq(getPoint2D
-                    (curve.get(i - j)))) {
-                        draw = false;
-                        break;
-                    }
-                if (draw)
-                    paintDimension.setValue(thisP.x, thisP.y, 15);
-            }
-
-          */
-        }
-        //a²+b²=c², a=1,b=radius,c=MindistNeigh
+            smoother.smoothGauss();
 
         for (Point p : applyStrengthMap.keySet()) {
 
             float strength = applyStrengthMask.getHeight(p.x, p.y);
-            //TODO
-            //    paintDimension.setValue(p.x, p.y, (int) (strength * 14f + 1f));
             dimension.setHeight(p.x, p.y,
                     dimension.getHeight(p.x, p.y) * (1 - strength) + finalHeightmap.getOrDefault(p, 62f) * strength);
-            //    float color = strength < .05 ? 1 : 2;
-            //    dimension.setHeight(p.x,p.y,color);
         }
     }
 
