@@ -11,16 +11,15 @@ public class PathManager {
     private int nextPathId = 0;
 
     public PathManager() {
-        int i = 3;
+        int i = 100;
         addPath(new Path(Arrays.asList(
-                RiverHandleInformation.riverInformation(i*0, 0, 20, 0,0,0),
-                RiverHandleInformation.riverInformation(i*10, 0, 20,0,0,0),
-                RiverHandleInformation.riverInformation(i*20, 0),
-                RiverHandleInformation.riverInformation(i*30, 0),
-                RiverHandleInformation.riverInformation(i*40, 0),
-                RiverHandleInformation.riverInformation(i*50, 0),
-                RiverHandleInformation.riverInformation(i*60, 0,20,0,0,0),
-                RiverHandleInformation.riverInformation(i*70, 0,20,0,0,0)
+                RiverHandleInformation.riverInformation(i*-1-50, i, 3, 2,3,20),
+                RiverHandleInformation.riverInformation(i*-1, i),
+                RiverHandleInformation.riverInformation(i*-0, -i),
+                RiverHandleInformation.riverInformation(i*1, i),
+                RiverHandleInformation.riverInformation(i*2, -i),
+                RiverHandleInformation.riverInformation(i*3, i),
+                RiverHandleInformation.riverInformation(i*3+50, i,7,4,10,0)
                 ), PointInterpreter.PointType.RIVER_2D));
     }
 
