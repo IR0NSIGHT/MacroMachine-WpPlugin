@@ -210,7 +210,7 @@ public class PathGeometryHelperTest {
                 toBeSmoothed.add(new Point(x, y));
             }
 
-        Smoother smoother = new Smoother(toBeSmoothed, 3, dimension);
+        KernelConvolution smoother = new KernelConvolution(toBeSmoothed, 3, dimension);
         for (Point point : toBeSmoothed) {
             assertEquals(fixedHeight, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
         }
@@ -245,7 +245,7 @@ public class PathGeometryHelperTest {
         assertEquals(pointHeightOriginal, dimension.getHeight(point.x, point.y),
                 "point is not correct height:" + point);
 
-        Smoother smoother = new Smoother(Collections.singleton(new Point(3, 3)), 50, dimension);
+        KernelConvolution smoother = new KernelConvolution(Collections.singleton(new Point(3, 3)), 50, dimension);
         smoother.smoothAverage();
 
         //single towering point on map was smoothed out and is now roughly the height as the fixedHeight of the terrain
@@ -282,7 +282,7 @@ public class PathGeometryHelperTest {
                 toBeSmoothed.add(new Point(x, y));
             }
 
-        Smoother smoother = new Smoother(toBeSmoothed, 3, dimension);
+        KernelConvolution smoother = new KernelConvolution(toBeSmoothed, 3, dimension);
         smoother.smoothGauss();
 /*
         //hand calculated values using a gauss kernel as used by the function
@@ -325,9 +325,9 @@ public class PathGeometryHelperTest {
             }
 
         int radius = 5;
-        Smoother smoother = new Smoother(toBeSmoothed, radius, dimension);
+        KernelConvolution smoother = new KernelConvolution(toBeSmoothed, radius, dimension);
 
-        float[] kernel = Smoother.generateGaussianCurve(2 * radius + 1, 10, radius, radius / 2f);
+        float[] kernel = KernelConvolution.generateGaussianCurve(2 * radius + 1, 10, radius, radius / 2f);
         float kernelSum = 0;
         for (int i = 0; i < kernel.length; i++)
             kernel[i] = (float) Math.sqrt(kernel[i]);
@@ -387,7 +387,7 @@ public class PathGeometryHelperTest {
                 toBeSmoothed.add(new Point(x, y));
             }
 
-        Smoother smoother = new Smoother(toBeSmoothed, 3, dimension);
+        KernelConvolution smoother = new KernelConvolution(toBeSmoothed, 3, dimension);
         for (Point point : toBeSmoothed) {
             assertEquals(point.x, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
         }
@@ -425,7 +425,7 @@ public class PathGeometryHelperTest {
 
         int smoothRadius = 3;
 
-        Smoother smoother = new Smoother(toBeSmoothed, smoothRadius, dimension);
+        KernelConvolution smoother = new KernelConvolution(toBeSmoothed, smoothRadius, dimension);
         for (Point point : toBeSmoothed) {
             if (point.x == 5) //sharp line at x = 5
                 assertEquals(15, dimension.getHeight(point.x, point.y));

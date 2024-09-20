@@ -2,6 +2,7 @@ package org.demo.wpplugin.operations.EditPath;
 
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.PathPreviewLayer;
+import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.operations.ApplyPath.OperationOptionsPanel;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
@@ -54,12 +55,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 {
 
     public static final int COLOR_NONE = 0;
-    public static final int COLOR_HANDLE = 1;
-    public static final int COLOR_CURVE = 2;
-    public static final int COLOR_SELECTED = 4;
-    public static final int SIZE_SELECTED = 5;
+    public static final int COLOR_HANDLE = DemoLayerRenderer.Cyan;
+    public static final int COLOR_CURVE = DemoLayerRenderer.BLUE;
+    public static final int COLOR_SELECTED = DemoLayerRenderer.Orange;
+
+    public static final int SIZE_SELECTED = 15;
     public static final int SIZE_DOT = 0;
-    public static final int SIZE_MEDIUM_CROSS = 3;
+    public static final int SIZE_MEDIUM_CROSS = 10;
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.

@@ -1,6 +1,8 @@
 package org.demo.wpplugin.operations.River;
 
+import org.demo.wpplugin.geometry.KernelConvolution;
 import org.demo.wpplugin.geometry.PaintDimension;
+import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
@@ -84,29 +86,37 @@ public class RiverHandleInformation {
 
         int startIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx-2),curveIdxHandles.length-1)];
         int endIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx+2),curveIdxHandles.length-1)];
+
+        float[] riverPosition_X = new float[curve.size()];
+        float[] riverPosition_Y = new float[curve.size()];
         for (int i = 0; i < curve.size(); i++) {
             float[] p = curve.get(i);
-            int color = startIdx < i && i < endIdx ? COLOR_CURVE : COLOR_HANDLE;
-            PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, color, dim);
+            riverPosition_X[i] = p[0];
+            riverPosition_Y[i] = p[1];
+        }
+
+        float[] riverPositionGradient_X = KernelConvolution.calculateGradient(riverPosition_X);
+        float[] riverPositionGradient_Y = KernelConvolution.calculateGradient(riverPosition_Y);
+
+        for (int i = 0; i < curve.size(); i++) {
+            float[] p = curve.get(i);
+            int color = startIdx < i && i < endIdx ? DemoLayerRenderer.Dark_Cyan : COLOR_CURVE;
+            PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
             // DRAW RIVER WIDTH ALONG CURVE
-            int offset = 3;
-            if (offset < i && i < curve.size() - offset) {
-                float radius = getValue(p, RIVER_RADIUS);
-                Point curvePointP = getPoint2D(p);
-                Point previous = getPoint2D(curve.get(i - offset));
-                Point next = getPoint2D(curve.get(i + offset));
-                int tangentX = next.x - previous.x;
-                int tangentY = next.y - previous.y;
-                double tangentAngle = angleOf(tangentX, tangentY);
+            float radius = getValue(p, RIVER_RADIUS);
+            Point curvePointP = getPoint2D(p);
 
-                int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
-                int y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(90)));
-                dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
+            int tangentX = Math.round(riverPositionGradient_X[i]);
+            int tangentY = Math.round(riverPositionGradient_Y[i]);
+            double tangentAngle = angleOf(tangentX, tangentY);
 
-                x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(-90)));
-                y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(-90)));
-                dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
-            }
+            int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
+            int y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(90)));
+            dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
+
+            x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(-90)));
+            y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(-90)));
+            dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
         }
 
         if (path.amountHandles() > 1) {
@@ -116,7 +126,8 @@ public class RiverHandleInformation {
 
         for (int i = 0; i < path.amountHandles(); i++) {
             float[] handle = path.handleByIndex(i);
-            PointUtils.markPoint(getPoint2D(handle), COLOR_HANDLE, SIZE_MEDIUM_CROSS,
+            int size = SIZE_MEDIUM_CROSS;
+            PointUtils.markPoint(getPoint2D(handle), DemoLayerRenderer.Yellow, size,
                     dim);
 
             //RIVER RADIUS

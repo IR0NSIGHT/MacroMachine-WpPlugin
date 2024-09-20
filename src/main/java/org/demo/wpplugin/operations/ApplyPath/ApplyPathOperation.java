@@ -2,7 +2,7 @@ package org.demo.wpplugin.operations.ApplyPath;
 
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.PaintDimension;
-import org.demo.wpplugin.geometry.Smoother;
+import org.demo.wpplugin.geometry.KernelConvolution;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
@@ -199,7 +199,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         float maxTransition = (getValue(maxHandleValues,
                 TRANSITION_RADIUS));
 
-        Smoother smoother = new Smoother(applyStrengthMap.keySet(), (int) (maxTransition / 2f * 0.9f),
+        KernelConvolution smoother = new KernelConvolution(applyStrengthMap.keySet(), (int) (maxTransition / 2f * 0.9f),
                 applyStrengthMask);
         smoother.smoothGauss();
 
