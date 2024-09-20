@@ -1,9 +1,13 @@
 package org.demo.wpplugin.operations;
 
+import org.demo.wpplugin.Fixify;
+import org.demo.wpplugin.geometry.HeightDimension;
+import org.demo.wpplugin.layers.PathPreviewLayer;
+import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.pathing.Path;
-import org.demo.wpplugin.pathing.PathManager;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.layers.renderers.RendererPreviewer;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -11,12 +15,9 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.function.Function;
 
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
-import static org.demo.wpplugin.operations.EditPath.EditPathOperation.PATH_ID;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -39,8 +40,10 @@ import static org.demo.wpplugin.operations.EditPath.EditPathOperation.PATH_ID;
  * <p><strong>Note</strong> that for now WorldPainter only supports operations that
  */
 public class FlattenPathOperation extends MouseOrTabletOperation implements
-        PaintOperation, // Implement this if you need access to the currently selected paint; note that some base classes already provide this
-        BrushOperation // Implement this if you need access to the currently selected brush; note that some base classes already provide this
+        PaintOperation, // Implement this if you need access to the currently selected paint; note that some base
+        // classes already provide this
+        BrushOperation // Implement this if you need access to the currently selected brush; note that some base
+        // classes already provide this
 {
 
     /**
@@ -73,7 +76,8 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
     }
 
     public static void main(String[] args) {
-        float[] heights = new float[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 5, 10, 17, 25, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28,};
+        float[] heights = new float[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 0, 0, 0, 5, 10, 17, 25, 28, 28,
+                28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28,};
         float[] diffs = findMaxDifference(heights);
         while (diffs[1] > 1) {
             heights = applyMeanFilter(heights);
@@ -88,7 +92,8 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
      * and the maximum difference.
      *
      * @param input The input array of floats.
-     * @return An array where the first element is the index of the maximum difference and the second element is the maximum difference.
+     * @return An array where the first element is the index of the maximum difference and the second element is the
+     * maximum difference.
      */
     public static float[] findMaxDifference(float[] input) {
         if (input == null || input.length < 2) {
@@ -207,6 +212,27 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         return output;
     }
 
+    static float[] getPathHeight(Point[] curve, Function<Point, Float> getHeight) {
+        float[] heights = new float[curve.length];
+        int i = 0;
+        for (Point p : curve)
+            heights[i++] = getHeight.apply(p);
+
+        return heights;
+    }
+
+    static float[] applyDownslopeFilter(float[] heights) {
+        float[] smoothedHeight = heights.clone();
+        float previousHeight = Float.MAX_VALUE;
+        for (int i = 0; i < heights.length; i++) {
+            float newHeight = Math.min(heights[i], previousHeight);
+            previousHeight = newHeight;
+            smoothedHeight[i] = newHeight;
+        }
+
+        return smoothedHeight;
+    }
+
     /**
      * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
      * this is invoked once per {@code delay} ms while the mouse button is down, with the first invocation having
@@ -214,9 +240,11 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
      *
      * @param centreX      The x coordinate where the operation should be applied, in world coordinates.
      * @param centreY      The y coordinate where the operation should be applied, in world coordinates.
-     * @param inverse      Whether to perform the "inverse" operation instead of the regular operation, if applicable. If the
+     * @param inverse      Whether to perform the "inverse" operation instead of the regular operation, if applicable
+     *                     . If the
      *                     operation has no inverse it should just apply the normal operation.
-     * @param first        Whether this is the first tick of a continuous operation. For a one shot operation this will always
+     * @param first        Whether this is the first tick of a continuous operation. For a one shot operation this
+     *                     will always
      *                     be {@code true}.
      * @param dynamicLevel The dynamic level (from 0.0f to 1.0f inclusive) to apply in addition to the {@code level}
      *                     property, for instance due to a pressure sensitive stylus being used. In other words,
@@ -239,6 +267,26 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         // * paint - the currently selected paint
         this.getDimension().setEventsInhibited(true);
         try {
+
+            HeightDimension dim = new HeightDimension() {
+                @Override
+                public float getHeight(int x, int y) {
+                    return getDimension().getHeightAt(x, y);
+                }
+
+                @Override
+                public void setHeight(int x, int y, float z) {
+                    if (getDimension().getHeightAt(x, y) != z) {
+                        getDimension().setHeightAt(x, y, z);
+                        getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE,x,y, DemoLayerRenderer.LIME);
+                    }
+                }
+            };
+
+            Fixify.fixDim(dim,-200,-200, 500,500);
+
+            /*
+
             int pathWidth = 2;
             int transitionDist = 10;
             int totalRadius = pathWidth + transitionDist;
@@ -297,7 +345,7 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
                // }
             }
 
-
+*/
         } catch (Exception e) {
             throw e;
         } finally {
@@ -305,27 +353,6 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
 
         }
 
-    }
-
-    static float[] getPathHeight(Point[] curve, Function<Point, Float> getHeight) {
-        float[] heights = new float[curve.length];
-        int i = 0;
-        for (Point p : curve)
-            heights[i++] = getHeight.apply(p);
-
-        return heights;
-    }
-
-    static float[] applyDownslopeFilter(float[] heights) {
-        float[] smoothedHeight = heights.clone();
-        float previousHeight = Float.MAX_VALUE;
-        for (int i = 0; i < heights.length; i++) {
-            float newHeight = Math.min(heights[i], previousHeight);
-            previousHeight = newHeight;
-            smoothedHeight[i] = newHeight;
-        }
-
-        return smoothedHeight;
     }
 
     private int getClosestPointIndexOnCurveTo(ArrayList<float[]> curve, Point nearby) {
@@ -347,13 +374,15 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         return closestIdx;
     }
 
-    float getHeightByDistanceToCurve(double distance, float ownHeight, float curveHeight, float pathWidth, float transition) {
+    float getHeightByDistanceToCurve(double distance, float ownHeight, float curveHeight, float pathWidth,
+                                     float transition) {
         if (distance < pathWidth) {
             return curveHeight;
         } else if (distance < (transition + pathWidth)) {
             //interpolate
             double interpolatePoint = distance - pathWidth;
-            assert interpolatePoint >= 0 && interpolatePoint < transition : "not in [0,1]: interpolation point = " + interpolatePoint;
+            assert interpolatePoint >= 0 && interpolatePoint < transition :
+                    "not in [0,1]: interpolation point = " + interpolatePoint;
             double factor = interpolatePoint / transition;
             assert factor >= 0 && factor <= 1;
 

@@ -21,6 +21,10 @@
         </repository>
     </repositories>
 
+
+
+
+
     <parent>
         <groupId>org.pepsoft.worldpainter</groupId>
         <artifactId>PluginParent</artifactId>
@@ -73,6 +77,13 @@
             <version>5.9.1</version>
             <scope>test</scope>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.aparapi/aparapi -->
+        <dependency>
+            <groupId>com.aparapi</groupId>
+            <artifactId>aparapi</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+
     </dependencies>
 
     <profiles>
