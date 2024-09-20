@@ -84,8 +84,8 @@ public class RiverHandleInformation {
         ArrayList<float[]> curve = path.continousCurve();
         int[] curveIdxHandles = path.handleToCurveIdx();
 
-        int startIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx-2),curveIdxHandles.length-1)];
-        int endIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx+2),curveIdxHandles.length-1)];
+        int startIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx - 2), curveIdxHandles.length - 1)];
+        int endIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx + 2), curveIdxHandles.length - 1)];
 
         float[] riverPosition_X = new float[curve.size()];
         float[] riverPosition_Y = new float[curve.size()];
@@ -95,28 +95,29 @@ public class RiverHandleInformation {
             riverPosition_Y[i] = p[1];
         }
 
-        float[] riverPositionGradient_X = KernelConvolution.calculateGradient(riverPosition_X);
-        float[] riverPositionGradient_Y = KernelConvolution.calculateGradient(riverPosition_Y);
 
-        for (int i = 0; i < curve.size(); i++) {
+        for (int i = 1; i < curve.size()-1; i++) {
             float[] p = curve.get(i);
             int color = startIdx < i && i < endIdx ? DemoLayerRenderer.Dark_Cyan : COLOR_CURVE;
             PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
-            // DRAW RIVER WIDTH ALONG CURVE
-            float radius = getValue(p, RIVER_RADIUS);
-            Point curvePointP = getPoint2D(p);
 
-            int tangentX = Math.round(riverPositionGradient_X[i]);
-            int tangentY = Math.round(riverPositionGradient_Y[i]);
-            double tangentAngle = angleOf(tangentX, tangentY);
+            for (RiverInformation info : RiverInformation.values()) {
+                float radius = getValue(p, info);
+                Point curvePointP = getPoint2D(p);
 
-            int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
-            int y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(90)));
-            dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
+                int tangentX = Math.round(curve.get(i+1)[0]-curve.get(i-1)[0]);
+                int tangentY =  Math.round(curve.get(i+1)[1]-curve.get(i-1)[1]);
+                double tangentAngle = angleOf(tangentX, tangentY);
 
-            x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(-90)));
-            y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(-90)));
-            dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
+                int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
+                int y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(90)));
+                dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
+
+                x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(-90)));
+                y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(-90)));
+                dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
+                color = color+1%15;
+            }
         }
 
         if (path.amountHandles() > 1) {
@@ -134,6 +135,7 @@ public class RiverHandleInformation {
             if (!(getValue(handle, RIVER_RADIUS) == INHERIT_VALUE))
                 PointUtils.drawCircle(getPoint2D(handle), getValue(handle, RIVER_RADIUS), dim,
                         getValue(handle, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
+
         }
     }
 
