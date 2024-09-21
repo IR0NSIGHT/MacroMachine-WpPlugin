@@ -282,8 +282,8 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
                 }
             };
 
-            Fixify.fixDim(dim, getDimension().getLowestX()*128, getDimension().getLowestY()*128,
-                    getDimension().getWidth() * 128, getDimension().getHeight() * 128);
+            Fixify.fixDim(dim,  new Rectangle(getDimension().getLowestX()*128, getDimension().getLowestY()*128,
+                    getDimension().getWidth() * 128, getDimension().getHeight() * 128));
 
             /*
 
