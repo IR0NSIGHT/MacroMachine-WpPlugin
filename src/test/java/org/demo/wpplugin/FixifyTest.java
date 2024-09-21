@@ -1,6 +1,7 @@
 package org.demo.wpplugin;
 
 import org.demo.wpplugin.geometry.HeightDimension;
+import org.demo.wpplugin.kernel.Fixify;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;

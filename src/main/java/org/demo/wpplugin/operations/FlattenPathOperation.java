@@ -1,15 +1,14 @@
 package org.demo.wpplugin.operations;
 
-import org.demo.wpplugin.Fixify;
 import org.demo.wpplugin.geometry.HeightDimension;
-import org.demo.wpplugin.layers.PathPreviewLayer;
-import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
+import org.demo.wpplugin.kernel.Fixify;
 import org.demo.wpplugin.pathing.Path;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
+import org.pepsoft.worldpainter.selection.SelectionChunk;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -17,6 +16,7 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
+import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
@@ -276,14 +276,37 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
                 @Override
                 public void setHeight(int x, int y, float z) {
                     if (getDimension().getHeightAt(x, y) != z) {
-                        getDimension().setHeightAt(x, y, z);
-                        getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, DemoLayerRenderer.RED);
+                        if (getDimension().getBitLayerValueAt(SelectionBlock.INSTANCE, x, y) || getDimension().getBitLayerValueAt(SelectionChunk.INSTANCE, x, y)) {
+                            getDimension().setHeightAt(x, y, z);
+                        }
+                        //    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, DemoLayerRenderer.RED);
                     }
                 }
             };
 
-            Fixify.fixDim(dim,  new Rectangle(getDimension().getLowestX()*128, getDimension().getLowestY()*128,
-                    getDimension().getWidth() * 128, getDimension().getHeight() * 128));
+            int startX = Integer.MAX_VALUE, startY = Integer.MAX_VALUE, endX = Integer.MIN_VALUE, endY =
+                    Integer.MIN_VALUE;
+            int selected = 0;
+            for (int x = getDimension().getLowestX(); x < getDimension().getHighestX(); x++) {
+                for (int y = getDimension().getLowestY(); y < getDimension().getHighestY(); y++) {
+                    if (getDimension().getTile(x, y).hasLayer(SelectionBlock.INSTANCE) || getDimension().getTile(x,
+                            y).hasLayer(SelectionChunk.INSTANCE)) {
+                        startX = Math.min(startX, x);
+                        startY = Math.min(startY, y);
+                        endX = Math.max(endX, x);
+                        endY = Math.max(endY, y);
+                        selected++;
+                    }
+                }
+            }
+            if (selected != 0) {
+                Rectangle area = new Rectangle(startX * TILE_SIZE, startY * TILE_SIZE,
+                        (endX + 1 - startX) * TILE_SIZE, (endY + 1 - startY) * TILE_SIZE);
+                Fixify.fixDim(dim, area);
+                System.out.println(area);
+            }
+
+
 
             /*
 
