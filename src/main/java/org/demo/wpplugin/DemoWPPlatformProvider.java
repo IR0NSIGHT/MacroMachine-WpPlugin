@@ -2,7 +2,6 @@ package org.demo.wpplugin;
 
 import org.demo.wpplugin.platforms.exporters.DemoPlatformExporter;
 import org.pepsoft.minecraft.Chunk;
-import org.pepsoft.minecraft.ChunkProvider;
 import org.pepsoft.minecraft.ChunkStore;
 import org.pepsoft.util.DesktopUtils;
 import org.pepsoft.worldpainter.GameType;

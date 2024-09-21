@@ -1,7 +1,10 @@
 package org.demo.wpplugin.layers;
 
+import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.layers.renderers.LayerRenderer;
 
+import java.awt.image.BufferedImage;
 import java.io.Serializable;
 
 import static org.pepsoft.worldpainter.layers.Layer.DataSize.NIBBLE;
@@ -10,9 +13,14 @@ import static org.pepsoft.worldpainter.layers.Layer.DataSize.NIBBLE;
  * The layer descriptor and provider class for your custom layer. This class is serialised in the .world file when it is
  * saved, so it must be {@link Serializable} and stable.
  */
-public class DemoLayer extends Layer {
-    private DemoLayer() {
+public class PathPreviewLayer extends Layer {
+    private PathPreviewLayer() {
         super(ID, NAME, DESCRIPTION, DATA_SIZE, DISCRETE, PRIORITY);
+    }
+
+    @Override
+    public LayerRenderer getRenderer() {
+        return DemoLayerRenderer.instance;
     }
 
     /**
@@ -21,17 +29,17 @@ public class DemoLayer extends Layer {
      * change if the layer changes in a non backwards compatible way, but not between versions of the plugin if it is
      * still backwards compatible.
      */
-    static final String ID = "org.demo.wpplugin.DemoLayer.v1";
+    static final String ID = "org.demo.wpplugin.PathPreviewLayer.v1";
 
     /**
      * Human-readable short name of the plugin.
      */
-    static final String NAME = "Demo Layer";
+    static final String NAME = "PathPreviewLayer";
 
     /**
      * Human-readable description of the plugin. This is used e.g. in the tooltip of the layer selection button.
      */
-    static final String DESCRIPTION = "A demonstration of creating a custom layer plugin for WorldPainter";
+    static final String DESCRIPTION = "Previewing the current path";
 
     /**
      * The data size (number of possible values) for this layer. If this changes, the ID must also change.
@@ -75,7 +83,7 @@ public class DemoLayer extends Layer {
     static final int PRIORITY = 50;
 
     // This needs to be last, otherwise the static fields are not yet initialised
-    public static final DemoLayer INSTANCE = new DemoLayer();
+    public static final PathPreviewLayer INSTANCE = new PathPreviewLayer();
 
     /**
      * This class is serialised in the .world file when it is saved, so it must be stable. It is recommended to give it

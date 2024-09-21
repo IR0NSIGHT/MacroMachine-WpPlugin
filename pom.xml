@@ -8,6 +8,19 @@
     <artifactId>DemoWPPlugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
+    <repositories>
+        <repository>
+            <id>oss.sonatype.org-snapshot</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <parent>
         <groupId>org.pepsoft.worldpainter</groupId>
         <artifactId>PluginParent</artifactId>
@@ -22,6 +35,7 @@
     </properties>
 
     <build>
+        <outputDirectory>target/classes</outputDirectory>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -40,11 +54,60 @@
                 <filtering>false</filtering>
             </resource>
         </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>11</source>
+                    <target>11</target>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.9.1</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.aparapi/aparapi -->
+        <dependency>
+            <groupId>com.aparapi</groupId>
+            <artifactId>aparapi</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+
+    </dependencies>
+
     <profiles>
+        <profile>
+            <id>debug-tests</id>
+            <properties>
+                <maven.surefire.debug>true</maven.surefire.debug>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.5.0</version>
+                        <configuration>
+                            <forkCount>0</forkCount>
+                            <argLine>
+                                -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
+                            </argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <!-- Enable this profile and execute the test phase in order to run your plugin with WorldPainter. -->
         <profile>
+
             <id>testWithWorldPainter</id>
             <dependencies>
                 <dependency>
@@ -75,7 +138,9 @@
                                 <argument>-classpath</argument>
                                 <classpath/>
                                 <!-- Uncomment this to enable debugging. Change suspend=n to suspend=y if you want to debug plugin loading or initialisation: -->
-                                <!--argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005</argument-->
+                                <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+                                </argument>
+                                <argLine>-ea</argLine>
                                 <!-- These exports are needed from Java 9+ to make the JIDE GUI framework work: -->
                                 <argument>--add-exports</argument>
                                 <argument>java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED</argument>
