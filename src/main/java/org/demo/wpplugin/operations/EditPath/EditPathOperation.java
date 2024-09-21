@@ -76,7 +76,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
-    static final String DESCRIPTION = "Draw smooth, connected curves with C1 continuity.";
+    static final String DESCRIPTION = "<html>Draw smooth, connected curves with C1 continuity.<br>left click: add new point " +
+            "after selected<br>right click: delete selected<br>ctrl+click: select this handle<br>shift+click: move selected" +
+            " handle here</html>";
     //update path
     public static int PATH_ID = 1;
     private final EditPathOptions options = new EditPathOptions();
@@ -88,6 +90,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     private boolean shiftDown = false;
     private boolean altDown = false;
     private boolean ctrlDown = false;
+    private StandardOptionsPanel panelContainer;
 
     public EditPathOperation() {
         // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
@@ -100,7 +103,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // super(NAME, DESCRIPTION, delay, ID);
         this.options.selectedPathId = PathManager.instance.getAnyValidId();
 
-        //Worldpainter Pen has a severe bug deep down that breaks shift/alt/control after a button in the settings pannel was used.
+        //Worldpainter Pen has a severe bug deep down that breaks shift/alt/control after a button in the settings
+        // pannel was used.
         //this shitty listener circumvents the bug
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
             @Override
@@ -327,14 +331,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
     @Override
     public JPanel getOptionsPanel() {
-        return new StandardOptionsPanel(getName(), getDescription()) {
-            @Override
-            protected void addAdditionalComponents(GridBagConstraints constraints) {
-                super.addAdditionalComponents(constraints);
-                eOptionsPanel = new EditPathOptionsPanel(options);
-                add(eOptionsPanel, constraints);
-            }
-        };
+        panelContainer = new EditPathOptionsPanelContainer(getName(), "a description");
+        return panelContainer;
     }
 
     @Override
@@ -349,6 +347,20 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     private static class EditPathOptions {
         int owo = 0;
         int selectedPathId = -1;
+    }
+
+    private class EditPathOptionsPanelContainer extends StandardOptionsPanel {
+        public EditPathOptionsPanelContainer(String name, String description) {
+            super(name, description);
+        }
+
+        @Override
+        protected void addAdditionalComponents(GridBagConstraints constraints) {
+            JLabel desc = new JLabel(getDescription());
+            add(desc, constraints);
+            eOptionsPanel = new EditPathOptionsPanel(options);
+            add(eOptionsPanel, constraints);
+        }
     }
 
     private class EditPathOptionsPanel extends OperationOptionsPanel<EditPathOptions> {
