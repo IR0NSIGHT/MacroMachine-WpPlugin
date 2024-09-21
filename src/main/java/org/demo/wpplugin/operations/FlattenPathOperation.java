@@ -7,7 +7,6 @@ import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.pathing.Path;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.layers.renderers.RendererPreviewer;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -278,12 +277,13 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
                 public void setHeight(int x, int y, float z) {
                     if (getDimension().getHeightAt(x, y) != z) {
                         getDimension().setHeightAt(x, y, z);
-                        getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE,x,y, DemoLayerRenderer.LIME);
+                        getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, DemoLayerRenderer.RED);
                     }
                 }
             };
 
-            Fixify.fixDim(dim,-200,-200, 500,500);
+            Fixify.fixDim(dim, getDimension().getLowestX()*128, getDimension().getLowestY()*128,
+                    getDimension().getWidth() * 128, getDimension().getHeight() * 128);
 
             /*
 
