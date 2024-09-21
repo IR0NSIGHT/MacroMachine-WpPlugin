@@ -18,6 +18,7 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,6 +85,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     private Brush brush;
     private Paint paint;
 
+    private boolean shiftDown = false;
+    private boolean altDown = false;
+    private boolean ctrlDown = false;
+
     public EditPathOperation() {
         // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
         // once for every time the user clicks the mouse or presses on the tablet:
@@ -94,6 +99,21 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // invocation:
         // super(NAME, DESCRIPTION, delay, ID);
         this.options.selectedPathId = PathManager.instance.getAnyValidId();
+
+        //Worldpainter Pen has a severe bug deep down that breaks shift/alt/control after a button in the settings pannel was used.
+        //this shitty listener circumvents the bug
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
+            @Override
+            public boolean dispatchKeyEvent(KeyEvent e) {
+                if (!EditPathOperation.super.isActive())
+                    return false;
+
+                shiftDown = e.isShiftDown();
+                altDown = e.isAltDown();
+                ctrlDown = e.isControlDown();
+                return false;
+            }
+        });
     }
 
     public static float[] interpolateRadii(Path path) {
@@ -170,13 +190,12 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         EditPathOperation.PATH_ID = getSelectedPathId();
 
         float[] userClickedCoord = RiverHandleInformation.riverInformation(centreX, centreY);
-
         assert getSelectedPoint() != null;
 
         if (getSelectedPoint() == null) {
             overwriteSelectedPath(path.addPoint(userClickedCoord));
             setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
-        } else if (isCtrlDown()) {
+        } else if (ctrlDown) {
             //SELECT POINT
             try {
                 if (path.amountHandles() != 0) {
@@ -191,7 +210,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             } catch (IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
-        } else if (isAltDown()) {
+        } else if (altDown) {
             if (inverse) {
                 overwriteSelectedPath(path.newEmpty());
                 setSelectedPointIdx(-1);
@@ -199,7 +218,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                 // MOVE SELECTED POINT TO
                 applyAsSelection();
             }
-        } else if (isShiftDown()) {
+        } else if (shiftDown) {
             float[] movedPoint = setPosition2D(getSelectedPoint(), userClickedCoord);
             int idx = path.indexOfPosition(getSelectedPoint());
             overwriteSelectedPath(path.movePoint(getSelectedPoint(), movedPoint));
@@ -321,6 +340,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     @Override
     protected void activate() throws PropertyVetoException {
         super.activate();
+        altDown = false;
+        ctrlDown = false;
+        shiftDown = false;
         redrawSelectedPathLayer();
     }
 
