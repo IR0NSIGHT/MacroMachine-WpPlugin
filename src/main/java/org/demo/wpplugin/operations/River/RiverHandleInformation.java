@@ -1,6 +1,5 @@
 package org.demo.wpplugin.operations.River;
 
-import org.demo.wpplugin.geometry.KernelConvolution;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.operations.OptionsLabel;
@@ -13,7 +12,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
-import static org.demo.wpplugin.operations.ApplyPath.ApplyPathOperation.angleOf;
+import static org.demo.wpplugin.operations.ApplyPath.ApplyRiverOperation.angleOf;
 import static org.demo.wpplugin.operations.EditPath.EditPathOperation.*;
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;

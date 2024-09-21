@@ -18,6 +18,7 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -310,10 +311,17 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         return new StandardOptionsPanel(getName(), getDescription()) {
             @Override
             protected void addAdditionalComponents(GridBagConstraints constraints) {
+                super.addAdditionalComponents(constraints);
                 eOptionsPanel = new EditPathOptionsPanel(options);
                 add(eOptionsPanel, constraints);
             }
         };
+    }
+
+    @Override
+    protected void activate() throws PropertyVetoException {
+        super.activate();
+        redrawSelectedPathLayer();
     }
 
     private static class EditPathOptions {

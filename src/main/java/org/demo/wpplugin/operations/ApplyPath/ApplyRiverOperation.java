@@ -10,9 +10,7 @@ import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
 import org.demo.wpplugin.pathing.PathManager;
-import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.*;
-import org.pepsoft.worldpainter.painting.Paint;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,21 +47,21 @@ import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
  *
  * <p><strong>Note</strong> that for now WorldPainter only supports operations that
  */
-public class ApplyPathOperation extends MouseOrTabletOperation
+public class ApplyRiverOperation extends MouseOrTabletOperation
 {
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
      */
-    static final String ID = "org.demo.wpplugin.ApplyPathOperation.v1";
+    static final String ID = "org.demo.wpplugin.applyRiverOperation.v1";
     /**
      * Human-readable short name of the operation.
      */
-    static final String NAME = "Apply Path Operation";
+    static final String NAME = "Apply River Operation";
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
-    static final String DESCRIPTION = "Apply path to this world";
+    static final String DESCRIPTION = "Apply river to this world, click anywhere";
     private final ApplyPathOptions options = new ApplyPathOptions(3, 0, 1, 3);
     private final StandardOptionsPanel optionsPanel = new StandardOptionsPanel(getName(), getDescription()) {
         @Override
@@ -72,7 +70,7 @@ public class ApplyPathOperation extends MouseOrTabletOperation
         }
     };
 
-    public ApplyPathOperation() {
+    public ApplyRiverOperation() {
         super(NAME, DESCRIPTION, ID);
     }
 
