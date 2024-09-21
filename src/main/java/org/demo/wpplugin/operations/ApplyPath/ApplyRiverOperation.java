@@ -61,7 +61,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
-    static final String DESCRIPTION = "Apply river to this world, click anywhere";
+    static final String DESCRIPTION = "<html>Apply river to this world<br>Last selected path gets applied into the world.<br>Potentially slow and expensive</html>";
     private final ApplyPathOptions options = new ApplyPathOptions(3, 0, 1, 3);
     private final StandardOptionsPanel optionsPanel = new StandardOptionsPanel(getName(), getDescription()) {
         @Override
@@ -319,19 +319,6 @@ public class ApplyRiverOperation extends MouseOrTabletOperation
         @Override
         protected ArrayList<OptionsLabel> addComponents(ApplyPathOptions options, Runnable onOptionsReconfigured) {
             ArrayList<OptionsLabel> inputs = new ArrayList<>();
-
-            inputs.add(numericInput("final width",
-                    "width of the path at the end.",
-                    new SpinnerNumberModel(options.getFinalWidth(), 0, 100, 1f),
-                    w -> options.setFinalWidth(w.intValue()),
-                    onOptionsReconfigured));
-
-            inputs.add(numericInput("start width",
-                    "width of the path at start.",
-                    new SpinnerNumberModel(options.getStartWidth(), 0, 100, 1f),
-                    w -> options.setStartWidth(w.intValue()),
-                    onOptionsReconfigured
-            ));
 
             inputs.add(numericInput("random width",
                     "each step the rivers radius will randomly increase or decrease. It will stay within +/- percent " +
