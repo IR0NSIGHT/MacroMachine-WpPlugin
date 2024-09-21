@@ -42,7 +42,7 @@ public class DemoWPPlugin extends AbstractPlugin implements
     private static final List<Layer> LAYERS = singletonList(PathPreviewLayer.INSTANCE);
 
     // OperationProvider
-    private static final List<Operation> OPERATIONS = Arrays.asList(new EditPathOperation(), new ApplyPathOperation(), new FlattenPathOperation());
+    private static final List<Operation> OPERATIONS = Arrays.asList(new EditPathOperation(), new ApplyPathOperation());
 
     /**
      * The plugin class must have a default (public, no arguments) constructor.

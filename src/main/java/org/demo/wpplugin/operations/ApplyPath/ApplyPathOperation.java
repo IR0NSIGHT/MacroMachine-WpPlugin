@@ -49,11 +49,7 @@ import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
  *
  * <p><strong>Note</strong> that for now WorldPainter only supports operations that
  */
-public class ApplyPathOperation extends MouseOrTabletOperation implements
-        PaintOperation, // Implement this if you need access to the currently selected paint; note that some base
-        // classes already provide this
-        BrushOperation // Implement this if you need access to the currently selected brush; note that some base
-        // classes already provide this
+public class ApplyPathOperation extends MouseOrTabletOperation
 {
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
@@ -75,8 +71,6 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
             add(new ApplyPathOptionsPanel(options), constraints);
         }
     };
-    private Brush brush;
-    private Paint paint;
 
     public ApplyPathOperation() {
         super(NAME, DESCRIPTION, ID);
@@ -317,26 +311,6 @@ public class ApplyPathOperation extends MouseOrTabletOperation implements
         } finally {
             this.getDimension().setEventsInhibited(false);
         }
-    }
-
-    @Override
-    public Brush getBrush() {
-        return brush;
-    }
-
-    @Override
-    public void setBrush(Brush brush) {
-        this.brush = brush;
-    }
-
-    @Override
-    public Paint getPaint() {
-        return paint;
-    }
-
-    @Override
-    public void setPaint(Paint paint) {
-        this.paint = paint;
     }
 
     private static class ApplyPathOptionsPanel extends OperationOptionsPanel<ApplyPathOptions> {
