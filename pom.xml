@@ -21,10 +21,6 @@
         </repository>
     </repositories>
 
-
-
-
-
     <parent>
         <groupId>org.pepsoft.worldpainter</groupId>
         <artifactId>PluginParent</artifactId>
