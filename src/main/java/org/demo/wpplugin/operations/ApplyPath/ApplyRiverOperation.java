@@ -1,8 +1,8 @@
 package org.demo.wpplugin.operations.ApplyPath;
 
 import org.demo.wpplugin.geometry.HeightDimension;
-import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.geometry.KernelConvolution;
+import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
@@ -47,8 +47,7 @@ import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
  *
  * <p><strong>Note</strong> that for now WorldPainter only supports operations that
  */
-public class ApplyRiverOperation extends MouseOrTabletOperation
-{
+public class ApplyRiverOperation extends MouseOrTabletOperation {
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
@@ -61,7 +60,8 @@ public class ApplyRiverOperation extends MouseOrTabletOperation
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
-    static final String DESCRIPTION = "<html>Apply river to this world<br>Last selected path gets applied into the world.<br>Potentially slow and expensive</html>";
+    static final String DESCRIPTION = "<html>Apply river to this world<br>Last selected path gets applied into the " +
+            "world.<br>Potentially slow and expensive</html>";
     private final ApplyPathOptions options = new ApplyPathOptions(3, 0, 1, 3);
     private final StandardOptionsPanel optionsPanel = new StandardOptionsPanel(getName(), getDescription()) {
         @Override
@@ -172,7 +172,6 @@ public class ApplyRiverOperation extends MouseOrTabletOperation
                             dimension.getHeight(point.x, point.y)
                     );  //interpolate between original terrain height and outermost;
                     dimension.setHeight(point.x, point.y, interpolatedValue);
-
                 }
             }
         }
