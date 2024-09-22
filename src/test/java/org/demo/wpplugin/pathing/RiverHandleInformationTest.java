@@ -18,11 +18,12 @@ class RiverHandleInformationTest {
         for (int i = 0; i < 10; i++) {
             float[] handle = new float[RIVER_2D.size];
             setPosition2D(handle,new float[]{i, 2*i});
-            handle = setValue(handle, RIVER_RADIUS, INHERIT_VALUE);
+            handle = setValue(handle, RIVER_RADIUS, i == 0 ? 3 : INHERIT_VALUE);
             handles.add(handle);
         }
         Path p = new Path(handles, RIVER_2D);
-        for (float[] handle : handles) {
+        for (int i = 1; i < handles.size(); i++) {
+            float[] handle = handles.get(i);
             assertEquals(INHERIT_VALUE, getValue(handle,RIVER_RADIUS));
         }
 
@@ -46,8 +47,9 @@ class RiverHandleInformationTest {
             DrawRiverPath(p, dim,-1);
         } catch (IllegalAccessException ignored) {
         }
-        for (float[] handle : handles) {
-            assertEquals(INHERIT_VALUE, getValue(handle,RIVER_RADIUS), "final values were changed");
+        for (int i = 1; i < handles.size(); i++) {
+            float[] handle = handles.get(i);
+            assertEquals(INHERIT_VALUE, getValue(handle,RIVER_RADIUS));
         }
         assertEquals(clone, p, "path was mutated by drawing it");
     }

@@ -27,6 +27,7 @@ public class Path implements Iterable<float[]> {
             this.handles.add(handle.clone());
         }
         this.type = type;
+        assert invariant();
     }
 
     public static boolean curveIsContinous(ArrayList<float[]> curve) {
@@ -57,8 +58,8 @@ public class Path implements Iterable<float[]> {
      */
     public static float[] prepareEmptyHandlesForInterpolation(float[] handles, float emptyMarker) {
         handles = handles.clone();
-        if (handles.length < 4) {
-            throw new IllegalArgumentException("at least 4 handles are required for interpolation");
+        if (handles.length > 0 && handles.length < 4) {
+            throw new IllegalArgumentException("zero or at least 4 handles are required for interpolation");
         }
 
         //count how many handles are not empty, remember first and last handle
@@ -207,10 +208,14 @@ public class Path implements Iterable<float[]> {
 
     private boolean invariant() {
         boolean okay = true;
+        float[] setValues = new float[type.size];
+        Arrays.fill(setValues, INHERIT_VALUE);
         for (float[] handle : handles) {
             for (int n = 0; n < type.size; n++) {
                 if (Float.isNaN(handle[n]))
                     return false;
+                if (setValues[n] == INHERIT_VALUE)
+                    setValues[n] = handle[n];
             }
 
             if (handle.length != type.size) {
@@ -222,6 +227,12 @@ public class Path implements Iterable<float[]> {
             if (type == PointInterpreter.PointType.RIVER_2D && !validateRiver2D(handle))
                 okay = false;
         }
+
+        if (handles.size() != 0)
+            for (int n = 0; n < type.size; n++) {
+                if (setValues[n] == INHERIT_VALUE)
+                    okay = false;
+            }
         return okay;
     }
 

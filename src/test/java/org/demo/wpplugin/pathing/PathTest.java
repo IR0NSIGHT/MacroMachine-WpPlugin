@@ -1,5 +1,6 @@
 package org.demo.wpplugin.pathing;
 
+import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
@@ -8,13 +9,28 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 import static org.demo.wpplugin.pathing.PointUtils.setPosition2D;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PathTest {
+    private Path newFilledPath(int length) {
+        return newFilledPath(length, PointInterpreter.PointType.POSITION_2D);
+    }
+
+    private Path newFilledPath(int length, PointInterpreter.PointType type) {
+        Path p = new Path(Collections.EMPTY_LIST, type);
+        for (int i = 0; i < length; i++) {
+            float[] newHandle = new float[type.size];
+            newHandle[0] = 3 * i;
+            newHandle[1] = 4 * i;
+            p = p.addPoint(newHandle.clone());
+        }
+        return p;
+    }
+
     @Test
     void clonePath() {
         Path p = newFilledPath(4, RIVER_2D);
@@ -31,24 +47,13 @@ class PathTest {
         assertEquals(p, clone);
 
         float[] newHandle = someHandle.clone();
-        newHandle = setValue(newHandle, RIVER_RADIUS, 127);
+        newHandle = setValue(newHandle, RIVER_RADIUS, getValue(newHandle, RIVER_RADIUS) + 1);
         assertNotSame(newHandle, someHandle);
         p = p.setHandleByIdx(newHandle, idx);
         assertArrayEquals(p.handleByIndex(idx), newHandle);
         assertNotSame(p, clone);
         assertNotEquals(p, clone);
 
-    }
-
-    private Path newFilledPath(int length, PointInterpreter.PointType type) {
-        Path p = new Path(Collections.EMPTY_LIST, type);
-        for (int i = 0; i < length; i++) {
-            float[] newHandle = new float[type.size];
-            newHandle[0] = 3 * i;
-            newHandle[1] = 4 * i;
-            p = p.addPoint(newHandle.clone());
-        }
-        return p;
     }
 
     @Test
@@ -77,10 +82,6 @@ class PathTest {
         Path newEmpty = path.newEmpty();
         assertEquals(0, newEmpty.amountHandles());
         assertTrue(newEmpty.continousCurve().isEmpty());
-    }
-
-    private Path newFilledPath(int length) {
-        return newFilledPath(length, PointInterpreter.PointType.POSITION_2D);
     }
 
     @Test
@@ -119,7 +120,8 @@ class PathTest {
         Path moved = path.movePoint(oldHandle, newHandle);
 
         assertEquals(length, moved.amountHandles(), "new path has a different length after shifting a point");
-        assertArrayEquals(newHandle, moved.handleByIndex(length / 2), "the shifted point is not where its supposed to" + " be");
+        assertArrayEquals(newHandle, moved.handleByIndex(length / 2), "the shifted point is not where its supposed to" +
+                " be");
     }
 
     @Test
@@ -224,6 +226,9 @@ class PathTest {
             assertEquals(37, curveP.get(curvePointIdx).y, "Point " + curveP.get(curvePointIdx));
 
             curvePointIdx++;
+        }
+        for (float[] point : curve) {
+            System.out.println("#".repeat(Math.round(getValue(point, RIVER_RADIUS))));
         }
     }
 

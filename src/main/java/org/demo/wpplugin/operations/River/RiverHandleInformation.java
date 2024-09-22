@@ -46,6 +46,13 @@ public class RiverHandleInformation {
         return new float[]{x, y, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE};
     }
 
+    public static float[] positionInformation(int x, int y, PointInterpreter.PointType type) {
+        float[] point = new float[type.size];
+        point[0] = x;
+        point[1] = y;
+        return point;
+    }
+
     public static boolean validateRiver2D(float[] handle) {
         if (handle.length != PointInterpreter.PointType.RIVER_2D.size) {
             return false;

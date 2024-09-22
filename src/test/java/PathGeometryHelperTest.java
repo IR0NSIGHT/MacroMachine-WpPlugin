@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.awt.*;
 import java.util.*;
 
+import static org.demo.wpplugin.pathing.PointInterpreter.PointType.POSITION_2D;
 import static org.demo.wpplugin.pathing.PointUtils.point2DfromNVectorArr;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 import static org.demo.wpplugin.pathing.Path.curveIsContinous;
@@ -18,15 +19,15 @@ public class PathGeometryHelperTest {
     @Test
     public void testPathGeometry() {
         // Arrange
-        Path p = new Path(Arrays.asList(RiverHandleInformation.riverInformation(0,0),
+        Path p = new Path(Arrays.asList(RiverHandleInformation.positionInformation(0,0, POSITION_2D),
 
-                RiverHandleInformation.riverInformation(0, 0),
-                RiverHandleInformation.riverInformation(-2, 5),
-                RiverHandleInformation.riverInformation(4, 4),
-                RiverHandleInformation.riverInformation(5, 5),
-                RiverHandleInformation.riverInformation(155, -255),
-                RiverHandleInformation.riverInformation(-9, 9)
-        ), PointInterpreter.PointType.RIVER_2D);
+                RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(-2, 5, POSITION_2D),
+                RiverHandleInformation.positionInformation(4, 4, POSITION_2D),
+                RiverHandleInformation.positionInformation(5, 5, POSITION_2D),
+                RiverHandleInformation.positionInformation(155, -255, POSITION_2D),
+                RiverHandleInformation.positionInformation(-9, 9, POSITION_2D)
+        ), POSITION_2D);
         PathGeometryHelper o = new PathGeometryHelper(p, p.continousCurve(), 0);
 
         // Act
@@ -79,15 +80,13 @@ public class PathGeometryHelperTest {
     @Test
     public void parentageTest() {
         // Arrange
-        Path p = new Path(Arrays.asList(RiverHandleInformation.riverInformation(0, 0),
-                RiverHandleInformation.riverInformation(0, 0),
-                RiverHandleInformation.riverInformation(10, 0),
-                RiverHandleInformation.riverInformation(20, 0),
-                RiverHandleInformation.riverInformation(30, 0),
-                RiverHandleInformation.riverInformation(40, 0)
-
-
-        ), PointInterpreter.PointType.RIVER_2D);
+        Path p = new Path(Arrays.asList(RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(10, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(20, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(30, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(40, 0, POSITION_2D)
+        ), POSITION_2D);
         double radius = 5;
         ArrayList<Point> curve = point2DfromNVectorArr(p.continousCurve());
         PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(), radius);
@@ -104,13 +103,13 @@ public class PathGeometryHelperTest {
         int size = 1000;
         // Arrange
         Path p = new Path(Arrays.asList(
-                RiverHandleInformation.riverInformation(-1, 0),
-                RiverHandleInformation.riverInformation(0, 0),
-                RiverHandleInformation.riverInformation(size, 0),
-                RiverHandleInformation.riverInformation(2 * size, 0),
-                RiverHandleInformation.riverInformation(3 * size, 0),
-                RiverHandleInformation.riverInformation(3 * size + 1, 0)
-        ), PointInterpreter.PointType.RIVER_2D);
+                RiverHandleInformation.positionInformation(-1, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(size, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(2 * size, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(3 * size, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(3 * size + 1, 0, POSITION_2D)
+        ), POSITION_2D);
         ArrayList<float[]> curveF = p.continousCurve();
         ArrayList<Point> curve = point2DfromNVectorArr(curveF);
         assert curveIsContinous(curveF);
@@ -134,13 +133,13 @@ public class PathGeometryHelperTest {
     @Test
     public void treeBoundingBoxTest() {
         Path p = new Path(Arrays.asList(
-                RiverHandleInformation.riverInformation(-1, 0),
-                RiverHandleInformation.riverInformation(0, 0),
-                RiverHandleInformation.riverInformation(500, 500),
-                RiverHandleInformation.riverInformation(-500, 500),
-                RiverHandleInformation.riverInformation(250, 250),
-                RiverHandleInformation.riverInformation(500, -250)
-        ), PointInterpreter.PointType.RIVER_2D);
+                RiverHandleInformation.positionInformation(-1, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(500, 500, POSITION_2D),
+                RiverHandleInformation.positionInformation(-500, 500, POSITION_2D),
+                RiverHandleInformation.positionInformation(250, 250, POSITION_2D),
+                RiverHandleInformation.positionInformation(500, -250, POSITION_2D)
+        ), POSITION_2D);
 
         Collection<AxisAlignedBoundingBox2d> boxes =
                 PointUtils.toBoundingBoxes(point2DfromNVectorArr(p.continousCurve()), 100, 50);
@@ -158,18 +157,18 @@ public class PathGeometryHelperTest {
     @Test
     public void treeBoundingBoxCollectIds() {
         Path p = new Path(Arrays.asList(
-                RiverHandleInformation.riverInformation(-1, 0),
-                RiverHandleInformation.riverInformation(0, 0),
-                RiverHandleInformation.riverInformation(500, 500),
-                RiverHandleInformation.riverInformation(-500, 500),
-                RiverHandleInformation.riverInformation(250, 250),
-                RiverHandleInformation.riverInformation(500, -250),
-                RiverHandleInformation.riverInformation(1000, 1000),
-                RiverHandleInformation.riverInformation(1000, -1000),
-                RiverHandleInformation.riverInformation(1000, -1001),
-                RiverHandleInformation.riverInformation(0, 0),
-                RiverHandleInformation.riverInformation(1, 1)
-        ), PointInterpreter.PointType.RIVER_2D);
+                RiverHandleInformation.positionInformation(-1, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(500, 500, POSITION_2D),
+                RiverHandleInformation.positionInformation(-500, 500, POSITION_2D),
+                RiverHandleInformation.positionInformation(250, 250, POSITION_2D),
+                RiverHandleInformation.positionInformation(500, -250, POSITION_2D),
+                RiverHandleInformation.positionInformation(1000, 1000, POSITION_2D),
+                RiverHandleInformation.positionInformation(1000, -1000, POSITION_2D),
+                RiverHandleInformation.positionInformation(1000, -1001, POSITION_2D),
+                RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(1, 1, POSITION_2D)
+        ), POSITION_2D);
 
         Collection<AxisAlignedBoundingBox2d> boxes =
                 PointUtils.toBoundingBoxes(point2DfromNVectorArr(p.continousCurve()), 100, 50);
