@@ -46,21 +46,76 @@ public class Path implements Iterable<float[]> {
         return true;
     }
 
-    public static float[] interpolateHandles(float[] handles, int[] curveIdxByHandle) {
+    /**
+     * will prepare handles array so that it can be interpolated.
+     *
+     * @param handles
+     * @param emptyMarker use this value to decide if a value in handle is "empty"
+     * @return new array with set handles
+     * @requires at least one handle value is set
+     * @ensures first two and last two values are set, therefor all others can be interpolated
+     */
+    public static float[] prepareEmptyHandlesForInterpolation(float[] handles, float emptyMarker) {
+        handles = handles.clone();
         if (handles.length < 4) {
-            return handles;
+            throw new IllegalArgumentException("at least 4 handles are required for interpolation");
         }
 
-        //manually: copy values of first and last handle to second and second last, to allow inteprolation along
-        // comelte curve
-        if (handles[0] != INHERIT_VALUE && handles[1] == INHERIT_VALUE) {
-            handles[1] = handles[0];
+        //count how many handles are not empty, remember first and last handle
+        int setHandles = 0;
+        float firstHandle = emptyMarker;
+        float lastHandle = emptyMarker;
+        for (float handle : handles) {
+            if (handle != emptyMarker) {
+                setHandles++;
+                if (firstHandle == emptyMarker)
+                    firstHandle = handle;
+                else
+                    lastHandle = handle;
+            }
         }
-        if (handles[handles.length - 1] != INHERIT_VALUE && handles[handles.length - 2] == INHERIT_VALUE) {
-            handles[handles.length - 2] = handles[handles.length - 1];
+        switch (setHandles) {
+            case 0:
+                throw new IllegalArgumentException("at least one value must be set in handles array to allow " +
+                        "interpolation");
+            case 1:
+                lastHandle = firstHandle;
+            case 2:
+            default: {
+                //we set the first two and last to values if they arent set already
+                handles[0] = handles[0] == emptyMarker ? firstHandle : handles[0];
+                handles[1] = handles[1] == emptyMarker ? firstHandle : handles[1];
+                int idx = handles.length - 1;
+                handles[idx] = handles[idx] == emptyMarker ? lastHandle : handles[idx];
+                idx = handles.length - 2;
+                handles[idx] = handles[idx] == emptyMarker ? lastHandle : handles[idx];
+                break;
+            }
         }
-        float[] outHandles = handles.clone();
 
+        assert canBeInterpolated(handles);
+        return handles;
+    }
+
+    public static boolean canBeInterpolated(float[] handles) {
+        return handles.length >= 4 &&
+                handles[0] != INHERIT_VALUE && handles[1] != INHERIT_VALUE &&
+                handles[handles.length - 1] != INHERIT_VALUE && handles[handles.length - 2] != INHERIT_VALUE;
+    }
+
+    /**
+     * fill take a handle array with unknown values and return one where all values are know/interpolated
+     *
+     * @param handles
+     * @param curveIdxByHandle array where arr[handleIdx] = startIdx on curve
+     * @return
+     * @requires handles array needs to be interpolatable -> first two and last two values MUST be set
+     */
+    public static float[] interpolateHandles(float[] handles, int[] curveIdxByHandle) {
+        assert handles.length == curveIdxByHandle.length : "both arrays must be the same length as the represent the " +
+                "same curveHandles";
+        assert canBeInterpolated(handles);
+        handles = prepareEmptyHandlesForInterpolation(handles, INHERIT_VALUE);
         //collect a map of all handles that are NOT interpolated and carry values
         int amountHandlesWithValues = 0;
         for (int i = 0; i < handles.length; i++)
@@ -74,6 +129,8 @@ public class Path implements Iterable<float[]> {
                 if (handles[i] != INHERIT_VALUE)
                     setValueIdcs[setValueIdx++] = i;
         }
+
+        float[] outHandles = handles.clone();
 
         for (int i = 0; i < setValueIdcs.length - 3; i++) {
             //interpolate all unknown handles within the segment ranging from B to C
@@ -138,7 +195,8 @@ public class Path implements Iterable<float[]> {
                 previousPoint = point;
                 result.add(previousPoint);
                 assert getPositionalDistance(point, previousPoint,
-                        RiverHandleInformation.PositionSize.SIZE_2_D.value) <= Math.sqrt(2) + 0.01f: "distance between curvepoints is to large:"+getPositionalDistance(point, previousPoint,
+                        RiverHandleInformation.PositionSize.SIZE_2_D.value) <= Math.sqrt(2) + 0.01f : "distance " +
+                        "between curvepoints is to large:" + getPositionalDistance(point, previousPoint,
                         RiverHandleInformation.PositionSize.SIZE_2_D.value);
             }
         }
@@ -276,13 +334,18 @@ public class Path implements Iterable<float[]> {
         int[] handleToCurveIdx = this.handleToCurveIdx();
         //fill handles that are marked as "to be interpolated"
         for (int n = 2; n < this.type.size; n++) {
+            //prepare array
             float[] informationArr = new float[handles.size()];
             for (int i = 0; i < handles.size(); i++) {
                 informationArr[i] = handles.get(i)[n];
             }
-            informationArr = interpolateHandles(informationArr, handleToCurveIdx);
+            //interpolate
+            float[] nthHandles = prepareEmptyHandlesForInterpolation(informationArr, INHERIT_VALUE);
+            informationArr = interpolateHandles(nthHandles, handleToCurveIdx);
+            //copy back array
             for (int i = 0; i < handles.size(); i++) {
                 handles.get(i)[n] = informationArr[i];
+                assert informationArr[i] != INHERIT_VALUE;
             }
         }
         return continousCurveFromHandles(handles);

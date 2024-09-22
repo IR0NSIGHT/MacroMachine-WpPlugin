@@ -226,4 +226,91 @@ class PathTest {
             curvePointIdx++;
         }
     }
+
+    @Test
+    void prepareEmptyHandlesForInterpolation() {
+        float[] incompleteHandles;
+        float[] completeHandles;
+        float[] expectedHandles;
+
+        //only one is set
+        incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, 7, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE};
+        completeHandles = Path.prepareEmptyHandlesForInterpolation(incompleteHandles, INHERIT_VALUE);
+        expectedHandles = new float[]{7, 7, 7, INHERIT_VALUE, 7, 7};
+        assertArrayEquals(expectedHandles, completeHandles);
+
+        //two are set
+        incompleteHandles = new float[]{5, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 7};
+        completeHandles = Path.prepareEmptyHandlesForInterpolation(incompleteHandles, INHERIT_VALUE);
+        expectedHandles = new float[]{5, 5, INHERIT_VALUE, 7, 7};
+        assertArrayEquals(expectedHandles, completeHandles);
+
+        //two are set but in wierd positions
+        incompleteHandles = new float[]{INHERIT_VALUE, 5, 7, INHERIT_VALUE, INHERIT_VALUE};
+        completeHandles = Path.prepareEmptyHandlesForInterpolation(incompleteHandles, INHERIT_VALUE);
+        expectedHandles = new float[]{5, 5, 7, 7, 7};
+        assertArrayEquals(expectedHandles, completeHandles);
+
+        //three or more are set but the first and last two are missing
+        incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, 5, INHERIT_VALUE, 6, INHERIT_VALUE, 7,
+                INHERIT_VALUE, 8,
+                INHERIT_VALUE, 9, INHERIT_VALUE, 10, INHERIT_VALUE, INHERIT_VALUE};
+        completeHandles = Path.prepareEmptyHandlesForInterpolation(incompleteHandles, INHERIT_VALUE);
+        expectedHandles = new float[]{5, 5, 5, INHERIT_VALUE, 6, INHERIT_VALUE, 7, INHERIT_VALUE, 8,
+                INHERIT_VALUE, 9, INHERIT_VALUE, 10, 10, 10};
+        assertArrayEquals(expectedHandles, completeHandles);
+
+
+        {        //not a single value is known
+            incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE,
+                    INHERIT_VALUE};
+            float[] finalIncompleteHandles = incompleteHandles;
+            assertThrows(IllegalArgumentException.class,
+                    () -> Path.prepareEmptyHandlesForInterpolation(finalIncompleteHandles, INHERIT_VALUE));
+        }
+
+        {    //handles are not long enough
+            incompleteHandles = new float[]{1, 2, 3};
+            float[] finalIncompleteHandles = incompleteHandles;
+            assertThrows(IllegalArgumentException.class,
+                    () -> Path.prepareEmptyHandlesForInterpolation(finalIncompleteHandles, INHERIT_VALUE));
+        }
+    }
+
+    @Test
+    void interpolateHandles() {
+        float[] incompleteHandles;
+        int[] curveByHandleIdx = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+        float[] completeHandles;
+        float[] expectedHandles;
+
+        //simplest flat
+        incompleteHandles = new float[]{1, 1, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE,
+                INHERIT_VALUE, INHERIT_VALUE, 1, 1};
+        assertTrue(Path.canBeInterpolated(incompleteHandles));
+        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx);
+        expectedHandles = new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+        assertArrayEquals(expectedHandles, completeHandles, 0.01f);
+
+        //minimum length
+        incompleteHandles = new float[]{1, 4, 7, 19};
+        curveByHandleIdx = new int[]{0, 1, 2, 3};
+        assertTrue(Path.canBeInterpolated(incompleteHandles));
+        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx);
+        expectedHandles = new float[]{1, 4, 7, 19};
+        assertArrayEquals(expectedHandles, completeHandles, 0.01f);
+
+        //classic 4 point interpolation that satisfys convex hull property
+        incompleteHandles = new float[]{10, 10, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 3, 3};
+        curveByHandleIdx = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
+        assertTrue(Path.canBeInterpolated(incompleteHandles));
+        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx);
+        expectedHandles = new float[]{1, 4, 7, 19};
+
+        for (int i = 2; i < incompleteHandles.length - 2; i++) {
+            //satisfies convex hull property
+            assertTrue(completeHandles[i] < 10);
+            assertTrue(completeHandles[i] > 3);
+        }
+    }
 }
