@@ -10,6 +10,7 @@ import java.util.LinkedList;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
+import static org.demo.wpplugin.pathing.PointInterpreter.PointType.POSITION_2D;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 import static org.demo.wpplugin.pathing.PointUtils.setPosition2D;
@@ -317,5 +318,23 @@ class PathTest {
             assertTrue(completeHandles[i] < 10);
             assertTrue(completeHandles[i] > 3);
         }
+    }
+
+    @Test
+    void handleToCurveIdx() {
+        Path p = new Path(Collections.EMPTY_LIST, PointInterpreter.PointType.POSITION_2D);
+        p = p.addPoint(positionInformation(10,10, POSITION_2D));
+        //+0
+        p = p.addPoint(positionInformation(20,10, POSITION_2D));
+        //+30
+        p = p.addPoint(positionInformation(50,10, POSITION_2D));
+        //+50
+        p = p.addPoint(positionInformation(100,10, POSITION_2D));
+        //+0
+        p = p.addPoint(positionInformation(110,10, POSITION_2D));
+
+        int[] handleTOCurve = p.handleToCurveIdx();
+        assertEquals(handleTOCurve.length, p.amountHandles());
+        assertArrayEquals(new int[]{0,0,30,80,80}, handleTOCurve);
     }
 }

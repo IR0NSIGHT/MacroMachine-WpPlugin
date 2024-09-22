@@ -17,10 +17,18 @@ public class CubicBezierSpline {
     public static float[] calculateCubicBezier(float startPoint, float handle0, float handle1, float endPoint,
                                                int numPoints) {
         float[] points = new float[numPoints];
+        boolean startPointPresent = false;
+        boolean endPointPresent = false;
         for (int i = 0; i < numPoints; i++) {
-            float t = (float) i / numPoints;
+            float t = (float) i / (numPoints-1);
             points[i] = calcuateCubicBezier(startPoint, handle0, handle1, endPoint, t);
+            if (Math.round(points[i]) == Math.round(startPoint))
+                startPointPresent = true;
+            if (Math.round(points[i]) == Math.round(endPoint))
+                endPointPresent = true;
         }
+        assert startPointPresent;
+        assert endPointPresent;
         return points;
     }
 
@@ -59,7 +67,7 @@ public class CubicBezierSpline {
         //prepare output array of n-vectors
         int pointsInCurve = (int)(estimateCurveSize(A,B,C,D, positionDigits)*2);
         float[][] path = new float[pointsInCurve][];
-        for (int i = 0; i < pointsInCurve; i++) {
+        for (int i = 0; i < path.length; i++) {
             path[i] = new float[vectorSize];    //new n-vector
         }
 
@@ -68,7 +76,7 @@ public class CubicBezierSpline {
 
         for (int n = 0; n < vectorSize; n++) {
             float[] nThPositionCurve = calculateCubicBezier(B[n], handle1p[n], handle2P[n], C[n], pointsInCurve);
-            for (int i = 0; i < pointsInCurve; i++) {
+            for (int i = 0; i < nThPositionCurve.length; i++) {
                 path[i][n] = nThPositionCurve[i];
                 if (Float.isNaN(nThPositionCurve[i]))
                     System.out.println("NaN");

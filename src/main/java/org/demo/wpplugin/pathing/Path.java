@@ -177,7 +177,6 @@ public class Path implements Iterable<float[]> {
                     RiverHandleInformation.PositionSize.SIZE_2_D.value);
             curvePoints.addAll(Arrays.asList(curveSegment));
         }
-        //FIXME reactivate    assert curveIsContinous(curvePoints) : "path has gaps inbetween";
 
         if (curvePoints.isEmpty())
             return new ArrayList<>(0);
@@ -203,6 +202,11 @@ public class Path implements Iterable<float[]> {
         }
         result.trimToSize();
         assert curveIsContinous(result);
+        ArrayList pointResult = point2DfromNVectorArr(result);
+        for (int i = 1; i < handles.size()-1; i++) {
+            Point handlePoint = getPoint2D(handles.get(i));
+            assert pointResult.contains(handlePoint) : "handle not in curve" + handlePoint;
+        }
         return result;
     }
 
