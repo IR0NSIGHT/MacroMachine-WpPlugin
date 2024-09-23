@@ -17,18 +17,14 @@ public class CubicBezierSpline {
     public static float[] calculateCubicBezier(float startPoint, float handle0, float handle1, float endPoint,
                                                int numPoints) {
         float[] points = new float[numPoints];
-        boolean startPointPresent = false;
-        boolean endPointPresent = false;
+        float tDelta = 1f / (numPoints-1);
         for (int i = 0; i < numPoints; i++) {
-            float t = (float) i / (numPoints-1);
+            float t = tDelta * i;
             points[i] = calcuateCubicBezier(startPoint, handle0, handle1, endPoint, t);
-            if (Math.round(points[i]) == Math.round(startPoint))
-                startPointPresent = true;
-            if (Math.round(points[i]) == Math.round(endPoint))
-                endPointPresent = true;
         }
-        assert startPointPresent;
-        assert endPointPresent;
+
+        assert numPoints == 0 || Math.round(points[0]) == Math.round(startPoint);
+        assert numPoints <= 1 || Math.round(points[points.length-1]) == Math.round(endPoint);
         return points;
     }
 
