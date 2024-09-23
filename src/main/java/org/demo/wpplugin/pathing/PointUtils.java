@@ -5,6 +5,7 @@ import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 
 import java.awt.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -114,6 +115,16 @@ public class PointUtils {
         }
         dist = (float) Math.sqrt(dist);
         return dist;
+    }
+
+    public static ArrayList<float[]> toPosition2DArray(ArrayList<float[]> points) {
+        ArrayList<float[]> result = new ArrayList<>(points.size());
+        for (int i = 0; i < points.size(); i++) {
+            float[] point = points.get(i);
+            float[] point2D =  RiverHandleInformation.positionInformation(point[0], point[1], PointInterpreter.PointType.POSITION_2D);
+            result.add(point2D);
+        }
+        return result;
     }
 
     public static float getPositionalDistance(float[] pointA, float[] pointB, int positionDigits) {

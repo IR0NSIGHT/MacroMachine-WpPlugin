@@ -16,6 +16,7 @@ import static org.demo.wpplugin.operations.ApplyPath.ApplyRiverOperation.angleOf
 import static org.demo.wpplugin.operations.EditPath.EditPathOperation.*;
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
+import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 import static org.demo.wpplugin.pathing.PointUtils.markLine;
 
@@ -32,9 +33,17 @@ public class RiverHandleInformation {
         return out;
     }
 
-    public static float[] riverInformation(int x, int y, float riverRadius, float riverDepth, int beachRadius,
-                                           int transitionRadius) {
-        return new float[]{x, y, riverRadius, riverDepth, beachRadius, transitionRadius};
+    public static float[] riverInformation(int x, int y, float riverRadius, float riverDepth, float beachRadius,
+                                           float transitionRadius, float waterZ) {
+        float[] out = new float[RIVER_2D.size];
+        out[0] = x;
+        out[1] = y;
+        out = setValue(out, RiverInformation.RIVER_RADIUS, riverRadius);
+        out = setValue(out, RiverInformation.RIVER_DEPTH, riverDepth);
+        out = setValue(out, RiverInformation.BEACH_RADIUS, beachRadius);
+        out = setValue(out, RiverInformation.TRANSITION_RADIUS, transitionRadius);
+        out = setValue(out, RiverInformation.WATER_Z, waterZ);
+        return out;
     }
 
     /**
@@ -43,10 +52,10 @@ public class RiverHandleInformation {
      * @return a handle with given position and the rest of meta values set to INHERIT
      */
     public static float[] riverInformation(int x, int y) {
-        return new float[]{x, y, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE};
+        return riverInformation(x, y, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE);
     }
 
-    public static float[] positionInformation(int x, int y, PointInterpreter.PointType type) {
+    public static float[] positionInformation(float x, float y, PointInterpreter.PointType type) {
         float[] point = new float[type.size];
         point[0] = x;
         point[1] = y;
@@ -54,7 +63,7 @@ public class RiverHandleInformation {
     }
 
     public static boolean validateRiver2D(float[] handle) {
-        if (handle.length != PointInterpreter.PointType.RIVER_2D.size) {
+        if (handle.length != RIVER_2D.size) {
             return false;
         }
         for (RiverInformation information : RiverInformation.values()) {
@@ -85,7 +94,7 @@ public class RiverHandleInformation {
     }
 
     public static void DrawRiverPath(Path path, PaintDimension dim, int selectedIdx) throws IllegalAccessException {
-        if (path.type != PointInterpreter.PointType.RIVER_2D)
+        if (path.type != RIVER_2D)
             throw new IllegalArgumentException("path is not river: " + path.type);
         ArrayList<float[]> curve = path.continousCurve();
         int[] curveIdxHandles = path.handleToCurveIdx();
@@ -102,7 +111,7 @@ public class RiverHandleInformation {
         }
 
 
-        for (int i = 1; i < curve.size()-1; i++) {
+        for (int i = 1; i < curve.size() - 1; i++) {
             float[] p = curve.get(i);
             int color = startIdx < i && i < endIdx ? DemoLayerRenderer.Dark_Cyan : COLOR_CURVE;
             PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
@@ -111,8 +120,8 @@ public class RiverHandleInformation {
                 float radius = getValue(p, info);
                 Point curvePointP = getPoint2D(p);
 
-                int tangentX = Math.round(curve.get(i+1)[0]-curve.get(i-1)[0]);
-                int tangentY =  Math.round(curve.get(i+1)[1]-curve.get(i-1)[1]);
+                int tangentX = Math.round(curve.get(i + 1)[0] - curve.get(i - 1)[0]);
+                int tangentY = Math.round(curve.get(i + 1)[1] - curve.get(i - 1)[1]);
                 double tangentAngle = angleOf(tangentX, tangentY);
 
                 int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
@@ -122,7 +131,7 @@ public class RiverHandleInformation {
                 x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(-90)));
                 y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(-90)));
                 dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
-                color = color+1%15;
+                color = color + 1 % 15;
             }
         }
 
@@ -146,11 +155,11 @@ public class RiverHandleInformation {
     }
 
     public enum RiverInformation {
-        RIVER_RADIUS(0, "river radius", "radius of the river ", 0, 100),
-        RIVER_DEPTH(1, "river depth", "depth of the river ", 0, 100),
-        BEACH_RADIUS(2, "beach radius", "radius of the beach ", 0, 100),
-        TRANSITION_RADIUS(3, "transition radius", "radius of the transition blending with original terrain ", 0, 100),
-        ;
+        RIVER_RADIUS(0, "river radius", "radius of the river ", 0, 1000),
+        RIVER_DEPTH(1, "river depth", "depth of the river ", 0, 1000),
+        BEACH_RADIUS(2, "beach radius", "radius of the beach ", 0, 1000),
+        TRANSITION_RADIUS(3, "transition radius", "radius of the transition blending with original terrain ", 0, 1000),
+        WATER_Z(4, "water level", "water level position on z axis", 0, 1000);
         public final int idx;
         public final String displayName;
         public final String toolTip;

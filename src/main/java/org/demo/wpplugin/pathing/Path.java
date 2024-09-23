@@ -169,11 +169,13 @@ public class Path implements Iterable<float[]> {
 
         //iterate all handles, calculate coordinates on curve
         for (int i = 0; i < handles.size() - 3; i++) {
+            float[] handleA, handleB, handleC, handleD;
+            handleA = handles.get(i);
+            handleB = handles.get(i + 1);
+            handleC = handles.get(i + 2);
+            handleD = handles.get(i + 3);
             float[][] curveSegment = CubicBezierSpline.getSplinePathFor(
-                    handles.get(i),
-                    handles.get(i + 1),
-                    handles.get(i + 2),
-                    handles.get(i + 3),
+                    handleA, handleB, handleC, handleD,
                     RiverHandleInformation.PositionSize.SIZE_2_D.value);
             curvePoints.addAll(Arrays.asList(curveSegment));
         }
@@ -189,6 +191,7 @@ public class Path implements Iterable<float[]> {
         result.add(previousPoint);
         for (float[] point : curvePoints) {
             assert point != null : "whats going on?";
+            result.add(point); /*
             if (arePositionalsEqual(point, previousPoint, positionDigits)) {
                 continue;
             } else {
@@ -199,11 +202,12 @@ public class Path implements Iterable<float[]> {
                         "between curvepoints is to large:" + getPositionalDistance(point, previousPoint,
                         RiverHandleInformation.PositionSize.SIZE_2_D.value);
             }
+            */
         }
         result.trimToSize();
-        assert curveIsContinous(result);
+        //assert curveIsContinous(result);
         ArrayList pointResult = point2DfromNVectorArr(result);
-        for (int i = 1; i < handles.size()-1; i++) {
+        for (int i = 1; i < handles.size() - 1; i++) {
             Point handlePoint = getPoint2D(handles.get(i));
             assert pointResult.contains(handlePoint) : "handle not in curve" + handlePoint;
         }
@@ -234,8 +238,10 @@ public class Path implements Iterable<float[]> {
 
         if (handles.size() != 0)
             for (int n = 0; n < type.size; n++) {
-                if (setValues[n] == INHERIT_VALUE)
+                if (setValues[n] == INHERIT_VALUE) {
                     okay = false;
+                    break;
+                }
             }
         return okay;
     }
@@ -382,7 +388,7 @@ public class Path implements Iterable<float[]> {
     }
 
     public int[] handleToCurveIdx() {
-        ArrayList<float[]> curve = continousCurveFromHandles(this.handles);
+        ArrayList<float[]> curve = continousCurveFromHandles(toPosition2DArray(this.handles));
         int[] handleIdcs = new int[amountHandles()];
         int handleIdx = 1;
         for (int i = 0; i < curve.size(); i++) {

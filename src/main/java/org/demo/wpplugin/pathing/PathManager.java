@@ -13,13 +13,13 @@ public class PathManager {
     public PathManager() {
         int i = 100;
         addPath(new Path(Arrays.asList(
-                RiverHandleInformation.riverInformation(i*-1-50, i, 3, 2,3,20),
+                RiverHandleInformation.riverInformation(i*-1-50, i, 3, 2,3,20,62),
                 RiverHandleInformation.riverInformation(i*-1, i),
                 RiverHandleInformation.riverInformation(i*-0, -i),
                 RiverHandleInformation.riverInformation(i*1, i),
                 RiverHandleInformation.riverInformation(i*2, -i),
                 RiverHandleInformation.riverInformation(i*3, i),
-                RiverHandleInformation.riverInformation(i*3+50, i,7,4,10,0)
+                RiverHandleInformation.riverInformation(i*3+50, i,7,4,10,0,62)
                 ), PointInterpreter.PointType.RIVER_2D));
     }
 
