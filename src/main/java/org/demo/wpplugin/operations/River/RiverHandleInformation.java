@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 import static org.demo.wpplugin.operations.ApplyPath.ApplyRiverOperation.angleOf;
 import static org.demo.wpplugin.operations.EditPath.EditPathOperation.*;
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 import static org.demo.wpplugin.pathing.PointUtils.markLine;
@@ -79,7 +79,7 @@ public class RiverHandleInformation {
         OptionsLabel[] options = new OptionsLabel[RiverInformation.values().length];
         int i = 0;
         for (RiverInformation information : RiverInformation.values()) {
-            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), INHERIT_VALUE, 100, 1f);
+            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), INHERIT_VALUE, information.max, 1f);
 
             options[i++] = numericInput(information.displayName,
                     information.toolTip,
@@ -116,7 +116,7 @@ public class RiverHandleInformation {
             int color = startIdx < i && i < endIdx ? DemoLayerRenderer.Dark_Cyan : COLOR_CURVE;
             PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
 
-            for (RiverInformation info : RiverInformation.values()) {
+            for (RiverInformation info : new RiverInformation[]{RIVER_RADIUS, BEACH_RADIUS, TRANSITION_RADIUS}) {
                 float radius = getValue(p, info);
                 Point curvePointP = getPoint2D(p);
 

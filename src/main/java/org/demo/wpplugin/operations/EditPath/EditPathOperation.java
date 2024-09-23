@@ -25,8 +25,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
-import static org.demo.wpplugin.pathing.Path.interpolateHandles;
 import static org.demo.wpplugin.pathing.PointUtils.*;
 
 /**
@@ -76,8 +74,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
-    static final String DESCRIPTION = "<html>Draw smooth, connected curves with C1 continuity.<br>left click: add new point " +
-            "after selected<br>right click: delete selected<br>ctrl+click: select this handle<br>shift+click: move selected" +
+    static final String DESCRIPTION = "<html>Draw smooth, connected curves with C1 continuity.<br>left click: add new" +
+            " point " +
+            "after selected<br>right click: delete selected<br>ctrl+click: select this handle<br>shift+click: move " +
+            "selected" +
             " handle here</html>";
     //update path
     public static int PATH_ID = 1;
@@ -182,12 +182,12 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         EditPathOperation.PATH_ID = getSelectedPathId();
 
         float[] userClickedCoord = RiverHandleInformation.riverInformation(centreX, centreY);
+        if (path.type == PointInterpreter.PointType.RIVER_2D)
+            setValue(userClickedCoord, RiverInformation.WATER_Z, getDimension().getHeightAt(centreX, centreY));
+
         assert getSelectedPoint() != null;
 
-        if (getSelectedPoint() == null) {
-            overwriteSelectedPath(path.addPoint(userClickedCoord));
-            setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
-        } else if (ctrlDown) {
+        if (ctrlDown) {
             //SELECT POINT
             try {
                 if (path.amountHandles() != 0) {

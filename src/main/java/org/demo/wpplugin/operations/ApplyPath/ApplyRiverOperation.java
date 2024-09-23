@@ -2,8 +2,6 @@ package org.demo.wpplugin.operations.ApplyPath;
 
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.KernelConvolution;
-import org.demo.wpplugin.geometry.PaintDimension;
-import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
@@ -105,7 +103,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
     }
 
     public static void applyRiverPath(Path path, ApplyPathOptions options, HeightDimension dimension,
-                                      PaintDimension paintDimension) {
+                                      HeightDimension waterMap) {
         ArrayList<float[]> curve = path.continousCurve();
         float randomPercent = (float) options.getRandomFluctuate() / 100f;
         float[] randomEdge = randomEdge(curve.size());
@@ -140,9 +138,10 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
             double riverRadius = getValue(curvePointF, RIVER_RADIUS) * (1 + randomFluxAtIdx * randomPercent);
             double beachRadius = getValue(curvePointF, BEACH_RADIUS);
             double transitionRadius = getValue(maxHandleValues, TRANSITION_RADIUS); //FIXME has to be fixed at max
+            float waterHeight = getValue(curvePointF, WATER_Z);
+
             // Transition, becuase the gauss smoother can only do one value
 
-            float beachHeight = 62; //base height of the river. riverDepth = 1 <=> beachHeight-1
 
             //FIXME: parentage is problematic: clostest point doenst guarentee to be the right parent on rivers that
             // grow fast and are very curvy
@@ -153,11 +152,14 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
                 if (distance < riverRadius) {
                     applyStrengthMap.put(point, 1f);
                     finalHeightmap.put(point,
-                            beachHeight + riverDepthByDistance.apply(new float[]{getValue(curvePointF, RIVER_DEPTH),
+                            waterHeight + riverDepthByDistance.apply(new float[]{getValue(curvePointF, RIVER_DEPTH),
                                     (float) distance, (float) riverRadius}));
+                    waterMap.setHeight(point.x,point.y,waterHeight);
                 } else if (distance - riverRadius <= beachRadius) {
-                    finalHeightmap.put(point, beachHeight);
+                    finalHeightmap.put(point, waterHeight);
                     applyStrengthMap.put(point, 1f);
+                    waterMap.setHeight(point.x,point.y,waterHeight);
+
                 } else if (distance - riverRadius - beachRadius <= transitionRadius) {
                     if (distance - riverRadius - beachRadius <= transitionRadius / 2f)
                         applyStrengthMap.put(point, 1f);
@@ -168,7 +170,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
                             (float) point.distance(curvePoint),
                             (float) riverRadius,
                             (float) (riverRadius + beachRadius + transitionRadius),
-                            beachHeight,
+                            waterHeight,
                             dimension.getHeight(point.x, point.y)
                     );  //interpolate between original terrain height and outermost;
                     dimension.setHeight(point.x, point.y, interpolatedValue);
@@ -194,13 +196,12 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
                 applyStrengthMask);
         smoother.smoothGauss();
 
-        for (Point p : applyStrengthMap.keySet()) {
-
+    /*    for (Point p : applyStrengthMap.keySet()) {
             float strength = applyStrengthMask.getHeight(p.x, p.y);
             dimension.setHeight(p.x, p.y,
-                    dimension.getHeight(p.x, p.y) * (1 - strength) + finalHeightmap.getOrDefault(p, 62f) * strength);
+                    dimension.getHeight(p.x, p.y) * (1 - strength) + finalHeightmap.get(p) * strength);
         }
-
+    */
         for (Point p : finalHeightmap.keySet()) {
             dimension.setHeight(p.x, p.y, finalHeightmap.get(p));
         }
@@ -288,21 +289,20 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
                 @Override
                 public void setHeight(int x, int y, float z) {
                     getDimension().setHeightAt(x, y, z);
-                    //    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, ((int) z) % 16);
                 }
             };
-            PaintDimension paint = new PaintDimension() {
+            HeightDimension water = new HeightDimension() {
                 @Override
-                public int getValue(int x, int y) {
-                    return getDimension().getLayerValueAt(PathPreviewLayer.INSTANCE, x, y);
+                public float getHeight(int x, int y) {
+                    return getDimension().getWaterLevelAt(x, y);
                 }
 
                 @Override
-                public void setValue(int x, int y, int v) {
-                    getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, v);
+                public void setHeight(int x, int y, float z) {
+                    getDimension().setWaterLevelAt(x, y, Math.round(z));
                 }
             };
-            applyRiverPath(path, options, dim, paint);
+            applyRiverPath(path, options, dim, water);
         } catch (Exception ex) {
             System.err.println(ex);
         } finally {

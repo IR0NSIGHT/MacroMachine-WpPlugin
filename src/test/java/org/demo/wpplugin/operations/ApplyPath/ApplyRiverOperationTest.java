@@ -88,7 +88,7 @@ class ApplyRiverOperationTest {
         p = p.addPoint(RiverHandleInformation.riverInformation(50, 70));
         p = p.addPoint(RiverHandleInformation.riverInformation(50, 71, 10, 6, 7, 8, 128));
 
-        ArrayList<float[]> curve = p.continousCurve();
+        ArrayList<float[]> curve = p.continousCurve(false);
     /*
         for (float[] a : curve) {
             assertEquals(5, getValue(a, RIVER_RADIUS), 0.01f);
@@ -172,6 +172,6 @@ class ApplyRiverOperationTest {
 
         toImage(dim, 100, 100);
 
-        toImage(curve1D(curve, WATER_Z), curve.size(), 255);
+    //    toImage(curve1D(curve, WATER_Z), curve.size(), 255);
     }
 }
