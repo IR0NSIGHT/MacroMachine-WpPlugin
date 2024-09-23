@@ -165,6 +165,10 @@ public class Path implements Iterable<float[]> {
     }
 
     public static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles) {
+        return continousCurveFromHandles(handles, true);
+    }
+
+    public static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles, boolean roundToGrid) {
         LinkedList<float[]> curvePoints = new LinkedList<>();
 
         //iterate all handles, calculate coordinates on curve
@@ -188,11 +192,13 @@ public class Path implements Iterable<float[]> {
 
         ArrayList<float[]> result = new ArrayList<>(curvePoints.size());
         float[] previousPoint = curvePoints.get(0);
-        result.add(previousPoint);
+        if (roundToGrid)
+            result.add(previousPoint);
         for (float[] point : curvePoints) {
             assert point != null : "whats going on?";
-            result.add(point); /*
-            if (arePositionalsEqual(point, previousPoint, positionDigits)) {
+            if (!roundToGrid)
+                result.add(point);
+            else if (arePositionalsEqual(point, previousPoint, positionDigits)) {
                 continue;
             } else {
                 previousPoint = point;
@@ -202,7 +208,6 @@ public class Path implements Iterable<float[]> {
                         "between curvepoints is to large:" + getPositionalDistance(point, previousPoint,
                         RiverHandleInformation.PositionSize.SIZE_2_D.value);
             }
-            */
         }
         result.trimToSize();
         //assert curveIsContinous(result);
@@ -348,11 +353,16 @@ public class Path implements Iterable<float[]> {
     }
 
     public ArrayList<float[]> continousCurve() {
+        return continousCurve(true);
+    }
+
+
+    public ArrayList<float[]> continousCurve(boolean roundToGrid) {
         ArrayList<float[]> handles = new ArrayList<>(this.handles.size());
         for (float[] handle : this.handles)
             handles.add(handle.clone());
 
-        int[] handleToCurveIdx = this.handleToCurveIdx();
+        int[] handleToCurveIdx = this.handleToCurveIdx(roundToGrid);
         //fill handles that are marked as "to be interpolated"
         for (int n = 2; n < this.type.size; n++) {
             //prepare array
@@ -369,7 +379,7 @@ public class Path implements Iterable<float[]> {
                 assert informationArr[i] != INHERIT_VALUE;
             }
         }
-        return continousCurveFromHandles(handles);
+        return continousCurveFromHandles(handles, roundToGrid);
     }
 
     public float[] handleByIndex(int index) throws IndexOutOfBoundsException {
@@ -387,8 +397,8 @@ public class Path implements Iterable<float[]> {
         return true;
     }
 
-    public int[] handleToCurveIdx() {
-        ArrayList<float[]> curve = continousCurveFromHandles(toPosition2DArray(this.handles));
+    public int[] handleToCurveIdx(boolean roundToGrid) {
+        ArrayList<float[]> curve = continousCurveFromHandles(toPosition2DArray(this.handles), roundToGrid);
         int[] handleIdcs = new int[amountHandles()];
         int handleIdx = 1;
         for (int i = 0; i < curve.size(); i++) {

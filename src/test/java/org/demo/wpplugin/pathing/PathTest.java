@@ -401,7 +401,7 @@ class PathTest {
         //+0
         p = p.addPoint(positionInformation(110,10, POSITION_2D));
 
-        int[] handleTOCurve = p.handleToCurveIdx();
+        int[] handleTOCurve = p.handleToCurveIdx(true);
         assertEquals(handleTOCurve.length, p.amountHandles());
         assertArrayEquals(new int[]{0,0,30,80,80}, handleTOCurve);
     }

@@ -120,18 +120,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         });
     }
 
-    public static float[] interpolateRadii(Path path) {
-        float[] radii = new float[path.amountHandles()];
-        {
-            for (int i = 0; i < path.amountHandles(); i++) {
-                radii[i] = getValue(path.handleByIndex(i), RIVER_RADIUS);
-            }
-        }
-
-        int[] curveIdcs = path.handleToCurveIdx();
-        return interpolateHandles(radii, curveIdcs);
-    }
-
     /**
      * draws this path onto the map
      *

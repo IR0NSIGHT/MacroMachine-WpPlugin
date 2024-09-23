@@ -96,8 +96,8 @@ public class RiverHandleInformation {
     public static void DrawRiverPath(Path path, PaintDimension dim, int selectedIdx) throws IllegalAccessException {
         if (path.type != RIVER_2D)
             throw new IllegalArgumentException("path is not river: " + path.type);
-        ArrayList<float[]> curve = path.continousCurve();
-        int[] curveIdxHandles = path.handleToCurveIdx();
+        ArrayList<float[]> curve = path.continousCurve(true);
+        int[] curveIdxHandles = path.handleToCurveIdx(true);
 
         int startIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx - 2), curveIdxHandles.length - 1)];
         int endIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx + 2), curveIdxHandles.length - 1)];
