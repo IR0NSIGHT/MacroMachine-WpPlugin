@@ -62,15 +62,30 @@ public class RiverHandleInformation {
         return point;
     }
 
-    public static boolean validateRiver2D(float[] handle) {
-        if (handle.length != RIVER_2D.size) {
-            return false;
-        }
-        for (RiverInformation information : RiverInformation.values()) {
-            float value = getValue(handle, information);
-            if (value != INHERIT_VALUE && (value < information.min || value > information.max)) {
+
+
+    public static boolean validateRiver2D(ArrayList<float[]> handles) {
+        float lastWaterZ = Float.MAX_VALUE;
+        for (float[] handle: handles) {
+            if (handle.length != RIVER_2D.size) {
                 return false;
             }
+            for (RiverInformation information : RiverInformation.values()) {
+                float value = getValue(handle, information);
+                if (value != INHERIT_VALUE && (value < information.min || value > information.max)) {
+                    return false;
+                }
+            }
+
+            if (getValue(handle, WATER_Z) != INHERIT_VALUE) {
+                if (lastWaterZ < getValue(handle, WATER_Z)) {
+                    //the river can only flow downhill, not uphill
+                    return false;
+                }
+
+                lastWaterZ = getValue(handle, WATER_Z);
+            }
+
         }
         return true;
     }

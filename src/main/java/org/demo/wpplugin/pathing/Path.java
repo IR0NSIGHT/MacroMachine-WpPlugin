@@ -237,9 +237,10 @@ public class Path implements Iterable<float[]> {
                         " but got " + Arrays.toString(handle));
                 okay = false;
             }
-            if (type == PointInterpreter.PointType.RIVER_2D && !validateRiver2D(handle))
-                okay = false;
         }
+
+        if (this.type == PointInterpreter.PointType.RIVER_2D)
+            okay = okay && validateRiver2D(handles);
 
         if (handles.size() != 0)
             for (int n = 0; n < type.size; n++) {
