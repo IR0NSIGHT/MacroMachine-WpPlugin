@@ -18,6 +18,7 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
@@ -178,6 +179,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         // In addition you have the following fields in this class:
         // * brush - the currently selected brush
         // * paint - the currently selected paint
+
         final Path path = getSelectedPath();
         EditPathOperation.PATH_ID = getSelectedPathId();
 
@@ -187,60 +189,67 @@ public class EditPathOperation extends MouseOrTabletOperation implements
 
         assert getSelectedPoint() != null;
 
-        if (ctrlDown) {
-            //SELECT POINT
-            try {
-                if (path.amountHandles() != 0) {
-                    int clostestIdx = path.getClosestHandleIdxTo(userClickedCoord);
-                    float[] closest = path.handleByIndex(clostestIdx);
-                    //dont allow very far away clicks
-                    if (getPositionalDistance(closest, userClickedCoord,
-                            RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
-                        setSelectedPointIdx(clostestIdx);
-                    }
-                }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        } else if (altDown) {
-            if (inverse) {
-                overwriteSelectedPath(path.newEmpty());
-                setSelectedPointIdx(-1);
-            } else {
-                // MOVE SELECTED POINT TO
-                applyAsSelection();
-            }
-        } else if (shiftDown) {
-            float[] movedPoint = setPosition2D(getSelectedPoint(), userClickedCoord);
-            int idx = path.indexOfPosition(getSelectedPoint());
-            overwriteSelectedPath(path.movePoint(getSelectedPoint(), movedPoint));
-            setSelectedPointIdx(idx);
-
-        } else if (inverse) {
-            //REMOVE SELECTED POINT
-            if (path.amountHandles() > 1) {
+        try {
+            if (ctrlDown) {
+                //SELECT POINT
                 try {
-                    float[] pointBeforeSelected = path.getPreviousPoint(getSelectedPoint());
-                    overwriteSelectedPath(path.removePoint(getSelectedPoint()));
-                    int idx = getSelectedPath().indexOfPosition(pointBeforeSelected);
-                    setSelectedPointIdx(idx);
+                    if (path.amountHandles() != 0) {
+                        int clostestIdx = path.getClosestHandleIdxTo(userClickedCoord);
+                        float[] closest = path.handleByIndex(clostestIdx);
+                        //dont allow very far away clicks
+                        if (getPositionalDistance(closest, userClickedCoord,
+                                RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
+                            setSelectedPointIdx(clostestIdx);
+                        }
+                    }
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException(e);
                 }
+            } else if (altDown) {
+                overwriteSelectedPath(path.newEmpty());
+                setSelectedPointIdx(-1);
+            } else if (shiftDown) {
+                try {
+                    float[] movedPoint = setPosition2D(getSelectedPoint(), userClickedCoord);
+                    int idx = path.indexOfPosition(getSelectedPoint());
+                    Path newPath = path.movePoint(getSelectedPoint(), movedPoint);
+                    setSelectedPointIdx(idx);
+
+                    overwriteSelectedPath(newPath);
+                } catch (Exception ex) {
+                    System.err.println("Error moving point " + getSelectedPoint() + " to " + getSelectedPath());
+                }
+
+            } else if (inverse) {
+                //REMOVE SELECTED POINT
+                if (path.amountHandles() > 1) {
+                    try {
+                        float[] pointBeforeSelected = path.getPreviousPoint(getSelectedPoint());
+                        Path newPath = path.removePoint(getSelectedPoint());
+                        overwriteSelectedPath(newPath);
+                        int idx = getSelectedPath().indexOfPosition(pointBeforeSelected);
+                        setSelectedPointIdx(idx);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            } else {
+                //add new point after selected
+                overwriteSelectedPath(path.insertPointAfter(getSelectedPoint(), userClickedCoord));
+                setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
             }
-        } else {
-            //add new point after selected
-            overwriteSelectedPath(path.insertPointAfter(getSelectedPoint(), userClickedCoord));
-            setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
+
+
+            assert getSelectedPath().amountHandles() == 0 || getSelectedPoint() != null;
+
+
+            assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull " +
+                    "setting " +
+                    "path in manager";
+        } catch (Exception e) {
+            System.out.println("Exception after user edit-path-action");
+            System.out.println(e);
         }
-
-
-        assert getSelectedPath().amountHandles() == 0 || getSelectedPoint() != null;
-
-
-        assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull setting " +
-                "path in manager";
-
         redrawSelectedPathLayer();
 
         if (this.eOptionsPanel != null)
@@ -412,7 +421,14 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                     OptionsLabel[] riverInputs = RiverHandleInformation.Editor(
                             getSelectedPoint(),
                             point -> {
-                                overwriteSelectedPath(getSelectedPath().movePoint(getSelectedPoint(), point));
+                                Path oldPath = getSelectedPath();
+                                try {
+                                    Path newPath = getSelectedPath().movePoint(getSelectedPoint(), point);
+                                    overwriteSelectedPath(newPath);
+                                } catch (Exception ex) {
+                                    System.err.println(ex.getMessage());
+                                    overwriteSelectedPath(oldPath);
+                                }
                                 redrawSelectedPathLayer();
                             },
                             onOptionsReconfigured);
@@ -420,6 +436,16 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                     inputs.addAll(Arrays.asList(riverInputs));
                 }
             }
+
+            JButton button1 = new JButton("Edit water height");
+            button1.addActionListener(e -> {
+                JDialog dialog = riverRadiusEditor(getSelectedPath());
+                dialog.setVisible(true);
+                onOptionsReconfigured();
+                redrawSelectedPathLayer();
+            });
+
+            inputs.add(() -> new JComponent[]{button1});
             return inputs;
         }
     }

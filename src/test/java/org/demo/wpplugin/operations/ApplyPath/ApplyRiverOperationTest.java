@@ -24,57 +24,7 @@ class ApplyRiverOperationTest {
 
     public static float maxZ = 0f;
 
-    public static void toImage(HeightDimension dim, int width, int height) {
 
-        // Create a BufferedImage with width, height and type (TYPE_INT_RGB is common for RGB images)
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-
-        // Loop over every pixel and manipulate it (here we're creating a gradient)
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                // Example: creating a color gradient from black to blue
-                int z = Math.round(dim.getHeight(x, y));
-
-                Color color = z == 0 ? new Color(255, 0, 0) : new Color(z, z, z);
-
-                // Set pixel color at (x, y)
-                image.setRGB(x, height-1-y, color.getRGB());
-            }
-        }
-
-        // Save the image to a file (as PNG)
-        try {
-            File output = new File("output_image.png");
-            ImageIO.write(image, "png", output);
-            System.out.println("Image created successfully!");
-        } catch (Exception e) {
-            System.out.println("Error saving the image: " + e.getMessage());
-        }
-    }
-
-    public static HeightDimension curve1D(ArrayList<float[]> curve,
-                                          RiverHandleInformation.RiverInformation riverInformation) {
-        HeightDimension dim = new HeightDimension() {
-            final HashMap<Point, Float> heightMap = new HashMap<>();
-
-            @Override
-            public float getHeight(int x, int y) {
-                return heightMap.getOrDefault(new Point(x, y), 0f);
-            }
-
-            @Override
-            public void setHeight(int x, int y, float z) {
-                maxZ = Math.max(z, maxZ);
-                heightMap.put(new Point(x, y), z);
-            }
-        };
-        for (int i = 0; i < curve.size(); i++) {
-            float value = getValue(curve.get(i), riverInformation);
-            for (int z = 0; z < value; z++)
-                dim.setHeight(i, z, 255);
-        }
-        return dim;
-    }
 
     @Test
     void applyRiverPath() {
@@ -170,7 +120,7 @@ class ApplyRiverOperationTest {
         }
 
 
-        toImage(dim, 100, 100);
+     //   toImage(dim, 100, 100);
 
     //    toImage(curve1D(curve, WATER_Z), curve.size(), 255);
     }
