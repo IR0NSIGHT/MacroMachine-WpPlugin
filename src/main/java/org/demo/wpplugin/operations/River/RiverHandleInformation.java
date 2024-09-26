@@ -4,6 +4,7 @@ import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.operations.OptionsLabel;
+import org.demo.wpplugin.pathing.FloatInterpolateList;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
@@ -21,7 +22,8 @@ import static org.demo.wpplugin.operations.EditPath.EditPathOperation.*;
 import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
-import static org.demo.wpplugin.pathing.PointUtils.*;
+import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
+import static org.demo.wpplugin.pathing.PointUtils.markLine;
 
 public class RiverHandleInformation {
     public static final float INHERIT_VALUE = -1;
@@ -143,15 +145,25 @@ public class RiverHandleInformation {
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Only close the dialog
 
         // Create a custom panel that will display the image
-        ArrayList<float[]> curve = path.continousCurve();
+        ArrayList<float[]> curve = path.continousCurve(true);
 
         // Calculate dialog size as a percentage of the screen size
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int dialogWidth = (int) (screenSize.width * 0.5); // 50% of screen width
         int dialogHeight = (int) (screenSize.height * 0.5); // 50% of screen height
 
+
         // Create a JLabel to display the image
-        JPanel imageLabel = new PathHistogram(path, WATER_Z, 3);
+        FloatInterpolateList waterZCurve = new FloatInterpolateList(curve.size());
+        int[] map = path.handleToCurveIdx(true);
+
+        for (int i = 0; i < path.amountHandles(); i++) {
+            float value = getValue(path.handleByIndex(i), RiverInformation.WATER_Z);
+            if (value != INHERIT_VALUE)
+                waterZCurve.setValue(map[i], value);
+        }
+
+        JPanel imageLabel = new PathHistogram(waterZCurve, 3);
         imageLabel.setSize(dialogWidth, dialogHeight);
         // Add the JLabel to the dialog
         dialog.add(imageLabel);
@@ -285,90 +297,5 @@ public class RiverHandleInformation {
         }
     }
 
-    private static class PathHistogram extends JPanel {
-        private Path path;
-        private RiverInformation information;
-        private int selectedIdx;
 
-        PathHistogram(Path path, RiverHandleInformation.RiverInformation riverInformation, int selectedIdx) {
-            super(new BorderLayout());
-            this.path = path;
-            this.selectedIdx = selectedIdx;
-            this.information = riverInformation;
-        }
-
-        public void update(Path path, RiverHandleInformation.RiverInformation riverInformation) {
-            this.path = path;
-            this.selectedIdx = selectedIdx;
-            this.information = riverInformation;
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            ArrayList<float[]> curve = path.continousCurve(true);
-
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.translate(50, 0);
-            g2d.setColor(Color.WHITE);
-            g2d.fillRect(0, 0, getWidth(), getHeight());
-            g2d.setColor(Color.BLACK);
-
-            float scale = getWidth() * 1f / curve.size();
-            g2d.scale(scale, scale);
-            g2d.setColor(Color.BLACK);
-
-            float[] distances = new float[curve.size()];
-            for (int i = 1; i < curve.size(); i++) {
-                float aZ = getValue(curve.get(i - 1), WATER_Z);
-                float bZ = getValue(curve.get(i), WATER_Z);
-
-                float d = getPositionalDistance(curve.get(i - 1), curve.get(i), 2);
-                distances[i] = distances[i - 1] + d;
-                g2d.drawLine(Math.round(distances[i - 1]), (int) (getHeight() / scale - aZ), Math.round(distances[i])
-                        , (int) (getHeight() / scale - bZ));
-            }
-            g2d.drawRect(0, 0, Math.round(distances[distances.length - 1]), getHeight());
-
-            for (int y = 0; y < 255; y += 20) {
-                int yPos = (int) (getHeight() / scale - y);
-                g2d.drawLine(0, yPos, 30, yPos);
-                g2d.drawString(String.valueOf(y), 35, yPos);
-            }
-
-            float[] dashPattern = {10, 5};
-            g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
-            int[] handleToCurve = path.handleToCurveIdx(true);
-            for (int handleIdx = 0; handleIdx < handleToCurve.length; handleIdx++) {
-                int x = Math.round(distances[handleToCurve[handleIdx]]);
-                int y = 35;
-                y += g.getFontMetrics().getHeight() * (handleIdx%5);
-
-                g2d.setColor(handleIdx == selectedIdx ? Color.ORANGE : Color.BLACK);
-                g2d.drawLine(x, 0, x, 30);
-                float[] handle = path.handleByIndex(handleIdx);
-                String text = "";
-                if (getValue(handle, information) == INHERIT_VALUE) {
-                    text += "(inherit)";
-                }
-                text += String.format("%.2f", getValue(curve.get(handleToCurve[handleIdx]), information));
-                x -= g.getFontMetrics().stringWidth(text) / 2;
-                g2d.drawString(text, x,
-                        y);
-            }
-        }
-
-        @Override
-        public Dimension getPreferredSize() {
-            // Get screen dimensions
-            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-
-            // Use a fraction of the screen size, e.g., 70% width and 40% height
-            int width = (int) (screenSize.width * 0.7);
-            int height = (int) (screenSize.height * 0.4);
-
-            // Return the dynamically calculated size
-            return new Dimension(width, height);
-        }
-    }
 }
