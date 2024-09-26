@@ -118,10 +118,5 @@ class ApplyRiverOperationTest {
             Point point = getPoint2D(handle);
             dim.setHeight(point.x, point.y, 255);
         }
-
-
-     //   toImage(dim, 100, 100);
-
-    //    toImage(curve1D(curve, WATER_Z), curve.size(), 255);
     }
 }

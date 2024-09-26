@@ -195,7 +195,7 @@ public class RiverHandleInformation {
         ImageIcon imageIcon = new ImageIcon(resizedImage);
 
         // Create a JLabel to display the image
-        JLabel imageLabel = new JLabel(imageIcon);
+        JPanel imageLabel = new PathHistogram(path, WATER_Z);
         imageLabel.setSize(dialogWidth, dialogHeight);
         // Add the JLabel to the dialog
         dialog.add(imageLabel);
@@ -214,7 +214,6 @@ public class RiverHandleInformation {
 
         return dialog;
     }
-
 
     public static OptionsLabel[] Editor(float[] point, Consumer<float[]> onSubmitCallback, Runnable onChanged) {
         OptionsLabel[] options = new OptionsLabel[RiverInformation.values().length];
@@ -330,6 +329,60 @@ public class RiverHandleInformation {
 
         PositionSize(int idx) {
             this.value = idx;
+        }
+    }
+
+    private static class PathHistogram extends JPanel {
+        private final Path path;
+        private final RiverInformation information;
+
+        PathHistogram(Path path, RiverHandleInformation.RiverInformation riverInformation) {
+            super(new BorderLayout());
+            this.path = path;
+            this.information = riverInformation;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            ArrayList<float[]> curve = path.continousCurve(true);
+
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setColor(Color.WHITE);
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+            g2d.setColor(Color.BLACK);
+            g2d.drawRect(0, 0, getWidth(), getHeight());
+            g2d.translate(0, getHeight());  // Move the origin to the bottom-left
+            g2d.scale(1, -1);  // Flip the y-axis
+            float scale = getWidth() * 1f / curve.size();
+            g2d.scale(scale, scale);
+            g2d.setColor(Color.BLACK);
+            for (int i = 1; i < curve.size(); i++) {
+                float aZ = getValue(curve.get(i - 1), WATER_Z);
+                float bZ = getValue(curve.get(i), WATER_Z);
+                g2d.drawLine(i - 1, (int) aZ, i, (int) bZ);
+            }
+
+            float[] dashPattern = {10, 5};
+            g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
+            int[] handleToCurve = path.handleToCurveIdx(true);
+            for (Integer i : handleToCurve) {
+                g2d.drawLine(i, 0, i, 30);
+
+            }
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            // Get screen dimensions
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+            // Use a fraction of the screen size, e.g., 70% width and 40% height
+            int width = (int) (screenSize.width * 0.7);
+            int height = (int) (screenSize.height * 0.4);
+
+            // Return the dynamically calculated size
+            return new Dimension(width, height);
         }
     }
 }
