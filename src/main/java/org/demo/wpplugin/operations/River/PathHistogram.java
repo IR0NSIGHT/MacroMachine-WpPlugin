@@ -47,9 +47,9 @@ public class PathHistogram extends JPanel implements KeyListener {
                 "interpolated";
 
         Graphics2D g2d = (Graphics2D) g;
-        g2d.translate(50, 0);
+        g2d.translate(50, getHeight()-50);
         g2d.setColor(Color.WHITE);
-        g2d.fillRect(0, 0, getWidth(), getHeight());
+        g2d.fillRect(0, 0, getWidth(), -getHeight());
         g2d.setColor(Color.BLACK);
 
         float scale = getWidth() * 1f / (curve.getSize() + 100);
@@ -62,16 +62,16 @@ public class PathHistogram extends JPanel implements KeyListener {
             float aZ = list[i - 1];
             float bZ = list[i];
 
-            g2d.drawLine(i - 1, (int) (getHeight() / scale - aZ), i
-                    , (int) (getHeight() / scale - bZ));
+            g2d.drawLine(
+                    i - 1, -Math.round(aZ),
+                    i, -Math.round(bZ));
         }
-        g2d.drawRect(0, 0, curve.getSize(), getHeight());
+        g2d.drawRect(0, 0, curve.getSize(), -getHeight());
 
         //mark height lines
         for (int y = 0; y < 255; y += 20) {
-            int yPos = (int) (getHeight() / scale - y);
-            g2d.drawLine(0, yPos, 30, yPos);
-            g2d.drawString(String.valueOf(y), 35, yPos);
+            g2d.drawLine(0, -y, 30, -y);
+            g2d.drawString(String.valueOf(y), 35, -y);
         }
 
         float[] dashPattern = {10, 5};
@@ -83,13 +83,17 @@ public class PathHistogram extends JPanel implements KeyListener {
             if (curve.isInterpolate(x))
                 continue;
 
-            int y = 35 + g.getFontMetrics().getHeight() * (handleIdx % 5);
+            int curveHeight = (int)curve.getInterpolatedList()[x];
+            int y = curveHeight/2;
             g2d.setColor(x == getSelectedCurveIdx() ? Color.ORANGE : Color.BLACK);
-            g2d.drawLine(x, 0, x, 30);
+            g2d.drawLine(x, 0, x, -y);
+            g2d.drawLine(x, -(y + g.getFontMetrics().getHeight()), x, -2*y);
+
+
 
             String text = "";
             text += String.format("%.2f", curve.getInterpolatedList()[x]);
-            g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, y);
+            g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
 
             handleIdx++;
         }
