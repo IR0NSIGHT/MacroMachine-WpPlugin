@@ -16,12 +16,6 @@ public class Path implements Iterable<float[]> {
     public final PointInterpreter.PointType type;
     private final ArrayList<float[]> handles;
 
-    private final HashMap<RiverHandleInformation.RiverInformation, FloatInterpolateLinearList> curves = new HashMap<>();
-
-    private Path() {
-        this.type = PointInterpreter.PointType.POSITION_2D;
-        handles = new ArrayList<>(0);
-    }
 
     public Path(List<float[]> handles, PointInterpreter.PointType type) {
         this.handles = new ArrayList<>(handles.size());
@@ -29,6 +23,7 @@ public class Path implements Iterable<float[]> {
             this.handles.add(handle.clone());
         }
         this.type = type;
+
         assert invariant();
     }
 
@@ -166,11 +161,11 @@ public class Path implements Iterable<float[]> {
         return outHandles;
     }
 
-    public static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles) {
+    private static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles) {
         return continousCurveFromHandles(handles, true);
     }
 
-    public static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles, boolean roundToGrid) {
+    private static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles, boolean roundToGrid) {
         LinkedList<float[]> curvePoints = new LinkedList<>();
 
         //iterate all handles, calculate coordinates on curve
@@ -221,8 +216,11 @@ public class Path implements Iterable<float[]> {
         return result;
     }
 
+
+
     private boolean invariant() {
         boolean okay = true;
+
         float[] setValues = new float[type.size];
         Arrays.fill(setValues, INHERIT_VALUE);
         for (float[] handle : handles) {

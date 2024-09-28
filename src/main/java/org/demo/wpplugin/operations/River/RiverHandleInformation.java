@@ -108,7 +108,6 @@ public class RiverHandleInformation {
                     //the river can only flow downhill, not uphill
                     return false;
                 }
-
                 lastWaterZ = getValue(handle, WATER_Z);
             }
 
