@@ -64,7 +64,6 @@ public class FloatInterpolateLinearList implements InterpolateList<Float> {
 
     @Override
     public int[] handleIdcs() {
-
         return handleIdcs;
     }
 

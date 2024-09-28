@@ -104,7 +104,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
 
     public static void applyRiverPath(Path path, ApplyPathOptions options, HeightDimension dimension,
                                       HeightDimension waterMap) {
-        ArrayList<float[]> curve = path.continousCurve();
+        ArrayList<float[]> curve = path.continousCurve(false);
         float randomPercent = (float) options.getRandomFluctuate() / 100f;
         float[] randomEdge = randomEdge(curve.size());
 
@@ -128,7 +128,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
             float x = 2 * dist / maxDist;
             return (x * x) - depth;
         };
-
+        float[] waterZs = Path.interpolateWaterZ(curve, dimension);
         for (int curveIdx = 0; curveIdx < curve.size(); curveIdx++) {
             float[] curvePointF = curve.get(curveIdx);
             Point curvePoint = getPoint2D(curvePointF);
@@ -138,7 +138,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
             double riverRadius = getValue(curvePointF, RIVER_RADIUS) * (1 + randomFluxAtIdx * randomPercent);
             double beachRadius = getValue(curvePointF, BEACH_RADIUS);
             double transitionRadius = getValue(maxHandleValues, TRANSITION_RADIUS); //FIXME has to be fixed at max
-            float waterHeight = getValue(curvePointF, WATER_Z);
+            float waterHeight = waterZs[curveIdx];
 
             // Transition, becuase the gauss smoother can only do one value
 
@@ -154,11 +154,11 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
                     finalHeightmap.put(point,
                             waterHeight + riverDepthByDistance.apply(new float[]{getValue(curvePointF, RIVER_DEPTH),
                                     (float) distance, (float) riverRadius}));
-                    waterMap.setHeight(point.x,point.y,waterHeight);
+                    waterMap.setHeight(point.x, point.y, waterHeight);
                 } else if (distance - riverRadius <= beachRadius) {
                     finalHeightmap.put(point, waterHeight);
                     applyStrengthMap.put(point, 1f);
-                    waterMap.setHeight(point.x,point.y,waterHeight);
+                    waterMap.setHeight(point.x, point.y, waterHeight);
 
                 } else if (distance - riverRadius - beachRadius <= transitionRadius) {
                     if (distance - riverRadius - beachRadius <= transitionRadius / 2f)

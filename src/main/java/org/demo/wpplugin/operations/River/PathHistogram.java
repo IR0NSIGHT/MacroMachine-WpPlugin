@@ -7,18 +7,22 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class PathHistogram extends JPanel implements KeyListener {
     private final FloatInterpolateLinearList curve;
+    private final boolean onlyValueChange;
+    private final float[] terrainCurve;
     private int[] selectable;
     private FloatInterpolateLinearList handles;
     private int selectedCurveIdx;
 
-    PathHistogram(FloatInterpolateLinearList curve, int selectedIdx) {
+    PathHistogram(FloatInterpolateLinearList curve, int selectedIdx, boolean onlyValueChange, float[] terrainCurve) {
         super(new BorderLayout());
-        this.selectedCurveIdx = curve.amountHandles()/2;
+        this.selectedCurveIdx = curve.handleIdcs()[0];
         this.curve = curve;
-
+        this.terrainCurve = terrainCurve;
+        this.onlyValueChange = onlyValueChange;
         setFocusable(true); // Make sure the component can receive focus for key events
         requestFocusInWindow(); // Request focus to ensure key bindings work
         setupKeyBindings();
@@ -44,7 +48,7 @@ public class PathHistogram extends JPanel implements KeyListener {
                 "interpolated";
 
         Graphics2D g2d = (Graphics2D) g;
-        g2d.translate(50, getHeight()-50);
+        g2d.translate(50, getHeight() - 50);
         g2d.setColor(Color.WHITE);
         g2d.fillRect(0, 0, getWidth(), -getHeight());
         g2d.setColor(Color.BLACK);
@@ -54,14 +58,30 @@ public class PathHistogram extends JPanel implements KeyListener {
         g2d.setColor(Color.BLACK);
 
         //draw curve
+        float minSoFar = Math.min(terrainCurve[0], curve.getInterpolatedValue(0));
         for (int i = 1; i < curve.getCurveLength(); i++) {
+            //handles line
+            g2d.setColor(Color.GRAY);
             float aZ = curve.getInterpolatedValue(i - 1).floatValue();
             float bZ = curve.getInterpolatedValue(i).floatValue();
 
             g2d.drawLine(
                     i - 1, -Math.round(aZ),
                     i, -Math.round(bZ));
+
+            g2d.setColor(Color.GREEN);
+            float terrainA = terrainCurve[i - 1];
+            float terrainB = terrainCurve[i];
+            g2d.drawLine(i - 1, -Math.round(terrainA), i, -Math.round(terrainB));
+
+            //min line
+            g2d.setColor(Color.BLACK);
+            g2d.drawLine(i - 1, -Math.round(Math.min(terrainA, minSoFar)), i,
+                    -Math.round(Math.min(terrainB, minSoFar)));
+
+            minSoFar = Math.min(Math.min(minSoFar, bZ), terrainB);
         }
+        g2d.setColor(Color.BLACK);
         g2d.drawRect(0, 0, curve.getCurveLength(), -getHeight());
 
         //mark height lines
@@ -80,11 +100,10 @@ public class PathHistogram extends JPanel implements KeyListener {
                 continue;
 
             int curveHeight = curve.getInterpolatedValue(x).intValue();
-            int y = curveHeight/2;
+            int y = curveHeight / 2;
             g2d.setColor(x == getSelectedCurveIdx() ? Color.ORANGE : Color.BLACK);
             g2d.drawLine(x, 0, x, -y);
-            g2d.drawLine(x, -(y + g.getFontMetrics().getHeight()), x, -2*y);
-
+            g2d.drawLine(x, -(y + g.getFontMetrics().getHeight()), x, -2 * y);
 
 
             String text = "";
@@ -147,6 +166,8 @@ public class PathHistogram extends JPanel implements KeyListener {
             }
             break;
             case KeyEvent.VK_SPACE: //Insert new handle
+                if (onlyValueChange)
+                    break;
                 int newCurveIdx = getSelectedCurveIdx() + 100;
                 if (selectedCurveIdx < selectable.length - 1) {
                     newCurveIdx = (selectable[selectedCurveIdx] + selectable[selectedCurveIdx + 1]) / 2;
@@ -157,16 +178,21 @@ public class PathHistogram extends JPanel implements KeyListener {
                     selectedCurveIdx = newCurveIdx;
                 }
                 break;
-            case KeyEvent.VK_DELETE: //Insert new handle
+            case KeyEvent.VK_DELETE:
+                if (onlyValueChange)
+                    break;
                 if (selectable.length < 2)
                     break;
                 if (!curve.isInterpolate(getSelectedCurveIdx())) {
                     curve.setToInterpolate(getSelectedCurveIdx());
-                    selectedCurveIdx--;
+                    selectedCurveIdx = selectableIdxNear(getSelectedCurveIdx(), -1);
                 }
                 break;
             case KeyEvent.VK_RIGHT: {
+
                 if (e.isShiftDown() || e.isControlDown()) {
+                    if (onlyValueChange)
+                        break;
                     //move selectable to the right
                     int curveIdx = getSelectedCurveIdx();
                     int off = e.isControlDown() ? 100 : 1;
@@ -183,6 +209,8 @@ public class PathHistogram extends JPanel implements KeyListener {
             break;
             case KeyEvent.VK_LEFT:
                 if (e.isShiftDown() || e.isControlDown()) {
+                    if (onlyValueChange)
+                        break;
                     //move selectable to the right
                     int curveIdx = getSelectedCurveIdx();
                     int off = e.isControlDown() ? -100 : -1;
@@ -199,17 +227,19 @@ public class PathHistogram extends JPanel implements KeyListener {
             default:
         }
         calcSelectables();
-        selectedCurveIdx = Math.max(0, Math.min(selectedCurveIdx, selectable.length - 1));
+        assert !curve.isInterpolate(getSelectedCurveIdx());
         repaint();
     }
 
     private int selectableIdxNear(int startIdx, int dir) {
-        for (int idx = startIdx; idx > 0 && idx < curve.getCurveLength(); idx+=dir) {
-            if (curve.isInterpolate(idx)) {
-                return idx;
-            }
+        int[] selectables = curve.handleIdcs();
+        int find = Arrays.binarySearch(selectables, startIdx);
+        if (find < 0)
+            return selectables[0];
+        else {
+            find = Math.min(Math.max(find + dir, 0), selectables.length - 1);
+            return selectables[find];
         }
-        return startIdx;
     }
 
     @Override

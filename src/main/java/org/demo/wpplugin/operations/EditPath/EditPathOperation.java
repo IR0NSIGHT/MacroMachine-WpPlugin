@@ -1,5 +1,6 @@
 package org.demo.wpplugin.operations.EditPath;
 
+import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
@@ -437,9 +438,21 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                 }
             }
 
+            HeightDimension dim = new HeightDimension() {
+                @Override
+                public float getHeight(int x, int y) {
+                    return getDimension().getHeightAt(x,y);
+                }
+
+                @Override
+                public void setHeight(int x, int y, float z) {
+
+                }
+            };
+
             JButton button1 = new JButton("Edit water height");
             button1.addActionListener(e -> {
-                JDialog dialog = riverRadiusEditor(getSelectedPath());
+                JDialog dialog = riverRadiusEditor(getSelectedPath(), EditPathOperation.this::overwriteSelectedPath, dim);
                 dialog.setVisible(true);
                 onOptionsReconfigured();
                 redrawSelectedPathLayer();

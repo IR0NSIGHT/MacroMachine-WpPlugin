@@ -12,6 +12,8 @@ import org.pepsoft.worldpainter.App;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -103,13 +105,15 @@ public class RiverHandleInformation {
                 }
             }
 
-            if (getValue(handle, WATER_Z) != INHERIT_VALUE) {
+        /*    if (getValue(handle, WATER_Z) != INHERIT_VALUE) {
                 if (lastWaterZ < getValue(handle, WATER_Z)) {
                     //the river can only flow downhill, not uphill
                     return false;
                 }
                 lastWaterZ = getValue(handle, WATER_Z);
             }
+
+         */
 
         }
         return true;
@@ -138,7 +142,7 @@ public class RiverHandleInformation {
         return dim;
     }
 
-    public static JDialog riverRadiusEditor(Path path) {
+    public static JDialog riverRadiusEditor(Path path, Consumer<Path> overWritePath, HeightDimension heightDimension) {
         JFrame parent = App.getInstance();
         JDialog dialog = new JDialog(parent, "Dialog Title", true); // Modal
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Only close the dialog
@@ -158,14 +162,38 @@ public class RiverHandleInformation {
 
         for (int i = 0; i < path.amountHandles(); i++) {
             float value = getValue(path.handleByIndex(i), RiverInformation.WATER_Z);
-            if (value != INHERIT_VALUE)
-                waterZCurve.setValue(map[i], value);
+            waterZCurve.setValue(map[i], value);
         }
 
-        JPanel imageLabel = new PathHistogram(waterZCurve, 3);
+        float[] terrainCurve = new float[curve.size()];
+        int i = 0;
+        for (float[] point: curve) {
+            terrainCurve[i++] = heightDimension.getHeight(getPoint2D(point).x, getPoint2D(point).y);
+        }
+
+        JPanel imageLabel = new PathHistogram(waterZCurve, 3, true, terrainCurve);
         imageLabel.setSize(dialogWidth, dialogHeight);
         // Add the JLabel to the dialog
         dialog.add(imageLabel);
+
+
+        // Add a listener for when the dialog is closed
+        dialog.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                Path p = path;
+                //write back values to path from pathhistogram
+                int handleIdx = 1;
+                for (int i = 0; i < waterZCurve.getCurveLength(); i++) {
+                    if (waterZCurve.isInterpolate(i))
+                        continue;
+                    float[] newValue = setValue(p.handleByIndex(handleIdx), WATER_Z, waterZCurve.getHandleValue(i));
+                    p = p.setHandleByIdx(newValue, handleIdx++);
+                }
+                overWritePath.accept(p);
+
+            }
+        });
 
         // Set the dialog size
         dialog.setSize(dialogWidth, dialogHeight);

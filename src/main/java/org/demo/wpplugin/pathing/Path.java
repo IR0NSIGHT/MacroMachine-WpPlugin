@@ -1,5 +1,6 @@
 package org.demo.wpplugin.pathing;
 
+import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 
 import java.awt.*;
@@ -7,15 +8,13 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.INHERIT_VALUE;
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.validateRiver2D;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.calcuateCubicBezier;
 import static org.demo.wpplugin.pathing.PointUtils.*;
 
 public class Path implements Iterable<float[]> {
     public final PointInterpreter.PointType type;
     private final ArrayList<float[]> handles;
-
 
     public Path(List<float[]> handles, PointInterpreter.PointType type) {
         this.handles = new ArrayList<>(handles.size());
@@ -25,6 +24,22 @@ public class Path implements Iterable<float[]> {
         this.type = type;
 
         assert invariant();
+    }
+
+    public static float[] interpolateWaterZ(ArrayList<float[]> curve, HeightDimension dim) {
+        float[] out = new float[curve.size()];
+        Point first = getPoint2D(curve.get(0));
+        out[0] = Math.min(getValue(curve.get(0), RiverInformation.WATER_Z), dim.getHeight(first.x, first.y));
+        for (int i = 1; i < curve.size(); i++) {
+            float[] curvePoint = curve.get(i);
+            float curveZ = getValue(curvePoint, RiverInformation.WATER_Z);
+            float terrainZ = dim.getHeight(getPoint2D(curvePoint).x, getPoint2D(curvePoint).y);
+            float previousZ = out[i - 1];
+
+            out[i] = Math.min(Math.min(previousZ, terrainZ), curveZ);
+        }
+
+        return out;
     }
 
     public static boolean curveIsContinous(ArrayList<float[]> curve) {
@@ -215,7 +230,6 @@ public class Path implements Iterable<float[]> {
         }
         return result;
     }
-
 
 
     private boolean invariant() {
