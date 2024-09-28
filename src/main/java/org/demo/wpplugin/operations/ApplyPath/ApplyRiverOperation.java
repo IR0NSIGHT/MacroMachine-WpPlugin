@@ -114,7 +114,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
         float[] maxHandleValues = getMaxValues(path, path.type.size);
 
         double totalSearchRadius =
-                getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS) + getValue(maxHandleValues, TRANSITION_RADIUS);
+                getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS);// + getValue(maxHandleValues, TRANSITION_RADIUS);
         PathGeometryHelper helper = new PathGeometryHelper(path, curve, totalSearchRadius);
         HashMap<Point, Collection<Point>> parentage = helper.getParentage();
 
@@ -160,7 +160,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
                     applyStrengthMap.put(point, 1f);
                     waterMap.setHeight(point.x, point.y, waterHeight);
 
-                } else if (distance - riverRadius - beachRadius <= transitionRadius) {
+                } /*else if (distance - riverRadius - beachRadius <= transitionRadius) {
                     if (distance - riverRadius - beachRadius <= transitionRadius / 2f)
                         applyStrengthMap.put(point, 1f);
                     else
@@ -175,6 +175,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
                     );  //interpolate between original terrain height and outermost;
                     dimension.setHeight(point.x, point.y, interpolatedValue);
                 }
+                */
             }
         }
 
@@ -191,6 +192,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
         };
         float maxTransition = (getValue(maxHandleValues,
                 TRANSITION_RADIUS));
+
 
         KernelConvolution smoother = new KernelConvolution(applyStrengthMap.keySet(), (int) (maxTransition / 2f * 0.9f),
                 applyStrengthMask);
