@@ -15,4 +15,5 @@ public interface InterpolateList<T> {
     T getHandleValue(int idx);
 
     int amountHandles();
+    int[] handleIdcs();
 }

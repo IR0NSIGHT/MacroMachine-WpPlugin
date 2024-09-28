@@ -8,9 +8,10 @@ public class FloatInterpolateLinearList implements InterpolateList<Float> {
     private final HashMap<Integer, Float> handleByIdx = new HashMap<>();
     private float[] interpolatedValues;
     private int curveLength;
+    private int[] handleIdcs;
 
     public FloatInterpolateLinearList() {
-        updateInterpolatedValues();
+        updateOnChanged();
     }
 
     @Override
@@ -24,13 +25,13 @@ public class FloatInterpolateLinearList implements InterpolateList<Float> {
             throw new IllegalArgumentException("this value is not legal for this state");
         }
         handleByIdx.put(idx, value);
-        updateInterpolatedValues();
+        updateOnChanged();
     }
 
     @Override
     public void setToInterpolate(int idx) {
         handleByIdx.remove(idx);
-        updateInterpolatedValues();
+        updateOnChanged();
     }
 
     @Override
@@ -61,15 +62,27 @@ public class FloatInterpolateLinearList implements InterpolateList<Float> {
         return handleByIdx.size();
     }
 
+    @Override
+    public int[] handleIdcs() {
+
+        return handleIdcs;
+    }
+
     private void updateCurveLength() {
         if (handleByIdx.isEmpty())
             curveLength = 0;
         else
-            curveLength = 1+ Collections.max(handleByIdx.keySet()); //max idx + 1
+            curveLength = 1 + Collections.max(handleByIdx.keySet()); //max idx + 1
     }
 
-    private void updateInterpolatedValues() {
+    private void updateOnChanged() {
         updateCurveLength();
+        updateHandleIdcs();
+
+        updateInterpolateValues();
+    }
+
+    private void updateInterpolateValues() {
         int curveLength = getCurveLength();
 
         float[] interpolatedValues = new float[curveLength];
@@ -94,5 +107,15 @@ public class FloatInterpolateLinearList implements InterpolateList<Float> {
         }
 
         this.interpolatedValues = interpolatedValues;
+    }
+
+    private void updateHandleIdcs() {
+        int[] handleIdcs = new int[handleByIdx.size()];
+        int i = 0;
+        for (Integer idx : handleByIdx.keySet()) {
+            handleIdcs[i++] = idx;
+        }
+        Arrays.sort(handleIdcs);
+        this.handleIdcs = handleIdcs;
     }
 }
