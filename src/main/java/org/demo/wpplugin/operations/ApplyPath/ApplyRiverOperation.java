@@ -1,7 +1,6 @@
 package org.demo.wpplugin.operations.ApplyPath;
 
 import org.demo.wpplugin.geometry.HeightDimension;
-import org.demo.wpplugin.geometry.KernelConvolution;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
@@ -13,7 +12,10 @@ import org.pepsoft.worldpainter.operations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Random;
 import java.util.function.Function;
 
 import static java.lang.Math.max;
@@ -112,7 +114,8 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
         float[] maxHandleValues = getMaxValues(path, path.type.size);
 
         double totalSearchRadius =
-                getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS);// + getValue(maxHandleValues, TRANSITION_RADIUS);
+                getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS);// + getValue
+        // (maxHandleValues, TRANSITION_RADIUS);
         PathGeometryHelper helper = new PathGeometryHelper(path, curve, totalSearchRadius);
         HashMap<Point, Collection<Point>> parentage = helper.getParentage();
 
@@ -163,19 +166,21 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
         float maxTransition = (getValue(maxHandleValues,
                 TRANSITION_RADIUS));
 
+        //add transitions rings
+        int amountRings = Math.round(maxTransition);
+        RingFinder ringFinder = new RingFinder(finalHeightmap, amountRings, dimension);
+        for (int i = 1; i < amountRings; i++) {
+            for (Point p : ringFinder.ring(i).keySet()) {
+                float beachHeight = ringFinder.ring(i).get(p);
+                float t = (1f * i) / (amountRings - 1);
+                float interpolate = (1-t) * beachHeight + ( t) * dimension.getHeight(p.x, p.y);
+                dimension.setHeight(p.x, p.y, interpolate);
+            }
+        }
+
         //apply beach and river heights
         for (Point p : finalHeightmap.keySet()) {
             dimension.setHeight(p.x, p.y, finalHeightmap.get(p));
-        }
-
-        //add transitions rings
-        int amountRings = Math.round(maxTransition);
-        RingFinder ringFinder = new RingFinder(new HashSet<>(finalHeightmap.keySet()), amountRings);
-        for (int i = 1; i < amountRings; i++) {
-
-            for (Point p: ringFinder.ring(i)) {
-                dimension.setHeight(p.x, p.y, 72+2*i);
-            }
         }
     }
 
