@@ -16,6 +16,8 @@ public class Path implements Iterable<float[]> {
     public final PointInterpreter.PointType type;
     private final ArrayList<float[]> handles;
 
+    private final HashMap<RiverHandleInformation.RiverInformation, FloatInterpolateLinearList> curves = new HashMap<>();
+
     private Path() {
         this.type = PointInterpreter.PointType.POSITION_2D;
         handles = new ArrayList<>(0);

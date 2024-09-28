@@ -1,6 +1,6 @@
 package org.demo.wpplugin.operations.River;
 
-import org.demo.wpplugin.pathing.FloatInterpolateList;
+import org.demo.wpplugin.pathing.FloatInterpolateLinearList;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,30 +9,27 @@ import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
 public class PathHistogram extends JPanel implements KeyListener {
-    private final FloatInterpolateList curve;
+    private final FloatInterpolateLinearList curve;
     private int[] selectable;
-    private FloatInterpolateList handles;
-    private int selectedIdx;
+    private FloatInterpolateLinearList handles;
+    private int selectedCurveIdx;
 
-    PathHistogram(FloatInterpolateList curve, int selectedIdx) {
+    PathHistogram(FloatInterpolateLinearList curve, int selectedIdx) {
         super(new BorderLayout());
-        this.selectedIdx = selectedIdx;
+        this.selectedCurveIdx = curve.amountHandles()/2;
         this.curve = curve;
 
-        calcSelectables();
-        assert selectable.length != 0;
-        this.selectedIdx = 0;
         setFocusable(true); // Make sure the component can receive focus for key events
         requestFocusInWindow(); // Request focus to ensure key bindings work
         setupKeyBindings();
     }
 
     private int getSelectedCurveIdx() {
-        return selectable[selectedIdx];
+        return selectedCurveIdx;
     }
 
     private void changeValue(float amount) {
-        float value = curve.getInterpolatedList()[getSelectedCurveIdx()] + amount;
+        float value = curve.getInterpolatedValue(getSelectedCurveIdx()) + amount;
         curve.setValue(getSelectedCurveIdx(), value);
     }
 
@@ -52,21 +49,20 @@ public class PathHistogram extends JPanel implements KeyListener {
         g2d.fillRect(0, 0, getWidth(), -getHeight());
         g2d.setColor(Color.BLACK);
 
-        float scale = getWidth() * 1f / (curve.getSize() + 100);
+        float scale = getWidth() * 1f / (curve.getCurveLength() + 100);
         g2d.scale(scale, scale);
         g2d.setColor(Color.BLACK);
 
-        float[] list = curve.getInterpolatedList();
         //draw curve
-        for (int i = 1; i < curve.getSize(); i++) {
-            float aZ = list[i - 1];
-            float bZ = list[i];
+        for (int i = 1; i < curve.getCurveLength(); i++) {
+            float aZ = curve.getInterpolatedValue(i - 1).floatValue();
+            float bZ = curve.getInterpolatedValue(i).floatValue();
 
             g2d.drawLine(
                     i - 1, -Math.round(aZ),
                     i, -Math.round(bZ));
         }
-        g2d.drawRect(0, 0, curve.getSize(), -getHeight());
+        g2d.drawRect(0, 0, curve.getCurveLength(), -getHeight());
 
         //mark height lines
         for (int y = 0; y < 255; y += 20) {
@@ -79,11 +75,11 @@ public class PathHistogram extends JPanel implements KeyListener {
 
         //mark handles
         int handleIdx = 0;
-        for (int x = 0; x < curve.getSize(); x++) {
+        for (int x = 0; x < curve.getCurveLength(); x++) {
             if (curve.isInterpolate(x))
                 continue;
 
-            int curveHeight = (int)curve.getInterpolatedList()[x];
+            int curveHeight = curve.getInterpolatedValue(x).intValue();
             int y = curveHeight/2;
             g2d.setColor(x == getSelectedCurveIdx() ? Color.ORANGE : Color.BLACK);
             g2d.drawLine(x, 0, x, -y);
@@ -92,7 +88,7 @@ public class PathHistogram extends JPanel implements KeyListener {
 
 
             String text = "";
-            text += String.format("%.2f", curve.getInterpolatedList()[x]);
+            text += String.format("%.2f", curve.getInterpolatedValue(x));
             g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
 
             handleIdx++;
@@ -118,12 +114,12 @@ public class PathHistogram extends JPanel implements KeyListener {
     }
 
     private int safeIdx(int idx) {
-        return Math.max(0, Math.min(this.curve.getSize() - 1, idx));
+        return Math.max(0, Math.min(this.curve.getCurveLength() - 1, idx));
     }
 
     private void calcSelectables() {
-        ArrayList selectables = new ArrayList<Integer>(curve.getSize());
-        for (int i = 0; i < curve.getSize(); i++) {
+        ArrayList selectables = new ArrayList<Integer>(curve.getCurveLength());
+        for (int i = 0; i < curve.getCurveLength(); i++) {
             if (!curve.isInterpolate(i)) {
                 selectables.add(i);
             }
@@ -152,13 +148,13 @@ public class PathHistogram extends JPanel implements KeyListener {
             break;
             case KeyEvent.VK_SPACE: //Insert new handle
                 int newCurveIdx = getSelectedCurveIdx() + 100;
-                if (selectedIdx < selectable.length - 1) {
-                    newCurveIdx = (selectable[selectedIdx] + selectable[selectedIdx + 1]) / 2;
+                if (selectedCurveIdx < selectable.length - 1) {
+                    newCurveIdx = (selectable[selectedCurveIdx] + selectable[selectedCurveIdx + 1]) / 2;
                 }
                 newCurveIdx = safeIdx(newCurveIdx);
                 if (curve.isInterpolate(newCurveIdx)) {
-                    curve.setValue(newCurveIdx, curve.getInterpolatedList()[selectable[0]]);
-                    selectHandleAt(newCurveIdx);
+                    curve.setValue(newCurveIdx, curve.getInterpolatedValue(selectable[0]));
+                    selectedCurveIdx = newCurveIdx;
                 }
                 break;
             case KeyEvent.VK_DELETE: //Insert new handle
@@ -166,7 +162,7 @@ public class PathHistogram extends JPanel implements KeyListener {
                     break;
                 if (!curve.isInterpolate(getSelectedCurveIdx())) {
                     curve.setToInterpolate(getSelectedCurveIdx());
-                    selectedIdx--;
+                    selectedCurveIdx--;
                 }
                 break;
             case KeyEvent.VK_RIGHT: {
@@ -176,12 +172,12 @@ public class PathHistogram extends JPanel implements KeyListener {
                     int off = e.isControlDown() ? 100 : 1;
                     int targetIdx = safeIdx(curveIdx + off);
                     if (curve.isInterpolate(targetIdx)) {
-                        curve.setValue(targetIdx, curve.getInterpolatedList()[curveIdx]);
+                        curve.setValue(targetIdx, curve.getInterpolatedValue(curveIdx));
                         curve.setToInterpolate(curveIdx);
-                        selectHandleAt(targetIdx);
+                        selectedCurveIdx = targetIdx;
                     }
                 } else {
-                    selectedIdx++;
+                    selectedCurveIdx = selectableIdxNear(selectedCurveIdx, 1);
                 }
             }
             break;
@@ -192,31 +188,28 @@ public class PathHistogram extends JPanel implements KeyListener {
                     int off = e.isControlDown() ? -100 : -1;
                     int targetIdx = safeIdx(curveIdx + off);
                     if (curve.isInterpolate(targetIdx)) {
-                        curve.setValue(targetIdx, curve.getInterpolatedList()[curveIdx]);
+                        curve.setValue(targetIdx, curve.getInterpolatedValue(curveIdx));
                         curve.setToInterpolate(curveIdx);
-                        selectHandleAt(targetIdx);
+                        selectedCurveIdx = targetIdx;
                     }
                 } else {
-                    selectedIdx--;
+                    selectedCurveIdx = selectableIdxNear(selectedCurveIdx, -1);
                 }
                 break;
             default:
         }
         calcSelectables();
-        selectedIdx = Math.max(0, Math.min(selectedIdx, selectable.length - 1));
+        selectedCurveIdx = Math.max(0, Math.min(selectedCurveIdx, selectable.length - 1));
         repaint();
     }
 
-    private void selectHandleAt(int curveIdx) {
-        calcSelectables();
-        for (int i = 0; i < selectable.length; i++) {
-            if (selectable[i] == curveIdx) {
-                selectedIdx = i;
-                assert getSelectedCurveIdx() == curveIdx;
-                break;
+    private int selectableIdxNear(int startIdx, int dir) {
+        for (int idx = startIdx; idx > 0 && idx < curve.getCurveLength(); idx+=dir) {
+            if (curve.isInterpolate(idx)) {
+                return idx;
             }
         }
-        System.out.println("thats not supposed to happen?");
+        return startIdx;
     }
 
     @Override

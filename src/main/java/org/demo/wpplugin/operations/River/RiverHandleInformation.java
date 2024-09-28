@@ -4,7 +4,7 @@ import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.operations.OptionsLabel;
-import org.demo.wpplugin.pathing.FloatInterpolateList;
+import org.demo.wpplugin.pathing.FloatInterpolateLinearList;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
@@ -154,7 +154,7 @@ public class RiverHandleInformation {
 
 
         // Create a JLabel to display the image
-        FloatInterpolateList waterZCurve = new FloatInterpolateList(curve.size());
+        FloatInterpolateLinearList waterZCurve = new FloatInterpolateLinearList();
         int[] map = path.handleToCurveIdx(true);
 
         for (int i = 0; i < path.amountHandles(); i++) {
