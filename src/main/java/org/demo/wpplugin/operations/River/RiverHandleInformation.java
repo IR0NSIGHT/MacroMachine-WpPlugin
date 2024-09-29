@@ -30,18 +30,16 @@ import static org.demo.wpplugin.pathing.PointUtils.markLine;
 public class RiverHandleInformation {
     public static final float INHERIT_VALUE = -1;
 
-    public static float getValue(float[] point, RiverInformation information) {
-        return point[PositionSize.SIZE_2_D.value + information.idx];
+    /**
+     * @param x
+     * @param y
+     * @return a handle with given position and the rest of meta values set to INHERIT
+     */
+    public static float[] riverInformation(int x, int y) {
+        return riverInformation(x, y, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE);
     }
 
-    public static float[] setValue(float[] point, RiverInformation information, float value) {
-        float[] out = point.clone();
-        out[PositionSize.SIZE_2_D.value + information.idx] = value;
-        return out;
-    }
-
-    public static float[] riverInformation(int x, int y, float riverRadius, float riverDepth, float beachRadius,
-                                           float transitionRadius, float waterZ) {
+    public static float[] riverInformation(int x, int y, float riverRadius, float riverDepth, float beachRadius, float transitionRadius, float waterZ) {
         float[] out = new float[RIVER_2D.size];
         out[0] = x;
         out[1] = y;
@@ -53,13 +51,10 @@ public class RiverHandleInformation {
         return out;
     }
 
-    /**
-     * @param x
-     * @param y
-     * @return a handle with given position and the rest of meta values set to INHERIT
-     */
-    public static float[] riverInformation(int x, int y) {
-        return riverInformation(x, y, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE);
+    public static float[] setValue(float[] point, RiverInformation information, float value) {
+        float[] out = point.clone();
+        out[PositionSize.SIZE_2_D.value + information.idx] = value;
+        return out;
     }
 
     public static float[] positionInformation(float x, float y, PointInterpreter.PointType type) {
@@ -68,7 +63,6 @@ public class RiverHandleInformation {
         point[1] = y;
         return point;
     }
-
 
     public static BufferedImage toImage(HeightDimension dim, int width, int height) {
 
@@ -90,7 +84,6 @@ public class RiverHandleInformation {
 
         return image;
     }
-
 
     public static boolean validateRiver2D(ArrayList<float[]> handles) {
         float lastWaterZ = Float.MAX_VALUE;
@@ -119,8 +112,11 @@ public class RiverHandleInformation {
         return true;
     }
 
-    public static HeightDimension curve1D(ArrayList<float[]> curve,
-                                          RiverHandleInformation.RiverInformation riverInformation) {
+    public static float getValue(float[] point, RiverInformation information) {
+        return point[PositionSize.SIZE_2_D.value + information.idx];
+    }
+
+    public static HeightDimension curve1D(ArrayList<float[]> curve, RiverHandleInformation.RiverInformation riverInformation) {
         HeightDimension dim = new HeightDimension() {
             final HashMap<Point, Float> heightMap = new HashMap<>();
 
@@ -167,7 +163,7 @@ public class RiverHandleInformation {
 
         float[] terrainCurve = new float[curve.size()];
         int i = 0;
-        for (float[] point: curve) {
+        for (float[] point : curve) {
             terrainCurve[i++] = heightDimension.getHeight(getPoint2D(point).x, getPoint2D(point).y);
         }
 
@@ -185,8 +181,7 @@ public class RiverHandleInformation {
                 //write back values to path from pathhistogram
                 int handleIdx = 1;
                 for (int i = 0; i < waterZCurve.getCurveLength(); i++) {
-                    if (waterZCurve.isInterpolate(i))
-                        continue;
+                    if (waterZCurve.isInterpolate(i)) continue;
                     float[] newValue = setValue(p.handleByIndex(handleIdx), WATER_Z, waterZCurve.getHandleValue(i));
                     p = p.setHandleByIdx(newValue, handleIdx++);
                 }
@@ -211,27 +206,18 @@ public class RiverHandleInformation {
         OptionsLabel[] options = new OptionsLabel[RiverInformation.values().length];
         int i = 0;
         for (RiverInformation information : RiverInformation.values()) {
-            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), INHERIT_VALUE,
-                    information.max, 1f);
+            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), INHERIT_VALUE, information.max, 1f);
 
-            options[i++] = numericInput(information.displayName,
-                    information.toolTip,
-                    model,
-                    newValue -> {
-                        onSubmitCallback.accept(setValue(point, information, newValue));
-                    },
-                    onChanged
-            );
+            options[i++] = numericInput(information.displayName, information.toolTip, model, newValue -> {
+                onSubmitCallback.accept(setValue(point, information, newValue));
+            }, onChanged);
         }
         return options;
     }
 
     public static void DrawRiverPath(Path path, PaintDimension dim, int selectedIdx) throws IllegalAccessException {
-        if (path.type != RIVER_2D)
-            throw new IllegalArgumentException("path is not river: " + path.type);
-        if (path.amountHandles() < 4) {
-
-        } else {
+        if (path.type != RIVER_2D) throw new IllegalArgumentException("path is not river: " + path.type);
+        if (!(path.amountHandles() < 4)) {
             ArrayList<float[]> curve = path.continousCurve(true);
             int[] curveIdxHandles = path.handleToCurveIdx(true);
 
@@ -281,23 +267,17 @@ public class RiverHandleInformation {
         for (int i = 0; i < path.amountHandles(); i++) {
             float[] handle = path.handleByIndex(i);
             int size = SIZE_MEDIUM_CROSS;
-            PointUtils.markPoint(getPoint2D(handle), DemoLayerRenderer.Yellow, size,
-                    dim);
+            PointUtils.markPoint(getPoint2D(handle), DemoLayerRenderer.Yellow, size, dim);
 
             //RIVER RADIUS
             if (!(getValue(handle, RIVER_RADIUS) == INHERIT_VALUE))
-                PointUtils.drawCircle(getPoint2D(handle), getValue(handle, RIVER_RADIUS), dim,
-                        getValue(handle, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
+                PointUtils.drawCircle(getPoint2D(handle), getValue(handle, RIVER_RADIUS), dim, getValue(handle, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
 
         }
     }
 
     public enum RiverInformation {
-        RIVER_RADIUS(0, "river radius", "radius of the river ", 0, 1000),
-        RIVER_DEPTH(1, "river depth", "depth of the river ", 0, 1000),
-        BEACH_RADIUS(2, "beach radius", "radius of the beach ", 0, 1000),
-        TRANSITION_RADIUS(3, "transition radius", "radius of the transition blending with original terrain ", 0, 1000),
-        WATER_Z(4, "water level", "water level position on z axis", 0, 1000);
+        RIVER_RADIUS(0, "river radius", "radius of the river ", 0, 1000), RIVER_DEPTH(1, "river depth", "depth of the river ", 0, 1000), BEACH_RADIUS(2, "beach radius", "radius of the beach ", 0, 1000), TRANSITION_RADIUS(3, "transition radius", "radius of the transition blending with original terrain ", 0, 1000), WATER_Z(4, "water level", "water level position on z axis", 0, 1000);
         public final int idx;
         public final String displayName;
         public final String toolTip;
@@ -314,9 +294,7 @@ public class RiverHandleInformation {
     }
 
     public enum PositionSize {
-        SIZE_1_D(1),
-        SIZE_2_D(2),
-        SIZE_3_D(3);
+        SIZE_1_D(1), SIZE_2_D(2), SIZE_3_D(3);
         public final int value;
 
         PositionSize(int idx) {

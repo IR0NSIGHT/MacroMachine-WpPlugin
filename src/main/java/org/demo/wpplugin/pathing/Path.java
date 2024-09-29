@@ -23,7 +23,7 @@ public class Path implements Iterable<float[]> {
         }
         this.type = type;
 
-        assert invariant();
+       assert invariant();
     }
 
     public static float[] interpolateWaterZ(ArrayList<float[]> curve, HeightDimension dim) {
@@ -256,13 +256,16 @@ public class Path implements Iterable<float[]> {
         if (this.type == PointInterpreter.PointType.RIVER_2D)
             okay = okay && validateRiver2D(handles);
 
-        if (handles.size() != 0)
+        //FIXME how to handle if user inputs illegal values?
+       /* if (handles.size() != 0)
             for (int n = 0; n < type.size; n++) {
                 if (setValues[n] == INHERIT_VALUE) {
                     okay = false;
                     break;
                 }
             }
+
+        */
         return okay;
     }
 
@@ -285,7 +288,7 @@ public class Path implements Iterable<float[]> {
         Path sum = new Path(this.handles, this.type);
         int idx = sum.indexOfPosition(point);
         sum.handles.remove(idx);
-        assert invariant();
+        assert sum.invariant();
         return sum;
     }
 

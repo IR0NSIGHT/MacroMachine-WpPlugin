@@ -19,7 +19,6 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
@@ -49,8 +48,7 @@ import static org.demo.wpplugin.pathing.PointUtils.*;
  *
  * <p><strong>Note</strong> that for now WorldPainter only supports operations that
  */
-public class EditPathOperation extends MouseOrTabletOperation implements
-        PaintOperation, // Implement this if you need access to the currently selected paint; note that some base
+public class EditPathOperation extends MouseOrTabletOperation implements PaintOperation, // Implement this if you need access to the currently selected paint; note that some base
         // classes already provide this
         BrushOperation // Implement this if you need access to the currently selected brush; note that some base
         // classes already provide this
@@ -76,11 +74,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
-    static final String DESCRIPTION = "<html>Draw smooth, connected curves with C1 continuity.<br>left click: add new" +
-            " point " +
-            "after selected<br>right click: delete selected<br>ctrl+click: select this handle<br>shift+click: move " +
-            "selected" +
-            " handle here</html>";
+    static final String DESCRIPTION = "<html>Draw smooth, connected curves with C1 continuity.<br>left click: add new" + " point " + "after selected<br>right click: delete selected<br>ctrl+click: select this handle<br>shift+click: move " + "selected" + " handle here</html>";
     //update path
     public static int PATH_ID = 1;
     private final EditPathOptions options = new EditPathOptions();
@@ -111,8 +105,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
-                if (!EditPathOperation.super.isActive())
-                    return false;
+                if (!EditPathOperation.super.isActive()) return false;
 
                 shiftDown = e.isShiftDown();
                 altDown = e.isAltDown();
@@ -122,30 +115,68 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         });
     }
 
-    /**
-     * draws this path onto the map
-     *
-     * @param path
-     */
-    static void DrawPathLayer(Path path, PaintDimension dim, int selectedPointIdx) throws IllegalAccessException {
-        Path clone = path.clone();
-        //nothing
-        if (path.type == PointInterpreter.PointType.RIVER_2D) {
-            DrawRiverPath(path, dim, selectedPointIdx);
-        }
-        assert clone.equals(path) : "something mutated the path";
-    }
-
-    float[] getSelectedPoint() {
-        if (selectedPointIdx == -1)
-            return null;
-        if (selectedPointIdx < 0 || selectedPointIdx > getSelectedPath().amountHandles() - 1)
-            return null;
-        return getSelectedPath().handleByIndex(selectedPointIdx);
-    }
-
     void setSelectedPointIdx(int selectedPointIdx) {
         this.selectedPointIdx = selectedPointIdx;
+    }
+
+    private void overwriteSelectedPath(Path p) {
+        try {
+            PathManager.instance.setPathBy(getSelectedPathId(), p);
+        } catch (AssertionError err) {
+            System.err.println(err);
+        }
+    }
+
+    private void applyAsSelection() {
+        Layer select = SelectionBlock.INSTANCE;
+
+        for (float[] p : getSelectedPath().continousCurve()) {
+            Point point = getPoint2D(p);
+            getDimension().setBitLayerValueAt(select, point.x, point.y, true);
+        }
+    }
+
+    Path getSelectedPath() {
+        return PathManager.instance.getPathBy(getSelectedPathId());
+    }
+
+    int getSelectedPathId() {
+        return options.selectedPathId;
+    }
+
+    @Override
+    public Brush getBrush() {
+        return brush;
+    }
+
+    @Override
+    public void setBrush(Brush brush) {
+        this.brush = brush;
+    }
+
+    @Override
+    public Paint getPaint() {
+        return paint;
+    }
+
+    @Override
+    public void setPaint(Paint paint) {
+        this.paint = paint;
+    }
+
+    @Override
+    public JPanel getOptionsPanel() {
+        panelContainer = new EditPathOptionsPanelContainer(getName(), "a description");
+        return panelContainer;
+    }
+
+    @Override
+    protected void activate() throws PropertyVetoException {
+        super.activate();
+        altDown = false;
+        ctrlDown = false;
+        shiftDown = false;
+        redrawSelectedPathLayer();
     }
 
     /**
@@ -198,8 +229,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                         int clostestIdx = path.getClosestHandleIdxTo(userClickedCoord);
                         float[] closest = path.handleByIndex(clostestIdx);
                         //dont allow very far away clicks
-                        if (getPositionalDistance(closest, userClickedCoord,
-                                RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
+                        if (getPositionalDistance(closest, userClickedCoord, RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
                             setSelectedPointIdx(clostestIdx);
                         }
                     }
@@ -230,7 +260,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements
                         overwriteSelectedPath(newPath);
                         int idx = getSelectedPath().indexOfPosition(pointBeforeSelected);
                         setSelectedPointIdx(idx);
-                    } catch (IllegalAccessException e) {
+                    } catch (Exception|AssertionError e ) {
+                        overwriteSelectedPath(path); // set old path
                         throw new RuntimeException(e);
                     }
                 }
@@ -244,39 +275,14 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             assert getSelectedPath().amountHandles() == 0 || getSelectedPoint() != null;
 
 
-            assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull " +
-                    "setting " +
-                    "path in manager";
+            assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull " + "setting " + "path in manager";
         } catch (Exception e) {
             System.out.println("Exception after user edit-path-action");
             System.out.println(e);
         }
         redrawSelectedPathLayer();
 
-        if (this.eOptionsPanel != null)
-            this.eOptionsPanel.onOptionsReconfigured();
-    }
-
-    private void overwriteSelectedPath(Path p) {
-        PathManager.instance.setPathBy(getSelectedPathId(), p);
-    }
-
-    Path getSelectedPath() {
-        return PathManager.instance.getPathBy(getSelectedPathId());
-    }
-
-    int getSelectedPathId() {
-        return options.selectedPathId;
-    }
-
-    private void applyAsSelection() {
-        Layer select = SelectionBlock.INSTANCE;
-
-        for (float[] p :
-                getSelectedPath().continousCurve()) {
-            Point point = getPoint2D(p);
-            getDimension().setBitLayerValueAt(select, point.x, point.y, true);
-        }
+        if (this.eOptionsPanel != null) this.eOptionsPanel.onOptionsReconfigured();
     }
 
     void redrawSelectedPathLayer() {
@@ -298,8 +304,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             //redraw new
             DrawPathLayer(getSelectedPath().clone(), dim, getSelectedPath().indexOfPosition(getSelectedPoint()));
             if (getSelectedPoint() != null)
-                PointUtils.markPoint(getPoint2D(getSelectedPoint()), COLOR_SELECTED,
-                        SIZE_SELECTED, dim);
+                PointUtils.markPoint(getPoint2D(getSelectedPoint()), COLOR_SELECTED, SIZE_SELECTED, dim);
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
         } finally {
@@ -307,39 +312,24 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         }
     }
 
-    @Override
-    public Brush getBrush() {
-        return brush;
+    /**
+     * draws this path onto the map
+     *
+     * @param path
+     */
+    static void DrawPathLayer(Path path, PaintDimension dim, int selectedPointIdx) throws IllegalAccessException {
+        Path clone = path.clone();
+        //nothing
+        if (path.type == PointInterpreter.PointType.RIVER_2D) {
+            DrawRiverPath(path, dim, selectedPointIdx);
+        }
+        assert clone.equals(path) : "something mutated the path";
     }
 
-    @Override
-    public void setBrush(Brush brush) {
-        this.brush = brush;
-    }
-
-    @Override
-    public Paint getPaint() {
-        return paint;
-    }
-
-    @Override
-    public void setPaint(Paint paint) {
-        this.paint = paint;
-    }
-
-    @Override
-    public JPanel getOptionsPanel() {
-        panelContainer = new EditPathOptionsPanelContainer(getName(), "a description");
-        return panelContainer;
-    }
-
-    @Override
-    protected void activate() throws PropertyVetoException {
-        super.activate();
-        altDown = false;
-        ctrlDown = false;
-        shiftDown = false;
-        redrawSelectedPathLayer();
+    float[] getSelectedPoint() {
+        if (selectedPointIdx == -1) return null;
+        if (selectedPointIdx < 0 || selectedPointIdx > getSelectedPath().amountHandles() - 1) return null;
+        return getSelectedPath().handleByIndex(selectedPointIdx);
     }
 
     private static class EditPathOptions {
@@ -367,8 +357,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
         }
 
         @Override
-        protected ArrayList<OptionsLabel> addComponents(EditPathOptions editPathOptions,
-                                                        Runnable onOptionsReconfigured) {
+        protected ArrayList<OptionsLabel> addComponents(EditPathOptions editPathOptions, Runnable onOptionsReconfigured) {
             ArrayList<OptionsLabel> inputs = new ArrayList<>();
 
             //select path dropdown
@@ -378,8 +367,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             comboBox.setSelectedItem(PathManager.instance.getPathName(editPathOptions.selectedPathId));
             comboBox.addActionListener(e -> {
                 editPathOptions.selectedPathId = ((PathManager.NamedId) comboBox.getSelectedItem()).id;
-                setSelectedPointIdx(getSelectedPath().amountHandles() == 0 ? -1 :
-                        getSelectedPath().amountHandles() - 1);
+                setSelectedPointIdx(getSelectedPath().amountHandles() == 0 ? -1 : getSelectedPath().amountHandles() - 1);
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
             });
@@ -391,8 +379,12 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             JButton button = new JButton("Add empty path");
             // Add an ActionListener to handle button clicks
             button.addActionListener(e -> {
-                editPathOptions.selectedPathId =
-                        PathManager.instance.addPath(getSelectedPath().newEmpty().addPoint(riverInformation(0, 0)));
+                float[][] handles = new float[][]{riverInformation(0, 0),
+                        riverInformation(10, 10, 1, 2, 3, 4, 5),
+                        riverInformation(20, 20)};
+                editPathOptions.selectedPathId = PathManager.instance.addPath(
+                        new Path(Arrays.asList(handles), getSelectedPath().type)
+                );
                 setSelectedPointIdx(0);
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
@@ -417,22 +409,21 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             inputs.add(() -> new JComponent[]{textField, submitNameChangeButton});
 
 
-            if (getSelectedPoint() != null) {
+            if (getSelectedPoint() != null &&
+                    !Arrays.equals(getSelectedPoint(), getSelectedPath().handleByIndex(0)) &&
+                    !Arrays.equals(getSelectedPoint(), getSelectedPath().getTail())) {
                 if (getSelectedPath().type == PointInterpreter.PointType.RIVER_2D) {
-                    OptionsLabel[] riverInputs = RiverHandleInformation.Editor(
-                            getSelectedPoint(),
-                            point -> {
-                                Path oldPath = getSelectedPath();
-                                try {
-                                    Path newPath = getSelectedPath().movePoint(getSelectedPoint(), point);
-                                    overwriteSelectedPath(newPath);
-                                } catch (Exception ex) {
-                                    System.err.println(ex.getMessage());
-                                    overwriteSelectedPath(oldPath);
-                                }
-                                redrawSelectedPathLayer();
-                            },
-                            onOptionsReconfigured);
+                    OptionsLabel[] riverInputs = RiverHandleInformation.Editor(getSelectedPoint(), point -> {
+                        Path oldPath = getSelectedPath();
+                        try {
+                            Path newPath = getSelectedPath().movePoint(getSelectedPoint(), point);
+                            overwriteSelectedPath(newPath);
+                        } catch (Exception ex) {
+                            System.err.println(ex.getMessage());
+                            overwriteSelectedPath(oldPath);
+                        }
+                        redrawSelectedPathLayer();
+                    }, onOptionsReconfigured);
 
                     inputs.addAll(Arrays.asList(riverInputs));
                 }
@@ -441,7 +432,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements
             HeightDimension dim = new HeightDimension() {
                 @Override
                 public float getHeight(int x, int y) {
-                    return getDimension().getHeightAt(x,y);
+                    return getDimension().getHeightAt(x, y);
                 }
 
                 @Override
