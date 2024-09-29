@@ -221,21 +221,12 @@ public class RiverHandleInformation {
             ArrayList<float[]> curve = path.continousCurve(true);
             int[] curveIdxHandles = path.handleToCurveIdx(true);
 
-            int startIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx - 2), curveIdxHandles.length - 1)];
-            int endIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx + 2), curveIdxHandles.length - 1)];
-
-            float[] riverPosition_X = new float[curve.size()];
-            float[] riverPosition_Y = new float[curve.size()];
-            for (int i = 0; i < curve.size(); i++) {
-                float[] p = curve.get(i);
-                riverPosition_X[i] = p[0];
-                riverPosition_Y[i] = p[1];
-            }
-
+            int selectionStartIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx - 2), curveIdxHandles.length - 1)];
+            int selectionEndIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx + 2), curveIdxHandles.length - 1)];
 
             for (int i = 1; i < curve.size() - 1; i++) {
                 float[] p = curve.get(i);
-                int color = startIdx < i && i < endIdx ? DemoLayerRenderer.Dark_Cyan : COLOR_CURVE;
+                int color = (selectionStartIdx < i && i < selectionEndIdx) ? DemoLayerRenderer.Dark_Cyan : COLOR_CURVE;
                 PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
 
                 for (RiverInformation info : new RiverInformation[]{RIVER_RADIUS, BEACH_RADIUS, TRANSITION_RADIUS}) {
