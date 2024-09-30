@@ -16,6 +16,7 @@ public class Path implements Iterable<float[]> {
     public final PointInterpreter.PointType type;
     private final ArrayList<float[]> handles;
     private final float[] defaultInterpolationValues;
+
     public Path(List<float[]> handles, PointInterpreter.PointType type) {
         this.handles = new ArrayList<>(handles.size());
         for (float[] handle : handles) {
@@ -23,40 +24,8 @@ public class Path implements Iterable<float[]> {
         }
         this.type = type;
         defaultInterpolationValues = new float[type.size];
-        Arrays.fill(defaultInterpolationValues,5f);
+        Arrays.fill(defaultInterpolationValues, 5f);
         assert invariant();
-    }
-
-    private boolean invariant() {
-        boolean okay = true;
-
-        float[] setValues = new float[type.size];
-        Arrays.fill(setValues, INHERIT_VALUE);
-        for (float[] handle : handles) {
-            for (int n = 0; n < type.size; n++) {
-                if (Float.isNaN(handle[n])) return false;
-                if (setValues[n] == INHERIT_VALUE) setValues[n] = handle[n];
-            }
-
-            if (handle.length != type.size) {
-                System.err.println("path has a handle with wrong size for type " + type + " expected " + type.size + " but got " + Arrays.toString(handle));
-                okay = false;
-            }
-        }
-
-        if (this.type == PointInterpreter.PointType.RIVER_2D) okay = okay && validateRiver2D(handles);
-
-        //FIXME how to handle if user inputs illegal values?
-       /* if (handles.size() != 0)
-            for (int n = 0; n < type.size; n++) {
-                if (setValues[n] == INHERIT_VALUE) {
-                    okay = false;
-                    break;
-                }
-            }
-
-        */
-        return okay;
     }
 
     public static float[] interpolateWaterZ(ArrayList<float[]> curve, HeightDimension dim) {
@@ -91,10 +60,6 @@ public class Path implements Iterable<float[]> {
         return true;
     }
 
-    private static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles) {
-        return continousCurveFromHandles(handles, true);
-    }
-
     private static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles, boolean roundToGrid) {
         LinkedList<float[]> curvePoints = new LinkedList<>();
 
@@ -105,7 +70,8 @@ public class Path implements Iterable<float[]> {
             handleB = handles.get(i + 1);
             handleC = handles.get(i + 2);
             handleD = handles.get(i + 3);
-            float[][] curveSegment = CubicBezierSpline.getSplinePathFor(handleA, handleB, handleC, handleD, RiverHandleInformation.PositionSize.SIZE_2_D.value);
+            float[][] curveSegment = CubicBezierSpline.getSplinePathFor(handleA, handleB, handleC, handleD,
+                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
             //curvepoints contain [x,y,t]
             curvePoints.addAll(Arrays.asList(curveSegment));
         }
@@ -126,7 +92,10 @@ public class Path implements Iterable<float[]> {
             } else {
                 previousPoint = point;
                 result.add(previousPoint);
-                assert getPositionalDistance(point, previousPoint, RiverHandleInformation.PositionSize.SIZE_2_D.value) <= Math.sqrt(2) + 0.01f : "distance " + "between curvepoints is to large:" + getPositionalDistance(point, previousPoint, RiverHandleInformation.PositionSize.SIZE_2_D.value);
+                assert getPositionalDistance(point, previousPoint,
+                        RiverHandleInformation.PositionSize.SIZE_2_D.value) <= Math.sqrt(2) + 0.01f : "distance " +
+                        "between curvepoints is to large:" + getPositionalDistance(point, previousPoint,
+                        RiverHandleInformation.PositionSize.SIZE_2_D.value);
             }
         }
         result.trimToSize();
@@ -137,6 +106,151 @@ public class Path implements Iterable<float[]> {
             assert pointResult.contains(handlePoint) : "handle not in curve" + handlePoint;
         }
         return result;
+    }
+
+    /**
+     * will prepare handles array so that it can be interpolated.
+     *
+     * @param handles
+     * @param emptyMarker use this value to decide if a value in handle is "empty"
+     * @return new array with set handles
+     * @requires at least one handle value is set
+     * @ensures first two and last two values are set, therefor all others can be interpolated
+     */
+    public static float[] prepareEmptyHandlesForInterpolation(float[] handles, float emptyMarker, float defaultValue) {
+        handles = handles.clone();
+        if (handles.length > 0 && handles.length < 4) {
+            throw new IllegalArgumentException("zero or at least 4 handles are required for interpolation");
+        }
+
+        //count how many handles are not empty, remember first and last handle
+        int setHandles = 0;
+        float firstHandle = emptyMarker;
+        float lastHandle = emptyMarker;
+        for (float handle : handles) {
+            if (handle != emptyMarker) {
+                setHandles++;
+                if (firstHandle == emptyMarker) firstHandle = handle;
+                else lastHandle = handle;
+            }
+        }
+        switch (setHandles) {
+            case 0:
+                lastHandle = firstHandle = defaultValue;
+                break;
+            case 1:
+                lastHandle = firstHandle;
+                break;
+            case 2:
+            default: {
+                break;
+            }
+        }
+        //we set the first two and last to values if they arent set already
+        handles[0] = handles[0] == emptyMarker ? firstHandle : handles[0];
+        handles[1] = handles[1] == emptyMarker ? firstHandle : handles[1];
+        int idx = handles.length - 1;
+        handles[idx] = handles[idx] == emptyMarker ? lastHandle : handles[idx];
+        idx = handles.length - 2;
+        handles[idx] = handles[idx] == emptyMarker ? lastHandle : handles[idx];
+
+        assert canBeInterpolated(handles);
+        return handles;
+    }
+
+    /**
+     * fill take a handle array with unknown values and return one where all values are know/interpolated
+     *
+     * @param handles
+     * @param curveIdxByHandle array where arr[handleIdx] = startIdx on curve
+     * @return
+     * @requires handles array needs to be interpolatable -> first two and last two values MUST be set
+     */
+    public static float[] interpolateHandles(float[] handles, int[] curveIdxByHandle, float defaultValue) {
+        assert handles.length == curveIdxByHandle.length : "both arrays must be the same length as the represent the "
+                + "same curveHandles";
+        assert canBeInterpolated(handles);
+        handles = prepareEmptyHandlesForInterpolation(handles, INHERIT_VALUE, defaultValue);
+        //collect a map of all handles that are NOT interpolated and carry values
+        int amountHandlesWithValues = 0;
+        for (int i = 0; i < handles.length; i++)
+            if (handles[i] != INHERIT_VALUE) amountHandlesWithValues++;
+
+        int[] setValueIdcs = new int[amountHandlesWithValues];
+        {
+            int setValueIdx = 0;
+            for (int i = 0; i < handles.length; i++)
+                if (handles[i] != INHERIT_VALUE) setValueIdcs[setValueIdx++] = i;
+        }
+
+        float[] outHandles = handles.clone();
+
+        for (int i = 0; i < setValueIdcs.length - 3; i++) {
+            //interpolate all unknown handles within the segment ranging from B to C
+            int handleIdxA = setValueIdcs[i];
+            int handleIdxB = setValueIdcs[i + 1];
+            int handleIdxC = setValueIdcs[i + 2];
+            int handleIdxD = setValueIdcs[i + 3];
+
+            float vA, vB, vC, vD;
+            vA = handles[handleIdxA];
+            vB = handles[handleIdxB];
+            vC = handles[handleIdxC];
+            vD = handles[handleIdxD];
+
+            int length = curveIdxByHandle[handleIdxC] - curveIdxByHandle[handleIdxB];
+            float start, end, handle0, handle1;
+            start = vB;
+            end = vC;
+            handle0 = length / 2f * (vC - vA) / (curveIdxByHandle[handleIdxC] - curveIdxByHandle[handleIdxA]) / 2f + vB;
+            handle1 = length / 2f * (vB - vD) / (curveIdxByHandle[handleIdxB] - curveIdxByHandle[handleIdxD]) / 2f + vC;
+
+            //find all handles that are between b and c and are interpolated
+            for (int unknownHandleIdx = handleIdxB + 1; unknownHandleIdx < handleIdxC; unknownHandleIdx++) {
+                int handlePositionInSegment = (curveIdxByHandle[unknownHandleIdx] - curveIdxByHandle[handleIdxB]);
+                float t = handlePositionInSegment / (length * 1f);
+                float interpolatedV = calcuateCubicBezier(start, handle0, handle1, end, t);
+                outHandles[unknownHandleIdx] = interpolatedV;
+            }
+        }
+        return outHandles;
+    }
+
+    public static boolean canBeInterpolated(float[] handles) {
+        return handles.length >= 4 && handles[0] != INHERIT_VALUE && handles[1] != INHERIT_VALUE && handles[handles.length - 1] != INHERIT_VALUE && handles[handles.length - 2] != INHERIT_VALUE;
+    }
+
+    private boolean invariant() {
+        boolean okay = true;
+
+        float[] setValues = new float[type.size];
+        Arrays.fill(setValues, INHERIT_VALUE);
+        for (float[] handle : handles) {
+            for (int n = 0; n < type.size; n++) {
+                if (Float.isNaN(handle[n])) return false;
+                if (setValues[n] == INHERIT_VALUE) setValues[n] = handle[n];
+            }
+
+            if (handle.length != type.size) {
+                System.err.println("path has a handle with wrong size for type " + type + " expected " + type.size +
+                        " but got " + Arrays.toString(handle));
+                okay = false;
+            }
+        }
+
+        if (this.type == PointInterpreter.PointType.RIVER_2D) okay = okay && validateRiver2D(handles);
+
+        //FIXME how to handle if user inputs illegal values?
+       /* if (handles.size() != 0)
+            for (int n = 0; n < type.size; n++) {
+                if (setValues[n] == INHERIT_VALUE) {
+                    okay = false;
+                    break;
+                }
+            }
+
+        */
+        return okay;
     }
 
     public Path addPoint(float[] point) {
@@ -249,7 +363,8 @@ public class Path implements Iterable<float[]> {
                 informationArr[i] = handles.get(i)[n];
             }
             //interpolate
-            float[] nthHandles = prepareEmptyHandlesForInterpolation(informationArr, INHERIT_VALUE, defaultInterpolationValues[n]);
+            float[] nthHandles = prepareEmptyHandlesForInterpolation(informationArr, INHERIT_VALUE,
+                    defaultInterpolationValues[n]);
             informationArr = interpolateHandles(nthHandles, handleToCurveIdx, defaultInterpolationValues[n]);
             //copy back array
             for (int i = 0; i < handles.size(); i++) {
@@ -265,7 +380,8 @@ public class Path implements Iterable<float[]> {
         int[] handleIdcs = new int[amountHandles()];
         int handleIdx = 1;
         for (int i = 0; i < curve.size(); i++) {
-            if (arePositionalsEqual(handleByIndex(handleIdx), curve.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value)) {
+            if (arePositionalsEqual(handleByIndex(handleIdx), curve.get(i),
+                    RiverHandleInformation.PositionSize.SIZE_2_D.value)) {
                 handleIdcs[handleIdx] = i;
                 handleIdx++;
             }
@@ -277,119 +393,8 @@ public class Path implements Iterable<float[]> {
         return handleIdcs;
     }
 
-    /**
-     * will prepare handles array so that it can be interpolated.
-     *
-     * @param handles
-     * @param emptyMarker use this value to decide if a value in handle is "empty"
-     * @return new array with set handles
-     * @requires at least one handle value is set
-     * @ensures first two and last two values are set, therefor all others can be interpolated
-     */
-    public static float[] prepareEmptyHandlesForInterpolation(float[] handles, float emptyMarker, float defaultValue) {
-        handles = handles.clone();
-        if (handles.length > 0 && handles.length < 4) {
-            throw new IllegalArgumentException("zero or at least 4 handles are required for interpolation");
-        }
-
-        //count how many handles are not empty, remember first and last handle
-        int setHandles = 0;
-        float firstHandle = emptyMarker;
-        float lastHandle = emptyMarker;
-        for (float handle : handles) {
-            if (handle != emptyMarker) {
-                setHandles++;
-                if (firstHandle == emptyMarker) firstHandle = handle;
-                else lastHandle = handle;
-            }
-        }
-        switch (setHandles) {
-            case 0:
-                lastHandle = firstHandle = defaultValue;
-                break;
-            case 1:
-                lastHandle = firstHandle;
-                break;
-            case 2:
-            default: {
-                break;
-            }
-        }
-        //we set the first two and last to values if they arent set already
-        handles[0] = handles[0] == emptyMarker ? firstHandle : handles[0];
-        handles[1] = handles[1] == emptyMarker ? firstHandle : handles[1];
-        int idx = handles.length - 1;
-        handles[idx] = handles[idx] == emptyMarker ? lastHandle : handles[idx];
-        idx = handles.length - 2;
-        handles[idx] = handles[idx] == emptyMarker ? lastHandle : handles[idx];
-
-        assert canBeInterpolated(handles);
-        return handles;
-    }
-
-    /**
-     * fill take a handle array with unknown values and return one where all values are know/interpolated
-     *
-     * @param handles
-     * @param curveIdxByHandle array where arr[handleIdx] = startIdx on curve
-     * @return
-     * @requires handles array needs to be interpolatable -> first two and last two values MUST be set
-     */
-    public static float[] interpolateHandles(float[] handles, int[] curveIdxByHandle, float defaultValue) {
-        assert handles.length == curveIdxByHandle.length : "both arrays must be the same length as the represent the " + "same curveHandles";
-        assert canBeInterpolated(handles);
-        handles = prepareEmptyHandlesForInterpolation(handles, INHERIT_VALUE, defaultValue);
-        //collect a map of all handles that are NOT interpolated and carry values
-        int amountHandlesWithValues = 0;
-        for (int i = 0; i < handles.length; i++)
-            if (handles[i] != INHERIT_VALUE) amountHandlesWithValues++;
-
-        int[] setValueIdcs = new int[amountHandlesWithValues];
-        {
-            int setValueIdx = 0;
-            for (int i = 0; i < handles.length; i++)
-                if (handles[i] != INHERIT_VALUE) setValueIdcs[setValueIdx++] = i;
-        }
-
-        float[] outHandles = handles.clone();
-
-        for (int i = 0; i < setValueIdcs.length - 3; i++) {
-            //interpolate all unknown handles within the segment ranging from B to C
-            int handleIdxA = setValueIdcs[i];
-            int handleIdxB = setValueIdcs[i + 1];
-            int handleIdxC = setValueIdcs[i + 2];
-            int handleIdxD = setValueIdcs[i + 3];
-
-            float vA, vB, vC, vD;
-            vA = handles[handleIdxA];
-            vB = handles[handleIdxB];
-            vC = handles[handleIdxC];
-            vD = handles[handleIdxD];
-
-            int length = curveIdxByHandle[handleIdxC] - curveIdxByHandle[handleIdxB];
-            float start, end, handle0, handle1;
-            start = vB;
-            end = vC;
-            handle0 = length / 2f * (vC - vA) / (curveIdxByHandle[handleIdxC] - curveIdxByHandle[handleIdxA]) / 2f + vB;
-            handle1 = length / 2f * (vB - vD) / (curveIdxByHandle[handleIdxB] - curveIdxByHandle[handleIdxD]) / 2f + vC;
-
-            //find all handles that are between b and c and are interpolated
-            for (int unknownHandleIdx = handleIdxB + 1; unknownHandleIdx < handleIdxC; unknownHandleIdx++) {
-                int handlePositionInSegment = (curveIdxByHandle[unknownHandleIdx] - curveIdxByHandle[handleIdxB]);
-                float t = handlePositionInSegment / (length * 1f);
-                float interpolatedV = calcuateCubicBezier(start, handle0, handle1, end, t);
-                outHandles[unknownHandleIdx] = interpolatedV;
-            }
-        }
-        return outHandles;
-    }
-
     public float[] handleByIndex(int index) throws IndexOutOfBoundsException {
         return handles.get(index);
-    }
-
-    public static boolean canBeInterpolated(float[] handles) {
-        return handles.length >= 4 && handles[0] != INHERIT_VALUE && handles[1] != INHERIT_VALUE && handles[handles.length - 1] != INHERIT_VALUE && handles[handles.length - 2] != INHERIT_VALUE;
     }
 
     private boolean curveHasNoClones(List<float[]> curve) {
@@ -409,7 +414,8 @@ public class Path implements Iterable<float[]> {
         double distMinSquared = Double.MAX_VALUE;
         for (int i = 0; i < handles.size(); i++) {
             float[] p = handleByIndex(i);
-            double distanceSq = PointUtils.getPositionalDistance(p, coord, RiverHandleInformation.PositionSize.SIZE_2_D.value);
+            double distanceSq = PointUtils.getPositionalDistance(p, coord,
+                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
             if (distanceSq < distMinSquared) {
                 distMinSquared = distanceSq;
                 closest = i;
