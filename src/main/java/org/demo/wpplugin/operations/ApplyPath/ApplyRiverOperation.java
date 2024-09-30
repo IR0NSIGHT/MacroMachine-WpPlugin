@@ -58,8 +58,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
-    static final String DESCRIPTION = "<html>Apply river to this world<br>Last selected path gets applied into the " +
-            "world.<br>Potentially slow and expensive</html>";
+    static final String DESCRIPTION = "<html>Apply river to this world<br>Last selected path gets applied into the " + "world.<br>Potentially slow and expensive</html>";
     private final ApplyPathOptions options = new ApplyPathOptions(3, 0, 1, 3);
     private final StandardOptionsPanel optionsPanel = new StandardOptionsPanel(getName(), getDescription()) {
         @Override
@@ -70,118 +69,6 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
 
     public ApplyRiverOperation() {
         super(NAME, DESCRIPTION, ID);
-    }
-
-    public static float[] randomEdge(int length) {
-        Random rand = new Random(420);
-        float[] randomEdge = new float[length];
-        float randomWidth = 0;
-        for (int i = 0; i < randomEdge.length; i++) {
-            randomWidth += ((rand.nextBoolean() ? 1f : -1f) * rand.nextFloat() * 0.3f);
-            randomWidth = max(randomWidth, -1);
-            randomWidth = min(randomWidth, 1);
-            randomEdge[i] = randomWidth;
-        }
-        return randomEdge;
-    }
-
-    /**
-     * collect all max values into a single point
-     * out[n] = Max(handles[all i][n])
-     *
-     * @param handles
-     * @return
-     */
-    public static float[] getMaxValues(Iterable<float[]> handles, int handleSize) {
-        float[] maxHandleValues = new float[handleSize];
-        for (float[] handle : handles) {
-            for (int n = RiverHandleInformation.PositionSize.SIZE_2_D.value; n < handle.length; n++) {
-                maxHandleValues[n] = max(maxHandleValues[n], handle[n]);
-            }
-        }
-        return maxHandleValues;
-    }
-
-    public static void applyRiverPath(Path path, ApplyPathOptions options, HeightDimension dimension,
-                                      HeightDimension waterMap) {
-        ArrayList<float[]> curve = path.continousCurve(false);
-        float randomPercent = (float) options.getRandomFluctuate() / 100f;
-        float[] randomEdge = randomEdge(curve.size());
-
-        double fluctuationSpeed = options.getFluctuationSpeed();
-        fluctuationSpeed = max(1, fluctuationSpeed);    //no divide by zero
-
-        float[] maxHandleValues = getMaxValues(path, path.type.size);
-
-        double totalSearchRadius =
-                getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS);// + getValue
-        // (maxHandleValues, TRANSITION_RADIUS);
-        PathGeometryHelper helper = new PathGeometryHelper(path, curve, totalSearchRadius);
-        HashMap<Point, Collection<Point>> parentage = helper.getParentage();
-
-        HashMap<Point, Float> finalHeightmap = new HashMap<>();
-
-        Function<float[], Float> riverDepthByDistance = (depthAndDist) -> {
-            float depth = depthAndDist[0];
-            float dist = depthAndDist[1];
-            float maxDist = depthAndDist[2];
-            float x = 2 * dist / maxDist;
-            return (x * x) - depth;
-        };
-        float[] waterZs = Path.interpolateWaterZ(curve, dimension);
-        for (int curveIdx = 0; curveIdx < curve.size(); curveIdx++) {
-            float[] curvePointF = curve.get(curveIdx);
-            Point curvePoint = getPoint2D(curvePointF);
-            Collection<Point> nearby = parentage.get(curvePoint);
-
-            float randomFluxAtIdx = randomEdge[(int) ((curveIdx) / fluctuationSpeed)];
-            double riverRadius = getValue(curvePointF, RIVER_RADIUS) * (1 + randomFluxAtIdx * randomPercent);
-            double beachRadius = getValue(curvePointF, BEACH_RADIUS);
-            double transitionRadius = getValue(maxHandleValues, TRANSITION_RADIUS); //FIXME has to be fixed at max
-            float waterHeight = waterZs[curveIdx];
-
-            // Transition, becuase the gauss smoother can only do one value
-
-
-            //FIXME: parentage is problematic: clostest point doenst guarentee to be the right parent on rivers that
-            // grow fast and are very curvy
-            // -> point in the transition layer chose the wrong parent. instead we need to test for the closest point
-            // on outermost beach layer!
-            for (Point point : nearby) {
-                double distance = point.distance(curvePoint);
-                if (distance < riverRadius) {
-                    finalHeightmap.put(point,
-                            waterHeight + riverDepthByDistance.apply(new float[]{getValue(curvePointF, RIVER_DEPTH),
-                                    (float) distance, (float) riverRadius}));
-                    waterMap.setHeight(point.x, point.y, waterHeight);
-                } else if (distance - riverRadius <= beachRadius) {
-                    finalHeightmap.put(point, waterHeight);
-                    waterMap.setHeight(point.x, point.y, waterHeight);
-
-                }
-            }
-        }
-
-
-        float maxTransition = (getValue(maxHandleValues,
-                TRANSITION_RADIUS));
-
-        //add transitions rings
-        int amountRings = Math.round(maxTransition);
-        RingFinder ringFinder = new RingFinder(finalHeightmap, amountRings, dimension);
-        for (int i = 1; i < amountRings; i++) {
-            for (Point p : ringFinder.ring(i).keySet()) {
-                float beachHeight = ringFinder.ring(i).get(p);
-                float t = (1f * i) / (amountRings - 1);
-                float interpolate = (1-t) * beachHeight + ( t) * dimension.getHeight(p.x, p.y);
-                dimension.setHeight(p.x, p.y, interpolate);
-            }
-        }
-
-        //apply beach and river heights
-        for (Point p : finalHeightmap.keySet()) {
-            dimension.setHeight(p.x, p.y, finalHeightmap.get(p));
-        }
     }
 
     public static double angleOf(int x, int y) {
@@ -287,6 +174,120 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
         }
     }
 
+    public static void applyRiverPath(Path path, ApplyPathOptions options, HeightDimension dimension, HeightDimension waterMap) {
+        ArrayList<float[]> curve = path.continousCurve(false);
+        float randomPercent = (float) options.getRandomFluctuate() / 100f;
+        float[] randomEdge = randomEdge(curve.size());
+
+        double fluctuationSpeed = options.getFluctuationSpeed();
+        fluctuationSpeed = max(1, fluctuationSpeed);    //no divide by zero
+
+        float[] maxHandleValues = getMaxValues(path, path.type.size);
+
+        double totalSearchRadius = getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS);// + getValue
+        // (maxHandleValues, TRANSITION_RADIUS);
+        PathGeometryHelper helper = new PathGeometryHelper(path, curve, totalSearchRadius);
+        HashMap<Point, Collection<Point>> parentage = helper.getParentage();
+
+        HashMap<Point, Float> finalHeightmap = new HashMap<>();
+
+        Function<float[], Float> riverDepthByDistance = (depthAndDist) -> {
+            float a, b, c;
+            float depth = depthAndDist[0];
+            float width = depthAndDist[2];
+            float x = depthAndDist[1];
+
+            a = -depth / (width * width);
+            b = 0;
+            c = depth;
+            return a * (x*x) + b*x + c;
+        }; float[] waterZs = Path.interpolateWaterZ(curve, dimension);
+        for (int curveIdx = 0; curveIdx < curve.size(); curveIdx++) {
+            float[] curvePointF = curve.get(curveIdx);
+            Point curvePoint = getPoint2D(curvePointF);
+            Collection<Point> nearby = parentage.get(curvePoint);
+
+            float randomFluxAtIdx = randomEdge[(int) ((curveIdx) / fluctuationSpeed)];
+            double riverRadius = getValue(curvePointF, RIVER_RADIUS) * (1 + randomFluxAtIdx * randomPercent);
+            double beachRadius = getValue(curvePointF, BEACH_RADIUS);
+            double transitionRadius = getValue(maxHandleValues, TRANSITION_RADIUS); //FIXME has to be fixed at max
+            float waterHeight = waterZs[curveIdx];
+
+            // Transition, becuase the gauss smoother can only do one value
+
+
+            //FIXME: parentage is problematic: clostest point doenst guarentee to be the right parent on rivers that
+            // grow fast and are very curvy
+            // -> point in the transition layer chose the wrong parent. instead we need to test for the closest point
+            // on outermost beach layer!
+            for (Point point : nearby) {
+                double distance = point.distance(curvePoint);
+                if (distance < riverRadius) {
+                    float[] params = new float[]{
+                            -getValue(curvePointF, RIVER_DEPTH)-0.1f,
+                            (float) distance,
+                            (float) riverRadius};
+                    float riverBedHeight = riverDepthByDistance.apply(params);
+                    finalHeightmap.put(point, waterHeight + riverBedHeight);
+                    waterMap.setHeight(point.x, point.y, waterHeight);
+                } else if (distance - riverRadius <= beachRadius) {
+                    finalHeightmap.put(point, waterHeight);
+                    waterMap.setHeight(point.x, point.y, waterHeight);
+                }
+            }
+        }
+
+
+        float maxTransition = (getValue(maxHandleValues, TRANSITION_RADIUS));
+
+        //add transitions rings
+        int amountRings = Math.round(maxTransition);
+        RingFinder ringFinder = new RingFinder(finalHeightmap, amountRings, dimension);
+        for (int i = 1; i < amountRings; i++) {
+            for (Point p : ringFinder.ring(i).keySet()) {
+                float beachHeight = ringFinder.ring(i).get(p);
+                float t = (1f * i) / (amountRings - 1);
+                float interpolate = (1 - t) * beachHeight + (t) * dimension.getHeight(p.x, p.y);
+                dimension.setHeight(p.x, p.y, interpolate);
+            }
+        }
+
+        //apply beach and river heights
+        for (Point p : finalHeightmap.keySet()) {
+            dimension.setHeight(p.x, p.y, finalHeightmap.get(p));
+        }
+    }
+
+    public static float[] randomEdge(int length) {
+        Random rand = new Random(420);
+        float[] randomEdge = new float[length];
+        float randomWidth = 0;
+        for (int i = 0; i < randomEdge.length; i++) {
+            randomWidth += ((rand.nextBoolean() ? 1f : -1f) * rand.nextFloat() * 0.3f);
+            randomWidth = max(randomWidth, -1);
+            randomWidth = min(randomWidth, 1);
+            randomEdge[i] = randomWidth;
+        }
+        return randomEdge;
+    }
+
+    /**
+     * collect all max values into a single point
+     * out[n] = Max(handles[all i][n])
+     *
+     * @param handles
+     * @return
+     */
+    public static float[] getMaxValues(Iterable<float[]> handles, int handleSize) {
+        float[] maxHandleValues = new float[handleSize];
+        for (float[] handle : handles) {
+            for (int n = RiverHandleInformation.PositionSize.SIZE_2_D.value; n < handle.length; n++) {
+                maxHandleValues[n] = max(maxHandleValues[n], handle[n]);
+            }
+        }
+        return maxHandleValues;
+    }
+
     private static class ApplyPathOptionsPanel extends OperationOptionsPanel<ApplyPathOptions> {
         public ApplyPathOptionsPanel(ApplyPathOptions panelOptions) {
             super(panelOptions);
@@ -296,18 +297,9 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
         protected ArrayList<OptionsLabel> addComponents(ApplyPathOptions options, Runnable onOptionsReconfigured) {
             ArrayList<OptionsLabel> inputs = new ArrayList<>();
 
-            inputs.add(numericInput("random width",
-                    "each step the rivers radius will randomly increase or decrease. It will stay within +/- percent " +
-                            "of the normal width.",
-                    new SpinnerNumberModel(options.getRandomFluctuate(), 0, 100, 1f),
-                    w -> options.setRandomFluctuate(w.intValue()),
-                    onOptionsReconfigured));
+            inputs.add(numericInput("random width", "each step the rivers radius will randomly increase or decrease. It will stay within +/- percent " + "of the normal width.", new SpinnerNumberModel(options.getRandomFluctuate(), 0, 100, 1f), w -> options.setRandomFluctuate(w.intValue()), onOptionsReconfigured));
 
-            inputs.add(numericInput("fluctuation speed",
-                    "how fast the random fluctuation appears. low number = less extreme change",
-                    new SpinnerNumberModel(options.getFluctuationSpeed(), 0, 100, 1f),
-                    w -> options.setFluctuationSpeed(w.intValue()),
-                    onOptionsReconfigured));
+            inputs.add(numericInput("fluctuation speed", "how fast the random fluctuation appears. low number = less extreme change", new SpinnerNumberModel(options.getFluctuationSpeed(), 0, 100, 1f), w -> options.setFluctuationSpeed(w.intValue()), onOptionsReconfigured));
 
             return inputs;
         }
