@@ -443,7 +443,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
             JButton button1 = new JButton("Edit water height");
             button1.addActionListener(e -> {
-                JDialog dialog = riverRadiusEditor(getSelectedPath(), EditPathOperation.this::overwriteSelectedPath, dim);
+                JDialog dialog = riverRadiusEditor(getSelectedPath(), selectedPointIdx, EditPathOperation.this::overwriteSelectedPath, dim);
                 dialog.setVisible(true);
                 onOptionsReconfigured();
                 redrawSelectedPathLayer();

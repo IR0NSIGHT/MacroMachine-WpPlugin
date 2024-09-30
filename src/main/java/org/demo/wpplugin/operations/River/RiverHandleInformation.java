@@ -4,7 +4,6 @@ import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.operations.OptionsLabel;
-import org.demo.wpplugin.pathing.FloatInterpolateLinearList;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
@@ -138,7 +137,7 @@ public class RiverHandleInformation {
         return dim;
     }
 
-    public static JDialog riverRadiusEditor(Path path, Consumer<Path> overWritePath, HeightDimension heightDimension) {
+    public static JDialog riverRadiusEditor(Path path, int selectedHandleIdx, Consumer<Path> overWritePath, HeightDimension heightDimension) {
         JFrame parent = App.getInstance();
         JDialog dialog = new JDialog(parent, "Dialog Title", true); // Modal
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Only close the dialog
@@ -153,21 +152,13 @@ public class RiverHandleInformation {
 
 
         // Create a JLabel to display the image
-        FloatInterpolateLinearList waterZCurve = new FloatInterpolateLinearList();
-        int[] map = path.handleToCurveIdx(true);
-
-        for (int i = 0; i < path.amountHandles(); i++) {
-            float value = getValue(path.handleByIndex(i), RiverInformation.WATER_Z);
-            waterZCurve.setValue(map[i], value);
-        }
-
         float[] terrainCurve = new float[curve.size()];
         int i = 0;
         for (float[] point : curve) {
             terrainCurve[i++] = heightDimension.getHeight(getPoint2D(point).x, getPoint2D(point).y);
         }
 
-        JPanel imageLabel = new PathHistogram(waterZCurve, 3, true, terrainCurve);
+        PathHistogram imageLabel = new PathHistogram(path, selectedHandleIdx, terrainCurve, heightDimension);
         imageLabel.setSize(dialogWidth, dialogHeight);
         // Add the JLabel to the dialog
         dialog.add(imageLabel);
@@ -177,16 +168,8 @@ public class RiverHandleInformation {
         dialog.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                Path p = path;
-                //write back values to path from pathhistogram
-                int handleIdx = 1;
-                for (int i = 0; i < waterZCurve.getCurveLength(); i++) {
-                    if (waterZCurve.isInterpolate(i)) continue;
-                    float[] newValue = setValue(p.handleByIndex(handleIdx), WATER_Z, waterZCurve.getHandleValue(i));
-                    p = p.setHandleByIdx(newValue, handleIdx++);
-                }
+                Path p = imageLabel.getPath();
                 overWritePath.accept(p);
-
             }
         });
 
