@@ -106,6 +106,7 @@ public class Path implements Iterable<float[]> {
             handleC = handles.get(i + 2);
             handleD = handles.get(i + 3);
             float[][] curveSegment = CubicBezierSpline.getSplinePathFor(handleA, handleB, handleC, handleD, RiverHandleInformation.PositionSize.SIZE_2_D.value);
+            //curvepoints contain [x,y,t]
             curvePoints.addAll(Arrays.asList(curveSegment));
         }
 
