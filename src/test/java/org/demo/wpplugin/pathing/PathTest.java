@@ -124,7 +124,8 @@ class PathTest {
         Path moved = path.movePoint(oldHandle, newHandle);
 
         assertEquals(length, moved.amountHandles(), "new path has a different length after shifting a point");
-        assertArrayEquals(newHandle, moved.handleByIndex(length / 2), "the shifted point is not where its supposed to" + " be");
+        assertArrayEquals(newHandle, moved.handleByIndex(length / 2), "the shifted point is not where its supposed " +
+                "to" + " be");
     }
 
     @Test
@@ -308,32 +309,35 @@ class PathTest {
 
         //only one is set
         incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, 7, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE};
-        completeHandles = Path.prepareEmptyHandlesForInterpolation(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = Path.makeInterpolatable(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{7, 7, 7, INHERIT_VALUE, 7, 7};
         assertArrayEquals(expectedHandles, completeHandles);
 
         //two are set
         incompleteHandles = new float[]{5, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 7};
-        completeHandles = Path.prepareEmptyHandlesForInterpolation(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = Path.makeInterpolatable(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{5, 5, INHERIT_VALUE, 7, 7};
         assertArrayEquals(expectedHandles, completeHandles);
 
         //two are set but in wierd positions
         incompleteHandles = new float[]{INHERIT_VALUE, 5, 7, INHERIT_VALUE, INHERIT_VALUE};
-        completeHandles = Path.prepareEmptyHandlesForInterpolation(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = Path.makeInterpolatable(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{5, 5, 7, 7, 7};
         assertArrayEquals(expectedHandles, completeHandles);
 
         //three or more are set but the first and last two are missing
-        incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, 5, INHERIT_VALUE, 6, INHERIT_VALUE, 7, INHERIT_VALUE, 8, INHERIT_VALUE, 9, INHERIT_VALUE, 10, INHERIT_VALUE, INHERIT_VALUE};
-        completeHandles = Path.prepareEmptyHandlesForInterpolation(incompleteHandles, INHERIT_VALUE, 156f);
-        expectedHandles = new float[]{5, 5, 5, INHERIT_VALUE, 6, INHERIT_VALUE, 7, INHERIT_VALUE, 8, INHERIT_VALUE, 9, INHERIT_VALUE, 10, 10, 10};
+        incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, 5, INHERIT_VALUE, 6, INHERIT_VALUE, 7,
+                INHERIT_VALUE, 8, INHERIT_VALUE, 9, INHERIT_VALUE, 10, INHERIT_VALUE, INHERIT_VALUE};
+        completeHandles = Path.makeInterpolatable(incompleteHandles, INHERIT_VALUE, 156f);
+        expectedHandles = new float[]{5, 5, 5, INHERIT_VALUE, 6, INHERIT_VALUE, 7, INHERIT_VALUE, 8, INHERIT_VALUE, 9
+                , INHERIT_VALUE, 10, 10, 10};
         assertArrayEquals(expectedHandles, completeHandles);
 
 
         {        //not a single value is known
-            incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE};
-            completeHandles = Path.prepareEmptyHandlesForInterpolation(incompleteHandles, INHERIT_VALUE, 17.56f);
+            incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE
+                    , INHERIT_VALUE};
+            completeHandles = Path.makeInterpolatable(incompleteHandles, INHERIT_VALUE, 17.56f);
             expectedHandles = new float[]{17.56f, 17.56f, INHERIT_VALUE, INHERIT_VALUE, 17.56f, 17.56f};
             assertArrayEquals(expectedHandles, completeHandles);
         }
@@ -341,7 +345,8 @@ class PathTest {
         {    //handles are not long enough
             incompleteHandles = new float[]{1, 2, 3};
             float[] finalIncompleteHandles = incompleteHandles;
-            assertThrows(IllegalArgumentException.class, () -> Path.prepareEmptyHandlesForInterpolation(finalIncompleteHandles, INHERIT_VALUE,17.57f));
+            assertThrows(IllegalArgumentException.class,
+                    () -> Path.makeInterpolatable(finalIncompleteHandles, INHERIT_VALUE, 17.57f));
         }
     }
 
@@ -353,9 +358,10 @@ class PathTest {
         float[] expectedHandles;
 
         //simplest flat
-        incompleteHandles = new float[]{1, 1, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 1, 1};
+        incompleteHandles = new float[]{1, 1, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE,
+                INHERIT_VALUE, INHERIT_VALUE, 1, 1};
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx,17.57f);
+        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx, 17.57f);
         expectedHandles = new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
         assertArrayEquals(expectedHandles, completeHandles, 0.01f);
 
@@ -363,7 +369,7 @@ class PathTest {
         incompleteHandles = new float[]{1, 4, 7, 19};
         curveByHandleIdx = new int[]{0, 1, 2, 3};
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx,17.57f);
+        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx, 17.57f);
         expectedHandles = new float[]{1, 4, 7, 19};
         assertArrayEquals(expectedHandles, completeHandles, 0.01f);
 
@@ -371,7 +377,7 @@ class PathTest {
         incompleteHandles = new float[]{10, 10, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 3, 3};
         curveByHandleIdx = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx,17.57f);
+        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx, 17.57f);
         expectedHandles = new float[]{1, 4, 7, 19};
 
         for (int i = 2; i < incompleteHandles.length - 2; i++) {
@@ -397,5 +403,41 @@ class PathTest {
         int[] handleTOCurve = p.handleToCurveIdx(true);
         assertEquals(handleTOCurve.length, p.amountHandles());
         assertArrayEquals(new int[]{0, 0, 30, 80, 80}, handleTOCurve);
+    }
+
+    @Test
+    void transposeHandles() {
+        int n = 2, m = 5;
+        ArrayList<float[]> input = new ArrayList<>();
+        input.add(new float[]{1, 2, 3, 4, 5});
+        input.add(new float[]{6, 7, 8, 9, 10});
+
+        assertEquals(n, input.size());
+        assertEquals(m, input.get(0).length);
+
+
+        ArrayList<float[]> transposed = Path.transposeHandles(input);
+        assertEquals(m, transposed.size());
+        assertEquals(n, transposed.get(0).length);
+
+        for (int ni = 0; ni < n; ni++) {
+            for (int mi = 0; mi < m; mi++) {
+                assertEquals(input.get(ni)[mi], transposed.get(mi)[ni], 1e-6);
+            }
+        }
+
+
+    }
+
+    @Test
+    void interpolateSegment() {
+        float[] handles = new float[]{10,20,30,40};
+        int[] handleToCurve = new int[]{0,10,20,30};
+        float[] interpolated = Path.interpolateSegment(handles, handleToCurve, 0);
+        float[] expected = new float[]{20,21,22,23,24,25,26,27,28,29};
+        for (int i = 0; i < interpolated.length; i++) {
+            System.out.println("#".repeat(Math.round(interpolated[i])));
+        }
+        assertArrayEquals(expected, interpolated, 0.01f);
     }
 }

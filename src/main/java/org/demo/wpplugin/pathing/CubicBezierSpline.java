@@ -34,17 +34,12 @@ public class CubicBezierSpline {
     }
 
     public static float calcuateCubicBezier(float startPoint, float handle0, float handle1, float endPoint, float t) {
-        double tSq = t * t, tCub = tSq * t;
+        double tSq = t * t, tCub = t * t * t;
         double x = Math.pow(1 - t, 3) * startPoint
                 + 3 * Math.pow(1 - t, 2) * t * handle0
                 + 3 * (1 - t) * tSq * handle1
                 + tCub * endPoint;
         return (float) x;
-    }
-
-    public static float getHalfWay(float A, float C) {
-        // (AC)/2
-        return (C - A) / 2;
     }
 
     /**
