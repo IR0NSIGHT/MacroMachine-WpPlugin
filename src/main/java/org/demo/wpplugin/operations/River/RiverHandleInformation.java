@@ -3,6 +3,7 @@ package org.demo.wpplugin.operations.River;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
+import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
@@ -38,7 +39,8 @@ public class RiverHandleInformation {
         return riverInformation(x, y, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE);
     }
 
-    public static float[] riverInformation(int x, int y, float riverRadius, float riverDepth, float beachRadius, float transitionRadius, float waterZ) {
+    public static float[] riverInformation(int x, int y, float riverRadius, float riverDepth, float beachRadius,
+                                           float transitionRadius, float waterZ) {
         float[] out = new float[RIVER_2D.size];
         out[0] = x;
         out[1] = y;
@@ -115,7 +117,8 @@ public class RiverHandleInformation {
         return point[PositionSize.SIZE_2_D.value + information.idx];
     }
 
-    public static HeightDimension curve1D(ArrayList<float[]> curve, RiverHandleInformation.RiverInformation riverInformation) {
+    public static HeightDimension curve1D(ArrayList<float[]> curve,
+                                          RiverHandleInformation.RiverInformation riverInformation) {
         HeightDimension dim = new HeightDimension() {
             final HashMap<Point, Float> heightMap = new HashMap<>();
 
@@ -137,13 +140,14 @@ public class RiverHandleInformation {
         return dim;
     }
 
-    public static JDialog riverRadiusEditor(Path path, int selectedHandleIdx, Consumer<Path> overWritePath, HeightDimension heightDimension) {
+    public static JDialog riverRadiusEditor(Path path, int selectedHandleIdx, Consumer<Path> overWritePath,
+                                            HeightDimension heightDimension) {
         JFrame parent = App.getInstance();
         JDialog dialog = new JDialog(parent, "Dialog Title", true); // Modal
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Only close the dialog
 
         // Create a custom panel that will display the image
-        ArrayList<float[]> curve = path.continousCurve(true);
+        ContinuousCurve curve = path.continousCurve(true);
 
         // Calculate dialog size as a percentage of the screen size
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -152,10 +156,9 @@ public class RiverHandleInformation {
 
 
         // Create a JLabel to display the image
-        float[] terrainCurve = new float[curve.size()];
-        int i = 0;
-        for (float[] point : curve) {
-            terrainCurve[i++] = heightDimension.getHeight(getPoint2D(point).x, getPoint2D(point).y);
+        float[] terrainCurve = new float[curve.curveLength()];
+        for (int i = 0; i < curve.curveLength(); i++) {
+            terrainCurve[i++] = heightDimension.getHeight(curve.getPosX(i), curve.getPosY(i));
         }
 
         PathHistogram imageLabel = new PathHistogram(path, selectedHandleIdx, terrainCurve, heightDimension);
@@ -189,7 +192,8 @@ public class RiverHandleInformation {
         OptionsLabel[] options = new OptionsLabel[RiverInformation.values().length];
         int i = 0;
         for (RiverInformation information : RiverInformation.values()) {
-            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), INHERIT_VALUE, information.max, 1f);
+            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), INHERIT_VALUE,
+                    information.max, 1f);
 
             options[i++] = numericInput(information.displayName, information.toolTip, model, newValue -> {
                 onSubmitCallback.accept(setValue(point, information, newValue));
@@ -201,23 +205,22 @@ public class RiverHandleInformation {
     public static void DrawRiverPath(Path path, PaintDimension dim, int selectedIdx) throws IllegalAccessException {
         if (path.type != RIVER_2D) throw new IllegalArgumentException("path is not river: " + path.type);
         if (!(path.amountHandles() < 4)) {
-            ArrayList<float[]> curve = path.continousCurve(true);
+            ContinuousCurve curve = path.continousCurve(true);
             int[] curveIdxHandles = path.handleToCurveIdx(true);
 
             int selectionStartIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx - 2), curveIdxHandles.length - 1)];
             int selectionEndIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx + 2), curveIdxHandles.length - 1)];
 
-            for (int i = 1; i < curve.size() - 1; i++) {
-                float[] p = curve.get(i);
+            for (int i = 1; i < curve.curveLength() - 1; i++) {
                 int color = (selectionStartIdx < i && i < selectionEndIdx) ? DemoLayerRenderer.Dark_Cyan : COLOR_CURVE;
                 //PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
                 float radius = 0f;
                 for (RiverInformation info : new RiverInformation[]{RIVER_RADIUS, BEACH_RADIUS, TRANSITION_RADIUS}) {
-                    radius += getValue(p, info);
-                    Point curvePointP = getPoint2D(p);
+                    radius += curve.getInfo(info, i);
+                    Point curvePointP = curve.getPos(i);
 
-                    int tangentX = Math.round(curve.get(i + 1)[0] - curve.get(i - 1)[0]);
-                    int tangentY = Math.round(curve.get(i + 1)[1] - curve.get(i - 1)[1]);
+                    int tangentX = curve.getPosX(i+1) - curve.getPosX(i-1);
+                    int tangentY = curve.getPosY(i+1) - curve.getPosY(i-1);
                     double tangentAngle = angleOf(tangentX, tangentY);
 
                     int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
@@ -245,13 +248,17 @@ public class RiverHandleInformation {
 
             //RIVER RADIUS
             if (!(getValue(handle, RIVER_RADIUS) == INHERIT_VALUE))
-                PointUtils.drawCircle(getPoint2D(handle), getValue(handle, RIVER_RADIUS), dim, getValue(handle, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
+                PointUtils.drawCircle(getPoint2D(handle), getValue(handle, RIVER_RADIUS), dim, getValue(handle,
+                        RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
 
         }
     }
 
     public enum RiverInformation {
-        RIVER_RADIUS(0, "river radius", "radius of the river ", 0, 1000), RIVER_DEPTH(1, "river depth", "depth of the river ", 0, 1000), BEACH_RADIUS(2, "beach radius", "radius of the beach ", 0, 1000), TRANSITION_RADIUS(3, "transition radius", "radius of the transition blending with original terrain ", 0, 1000), WATER_Z(4, "water level", "water level position on z axis", 0, 1000);
+        RIVER_RADIUS(0, "river radius", "radius of the river ", 0, 1000), RIVER_DEPTH(1, "river depth", "depth of the" +
+                " river ", 0, 1000), BEACH_RADIUS(2, "beach radius", "radius of the beach ", 0, 1000),
+        TRANSITION_RADIUS(3, "transition radius", "radius of the transition blending with original terrain ", 0,
+                1000), WATER_Z(4, "water level", "water level position on z axis", 0, 1000);
         public final int idx;
         public final String displayName;
         public final String toolTip;

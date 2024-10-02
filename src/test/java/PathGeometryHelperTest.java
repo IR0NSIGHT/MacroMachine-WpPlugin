@@ -2,24 +2,22 @@ import org.demo.wpplugin.geometry.*;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
-import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
+import java.util.List;
 import java.util.*;
 
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.POSITION_2D;
-import static org.demo.wpplugin.pathing.PointUtils.point2DfromNVectorArr;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
-import static org.demo.wpplugin.pathing.Path.curveIsContinous;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class PathGeometryHelperTest {
     @Test
     public void testPathGeometry() {
         // Arrange
-        Path p = new Path(Arrays.asList(RiverHandleInformation.positionInformation(0,0, POSITION_2D),
+        Path p = new Path(Arrays.asList(RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
 
                 RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
                 RiverHandleInformation.positionInformation(-2, 5, POSITION_2D),
@@ -28,10 +26,11 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.positionInformation(155, -255, POSITION_2D),
                 RiverHandleInformation.positionInformation(-9, 9, POSITION_2D)
         ), POSITION_2D);
-        PathGeometryHelper o = new PathGeometryHelper(p, p.continousCurve(), 0);
+        PathGeometryHelper o = new PathGeometryHelper(p,
+                new ArrayList<>(List.of(p.continousCurve().getPositions2d())), 0);
 
         // Act
-        ArrayList<Point> curve = point2DfromNVectorArr(p.continousCurve());
+        ArrayList<Point> curve = new ArrayList<>(List.of(p.continousCurve().getPositions2d()));
         BoundingBox curveBox = AxisAlignedBoundingBox2d.fromPoints(curve);
 
         // Assert
@@ -88,8 +87,8 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.positionInformation(40, 0, POSITION_2D)
         ), POSITION_2D);
         double radius = 5;
-        ArrayList<Point> curve = point2DfromNVectorArr(p.continousCurve());
-        PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(), radius);
+        ArrayList<Point> curve = new ArrayList<>(List.of(p.continousCurve().getPositions2d()));
+        PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage();
         assertEquals(parentage.size(), curve.size());
         for (Point point : curve) {
@@ -110,16 +109,14 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.positionInformation(3 * size, 0, POSITION_2D),
                 RiverHandleInformation.positionInformation(3 * size + 1, 0, POSITION_2D)
         ), POSITION_2D);
-        ArrayList<float[]> curveF = p.continousCurve();
-        ArrayList<Point> curve = point2DfromNVectorArr(curveF);
-        assert curveIsContinous(curveF);
-        for (int i = 1; i < p.amountHandles()-1; i++) {
+        ArrayList<Point> curve = new ArrayList<>(List.of(p.continousCurve().getPositions2d()));
+        for (int i = 1; i < p.amountHandles() - 1; i++) {
             Point point = getPoint2D(p.handleByIndex(i));
-            assertTrue(curve.contains(point),"final curve is missing a control point:"+point);
+            assertTrue(curve.contains(point), "final curve is missing a control point:" + point);
         }
         assertTrue(3 * size + 1 <= curve.size());
         int radius = 50;
-        PathGeometryHelper geo = new PathGeometryHelper(p, p.continousCurve(), radius);
+        PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage();
         assertEquals(parentage.size(), curve.size());
         int totalNearby = 0;
@@ -142,7 +139,7 @@ public class PathGeometryHelperTest {
         ), POSITION_2D);
 
         Collection<AxisAlignedBoundingBox2d> boxes =
-                PointUtils.toBoundingBoxes(point2DfromNVectorArr(p.continousCurve()), 100, 50);
+                PointUtils.toBoundingBoxes(new ArrayList<>(List.of(p.continousCurve().getPositions2d())), 100, 50);
         BoundingBox treeBox = TreeBoundingBox.constructTree(boxes);
 
         for (int i = 0; i < 1000; i++) {
@@ -171,7 +168,7 @@ public class PathGeometryHelperTest {
         ), POSITION_2D);
 
         Collection<AxisAlignedBoundingBox2d> boxes =
-                PointUtils.toBoundingBoxes(point2DfromNVectorArr(p.continousCurve()), 100, 50);
+                PointUtils.toBoundingBoxes(new ArrayList<>(List.of(p.continousCurve().getPositions2d())), 100, 50);
         TreeBoundingBox treeBox = TreeBoundingBox.constructTree(boxes);
 
         for (int i = 0; i < 1000; i++) {

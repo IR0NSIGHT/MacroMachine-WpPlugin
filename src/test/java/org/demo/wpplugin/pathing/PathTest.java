@@ -1,5 +1,6 @@
 package org.demo.wpplugin.pathing;
 
+import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.junit.jupiter.api.Test;
 
@@ -7,6 +8,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
@@ -81,7 +83,7 @@ class PathTest {
         assertEquals(length, path.amountHandles());
         Path newEmpty = path.newEmpty();
         assertEquals(0, newEmpty.amountHandles());
-        assertTrue(newEmpty.continousCurve().isEmpty());
+        assertEquals(0, newEmpty.continousCurve().curveLength());
     }
 
     private Path newFilledPath(int length) {
@@ -220,8 +222,8 @@ class PathTest {
             assertEquals(new Point(i * 10, 37), getPoint2D(p.handleByIndex(i)));
         }
 
-        ArrayList<float[]> curve = p.continousCurve();
-        ArrayList<Point> curveP = PointUtils.point2DfromNVectorArr(curve);
+        ContinuousCurve curve;
+        ArrayList<Point> curveP = new ArrayList<>(List.of(p.continousCurve().getPositions2d()));
 
         int curvePointIdx = 0;
         for (int curveX = getPoint2D(p.handleByIndex(1)).x; curveX <= getPoint2D(p.handleByIndex(p.amountHandles() - 2)).x; curveX++) {
@@ -231,10 +233,6 @@ class PathTest {
 
             curvePointIdx++;
         }
-        for (float[] point : curve) {
-            System.out.println("#".repeat(Math.round(getValue(point, RIVER_RADIUS))));
-        }
-
 
         {
             //Test if interpolating of INHERT handles works for edge cases
@@ -249,11 +247,12 @@ class PathTest {
                 p = p.addPoint(RiverHandleInformation.riverInformation(21, 30));
 
                 curve = p.continousCurve();
-                for (float[] a : curve) {
-                    assertEquals(5, getValue(a, RIVER_RADIUS), 0.01f);
-                    assertEquals(6, getValue(a, RIVER_DEPTH), 0.01f);
-                    assertEquals(7, getValue(a, BEACH_RADIUS), 0.01f);
-                    assertEquals(30, getValue(a, TRANSITION_RADIUS), 0.01f);
+                for (int i = 0; i < curve.curveLength(); i++) {
+
+                    assertEquals(5, curve.getInfo(RIVER_RADIUS, i), 0.01f);
+                    assertEquals(6, curve.getInfo(RIVER_DEPTH, i), 0.01f);
+                    assertEquals(7, curve.getInfo(BEACH_RADIUS, i), 0.01f);
+                    assertEquals(30, curve.getInfo(TRANSITION_RADIUS, i), 0.01f);
                 }
             }
 
@@ -270,11 +269,12 @@ class PathTest {
                 p = new Path(handles, PointInterpreter.PointType.RIVER_2D);
 
                 curve = p.continousCurve();
-                for (float[] a : curve) {
-                    assertEquals(5, getValue(a, RIVER_RADIUS), 0.01f);
-                    assertEquals(6, getValue(a, RIVER_DEPTH), 0.01f);
-                    assertEquals(7, getValue(a, BEACH_RADIUS), 0.01f);
-                    assertEquals(30, getValue(a, TRANSITION_RADIUS), 0.01f);
+                for (int i = 0; i < curve.curveLength(); i++) {
+
+                    assertEquals(5, curve.getInfo(RIVER_RADIUS, i), 0.01f);
+                    assertEquals(6, curve.getInfo(RIVER_DEPTH, i), 0.01f);
+                    assertEquals(7, curve.getInfo(BEACH_RADIUS, i), 0.01f);
+                    assertEquals(30, curve.getInfo(TRANSITION_RADIUS, i), 0.01f);
                 }
             }
 
@@ -291,11 +291,12 @@ class PathTest {
                 p = new Path(handles, PointInterpreter.PointType.RIVER_2D);
 
                 curve = p.continousCurve();
-                for (float[] a : curve) {
-                    assertEquals(5, getValue(a, RIVER_RADIUS), 0.01f);
-                    assertEquals(6, getValue(a, RIVER_DEPTH), 0.01f);
-                    assertEquals(7, getValue(a, BEACH_RADIUS), 0.01f);
-                    assertEquals(30, getValue(a, TRANSITION_RADIUS), 0.01f);
+                for (int i = 0; i < curve.curveLength(); i++) {
+
+                    assertEquals(5, curve.getInfo(RIVER_RADIUS, i), 0.01f);
+                    assertEquals(6, curve.getInfo(RIVER_DEPTH, i), 0.01f);
+                    assertEquals(7, curve.getInfo(BEACH_RADIUS, i), 0.01f);
+                    assertEquals(30, curve.getInfo(TRANSITION_RADIUS, i), 0.01f);
                 }
             }
         }
@@ -309,26 +310,26 @@ class PathTest {
 
         //only one is set
         incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, 7, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE};
-        completeHandles = Path.makeInterpolatable(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = Path.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{7, 7, 7, INHERIT_VALUE, 7, 7};
         assertArrayEquals(expectedHandles, completeHandles);
 
         //two are set
         incompleteHandles = new float[]{5, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 7};
-        completeHandles = Path.makeInterpolatable(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = Path.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{5, 5, INHERIT_VALUE, 7, 7};
         assertArrayEquals(expectedHandles, completeHandles);
 
         //two are set but in wierd positions
         incompleteHandles = new float[]{INHERIT_VALUE, 5, 7, INHERIT_VALUE, INHERIT_VALUE};
-        completeHandles = Path.makeInterpolatable(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = Path.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{5, 5, 7, 7, 7};
         assertArrayEquals(expectedHandles, completeHandles);
 
         //three or more are set but the first and last two are missing
         incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, 5, INHERIT_VALUE, 6, INHERIT_VALUE, 7,
                 INHERIT_VALUE, 8, INHERIT_VALUE, 9, INHERIT_VALUE, 10, INHERIT_VALUE, INHERIT_VALUE};
-        completeHandles = Path.makeInterpolatable(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = Path.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{5, 5, 5, INHERIT_VALUE, 6, INHERIT_VALUE, 7, INHERIT_VALUE, 8, INHERIT_VALUE, 9
                 , INHERIT_VALUE, 10, 10, 10};
         assertArrayEquals(expectedHandles, completeHandles);
@@ -337,7 +338,7 @@ class PathTest {
         {        //not a single value is known
             incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE
                     , INHERIT_VALUE};
-            completeHandles = Path.makeInterpolatable(incompleteHandles, INHERIT_VALUE, 17.56f);
+            completeHandles = Path.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 17.56f);
             expectedHandles = new float[]{17.56f, 17.56f, INHERIT_VALUE, INHERIT_VALUE, 17.56f, 17.56f};
             assertArrayEquals(expectedHandles, completeHandles);
         }
@@ -346,7 +347,7 @@ class PathTest {
             incompleteHandles = new float[]{1, 2, 3};
             float[] finalIncompleteHandles = incompleteHandles;
             assertThrows(IllegalArgumentException.class,
-                    () -> Path.makeInterpolatable(finalIncompleteHandles, INHERIT_VALUE, 17.57f));
+                    () -> Path.supplementFirstAndLastTwoHandles(finalIncompleteHandles, INHERIT_VALUE, 17.57f));
         }
     }
 
@@ -361,7 +362,7 @@ class PathTest {
         incompleteHandles = new float[]{1, 1, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE,
                 INHERIT_VALUE, INHERIT_VALUE, 1, 1};
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx, 17.57f);
+        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx);
         expectedHandles = new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
         assertArrayEquals(expectedHandles, completeHandles, 0.01f);
 
@@ -369,7 +370,7 @@ class PathTest {
         incompleteHandles = new float[]{1, 4, 7, 19};
         curveByHandleIdx = new int[]{0, 1, 2, 3};
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx, 17.57f);
+        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx);
         expectedHandles = new float[]{1, 4, 7, 19};
         assertArrayEquals(expectedHandles, completeHandles, 0.01f);
 
@@ -377,7 +378,7 @@ class PathTest {
         incompleteHandles = new float[]{10, 10, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 3, 3};
         curveByHandleIdx = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx, 17.57f);
+        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx);
         expectedHandles = new float[]{1, 4, 7, 19};
 
         for (int i = 2; i < incompleteHandles.length - 2; i++) {
@@ -431,10 +432,10 @@ class PathTest {
 
     @Test
     void interpolateSegment() {
-        float[] handles = new float[]{10,20,30,40};
-        int[] handleToCurve = new int[]{0,10,20,30};
+        float[] handles = new float[]{10, 20, 30, 40};
+        int[] handleToCurve = new int[]{0, 10, 20, 30};
         float[] interpolated = Path.interpolateSegment(handles, handleToCurve, 0);
-        float[] expected = new float[]{20,21,22,23,24,25,26,27,28,29};
+        float[] expected = new float[]{20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
         for (int i = 0; i < interpolated.length; i++) {
             System.out.println("#".repeat(Math.round(interpolated[i])));
         }

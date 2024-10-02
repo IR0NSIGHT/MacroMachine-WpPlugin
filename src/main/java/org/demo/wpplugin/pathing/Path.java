@@ -1,8 +1,8 @@
 package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.geometry.HeightDimension;
+import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
-import scala.collection.SeqView;
 
 import java.awt.*;
 import java.util.List;
@@ -10,6 +10,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.WATER_Z;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.calcuateCubicBezier;
 import static org.demo.wpplugin.pathing.PointUtils.*;
 
@@ -29,14 +30,13 @@ public class Path implements Iterable<float[]> {
         assert invariant();
     }
 
-    public static float[] interpolateWaterZ(ArrayList<float[]> curve, HeightDimension dim) {
-        float[] out = new float[curve.size()];
-        Point first = getPoint2D(curve.get(0));
-        out[0] = Math.min(getValue(curve.get(0), RiverInformation.WATER_Z), dim.getHeight(first.x, first.y));
-        for (int i = 1; i < curve.size(); i++) {
-            float[] curvePoint = curve.get(i);
-            float curveZ = getValue(curvePoint, RiverInformation.WATER_Z);
-            float terrainZ = dim.getHeight(getPoint2D(curvePoint).x, getPoint2D(curvePoint).y);
+    public static float[] interpolateWaterZ(ContinuousCurve curve, HeightDimension dim) {
+        float[] out = new float[curve.curveLength()];
+        Point first = curve.getPositions2d()[0];
+        out[0] = Math.min(curve.getInfo(WATER_Z)[0], dim.getHeight(first.x, first.y));
+        for (int i = 1; i < curve.curveLength(); i++) {
+            float curveZ = curve.getInfo(WATER_Z)[i];
+            float terrainZ = dim.getHeight(curve.getPositions2d()[i].x, curve.getPositions2d()[i].y);
             float previousZ = out[i - 1];
 
             out[i] = Math.min(Math.min(previousZ, terrainZ), curveZ);
@@ -120,7 +120,9 @@ public class Path implements Iterable<float[]> {
     }
 
     /**
-     * will prepare handles array so that it can be interpolated.
+     * will prepare handles array so that it can be interpolated with catmull rom
+     * adds first two and last two handels if not present, based on existing handles
+     * if no handles exist, uses default value
      *
      * @param handles
      * @param emptyMarker use this value to decide if a value in handle is "empty"
@@ -128,7 +130,7 @@ public class Path implements Iterable<float[]> {
      * @requires at least one handle value is set
      * @ensures first two and last two values are set, therefor all others can be interpolated
      */
-    public static float[] makeInterpolatable(float[] handles, float emptyMarker, float defaultValue) {
+    public static float[] supplementFirstAndLastTwoHandles(float[] handles, float emptyMarker, float defaultValue) {
         handles = handles.clone();
         if (handles.length > 0 && handles.length < 4) {
             throw new IllegalArgumentException("zero or at least 4 handles are required for interpolation");
@@ -169,7 +171,10 @@ public class Path implements Iterable<float[]> {
         return handles;
     }
 
-    public static float[] removeInheritValues(float[] flatHandles, int[] handleToCurve) {
+    public static HandleAndIdcs removeInheritValues(float[] flatHandles, int[] handleToCurve) {
+        if (flatHandles.length != handleToCurve.length)
+            throw new IllegalArgumentException("must be same size");
+
         float[] pureFlatHandles = new float[flatHandles.length];
         int[] pureHandleToCurve = new int[flatHandles.length];
         int pureIdx = 0;
@@ -180,7 +185,15 @@ public class Path implements Iterable<float[]> {
                 pureIdx++;
             }
         }
-        return pureFlatHandles;
+        pureHandleToCurve = Arrays.copyOf(pureHandleToCurve, pureIdx);
+        pureFlatHandles = Arrays.copyOf(pureFlatHandles, pureIdx);
+
+        //postcondition
+        assert Arrays.binarySearch(pureFlatHandles, INHERIT_VALUE) < 0 : "array still contains INHERIT values";
+        assert pureFlatHandles.length == pureHandleToCurve.length;
+        assert pureFlatHandles.length <= handleToCurve.length;
+
+        return new HandleAndIdcs(pureFlatHandles, pureHandleToCurve);
     }
 
     /**
@@ -211,11 +224,10 @@ public class Path implements Iterable<float[]> {
      * @return
      * @requires handles array needs to be interpolatable -> first two and last two values MUST be set
      */
-    public static float[] interpolateHandles(float[] handles, int[] curveIdxByHandle, float defaultValue) {
+    public static float[] interpolateHandles(float[] handles, int[] curveIdxByHandle) {
         assert handles.length == curveIdxByHandle.length : "both arrays must be the same length as the represent the "
                 + "same curveHandles";
         assert canBeInterpolated(handles);
-        handles = makeInterpolatable(handles, INHERIT_VALUE, defaultValue);
         //collect a map of all handles that are NOT interpolated and carry values
         int amountHandlesWithValues = 0;
         for (int i = 0; i < handles.length; i++)
@@ -319,10 +331,10 @@ public class Path implements Iterable<float[]> {
         float start, end, handle0, handle1;
         start = vB;
         end = vC;
-        float distSegment = IdxC- IdxB;
-        float distCANormalized = (IdxC-IdxA) / distSegment;
+        float distSegment = IdxC - IdxB;
+        float distCANormalized = (IdxC - IdxA) / distSegment;
         float distDBNormalized = (IdxD - IdxB) / distSegment;
-        float diffCA = vC-vA;
+        float diffCA = vC - vA;
         float diffDB = vD - vB;
         float tangentCA = diffCA / distCANormalized;
         float tangentDB = diffDB / distDBNormalized;
@@ -465,46 +477,36 @@ public class Path implements Iterable<float[]> {
         return sum;
     }
 
-    public ArrayList<float[]> continousCurve() {
+    public ContinuousCurve continousCurve() {
         return continousCurve(true);
     }
 
-    public ArrayList<float[]> continousCurve(boolean roundToGrid) {
+    public ContinuousCurve continousCurve(boolean roundToGrid) {
+        if (this.handles.isEmpty())
+            return new ContinuousCurve(new ArrayList<float[]>());
+
         ArrayList<float[]> handles = new ArrayList<>(this.handles.size());
         for (float[] handle : this.handles)
             handles.add(handle.clone());
 
+        //we know the positions of each handle already through magic
         int[] handleToCurveIdx = this.handleToCurveIdx(roundToGrid);
 
-        ArrayList<float[]> handlesT = transposeHandles(handles);
-        ArrayList<float[]> curveT = new ArrayList<>(handlesT.size());
-        //TODO interpolate positions
+        //handles exist as flat lists
+        ArrayList<float[]> flatHandles = transposeHandles(handles);
+        ArrayList<float[]> flatHandlesInterpolated = new ArrayList<>(flatHandles.size());
 
         //iterate all handleArrays and calculate a continous curve
-        for (int n = 2; n < type.size; n++) {
-            float[] nthHandles = makeInterpolatable(handlesT.get(n), INHERIT_VALUE,
-                    defaultInterpolationValues[n]);
-            interpolateHandles(nthHandles, handleToCurveIdx, defaultInterpolationValues[n]);
+        for (int n = 0; n < type.size; n++) {
+            float[] nthHandles = flatHandles.get(n);
+            nthHandles = supplementFirstAndLastTwoHandles(nthHandles, INHERIT_VALUE, defaultInterpolationValues[n]);
+            HandleAndIdcs ready = removeInheritValues(nthHandles, handleToCurveIdx.clone());
+            float[] interpolated = interpolateHandles(ready.handles, ready.idcs);
+            assert interpolated.length == handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated values " +
+                    "array is not as long as the whole curve";
+            flatHandlesInterpolated.add(interpolated);
         }
-
-        //fill handles that are marked as "to be interpolated"
-        for (int n = 2; n < this.type.size; n++) {
-            //prepare array
-            float[] informationArr = new float[handles.size()];
-            for (int i = 0; i < handles.size(); i++) {
-                informationArr[i] = handles.get(i)[n];
-            }
-            //interpolate
-            float[] nthHandles = makeInterpolatable(informationArr, INHERIT_VALUE,
-                    defaultInterpolationValues[n]);
-            informationArr = interpolateHandles(nthHandles, handleToCurveIdx, defaultInterpolationValues[n]);
-            //copy back array
-            for (int i = 0; i < handles.size(); i++) {
-                handles.get(i)[n] = informationArr[i];
-                assert informationArr[i] != INHERIT_VALUE;
-            }
-        }
-        return continousCurveFromHandles(handles, roundToGrid);
+        return new ContinuousCurve(flatHandlesInterpolated);
     }
 
     public int[] handleToCurveIdx(boolean roundToGrid) {
@@ -588,5 +590,15 @@ public class Path implements Iterable<float[]> {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    public static class HandleAndIdcs {
+        public final float[] handles;
+        public final int[] idcs;
+
+        public HandleAndIdcs(float[] handles, int[] idcs) {
+            this.handles = handles;
+            this.idcs = idcs;
+        }
     }
 }

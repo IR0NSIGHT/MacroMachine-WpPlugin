@@ -127,15 +127,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         }
     }
 
-    private void applyAsSelection() {
-        Layer select = SelectionBlock.INSTANCE;
-
-        for (float[] p : getSelectedPath().continousCurve()) {
-            Point point = getPoint2D(p);
-            getDimension().setBitLayerValueAt(select, point.x, point.y, true);
-        }
-    }
-
     Path getSelectedPath() {
         return PathManager.instance.getPathBy(getSelectedPathId());
     }

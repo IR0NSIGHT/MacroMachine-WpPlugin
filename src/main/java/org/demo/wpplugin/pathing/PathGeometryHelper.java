@@ -3,9 +3,12 @@ package org.demo.wpplugin.pathing;
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.BoundingBox;
 import org.demo.wpplugin.geometry.TreeBoundingBox;
+import org.demo.wpplugin.operations.ContinuousCurve;
 
+import javax.vecmath.Point2f;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import static org.demo.wpplugin.pathing.PointUtils.point2DfromNVectorArr;
 
@@ -16,19 +19,19 @@ public class PathGeometryHelper implements BoundingBox {
     private final double radius;
     private TreeBoundingBox treeBoundingBox;
 
-    private PathGeometryHelper(Path path, TreeBoundingBox boundingBoxes, ArrayList<Point> curve,
+    private PathGeometryHelper(Path path, TreeBoundingBox boundingBoxes, ArrayList<Point> positions,
                                double radius
             , int[] segmentStartIdcs) {
         this.path = path;
-        this.curve = curve;
+        this.curve =positions;
         this.treeBoundingBox = boundingBoxes;
         this.segmentStartIdcs = segmentStartIdcs;
         this.radius = radius;
     }
 
-    public PathGeometryHelper(Path path, ArrayList<float[]> curve, double radius) {
+    public PathGeometryHelper(Path path, ArrayList<Point> positions, double radius) {
         this.path = path;
-        this.curve = point2DfromNVectorArr(curve);
+        this.curve = positions;
         this.radius = radius;
 
         int boxSizeFacctor = 10; //no zero divisor

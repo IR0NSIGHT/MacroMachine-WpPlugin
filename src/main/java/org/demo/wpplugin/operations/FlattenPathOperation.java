@@ -405,14 +405,6 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
             return ownHeight;
     }
 
-    private void applyAsSelection(Path path) {
-        Layer select = SelectionBlock.INSTANCE;
-        for (float[] pF : path.continousCurve()) {
-            Point p = getPoint2D(pF);
-            getDimension().setBitLayerValueAt(select, p.x, p.y, true);
-        }
-    }
-
     @Override
     public Brush getBrush() {
         return brush;

@@ -1,29 +1,23 @@
 package org.demo.wpplugin.operations.ApplyPath;
 
 import org.demo.wpplugin.geometry.HeightDimension;
+import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.junit.jupiter.api.Test;
 
-import javax.imageio.ImageIO;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.WATER_Z;
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
-import static org.demo.wpplugin.pathing.PointUtils.getPositionalDistance;
 
 class ApplyRiverOperationTest {
 
     public static float maxZ = 0f;
-
 
 
     @Test
@@ -38,7 +32,7 @@ class ApplyRiverOperationTest {
         p = p.addPoint(RiverHandleInformation.riverInformation(50, 70));
         p = p.addPoint(RiverHandleInformation.riverInformation(50, 71, 10, 6, 7, 8, 128));
 
-        ArrayList<float[]> curve = p.continousCurve(false);
+        ContinuousCurve curve = p.continousCurve(false);
     /*
         for (float[] a : curve) {
             assertEquals(5, getValue(a, RIVER_RADIUS), 0.01f);
@@ -66,13 +60,13 @@ class ApplyRiverOperationTest {
         //find bounding box of river
         int startX = 0, startY = 0, endX = 0, endY = 0;
         float maxRadius = 0;
-        for (float[] curveP : curve) {
-            Point point = getPoint2D(curveP);
+        for (int i = 0; i < curve.curveLength(); i++) {
+            Point point = curve.getPos(i);
             startX = Math.min(startX, point.x);
             startY = Math.min(startY, point.y);
             endX = Math.max(endX, point.x);
             endY = Math.max(endY, point.y);
-            maxRadius = Math.max(maxRadius, getValue(curveP, RIVER_RADIUS));
+            maxRadius = Math.max(maxRadius, curve.getInfo(RIVER_RADIUS, i));
         }
         startX -= maxRadius;
         startY -= maxRadius;
@@ -83,35 +77,31 @@ class ApplyRiverOperationTest {
         for (int x = startX; x < endX; x++) {
             for (int y = startY; y < endY; y++) {
                 //every point (simmulates kernel)
-                float[] self = new float[]{x, y};
-                float[] closestOne = null;
+                Point self = new Point(x, y);
+                int closestOne = -1;
                 float closestDist = Float.MAX_VALUE;
-                int closestI = Integer.MAX_VALUE;
 
                 //test every curve point if this position is within the curve points radius
-                for (int i = 0; i < curve.size(); i++) {
-                    float[] curveP = curve.get(i);
-
-                    float d = getPositionalDistance(self, curveP, 2);
-                    if (d < getValue(curveP, RIVER_RADIUS) && d < closestDist) {
+                for (int i = 0; i < curve.curveLength(); i++) {
+                    float d = (float) self.distance(curve.getPos(i));
+                    if (d < curve.getInfo(RIVER_RADIUS, i) && d < closestDist) {
                         //i am a river
                         closestDist = d;
-                        closestOne = curveP;
-                        closestI = i;
+                        closestOne = i;
                     }
                 }
-                if (closestOne != null) {
-                    float waterZ = getValue(closestOne, WATER_Z);
+                if (closestOne != -1) {
+                    float waterZ = curve.getInfo(WATER_Z, closestOne);
                     assert waterZ >= 0;
                     dim.setHeight(x, y, waterZ);
                 }
             }
         }
 
-        for (float[] a : curve) {
-            float waterZ = getValue(a, WATER_Z);
+        for (int i = 0; i < curve.curveLength(); i++) {
+            float waterZ = curve.getInfo(WATER_Z, i);
             assert waterZ >= 1 && waterZ <= 255;
-            Point point = getPoint2D(a);
+            Point point = curve.getPos(i);
             dim.setHeight(point.x, point.y, waterZ);
         }
         for (float[] handle : p) {
