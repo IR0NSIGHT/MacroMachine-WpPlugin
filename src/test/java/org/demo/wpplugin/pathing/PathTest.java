@@ -8,7 +8,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
-import java.util.List;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
@@ -223,15 +222,19 @@ class PathTest {
         }
 
         ContinuousCurve curve;
-        ArrayList<Point> curveP = new ArrayList<>(List.of(p.continousCurve().getPositions2d()));
-
-        int curvePointIdx = 0;
-        for (int curveX = getPoint2D(p.handleByIndex(1)).x; curveX <= getPoint2D(p.handleByIndex(p.amountHandles() - 2)).x; curveX++) {
+        ContinuousCurve curveP = p.continousCurve();
+        int[] handleToCurve = p.handleToCurveIdx(true);
+        int handleIdx = 0;
+        for (float[] handle : p) {
+            Point handlePos = getPoint2D(handle);
+            int curvePointIdx = handleToCurve[handleIdx];
             //iterate from first handle where curve starts to last handle where curve ends
-            assertEquals(curveX, curveP.get(curvePointIdx).x, "Point " + curveP.get(curvePointIdx));
-            assertEquals(37, curveP.get(curvePointIdx).y, "Point " + curveP.get(curvePointIdx));
+            assertEquals(handlePos.x, curveP.getPosX(curvePointIdx), "this handle is not at the expected x position " +
+                    "in the curve");
+            assertEquals(37, curveP.getPosY(curvePointIdx), "this handle is not at the expected y position in the " +
+                    "curve");
 
-            curvePointIdx++;
+            handleIdx++;
         }
 
         {
@@ -440,5 +443,14 @@ class PathTest {
             System.out.println("#".repeat(Math.round(interpolated[i])));
         }
         assertArrayEquals(expected, interpolated, 0.01f);
+    }
+
+    @Test
+    void removeInheritValues() {
+        float[] handles = new float[]{3.0f, 3.0f, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE,
+                INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 17.0f, 17.0f};
+        Path.HandleAndIdcs pure = Path.removeInheritValues(handles, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                12});
+        assertArrayEquals(pure.handles, new float[]{3.0f, 3.0f, 17.0f, 17.0f}, 0.01f);
     }
 }

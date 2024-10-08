@@ -9,8 +9,9 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.INHERIT_VALUE;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.WATER_Z;
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.validateRiver2D;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.calcuateCubicBezier;
 import static org.demo.wpplugin.pathing.PointUtils.*;
 
@@ -178,7 +179,7 @@ public class Path implements Iterable<float[]> {
         float[] pureFlatHandles = new float[flatHandles.length];
         int[] pureHandleToCurve = new int[flatHandles.length];
         int pureIdx = 0;
-        for (int i = 0; i < flatHandles.length - 1; i++) {
+        for (int i = 0; i < flatHandles.length; i++) {
             if (flatHandles[i] != INHERIT_VALUE) {
                 pureFlatHandles[pureIdx] = flatHandles[i];
                 pureHandleToCurve[pureIdx] = handleToCurve[i];
@@ -217,59 +218,35 @@ public class Path implements Iterable<float[]> {
     }
 
     /**
-     * fill take a handle array with unknown values and return one where all values are know/interpolated
+     * will take a handle array and index information
+     * will construct a interpolated curve matching both
      *
      * @param handles
      * @param curveIdxByHandle array where arr[handleIdx] = startIdx on curve
      * @return
-     * @requires handles array needs to be interpolatable -> first two and last two values MUST be set
+     * @requires handles must not contain INHERIT values
      */
     public static float[] interpolateHandles(float[] handles, int[] curveIdxByHandle) {
         assert handles.length == curveIdxByHandle.length : "both arrays must be the same length as the represent the "
                 + "same curveHandles";
         assert canBeInterpolated(handles);
-        //collect a map of all handles that are NOT interpolated and carry values
-        int amountHandlesWithValues = 0;
-        for (int i = 0; i < handles.length; i++)
-            if (handles[i] != INHERIT_VALUE) amountHandlesWithValues++;
 
-        int[] setValueIdcs = new int[amountHandlesWithValues];
-        {
-            int setValueIdx = 0;
-            for (int i = 0; i < handles.length; i++)
-                if (handles[i] != INHERIT_VALUE) setValueIdcs[setValueIdx++] = i;
-        }
+        int totalCurveLength = curveIdxByHandle[curveIdxByHandle.length - 1] + 1;
 
-        float[] outHandles = handles.clone();
-
-        for (int i = 0; i < setValueIdcs.length - 3; i++) {
-            //interpolate all unknown handles within the segment ranging from B to C
-            int handleIdxA = setValueIdcs[i];
-            int handleIdxB = setValueIdcs[i + 1];
-            int handleIdxC = setValueIdcs[i + 2];
-            int handleIdxD = setValueIdcs[i + 3];
-
-            float vA, vB, vC, vD;
-            vA = handles[handleIdxA];
-            vB = handles[handleIdxB];
-            vC = handles[handleIdxC];
-            vD = handles[handleIdxD];
-
-            int length = curveIdxByHandle[handleIdxC] - curveIdxByHandle[handleIdxB];
-            float start, end, handle0, handle1;
-            start = vB;
-            end = vC;
-            handle0 = length / 2f * (vC - vA) / (curveIdxByHandle[handleIdxC] - curveIdxByHandle[handleIdxA]) / 2f + vB;
-            handle1 = length / 2f * (vB - vD) / (curveIdxByHandle[handleIdxB] - curveIdxByHandle[handleIdxD]) / 2f + vC;
-
-            //find all handles that are between b and c and are interpolated
-            for (int unknownHandleIdx = handleIdxB + 1; unknownHandleIdx < handleIdxC; unknownHandleIdx++) {
-                int handlePositionInSegment = (curveIdxByHandle[unknownHandleIdx] - curveIdxByHandle[handleIdxB]);
-                float t = handlePositionInSegment / (length * 1f);
-                float interpolatedV = calcuateCubicBezier(start, handle0, handle1, end, t);
-                outHandles[unknownHandleIdx] = interpolatedV;
+        float[] outHandles = new float[totalCurveLength];
+        Arrays.fill(outHandles, INHERIT_VALUE);
+        for (int i = 0; i < handles.length - 3; i++) {
+            float[] segment = interpolateSegment(handles, curveIdxByHandle, i);
+            int segmentStartIdx = curveIdxByHandle[i + 1];
+            int segmentEndIDx = curveIdxByHandle[i + 2];
+            for (int j = 0; j < segment.length; j++) {
+                assert outHandles[segmentStartIdx + j] == INHERIT_VALUE;
+                outHandles[segmentStartIdx + j] = segment[j];
+                assert outHandles[segmentStartIdx + j] != INHERIT_VALUE;
+                assert outHandles[curveIdxByHandle[i+1]] == handles[i+1];
             }
         }
+
         return outHandles;
     }
 
@@ -502,7 +479,7 @@ public class Path implements Iterable<float[]> {
             nthHandles = supplementFirstAndLastTwoHandles(nthHandles, INHERIT_VALUE, defaultInterpolationValues[n]);
             HandleAndIdcs ready = removeInheritValues(nthHandles, handleToCurveIdx.clone());
             float[] interpolated = interpolateHandles(ready.handles, ready.idcs);
-            assert interpolated.length == handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated values " +
+            assert interpolated.length == 1+ handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated values " +
                     "array is not as long as the whole curve";
             flatHandlesInterpolated.add(interpolated);
         }

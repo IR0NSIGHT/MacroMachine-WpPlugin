@@ -14,7 +14,6 @@ public class ContinuousCurve {
             this.length = 0;
         } else {
             this.length = flatCurve.get(0).length;
-
         }
 
         for (float[] curve : flatCurve) {
@@ -40,7 +39,7 @@ public class ContinuousCurve {
     }
 
     public int getPosX(int curveIdx) {
-        int idx = 1;
+        int idx = 0;
         assert idx < flatCurve.size();
         return Math.round(flatCurve.get(idx)[curveIdx]);
     }
