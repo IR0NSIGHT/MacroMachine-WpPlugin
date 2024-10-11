@@ -195,24 +195,28 @@ class PathTest {
     void continuousCurve() {
         Path p = newFilledPath(10 + 2 + 1, RIVER_2D);
 
-        float startV = 3;
-        p = p.setHandleByIdx(setValue(p.handleByIndex(0), RIVER_RADIUS, startV), 0);
-        assertEquals(startV, getValue(p.handleByIndex(0), RIVER_RADIUS));
+        //set start river width values
+        float startWidthRiver = 3;
+        p = p.setHandleByIdx(setValue(p.handleByIndex(0), RIVER_RADIUS, startWidthRiver), 0);
+        assertEquals(startWidthRiver, getValue(p.handleByIndex(0), RIVER_RADIUS));
 
-        p = p.setHandleByIdx(setValue(p.handleByIndex(1), RIVER_RADIUS, startV), 1);
-        assertEquals(startV, getValue(p.handleByIndex(1), RIVER_RADIUS));
+        p = p.setHandleByIdx(setValue(p.handleByIndex(1), RIVER_RADIUS, startWidthRiver), 1);
+        assertEquals(startWidthRiver, getValue(p.handleByIndex(1), RIVER_RADIUS));
 
 
+        //set river final width values
         p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles() - 1), RIVER_RADIUS, 17), p.amountHandles() - 1);
         assertEquals(17, getValue(p.handleByIndex(p.amountHandles() - 1), RIVER_RADIUS));
         p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles() - 2), RIVER_RADIUS, 17), p.amountHandles() - 2);
         assertEquals(17, getValue(p.handleByIndex(p.amountHandles() - 2), RIVER_RADIUS));
 
+        //set river radius to inherit on all but first two and last two values
         for (int i = 2; i < p.amountHandles() - 2; i++) {
             p = p.setHandleByIdx(setValue(p.handleByIndex(i), RIVER_RADIUS, INHERIT_VALUE), i);
             assertEquals(INHERIT_VALUE, getValue(p.handleByIndex(i), RIVER_RADIUS));
         }
 
+        //path moves along x, with y = 37 for all points
         //set position for all points
         for (int i = 0; i < p.amountHandles(); i++) {
             float[] newHandle = setPosition2D(p.handleByIndex(i), new float[]{i * 10, 37});
@@ -223,18 +227,23 @@ class PathTest {
 
         ContinuousCurve curve;
         ContinuousCurve curveP = p.continousCurve();
+        //are all curvepoints y=37?
+        for (int i = 0; i < curveP.curveLength(); i++) {
+            assertEquals(37, curveP.getPosY(i),0.001f, "this point on the curve is supposed to be at y=37");
+        }
+
+        //test if all handles (except zero and last handle) are at the right index
         int[] handleToCurve = p.handleToCurveIdx(true);
-        int handleIdx = 0;
-        for (float[] handle : p) {
+        for (int i = 1; i < p.amountHandles() - 1; i++) {
+            float[] handle = p.handleByIndex(i);
             Point handlePos = getPoint2D(handle);
-            int curvePointIdx = handleToCurve[handleIdx];
+            int curvePointIdx = handleToCurve[i];
             //iterate from first handle where curve starts to last handle where curve ends
             assertEquals(handlePos.x, curveP.getPosX(curvePointIdx), "this handle is not at the expected x position " +
                     "in the curve");
             assertEquals(37, curveP.getPosY(curvePointIdx), "this handle is not at the expected y position in the " +
                     "curve");
 
-            handleIdx++;
         }
 
         {
@@ -358,37 +367,35 @@ class PathTest {
     void interpolateHandles() {
         float[] incompleteHandles;
         int[] curveByHandleIdx = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        float[] completeHandles;
-        float[] expectedHandles;
+        float[] interpolatedCurve;
+        float[] expectedCurve;
 
         //simplest flat
-        incompleteHandles = new float[]{1, 1, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE,
-                INHERIT_VALUE, INHERIT_VALUE, 1, 1};
+        incompleteHandles = new float[]{1, 1, 1, 1};
+        curveByHandleIdx = new int[]{0, 0, 10, 10};
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx);
-        expectedHandles = new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-        assertArrayEquals(expectedHandles, completeHandles, 0.01f);
+        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, curveByHandleIdx);
+        expectedCurve = new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+        assertArrayEquals(expectedCurve, interpolatedCurve, 0.01f);
 
         //minimum length
         incompleteHandles = new float[]{1, 4, 7, 19};
-        curveByHandleIdx = new int[]{0, 1, 2, 3};
+        curveByHandleIdx = new int[]{0, 0, 1, 1};
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx);
-        expectedHandles = new float[]{1, 4, 7, 19};
-        assertArrayEquals(expectedHandles, completeHandles, 0.01f);
+        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, curveByHandleIdx);
+        expectedCurve = new float[]{4, 7};
+        assertArrayEquals(expectedCurve, interpolatedCurve, 0.01f);
 
-        //classic 4 point interpolation that satisfys convex hull property
-        incompleteHandles = new float[]{10, 10, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 3, 3};
-        curveByHandleIdx = new int[]{0, 1, 2, 3, 4, 5, 6, 7};
+        //classic 4 point interpolation
+        incompleteHandles = new float[]{10, 10, 9, 6, 5, 3, 3, 3};
+        curveByHandleIdx = new int[]{0, 0, 1, 2, 3, 6, 7, 7};
+        expectedCurve = new float[]{10.0f, 9.f, 6.0f, 5.0f, 4.2592587f, 3.574074f, 3.0f, 3.0f};
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        completeHandles = Path.interpolateHandles(incompleteHandles, curveByHandleIdx);
-        expectedHandles = new float[]{1, 4, 7, 19};
+        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, curveByHandleIdx);
 
-        for (int i = 2; i < incompleteHandles.length - 2; i++) {
-            //satisfies convex hull property
-            assertTrue(completeHandles[i] < 10);
-            assertTrue(completeHandles[i] > 3);
-        }
+        assertEquals(8, interpolatedCurve.length);
+        assertArrayEquals(expectedCurve, interpolatedCurve, 0.01f);
+
     }
 
     @Test

@@ -125,15 +125,15 @@ public class Path implements Iterable<float[]> {
      * adds first two and last two handels if not present, based on existing handles
      * if no handles exist, uses default value
      *
-     * @param handles
+     * @param inHandles
      * @param emptyMarker use this value to decide if a value in handle is "empty"
      * @return new array with set handles
      * @requires at least one handle value is set
-     * @ensures first two and last two values are set, therefor all others can be interpolated
+     * @ensures first two and last two values are set, therefor all others can be interpolated, out.length = in.length
      */
-    public static float[] supplementFirstAndLastTwoHandles(float[] handles, float emptyMarker, float defaultValue) {
-        handles = handles.clone();
-        if (handles.length > 0 && handles.length < 4) {
+    public static float[] supplementFirstAndLastTwoHandles(float[] inHandles, float emptyMarker, float defaultValue) {
+        float[] outHandles = inHandles.clone();
+        if (outHandles.length > 0 && outHandles.length < 4) {
             throw new IllegalArgumentException("zero or at least 4 handles are required for interpolation");
         }
 
@@ -141,7 +141,7 @@ public class Path implements Iterable<float[]> {
         int setHandles = 0;
         float firstHandle = emptyMarker;
         float lastHandle = emptyMarker;
-        for (float handle : handles) {
+        for (float handle : outHandles) {
             if (handle != emptyMarker) {
                 setHandles++;
                 if (firstHandle == emptyMarker) firstHandle = handle;
@@ -161,15 +161,15 @@ public class Path implements Iterable<float[]> {
             }
         }
         //we set the first two and last to values if they arent set already
-        handles[0] = handles[0] == emptyMarker ? firstHandle : handles[0];
-        handles[1] = handles[1] == emptyMarker ? firstHandle : handles[1];
-        int idx = handles.length - 1;
-        handles[idx] = handles[idx] == emptyMarker ? lastHandle : handles[idx];
-        idx = handles.length - 2;
-        handles[idx] = handles[idx] == emptyMarker ? lastHandle : handles[idx];
+        outHandles[0] = outHandles[0] == emptyMarker ? firstHandle : outHandles[0];
+        outHandles[1] = outHandles[1] == emptyMarker ? firstHandle : outHandles[1];
+        int idx = outHandles.length - 1;
+        outHandles[idx] = outHandles[idx] == emptyMarker ? lastHandle : outHandles[idx];
+        idx = outHandles.length - 2;
+        outHandles[idx] = outHandles[idx] == emptyMarker ? lastHandle : outHandles[idx];
 
-        assert canBeInterpolated(handles);
-        return handles;
+        assert outHandles.length == inHandles.length;
+        return outHandles;
     }
 
     public static HandleAndIdcs removeInheritValues(float[] flatHandles, int[] handleToCurve) {
@@ -226,10 +226,14 @@ public class Path implements Iterable<float[]> {
      * @return
      * @requires handles must not contain INHERIT values
      */
-    public static float[] interpolateHandles(float[] handles, int[] curveIdxByHandle) {
+    public static float[] interpolateFromHandles(float[] handles, int[] curveIdxByHandle) {
         assert handles.length == curveIdxByHandle.length : "both arrays must be the same length as the represent the "
                 + "same curveHandles";
-        assert canBeInterpolated(handles);
+        assert curveIdxByHandle[0] == 0 : "curveIdxByHandle must represent the complete curve.";
+        assert curveIdxByHandle[1] == 0 : "first curve idx must be zero so the first index can be ignored";
+        if (!canBeInterpolated(handles)) {
+            throw new IllegalArgumentException("handles are not interpolatable");
+        }
 
         int totalCurveLength = curveIdxByHandle[curveIdxByHandle.length - 1] + 1;
 
@@ -243,15 +247,20 @@ public class Path implements Iterable<float[]> {
                 assert outHandles[segmentStartIdx + j] == INHERIT_VALUE;
                 outHandles[segmentStartIdx + j] = segment[j];
                 assert outHandles[segmentStartIdx + j] != INHERIT_VALUE;
-                assert outHandles[curveIdxByHandle[i+1]] == handles[i+1];
+                assert outHandles[curveIdxByHandle[i + 1]] == handles[i + 1];
             }
         }
+        //copy last used handle to outarray
+        outHandles[outHandles.length-1] = handles[curveIdxByHandle.length - 2];
 
         return outHandles;
     }
 
     public static boolean canBeInterpolated(float[] handles) {
-        return handles.length >= 4 && handles[0] != INHERIT_VALUE && handles[1] != INHERIT_VALUE && handles[handles.length - 1] != INHERIT_VALUE && handles[handles.length - 2] != INHERIT_VALUE;
+        float[] copy = handles.clone();
+        Arrays.sort(copy);
+        int inheritIdx = Arrays.binarySearch(handles, INHERIT_VALUE);
+        return handles.length >= 4 && inheritIdx < 0; //does not contain inherit value
     }
 
     /**
@@ -476,10 +485,10 @@ public class Path implements Iterable<float[]> {
         //iterate all handleArrays and calculate a continous curve
         for (int n = 0; n < type.size; n++) {
             float[] nthHandles = flatHandles.get(n);
-            nthHandles = supplementFirstAndLastTwoHandles(nthHandles, INHERIT_VALUE, defaultInterpolationValues[n]);
+            nthHandles = supplementFirstAndLastTwoHandles(nthHandles, INHERIT_VALUE, 0);
             HandleAndIdcs ready = removeInheritValues(nthHandles, handleToCurveIdx.clone());
-            float[] interpolated = interpolateHandles(ready.handles, ready.idcs);
-            assert interpolated.length == 1+ handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated values " +
+            float[] interpolated = interpolateFromHandles(ready.handles, ready.idcs);
+            assert interpolated.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated values " +
                     "array is not as long as the whole curve";
             flatHandlesInterpolated.add(interpolated);
         }
