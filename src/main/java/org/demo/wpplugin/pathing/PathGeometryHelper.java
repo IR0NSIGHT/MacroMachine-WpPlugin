@@ -3,27 +3,22 @@ package org.demo.wpplugin.pathing;
 import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.BoundingBox;
 import org.demo.wpplugin.geometry.TreeBoundingBox;
-import org.demo.wpplugin.operations.ContinuousCurve;
 
-import javax.vecmath.Point2f;
 import java.awt.*;
 import java.util.*;
-import java.util.List;
-
-import static org.demo.wpplugin.pathing.PointUtils.point2DfromNVectorArr;
 
 public class PathGeometryHelper implements BoundingBox {
     private final Path path;
     private final ArrayList<Point> curve;
     private final int[] segmentStartIdcs;
     private final double radius;
-    private TreeBoundingBox treeBoundingBox;
+    private final TreeBoundingBox treeBoundingBox;
 
     private PathGeometryHelper(Path path, TreeBoundingBox boundingBoxes, ArrayList<Point> positions,
                                double radius
             , int[] segmentStartIdcs) {
         this.path = path;
-        this.curve =positions;
+        this.curve = positions;
         this.treeBoundingBox = boundingBoxes;
         this.segmentStartIdcs = segmentStartIdcs;
         this.radius = radius;
@@ -43,7 +38,8 @@ public class PathGeometryHelper implements BoundingBox {
         }
         segmentStartIdcs[segmentIdx] = curve.size();
 
-        ArrayList<AxisAlignedBoundingBox2d> boundingBoxes = new ArrayList<>(PointUtils.toBoundingBoxes(this.curve, boxSizeFacctor, radius));
+        ArrayList<AxisAlignedBoundingBox2d> boundingBoxes = new ArrayList<>(PointUtils.toBoundingBoxes(this.curve,
+                boxSizeFacctor, radius));
         treeBoundingBox = TreeBoundingBox.constructTree(boundingBoxes);
         for (Point p : this.curve) {
             assert this.contains(p);
@@ -61,6 +57,12 @@ public class PathGeometryHelper implements BoundingBox {
         HashMap<Point, Collection<Point>> parentage = new HashMap<>();
         for (Point point : curve) {
             parentage.put(point, new LinkedList<>());
+        }
+
+        { //debug
+            HashSet<Point> leftOver = new HashSet<>(curve);
+            leftOver.removeAll(parentage.keySet());
+            System.err.println(leftOver);
         }
 
         Collection<Point> allNearby = allNearbyPoints();
@@ -100,9 +102,9 @@ public class PathGeometryHelper implements BoundingBox {
     private void expandX(Point base, int radius, int f, HashSet<Point> allNearby, boolean onY) {
         for (int i = 1; i <= radius; i++) {
             Point nearby = onY ? new Point(base.x, base.y + i * f) : new Point(base.x + i * f, base.y);
-        //    if (allNearby.contains(nearby)) {
-        //        return;
-        //    }
+            //    if (allNearby.contains(nearby)) {
+            //        return;
+            //    }
             allNearby.add(nearby);
         }
     }
@@ -113,7 +115,7 @@ public class PathGeometryHelper implements BoundingBox {
         Collection<Integer> containingBoxIdcs = getContainingIdcs(nearby);
         for (int idx : containingBoxIdcs) {
             assert idx >= 0;
-            assert idx < segmentStartIdcs.length: "box idx is out of bounds";
+            assert idx < segmentStartIdcs.length : "box idx is out of bounds";
             for (int i = segmentStartIdcs[idx]; i < segmentStartIdcs[idx + 1]; i++) {
                 Point curveP = curve.get(i);
                 double distSq = curveP.distanceSq(nearby);

@@ -229,13 +229,13 @@ public class Path implements Iterable<float[]> {
     public static float[] interpolateFromHandles(float[] handles, int[] curveIdxByHandle) {
         assert handles.length == curveIdxByHandle.length : "both arrays must be the same length as the represent the "
                 + "same curveHandles";
-        assert curveIdxByHandle[0] == 0 : "curveIdxByHandle must represent the complete curve.";
+    //    assert curveIdxByHandle[0] == 0 : "curveIdxByHandle must represent the complete curve.";
         assert curveIdxByHandle[1] == 0 : "first curve idx must be zero so the first index can be ignored";
         if (!canBeInterpolated(handles)) {
             throw new IllegalArgumentException("handles are not interpolatable");
         }
 
-        int totalCurveLength = curveIdxByHandle[curveIdxByHandle.length - 1] + 1;
+        int totalCurveLength = curveIdxByHandle[curveIdxByHandle.length - 2] + 1;   //last used handle index
 
         float[] outHandles = new float[totalCurveLength];
         Arrays.fill(outHandles, INHERIT_VALUE);

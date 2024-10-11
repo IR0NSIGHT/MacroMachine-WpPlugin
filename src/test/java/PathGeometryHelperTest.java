@@ -79,7 +79,7 @@ public class PathGeometryHelperTest {
     @Test
     public void parentageTest() {
         // Arrange
-        Path p = new Path(Arrays.asList(RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
+        Path p = new Path(Arrays.asList(RiverHandleInformation.positionInformation(-10, 0, POSITION_2D),
                 RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
                 RiverHandleInformation.positionInformation(10, 0, POSITION_2D),
                 RiverHandleInformation.positionInformation(20, 0, POSITION_2D),
