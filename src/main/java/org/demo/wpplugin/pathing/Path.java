@@ -173,8 +173,7 @@ public class Path implements Iterable<float[]> {
     }
 
     public static HandleAndIdcs removeInheritValues(float[] flatHandles, int[] handleToCurve) {
-        if (flatHandles.length != handleToCurve.length)
-            throw new IllegalArgumentException("must be same size");
+        if (flatHandles.length != handleToCurve.length) throw new IllegalArgumentException("must be same size");
 
         float[] pureFlatHandles = new float[flatHandles.length];
         int[] pureHandleToCurve = new int[flatHandles.length];
@@ -338,6 +337,15 @@ public class Path implements Iterable<float[]> {
         return interpolated;
     }
 
+    private static float[] interpolateCatmullRom(float[] nthHandles, int[] handleToCurveIdx) {
+        nthHandles = supplementFirstAndLastTwoHandles(nthHandles, INHERIT_VALUE, 0);
+        HandleAndIdcs ready = removeInheritValues(nthHandles, handleToCurveIdx.clone());
+        float[] interpolated = interpolateFromHandles(ready.handles, ready.idcs);
+        assert interpolated.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 2] : "interpolated values " +
+                "array is not as long as the whole curve";
+        return interpolated;
+    }
+
     private boolean invariant() {
         boolean okay = true;
 
@@ -468,8 +476,7 @@ public class Path implements Iterable<float[]> {
     }
 
     public ContinuousCurve continousCurve(boolean roundToGrid) {
-        if (this.handles.isEmpty())
-            return new ContinuousCurve(new ArrayList<float[]>());
+        if (this.handles.isEmpty()) return new ContinuousCurve(new ArrayList<float[]>());
 
         ArrayList<float[]> handles = new ArrayList<>(this.handles.size());
         for (float[] handle : this.handles)
@@ -485,11 +492,7 @@ public class Path implements Iterable<float[]> {
         //iterate all handleArrays and calculate a continous curve
         for (int n = 0; n < type.size; n++) {
             float[] nthHandles = flatHandles.get(n);
-            nthHandles = supplementFirstAndLastTwoHandles(nthHandles, INHERIT_VALUE, 0);
-            HandleAndIdcs ready = removeInheritValues(nthHandles, handleToCurveIdx.clone());
-            float[] interpolated = interpolateFromHandles(ready.handles, ready.idcs);
-            assert interpolated.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 2] : "interpolated values " +
-                    "array is not as long as the whole curve";
+            float[] interpolated = interpolateCatmullRom(nthHandles, handleToCurveIdx);
             flatHandlesInterpolated.add(interpolated);
         }
         return new ContinuousCurve(flatHandlesInterpolated);
