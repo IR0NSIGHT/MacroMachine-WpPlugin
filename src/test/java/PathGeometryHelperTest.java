@@ -99,22 +99,22 @@ public class PathGeometryHelperTest {
 
     @Test
     public void testSubotpimalAABBXPath() {
-        int size = 1000;
+        int size = 100;
         // Arrange
         Path p = new Path(Arrays.asList(
-                RiverHandleInformation.positionInformation(-1, 0, POSITION_2D),
+                RiverHandleInformation.positionInformation(-1 * size, 0, POSITION_2D),
                 RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
                 RiverHandleInformation.positionInformation(size, 0, POSITION_2D),
                 RiverHandleInformation.positionInformation(2 * size, 0, POSITION_2D),
                 RiverHandleInformation.positionInformation(3 * size, 0, POSITION_2D),
-                RiverHandleInformation.positionInformation(3 * size + 1, 0, POSITION_2D)
+                RiverHandleInformation.positionInformation(4 * size, 0, POSITION_2D)
         ), POSITION_2D);
-        ArrayList<Point> curve = new ArrayList<>(List.of(p.continousCurve().getPositions2d()));
+        ArrayList<Point> curve = new ArrayList<>(List.of(p.continousCurve(true).getPositions2d()));
         for (int i = 1; i < p.amountHandles() - 1; i++) {
             Point point = getPoint2D(p.handleByIndex(i));
             assertTrue(curve.contains(point), "final curve is missing a control point:" + point);
         }
-        assertTrue(3 * size + 1 <= curve.size());
+        assertTrue(3 * size + 1 == curve.size());
         int radius = 50;
         PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage();

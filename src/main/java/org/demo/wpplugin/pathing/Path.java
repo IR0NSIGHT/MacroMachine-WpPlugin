@@ -229,7 +229,7 @@ public class Path implements Iterable<float[]> {
     public static float[] interpolateFromHandles(float[] handles, int[] curveIdxByHandle) {
         assert handles.length == curveIdxByHandle.length : "both arrays must be the same length as the represent the "
                 + "same curveHandles";
-    //    assert curveIdxByHandle[0] == 0 : "curveIdxByHandle must represent the complete curve.";
+        //    assert curveIdxByHandle[0] == 0 : "curveIdxByHandle must represent the complete curve.";
         assert curveIdxByHandle[1] == 0 : "first curve idx must be zero so the first index can be ignored";
         if (!canBeInterpolated(handles)) {
             throw new IllegalArgumentException("handles are not interpolatable");
@@ -251,7 +251,7 @@ public class Path implements Iterable<float[]> {
             }
         }
         //copy last used handle to outarray
-        outHandles[outHandles.length-1] = handles[curveIdxByHandle.length - 2];
+        outHandles[outHandles.length - 1] = handles[curveIdxByHandle.length - 2];
 
         return outHandles;
     }
@@ -488,7 +488,7 @@ public class Path implements Iterable<float[]> {
             nthHandles = supplementFirstAndLastTwoHandles(nthHandles, INHERIT_VALUE, 0);
             HandleAndIdcs ready = removeInheritValues(nthHandles, handleToCurveIdx.clone());
             float[] interpolated = interpolateFromHandles(ready.handles, ready.idcs);
-            assert interpolated.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated values " +
+            assert interpolated.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 2] : "interpolated values " +
                     "array is not as long as the whole curve";
             flatHandlesInterpolated.add(interpolated);
         }
@@ -496,6 +496,7 @@ public class Path implements Iterable<float[]> {
     }
 
     public int[] handleToCurveIdx(boolean roundToGrid) {
+        assert this.amountHandles() >= 4;
         ArrayList<float[]> curve = continousCurveFromHandles(toPosition2DArray(this.handles), roundToGrid);
         int[] handleIdcs = new int[amountHandles()];
         int handleIdx = 1;
@@ -510,6 +511,11 @@ public class Path implements Iterable<float[]> {
         for (int i = handleIdx; i < handleIdcs.length; i++) {
             handleIdcs[i] = handleIdcs[handleIdx];
         }
+        //manually set the first and last handle index, so that the zero and last (virtual) segements are the same
+        // length as the true first and last segments
+        handleIdcs[0] = handleIdcs[1] - handleIdcs[2];
+        int lastIdx = handleIdcs.length - 1;
+        handleIdcs[lastIdx] = handleIdcs[lastIdx - 1] + (handleIdcs[lastIdx - 1] - handleIdcs[lastIdx - 2]);
         return handleIdcs;
     }
 

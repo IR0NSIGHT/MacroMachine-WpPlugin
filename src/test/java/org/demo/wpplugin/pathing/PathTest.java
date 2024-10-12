@@ -419,7 +419,7 @@ class PathTest {
 
         int[] handleTOCurve = p.handleToCurveIdx(true);
         assertEquals(handleTOCurve.length, p.amountHandles());
-        assertArrayEquals(new int[]{0, 0, 30, 80, 80}, handleTOCurve);
+        assertArrayEquals(new int[]{-30, 0, 30, 80, 130}, handleTOCurve);
     }
 
     @Test

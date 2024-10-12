@@ -59,12 +59,6 @@ public class PathGeometryHelper implements BoundingBox {
             parentage.put(point, new LinkedList<>());
         }
 
-        { //debug
-            HashSet<Point> leftOver = new HashSet<>(curve);
-            leftOver.removeAll(parentage.keySet());
-            System.err.println(leftOver);
-        }
-
         Collection<Point> allNearby = allNearbyPoints();
 
         assert new HashSet<>(allNearby).containsAll(curve) : "some curvepoints are missing";
