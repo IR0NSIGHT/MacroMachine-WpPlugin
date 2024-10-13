@@ -1,10 +1,12 @@
 package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.geometry.PaintDimension;
+import org.demo.wpplugin.operations.ContinuousCurve;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 
+import static org.demo.wpplugin.geometry.HeightDimension.getDummyDimension62;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
@@ -17,18 +19,18 @@ class RiverHandleInformationTest {
         ArrayList<float[]> handles = new ArrayList<>(10);
         for (int i = 0; i < 10; i++) {
             float[] handle = new float[RIVER_2D.size];
-            setPosition2D(handle,new float[]{i, 2*i});
+            setPosition2D(handle, new float[]{i, 2 * i});
             handle = setValue(handle, RIVER_RADIUS, i == 0 ? 3 : INHERIT_VALUE);
             handles.add(handle);
         }
         Path p = new Path(handles, RIVER_2D);
         for (int i = 1; i < handles.size(); i++) {
             float[] handle = handles.get(i);
-            assertEquals(INHERIT_VALUE, getValue(handle,RIVER_RADIUS));
+            assertEquals(INHERIT_VALUE, getValue(handle, RIVER_RADIUS));
         }
 
-        p = p.setHandleByIdx(setValue(p.handleByIndex(0),RIVER_RADIUS, 15), 0);
-        p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles()-1),RIVER_RADIUS, 15), p.amountHandles()-1);
+        p = p.setHandleByIdx(setValue(p.handleByIndex(0), RIVER_RADIUS, 15), 0);
+        p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles() - 1), RIVER_RADIUS, 15), p.amountHandles() - 1);
 
 
         PaintDimension dim = new PaintDimension() {
@@ -44,12 +46,12 @@ class RiverHandleInformationTest {
         };
         Path clone = p.clone();
         try {
-            DrawRiverPath(p, dim,-1);
+            DrawRiverPath(p, ContinuousCurve.fromPath(p, getDummyDimension62()), dim, -1);
         } catch (IllegalAccessException ignored) {
         }
         for (int i = 1; i < handles.size(); i++) {
             float[] handle = handles.get(i);
-            assertEquals(INHERIT_VALUE, getValue(handle,RIVER_RADIUS));
+            assertEquals(INHERIT_VALUE, getValue(handle, RIVER_RADIUS));
         }
         assertEquals(clone, p, "path was mutated by drawing it");
     }

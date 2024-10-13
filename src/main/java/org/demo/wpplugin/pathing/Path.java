@@ -471,33 +471,6 @@ public class Path implements Iterable<float[]> {
         return sum;
     }
 
-    public ContinuousCurve continousCurve() {
-        return continousCurve(true);
-    }
-
-    public ContinuousCurve continousCurve(boolean roundToGrid) {
-        if (this.handles.isEmpty()) return new ContinuousCurve(new ArrayList<float[]>());
-
-        ArrayList<float[]> handles = new ArrayList<>(this.handles.size());
-        for (float[] handle : this.handles)
-            handles.add(handle.clone());
-
-        //we know the positions of each handle already through magic
-        int[] handleToCurveIdx = this.handleToCurveIdx(roundToGrid);
-
-        //handles exist as flat lists
-        ArrayList<float[]> flatHandles = transposeHandles(handles);
-        ArrayList<float[]> flatHandlesInterpolated = new ArrayList<>(flatHandles.size());
-
-        //iterate all handleArrays and calculate a continous curve
-        for (int n = 0; n < type.size; n++) {
-            float[] nthHandles = flatHandles.get(n);
-            float[] interpolated = interpolateCatmullRom(nthHandles, handleToCurveIdx);
-            flatHandlesInterpolated.add(interpolated);
-        }
-        return new ContinuousCurve(flatHandlesInterpolated);
-    }
-
     public int[] handleToCurveIdx(boolean roundToGrid) {
         assert this.amountHandles() >= 4;
         ArrayList<float[]> curve = continousCurveFromHandles(toPosition2DArray(this.handles), roundToGrid);

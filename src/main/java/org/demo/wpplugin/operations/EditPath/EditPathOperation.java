@@ -5,6 +5,7 @@ import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.operations.ApplyPath.OperationOptionsPanel;
+import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
@@ -12,10 +13,8 @@ import org.demo.wpplugin.pathing.PathManager;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
 import org.pepsoft.worldpainter.brushes.Brush;
-import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
-import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +47,8 @@ import static org.demo.wpplugin.pathing.PointUtils.*;
  *
  * <p><strong>Note</strong> that for now WorldPainter only supports operations that
  */
-public class EditPathOperation extends MouseOrTabletOperation implements PaintOperation, // Implement this if you need access to the currently selected paint; note that some base
+public class EditPathOperation extends MouseOrTabletOperation implements PaintOperation, // Implement this if you
+// need access to the currently selected paint; note that some base
         // classes already provide this
         BrushOperation // Implement this if you need access to the currently selected brush; note that some base
         // classes already provide this
@@ -74,7 +74,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
-    static final String DESCRIPTION = "<html>Draw smooth, connected curves with C1 continuity.<br>left click: add new" + " point " + "after selected<br>right click: delete selected<br>ctrl+click: select this handle<br>shift+click: move " + "selected" + " handle here</html>";
+    static final String DESCRIPTION = "<html>Draw smooth, connected curves with C1 continuity.<br>left click: add " +
+            "new" + " point " + "after selected<br>right click: delete selected<br>ctrl+click: select this " +
+            "handle<br>shift+click: move " + "selected" + " handle here</html>";
     //update path
     public static int PATH_ID = 1;
     private final EditPathOptions options = new EditPathOptions();
@@ -113,6 +115,20 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 return false;
             }
         });
+    }
+
+    /**
+     * draws this path onto the map
+     *
+     * @param path
+     */
+    static void DrawPathLayer(Path path, ContinuousCurve curve, PaintDimension dim, int selectedPointIdx) throws IllegalAccessException {
+        Path clone = path.clone();
+        //nothing
+        if (path.type == PointInterpreter.PointType.RIVER_2D) {
+            DrawRiverPath(path, curve, dim, selectedPointIdx);
+        }
+        assert clone.equals(path) : "something mutated the path";
     }
 
     void setSelectedPointIdx(int selectedPointIdx) {
@@ -220,7 +236,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                         int clostestIdx = path.getClosestHandleIdxTo(userClickedCoord);
                         float[] closest = path.handleByIndex(clostestIdx);
                         //dont allow very far away clicks
-                        if (getPositionalDistance(closest, userClickedCoord, RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
+                        if (getPositionalDistance(closest, userClickedCoord,
+                                RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
                             setSelectedPointIdx(clostestIdx);
                         }
                     }
@@ -251,7 +268,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                         overwriteSelectedPath(newPath);
                         int idx = getSelectedPath().indexOfPosition(pointBeforeSelected);
                         setSelectedPointIdx(idx);
-                    } catch (Exception|AssertionError e ) {
+                    } catch (Exception | AssertionError e) {
                         overwriteSelectedPath(path); // set old path
                         throw new RuntimeException(e);
                     }
@@ -266,7 +283,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             assert getSelectedPath().amountHandles() == 0 || getSelectedPoint() != null;
 
 
-            assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull " + "setting " + "path in manager";
+            assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull " +
+                    "setting " + "path in manager";
         } catch (Exception e) {
             System.out.println("Exception after user edit-path-action");
             System.out.println(e);
@@ -280,7 +298,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         this.getDimension().setEventsInhibited(true);
         //erase old
         this.getDimension().clearLayerData(PathPreviewLayer.INSTANCE);
-        PaintDimension dim = new PaintDimension() {
+        PaintDimension paintDim = new PaintDimension() {
             @Override
             public int getValue(int x, int y) {
                 return getDimension().getLayerValueAt(PathPreviewLayer.INSTANCE, x, y);
@@ -291,30 +309,30 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, v);
             }
         };
+
+        HeightDimension heightDim = new HeightDimension() {
+            @Override
+            public float getHeight(int x, int y) {
+                return getDimension().getHeightAt(x, y);
+            }
+
+            @Override
+            public void setHeight(int x, int y, float z) {
+                getDimension().setHeightAt(x, y, z);
+            }
+        };
+
         try {
             //redraw new
-            DrawPathLayer(getSelectedPath().clone(), dim, getSelectedPath().indexOfPosition(getSelectedPoint()));
+            DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), heightDim), paintDim,
+                    getSelectedPath().indexOfPosition(getSelectedPoint()));
             if (getSelectedPoint() != null)
-                PointUtils.markPoint(getPoint2D(getSelectedPoint()), COLOR_SELECTED, SIZE_SELECTED, dim);
+                PointUtils.markPoint(getPoint2D(getSelectedPoint()), COLOR_SELECTED, SIZE_SELECTED, paintDim);
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
         } finally {
             this.getDimension().setEventsInhibited(false);
         }
-    }
-
-    /**
-     * draws this path onto the map
-     *
-     * @param path
-     */
-    static void DrawPathLayer(Path path, PaintDimension dim, int selectedPointIdx) throws IllegalAccessException {
-        Path clone = path.clone();
-        //nothing
-        if (path.type == PointInterpreter.PointType.RIVER_2D) {
-            DrawRiverPath(path, dim, selectedPointIdx);
-        }
-        assert clone.equals(path) : "something mutated the path";
     }
 
     float[] getSelectedPoint() {
@@ -348,7 +366,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         }
 
         @Override
-        protected ArrayList<OptionsLabel> addComponents(EditPathOptions editPathOptions, Runnable onOptionsReconfigured) {
+        protected ArrayList<OptionsLabel> addComponents(EditPathOptions editPathOptions,
+                                                        Runnable onOptionsReconfigured) {
             ArrayList<OptionsLabel> inputs = new ArrayList<>();
 
             //select path dropdown
@@ -358,7 +377,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             comboBox.setSelectedItem(PathManager.instance.getPathName(editPathOptions.selectedPathId));
             comboBox.addActionListener(e -> {
                 editPathOptions.selectedPathId = ((PathManager.NamedId) comboBox.getSelectedItem()).id;
-                setSelectedPointIdx(getSelectedPath().amountHandles() == 0 ? -1 : getSelectedPath().amountHandles() - 1);
+                setSelectedPointIdx(getSelectedPath().amountHandles() == 0 ? -1 :
+                        getSelectedPath().amountHandles() - 1);
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
             });
@@ -434,7 +454,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
             JButton button1 = new JButton("Edit water height");
             button1.addActionListener(e -> {
-                JDialog dialog = riverRadiusEditor(getSelectedPath(), selectedPointIdx, EditPathOperation.this::overwriteSelectedPath, dim);
+                JDialog dialog = riverRadiusEditor(getSelectedPath(), selectedPointIdx,
+                        EditPathOperation.this::overwriteSelectedPath, dim);
                 dialog.setVisible(true);
                 onOptionsReconfigured();
                 redrawSelectedPathLayer();

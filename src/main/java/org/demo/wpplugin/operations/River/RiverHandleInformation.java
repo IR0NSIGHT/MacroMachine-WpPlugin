@@ -147,7 +147,7 @@ public class RiverHandleInformation {
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Only close the dialog
 
         // Create a custom panel that will display the image
-        ContinuousCurve curve = path.continousCurve(true);
+        ContinuousCurve curve = ContinuousCurve.fromPath(path, heightDimension);
 
         // Calculate dialog size as a percentage of the screen size
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -202,10 +202,9 @@ public class RiverHandleInformation {
         return options;
     }
 
-    public static void DrawRiverPath(Path path, PaintDimension dim, int selectedIdx) throws IllegalAccessException {
+    public static void DrawRiverPath(Path path, ContinuousCurve curve, PaintDimension dim, int selectedIdx) throws IllegalAccessException {
         if (path.type != RIVER_2D) throw new IllegalArgumentException("path is not river: " + path.type);
         if (!(path.amountHandles() < 4)) {
-            ContinuousCurve curve = path.continousCurve(true);
             int[] curveIdxHandles = path.handleToCurveIdx(true);
 
             int selectionStartIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx - 2), curveIdxHandles.length - 1)];

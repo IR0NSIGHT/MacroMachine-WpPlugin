@@ -107,7 +107,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
 
     public static void applyRiverPath(Path path, ApplyPathOptions options, HeightDimension dimension,
                                       HeightDimension waterMap) {
-        ContinuousCurve curve = path.continousCurve(false);
+        ContinuousCurve curve = ContinuousCurve.fromPath(path, dimension);
         float randomPercent = (float) options.getRandomFluctuate() / 100f;
         float[] randomEdge = randomEdge(curve.curveLength());
 

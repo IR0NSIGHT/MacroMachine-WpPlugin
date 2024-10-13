@@ -1,6 +1,7 @@
 package org.demo.wpplugin.operations.River;
 
 import org.demo.wpplugin.geometry.HeightDimension;
+import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.pathing.Path;
 import scala.NotImplementedError;
 
@@ -38,7 +39,9 @@ public class PathHistogram extends JPanel implements KeyListener {
 
     @Override
     protected void paintComponent(Graphics g) {
-        float[] curveHeights = Path.interpolateWaterZ(path.continousCurve(true), dimension);
+        ContinuousCurve curve = ContinuousCurve.fromPath(path, dimension);
+
+        float[] curveHeights = Path.interpolateWaterZ(curve, dimension);
         super.paintComponent(g);
 
         Graphics2D g2d = (Graphics2D) g;
@@ -99,7 +102,8 @@ public class PathHistogram extends JPanel implements KeyListener {
             g2d.drawLine(x, 0, x, -y);
             g2d.drawLine(x, -(y + g.getFontMetrics().getHeight()), x, -2 * y);
 
-            String text = notSet ? "(INHERIT)" : String.format("%.2f", getValue(path.handleByIndex(handleIdx), RiverInformation.WATER_Z));
+            String text = notSet ? "(INHERIT)" : String.format("%.2f", getValue(path.handleByIndex(handleIdx),
+                    RiverInformation.WATER_Z));
             g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
         }
     }
@@ -175,7 +179,8 @@ public class PathHistogram extends JPanel implements KeyListener {
             throw new IllegalArgumentException("can not set value because idx is not a handle");
         } else {
             float[] handle = path.handleByIndex(handleIdx);
-            float[] newHandle = setValue(handle, RiverInformation.WATER_Z, getValue(handle, RiverInformation.WATER_Z) + amount);
+            float[] newHandle = setValue(handle, RiverInformation.WATER_Z,
+                    getValue(handle, RiverInformation.WATER_Z) + amount);
             overwritePath(path.setHandleByIdx(newHandle, handleIdx));
         }
     }

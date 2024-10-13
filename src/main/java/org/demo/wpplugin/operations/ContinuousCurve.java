@@ -25,6 +25,8 @@ public class ContinuousCurve {
     }
 
     public static ContinuousCurve fromPath(Path path, HeightDimension dimension) {
+        if (path.amountHandles() == 0)
+            return new ContinuousCurve(new ArrayList<>());
         ArrayList<float[]> handles = new ArrayList<>(path.amountHandles());
         for (float[] handle : path)
             handles.add(handle.clone());
