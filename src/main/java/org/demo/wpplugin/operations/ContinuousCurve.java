@@ -1,6 +1,8 @@
 package org.demo.wpplugin.operations;
 
+import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
+import org.demo.wpplugin.pathing.Path;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -20,6 +22,41 @@ public class ContinuousCurve {
             assert curve.length == length;
         }
         this.flatCurve = flatCurve;
+    }
+
+    public static ContinuousCurve fromPath(Path path, HeightDimension dimension) {
+        ArrayList<float[]> handles = new ArrayList<>(path.amountHandles());
+        for (float[] handle : path)
+            handles.add(handle.clone());
+
+        //we know the positions of each handle already through magic
+        int[] handleToCurveIdx = path.handleToCurveIdx(true);
+
+        //handles exist as flat lists
+        ArrayList<float[]> flatHandles = Path.transposeHandles(handles);
+        ArrayList<float[]> interpolatedCurve = new ArrayList<>(flatHandles.size());
+
+        //iterate all handleArrays and calculate a continous curve
+        for (int n = 0; n < path.type.size; n++) {
+            float[] nthHandles = flatHandles.get(n);
+            float[] interpolated = Path.interpolateCatmullRom(nthHandles, handleToCurveIdx);
+            interpolatedCurve.add(interpolated);
+        }
+        return new ContinuousCurve(interpolatedCurve);
+    }
+
+    private float[] interpolateType(RiverHandleInformation.RiverInformation type, float[] handle,
+                                    int[] handleToCurveIdx, HeightDimension dimension) {
+        switch (type) {
+            case WATER_Z:
+                Path.interpolateWaterZ(null, dimension);
+            case RIVER_RADIUS:
+            case TRANSITION_RADIUS:
+            case BEACH_RADIUS:
+            case RIVER_DEPTH:
+                return Path.interpolateCatmullRom(handle, handleToCurveIdx);
+        }
+        throw new IllegalArgumentException("unknown river type: " + type);
     }
 
     public float[] getInfo(RiverHandleInformation.RiverInformation information) {

@@ -337,7 +337,7 @@ public class Path implements Iterable<float[]> {
         return interpolated;
     }
 
-    private static float[] interpolateCatmullRom(float[] nthHandles, int[] handleToCurveIdx) {
+    public static float[] interpolateCatmullRom(float[] nthHandles, int[] handleToCurveIdx) {
         nthHandles = supplementFirstAndLastTwoHandles(nthHandles, INHERIT_VALUE, 0);
         HandleAndIdcs ready = removeInheritValues(nthHandles, handleToCurveIdx.clone());
         float[] interpolated = interpolateFromHandles(ready.handles, ready.idcs);

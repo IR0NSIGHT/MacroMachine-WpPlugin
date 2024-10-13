@@ -219,8 +219,8 @@ public class RiverHandleInformation {
                     radius += curve.getInfo(info, i);
                     Point curvePointP = curve.getPos(i);
 
-                    int tangentX = curve.getPosX(i+1) - curve.getPosX(i-1);
-                    int tangentY = curve.getPosY(i+1) - curve.getPosY(i-1);
+                    int tangentX = curve.getPosX(i + 1) - curve.getPosX(i - 1);
+                    int tangentY = curve.getPosY(i + 1) - curve.getPosY(i - 1);
                     double tangentAngle = angleOf(tangentX, tangentY);
 
                     int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
