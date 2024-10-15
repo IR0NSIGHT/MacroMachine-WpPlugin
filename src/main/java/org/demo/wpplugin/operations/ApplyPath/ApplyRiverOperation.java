@@ -13,11 +13,8 @@ import org.pepsoft.worldpainter.operations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.function.Function;
 
 import static java.lang.Math.max;
@@ -62,7 +59,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
     static final String DESCRIPTION =
             "<html>Apply river to this world<br>Last selected path gets applied into the " + "world.<br>Potentially " +
                     "slow and expensive</html>";
-    private final ApplyPathOptions options = new ApplyPathOptions(3, 0, 1, 3);
+    private final ApplyPathOptions options = new ApplyPathOptions(0, 1);
     private final StandardOptionsPanel optionsPanel = new StandardOptionsPanel(getName(), getDescription()) {
         @Override
         protected void addAdditionalComponents(GridBagConstraints constraints) {
@@ -108,10 +105,10 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
     public static void applyRiverPath(Path path, ApplyPathOptions options, HeightDimension dimension,
                                       HeightDimension waterMap) {
         ContinuousCurve curve = ContinuousCurve.fromPath(path, dimension);
-        float randomPercent = (float) options.getRandomFluctuate() / 100f;
+        float randomPercent = (float) options.randomFluctuate / 100f;
         float[] randomEdge = randomEdge(curve.curveLength());
 
-        double fluctuationSpeed = options.getFluctuationSpeed();
+        double fluctuationSpeed = options.fluctuationSpeed;
         fluctuationSpeed = max(1, fluctuationSpeed);    //no divide by zero
 
         float[] maxHandleValues = getMaxValues(path, path.type.size);
@@ -119,7 +116,8 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
         double totalSearchRadius = getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS);
         // + getValue
         // (maxHandleValues, TRANSITION_RADIUS);
-        PathGeometryHelper helper = new PathGeometryHelper(path, new ArrayList<>(List.of(curve.getPositions2d())), totalSearchRadius);
+        PathGeometryHelper helper = new PathGeometryHelper(path, new ArrayList<>(List.of(curve.getPositions2d())),
+                totalSearchRadius);
         HashMap<Point, Collection<Point>> parentage = helper.getParentage();
 
         HashMap<Point, Float> finalHeightmap = new HashMap<>();
@@ -303,12 +301,12 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
 
             inputs.add(numericInput("random width", "each step the rivers radius will randomly increase or decrease. " +
                             "It will stay within +/- percent " + "of the normal width.",
-                    new SpinnerNumberModel(options.getRandomFluctuate(), 0, 100, 1f),
-                    w -> options.setRandomFluctuate(w.intValue()), onOptionsReconfigured));
+                    new SpinnerNumberModel(options.randomFluctuate, 0, 100, 1f),
+                    w -> options.randomFluctuate = w.intValue(), onOptionsReconfigured));
 
             inputs.add(numericInput("fluctuation speed", "how fast the random fluctuation appears. low number = less " +
-                            "extreme change", new SpinnerNumberModel(options.getFluctuationSpeed(), 0, 100, 1f),
-                    w -> options.setFluctuationSpeed(w.intValue()), onOptionsReconfigured));
+                            "extreme change", new SpinnerNumberModel(options.fluctuationSpeed, 0, 100, 1f),
+                    w -> options.fluctuationSpeed = w.intValue(), onOptionsReconfigured));
 
             return inputs;
         }
