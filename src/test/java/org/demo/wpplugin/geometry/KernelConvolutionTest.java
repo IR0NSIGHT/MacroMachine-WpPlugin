@@ -1,5 +1,6 @@
 package org.demo.wpplugin.geometry;
 
+import org.demo.wpplugin.kernel.KernelConvolution;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

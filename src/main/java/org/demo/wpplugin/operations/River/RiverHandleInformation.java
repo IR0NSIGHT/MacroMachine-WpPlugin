@@ -1,10 +1,11 @@
 package org.demo.wpplugin.operations.River;
 
+import org.demo.wpplugin.Gui.PathHistogram;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.operations.ContinuousCurve;
-import org.demo.wpplugin.operations.OptionsLabel;
+import org.demo.wpplugin.Gui.OptionsLabel;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
@@ -19,7 +20,7 @@ import java.util.function.Consumer;
 
 import static org.demo.wpplugin.operations.ApplyPath.ApplyRiverOperation.angleOf;
 import static org.demo.wpplugin.operations.EditPath.EditPathOperation.*;
-import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
+import static org.demo.wpplugin.Gui.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;

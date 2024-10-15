@@ -1,4 +1,6 @@
-package org.demo.wpplugin.geometry;
+package org.demo.wpplugin.kernel;
+
+import org.demo.wpplugin.geometry.HeightDimension;
 
 import java.awt.*;
 import java.util.Arrays;

@@ -2,6 +2,7 @@ import org.demo.wpplugin.geometry.*;
 import org.demo.wpplugin.geometry.BoundingBoxes.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.BoundingBoxes.BoundingBox;
 import org.demo.wpplugin.geometry.BoundingBoxes.TreeBoundingBox;
+import org.demo.wpplugin.kernel.KernelConvolution;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;

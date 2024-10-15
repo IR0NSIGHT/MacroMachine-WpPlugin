@@ -1,4 +1,4 @@
-package org.demo.wpplugin.operations;
+package org.demo.wpplugin.Gui;
 
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 

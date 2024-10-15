@@ -1,9 +1,7 @@
-package org.demo.wpplugin.operations.ApplyPath;//
+package org.demo.wpplugin.Gui;//
 // Source code recreated from a .class file by IntelliJ IDEA
 // (powered by FernFlower decompiler)
 //
-
-import org.demo.wpplugin.operations.OptionsLabel;
 
 import javax.swing.*;
 import java.util.ArrayList;

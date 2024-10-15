@@ -1,9 +1,10 @@
 package org.demo.wpplugin.operations.ApplyPath;
 
+import org.demo.wpplugin.Gui.OperationOptionsPanel;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.EditPath.EditPathOperation;
-import org.demo.wpplugin.operations.OptionsLabel;
+import org.demo.wpplugin.Gui.OptionsLabel;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathGeometryHelper;
@@ -19,7 +20,7 @@ import java.util.function.Function;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import static org.demo.wpplugin.operations.OptionsLabel.numericInput;
+import static org.demo.wpplugin.Gui.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
 

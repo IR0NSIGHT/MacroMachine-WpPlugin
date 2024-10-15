@@ -1,4 +1,4 @@
-package org.demo.wpplugin.operations.River;
+package org.demo.wpplugin.Gui;
 
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.ContinuousCurve;
@@ -18,7 +18,7 @@ public class PathHistogram extends JPanel implements KeyListener {
     private Path path;
     private int selectedHandleIdx;
 
-    PathHistogram(Path path, int selectedIdx, float[] terrainCurve, HeightDimension dimension) {
+    public PathHistogram(Path path, int selectedIdx, float[] terrainCurve, HeightDimension dimension) {
         super(new BorderLayout());
         this.selectedHandleIdx = selectedIdx;
         overwritePath(path);

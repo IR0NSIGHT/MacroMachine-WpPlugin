@@ -1,4 +1,4 @@
-package org.demo.wpplugin.operations;
+package org.demo.wpplugin.operations.LinearByAngleOperation;
 
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.brushes.Brush;
