@@ -8,7 +8,6 @@ import org.demo.wpplugin.operations.OptionsLabel;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
-import org.pepsoft.worldpainter.App;
 
 import javax.swing.*;
 import java.awt.*;
@@ -140,9 +139,8 @@ public class RiverHandleInformation {
         return dim;
     }
 
-    public static JDialog riverRadiusEditor(Path path, int selectedHandleIdx, Consumer<Path> overWritePath,
+    public static JDialog riverRadiusEditor(JFrame parent, Path path, int selectedHandleIdx, Consumer<Path> overWritePath,
                                             HeightDimension heightDimension) {
-        JFrame parent = App.getInstance();
         JDialog dialog = new JDialog(parent, "Dialog Title", true); // Modal
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Only close the dialog
 
