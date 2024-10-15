@@ -197,26 +197,6 @@ public class Path implements Iterable<float[]> {
     }
 
     /**
-     * takes a flat array of handles and interpolates a curve from them.
-     * the spacing between the handles on Y axis is determined by handleToCurve
-     * any INHERIT values in the flatarray are just ignored and overwritten by interpolation
-     *
-     * @param flatHandles
-     * @param handleToCurve
-     * @return
-     */
-    public static float[] doInterpolation(float[] flatHandles, int[] handleToCurve) {
-        assert flatHandles.length == handleToCurve.length : "both input array must be of same size.";
-        assert Arrays.binarySearch(flatHandles, INHERIT_VALUE) < 0 : "handle array can not contain INHERIT values!";
-
-        //each curve segment
-        for (int i = 0; i < handleToCurve.length - 3; i++) {
-
-        }
-        return null;
-    }
-
-    /**
      * will take a handle array and index information
      * will construct a interpolated curve matching both
      *
@@ -497,17 +477,6 @@ public class Path implements Iterable<float[]> {
 
     public float[] handleByIndex(int index) throws IndexOutOfBoundsException {
         return handles.get(index);
-    }
-
-    private boolean curveHasNoClones(List<float[]> curve) {
-        float[] previous = null;
-        for (float[] p : curve) {
-            if (p.equals(previous)) {
-                return false;
-            }
-            previous = p;
-        }
-        return true;
     }
 
     public int getClosestHandleIdxTo(float[] coord) throws IllegalAccessException {
