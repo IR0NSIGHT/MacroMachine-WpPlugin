@@ -15,7 +15,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.function.Consumer;
 
 import static org.demo.wpplugin.operations.ApplyPath.ApplyRiverOperation.angleOf;
@@ -116,30 +115,8 @@ public class RiverHandleInformation {
         return point[PositionSize.SIZE_2_D.value + information.idx];
     }
 
-    public static HeightDimension curve1D(ArrayList<float[]> curve,
-                                          RiverHandleInformation.RiverInformation riverInformation) {
-        HeightDimension dim = new HeightDimension() {
-            final HashMap<Point, Float> heightMap = new HashMap<>();
-
-            @Override
-            public float getHeight(int x, int y) {
-                return heightMap.getOrDefault(new Point(x, y), 0f);
-            }
-
-            @Override
-            public void setHeight(int x, int y, float z) {
-                heightMap.put(new Point(x, y), z);
-            }
-        };
-        for (int i = 0; i < curve.size(); i++) {
-            float value = getValue(curve.get(i), riverInformation);
-            for (int z = 0; z < value; z++)
-                dim.setHeight(i, z, 255);
-        }
-        return dim;
-    }
-
-    public static JDialog riverRadiusEditor(JFrame parent, Path path, int selectedHandleIdx, Consumer<Path> overWritePath,
+    public static JDialog riverRadiusEditor(JFrame parent, Path path, int selectedHandleIdx,
+                                            Consumer<Path> overWritePath,
                                             HeightDimension heightDimension) {
         JDialog dialog = new JDialog(parent, "Dialog Title", true); // Modal
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Only close the dialog
