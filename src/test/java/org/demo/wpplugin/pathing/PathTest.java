@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 
-import static org.demo.wpplugin.geometry.HeightDimension.getDummyDimension62;
+import static org.demo.wpplugin.geometry.HeightDimension.getImmutableDimension62;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.POSITION_2D;
@@ -83,7 +83,7 @@ class PathTest {
         assertEquals(length, path.amountHandles());
         Path newEmpty = path.newEmpty();
         assertEquals(0, newEmpty.amountHandles());
-        ContinuousCurve curve = ContinuousCurve.fromPath(newEmpty, getDummyDimension62());
+        ContinuousCurve curve = ContinuousCurve.fromPath(newEmpty, getImmutableDimension62());
         assertEquals(0, curve.curveLength());
     }
 
@@ -228,7 +228,7 @@ class PathTest {
         }
 
         ContinuousCurve curve;
-        ContinuousCurve curveP = ContinuousCurve.fromPath(p, getDummyDimension62());
+        ContinuousCurve curveP = ContinuousCurve.fromPath(p, getImmutableDimension62());
         //are all curvepoints y=37?
         for (int i = 0; i < curveP.curveLength(); i++) {
             assertEquals(37, curveP.getPosY(i), 0.001f, "this point on the curve is supposed to be at y=37");
@@ -260,7 +260,7 @@ class PathTest {
                 p = p.addPoint(RiverHandleInformation.riverInformation(20, 30));
                 p = p.addPoint(RiverHandleInformation.riverInformation(21, 30));
 
-                curve = ContinuousCurve.fromPath(p, getDummyDimension62());
+                curve = ContinuousCurve.fromPath(p, getImmutableDimension62());
                 for (int i = 0; i < curve.curveLength(); i++) {
 
                     assertEquals(5, curve.getInfo(RIVER_RADIUS, i), 0.01f);
@@ -282,7 +282,7 @@ class PathTest {
 
                 p = new Path(handles, PointInterpreter.PointType.RIVER_2D);
 
-                curve = ContinuousCurve.fromPath(p, getDummyDimension62());
+                curve = ContinuousCurve.fromPath(p, getImmutableDimension62());
                 for (int i = 0; i < curve.curveLength(); i++) {
 
                     assertEquals(5, curve.getInfo(RIVER_RADIUS, i), 0.01f);
@@ -304,7 +304,7 @@ class PathTest {
 
                 p = new Path(handles, PointInterpreter.PointType.RIVER_2D);
 
-                curve = ContinuousCurve.fromPath(p, getDummyDimension62());
+                curve = ContinuousCurve.fromPath(p, getImmutableDimension62());
                 for (int i = 0; i < curve.curveLength(); i++) {
 
                     assertEquals(5, curve.getInfo(RIVER_RADIUS, i), 0.01f);

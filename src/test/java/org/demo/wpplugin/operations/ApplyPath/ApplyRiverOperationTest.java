@@ -11,7 +11,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
 
-import static org.demo.wpplugin.geometry.HeightDimension.getDummyDimension62;
+import static org.demo.wpplugin.geometry.HeightDimension.getImmutableDimension62;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.WATER_Z;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
@@ -33,7 +33,7 @@ class ApplyRiverOperationTest {
         p = p.addPoint(RiverHandleInformation.riverInformation(50, 70));
         p = p.addPoint(RiverHandleInformation.riverInformation(50, 71, 10, 6, 7, 8, 128));
 
-        ContinuousCurve curve = ContinuousCurve.fromPath(p, getDummyDimension62());
+        ContinuousCurve curve = ContinuousCurve.fromPath(p, getImmutableDimension62());
     /*
         for (float[] a : curve) {
             assertEquals(5, getValue(a, RIVER_RADIUS), 0.01f);

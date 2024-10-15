@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 
-import static org.demo.wpplugin.geometry.HeightDimension.getDummyDimension62;
+import static org.demo.wpplugin.geometry.HeightDimension.getImmutableDimension62;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
@@ -46,7 +46,7 @@ class RiverHandleInformationTest {
         };
         Path clone = p.clone();
         try {
-            DrawRiverPath(p, ContinuousCurve.fromPath(p, getDummyDimension62()), dim, -1);
+            DrawRiverPath(p, ContinuousCurve.fromPath(p, getImmutableDimension62()), dim, -1);
         } catch (IllegalAccessException ignored) {
         }
         for (int i = 1; i < handles.size(); i++) {
