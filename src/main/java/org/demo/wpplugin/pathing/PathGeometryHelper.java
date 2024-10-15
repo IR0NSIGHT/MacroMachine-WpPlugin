@@ -1,8 +1,8 @@
 package org.demo.wpplugin.pathing;
 
-import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
-import org.demo.wpplugin.geometry.BoundingBox;
-import org.demo.wpplugin.geometry.TreeBoundingBox;
+import org.demo.wpplugin.geometry.BoundingBoxes.AxisAlignedBoundingBox2d;
+import org.demo.wpplugin.geometry.BoundingBoxes.BoundingBox;
+import org.demo.wpplugin.geometry.BoundingBoxes.TreeBoundingBox;
 
 import java.awt.*;
 import java.util.*;

@@ -1,11 +1,10 @@
 package org.demo.wpplugin.pathing;
 
-import org.demo.wpplugin.geometry.AxisAlignedBoundingBox2d;
+import org.demo.wpplugin.geometry.BoundingBoxes.AxisAlignedBoundingBox2d;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 
 import java.awt.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,17 +47,6 @@ public class PointUtils {
             throw new IllegalArgumentException("Cannot normalize a point at the origin (0,0).");
         }
         return divide(p, magnitude);
-    }
-
-    public static double calculatePathLength(Point[] path) {
-        if (path == null || path.length < 2) {
-            throw new IllegalArgumentException("Path must contain at least two points.");
-        }
-        double totalLength = 0.0;
-        for (int i = 1; i < path.length; i++) {
-            totalLength += path[i - 1].distance(path[i]);
-        }
-        return totalLength;
     }
 
     public static ArrayList<AxisAlignedBoundingBox2d> toBoundingBoxes(ArrayList<Point> curve, int boxSizeFactor,
