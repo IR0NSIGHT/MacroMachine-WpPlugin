@@ -454,7 +454,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
             JButton button1 = new JButton("Edit water height");
             button1.addActionListener(e -> {
-                JDialog dialog = riverRadiusEditor((JFrame)this.getParent(), //FIXME does this work?s
+                JFrame c =  (JFrame) SwingUtilities.getWindowAncestor(this.getParent());
+                JDialog dialog = riverRadiusEditor(c,
                         getSelectedPath(), selectedPointIdx,
                         EditPathOperation.this::overwriteSelectedPath, dim);
                 dialog.setVisible(true);
