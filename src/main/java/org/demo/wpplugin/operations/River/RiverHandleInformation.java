@@ -219,7 +219,8 @@ public class RiverHandleInformation {
         for (int i = 0; i < path.amountHandles(); i++) {
             float[] handle = path.handleByIndex(i);
             int size = SIZE_MEDIUM_CROSS;
-            PointUtils.markPoint(getPoint2D(handle), DemoLayerRenderer.Yellow, size, dim);
+            Point handleP = getPoint2D(handle);
+            PointUtils.markPoint(handleP, DemoLayerRenderer.Yellow, size, dim);
 
             //RIVER RADIUS
             if (!(getValue(handle, RIVER_RADIUS) == INHERIT_VALUE))

@@ -124,7 +124,7 @@ class PathTest {
 
         float[] oldHandle = path.handleByIndex(length / 2).clone();
         float[] newHandle = new float[]{123, 456};
-        Path moved = path.movePoint(oldHandle, newHandle);
+        Path moved = path.overwriteHandle(oldHandle, newHandle);
 
         assertEquals(length, moved.amountHandles(), "new path has a different length after shifting a point");
         assertArrayEquals(newHandle, moved.handleByIndex(length / 2), "the shifted point is not where its supposed " +

@@ -147,8 +147,14 @@ public class PointUtils {
         return out;
     }
 
-    public static float[] setPosition2D(float[] point, float[] position) {
-        float[] out = point.clone();
+    /**
+     *
+     * @param meta handle with meta info
+     * @param position position information to use
+     * @return handle that has meta from poiint and position from positon
+     */
+    public static float[] setPosition2D(float[] meta, float[] position) {
+        float[] out = meta.clone();
         if (RiverHandleInformation.PositionSize.SIZE_2_D.value >= 0)
             System.arraycopy(position, 0, out, 0, RiverHandleInformation.PositionSize.SIZE_2_D.value);
         return out;

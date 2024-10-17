@@ -367,10 +367,10 @@ public class Path implements Iterable<float[]> {
         return -1;
     }
 
-    public Path movePoint(float[] point, float[] newPosition) {
+    public Path overwriteHandle(float[] original, float[] newValue) {
         Path sum = new Path(this.handles, this.type);
-        int idx = indexOfPosition(point);
-        sum.handles.set(idx, setPosition2D(point, newPosition));
+        int idx = indexOfPosition(original);
+        sum.handles.set(idx, newValue);
         assert invariant();
         return sum;
     }
@@ -426,7 +426,9 @@ public class Path implements Iterable<float[]> {
     }
 
     public int[] handleToCurveIdx(boolean roundToGrid) {
-        assert this.amountHandles() >= 4;
+        if (this.amountHandles() < 4)
+            return new int[this.amountHandles()]; //zero filled array
+
         ArrayList<float[]> curve = continousCurveFromHandles(toPosition2DArray(this.handles), roundToGrid);
         int[] handleIdcs = new int[amountHandles()];
         int handleIdx = 1;

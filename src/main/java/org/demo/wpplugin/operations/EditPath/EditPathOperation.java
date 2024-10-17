@@ -251,7 +251,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 try {
                     float[] movedPoint = setPosition2D(getSelectedPoint(), userClickedCoord);
                     int idx = path.indexOfPosition(getSelectedPoint());
-                    Path newPath = path.movePoint(getSelectedPoint(), movedPoint);
+                    Path newPath = path.overwriteHandle(getSelectedPoint(), movedPoint);
                     setSelectedPointIdx(idx);
 
                     overwriteSelectedPath(newPath);
@@ -427,7 +427,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                     OptionsLabel[] riverInputs = RiverHandleInformation.Editor(getSelectedPoint(), point -> {
                         Path oldPath = getSelectedPath();
                         try {
-                            Path newPath = getSelectedPath().movePoint(getSelectedPoint(), point);
+                            Path newPath = getSelectedPath().overwriteHandle(getSelectedPoint(), point);
                             overwriteSelectedPath(newPath);
                         } catch (Exception ex) {
                             System.err.println(ex.getMessage());
