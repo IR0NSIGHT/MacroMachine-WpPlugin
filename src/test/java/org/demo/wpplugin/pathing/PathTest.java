@@ -15,21 +15,6 @@ import static org.demo.wpplugin.pathing.PointUtils.setPosition2D;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PathTest {
-    private Path newFilledPath(int length) {
-        return newFilledPath(length, PointInterpreter.PointType.POSITION_2D);
-    }
-
-    private Path newFilledPath(int length, PointInterpreter.PointType type) {
-        Path p = new Path(Collections.EMPTY_LIST, type);
-        for (int i = 0; i < length; i++) {
-            float[] newHandle = new float[type.size];
-            newHandle[0] = 3 * i;
-            newHandle[1] = 4 * i;
-            p = p.addPoint(newHandle.clone());
-        }
-        return p;
-    }
-
     @Test
     void clonePath() {
         Path p = newFilledPath(4, RIVER_2D);
@@ -37,7 +22,7 @@ class PathTest {
         assertEquals(p, clone);
         assertNotSame(p, clone);
 
-        int idx = p.amountHandles()/2;
+        int idx = p.amountHandles() / 2;
         float[] someHandle = p.handleByIndex(idx).clone();
         p = p.setHandleByIdx(someHandle, idx);
         assertArrayEquals(p.handleByIndex(idx), someHandle);
@@ -53,6 +38,17 @@ class PathTest {
         assertNotSame(p, clone);
         assertNotEquals(p, clone);
 
+    }
+
+    private Path newFilledPath(int length, PointInterpreter.PointType type) {
+        Path p = new Path(Collections.EMPTY_LIST, type);
+        for (int i = 0; i < length; i++) {
+            float[] newHandle = new float[type.size];
+            newHandle[0] = 3 * i;
+            newHandle[1] = 4 * i;
+            p = p.addPoint(newHandle.clone());
+        }
+        return p;
     }
 
     @Test
@@ -81,6 +77,10 @@ class PathTest {
         Path newEmpty = path.newEmpty();
         assertEquals(0, newEmpty.amountHandles());
         assertTrue(newEmpty.continousCurve().isEmpty());
+    }
+
+    private Path newFilledPath(int length) {
+        return newFilledPath(length, PointInterpreter.PointType.POSITION_2D);
     }
 
     @Test
@@ -119,8 +119,7 @@ class PathTest {
         Path moved = path.movePoint(oldHandle, newHandle);
 
         assertEquals(length, moved.amountHandles(), "new path has a different length after shifting a point");
-        assertArrayEquals(newHandle, moved.handleByIndex(length / 2), "the shifted point is not where its supposed to" +
-                " be");
+        assertArrayEquals(newHandle, moved.handleByIndex(length / 2), "the shifted point is not where its supposed to" + " be");
     }
 
     @Test
@@ -187,7 +186,7 @@ class PathTest {
 
     @Test
     void continuousCurve() {
-        Path p = newFilledPath(10+2+1, RIVER_2D);
+        Path p = newFilledPath(10 + 2 + 1, RIVER_2D);
 
         float startV = 3;
         p = p.setHandleByIdx(setValue(p.handleByIndex(0), RIVER_RADIUS, startV), 0);
@@ -197,10 +196,10 @@ class PathTest {
         assertEquals(startV, getValue(p.handleByIndex(1), RIVER_RADIUS));
 
 
-        p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles()-1), RIVER_RADIUS, 17), p.amountHandles() - 1);
-        assertEquals(17, getValue(p.handleByIndex(p.amountHandles()-1), RIVER_RADIUS));
-        p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles()-2), RIVER_RADIUS, 17), p.amountHandles() - 2);
-        assertEquals(17, getValue(p.handleByIndex(p.amountHandles()-2), RIVER_RADIUS));
+        p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles() - 1), RIVER_RADIUS, 17), p.amountHandles() - 1);
+        assertEquals(17, getValue(p.handleByIndex(p.amountHandles() - 1), RIVER_RADIUS));
+        p = p.setHandleByIdx(setValue(p.handleByIndex(p.amountHandles() - 2), RIVER_RADIUS, 17), p.amountHandles() - 2);
+        assertEquals(17, getValue(p.handleByIndex(p.amountHandles() - 2), RIVER_RADIUS));
 
         for (int i = 2; i < p.amountHandles() - 2; i++) {
             p = p.setHandleByIdx(setValue(p.handleByIndex(i), RIVER_RADIUS, INHERIT_VALUE), i);
@@ -209,25 +208,22 @@ class PathTest {
 
         //set position for all points
         for (int i = 0; i < p.amountHandles(); i++) {
-            float[] newHandle = setPosition2D(p.handleByIndex(i), new float[]{i*10,37});
+            float[] newHandle = setPosition2D(p.handleByIndex(i), new float[]{i * 10, 37});
             p = p.setHandleByIdx(newHandle, i);
 
-            assertEquals(new Point(i*10,37), getPoint2D(p.handleByIndex(i)));
+            assertEquals(new Point(i * 10, 37), getPoint2D(p.handleByIndex(i)));
         }
 
         ArrayList<float[]> curve = p.continousCurve();
         ArrayList<Point> curveP = PointUtils.point2DfromNVectorArr(curve);
 
         int curvePointIdx = 0;
-        for (int curveX = getPoint2D(p.handleByIndex(1)).x; curveX <= getPoint2D(p.handleByIndex(p.amountHandles()-2)).x; curveX++) {
+        for (int curveX = getPoint2D(p.handleByIndex(1)).x; curveX <= getPoint2D(p.handleByIndex(p.amountHandles() - 2)).x; curveX++) {
             //iterate from first handle where curve starts to last handle where curve ends
-            assertEquals(curveX, curveP.get(curvePointIdx).x,"Point " + curveP.get(curvePointIdx) );
-            assertEquals(37, curveP.get(curvePointIdx).y,"Point " + curveP.get(curvePointIdx) );
+            assertEquals(curveX, curveP.get(curvePointIdx).x, "Point " + curveP.get(curvePointIdx));
+            assertEquals(37, curveP.get(curvePointIdx).y, "Point " + curveP.get(curvePointIdx));
 
             curvePointIdx++;
-        }
-        for (float[] point : curve) {
-            System.out.println("#".repeat(Math.round(getValue(point, RIVER_RADIUS))));
         }
     }
 }
