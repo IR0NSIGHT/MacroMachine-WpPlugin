@@ -83,28 +83,6 @@
     </dependencies>
 
     <profiles>
-        <profile>
-            <id>debug-tests</id>
-            <properties>
-                <maven.surefire.debug>true</maven.surefire.debug>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.5.0</version>
-                        <configuration>
-                            <forkCount>0</forkCount>
-                            <argLine>
-                                -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
-                            </argLine>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
         <!-- Enable this profile and execute the test phase in order to run your plugin with WorldPainter. -->
         <profile>
 
