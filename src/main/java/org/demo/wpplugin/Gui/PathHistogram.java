@@ -3,7 +3,6 @@ package org.demo.wpplugin.Gui;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.pathing.Path;
-import scala.NotImplementedError;
 
 import javax.swing.*;
 import java.awt.*;
@@ -148,8 +147,6 @@ public class PathHistogram extends JPanel implements KeyListener {
                 changeValue(-change);
             }
             break;
-            case KeyEvent.VK_SPACE: //Insert new handle
-                throw new NotImplementedError("");
             case KeyEvent.VK_DELETE: {
                 float[] handle = path.handleByIndex(getSelectedHandleIdx());
                 float[] newHandle = setValue(handle, RiverInformation.WATER_Z, INHERIT_VALUE);

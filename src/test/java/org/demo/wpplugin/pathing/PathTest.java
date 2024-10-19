@@ -454,9 +454,6 @@ class PathTest {
         int[] handleToCurve = new int[]{0, 10, 20, 30};
         float[] interpolated = Path.interpolateSegment(handles, handleToCurve, 0);
         float[] expected = new float[]{20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
-        for (int i = 0; i < interpolated.length; i++) {
-            System.out.println("#".repeat(Math.round(interpolated[i])));
-        }
         assertArrayEquals(expected, interpolated, 0.01f);
     }
 
