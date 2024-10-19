@@ -1,14 +1,8 @@
 package org.demo.wpplugin.kernel;
 
-import com.aparapi.Kernel;
-import org.demo.wpplugin.geometry.HeightDimension;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
 
 
-public class Fixify extends Kernel {
+public class Fixify {
     final float[] heightMapArr;
     final float[] fixedHeightMapArr;
     final int width;
@@ -26,6 +20,7 @@ public class Fixify extends Kernel {
      * @param dim
      * @param area
      */
+    /*
     public static void fixDim(HeightDimension dim, Rectangle area) {
         final float[] heightMapArr = new float[area.width * area.height];
         final float[] fixedHeightMapArr = new float[heightMapArr.length];
@@ -57,4 +52,5 @@ public class Fixify extends Kernel {
         Collections.sort(list);
         fixedHeightMapArr[i] = list.get(2); //median
     }
+    */
 }

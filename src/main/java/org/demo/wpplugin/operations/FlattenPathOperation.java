@@ -299,14 +299,6 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
                     }
                 }
             }
-            if (selected != 0) {
-                Rectangle area = new Rectangle(startX * TILE_SIZE, startY * TILE_SIZE,
-                        (endX + 1 - startX) * TILE_SIZE, (endY + 1 - startY) * TILE_SIZE);
-                Fixify.fixDim(dim, area);
-                System.out.println(area);
-            }
-
-
 
             /*
 
