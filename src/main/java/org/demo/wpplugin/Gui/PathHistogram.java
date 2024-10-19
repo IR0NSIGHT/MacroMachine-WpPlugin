@@ -179,8 +179,12 @@ public class PathHistogram extends JPanel implements KeyListener {
             throw new IllegalArgumentException("can not set value because idx is not a handle");
         } else {
             float[] handle = path.handleByIndex(handleIdx);
-            float[] newHandle = setValue(handle, RiverInformation.WATER_Z,
-                    getValue(handle, RiverInformation.WATER_Z) + amount);
+
+            float targetValue = getValue(handle, RiverInformation.WATER_Z) + amount;
+            targetValue = targetValue == INHERIT_VALUE ? INHERIT_VALUE : Math.min(RiverInformation.WATER_Z.max, Math.max(RiverInformation.WATER_Z.min, targetValue));
+
+            float[] newHandle = setValue(handle, RiverInformation.WATER_Z, targetValue);
+                    ;
             overwritePath(path.setHandleByIdx(newHandle, handleIdx));
         }
     }
