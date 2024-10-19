@@ -1,7 +1,6 @@
 package org.demo.wpplugin.operations;
 
 import org.demo.wpplugin.geometry.HeightDimension;
-import org.demo.wpplugin.kernel.Fixify;
 import org.demo.wpplugin.pathing.Path;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -16,7 +15,6 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
-import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 
 /**
  * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
