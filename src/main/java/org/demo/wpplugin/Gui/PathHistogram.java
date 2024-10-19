@@ -45,16 +45,36 @@ public class PathHistogram extends JPanel implements KeyListener {
         super.paintComponent(g);
 
         Graphics2D g2d = (Graphics2D) g;
+        //shift to right
         g2d.translate(100, getHeight() - 50);
-        g2d.setColor(Color.WHITE);
-        g2d.fillRect(0, 0, getWidth(), -getHeight());
-        g2d.setColor(Color.BLACK);
+
 
         int extraWidth = 200;
-        float scale = getWidth() * 1f / (curveHeights.length + extraWidth);
+        int graphicsWidth = Math.max(255,(curveHeights.length ))+ extraWidth;
+        int graphicsHeight = 255*2;
+        float scale = Math.min(getHeight(), getWidth()) * 1f / graphicsHeight;
         g2d.scale(scale, scale);
+
+        {   //draw background
+            g2d.setColor(Color.WHITE);
+            g2d.fillRect(0, 0, getWidth(), -getHeight());
+        }
+
+
+        int xShiftBase = g2d.getFontMetrics().stringWidth(String.valueOf(1000));
+
+        {        //mark height lines
+            g2d.setColor(Color.BLACK);
+            for (int y = 0; y <= 255; y += 25) {
+                g2d.drawString(String.valueOf(y), 0, -y);
+
+                g2d.drawLine(xShiftBase, -y, xShiftBase*2, -y);
+            }
+        }
+
+        g2d.translate(xShiftBase * 2,0);
         g2d.setColor(Color.BLACK);
-        g2d.drawRect(0, -300, curveHeights.length, 300);
+        g2d.drawRect(0, -300, graphicsWidth, graphicsHeight);
 
         {        //draw terrain curve
             g2d.setColor(Color.GREEN);
@@ -80,12 +100,7 @@ public class PathHistogram extends JPanel implements KeyListener {
 
         g2d.setColor(Color.BLACK);
 
-        //mark height lines
-        for (int y = 0; y <= 255; y += 25) {
-            g2d.drawString(String.valueOf(y), -50, -y);
 
-            g2d.drawLine(-50 + g2d.getFontMetrics().stringWidth(String.valueOf(y)), -y, -10, -y);
-        }
 
         float[] dashPattern = {10, 5};
         g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
