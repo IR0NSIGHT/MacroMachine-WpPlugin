@@ -2,6 +2,7 @@ package org.demo.wpplugin.Gui;
 
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.ContinuousCurve;
+import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
 
 import javax.swing.*;
@@ -49,28 +50,34 @@ public class PathHistogram extends JPanel implements KeyListener {
         g2d.fillRect(0, 0, getWidth(), -getHeight());
         g2d.setColor(Color.BLACK);
 
-        int extraWidth = 500;
+        int extraWidth = 200;
         float scale = getWidth() * 1f / (curveHeights.length + extraWidth);
         g2d.scale(scale, scale);
         g2d.setColor(Color.BLACK);
         g2d.drawRect(0, -300, curveHeights.length, 300);
 
-        //draw curve
-        for (int i = 1; i < curveHeights.length; i++) {
-            //handles line
-            float aZ = curveHeights[i - 1];
-            float bZ = curveHeights[i];
-
-            //draw terrain height
+        {        //draw terrain curve
             g2d.setColor(Color.GREEN);
-            float terrainA = terrainCurve[i - 1];
-            float terrainB = terrainCurve[i];
-            g2d.drawLine(i - 1, -Math.round(terrainA), i, -Math.round(terrainB));
+            for (int i = 1; i < terrainCurve.length; i++) {
+                //draw terrain height
 
-            //draw curve as interpoalted by Path
-            g2d.setColor(Color.BLACK);
-            g2d.drawLine(i - 1, -Math.round(aZ), i, -Math.round(bZ));
+                float terrainA = terrainCurve[i - 1];
+                float terrainB = terrainCurve[i];
+                g2d.drawLine(i - 1, -Math.round(terrainA), i, -Math.round(terrainB));
+            }
+            g2d.drawString("terrain profile", terrainCurve.length, -terrainCurve[terrainCurve.length - 1]);
         }
+        {        //draw interpoalted curve
+            g2d.setColor(Color.BLACK);
+            for (int i = 1; i < curveHeights.length; i++) {
+                //handles line
+                float aZ = curveHeights[i - 1];
+                float bZ = curveHeights[i];
+                g2d.drawLine(i - 1, -Math.round(aZ), i, -Math.round(bZ));
+            }
+            g2d.drawString("river profile", curveHeights.length, -curveHeights[curveHeights.length - 1]);
+        }
+
         g2d.setColor(Color.BLACK);
 
         //mark height lines
@@ -101,8 +108,7 @@ public class PathHistogram extends JPanel implements KeyListener {
             g2d.drawLine(x, 0, x, -y);
             g2d.drawLine(x, -(y + g.getFontMetrics().getHeight()), x, -2 * y);
 
-            String text = notSet ? "(INHERIT)" : String.format("%.2f", getValue(path.handleByIndex(handleIdx),
-                    RiverInformation.WATER_Z));
+            String text = String.format("%.2f", curveHeights[handleToCurve[handleIdx]]) + (notSet ? "\n(INHERIT)" : "");
             g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
         }
     }
@@ -177,11 +183,9 @@ public class PathHistogram extends JPanel implements KeyListener {
         } else {
             float[] handle = path.handleByIndex(handleIdx);
 
-            float targetValue = getValue(handle, RiverInformation.WATER_Z) + amount;
-            targetValue = targetValue == INHERIT_VALUE ? INHERIT_VALUE : Math.min(RiverInformation.WATER_Z.max, Math.max(RiverInformation.WATER_Z.min, targetValue));
+            float targetValue = RiverHandleInformation.sanitizeInput(getValue(handle, RiverInformation.WATER_Z) + amount, RiverInformation.WATER_Z);
 
             float[] newHandle = setValue(handle, RiverInformation.WATER_Z, targetValue);
-                    ;
             overwritePath(path.setHandleByIdx(newHandle, handleIdx));
         }
     }

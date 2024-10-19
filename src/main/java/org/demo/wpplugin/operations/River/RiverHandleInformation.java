@@ -250,6 +250,11 @@ public class RiverHandleInformation {
         }
     }
 
+    public static float sanitizeInput(float input, RiverInformation information) {
+        if (input < information.min)
+            return INHERIT_VALUE;
+        return Math.min(input, information.max);
+    }
     public enum PositionSize {
         SIZE_1_D(1), SIZE_2_D(2), SIZE_3_D(3);
         public final int value;
