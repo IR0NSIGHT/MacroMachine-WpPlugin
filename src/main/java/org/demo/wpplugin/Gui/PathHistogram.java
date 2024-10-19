@@ -15,8 +15,11 @@ import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 public class PathHistogram extends JPanel implements KeyListener {
     private final float[] terrainCurve;
     private final HeightDimension dimension;
+    private int userZoom = 3;
+    private final Point userFocus = new Point(0, 0);
     private Path path;
     private int selectedHandleIdx;
+    private Graphics2D g2d;
 
     public PathHistogram(Path path, int selectedIdx, float[] terrainCurve, HeightDimension dimension) {
         super(new BorderLayout());
@@ -39,19 +42,21 @@ public class PathHistogram extends JPanel implements KeyListener {
 
     @Override
     protected void paintComponent(Graphics g) {
-        ContinuousCurve curve = ContinuousCurve.fromPath(path, dimension);
-
-        float[] curveHeights = Path.interpolateWaterZ(curve, dimension);
         super.paintComponent(g);
+        g2d = (Graphics2D) g;
 
-        Graphics2D g2d = (Graphics2D) g;
+        ContinuousCurve curve = ContinuousCurve.fromPath(path, dimension);
+        float[] curveHeights = Path.interpolateWaterZ(curve, dimension);
+
+
         //shift to right
         g2d.translate(100, getHeight() - 50);
 
 
         int extraWidth = 200;
-        int graphicsWidth = Math.max(255,(curveHeights.length ))+ extraWidth;
-        int graphicsHeight = 255*2;
+        int graphicsWidth = Math.max(255, (curveHeights.length)) + extraWidth;
+        int graphicsHeight = 300;
+        //scale to window
         float scale = Math.min(getHeight(), getWidth()) * 1f / graphicsHeight;
         g2d.scale(scale, scale);
 
@@ -63,29 +68,31 @@ public class PathHistogram extends JPanel implements KeyListener {
 
         int xShiftBase = g2d.getFontMetrics().stringWidth(String.valueOf(1000));
 
-        {        //mark height lines
+        {    //mark height lines
             g2d.setColor(Color.BLACK);
             for (int y = 0; y <= 255; y += 25) {
-                g2d.drawString(String.valueOf(y), 0, -y);
-
-                g2d.drawLine(xShiftBase, -y, xShiftBase*2, -y);
+                g2d.drawString(String.valueOf(y), 0, getGraphicsY(y));
+                g2d.drawLine(xShiftBase, getGraphicsY(y), xShiftBase * 2, getGraphicsY(y));
             }
         }
+        g2d.translate(xShiftBase * 2, 0);   //shift rest of image right so the height lines are left of it
 
-        g2d.translate(xShiftBase * 2,0);
+        //mark water line
+        g2d.setColor(Color.BLUE);
+        g2d.drawLine(getGraphicsX(0), getGraphicsY(62), getGraphicsX(curveHeights.length), getGraphicsY(62));
+
+
         g2d.setColor(Color.BLACK);
-        g2d.drawRect(0, -300, graphicsWidth, graphicsHeight);
+        g2d.drawRect(getGraphicsX(0), getGraphicsY(0), getGraphicsX(curveHeights.length), getGraphicsY(255));
 
         {        //draw terrain curve
             g2d.setColor(Color.GREEN);
-            for (int i = 1; i < terrainCurve.length; i++) {
+            for (int i = 0; i < terrainCurve.length; i++) {
                 //draw terrain height
-
-                float terrainA = terrainCurve[i - 1];
                 float terrainB = terrainCurve[i];
-                g2d.drawLine(i - 1, -Math.round(terrainA), i, -Math.round(terrainB));
+                markHeightPoint(i, terrainB);
             }
-            g2d.drawString("terrain profile", terrainCurve.length, -terrainCurve[terrainCurve.length - 1]);
+            g2d.drawString("terrain profile", getGraphicsX(terrainCurve.length), getGraphicsY(terrainCurve[terrainCurve.length - 1]));
         }
         {        //draw interpoalted curve
             g2d.setColor(Color.BLACK);
@@ -99,7 +106,6 @@ public class PathHistogram extends JPanel implements KeyListener {
         }
 
         g2d.setColor(Color.BLACK);
-
 
 
         float[] dashPattern = {10, 5};
@@ -126,6 +132,26 @@ public class PathHistogram extends JPanel implements KeyListener {
             String text = String.format("%.2f", curveHeights[handleToCurve[handleIdx]]) + (notSet ? "\n(INHERIT)" : "");
             g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
         }
+    }
+
+    private int getGraphicsX(int rawX) {
+        return (userFocus.x + rawX) * userZoom;
+    }
+
+    private int getGraphicsY(float heightOnMap) {
+        return -(int) ((userFocus.y + heightOnMap) * userZoom);
+    }
+
+    /**
+     * takes a point on curve with x y coord and translate it + draws on the current graphics, includes user zoom
+     *
+     * @param orgX   curve index untranslated (raw)
+     * @param height raw height on worldpainter map
+     */
+    private void markHeightPoint(int orgX, float height) {
+        int x = getGraphicsX(orgX);
+        int y = getGraphicsY(height);
+        g2d.drawRect(x, y, userZoom, userZoom);
     }
 
     private int getSelectedHandleIdx() {
@@ -158,14 +184,29 @@ public class PathHistogram extends JPanel implements KeyListener {
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
         switch (key) {
+
+            case KeyEvent.VK_PLUS:
+                userZoom = Math.min(userZoom + 1, 5);
+                break;
+
+            case KeyEvent.VK_MINUS:
+                userZoom = Math.max(userZoom - 1, 1);
+                break;
+
             case KeyEvent.VK_UP: {
-                int change = e.isControlDown() ? 25 : 1;
-                changeValue(change);
+                if (e.isShiftDown()) userFocus.y += 1;
+                else {
+                    int change = e.isControlDown() ? 25 : 1;
+                    changeValue(change);
+                }
             }
             break;
             case KeyEvent.VK_DOWN: {
-                int change = e.isControlDown() ? 25 : 1;
-                changeValue(-change);
+                if (e.isShiftDown()) userFocus.y -= 1;
+                else {
+                    int change = e.isControlDown() ? 25 : 1;
+                    changeValue(-change);
+                }
             }
             break;
             case KeyEvent.VK_DELETE: {
@@ -176,10 +217,14 @@ public class PathHistogram extends JPanel implements KeyListener {
                 break;
             }
             case KeyEvent.VK_RIGHT:
-                selectedHandleIdx = selectableIdxNear(getSelectedHandleIdx(), 1);
+                if (e.isShiftDown()) userFocus.x += 1;
+                else
+                    selectedHandleIdx = selectableIdxNear(getSelectedHandleIdx(), 1);
                 break;
             case KeyEvent.VK_LEFT:
-                selectedHandleIdx = selectableIdxNear(getSelectedHandleIdx(), -1);
+                if (e.isShiftDown()) userFocus.x -= 1;
+                else
+                    selectedHandleIdx = selectableIdxNear(getSelectedHandleIdx(), -1);
                 break;
             default:
         }
