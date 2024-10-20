@@ -59,8 +59,8 @@ public class PathHistogram extends JPanel implements KeyListener {
             g2d.fillRect(0, 0, getWidth(), getHeight());
         }
 
-        //shift to right
-        g2d.translate(50, getHeight() - 50);
+        //shift down so image -y maps to terrain y
+        g2d.translate(0, getHeight());
 
 
         int extraWidth = 200;
@@ -71,8 +71,9 @@ public class PathHistogram extends JPanel implements KeyListener {
         AffineTransform originalTransform = g2d.getTransform();
         //scale to window
         float scale = Math.min(getHeight(), getWidth()) * 1f / graphicsHeight;
-        g2d.translate(userFocus.x, userFocus.y);
-        float totalScale = scale * userZoom;
+        float totalScale = userZoom;
+
+        g2d.translate(totalScale*(-userFocus.x + 50), totalScale*(-userFocus.y - 50));
         g2d.scale(totalScale, totalScale);
         Font font = new Font("Arial", Font.PLAIN, (int) (20 / (totalScale)));
         g2d.setFont(font);
@@ -97,20 +98,35 @@ public class PathHistogram extends JPanel implements KeyListener {
                 g2d.setColor(waterBlue); //blue
                 int aZ = Math.round(curveHeights[i]);
                 g2d.fillRect(i - 1, -aZ, 1, aZ);
+
+
             }
+
             g2d.drawString("terrain profile", terrainCurve.length, terrainCurve[terrainCurve.length - 1]);
             g2d.drawString("river profile", curveHeights.length, -curveHeights[curveHeights.length - 1]);
         }
 
         g2d.setColor(Color.BLACK);
+        for (int x = 0; x < 500; x+=40) {
+            g2d.drawLine(x,0,x,-255);
+            if (x%25==0)
+                g2d.drawString(String.valueOf(x),x,-255);
+        }
+        g2d.setColor(Color.RED);
+        g2d.drawString("focus"+userFocus.toString() + " zoom " + String.valueOf(totalScale), userFocus.x, 20);
+        g2d.drawLine(userFocus.x,0,userFocus.x,-255);
 
-
+        if (1==1)return;;
         float[] dashPattern = {10f / totalScale, 5f / totalScale};
         g2d.setStroke(new BasicStroke(3f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
 
         int[] handleToCurve = path.handleToCurveIdx(true);
         //mark handles
         for (int handleIdx = 1; handleIdx < path.amountHandles() - 1; handleIdx++) {
+            int curveX = handleToCurve[handleIdx];
+            if (curveX < userFocus.x)
+                continue;
+
             float curveHeightF = getValue(path.handleByIndex(handleIdx), RiverInformation.WATER_Z);
             boolean notSet = curveHeightF == INHERIT_VALUE;
             int curveHeight = Math.round(curveHeightF);
@@ -130,11 +146,12 @@ public class PathHistogram extends JPanel implements KeyListener {
             g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
         }
 
+        // draw overlay
         g2d.setStroke(new BasicStroke(1f / totalScale));
         int widthOfString = g2d.getFontMetrics().stringWidth(String.valueOf(1000));
         {    //mark height lines
             g2d.setColor(Color.BLACK);
-            int windowX = (int) (-userFocus.x / totalScale);
+            int windowX = (int) (userFocus.x / totalScale);
             for (int y = 0; y <= 255; y += 25) {
                 g2d.drawString(String.valueOf(((y))), windowX, -(y));
                 g2d.drawLine(windowX + widthOfString, -(y), windowX + 2 * widthOfString, -(y));
@@ -235,6 +252,9 @@ public class PathHistogram extends JPanel implements KeyListener {
                 break;
             default:
         }
+
+        userFocus.x = Math.max(0, userFocus.x);
+        userFocus.y = Math.max(0,Math.min(255,userFocus.y));
         repaint();
     }
 
