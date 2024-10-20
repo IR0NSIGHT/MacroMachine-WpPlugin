@@ -1,6 +1,5 @@
 package org.demo.wpplugin.Gui;
 
-import org.checkerframework.checker.units.qual.C;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
@@ -10,7 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.geom.AffineTransform;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 
@@ -152,7 +150,9 @@ public class PathHistogram extends JPanel implements KeyListener {
             g2d.drawLine(x, 0, x, -y);
             g2d.drawLine(x, -(y + g.getFontMetrics().getHeight()), x, -2 * y);
 
-            String text = String.format("%.2f", curveHeights[handleToCurve[handleIdx]]) + (notSet ? "\n(INHERIT)" : "");
+            String text = String.format("%.0f", curveHeights[handleToCurve[handleIdx]]);
+            if (notSet)
+                text = "("+text+")";
             g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
         }
         if (1==1)return;;
