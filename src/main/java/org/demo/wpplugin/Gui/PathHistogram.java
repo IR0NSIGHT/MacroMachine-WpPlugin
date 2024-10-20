@@ -83,32 +83,38 @@ public class PathHistogram extends JPanel implements KeyListener {
                     continue;
                 g2d.setColor(grassGreen);  //green
                 int terrainB = Math.round(terrainCurve[i]);
-                g2d.fillRect(i, -(int) terrainB, 1, terrainB);
+                g2d.fillRect(i, -(int) terrainB, 1, terrainB - userFocus.y);
 
                 g2d.setColor(waterBlue); //blue
                 int aZ = Math.round(curveHeights[i]);
-                g2d.fillRect(i - 1, -aZ, 1, aZ);
+                g2d.fillRect(i - 1, -aZ, 1, aZ  - userFocus.y);
             }
 
             g2d.drawString("terrain profile", terrainCurve.length, terrainCurve[terrainCurve.length - 1]);
             g2d.drawString("river profile", curveHeights.length, -curveHeights[curveHeights.length - 1]);
         }
 
-        //horizontal lines
-        g2d.setColor(Color.BLACK);
-        for (int y = 0; y < 255 ; y+=50) {
-            g2d.drawLine(userFocus.x,-y, curveHeights.length,-y);
+        {
+            //horizontal lines
+            g2d.setColor(Color.BLACK);
+            int y;
+            for (y = 0; y <= userFocus.y + 300; y += 50) {
+                if (y < userFocus.y)
+                    continue;
+                g2d.drawLine(userFocus.x, -y, curveHeights.length, -y);
+                g2d.drawString(String.valueOf(y), userFocus.x - g2d.getFontMetrics().stringWidth(String.valueOf(y)), -y);
+            }
+            //vertical lines
+            for (int x = 0; x <= curveHeights.length; x += 50) {
+                if (x < userFocus.x)
+                    continue;
+                g2d.drawLine(x, -userFocus.y, x, -y);
+                g2d.drawString(String.valueOf(x), x, -userFocus.y + g2d.getFontMetrics().getHeight());
+            }
+            g2d.setColor(Color.RED);
+            g2d.drawString("focus" + userFocus.toString() + " zoom " + String.valueOf(totalScale), userFocus.x, 2 * g2d.getFontMetrics().getHeight());
+            g2d.drawLine(userFocus.x, 0, userFocus.x, -255);
         }
-        //vertical lines
-        for (int x = 0; x < curveHeights.length; x+=50) {
-            if (x < userFocus.x)
-                continue;
-            g2d.drawLine(x,Math.max(0,-userFocus.y),x,-255);
-            g2d.drawString(String.valueOf(x),x,g2d.getFontMetrics().getHeight());
-        }
-        g2d.setColor(Color.RED);
-        g2d.drawString("focus"+userFocus.toString() + " zoom " + String.valueOf(totalScale), userFocus.x, 2 * g2d.getFontMetrics().getHeight());
-        g2d.drawLine(userFocus.x,0,userFocus.x,-255);
 
         //mark water line
         g2d.setColor(Color.BLUE);
