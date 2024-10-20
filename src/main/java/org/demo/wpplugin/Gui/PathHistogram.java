@@ -81,6 +81,8 @@ public class PathHistogram extends JPanel implements KeyListener {
         {        //draw interpoalted curve
             g2d.setColor(Color.BLACK);
             for (int i = 0; i < curveHeights.length; i++) {
+                if (i < userFocus.x)
+                    continue;
                 g2d.setColor(grassGreen);  //green
                 int terrainB = Math.round(terrainCurve[i]);
                 g2d.fillRect(i, -(int) terrainB, 1, terrainB);
@@ -116,7 +118,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         g2d.drawString("ocean level",userFocus.x - g2d.getFontMetrics().stringWidth("ocean level"),-62);
 
 
-        if (1==1)return;;
+
         float[] dashPattern = {10f / totalScale, 5f / totalScale};
         g2d.setStroke(new BasicStroke(3f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
 
@@ -145,7 +147,7 @@ public class PathHistogram extends JPanel implements KeyListener {
             String text = String.format("%.2f", curveHeights[handleToCurve[handleIdx]]) + (notSet ? "\n(INHERIT)" : "");
             g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
         }
-
+        if (1==1)return;;
         // draw overlay
         g2d.setStroke(new BasicStroke(1f / totalScale));
         int widthOfString = g2d.getFontMetrics().stringWidth(String.valueOf(1000));
