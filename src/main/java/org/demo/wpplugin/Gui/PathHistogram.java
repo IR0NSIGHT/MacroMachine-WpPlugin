@@ -75,8 +75,6 @@ public class PathHistogram extends JPanel implements KeyListener {
         g2d.setStroke(new BasicStroke(1f / totalScale));
 
         g2d.setColor(Color.BLACK);
-        g2d.drawRect(0, -0, curveHeights.length, -255);
-
 
         {        //draw interpoalted curve
             g2d.setColor(Color.BLACK);
@@ -106,10 +104,10 @@ public class PathHistogram extends JPanel implements KeyListener {
             if (x < userFocus.x)
                 continue;
             g2d.drawLine(x,Math.max(0,-userFocus.y),x,-255);
-            g2d.drawString(String.valueOf(x),x,10);
+            g2d.drawString(String.valueOf(x),x,g2d.getFontMetrics().getHeight());
         }
         g2d.setColor(Color.RED);
-        g2d.drawString("focus"+userFocus.toString() + " zoom " + String.valueOf(totalScale), userFocus.x, 20);
+        g2d.drawString("focus"+userFocus.toString() + " zoom " + String.valueOf(totalScale), userFocus.x, 2 * g2d.getFontMetrics().getHeight());
         g2d.drawLine(userFocus.x,0,userFocus.x,-255);
 
         //mark water line
