@@ -112,9 +112,57 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 shiftDown = e.isShiftDown();
                 altDown = e.isAltDown();
                 ctrlDown = e.isControlDown();
+
                 return false;
             }
         });
+    }
+
+    private Point getLowestAtRadius(int radius, Point center) {
+        Point pMin = center;
+        float zMin = Float.MAX_VALUE;
+        for (float alpha = 0; alpha < 2*Math.PI; alpha+= 0.1f) {
+            Point newP = pointWithAngleAndRadius(center, alpha, radius);
+            float z = getDimension().getHeightAt(newP);
+            if (z < zMin) {
+                zMin = z;
+                pMin = newP;
+            }
+        }
+        return pMin;
+    }
+
+    private void addHandleDownhill() {
+        Point selected = getPoint2D(getSelectedPoint());
+        float selectedZ = getDimension().getHeightAt(selected);
+
+        Point pMin = null;
+        for (int i = 3; i < 25; i++) {
+            pMin = getLowestAtRadius(i,selected);
+            if (getDimension().getHeightAt(pMin) < selectedZ)
+                break;
+        }
+        if (getDimension().getHeightAt(pMin) >= selectedZ)
+            return; //tested all radii, didnt find lower point
+
+        Path p = getSelectedPath();
+        assert pMin != null;
+
+        float[] newHandle = RiverHandleInformation.riverInformation(pMin.x,pMin.y);
+        p = p.insertPointAfter(getSelectedPoint(), newHandle);
+        overwriteSelectedPath(p);
+        try {
+            setSelectedPointIdx(p.getClosestHandleIdxTo(newHandle));
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+        redrawSelectedPathLayer();
+     }
+
+    private static Point pointWithAngleAndRadius(Point p, float angleRad, int radius) {
+        int x = (int) Math.round(radius * Math.cos(angleRad));
+        int y = (int) Math.round(radius * Math.sin(angleRad));
+        return new Point(p.x+ x,p.y + y);
     }
 
     /**
@@ -417,7 +465,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 onOptionsReconfigured.run();
             });
 
-            inputs.add(() -> new JComponent[]{textField, submitNameChangeButton});
+            {          // FLOW DOWNHILL BUTTON
+                JButton myButton = new JButton("flow downhill");
+                myButton.addActionListener(e -> {
+                    addHandleDownhill();
+                });
+                inputs.add(() -> new JComponent[]{myButton});
+            }
 
 
             if (getSelectedPoint() != null &&
