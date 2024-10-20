@@ -62,9 +62,6 @@ public class PathHistogram extends JPanel implements KeyListener {
         //shift down so image -y maps to terrain y
         g2d.translate(0, getHeight());
 
-
-        int extraWidth = 200;
-        int graphicsWidth = Math.max(255, (curveHeights.length)) + extraWidth;
         int graphicsHeight = 300;
 
         //scale to window
@@ -76,11 +73,6 @@ public class PathHistogram extends JPanel implements KeyListener {
         Font font = new Font("Arial", Font.PLAIN, (int) (20 / (totalScale)));
         g2d.setFont(font);
         g2d.setStroke(new BasicStroke(1f / totalScale));
-
-        //mark water line
-        g2d.setColor(Color.BLUE);
-        g2d.drawLine(0, -62, curveHeights.length, -62);
-
 
         g2d.setColor(Color.BLACK);
         g2d.drawRect(0, -0, curveHeights.length, -255);
@@ -118,6 +110,10 @@ public class PathHistogram extends JPanel implements KeyListener {
         g2d.drawString("focus"+userFocus.toString() + " zoom " + String.valueOf(totalScale), userFocus.x, 20);
         g2d.drawLine(userFocus.x,0,userFocus.x,-255);
 
+        //mark water line
+        g2d.setColor(Color.BLUE);
+        g2d.drawLine(userFocus.x, -62, curveHeights.length, -62);
+        g2d.drawString("ocean level",userFocus.x - g2d.getFontMetrics().stringWidth("ocean level"),-62);
 
 
         if (1==1)return;;
