@@ -68,6 +68,11 @@ public class PathHistogram extends JPanel implements KeyListener {
         float scale = Math.min(getHeight(), getWidth()) * 1f / graphicsHeight;
         float totalScale = userZoom * scale;
 
+        float[] dashPattern = {10f / totalScale, 5f / totalScale};
+        Stroke dottedHandle = new BasicStroke(3f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0);
+        Stroke dottedGrid = new BasicStroke(1f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3f / totalScale, 2f / totalScale}, 0);
+
+
         g2d.translate(totalScale*(-userFocus.x + 50), totalScale*(userFocus.y - 50 ));
         g2d.scale(totalScale, totalScale);
         Font font = new Font("Arial", Font.PLAIN, (int) (20 / (totalScale)));
@@ -95,6 +100,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         }
 
         {
+            g2d.setStroke(dottedGrid);
             //horizontal lines
             g2d.setColor(Color.BLACK);
             int y;
@@ -116,15 +122,13 @@ public class PathHistogram extends JPanel implements KeyListener {
             g2d.drawLine(userFocus.x, 0, userFocus.x, -255);
         }
 
+        g2d.setStroke(dottedHandle);
         //mark water line
         g2d.setColor(Color.BLUE);
         g2d.drawLine(userFocus.x, -62, curveHeights.length, -62);
         g2d.drawString("ocean level",userFocus.x - g2d.getFontMetrics().stringWidth("ocean level"),-62);
 
-
-
-        float[] dashPattern = {10f / totalScale, 5f / totalScale};
-        g2d.setStroke(new BasicStroke(3f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0));
+        g2d.setStroke(dottedHandle);
 
         int[] handleToCurve = path.handleToCurveIdx(true);
         //mark handles
