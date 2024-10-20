@@ -18,7 +18,7 @@ public class PathHistogram extends JPanel implements KeyListener {
     private final float[] terrainCurve;
     private final HeightDimension dimension;
     private final Point userFocus = new Point(0, 0);
-    private int userZoom = 3;
+    private float userZoom = 1f;
     private Path path;
     private int selectedHandleIdx;
     private Graphics2D g2d;
@@ -71,7 +71,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         AffineTransform originalTransform = g2d.getTransform();
         //scale to window
         float scale = Math.min(getHeight(), getWidth()) * 1f / graphicsHeight;
-        float totalScale = userZoom;
+        float totalScale = userZoom * scale;
 
         g2d.translate(totalScale*(-userFocus.x + 50), totalScale*(-userFocus.y - 50));
         g2d.scale(totalScale, totalScale);
@@ -107,10 +107,9 @@ public class PathHistogram extends JPanel implements KeyListener {
         }
 
         g2d.setColor(Color.BLACK);
-        for (int x = 0; x < 500; x+=40) {
+        for (int x = userFocus.x; x < userFocus.x + getWidth(); x+=50) {
             g2d.drawLine(x,0,x,-255);
-            if (x%25==0)
-                g2d.drawString(String.valueOf(x),x,-255);
+            g2d.drawString(String.valueOf(x),x,10);
         }
         g2d.setColor(Color.RED);
         g2d.drawString("focus"+userFocus.toString() + " zoom " + String.valueOf(totalScale), userFocus.x, 20);
@@ -177,26 +176,6 @@ public class PathHistogram extends JPanel implements KeyListener {
         return new Dimension(width, height);
     }
 
-    /**
-     * takes a point on curve with x y coord and translate it + draws on the current graphics, includes user zoom
-     *
-     * @param orgX   curve index untranslated (raw)
-     * @param height raw height on worldpainter map
-     */
-    private void markHeightPoint(int orgX, float height) {
-        int x = getGraphicsX(orgX);
-        int y = getGraphicsY(height);
-        g2d.drawRect(x, y, userZoom, userZoom);
-    }
-
-    private int getGraphicsX(int rawX) {
-        return (userFocus.x + rawX) * userZoom;
-    }
-
-    private int getGraphicsY(float heightOnMap) {
-        return -(int) ((userFocus.y + heightOnMap) * userZoom);
-    }
-
     public Path getPath() {
         return path;
     }
@@ -212,11 +191,11 @@ public class PathHistogram extends JPanel implements KeyListener {
         switch (key) {
 
             case KeyEvent.VK_PLUS:
-                userZoom = Math.min(userZoom + 1, 5);
+                userZoom = Math.min(userZoom * 1.5f, 10f);
                 break;
 
             case KeyEvent.VK_MINUS:
-                userZoom = Math.max(userZoom - 1, 1);
+                userZoom = Math.max(userZoom / 1.5f, 0.1f);
                 break;
 
             case KeyEvent.VK_UP: {
@@ -253,7 +232,9 @@ public class PathHistogram extends JPanel implements KeyListener {
             default:
         }
 
-        userFocus.x = Math.max(0, userFocus.x);
+        int[] handleToCurve = path.handleToCurveIdx(true);
+        int curveLength = handleToCurve[handleToCurve.length-2];
+        userFocus.x = Math.max(0, Math.min(userFocus.x, curveLength));
         userFocus.y = Math.max(0,Math.min(255,userFocus.y));
         repaint();
     }
