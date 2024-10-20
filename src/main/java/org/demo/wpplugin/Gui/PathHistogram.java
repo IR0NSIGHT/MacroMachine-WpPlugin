@@ -67,13 +67,11 @@ public class PathHistogram extends JPanel implements KeyListener {
         int graphicsWidth = Math.max(255, (curveHeights.length)) + extraWidth;
         int graphicsHeight = 300;
 
-
-        AffineTransform originalTransform = g2d.getTransform();
         //scale to window
         float scale = Math.min(getHeight(), getWidth()) * 1f / graphicsHeight;
         float totalScale = userZoom * scale;
 
-        g2d.translate(totalScale*(-userFocus.x + 50), totalScale*(-userFocus.y - 50));
+        g2d.translate(totalScale*(-userFocus.x + 50), totalScale*(userFocus.y - 50 ));
         g2d.scale(totalScale, totalScale);
         Font font = new Font("Arial", Font.PLAIN, (int) (20 / (totalScale)));
         g2d.setFont(font);
@@ -98,22 +96,29 @@ public class PathHistogram extends JPanel implements KeyListener {
                 g2d.setColor(waterBlue); //blue
                 int aZ = Math.round(curveHeights[i]);
                 g2d.fillRect(i - 1, -aZ, 1, aZ);
-
-
             }
 
             g2d.drawString("terrain profile", terrainCurve.length, terrainCurve[terrainCurve.length - 1]);
             g2d.drawString("river profile", curveHeights.length, -curveHeights[curveHeights.length - 1]);
         }
 
+        //horizontal lines
         g2d.setColor(Color.BLACK);
-        for (int x = userFocus.x; x < userFocus.x + getWidth(); x+=50) {
-            g2d.drawLine(x,0,x,-255);
+        for (int y = 0; y < 255 ; y+=50) {
+            g2d.drawLine(userFocus.x,-y, curveHeights.length,-y);
+        }
+        //vertical lines
+        for (int x = 0; x < curveHeights.length; x+=50) {
+            if (x < userFocus.x)
+                continue;
+            g2d.drawLine(x,Math.max(0,-userFocus.y),x,-255);
             g2d.drawString(String.valueOf(x),x,10);
         }
         g2d.setColor(Color.RED);
         g2d.drawString("focus"+userFocus.toString() + " zoom " + String.valueOf(totalScale), userFocus.x, 20);
         g2d.drawLine(userFocus.x,0,userFocus.x,-255);
+
+
 
         if (1==1)return;;
         float[] dashPattern = {10f / totalScale, 5f / totalScale};
@@ -234,7 +239,7 @@ public class PathHistogram extends JPanel implements KeyListener {
 
         int[] handleToCurve = path.handleToCurveIdx(true);
         int curveLength = handleToCurve[handleToCurve.length-2];
-        userFocus.x = Math.max(0, Math.min(userFocus.x, curveLength));
+        userFocus.x = Math.max(0, Math.min(userFocus.x, curveLength - 50));
         userFocus.y = Math.max(0,Math.min(255,userFocus.y));
         repaint();
     }
