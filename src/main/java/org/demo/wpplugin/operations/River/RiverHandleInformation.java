@@ -27,7 +27,7 @@ import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
 import static org.demo.wpplugin.pathing.PointUtils.markLine;
 
 public class RiverHandleInformation {
-    public static final float INHERIT_VALUE = -1;
+    public static final float INHERIT_VALUE = Float.MIN_VALUE;
 
     /**
      * @param x
@@ -86,7 +86,6 @@ public class RiverHandleInformation {
     }
 
     public static boolean validateRiver2D(ArrayList<float[]> handles) {
-        float lastWaterZ = Float.MAX_VALUE;
         for (float[] handle : handles) {
             if (handle.length != RIVER_2D.size) {
                 return false;
@@ -97,17 +96,6 @@ public class RiverHandleInformation {
                     return false;
                 }
             }
-
-        /*    if (getValue(handle, WATER_Z) != INHERIT_VALUE) {
-                if (lastWaterZ < getValue(handle, WATER_Z)) {
-                    //the river can only flow downhill, not uphill
-                    return false;
-                }
-                lastWaterZ = getValue(handle, WATER_Z);
-            }
-
-         */
-
         }
         return true;
     }

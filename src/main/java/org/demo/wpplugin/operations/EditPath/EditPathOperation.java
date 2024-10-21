@@ -23,6 +23,7 @@ import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.pathing.PointUtils.*;
@@ -121,7 +122,12 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     private Point getLowestAtRadius(int radius, Point center) {
         Point pMin = center;
         float zMin = Float.MAX_VALUE;
-        for (float alpha = 0; alpha < 2*Math.PI; alpha+= 0.1f) {
+        ArrayList<Float> angles = new ArrayList<>(36);
+        for (int i = 0; i < 36; i++) {
+            angles.add((float)(i / 36f * Math.PI * 2f));
+        }
+        Collections.shuffle(angles);
+        for (float alpha : angles) {
             Point newP = pointWithAngleAndRadius(center, alpha, radius);
             float z = getDimension().getHeightAt(newP);
             if (z < zMin) {
@@ -132,18 +138,21 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         return pMin;
     }
 
-    private void addHandleDownhill() {
+    /**
+     * automatically advance the path downhill until it doesnt find any lower point.
+     */
+    private boolean addHandleDownhill() {
         Point selected = getPoint2D(getSelectedPoint());
         float selectedZ = getDimension().getHeightAt(selected);
 
         Point pMin = null;
-        for (int i = 3; i < 25; i++) {
+        for (int i = 1; i < 25; i++) {
             pMin = getLowestAtRadius(i,selected);
             if (getDimension().getHeightAt(pMin) < selectedZ)
                 break;
         }
         if (getDimension().getHeightAt(pMin) >= selectedZ)
-            return; //tested all radii, didnt find lower point
+            return false; //tested all radii, didnt find lower point
 
         Path p = getSelectedPath();
         assert pMin != null;
@@ -156,8 +165,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-        redrawSelectedPathLayer();
-     }
+        return true;
+    }
 
     private static Point pointWithAngleAndRadius(Point p, float angleRad, int radius) {
         int x = (int) Math.round(radius * Math.cos(angleRad));
@@ -468,7 +477,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             {          // FLOW DOWNHILL BUTTON
                 JButton myButton = new JButton("flow downhill");
                 myButton.addActionListener(e -> {
-                    addHandleDownhill();
+                    //run downhill 25 handles max or until we hit a hole with no escape
+                    for (int i = 0; i < 25; i++) {
+                        boolean didFindSth = addHandleDownhill();
+                        if (!didFindSth)
+                            break;
+                    }
+                    redrawSelectedPathLayer();
                 });
                 inputs.add(() -> new JComponent[]{myButton});
             }

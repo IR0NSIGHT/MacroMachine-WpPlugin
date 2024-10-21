@@ -8,6 +8,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.INHERIT_VALUE;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.WATER_Z;
@@ -25,7 +26,32 @@ public class Path implements Iterable<float[]> {
             this.handles.add(handle.clone());
         }
         this.type = type;
-        assert invariant();
+        assert invariant() : "path invariant hurt";
+    }
+
+    private boolean invariant() {
+        boolean okay = true;
+
+        float[] setValues = new float[type.size];
+        Arrays.fill(setValues, INHERIT_VALUE);
+        for (float[] handle : handles) {
+            for (int n = 0; n < type.size; n++) {
+                if (Float.isNaN(handle[n]))
+                    return false;
+                if (setValues[n] == INHERIT_VALUE)
+                    setValues[n] = handle[n];
+            }
+
+            if (handle.length != type.size) {
+                System.err.println("path has a handle with wrong size for type " + type + " expected " + type.size + " but got " + Arrays.toString(handle));
+                okay = false;
+            }
+        }
+
+        if (okay && this.type == PointInterpreter.PointType.RIVER_2D)
+            okay = validateRiver2D(handles);
+
+        return okay;
     }
 
     public static float[] interpolateWaterZ(ContinuousCurve curve, HeightDimension dim) {
@@ -60,58 +86,47 @@ public class Path implements Iterable<float[]> {
     }
 
     /**
-     * every item in the list is an array of handles.
-     * the first two items are interpreted as x and y coordinates
+     * will turn a n x m list into an m x n list
+     * deep-clones inputs
      *
-     * @param handles     list of handles to interpolate curve from.
-     * @param roundToGrid make sure each point on the curve only maps to one point on the grid
-     * @return list of points building a continous curve
+     * @param input matrix N x M
+     * @return matrix M x N
      */
-    private static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles, boolean roundToGrid) {
-        LinkedList<float[]> curvePoints = new LinkedList<>();
+    public static ArrayList<float[]> transposeHandles(ArrayList<float[]> input) {
+        int nLength = input.get(0).length;
+        int mLenght = input.size();
+        ArrayList<float[]> output = new ArrayList<>(nLength);
 
-        //iterate all handles, calculate coordinates on curve
-        for (int i = 0; i < handles.size() - 3; i++) {
-            float[] handleA, handleB, handleC, handleD;
-            handleA = handles.get(i);
-            handleB = handles.get(i + 1);
-            handleC = handles.get(i + 2);
-            handleD = handles.get(i + 3);
-            float[][] curveSegment = CubicBezierSpline.getSplinePathFor(handleA, handleB, handleC, handleD,
-                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
-            //curvepoints contain [x,y,t]
-            curvePoints.addAll(Arrays.asList(curveSegment));
-        }
-
-        if (curvePoints.isEmpty()) return new ArrayList<>(0);
-
-        int positionDigits = PointInterpreter.PointType.POSITION_2D.size;   //FIXME thats the wrong constant
-        assert curvePoints.size() > 2;
-
-        ArrayList<float[]> result = new ArrayList<>(curvePoints.size());
-        float[] previousPoint = curvePoints.get(0);
-        if (roundToGrid) result.add(previousPoint);
-        for (float[] point : curvePoints) {
-            assert point != null : "whats going on?";
-            if (!roundToGrid) result.add(point);
-            else if (!arePositionalsEqual(point, previousPoint, positionDigits)) {
-                previousPoint = point;
-                result.add(previousPoint);
-                assert getPositionalDistance(point, previousPoint,
-                        RiverHandleInformation.PositionSize.SIZE_2_D.value) <= Math.sqrt(2) + 0.01f : "distance " +
-                        "between curvepoints is to large:" + getPositionalDistance(point, previousPoint,
-                        RiverHandleInformation.PositionSize.SIZE_2_D.value);
+        for (int n = 0; n < nLength; n++) {
+            float[] nThList = new float[mLenght];
+            output.add(nThList);
+            for (int m = 0; m < mLenght; m++) {
+                float handle = input.get(m)[n];
+                nThList[m] = handle;
             }
+        }
+        return output;
+    }
 
-        }
-        result.trimToSize();
-        //assert curveIsContinous(result);
-        ArrayList<Point> pointResult = point2DfromNVectorArr(result);
-        for (int i = 1; i < handles.size() - 1; i++) {
-            Point handlePoint = getPoint2D(handles.get(i));
-            assert pointResult.contains(handlePoint) : "handle not in curve" + handlePoint;
-        }
-        return result;
+    public static float[] interpolateCatmullRom(float[] nthHandles, int[] handleToCurveIdx) {
+        final float[] handlesWithSomeValues = supplementFirstAndLastTwoHandles(nthHandles, INHERIT_VALUE, 5);
+
+        Predicate<float[]> arrayContainsValuesThatAreNotInheritVal = xs -> {
+            ArrayList<Float> sorted = new ArrayList<>();
+            for (float f : xs)
+                sorted.add(f);
+            sorted.removeIf(f -> f == INHERIT_VALUE);
+            if (sorted.isEmpty())
+                System.out.println("whoopsie :(");
+            return !sorted.isEmpty();
+        };
+
+        assert arrayContainsValuesThatAreNotInheritVal.test(handlesWithSomeValues) : "handles MUST have at least one value to be interpolable";
+
+        HandleAndIdcs ready = removeInheritValues(handlesWithSomeValues, handleToCurveIdx.clone());
+        float[] interpolated = interpolateFromHandles(ready.handles, ready.idcs);
+        assert interpolated.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 2] : "interpolated values " + "array is not as long as the whole curve";
+        return interpolated;
     }
 
     /**
@@ -119,7 +134,7 @@ public class Path implements Iterable<float[]> {
      * adds first two and last two handels if not present, based on existing handles
      * if no handles exist, uses default value
      *
-     * @param inHandles input flat list of handles. each idx = 1 handle
+     * @param inHandles   input flat list of handles. each idx = 1 handle
      * @param emptyMarker use this value to decide if a value in handle is "empty"
      * @return new array with set handles
      * @requires at least one handle value is set
@@ -193,14 +208,13 @@ public class Path implements Iterable<float[]> {
      * will take a handle array and index information
      * will construct a interpolated curve matching both
      *
-     * @param handles flat list of handle values, each idx = 1 handle
+     * @param handles          flat list of handle values, each idx = 1 handle
      * @param curveIdxByHandle array where arr[handleIdx] = startIdx on curve, describes where each handle is on the curve
      * @return interpolated curve that fills unknown positions between the handles using catmull rom
      * @requires handles must not contain INHERIT values
      */
     public static float[] interpolateFromHandles(float[] handles, int[] curveIdxByHandle) {
-        assert handles.length == curveIdxByHandle.length : "both arrays must be the same length as the represent the "
-                + "same curveHandles";
+        assert handles.length == curveIdxByHandle.length : "both arrays must be the same length as the represent the " + "same curveHandles";
         //    assert curveIdxByHandle[0] == 0 : "curveIdxByHandle must represent the complete curve.";
         assert curveIdxByHandle[1] == 0 : "first curve idx must be zero so the first index can be ignored";
         if (!canBeInterpolated(handles)) {
@@ -217,6 +231,9 @@ public class Path implements Iterable<float[]> {
             for (int j = 0; j < segment.length; j++) {
                 assert outHandles[segmentStartIdx + j] == INHERIT_VALUE;
                 outHandles[segmentStartIdx + j] = segment[j];
+                if (outHandles[segmentStartIdx + j] == INHERIT_VALUE) {
+                    System.out.println("");
+                }
                 assert outHandles[segmentStartIdx + j] != INHERIT_VALUE;
                 assert outHandles[curveIdxByHandle[i + 1]] == handles[i + 1];
             }
@@ -235,35 +252,12 @@ public class Path implements Iterable<float[]> {
     }
 
     /**
-     * will turn a n x m list into an m x n list
-     * deep-clones inputs
-     *
-     * @param input matrix N x M
-     * @return matrix M x N
-     */
-    public static ArrayList<float[]> transposeHandles(ArrayList<float[]> input) {
-        int nLength = input.get(0).length;
-        int mLenght = input.size();
-        ArrayList<float[]> output = new ArrayList<>(nLength);
-
-        for (int n = 0; n < nLength; n++) {
-            float[] nThList = new float[mLenght];
-            output.add(nThList);
-            for (int m = 0; m < mLenght; m++) {
-                float handle = input.get(m)[n];
-                nThList[m] = handle;
-            }
-        }
-        return output;
-    }
-
-    /**
      * interpolates  a segment of the given handle list using catmull rom.
      * segment starts at flatHandles[i] .. flatHandles[i+3]
      *
-     * @param flatHandles list of flat handle values. each idx = 1 handle
+     * @param flatHandles   list of flat handle values. each idx = 1 handle
      * @param handleToCurve positions of handles on the curve
-     * @param i index of segment start. can be 0 to length-3
+     * @param i             index of segment start. can be 0 to length-3
      * @return interpolated segment between handle[i+1] and handle[i+2]
      */
     public static float[] interpolateSegment(float[] flatHandles, int[] handleToCurve, int i) {
@@ -307,38 +301,6 @@ public class Path implements Iterable<float[]> {
             interpolated[j] = interpolatedV;
         }
         return interpolated;
-    }
-
-    public static float[] interpolateCatmullRom(float[] nthHandles, int[] handleToCurveIdx) {
-        nthHandles = supplementFirstAndLastTwoHandles(nthHandles, INHERIT_VALUE, 0);
-        HandleAndIdcs ready = removeInheritValues(nthHandles, handleToCurveIdx.clone());
-        float[] interpolated = interpolateFromHandles(ready.handles, ready.idcs);
-        assert interpolated.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 2] : "interpolated values " +
-                "array is not as long as the whole curve";
-        return interpolated;
-    }
-
-    private boolean invariant() {
-        boolean okay = true;
-
-        float[] setValues = new float[type.size];
-        Arrays.fill(setValues, INHERIT_VALUE);
-        for (float[] handle : handles) {
-            for (int n = 0; n < type.size; n++) {
-                if (Float.isNaN(handle[n])) return false;
-                if (setValues[n] == INHERIT_VALUE) setValues[n] = handle[n];
-            }
-
-            if (handle.length != type.size) {
-                System.err.println("path has a handle with wrong size for type " + type + " expected " + type.size +
-                        " but got " + Arrays.toString(handle));
-                okay = false;
-            }
-        }
-
-        if (this.type == PointInterpreter.PointType.RIVER_2D) okay = okay && validateRiver2D(handles);
-
-        return okay;
     }
 
     public Path addPoint(float[] point) {
@@ -426,15 +388,13 @@ public class Path implements Iterable<float[]> {
     }
 
     public int[] handleToCurveIdx(boolean roundToGrid) {
-        if (this.amountHandles() < 4)
-            return new int[this.amountHandles()]; //zero filled array
+        if (this.amountHandles() < 4) return new int[this.amountHandles()]; //zero filled array
 
         ArrayList<float[]> curve = continousCurveFromHandles(toPosition2DArray(this.handles), roundToGrid);
         int[] handleIdcs = new int[amountHandles()];
         int handleIdx = 1;
         for (int i = 0; i < curve.size(); i++) {
-            if (arePositionalsEqual(handleByIndex(handleIdx), curve.get(i),
-                    RiverHandleInformation.PositionSize.SIZE_2_D.value)) {
+            if (arePositionalsEqual(handleByIndex(handleIdx), curve.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value)) {
                 handleIdcs[handleIdx] = i;
                 handleIdx++;
             }
@@ -451,6 +411,57 @@ public class Path implements Iterable<float[]> {
         return handleIdcs;
     }
 
+    /**
+     * every item in the list is an array of handles.
+     * the first two items are interpreted as x and y coordinates
+     *
+     * @param handles     list of handles to interpolate curve from.
+     * @param roundToGrid make sure each point on the curve only maps to one point on the grid
+     * @return list of points building a continous curve
+     */
+    private static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles, boolean roundToGrid) {
+        LinkedList<float[]> curvePoints = new LinkedList<>();
+
+        //iterate all handles, calculate coordinates on curve
+        for (int i = 0; i < handles.size() - 3; i++) {
+            float[] handleA, handleB, handleC, handleD;
+            handleA = handles.get(i);
+            handleB = handles.get(i + 1);
+            handleC = handles.get(i + 2);
+            handleD = handles.get(i + 3);
+            float[][] curveSegment = CubicBezierSpline.getSplinePathFor(handleA, handleB, handleC, handleD, RiverHandleInformation.PositionSize.SIZE_2_D.value);
+            //curvepoints contain [x,y,t]
+            curvePoints.addAll(Arrays.asList(curveSegment));
+        }
+
+        if (curvePoints.isEmpty()) return new ArrayList<>(0);
+
+        int positionDigits = PointInterpreter.PointType.POSITION_2D.size;   //FIXME thats the wrong constant
+        assert curvePoints.size() > 2;
+
+        ArrayList<float[]> result = new ArrayList<>(curvePoints.size());
+        float[] previousPoint = curvePoints.get(0);
+        if (roundToGrid) result.add(previousPoint);
+        for (float[] point : curvePoints) {
+            assert point != null : "whats going on?";
+            if (!roundToGrid) result.add(point);
+            else if (!arePositionalsEqual(point, previousPoint, positionDigits)) {
+                previousPoint = point;
+                result.add(previousPoint);
+                assert getPositionalDistance(point, previousPoint, RiverHandleInformation.PositionSize.SIZE_2_D.value) <= Math.sqrt(2) + 0.01f : "distance " + "between curvepoints is to large:" + getPositionalDistance(point, previousPoint, RiverHandleInformation.PositionSize.SIZE_2_D.value);
+            }
+
+        }
+        result.trimToSize();
+        //assert curveIsContinous(result);
+        ArrayList<Point> pointResult = point2DfromNVectorArr(result);
+        for (int i = 1; i < handles.size() - 1; i++) {
+            Point handlePoint = getPoint2D(handles.get(i));
+            assert pointResult.contains(handlePoint) : "handle not in curve" + handlePoint;
+        }
+        return result;
+    }
+
     public float[] handleByIndex(int index) throws IndexOutOfBoundsException {
         return handles.get(index);
     }
@@ -461,8 +472,7 @@ public class Path implements Iterable<float[]> {
         double distMinSquared = Double.MAX_VALUE;
         for (int i = 0; i < handles.size(); i++) {
             float[] p = handleByIndex(i);
-            double distanceSq = PointUtils.getPositionalDistance(p, coord,
-                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
+            double distanceSq = PointUtils.getPositionalDistance(p, coord, RiverHandleInformation.PositionSize.SIZE_2_D.value);
             if (distanceSq < distMinSquared) {
                 distMinSquared = distanceSq;
                 closest = i;
