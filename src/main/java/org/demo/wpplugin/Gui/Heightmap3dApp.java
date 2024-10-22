@@ -68,20 +68,19 @@ public class Heightmap3dApp extends Application {
         if (instance == null)
             startJavaFX();
         else {
-            Platform.runLater(() -> {
                 instance.reloadScene();
-                instance.primaryStage.show();
-            });
-
         }
     }
 
 
     // Static method to open a new stage
     public void reloadScene() {
-        root.getChildren().clear(); // Clear existing nodes
-        Group world = createEnvironment();
-        root.getChildren().add(world);
+        Platform.runLater(() -> {
+            root.getChildren().clear(); // Clear existing nodes
+            Group world = createEnvironment();
+            root.getChildren().add(world);
+        });
+
     }
 
     private Stage primaryStage;
