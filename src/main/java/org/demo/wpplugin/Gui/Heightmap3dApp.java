@@ -1,6 +1,7 @@
 package org.demo.wpplugin.Gui;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.geometry.Point3D;
 import javafx.scene.*;
@@ -21,7 +22,13 @@ import javafx.stage.Stage;
  * http://www.genuinecoder.com
  */
 public class Heightmap3dApp extends Application {
-
+    public static Heightmap3dApp instance;
+    private Group root;
+    @Override
+    public void init() {
+        // Set the flag to true when the application is initialized
+        instance = this;
+    }
     public static float[][] heightMap = new float[][]{
             {62,65,68,80},
             {62,65,68,80},
@@ -47,16 +54,44 @@ public class Heightmap3dApp extends Application {
     double ROTATION_SPEED = 0.1f;
     double CAMERA_MOVE_SPEED = 100f;
 
-    public static void main(String... args) {
-        launch(args);
+    private static boolean isJavaFXRunning = false;
+
+    public static void startJavaFX() {
+        if (!isJavaFXRunning) {
+            // Start JavaFX runtime in a background thread
+            new Thread(() -> Application.launch(Heightmap3dApp.class)).start();
+            isJavaFXRunning = true;
+        }
     }
+
+   public static void main(String... args) {
+        if (instance == null)
+            startJavaFX();
+        else {
+            Platform.runLater(() -> {
+                instance.reloadScene();
+                instance.primaryStage.show();
+            });
+
+        }
+    }
+
+
+    // Static method to open a new stage
+    public void reloadScene() {
+        root.getChildren().clear(); // Clear existing nodes
+        Group world = createEnvironment();
+        root.getChildren().add(world);
+    }
+
+    private Stage primaryStage;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Group world = createEnvironment();
-
-
-        Scene scene = new Scene(world, SIZEFACTOR, SIZEFACTOR, true);
+        root = new Group();
+        this.reloadScene();
+        this.primaryStage = primaryStage;
+        Scene scene = new Scene(root, SIZEFACTOR, SIZEFACTOR, true);
         scene.setFill(Color.LIGHTBLUE);
         primaryStage.setScene(scene);
         primaryStage.setWidth(16 * SIZEFACTOR);
@@ -75,7 +110,7 @@ public class Heightmap3dApp extends Application {
 
         handleMouse(scene, scene.getRoot(), camera);
 
-        world.getTransforms().addAll(worldRotY, worldRotX);
+        root.getTransforms().addAll(worldRotY, worldRotX);
 
 
 
@@ -115,6 +150,8 @@ public class Heightmap3dApp extends Application {
 
         primaryStage.show();
     }
+
+
 
     enum LocalDir {
         FORWARD,
