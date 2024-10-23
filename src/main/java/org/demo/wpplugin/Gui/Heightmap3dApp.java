@@ -27,6 +27,10 @@ import java.io.IOException;
 public class Heightmap3dApp extends Application {
     public static Heightmap3dApp instance;
     public static float[][] heightMap = DefaultHeightMap.loadFloatArrayFromFile("default_heightmap.txt");
+    /*new float[][]{
+            {1,1,3,1}
+    };
+     */
     public static int SIZEFACTOR = 100;
     private static boolean isJavaFXRunning = false;
     private final float[] quadUp = new float[]{0, 0, 0,//left
@@ -34,18 +38,19 @@ public class Heightmap3dApp extends Application {
             100, 0, 100,  //deep right
             0, 0, 100 //deep left
     };
-    private final float[] quadXPos = new float[]{0, 0, 0,//left
-            0, 0, 100,   //right
-            0, 100, 100,  //deep right
-            0, 100, 0 //deep left
-    };
-    private final float[] quadXNeg = new float[]{100, 0, 100,//left
+    private final float[] quadXPos = new float[]{
+            100, 0, 100,//left
             100, 0, 0,   //right
             100, 100, 0,  //deep right
             100, 100, 100 //deep left
     };
-    private final float[] quadZNeg = new float[]{0, 0, 100, 100, 0, 100, 100, 100, 100, 0, 100, 100};
-    private final float[] quadZPos = new float[]{0, 0, 0, 0, 100, 0, 100, 100, 0, 100, 0, 0};
+    private final float[] quadXNeg = new float[]{0, 0, 0,//left
+            0, 0, 100,   //right
+            0, 100, 100,  //deep right
+            0, 100, 0 //deep left
+    };
+    private final float[] quadZNeg =  new float[]{0, 0, 0, 0, 100, 0, 100, 100, 0, 100, 0, 0};
+    private final float[] quadZPos = new float[]{0, 0, 100, 100, 0, 100, 100, 100, 100, 0, 100, 100};
     Rotate lightRotY = new Rotate(0, Rotate.Y_AXIS);
     Rotate worldRotX = new Rotate(0, Rotate.X_AXIS);
     Rotate worldRotY = new Rotate(0, Rotate.Y_AXIS);
@@ -88,11 +93,11 @@ public class Heightmap3dApp extends Application {
     // Static method to open a new stage
     public void reloadScene() {
         Platform.runLater(() -> {
-            try {
-                DefaultHeightMap.saveFloatArrayToFile(heightMap, "default_heightmap.txt");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+       //     try {
+       //         DefaultHeightMap.saveFloatArrayToFile(heightMap, "default_heightmap.txt");
+      //      } catch (IOException e) {
+        //        throw new RuntimeException(e);
+        //    }
             root.getChildren().clear(); // Clear existing nodes
             Group world = createEnvironment();
             root.getChildren().add(world);
@@ -151,15 +156,22 @@ public class Heightmap3dApp extends Application {
             for (int x = 0; x < heightMap[0].length; x++) {
                 float y = Math.round(heightMap[z][x]);
                 Point3D center = new Point3D(x * 100, -y * 100, z * 100);
-                Block blockType;
-                if (y < 62) blockType = Block.WATER;    //water
-                else if (y > 120) blockType = Block.ROCK;    //rock
-                else blockType = Block.GRASS;   //grass
-                addFace(center, mesh, Dir.UP, blockType);
-                addFace(center, mesh, Dir.XNEG, blockType);
-                addFace(center, mesh, Dir.XPOS, blockType);
-                addFace(center, mesh, Dir.ZNEG, blockType);
-                addFace(center, mesh, Dir.ZPOS, blockType);
+                Texture blockType;
+                if (y < 62) blockType = Texture.WATER_zpos;    //water
+                else if (y > 120) blockType = Texture.ROCK_xneg;    //rock
+                else blockType = Texture.GRASS_xpos;   //grass
+                addFace(center, mesh, Dir.UP, blockType, 1);
+
+                for (Dir dir : new Dir[]{Dir.ZPOS,Dir.ZNEG, Dir.XPOS, Dir.XNEG }) {
+                    float xNegY = getYLowerOrDefault(center, heightMap, -1, dir);
+                    if (xNegY != -1) {
+                        for (double yy = center.getY(); yy < xNegY; yy += 100) {
+                            Point3D offsetCenter = new Point3D(center.getX(), yy, center.getZ());
+                            addFace(offsetCenter, mesh, dir, blockType, (float)yy + 100);
+                        }
+
+                    }
+                }
             }
 
         // Load the PNG image as a texture
@@ -182,7 +194,7 @@ public class Heightmap3dApp extends Application {
         return meshView;
     }
 
-    private void addFace(Point3D position, TriangleMesh view, Dir dir, Block block) {
+    private void addFace(Point3D position, TriangleMesh view, Dir dir, Texture texture, float y) {
         FaceDef face = new FaceDef();
         switch (dir) {
             case UP:
@@ -190,15 +202,19 @@ public class Heightmap3dApp extends Application {
                 break;
             case XPOS:
                 face.verts = quadXPos.clone();
+                texture = Texture.GRASS_xpos;
                 break;
             case XNEG:
                 face.verts = quadXNeg.clone();
+                texture = Texture.ROCK_xneg;
                 break;
             case ZNEG:
                 face.verts = quadZNeg.clone();
+                texture = Texture.DIRT_zneg;
                 break;
             case ZPOS:
                 face.verts = quadZPos.clone();
+                texture = Texture.WATER_zpos;
                 break;
             default:
                 face.verts = new float[3 * 4];
@@ -207,24 +223,25 @@ public class Heightmap3dApp extends Application {
         for (int i = 0; i < face.verts.length; i += 3)
             face.verts[i] += (float) position.getX();
         for (int i = 1; i < face.verts.length; i += 3)
-            face.verts[i] += face.verts[i] == 0 ? (float) position.getY() : 0;
+            face.verts[i] += face.verts[i] == 0 ? (float) position.getY() : y;
         for (int i = 2; i < face.verts.length; i += 3)
             face.verts[i] += (float) position.getZ();
 
         float texPos;
 
-        switch (block) {
-            case ROCK:
+        switch (texture) {
+            case ROCK_xneg:
                 texPos = 1;
 
                 break;
-            case GRASS:
-                if (dir == Dir.UP) texPos = 0;
-
-                else texPos = 3f;
+            case GRASS_xpos:
+                texPos = 0;
                 break;
-            case WATER:
+            case WATER_zpos:
                 texPos = 2f;
+                break;
+            case DIRT_zneg:
+                texPos = 3f;
                 break;
             default:
                 texPos = 0f;
@@ -248,6 +265,32 @@ public class Heightmap3dApp extends Application {
         view.getTexCoords().addAll(face.texCoords);
         view.getFaces().addAll(face.faces);
 
+    }
+
+    private float getYLowerOrDefault(Point3D pos, float[][] heightMap, float defaultV, Dir dir) {
+        int x = (int) pos.getX() / 100;
+        int z = (int) pos.getZ() / 100;
+
+        switch (dir) {
+            case XNEG:
+                x -= 1;
+                break;
+            case XPOS:
+                x += 1;
+                break;
+            case ZNEG:
+                z -= 1;
+                break;
+            case ZPOS:
+                z += 1;
+
+        }
+        if (z < 0 || z >= heightMap.length || x < 0 || x >= heightMap[0].length)
+            return 0;
+        float height = Math.round(heightMap[z][x]) * 100;
+        if (height >= -pos.getY())
+            return defaultV;
+        return -height;
     }
 
     public static void printFloatArray(float[][] array) {
@@ -468,8 +511,8 @@ public class Heightmap3dApp extends Application {
         return forward;
     }
 
-    enum Block {
-        GRASS, ROCK, WATER
+    enum Texture {
+        GRASS_xpos, ROCK_xneg, WATER_zpos, DIRT_zneg
     }
 
 
