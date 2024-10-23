@@ -24,6 +24,7 @@ import javafx.stage.Stage;
 public class Heightmap3dApp extends Application {
     public static Heightmap3dApp instance;
     private Group root;
+    Rotate lightRotY = new Rotate(0, Rotate.Y_AXIS);
     @Override
     public void init() {
         // Set the flag to true when the application is initialized
@@ -210,16 +211,22 @@ public class Heightmap3dApp extends Application {
         m.setDiffuseColor(Color.DARKGREEN);
         ground.setMaterial(m);
 
-        Color dimmedColor = Color.WHITE.deriveColor(0, 1, 0.5, 1);
-        AmbientLight ambientLight = new AmbientLight(dimmedColor);
+        float ambientStrenght = 0.3f;
+        Color ambientColor = Color.WHITE.deriveColor(0, 1, ambientStrenght, 1);
+        AmbientLight ambientLight = new AmbientLight(ambientColor);
         group.getChildren().add(ambientLight);
 
+        Group lightAnchor = new Group();
         PointLight l = new PointLight();
-        l.setColor(dimmedColor);
-        l.setTranslateX(10000);
-        l.setTranslateY(-10000);
-        l.setTranslateZ(10000);
-        group.getChildren().add(l);
+        Color directionalColor = Color.WHITE.deriveColor(0, 1, 1-ambientStrenght, 1);
+        l.setColor(directionalColor);
+        l.setTranslateX(100000);
+        l.setTranslateY(-100000);
+        l.setTranslateZ(100000);
+        lightAnchor.getChildren().add(l);
+        lightAnchor.getTransforms().add(lightRotY);
+
+        group.getChildren().add(lightAnchor);
 
 
         group.getChildren().add(createHeightmapMesh());
@@ -257,8 +264,17 @@ public class Heightmap3dApp extends Application {
                 }
                 if (me.isPrimaryButtonDown()) {
 
-                    rotateCameraAroundYAxis(camera,mouseDeltaX * modifier * ROTATION_SPEED);
-                    rotateCameraAroundXAxis(camera, mouseDeltaY * modifier * ROTATION_SPEED);
+                    if (me.isShiftDown()) {
+                        //rotate world
+                        rotateRootAroundYAxis(mouseDeltaX * modifier * ROTATION_SPEED);
+                    } else if (me.isControlDown())
+                        //rotate light
+                        lightRotY.setAngle(lightRotY.getAngle() + mouseDeltaX * modifier * ROTATION_SPEED);
+                    else {
+                        //pan camera
+                        rotateCameraAroundYAxis(camera,mouseDeltaX * modifier * ROTATION_SPEED);
+                        rotateCameraAroundXAxis(camera, -mouseDeltaY * modifier * ROTATION_SPEED);
+                    }
                 } else if (me.isSecondaryButtonDown()) {
                     Point3D f = getNodeDir(camera, LocalDir.FORWARD);
                     Point3D fPlane = new Point3D(f.getX(), 0, f.getZ());
@@ -285,7 +301,7 @@ public class Heightmap3dApp extends Application {
 
     Rotate camYRot = new Rotate();
     Rotate camXRot = new Rotate();
-
+    Rotate worldYRot = new Rotate();
     private void rotateCameraAroundYAxis(Camera camera, double angleInDegrees) {
         // Create a Rotate transform
         camYRot.setAxis(Rotate.Y_AXIS);
@@ -293,6 +309,18 @@ public class Heightmap3dApp extends Application {
         // Apply the rotation to the camera
         camera.getTransforms().clear();
         camera.getTransforms().addAll(camYRot, camXRot);
+    }
+
+    private void rotateRootAroundYAxis(double angleInDegrees) {
+        //double total = root.getRotate() + angleInDegrees
+        //root.setRotate(total);
+        worldRotY.setAxis(Rotate.Y_AXIS);
+        double total = (worldRotY.getAngle() + angleInDegrees)%360;
+        worldRotY.setAngle(total);
+        // No need to clear and re-add the transform every time
+        if (!root.getTransforms().contains(worldRotY)) {
+            root.getTransforms().add(worldRotY);  // Add the transform if not already added
+        }
     }
 
     private void rotateCameraAroundXAxis(Camera camera, double angleInDegrees) {
@@ -416,7 +444,7 @@ public class Heightmap3dApp extends Application {
         TriangleMesh mesh = new TriangleMesh();
         for (int z= 0; z < heightMap.length; z++)
             for (int x = 0; x < heightMap[0].length; x++) {
-                float y = heightMap[z][x];
+                float y = Math.round(heightMap[z][x]);
                 Point3D center = new Point3D(x * 100, -y * 100, z * 100);
                 addFace(center, mesh, Dir.UP);
                 addFace(center, mesh, Dir.XNEG);
@@ -427,11 +455,15 @@ public class Heightmap3dApp extends Application {
 
 
         PhongMaterial material = new PhongMaterial();
-        material.setDiffuseColor(Color.RED);
+        material.setDiffuseColor(Color.GREEN);
+        material.setSpecularColor(Color.LIGHTGREEN);
+        material.setSpecularPower(30);  // Moderate shininess
 
         MeshView meshView = new MeshView(mesh);
         meshView.setDrawMode(javafx.scene.shape.DrawMode.FILL); // Render filled triangles
         meshView.setMaterial(material);
+        meshView.setTranslateX(-heightMap.length/2 * 100);
+        meshView.setTranslateZ(-heightMap.length/2 * 100);
 
         return meshView;
     }

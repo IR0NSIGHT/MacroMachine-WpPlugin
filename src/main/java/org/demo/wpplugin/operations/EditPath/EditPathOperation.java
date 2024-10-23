@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 
+import static org.demo.wpplugin.Gui.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.pathing.PointUtils.*;
 
@@ -143,6 +144,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         return pMin;
     }
 
+    int resolution3d = 2;
+
     private void show3d() {
         Point selected = getPoint2D(getSelectedPoint());
         //Create heightmap
@@ -150,8 +153,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         for (int y = -128; y < 128; y++) {
             heightmap[y + 128] = new float[256];
             for (int x = -128; x < 128; x++) {
-                Point thisP = new Point(selected.x + x, selected.y + y);
-                float height = getDimension().getHeightAt(thisP);
+                Point thisP = new Point(selected.x + x* resolution3d, selected.y + y* resolution3d);
+                float height = getDimension().getHeightAt(thisP)/ resolution3d;
                 heightmap[y + 128][x + 128] = height;
             }
         }
@@ -492,13 +495,22 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             }
 
 
-            {          // SHOW 3d BUTTON
+            {
+
+                // SHOW 3d BUTTON
                 JButton myButton = new JButton("show 3d");
                 myButton.addActionListener(e -> {
                     //run downhill 25 handles max or until we hit a hole with no escape
                     show3d();
                 });
                 inputs.add(() -> new JComponent[]{myButton});
+
+                SpinnerNumberModel model = new SpinnerNumberModel(1f*resolution3d, 1,10, 1f);
+
+                 OptionsLabel l = numericInput("3d resolution 1:x", "displays area in 1:resolution", model, newValue -> {
+                    resolution3d = newValue.intValue();
+                }, EditPathOperation.this::show3d);
+                inputs.add(l);
             }
 
 
