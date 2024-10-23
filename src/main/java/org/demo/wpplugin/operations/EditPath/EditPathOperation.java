@@ -158,7 +158,17 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 heightmap[y + 128][x + 128] = height;
             }
         }
+        float[][] waterMap = new float[256][];
+        for (int y = -128; y < 128; y++) {
+            waterMap[y + 128] = new float[256];
+            for (int x = -128; x < 128; x++) {
+                Point thisP = new Point(selected.x + x* resolution3d, selected.y + y* resolution3d);
+                float height = (float) getDimension().getWaterLevelAt(thisP.x, thisP.y) / resolution3d;
+                waterMap[y + 128][x + 128] = height;
+            }
+        }
         Heightmap3dApp.heightMap = heightmap;
+        Heightmap3dApp.waterMap = waterMap;
         Heightmap3dApp.main();
     }
 

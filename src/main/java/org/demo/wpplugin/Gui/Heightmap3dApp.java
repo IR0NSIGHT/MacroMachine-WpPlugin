@@ -27,6 +27,8 @@ import java.io.IOException;
 public class Heightmap3dApp extends Application {
     public static Heightmap3dApp instance;
     public static float[][] heightMap = DefaultHeightMap.loadFloatArrayFromFile("default_heightmap.txt");
+    public static float[][] waterMap = DefaultHeightMap.loadFloatArrayFromFile("default_watermap.txt");
+
     /*new float[][]{
             {1,1,3,1}
     };
@@ -38,8 +40,7 @@ public class Heightmap3dApp extends Application {
             100, 0, 100,  //deep right
             0, 0, 100 //deep left
     };
-    private final float[] quadXPos = new float[]{
-            100, 0, 100,//left
+    private final float[] quadXPos = new float[]{100, 0, 100,//left
             100, 0, 0,   //right
             100, 100, 0,  //deep right
             100, 100, 100 //deep left
@@ -49,7 +50,7 @@ public class Heightmap3dApp extends Application {
             0, 100, 100,  //deep right
             0, 100, 0 //deep left
     };
-    private final float[] quadZNeg =  new float[]{0, 0, 0, 0, 100, 0, 100, 100, 0, 100, 0, 0};
+    private final float[] quadZNeg = new float[]{0, 0, 0, 0, 100, 0, 100, 100, 0, 100, 0, 0};
     private final float[] quadZPos = new float[]{0, 0, 100, 100, 0, 100, 100, 100, 100, 0, 100, 100};
     Rotate lightRotY = new Rotate(0, Rotate.Y_AXIS);
     Rotate worldRotX = new Rotate(0, Rotate.X_AXIS);
@@ -93,11 +94,13 @@ public class Heightmap3dApp extends Application {
     // Static method to open a new stage
     public void reloadScene() {
         Platform.runLater(() -> {
-       //     try {
-       //         DefaultHeightMap.saveFloatArrayToFile(heightMap, "default_heightmap.txt");
-      //      } catch (IOException e) {
-        //        throw new RuntimeException(e);
-        //    }
+            try {
+                DefaultHeightMap.saveFloatArrayToFile(heightMap, "default_heightmap.txt");
+                DefaultHeightMap.saveFloatArrayToFile(waterMap, "default_watermap.txt");
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             root.getChildren().clear(); // Clear existing nodes
             Group world = createEnvironment();
             root.getChildren().add(world);
@@ -145,29 +148,37 @@ public class Heightmap3dApp extends Application {
 
         group.getChildren().add(lightAnchor);
 
+        group.getChildren().add(createHeightmapMesh(true));
+        group.getChildren().add(createHeightmapMesh(false));
 
-        group.getChildren().add(createHeightmapMesh());
         return group;
     }
 
-    private MeshView createHeightmapMesh() {
+    private MeshView createHeightmapMesh(boolean isWaterMap) {
+        float[][] heightMap = isWaterMap ? waterMap : Heightmap3dApp.heightMap;
+
         TriangleMesh mesh = new TriangleMesh();
         for (int z = 0; z < heightMap.length; z++)
             for (int x = 0; x < heightMap[0].length; x++) {
                 float y = Math.round(heightMap[z][x]);
                 Point3D center = new Point3D(x * 100, -y * 100, z * 100);
                 Texture blockType;
-                if (y < 62) blockType = Texture.WATER_zpos;    //water
-                else if (y > 120) blockType = Texture.ROCK_xneg;    //rock
-                else blockType = Texture.GRASS_xpos;   //grass
+                if (!isWaterMap) {
+                    if (y < 120) blockType = Texture.GRASS_xpos;    //rock
+                    else blockType = Texture.ROCK_xneg;   //grass
+                } else {
+                    blockType = Texture.WATER;
+                }
+
                 addFace(center, mesh, Dir.UP, blockType, 1);
 
-                for (Dir dir : new Dir[]{Dir.ZPOS,Dir.ZNEG, Dir.XPOS, Dir.XNEG }) {
+                if (blockType == Texture.GRASS_xpos) blockType = Texture.DIRT_zneg;  //sideways
+                for (Dir dir : new Dir[]{Dir.ZPOS, Dir.ZNEG, Dir.XPOS, Dir.XNEG}) {
                     float xNegY = getYLowerOrDefault(center, heightMap, -1, dir);
                     if (xNegY != -1) {
                         for (double yy = center.getY(); yy < xNegY; yy += 100) {
                             Point3D offsetCenter = new Point3D(center.getX(), yy, center.getZ());
-                            addFace(offsetCenter, mesh, dir, blockType, (float)yy + 100);
+                            addFace(offsetCenter, mesh, dir, blockType, (float) yy + 100);
                         }
 
                     }
@@ -202,19 +213,15 @@ public class Heightmap3dApp extends Application {
                 break;
             case XPOS:
                 face.verts = quadXPos.clone();
-                texture = Texture.GRASS_xpos;
                 break;
             case XNEG:
                 face.verts = quadXNeg.clone();
-                texture = Texture.ROCK_xneg;
                 break;
             case ZNEG:
                 face.verts = quadZNeg.clone();
-                texture = Texture.DIRT_zneg;
                 break;
             case ZPOS:
                 face.verts = quadZPos.clone();
-                texture = Texture.WATER_zpos;
                 break;
             default:
                 face.verts = new float[3 * 4];
@@ -237,7 +244,7 @@ public class Heightmap3dApp extends Application {
             case GRASS_xpos:
                 texPos = 0;
                 break;
-            case WATER_zpos:
+            case WATER:
                 texPos = 2f;
                 break;
             case DIRT_zneg:
@@ -285,11 +292,9 @@ public class Heightmap3dApp extends Application {
                 z += 1;
 
         }
-        if (z < 0 || z >= heightMap.length || x < 0 || x >= heightMap[0].length)
-            return 0;
+        if (z < 0 || z >= heightMap.length || x < 0 || x >= heightMap[0].length) return 0;
         float height = Math.round(heightMap[z][x]) * 100;
-        if (height >= -pos.getY())
-            return defaultV;
+        if (height >= -pos.getY()) return defaultV;
         return -height;
     }
 
@@ -512,7 +517,7 @@ public class Heightmap3dApp extends Application {
     }
 
     enum Texture {
-        GRASS_xpos, ROCK_xneg, WATER_zpos, DIRT_zneg
+        GRASS_xpos, ROCK_xneg, WATER, DIRT_zneg
     }
 
 
