@@ -13,6 +13,7 @@ import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PathManager;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
+import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
@@ -150,25 +151,43 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         Point selected = getPoint2D(getSelectedPoint());
         //Create heightmap
         float[][] heightmap = new float[256][];
+        float[][] waterMap = new float[256][];
+        Heightmap3dApp.Texture[][] blockMap = new Heightmap3dApp.Texture[256][];
+
         for (int y = -128; y < 128; y++) {
             heightmap[y + 128] = new float[256];
+            waterMap[y + 128] = new float[256];
+            blockMap[y+128] = new Heightmap3dApp.Texture[256];
             for (int x = -128; x < 128; x++) {
                 Point thisP = new Point(selected.x + x* resolution3d, selected.y + y* resolution3d);
+
                 float height = getDimension().getHeightAt(thisP)/ resolution3d;
                 heightmap[y + 128][x + 128] = height;
-            }
-        }
-        float[][] waterMap = new float[256][];
-        for (int y = -128; y < 128; y++) {
-            waterMap[y + 128] = new float[256];
-            for (int x = -128; x < 128; x++) {
-                Point thisP = new Point(selected.x + x* resolution3d, selected.y + y* resolution3d);
-                float height = (float) getDimension().getWaterLevelAt(thisP.x, thisP.y) / resolution3d;
-                waterMap[y + 128][x + 128] = height;
+
+                float waterHeight = (float) getDimension().getWaterLevelAt(thisP.x, thisP.y) / resolution3d;
+                waterMap[y + 128][x + 128] = waterHeight;
+
+                Terrain t =getDimension().getTerrainAt(thisP.x, thisP.y);
+                Heightmap3dApp.Texture tex;
+                switch (t) {
+                    case GRASS:
+                        tex = Heightmap3dApp.Texture.GRASS;
+                        break;
+                    case ROCK:
+                        tex = Heightmap3dApp.Texture.ROCK;
+                        break;
+                    case DIRT:
+                        tex = Heightmap3dApp.Texture.DIRT;
+                        break;
+                    default:
+                        tex = Heightmap3dApp.Texture.ROCK;
+                }
+                blockMap[y+128][x+128] = tex;
             }
         }
         Heightmap3dApp.heightMap = heightmap;
         Heightmap3dApp.waterMap = waterMap;
+        Heightmap3dApp.blockmap = blockMap;
         Heightmap3dApp.main();
     }
 

@@ -28,11 +28,8 @@ public class Heightmap3dApp extends Application {
     public static Heightmap3dApp instance;
     public static float[][] heightMap = DefaultHeightMap.loadFloatArrayFromFile("default_heightmap.txt");
     public static float[][] waterMap = DefaultHeightMap.loadFloatArrayFromFile("default_watermap.txt");
+    public static Texture[][] blockmap = DefaultHeightMap.loadTextureArrayFromFile("default_blockmap.txt");
 
-    /*new float[][]{
-            {1,1,3,1}
-    };
-     */
     public static int SIZEFACTOR = 100;
     private static boolean isJavaFXRunning = false;
     private final float[] quadUp = new float[]{0, 0, 0,//left
@@ -168,15 +165,14 @@ public class Heightmap3dApp extends Application {
                 Point3D center = new Point3D(x * 100, -y * 100, z * 100);
                 Texture blockType;
                 if (!isWaterMap) {
-                    if (y < 120) blockType = Texture.GRASS_xpos;    //rock
-                    else blockType = Texture.ROCK_xneg;   //grass
+                    blockType = Heightmap3dApp.blockmap[z][x];
                 } else {
                     blockType = Texture.WATER;
                 }
 
                 addFace(center, mesh, Dir.UP, blockType, 1);
 
-                if (blockType == Texture.GRASS_xpos) blockType = Texture.DIRT_zneg;  //sideways
+                if (blockType == Texture.GRASS) blockType = Texture.DIRT;  //sideways
                 for (Dir dir : new Dir[]{Dir.ZPOS, Dir.ZNEG, Dir.XPOS, Dir.XNEG}) {
                     float xNegY = getYLowerOrDefault(center, heightMap, -1, dir);
                     if (xNegY != -1) {
@@ -244,17 +240,17 @@ public class Heightmap3dApp extends Application {
         float texPos;
 
         switch (texture) {
-            case ROCK_xneg:
+            case ROCK:
                 texPos = 1;
 
                 break;
-            case GRASS_xpos:
+            case GRASS:
                 texPos = 0;
                 break;
             case WATER:
                 texPos = 2f;
                 break;
-            case DIRT_zneg:
+            case DIRT:
                 texPos = 3f;
                 break;
             default:
@@ -538,8 +534,8 @@ public class Heightmap3dApp extends Application {
         return forward;
     }
 
-    enum Texture {
-        GRASS_xpos, ROCK_xneg, WATER, DIRT_zneg
+    public enum Texture {
+        GRASS, ROCK, WATER, DIRT
     }
 
 
