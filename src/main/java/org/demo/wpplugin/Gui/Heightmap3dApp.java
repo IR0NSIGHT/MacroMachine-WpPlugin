@@ -10,9 +10,11 @@ import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Material;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.MeshView;
+import javafx.scene.shape.Sphere;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
@@ -92,7 +94,8 @@ public class Heightmap3dApp extends Application {
     public static void main(String... args) {
         if (instance == null) startJavaFX();
         else {
-            instance.reloadScene();
+            Platform.runLater(() -> {instance.reloadScene();});
+
         }
     }
 
@@ -106,7 +109,6 @@ public class Heightmap3dApp extends Application {
 
     // Static method to open a new stage
     public void reloadScene() {
-        Platform.runLater(() -> {
             try {
                 DefaultHeightMap.saveFloatArrayToFile(heightMap, "default_heightmap.txt");
                 DefaultHeightMap.saveFloatArrayToFile(waterMap, "default_watermap.txt");
@@ -116,15 +118,20 @@ public class Heightmap3dApp extends Application {
             }
             root.getChildren().clear(); // Clear existing nodes
             Group world = createEnvironment();
+
             updateSelectedPointer();
             root.getChildren().add(world);
-
-        });
     }
 
     private Group createEnvironment() {
         Group group = new Group();
-
+        {
+            Sphere center = new Sphere();
+            center.setRadius(25 * 100);
+            PhongMaterial material = new PhongMaterial(Color.YELLOW);
+            center.setMaterial(material);
+            group.getChildren().add(center);
+        }
 
         float ambientStrenght = 0.3f;
         Color ambientColor = Color.WHITE.deriveColor(0, 1, ambientStrenght, 1);
@@ -162,7 +169,6 @@ public class Heightmap3dApp extends Application {
             selected.getChildren().add(selectedOut);
             group.getChildren().add(selected);
         }
-
         return group;
     }
 
@@ -373,17 +379,19 @@ public class Heightmap3dApp extends Application {
         camera.setFarClip(2000);
         camera.setNearClip(1);
 
-        int camDist = 10000;
-        camera.setTranslateX(-8 * SIZEFACTOR);
-        camera.setTranslateY(-2000);
-        camera.setTranslateZ(-camDist);
+        //i dont know why does numbers are what they are, i just positioned the camera manually and saved the coords.
+        camera.setTranslateX(870 * 100);
+        camera.setTranslateY(-307 * 100);
+        camera.setTranslateZ(450 * 100);
 
+        rotateCameraAroundYAxis(camera,180);
+        rotateCameraAroundXAxis(camera,-30);
         scene.setCamera(camera);
 
         handleMouse(scene, scene.getRoot(), camera);
 
         root.getTransforms().addAll(worldRotY, worldRotX);
-
+        root.setScaleX(-1);
 
         primaryStage.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             double mod = 1f;
@@ -492,7 +500,7 @@ public class Heightmap3dApp extends Application {
                 camera.setTranslateX(fPlane.getX());
                 camera.setTranslateY(fPlane.getY());
                 camera.setTranslateZ(fPlane.getZ());
-
+                System.out.println("camera pos =" + camera.getTranslateX() + "," + camera.getTranslateY()+ "," + camera.getTranslateZ());
             } else if (me.isMiddleButtonDown()) {
                 camera.setTranslateY(camera.getTranslateY() + mouseDeltaY * -0.1f * modifier * CAMERA_MOVE_SPEED);
             }
@@ -621,14 +629,6 @@ public class Heightmap3dApp extends Application {
             setWaterHeightAt(pos.getX(), pos.getY(),height);
         }
 
-    }
-
-    private void moveNodeRelative(Node node, double distance, LocalDir dir) {
-        Point3D forward = getNodeDir(node, dir);
-        // Update the camera's position based on the forward vector
-        node.setTranslateX(node.getTranslateX() + forward.getX() * distance);
-        node.setTranslateY(node.getTranslateY() + forward.getY() * distance);
-        node.setTranslateZ(node.getTranslateZ() + forward.getZ() * distance);
     }
 
     public enum Texture {
