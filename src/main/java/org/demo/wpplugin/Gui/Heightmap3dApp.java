@@ -149,8 +149,9 @@ public class Heightmap3dApp extends Application {
 
         group.getChildren().add(lightAnchor);
 
-        group.getChildren().add(createHeightmapMesh(true));
         group.getChildren().add(createHeightmapMesh(false));
+
+        group.getChildren().add(createHeightmapMesh(true));
 
         return group;
     }
@@ -162,6 +163,8 @@ public class Heightmap3dApp extends Application {
         for (int z = 0; z < heightMap.length; z++)
             for (int x = 0; x < heightMap[0].length; x++) {
                 float y = Math.round(heightMap[z][x]);
+                if (isWaterMap && Math.round(Heightmap3dApp.heightMap[z][x]) >= y)
+                    continue;   //dont draw water if its below/equal of terrain
                 Point3D center = new Point3D(x * 100, -y * 100, z * 100);
                 Texture blockType;
                 if (!isWaterMap) {
@@ -192,7 +195,10 @@ public class Heightmap3dApp extends Application {
         // Create a PhongMaterial and set the texture map
         PhongMaterial material = new PhongMaterial();
         material.setDiffuseMap(textureImage);  // Apply the PNG texture as the diffuse map
-
+        if (isWaterMap) {
+            Color waterColor = new Color(1,1,1,0.2);
+            material.setDiffuseColor(waterColor);
+        }
         //  material.setDiffuseColor(Color.W);
         //  material.setSpecularColor(Color.LIGHTGREEN);
         //  material.setSpecularPower(30);  // Moderate shininess
