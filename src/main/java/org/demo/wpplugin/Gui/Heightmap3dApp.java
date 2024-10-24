@@ -75,6 +75,7 @@ public class Heightmap3dApp extends Application {
     Rotate worldYRot = new Rotate();
     private Group root;
     private Stage primaryStage;
+    private boolean moveCameraOnMouseMove = false;
 
     public static void main(String... args) {
         if (instance == null) startJavaFX();
@@ -384,6 +385,8 @@ public class Heightmap3dApp extends Application {
                 case D:
                     moveNodeRelative(camera, mod, LocalDir.RIGHT);
                     break;
+                case SPACE:
+                    moveCameraOnMouseMove = !moveCameraOnMouseMove;
             }
         });
 
@@ -391,17 +394,56 @@ public class Heightmap3dApp extends Application {
     }
 
     private void handleMouse(Scene scene, final Node root, final Camera camera) {
+        scene.setOnMouseDragged(me -> {
+            mouseOldX = mousePosX;
+            mouseOldY = mousePosY;
+            mousePosX = me.getSceneX();
+            mousePosY = me.getSceneY();
+            mouseDeltaX = (mousePosX - mouseOldX);
+            mouseDeltaY = (mousePosY - mouseOldY);
 
-        scene.setOnMousePressed(new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent me) {
-                mousePosX = me.getSceneX();
-                mousePosY = me.getSceneY();
-                mouseOldX = me.getSceneX();
-                mouseOldY = me.getSceneY();
+            double modifier = 1.0;
+
+            if (me.isControlDown()) {
+                modifier = CONTROL_MULTIPLIER;
+            }
+            if (me.isShiftDown()) {
+                modifier = SHIFT_MULTIPLIER;
+            }
+            if (moveCameraOnMouseMove)
+                return;
+            if (me.isPrimaryButtonDown()) {
+                if (me.isShiftDown()) {
+                    //rotate world
+                    rotateRootAroundYAxis(mouseDeltaX * modifier * ROTATION_SPEED);
+                } else if (me.isControlDown())
+                    //rotate light
+                    lightRotY.setAngle(lightRotY.getAngle() + mouseDeltaX * modifier * ROTATION_SPEED);
+                else {
+                    //pan camera
+
+                }
+            } else if (me.isSecondaryButtonDown()) {
+                Point3D f = getNodeDir(camera, LocalDir.FORWARD);
+                Point3D fPlane = new Point3D(f.getX(), 0, f.getZ());
+                fPlane = fPlane.multiply(mouseDeltaY * 0.1f * modifier * CAMERA_MOVE_SPEED);
+
+                f = getNodeDir(camera, LocalDir.RIGHT);
+                f = new Point3D(f.getX(), 0, f.getZ());
+                f = f.multiply(mouseDeltaX * -0.1f * modifier * CAMERA_MOVE_SPEED);
+
+                fPlane = fPlane.add(f);
+                fPlane = fPlane.add(camera.getTranslateX(), camera.getTranslateY(), camera.getTranslateZ());
+
+                camera.setTranslateX(fPlane.getX());
+                camera.setTranslateY(fPlane.getY());
+                camera.setTranslateZ(fPlane.getZ());
+
+            } else if (me.isMiddleButtonDown()) {
+                camera.setTranslateY(camera.getTranslateY() + mouseDeltaY * -0.1f * modifier * CAMERA_MOVE_SPEED);
             }
         });
-        scene.setOnMouseDragged(new EventHandler<MouseEvent>() {
+        scene.setOnMouseMoved(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
                 mouseOldX = mousePosX;
@@ -419,37 +461,11 @@ public class Heightmap3dApp extends Application {
                 if (me.isShiftDown()) {
                     modifier = SHIFT_MULTIPLIER;
                 }
-                if (me.isPrimaryButtonDown()) {
 
-                    if (me.isShiftDown()) {
-                        //rotate world
-                        rotateRootAroundYAxis(mouseDeltaX * modifier * ROTATION_SPEED);
-                    } else if (me.isControlDown())
-                        //rotate light
-                        lightRotY.setAngle(lightRotY.getAngle() + mouseDeltaX * modifier * ROTATION_SPEED);
-                    else {
-                        //pan camera
-                        rotateCameraAroundYAxis(camera, mouseDeltaX * modifier * ROTATION_SPEED);
-                        rotateCameraAroundXAxis(camera, -mouseDeltaY * modifier * ROTATION_SPEED);
-                    }
-                } else if (me.isSecondaryButtonDown()) {
-                    Point3D f = getNodeDir(camera, LocalDir.FORWARD);
-                    Point3D fPlane = new Point3D(f.getX(), 0, f.getZ());
-                    fPlane = fPlane.multiply(mouseDeltaY * 0.1f * modifier * CAMERA_MOVE_SPEED);
+                if (moveCameraOnMouseMove && !me.isPrimaryButtonDown() && !me.isSecondaryButtonDown() && !me.isMiddleButtonDown()) {
+                    rotateCameraAroundYAxis(camera, mouseDeltaX * modifier * ROTATION_SPEED);
+                    rotateCameraAroundXAxis(camera, -mouseDeltaY * modifier * ROTATION_SPEED);
 
-                    f = getNodeDir(camera, LocalDir.RIGHT);
-                    f = new Point3D(f.getX(), 0, f.getZ());
-                    f = f.multiply(mouseDeltaX * 0.1f * modifier * CAMERA_MOVE_SPEED);
-
-                    fPlane = fPlane.add(f);
-                    fPlane = fPlane.add(camera.getTranslateX(), camera.getTranslateY(), camera.getTranslateZ());
-
-                    camera.setTranslateX(fPlane.getX());
-                    camera.setTranslateY(fPlane.getY());
-                    camera.setTranslateZ(fPlane.getZ());
-
-                } else if (me.isMiddleButtonDown()) {
-                    camera.setTranslateY(camera.getTranslateY() + mouseDeltaY * 0.1f * modifier * CAMERA_MOVE_SPEED);
                 }
 
             }
@@ -462,18 +478,6 @@ public class Heightmap3dApp extends Application {
         node.setTranslateX(node.getTranslateX() + forward.getX() * distance);
         node.setTranslateY(node.getTranslateY() + forward.getY() * distance);
         node.setTranslateZ(node.getTranslateZ() + forward.getZ() * distance);
-    }
-
-    private void rotateRootAroundYAxis(double angleInDegrees) {
-        //double total = root.getRotate() + angleInDegrees
-        //root.setRotate(total);
-        worldRotY.setAxis(Rotate.Y_AXIS);
-        double total = (worldRotY.getAngle() + angleInDegrees) % 360;
-        worldRotY.setAngle(total);
-        // No need to clear and re-add the transform every time
-        if (!root.getTransforms().contains(worldRotY)) {
-            root.getTransforms().add(worldRotY);  // Add the transform if not already added
-        }
     }
 
     private void rotateCameraAroundYAxis(Camera camera, double angleInDegrees) {
@@ -493,6 +497,18 @@ public class Heightmap3dApp extends Application {
         // Apply the rotation to the camera
         camera.getTransforms().clear();
         camera.getTransforms().addAll(camYRot, camXRot);
+    }
+
+    private void rotateRootAroundYAxis(double angleInDegrees) {
+        //double total = root.getRotate() + angleInDegrees
+        //root.setRotate(total);
+        worldRotY.setAxis(Rotate.Y_AXIS);
+        double total = (worldRotY.getAngle() + angleInDegrees) % 360;
+        worldRotY.setAngle(total);
+        // No need to clear and re-add the transform every time
+        if (!root.getTransforms().contains(worldRotY)) {
+            root.getTransforms().add(worldRotY);  // Add the transform if not already added
+        }
     }
 
     private Point3D getNodeDir(Node n, LocalDir dir) {
