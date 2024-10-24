@@ -1,5 +1,6 @@
 package org.demo.wpplugin.operations.EditPath;
 
+import javafx.geometry.Point2D;
 import org.demo.wpplugin.Gui.Heightmap3dApp;
 import org.demo.wpplugin.Gui.OperationOptionsPanel;
 import org.demo.wpplugin.Gui.OptionsLabel;
@@ -214,6 +215,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         Heightmap3dApp.heightMap = heightmap;
         Heightmap3dApp.waterMap = waterMap;
         Heightmap3dApp.blockmap = blockMap;
+        Heightmap3dApp.setHeightMap = point -> {
+            getDimension().setHeightAt((int)point.getX(), (int)point.getY(),(float)point.getZ());
+        };
+        Heightmap3dApp.setWaterHeight = point -> {
+            getDimension().setWaterLevelAt((int)point.getX(), (int)point.getY(),(int)point.getZ());
+        };
+        Heightmap3dApp.globalOffset = new Point2D(selected.x-128, selected.y-128);
         Heightmap3dApp.main();
     }
 
