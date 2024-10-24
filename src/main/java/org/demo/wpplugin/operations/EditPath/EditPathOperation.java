@@ -169,7 +169,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
                 Terrain t =getDimension().getTerrainAt(thisP.x, thisP.y);
                 Heightmap3dApp.Texture tex;
+                if (t == null)
+                    t = Terrain.GRASS;
                 switch (t) {
+
                     case GRASS:
                         tex = Heightmap3dApp.Texture.GRASS;
                         break;

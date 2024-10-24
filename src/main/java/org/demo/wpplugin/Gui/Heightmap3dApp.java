@@ -95,7 +95,7 @@ public class Heightmap3dApp extends Application {
             try {
                 DefaultHeightMap.saveFloatArrayToFile(heightMap, "default_heightmap.txt");
                 DefaultHeightMap.saveFloatArrayToFile(waterMap, "default_watermap.txt");
-
+                DefaultHeightMap.saveTextureArrayToFile(blockmap,"default_blockmap.txt");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
