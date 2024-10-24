@@ -29,7 +29,7 @@ public class Heightmap3dApp extends Application {
     public static float[][] heightMap = DefaultHeightMap.loadFloatArrayFromFile("default_heightmap.txt");
     public static float[][] waterMap = DefaultHeightMap.loadFloatArrayFromFile("default_watermap.txt");
     public static Texture[][] blockmap = DefaultHeightMap.loadTextureArrayFromFile("default_blockmap.txt");
-
+    public static Image blockTexture = null;
     public static int SIZEFACTOR = 100;
     private static boolean isJavaFXRunning = false;
     private final float[] quadUp = new float[]{0, 0, 0,//left
@@ -69,9 +69,9 @@ public class Heightmap3dApp extends Application {
     double CAMERA_MOVE_SPEED = 100f;
     Rotate camYRot = new Rotate();
     Rotate camXRot = new Rotate();
-    Rotate worldYRot = new Rotate();
+
+
     private Group root;
-    private Stage primaryStage;
     private boolean moveCameraOnMouseMove = false;
 
     public static void main(String... args) {
@@ -174,13 +174,17 @@ public class Heightmap3dApp extends Application {
 
                 if (blockType == Texture.GRASS) blockType = Texture.DIRT;  //sideways
                 for (Dir dir : new Dir[]{Dir.ZPOS, Dir.ZNEG, Dir.XPOS, Dir.XNEG}) {
-                    float xNegY = getYLowerOrDefault(center, heightMap, -1, dir);
-                    if (xNegY != -1) {
-                        for (double yy = center.getY(); yy < xNegY; yy += 100) {
-                            Point3D offsetCenter = new Point3D(center.getX(), yy, center.getZ());
-                            addFace(offsetCenter, mesh, dir, blockType, (float) yy + 100);
-                        }
+                    if (isWaterMap)
+                        addFace(center, mesh, dir, blockType, (float) center.getY());
+                    else{
+                        float xNegY = getYLowerOrDefault(center, heightMap, -1, dir);
+                        if (xNegY != -1) {
+                            for (double yy = center.getY(); yy < xNegY; yy += 100) {
+                                Point3D offsetCenter = new Point3D(center.getX(), yy, center.getZ());
+                                addFace(offsetCenter, mesh, dir, blockType, (float) yy );
+                            }
 
+                        }
                     }
                 }
             }
@@ -239,10 +243,10 @@ public class Heightmap3dApp extends Application {
 
         float texPos;
 
+        float texWidth = Texture.values().length;
         switch (texture) {
             case ROCK:
                 texPos = 1;
-
                 break;
             case GRASS:
                 texPos = 0;
@@ -253,12 +257,21 @@ public class Heightmap3dApp extends Application {
             case DIRT:
                 texPos = 3f;
                 break;
+            case SNOW:
+                texPos = 4;
+                break;
+            case GRAVEL:
+                texPos = 5f;
+                break;
+            case SAND:
+                texPos = 6f;
+                break;
             default:
                 texPos = 0f;
                 break;
         }
-        float startPosTex = texPos / 4f + 0.01f;
-        float endPosTex = texPos / 4f + 1 / 4f - 0.01f;
+        float startPosTex = texPos / texWidth + 0.01f;
+        float endPosTex = texPos / texWidth + 1 / texWidth - 0.01f;
         face.texCoords = new float[]{startPosTex, startPosTex, endPosTex, startPosTex, endPosTex, endPosTex, startPosTex, endPosTex,};
         face.faces = new int[]{0, 0, 1, 1, 2, 2,
 
@@ -335,7 +348,6 @@ public class Heightmap3dApp extends Application {
     public void start(Stage primaryStage) throws Exception {
         root = new Group();
         this.reloadScene();
-        this.primaryStage = primaryStage;
         Scene scene = new Scene(root, SIZEFACTOR, SIZEFACTOR, true);
         scene.setFill(Color.LIGHTBLUE);
         primaryStage.setScene(scene);
@@ -535,7 +547,7 @@ public class Heightmap3dApp extends Application {
     }
 
     public enum Texture {
-        GRASS, ROCK, WATER, DIRT
+        GRASS, ROCK, WATER, DIRT, SNOW, GRAVEL, SAND
     }
 
 

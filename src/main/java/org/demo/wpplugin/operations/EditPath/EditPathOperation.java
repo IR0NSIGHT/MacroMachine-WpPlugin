@@ -83,10 +83,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     public static int PATH_ID = 1;
     private final EditPathOptions options = new EditPathOptions();
     EditPathOptionsPanel eOptionsPanel;
+    int resolution3d = 2;
     private int selectedPointIdx;
     private Brush brush;
     private Paint paint;
-
     private boolean shiftDown = false;
     private boolean altDown = false;
     private boolean ctrlDown = false;
@@ -145,8 +145,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         return pMin;
     }
 
-    int resolution3d = 2;
-
     private void show3d() {
         Point selected = getPoint2D(getSelectedPoint());
         //Create heightmap
@@ -157,35 +155,60 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         for (int y = -128; y < 128; y++) {
             heightmap[y + 128] = new float[256];
             waterMap[y + 128] = new float[256];
-            blockMap[y+128] = new Heightmap3dApp.Texture[256];
+            blockMap[y + 128] = new Heightmap3dApp.Texture[256];
             for (int x = -128; x < 128; x++) {
-                Point thisP = new Point(selected.x + x* resolution3d, selected.y + y* resolution3d);
+                Point thisP = new Point(selected.x + x * resolution3d, selected.y + y * resolution3d);
 
-                float height = getDimension().getHeightAt(thisP)/ resolution3d;
+                float height = getDimension().getHeightAt(thisP) / resolution3d;
                 heightmap[y + 128][x + 128] = height;
 
                 float waterHeight = (float) getDimension().getWaterLevelAt(thisP.x, thisP.y) / resolution3d;
                 waterMap[y + 128][x + 128] = waterHeight;
 
-                Terrain t =getDimension().getTerrainAt(thisP.x, thisP.y);
+                Terrain t = getDimension().getTerrainAt(thisP.x, thisP.y);
                 Heightmap3dApp.Texture tex;
-                if (t == null)
-                    t = Terrain.GRASS;
+                if (t == null) t = Terrain.GRASS;
                 switch (t) {
 
                     case GRASS:
+                    case BARE_GRASS:
                         tex = Heightmap3dApp.Texture.GRASS;
                         break;
+                    case GRAVEL:
+                        tex = Heightmap3dApp.Texture.GRAVEL;
+                        break;
+                    case SAND:
+                    case DESERT:
+                    case BEACHES:
+                    case BARE_BEACHES:
+                    case SANDSTONE:
+                    case END_STONE:
+                        tex = Heightmap3dApp.Texture.SAND;
+                        break;
                     case ROCK:
+                    case STONE:
+                    case COBBLESTONE:
+                    case MOSSY_COBBLESTONE:
+                    case DIORITE:
+                    case ANDESITE:
+                    case BASALT:
+                    case DEEPSLATE:
                         tex = Heightmap3dApp.Texture.ROCK;
+                        break;
+                    case DEEP_SNOW:
+                    case SNOW:
+                        tex = Heightmap3dApp.Texture.SNOW;
                         break;
                     case DIRT:
                         tex = Heightmap3dApp.Texture.DIRT;
                         break;
+                    case WATER:
+                        tex = Heightmap3dApp.Texture.WATER;
+                        break;
                     default:
                         tex = Heightmap3dApp.Texture.ROCK;
                 }
-                blockMap[y+128][x+128] = tex;
+                blockMap[y + 128][x + 128] = tex;
             }
         }
         Heightmap3dApp.heightMap = heightmap;
@@ -537,9 +560,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 });
                 inputs.add(() -> new JComponent[]{myButton});
 
-                SpinnerNumberModel model = new SpinnerNumberModel(1f*resolution3d, 1,10, 1f);
+                SpinnerNumberModel model = new SpinnerNumberModel(1f * resolution3d, 1, 10, 1f);
 
-                 OptionsLabel l = numericInput("3d resolution 1:x", "displays area in 1:resolution", model, newValue -> {
+                OptionsLabel l = numericInput("3d resolution 1:x", "displays area in 1:resolution", model, newValue -> {
                     resolution3d = newValue.intValue();
                 }, EditPathOperation.this::show3d);
                 inputs.add(l);
