@@ -130,7 +130,7 @@ public class Heightmap3dApp extends Application {
             center.setRadius(25 * 100);
             PhongMaterial material = new PhongMaterial(Color.YELLOW);
             center.setMaterial(material);
-            group.getChildren().add(center);
+        //    group.getChildren().add(center);
         }
 
         float ambientStrenght = 0.3f;
@@ -139,14 +139,17 @@ public class Heightmap3dApp extends Application {
         group.getChildren().add(ambientLight);
 
         Group lightAnchor = new Group();
+        Sphere anchorHelper = new Sphere();
+        anchorHelper.setRadius(10*100);
+        lightAnchor.getChildren().add(anchorHelper);
         PointLight l = new PointLight();
         Color directionalColor = Color.WHITE.deriveColor(0, 1, 1 - ambientStrenght, 1);
         l.setColor(directionalColor);
+        lightAnchor.getTransforms().add(lightRotY);
         l.setTranslateX(100000);
         l.setTranslateY(-100000);
         l.setTranslateZ(100000);
         lightAnchor.getChildren().add(l);
-        lightAnchor.getTransforms().add(lightRotY);
 
         group.getChildren().add(lightAnchor);
 
