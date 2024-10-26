@@ -9,7 +9,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.Arrays;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 
@@ -70,8 +69,9 @@ public class PathHistogram extends JPanel implements KeyListener {
         Color skyBlue = new Color(192, 255, 255);
         Color waterBlue = new Color(49, 72, 244);
 
-        float[] curveHeights = curve.getWaterCurve(dimension);
-
+        float[] waterCurve = curve.getWaterCurve(dimension);
+        assert waterCurve.length == curve.curveLength();
+        assert terrainCurve.length == curve.curveLength();
         {   //draw background
             g2d.setColor(skyBlue);
             g2d.fillRect(0, 0, getWidth(), getHeight());
@@ -93,7 +93,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         int borderWidth = 100;
         g2d.translate(totalScale * (-userFocus.x) + borderWidth, totalScale * (userFocus.y) - borderWidth);
         g2d.scale(totalScale, totalScale);
-        Font font = new Font("Arial", Font.PLAIN, (int) (20 / (totalScale)));
+        Font font = new Font("Arial", Font.PLAIN, (int) (20f / (totalScale)));
         g2d.setFont(font);
         g2d.setStroke(new BasicStroke(1f / totalScale));
 
@@ -101,14 +101,14 @@ public class PathHistogram extends JPanel implements KeyListener {
 
         {        //draw interpoalted curve
             g2d.setColor(Color.BLACK);
-            for (int i = 0; i < curveHeights.length; i++) {
+            for (int i = 0; i < waterCurve.length; i++) {
                 if (i < userFocus.x) continue;
                 g2d.setColor(grassGreen);  //green
                 int terrainB = Math.round(terrainCurve[i]);
-                g2d.fillRect(i, -(int) terrainB, 1, terrainB - userFocus.y);
-
+                g2d.fillRect(i, -terrainB, 1, terrainB - userFocus.y);
+                //FIXME why are terrain curve and waterCurve 2 different lengths?
                 g2d.setColor(waterBlue); //blue
-                int aZ = Math.round(curveHeights[i]);
+                int aZ = Math.round(waterCurve[i]);
                 g2d.fillRect(i - 1, -aZ, 1, aZ - userFocus.y);
             }
         }
@@ -120,11 +120,11 @@ public class PathHistogram extends JPanel implements KeyListener {
             int y;
             for (y = 0; y <= userFocus.y + 300; y += 50) {
                 if (y < userFocus.y) continue;
-                g2d.drawLine(userFocus.x, -y, curveHeights.length, -y);
+                g2d.drawLine(userFocus.x, -y, waterCurve.length, -y);
                 g2d.drawString(String.valueOf(y), userFocus.x - g2d.getFontMetrics().stringWidth(String.valueOf(y)), -y);
             }
             //vertical lines
-            for (int x = 0; x <= curveHeights.length; x += 50) {
+            for (int x = 0; x <= waterCurve.length; x += 50) {
                 if (x < userFocus.x) continue;
                 g2d.drawLine(x, -userFocus.y, x, -y);
                 g2d.drawString(String.valueOf(x), x, -userFocus.y + g2d.getFontMetrics().getHeight());
@@ -144,7 +144,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         if (userFocus.y < oceanLevel) {
             //mark water line
             g2d.setColor(Color.BLUE);
-            g2d.drawLine(userFocus.x, -62, curveHeights.length, -62);
+            g2d.drawLine(userFocus.x, -62, waterCurve.length, -62);
             g2d.drawString("ocean level", userFocus.x - g2d.getFontMetrics().stringWidth("ocean level"), -oceanLevel);
         }
 
@@ -157,7 +157,7 @@ public class PathHistogram extends JPanel implements KeyListener {
 
             float curveHeightHandle = getValue(path.handleByIndex(handleIdx), RiverInformation.WATER_Z);
             boolean notSet = curveHeightHandle == INHERIT_VALUE;
-            int curveHeightReal = Math.round(curveHeights[pointCurveIdx]);
+            int curveHeightReal = Math.round(waterCurve[pointCurveIdx]);
             Color c = Color.BLACK;
             if (notSet) {
                 c = Color.LIGHT_GRAY;
