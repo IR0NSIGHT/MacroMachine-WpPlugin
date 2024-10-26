@@ -34,14 +34,6 @@ class ApplyRiverOperationTest {
         p = p.addPoint(RiverHandleInformation.riverInformation(50, 71, 10, 6, 7, 8, 128));
 
         ContinuousCurve curve = ContinuousCurve.fromPath(p, getImmutableDimension62());
-    /*
-        for (float[] a : curve) {
-            assertEquals(5, getValue(a, RIVER_RADIUS), 0.01f);
-            assertEquals(6, getValue(a, RIVER_DEPTH), 0.01f);
-            assertEquals(7, getValue(a, BEACH_RADIUS), 0.01f);
-            assertEquals(30, getValue(a, TRANSITION_RADIUS), 0.01f);
-        }
-    */
 
         HeightDimension dim = new HeightDimension() {
             final HashMap<Point, Float> heightMap = new HashMap<>();

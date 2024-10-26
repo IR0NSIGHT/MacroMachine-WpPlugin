@@ -92,8 +92,7 @@ public class CubicBezierSpline {
         float cont_net = PointUtils.getPositionalDistance(pointA, pointB, positionDigits) +
                 PointUtils.getPositionalDistance(pointC, pointB, positionDigits) +
                 PointUtils.getPositionalDistance(pointC, pointD, positionDigits);
-        float app_arc_length = (cont_net + chord) / 2f;
-        return app_arc_length;
+        return (cont_net + chord) / 2f;
     }
 
     private static float[] getBezierHandle(float[] pointA, float[] pointB, float[] pointC, int positionDigits,

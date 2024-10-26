@@ -210,7 +210,10 @@ public class Heightmap3dApp extends Application {
                 }
             }
 
-        // Load the PNG image as a texture
+        return getMeshView(isWaterMap, mesh, heightMap);
+    }
+
+    private static MeshView getMeshView(boolean isWaterMap, TriangleMesh mesh, float[][] heightMap) {
         Image textureImage = new Image("file:main_color_texture_worldpainter.png");
 
         // Create a PhongMaterial and set the texture map
@@ -220,16 +223,12 @@ public class Heightmap3dApp extends Application {
             Color waterColor = new Color(1, 1, 1, 0.2);
             material.setDiffuseColor(waterColor);
         }
-        //  material.setDiffuseColor(Color.W);
-        //  material.setSpecularColor(Color.LIGHTGREEN);
-        //  material.setSpecularPower(30);  // Moderate shininess
 
         MeshView meshView = new MeshView(mesh);
         meshView.setDrawMode(javafx.scene.shape.DrawMode.FILL); // Render filled triangles
         meshView.setMaterial(material);
         meshView.setTranslateX(-heightMap.length / 2 * 100);
         meshView.setTranslateZ(-heightMap.length / 2 * 100);
-
         return meshView;
     }
 

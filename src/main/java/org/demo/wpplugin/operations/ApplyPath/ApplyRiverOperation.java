@@ -115,8 +115,6 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
         float[] maxHandleValues = getMaxValues(path, path.type.size);
 
         double totalSearchRadius = getValue(maxHandleValues, RIVER_RADIUS) + getValue(maxHandleValues, BEACH_RADIUS);
-        // + getValue
-        // (maxHandleValues, TRANSITION_RADIUS);
         PathGeometryHelper helper = new PathGeometryHelper(path, new ArrayList<>(Arrays.asList(curve.getPositions2d())),
                 totalSearchRadius);
         HashMap<Point, Collection<Point>> parentage = helper.getParentage();

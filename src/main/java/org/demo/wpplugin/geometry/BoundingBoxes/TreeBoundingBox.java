@@ -23,7 +23,7 @@ public class TreeBoundingBox extends AxisAlignedBoundingBox2d {
     public static TreeBoundingBox constructTree(Collection<AxisAlignedBoundingBox2d> neighbouringBoxes) {
         if (neighbouringBoxes.size() == 1) {
             neighbouringBoxes.add(new NeverBoundingBox(-1));
-        } else if (neighbouringBoxes.size() == 0) {
+        } else if (neighbouringBoxes.isEmpty()) {
             throw new IllegalArgumentException("will not construct tree for zero length list");
         }
         assert neighbouringBoxes.size() >= 2;
@@ -50,8 +50,7 @@ public class TreeBoundingBox extends AxisAlignedBoundingBox2d {
         if (!super.contains(p)) {
             return false;
         }
-        boolean isInChildren = (leftChild.contains(p) || rightChild.contains(p));
-        return isInChildren;
+        return (leftChild.contains(p) || rightChild.contains(p));
     }
 
     public void collectContainingAABBxsIds(Point p, Collection<Integer> out) {

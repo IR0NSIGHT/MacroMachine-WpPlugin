@@ -217,11 +217,6 @@ public class PathGeometryHelperTest {
             assertEquals(fixedHeight, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
         }
         smoother.smoothAverage();
-     /*   for (Point point : toBeSmoothed) {
-            assertEquals(fixedHeight, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
-        }
-
-      */
     }
 
     @Test
@@ -257,6 +252,20 @@ public class PathGeometryHelperTest {
     @Test
     public void smoothingTestFlatGauss() {
         float fixedHeight = 5;
+        HeightDimension dimension = getHeightDimension(fixedHeight);
+
+        Collection<Point> toBeSmoothed = new LinkedList<>();
+        int squareLength = 10;
+        for (int x = -squareLength; x <= squareLength; x++)
+            for (int y = -squareLength; y <= squareLength; y++) {
+                toBeSmoothed.add(new Point(x, y));
+            }
+
+        KernelConvolution smoother = new KernelConvolution(toBeSmoothed, 3, dimension);
+        smoother.smoothGauss();
+    }
+
+    private static HeightDimension getHeightDimension(float fixedHeight) {
         HeightDimension dimension = new HeightDimension() {
             final HashMap<Point, Float> heights = new HashMap<>();
 
@@ -276,48 +285,13 @@ public class PathGeometryHelperTest {
             for (int y = -mountainLength; y <= mountainLength; y++) {
                 dimension.setHeight(x, y, 10);
             }
-
-        Collection<Point> toBeSmoothed = new LinkedList<>();
-        int squareLength = 10;
-        for (int x = -squareLength; x <= squareLength; x++)
-            for (int y = -squareLength; y <= squareLength; y++) {
-                toBeSmoothed.add(new Point(x, y));
-            }
-
-        KernelConvolution smoother = new KernelConvolution(toBeSmoothed, 3, dimension);
-        smoother.smoothGauss();
-/*
-        //hand calculated values using a gauss kernel as used by the function
-        assertEquals(7.02f, dimension.getHeight(-2,2),0.05f);
-        assertEquals(7.02f, dimension.getHeight(2,2),0.05f);
-        assertEquals(7.02f, dimension.getHeight(-2,-2),0.05f);
-        assertEquals(7.02f, dimension.getHeight(2,-2),0.05f);
-
-        assertEquals(7.947f, dimension.getHeight(-2,0),0.05f);
-*/
+        return dimension;
     }
 
 
     @Test
     public void basicGaussKernel() {
-        float fixedHeight = 12f;
-        //terrain is z=x => 45° angle on x axis
-        //since terrain is uniformly angled, no change should occur with smoothing
-        HeightDimension dimension = new HeightDimension() {
-            final HashMap<Point, Float> heights = new HashMap<>();
-
-            @Override
-            public float getHeight(int x, int y) {
-                return heights.getOrDefault(new Point(x, y), fixedHeight);
-            }
-
-            @Override
-            public void setHeight(int x, int y, float z) {
-                heights.put(new Point(x, y), z);
-            }
-        };
-
-        dimension.setHeight(0, 0, 101f);
+        HeightDimension dimension = getHeightDimension();
 
         Collection<Point> toBeSmoothed = new LinkedList<>();
         int squareLength = 10;
@@ -363,6 +337,28 @@ public class PathGeometryHelperTest {
         }
     }
 
+    private static HeightDimension getHeightDimension() {
+        float fixedHeight = 12f;
+        //terrain is z=x => 45° angle on x axis
+        //since terrain is uniformly angled, no change should occur with smoothing
+        HeightDimension dimension = new HeightDimension() {
+            final HashMap<Point, Float> heights = new HashMap<>();
+
+            @Override
+            public float getHeight(int x, int y) {
+                return heights.getOrDefault(new Point(x, y), fixedHeight);
+            }
+
+            @Override
+            public void setHeight(int x, int y, float z) {
+                heights.put(new Point(x, y), z);
+            }
+        };
+
+        dimension.setHeight(0, 0, 101f);
+        return dimension;
+    }
+
     @Test
     public void smoothingTestAngledUniform() {
         float fixedHeight = 7.57f;
@@ -394,9 +390,6 @@ public class PathGeometryHelperTest {
             assertEquals(point.x, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
         }
         smoother.smoothAverage();
-        //    for (Point point : toBeSmoothed) {
-        //        assertEquals(point.x, dimension.getHeight(point.x, point.y), "point is not correct height:" + point);
-        //    }
     }
 
     @Test
@@ -437,31 +430,5 @@ public class PathGeometryHelperTest {
         }
 
         smoother.smoothAverage();
-
-        float heightAtX5 = 9;
-        /*
-        for (Point point : toBeSmoothed) {
-
-            if (2 <= point.x && point.x <= 8)
-                //near wall
-                if (Math.abs(point.y) <= squareLength - smoothRadius)
-                    //not near y edge
-                    assertEquals(heightAtX5, dimension.getHeight(point.x, point.y), "point" + point + " has wrong " +
-                            "height");
-                else
-                    //near y edge
-                    assertTrue(8 <= dimension.getHeight(point.x, point.y) && dimension.getHeight(point.x, point.y) < 15
-                            , "point" + point + " has wrong height:" + dimension.getHeight(point.x, point.y));
-
-            else if (Math.abs(point.y) <= squareLength - smoothRadius)
-                //point is not near the wall
-                assertEquals(fixedHeight, dimension.getHeight(point.x, point.y),
-                        "point is not correct height:" + point);
-            else //a point on the y axis edge with wierd values
-                assertTrue(8 <= dimension.getHeight(point.x, point.y) && dimension.getHeight(point.x, point.y) <= 15
-                        , "point" + point + " has wrong height:" + dimension.getHeight(point.x, point.y));
-        }
-
-         */
     }
 }

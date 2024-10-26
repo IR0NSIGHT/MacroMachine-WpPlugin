@@ -7,7 +7,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 public abstract class OperationOptionsPanel<Options> extends JPanel {
-    private Options options;
+    private final Options options;
     ArrayList<OptionsLabel> inputs;
     public OperationOptionsPanel(Options options) {
         this.options = options;

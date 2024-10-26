@@ -21,14 +21,13 @@ public class RingFinder {
     }
 
     private HashMap<Point, Float> findRingAround(HashMap<Point, Float> points, HashMap<Point, Float> ignore) {
-        HashMap<Point, Float> known = points;
         HashMap<Point, Float> ring = new HashMap<Point, Float>(points.size());
         for (Point parent : points.keySet()) {
             for (int x : new int[]{-1, 0, 1})
                 for (int y : new int[]{-1, 0, 1}) {
                     Point thisP = new Point(parent.x + x, parent.y + y);
                     if (!ignore.containsKey(thisP) && !points.containsKey(thisP)) {
-                        Float z = known.get(parent);
+                        Float z = points.get(parent);
                         ring.put(thisP, z);
                     }
                 }

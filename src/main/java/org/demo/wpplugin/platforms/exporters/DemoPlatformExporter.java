@@ -33,7 +33,6 @@ import static java.util.Collections.emptyMap;
 public class DemoPlatformExporter implements WorldExporter {
     public DemoPlatformExporter(World2 world, WorldExportSettings exportSettings) {
         this.world = world;
-        this.exportSettings = exportSettings;
     }
 
     @Override
@@ -64,7 +63,6 @@ public class DemoPlatformExporter implements WorldExporter {
     }
 
     private final World2 world;
-    private final WorldExportSettings exportSettings;
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyyMMddHHmmss");
 }

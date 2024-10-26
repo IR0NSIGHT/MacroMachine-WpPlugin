@@ -6,5 +6,5 @@ import java.util.Iterator;
 public interface BoundingBox {
     boolean contains(Point p);
     BoundingBox expand(double size);
-    public Iterator<Point> areaIterator();
+    Iterator<Point> areaIterator();
 }

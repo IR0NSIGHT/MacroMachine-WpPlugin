@@ -19,7 +19,6 @@ public class PathHistogram extends JPanel implements KeyListener {
     private float userZoom = 1f;
     private Path path;
     private int selectedHandleIdx;
-    private Graphics2D g2d;
 
     public PathHistogram(Path path, int selectedIdx, float[] terrainCurve, HeightDimension dimension) {
         super(new BorderLayout());
@@ -43,7 +42,7 @@ public class PathHistogram extends JPanel implements KeyListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g2d = (Graphics2D) g;
+        Graphics2D g2d = (Graphics2D) g;
 
         Color grassGreen = new Color(69,110,51);
         Color skyBlue = new Color(192,255,255);
@@ -116,7 +115,7 @@ public class PathHistogram extends JPanel implements KeyListener {
                 g2d.drawString(String.valueOf(x), x, -userFocus.y + g2d.getFontMetrics().getHeight());
             }
             g2d.setColor(Color.RED);
-            g2d.drawString("focus" + userFocus.toString() + " zoom " + String.valueOf(totalScale), userFocus.x, 2 * g2d.getFontMetrics().getHeight());
+            g2d.drawString("focus" + userFocus + " zoom " + totalScale, userFocus.x, 2 * g2d.getFontMetrics().getHeight());
             g2d.drawLine(userFocus.x, 0, userFocus.x, -255);
         }
 
@@ -155,7 +154,7 @@ public class PathHistogram extends JPanel implements KeyListener {
                 text = "("+text+")";
             g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
         }
-        if (1==1)return;;
+        if (1==1)return;    //FIXME why is that here?
         // draw overlay
         g2d.setStroke(new BasicStroke(1f / totalScale));
         int widthOfString = g2d.getFontMetrics().stringWidth(String.valueOf(1000));

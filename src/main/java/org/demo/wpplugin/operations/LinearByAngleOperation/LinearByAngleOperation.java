@@ -81,8 +81,7 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
             }
         }
 
-        double slope = calculateSlopeInDegrees(heights);
-        return slope;
+        return calculateSlopeInDegrees(heights);
     }
 
     /**
@@ -122,13 +121,7 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
         double gradient = Math.sqrt(sumVertical * sumVertical + sumHorizontal * sumHorizontal);
 
         // Convert slope to degrees
-        double slopeInDegrees = Math.toDegrees(Math.atan(gradient));
-
-    /*    gaga
-        hhag
-        scta
-*/
-        return slopeInDegrees;
+        return Math.toDegrees(Math.atan(gradient));
     }
 
     /**
@@ -197,8 +190,8 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
 
     private ApplyAction getApplyAction() {
         return new ApplyAction() {
-            int[] valueByBand = new int[]{0, 1, 2, 4, 8, 12, 4, 1, 0};
-            Terrain[] terrainByBand = new Terrain[]{
+            final int[] valueByBand = new int[]{0, 1, 2, 4, 8, 12, 4, 1, 0};
+            final Terrain[] terrainByBand = new Terrain[]{
                     null,
                     Terrain.GRASS,
                     Terrain.GRASS,

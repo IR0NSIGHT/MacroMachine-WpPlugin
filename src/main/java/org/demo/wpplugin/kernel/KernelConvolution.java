@@ -43,10 +43,9 @@ public class KernelConvolution {
         // Generate the Gaussian curve
         for (int i = 0; i < size; i++) {
             // Calculate the x value for each point
-            float x = i;
 
             // Apply the Gaussian formula
-            float value = (float) (maxHeight * Math.exp(-Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2))));
+            float value = (float) (maxHeight * Math.exp(-Math.pow((float) i - mean, 2) / (2 * Math.pow(stdDev, 2))));
 
             // Store the value in the curve array
             curve[i] = value;

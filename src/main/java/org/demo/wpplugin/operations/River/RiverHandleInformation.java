@@ -64,27 +64,6 @@ public class RiverHandleInformation {
         return point;
     }
 
-    public static BufferedImage toImage(HeightDimension dim, int width, int height) {
-
-        // Create a BufferedImage with width, height and type (TYPE_INT_RGB is common for RGB images)
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-
-        // Loop over every pixel and manipulate it (here we're creating a gradient)
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                // Example: creating a color gradient from black to blue
-                int z = Math.round(dim.getHeight(x, y));
-
-                Color color = z == 0 ? new Color(255, 0, 0) : new Color(z, z, z);
-
-                // Set pixel color at (x, y)
-                image.setRGB(x, height - 1 - y, color.getRGB());
-            }
-        }
-
-        return image;
-    }
-
     public static boolean validateRiver2D(ArrayList<float[]> handles) {
         for (float[] handle : handles) {
             if (handle.length != RIVER_2D.size) {

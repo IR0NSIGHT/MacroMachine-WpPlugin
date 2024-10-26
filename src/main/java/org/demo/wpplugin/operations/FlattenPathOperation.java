@@ -68,8 +68,6 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
         // Using this constructor instead will create a continues operation. The tick() method will be invoked once
         // every "delay" ms while the user has the mouse button down or continues pressing on the tablet. The "first"
         // parameter will be true for the first invocation per mouse button press and false for every subsequent
-        // invocation:
-        // super(NAME, DESCRIPTION, delay, ID);
     }
 
     public static void main(String[] args) {
@@ -298,67 +296,6 @@ public class FlattenPathOperation extends MouseOrTabletOperation implements
                 }
             }
 
-            /*
-
-            int pathWidth = 2;
-            int transitionDist = 10;
-            int totalRadius = pathWidth + transitionDist;
-            float maxHeightDiff = 0.7f;
-            Path path = PathManager.instance.getPathBy(PATH_ID);
-
-            HashSet<Point> seen = new HashSet<>();
-            ArrayList<float[]> curve = path.continousCurve();
-            LinkedList<Point> edge = new LinkedList<>();
-            int totalRadiusSq = totalRadius * totalRadius;
-            //collect all points within rough radius
-            for (float[] pF : curve) {
-                Point p = getPoint2D(pF);
-                for (int x = -totalRadius; x < totalRadius; x++) {
-                    for (int y = -totalRadius; y < totalRadius; y++) {
-                        Point edgePoint = new Point(p.x + x, p.y + y);
-                        if (edgePoint.distanceSq(p) > totalRadiusSq)
-                            continue;
-                        if (seen.contains(edgePoint))
-                            continue;
-                        seen.add(edgePoint);
-                        edge.add(edgePoint);
-                    }
-                }
-            }
-
-            float[] curveHeights = getPathHeight(curve.toArray(new Point[0]), p -> getDimension().getHeightAt(p));
-            curveHeights = applyMedianFilter(curveHeights, 11);
-            float[] diffs = findMaxDifference(curveHeights);
-            int safety = 0;
-            while (diffs[1] > 0.5f && safety < 100) {
-                curveHeights = applyMeanFilter(curveHeights);
-                diffs = findMaxDifference(curveHeights);
-                safety++;
-            }
-            curveHeights = applyMinFilter(curveHeights, 5);
-
-            //curveHeights = applyDownslopeFilter(curveHeights);
-            for (Point e : edge) {
-                int curveIdx = getClosestPointIndexOnCurveTo(curve, e);
-                Point closestCurvePoint = getPoint2D(curve.get(curveIdx));
-
-                float interpolatedHeight = getHeightByDistanceToCurve(e.distance(closestCurvePoint),
-                        getDimension().getHeightAt(e),
-                        curveHeights[curveIdx], pathWidth, transitionDist
-                );
-
-              // if (closestCurvePoint.distance(e) < pathWidth - 1) {
-              //     //water
-              //     getDimension().setHeightAt(e, interpolatedHeight - 2);
-              //     getDimension().setWaterLevelAt(e.x, e.y, (int) interpolatedHeight);
-
-              // } else {
-                    //edge
-                    getDimension().setHeightAt(e, interpolatedHeight);
-               // }
-            }
-
-*/
         } catch (Exception e) {
             throw e;
         } finally {

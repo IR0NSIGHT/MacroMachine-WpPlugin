@@ -96,9 +96,6 @@ public class PathGeometryHelper implements BoundingBox {
     private void expandX(Point base, int radius, int f, HashSet<Point> allNearby, boolean onY) {
         for (int i = 1; i <= radius; i++) {
             Point nearby = onY ? new Point(base.x, base.y + i * f) : new Point(base.x + i * f, base.y);
-            //    if (allNearby.contains(nearby)) {
-            //        return;
-            //    }
             allNearby.add(nearby);
         }
     }
