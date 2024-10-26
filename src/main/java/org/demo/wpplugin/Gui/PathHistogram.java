@@ -17,16 +17,25 @@ public class PathHistogram extends JPanel implements KeyListener {
     private final float[] terrainCurve;
     private final HeightDimension dimension;
     private final Point userFocus = new Point(0, 0);
+    /**
+     * array that tells which handles are currently selected by the user
+     */
+    private final boolean[] handleSelection;
     private float userZoom = 1f;
     private Path path;
-    private int selectedHandleIdx;
+    /**
+     * the handle where the users selection cursor is currently
+     */
+    private int cursorHandleIdx;
 
     public PathHistogram(Path path, int selectedIdx, float[] terrainCurve, HeightDimension dimension) {
         super(new BorderLayout());
-        this.selectedHandleIdx = selectedIdx;
+        this.cursorHandleIdx = selectedIdx;
         overwritePath(path);
         this.terrainCurve = terrainCurve;
         this.dimension = dimension;
+        handleSelection = new boolean[path.amountHandles()];
+
         setFocusable(true); // Make sure the component can receive focus for key events
         requestFocusInWindow(); // Request focus to ensure key bindings work
         setupKeyBindings();
@@ -127,7 +136,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         g2d.setStroke(dottedHandle);
 
         int[] handleToCurve = path.handleToCurveIdx(true);
-        //mark handles
+        //DRAW HANDLES
         for (int handleIdx = 1; handleIdx < path.amountHandles() - 1; handleIdx++) {
             int pointCurveIdx = handleToCurve[handleIdx];
             if (pointCurveIdx < userFocus.x) continue;
@@ -139,14 +148,15 @@ public class PathHistogram extends JPanel implements KeyListener {
             if (notSet) {
                 c = Color.LIGHT_GRAY;
             }
-
+            if (handleIdx == getCursorHandleIdx()) c = Color.RED;
+            if (handleSelection[handleIdx]) c = Color.ORANGE;
             //vertical lines
-            g2d.setColor(handleIdx == getSelectedHandleIdx() ? Color.ORANGE : c);
+            g2d.setColor(c);
             g2d.setStroke(dottedHandle);
 
-            if (handleIdx == getSelectedHandleIdx()) {
+            if (handleIdx == getCursorHandleIdx()) {
                 int width = 8;
-                g2d.fillOval(pointCurveIdx-width/2,-userFocus.y+10+width/2, width, width);
+                g2d.fillOval(pointCurveIdx - width / 2, -userFocus.y + 10 + width / 2, width, width);
             }
 
             String text = String.format("%.0f -> %d", curveHeightHandle, curveHeightReal);
@@ -169,8 +179,12 @@ public class PathHistogram extends JPanel implements KeyListener {
         }
     }
 
-    private int getSelectedHandleIdx() {
-        return selectedHandleIdx;
+    private int getCursorHandleIdx() {
+        return cursorHandleIdx;
+    }
+
+    private void setCursorHandleIdx(int idx) {
+        cursorHandleIdx = idx;
     }
 
     @Override
@@ -199,7 +213,7 @@ public class PathHistogram extends JPanel implements KeyListener {
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
         switch (key) {
-
+            // ZOOM STUFF
             case KeyEvent.VK_PLUS:
                 userZoom = Math.min(userZoom * 1.5f, 10f);
                 break;
@@ -208,11 +222,16 @@ public class PathHistogram extends JPanel implements KeyListener {
                 userZoom = Math.max(userZoom / 1.5f, 0.1f);
                 break;
 
+            case KeyEvent.VK_ENTER:
+                toggleHandleSelection(getCursorHandleIdx());
+                break;
+
+            // CHANGE VALUE OF SELECTION
             case KeyEvent.VK_UP: {
                 if (e.isShiftDown()) userFocus.y += 10;
                 else {
                     int change = e.isControlDown() ? 25 : 1;
-                    changeValue(change);
+                    changeHandleValue(change);
                 }
             }
             break;
@@ -220,40 +239,78 @@ public class PathHistogram extends JPanel implements KeyListener {
                 if (e.isShiftDown()) userFocus.y -= 10;
                 else {
                     int change = e.isControlDown() ? 25 : 1;
-                    changeValue(-change);
+                    changeHandleValue(-change);
                 }
             }
             break;
-            case KeyEvent.VK_DELETE: {
-                float[] handle = path.handleByIndex(getSelectedHandleIdx());
-                float[] newHandle = setValue(handle, RiverInformation.WATER_Z, INHERIT_VALUE);
-                Path newP = path.setHandleByIdx(newHandle, getSelectedHandleIdx());
-                overwritePath(newP);
+            case KeyEvent.VK_T: {
+                //set all selected handles to terrain height
+                for (int i = 1; i < handleSelection.length - 1; i++) {
+                    if (!handleSelection[i]) continue;
+                    float[] handle = path.handleByIndex(i);
+                    int pointCurveIdx = path.handleToCurveIdx(true)[i];
+                    float terrainHeight = terrainCurve[pointCurveIdx];
+                    float[] newHandle = setValue(handle, RiverInformation.WATER_Z, terrainHeight);
+                    Path newP = path.setHandleByIdx(newHandle, i);
+                    overwritePath(newP);
+                }
                 break;
             }
+            case KeyEvent.VK_DELETE: {
+                // set all selected handles to INHERIT
+                for (int i = 1; i < handleSelection.length - 1; i++) {
+                    if (!handleSelection[i]) continue;
+                    float[] handle = path.handleByIndex(i);
+                    float[] newHandle = setValue(handle, RiverInformation.WATER_Z, INHERIT_VALUE);
+                    Path newP = path.setHandleByIdx(newHandle, i);
+                    overwritePath(newP);
+                }
+                break;
+            }
+
+            // SELECTION CURSOR INPUT
             case KeyEvent.VK_RIGHT:
                 if (e.isShiftDown()) userFocus.x += 40;
-                else selectedHandleIdx = selectableIdxNear(getSelectedHandleIdx(), 1);
+                else {
+                    //expand selection
+                    if (e.isControlDown()) {
+                        expandSelectState(+1);
+                    } else {
+                        moveCursor(+1);
+                    }
+                }
                 break;
             case KeyEvent.VK_LEFT:
                 if (e.isShiftDown()) userFocus.x -= 40;
-                else selectedHandleIdx = selectableIdxNear(getSelectedHandleIdx(), -1);
+                else {
+                    //expand selection
+                    if (e.isControlDown()) {
+                        expandSelectState(-1);
+                    } else {
+                        moveCursor(-1);
+                    }
+                }
                 break;
-            case KeyEvent.VK_T: {       //match handle height to terrain
-                float[] handle = path.handleByIndex(getSelectedHandleIdx());
-                int pointCurveIdx = path.handleToCurveIdx(true)[getSelectedHandleIdx()];
-                float terrainHeight = terrainCurve[pointCurveIdx];
-                float[] newHandle = setValue(handle, RiverInformation.WATER_Z, terrainHeight);
-                Path newP = path.setHandleByIdx(newHandle, getSelectedHandleIdx());
-                overwritePath(newP);
+
+            case KeyEvent.VK_A:
+                if (e.isControlDown()) {
+                    boolean allSelected = true;
+                    for (int i = 1; i < handleSelection.length - 1; i++) {
+                        allSelected = allSelected && isSelected(i);
+                    }
+                    if (allSelected) deselectAll();
+                    else selectAll();
+                }
                 break;
-            }
+            case KeyEvent.VK_I:
+                if (e.isControlDown()) invertTotalSelection();
+                break;
             default:
         }
 
         float[] sortedTerrain = terrainCurve.clone();
         Arrays.sort(sortedTerrain);
-        int maxTerrain = Math.round(sortedTerrain[sortedTerrain.length-1]);
+        int maxTerrain = Math.round(sortedTerrain[sortedTerrain.length - 1]);
 
         int[] handleToCurve = path.handleToCurveIdx(true);
         int curveLength = handleToCurve[handleToCurve.length - 2];
@@ -262,16 +319,14 @@ public class PathHistogram extends JPanel implements KeyListener {
         repaint();
     }
 
-    @Override
-    public void keyReleased(KeyEvent e) {
-
+    private void toggleHandleSelection(int handleIdx) {
+        if (isSelected(handleIdx)) doUnSelect(handleIdx);
+        else doSelect(handleIdx);
     }
 
-    private void changeValue(float amount) {
-        int handleIdx = getSelectedHandleIdx();
-        if (handleIdx < 0 || handleIdx >= path.amountHandles()) {
-            throw new IllegalArgumentException("can not set value because idx is not a handle");
-        } else {
+    private void changeHandleValue(float amount) {
+        for (int handleIdx = 1; handleIdx < handleSelection.length - 1; handleIdx++) {
+            if (!handleSelection[handleIdx]) continue;
             float[] handle = path.handleByIndex(handleIdx);
 
             float targetValue = RiverHandleInformation.sanitizeInput(getValue(handle, RiverInformation.WATER_Z) + amount, RiverInformation.WATER_Z);
@@ -281,8 +336,55 @@ public class PathHistogram extends JPanel implements KeyListener {
         }
     }
 
+    private void expandSelectState(int dir) {
+        //copy current select state to next cursor
+        int nextCursor = selectableIdxNear(getCursorHandleIdx(), dir);
+        if (isSelected(getCursorHandleIdx())) doSelect(nextCursor);
+        else doUnSelect(nextCursor);
+        setCursorHandleIdx(nextCursor);
+    }
+
+    private void moveCursor(int dir) {
+        setCursorHandleIdx(selectableIdxNear(getCursorHandleIdx(), dir));
+    }
+
+    private boolean isSelected(int idx) {
+        return handleSelection[idx];
+    }
+
+    private void deselectAll() {
+        for (int i = 1; i < handleSelection.length - 1; i++) {
+            doUnSelect(i);
+        }
+    }
+
+    private void selectAll() {
+        for (int i = 1; i < handleSelection.length - 1; i++) {
+            doSelect(i);
+        }
+    }
+
+    private void invertTotalSelection() {
+        for (int i = 1; i < handleSelection.length - 1; i++) {
+            toggleHandleSelection(i);
+        }
+    }
+
+    private void doUnSelect(int idx) {
+        handleSelection[idx] = false;
+    }
+
+    private void doSelect(int idx) {
+        handleSelection[idx] = true;
+    }
+
     private int selectableIdxNear(int startIdx, int dir) {
         //dont allow selecting the first and last index, as those are control points and not on the curve
         return Math.max(1, Math.min(path.amountHandles() - 2, startIdx + dir));
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
     }
 }

@@ -201,10 +201,13 @@ public class RiverHandleInformation {
     }
 
     public enum RiverInformation {
-        RIVER_RADIUS(0, "river radius", "radius of the river ", 0, 1000), RIVER_DEPTH(1, "river depth", "depth of the" +
-                " river ", 0, 1000), BEACH_RADIUS(2, "beach radius", "radius of the beach ", 0, 1000),
+        RIVER_RADIUS(0, "river radius", "radius of the river ", 0, 1000),
+        RIVER_DEPTH(1, "river depth", "depth of the" +
+                " river ", 0, 1000),
+        BEACH_RADIUS(2, "beach radius", "radius of the beach ", 0, 1000),
         TRANSITION_RADIUS(3, "transition radius", "radius of the transition blending with original terrain ", 0,
-                1000), WATER_Z(4, "water level", "water level position on z axis", 0, 1000);
+                1000),
+        WATER_Z(4, "water level", "water level position on z axis", -10000, 100000);
         public final int idx;
         public final String displayName;
         public final String toolTip;
