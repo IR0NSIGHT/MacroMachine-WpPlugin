@@ -154,19 +154,6 @@ public class PathHistogram extends JPanel implements KeyListener {
                 text = "("+text+")";
             g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
         }
-        if (1==1)return;    //FIXME why is that here?
-        // draw overlay
-        g2d.setStroke(new BasicStroke(1f / totalScale));
-        int widthOfString = g2d.getFontMetrics().stringWidth(String.valueOf(1000));
-        {    //mark height lines
-            g2d.setColor(Color.BLACK);
-            int windowX = (int) (userFocus.x / totalScale);
-            for (int y = 0; y <= 255; y += 25) {
-                g2d.drawString(String.valueOf(((y))), windowX, -(y));
-                g2d.drawLine(windowX + widthOfString, -(y), windowX + 2 * widthOfString, -(y));
-            }
-        }
-
     }
 
     private int getSelectedHandleIdx() {
