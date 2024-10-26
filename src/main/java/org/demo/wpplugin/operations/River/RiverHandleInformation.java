@@ -98,13 +98,7 @@ public class RiverHandleInformation {
         int dialogHeight = (int) (screenSize.height * 0.5); // 50% of screen height
 
 
-        // Create a JLabel to display the image
-        float[] terrainCurve = new float[curve.curveLength()];
-        for (int i = 0; i < curve.curveLength(); i++) {
-            terrainCurve[i] = heightDimension.getHeight(curve.getPosX(i), curve.getPosY(i));
-        }
-
-        PathHistogram imageLabel = new PathHistogram(path, selectedHandleIdx, terrainCurve, heightDimension);
+        PathHistogram imageLabel = new PathHistogram(path, selectedHandleIdx, heightDimension);
         imageLabel.setSize(dialogWidth, dialogHeight);
         // Add the JLabel to the dialog
         dialog.add(imageLabel);

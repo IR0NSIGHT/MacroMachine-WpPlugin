@@ -29,6 +29,20 @@ public class Path implements Iterable<float[]> {
         assert invariant() : "path invariant hurt";
     }
 
+    public static Path newFilledPath(int length, PointInterpreter.PointType type) {
+        Path p = new Path(Collections.EMPTY_LIST, type);
+        for (int i = 0; i < length; i++) {
+            float[] newHandle = new float[type.size];
+            newHandle[0] = 3 * i;
+            newHandle[1] = 4 * i;
+            for (int n = 2; n < type.size; n++) {
+                newHandle[n] = 27;
+            }
+            p = p.addPoint(newHandle.clone());
+        }
+        return p;
+    }
+
     private boolean invariant() {
         boolean okay = true;
 
@@ -58,9 +72,12 @@ public class Path implements Iterable<float[]> {
         float[] out = new float[curve.curveLength()];
         Point first = curve.getPositions2d()[0];
         out[0] = Math.min(curve.getInfo(WATER_Z)[0], dim.getHeight(first.x, first.y));
+        Point[] positions = curve.getPositions2d();
         for (int i = 1; i < curve.curveLength(); i++) {
             float curveZ = curve.getInfo(WATER_Z)[i];
-            float terrainZ = dim.getHeight(curve.getPositions2d()[i].x, curve.getPositions2d()[i].y);
+            int x = positions[i].x;
+            int y = positions[i].y;
+            float terrainZ = dim.getHeight(x,y);
             float previousZ = out[i - 1];
 
             out[i] = Math.min(Math.min(previousZ, terrainZ), curveZ);

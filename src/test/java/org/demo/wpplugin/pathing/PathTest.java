@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PathTest {
     @Test
     void clonePath() {
-        Path p = newFilledPath(4, RIVER_2D);
+        Path p = Path.newFilledPath(4, RIVER_2D);
         Path clone = p.clone();
         assertEquals(p, clone);
         assertNotSame(p, clone);
@@ -42,20 +42,6 @@ class PathTest {
         assertNotSame(p, clone);
         assertNotEquals(p, clone);
 
-    }
-
-    private Path newFilledPath(int length, PointInterpreter.PointType type) {
-        Path p = new Path(Collections.EMPTY_LIST, type);
-        for (int i = 0; i < length; i++) {
-            float[] newHandle = new float[type.size];
-            newHandle[0] = 3 * i;
-            newHandle[1] = 4 * i;
-            for (int n = 2; n < type.size; n++) {
-                newHandle[n] = 27;
-            }
-            p = p.addPoint(newHandle.clone());
-        }
-        return p;
     }
 
     @Test
@@ -88,7 +74,7 @@ class PathTest {
     }
 
     private Path newFilledPath(int length) {
-        return newFilledPath(length, PointInterpreter.PointType.POSITION_2D);
+        return Path.newFilledPath(length, PointInterpreter.PointType.POSITION_2D);
     }
 
     @Test
@@ -180,7 +166,7 @@ class PathTest {
         }
 
         {  //make sure meta data is ignored for indexOf
-            Path p = newFilledPath(length, RIVER_2D);
+            Path p = Path.newFilledPath(length, RIVER_2D);
             assertEquals(length, p.amountHandles());
             assertSame(p.type, RIVER_2D);
 
@@ -195,7 +181,7 @@ class PathTest {
 
     @Test
     void continuousCurve() {
-        Path p = newFilledPath(10 + 2 + 1, RIVER_2D);
+        Path p = Path.newFilledPath(10 + 2 + 1, RIVER_2D);
 
         //set start river width values
         float startWidthRiver = 3;

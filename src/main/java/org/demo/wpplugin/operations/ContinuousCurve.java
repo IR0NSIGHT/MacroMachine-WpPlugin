@@ -6,10 +6,15 @@ import org.demo.wpplugin.pathing.Path;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import static org.demo.wpplugin.pathing.Path.interpolateWaterZ;
 
 public class ContinuousCurve {
     private final int length;
     private final ArrayList<float[]> flatCurve;
+    private final HashMap<RiverHandleInformation.RiverInformation, Float> maxima = new HashMap<>();
+    private final HashMap<RiverHandleInformation.RiverInformation, Float> minima = new HashMap<>();
 
     public ContinuousCurve(ArrayList<float[]> flatCurve) {
         if (flatCurve.isEmpty()) {
@@ -18,10 +23,30 @@ public class ContinuousCurve {
             this.length = flatCurve.get(0).length;
         }
 
-        for (float[] curve : flatCurve) {
+        for (RiverHandleInformation.RiverInformation info :RiverHandleInformation.RiverInformation.values()) {
+            float[] curve = flatCurve.get(info.idx);
             assert curve.length == length;
+
+            {
+                float max = Float.MIN_VALUE;
+                float min = Float.MAX_VALUE;
+                for (float f: curve) {
+                    max = Math.max(f,max);
+                    min = Math.min(f,min);
+                }
+                maxima.put(info, max);
+                minima.put(info, min);
+            }
         }
         this.flatCurve = flatCurve;
+    }
+
+    public float getMax(RiverHandleInformation.RiverInformation information) {
+        return maxima.getOrDefault(information,Float.MIN_VALUE);
+    }
+
+    public float getMin(RiverHandleInformation.RiverInformation information) {
+        return minima.getOrDefault(information,Float.MAX_VALUE);
     }
 
     public static ContinuousCurve fromPath(Path path, HeightDimension dimension) {
@@ -47,11 +72,23 @@ public class ContinuousCurve {
         return new ContinuousCurve(interpolatedCurve);
     }
 
+    public float[] terrainCurve(HeightDimension dim) {
+        float[] terrainCurve = new float[this.curveLength()];
+        for (int i = 0; i < this.curveLength(); i++) {
+            terrainCurve[i] = dim.getHeight(this.getPosX(i), this.getPosY(i));
+        }
+        return terrainCurve;
+    }
+
+    public float[] getWaterCurve(HeightDimension dim) {
+        return Path.interpolateWaterZ(this, dim);
+    }
+
     private float[] interpolateType(RiverHandleInformation.RiverInformation type, float[] handle,
                                     int[] handleToCurveIdx, HeightDimension dimension) {
         switch (type) {
             case WATER_Z:
-                Path.interpolateWaterZ(null, dimension);
+                interpolateWaterZ(null, dimension);
             case RIVER_RADIUS:
             case TRANSITION_RADIUS:
             case BEACH_RADIUS:
@@ -80,13 +117,13 @@ public class ContinuousCurve {
     public int getPosX(int curveIdx) {
         int idx = 0;
         assert idx < flatCurve.size();
-        return Math.round(flatCurve.get(idx)[curveIdx]);
+        return (int)(flatCurve.get(idx)[curveIdx]);
     }
 
     public int getPosY(int curveIdx) {
         int idx = 1;
         assert idx < flatCurve.size();
-        return Math.round(flatCurve.get(idx)[curveIdx]);
+        return (int)(flatCurve.get(idx)[curveIdx]);
     }
 
     public Point getPos(int curveIdx) {
@@ -95,11 +132,13 @@ public class ContinuousCurve {
 
     public Point[] getPositions2d() {
         Point[] positions = new Point[curveLength()];
+        float[] xPos = flatCurve.get(0);
+        float[] yPos = flatCurve.get(1);
         if (curveLength() < 2)
             return positions;
 
         for (int i = 0; i < positions.length; i++) {
-            positions[i] = getPos(i);
+            positions[i] = new Point((int)xPos[i],(int)yPos[i]);
         }
         return positions;
     }

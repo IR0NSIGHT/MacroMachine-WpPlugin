@@ -27,15 +27,19 @@ public class PathHistogram extends JPanel implements KeyListener {
      * the handle where the users selection cursor is currently
      */
     private int cursorHandleIdx;
+    private ContinuousCurve curve;
+    private boolean recalcCurve = false;
+    int[] handleToCurve;
 
-    public PathHistogram(Path path, int selectedIdx, float[] terrainCurve, HeightDimension dimension) {
+    public PathHistogram(Path path, int selectedIdx, HeightDimension dimension) {
         super(new BorderLayout());
         this.cursorHandleIdx = selectedIdx;
         overwritePath(path);
-        this.terrainCurve = terrainCurve;
         this.dimension = dimension;
         handleSelection = new boolean[path.amountHandles()];
-
+        this.curve = ContinuousCurve.fromPath(path, dimension);
+        this.terrainCurve = curve.terrainCurve(dimension);
+        handleToCurve = path.handleToCurveIdx(true);
         setFocusable(true); // Make sure the component can receive focus for key events
         requestFocusInWindow(); // Request focus to ensure key bindings work
         setupKeyBindings();
@@ -43,6 +47,7 @@ public class PathHistogram extends JPanel implements KeyListener {
 
     private void overwritePath(Path path) {
         this.path = path;
+        recalcCurve = true;
     }
 
     private void setupKeyBindings() {
@@ -52,14 +57,20 @@ public class PathHistogram extends JPanel implements KeyListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+
+        if (recalcCurve) {
+            recalcCurve = false;
+            curve = ContinuousCurve.fromPath(path, dimension);
+            handleToCurve = path.handleToCurveIdx(true);
+        }
+
         Graphics2D g2d = (Graphics2D) g;
 
         Color grassGreen = new Color(69, 110, 51);
         Color skyBlue = new Color(192, 255, 255);
         Color waterBlue = new Color(49, 72, 244);
 
-        ContinuousCurve curve = ContinuousCurve.fromPath(path, dimension);
-        float[] curveHeights = Path.interpolateWaterZ(curve, dimension);
+        float[] curveHeights = curve.getWaterCurve(dimension);
 
         {   //draw background
             g2d.setColor(skyBlue);
@@ -135,7 +146,6 @@ public class PathHistogram extends JPanel implements KeyListener {
 
         g2d.setStroke(dottedHandle);
 
-        int[] handleToCurve = path.handleToCurveIdx(true);
         //DRAW HANDLES
         for (int handleIdx = 1; handleIdx < path.amountHandles() - 1; handleIdx++) {
             int pointCurveIdx = handleToCurve[handleIdx];
@@ -248,7 +258,7 @@ public class PathHistogram extends JPanel implements KeyListener {
                 for (int i = 1; i < handleSelection.length - 1; i++) {
                     if (!handleSelection[i]) continue;
                     float[] handle = path.handleByIndex(i);
-                    int pointCurveIdx = path.handleToCurveIdx(true)[i];
+                    int pointCurveIdx = handleToCurve[i];
                     float terrainHeight = terrainCurve[pointCurveIdx];
                     float[] newHandle = setValue(handle, RiverInformation.WATER_Z, terrainHeight);
                     Path newP = path.setHandleByIdx(newHandle, i);
@@ -308,13 +318,10 @@ public class PathHistogram extends JPanel implements KeyListener {
             default:
         }
 
-        float[] sortedTerrain = terrainCurve.clone();
-        Arrays.sort(sortedTerrain);
-        int maxTerrain = Math.round(sortedTerrain[sortedTerrain.length - 1]);
+        int maxTerrain = Math.round(curve.getMax(RiverInformation.WATER_Z));
 
-        int[] handleToCurve = path.handleToCurveIdx(true);
         int curveLength = handleToCurve[handleToCurve.length - 2];
-        userFocus.x = Math.max(0, Math.min(userFocus.x, curveLength - 50));
+        userFocus.x = Math.max(-50, Math.min(userFocus.x, curveLength - 50));
         userFocus.y = Math.max(0, Math.min(maxTerrain, userFocus.y));
         repaint();
     }
