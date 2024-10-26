@@ -217,7 +217,7 @@ class PathTest {
         ContinuousCurve curveP = ContinuousCurve.fromPath(p, getImmutableDimension62());
         //are all curvepoints y=37?
         for (int i = 0; i < curveP.curveLength(); i++) {
-            assertEquals(37, curveP.getPosY(i), 0.001f, "this point on the curve is supposed to be at y=37");
+            assertEquals(37, curveP.getPosY(i), 0.01f, "this point on the curve is supposed to be at y=37");
         }
 
         //test if all handles (except zero and last handle) are at the right index

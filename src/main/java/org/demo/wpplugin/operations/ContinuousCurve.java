@@ -3,6 +3,7 @@ package org.demo.wpplugin.operations;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
+import org.demo.wpplugin.pathing.PointInterpreter;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -15,18 +16,19 @@ public class ContinuousCurve {
     private final ArrayList<float[]> flatCurve;
     private final HashMap<RiverHandleInformation.RiverInformation, Float> maxima = new HashMap<>();
     private final HashMap<RiverHandleInformation.RiverInformation, Float> minima = new HashMap<>();
+    private PointInterpreter.PointType type;
 
-    public ContinuousCurve(ArrayList<float[]> flatCurve) {
+    public ContinuousCurve(ArrayList<float[]> flatCurve, PointInterpreter.PointType type) {
+        this.type = type;
         if (flatCurve.isEmpty()) {
             this.length = 0;
         } else {
             this.length = flatCurve.get(0).length;
         }
 
-        for (RiverHandleInformation.RiverInformation info :RiverHandleInformation.RiverInformation.values()) {
-            float[] curve = flatCurve.get(info.idx + 2 /* position */);
+        for (RiverHandleInformation.RiverInformation info : type.information) {
+            float[] curve = flatCurve.get(info.idx + type.posSize);
             assert curve.length == length;
-
             {
                 float max = Float.MIN_VALUE;
                 float min = Float.MAX_VALUE;
@@ -38,6 +40,7 @@ public class ContinuousCurve {
                 minima.put(info, min);
             }
         }
+
         this.flatCurve = flatCurve;
     }
 
@@ -50,8 +53,10 @@ public class ContinuousCurve {
     }
 
     public static ContinuousCurve fromPath(Path path, HeightDimension dimension) {
+
+        assert path.type != null;
         if (path.amountHandles() < 4)
-            return new ContinuousCurve(new ArrayList<>());
+            return new ContinuousCurve(new ArrayList<>(), path.type);
         ArrayList<float[]> handles = new ArrayList<>(path.amountHandles());
         for (float[] handle : path)
             handles.add(handle.clone());
@@ -69,7 +74,7 @@ public class ContinuousCurve {
             float[] interpolated = Path.interpolateCatmullRom(nthHandles, handleToCurveIdx);
             interpolatedCurve.add(interpolated);
         }
-        return new ContinuousCurve(interpolatedCurve);
+        return new ContinuousCurve(interpolatedCurve, path.type);
     }
 
     public float[] terrainCurve(HeightDimension dim) {
@@ -99,13 +104,13 @@ public class ContinuousCurve {
     }
 
     public float[] getInfo(RiverHandleInformation.RiverInformation information) {
-        int idx = RiverHandleInformation.PositionSize.SIZE_2_D.value + information.idx;
+        int idx = this.type.posSize + information.idx;
         assert idx >= 0 && idx < flatCurve.size();
         return flatCurve.get(idx);
     }
 
     public float getInfo(RiverHandleInformation.RiverInformation information, int curveIdx) {
-        int idx = RiverHandleInformation.PositionSize.SIZE_2_D.value + information.idx;
+        int idx = this.type.posSize + information.idx;
         assert idx >= 0 && idx < flatCurve.size();
         return flatCurve.get(idx)[curveIdx];
     }
@@ -117,13 +122,13 @@ public class ContinuousCurve {
     public int getPosX(int curveIdx) {
         int idx = 0;
         assert idx < flatCurve.size();
-        return (int)(flatCurve.get(idx)[curveIdx]);
+        return Math.round(flatCurve.get(idx)[curveIdx]);
     }
 
     public int getPosY(int curveIdx) {
         int idx = 1;
         assert idx < flatCurve.size();
-        return (int)(flatCurve.get(idx)[curveIdx]);
+        return Math.round(flatCurve.get(idx)[curveIdx]);
     }
 
     public Point getPos(int curveIdx) {
@@ -138,7 +143,7 @@ public class ContinuousCurve {
             return positions;
 
         for (int i = 0; i < positions.length; i++) {
-            positions[i] = new Point((int)xPos[i],(int)yPos[i]);
+            positions[i] = new Point(Math.round(xPos[i]),Math.round(yPos[i]));
         }
         return positions;
     }

@@ -124,7 +124,7 @@ public class PathGeometryHelperTest {
         int radius = 50;
         PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage();
-        assertEquals(parentage.size(), curve.size());
+        assertEquals(curve.size(),parentage.size());
         int totalNearby = 0;
         for (Point point : curve) {
             totalNearby += parentage.get(point).size();
