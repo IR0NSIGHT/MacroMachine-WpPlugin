@@ -90,8 +90,8 @@ public class PathHistogram extends JPanel implements KeyListener {
         Stroke dottedHandle = new BasicStroke(3f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0);
         Stroke dottedGrid = new BasicStroke(1f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3f / totalScale, 2f / totalScale}, 0);
 
-
-        g2d.translate(totalScale * (-userFocus.x + 50), totalScale * (userFocus.y - 50));
+        int borderWidth = 100;
+        g2d.translate(totalScale * (-userFocus.x) + borderWidth, totalScale * (userFocus.y) - borderWidth);
         g2d.scale(totalScale, totalScale);
         Font font = new Font("Arial", Font.PLAIN, (int) (20 / (totalScale)));
         g2d.setFont(font);
