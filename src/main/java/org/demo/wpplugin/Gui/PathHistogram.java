@@ -9,6 +9,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.Arrays;
 
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 
@@ -44,9 +45,9 @@ public class PathHistogram extends JPanel implements KeyListener {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        Color grassGreen = new Color(69,110,51);
-        Color skyBlue = new Color(192,255,255);
-        Color waterBlue = new Color(49,72,244);
+        Color grassGreen = new Color(69, 110, 51);
+        Color skyBlue = new Color(192, 255, 255);
+        Color waterBlue = new Color(49, 72, 244);
 
         ContinuousCurve curve = ContinuousCurve.fromPath(path, dimension);
         float[] curveHeights = Path.interpolateWaterZ(curve, dimension);
@@ -70,7 +71,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         Stroke dottedGrid = new BasicStroke(1f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3f / totalScale, 2f / totalScale}, 0);
 
 
-        g2d.translate(totalScale*(-userFocus.x + 50), totalScale*(userFocus.y - 50 ));
+        g2d.translate(totalScale * (-userFocus.x + 50), totalScale * (userFocus.y - 50));
         g2d.scale(totalScale, totalScale);
         Font font = new Font("Arial", Font.PLAIN, (int) (20 / (totalScale)));
         g2d.setFont(font);
@@ -81,19 +82,15 @@ public class PathHistogram extends JPanel implements KeyListener {
         {        //draw interpoalted curve
             g2d.setColor(Color.BLACK);
             for (int i = 0; i < curveHeights.length; i++) {
-                if (i < userFocus.x)
-                    continue;
+                if (i < userFocus.x) continue;
                 g2d.setColor(grassGreen);  //green
                 int terrainB = Math.round(terrainCurve[i]);
                 g2d.fillRect(i, -(int) terrainB, 1, terrainB - userFocus.y);
 
                 g2d.setColor(waterBlue); //blue
                 int aZ = Math.round(curveHeights[i]);
-                g2d.fillRect(i - 1, -aZ, 1, aZ  - userFocus.y);
+                g2d.fillRect(i - 1, -aZ, 1, aZ - userFocus.y);
             }
-
-            g2d.drawString("terrain profile", terrainCurve.length, terrainCurve[terrainCurve.length - 1]);
-            g2d.drawString("river profile", curveHeights.length, -curveHeights[curveHeights.length - 1]);
         }
 
         {
@@ -102,57 +99,73 @@ public class PathHistogram extends JPanel implements KeyListener {
             g2d.setColor(Color.BLACK);
             int y;
             for (y = 0; y <= userFocus.y + 300; y += 50) {
-                if (y < userFocus.y)
-                    continue;
+                if (y < userFocus.y) continue;
                 g2d.drawLine(userFocus.x, -y, curveHeights.length, -y);
                 g2d.drawString(String.valueOf(y), userFocus.x - g2d.getFontMetrics().stringWidth(String.valueOf(y)), -y);
             }
             //vertical lines
             for (int x = 0; x <= curveHeights.length; x += 50) {
-                if (x < userFocus.x)
-                    continue;
+                if (x < userFocus.x) continue;
                 g2d.drawLine(x, -userFocus.y, x, -y);
                 g2d.drawString(String.valueOf(x), x, -userFocus.y + g2d.getFontMetrics().getHeight());
             }
             g2d.setColor(Color.RED);
             g2d.drawString("focus" + userFocus + " zoom " + totalScale, userFocus.x, 2 * g2d.getFontMetrics().getHeight());
-            g2d.drawLine(userFocus.x, 0, userFocus.x, -255);
+            //    g2d.drawLine(userFocus.x, 0, userFocus.x, -255);
         }
 
         g2d.setStroke(dottedHandle);
-        //mark water line
-        g2d.setColor(Color.BLUE);
-        g2d.drawLine(userFocus.x, -62, curveHeights.length, -62);
-        g2d.drawString("ocean level",userFocus.x - g2d.getFontMetrics().stringWidth("ocean level"),-62);
+
+        int oceanLevel = 62;
+        if (userFocus.y < oceanLevel) {
+            //mark water line
+            g2d.setColor(Color.BLUE);
+            g2d.drawLine(userFocus.x, -62, curveHeights.length, -62);
+            g2d.drawString("ocean level", userFocus.x - g2d.getFontMetrics().stringWidth("ocean level"), -oceanLevel);
+        }
 
         g2d.setStroke(dottedHandle);
 
         int[] handleToCurve = path.handleToCurveIdx(true);
         //mark handles
         for (int handleIdx = 1; handleIdx < path.amountHandles() - 1; handleIdx++) {
-            int curveX = handleToCurve[handleIdx];
-            if (curveX < userFocus.x)
-                continue;
+            int pointCurveIdx = handleToCurve[handleIdx];
+            if (pointCurveIdx < userFocus.x) continue;
 
-            float curveHeightF = getValue(path.handleByIndex(handleIdx), RiverInformation.WATER_Z);
-            boolean notSet = curveHeightF == INHERIT_VALUE;
-            int curveHeight = Math.round(curveHeightF);
-            int y = curveHeight / 2;
+            float curveHeightHandle = getValue(path.handleByIndex(handleIdx), RiverInformation.WATER_Z);
+            boolean notSet = curveHeightHandle == INHERIT_VALUE;
+            int curveHeightReal = Math.round(curveHeights[pointCurveIdx]);
             Color c = Color.BLACK;
             if (notSet) {
                 c = Color.LIGHT_GRAY;
-                y = 30;
             }
-            int x = handleToCurve[handleIdx];
+
             //vertical lines
             g2d.setColor(handleIdx == getSelectedHandleIdx() ? Color.ORANGE : c);
-            g2d.drawLine(x, 0, x, -y);
-            g2d.drawLine(x, -(y + g.getFontMetrics().getHeight()), x, -2 * y);
+            g2d.setStroke(dottedHandle);
 
-            String text = String.format("%.0f", curveHeights[handleToCurve[handleIdx]]);
-            if (notSet)
-                text = "("+text+")";
-            g2d.drawString(text, x - g.getFontMetrics().stringWidth(text) / 2, -y);
+            if (handleIdx == getSelectedHandleIdx()) {
+                int width = 8;
+                g2d.fillOval(pointCurveIdx-width/2,-userFocus.y+10+width/2, width, width);
+            }
+
+            String text = String.format("%.0f -> %d", curveHeightHandle, curveHeightReal);
+            if (notSet) text = "(" + text + ")";
+            //draw above terrain or watercurve
+            int terrainHeight = Math.round(terrainCurve[pointCurveIdx]);
+            float tHeight = Math.max(terrainHeight, curveHeightReal);
+            if (userFocus.y < tHeight)
+                g2d.drawString(text, pointCurveIdx - g.getFontMetrics().stringWidth(text) / 2, -tHeight - 10);
+
+            if (curveHeightHandle > userFocus.y) {
+                g2d.drawLine(pointCurveIdx, -userFocus.y, pointCurveIdx, -Math.round(curveHeightHandle)); //-(int)tHeight
+            }
+
+            if (terrainHeight >= userFocus.y) {
+                g2d.setStroke(dottedGrid);
+                g2d.drawLine(pointCurveIdx, -userFocus.y, pointCurveIdx, -Math.round(terrainHeight));
+            }
+
         }
     }
 
@@ -226,13 +239,26 @@ public class PathHistogram extends JPanel implements KeyListener {
                 if (e.isShiftDown()) userFocus.x -= 40;
                 else selectedHandleIdx = selectableIdxNear(getSelectedHandleIdx(), -1);
                 break;
+            case KeyEvent.VK_T: {       //match handle height to terrain
+                float[] handle = path.handleByIndex(getSelectedHandleIdx());
+                int pointCurveIdx = path.handleToCurveIdx(true)[getSelectedHandleIdx()];
+                float terrainHeight = terrainCurve[pointCurveIdx];
+                float[] newHandle = setValue(handle, RiverInformation.WATER_Z, terrainHeight);
+                Path newP = path.setHandleByIdx(newHandle, getSelectedHandleIdx());
+                overwritePath(newP);
+                break;
+            }
             default:
         }
 
+        float[] sortedTerrain = terrainCurve.clone();
+        Arrays.sort(sortedTerrain);
+        int maxTerrain = Math.round(sortedTerrain[sortedTerrain.length-1]);
+
         int[] handleToCurve = path.handleToCurveIdx(true);
-        int curveLength = handleToCurve[handleToCurve.length-2];
+        int curveLength = handleToCurve[handleToCurve.length - 2];
         userFocus.x = Math.max(0, Math.min(userFocus.x, curveLength - 50));
-        userFocus.y = Math.max(0,Math.min(255,userFocus.y));
+        userFocus.y = Math.max(0, Math.min(maxTerrain, userFocus.y));
         repaint();
     }
 
