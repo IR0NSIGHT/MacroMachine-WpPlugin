@@ -414,16 +414,16 @@ public class Heightmap3dApp extends Application {
                 case DOWN:
                     worldRotX.setAngle(worldRotX.getAngle() - 10);
                 case W: //w/s is for z
-                    selectedCoord = selectedCoord.add(1, 0);
+                    selectedCoord = selectedCoord.add(0, -1);
                     break;
                 case S:
-                    selectedCoord = selectedCoord.add(-1, 0);
-                    break;
-                case A:// a/d is x axis
                     selectedCoord = selectedCoord.add(0, 1);
                     break;
+                case A:// a/d is x axis
+                    selectedCoord = selectedCoord.add(-1, 0);
+                    break;
                 case D:
-                    selectedCoord = selectedCoord.add(0, -1);
+                    selectedCoord = selectedCoord.add(1, 0);
                     break;
                 case SPACE:
                     moveCameraOnMouseMove = !moveCameraOnMouseMove;
@@ -546,6 +546,7 @@ public class Heightmap3dApp extends Application {
         selectedPointer.setTranslateZ((-heightMap.length / 2 + 0.5f + selectedCoord.getY()) * 100);
         float height = Math.round(getHeightAt(selectedCoord.getX(),selectedCoord.getY()));
         selectedPointer.setTranslateY((-height + 0.5f) * 100);
+        System.out.println("selected pointer at " + globalOffset.add(selectedCoord).toString());
     }
 
     private void rotateRootAroundYAxis(double angleInDegrees) {
@@ -628,7 +629,13 @@ public class Heightmap3dApp extends Application {
             setHeightAt(pos.getX(), pos.getY(),height);
         } else {
             float height = getWaterHeightAt(pos.getX(), pos.getY());
+            float terrain = getHeightAt(pos.getX(), pos.getY());
             height+=change;
+            if (change > 0 && height <= terrain) {
+                height = terrain + change;  //place directly above terrain, regardless of old waterheight
+            } else if (change < 0 && height <= terrain){
+                height = 0; //place at zero regardless of old waterheight
+            }
             setWaterHeightAt(pos.getX(), pos.getY(),height);
         }
 
