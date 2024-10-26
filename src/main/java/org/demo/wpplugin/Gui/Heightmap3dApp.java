@@ -18,6 +18,7 @@ import javafx.scene.shape.Sphere;
 import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 
 import java.io.IOException;
 import java.util.function.Consumer;
@@ -44,6 +45,8 @@ public class Heightmap3dApp extends Application {
     public static Consumer<Point3D> setHeightMap = point -> {
         System.out.println("callback: change height to" + point.toString());
     };
+
+    public static boolean show;
 
     public static int SIZEFACTOR = 100;
     private static boolean isJavaFXRunning = false;
@@ -94,7 +97,9 @@ public class Heightmap3dApp extends Application {
     public static void main(String... args) {
         if (instance == null) startJavaFX();
         else {
-            Platform.runLater(() -> {instance.reloadScene();});
+            show = true;
+            Platform.runLater(() -> {
+                instance.reloadScene();});
 
         }
     }
@@ -121,6 +126,7 @@ public class Heightmap3dApp extends Application {
 
             updateSelectedPointer();
             root.getChildren().add(world);
+
     }
 
     private Group createEnvironment() {
@@ -212,6 +218,8 @@ public class Heightmap3dApp extends Application {
 
         return getMeshView(isWaterMap, mesh, heightMap);
     }
+
+
 
     private static MeshView getMeshView(boolean isWaterMap, TriangleMesh mesh, float[][] heightMap) {
         Image textureImage = new Image("file:main_color_texture_worldpainter.png");
@@ -367,8 +375,27 @@ public class Heightmap3dApp extends Application {
         instance = this;
     }
 
+    private static Stage primaryStage;
     @Override
     public void start(Stage primaryStage) throws Exception {
+        this.primaryStage = primaryStage;
+        // Override the close request event to prevent closing
+        primaryStage.setOnCloseRequest((WindowEvent event) -> {
+            // Consume the event, which prevents the window from closing
+            event.consume();
+            // Optionally, show a message or trigger another action
+            System.out.println("Close operation is disabled!");
+            primaryStage.hide();
+            show = false;
+            while(true) {
+                if (show) {
+                    primaryStage.show();
+                    break;
+                }
+            }
+        });
+
+
         root = new Group();
         this.reloadScene();
         Scene scene = new Scene(root, SIZEFACTOR, SIZEFACTOR, true);
@@ -454,7 +481,7 @@ public class Heightmap3dApp extends Application {
             }
             updateSelectedPointer();
         });
-
+        show = true;
         primaryStage.show();
     }
 

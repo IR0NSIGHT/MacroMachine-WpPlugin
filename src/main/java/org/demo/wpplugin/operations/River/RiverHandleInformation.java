@@ -129,11 +129,12 @@ public class RiverHandleInformation {
         OptionsLabel[] options = new OptionsLabel[RiverInformation.values().length];
         int i = 0;
         for (RiverInformation information : RiverInformation.values()) {
-            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), INHERIT_VALUE,
+            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), information.min-1,
                     information.max, 1f);
 
             options[i++] = numericInput(information.displayName, information.toolTip, model, newValue -> {
-                onSubmitCallback.accept(setValue(point, information, newValue));
+                float allowed = sanitizeInput(newValue, information);
+                onSubmitCallback.accept(setValue(point, information, allowed));
             }, onChanged);
         }
         return options;

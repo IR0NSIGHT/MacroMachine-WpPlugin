@@ -6,6 +6,8 @@ import javax.swing.*;
 import java.text.ParseException;
 import java.util.function.Consumer;
 
+import static org.demo.wpplugin.operations.River.RiverHandleInformation.INHERIT_VALUE;
+
 public interface OptionsLabel {
     static OptionsLabel numericInput(String text, String tooltip, SpinnerNumberModel number,
                                      Consumer<Float> setOptionValue, Runnable notifyAfterReconfigure) {
@@ -24,14 +26,19 @@ public interface OptionsLabel {
                     @Override
                     public Object stringToValue(String text) throws ParseException {
                         if (text.equals("INHERIT")) {
-                            return (double)RiverHandleInformation.INHERIT_VALUE;
+                            return (double) INHERIT_VALUE;
                         }
                         return Double.parseDouble(text);
                     }
 
                     @Override
                     public String valueToString(Object value) throws ParseException {
-                        return value instanceof Double && ((Double) value).floatValue() == RiverHandleInformation.INHERIT_VALUE ? "INHERIT" : value.toString();
+                        if (value instanceof Double) {
+                            float val = ((Double) value).floatValue();
+                            if (val == INHERIT_VALUE)
+                                return "INHERIT";
+                        }
+                        return value.toString();
                     }
                 };
             }
