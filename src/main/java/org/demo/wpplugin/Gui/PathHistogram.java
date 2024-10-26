@@ -130,8 +130,12 @@ public class PathHistogram extends JPanel implements KeyListener {
                 g2d.drawString(String.valueOf(x), x, -userFocus.y + g2d.getFontMetrics().getHeight());
             }
             g2d.setColor(Color.RED);
-            g2d.drawString("focus" + userFocus + " zoom " + totalScale, userFocus.x, 2 * g2d.getFontMetrics().getHeight());
-            //    g2d.drawLine(userFocus.x, 0, userFocus.x, -255);
+            int fontHeight = g2d.getFontMetrics().getHeight();
+            g2d.drawString(String.valueOf(y), userFocus.x - g2d.getFontMetrics().stringWidth(String.valueOf(y)), -y);
+
+            g2d.drawString( String.format("ancor position %d,%d, zoom: %.2f", userFocus.x,userFocus.y, userZoom), userFocus.x, -userFocus.y + 2 * fontHeight);
+            g2d.drawString(String.format("length: %d, handles: %d", curve.curveLength(), path.amountHandles()), userFocus.x, -userFocus.y + 3 * fontHeight);
+            g2d.drawString(String.format("highest water: %.0f, lowest water: %.0f", curve.getMax(RiverInformation.WATER_Z), curve.getMin(RiverInformation.WATER_Z)), userFocus.x, -userFocus.y + 4 * fontHeight);
         }
 
         g2d.setStroke(dottedHandle);

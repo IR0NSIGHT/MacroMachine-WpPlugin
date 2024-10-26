@@ -24,7 +24,7 @@ public class ContinuousCurve {
         }
 
         for (RiverHandleInformation.RiverInformation info :RiverHandleInformation.RiverInformation.values()) {
-            float[] curve = flatCurve.get(info.idx);
+            float[] curve = flatCurve.get(info.idx + 2 /* position */);
             assert curve.length == length;
 
             {
