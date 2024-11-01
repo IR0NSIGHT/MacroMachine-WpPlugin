@@ -20,6 +20,10 @@ class ContinuousCurveTest {
         assertEquals(10, c.curveLength());
         assertEquals(new Point(2, 3), c.getPos(3));
 
+        for (int i = 1; i < c.curveLength(); i++) {
+            assertTrue(c.isConnectedToPrevious(i));
+        }
+
         //infos that are not set return default values
         for (RiverHandleInformation.RiverInformation info : RiverHandleInformation.RiverInformation.values()) {
             assertEquals(Float.MIN_VALUE, c.getMax(info));

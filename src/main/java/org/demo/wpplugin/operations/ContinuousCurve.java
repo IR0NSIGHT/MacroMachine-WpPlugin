@@ -18,6 +18,11 @@ public class ContinuousCurve {
     private final HashMap<RiverHandleInformation.RiverInformation, Float> minima = new HashMap<>();
     private PointInterpreter.PointType type;
 
+    public boolean isConnectedToPrevious(int idx) {
+        boolean connected = (getPosX(idx) == getPosX(idx-1) || getPosY(idx) == getPosY(idx-1));
+        return connected;
+    }
+
     public ContinuousCurve(ArrayList<float[]> flatCurve, PointInterpreter.PointType type) {
         this.type = type;
         if (flatCurve.isEmpty()) {
