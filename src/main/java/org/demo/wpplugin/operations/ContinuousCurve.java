@@ -23,6 +23,20 @@ public class ContinuousCurve {
         return connected;
     }
 
+    /**
+     * are all points of the curve connected to a previous neighbour on x or y axis
+     * -> no diagonal jumps, no points spaced further than euclid distance 1
+     * @return
+     */
+    public boolean isConnectedCurve() {
+        for (int i = 1; i < curveLength(); i++) {
+            if (!isConnectedToPrevious(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public ContinuousCurve(ArrayList<float[]> flatCurve, PointInterpreter.PointType type) {
         this.type = type;
         if (flatCurve.isEmpty()) {
