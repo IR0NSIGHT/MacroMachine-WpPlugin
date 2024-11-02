@@ -11,6 +11,9 @@ import static org.demo.wpplugin.pathing.CubicBezierSpline.estimateCurveSize;
 
 public class CatMullRomInterpolation {
     public static float[] interpolateCatmullRom(float[] positions, int[] handleToCurveIdx) {
+        if (positions.length < 2)
+            return positions.clone();
+
         Predicate<float[]> arrayContainsValuesThatAreNotInheritVal = xs -> {
             ArrayList<Float> sorted = new ArrayList<>();
             for (float f : xs)
@@ -22,19 +25,19 @@ public class CatMullRomInterpolation {
         };
 
         final float[] handlesWithSomeValues = supplementFirstAndLastTwoHandles(positions, INHERIT_VALUE, 5);
-        assert arrayContainsValuesThatAreNotInheritVal.test(handlesWithSomeValues) : "handles MUST have at least one " +
-                "value to be interpolable";
+        assert  arrayContainsValuesThatAreNotInheritVal.test(handlesWithSomeValues) : "handles MUST have at least one " +
+                "value to be interpolable"+ Arrays.toString(handlesWithSomeValues);
 
         HandleAndIdcs ready = removeInheritValues(handlesWithSomeValues, handleToCurveIdx.clone());
         int[] segmentLengths = ready.idcs.clone();
-        for (int i = 0; i < segmentLengths.length-1; i++)
-            segmentLengths[i] = segmentLengths[i+1] - segmentLengths[i];
-        segmentLengths[segmentLengths.length-1] = segmentLengths[segmentLengths.length-2];
+        for (int i = 0; i < segmentLengths.length - 1; i++)
+            segmentLengths[i] = segmentLengths[i + 1] - segmentLengths[i];
+        segmentLengths[segmentLengths.length - 1] = segmentLengths[segmentLengths.length - 2];
 
         float[] tangents = positionsToHandleOffsetCatmullRom(ready.handles);
         //TODO tangents should be twice as big?
         for (int i = 0; i < tangents.length; i++)   //scale offsets to tangents
-            tangents[i] /= segmentLengths[i]/2f;
+            tangents[i] /= segmentLengths[i] / 2f;
 
         float[] interpolated = interpolateFromHandles(ready.handles, tangents, ready.idcs);
         assert interpolated.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated values " +
@@ -55,9 +58,6 @@ public class CatMullRomInterpolation {
      */
     public static float[] supplementFirstAndLastTwoHandles(float[] inHandles, float emptyMarker, float defaultValue) {
         float[] outHandles = inHandles.clone();
-        if (outHandles.length > 0 && outHandles.length < 4) {
-            throw new IllegalArgumentException("zero or at least 4 handles are required for interpolation");
-        }
 
         //count how many handles are not empty, remember first and last handle
         int setHandles = 0;
@@ -82,13 +82,17 @@ public class CatMullRomInterpolation {
                 break;
             }
         }
-        //we set the first two and last to values if they arent set already
-        outHandles[0] = outHandles[0] == emptyMarker ? firstHandle : outHandles[0];
-        outHandles[1] = outHandles[1] == emptyMarker ? firstHandle : outHandles[1];
-        int idx = outHandles.length - 1;
-        outHandles[idx] = outHandles[idx] == emptyMarker ? lastHandle : outHandles[idx];
-        idx = outHandles.length - 2;
-        outHandles[idx] = outHandles[idx] == emptyMarker ? lastHandle : outHandles[idx];
+        if (outHandles.length != 0 )
+            outHandles[0] = outHandles[0] == emptyMarker ? firstHandle : outHandles[0];
+
+        if (outHandles.length > 1) {
+            //we set the first two and last to values if they arent set already
+            outHandles[1] = outHandles[1] == emptyMarker ? firstHandle : outHandles[1];
+            int idx = outHandles.length - 1;
+            outHandles[idx] = outHandles[idx] == emptyMarker ? lastHandle : outHandles[idx];
+            idx = outHandles.length - 2;
+            outHandles[idx] = outHandles[idx] == emptyMarker ? lastHandle : outHandles[idx];
+        }
 
         assert outHandles.length == inHandles.length;
         return outHandles;

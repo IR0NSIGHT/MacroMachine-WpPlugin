@@ -66,9 +66,6 @@ public class ContinuousCurve {
     public static ContinuousCurve fromPath(Path path, HeightDimension dimension) {
 
         assert path.type != null;
-        if (path.amountHandles() < 4)
-            return new ContinuousCurve(new ArrayList<>(), path.type);
-
 
         //handles exist as flat lists, only true coords are used
         ArrayList<float[]> flatHandles = transposeHandles(onlyNonInterpolateHandles(path.getHandles()));
@@ -95,7 +92,8 @@ public class ContinuousCurve {
             interpolatedCurve.add(interpolated);
         }
 
-        assert interpolatedCurve.get(0).length == 1+handleToCurveIdx[handleToCurveIdx.length - 1] : "curve xs are wrong" +
+        assert interpolatedCurve.get(0).length == 1 + handleToCurveIdx[handleToCurveIdx.length - 1] : "curve xs are " +
+                "wrong" +
                 " length";
         return new ContinuousCurve(interpolatedCurve, path.type);
     }
@@ -123,15 +121,22 @@ public class ContinuousCurve {
 
     public static float[] positionsToHandleOffsetCatmullRom(float[] positions) {
         float[] handleOffsets = new float[positions.length];
+
         //catmull rom from neighbours where possible
         for (int i = 1; i < handleOffsets.length - 1; i++) {
             handleOffsets[i] = (positions[i + 1] - positions[i - 1]) / 4f;    //TODO this might cause overshooting if
             // one of the two neighbours is very far away
         }
+
         //first and last pos only have 1 neighbour
-        handleOffsets[0] = (positions[1] - positions[0]) / 2f;
-        int l = handleOffsets.length;
-        handleOffsets[l - 1] = (positions[l - 1] - positions[l - 2]) / 2f;
+        if (handleOffsets.length > 2) {
+            handleOffsets[0] = (positions[1] - positions[0]) / 2f;
+            int l = handleOffsets.length;
+            handleOffsets[l - 1] = (positions[l - 1] - positions[l - 2]) / 2f;
+        } else {
+            //zero or one position
+            Arrays.fill(handleOffsets, 0);
+        }
         return handleOffsets;
     }
 

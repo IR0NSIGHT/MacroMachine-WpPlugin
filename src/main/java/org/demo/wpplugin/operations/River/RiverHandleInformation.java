@@ -1,11 +1,11 @@
 package org.demo.wpplugin.operations.River;
 
+import org.demo.wpplugin.Gui.OptionsLabel;
 import org.demo.wpplugin.Gui.PathHistogram;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.operations.ContinuousCurve;
-import org.demo.wpplugin.Gui.OptionsLabel;
 import org.demo.wpplugin.pathing.Path;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
@@ -17,9 +17,10 @@ import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
-import static org.demo.wpplugin.operations.ApplyPath.ApplyRiverOperation.angleOf;
-import static org.demo.wpplugin.operations.EditPath.EditPathOperation.*;
 import static org.demo.wpplugin.Gui.OptionsLabel.numericInput;
+import static org.demo.wpplugin.operations.ApplyPath.ApplyRiverOperation.angleOf;
+import static org.demo.wpplugin.operations.EditPath.EditPathOperation.COLOR_CURVE;
+import static org.demo.wpplugin.operations.EditPath.EditPathOperation.COLOR_HANDLE;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.*;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
 import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
@@ -128,7 +129,7 @@ public class RiverHandleInformation {
         OptionsLabel[] options = new OptionsLabel[RiverInformation.values().length];
         int i = 0;
         for (RiverInformation information : RiverInformation.values()) {
-            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), information.min-1,
+            SpinnerNumberModel model = new SpinnerNumberModel(getValue(point, information), information.min - 1,
                     information.max, 1f);
 
             options[i++] = numericInput(information.displayName, information.toolTip, model, newValue -> {
@@ -141,43 +142,35 @@ public class RiverHandleInformation {
 
     public static void DrawRiverPath(Path path, ContinuousCurve curve, PaintDimension dim, int selectedIdx) throws IllegalAccessException {
         if (path.type != RIVER_2D) throw new IllegalArgumentException("path is not river: " + path.type);
-        if (!(path.amountHandles() < 4)) {
-            int[] curveIdxHandles = path.estimateSegmentLengths(true);
+        int[] curveIdxHandles = path.estimateSegmentLengths(true);
 
-            int selectionStartIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx - 2), curveIdxHandles.length - 1)];
-            int selectionEndIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx + 2), curveIdxHandles.length - 1)];
+        int selectionStartIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx - 2), curveIdxHandles.length - 1)];
+        int selectionEndIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx + 2), curveIdxHandles.length - 1)];
 
-            for (int i = 1; i < curve.curveLength() - 1; i++) {
-                int color = COLOR_CURVE;
-                Point curvePointP = curve.getPos(i);
-                dim.setValue(curvePointP.x , curvePointP.y , COLOR_CURVE);
-                if (i % 10 != 0)    //only mark meta info every 10 blocks
-                    continue;
-                //PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
-                float radius = 0f;
-                for (RiverInformation info : new RiverInformation[]{RIVER_RADIUS, BEACH_RADIUS, TRANSITION_RADIUS}) {
-                    radius += curve.getInfo(info, i);
+        for (int i = 1; i < curve.curveLength() - 1; i++) {
+            int color = COLOR_CURVE;
+            Point curvePointP = curve.getPos(i);
+            dim.setValue(curvePointP.x, curvePointP.y, COLOR_CURVE);
+            if (i % 10 != 0)    //only mark meta info every 10 blocks
+                continue;
+            //PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
+            float radius = 0f;
+            for (RiverInformation info : new RiverInformation[]{RIVER_RADIUS, BEACH_RADIUS, TRANSITION_RADIUS}) {
+                radius += curve.getInfo(info, i);
 
-                    int tangentX = curve.getPosX(i + 1) - curve.getPosX(i - 1);
-                    int tangentY = curve.getPosY(i + 1) - curve.getPosY(i - 1);
-                    double tangentAngle = angleOf(tangentX, tangentY);
+                int tangentX = curve.getPosX(i + 1) - curve.getPosX(i - 1);
+                int tangentY = curve.getPosY(i + 1) - curve.getPosY(i - 1);
+                double tangentAngle = angleOf(tangentX, tangentY);
 
-                    int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
-                    int y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(90)));
-                    dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
+                int x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(90)));
+                int y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(90)));
+                dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
 
-                    x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(-90)));
-                    y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(-90)));
-                    dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
-                    color = color + 1 % 15;
-                }
+                x = (int) Math.round(radius * Math.cos(tangentAngle + Math.toRadians(-90)));
+                y = (int) Math.round(radius * Math.sin(tangentAngle + Math.toRadians(-90)));
+                dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
+                color = color + 1 % 15;
             }
-        }
-
-
-        if (path.amountHandles() > 1) {
-            markLine(getPoint2D(path.handleByIndex(0)), getPoint2D(path.handleByIndex(1)), COLOR_HANDLE, dim);
-            markLine(getPoint2D(path.getTail()), getPoint2D(path.getPreviousPoint(path.getTail())), COLOR_HANDLE, dim);
         }
 
         for (int i = 0; i < path.amountHandles(); i++) {
@@ -192,6 +185,12 @@ public class RiverHandleInformation {
                         RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
 
         }
+    }
+
+    public static float sanitizeInput(float input, RiverInformation information) {
+        if (input < information.min)
+            return INHERIT_VALUE;
+        return Math.min(input, information.max);
     }
 
     public enum RiverInformation {
@@ -217,11 +216,6 @@ public class RiverHandleInformation {
         }
     }
 
-    public static float sanitizeInput(float input, RiverInformation information) {
-        if (input < information.min)
-            return INHERIT_VALUE;
-        return Math.min(input, information.max);
-    }
     public enum PositionSize {
         SIZE_1_D(1), SIZE_2_D(2), SIZE_3_D(3);
         public final int value;
