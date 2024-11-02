@@ -67,6 +67,9 @@ public class ContinuousCurve {
 
         assert path.type != null;
 
+        if (path.amountHandles() == 0)
+            return new ContinuousCurve(new ArrayList<>(), path.type);
+
         //handles exist as flat lists, only true coords are used
         ArrayList<float[]> flatHandles = transposeHandles(onlyNonInterpolateHandles(path.getHandles()));
         ArrayList<float[]> interpolatedCurve = new ArrayList<>(flatHandles.size());

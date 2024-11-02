@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.INHERIT_VALUE;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.WATER_Z;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.validateRiver2D;
-import static org.demo.wpplugin.pathing.PointUtils.*;
+import static org.demo.wpplugin.pathing.PointUtils.arePositionalsEqual;
 
 public class Path implements Iterable<float[]> {
     public final PointInterpreter.PointType type;
@@ -57,77 +57,6 @@ public class Path implements Iterable<float[]> {
         }
 
         return out;
-    }
-
-    public static boolean curveIsContinous(ArrayList<float[]> curve) {
-        Point previous = null;
-        float root2 = (float) Math.sqrt(2) + 0.001f; //allow delta
-        for (Point p : point2DfromNVectorArr(curve)) {
-            if (previous != null) {
-                float dist = (float) p.distance(previous);
-                if (p.equals(previous)) return false; //point has clone
-                if (dist >= root2) {
-                    return false; //point is not connected
-                }
-            }
-            previous = p;
-        }
-        return true;
-    }
-
-    /**
-     * every item in the list is an array of handles.
-     * the first two items are interpreted as x and y coordinates
-     *
-     * @param handles     list of handles to interpolate curve from.
-     * @param roundToGrid make sure each point on the curve only maps to one point on the grid
-     * @return list of points building a continous curve
-     */
-    private static ArrayList<float[]> continousCurveFromHandles(ArrayList<float[]> handles, boolean roundToGrid) {
-        LinkedList<float[]> curvePoints = new LinkedList<>();
-
-        //iterate all handles, calculate coordinates on curve
-        for (int i = 0; i < handles.size() - 3; i++) {
-            float[] handleA, handleB, handleC, handleD;
-            handleA = handles.get(i);
-            handleB = handles.get(i + 1);
-            handleC = handles.get(i + 2);
-            handleD = handles.get(i + 3);
-            float[][] curveSegment = CubicBezierSpline.getSplinePathFor(handleA, handleB, handleC, handleD,
-                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
-            //curvepoints contain [x,y,t]
-            curvePoints.addAll(Arrays.asList(curveSegment));
-        }
-
-        if (curvePoints.isEmpty()) return new ArrayList<>(0);
-
-        int positionDigits = PointInterpreter.PointType.POSITION_2D.size;   //FIXME thats the wrong constant
-        assert curvePoints.size() > 2;
-
-        ArrayList<float[]> result = new ArrayList<>(curvePoints.size());
-        float[] previousPoint = curvePoints.get(0);
-        if (roundToGrid) result.add(previousPoint);
-        for (float[] point : curvePoints) {
-            assert point != null : "whats going on?";
-            if (!roundToGrid) result.add(point);
-            else if (!arePositionalsEqual(point, previousPoint, positionDigits)) {
-                previousPoint = point;
-                result.add(previousPoint);
-                assert getPositionalDistance(point, previousPoint,
-                        RiverHandleInformation.PositionSize.SIZE_2_D.value) <= Math.sqrt(2) + 0.01f : "distance " +
-                        "between curvepoints is to large:" + getPositionalDistance(point, previousPoint,
-                        RiverHandleInformation.PositionSize.SIZE_2_D.value);
-            }
-
-        }
-        result.trimToSize();
-        //assert curveIsContinous(result);
-        ArrayList<Point> pointResult = point2DfromNVectorArr(result);
-        for (int i = 1; i < handles.size() - 1; i++) {
-            Point handlePoint = getPoint2D(handles.get(i));
-            assert pointResult.contains(handlePoint) : "handle not in curve" + handlePoint;
-        }
-        return result;
     }
 
     public ArrayList<float[]> getHandles() {
@@ -242,31 +171,6 @@ public class Path implements Iterable<float[]> {
         Path sum = new Path(newHandles, this.type);
         assert invariant();
         return sum;
-    }
-
-    public int[] estimateSegmentLengths(boolean roundToGrid) {
-        if (this.amountHandles() < 4) return new int[this.amountHandles()]; //zero filled array
-
-        ArrayList<float[]> curve = continousCurveFromHandles(toPosition2DArray(this.handles), roundToGrid);
-        int[] handleIdcs = new int[amountHandles()];
-        int handleIdx = 1;
-        for (int i = 0; i < curve.size(); i++) {
-            if (arePositionalsEqual(handleByIndex(handleIdx), curve.get(i),
-                    RiverHandleInformation.PositionSize.SIZE_2_D.value)) {
-                handleIdcs[handleIdx] = i;
-                handleIdx++;
-            }
-        }
-        handleIdx--;
-        for (int i = handleIdx; i < handleIdcs.length; i++) {
-            handleIdcs[i] = handleIdcs[handleIdx];
-        }
-        //manually set the first and last handle index, so that the zero and last (virtual) segements are the same
-        // length as the true first and last segments
-        handleIdcs[0] = handleIdcs[1] - handleIdcs[2];
-        int lastIdx = handleIdcs.length - 1;
-        handleIdcs[lastIdx] = handleIdcs[lastIdx - 1] + (handleIdcs[lastIdx - 1] - handleIdcs[lastIdx - 2]);
-        return handleIdcs;
     }
 
     public float[] handleByIndex(int index) throws IndexOutOfBoundsException {

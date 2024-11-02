@@ -11,6 +11,9 @@ public class ArrayUtility {
      * @return matrix M x N
      */
     public static ArrayList<float[]> transposeHandles(ArrayList<float[]> input) {
+        if (input.size() == 0) {
+            return new ArrayList<>();
+        }
         int nLength = input.get(0).length;
         int mLenght = input.size();
         ArrayList<float[]> output = new ArrayList<>(nLength);
