@@ -457,24 +457,28 @@ class PathTest {
     }
 
     @Test
-    void testHandleToCurveIdx() {
-        float[] xs = new float[]{10, 20, 30, 40, 50, 70};
-        float[] ys = new float[]{10, 10, 10, 10, 10, 10};
-        float[] xHandleOffset = new float[]{5, 5, 5, 5, 5, 5};
-        float[] yHandleOffset = new float[]{0, 0, 0, 0, 0, 0};
-        int[] segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
-        assertEquals(xs.length, segmentLengths.length, "6 points make 6 segments");
-
-        assertArrayEquals(new int[]{10, 10, 10, 10, 20, 1}, segmentLengths, Arrays.toString(segmentLengths));
-
-        xs = new float[]{10, 20};
-        ys = new float[]{30, 40};
-        yHandleOffset = new float[]{5, 5};
-        xHandleOffset = new float[]{5, 5};
-        segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
-        assertEquals(2, segmentLengths.length, "2 points should make 2 segments");
-        assertArrayEquals(new int[]{15,1}, segmentLengths, Arrays.toString(segmentLengths) + "diagonal jump with 10 " +
-                "distance");
+    void testSegmentLengthEstimation() {
+        {   //flat line on x axis
+            float[] xs = new float[]{10, 20, 30, 40, 50, 70};
+            float[] ys = new float[]{10, 10, 10, 10, 10, 10};
+            float[] xHandleOffset = new float[]{5, 5, 5, 5, 5, 5};
+            float[] yHandleOffset = new float[]{0, 0, 0, 0, 0, 0};
+            int[] segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
+            assertEquals(xs.length, segmentLengths.length, "6 points make 6 segments");
+            assertArrayEquals(new int[]{10, 10, 10, 10, 20, 1}, segmentLengths, Arrays.toString(segmentLengths));
+        }
+        {   //simple diagonal line on xy
+            float[] xs = new float[]{10, 20, 40};
+            float[] ys = new float[]{30, 40, 60};
+            float[] yHandleOffset = new float[]{5, 10, 10};
+            float[] xHandleOffset = new float[]{5, 10, 10};
+            int[] segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
+            assertEquals(3, segmentLengths.length, "2 points should make 2 segments");
+            //ceil sqrt(2)*10, ceil sqrt(2)*20
+            assertArrayEquals(new int[]{15,29,1}, segmentLengths, Arrays.toString(segmentLengths) + "diagonal jump with" +
+                    " 10 " +
+                    "distance");
+        }
     }
 
     @Test

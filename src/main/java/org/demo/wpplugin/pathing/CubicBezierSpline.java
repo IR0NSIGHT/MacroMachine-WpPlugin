@@ -43,65 +43,36 @@ public class CubicBezierSpline {
     }
 
     /**
-     * get spline connecting B and C. A and D are the points before and after BC in the path
      *
-     * @param beforeStart
-     * @param startPoint
-     * @param endPoint
-     * @param afterEnd
-     */
-    public static float[][] getSplinePathFor(float[] beforeStart, float[] startPoint, float[] endPoint,
-                                             float[] afterEnd, int positionDigits) {
-        assert beforeStart.length == startPoint.length;
-        assert startPoint.length == endPoint.length;
-        assert endPoint.length == afterEnd.length;
-        assert beforeStart.length >= positionDigits;
-
-        int vectorSize = beforeStart.length;
-
-        float distance = PointUtils.getPositionalDistance(startPoint, endPoint, positionDigits);
-
-        //prepare output array of n-vectors
-        int pointsInCurve = (int) (estimateCurveSize(beforeStart, startPoint, endPoint, afterEnd, positionDigits) * 2);
-        float[][] path = new float[pointsInCurve][];
-        for (int i = 0; i < path.length; i++) {
-            path[i] = new float[vectorSize];    //new n-vector
-        }
-
-        float[] handle1p = getBezierHandle(beforeStart, startPoint, endPoint, positionDigits, distance);
-        float[] handle2P = getBezierHandle(afterEnd, endPoint, startPoint, positionDigits, distance);
-
-        for (int n = 0; n < vectorSize; n++) {
-            float[] nThPositionCurve = calculateCubicBezier(startPoint[n],
-                    n < 2 ? handle1p[n] : startPoint[n],
-                    n < 2 ? handle2P[n] : endPoint[n], endPoint[n], pointsInCurve);
-            for (int i = 0; i < nThPositionCurve.length; i++) {
-                path[i][n] = nThPositionCurve[i];
-                if (Float.isNaN(nThPositionCurve[i]))
-                    System.out.println("NaN");
-                assert !Float.isNaN(nThPositionCurve[i]) : "position is Nan: " + Arrays.toString(path[i]);
-            }
-        }
-
-        return path;
-    }
-
-    /**
-     *
-     * @param A pos 0
-     * @param B handle 0
-     * @param C handle 1
-     * @param D pos 1
+     * @param pos0 pos 0
+     * @param handle0 handle 0
+     * @param handle1 handle 1
+     * @param pos1 pos 1
      * @param positionDigits
      * @return
      */
-    public static float estimateCurveSize(float[] A, float[] B, float[] C, float[] D,
+    public static float estimateCurveSize(float[] pos0, float[] handle0, float[] handle1, float[] pos1,
                                           int positionDigits) {
-        float chord = PointUtils.getPositionalDistance(D, A, positionDigits);
-        float cont_net = PointUtils.getPositionalDistance(A, B, positionDigits) +
-                PointUtils.getPositionalDistance(C, B, positionDigits) +
-                PointUtils.getPositionalDistance(C, D, positionDigits);
-        return (cont_net + chord) / 2f;
+
+        float[] xPoints = calculateCubicBezier(pos0[0],handle0[0],handle1[0], pos1[0],11);
+        float[] yPoints =calculateCubicBezier(pos0[1],handle0[1],handle1[1], pos1[1],11);
+        double totalLength = 0;
+        for (int i = 0; i < xPoints.length-1; i++) {
+            float xDiff = xPoints[i] - xPoints[i + 1];
+            xDiff *= xDiff;
+            float yDiff = yPoints[i] - yPoints[i + 1];
+            yDiff *= yDiff;
+            double distanceBetweenNeighbours = Math.sqrt(xDiff + yDiff);
+            totalLength += distanceBetweenNeighbours;
+        }
+
+        /*
+        float chord = PointUtils.getPositionalDistance(pos1, pos0, positionDigits);
+        float cont_net = PointUtils.getPositionalDistance(pos0, handle0, positionDigits) +
+                PointUtils.getPositionalDistance(handle1, handle0, positionDigits) +
+                PointUtils.getPositionalDistance(handle1, pos1, positionDigits);
+        */
+        return (float)totalLength;
     }
 
     private static float[] getBezierHandle(float[] pointA, float[] pointB, float[] pointC, int positionDigits,

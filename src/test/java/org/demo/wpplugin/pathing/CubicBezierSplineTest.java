@@ -22,4 +22,25 @@ class CubicBezierSplineTest {
             assertEquals( interpolated, (t*end)+(1-t)*start,0.001f);
         }
     }
+
+    @Test
+    void estimateCurveSize() {
+        {
+            float[] start = new float[]{10, 20};
+            float[] end = new float[]{20, 20};
+            float[] handle0 = new float[]{13.333f, 20};
+            float[] handle1 = new float[]{16.666f, 20}; //straight diagonal line
+            float length = CubicBezierSpline.estimateCurveSize(start, handle0, handle1, end, 2);
+            assertEquals(length, 10f, 0.01f);
+        }
+
+        {
+            float[] start = new float[]{10, 20};
+            float[] end = new float[]{20, 30};
+            float[] handle0 = new float[]{13.333f, 23.333f};
+            float[] handle1 = new float[]{16.666f, 26.666f}; //straight diagonal line
+            float length = CubicBezierSpline.estimateCurveSize(start, handle0, handle1, end, 2);
+            assertEquals(length, Math.sqrt(2) * 10f, 0.01f);
+        }
+    }
 }
