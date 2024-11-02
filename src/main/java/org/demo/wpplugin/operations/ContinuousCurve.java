@@ -64,7 +64,6 @@ public class ContinuousCurve {
     }
 
     public static ContinuousCurve fromPath(Path path, HeightDimension dimension) {
-
         assert path.type != null;
 
         if (path.amountHandles() == 0)
@@ -86,12 +85,15 @@ public class ContinuousCurve {
         float[] ysHandleOffsets = positionsToHandleOffsetCatmullRom(ysPos);
         assert xsPos.length == ysPos.length && xsPos.length == xsHandleOffsets.length && ysPos.length == ysHandleOffsets.length : "positions and halndPerPositon must all be same length";
 
-        int[] handleToCurveIdx = handleToCurve(flatHandles.get(0), flatHandles.get(1));
+        int[] segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(flatHandles.get(0), flatHandles.get(1),
+                xsHandleOffsets, ysHandleOffsets);
+        int[] handleToCurveIdx = handleToCurve(segmentLengths);
 
         //iterate all handleArrays and calculate a continous curve
         for (int n = 0; n < path.type.size; n++) {
             float[] nthHandles = flatHandles.get(n);
-            float[] interpolated = CatMullRomInterpolation.interpolateCatmullRom(nthHandles, handleToCurveIdx);
+            float[] interpolated = CatMullRomInterpolation.interpolateCatmullRom(nthHandles, handleToCurveIdx,
+                    segmentLengths);
             interpolatedCurve.add(interpolated);
         }
 
@@ -107,19 +109,22 @@ public class ContinuousCurve {
         return handleToCurve(flatHandles.get(0), flatHandles.get(1));
     }
 
+    public static int[] handleToCurve(int[] segmentSizes) {
+        int[] handleToCurveIdx = new int[segmentSizes.length];
+        for (int i = 0; i < segmentSizes.length-1; i++)
+            handleToCurveIdx[i + 1] = handleToCurveIdx[i] + segmentSizes[i];
+
+        for (int i = 1; i < handleToCurveIdx.length; i++)
+            assert handleToCurveIdx[i] > handleToCurveIdx[i - 1] : "not strictly monotone";
+        return handleToCurveIdx;
+    }
 
     public static int[] handleToCurve(float[] xsPos, float[] ysPos) {
         float[] xsOff = positionsToHandleOffsetCatmullRom(xsPos);
         float[] ysOff = positionsToHandleOffsetCatmullRom(ysPos);
         //we know the positions of each handle already through magic
-        int[] handleToCurveIdx = new int[xsPos.length];
         int[] segmentSizes = CatMullRomInterpolation.estimateSegmentLengths(xsPos, ysPos, xsOff, ysOff);
-        for (int i = 0; i < segmentSizes.length; i++)
-            handleToCurveIdx[i + 1] = handleToCurveIdx[i] + segmentSizes[0];
-
-        for (int i = 1; i < handleToCurveIdx.length; i++)
-            assert handleToCurveIdx[i] > handleToCurveIdx[i - 1] : "not strictly monotone";
-        return handleToCurveIdx;
+        return handleToCurve(segmentSizes);
     }
 
     public static float[] positionsToHandleOffsetCatmullRom(float[] positions) {

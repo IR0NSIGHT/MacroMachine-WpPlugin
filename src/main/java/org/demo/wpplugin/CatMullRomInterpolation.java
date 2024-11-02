@@ -10,7 +10,7 @@ import static org.demo.wpplugin.pathing.CubicBezierSpline.calcuateCubicBezier;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.estimateCurveSize;
 
 public class CatMullRomInterpolation {
-    public static float[] interpolateCatmullRom(float[] positions, int[] handleToCurveIdx) {
+    public static float[] interpolateCatmullRom(float[] positions, int[] handleToCurveIdx, int[] segmentLengths) {
         if (positions.length < 2)
             return positions.clone();
 
@@ -29,10 +29,6 @@ public class CatMullRomInterpolation {
                 "value to be interpolable"+ Arrays.toString(handlesWithSomeValues);
 
         HandleAndIdcs ready = removeInheritValues(handlesWithSomeValues, handleToCurveIdx.clone());
-        int[] segmentLengths = ready.idcs.clone();
-        for (int i = 0; i < segmentLengths.length - 1; i++)
-            segmentLengths[i] = segmentLengths[i + 1] - segmentLengths[i];
-        segmentLengths[segmentLengths.length - 1] = segmentLengths[segmentLengths.length - 2];
 
         float[] tangents = positionsToHandleOffsetCatmullRom(ready.handles);
         //TODO tangents should be twice as big?
@@ -138,6 +134,7 @@ public class CatMullRomInterpolation {
             ));
             segmentLengthsList.add(sizeOfSegment);
         }
+        segmentLengthsList.add(1);  //last point is single length segment
         int[] segmentLengths = ArrayUtility.toIntArray(segmentLengthsList);
         return segmentLengths;
     }

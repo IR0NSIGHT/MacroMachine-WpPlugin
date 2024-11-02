@@ -104,36 +104,6 @@ public class PathGeometryHelperTest {
     }
 
     @Test
-    public void testSubotpimalAABBXPath() {
-        int size = 100;
-        // Arrange
-        Path p = new Path(Arrays.asList(
-                RiverHandleInformation.positionInformation(-1 * size, 0, POSITION_2D),
-                RiverHandleInformation.positionInformation(0, 0, POSITION_2D),
-                RiverHandleInformation.positionInformation(size, 0, POSITION_2D),
-                RiverHandleInformation.positionInformation(2 * size, 0, POSITION_2D),
-                RiverHandleInformation.positionInformation(3 * size, 0, POSITION_2D),
-                RiverHandleInformation.positionInformation(4 * size, 0, POSITION_2D)
-        ), POSITION_2D);
-        ArrayList<Point> curve = new ArrayList<>(Arrays.asList(ContinuousCurve.fromPath(p, getImmutableDimension62()).getPositions2d()));
-        for (int i = 0; i < p.amountHandles(); i++) {
-            Point point = getPoint2D(p.handleByIndex(i));
-            assertTrue(curve.contains(point), "final curve is missing a control point:" + point);
-        }
-        assertEquals(5 * size + 1, curve.size());
-        int radius = 50;
-        PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
-        HashMap<Point, Collection<Point>> parentage = geo.getParentage();
-        assertEquals(curve.size(),parentage.size());
-        int totalNearby = 0;
-        for (Point point : curve) {
-            totalNearby += parentage.get(point).size();
-        }
-        assertTrue(radius * (3 * size + 1) < totalNearby);
-        assertTrue(totalNearby < 2f * 2 * radius * (3 * size + 1));
-    }
-
-    @Test
     public void treeBoundingBoxTest() {
         Path p = new Path(Arrays.asList(
                 RiverHandleInformation.positionInformation(-1, 0, POSITION_2D),

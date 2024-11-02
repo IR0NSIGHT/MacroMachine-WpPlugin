@@ -463,17 +463,17 @@ class PathTest {
         float[] xHandleOffset = new float[]{5, 5, 5, 5, 5, 5};
         float[] yHandleOffset = new float[]{0, 0, 0, 0, 0, 0};
         int[] segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
-        assertEquals(xs.length - 1, segmentLengths.length, "6 points should make 5 segments");
+        assertEquals(xs.length, segmentLengths.length, "6 points make 6 segments");
 
-        assertArrayEquals(new int[]{10, 10, 10, 10, 20}, segmentLengths, Arrays.toString(segmentLengths));
+        assertArrayEquals(new int[]{10, 10, 10, 10, 20, 1}, segmentLengths, Arrays.toString(segmentLengths));
 
         xs = new float[]{10, 20};
         ys = new float[]{30, 40};
         yHandleOffset = new float[]{5, 5};
         xHandleOffset = new float[]{5, 5};
         segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
-        assertEquals(1, segmentLengths.length, "2 points should make 1 segments");
-        assertArrayEquals(new int[]{15}, segmentLengths, Arrays.toString(segmentLengths) + "diagonal jump with 10 " +
+        assertEquals(2, segmentLengths.length, "2 points should make 2 segments");
+        assertArrayEquals(new int[]{15,1}, segmentLengths, Arrays.toString(segmentLengths) + "diagonal jump with 10 " +
                 "distance");
     }
 
@@ -481,7 +481,8 @@ class PathTest {
     void interpolateCatmullRom() {
         float[] xs = new float[]{10, 20, 30, 40, 50, 70};
         int[] curveIdcs = new int[]{0, 10, 20, 30, 40, 50};
-        float[] curveXs = CatMullRomInterpolation.interpolateCatmullRom(xs, curveIdcs);
+        int[] segmentSizes = new int[]{10, 10, 10, 10, 10, 10};
+        float[] curveXs = CatMullRomInterpolation.interpolateCatmullRom(xs, curveIdcs, segmentSizes);
         assertEquals(51, curveXs.length);
         for (int i = 0; i < curveIdcs.length; i++) {
             assertEquals(curveXs[curveIdcs[i]], xs[i], 1e-6, "handle points are missing from the curve or at wrong " +
