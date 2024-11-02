@@ -14,7 +14,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
@@ -143,7 +142,7 @@ public class RiverHandleInformation {
     public static void DrawRiverPath(Path path, ContinuousCurve curve, PaintDimension dim, int selectedIdx) throws IllegalAccessException {
         if (path.type != RIVER_2D) throw new IllegalArgumentException("path is not river: " + path.type);
         if (!(path.amountHandles() < 4)) {
-            int[] curveIdxHandles = path.handleToCurveIdx(true);
+            int[] curveIdxHandles = path.estimateSegmentLengths(true);
 
             int selectionStartIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx - 2), curveIdxHandles.length - 1)];
             int selectionEndIdx = curveIdxHandles[Math.min(Math.max(0, selectedIdx + 2), curveIdxHandles.length - 1)];

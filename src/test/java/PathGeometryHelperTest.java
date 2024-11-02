@@ -120,7 +120,7 @@ public class PathGeometryHelperTest {
             Point point = getPoint2D(p.handleByIndex(i));
             assertTrue(curve.contains(point), "final curve is missing a control point:" + point);
         }
-        assertTrue(3 * size + 1 == curve.size());
+        assertEquals(5 * size + 1, curve.size());
         int radius = 50;
         PathGeometryHelper geo = new PathGeometryHelper(p, curve, radius);
         HashMap<Point, Collection<Point>> parentage = geo.getParentage();

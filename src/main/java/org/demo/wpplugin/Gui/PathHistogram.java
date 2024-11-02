@@ -38,7 +38,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         handleSelection = new boolean[path.amountHandles()];
         this.curve = ContinuousCurve.fromPath(path, dimension);
         this.terrainCurve = curve.terrainCurve(dimension);
-        handleToCurve = path.handleToCurveIdx(true);
+        handleToCurve = path.estimateSegmentLengths(true);
         setFocusable(true); // Make sure the component can receive focus for key events
         requestFocusInWindow(); // Request focus to ensure key bindings work
         setupKeyBindings();
@@ -60,7 +60,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         if (recalcCurve) {
             recalcCurve = false;
             curve = ContinuousCurve.fromPath(path, dimension);
-            handleToCurve = path.handleToCurveIdx(true);
+            handleToCurve = path.estimateSegmentLengths(true);
         }
 
         Graphics2D g2d = (Graphics2D) g;

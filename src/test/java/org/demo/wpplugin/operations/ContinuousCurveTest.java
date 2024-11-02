@@ -1,11 +1,14 @@
 package org.demo.wpplugin.operations;
 
+import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
+import org.demo.wpplugin.pathing.CubicBezierSpline;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -47,5 +50,13 @@ class ContinuousCurveTest {
         ContinuousCurve c = new ContinuousCurve(flat, PointInterpreter.PointType.POSITION_2D);
 
         assertFalse(c.isConnectedCurve());
+    }
+
+    @Test
+    void positionsToHandleOffsetCatmullRom() {
+        float[] xsPos = new float[]{10,20,30,100};
+        float[] xHandleOff = ContinuousCurve.positionsToHandleOffsetCatmullRom(xsPos);
+
+        assertArrayEquals(new float[]{5,5,20,35}, xHandleOff, "handles:" + Arrays.toString(xHandleOff));
     }
 }

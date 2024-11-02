@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -221,8 +222,12 @@ class PathTest {
         }
 
         //test if all handles (except zero and last handle) are at the right index
-        int[] handleToCurve = p.handleToCurveIdx(true);
-        for (int i = 1; i < p.amountHandles() - 1; i++) {
+        ArrayList<float[]> flatHandles = new ArrayList<>();
+        flatHandles = Path.transposeHandles(p.getHandles());
+        int[] handleToCurve = ContinuousCurve.handleToCurve(flatHandles.get(0),flatHandles.get(1));
+
+
+        for (int i = 0; i < p.amountHandles(); i++) {
             float[] handle = p.handleByIndex(i);
             Point handlePos = getPoint2D(handle);
             int curvePointIdx = handleToCurve[i];
@@ -240,7 +245,7 @@ class PathTest {
             {
                 //only first value is set
                 p = new Path(Collections.EMPTY_LIST, PointInterpreter.PointType.RIVER_2D);
-                p = p.addPoint(RiverHandleInformation.riverInformation(10, 10, 5, 6, 7, 30,10));
+                p = p.addPoint(RiverHandleInformation.riverInformation(10, 10, 5, 6, 7, 30, 10));
                 p = p.addPoint(RiverHandleInformation.riverInformation(11, 10));
 
                 p = p.addPoint(RiverHandleInformation.riverInformation(20, 30));
@@ -264,7 +269,7 @@ class PathTest {
                 handles.add(RiverHandleInformation.riverInformation(11, 10));
 
                 handles.add(RiverHandleInformation.riverInformation(20, 30));
-                handles.add(RiverHandleInformation.riverInformation(21, 30, 5, 6, 7, 30,10));
+                handles.add(RiverHandleInformation.riverInformation(21, 30, 5, 6, 7, 30, 10));
 
                 p = new Path(handles, PointInterpreter.PointType.RIVER_2D);
 
@@ -285,7 +290,7 @@ class PathTest {
                 handles.add(RiverHandleInformation.riverInformation(10, 10));
                 handles.add(RiverHandleInformation.riverInformation(11, 10));
                 handles.add(RiverHandleInformation.riverInformation(100, 200));
-                handles.add(RiverHandleInformation.riverInformation(20, 30, 5, 6, 7, 30,10));
+                handles.add(RiverHandleInformation.riverInformation(20, 30, 5, 6, 7, 30, 10));
                 handles.add(RiverHandleInformation.riverInformation(21, 30));
 
                 p = new Path(handles, PointInterpreter.PointType.RIVER_2D);
@@ -354,42 +359,39 @@ class PathTest {
     @Test
     void interpolateHandles() {
         float[] incompleteHandles;
+        float[] tangents;
         int[] curveByHandleIdx = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
         float[] interpolatedCurve;
         float[] expectedCurve;
 
         //simplest flat
         incompleteHandles = new float[]{1, 1, 1, 1};
-        curveByHandleIdx = new int[]{0, 0, 10, 10};
+        tangents = new float[]{0, 0, 0, 0};
+        curveByHandleIdx = new int[]{0, 3, 6, 10};
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, curveByHandleIdx);
+        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, tangents, curveByHandleIdx);
         expectedCurve = new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
         assertArrayEquals(expectedCurve, interpolatedCurve, 0.01f);
 
         //minimum length
-        incompleteHandles = new float[]{1, 4, 7, 19};
-        curveByHandleIdx = new int[]{0, 0, 1, 1};
+        incompleteHandles = new float[]{10, 20};
+        tangents = new float[]{1 / 3f, 1 / 3f};
+        curveByHandleIdx = new int[]{0, 2};  //3 points: t=0, t=0.5, t=1
         assertTrue(Path.canBeInterpolated(incompleteHandles));
-        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, curveByHandleIdx);
-        expectedCurve = new float[]{4, 7};
-        assertArrayEquals(expectedCurve, interpolatedCurve, 0.01f);
-
-        //classic 4 point interpolation
-        incompleteHandles = new float[]{10, 10, 9, 6, 5, 3, 3, 3};
-        curveByHandleIdx = new int[]{0, 0, 1, 2, 3, 6, 7, 7};
-        expectedCurve = new float[]{10.0f, 9.f, 6.0f, 5.0f, 4.2592587f, 3.574074f, 3.0f, 3.0f};
-        assertTrue(Path.canBeInterpolated(incompleteHandles));
-        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, curveByHandleIdx);
+        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, tangents, curveByHandleIdx);
+        expectedCurve = new float[]{10, 15f, 20};
+        assertArrayEquals(expectedCurve, interpolatedCurve, 0.01f, Arrays.toString(incompleteHandles));
 
         //equally space means equally spaced points on curve
         incompleteHandles = new float[]{-10, 0, 10, 20, 30, 40};
-        curveByHandleIdx = new int[]{-10, 0, 10, 20, 30, 40};
-        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, curveByHandleIdx);
-        for (int x = 0; x <= 30; x++) {
-            assertEquals(x, interpolatedCurve[x], 0.01f);
+        tangents = new float[]{1, 1, 1, 1, 1, 1};
+        curveByHandleIdx = new int[]{0, 10, 20, 30, 40, 50};
+        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, tangents, curveByHandleIdx);
+        int i = 0;
+        for (int x = -10; x <= 40; x++) {
+            assertEquals(x, interpolatedCurve[i++], 0.01f,"idx ="+i+" arr = "+ Arrays.toString(incompleteHandles));
         }
-        assertEquals(31, interpolatedCurve.length);
-
+        assertEquals(51, interpolatedCurve.length);
     }
 
     @Test
@@ -405,7 +407,7 @@ class PathTest {
         //+0
         p = p.addPoint(positionInformation(110, 10, POSITION_2D));
 
-        int[] handleTOCurve = p.handleToCurveIdx(true);
+        int[] handleTOCurve = p.estimateSegmentLengths(true);
         assertEquals(handleTOCurve.length, p.amountHandles());
         assertArrayEquals(new int[]{-30, 0, 30, 80, 130}, handleTOCurve);
     }
@@ -437,8 +439,9 @@ class PathTest {
     @Test
     void interpolateSegment() {
         float[] handles = new float[]{10, 20, 30, 40};
+        float[] tangents = new float[]{1, 1, 1, 1};
         int[] handleToCurve = new int[]{0, 10, 20, 30};
-        float[] interpolated = Path.interpolateSegment(handles, handleToCurve, 0);
+        float[] interpolated = Path.interpolateSegment(handles, tangents, handleToCurve, 1);
         float[] expected = new float[]{20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
         assertArrayEquals(expected, interpolated, 0.01f);
     }
@@ -450,5 +453,49 @@ class PathTest {
         Path.HandleAndIdcs pure = Path.removeInheritValues(handles, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
                 12});
         assertArrayEquals(pure.handles, new float[]{3.0f, 3.0f, 17.0f, 17.0f}, 0.01f);
+    }
+
+    @Test
+    void testHandleToCurveIdx() {
+        float[] xs = new float[]{10, 20, 30, 40, 50, 70};
+        float[] ys = new float[]{10, 10, 10, 10, 10, 10};
+        float[] xHandleOffset = new float[]{5, 5, 5, 5, 5, 5};
+        float[] yHandleOffset = new float[]{0, 0, 0, 0, 0, 0};
+        int[] segmentLengths = Path.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
+        assertEquals(xs.length - 1, segmentLengths.length, "6 points should make 5 segments");
+
+        assertArrayEquals(new int[]{10, 10, 10, 10, 20}, segmentLengths, Arrays.toString(segmentLengths));
+
+        xs = new float[]{10, 20};
+        ys = new float[]{30, 40};
+        yHandleOffset = new float[]{5, 5};
+        xHandleOffset = new float[]{5, 5};
+        segmentLengths = Path.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
+        assertEquals(1, segmentLengths.length, "2 points should make 1 segments");
+        assertArrayEquals(new int[]{15}, segmentLengths, Arrays.toString(segmentLengths) + "diagonal jump with 10 " +
+                "distance");
+    }
+
+    @Test
+    void interpolateCatmullRom() {
+        float[] xs = new float[]{10, 20, 30, 40, 50, 70};
+        int[] curveIdcs = new int[]{0, 10, 20, 30, 40, 50};
+        float[] curveXs = Path.interpolateCatmullRom(xs, curveIdcs);
+        assertEquals(51, curveXs.length);
+        for (int i = 0; i < curveIdcs.length; i++) {
+            assertEquals(curveXs[curveIdcs[i]], xs[i], 1e-6, "handle points are missing from the curve or at wrong curve idx");
+        }
+    }
+
+    @Test
+    void flattenNestedList() {
+        ArrayList<float[]> nest = new ArrayList<>(5);
+        nest.add(new float[]{1, 2, 3, 4});
+        nest.add(new float[]{5, 6, 7, 8, 9, 10});
+        nest.add(new float[]{});
+        nest.add(new float[]{11});
+
+        float[] flat = Path.flattenNestedList(nest);
+        assertArrayEquals(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, flat);
     }
 }

@@ -86,12 +86,21 @@ public class CubicBezierSpline {
         return path;
     }
 
-    public static float estimateCurveSize(float[] pointA, float[] pointB, float[] pointC, float[] pointD,
+    /**
+     *
+     * @param A pos 0
+     * @param B handle 0
+     * @param C handle 1
+     * @param D pos 1
+     * @param positionDigits
+     * @return
+     */
+    public static float estimateCurveSize(float[] A, float[] B, float[] C, float[] D,
                                           int positionDigits) {
-        float chord = PointUtils.getPositionalDistance(pointD, pointA, positionDigits);
-        float cont_net = PointUtils.getPositionalDistance(pointA, pointB, positionDigits) +
-                PointUtils.getPositionalDistance(pointC, pointB, positionDigits) +
-                PointUtils.getPositionalDistance(pointC, pointD, positionDigits);
+        float chord = PointUtils.getPositionalDistance(D, A, positionDigits);
+        float cont_net = PointUtils.getPositionalDistance(A, B, positionDigits) +
+                PointUtils.getPositionalDistance(C, B, positionDigits) +
+                PointUtils.getPositionalDistance(C, D, positionDigits);
         return (cont_net + chord) / 2f;
     }
 
