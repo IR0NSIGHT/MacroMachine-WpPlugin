@@ -247,8 +247,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         float selectedZ = getDimension().getHeightAt(selected);
 
         Point pMin = null;
-        for (int i = 1; i < 25; i++) {
-            pMin = getLowestAtRadius(i, selected);
+        for (int radius = 1; radius < 25; radius++) {
+            pMin = getLowestAtRadius(radius, selected);
             if (getDimension().getHeightAt(pMin) < selectedZ) break;
         }
         if (getDimension().getHeightAt(pMin) >= selectedZ) return false; //tested all radii, didnt find lower point

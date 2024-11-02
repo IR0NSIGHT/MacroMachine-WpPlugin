@@ -1,5 +1,6 @@
 package org.demo.wpplugin.operations;
 
+import org.demo.wpplugin.CatMullRomInterpolation;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.demo.wpplugin.pathing.Path;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import static org.demo.wpplugin.ArrayUtility.transposeHandles;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.INHERIT_VALUE;
 
 public class ContinuousCurve {
@@ -69,7 +71,7 @@ public class ContinuousCurve {
 
 
         //handles exist as flat lists, only true coords are used
-        ArrayList<float[]> flatHandles = Path.transposeHandles(onlyNonInterpolateHandles(path.getHandles()));
+        ArrayList<float[]> flatHandles = transposeHandles(onlyNonInterpolateHandles(path.getHandles()));
         ArrayList<float[]> interpolatedCurve = new ArrayList<>(flatHandles.size());
 
         float[] xsPos = flatHandles.get(0);
@@ -89,20 +91,33 @@ public class ContinuousCurve {
         //iterate all handleArrays and calculate a continous curve
         for (int n = 0; n < path.type.size; n++) {
             float[] nthHandles = flatHandles.get(n);
-            float[] interpolated = Path.interpolateCatmullRom(nthHandles, handleToCurveIdx);
+            float[] interpolated = CatMullRomInterpolation.interpolateCatmullRom(nthHandles, handleToCurveIdx);
             interpolatedCurve.add(interpolated);
         }
+
+        assert interpolatedCurve.get(0).length == 1+handleToCurveIdx[handleToCurveIdx.length - 1] : "curve xs are wrong" +
+                " length";
         return new ContinuousCurve(interpolatedCurve, path.type);
     }
+
+    public static int[] handleToCurve(Path p) {
+        ArrayList<float[]> handles = p.getHandles();
+        ArrayList<float[]> flatHandles = transposeHandles(handles);
+        return handleToCurve(flatHandles.get(0), flatHandles.get(1));
+    }
+
 
     public static int[] handleToCurve(float[] xsPos, float[] ysPos) {
         float[] xsOff = positionsToHandleOffsetCatmullRom(xsPos);
         float[] ysOff = positionsToHandleOffsetCatmullRom(ysPos);
         //we know the positions of each handle already through magic
         int[] handleToCurveIdx = new int[xsPos.length];
-        int[] segmentSizes = Path.estimateSegmentLengths(xsPos, ysPos, xsOff, ysOff);
+        int[] segmentSizes = CatMullRomInterpolation.estimateSegmentLengths(xsPos, ysPos, xsOff, ysOff);
         for (int i = 0; i < segmentSizes.length; i++)
             handleToCurveIdx[i + 1] = handleToCurveIdx[i] + segmentSizes[0];
+
+        for (int i = 1; i < handleToCurveIdx.length; i++)
+            assert handleToCurveIdx[i] > handleToCurveIdx[i - 1] : "not strictly monotone";
         return handleToCurveIdx;
     }
 

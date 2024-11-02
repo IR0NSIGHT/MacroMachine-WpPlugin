@@ -116,7 +116,7 @@ public class PathGeometryHelperTest {
                 RiverHandleInformation.positionInformation(4 * size, 0, POSITION_2D)
         ), POSITION_2D);
         ArrayList<Point> curve = new ArrayList<>(Arrays.asList(ContinuousCurve.fromPath(p, getImmutableDimension62()).getPositions2d()));
-        for (int i = 1; i < p.amountHandles() - 1; i++) {
+        for (int i = 0; i < p.amountHandles(); i++) {
             Point point = getPoint2D(p.handleByIndex(i));
             assertTrue(curve.contains(point), "final curve is missing a control point:" + point);
         }

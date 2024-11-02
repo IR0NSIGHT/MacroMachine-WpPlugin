@@ -1,5 +1,6 @@
 package org.demo.wpplugin.Gui;
 
+import org.demo.wpplugin.CatMullRomInterpolation;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
@@ -38,10 +39,13 @@ public class PathHistogram extends JPanel implements KeyListener {
         handleSelection = new boolean[path.amountHandles()];
         this.curve = ContinuousCurve.fromPath(path, dimension);
         this.terrainCurve = curve.terrainCurve(dimension);
-        handleToCurve = path.estimateSegmentLengths(true);
+
+
+        handleToCurve = ContinuousCurve.handleToCurve(path);
         setFocusable(true); // Make sure the component can receive focus for key events
         requestFocusInWindow(); // Request focus to ensure key bindings work
         setupKeyBindings();
+        assert curve.curveLength() == handleToCurve[handleSelection.length - 1] :"last handle index is not at end of curve";
     }
 
     private void overwritePath(Path path) {
@@ -60,7 +64,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         if (recalcCurve) {
             recalcCurve = false;
             curve = ContinuousCurve.fromPath(path, dimension);
-            handleToCurve = path.estimateSegmentLengths(true);
+            handleToCurve = ContinuousCurve.handleToCurve(path);    //FIXME does this ever change?
         }
 
         Graphics2D g2d = (Graphics2D) g;
@@ -151,7 +155,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         g2d.setStroke(dottedHandle);
 
         //DRAW HANDLES
-        for (int handleIdx = 1; handleIdx < path.amountHandles() - 1; handleIdx++) {
+        for (int handleIdx = 0; handleIdx < path.amountHandles(); handleIdx++) {
             int pointCurveIdx = handleToCurve[handleIdx];
             if (pointCurveIdx < userFocus.x) continue;
 
@@ -259,7 +263,7 @@ public class PathHistogram extends JPanel implements KeyListener {
             break;
             case KeyEvent.VK_T: {
                 //set all selected handles to terrain height
-                for (int i = 1; i < handleSelection.length - 1; i++) {
+                for (int i = 0; i < handleSelection.length; i++) {
                     if (!handleSelection[i]) continue;
                     float[] handle = path.handleByIndex(i);
                     int pointCurveIdx = handleToCurve[i];
@@ -272,7 +276,7 @@ public class PathHistogram extends JPanel implements KeyListener {
             }
             case KeyEvent.VK_DELETE: {
                 // set all selected handles to INHERIT
-                for (int i = 1; i < handleSelection.length - 1; i++) {
+                for (int i = 0; i < handleSelection.length; i++) {
                     if (!handleSelection[i]) continue;
                     float[] handle = path.handleByIndex(i);
                     float[] newHandle = setValue(handle, RiverInformation.WATER_Z, INHERIT_VALUE);
@@ -309,7 +313,7 @@ public class PathHistogram extends JPanel implements KeyListener {
             case KeyEvent.VK_A:
                 if (e.isControlDown()) {
                     boolean allSelected = true;
-                    for (int i = 1; i < handleSelection.length - 1; i++) {
+                    for (int i = 0; i < handleSelection.length; i++) {
                         allSelected = allSelected && isSelected(i);
                     }
                     if (allSelected) deselectAll();
@@ -364,19 +368,19 @@ public class PathHistogram extends JPanel implements KeyListener {
     }
 
     private void deselectAll() {
-        for (int i = 1; i < handleSelection.length - 1; i++) {
+        for (int i = 0; i < handleSelection.length; i++) {
             doUnSelect(i);
         }
     }
 
     private void selectAll() {
-        for (int i = 1; i < handleSelection.length - 1; i++) {
+        for (int i = 0; i < handleSelection.length ; i++) {
             doSelect(i);
         }
     }
 
     private void invertTotalSelection() {
-        for (int i = 1; i < handleSelection.length - 1; i++) {
+        for (int i = 0; i < handleSelection.length ; i++) {
             toggleHandleSelection(i);
         }
     }

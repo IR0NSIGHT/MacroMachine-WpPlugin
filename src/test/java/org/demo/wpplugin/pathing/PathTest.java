@@ -1,5 +1,7 @@
 package org.demo.wpplugin.pathing;
 
+import org.demo.wpplugin.ArrayUtility;
+import org.demo.wpplugin.CatMullRomInterpolation;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.junit.jupiter.api.Test;
@@ -223,7 +225,7 @@ class PathTest {
 
         //test if all handles (except zero and last handle) are at the right index
         ArrayList<float[]> flatHandles = new ArrayList<>();
-        flatHandles = Path.transposeHandles(p.getHandles());
+        flatHandles = ArrayUtility.transposeHandles(p.getHandles());
         int[] handleToCurve = ContinuousCurve.handleToCurve(flatHandles.get(0),flatHandles.get(1));
 
 
@@ -315,26 +317,26 @@ class PathTest {
 
         //only one is set
         incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, 7, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE};
-        completeHandles = Path.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = CatMullRomInterpolation.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{7, 7, 7, INHERIT_VALUE, 7, 7};
         assertArrayEquals(expectedHandles, completeHandles);
 
         //two are set
         incompleteHandles = new float[]{5, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 7};
-        completeHandles = Path.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = CatMullRomInterpolation.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{5, 5, INHERIT_VALUE, 7, 7};
         assertArrayEquals(expectedHandles, completeHandles);
 
         //two are set but in wierd positions
         incompleteHandles = new float[]{INHERIT_VALUE, 5, 7, INHERIT_VALUE, INHERIT_VALUE};
-        completeHandles = Path.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = CatMullRomInterpolation.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{5, 5, 7, 7, 7};
         assertArrayEquals(expectedHandles, completeHandles);
 
         //three or more are set but the first and last two are missing
         incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, 5, INHERIT_VALUE, 6, INHERIT_VALUE, 7,
                 INHERIT_VALUE, 8, INHERIT_VALUE, 9, INHERIT_VALUE, 10, INHERIT_VALUE, INHERIT_VALUE};
-        completeHandles = Path.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
+        completeHandles = CatMullRomInterpolation.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 156f);
         expectedHandles = new float[]{5, 5, 5, INHERIT_VALUE, 6, INHERIT_VALUE, 7, INHERIT_VALUE, 8, INHERIT_VALUE, 9
                 , INHERIT_VALUE, 10, 10, 10};
         assertArrayEquals(expectedHandles, completeHandles);
@@ -343,7 +345,7 @@ class PathTest {
         {        //not a single value is known
             incompleteHandles = new float[]{INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE
                     , INHERIT_VALUE};
-            completeHandles = Path.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 17.56f);
+            completeHandles = CatMullRomInterpolation.supplementFirstAndLastTwoHandles(incompleteHandles, INHERIT_VALUE, 17.56f);
             expectedHandles = new float[]{17.56f, 17.56f, INHERIT_VALUE, INHERIT_VALUE, 17.56f, 17.56f};
             assertArrayEquals(expectedHandles, completeHandles);
         }
@@ -352,7 +354,7 @@ class PathTest {
             incompleteHandles = new float[]{1, 2, 3};
             float[] finalIncompleteHandles = incompleteHandles;
             assertThrows(IllegalArgumentException.class,
-                    () -> Path.supplementFirstAndLastTwoHandles(finalIncompleteHandles, INHERIT_VALUE, 17.57f));
+                    () -> CatMullRomInterpolation.supplementFirstAndLastTwoHandles(finalIncompleteHandles, INHERIT_VALUE, 17.57f));
         }
     }
 
@@ -368,8 +370,8 @@ class PathTest {
         incompleteHandles = new float[]{1, 1, 1, 1};
         tangents = new float[]{0, 0, 0, 0};
         curveByHandleIdx = new int[]{0, 3, 6, 10};
-        assertTrue(Path.canBeInterpolated(incompleteHandles));
-        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, tangents, curveByHandleIdx);
+        assertTrue(CatMullRomInterpolation.canBeInterpolated(incompleteHandles));
+        interpolatedCurve = CatMullRomInterpolation.interpolateFromHandles(incompleteHandles, tangents, curveByHandleIdx);
         expectedCurve = new float[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
         assertArrayEquals(expectedCurve, interpolatedCurve, 0.01f);
 
@@ -377,8 +379,8 @@ class PathTest {
         incompleteHandles = new float[]{10, 20};
         tangents = new float[]{1 / 3f, 1 / 3f};
         curveByHandleIdx = new int[]{0, 2};  //3 points: t=0, t=0.5, t=1
-        assertTrue(Path.canBeInterpolated(incompleteHandles));
-        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, tangents, curveByHandleIdx);
+        assertTrue(CatMullRomInterpolation.canBeInterpolated(incompleteHandles));
+        interpolatedCurve = CatMullRomInterpolation.interpolateFromHandles(incompleteHandles, tangents, curveByHandleIdx);
         expectedCurve = new float[]{10, 15f, 20};
         assertArrayEquals(expectedCurve, interpolatedCurve, 0.01f, Arrays.toString(incompleteHandles));
 
@@ -386,7 +388,7 @@ class PathTest {
         incompleteHandles = new float[]{-10, 0, 10, 20, 30, 40};
         tangents = new float[]{1, 1, 1, 1, 1, 1};
         curveByHandleIdx = new int[]{0, 10, 20, 30, 40, 50};
-        interpolatedCurve = Path.interpolateFromHandles(incompleteHandles, tangents, curveByHandleIdx);
+        interpolatedCurve = CatMullRomInterpolation.interpolateFromHandles(incompleteHandles, tangents, curveByHandleIdx);
         int i = 0;
         for (int x = -10; x <= 40; x++) {
             assertEquals(x, interpolatedCurve[i++], 0.01f,"idx ="+i+" arr = "+ Arrays.toString(incompleteHandles));
@@ -423,7 +425,7 @@ class PathTest {
         assertEquals(m, input.get(0).length);
 
 
-        ArrayList<float[]> transposed = Path.transposeHandles(input);
+        ArrayList<float[]> transposed = ArrayUtility.transposeHandles(input);
         assertEquals(m, transposed.size());
         assertEquals(n, transposed.get(0).length);
 
@@ -441,7 +443,7 @@ class PathTest {
         float[] handles = new float[]{10, 20, 30, 40};
         float[] tangents = new float[]{1, 1, 1, 1};
         int[] handleToCurve = new int[]{0, 10, 20, 30};
-        float[] interpolated = Path.interpolateSegment(handles, tangents, handleToCurve, 1);
+        float[] interpolated = CatMullRomInterpolation.interpolateSegment(handles, tangents, handleToCurve, 1);
         float[] expected = new float[]{20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
         assertArrayEquals(expected, interpolated, 0.01f);
     }
@@ -450,7 +452,7 @@ class PathTest {
     void removeInheritValues() {
         float[] handles = new float[]{3.0f, 3.0f, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE,
                 INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 17.0f, 17.0f};
-        Path.HandleAndIdcs pure = Path.removeInheritValues(handles, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+        CatMullRomInterpolation.HandleAndIdcs pure = CatMullRomInterpolation.removeInheritValues(handles, new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
                 12});
         assertArrayEquals(pure.handles, new float[]{3.0f, 3.0f, 17.0f, 17.0f}, 0.01f);
     }
@@ -461,7 +463,7 @@ class PathTest {
         float[] ys = new float[]{10, 10, 10, 10, 10, 10};
         float[] xHandleOffset = new float[]{5, 5, 5, 5, 5, 5};
         float[] yHandleOffset = new float[]{0, 0, 0, 0, 0, 0};
-        int[] segmentLengths = Path.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
+        int[] segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
         assertEquals(xs.length - 1, segmentLengths.length, "6 points should make 5 segments");
 
         assertArrayEquals(new int[]{10, 10, 10, 10, 20}, segmentLengths, Arrays.toString(segmentLengths));
@@ -470,7 +472,7 @@ class PathTest {
         ys = new float[]{30, 40};
         yHandleOffset = new float[]{5, 5};
         xHandleOffset = new float[]{5, 5};
-        segmentLengths = Path.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
+        segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
         assertEquals(1, segmentLengths.length, "2 points should make 1 segments");
         assertArrayEquals(new int[]{15}, segmentLengths, Arrays.toString(segmentLengths) + "diagonal jump with 10 " +
                 "distance");
@@ -480,7 +482,7 @@ class PathTest {
     void interpolateCatmullRom() {
         float[] xs = new float[]{10, 20, 30, 40, 50, 70};
         int[] curveIdcs = new int[]{0, 10, 20, 30, 40, 50};
-        float[] curveXs = Path.interpolateCatmullRom(xs, curveIdcs);
+        float[] curveXs = CatMullRomInterpolation.interpolateCatmullRom(xs, curveIdcs);
         assertEquals(51, curveXs.length);
         for (int i = 0; i < curveIdcs.length; i++) {
             assertEquals(curveXs[curveIdcs[i]], xs[i], 1e-6, "handle points are missing from the curve or at wrong curve idx");
@@ -495,7 +497,7 @@ class PathTest {
         nest.add(new float[]{});
         nest.add(new float[]{11});
 
-        float[] flat = Path.flattenNestedList(nest);
+        float[] flat = ArrayUtility.flattenNestedList(nest);
         assertArrayEquals(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, flat);
     }
 }
