@@ -1,6 +1,5 @@
 package org.demo.wpplugin.Gui;
 
-import org.demo.wpplugin.CatMullRomInterpolation;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
@@ -21,6 +20,7 @@ public class PathHistogram extends JPanel implements KeyListener {
      * array that tells which handles are currently selected by the user
      */
     private final boolean[] handleSelection;
+    int[] handleToCurve;
     private float userZoom = 1f;
     private Path path;
     /**
@@ -29,7 +29,6 @@ public class PathHistogram extends JPanel implements KeyListener {
     private int cursorHandleIdx;
     private ContinuousCurve curve;
     private boolean recalcCurve = false;
-    int[] handleToCurve;
 
     public PathHistogram(Path path, int selectedIdx, HeightDimension dimension) {
         super(new BorderLayout());
@@ -45,7 +44,8 @@ public class PathHistogram extends JPanel implements KeyListener {
         setFocusable(true); // Make sure the component can receive focus for key events
         requestFocusInWindow(); // Request focus to ensure key bindings work
         setupKeyBindings();
-        assert curve.curveLength() == handleToCurve[handleSelection.length - 1] :"last handle index is not at end of curve";
+        assert curve.curveLength() == 1 + handleToCurve[handleSelection.length - 1] : "last handle index is not at " +
+                "end of curve";
     }
 
     private void overwritePath(Path path) {
@@ -91,8 +91,10 @@ public class PathHistogram extends JPanel implements KeyListener {
         float totalScale = userZoom * scale;
 
         float[] dashPattern = {10f / totalScale, 5f / totalScale};
-        Stroke dottedHandle = new BasicStroke(3f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, dashPattern, 0);
-        Stroke dottedGrid = new BasicStroke(1f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3f / totalScale, 2f / totalScale}, 0);
+        Stroke dottedHandle = new BasicStroke(3f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0,
+                dashPattern, 0);
+        Stroke dottedGrid = new BasicStroke(1f / totalScale, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0,
+                new float[]{3f / totalScale, 2f / totalScale}, 0);
 
         int borderWidth = 100;
         g2d.translate(totalScale * (-userFocus.x) + borderWidth, totalScale * (userFocus.y) - borderWidth);
@@ -125,7 +127,8 @@ public class PathHistogram extends JPanel implements KeyListener {
             for (y = 0; y <= userFocus.y + 300; y += 50) {
                 if (y < userFocus.y) continue;
                 g2d.drawLine(userFocus.x, -y, waterCurve.length, -y);
-                g2d.drawString(String.valueOf(y), userFocus.x - g2d.getFontMetrics().stringWidth(String.valueOf(y)), -y);
+                g2d.drawString(String.valueOf(y), userFocus.x - g2d.getFontMetrics().stringWidth(String.valueOf(y)),
+                        -y);
             }
             //vertical lines
             for (int x = 0; x <= waterCurve.length; x += 50) {
@@ -137,9 +140,13 @@ public class PathHistogram extends JPanel implements KeyListener {
             int fontHeight = g2d.getFontMetrics().getHeight();
             g2d.drawString(String.valueOf(y), userFocus.x - g2d.getFontMetrics().stringWidth(String.valueOf(y)), -y);
 
-            g2d.drawString( String.format("ancor position %d,%d, zoom: %.2f", userFocus.x,userFocus.y, userZoom), userFocus.x, -userFocus.y + 2 * fontHeight);
-            g2d.drawString(String.format("length: %d, handles: %d", curve.curveLength(), path.amountHandles()), userFocus.x, -userFocus.y + 3 * fontHeight);
-            g2d.drawString(String.format("highest water: %.0f, lowest water: %.0f", curve.getMax(RiverInformation.WATER_Z), curve.getMin(RiverInformation.WATER_Z)), userFocus.x, -userFocus.y + 4 * fontHeight);
+            g2d.drawString(String.format("ancor position %d,%d, zoom: %.2f", userFocus.x, userFocus.y, userZoom),
+                    userFocus.x, -userFocus.y + 2 * fontHeight);
+            g2d.drawString(String.format("length: %d, handles: %d", curve.curveLength(), path.amountHandles()),
+                    userFocus.x, -userFocus.y + 3 * fontHeight);
+            g2d.drawString(String.format("highest water: %.0f, lowest water: %.0f",
+                    curve.getMax(RiverInformation.WATER_Z), curve.getMin(RiverInformation.WATER_Z)), userFocus.x,
+                    -userFocus.y + 4 * fontHeight);
         }
 
         g2d.setStroke(dottedHandle);
@@ -186,7 +193,8 @@ public class PathHistogram extends JPanel implements KeyListener {
                 g2d.drawString(text, pointCurveIdx - g.getFontMetrics().stringWidth(text) / 2, -tHeight - 10);
 
             if (curveHeightHandle > userFocus.y) {
-                g2d.drawLine(pointCurveIdx, -userFocus.y, pointCurveIdx, -Math.round(curveHeightHandle)); //-(int)tHeight
+                g2d.drawLine(pointCurveIdx, -userFocus.y, pointCurveIdx, -Math.round(curveHeightHandle)); //-(int)
+                // tHeight
             }
 
             if (terrainHeight >= userFocus.y) {
@@ -344,7 +352,9 @@ public class PathHistogram extends JPanel implements KeyListener {
             if (!handleSelection[handleIdx]) continue;
             float[] handle = path.handleByIndex(handleIdx);
 
-            float targetValue = RiverHandleInformation.sanitizeInput(getValue(handle, RiverInformation.WATER_Z) + amount, RiverInformation.WATER_Z);
+            float targetValue =
+                    RiverHandleInformation.sanitizeInput(getValue(handle, RiverInformation.WATER_Z) + amount,
+                            RiverInformation.WATER_Z);
 
             float[] newHandle = setValue(handle, RiverInformation.WATER_Z, targetValue);
             overwritePath(path.setHandleByIdx(newHandle, handleIdx));
@@ -374,13 +384,13 @@ public class PathHistogram extends JPanel implements KeyListener {
     }
 
     private void selectAll() {
-        for (int i = 0; i < handleSelection.length ; i++) {
+        for (int i = 0; i < handleSelection.length; i++) {
             doSelect(i);
         }
     }
 
     private void invertTotalSelection() {
-        for (int i = 0; i < handleSelection.length ; i++) {
+        for (int i = 0; i < handleSelection.length; i++) {
             toggleHandleSelection(i);
         }
     }
