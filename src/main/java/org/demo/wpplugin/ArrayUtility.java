@@ -102,36 +102,14 @@ public class ArrayUtility {
         float[] result = new float[count];
 
         // Step 3: Copy elements that are not marked for removal
-        int resultI = 0;
-        float acc = 0;
+        int resultI = -1;
         Map<Integer, Float> summedSegment = new HashMap<>();
         for (int i = 0; i < original.length; i++) {
-            if (!toBeRemoved[i]) {
-                summedSegment.put(resultI - 1, summedSegment.getOrDefault(resultI - 1, 0f) + acc);
-                System.out.println("add acc to result i " + (resultI - 1));
-
-                acc = 0;
-                acc += original[i];
-                System.out.println("acc + idx " + i);
+            if (!toBeRemoved[i])
                 resultI++;
-
-                if (i == original.length - 1) {
-                    summedSegment.put(resultI - 1, summedSegment.getOrDefault(resultI - 1, 0f) + acc);
-                    System.out.println("final add acc to result i " + (resultI - 1));
-                }
-            } else if (i == original.length - 1) {
-                //i is the last index
-                acc += original[i];
-                System.out.println("acc + idx " + i);
-
-                summedSegment.put(resultI - 1, summedSegment.getOrDefault(resultI - 1, 0f) + acc);
-                System.out.println("final add acc to result i " + (resultI - 1));
-
-            } else {
-                acc += original[i];
-                System.out.println("acc + idx " + i);
-            }
+            summedSegment.put(resultI, summedSegment.getOrDefault(resultI, 0f) + original[i]);
         }
+
         for (Map.Entry<Integer, Float> entry : summedSegment.entrySet()) {
             if (entry.getKey() < 0) {
                 result[0] += entry.getValue();

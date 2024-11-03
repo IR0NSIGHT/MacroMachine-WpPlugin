@@ -58,6 +58,22 @@ class ArrayUtilityTest {
 
     @Test
     void sumIndices() {
+        {   //trivial 1
+            float[] values = new float[]{5};
+            boolean[] toRemove = new boolean[]{false};
+
+            float[] summed = ArrayUtility.sumIndices(values, toRemove);
+            assertArrayEquals(new float[]{5 }, summed);
+        }
+        {   //trivial 2
+            float[] values = new float[]{5, 10};
+            boolean[] toRemove = new boolean[]{false, false};
+
+            float[] summed = ArrayUtility.sumIndices(values, toRemove);
+            assertArrayEquals(new float[]{5, 10 }, summed);
+        }
+
+
         {   //normal
             float[] values = new float[]{5, 10, 0, 10, -5};
             boolean[] toRemove = new boolean[]{false, true, false, true, true};
