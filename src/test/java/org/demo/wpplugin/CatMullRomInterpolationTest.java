@@ -164,5 +164,19 @@ class CatMullRomInterpolationTest {
 
     @Test
     void tangentsFromPositions() {
+
+        {
+            float[] xs = new float[]{10, 11, 12, 13, 14, 15};
+            float[] segmentLengths = new float[]{1, 1, 1, 1, 1, 1};
+            float[] tangents = CatMullRomInterpolation.tangentsFromPositions(xs, segmentLengths);
+            assertArrayEquals(new float[]{1, 1, 1, 1, 1, 1}, tangents);
+        }
+
+        {
+            float[] xs = new float[]{7,8,9,10,110, 111};
+            float[] segmentLengths = new float[]{1, 1, 1, 100,1, 1};
+            float[] tangents = CatMullRomInterpolation.tangentsFromPositions(xs, segmentLengths);
+            assertArrayEquals(new float[]{1, 1, 1, 1, 1, 1}, tangents);
+        }
     }
 }

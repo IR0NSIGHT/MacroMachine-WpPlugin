@@ -49,10 +49,17 @@ public class CatMullRomInterpolation {
     }
 
     public static float[] tangentsFromPositions(float[] positions, float[] segmentLengths) {
-        float[] tangents = positionsToHandleOffsetCatmullRom(positions);
-        //TODO tangents should be twice as big?
-        for (int i = 0; i < tangents.length; i++)   //scale offsets to tangents
-            tangents[i] /= segmentLengths[i] / 2f;
+        float[] tangents = new float[positions.length];
+
+        //calculate differences to previous and following neighbour, scale by parameter distance to neighbour (segment length)
+        for (int i = 0;i < positions.length; i++) {
+            if (i > 0)
+                tangents[i] += (positions[i] - positions[i-1])/segmentLengths[i-1];
+            if (i < positions.length-1)
+                tangents[i] += (positions[i+1] - positions[i])/segmentLengths[i];
+            if (i > 0 && i < positions.length - 1)
+                tangents[i] /= 2f;
+        }
         return tangents;
     }
 
