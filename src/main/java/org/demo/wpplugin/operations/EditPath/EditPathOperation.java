@@ -216,12 +216,12 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         Heightmap3dApp.waterMap = waterMap;
         Heightmap3dApp.blockmap = blockMap;
         Heightmap3dApp.setHeightMap = point -> {
-            getDimension().setHeightAt((int)point.getX(), (int)point.getY(),(float)point.getZ());
+            getDimension().setHeightAt((int) point.getX(), (int) point.getY(), (float) point.getZ());
         };
         Heightmap3dApp.setWaterHeight = point -> {
-            getDimension().setWaterLevelAt((int)point.getX(), (int)point.getY(),(int)point.getZ());
+            getDimension().setWaterLevelAt((int) point.getX(), (int) point.getY(), (int) point.getZ());
         };
-        Heightmap3dApp.globalOffset = new Point2D(selected.x-128, selected.y-128);
+        Heightmap3dApp.globalOffset = new Point2D(selected.x - 128, selected.y - 128);
         Heightmap3dApp.main();
     }
 
@@ -607,16 +607,36 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 }
             };
 
-            JButton button1 = new JButton("Edit water height");
-            button1.addActionListener(e -> {
-                JFrame c = (JFrame) SwingUtilities.getWindowAncestor(this.getParent());
-                JDialog dialog = riverRadiusEditor(c, getSelectedPath(), selectedPointIdx, EditPathOperation.this::overwriteSelectedPath, dim);
-                dialog.setVisible(true);
-                onOptionsReconfigured();
-                redrawSelectedPathLayer();
-            });
+            {
+                JButton button1 = new JButton("Edit water height");
+                button1.addActionListener(e -> {
+                    JFrame c = (JFrame) SwingUtilities.getWindowAncestor(this.getParent());
+                    JDialog dialog = riverRadiusEditor(c, getSelectedPath(), selectedPointIdx, EditPathOperation.this::overwriteSelectedPath, dim);
+                    dialog.setVisible(true);
+                    onOptionsReconfigured();
+                    redrawSelectedPathLayer();
+                });
+                inputs.add(() -> new JComponent[]{button1});
+            }
 
-            inputs.add(() -> new JComponent[]{button1});
+            {   // subdivide segment
+                JButton subdivideButton = new JButton("subdivide segment");
+                subdivideButton.addActionListener(e -> {
+                    Path p = getSelectedPath();
+                    int selectedIdx = p.indexOfPosition(getSelectedPoint());
+                    float[] start = getSelectedPoint();
+                    float[] end = p.handleByIndex(selectedIdx+ 1);
+
+                    //    p = Path.subdivide(p, p.indexOfPosition(handle), 1);
+                    //FIXME do something
+                    overwriteSelectedPath(p);
+                    onOptionsReconfigured();
+                    redrawSelectedPathLayer();
+                });
+                inputs.add(() -> new JComponent[]{subdivideButton});
+
+            }
+
             return inputs;
         }
     }

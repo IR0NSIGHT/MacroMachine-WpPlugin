@@ -1,5 +1,6 @@
 package org.demo.wpplugin.pathing;
 
+import org.demo.wpplugin.ArrayUtility;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
@@ -27,6 +28,28 @@ public class Path implements Iterable<float[]> {
         assert invariant() : "path invariant hurt";
     }
 
+    private boolean invariant() {
+        boolean okay = true;
+
+        float[] setValues = new float[type.size];
+        Arrays.fill(setValues, INHERIT_VALUE);
+        for (float[] handle : handles) {
+            for (int n = 0; n < type.size; n++) {
+                if (Float.isNaN(handle[n])) return false;
+                if (setValues[n] == INHERIT_VALUE) setValues[n] = handle[n];
+            }
+
+            if (handle.length != type.size) {
+                System.err.println("path has a handle with wrong size for type " + type + " expected " + type.size + " but got " + Arrays.toString(handle));
+                okay = false;
+            }
+        }
+
+        if (okay && this.type == PointInterpreter.PointType.RIVER_2D) okay = validateRiver2D(handles);
+
+        return okay;
+    }
+
     public static Path newFilledPath(int length, PointInterpreter.PointType type) {
         Path p = new Path(Collections.EMPTY_LIST, type);
         for (int i = 0; i < length; i++) {
@@ -39,6 +62,13 @@ public class Path implements Iterable<float[]> {
             p = p.addPoint(newHandle.clone());
         }
         return p;
+    }
+
+    public Path addPoint(float[] point) {
+        Path sum = new Path(this.handles, this.type);
+        sum.handles.add(point);
+        assert invariant();
+        return sum;
     }
 
     public static float[] interpolateWaterZ(ContinuousCurve curve, HeightDimension dim) {
@@ -61,39 +91,6 @@ public class Path implements Iterable<float[]> {
 
     public ArrayList<float[]> getHandles() {
         return handles;
-    }
-
-    private boolean invariant() {
-        boolean okay = true;
-
-        float[] setValues = new float[type.size];
-        Arrays.fill(setValues, INHERIT_VALUE);
-        for (float[] handle : handles) {
-            for (int n = 0; n < type.size; n++) {
-                if (Float.isNaN(handle[n]))
-                    return false;
-                if (setValues[n] == INHERIT_VALUE)
-                    setValues[n] = handle[n];
-            }
-
-            if (handle.length != type.size) {
-                System.err.println("path has a handle with wrong size for type " + type + " expected " + type.size +
-                        " but got " + Arrays.toString(handle));
-                okay = false;
-            }
-        }
-
-        if (okay && this.type == PointInterpreter.PointType.RIVER_2D)
-            okay = validateRiver2D(handles);
-
-        return okay;
-    }
-
-    public Path addPoint(float[] point) {
-        Path sum = new Path(this.handles, this.type);
-        sum.handles.add(point);
-        assert invariant();
-        return sum;
     }
 
     public Path newEmpty() {
@@ -173,18 +170,13 @@ public class Path implements Iterable<float[]> {
         return sum;
     }
 
-    public float[] handleByIndex(int index) throws IndexOutOfBoundsException {
-        return handles.get(index);
-    }
-
     public int getClosestHandleIdxTo(float[] coord) throws IllegalAccessException {
         if (amountHandles() == 0) throw new IllegalAccessException("can not find closest handle on zero-handle-path");
         int closest = -1;
         double distMinSquared = Double.MAX_VALUE;
         for (int i = 0; i < handles.size(); i++) {
             float[] p = handleByIndex(i);
-            double distanceSq = PointUtils.getPositionalDistance(p, coord,
-                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
+            double distanceSq = PointUtils.getPositionalDistance(p, coord, RiverHandleInformation.PositionSize.SIZE_2_D.value);
             if (distanceSq < distMinSquared) {
                 distMinSquared = distanceSq;
                 closest = i;
@@ -192,6 +184,10 @@ public class Path implements Iterable<float[]> {
         }
         assert invariant();
         return closest;
+    }
+
+    public float[] handleByIndex(int index) throws IndexOutOfBoundsException {
+        return handles.get(index);
     }
 
     @Override

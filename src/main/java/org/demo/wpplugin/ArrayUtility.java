@@ -1,9 +1,6 @@
 package org.demo.wpplugin;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ArrayUtility {
 
@@ -44,9 +41,16 @@ public class ArrayUtility {
         return output;
     }
 
+    public static float[] toFloatArray(Collection<Float> list) {
+        float[] array = new float[list.size()];
+        int i = 0;
+        for (Float f: list) {
+            array[i++] = f;
+        }
+        return array;
+    }
 
-
-    public static int[] toIntArray(ArrayList<Integer> list) {
+    public static int[] toIntArray(List<Integer> list) {
         int[] array = new int[list.size()];
         for (int i = 0; i < list.size(); i++) {
             array[i] = list.get(i);
