@@ -185,10 +185,23 @@ class ArrayUtilityTest {
 
     @Test
     void flattenNestedList() {
-        ArrayList<float[]> matrix = new ArrayList<>();
-        matrix.add(new float[]{5, 10, 0, 10, -5});
-        matrix.add(new float[]{5, 4, 3, 2, 1});
-        float[] flat = ArrayUtility.flattenNestedList(matrix);
-        assertArrayEquals(new float[]{5, 10, 0, 10, -5, 5, 4, 3, 2, 1}, flat);
+        {
+            ArrayList<float[]> matrix = new ArrayList<>();
+            matrix.add(new float[]{5, 10, 0, 10, -5});
+            matrix.add(new float[]{5, 4, 3, 2, 1});
+            float[] flat = ArrayUtility.flattenNestedList(matrix);
+            assertArrayEquals(new float[]{5, 10, 0, 10, -5, 5, 4, 3, 2, 1}, flat);
+        }
+
+        {
+            ArrayList<float[]> nest = new ArrayList<>(5);
+            nest.add(new float[]{1, 2, 3, 4});
+            nest.add(new float[]{5, 6, 7, 8, 9, 10});
+            nest.add(new float[]{});
+            nest.add(new float[]{11});
+
+            float[] flat = ArrayUtility.flattenNestedList(nest);
+            assertArrayEquals(new float[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, flat);
+        }
     }
 }
