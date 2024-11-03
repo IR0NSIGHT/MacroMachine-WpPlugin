@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import static org.demo.wpplugin.ArrayUtility.transposeHandles;
+import static org.demo.wpplugin.ArrayUtility.transposeMatrix;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.INHERIT_VALUE;
 
 public class ContinuousCurve {
@@ -70,7 +70,7 @@ public class ContinuousCurve {
             return new ContinuousCurve(new ArrayList<>(), path.type);
 
         //handles exist as flat lists, only true coords are used
-        ArrayList<float[]> flatHandles = transposeHandles(onlyNonInterpolateHandles(path.getHandles()));
+        ArrayList<float[]> flatHandles = transposeMatrix(onlyNonInterpolateHandles(path.getHandles()));
         ArrayList<float[]> interpolatedCurve = new ArrayList<>(flatHandles.size());
 
         float[] xsPos = flatHandles.get(0);
@@ -105,7 +105,7 @@ public class ContinuousCurve {
 
     public static int[] handleToCurve(Path p) {
         ArrayList<float[]> handles = p.getHandles();
-        ArrayList<float[]> flatHandles = transposeHandles(handles);
+        ArrayList<float[]> flatHandles = transposeMatrix(handles);
         return handleToCurve(flatHandles.get(0), flatHandles.get(1));
     }
 

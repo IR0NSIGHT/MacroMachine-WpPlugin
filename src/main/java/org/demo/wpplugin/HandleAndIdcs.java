@@ -19,7 +19,7 @@ public class HandleAndIdcs {
         boolean[] removeMarkers = new boolean[struct.positions.length];
 
         for (int i = 0; i < struct.positions.length; i++) {
-            if (struct.positions[i] != INHERIT_VALUE) {
+            if (struct.positions[i] == INHERIT_VALUE) {
                 removeMarkers[i] = true;
             }
         }
@@ -30,9 +30,9 @@ public class HandleAndIdcs {
         HandleAndIdcs out = new HandleAndIdcs(newPositions, newHandleToCurve, newSegmentLengths);
 
         //postcondition
-        assert !ArrayUtility.linearSearch(struct.positions, INHERIT_VALUE) : "array still contains INHERIT values";
+        assert !ArrayUtility.linearSearch(out.positions, INHERIT_VALUE) : "array still contains INHERIT values";
         assert out.positions.length <= struct.positions.length;
-
+        assert !ArrayUtility.linearSearch(out.segmentLengths, 0) : "segments can never be zero length";
         return out;
     }
 }

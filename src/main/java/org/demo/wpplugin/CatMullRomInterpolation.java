@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
+import static org.demo.wpplugin.ArrayUtility.isValidArray;
 import static org.demo.wpplugin.operations.ContinuousCurve.positionsToHandleOffsetCatmullRom;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.INHERIT_VALUE;
 import static org.demo.wpplugin.pathing.CubicBezierSpline.calcuateCubicBezier;
@@ -36,7 +37,11 @@ public class CatMullRomInterpolation {
         HandleAndIdcs ready = HandleAndIdcs.removeInheritValues(in);
 
         float[] tangents = tangentsFromPositions(ready.positions, ready.segmentLengths);
+        assert isValidArray(tangents) : "some illegal values are in this float array: "+ Arrays.toString(tangents);
+
         float[] interpolatedPositions = interpolateFromHandles(ready.positions, tangents, ready.idcs);
+        assert isValidArray(interpolatedPositions) : "some illegal values are in this float array: "+ Arrays.toString(tangents);
+
         assert interpolatedPositions.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated " +
                 "values " +
                 "array is not as long as the whole curve";

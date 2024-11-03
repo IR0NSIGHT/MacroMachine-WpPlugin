@@ -225,7 +225,7 @@ class PathTest {
 
         //test if all handles (except zero and last handle) are at the right index
         ArrayList<float[]> flatHandles = new ArrayList<>();
-        flatHandles = ArrayUtility.transposeHandles(p.getHandles());
+        flatHandles = ArrayUtility.transposeMatrix(p.getHandles());
         int[] handleToCurve = ContinuousCurve.handleToCurve(flatHandles.get(0), flatHandles.get(1));
 
 
@@ -424,7 +424,7 @@ class PathTest {
         assertEquals(m, input.get(0).length);
 
 
-        ArrayList<float[]> transposed = ArrayUtility.transposeHandles(input);
+        ArrayList<float[]> transposed = ArrayUtility.transposeMatrix(input);
         assertEquals(m, transposed.size());
         assertEquals(n, transposed.get(0).length);
 
