@@ -2,6 +2,7 @@ package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.ArrayUtility;
 import org.demo.wpplugin.CatMullRomInterpolation;
+import org.demo.wpplugin.HandleAndIdcs;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 import org.junit.jupiter.api.Test;
@@ -450,10 +451,13 @@ class PathTest {
     void removeInheritValues() {
         float[] handles = new float[]{3.0f, 3.0f, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE,
                 INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, INHERIT_VALUE, 17.0f, 17.0f};
-        CatMullRomInterpolation.HandleAndIdcs pure = CatMullRomInterpolation.removeInheritValues(handles, new int[]{0
-                , 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-                12});
-        assertArrayEquals(pure.handles, new float[]{3.0f, 3.0f, 17.0f, 17.0f}, 0.01f);
+        float[] segmentLengths = new float[handles.length];
+        Arrays.fill(segmentLengths, 5);
+        int[] handleIdcs = ContinuousCurve.handleToCurve(segmentLengths);
+
+        HandleAndIdcs struct = new HandleAndIdcs(handles, handleIdcs, segmentLengths);
+        HandleAndIdcs pure = HandleAndIdcs.removeInheritValues(struct);
+        assertArrayEquals(pure.positions, new float[]{3.0f, 3.0f, 17.0f, 17.0f}, 0.01f);
     }
 
     @Test
@@ -475,7 +479,8 @@ class PathTest {
             int[] segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(xs, ys, xHandleOffset, yHandleOffset);
             assertEquals(3, segmentLengths.length, "2 points should make 2 segments");
             //ceil sqrt(2)*10, ceil sqrt(2)*20
-            assertArrayEquals(new int[]{15,29,1}, segmentLengths, Arrays.toString(segmentLengths) + "diagonal jump with" +
+            assertArrayEquals(new int[]{15, 29, 1}, segmentLengths, Arrays.toString(segmentLengths) + "diagonal jump " +
+                    "with" +
                     " 10 " +
                     "distance");
         }

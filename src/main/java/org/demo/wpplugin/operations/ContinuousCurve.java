@@ -109,6 +109,22 @@ public class ContinuousCurve {
         return handleToCurve(flatHandles.get(0), flatHandles.get(1));
     }
 
+    public static int[] handleToCurve(float[] segmentSizes) {
+        float[] handleToCurveIdx = new float[segmentSizes.length];
+        for (int i = 0; i < segmentSizes.length-1; i++)
+            handleToCurveIdx[i + 1] = handleToCurveIdx[i] + segmentSizes[i];
+
+        int[] handlesIdcsOut = new int[handleToCurveIdx.length];
+        for (int i = 0; i < handleToCurveIdx.length; i++)
+            handlesIdcsOut[i] = Math.round(handleToCurveIdx[i]);
+
+
+        for (int i = 1; i < handlesIdcsOut.length; i++)
+            assert handlesIdcsOut[i] > handlesIdcsOut[i - 1] : "not strictly monotone: " + Arrays.toString(handlesIdcsOut);
+
+        return handlesIdcsOut;
+    }
+
     public static int[] handleToCurve(int[] segmentSizes) {
         int[] handleToCurveIdx = new int[segmentSizes.length];
         for (int i = 0; i < segmentSizes.length-1; i++)

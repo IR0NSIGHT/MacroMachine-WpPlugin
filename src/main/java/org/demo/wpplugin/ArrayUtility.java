@@ -52,4 +52,93 @@ public class ArrayUtility {
         }
         return out;
     }
+
+    public static boolean linearSearch(float[] arr, float val) {
+        for (float element : arr) {
+            if (element == val) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * will take original array + marker array and combine marked indices with the previous ones.
+     * all marked positions will be removed
+     * unmarked positions gain the sum of marked values following it
+     * 1,2,3,4,5 with 1 and 5 unmarked => {1+2+3+4,5
+     * }
+     * @param original
+     * @param toBeRemoved
+     * @return
+     */
+    public static float[] sumIndices(float[] original, boolean[] toBeRemoved) {
+        // Step 1: Count how many elements will remain
+        int count = 0;
+        for (boolean remove : toBeRemoved) {
+            if (!remove) {
+                count++;
+            }
+        }
+
+        // Step 2: Create a new array with the correct size
+        float[] result = new float[count];
+        int index = 0;
+
+        // Step 3: Copy elements that are not marked for removal
+        for (int i = 0; i < original.length; i++) {
+            result[index] += original[i];
+            if (i+1 < original.length && !toBeRemoved[i+1]) {
+                index++;
+            }
+        }
+
+        return result;
+    }
+
+    public static int[] removePositions(int[] original, boolean[] toBeRemoved) {
+        // Step 1: Count how many elements will remain
+        int count = 0;
+        for (boolean remove : toBeRemoved) {
+            if (!remove) {
+                count++;
+            }
+        }
+
+        // Step 2: Create a new array with the correct size
+        int[] result = new int[count];
+        int index = 0;
+
+        // Step 3: Copy elements that are not marked for removal
+        for (int i = 0; i < original.length; i++) {
+            if (i < toBeRemoved.length && !toBeRemoved[i]) {
+                result[index++] = original[i];
+            }
+        }
+
+        return result;
+    }
+
+    public static float[] removePositions(float[] original, boolean[] toBeRemoved) {
+        // Step 1: Count how many elements will remain
+        int count = 0;
+        for (boolean remove : toBeRemoved) {
+            if (!remove) {
+                count++;
+            }
+        }
+
+        // Step 2: Create a new array with the correct size
+        float[] result = new float[count];
+        int index = 0;
+
+        // Step 3: Copy elements that are not marked for removal
+        for (int i = 0; i < original.length; i++) {
+            if (i < toBeRemoved.length && !toBeRemoved[i]) {
+                result[index++] = original[i];
+            }
+        }
+
+        return result;
+    }
 }

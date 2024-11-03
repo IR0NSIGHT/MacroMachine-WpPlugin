@@ -25,20 +25,30 @@ public class CatMullRomInterpolation {
         };
 
         final float[] handlesWithSomeValues = supplementFirstAndLastTwoHandles(positions, INHERIT_VALUE, 5);
-        assert  arrayContainsValuesThatAreNotInheritVal.test(handlesWithSomeValues) : "handles MUST have at least one " +
-                "value to be interpolable"+ Arrays.toString(handlesWithSomeValues);
+        assert arrayContainsValuesThatAreNotInheritVal.test(handlesWithSomeValues) : "handles MUST have at least one " +
+                "value to be interpolable" + Arrays.toString(handlesWithSomeValues);
 
-        HandleAndIdcs ready = removeInheritValues(handlesWithSomeValues, handleToCurveIdx.clone());
+        //FIXME use float lengths everywhere
+        float[] segmentLengthsFloat = new float[segmentLengths.length];
+        for (int i = 0; i < segmentLengths.length; i++)
+            segmentLengthsFloat[i] = segmentLengths[i];
+        HandleAndIdcs in = new HandleAndIdcs(handlesWithSomeValues, handleToCurveIdx.clone(), segmentLengthsFloat);
+        HandleAndIdcs ready = HandleAndIdcs.removeInheritValues(in);
 
-        float[] tangents = positionsToHandleOffsetCatmullRom(ready.handles);
+        float[] tangents = tangentsFromPositions(ready.positions, ready.segmentLengths);
+        float[] interpolatedPositions = interpolateFromHandles(ready.positions, tangents, ready.idcs);
+        assert interpolatedPositions.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated " +
+                "values " +
+                "array is not as long as the whole curve";
+        return interpolatedPositions;
+    }
+
+    public static float[] tangentsFromPositions(float[] positions, float[] segmentLengths) {
+        float[] tangents = positionsToHandleOffsetCatmullRom(positions);
         //TODO tangents should be twice as big?
         for (int i = 0; i < tangents.length; i++)   //scale offsets to tangents
             tangents[i] /= segmentLengths[i] / 2f;
-
-        float[] interpolated = interpolateFromHandles(ready.handles, tangents, ready.idcs);
-        assert interpolated.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated values " +
-                "array is not as long as the whole curve";
-        return interpolated;
+        return tangents;
     }
 
     /**
@@ -78,7 +88,7 @@ public class CatMullRomInterpolation {
                 break;
             }
         }
-        if (outHandles.length != 0 )
+        if (outHandles.length != 0)
             outHandles[0] = outHandles[0] == emptyMarker ? firstHandle : outHandles[0];
 
         if (outHandles.length > 1) {
@@ -92,29 +102,6 @@ public class CatMullRomInterpolation {
 
         assert outHandles.length == inHandles.length;
         return outHandles;
-    }
-
-    public static HandleAndIdcs removeInheritValues(float[] flatHandles, int[] handleToCurve) {
-        if (flatHandles.length != handleToCurve.length) throw new IllegalArgumentException("must be same size");
-
-        float[] pureFlatHandles = new float[flatHandles.length];
-        int[] pureHandleToCurve = new int[flatHandles.length];
-        int pureIdx = 0;
-        for (int i = 0; i < flatHandles.length; i++) {
-            if (flatHandles[i] != INHERIT_VALUE) {
-                pureFlatHandles[pureIdx] = flatHandles[i];
-                pureHandleToCurve[pureIdx] = handleToCurve[i];
-                pureIdx++;
-            }
-        }
-        pureHandleToCurve = Arrays.copyOf(pureHandleToCurve, pureIdx);
-        pureFlatHandles = Arrays.copyOf(pureFlatHandles, pureIdx);
-
-        //postcondition
-        assert Arrays.binarySearch(pureFlatHandles, INHERIT_VALUE) < 0 : "array still contains INHERIT values";
-        assert pureFlatHandles.length <= handleToCurve.length;
-
-        return new HandleAndIdcs(pureFlatHandles, pureHandleToCurve);
     }
 
     public static int[] estimateSegmentLengths(float[] xsPos, float[] ysPos, float[] xsHandlesOffset,
@@ -135,8 +122,7 @@ public class CatMullRomInterpolation {
             segmentLengthsList.add(sizeOfSegment);
         }
         segmentLengthsList.add(1);  //last point is single length segment
-        int[] segmentLengths = ArrayUtility.toIntArray(segmentLengthsList);
-        return segmentLengths;
+        return ArrayUtility.toIntArray(segmentLengthsList);
     }
 
     /**
@@ -222,13 +208,4 @@ public class CatMullRomInterpolation {
         return interpolated;
     }
 
-    public static class HandleAndIdcs {
-        public final float[] handles;
-        public final int[] idcs;
-
-        public HandleAndIdcs(float[] handles, int[] idcs) {
-            this.handles = handles;
-            this.idcs = idcs;
-        }
-    }
 }

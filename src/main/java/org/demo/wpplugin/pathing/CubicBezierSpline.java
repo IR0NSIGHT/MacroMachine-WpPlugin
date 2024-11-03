@@ -54,8 +54,8 @@ public class CubicBezierSpline {
     public static float estimateCurveSize(float[] pos0, float[] handle0, float[] handle1, float[] pos1,
                                           int positionDigits) {
 
-        float[] xPoints = calculateCubicBezier(pos0[0],handle0[0],handle1[0], pos1[0],11);
-        float[] yPoints =calculateCubicBezier(pos0[1],handle0[1],handle1[1], pos1[1],11);
+        float[] xPoints = calculateCubicBezier(pos0[0],handle0[0],handle1[0], pos1[0],30+1);
+        float[] yPoints =calculateCubicBezier(pos0[1],handle0[1],handle1[1], pos1[1],30+1);
         double totalLength = 0;
         for (int i = 0; i < xPoints.length-1; i++) {
             float xDiff = xPoints[i] - xPoints[i + 1];
