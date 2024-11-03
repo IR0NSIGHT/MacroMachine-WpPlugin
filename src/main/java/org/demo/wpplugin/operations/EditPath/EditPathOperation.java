@@ -577,7 +577,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             }
 
 
-            if (getSelectedPoint() != null && !Arrays.equals(getSelectedPoint(), getSelectedPath().handleByIndex(0)) && !Arrays.equals(getSelectedPoint(), getSelectedPath().getTail())) {
+            if (getSelectedPoint() != null) {
                 if (getSelectedPath().type == PointInterpreter.PointType.RIVER_2D) {
                     OptionsLabel[] riverInputs = RiverHandleInformation.Editor(getSelectedPoint(), point -> {
                         Path oldPath = getSelectedPath();
