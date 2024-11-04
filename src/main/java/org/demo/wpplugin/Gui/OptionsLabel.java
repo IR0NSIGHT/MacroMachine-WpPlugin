@@ -37,6 +37,7 @@ public interface OptionsLabel {
                             float val = ((Double) value).floatValue();
                             if (val == INHERIT_VALUE)
                                 return "INHERIT";
+                            return String.format("%.2f",val);
                         }
                         return value.toString();
                     }

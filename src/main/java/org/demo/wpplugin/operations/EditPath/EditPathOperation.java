@@ -1,9 +1,12 @@
 package org.demo.wpplugin.operations.EditPath;
 
 import javafx.geometry.Point2D;
+import org.demo.wpplugin.ArrayUtility;
 import org.demo.wpplugin.Gui.Heightmap3dApp;
 import org.demo.wpplugin.Gui.OperationOptionsPanel;
 import org.demo.wpplugin.Gui.OptionsLabel;
+import org.demo.wpplugin.HalfWaySubdivider;
+import org.demo.wpplugin.Subdivide;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.PaintDimension;
 import org.demo.wpplugin.layers.PathPreviewLayer;
@@ -23,39 +26,44 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyVetoException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 import static org.demo.wpplugin.Gui.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
 import static org.demo.wpplugin.pathing.PointUtils.*;
 
 /**
- * For any operation that is intended to be applied to the dimension in a particular location as indicated by the user
- * by clicking or dragging with a mouse or pressing down on a tablet, it makes sense to subclass
+ * For any operation that is intended to be applied to the dimension in a
+ * particular location as indicated by the user
+ * by clicking or dragging with a mouse or pressing down on a tablet, it
+ * makes sense to subclass
  * {@link MouseOrTabletOperation}, which automatically sets that up for you.
  *
- * <p>For more general kinds of operations you are free to subclass {@link AbstractOperation} instead, or even just
+ * <p>For more general kinds of operations you are free to subclass
+ * {@link AbstractOperation} instead, or even just
  * implement {@link Operation} directly.
  *
  * <p>There are also more specific base classes you can use:
  *
  * <ul>
- *     <li>{@link AbstractBrushOperation} - for operations that need access to the currently selected brush and
+ *     <li>{@link AbstractBrushOperation} - for operations that need access
+ *     to the currently selected brush and
  *     intensity setting.
- *     <li>{@link RadiusOperation} - for operations that perform an action in the shape of the brush.
- *     <li>{@link AbstractPaintOperation} - for operations that apply the currently selected paint in the shape of the
+ *     <li>{@link RadiusOperation} - for operations that perform an action in
+ *     the shape of the brush.
+ *     <li>{@link AbstractPaintOperation} - for operations that apply the
+ *     currently selected paint in the shape of the
  *     brush.
  * </ul>
  *
- * <p><strong>Note</strong> that for now WorldPainter only supports operations that
+ * <p><strong>Note</strong> that for now WorldPainter only supports
+ * operations that
  */
 public class EditPathOperation extends MouseOrTabletOperation implements PaintOperation, // Implement this if you
 // need access to the currently selected paint; note that some base
         // classes already provide this
-        BrushOperation // Implement this if you need access to the currently selected brush; note that some base
+        BrushOperation // Implement this if you need access to the currently
+        // selected brush; note that some base
         // classes already provide this
 {
 
@@ -68,8 +76,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     public static final int SIZE_DOT = 0;
     public static final int SIZE_MEDIUM_CROSS = 10;
     /**
-     * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
-     * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
+     * The globally unique ID of the operation. It's up to you what to use
+     * here. It is not visible to the user. It can
+     * be a FQDN or package and class name, like here, or you could use a
+     * UUID. As long as it is globally unique.
      */
     static final String ID = "org.demo.wpplugin.BezierPathTool.v1";
     /**
@@ -77,34 +87,49 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
      */
     static final String NAME = "Edit Path Operation";
     /**
-     * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
+     * Human-readable description of the operation. This is used e.g. in the
+     * tooltip of the operation selection button.
      */
-    static final String DESCRIPTION = "<html>Draw smooth, connected curves with C1 continuity.<br>left click: add " + "new" + " point " + "after selected<br>right click: delete selected<br>ctrl+click: select this " + "handle<br>shift+click: move " + "selected" + " handle here</html>";
+    static final String DESCRIPTION = "<html>Draw smooth, connected curves " + "with C1 continuity.<br>left click: " +
+            "add " + "new" + " point " + "after selected<br>right click: delete selected<br>ctrl+click: " + "select " +
+            "this " + "handle<br>shift+click: move " + "selected" + " " + "handle here</html>";
     //update path
     public static int PATH_ID = 1;
     private final EditPathOptions options = new EditPathOptions();
+    private final LinkedList<ToolHistoryState> history = new LinkedList<>();
     EditPathOptionsPanel eOptionsPanel;
     int resolution3d = 2;
-    private int selectedPointIdx;
     private Brush brush;
     private Paint paint;
     private boolean shiftDown = false;
     private boolean altDown = false;
     private boolean ctrlDown = false;
     private StandardOptionsPanel panelContainer;
+    private ToolHistoryState currentState;
 
     public EditPathOperation() {
-        // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
-        // once for every time the user clicks the mouse or presses on the tablet:
+        // Using this constructor will create a "single shot" operation. The
+        // tick() method below will only be invoked
+        // once for every time the user clicks the mouse or presses on the
+        // tablet:
         super(NAME, DESCRIPTION, ID);
-        // Using this constructor instead will create a continues operation. The tick() method will be invoked once
-        // every "delay" ms while the user has the mouse button down or continues pressing on the tablet. The "first"
-        // parameter will be true for the first invocation per mouse button press and false for every subsequent
+        // Using this constructor instead will create a continues operation.
+        // The tick() method will be invoked once
+        // every "delay" ms while the user has the mouse button down or
+        // continues pressing on the tablet. The "first"
+        // parameter will be true for the first invocation per mouse button
+        // press and false for every subsequent
         // invocation:
         // super(NAME, DESCRIPTION, delay, ID);
-        this.options.selectedPathId = PathManager.instance.getAnyValidId();
-
-        //Worldpainter Pen has a severe bug deep down that breaks shift/alt/control after a button in the settings
+        int selectedPathId = PathManager.instance.getAnyValidId();
+        Path p= PathManager.instance.getPathBy(selectedPathId);
+        this.currentState = new ToolHistoryState(
+                p,
+                new boolean[p.amountHandles()],
+                0,selectedPathId
+        );
+        //Worldpainter Pen has a severe bug deep down that breaks
+        // shift/alt/control after a button in the settings
         // pannel was used.
         //this shitty listener circumvents the bug
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
@@ -121,33 +146,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         });
     }
 
-    private static Point pointWithAngleAndRadius(Point p, float angleRad, int radius) {
-        int x = (int) Math.round(radius * Math.cos(angleRad));
-        int y = (int) Math.round(radius * Math.sin(angleRad));
-        return new Point(p.x + x, p.y + y);
-    }
-
-    private Point getLowestAtRadius(int radius, Point center) {
-        Point pMin = center;
-        float zMin = Float.MAX_VALUE;
-        ArrayList<Float> angles = new ArrayList<>(36);
-        for (int i = 0; i < 36; i++) {
-            angles.add((float) (i / 36f * Math.PI * 2f));
-        }
-        Collections.shuffle(angles);
-        for (float alpha : angles) {
-            Point newP = pointWithAngleAndRadius(center, alpha, radius);
-            float z = getDimension().getHeightAt(newP);
-            if (z < zMin) {
-                zMin = z;
-                pMin = newP;
-            }
-        }
-        return pMin;
-    }
-
-    private void show3d() {
-        Point selected = getPoint2D(getSelectedPoint());
+    private void show3dAction() {
+        Point selected = getPoint2D(getCursorHandle());
         //Create heightmap
         float[][] heightmap = new float[256][];
         float[][] waterMap = new float[256][];
@@ -225,25 +225,23 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         Heightmap3dApp.main();
     }
 
-    float[] getSelectedPoint() {
+    float[] getCursorHandle() {
+        int selectedPointIdx = currentState.cursorHandleIdx;
         if (selectedPointIdx == -1) return null;
         if (selectedPointIdx < 0 || selectedPointIdx > getSelectedPath().amountHandles() - 1) return null;
         return getSelectedPath().handleByIndex(selectedPointIdx);
     }
 
     Path getSelectedPath() {
-        return PathManager.instance.getPathBy(getSelectedPathId());
-    }
-
-    int getSelectedPathId() {
-        return options.selectedPathId;
+        return currentState.path;
     }
 
     /**
-     * automatically advance the path downhill until it doesnt find any lower point.
+     * automatically advance the path downhill until it doesnt find any lower
+     * point.
      */
     private boolean addHandleDownhill() {
-        Point selected = getPoint2D(getSelectedPoint());
+        Point selected = getPoint2D(getCursorHandle());
         float selectedZ = getDimension().getHeightAt(selected);
 
         Point pMin = null;
@@ -257,7 +255,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         assert pMin != null;
 
         float[] newHandle = RiverHandleInformation.riverInformation(pMin.x, pMin.y);
-        p = p.insertPointAfter(getSelectedPoint(), newHandle);
+        p = p.insertPointAfter(getCursorHandle(), newHandle);
         overwriteSelectedPath(p);
         try {
             setSelectedPointIdx(p.getClosestHandleIdxTo(newHandle));
@@ -267,13 +265,64 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         return true;
     }
 
-    void setSelectedPointIdx(int selectedPointIdx) {
-        this.selectedPointIdx = selectedPointIdx;
+    private Point getLowestAtRadius(int radius, Point center) {
+        Point pMin = center;
+        float zMin = Float.MAX_VALUE;
+        ArrayList<Float> angles = new ArrayList<>(36);
+        for (int i = 0; i < 36; i++) {
+            angles.add((float) (i / 36f * Math.PI * 2f));
+        }
+        Collections.shuffle(angles);
+        for (float alpha : angles) {
+            Point newP = pointWithAngleAndRadius(center, alpha, radius);
+            float z = getDimension().getHeightAt(newP);
+            if (z < zMin) {
+                zMin = z;
+                pMin = newP;
+            }
+        }
+        return pMin;
     }
 
     private void overwriteSelectedPath(Path p) {
+        history.addFirst(currentState);
+        this.currentState = new ToolHistoryState(p, currentState.selectedIdcs, currentState.cursorHandleIdx,
+                currentState.pathId);
         try {
             PathManager.instance.setPathBy(getSelectedPathId(), p);
+        } catch (AssertionError err) {
+            System.err.println(err);
+        }
+    }
+
+    void setSelectedPointIdx(int selectedPointIdx) {
+        assert selectedPointIdx >= 0 && selectedPointIdx < getSelectedPath().amountHandles();
+        this.currentState.cursorHandleIdx = selectedPointIdx;
+    }
+
+    private static Point pointWithAngleAndRadius(Point p, float angleRad, int radius) {
+        int x = (int) Math.round(radius * Math.cos(angleRad));
+        int y = (int) Math.round(radius * Math.sin(angleRad));
+        return new Point(p.x + x, p.y + y);
+    }
+
+    int getSelectedPathId() {
+        return currentState.pathId;
+    }
+
+    private void selectPathById(int pathId) {
+        history.addFirst(currentState);
+        Path p = PathManager.instance.getPathBy(pathId);
+        currentState = new ToolHistoryState(p, new boolean[p.amountHandles()], 0, pathId);
+    }
+
+    private void undo() {
+        if (history.isEmpty())
+            return;
+        ToolHistoryState previousPath = history.pop();
+        try {
+            currentState = previousPath;
+            PathManager.instance.setPathBy(previousPath.pathId, previousPath.path);
         } catch (AssertionError err) {
             System.err.println(err);
         }
@@ -301,7 +350,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
     @Override
     public JPanel getOptionsPanel() {
-        panelContainer = new EditPathOptionsPanelContainer(getName(), "a description");
+        panelContainer = new EditPathOptionsPanelContainer(getName(), "a " + "description");
         return panelContainer;
     }
 
@@ -312,112 +361,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         ctrlDown = false;
         shiftDown = false;
         redrawSelectedPathLayer();
-    }
-
-    /**
-     * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
-     * this is invoked once per {@code delay} ms while the mouse button is down, with the first invocation having
-     * {@code first} be {@code true} and subsequent invocations having it be {@code false}.
-     *
-     * @param centreX      The x coordinate where the operation should be applied, in world coordinates.
-     * @param centreY      The y coordinate where the operation should be applied, in world coordinates.
-     * @param inverse      Whether to perform the "inverse" operation instead of the regular operation, if applicable
-     *                     . If the
-     *                     operation has no inverse it should just apply the normal operation.
-     * @param first        Whether this is the first tick of a continuous operation. For a one shot operation this
-     *                     will always
-     *                     be {@code true}.
-     * @param dynamicLevel The dynamic level (from 0.0f to 1.0f inclusive) to apply in addition to the {@code level}
-     *                     property, for instance due to a pressure sensitive stylus being used. In other words,
-     *                     <strong>not</strong> the total level at which to apply the operation! Operations are free to
-     *                     ignore this if it is not applicable. If the operation is being applied through a means which
-     *                     doesn't provide a dynamic level (for instance the mouse), this will be <em>exactly</em>
-     *                     {@code 1.0f}.
-     */
-    @Override
-    protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
-        //  Perform the operation. In addition to the parameters you have the following methods available:
-        // * getDimension() - obtain the dimension on which to perform the operation
-        // * getLevel() - obtain the current brush intensity setting as a float between 0.0 and 1.0
-        // * isAltDown() - whether the Alt key is currently pressed - NOTE: this is already in use to indicate whether
-        //                 the operation should be inverted, so should probably not be overloaded
-        // * isCtrlDown() - whether any of the Ctrl, Windows or Command keys are currently pressed
-        // * isShiftDown() - whether the Shift key is currently pressed
-        // In addition you have the following fields in this class:
-        // * brush - the currently selected brush
-        // * paint - the currently selected paint
-
-        final Path path = getSelectedPath();
-        EditPathOperation.PATH_ID = getSelectedPathId();
-
-        float[] userClickedCoord = RiverHandleInformation.riverInformation(centreX, centreY);
-        if (path.type == PointInterpreter.PointType.RIVER_2D)
-            setValue(userClickedCoord, RiverInformation.WATER_Z, getDimension().getHeightAt(centreX, centreY));
-
-        assert getSelectedPoint() != null;
-
-        try {
-            if (ctrlDown) {
-                //SELECT POINT
-                try {
-                    if (path.amountHandles() != 0) {
-                        int clostestIdx = path.getClosestHandleIdxTo(userClickedCoord);
-                        float[] closest = path.handleByIndex(clostestIdx);
-                        //dont allow very far away clicks
-                        if (getPositionalDistance(closest, userClickedCoord, RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
-                            setSelectedPointIdx(clostestIdx);
-                        }
-                    }
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-            } else if (altDown) {
-                overwriteSelectedPath(path.newEmpty());
-                setSelectedPointIdx(-1);
-            } else if (shiftDown) {
-                try {
-                    float[] movedPoint = setPosition2D(getSelectedPoint(), userClickedCoord);
-                    int idx = path.indexOfPosition(getSelectedPoint());
-                    Path newPath = path.overwriteHandle(getSelectedPoint(), movedPoint);
-                    setSelectedPointIdx(idx);
-
-                    overwriteSelectedPath(newPath);
-                } catch (Exception ex) {
-                    System.err.println("Error moving point " + getSelectedPoint() + " to " + getSelectedPath());
-                }
-
-            } else if (inverse) {
-                //REMOVE SELECTED POINT
-                if (path.amountHandles() > 1) {
-                    try {
-                        float[] pointBeforeSelected = path.getPreviousPoint(getSelectedPoint());
-                        Path newPath = path.removePoint(getSelectedPoint());
-                        overwriteSelectedPath(newPath);
-                        int idx = getSelectedPath().indexOfPosition(pointBeforeSelected);
-                        setSelectedPointIdx(idx);
-                    } catch (Exception | AssertionError e) {
-                        overwriteSelectedPath(path); // set old path
-                        throw new RuntimeException(e);
-                    }
-                }
-            } else {
-                //add new point after selected
-                overwriteSelectedPath(path.insertPointAfter(getSelectedPoint(), userClickedCoord));
-                setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
-            }
-
-
-            assert getSelectedPath().amountHandles() == 0 || getSelectedPoint() != null;
-
-
-            assert getSelectedPath() == PathManager.instance.getPathBy(options.selectedPathId) : "unsuccessfull " + "setting " + "path in manager";
-        } catch (Exception e) {
-            System.out.println("Exception after user edit-path-action");
-            System.out.println(e);
-        }
-        redrawSelectedPathLayer();
-
-        if (this.eOptionsPanel != null) this.eOptionsPanel.onOptionsReconfigured();
     }
 
     void redrawSelectedPathLayer() {
@@ -450,9 +393,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
         try {
             //redraw new
-            DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), heightDim), paintDim, getSelectedPath().indexOfPosition(getSelectedPoint()));
-            if (getSelectedPoint() != null)
-                PointUtils.markPoint(getPoint2D(getSelectedPoint()), COLOR_SELECTED, SIZE_SELECTED, paintDim);
+            DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), heightDim), paintDim
+                    , getSelectedPath().indexOfPosition(getCursorHandle()));
+            if (getCursorHandle() != null)
+                PointUtils.markPoint(getPoint2D(getCursorHandle()), COLOR_SELECTED, SIZE_SELECTED, paintDim);
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
         } finally {
@@ -474,9 +418,150 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         assert clone.equals(path) : "something mutated the path";
     }
 
+    /**
+     * Perform the operation. For single shot operations this is invoked once
+     * per mouse-down. For continuous operations
+     * this is invoked once per {@code delay} ms while the mouse button is
+     * down, with the first invocation having
+     * {@code first} be {@code true} and subsequent invocations having it be
+     * {@code false}.
+     *
+     * @param centreX      The x coordinate where the operation should be
+     *                     applied, in world coordinates.
+     * @param centreY      The y coordinate where the operation should be
+     *                     applied, in world coordinates.
+     * @param inverse      Whether to perform the "inverse" operation instead
+     *                     of the regular operation, if applicable
+     *                     . If the
+     *                     operation has no inverse it should just apply the
+     *                     normal operation.
+     * @param first        Whether this is the first tick of a continuous
+     *                     operation. For a one shot operation this
+     *                     will always
+     *                     be {@code true}.
+     * @param dynamicLevel The dynamic level (from 0.0f to 1.0f inclusive) to
+     *                     apply in addition to the {@code level}
+     *                     property, for instance due to a pressure sensitive
+     *                     stylus being used. In other words,
+     *                     <strong>not</strong> the total level at which to
+     *                     apply the operation! Operations are free to
+     *                     ignore this if it is not applicable. If the
+     *                     operation is being applied through a means which
+     *                     doesn't provide a dynamic level (for instance the
+     *                     mouse), this will be <em>exactly</em>
+     *                     {@code 1.0f}.
+     */
+    @Override
+    protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
+        //  Perform the operation. In addition to the parameters you have the
+        //  following methods available:
+        // * getDimension() - obtain the dimension on which to perform the
+        // operation
+        // * getLevel() - obtain the current brush intensity setting as a
+        // float between 0.0 and 1.0
+        // * isAltDown() - whether the Alt key is currently pressed - NOTE:
+        // this is already in use to indicate whether
+        //                 the operation should be inverted, so should
+        //                 probably not be overloaded
+        // * isCtrlDown() - whether any of the Ctrl, Windows or Command keys
+        // are currently pressed
+        // * isShiftDown() - whether the Shift key is currently pressed
+        // In addition you have the following fields in this class:
+        // * brush - the currently selected brush
+        // * paint - the currently selected paint
+
+        final Path path = getSelectedPath();
+        EditPathOperation.PATH_ID = getSelectedPathId();
+
+        float[] userClickedCoord = RiverHandleInformation.riverInformation(centreX, centreY);
+        if (path.type == PointInterpreter.PointType.RIVER_2D)
+            setValue(userClickedCoord, RiverInformation.WATER_Z, getDimension().getHeightAt(centreX, centreY));
+
+        assert getCursorHandle() != null;
+
+        try {
+            if (ctrlDown) {
+                //SELECT POINT
+                try {
+                    if (path.amountHandles() != 0) {
+                        int clostestIdx = path.getClosestHandleIdxTo(userClickedCoord);
+                        float[] closest = path.handleByIndex(clostestIdx);
+                        //dont allow very far away clicks
+                        if (getPositionalDistance(closest, userClickedCoord,
+                                RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
+                            setSelectedPointIdx(clostestIdx);
+                        }
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            } else if (altDown) {
+                overwriteSelectedPath(path.newEmpty());
+                setSelectedPointIdx(-1);
+            } else if (shiftDown) {
+                try {
+                    float[] movedPoint = setPosition2D(getCursorHandle(), userClickedCoord);
+                    int idx = path.indexOfPosition(getCursorHandle());
+                    Path newPath = path.overwriteHandle(getCursorHandle(), movedPoint);
+                    setSelectedPointIdx(idx);
+
+                    overwriteSelectedPath(newPath);
+                } catch (Exception ex) {
+                    System.err.println("Error moving point " + getCursorHandle() + " to " + getSelectedPath());
+                }
+
+            } else if (inverse) {
+                //REMOVE SELECTED POINT
+                if (path.amountHandles() > 1) {
+                    try {
+                        float[] pointBeforeSelected = path.getPreviousPoint(getCursorHandle());
+                        Path newPath = path.removePoint(getCursorHandle());
+                        overwriteSelectedPath(newPath);
+                        int idx = getSelectedPath().indexOfPosition(pointBeforeSelected);
+                        setSelectedPointIdx(idx);
+                    } catch (Exception | AssertionError e) {
+                        overwriteSelectedPath(path); // set old path
+                        throw new RuntimeException(e);
+                    }
+                }
+            } else {
+                //add new point after selected
+                overwriteSelectedPath(path.insertPointAfter(getCursorHandle(), userClickedCoord));
+                setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
+            }
+
+
+            assert getSelectedPath().amountHandles() == 0 || getCursorHandle() != null;
+
+
+            assert getSelectedPath() == PathManager.instance.getPathBy(getSelectedPathId()) : "unsuccessfull " +
+                    "setting " + "path in manager";
+        } catch (Exception e) {
+            System.out.println("Exception after user edit-path-action");
+            System.out.println(e);
+        }
+        redrawSelectedPathLayer();
+
+        if (this.eOptionsPanel != null) this.eOptionsPanel.onOptionsReconfigured();
+    }
+
     private static class EditPathOptions {
-        int owo = 0;
-        int selectedPathId = -1;
+        float subdivisions = 25;
+        float subdivisionRange = .5f;
+    }
+
+    private class ToolHistoryState {
+        final Path path;
+        boolean[] selectedIdcs;
+        int cursorHandleIdx;
+        int pathId;
+
+        public ToolHistoryState(Path path, boolean[] selectedIdcs, int cursorHandleIdx, int pathId) {
+            this.path = path;
+            this.selectedIdcs = selectedIdcs;
+            this.pathId = pathId;
+            this.cursorHandleIdx = cursorHandleIdx;
+        }
     }
 
     private class EditPathOptionsPanelContainer extends StandardOptionsPanel {
@@ -499,17 +584,19 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         }
 
         @Override
-        protected ArrayList<OptionsLabel> addComponents(EditPathOptions editPathOptions, Runnable onOptionsReconfigured) {
+        protected ArrayList<OptionsLabel> addComponents(EditPathOptions editPathOptions,
+                                                        Runnable onOptionsReconfigured) {
             ArrayList<OptionsLabel> inputs = new ArrayList<>();
 
             //select path dropdown
             Collection<PathManager.NamedId> availablePaths = PathManager.instance.allPathNamedIds();
 
             JComboBox<Object> comboBox = new JComboBox<>(availablePaths.toArray());
-            comboBox.setSelectedItem(PathManager.instance.getPathName(editPathOptions.selectedPathId));
+            comboBox.setSelectedItem(PathManager.instance.getPathName(getSelectedPathId()));
             comboBox.addActionListener(e -> {
-                editPathOptions.selectedPathId = ((PathManager.NamedId) comboBox.getSelectedItem()).id;
-                setSelectedPointIdx(getSelectedPath().amountHandles() == 0 ? -1 : getSelectedPath().amountHandles() - 1);
+                selectPathById(((PathManager.NamedId) comboBox.getSelectedItem()).id);
+                setSelectedPointIdx(getSelectedPath().amountHandles() == 0 ? -1 :
+                        getSelectedPath().amountHandles() - 1);
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
             });
@@ -521,8 +608,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             JButton button = new JButton("Add empty path");
             // Add an ActionListener to handle button clicks
             button.addActionListener(e -> {
-                float[][] handles = new float[][]{riverInformation(0, 0), riverInformation(10, 10, 1, 2, 3, 4, 5), riverInformation(20, 20)};
-                editPathOptions.selectedPathId = PathManager.instance.addPath(new Path(Arrays.asList(handles), getSelectedPath().type));
+                float[][] handles = new float[][]{riverInformation(0, 0), riverInformation(10, 10, 1, 2, 3, 4, 5),
+                        riverInformation(20, 20)};
+                selectPathById(PathManager.instance.addPath(new Path(Arrays.asList(handles),
+                        getSelectedPath().type)));
                 setSelectedPointIdx(0);
                 redrawSelectedPathLayer();
                 onOptionsReconfigured.run();
@@ -535,19 +624,20 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
             // Create a JButton to trigger an action
             JButton submitNameChangeButton = new JButton("Change Name");
-            textField.setText(PathManager.instance.getPathName(options.selectedPathId).name);
+            textField.setText(PathManager.instance.getPathName(getSelectedPathId()).name);
             // Add ActionListener to handle button click
             submitNameChangeButton.addActionListener(e -> {
                 // Get the text from the text field and display it in the label
                 String inputText = textField.getText();
-                PathManager.instance.nameExistingPath(options.selectedPathId, inputText);
+                PathManager.instance.nameExistingPath(getSelectedPathId(), inputText);
                 onOptionsReconfigured.run();
             });
 
             {          // FLOW DOWNHILL BUTTON
                 JButton myButton = new JButton("flow downhill");
                 myButton.addActionListener(e -> {
-                    //run downhill 25 handles max or until we hit a hole with no escape
+                    //run downhill 25 handles max or until we hit a hole with
+                    // no escape
                     for (int i = 0; i < 25; i++) {
                         boolean didFindSth = addHandleDownhill();
                         if (!didFindSth) break;
@@ -563,26 +653,28 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 // SHOW 3d BUTTON
                 JButton myButton = new JButton("show 3d");
                 myButton.addActionListener(e -> {
-                    //run downhill 25 handles max or until we hit a hole with no escape
-                    show3d();
+                    //run downhill 25 handles max or until we hit a hole with
+                    // no escape
+                    show3dAction();
                 });
                 inputs.add(() -> new JComponent[]{myButton});
 
                 SpinnerNumberModel model = new SpinnerNumberModel(1f * resolution3d, 1, 10, 1f);
 
-                OptionsLabel l = numericInput("3d resolution 1:x", "displays area in 1:resolution", model, newValue -> {
-                    resolution3d = newValue.intValue();
-                }, EditPathOperation.this::show3d);
+                OptionsLabel l = numericInput("3d resolution 1:x", "displays " + "area in 1:resolution", model,
+                        newValue -> {
+                            resolution3d = newValue.intValue();
+                        }, EditPathOperation.this::show3dAction);
                 inputs.add(l);
             }
 
 
-            if (getSelectedPoint() != null) {
+            if (getCursorHandle() != null) {
                 if (getSelectedPath().type == PointInterpreter.PointType.RIVER_2D) {
-                    OptionsLabel[] riverInputs = RiverHandleInformation.Editor(getSelectedPoint(), point -> {
+                    OptionsLabel[] riverInputs = RiverHandleInformation.Editor(getCursorHandle(), point -> {
                         Path oldPath = getSelectedPath();
                         try {
-                            Path newPath = getSelectedPath().overwriteHandle(getSelectedPoint(), point);
+                            Path newPath = getSelectedPath().overwriteHandle(getCursorHandle(), point);
                             overwriteSelectedPath(newPath);
                         } catch (Exception ex) {
                             System.err.println(ex.getMessage());
@@ -611,7 +703,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 JButton button1 = new JButton("Edit water height");
                 button1.addActionListener(e -> {
                     JFrame c = (JFrame) SwingUtilities.getWindowAncestor(this.getParent());
-                    JDialog dialog = riverRadiusEditor(c, getSelectedPath(), selectedPointIdx, EditPathOperation.this::overwriteSelectedPath, dim);
+                    JDialog dialog = riverRadiusEditor(c, getSelectedPath(), currentState.cursorHandleIdx,
+                            EditPathOperation.this::overwriteSelectedPath, dim);
                     dialog.setVisible(true);
                     onOptionsReconfigured();
                     redrawSelectedPathLayer();
@@ -620,21 +713,70 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             }
 
             {   // subdivide segment
-                JButton subdivideButton = new JButton("subdivide segment");
-                subdivideButton.addActionListener(e -> {
-                    Path p = getSelectedPath();
-                    int selectedIdx = p.indexOfPosition(getSelectedPoint());
-                    float[] start = getSelectedPoint();
-                    float[] end = p.handleByIndex(selectedIdx+ 1);
+                {
+                    JButton subdivideButton = new JButton("subdivide segment");
+                    subdivideButton.addActionListener(e -> {
+                        Path p = getSelectedPath();
+                        int selectedIdx = p.indexOfPosition(getCursorHandle()) - 1;
+                        ArrayList<float[]> flatHandles = ArrayUtility.transposeMatrix(p.getHandles());
+                        Subdivide divider = new HalfWaySubdivider(options.subdivisionRange, options.subdivisionRange,
+                                true);
+                        ArrayList<float[]> newFlats = Subdivide.subdivide(flatHandles.get(0), flatHandles.get(1),
+                                selectedIdx, (int) options.subdivisions, divider);
+                        for (int i = 2; i < p.type.size; i++) {
+                            float[] filler = new float[newFlats.get(0).length];
+                            Arrays.fill(filler, INHERIT_VALUE);
+                            newFlats.add(filler);
+                        }
 
-                    //    p = Path.subdivide(p, p.indexOfPosition(handle), 1);
-                    //FIXME do something
-                    overwriteSelectedPath(p);
-                    onOptionsReconfigured();
-                    redrawSelectedPathLayer();
-                });
-                inputs.add(() -> new JComponent[]{subdivideButton});
+                        ArrayList<float[]> newHandles = ArrayUtility.transposeMatrix(newFlats);
+                        int newSelectedIdx = newHandles.size() + selectedIdx - 1;
+                        //add old handles before segment
+                        for (int i = 0; i < selectedIdx; i++) {
+                            newHandles.add(i, p.handleByIndex(i));
+                        }
+                        //add old handles after segment
+                        for (int i = selectedIdx + 2; i < p.amountHandles(); i++) {
+                            newHandles.add(p.handleByIndex(i));
+                        }
+                        p = new Path(newHandles, p.type);
 
+
+                        overwriteSelectedPath(p);
+                        setSelectedPointIdx(newSelectedIdx);
+
+                        onOptionsReconfigured();
+                        redrawSelectedPathLayer();
+                    });
+                    inputs.add(() -> new JComponent[]{subdivideButton});
+                }
+
+                {
+                    SpinnerNumberModel model = new SpinnerNumberModel(options.subdivisions, 5, 200, 5f);
+                    OptionsLabel label = numericInput("subdivisions", "how often to subdivide", model, f -> {
+                        options.subdivisions = f;
+                    }, onOptionsReconfigured);
+                    inputs.add(label);
+                }
+                {
+                    SpinnerNumberModel model = new SpinnerNumberModel(options.subdivisionRange * 200f, 1, 100, 1f);
+                    OptionsLabel label = numericInput("subdivide range %",
+                            "how far a new random point is allowed to be placed from the curve",
+                            model, f -> {
+                                options.subdivisionRange = f / 200f;
+                            }, onOptionsReconfigured);
+                    inputs.add(label);
+                }
+            }
+            {
+                JButton undoButton = new JButton("undo");
+                undoButton.addActionListener(e -> {
+                            undo();
+                            onOptionsReconfigured();
+                            redrawSelectedPathLayer();
+                        }
+                );
+                inputs.add(() -> new JComponent[]{undoButton});
             }
 
             return inputs;
