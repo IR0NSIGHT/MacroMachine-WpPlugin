@@ -138,7 +138,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             wpApp.getRootPane().getActionMap().put("submit", new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    setHandleSelection(currentState.cursorHandleIdx, !currentState.selectedIdcs[currentState.cursorHandleIdx]);
+                    setHandleSelection(currentState.cursorHandleIdx, !isHandleSelected(currentState.cursorHandleIdx, false));
                     redrawSelectedPathLayer();
                 }
             });
@@ -187,34 +187,34 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
     private int[] getSelectedIdcs(boolean andCursor) {
         int count = 0;
-        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
-            if (isHandleSelected(i) || (andCursor && currentState.cursorHandleIdx == i))
+        for (int i = 0; i < getSelectedPath().amountHandles(); i++) {
+            if (isHandleSelected(i, andCursor))
                 count++;
         }
         int[] idcs = new int[count];
         int sel = 0;
-        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
-            if (isHandleSelected(i))
+        for (int i = 0; i < getSelectedPath().amountHandles(); i++) {
+            if (isHandleSelected(i,andCursor))
                 idcs[sel++] = i;
         }
         return idcs;
     }
 
     private void deselectAll() {
-        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
-            currentState.selectedIdcs[i] = false;
+        for (int i = 0; i < getSelectedPath().amountHandles(); i++) {
+            setHandleSelection(i,false);
         }
     }
 
     private void selectAll() {
-        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
-            currentState.selectedIdcs[i] = true;
+        for (int i = 0; i < getSelectedPath().amountHandles(); i++) {
+            setHandleSelection(i,true);
         }
     }
 
     private void invertSelection() {
-        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
-            currentState.selectedIdcs[i] = !currentState.selectedIdcs[i];
+        for (int i = 0; i < getSelectedPath().amountHandles(); i++) {
+            setHandleSelection(i, !isHandleSelected(i,false));
         }
     }
 
@@ -222,10 +222,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         currentState.selectedIdcs[handle] = state;
     }
 
-    private boolean isHandleSelected(int idx) {
-        if (idx < 0 || idx >= currentState.selectedIdcs.length)
+    private boolean isHandleSelected(int idx, boolean orCursor) {
+        if (idx < 0 || idx >= getSelectedPath().amountHandles())
             throw new ArrayIndexOutOfBoundsException("thats not a valid idx:" + idx);
-        return currentState.selectedIdcs[idx];
+        return (orCursor && currentState.cursorHandleIdx == idx) || currentState.selectedIdcs[idx];
     }
 
     void redrawSelectedPathLayer() {
@@ -256,10 +256,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             }
         };
 
-        int idx = 0;
-        for (float[] handle : getSelectedPath()) {
-            if (isHandleSelected(idx++))
-                markPoint(getPoint2D(handle), COLOR_SELECTED, SIZE_MEDIUM_CROSS, paintDim);
+        for (int selectedIdx: getSelectedIdcs(false)) {
+            float[] handle = getSelectedPath().handleByIndex(selectedIdx);
+            markPoint(getPoint2D(handle), COLOR_SELECTED, SIZE_MEDIUM_CROSS, paintDim);
         }
 
 
@@ -434,8 +433,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         //copy over handle selection, even if positions were added/deleted
         boolean[] newSelection = new boolean[p.amountHandles()];
         Path oldPath = getSelectedPath();
-        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
-            if (currentState.selectedIdcs[i]) {
+        for (int i = 0; i < getSelectedPath().amountHandles(); i++) {
+            if (isHandleSelected(i, false)) {
                 int newIdx = p.indexOfPosition(oldPath.handleByIndex(i));
                 newSelection[newIdx] = true;
             }
@@ -515,6 +514,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         altDown = false;
         ctrlDown = false;
         shiftDown = false;
+        addKeyListenerToComponent(this.getView());
+
         redrawSelectedPathLayer();
     }
 
@@ -553,8 +554,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
      */
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
-        addKeyListenerToComponent(this.getView());
-
         //  Perform the operation. In addition to the parameters you have the
         //  following methods available:
         // * getDimension() - obtain the dimension on which to perform the
@@ -661,9 +660,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     }
 
     private void selectAllBetween(int start, int end) {
-
         for (int i = Math.min(start, end); i <= Math.max(start, end); i++) {
-            currentState.selectedIdcs[i] = true;
+            setHandleSelection(i, true);
         }
     }
 
@@ -849,7 +847,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                         //subdivide all marked segments
                         for (int oldSelectedIdx : getSelectedIdcs(true)) {
                             int selectedIdx = indexOffset + oldSelectedIdx;
-
+                            if (selectedIdx < 0 || selectedIdx + 1 >= flatHandles.get(0).length)
+                                continue;
                             ArrayList<float[]> newFlats = Subdivide.subdivide(flatHandles.get(0), flatHandles.get(1),
                                     selectedIdx, (int) options.subdivisions, divider);
 
