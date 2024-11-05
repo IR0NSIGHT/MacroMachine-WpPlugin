@@ -18,12 +18,16 @@ import org.demo.wpplugin.pathing.PathManager;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
 import org.pepsoft.worldpainter.Terrain;
+import org.pepsoft.worldpainter.WorldPainterView;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyVetoException;
 import java.util.*;
@@ -106,6 +110,46 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     private boolean ctrlDown = false;
     private StandardOptionsPanel panelContainer;
     private ToolHistoryState currentState;
+    private boolean keyListening;
+    public void addKeyListenerToComponent(JComponent component) {
+        if (keyListening)
+            return;
+        keyListening = true;
+
+
+        JFrame wpApp = (JFrame) SwingUtilities.getWindowAncestor(component);
+        wpApp.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke("ENTER"),"select_all");
+        wpApp.getRootPane().getActionMap().put("select_all", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("control all was fired");
+            }
+        });
+
+
+        component.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                super.keyTyped(e);
+                if (component.isFocusOwner()) {  // Check if this component has focus
+                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {  // Replace with the specific key
+                        // Handle key down event here
+                        System.out.println("Key pressed on the focused component!");
+                    }
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                super.keyReleased(e);
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                super.keyPressed(e);
+            }
+        });
+    }
 
     public EditPathOperation() {
         // Using this constructor will create a "single shot" operation. The
@@ -536,6 +580,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
      */
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
+        addKeyListenerToComponent(this.getView());
+
         //  Perform the operation. In addition to the parameters you have the
         //  following methods available:
         // * getDimension() - obtain the dimension on which to perform the
@@ -552,7 +598,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         // In addition you have the following fields in this class:
         // * brush - the currently selected brush
         // * paint - the currently selected paint
-
         final Path path = getSelectedPath();
         EditPathOperation.PATH_ID = getSelectedPathId();
 
