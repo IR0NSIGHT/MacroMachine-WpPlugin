@@ -152,7 +152,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                             didSomething = true;
                             break;
                         case KeyEvent.VK_I:
-                            invertSelection(); didSomething = true;
+                            invertSelection();
+                            didSomething = true;
                             break;
                     }
                 }
@@ -211,11 +212,76 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         return currentState.cursorHandleIdx == idx || currentState.selectedIdcs[idx];
     }
 
-    private void selectAllBetween(int start, int end) {
+    void redrawSelectedPathLayer() {
+        this.getDimension().setEventsInhibited(true);
+        //erase old
+        this.getDimension().clearLayerData(PathPreviewLayer.INSTANCE);
+        PaintDimension paintDim = new PaintDimension() {
+            @Override
+            public int getValue(int x, int y) {
+                return getDimension().getLayerValueAt(PathPreviewLayer.INSTANCE, x, y);
+            }
 
-        for (int i = Math.min(start,end); i <= Math.max(start,end); i++) {
-            currentState.selectedIdcs[i] = true;
+            @Override
+            public void setValue(int x, int y, int v) {
+                getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, v);
+            }
+        };
+
+        HeightDimension heightDim = new HeightDimension() {
+            @Override
+            public float getHeight(int x, int y) {
+                return getDimension().getHeightAt(x, y);
+            }
+
+            @Override
+            public void setHeight(int x, int y, float z) {
+                getDimension().setHeightAt(x, y, z);
+            }
+        };
+
+        int idx = 0;
+        for (float[] handle : getSelectedPath()) {
+            if (isHandleSelected(idx++))
+                markPoint(getPoint2D(handle), COLOR_SELECTED, SIZE_MEDIUM_CROSS, paintDim);
         }
+
+        try {
+            //redraw new
+            DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), heightDim), paintDim
+                    , getSelectedPath().indexOfPosition(getCursorHandle()));
+            if (getCursorHandle() != null)
+                PointUtils.markPoint(getPoint2D(getCursorHandle()), COLOR_SELECTED, SIZE_SELECTED, paintDim);
+        } catch (Exception ex) {
+            System.err.println(ex.getMessage());
+        } finally {
+            this.getDimension().setEventsInhibited(false);
+        }
+    }
+
+    Path getSelectedPath() {
+        return currentState.path;
+    }
+
+    /**
+     * draws this path onto the map
+     *
+     * @param path
+     */
+    static void DrawPathLayer(Path path, ContinuousCurve curve, PaintDimension dim, int selectedPointIdx) throws IllegalAccessException {
+        Path clone = path.clone();
+        //nothing
+        if (path.type == PointInterpreter.PointType.RIVER_2D) {
+            DrawRiverPath(path, curve, dim, selectedPointIdx);
+        }
+        assert clone.equals(path) : "something mutated the path";
+    }
+
+    float[] getCursorHandle() {
+        int selectedPointIdx = currentState.cursorHandleIdx;
+        if (selectedPointIdx == -1) return null;
+        if (selectedPointIdx < 0 || selectedPointIdx > getSelectedPath().amountHandles() - 1) return null;
+        return getSelectedPath().handleByIndex(selectedPointIdx);
     }
 
     private void show3dAction() {
@@ -297,17 +363,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         Heightmap3dApp.main();
     }
 
-    float[] getCursorHandle() {
-        int selectedPointIdx = currentState.cursorHandleIdx;
-        if (selectedPointIdx == -1) return null;
-        if (selectedPointIdx < 0 || selectedPointIdx > getSelectedPath().amountHandles() - 1) return null;
-        return getSelectedPath().handleByIndex(selectedPointIdx);
-    }
-
-    Path getSelectedPath() {
-        return currentState.path;
-    }
-
     /**
      * automatically advance the path downhill until it doesnt find any lower
      * point.
@@ -360,7 +415,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         history.addFirst(currentState);
 
         //copy over handle selection, even if positions were added/deleted
-        boolean[] newSelection= new boolean[p.amountHandles()];
+        boolean[] newSelection = new boolean[p.amountHandles()];
         Path oldPath = getSelectedPath();
         for (int i = 0; i < currentState.selectedIdcs.length; i++) {
             if (currentState.selectedIdcs[i]) {
@@ -444,67 +499,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         ctrlDown = false;
         shiftDown = false;
         redrawSelectedPathLayer();
-    }
-
-    void redrawSelectedPathLayer() {
-        this.getDimension().setEventsInhibited(true);
-        //erase old
-        this.getDimension().clearLayerData(PathPreviewLayer.INSTANCE);
-        PaintDimension paintDim = new PaintDimension() {
-            @Override
-            public int getValue(int x, int y) {
-                return getDimension().getLayerValueAt(PathPreviewLayer.INSTANCE, x, y);
-            }
-
-            @Override
-            public void setValue(int x, int y, int v) {
-                getDimension().setLayerValueAt(PathPreviewLayer.INSTANCE, x, y, v);
-            }
-        };
-
-        HeightDimension heightDim = new HeightDimension() {
-            @Override
-            public float getHeight(int x, int y) {
-                return getDimension().getHeightAt(x, y);
-            }
-
-            @Override
-            public void setHeight(int x, int y, float z) {
-                getDimension().setHeightAt(x, y, z);
-            }
-        };
-
-        int idx = 0;
-        for (float[] handle: getSelectedPath()) {
-            if (isHandleSelected(idx++))
-                markPoint(getPoint2D(handle),COLOR_SELECTED,SIZE_MEDIUM_CROSS, paintDim);
-        }
-
-        try {
-            //redraw new
-            DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), heightDim), paintDim
-                    , getSelectedPath().indexOfPosition(getCursorHandle()));
-            if (getCursorHandle() != null)
-                PointUtils.markPoint(getPoint2D(getCursorHandle()), COLOR_SELECTED, SIZE_SELECTED, paintDim);
-        } catch (Exception ex) {
-            System.err.println(ex.getMessage());
-        } finally {
-            this.getDimension().setEventsInhibited(false);
-        }
-    }
-
-    /**
-     * draws this path onto the map
-     *
-     * @param path
-     */
-    static void DrawPathLayer(Path path, ContinuousCurve curve, PaintDimension dim, int selectedPointIdx) throws IllegalAccessException {
-        Path clone = path.clone();
-        //nothing
-        if (path.type == PointInterpreter.PointType.RIVER_2D) {
-            DrawRiverPath(path, curve, dim, selectedPointIdx);
-        }
-        assert clone.equals(path) : "something mutated the path";
     }
 
     /**
@@ -648,8 +642,15 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         return -1;
     }
 
+    private void selectAllBetween(int start, int end) {
+
+        for (int i = Math.min(start, end); i <= Math.max(start, end); i++) {
+            currentState.selectedIdcs[i] = true;
+        }
+    }
+
     private static class EditPathOptions {
-        float subdivisions = 25;
+        float subdivisions = 1;
         float subdivisionRange = .5f;
     }
 
@@ -820,32 +821,35 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                     JButton subdivideButton = new JButton("subdivide segment");
                     subdivideButton.addActionListener(e -> {
                         Path p = getSelectedPath();
-                        int selectedIdx = p.indexOfPosition(getCursorHandle()) - 1;
-                        ArrayList<float[]> flatHandles = ArrayUtility.transposeMatrix(p.getHandles());
+                        ArrayList<float[]> pathHandles = p.getHandles();
+                        int newSelectedIdx = currentState.cursorHandleIdx;
+                        int indexOffset = 0;
+                        ArrayList<float[]> flatHandles = ArrayUtility.transposeMatrix(pathHandles);
                         Subdivide divider = new HalfWaySubdivider(options.subdivisionRange, options.subdivisionRange,
                                 true);
-                        ArrayList<float[]> newFlats = Subdivide.subdivide(flatHandles.get(0), flatHandles.get(1),
-                                selectedIdx, (int) options.subdivisions, divider);
-                        for (int i = 2; i < p.type.size; i++) {
-                            float[] filler = new float[newFlats.get(0).length];
-                            Arrays.fill(filler, INHERIT_VALUE);
-                            newFlats.add(filler);
+
+                        //subdivide all marked segments
+                        for (int oldSelectedIdx : getSelectedIdcs()) {
+                            int selectedIdx = indexOffset + oldSelectedIdx;
+
+                            ArrayList<float[]> newFlats = Subdivide.subdivide(flatHandles.get(0), flatHandles.get(1),
+                                    selectedIdx, (int) options.subdivisions, divider);
+
+                            //FIXME carry over the old values
+                            for (int i = 2; i < p.type.size; i++) {
+                                float[] filler = new float[newFlats.get(0).length];
+                                Arrays.fill(filler, INHERIT_VALUE);
+                                newFlats.add(filler);
+                            }
+
+                            int amountNewHandles = newFlats.get(0).length - flatHandles.get(0).length;
+                            assert amountNewHandles >= 0;
+                            indexOffset += amountNewHandles;
+                            flatHandles = newFlats;
                         }
 
-                        ArrayList<float[]> newHandles = ArrayUtility.transposeMatrix(newFlats);
-                        int newSelectedIdx = newHandles.size() + selectedIdx - 1;
-                        //add old handles before segment
-                        for (int i = 0; i < selectedIdx; i++) {
-                            newHandles.add(i, p.handleByIndex(i));
-                        }
-                        //add old handles after segment
-                        for (int i = selectedIdx + 2; i < p.amountHandles(); i++) {
-                            newHandles.add(p.handleByIndex(i));
-                        }
-                        p = new Path(newHandles, p.type);
-
-
-                        overwriteSelectedPath(p);
+                        //write back new handles as selected path
+                        overwriteSelectedPath(new Path(ArrayUtility.transposeMatrix(flatHandles), p.type));
                         setSelectedPointIdx(newSelectedIdx);
 
                         onOptionsReconfigured();
@@ -855,7 +859,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 }
 
                 {
-                    SpinnerNumberModel model = new SpinnerNumberModel(options.subdivisions, 5, 200, 5f);
+                    SpinnerNumberModel model = new SpinnerNumberModel(options.subdivisions, 1f, 5f, 1f);
                     OptionsLabel label = numericInput("subdivisions", "how often to subdivide", model, f -> {
                         options.subdivisions = f;
                     }, onOptionsReconfigured);

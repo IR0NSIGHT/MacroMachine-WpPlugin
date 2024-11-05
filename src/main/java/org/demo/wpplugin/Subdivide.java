@@ -16,8 +16,7 @@ public interface Subdivide {
         ys.add(ysPos[startHandleIdx]);
         ys.add(ysPos[startHandleIdx + 1]);
 
-        float minDist = subdivisionAmount;
-        for (int s = 0; s < 7; s++) {        //add middle points for all neighbouring values
+        for (int s = 0; s < subdivisionAmount; s++) {        //add middle points for all neighbouring values
             List<Float> newXs = new ArrayList<>(xs.size() * 2);
             List<Float> newYs = new ArrayList<>(xs.size() * 2);
             newXs.addAll(xs);
@@ -25,11 +24,6 @@ public interface Subdivide {
             int targetIdx = 0;
             boolean changed = false;
             for (int i = 0; i < xs.size() - 1; i++) {
-                float dist = getPositionalDistance(
-                        new float[]{xs.get(i), ys.get(i)},
-                        new float[]{xs.get(i + 1), ys.get(i + 1)}, 2);
-                if (dist < minDist)
-                    continue;
                 changed = true;
                 float[] middleX = action.subdividePoints(xs.get(i), xs.get(i + 1), ys.get(i), ys.get(i + 1));
 
@@ -45,6 +39,17 @@ public interface Subdivide {
                 break;
         }
 
+        // add old positions from zero to start
+        for (int i = 0; i < startHandleIdx; i++) {
+            xs.add(i,xsPos[i]);
+            ys.add(i,ysPos[i]);
+        }
+
+        //add old positions from end to end-of-array
+        for (int i = startHandleIdx + 2; i < xsPos.length; i++) {
+            xs.add(xsPos[i]);
+            ys.add(ysPos[i]);
+        }
 
         float[] outXs = ArrayUtility.toFloatArray(xs);
         float[] outYs = ArrayUtility.toFloatArray(ys);
