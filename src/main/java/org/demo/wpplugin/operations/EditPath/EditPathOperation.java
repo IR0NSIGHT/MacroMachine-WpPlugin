@@ -18,7 +18,6 @@ import org.demo.wpplugin.pathing.PathManager;
 import org.demo.wpplugin.pathing.PointInterpreter;
 import org.demo.wpplugin.pathing.PointUtils;
 import org.pepsoft.worldpainter.Terrain;
-import org.pepsoft.worldpainter.WorldPainterView;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
@@ -27,7 +26,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyVetoException;
 import java.util.*;
@@ -118,37 +116,33 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
 
         JFrame wpApp = (JFrame) SwingUtilities.getWindowAncestor(component);
-        wpApp.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke("ENTER"),"select_all");
-        wpApp.getRootPane().getActionMap().put("select_all", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                System.out.println("control all was fired");
-            }
-        });
-
-
-        component.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                super.keyTyped(e);
-                if (component.isFocusOwner()) {  // Check if this component has focus
-                    if (e.getKeyCode() == KeyEvent.VK_ENTER) {  // Replace with the specific key
-                        // Handle key down event here
-                        System.out.println("Key pressed on the focused component!");
-                    }
+        {
+            KeyStroke controlA = KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK);
+            wpApp.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).
+                    put(controlA, "select_all");
+            wpApp.getRootPane().getActionMap().put("select_all", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (getSelectedIdcs(false).length == getSelectedPath().amountHandles())  //all are selected
+                        deselectAll();
+                    else    //not all are selected
+                        selectAll();
+                    redrawSelectedPathLayer();
                 }
-            }
+            });
+        }
 
-            @Override
-            public void keyReleased(KeyEvent e) {
-                super.keyReleased(e);
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                super.keyPressed(e);
-            }
-        });
+        {
+            wpApp.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).
+                    put(KeyStroke.getKeyStroke("ENTER"), "submit");
+            wpApp.getRootPane().getActionMap().put("submit", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    setHandleSelection(currentState.cursorHandleIdx, !currentState.selectedIdcs[currentState.cursorHandleIdx]);
+                    redrawSelectedPathLayer();
+                }
+            });
+        }
     }
 
     public EditPathOperation() {
@@ -180,43 +174,21 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             @Override
             public boolean dispatchKeyEvent(KeyEvent e) {
                 if (!EditPathOperation.super.isActive()) return false;
-
                 shiftDown = e.isShiftDown();
                 altDown = e.isAltDown();
                 ctrlDown = e.isControlDown();
 
-                boolean didSomething = false;
-                if (ctrlDown && !e.isActionKey()) {
-                    switch (e.getKeyCode()) {
-                        case KeyEvent.VK_A:
-                            if (getSelectedIdcs().length == p.amountHandles())  //all are selected
-                                deselectAll();
-                            else    //not all are selected
-                                selectedAll();
-                            didSomething = true;
-                            break;
-                        case KeyEvent.VK_I:
-                            invertSelection();
-                            didSomething = true;
-                            break;
-                    }
-                }
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    setHandleSelection(currentState.cursorHandleIdx, !isHandleSelected(currentState.cursorHandleIdx));
-                    didSomething = true;
-                }
-
-                if (didSomething)
-                    redrawSelectedPathLayer();
                 return false;
             }
         });
     }
 
-    private int[] getSelectedIdcs() {
+
+
+    private int[] getSelectedIdcs(boolean andCursor) {
         int count = 0;
         for (int i = 0; i < currentState.selectedIdcs.length; i++) {
-            if (isHandleSelected(i))
+            if (isHandleSelected(i) || (andCursor && currentState.cursorHandleIdx == i))
                 count++;
         }
         int[] idcs = new int[count];
@@ -234,7 +206,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         }
     }
 
-    private void selectedAll() {
+    private void selectAll() {
         for (int i = 0; i < currentState.selectedIdcs.length; i++) {
             currentState.selectedIdcs[i] = true;
         }
@@ -253,7 +225,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     private boolean isHandleSelected(int idx) {
         if (idx < 0 || idx >= currentState.selectedIdcs.length)
             throw new ArrayIndexOutOfBoundsException("thats not a valid idx:" + idx);
-        return currentState.cursorHandleIdx == idx || currentState.selectedIdcs[idx];
+        return currentState.selectedIdcs[idx];
     }
 
     void redrawSelectedPathLayer() {
@@ -290,12 +262,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 markPoint(getPoint2D(handle), COLOR_SELECTED, SIZE_MEDIUM_CROSS, paintDim);
         }
 
+
         try {
             //redraw new
             DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), heightDim), paintDim
                     , getSelectedPath().indexOfPosition(getCursorHandle()));
             if (getCursorHandle() != null)
-                PointUtils.markPoint(getPoint2D(getCursorHandle()), COLOR_SELECTED, SIZE_SELECTED, paintDim);
+                PointUtils.drawCircle(getPoint2D(getCursorHandle()), COLOR_SELECTED, SIZE_SELECTED, paintDim, false);
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
         } finally {
@@ -874,7 +847,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                                 true);
 
                         //subdivide all marked segments
-                        for (int oldSelectedIdx : getSelectedIdcs()) {
+                        for (int oldSelectedIdx : getSelectedIdcs(true)) {
                             int selectedIdx = indexOffset + oldSelectedIdx;
 
                             ArrayList<float[]> newFlats = Subdivide.subdivide(flatHandles.get(0), flatHandles.get(1),

@@ -62,8 +62,9 @@ public class PointUtils {
         return bbxs;
     }
 
-    public static void drawCircle(Point center, float radius, PaintDimension dimension, boolean dotted) {
-        for (int theta = 0; theta < 360; theta += 10) {
+    public static void drawCircle(Point center, int color, float radius,  PaintDimension dimension, boolean dotted) {
+        int incr = dotted ? 10 : 1;
+        for (int theta = 0; theta < 360; theta += incr) {
             int x = (int) Math.round(radius * Math.cos(theta));
             int y = (int) Math.round(radius * Math.sin(theta));
             dimension.setValue(center.x + x, center.y + y, 15);
@@ -79,6 +80,14 @@ public class PointUtils {
      */
     public static void markPoint(Point p, int color, int size, PaintDimension dim) {
         for (int i = -size; i <= size; i++) {
+            dim.setValue(p.x + i, p.y - i, color);
+            dim.setValue(p.x + i, p.y + i, color);
+        }
+    }
+
+    public static void markCircle(Point p, int color, int size, PaintDimension dim) {
+        for (int i = -size; i <= size; i++) {
+
             dim.setValue(p.x + i, p.y - i, color);
             dim.setValue(p.x + i, p.y + i, color);
         }

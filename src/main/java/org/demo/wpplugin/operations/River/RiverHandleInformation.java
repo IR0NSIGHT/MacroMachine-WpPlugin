@@ -171,13 +171,14 @@ public class RiverHandleInformation {
 
         for (int i = 0; i < path.amountHandles(); i++) {
             float[] handle = path.handleByIndex(i);
-            int size = 0;
-            Point handleP = getPoint2D(handle);
-            PointUtils.markPoint(handleP, DemoLayerRenderer.Yellow, size, dim);
 
             //RIVER RADIUS
             if (!(getValue(handle, RIVER_RADIUS) == INHERIT_VALUE))
-                PointUtils.drawCircle(getPoint2D(handle), getValue(handle, RIVER_RADIUS), dim, getValue(handle,
+                PointUtils.drawCircle(
+                        getPoint2D(handle),
+                        COLOR_CURVE,
+                        getValue(handle, RIVER_RADIUS),
+                        dim, getValue(handle,
                         RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
 
         }
