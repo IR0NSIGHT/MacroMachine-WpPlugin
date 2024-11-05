@@ -122,11 +122,11 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         // invocation:
         // super(NAME, DESCRIPTION, delay, ID);
         int selectedPathId = PathManager.instance.getAnyValidId();
-        Path p= PathManager.instance.getPathBy(selectedPathId);
+        Path p = PathManager.instance.getPathBy(selectedPathId);
         this.currentState = new ToolHistoryState(
                 p,
                 new boolean[p.amountHandles()],
-                0,selectedPathId
+                0, selectedPathId
         );
         //Worldpainter Pen has a severe bug deep down that breaks
         // shift/alt/control after a button in the settings
@@ -141,9 +141,81 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 altDown = e.isAltDown();
                 ctrlDown = e.isControlDown();
 
+                boolean didSomething = false;
+                if (ctrlDown && !e.isActionKey()) {
+                    switch (e.getKeyCode()) {
+                        case KeyEvent.VK_A:
+                            if (getSelectedIdcs().length == p.amountHandles())  //all are selected
+                                deselectAll();
+                            else    //not all are selected
+                                selectedAll();
+                            didSomething = true;
+                            break;
+                        case KeyEvent.VK_I:
+                            invertSelection(); didSomething = true;
+                            break;
+                    }
+                }
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    setHandleSelection(currentState.cursorHandleIdx, !isHandleSelected(currentState.cursorHandleIdx));
+                    didSomething = true;
+                }
+
+                if (didSomething)
+                    redrawSelectedPathLayer();
                 return false;
             }
         });
+    }
+
+    private int[] getSelectedIdcs() {
+        int count = 0;
+        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
+            if (isHandleSelected(i))
+                count++;
+        }
+        int[] idcs = new int[count];
+        int sel = 0;
+        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
+            if (isHandleSelected(i))
+                idcs[sel++] = i;
+        }
+        return idcs;
+    }
+
+    private void deselectAll() {
+        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
+            currentState.selectedIdcs[i] = false;
+        }
+    }
+
+    private void selectedAll() {
+        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
+            currentState.selectedIdcs[i] = true;
+        }
+    }
+
+    private void invertSelection() {
+        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
+            currentState.selectedIdcs[i] = !currentState.selectedIdcs[i];
+        }
+    }
+
+    private void setHandleSelection(int handle, boolean state) {
+        currentState.selectedIdcs[handle] = state;
+    }
+
+    private boolean isHandleSelected(int idx) {
+        if (idx < 0 || idx >= currentState.selectedIdcs.length)
+            throw new ArrayIndexOutOfBoundsException("thats not a valid idx:" + idx);
+        return currentState.cursorHandleIdx == idx || currentState.selectedIdcs[idx];
+    }
+
+    private void selectAllBetween(int start, int end) {
+
+        for (int i = Math.min(start,end); i <= Math.max(start,end); i++) {
+            currentState.selectedIdcs[i] = true;
+        }
     }
 
     private void show3dAction() {
@@ -286,7 +358,18 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
     private void overwriteSelectedPath(Path p) {
         history.addFirst(currentState);
-        this.currentState = new ToolHistoryState(p, currentState.selectedIdcs, currentState.cursorHandleIdx,
+
+        //copy over handle selection, even if positions were added/deleted
+        boolean[] newSelection= new boolean[p.amountHandles()];
+        Path oldPath = getSelectedPath();
+        for (int i = 0; i < currentState.selectedIdcs.length; i++) {
+            if (currentState.selectedIdcs[i]) {
+                int newIdx = p.indexOfPosition(oldPath.handleByIndex(i));
+                newSelection[newIdx] = true;
+            }
+        }
+
+        this.currentState = new ToolHistoryState(p, newSelection, currentState.cursorHandleIdx,
                 currentState.pathId);
         try {
             PathManager.instance.setPathBy(getSelectedPathId(), p);
@@ -391,6 +474,12 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             }
         };
 
+        int idx = 0;
+        for (float[] handle: getSelectedPath()) {
+            if (isHandleSelected(idx++))
+                markPoint(getPoint2D(handle),COLOR_SELECTED,SIZE_MEDIUM_CROSS, paintDim);
+        }
+
         try {
             //redraw new
             DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), heightDim), paintDim
@@ -481,37 +570,21 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
         try {
             if (ctrlDown) {
-                //SELECT POINT
-                try {
-                    if (path.amountHandles() != 0) {
-                        int clostestIdx = path.getClosestHandleIdxTo(userClickedCoord);
-                        float[] closest = path.handleByIndex(clostestIdx);
-                        //dont allow very far away clicks
-                        if (getPositionalDistance(closest, userClickedCoord,
-                                RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
-                            setSelectedPointIdx(clostestIdx);
-                        }
-                    }
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
+                int idx = getHandleNear(userClickedCoord, path);
+                if (idx != -1)
+                    setSelectedPointIdx(idx);
             } else if (altDown) {
                 overwriteSelectedPath(path.newEmpty());
                 setSelectedPointIdx(-1);
             } else if (shiftDown) {
-                try {
-                    float[] movedPoint = setPosition2D(getCursorHandle(), userClickedCoord);
-                    int idx = path.indexOfPosition(getCursorHandle());
-                    Path newPath = path.overwriteHandle(getCursorHandle(), movedPoint);
-                    setSelectedPointIdx(idx);
-
-                    overwriteSelectedPath(newPath);
-                } catch (Exception ex) {
-                    System.err.println("Error moving point " + getCursorHandle() + " to " + getSelectedPath());
+                int oldIdx = currentState.cursorHandleIdx;
+                int newIdx = getHandleNear(userClickedCoord, path);
+                if (newIdx != -1) {
+                    setSelectedPointIdx(newIdx);
                 }
-
+                selectAllBetween(oldIdx, newIdx);
             } else if (inverse) {
-                //REMOVE SELECTED POINT
+            /*    //REMOVE SELECTED POINT
                 if (path.amountHandles() > 1) {
                     try {
                         float[] pointBeforeSelected = path.getPreviousPoint(getCursorHandle());
@@ -523,6 +596,18 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                         overwriteSelectedPath(path); // set old path
                         throw new RuntimeException(e);
                     }
+                }
+
+             */
+                try {
+                    float[] movedPoint = setPosition2D(getCursorHandle(), userClickedCoord);
+                    int idx = path.indexOfPosition(getCursorHandle());
+                    Path newPath = path.overwriteHandle(getCursorHandle(), movedPoint);
+                    setSelectedPointIdx(idx);
+
+                    overwriteSelectedPath(newPath);
+                } catch (Exception ex) {
+                    System.err.println("Error moving point " + getCursorHandle() + " to " + getSelectedPath());
                 }
             } else {
                 //add new point after selected
@@ -543,6 +628,24 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         redrawSelectedPathLayer();
 
         if (this.eOptionsPanel != null) this.eOptionsPanel.onOptionsReconfigured();
+    }
+
+    private int getHandleNear(float[] userClickedCoord, Path path) {
+        //SELECT POINT
+        try {
+            if (path.amountHandles() != 0) {
+                int clostestIdx = path.getClosestHandleIdxTo(userClickedCoord);
+                float[] closest = path.handleByIndex(clostestIdx);
+                //dont allow very far away clicks
+                if (getPositionalDistance(closest, userClickedCoord,
+                        RiverHandleInformation.PositionSize.SIZE_2_D.value) < 50) {
+                    return clostestIdx;
+                }
+            }
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+        return -1;
     }
 
     private static class EditPathOptions {
