@@ -526,6 +526,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
     private void userDoDeleteAction() {
         Path path = getSelectedPath();
+        int oldCursor = currentState.indexSelection.getCursorHandleIdx();
         ArrayList<float[]> remaining = new ArrayList<>();
         for (int i = 0; i < path.amountHandles(); i++) {
             if (!currentState.indexSelection.isHandleSelected(i, true))
@@ -534,6 +535,26 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         Path newPath = new Path(remaining, path.type);
         int[] mapping = Path.getMappingFromTo(newPath, path);
         overwriteSelectedPath(newPath, mapping);
+
+        //find a new index closest to the deleted cursor
+        int[] oldToNew = Path.getMappingFromTo(path, newPath);
+        int newCursor = -1;
+        //walk forwards from old cursor
+        for (int idx = oldCursor; idx < oldToNew.length; idx++) {
+            if (oldToNew[idx] != -1) {
+                newCursor = oldToNew[idx];
+                break;
+            }
+        }
+        if (newCursor == -1)    //walk backwards form old cursor if necessary
+            for (int idx = oldCursor; idx >= 0; idx--) {
+                if (oldToNew[idx] != -1) {
+                    newCursor = oldToNew[idx];
+                    break;
+                }
+            }
+
+        setSelectedPointIdx(newCursor);
     }
 
     private void userDoAddNewPoint(Path path, float[] userClickedCoord) {
@@ -642,6 +663,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             this.getDimension().setEventsInhibited(false);
         }
     }
+
 
     private static class EditPathOptions {
         float subdivisions = 1;
