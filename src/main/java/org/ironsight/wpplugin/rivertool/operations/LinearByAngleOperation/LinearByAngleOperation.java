@@ -40,7 +40,7 @@ public class LinearByAngleOperation extends MouseOrTabletOperation implements
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
      */
-    static final String ID = "org.demo.wpplugin.FlattenPathOperation.v1";
+    static final String ID = "orig.ironsight.wpplugin.rivertool.FlattenPathOperation.v1";
     /**
      * Human-readable short name of the operation.
      */

@@ -28,7 +28,7 @@ public class PathPreviewLayer extends Layer {
      * change if the layer changes in a non backwards compatible way, but not between versions of the plugin if it is
      * still backwards compatible.
      */
-    static final String ID = "org.demo.wpplugin.PathPreviewLayer.v1";
+    static final String ID = "orig.ironsight.wpplugin.rivertool.PathPreviewLayer.v1";
 
     /**
      * Human-readable short name of the plugin.

@@ -1,14 +1,11 @@
-package org.demo.wpplugin;
+package orig.ironsight.wpplugin.rivertool;
 
-import org.demo.wpplugin.platforms.exporters.DemoPlatformExporter;
+import org.ironsight.wpplugin.rivertool.platforms.exporters.DemoPlatformExporter;
 import org.pepsoft.minecraft.Chunk;
 import org.pepsoft.minecraft.ChunkStore;
 import org.pepsoft.util.DesktopUtils;
-import org.pepsoft.worldpainter.GameType;
-import org.pepsoft.worldpainter.Generator;
-import org.pepsoft.worldpainter.Platform;
+import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Platform.Capability;
-import org.pepsoft.worldpainter.World2;
 import org.pepsoft.worldpainter.exporting.AbstractWorldExporter;
 import org.pepsoft.worldpainter.exporting.PostProcessor;
 import org.pepsoft.worldpainter.exporting.WorldExportSettings;
@@ -61,7 +58,7 @@ public class DemoWPPlatformProvider extends AbstractPlatformProvider {
 
     @SuppressWarnings("ArraysAsListWithZeroOrOneArgument") // May be expanded
     private static final Platform DEMO_PLATFORM = new Platform(
-            "org.demo.wpplugin.DemoPlatform.v1",  // The globally unique, stable identifier for this platform/map format/file type
+            "orig.ironsight.wpplugin.rivertool.DemoPlatform.v1",  // The globally unique, stable identifier for this platform/map format/file type
             "Demo Platform",                      // A short name. This is displayed to the user and may change
             128, 256, 512,                        // The minimum, default and maximum maxHeights of the format. These may be the same if the format only supports one maxHeight. Note that maxHeight is _exclusive_; it is one more than the highest block may be placed
                                                   // This version of the constructor results in a platform with a fixed minHeight (inclusive) of zero. Take a look at the other constructors to provide a configurable minHeight

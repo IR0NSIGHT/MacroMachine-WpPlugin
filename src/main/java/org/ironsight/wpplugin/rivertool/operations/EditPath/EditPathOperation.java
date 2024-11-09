@@ -13,7 +13,6 @@ import org.ironsight.wpplugin.rivertool.layers.PathPreviewLayer;
 import org.ironsight.wpplugin.rivertool.layers.renderers.DemoLayerRenderer;
 import org.ironsight.wpplugin.rivertool.operations.ContinuousCurve;
 import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
-import org.demo.wpplugin.pathing.*;
 import org.ironsight.wpplugin.rivertool.pathing.*;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.brushes.Brush;
@@ -79,7 +78,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
      * be a FQDN or package and class name, like here, or you could use a
      * UUID. As long as it is globally unique.
      */
-    static final String ID = "org.demo.wpplugin.BezierPathTool.v1";
+    static final String ID = "orig.ironsight.wpplugin.rivertool.BezierPathTool.v1";
     /**
      * Human-readable short name of the operation.
      */
@@ -353,7 +352,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     }
 
     void setSelectedPointIdx(int selectedPointIdx) {
-        assert selectedPointIdx >= 0 && selectedPointIdx < getSelectedPath().amountHandles();
         currentState.indexSelection.setCursorHandleIdx(selectedPointIdx);
     }
 
