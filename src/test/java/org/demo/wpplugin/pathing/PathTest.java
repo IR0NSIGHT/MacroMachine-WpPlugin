@@ -1,6 +1,5 @@
 package org.demo.wpplugin.pathing;
 
-import org.checkerframework.checker.units.qual.A;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.junit.jupiter.api.Test;
 
@@ -111,7 +110,8 @@ class PathTest {
         Path moved = path.overwriteHandle(oldHandle, newHandle);
 
         assertEquals(length, moved.amountHandles(), "new path has a different length after shifting a point");
-        assertArrayEquals(newHandle, moved.handleByIndex(length / 2), "the shifted point is not where its supposed " + "to" + " be");
+        assertArrayEquals(newHandle, moved.handleByIndex(length / 2),
+                "the shifted point is not where its supposed " + "to" + " be");
     }
 
     @Test
@@ -179,23 +179,45 @@ class PathTest {
     @Test
     void getMappingFromTo() {
         ArrayList<float[]> handles = new ArrayList<>();
-        handles.add(new float[]{5,10});
-        handles.add(new float[]{10,20});
+        handles.add(new float[]{5, 10});
+        handles.add(new float[]{10, 20});
         Path oldP = new Path(handles, POSITION_2D);
-        assertEquals(2,oldP.amountHandles());
-        assertArrayEquals(new float[]{5,10},oldP.handleByIndex(0));
-        assertArrayEquals(new float[]{10,20},oldP.handleByIndex(1));
+        assertEquals(2, oldP.amountHandles());
+        assertArrayEquals(new float[]{5, 10}, oldP.handleByIndex(0));
+        assertArrayEquals(new float[]{10, 20}, oldP.handleByIndex(1));
 
         {
             Path newP = oldP.insertPointAfter(new float[]{5, 10}, new float[]{7, 7});
-            assertArrayEquals(new int[]{0, -1, 1}, Path.getMappingFromTo(newP, oldP), "new 0 -> old 0, new 1 -> deleted, new 2 -> old 1");
+            assertArrayEquals(new int[]{0, -1, 1}, Path.getMappingFromTo(newP, oldP), "new 0 -> old 0, new 1 -> " +
+                    "deleted, new 2 -> old 1");
             assertArrayEquals(new int[]{0, 2}, Path.getMappingFromTo(oldP, newP), "new 0 -> old 0, new 1 -> 2");
         }
 
         {
             Path newP = oldP.removePoint(new float[]{5, 10});
             assertArrayEquals(new int[]{1}, Path.getMappingFromTo(newP, oldP), "new 0 -> old 1");
-            assertArrayEquals(new int[]{-1,0}, Path.getMappingFromTo(oldP, newP), "old 0 -> deleted, old 1 -> new 0");
+            assertArrayEquals(new int[]{-1, 0}, Path.getMappingFromTo(oldP, newP), "old 0 -> deleted, old 1 -> new 0");
+        }
+    }
+
+    @Test
+    void mapPoints() {
+        Path p = newFilledPath(10);
+        Path mapped = p.mapPoints(new Path.MapPointAction() {
+            @Override
+            public float[] map(float[] point, int index) {
+                float[] out = point.clone();
+                out[0] += 5;
+                out[1] += 10;
+                return out;
+            }
+        });
+
+        assertEquals(p.amountHandles(), mapped.amountHandles());
+        for (int i = 0; i < p.amountHandles(); i++) {
+            assertEquals(p.handleByIndex(i)[0]+5, mapped.handleByIndex(i)[0]);
+            assertEquals(p.handleByIndex(i)[1]+10, mapped.handleByIndex(i)[1]);
+
         }
     }
 }

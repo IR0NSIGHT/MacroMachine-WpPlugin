@@ -1,6 +1,5 @@
 package org.demo.wpplugin.pathing;
 
-import org.demo.wpplugin.ArrayUtility;
 import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
@@ -40,7 +39,8 @@ public class Path implements Iterable<float[]> {
             }
 
             if (handle.length != type.size) {
-                System.err.println("path has a handle with wrong size for type " + type + " expected " + type.size + " but got " + Arrays.toString(handle));
+                System.err.println("path has a handle with wrong size for type " + type + " expected " + type.size +
+                        " but got " + Arrays.toString(handle));
                 okay = false;
             }
         }
@@ -89,10 +89,6 @@ public class Path implements Iterable<float[]> {
         return out;
     }
 
-    public ArrayList<float[]> getHandles() {
-        return handles;
-    }
-
     public static int[] getMappingFromTo(Path from, Path to) {
         int[] mapping = new int[from.amountHandles()];
         for (int fromIdx = 0; fromIdx < mapping.length; fromIdx++) {
@@ -103,12 +99,31 @@ public class Path implements Iterable<float[]> {
         return mapping;
     }
 
+    public int amountHandles() {
+        return handles.size();
+    }
+
+    public float[] handleByIndex(int index) throws IndexOutOfBoundsException {
+        return handles.get(index);
+    }
+
+    public int indexOfPosition(float[] p) {
+        for (int i = 0; i < handles.size(); i++) {
+            if (arePositionalsEqual(p, handles.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value)) return i;
+        }
+        return -1;
+    }
+
     public static int[] getOneToOneMapping(Path from) {
         int[] mapping = new int[from.amountHandles()];
         for (int i = 0; i < mapping.length; i++) {
             mapping[i] = i;
         }
         return mapping;
+    }
+
+    public ArrayList<float[]> getHandles() {
+        return handles;
     }
 
     public Path newEmpty() {
@@ -123,13 +138,6 @@ public class Path implements Iterable<float[]> {
         return sum;
     }
 
-    public int indexOfPosition(float[] p) {
-        for (int i = 0; i < handles.size(); i++) {
-            if (arePositionalsEqual(p, handles.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value)) return i;
-        }
-        return -1;
-    }
-
     public Path overwriteHandle(float[] original, float[] newValue) {
         Path sum = new Path(this.handles, this.type);
         int idx = indexOfPosition(original);
@@ -141,10 +149,6 @@ public class Path implements Iterable<float[]> {
     public float[] getTail() {
         if (amountHandles() == 0) throw new IllegalArgumentException("can not access tail of zero-length path!");
         return handles.get(amountHandles() - 1);
-    }
-
-    public int amountHandles() {
-        return handles.size();
     }
 
     public float[] getPreviousPoint(float[] point) throws IllegalAccessException {
@@ -163,6 +167,15 @@ public class Path implements Iterable<float[]> {
         sum.handles.add(idx + 1, newPosition);
         assert invariant();
         return sum;
+    }
+
+    public Path mapPoints(MapPointAction action) {
+        ArrayList<float[]> handles = new ArrayList<>();
+        int i = 0;
+        for (float[] h : this) {
+            handles.add(action.map(h, i++));
+        }
+        return new Path(handles, this.type);
     }
 
     @Override
@@ -194,7 +207,8 @@ public class Path implements Iterable<float[]> {
         double distMinSquared = Double.MAX_VALUE;
         for (int i = 0; i < handles.size(); i++) {
             float[] p = handleByIndex(i);
-            double distanceSq = PointUtils.getPositionalDistance(p, coord, RiverHandleInformation.PositionSize.SIZE_2_D.value);
+            double distanceSq = PointUtils.getPositionalDistance(p, coord,
+                    RiverHandleInformation.PositionSize.SIZE_2_D.value);
             if (distanceSq < distMinSquared) {
                 distMinSquared = distanceSq;
                 closest = i;
@@ -202,10 +216,6 @@ public class Path implements Iterable<float[]> {
         }
         assert invariant();
         return closest;
-    }
-
-    public float[] handleByIndex(int index) throws IndexOutOfBoundsException {
-        return handles.get(index);
     }
 
     @Override
@@ -239,6 +249,10 @@ public class Path implements Iterable<float[]> {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    interface MapPointAction {
+        float[] map(float[] point, int index);
     }
 
 }
