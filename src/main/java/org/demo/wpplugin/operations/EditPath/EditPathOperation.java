@@ -580,8 +580,14 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
     private void userDoSelectPosition(float[] userClickedCoord, Path path) {
         int idx = getHandleNear(userClickedCoord, path);
-        if (idx != -1)
-            setSelectedPointIdx(idx);
+        if (currentState.indexSelection.getCursorHandleIdx() == idx) {
+            //clicked cursor pos again
+            currentState.indexSelection.invertHandleSelection(idx);
+        } else {
+            if (idx != -1)
+                setSelectedPointIdx(idx);
+        }
+
     }
 
     private int getHandleNear(float[] userClickedCoord, Path path) {
@@ -838,7 +844,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                         Path newPath = new Path(ArrayUtility.transposeMatrix(flatHandles), p.type);
                         int[] newToOldMap = Path.getMappingFromTo(newPath, p);
                         overwriteSelectedPath(newPath, newToOldMap);
-                        setSelectedPointIdx(newSelectedIdx);
+                        for (int i = 0; i < newToOldMap.length; i++) {
+                            if (newToOldMap[i] == -1) {
+                                //new point, add to selection
+                                currentState.indexSelection.setHandleSelection(i, true);
+                            }
+                        }
+
 
                         onOptionsReconfigured();
                         redrawSelectedPathLayer();
