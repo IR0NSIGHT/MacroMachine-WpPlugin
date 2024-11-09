@@ -140,7 +140,7 @@ public class RiverHandleInformation {
         return options;
     }
 
-    public static void DrawRiverPath(Path path, ContinuousCurve curve, PaintDimension dim, int selectedIdx) throws IllegalAccessException {
+    public static void DrawRiverPath(Path path, ContinuousCurve curve, PaintDimension dim) throws IllegalAccessException {
         if (path.type != RIVER_2D) throw new IllegalArgumentException("path is not river: " + path.type);
 
         for (int i = 1; i < curve.curveLength() - 1; i++) {

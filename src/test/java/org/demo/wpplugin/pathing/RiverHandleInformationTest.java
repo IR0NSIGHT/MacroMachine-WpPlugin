@@ -42,7 +42,7 @@ class RiverHandleInformationTest {
         };
         Path clone = p.clone();
         try {
-            DrawRiverPath(p, ContinuousCurve.fromPath(p, getImmutableDimension62()), dim, -1);
+            DrawRiverPath(p, ContinuousCurve.fromPath(p, getImmutableDimension62()), dim);
         } catch (IllegalAccessException ignored) {
         }
         assertEquals(clone, p, "path was mutated by drawing it");

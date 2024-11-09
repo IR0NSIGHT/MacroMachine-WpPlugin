@@ -101,6 +101,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     public static int PATH_ID = 1;
     private final EditPathOptions options = new EditPathOptions();
     private final LinkedList<ToolHistoryState> history = new LinkedList<>();
+    private final HeightDimension dim;
     EditPathOptionsPanel eOptionsPanel;
     int resolution3d = 2;
     private Brush brush;
@@ -108,7 +109,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     private boolean shiftDown = false;
     private boolean altDown = false;
     private boolean ctrlDown = false;
-    private final HeightDimension dim;
     private StandardOptionsPanel panelContainer;
     private ToolHistoryState currentState;
     private boolean keyListening;
@@ -160,6 +160,20 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         };
     }
 
+    /**
+     * draws this path onto the map
+     *
+     * @param path
+     */
+    static void DrawPathLayer(Path path, ContinuousCurve curve, PaintDimension dim) throws IllegalAccessException {
+        Path clone = path.clone();
+        //nothing
+        if (path.type == PointInterpreter.PointType.RIVER_2D) {
+            DrawRiverPath(path, curve, dim);
+        }
+        assert clone.equals(path) : "something mutated the path";
+    }
+
     public void addKeyListenerToComponent(JComponent component) {
         if (keyListening)
             return;
@@ -167,6 +181,19 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
 
         JFrame wpApp = (JFrame) SwingUtilities.getWindowAncestor(component);
+        {
+            KeyStroke keyStroke = KeyStroke.getKeyStroke((char) KeyEvent.VK_DELETE);
+            wpApp.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).
+                    put(keyStroke, "delete");
+            wpApp.getRootPane().getActionMap().put("delete", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    userDoDeleteAction();
+                    redrawSelectedPathLayer();
+                }
+            });
+        }
+
         {
             KeyStroke controlA = KeyStroke.getKeyStroke(KeyEvent.VK_A, InputEvent.CTRL_MASK);
             wpApp.getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).
@@ -430,19 +457,20 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
      */
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
+        this.getView().requestFocus();
         //  Perform the operation. In addition to the parameters you have the
         //  following methods available:
         // * getDimension() - obtain the dimension on which to perform the
         // operation
         // * getLevel() - obtain the current brush intensity setting as a
         // float between 0.0 and 1.0
-        // * isAltDown() - whether the Alt key is currently pressed - NOTE:
+        // * altDown - whether the Alt key is currently pressed - NOTE:
         // this is already in use to indicate whether
         //                 the operation should be inverted, so should
         //                 probably not be overloaded
-        // * isCtrlDown() - whether any of the Ctrl, Windows or Command keys
+        // * ctrlDown - whether any of the Ctrl, Windows or Command keys
         // are currently pressed
-        // * isShiftDown() - whether the Shift key is currently pressed
+        // * shiftDown - whether the Shift key is currently pressed
         // In addition you have the following fields in this class:
         // * brush - the currently selected brush
         // * paint - the currently selected paint
@@ -453,59 +481,36 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         if (path.type == PointInterpreter.PointType.RIVER_2D)
             setValue(userClickedCoord, RiverInformation.WATER_Z, getDimension().getHeightAt(centreX, centreY));
 
-        assert getCursorHandle() != null;
+        altDown = isAltDown();
+        ctrlDown = isCtrlDown();
+        shiftDown = isShiftDown();
 
         try {
-            if (ctrlDown) {
-                int idx = getHandleNear(userClickedCoord, path);
-                if (idx != -1)
-                    setSelectedPointIdx(idx);
-            } else if (altDown) {
-                overwriteSelectedPath(path.newEmpty(), new int[0]);
-                setSelectedPointIdx(-1);
-            } else if (shiftDown) {
-                int newIdx = getHandleNear(userClickedCoord, path);
-                if (newIdx != -1) {
-                    currentState.indexSelection.selectAllBetweenCursorAnd(newIdx);
-                    setSelectedPointIdx(newIdx);
-                }
-            } else if (inverse) {
-            /*    //REMOVE SELECTED POINT
-                if (path.amountHandles() > 1) {
-                    try {
-                        float[] pointBeforeSelected = path.getPreviousPoint(getCursorHandle());
-                        Path newPath = path.removePoint(getCursorHandle());
-                        overwriteSelectedPath(newPath);
-                        int idx = getSelectedPath().indexOfPosition(pointBeforeSelected);
-                        setSelectedPointIdx(idx);
-                    } catch (Exception | AssertionError e) {
-                        overwriteSelectedPath(path); // set old path
-                        throw new RuntimeException(e);
-                    }
-                }
+            if (inverse) {
+                //rightclick
+                if (shiftDown) {
 
-             */
-                try {
-                    float[] movedPoint = setPosition2D(getCursorHandle(), userClickedCoord);
-                    int idx = path.indexOfPosition(getCursorHandle());
-                    Path newPath = path.overwriteHandle(getCursorHandle(), movedPoint);
-                    setSelectedPointIdx(idx);
+                } else if (ctrlDown) {
+                    if (path.amountHandles() != 0)
+                        userDoDeleteAction();
 
-                    //edge case: a 1:1 mapping because a point was moved
-                    int[] newToOldMapping = new int[newPath.amountHandles()];
-                    for (int i = 0; i < newToOldMapping.length; i++) {
-                        newToOldMapping[i] = i;
-                    }
-                    overwriteSelectedPath(newPath, newToOldMapping);
-                } catch (Exception ex) {
-                    System.err.println("Error moving point " + getCursorHandle() + " to " + getSelectedPath());
+                } else {
+                    if (path.amountHandles() != 0)
+                        userDoShiftPoint(userClickedCoord, path);
                 }
             } else {
-                //add new point after selected
-                Path p = path.insertPointAfter(getCursorHandle(), userClickedCoord);
-                int[] newToOldMapping = Path.getMappingFromTo(p, getSelectedPath());
-                overwriteSelectedPath(p, newToOldMapping);
-                setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
+                //leftclick
+                if (shiftDown) {
+                    if (path.amountHandles() != 0)
+                        userDoSelectAllFromCursor(userClickedCoord, path);
+                } else if (ctrlDown) {
+                    userDoAddNewPoint(path, userClickedCoord);
+
+                } else {
+                    if (path.amountHandles() != 0)
+                        userDoSelectPosition(userClickedCoord, path);
+                }
+
             }
 
             assert getSelectedPath().amountHandles() == 0 || getCursorHandle() != null;
@@ -520,6 +525,62 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         redrawSelectedPathLayer();
 
         if (this.eOptionsPanel != null) this.eOptionsPanel.onOptionsReconfigured();
+    }
+
+    private void userDoDeleteAction() {
+        Path path = getSelectedPath();
+        ArrayList<float[]> remaining = new ArrayList<>();
+        for (int i = 0; i < path.amountHandles(); i++) {
+            if (!currentState.indexSelection.isHandleSelected(i, true))
+                remaining.add(path.handleByIndex(i));
+        }
+        Path newPath = new Path(remaining, path.type);
+        int[] mapping = Path.getMappingFromTo(newPath, path);
+        overwriteSelectedPath(newPath, mapping);
+    }
+
+    private void userDoAddNewPoint(Path path, float[] userClickedCoord) {
+        Path p =(path.amountHandles() == 0) ? path.addPoint(userClickedCoord) : path.insertPointAfter(getCursorHandle(), userClickedCoord);
+        int[] newToOldMapping = Path.getMappingFromTo(p, getSelectedPath());
+        overwriteSelectedPath(p, newToOldMapping);
+        setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
+    }
+
+    private void userDoShiftPoint(float[] userClickedCoord, Path path) {
+        try {
+            float[] movedPoint = setPosition2D(getCursorHandle(), userClickedCoord);
+            int idx = path.indexOfPosition(getCursorHandle());
+            Path newPath = path.overwriteHandle(getCursorHandle(), movedPoint);
+            setSelectedPointIdx(idx);
+
+            //edge case: a 1:1 mapping because a point was moved
+            int[] newToOldMapping = new int[newPath.amountHandles()];
+            for (int i = 0; i < newToOldMapping.length; i++) {
+                newToOldMapping[i] = i;
+            }
+            overwriteSelectedPath(newPath, newToOldMapping);
+        } catch (Exception ex) {
+            System.err.println("Error moving point " + getCursorHandle() + " to " + getSelectedPath());
+        }
+    }
+
+    private void userDoSelectAllFromCursor(float[] userClickedCoord, Path path) {
+        int newIdx = getHandleNear(userClickedCoord, path);
+        if (newIdx != -1) {
+            currentState.indexSelection.selectAllBetweenCursorAnd(newIdx);
+            setSelectedPointIdx(newIdx);
+        }
+    }
+
+    private void userDoClearPath(Path path) {
+        overwriteSelectedPath(path.newEmpty(), new int[0]);
+        setSelectedPointIdx(-1);
+    }
+
+    private void userDoSelectPosition(float[] userClickedCoord, Path path) {
+        int idx = getHandleNear(userClickedCoord, path);
+        if (idx != -1)
+            setSelectedPointIdx(idx);
     }
 
     private int getHandleNear(float[] userClickedCoord, Path path) {
@@ -541,6 +602,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     }
 
     void redrawSelectedPathLayer() {
+        this.getView().requestFocus();
         this.getDimension().setEventsInhibited(true);
         //erase old
         this.getDimension().clearLayerData(PathPreviewLayer.INSTANCE);
@@ -564,7 +626,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         try {
             //redraw new
             DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), dim), paintDim
-                    , getSelectedPath().indexOfPosition(getCursorHandle()));
+            );
             if (getCursorHandle() != null)
                 PointUtils.drawCircle(getPoint2D(getCursorHandle()), COLOR_SELECTED, SIZE_SELECTED, paintDim, false);
         } catch (Exception ex) {
@@ -572,20 +634,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         } finally {
             this.getDimension().setEventsInhibited(false);
         }
-    }
-
-    /**
-     * draws this path onto the map
-     *
-     * @param path
-     */
-    static void DrawPathLayer(Path path, ContinuousCurve curve, PaintDimension dim, int selectedPointIdx) throws IllegalAccessException {
-        Path clone = path.clone();
-        //nothing
-        if (path.type == PointInterpreter.PointType.RIVER_2D) {
-            DrawRiverPath(path, curve, dim, selectedPointIdx);
-        }
-        assert clone.equals(path) : "something mutated the path";
     }
 
     private static class EditPathOptions {
