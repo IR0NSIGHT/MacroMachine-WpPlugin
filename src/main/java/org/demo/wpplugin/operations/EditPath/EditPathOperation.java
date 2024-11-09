@@ -13,10 +13,7 @@ import org.demo.wpplugin.layers.PathPreviewLayer;
 import org.demo.wpplugin.layers.renderers.DemoLayerRenderer;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
-import org.demo.wpplugin.pathing.Path;
-import org.demo.wpplugin.pathing.PathManager;
-import org.demo.wpplugin.pathing.PointInterpreter;
-import org.demo.wpplugin.pathing.PointUtils;
+import org.demo.wpplugin.pathing.*;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.*;
@@ -496,7 +493,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
                 } else {
                     if (path.amountHandles() != 0)
-                        userDoShiftPoint(userClickedCoord, path);
+                        userDoShiftPoint(userClickedCoord);
                 }
             } else {
                 //leftclick
@@ -540,28 +537,32 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     }
 
     private void userDoAddNewPoint(Path path, float[] userClickedCoord) {
-        Path p =(path.amountHandles() == 0) ? path.addPoint(userClickedCoord) : path.insertPointAfter(getCursorHandle(), userClickedCoord);
+        Path p = (path.amountHandles() == 0) ? path.addPoint(userClickedCoord) :
+                path.insertPointAfter(getCursorHandle(), userClickedCoord);
         int[] newToOldMapping = Path.getMappingFromTo(p, getSelectedPath());
         overwriteSelectedPath(p, newToOldMapping);
         setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
     }
 
-    private void userDoShiftPoint(float[] userClickedCoord, Path path) {
-        try {
-            float[] movedPoint = setPosition2D(getCursorHandle(), userClickedCoord);
-            int idx = path.indexOfPosition(getCursorHandle());
-            Path newPath = path.overwriteHandle(getCursorHandle(), movedPoint);
-            setSelectedPointIdx(idx);
-
-            //edge case: a 1:1 mapping because a point was moved
-            int[] newToOldMapping = new int[newPath.amountHandles()];
-            for (int i = 0; i < newToOldMapping.length; i++) {
-                newToOldMapping[i] = i;
+    private void userDoShiftPoint(float[] userClickedCoord) {
+        float[] cursor = getCursorHandle();
+        float diffX = userClickedCoord[0] - cursor[0];
+        float diffY = userClickedCoord[1] - cursor[1];
+        MapPointAction a = new MapPointAction() {
+            @Override
+            public float[] map(float[] point, int index) {
+                float[] out = point.clone();
+                if (currentState.indexSelection.isHandleSelected(index, true)) {
+                    out[0] += diffX;
+                    out[1] += diffY;
+                }
+                return out;
             }
-            overwriteSelectedPath(newPath, newToOldMapping);
-        } catch (Exception ex) {
-            System.err.println("Error moving point " + getCursorHandle() + " to " + getSelectedPath());
-        }
+        };
+
+
+        Path shifted = getSelectedPath().mapPoints(a);
+        overwriteSelectedPath(shifted, Path.getOneToOneMapping(shifted));
     }
 
     private void userDoSelectAllFromCursor(float[] userClickedCoord, Path path) {
