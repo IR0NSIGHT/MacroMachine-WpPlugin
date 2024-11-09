@@ -147,20 +147,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         });
     }
 
-    /**
-     * draws this path onto the map
-     *
-     * @param path
-     */
-    static void DrawPathLayer(Path path, ContinuousCurve curve, PaintDimension dim, int selectedPointIdx) throws IllegalAccessException {
-        Path clone = path.clone();
-        //nothing
-        if (path.type == PointInterpreter.PointType.RIVER_2D) {
-            DrawRiverPath(path, curve, dim, selectedPointIdx);
-        }
-        assert clone.equals(path) : "something mutated the path";
-    }
-
     public void addKeyListenerToComponent(JComponent component) {
         if (keyListening)
             return;
@@ -307,7 +293,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
         float[] newHandle = RiverHandleInformation.riverInformation(pMin.x, pMin.y);
         p = p.insertPointAfter(getCursorHandle(), newHandle);
-        overwriteSelectedPath(p);
+        int[] newToOldMapping = Path.getMappingFromTo(p, getSelectedPath());
+        overwriteSelectedPath(p, newToOldMapping);
         try {
             setSelectedPointIdx(p.getClosestHandleIdxTo(newHandle));
         } catch (IllegalAccessException e) {
@@ -335,26 +322,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         return pMin;
     }
 
-    private void overwriteSelectedPath(Path p) {
+    private void overwriteSelectedPath(Path p, int[] newToOldMapping) {
         history.addFirst(currentState);
 
-        new IndexSelection(new boolean[p.amountHandles()], p.amountHandles(), -1);
-        //copy over handle selection, even if positions were added/deleted
-        boolean[] newSelection = new boolean[p.amountHandles()];
-        Path oldPath = getSelectedPath();
-        for (int i = 0; i < getSelectedPath().amountHandles(); i++) {
-            if (currentState.indexSelection.isHandleSelected(i, false)) {
-                int newIdx = p.indexOfPosition(oldPath.handleByIndex(i));
-                newSelection[newIdx] = true;
-            }
-        }
-        int newCursor = -1;
-        try {
-            newCursor = p.getClosestHandleIdxTo(getCursorHandle());
-        } catch (IllegalAccessException ignored) {
+        assert newToOldMapping.length == p.amountHandles();
+        IndexSelection newSel = IndexSelection.translateToNew(currentState.indexSelection, newToOldMapping);
 
-        }
-        this.currentState = new ToolHistoryState(p, new IndexSelection(newSelection, p.amountHandles(), newCursor),
+        this.currentState = new ToolHistoryState(p, newSel,
                 currentState.pathId);
         try {
             PathManager.instance.setPathBy(getSelectedPathId(), p);
@@ -499,14 +473,14 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 if (idx != -1)
                     setSelectedPointIdx(idx);
             } else if (altDown) {
-                overwriteSelectedPath(path.newEmpty());
+                overwriteSelectedPath(path.newEmpty(), new int[0]);
                 setSelectedPointIdx(-1);
             } else if (shiftDown) {
                 int newIdx = getHandleNear(userClickedCoord, path);
                 if (newIdx != -1) {
+                    currentState.indexSelection.selectAllBetweenCursorAnd(newIdx);
                     setSelectedPointIdx(newIdx);
                 }
-                currentState.indexSelection.selectAllBetweenCursorAnd(newIdx);
             } else if (inverse) {
             /*    //REMOVE SELECTED POINT
                 if (path.amountHandles() > 1) {
@@ -529,13 +503,20 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                     Path newPath = path.overwriteHandle(getCursorHandle(), movedPoint);
                     setSelectedPointIdx(idx);
 
-                    overwriteSelectedPath(newPath);
+                    //edge case: a 1:1 mapping because a point was moved
+                    int[] newToOldMapping = new int[newPath.amountHandles()];
+                    for (int i = 0; i < newToOldMapping.length; i++) {
+                        newToOldMapping[i] = i;
+                    }
+                    overwriteSelectedPath(newPath, newToOldMapping);
                 } catch (Exception ex) {
                     System.err.println("Error moving point " + getCursorHandle() + " to " + getSelectedPath());
                 }
             } else {
                 //add new point after selected
-                overwriteSelectedPath(path.insertPointAfter(getCursorHandle(), userClickedCoord));
+                Path p = path.insertPointAfter(getCursorHandle(), userClickedCoord);
+                int[] newToOldMapping = Path.getMappingFromTo(p, getSelectedPath());
+                overwriteSelectedPath(p, newToOldMapping);
                 setSelectedPointIdx(getSelectedPath().indexOfPosition(userClickedCoord));
             }
 
@@ -616,6 +597,20 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         } finally {
             this.getDimension().setEventsInhibited(false);
         }
+    }
+
+    /**
+     * draws this path onto the map
+     *
+     * @param path
+     */
+    static void DrawPathLayer(Path path, ContinuousCurve curve, PaintDimension dim, int selectedPointIdx) throws IllegalAccessException {
+        Path clone = path.clone();
+        //nothing
+        if (path.type == PointInterpreter.PointType.RIVER_2D) {
+            DrawRiverPath(path, curve, dim, selectedPointIdx);
+        }
+        assert clone.equals(path) : "something mutated the path";
     }
 
     private static class EditPathOptions {
@@ -743,13 +738,11 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             if (getCursorHandle() != null) {
                 if (getSelectedPath().type == PointInterpreter.PointType.RIVER_2D) {
                     OptionsLabel[] riverInputs = RiverHandleInformation.Editor(getCursorHandle(), point -> {
-                        Path oldPath = getSelectedPath();
                         try {
                             Path newPath = getSelectedPath().overwriteHandle(getCursorHandle(), point);
-                            overwriteSelectedPath(newPath);
+                            overwriteSelectedPath(newPath, Path.getOneToOneMapping(newPath));
                         } catch (Exception ex) {
                             System.err.println(ex.getMessage());
-                            overwriteSelectedPath(oldPath);
                         }
                         redrawSelectedPathLayer();
                     }, onOptionsReconfigured);
@@ -774,8 +767,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 JButton button1 = new JButton("Edit water height");
                 button1.addActionListener(e -> {
                     JFrame c = (JFrame) SwingUtilities.getWindowAncestor(this.getParent());
-                    JDialog dialog = riverRadiusEditor(c, getSelectedPath(), currentState.indexSelection.getCursorHandleIdx(),
-                            EditPathOperation.this::overwriteSelectedPath, dim);
+                    JDialog dialog = riverRadiusEditor(c, getSelectedPath(),
+                            currentState.indexSelection.getCursorHandleIdx(),
+                            p -> overwriteSelectedPath(p, Path.getOneToOneMapping(p)), dim);
                     dialog.setVisible(true);
                     onOptionsReconfigured();
                     redrawSelectedPathLayer();
@@ -817,7 +811,9 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                         }
 
                         //write back new handles as selected path
-                        overwriteSelectedPath(new Path(ArrayUtility.transposeMatrix(flatHandles), p.type));
+                        Path newPath = new Path(ArrayUtility.transposeMatrix(flatHandles), p.type);
+                        int[] newToOldMap = Path.getMappingFromTo(newPath, p);
+                        overwriteSelectedPath(newPath, newToOldMap);
                         setSelectedPointIdx(newSelectedIdx);
 
                         onOptionsReconfigured();

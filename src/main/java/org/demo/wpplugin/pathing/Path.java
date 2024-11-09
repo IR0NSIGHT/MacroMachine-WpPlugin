@@ -93,6 +93,24 @@ public class Path implements Iterable<float[]> {
         return handles;
     }
 
+    public static int[] getMappingFromTo(Path from, Path to) {
+        int[] mapping = new int[from.amountHandles()];
+        for (int fromIdx = 0; fromIdx < mapping.length; fromIdx++) {
+            float[] fromPoint = from.handleByIndex(fromIdx);
+            int toIdx = to.indexOfPosition(fromPoint);
+            mapping[fromIdx] = toIdx;
+        }
+        return mapping;
+    }
+
+    public static int[] getOneToOneMapping(Path from) {
+        int[] mapping = new int[from.amountHandles()];
+        for (int i = 0; i < mapping.length; i++) {
+            mapping[i] = i;
+        }
+        return mapping;
+    }
+
     public Path newEmpty() {
         return new Path(Collections.EMPTY_LIST, this.type);
     }

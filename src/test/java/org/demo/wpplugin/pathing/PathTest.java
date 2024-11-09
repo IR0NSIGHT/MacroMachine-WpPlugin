@@ -1,8 +1,10 @@
 package org.demo.wpplugin.pathing;
 
+import org.checkerframework.checker.units.qual.A;
 import org.demo.wpplugin.operations.ContinuousCurve;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 
@@ -10,6 +12,7 @@ import static org.demo.wpplugin.geometry.HeightDimension.getImmutableDimension62
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.RiverInformation.RIVER_RADIUS;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.getValue;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.setValue;
+import static org.demo.wpplugin.pathing.PointInterpreter.PointType.POSITION_2D;
 import static org.demo.wpplugin.pathing.PointInterpreter.PointType.RIVER_2D;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -173,4 +176,26 @@ class PathTest {
         }
     }
 
+    @Test
+    void getMappingFromTo() {
+        ArrayList<float[]> handles = new ArrayList<>();
+        handles.add(new float[]{5,10});
+        handles.add(new float[]{10,20});
+        Path oldP = new Path(handles, POSITION_2D);
+        assertEquals(2,oldP.amountHandles());
+        assertArrayEquals(new float[]{5,10},oldP.handleByIndex(0));
+        assertArrayEquals(new float[]{10,20},oldP.handleByIndex(1));
+
+        {
+            Path newP = oldP.insertPointAfter(new float[]{5, 10}, new float[]{7, 7});
+            assertArrayEquals(new int[]{0, -1, 1}, Path.getMappingFromTo(newP, oldP), "new 0 -> old 0, new 1 -> deleted, new 2 -> old 1");
+            assertArrayEquals(new int[]{0, 2}, Path.getMappingFromTo(oldP, newP), "new 0 -> old 0, new 1 -> 2");
+        }
+
+        {
+            Path newP = oldP.removePoint(new float[]{5, 10});
+            assertArrayEquals(new int[]{1}, Path.getMappingFromTo(newP, oldP), "new 0 -> old 1");
+            assertArrayEquals(new int[]{-1,0}, Path.getMappingFromTo(oldP, newP), "old 0 -> deleted, old 1 -> new 0");
+        }
+    }
 }
