@@ -251,8 +251,4 @@ public class Path implements Iterable<float[]> {
         return sb.toString();
     }
 
-    interface MapPointAction {
-        float[] map(float[] point, int index);
-    }
-
 }

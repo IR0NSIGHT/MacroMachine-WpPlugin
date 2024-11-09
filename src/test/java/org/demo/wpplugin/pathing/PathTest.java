@@ -203,7 +203,7 @@ class PathTest {
     @Test
     void mapPoints() {
         Path p = newFilledPath(10);
-        Path mapped = p.mapPoints(new Path.MapPointAction() {
+        Path mapped = p.mapPoints(new MapPointAction() {
             @Override
             public float[] map(float[] point, int index) {
                 float[] out = point.clone();
