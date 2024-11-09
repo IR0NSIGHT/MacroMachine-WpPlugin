@@ -28,7 +28,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyVetoException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
 
 import static org.demo.wpplugin.Gui.OptionsLabel.numericInput;
 import static org.demo.wpplugin.operations.River.RiverHandleInformation.*;
@@ -105,7 +108,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     private boolean shiftDown = false;
     private boolean altDown = false;
     private boolean ctrlDown = false;
-    private HeightDimension dim ;
+    private final HeightDimension dim;
     private StandardOptionsPanel panelContainer;
     private ToolHistoryState currentState;
     private boolean keyListening;
@@ -135,16 +138,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
         // shift/alt/control after a button in the settings
         // pannel was used.
         //this shitty listener circumvents the bug
-        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyEventDispatcher() {
-            @Override
-            public boolean dispatchKeyEvent(KeyEvent e) {
-                if (!EditPathOperation.super.isActive()) return false;
-                shiftDown = e.isShiftDown();
-                altDown = e.isAltDown();
-                ctrlDown = e.isControlDown();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(e -> {
+            if (!EditPathOperation.super.isActive()) return false;
+            shiftDown = e.isShiftDown();
+            altDown = e.isAltDown();
+            ctrlDown = e.isControlDown();
 
-                return false;
-            }
+            return false;
         });
 
         this.dim = new HeightDimension() {
