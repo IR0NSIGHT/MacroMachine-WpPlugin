@@ -1,8 +1,7 @@
 {
-  "name": "Demo WorldPainter Plugin",
+  "name": "River Creation Tool",
   "version": "${project.version}",
   "classes": [
-    "org.demo.wpplugin.DemoWPPlugin",
-    "org.demo.wpplugin.DemoWPPlatformProvider"
+    "org.ironsight.wpplugin.rivertool.RiverToolPlugin",
   ]
 }

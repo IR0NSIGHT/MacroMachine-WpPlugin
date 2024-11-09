@@ -1,22 +1,20 @@
-import org.demo.wpplugin.geometry.*;
-import org.demo.wpplugin.geometry.BoundingBoxes.AxisAlignedBoundingBox2d;
-import org.demo.wpplugin.geometry.BoundingBoxes.BoundingBox;
-import org.demo.wpplugin.geometry.BoundingBoxes.TreeBoundingBox;
-import org.demo.wpplugin.kernel.KernelConvolution;
-import org.demo.wpplugin.operations.ContinuousCurve;
-import org.demo.wpplugin.operations.River.RiverHandleInformation;
-import org.demo.wpplugin.pathing.Path;
-import org.demo.wpplugin.pathing.PathGeometryHelper;
-import org.demo.wpplugin.pathing.PointUtils;
+import org.ironsight.wpplugin.rivertool.geometry.BoundingBoxes.AxisAlignedBoundingBox2d;
+import org.ironsight.wpplugin.rivertool.geometry.BoundingBoxes.BoundingBox;
+import org.ironsight.wpplugin.rivertool.geometry.BoundingBoxes.TreeBoundingBox;
+import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
+import org.ironsight.wpplugin.rivertool.kernel.KernelConvolution;
+import org.ironsight.wpplugin.rivertool.operations.ContinuousCurve;
+import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
+import org.ironsight.wpplugin.rivertool.pathing.Path;
+import org.ironsight.wpplugin.rivertool.pathing.PathGeometryHelper;
+import org.ironsight.wpplugin.rivertool.pathing.PointUtils;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
-import java.util.List;
 import java.util.*;
 
-import static org.demo.wpplugin.geometry.HeightDimension.getImmutableDimension62;
-import static org.demo.wpplugin.pathing.PointInterpreter.PointType.POSITION_2D;
-import static org.demo.wpplugin.pathing.PointUtils.getPoint2D;
+import static org.ironsight.wpplugin.rivertool.geometry.HeightDimension.getImmutableDimension62;
+import static org.ironsight.wpplugin.rivertool.pathing.PointInterpreter.PointType.POSITION_2D;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class PathGeometryHelperTest {
