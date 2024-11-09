@@ -105,6 +105,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     private boolean shiftDown = false;
     private boolean altDown = false;
     private boolean ctrlDown = false;
+    private HeightDimension dim ;
     private StandardOptionsPanel panelContainer;
     private ToolHistoryState currentState;
     private boolean keyListening;
@@ -145,6 +146,18 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                 return false;
             }
         });
+
+        this.dim = new HeightDimension() {
+            @Override
+            public float getHeight(int x, int y) {
+                return getDimension().getHeightAt(x, y);
+            }
+
+            @Override
+            public void setHeight(int x, int y, float z) {
+                getDimension().setHeightAt(x, y, z);
+            }
+        };
     }
 
     public void addKeyListenerToComponent(JComponent component) {
@@ -277,13 +290,13 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
      * automatically advance the path downhill until it doesnt find any lower
      * point.
      */
-    private boolean addHandleDownhill() {
+    private boolean addHandleDownhill(HeightDimension dim) {
         Point selected = getPoint2D(getCursorHandle());
         float selectedZ = getDimension().getHeightAt(selected);
 
         Point pMin = null;
         for (int radius = 1; radius < 25; radius++) {
-            pMin = getLowestAtRadius(radius, selected);
+            pMin = getLowestAtRadius(radius, selected, dim);
             if (getDimension().getHeightAt(pMin) < selectedZ) break;
         }
         if (getDimension().getHeightAt(pMin) >= selectedZ) return false; //tested all radii, didnt find lower point
@@ -301,25 +314,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             throw new RuntimeException(e);
         }
         return true;
-    }
-
-    private Point getLowestAtRadius(int radius, Point center) {
-        Point pMin = center;
-        float zMin = Float.MAX_VALUE;
-        ArrayList<Float> angles = new ArrayList<>(36);
-        for (int i = 0; i < 36; i++) {
-            angles.add((float) (i / 36f * Math.PI * 2f));
-        }
-        Collections.shuffle(angles);
-        for (float alpha : angles) {
-            Point newP = pointWithAngleAndRadius(center, alpha, radius);
-            float z = getDimension().getHeightAt(newP);
-            if (z < zMin) {
-                zMin = z;
-                pMin = newP;
-            }
-        }
-        return pMin;
     }
 
     private void overwriteSelectedPath(Path p, int[] newToOldMapping) {
@@ -340,12 +334,6 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     void setSelectedPointIdx(int selectedPointIdx) {
         assert selectedPointIdx >= 0 && selectedPointIdx < getSelectedPath().amountHandles();
         currentState.indexSelection.setCursorHandleIdx(selectedPointIdx);
-    }
-
-    private static Point pointWithAngleAndRadius(Point p, float angleRad, int radius) {
-        int x = (int) Math.round(radius * Math.cos(angleRad));
-        int y = (int) Math.round(radius * Math.sin(angleRad));
-        return new Point(p.x + x, p.y + y);
     }
 
     int getSelectedPathId() {
@@ -568,27 +556,14 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             }
         };
 
-        HeightDimension heightDim = new HeightDimension() {
-            @Override
-            public float getHeight(int x, int y) {
-                return getDimension().getHeightAt(x, y);
-            }
-
-            @Override
-            public void setHeight(int x, int y, float z) {
-                getDimension().setHeightAt(x, y, z);
-            }
-        };
-
         for (int selectedIdx : currentState.indexSelection.getSelectedIdcs(false)) {
             float[] handle = getSelectedPath().handleByIndex(selectedIdx);
             markPoint(getPoint2D(handle), COLOR_SELECTED, SIZE_MEDIUM_CROSS, paintDim);
         }
 
-
         try {
             //redraw new
-            DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), heightDim), paintDim
+            DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), dim), paintDim
                     , getSelectedPath().indexOfPosition(getCursorHandle()));
             if (getCursorHandle() != null)
                 PointUtils.drawCircle(getPoint2D(getCursorHandle()), COLOR_SELECTED, SIZE_SELECTED, paintDim, false);
@@ -705,7 +680,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                     //run downhill 25 handles max or until we hit a hole with
                     // no escape
                     for (int i = 0; i < 25; i++) {
-                        boolean didFindSth = addHandleDownhill();
+                        boolean didFindSth = addHandleDownhill(dim);
                         if (!didFindSth) break;
                     }
                     redrawSelectedPathLayer();

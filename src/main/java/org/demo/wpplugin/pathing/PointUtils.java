@@ -1,12 +1,15 @@
 package org.demo.wpplugin.pathing;
 
 import org.demo.wpplugin.geometry.BoundingBoxes.AxisAlignedBoundingBox2d;
+import org.demo.wpplugin.geometry.HeightDimension;
 import org.demo.wpplugin.geometry.PaintDimension;
+import org.demo.wpplugin.operations.EditPath.EditPathOperation;
 import org.demo.wpplugin.operations.River.RiverHandleInformation;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class PointUtils {
@@ -167,5 +170,30 @@ public class PointUtils {
         if (RiverHandleInformation.PositionSize.SIZE_2_D.value >= 0)
             System.arraycopy(position, 0, out, 0, RiverHandleInformation.PositionSize.SIZE_2_D.value);
         return out;
+    }
+
+    public static Point getLowestAtRadius(int radius, Point center, HeightDimension dim) {
+        Point pMin = center;
+        float zMin = Float.MAX_VALUE;
+        ArrayList<Float> angles = new ArrayList<>(36);
+        for (int i = 0; i < 36; i++) {
+            angles.add((float) (i / 36f * Math.PI * 2f));
+        }
+        Collections.shuffle(angles);
+        for (float alpha : angles) {
+            Point newP = pointWithAngleAndRadius(center, alpha, radius);
+            float z = dim.getHeight(newP.x, newP.y);
+            if (z < zMin) {
+                zMin = z;
+                pMin = newP;
+            }
+        }
+        return pMin;
+    }
+
+    private static Point pointWithAngleAndRadius(Point p, float angleRad, int radius) {
+        int x = (int) Math.round(radius * Math.cos(angleRad));
+        int y = (int) Math.round(radius * Math.sin(angleRad));
+        return new Point(p.x + x, p.y + y);
     }
 }
