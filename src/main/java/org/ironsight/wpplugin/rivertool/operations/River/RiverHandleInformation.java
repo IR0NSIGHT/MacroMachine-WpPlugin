@@ -147,6 +147,7 @@ public class RiverHandleInformation {
                 continue;
             //PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
             float radius = 0f;
+            /*
             for (RiverInformation info : new RiverInformation[]{RIVER_RADIUS, BEACH_RADIUS, TRANSITION_RADIUS}) {
                 radius += curve.getInfo(info, i);
 
@@ -163,6 +164,8 @@ public class RiverHandleInformation {
                 dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
                 color = color + 1 % 15;
             }
+
+             */
         }
 
         for (int i = 0; i < path.amountHandles(); i++) {

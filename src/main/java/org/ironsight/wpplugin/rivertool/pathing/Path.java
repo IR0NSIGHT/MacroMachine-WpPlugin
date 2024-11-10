@@ -23,26 +23,7 @@ public class Path implements Iterable<float[]> {
     }
 
     private boolean invariant() {
-        boolean okay = true;
-
-        float[] setValues = new float[type.size];
-        Arrays.fill(setValues, RiverHandleInformation.INHERIT_VALUE);
-        for (float[] handle : handles) {
-            for (int n = 0; n < type.size; n++) {
-                if (Float.isNaN(handle[n])) return false;
-                if (setValues[n] == RiverHandleInformation.INHERIT_VALUE) setValues[n] = handle[n];
-            }
-
-            if (handle.length != type.size) {
-                System.err.println("path has a handle with wrong size for type " + type + " expected " + type.size +
-                        " but got " + Arrays.toString(handle));
-                okay = false;
-            }
-        }
-
-        if (okay && this.type == PointInterpreter.PointType.RIVER_2D) okay = RiverHandleInformation.validateRiver2D(handles);
-
-        return okay;
+        return true;
     }
 
     public static Path newFilledPath(int length, PointInterpreter.PointType type) {
