@@ -400,8 +400,9 @@ public class Heightmap3dApp extends Application {
         BufferedImage bImg = isWaterMap ? new BufferedImage(256,256,BufferedImage.TYPE_INT_ARGB)  :texture256;
         if (isWaterMap) {
             fillImageWithColor(bImg,new java.awt.Color(0,0,255,128));
+        } else {
+            saveAsPNG(bImg,"textureImage256.png");
         }
-        saveAsPNG(bImg,"textureImage256.png");
         textureImage = convertToFXImage(bImg);
         // Create a PhongMaterial and set the texture map
         PhongMaterial material = new PhongMaterial();
