@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.function.Predicate;
 
 public class CatMullRomInterpolation {
-    public static float[] interpolateCatmullRom(float[] positions, int[] handleToCurveIdx, int[] segmentLengths) {
+    public static float[] interpolateCatmullRom(float[] positions, int[] handleToCurveIdx, int[] segmentLengths, float defaultVaule) {
         if (positions.length < 2)
             return positions.clone();
 
@@ -22,7 +22,8 @@ public class CatMullRomInterpolation {
             return !sorted.isEmpty();
         };
 
-        final float[] handlesWithSomeValues = supplementFirstAndLastTwoHandles(positions, RiverHandleInformation.INHERIT_VALUE, 5);
+
+        final float[] handlesWithSomeValues = supplementFirstAndLastTwoHandles(positions, RiverHandleInformation.INHERIT_VALUE, defaultVaule);
         assert arrayContainsValuesThatAreNotInheritVal.test(handlesWithSomeValues) : "handles MUST have at least one " +
                 "value to be interpolable" + Arrays.toString(handlesWithSomeValues);
 

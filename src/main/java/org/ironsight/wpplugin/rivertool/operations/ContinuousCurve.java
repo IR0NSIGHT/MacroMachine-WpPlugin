@@ -77,8 +77,9 @@ public class ContinuousCurve {
         //iterate all handleArrays and calculate a continous curve
         for (int n = 0; n < path.type.size; n++) {
             float[] nthHandles = flatHandles.get(n);
+            float defaultVal = n == RiverHandleInformation.RiverInformation.WATER_Z.idx + 2 ? 9999 : 5;
             float[] interpolated = CatMullRomInterpolation.interpolateCatmullRom(nthHandles, handleToCurveIdx,
-                    segmentLengths);
+                    segmentLengths, defaultVal);
             interpolatedCurve.add(interpolated);
         }
 
@@ -140,7 +141,7 @@ public class ContinuousCurve {
         ArrayList<float[]> continuousPositions = new ArrayList<>();
         continuousPositions.add(positions.get(0));
         for (int i = 1; i < positions.size(); i++) {
-            float[] previous = positions.get(i-1);
+            float[] previous = positions.get(i - 1);
             float[] thisPos = positions.get(i);
             float xDiff = Math.abs(thisPos[0] - previous[0]);
             float yDiff = Math.abs(thisPos[1] - previous[1]);
@@ -203,7 +204,7 @@ public class ContinuousCurve {
             float[] existing = handles.get(i - 1);
             float[] next = handles.get(i);
             if (existing[0] - next[0] != 0 && existing[1] - next[1] != 0) {
-                float[] diag = linearInterpolate(existing,next,0.5f);
+                float[] diag = linearInterpolate(existing, next, 0.5f);
                 //mix x coord so they are connected
                 diag[0] = existing[0];
                 diag[1] = next[1];
@@ -212,7 +213,7 @@ public class ContinuousCurve {
             outHandles.add(next);
         }
         return outHandles;
-        }
+    }
 
     public static int[] handleToCurve(Path p) {
         ArrayList<float[]> handles = p.getHandles();

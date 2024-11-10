@@ -14,7 +14,7 @@ class CatMullRomInterpolationTest {
         float[] xs = new float[]{10, 20, 30, 40, 50, 70};
         int[] curveIdcs = new int[]{0, 10, 20, 30, 40, 50};
         int[] segmentSizes = new int[]{10, 10, 10, 10, 10, 10};
-        float[] curveXs = CatMullRomInterpolation.interpolateCatmullRom(xs, curveIdcs, segmentSizes);
+        float[] curveXs = CatMullRomInterpolation.interpolateCatmullRom(xs, curveIdcs, segmentSizes, 5);
         assertEquals(51, curveXs.length);
         for (int i = 0; i < curveIdcs.length; i++) {
             assertEquals(curveXs[curveIdcs[i]], xs[i], 1e-6, "handle points are missing from the curve or at wrong " + "curve idx");

@@ -38,7 +38,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         this.terrainCurve = curve.terrainCurve(dimension);
 
 
-        handleToCurve = ContinuousCurve.handleToCurve(path);
+        handleToCurve = handleToCurve(curve, path);
         setFocusable(true); // Make sure the component can receive focus for key events
         requestFocusInWindow(); // Request focus to ensure key bindings work
         setupKeyBindings();
@@ -49,6 +49,19 @@ public class PathHistogram extends JPanel implements KeyListener {
     private void overwritePath(Path path) {
         this.path = path;
         recalcCurve = true;
+    }
+
+    private static int[] handleToCurve(ContinuousCurve curve, Path p) {
+        int[] handleToCurve = new int[p.amountHandles()];
+        int handleIdx = 0;
+        for (int i = 0; i < curve.curveLength(); i++) {
+            if (curve.getPosX(i) == p.handleByIndex(handleIdx)[0] && curve.getPosY(i) == p.handleByIndex(handleIdx)[1]) {
+                handleToCurve[handleIdx++] = i;
+            }
+        }
+        assert handleToCurve[handleToCurve.length - 1] == curve.curveLength() - 1 : "last handle must be at last " +
+                "position in curve";
+        return handleToCurve;
     }
 
     private void setupKeyBindings() {
@@ -62,7 +75,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         if (recalcCurve) {
             recalcCurve = false;
             curve = ContinuousCurve.fromPath(path, dimension);
-            handleToCurve = ContinuousCurve.handleToCurve(path);    //FIXME does this ever change?
+            handleToCurve = handleToCurve(curve, path);
         }
 
         Graphics2D g2d = (Graphics2D) g;
@@ -143,7 +156,8 @@ public class PathHistogram extends JPanel implements KeyListener {
             g2d.drawString(String.format("length: %d, handles: %d", curve.curveLength(), path.amountHandles()),
                     userFocus.x, -userFocus.y + 3 * fontHeight);
             g2d.drawString(String.format("highest water: %.0f, lowest water: %.0f",
-                    curve.getMax(RiverHandleInformation.RiverInformation.WATER_Z), curve.getMin(RiverHandleInformation.RiverInformation.WATER_Z)), userFocus.x,
+                            curve.getMax(RiverHandleInformation.RiverInformation.WATER_Z),
+                            curve.getMin(RiverHandleInformation.RiverInformation.WATER_Z)), userFocus.x,
                     -userFocus.y + 4 * fontHeight);
         }
 
@@ -164,7 +178,8 @@ public class PathHistogram extends JPanel implements KeyListener {
             int pointCurveIdx = handleToCurve[handleIdx];
             if (pointCurveIdx < userFocus.x) continue;
 
-            float curveHeightHandle = RiverHandleInformation.getValue(path.handleByIndex(handleIdx), RiverHandleInformation.RiverInformation.WATER_Z);
+            float curveHeightHandle = RiverHandleInformation.getValue(path.handleByIndex(handleIdx),
+                    RiverHandleInformation.RiverInformation.WATER_Z);
             boolean notSet = curveHeightHandle == RiverHandleInformation.INHERIT_VALUE;
             int curveHeightReal = Math.round(waterCurve[pointCurveIdx]);
             Color c = Color.BLACK;
@@ -274,7 +289,8 @@ public class PathHistogram extends JPanel implements KeyListener {
                     float[] handle = path.handleByIndex(i);
                     int pointCurveIdx = handleToCurve[i];
                     float terrainHeight = terrainCurve[pointCurveIdx];
-                    float[] newHandle = RiverHandleInformation.setValue(handle, RiverHandleInformation.RiverInformation.WATER_Z, terrainHeight);
+                    float[] newHandle = RiverHandleInformation.setValue(handle,
+                            RiverHandleInformation.RiverInformation.WATER_Z, terrainHeight);
                     Path newP = path.setHandleByIdx(newHandle, i);
                     overwritePath(newP);
                 }
@@ -285,7 +301,8 @@ public class PathHistogram extends JPanel implements KeyListener {
                 for (int i = 0; i < handleSelection.length; i++) {
                     if (!handleSelection[i]) continue;
                     float[] handle = path.handleByIndex(i);
-                    float[] newHandle = RiverHandleInformation.setValue(handle, RiverHandleInformation.RiverInformation.WATER_Z, RiverHandleInformation.INHERIT_VALUE);
+                    float[] newHandle = RiverHandleInformation.setValue(handle,
+                            RiverHandleInformation.RiverInformation.WATER_Z, RiverHandleInformation.INHERIT_VALUE);
                     Path newP = path.setHandleByIdx(newHandle, i);
                     overwritePath(newP);
                 }
@@ -351,10 +368,12 @@ public class PathHistogram extends JPanel implements KeyListener {
             float[] handle = path.handleByIndex(handleIdx);
 
             float targetValue =
-                    RiverHandleInformation.sanitizeInput(RiverHandleInformation.getValue(handle, RiverHandleInformation.RiverInformation.WATER_Z) + amount,
+                    RiverHandleInformation.sanitizeInput(RiverHandleInformation.getValue(handle,
+                                    RiverHandleInformation.RiverInformation.WATER_Z) + amount,
                             RiverHandleInformation.RiverInformation.WATER_Z);
 
-            float[] newHandle = RiverHandleInformation.setValue(handle, RiverHandleInformation.RiverInformation.WATER_Z, targetValue);
+            float[] newHandle = RiverHandleInformation.setValue(handle,
+                    RiverHandleInformation.RiverInformation.WATER_Z, targetValue);
             overwritePath(path.setHandleByIdx(newHandle, handleIdx));
         }
     }
