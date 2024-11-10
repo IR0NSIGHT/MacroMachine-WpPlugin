@@ -157,7 +157,6 @@ public class ContinuousCurve {
             continuousPositions.add(thisPos);
 
         }
-        continuousPositions.add(positions.get(positions.size() - 1));
 
         continuousPositions = connectDiagonals(continuousPositions);
 

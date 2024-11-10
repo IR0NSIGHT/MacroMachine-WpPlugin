@@ -234,7 +234,7 @@ class ContinuousCurveTest {
             ArrayList<float[]> flatHandlesConnected = ContinuousCurve.makeContinuous(flatHandles);
             assertArrayEquals(new float[]{6, 7, 7, 8, 9, 10}, flatHandlesConnected.get(0), 0.01f);
             assertArrayEquals(new float[]{1, 1f, 2f, 2f, 2, 2}, flatHandlesConnected.get(1), 0.01f);
-            assertArrayEquals(new float[]{0, 2.5f, 3.75f, 5, 7.5f, 10}, flatHandlesConnected.get(1), 0.01f);
+            assertArrayEquals(new float[]{0, 2.5f, 3.75f, 5, 7.5f, 10}, flatHandlesConnected.get(2), 0.01f);
         }
     }
 
