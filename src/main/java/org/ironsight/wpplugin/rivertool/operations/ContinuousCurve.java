@@ -247,6 +247,19 @@ public class ContinuousCurve {
         return handlesIdcsOut;
     }
 
+    public static int[] handleToCurve(ContinuousCurve curve, Path p) {
+        int[] handleToCurve = new int[p.amountHandles()];
+        int handleIdx = 0;
+        for (int i = 0; i < curve.curveLength(); i++) {
+            if (curve.getPosX(i) == Math.round(p.handleByIndex(handleIdx)[0]) && curve.getPosY(i) == Math.round(p.handleByIndex(handleIdx)[1])) {
+                handleToCurve[handleIdx++] = i;
+            }
+        }
+        assert handleToCurve[handleToCurve.length - 1] == curve.curveLength() - 1 : "last handle must be at last " +
+                "position in curve";
+        return handleToCurve;
+    }
+
     /**
      * are all points of the curve connected to a previous neighbour on x or y axis
      * -> no diagonal jumps, no points spaced further than euclid distance 1

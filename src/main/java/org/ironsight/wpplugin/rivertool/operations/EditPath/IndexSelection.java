@@ -39,7 +39,7 @@ public class IndexSelection {
 
     public boolean isHandleSelected(int idx, boolean orCursor) {
         if (idx < 0 || idx >= amountHandles)
-            throw new ArrayIndexOutOfBoundsException("thats not a valid idx:" + idx);
+            return false;
         return (orCursor && cursorHandleIdx == idx) || selectedIdcs[idx];
     }
 

@@ -140,12 +140,10 @@ public class RiverHandleInformation {
             int color = COLOR_CURVE;
             Point curvePointP = curve.getPos(i);
             dim.setValue(curvePointP.x, curvePointP.y, COLOR_CURVE);
-            if (i % 10 != 0)    //only mark meta info every 10 blocks
-                continue;
             //PointUtils.markPoint(getPoint2D(p), COLOR_CURVE, SIZE_DOT, dim);
             float radius = 0f;
-            /*
-            for (RiverInformation info : new RiverInformation[]{RIVER_RADIUS, BEACH_RADIUS, TRANSITION_RADIUS}) {
+
+            for (RiverInformation info : new RiverInformation[]{RIVER_RADIUS}) {
                 radius += curve.getInfo(info, i);
 
                 int tangentX = curve.getPosX(i + 1) - curve.getPosX(i - 1);
@@ -162,7 +160,7 @@ public class RiverHandleInformation {
                 color = color + 1 % 15;
             }
 
-             */
+
         }
 
         for (int i = 0; i < path.amountHandles(); i++) {

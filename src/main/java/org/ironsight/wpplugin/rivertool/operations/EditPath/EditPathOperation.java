@@ -250,10 +250,10 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                             ColourScheme scheme = new HardcodedColourScheme();
                             int color = getDimension().getTerrainAt(thisP.x, thisP.y)
                                     .getColour(0,
-                                            thisP.x, thisP.y, 62, (int) 62,
+                                            thisP.x, thisP.y, 62, 62,
                                             Configuration.DEFAULT_PLATFORM,
                                             scheme);
-                            texture.setRGB(x+128,y+128,color);
+                            texture.setRGB(x + 128, y + 128, color);
 
                             float waterHeight = (float) getDimension().getWaterLevelAt(thisP.x, thisP.y) / resolution3d;
                             waterMap[y + 128][x + 128] = waterHeight;
@@ -674,18 +674,32 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             }
         };
 
-        for (int selectedIdx : currentState.indexSelection.getSelectedIdcs(false)) {
-            float[] handle = getSelectedPath().handleByIndex(selectedIdx);
-            PointUtils.markPoint(PointUtils.getPoint2D(handle), COLOR_SELECTED, SIZE_MEDIUM_CROSS, paintDim);
-        }
 
         try {
+            ContinuousCurve curve = ContinuousCurve.fromPath(getSelectedPath(), dim);
             //redraw new
-            DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), dim), paintDim
+            DrawPathLayer(getSelectedPath().clone(), curve, paintDim
             );
             if (getCursorHandle() != null)
-                PointUtils.drawCircle(PointUtils.getPoint2D(getCursorHandle()), COLOR_SELECTED, SIZE_SELECTED,
+                PointUtils.drawCircle(PointUtils.getPoint2D(getCursorHandle()), COLOR_HANDLE, SIZE_SELECTED,
                         paintDim, false);
+
+            //mark selected handles
+            for (int selectedIdx : currentState.indexSelection.getSelectedIdcs(false)) {
+                float[] handle = getSelectedPath().handleByIndex(selectedIdx);
+                PointUtils.markPoint(PointUtils.getPoint2D(handle), COLOR_SELECTED, SIZE_MEDIUM_CROSS, paintDim);
+            }
+
+            //mark selected segments
+            int[] handleToCurve = ContinuousCurve.handleToCurve(curve, getSelectedPath());
+            for (int selectedIdx : currentState.indexSelection.getSelectedIdcs(true)) {
+                if (currentState.indexSelection.isHandleSelected(selectedIdx + 1, true))
+                    for (int cIdx = handleToCurve[selectedIdx]; cIdx < handleToCurve[selectedIdx + 1]; cIdx++) {
+                        PointUtils.markPoint(curve.getPos(cIdx), COLOR_SELECTED, SIZE_DOT, paintDim);
+                    }
+            }
+
+
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
         } finally {
@@ -878,7 +892,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                             int selectedIdx = indexOffset + oldSelectedIdx;
                             if (selectedIdx < 0 || selectedIdx >= flatHandles.get(0).length - 1)
                                 continue;
-                            if (Arrays.binarySearch(selectedIdcs, oldSelectedIdx+1) < 0)
+                            if (Arrays.binarySearch(selectedIdcs, oldSelectedIdx + 1) < 0)
                                 continue;   //only if segment start AND end are selected
 
                             ArrayList<float[]> newFlats = Subdivide.subdivide(flatHandles.get(0), flatHandles.get(1),

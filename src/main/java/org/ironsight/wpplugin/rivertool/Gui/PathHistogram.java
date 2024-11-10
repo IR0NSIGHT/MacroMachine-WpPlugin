@@ -38,7 +38,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         this.terrainCurve = curve.terrainCurve(dimension);
 
 
-        handleToCurve = handleToCurve(curve, path);
+        handleToCurve = ContinuousCurve.handleToCurve(curve, path);
         setFocusable(true); // Make sure the component can receive focus for key events
         requestFocusInWindow(); // Request focus to ensure key bindings work
         setupKeyBindings();
@@ -47,19 +47,6 @@ public class PathHistogram extends JPanel implements KeyListener {
     private void overwritePath(Path path) {
         this.path = path;
         recalcCurve = true;
-    }
-
-    private static int[] handleToCurve(ContinuousCurve curve, Path p) {
-        int[] handleToCurve = new int[p.amountHandles()];
-        int handleIdx = 0;
-        for (int i = 0; i < curve.curveLength(); i++) {
-            if (curve.getPosX(i) == Math.round(p.handleByIndex(handleIdx)[0]) && curve.getPosY(i) == Math.round(p.handleByIndex(handleIdx)[1])) {
-                handleToCurve[handleIdx++] = i;
-            }
-        }
-        assert handleToCurve[handleToCurve.length - 1] == curve.curveLength() - 1 : "last handle must be at last " +
-                "position in curve";
-        return handleToCurve;
     }
 
     private void setupKeyBindings() {
@@ -73,7 +60,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         if (recalcCurve) {
             recalcCurve = false;
             curve = ContinuousCurve.fromPath(path, dimension);
-            handleToCurve = handleToCurve(curve, path);
+            handleToCurve = ContinuousCurve.handleToCurve(curve, path);
         }
 
         Graphics2D g2d = (Graphics2D) g;
