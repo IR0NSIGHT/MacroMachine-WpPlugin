@@ -147,7 +147,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
             // on outermost beach layer!
             for (Point point : nearby) {
                 double distance = point.distance(curvePoint);
-                if (distance < riverRadius) {
+                if (distance <= riverRadius) {
                     float[] params = new float[]{
                             -curve.getInfo(RiverHandleInformation.RiverInformation.RIVER_DEPTH, curveIdx) - 0.1f,
                             (float) distance,
