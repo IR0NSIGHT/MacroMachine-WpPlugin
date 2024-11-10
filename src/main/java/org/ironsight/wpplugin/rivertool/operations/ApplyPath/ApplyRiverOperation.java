@@ -119,9 +119,10 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
 
         Function<float[], Float> riverDepthByDistance = (depthAndDist) -> {
             float a, b, c;
-            float depth = depthAndDist[0];
-            float width = depthAndDist[2];
             float x = depthAndDist[1];
+
+            float depth = depthAndDist[0];
+            float width = Math.max(1, depthAndDist[2]);
 
             a = -depth / (width * width);
             b = 0;
@@ -153,7 +154,8 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
                             (float) distance,
                             (float) riverRadius};
                     float riverBedHeight = riverDepthByDistance.apply(params);
-                    finalHeightmap.put(point, waterHeight + riverBedHeight);
+                    float terrainHeight = waterHeight + riverBedHeight;
+                    finalHeightmap.put(point, terrainHeight);
                     waterMap.setHeight(point.x, point.y, waterHeight);
                 } else if (distance - riverRadius <= beachRadius) {
                     finalHeightmap.put(point, waterHeight);
