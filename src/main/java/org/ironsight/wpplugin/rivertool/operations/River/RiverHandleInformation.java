@@ -85,9 +85,6 @@ public class RiverHandleInformation {
         JDialog dialog = new JDialog(parent, "Dialog Title", true); // Modal
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE); // Only close the dialog
 
-        // Create a custom panel that will display the image
-        ContinuousCurve curve = ContinuousCurve.fromPath(path, heightDimension);
-
         // Calculate dialog size as a percentage of the screen size
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         int dialogWidth = (int) (screenSize.width * 0.5); // 50% of screen width

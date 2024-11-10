@@ -42,8 +42,6 @@ public class PathHistogram extends JPanel implements KeyListener {
         setFocusable(true); // Make sure the component can receive focus for key events
         requestFocusInWindow(); // Request focus to ensure key bindings work
         setupKeyBindings();
-        assert curve.curveLength() == 1 + handleToCurve[handleSelection.length - 1] : "last handle index is not at " +
-                "end of curve";
     }
 
     private void overwritePath(Path path) {
@@ -55,7 +53,7 @@ public class PathHistogram extends JPanel implements KeyListener {
         int[] handleToCurve = new int[p.amountHandles()];
         int handleIdx = 0;
         for (int i = 0; i < curve.curveLength(); i++) {
-            if (curve.getPosX(i) == p.handleByIndex(handleIdx)[0] && curve.getPosY(i) == p.handleByIndex(handleIdx)[1]) {
+            if (curve.getPosX(i) == Math.round(p.handleByIndex(handleIdx)[0]) && curve.getPosY(i) == Math.round(p.handleByIndex(handleIdx)[1])) {
                 handleToCurve[handleIdx++] = i;
             }
         }

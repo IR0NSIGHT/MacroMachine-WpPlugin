@@ -84,7 +84,7 @@ public class ContinuousCurve {
         }
 
         ArrayList<float[]> continuousFlats = makeContinuous(interpolatedCurve);
-
+        assert continuousFlats.size() == interpolatedCurve.size();
         return new ContinuousCurve(continuousFlats, path.type);
     }
 
@@ -162,8 +162,9 @@ public class ContinuousCurve {
         continuousPositions = connectDiagonals(continuousPositions);
 
         assert continuousPositions.size() >= positions.size();
-
-        return ArrayUtility.transposeMatrix(continuousPositions);
+        ArrayList<float[]> outFlats = ArrayUtility.transposeMatrix(continuousPositions);
+        assert flatCurveWithHoles.size() == outFlats.size();
+        return outFlats;
     }
 
     public static ArrayList<float[]> roundHandles(ArrayList<float[]> handles) {
