@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.rivertool.Gui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
@@ -19,6 +20,11 @@ import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.function.Consumer;
 
@@ -33,7 +39,8 @@ public class Heightmap3dApp extends Application {
     public static float[][] heightMap = DefaultHeightMap.loadFloatArrayFromFile("default_heightmap.txt");
     public static float[][] waterMap = DefaultHeightMap.loadFloatArrayFromFile("default_watermap.txt");
     public static Texture[][] blockmap = DefaultHeightMap.loadTextureArrayFromFile("default_blockmap.txt");
-    public static Point2D globalOffset = new Point2D(0,0);
+    public static BufferedImage texture256 = new BufferedImage(256,256,BufferedImage.TYPE_INT_ARGB);
+    public static Point2D globalOffset = new Point2D(0, 0);
     public static Consumer<Point3D> setWaterHeight = point -> {
         System.out.println("callback: change waterlevel to" + point.toString());
 
@@ -49,6 +56,7 @@ public class Heightmap3dApp extends Application {
 
     public static int SIZEFACTOR = 100;
     private static boolean isJavaFXRunning = false;
+    private static Stage primaryStage;
     private final float[] quadUp = new float[]{0, 0, 0,//left
             100, 0, 0,   //right
             100, 0, 100,  //deep right
@@ -86,8 +94,6 @@ public class Heightmap3dApp extends Application {
     double CAMERA_MOVE_SPEED = 100f;
     Rotate camYRot = new Rotate();
     Rotate camXRot = new Rotate();
-
-
     private Group root;
     private boolean moveCameraOnMouseMove = false;
     private Point2D selectedCoord = new Point2D(128, 128);
@@ -98,7 +104,8 @@ public class Heightmap3dApp extends Application {
         else {
             show = true;
             Platform.runLater(() -> {
-                instance.reloadScene();});
+                instance.reloadScene();
+            });
 
         }
     }
@@ -113,18 +120,18 @@ public class Heightmap3dApp extends Application {
 
     // Static method to open a new stage
     public void reloadScene() {
-            try {
-                DefaultHeightMap.saveFloatArrayToFile(heightMap, "default_heightmap.txt");
-                DefaultHeightMap.saveFloatArrayToFile(waterMap, "default_watermap.txt");
-                DefaultHeightMap.saveTextureArrayToFile(blockmap, "default_blockmap.txt");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            root.getChildren().clear(); // Clear existing nodes
-            Group world = createEnvironment();
+        try {
+            DefaultHeightMap.saveFloatArrayToFile(heightMap, "default_heightmap.txt");
+            DefaultHeightMap.saveFloatArrayToFile(waterMap, "default_watermap.txt");
+            DefaultHeightMap.saveTextureArrayToFile(blockmap, "default_blockmap.txt");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        root.getChildren().clear(); // Clear existing nodes
+        Group world = createEnvironment();
 
-            updateSelectedPointer();
-            root.getChildren().add(world);
+        updateSelectedPointer();
+        root.getChildren().add(world);
 
     }
 
@@ -135,7 +142,7 @@ public class Heightmap3dApp extends Application {
             center.setRadius(25 * 100);
             PhongMaterial material = new PhongMaterial(Color.YELLOW);
             center.setMaterial(material);
-        //    group.getChildren().add(center);
+            //    group.getChildren().add(center);
         }
 
         float ambientStrenght = 0.3f;
@@ -145,7 +152,7 @@ public class Heightmap3dApp extends Application {
 
         Group lightAnchor = new Group();
         Sphere anchorHelper = new Sphere();
-        anchorHelper.setRadius(10*100);
+        anchorHelper.setRadius(10 * 100);
         lightAnchor.getChildren().add(anchorHelper);
         PointLight l = new PointLight();
         Color directionalColor = Color.WHITE.deriveColor(0, 1, 1 - ambientStrenght, 1);
@@ -180,14 +187,26 @@ public class Heightmap3dApp extends Application {
         return group;
     }
 
+    private void updateSelectedPointer() {
+        selectedCoord = new Point2D(
+                Math.max(0, Math.min(255, selectedCoord.getX())),
+                Math.max(0, Math.min(255, selectedCoord.getY())));
+
+        selectedPointer.setTranslateX((-heightMap.length / 2 + 0.5f + selectedCoord.getX()) * 100);
+        selectedPointer.setTranslateZ((-heightMap.length / 2 + 0.5f + selectedCoord.getY()) * 100);
+        float height = Math.round(getHeightAt(selectedCoord.getX(), selectedCoord.getY()));
+        selectedPointer.setTranslateY((-height + 0.5f) * 100);
+        System.out.println("selected pointer at " + globalOffset.add(selectedCoord).toString());
+    }
+
     private MeshView createHeightmapMesh(boolean isWaterMap) {
         float[][] heightMap = isWaterMap ? waterMap : Heightmap3dApp.heightMap;
 
         TriangleMesh mesh = new TriangleMesh();
         for (int z = 0; z < heightMap.length; z++)
             for (int x = 0; x < heightMap[0].length; x++) {
-                float y =  Math.round(isWaterMap ? getWaterHeightAt(x,z) : getHeightAt(x,z));
-                if (isWaterMap && getHeightAt(x,z) >= y)
+                float y = Math.round(isWaterMap ? getWaterHeightAt(x, z) : getHeightAt(x, z));
+                if (isWaterMap && getHeightAt(x, z) >= y)
                     continue;   //dont draw water if its below/equal of terrain
                 Point3D center = new Point3D(x * 100, -y * 100, z * 100);
                 Texture blockType;
@@ -218,25 +237,12 @@ public class Heightmap3dApp extends Application {
         return getMeshView(isWaterMap, mesh, heightMap);
     }
 
+    private float getHeightAt(double x, double z) {
+        return heightMap[(int) z][(int) x];
+    }
 
-
-    private static MeshView getMeshView(boolean isWaterMap, TriangleMesh mesh, float[][] heightMap) {
-        Image textureImage = new Image("file:main_color_texture_worldpainter.png");
-
-        // Create a PhongMaterial and set the texture map
-        PhongMaterial material = new PhongMaterial();
-        material.setDiffuseMap(textureImage);  // Apply the PNG texture as the diffuse map
-        if (isWaterMap) {
-            Color waterColor = new Color(1, 1, 1, 0.2);
-            material.setDiffuseColor(waterColor);
-        }
-
-        MeshView meshView = new MeshView(mesh);
-        meshView.setDrawMode(javafx.scene.shape.DrawMode.FILL); // Render filled triangles
-        meshView.setMaterial(material);
-        meshView.setTranslateX(-heightMap.length / 2 * 100);
-        meshView.setTranslateZ(-heightMap.length / 2 * 100);
-        return meshView;
+    private float getWaterHeightAt(double x, double z) {
+        return waterMap[(int) z][(int) x];
     }
 
     private void addFace(Point3D position, TriangleMesh view, Dir dir, Texture texture, float y) {
@@ -302,7 +308,16 @@ public class Heightmap3dApp extends Application {
         }
         float startPosTex = texPos / texWidth + 0.01f;
         float endPosTex = texPos / texWidth + 1 / texWidth - 0.01f;
-        face.texCoords = new float[]{startPosTex, startPosTex, endPosTex, startPosTex, endPosTex, endPosTex, startPosTex, endPosTex,};
+
+        float delta = 1 / 256f / 2f;
+        float xPos = delta +(float) (position.getX() / 100f / 256f);
+        float yPos = delta +(float) (position.getZ() / 100f/  256f);
+        //use 2d image of heightmap as texture
+        face.texCoords = new float[]{
+                xPos, yPos,
+                xPos, yPos,
+                xPos, yPos,
+                xPos, yPos,};
         face.faces = new int[]{0, 0, 1, 1, 2, 2,
 
                 2, 2, 3, 3, 0, 0};
@@ -343,6 +358,77 @@ public class Heightmap3dApp extends Application {
         if (height >= -pos.getY()) return defaultV;
         return -height;
     }
+    public static void saveAsPNG(BufferedImage bufferedImage, String filePath) {
+        try {
+            File outputFile = new File(filePath);
+            ImageIO.write(bufferedImage, "png", outputFile);
+            System.out.println("Image saved successfully to: " + filePath);
+        } catch (IOException e) {
+            System.err.println("Failed to save image: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    public static Image convertToFXImage(BufferedImage bufferedImage) {
+        try {
+            // Convert BufferedImage to byte array
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ImageIO.write(bufferedImage, "png", os);
+            ByteArrayInputStream is = new ByteArrayInputStream(os.toByteArray());
+
+            // Create JavaFX Image from byte array
+            return new Image(is, bufferedImage.getWidth(), bufferedImage.getHeight(), false, false);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static MeshView getMeshView(boolean isWaterMap, TriangleMesh mesh, float[][] heightMap) {
+        Image textureImage = new Image("file:main_color_texture_worldpainter.png");
+        BufferedImage bImg = texture256;
+        saveAsPNG(bImg,"textureImage256.png");
+        textureImage = convertToFXImage(bImg);
+        // Create a PhongMaterial and set the texture map
+        PhongMaterial material = new PhongMaterial();
+        material.setDiffuseMap(textureImage);  // Apply the PNG texture as the diffuse map
+        if (isWaterMap) {
+            Color waterColor = new Color(1, 1, 1, 0.2);
+            material.setDiffuseColor(waterColor);
+        }
+
+        MeshView meshView = new MeshView(mesh);
+        meshView.setDrawMode(javafx.scene.shape.DrawMode.FILL); // Render filled triangles
+        meshView.setMaterial(material);
+        meshView.setTranslateX(-heightMap.length / 2 * 100);
+        meshView.setTranslateZ(-heightMap.length / 2 * 100);
+        return meshView;
+    }
+
+    public static BufferedImage createImage() {
+        int width = 256;
+        int height = 256;
+
+        // Create a BufferedImage with transparency support
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+        // Iterate over each pixel in the image
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                // Combine into an ARGB color (with full opacity)
+                int color = 0xFF000000;
+                int red = x << 16;
+                int green = y << 8;
+                int blue = 0 << 0;
+                color = color | red;
+                color = color | green;
+                color = color | blue;
+                // Set pixel color at (x, y)
+                image.setRGB(x, y, color );
+            }
+        }
+
+        return image;
+    }
 
     public static void printFloatArray(float[][] array) {
         StringBuilder sb = new StringBuilder();
@@ -374,10 +460,9 @@ public class Heightmap3dApp extends Application {
         instance = this;
     }
 
-    private static Stage primaryStage;
     @Override
     public void start(Stage primaryStage) throws Exception {
-        this.primaryStage = primaryStage;
+        Heightmap3dApp.primaryStage = primaryStage;
         // Override the close request event to prevent closing
         primaryStage.setOnCloseRequest((WindowEvent event) -> {
             // Consume the event, which prevents the window from closing
@@ -386,7 +471,7 @@ public class Heightmap3dApp extends Application {
             System.out.println("Close operation is disabled!");
             primaryStage.hide();
             show = false;
-            while(true) {
+            while (true) {
                 if (show) {
                     primaryStage.show();
                     break;
@@ -412,8 +497,8 @@ public class Heightmap3dApp extends Application {
         camera.setTranslateY(-307 * 100);
         camera.setTranslateZ(450 * 100);
 
-        rotateCameraAroundYAxis(camera,180);
-        rotateCameraAroundXAxis(camera,-30);
+        rotateCameraAroundYAxis(camera, 180);
+        rotateCameraAroundXAxis(camera, -30);
         scene.setCamera(camera);
 
         handleMouse(scene, scene.getRoot(), camera);
@@ -454,25 +539,25 @@ public class Heightmap3dApp extends Application {
                     moveCameraOnMouseMove = !moveCameraOnMouseMove;
                 case R: //raise heightmap
                 {
-                    changeSelectedTerrain(1,false);
+                    changeSelectedTerrain(1, false);
                     reloadScene();
                     break;
                 }
                 case F: //lower heightmap
                 {
-                    changeSelectedTerrain(-1,false);
+                    changeSelectedTerrain(-1, false);
                     reloadScene();
                     break;
                 }
                 case T: //raise water
                 {
-                    changeSelectedTerrain(1,true);
+                    changeSelectedTerrain(1, true);
                     reloadScene();
                     break;
                 }
                 case G: //lower water
                 {
-                    changeSelectedTerrain(-1,true);
+                    changeSelectedTerrain(-1, true);
                     reloadScene();
                     break;
                 }
@@ -528,7 +613,6 @@ public class Heightmap3dApp extends Application {
                 camera.setTranslateX(fPlane.getX());
                 camera.setTranslateY(fPlane.getY());
                 camera.setTranslateZ(fPlane.getZ());
-                System.out.println("camera pos =" + camera.getTranslateX() + "," + camera.getTranslateY()+ "," + camera.getTranslateZ());
             } else if (me.isMiddleButtonDown()) {
                 camera.setTranslateY(camera.getTranslateY() + mouseDeltaY * -0.1f * modifier * CAMERA_MOVE_SPEED);
             }
@@ -561,18 +645,6 @@ public class Heightmap3dApp extends Application {
             }
         }); // setOnMouseDragged
     } //handleMouse
-
-    private void updateSelectedPointer() {
-        selectedCoord = new Point2D(
-                Math.max(0,Math.min(255,selectedCoord.getX())),
-                Math.max(0,Math.min(255,selectedCoord.getY())));
-
-        selectedPointer.setTranslateX((-heightMap.length / 2 + 0.5f + selectedCoord.getX()) * 100);
-        selectedPointer.setTranslateZ((-heightMap.length / 2 + 0.5f + selectedCoord.getY()) * 100);
-        float height = Math.round(getHeightAt(selectedCoord.getX(),selectedCoord.getY()));
-        selectedPointer.setTranslateY((-height + 0.5f) * 100);
-        System.out.println("selected pointer at " + globalOffset.add(selectedCoord).toString());
-    }
 
     private void rotateRootAroundYAxis(double angleInDegrees) {
         //double total = root.getRotate() + angleInDegrees
@@ -626,42 +698,36 @@ public class Heightmap3dApp extends Application {
         camera.getTransforms().addAll(camYRot, camXRot);
     }
 
-    private float getWaterHeightAt(double x, double z) {
-        return waterMap[(int)z][(int)x];
-    }
     private void setWaterHeightAt(double x, double z, double height) {
-        waterMap[(int)z][(int)x] = (float)height;
-        setWaterHeight.accept(new Point3D(globalOffset.getX() + x,globalOffset.getY() + z,height));
+        waterMap[(int) z][(int) x] = (float) height;
+        setWaterHeight.accept(new Point3D(globalOffset.getX() + x, globalOffset.getY() + z, height));
     }
 
-    private float getHeightAt(double x, double z) {
-        return heightMap[(int)z][(int)x];
-    }
     private void setHeightAt(double x, double z, double height) {
-        heightMap[(int)z][(int)x] = (float)height;
-        setHeightMap.accept(new Point3D(globalOffset.getX() + x,globalOffset.getY() + z,height));
+        heightMap[(int) z][(int) x] = (float) height;
+        setHeightMap.accept(new Point3D(globalOffset.getX() + x, globalOffset.getY() + z, height));
     }
 
     private Point2D fromWorldpainterCoord(int x, int y) {
-        return new Point2D(x,y);
+        return new Point2D(x, y);
     }
 
     private void changeSelectedTerrain(int change, boolean isWater) {
         Point2D pos = selectedCoord;
         if (!isWater) {
             float height = getHeightAt(pos.getX(), pos.getY());
-            height+=change;
-            setHeightAt(pos.getX(), pos.getY(),height);
+            height += change;
+            setHeightAt(pos.getX(), pos.getY(), height);
         } else {
             float height = getWaterHeightAt(pos.getX(), pos.getY());
             float terrain = getHeightAt(pos.getX(), pos.getY());
-            height+=change;
+            height += change;
             if (change > 0 && height <= terrain) {
                 height = terrain + change;  //place directly above terrain, regardless of old waterheight
-            } else if (change < 0 && height <= terrain){
+            } else if (change < 0 && height <= terrain) {
                 height = 0; //place at zero regardless of old waterheight
             }
-            setWaterHeightAt(pos.getX(), pos.getY(),height);
+            setWaterHeightAt(pos.getX(), pos.getY(), height);
         }
 
     }

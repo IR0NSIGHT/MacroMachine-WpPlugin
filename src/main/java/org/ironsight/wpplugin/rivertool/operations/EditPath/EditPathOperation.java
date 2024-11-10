@@ -15,8 +15,11 @@ import org.ironsight.wpplugin.rivertool.layers.renderers.DemoLayerRenderer;
 import org.ironsight.wpplugin.rivertool.operations.ContinuousCurve;
 import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 import org.ironsight.wpplugin.rivertool.pathing.*;
+import org.pepsoft.worldpainter.ColourScheme;
+import org.pepsoft.worldpainter.Configuration;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.brushes.Brush;
+import org.pepsoft.worldpainter.colourschemes.HardcodedColourScheme;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
 
@@ -25,6 +28,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -232,7 +236,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                     float[][] heightmap = new float[256][];
                     float[][] waterMap = new float[256][];
                     Heightmap3dApp.Texture[][] blockMap = new Heightmap3dApp.Texture[256][];
-
+                    BufferedImage texture = Heightmap3dApp.texture256;
                     for (int y = -128; y < 128; y++) {
                         heightmap[y + 128] = new float[256];
                         waterMap[y + 128] = new float[256];
@@ -240,8 +244,16 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                         for (int x = -128; x < 128; x++) {
                             Point thisP = new Point(selected.x + x * resolution3d, selected.y + y * resolution3d);
 
+
                             float height = getDimension().getHeightAt(thisP) / resolution3d;
                             heightmap[y + 128][x + 128] = height;
+                            ColourScheme scheme = new HardcodedColourScheme();
+                            int color = getDimension().getTerrainAt(thisP.x, thisP.y)
+                                    .getColour(0,
+                                            thisP.x, thisP.y, 62, (int) 62,
+                                            Configuration.DEFAULT_PLATFORM,
+                                            scheme);
+                            texture.setRGB(x+128,y+128,color);
 
                             float waterHeight = (float) getDimension().getWaterLevelAt(thisP.x, thisP.y) / resolution3d;
                             waterMap[y + 128][x + 128] = waterHeight;
@@ -903,8 +915,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                     SpinnerNumberModel model = new SpinnerNumberModel(options.subdivisions, 1f, 5f, 1f);
                     OptionsLabel label = OptionsLabel.numericInput("subdivisions", "how often to subdivide", model,
                             f -> {
-                        options.subdivisions = f;
-                    }, onOptionsReconfigured);
+                                options.subdivisions = f;
+                            }, onOptionsReconfigured);
                     inputs.add(label);
                 }
                 {
