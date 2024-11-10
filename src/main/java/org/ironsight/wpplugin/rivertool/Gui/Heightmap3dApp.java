@@ -2,7 +2,6 @@ package org.ironsight.wpplugin.rivertool.Gui;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.geometry.Point3D;
@@ -21,6 +20,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -383,9 +383,24 @@ public class Heightmap3dApp extends Application {
         }
     }
 
+    public static void fillImageWithColor(BufferedImage image, java.awt.Color argbColor) {
+        // Create a Graphics2D object to draw on the BufferedImage
+        Graphics2D g2d = image.createGraphics();
+
+        // Set the color using the ARGB value and fill the entire image
+        g2d.setColor(argbColor);
+        g2d.fillRect(0, 0, image.getWidth(), image.getHeight());
+
+        // Dispose of the Graphics2D object to release resources
+        g2d.dispose();
+    }
+
     private static MeshView getMeshView(boolean isWaterMap, TriangleMesh mesh, float[][] heightMap) {
-        Image textureImage = new Image("file:main_color_texture_worldpainter.png");
-        BufferedImage bImg = texture256;
+        Image textureImage;
+        BufferedImage bImg = isWaterMap ? new BufferedImage(256,256,BufferedImage.TYPE_INT_ARGB)  :texture256;
+        if (isWaterMap) {
+            fillImageWithColor(bImg,new java.awt.Color(0,0,255,128));
+        }
         saveAsPNG(bImg,"textureImage256.png");
         textureImage = convertToFXImage(bImg);
         // Create a PhongMaterial and set the texture map
