@@ -1,7 +1,6 @@
 package org.ironsight.wpplugin.rivertool.operations.EditPath;
 
 import javafx.geometry.Point2D;
-import org.ironsight.wpplugin.rivertool.ArrayUtility;
 import org.ironsight.wpplugin.rivertool.Gui.Heightmap3dApp;
 import org.ironsight.wpplugin.rivertool.Gui.OperationOptionsPanel;
 import org.ironsight.wpplugin.rivertool.Gui.OptionsLabel;
@@ -880,39 +879,31 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                     subdivideButton.addActionListener(e -> {
                         Path p = getSelectedPath();
                         ArrayList<float[]> pathHandles = p.getHandles();
-                        int newSelectedIdx = currentState.indexSelection.getCursorHandleIdx();
+                        ArrayList<float[]> outHandles = new ArrayList<>();
                         int indexOffset = 0;
-                        ArrayList<float[]> flatHandles = ArrayUtility.transposeMatrix(pathHandles);
                         Subdivide divider = new HalfWaySubdivider(options.subdivisionRange, options.subdivisionRange,
                                 true);
 
                         //subdivide all marked segments
-                        int[] selectedIdcs = currentState.indexSelection.getSelectedIdcs(true);
-                        for (int oldSelectedIdx : selectedIdcs) {
-                            int selectedIdx = indexOffset + oldSelectedIdx;
-                            if (selectedIdx < 0 || selectedIdx >= flatHandles.get(0).length - 1)
-                                continue;
-                            if (Arrays.binarySearch(selectedIdcs, oldSelectedIdx + 1) < 0)
-                                continue;   //only if segment start AND end are selected
+                        for (int handleIdx = 0; handleIdx < pathHandles.size(); handleIdx++) {
+                            outHandles.add(pathHandles.get(handleIdx));
+                            if (currentState.indexSelection.isHandleSelected(handleIdx, true) &&
+                                currentState.indexSelection.isHandleSelected(handleIdx+1,true)
+                            ) {
+                                ArrayList<float[]> segment = new ArrayList<>();
+                                segment.add(pathHandles.get(handleIdx));
+                                segment.add(pathHandles.get(handleIdx + 1));
+                                ArrayList<float[]> newHandles = Subdivide.subdivide(segment,
+                                        (int) options.subdivisions, divider);
 
-                            ArrayList<float[]> newFlats = Subdivide.subdivide(flatHandles.get(0), flatHandles.get(1),
-                                    selectedIdx, (int) options.subdivisions, divider);
-
-                            //FIXME carry over the old values
-                            for (int i = 2; i < p.type.size; i++) {
-                                float[] filler = new float[newFlats.get(0).length];
-                                Arrays.fill(filler, RiverHandleInformation.INHERIT_VALUE);
-                                newFlats.add(filler);
+                                newHandles.remove(0);   //first handle
+                                newHandles.remove(newHandles.size()-1); //last handle (idx +1)
+                                outHandles.addAll(newHandles);
                             }
-
-                            int amountNewHandles = newFlats.get(0).length - flatHandles.get(0).length;
-                            assert amountNewHandles >= 0;
-                            indexOffset += amountNewHandles;
-                            flatHandles = newFlats;
                         }
 
                         //write back new handles as selected path
-                        Path newPath = new Path(ArrayUtility.transposeMatrix(flatHandles), p.type);
+                        Path newPath = new Path(outHandles, p.type);
                         int[] newToOldMap = Path.getMappingFromTo(newPath, p);
                         overwriteSelectedPath(newPath, newToOldMap);
                         for (int i = 0; i < newToOldMap.length; i++) {
