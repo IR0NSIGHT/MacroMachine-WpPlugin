@@ -6,6 +6,7 @@ import org.ironsight.wpplugin.rivertool.Gui.Heightmap3dApp;
 import org.ironsight.wpplugin.rivertool.Gui.OperationOptionsPanel;
 import org.ironsight.wpplugin.rivertool.Gui.OptionsLabel;
 import org.ironsight.wpplugin.rivertool.HalfWaySubdivider;
+import org.ironsight.wpplugin.rivertool.RepeatedTask;
 import org.ironsight.wpplugin.rivertool.Subdivide;
 import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
 import org.ironsight.wpplugin.rivertool.geometry.PaintDimension;
@@ -97,6 +98,7 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     private final HeightDimension dim;
     EditPathOptionsPanel eOptionsPanel;
     int resolution3d = 2;
+    RepeatedTask task;
     private Brush brush;
     private Paint paint;
     private boolean shiftDown = false;
@@ -217,82 +219,100 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
     }
 
     private void show3dAction() {
-        Point selected = PointUtils.getPoint2D(getCursorHandle());
-        //Create heightmap
-        float[][] heightmap = new float[256][];
-        float[][] waterMap = new float[256][];
-        Heightmap3dApp.Texture[][] blockMap = new Heightmap3dApp.Texture[256][];
+        if (task != null)
+            return;
+        task = new RepeatedTask();
 
-        for (int y = -128; y < 128; y++) {
-            heightmap[y + 128] = new float[256];
-            waterMap[y + 128] = new float[256];
-            blockMap[y + 128] = new Heightmap3dApp.Texture[256];
-            for (int x = -128; x < 128; x++) {
-                Point thisP = new Point(selected.x + x * resolution3d, selected.y + y * resolution3d);
+        Runnable runner = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Point selected = PointUtils.getPoint2D(getCursorHandle());
+                    //Create heightmap
+                    float[][] heightmap = new float[256][];
+                    float[][] waterMap = new float[256][];
+                    Heightmap3dApp.Texture[][] blockMap = new Heightmap3dApp.Texture[256][];
 
-                float height = getDimension().getHeightAt(thisP) / resolution3d;
-                heightmap[y + 128][x + 128] = height;
+                    for (int y = -128; y < 128; y++) {
+                        heightmap[y + 128] = new float[256];
+                        waterMap[y + 128] = new float[256];
+                        blockMap[y + 128] = new Heightmap3dApp.Texture[256];
+                        for (int x = -128; x < 128; x++) {
+                            Point thisP = new Point(selected.x + x * resolution3d, selected.y + y * resolution3d);
 
-                float waterHeight = (float) getDimension().getWaterLevelAt(thisP.x, thisP.y) / resolution3d;
-                waterMap[y + 128][x + 128] = waterHeight;
+                            float height = getDimension().getHeightAt(thisP) / resolution3d;
+                            heightmap[y + 128][x + 128] = height;
 
-                Terrain t = getDimension().getTerrainAt(thisP.x, thisP.y);
-                Heightmap3dApp.Texture tex;
-                if (t == null) t = Terrain.GRASS;
-                switch (t) {
+                            float waterHeight = (float) getDimension().getWaterLevelAt(thisP.x, thisP.y) / resolution3d;
+                            waterMap[y + 128][x + 128] = waterHeight;
 
-                    case GRASS:
-                    case BARE_GRASS:
-                        tex = Heightmap3dApp.Texture.GRASS;
-                        break;
-                    case GRAVEL:
-                        tex = Heightmap3dApp.Texture.GRAVEL;
-                        break;
-                    case SAND:
-                    case DESERT:
-                    case BEACHES:
-                    case BARE_BEACHES:
-                    case SANDSTONE:
-                    case END_STONE:
-                        tex = Heightmap3dApp.Texture.SAND;
-                        break;
-                    case ROCK:
-                    case STONE:
-                    case COBBLESTONE:
-                    case MOSSY_COBBLESTONE:
-                    case DIORITE:
-                    case ANDESITE:
-                    case BASALT:
-                    case DEEPSLATE:
-                        tex = Heightmap3dApp.Texture.ROCK;
-                        break;
-                    case DEEP_SNOW:
-                    case SNOW:
-                        tex = Heightmap3dApp.Texture.SNOW;
-                        break;
-                    case DIRT:
-                        tex = Heightmap3dApp.Texture.DIRT;
-                        break;
-                    case WATER:
-                        tex = Heightmap3dApp.Texture.WATER;
-                        break;
-                    default:
-                        tex = Heightmap3dApp.Texture.ROCK;
+                            Terrain t = getDimension().getTerrainAt(thisP.x, thisP.y);
+                            Heightmap3dApp.Texture tex;
+                            if (t == null) t = Terrain.GRASS;
+                            switch (t) {
+
+                                case GRASS:
+                                case BARE_GRASS:
+                                    tex = Heightmap3dApp.Texture.GRASS;
+                                    break;
+                                case GRAVEL:
+                                    tex = Heightmap3dApp.Texture.GRAVEL;
+                                    break;
+                                case SAND:
+                                case DESERT:
+                                case BEACHES:
+                                case BARE_BEACHES:
+                                case SANDSTONE:
+                                case END_STONE:
+                                    tex = Heightmap3dApp.Texture.SAND;
+                                    break;
+                                case ROCK:
+                                case STONE:
+                                case COBBLESTONE:
+                                case MOSSY_COBBLESTONE:
+                                case DIORITE:
+                                case ANDESITE:
+                                case BASALT:
+                                case DEEPSLATE:
+                                    tex = Heightmap3dApp.Texture.ROCK;
+                                    break;
+                                case DEEP_SNOW:
+                                case SNOW:
+                                    tex = Heightmap3dApp.Texture.SNOW;
+                                    break;
+                                case DIRT:
+                                    tex = Heightmap3dApp.Texture.DIRT;
+                                    break;
+                                case WATER:
+                                    tex = Heightmap3dApp.Texture.WATER;
+                                    break;
+                                default:
+                                    tex = Heightmap3dApp.Texture.ROCK;
+                            }
+                            blockMap[y + 128][x + 128] = tex;
+                        }
+                    }
+                    Heightmap3dApp.heightMap = heightmap;
+                    Heightmap3dApp.waterMap = waterMap;
+                    Heightmap3dApp.blockmap = blockMap;
+                    Heightmap3dApp.setHeightMap = point -> {
+                        getDimension().setHeightAt((int) point.getX(), (int) point.getY(), (float) point.getZ());
+                    };
+                    Heightmap3dApp.setWaterHeight = point -> {
+                        getDimension().setWaterLevelAt((int) point.getX(), (int) point.getY(), (int) point.getZ());
+                    };
+                    Heightmap3dApp.globalOffset = new Point2D(selected.x - 128, selected.y - 128);
+                    Heightmap3dApp.main();
+                } catch (Exception ignored) {
+
                 }
-                blockMap[y + 128][x + 128] = tex;
+
             }
-        }
-        Heightmap3dApp.heightMap = heightmap;
-        Heightmap3dApp.waterMap = waterMap;
-        Heightmap3dApp.blockmap = blockMap;
-        Heightmap3dApp.setHeightMap = point -> {
-            getDimension().setHeightAt((int) point.getX(), (int) point.getY(), (float) point.getZ());
         };
-        Heightmap3dApp.setWaterHeight = point -> {
-            getDimension().setWaterLevelAt((int) point.getX(), (int) point.getY(), (int) point.getZ());
-        };
-        Heightmap3dApp.globalOffset = new Point2D(selected.x - 128, selected.y - 128);
-        Heightmap3dApp.main();
+
+        task.startTask(runner);
+
+
     }
 
     float[] getCursorHandle() {
@@ -471,7 +491,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
         float[] userClickedCoord = RiverHandleInformation.riverInformation(centreX, centreY);
         if (path.type == PointInterpreter.PointType.RIVER_2D)
-            RiverHandleInformation.setValue(userClickedCoord, RiverHandleInformation.RiverInformation.WATER_Z, getDimension().getHeightAt(centreX, centreY));
+            RiverHandleInformation.setValue(userClickedCoord, RiverHandleInformation.RiverInformation.WATER_Z,
+                    getDimension().getHeightAt(centreX, centreY));
 
         altDown = isAltDown();
         ctrlDown = isCtrlDown();
@@ -651,7 +672,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             DrawPathLayer(getSelectedPath().clone(), ContinuousCurve.fromPath(getSelectedPath(), dim), paintDim
             );
             if (getCursorHandle() != null)
-                PointUtils.drawCircle(PointUtils.getPoint2D(getCursorHandle()), COLOR_SELECTED, SIZE_SELECTED, paintDim, false);
+                PointUtils.drawCircle(PointUtils.getPoint2D(getCursorHandle()), COLOR_SELECTED, SIZE_SELECTED,
+                        paintDim, false);
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
         } finally {
@@ -721,7 +743,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
             JButton button = new JButton("Add empty path");
             // Add an ActionListener to handle button clicks
             button.addActionListener(e -> {
-                float[][] handles = new float[][]{RiverHandleInformation.riverInformation(0, 0), RiverHandleInformation.riverInformation(10, 10, 1, 2, 3, 4, 5),
+                float[][] handles = new float[][]{RiverHandleInformation.riverInformation(0, 0),
+                        RiverHandleInformation.riverInformation(10, 10, 1, 2, 3, 4, 5),
                         RiverHandleInformation.riverInformation(20, 20)};
                 selectPathById(PathManager.instance.addPath(new Path(Arrays.asList(handles),
                         getSelectedPath().type)));
@@ -774,7 +797,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
                 SpinnerNumberModel model = new SpinnerNumberModel(1f * resolution3d, 1, 10, 1f);
 
-                OptionsLabel l = OptionsLabel.numericInput("3d resolution 1:x", "displays " + "area in 1:resolution", model,
+                OptionsLabel l = OptionsLabel.numericInput("3d resolution 1:x", "displays " + "area in 1:resolution",
+                        model,
                         newValue -> {
                             resolution3d = newValue.intValue();
                         }, EditPathOperation.this::show3dAction);
@@ -877,7 +901,8 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
 
                 {
                     SpinnerNumberModel model = new SpinnerNumberModel(options.subdivisions, 1f, 5f, 1f);
-                    OptionsLabel label = OptionsLabel.numericInput("subdivisions", "how often to subdivide", model, f -> {
+                    OptionsLabel label = OptionsLabel.numericInput("subdivisions", "how often to subdivide", model,
+                            f -> {
                         options.subdivisions = f;
                     }, onOptionsReconfigured);
                     inputs.add(label);
