@@ -873,10 +873,14 @@ public class EditPathOperation extends MouseOrTabletOperation implements PaintOp
                                 true);
 
                         //subdivide all marked segments
-                        for (int oldSelectedIdx : currentState.indexSelection.getSelectedIdcs(true)) {
+                        int[] selectedIdcs = currentState.indexSelection.getSelectedIdcs(true);
+                        for (int oldSelectedIdx : selectedIdcs) {
                             int selectedIdx = indexOffset + oldSelectedIdx;
-                            if (selectedIdx < 0 || selectedIdx + 1 >= flatHandles.get(0).length)
+                            if (selectedIdx < 0 || selectedIdx >= flatHandles.get(0).length - 1)
                                 continue;
+                            if (Arrays.binarySearch(selectedIdcs, oldSelectedIdx+1) < 0)
+                                continue;   //only if segment start AND end are selected
+
                             ArrayList<float[]> newFlats = Subdivide.subdivide(flatHandles.get(0), flatHandles.get(1),
                                     selectedIdx, (int) options.subdivisions, divider);
 
