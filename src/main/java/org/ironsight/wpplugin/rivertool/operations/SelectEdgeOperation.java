@@ -10,6 +10,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.beans.PropertyVetoException;
 import java.util.*;
 
@@ -63,6 +65,20 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         }
 
         {
+            JButton button3 = new JButton("Edit gradient");
+            // Add action listeners to handle button click events
+            button3.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    showArrayEditorDialog(options.gradient.positions, options.gradient.values);
+                }
+            });
+
+            panel.add(button3);
+
+        }
+
+        {
             // Create a JComboBox with options
             String[] listOptions = {"Out", "In", "Both", "Out and keep"};
             JComboBox<String> dropdown = new JComboBox<>(listOptions);
@@ -93,6 +109,94 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         return panel;
     }
 
+    public void showArrayEditorDialog(float[] points, float[] values) {
+        // Create the dialog
+        JDialog dialog = new JDialog((Frame) null, "Edit Arrays", true); // Modal dialog
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setLayout(new BorderLayout(10, 10));
+
+        // Panel for editing points
+        JPanel pointsPanel = new JPanel(new GridLayout(points.length + 1, 2, 5, 5));
+        pointsPanel.setBorder(BorderFactory.createTitledBorder("Points"));
+        JTextField[] pointFields = new JTextField[points.length];
+        JTextField[] valueFields = new JTextField[values.length];
+
+        pointsPanel.add(new JLabel("Up to width %"));
+        pointsPanel.add(new JLabel("apply with chance %"));
+
+        for (int i = 0; i < points.length; i++) {
+            {
+                pointFields[i] = new JTextField(String.valueOf(Math.round(points[i] * 100)));
+                JTextField field = pointFields[i];
+                field.addFocusListener(new FocusAdapter() {
+                    @Override
+                    public void focusGained(FocusEvent e) {
+                        field.selectAll();
+                    }
+                });
+                pointsPanel.add(pointFields[i]);
+            }
+
+            {
+                valueFields[i] = new JTextField(String.valueOf(Math.round(values[i] * 100)));
+                JTextField field = valueFields[i];
+                field.addFocusListener(new FocusAdapter() {
+                    @Override
+                    public void focusGained(FocusEvent e) {
+                        field.selectAll();
+                    }
+                });
+                pointsPanel.add(valueFields[i]);
+            }
+
+        }
+
+        // Submit and Cancel buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton submitButton = new JButton("Submit");
+        JButton cancelButton = new JButton("Cancel");
+
+        submitButton.addActionListener((ActionEvent e) -> {
+            try {
+                // Parse updated points and values
+                float[] updatedPoints = new float[points.length];
+                float[] updatedValues = new float[values.length];
+
+                for (int i = 0; i < points.length; i++) {
+                    updatedPoints[i] = Float.parseFloat(pointFields[i].getText()) / 100f;
+                }
+                for (int i = 0; i < values.length; i++) {
+                    updatedValues[i] = Float.parseFloat(valueFields[i].getText()) / 100f;
+                }
+
+                // Trigger callback with updated arrays
+                this.options.gradient = new Gradient(updatedPoints, updatedValues);
+
+                // Close the dialog
+                dialog.dispose();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog, "Invalid input. Please enter valid float values.", "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        // Add buttons to the button panel
+        buttonPanel.add(cancelButton);
+        buttonPanel.add(submitButton);
+
+        // Add components to the dialog
+        dialog.add(pointsPanel, BorderLayout.NORTH);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Set dialog size and make it visible
+        dialog.pack();
+        dialog.setLocationRelativeTo(null); // Center on screen
+        dialog.setVisible(true);
+    }
+
+
     @Override
     protected void activate() throws PropertyVetoException {
 
@@ -100,8 +204,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
     private void run() {
         this.getDimension().setEventsInhibited(true);
-
-        options.gradient = new Gradient(new float[]{0.1f, 0.25f, 0.5f, 1f}, new float[]{0.4f, 0.2f, 0.1f, 0.03f});
 
         int annotationMatch = CYAN;
 
@@ -144,8 +246,14 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                 restrictions = start.ring(0).keySet();
                 break;
             case INWARD:
-                edge = start.ring(1);
-                restrictions = start.ring(2).keySet();
+                edge = start.ring(1);   //initial first outer layer
+                restrictions = start.ring(2).keySet(); //initial second outwards layer
+
+                //walk inwards once
+                start = new RingFinder(edge, 1, restrictions);
+                restrictions = edge.keySet();
+                edge = start.ring(1);   //first inwards layer
+
                 break;
             case OUT_AND_KEEP:
                 //edge stays the same
@@ -186,7 +294,8 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         int width = 3;
         DIRECTION dir = DIRECTION.OUTWARD;
 
-        Gradient gradient = new Gradient(new float[0], new float[0]);
+        Gradient gradient = new Gradient(new float[]{0.09f, 0.1f, 0.25f, 0.5f, 1f}, new float[]{1f, 0.4f, 0.2f, 0.1f,
+                0.03f});
 
 
         enum DIRECTION {

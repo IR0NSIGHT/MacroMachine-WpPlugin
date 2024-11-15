@@ -3,8 +3,8 @@ package org.ironsight.wpplugin.rivertool.operations;
 import java.util.Arrays;
 
 public class Gradient {
-    private final float[] positions;
-    private final float[] values;
+    final float[] positions;
+    final float[] values;
 
     public Gradient(float[] positions, float[] values) {
         assert positions.length == values.length;
