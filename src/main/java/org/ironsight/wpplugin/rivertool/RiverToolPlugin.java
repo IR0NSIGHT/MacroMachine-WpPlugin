@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.rivertool;
 import org.ironsight.wpplugin.rivertool.layers.PathPreviewLayer;
 import org.ironsight.wpplugin.rivertool.operations.EditPath.EditPathOperation;
 import org.ironsight.wpplugin.rivertool.operations.ApplyPath.ApplyRiverOperation;
+import org.ironsight.wpplugin.rivertool.operations.SelectEdgeOperation;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.AbstractPlugin;
@@ -40,7 +41,7 @@ public class RiverToolPlugin extends AbstractPlugin implements
     private static final List<Layer> LAYERS = singletonList(PathPreviewLayer.INSTANCE);
 
     // OperationProvider
-    private static final List<Operation> OPERATIONS = Arrays.asList(new EditPathOperation(), new ApplyRiverOperation());
+    private static final List<Operation> OPERATIONS = Arrays.asList(new EditPathOperation(), new ApplyRiverOperation(), new SelectEdgeOperation());
 
     /**
      * The plugin class must have a default (public, no arguments) constructor.

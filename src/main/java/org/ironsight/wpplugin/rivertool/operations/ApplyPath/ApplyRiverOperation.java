@@ -169,7 +169,7 @@ public class ApplyRiverOperation extends MouseOrTabletOperation {
 
         //add transitions rings
         int amountRings = Math.round(maxTransition);
-        RingFinder ringFinder = new RingFinder(finalHeightmap, amountRings, dimension);
+        RingFinder ringFinder = new RingFinder(finalHeightmap, amountRings);
         for (int i = 1; i < amountRings; i++) {
             for (Point p : ringFinder.ring(i).keySet()) {
                 float beachHeight = ringFinder.ring(i).get(p);

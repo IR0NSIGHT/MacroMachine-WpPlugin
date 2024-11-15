@@ -15,7 +15,7 @@ class RingFinderTest {
         HashMap<Point, Float> initialPoints = new HashMap<>();
         initialPoints.put(new Point(5, 15), 17f);
         HeightDimension dim = HeightDimension.getEmptyMutableDimension();
-        RingFinder rf = new RingFinder(initialPoints, 3, dim);
+        RingFinder rf = new RingFinder(initialPoints, 3);
 
         //initial points are the zero ring
         HashMap<Point, Float> zero = rf.ring(0);
