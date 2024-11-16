@@ -2,20 +2,21 @@ package org.ironsight.wpplugin.rivertool.operations;
 
 import org.ironsight.wpplugin.rivertool.Gui.GradientDisplay;
 import org.ironsight.wpplugin.rivertool.Gui.GradientEditor;
-import org.ironsight.wpplugin.rivertool.Gui.OptionsLabel;
 import org.ironsight.wpplugin.rivertool.pathing.RingFinder;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
+import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import java.util.*;
 
-import static org.ironsight.wpplugin.rivertool.Gui.OptionsLabel.numericInput;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -47,14 +48,32 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         textArea.setEditable(false);
         main.add(textArea);
 
-        JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
         main.add(panel);
         {   //SPINNER WIDTH
-            OptionsLabel l = numericInput("width", "how wide the edge should be",
-                    new SpinnerNumberModel(options.width, 1, 100, 1.), f -> options.width = f.intValue(),
-                    () -> {
-                    });
-            panel.add(l.getLabels()[0]);
+            JPanel input = new JPanel();
+            input.setLayout(new BoxLayout(input, BoxLayout.X_AXIS));
+            {
+                JLabel label = new JLabel("width");
+                label.setToolTipText("how wide the edge should be");
+                input.add(label);
+            }
+            { // Create a SpinnerNumberModel for numeric input
+                SpinnerNumberModel model = new SpinnerNumberModel(options.width, 1, 100, 1f); // initialValue, min,
+                // max, step
+                JSpinner spinner = new JSpinner(model);
+                // Add a change listener to capture value changes
+                spinner.addChangeListener(new ChangeListener() {
+                    @Override
+                    public void stateChanged(ChangeEvent e) {
+                        // Retrieve the current value (im to lazy to figure out when its a double or a float)
+                        options.width = ((Double) spinner.getValue()).intValue();
+                    }
+                });
+                input.add(spinner);
+            }
+
+            panel.add(input);
         }
 
         {   //EXECUTE BUTTON
@@ -110,6 +129,20 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                 }
             });
             panel.add(dropdown);
+        }
+
+        {
+            JButton button = new JButton();
+            button.setText(options.asSelection ? "apply as annotation" : "apply as selection");
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    options.asSelection = !options.asSelection;
+                    button.setText(options.asSelection ? "apply as annotation" : "apply as selection");
+
+                }
+            });
+            panel.add(button);
         }
         return main;
     }
@@ -172,7 +205,8 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                         }
                     }
                 }
-                tile.clearLayerData(Annotations.INSTANCE);
+                if (!options.asSelection)
+                    tile.clearLayerData(Annotations.INSTANCE);
             }
         }
 
@@ -223,7 +257,10 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     private void applyWithStrength(Collection<Point> points, float strength) {
         for (Point p : points) {
             if (strength > r.nextFloat()) {
-                getDimension().setLayerValueAt(Annotations.INSTANCE, p.x, p.y, CYAN);
+                if (options.asSelection)
+                    getDimension().setBitLayerValueAt(SelectionBlock.INSTANCE, p.x, p.y, true);
+                else
+                    getDimension().setLayerValueAt(Annotations.INSTANCE, p.x, p.y, CYAN);
             }
         }
     }
@@ -242,7 +279,7 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     private static class SelectEdgeOptions {
         int width = 3;
         DIRECTION dir = DIRECTION.OUTWARD;
-
+        boolean asSelection = true;
         Gradient gradient = new Gradient(
                 new float[]{0.01f, 0.15f, 0.25f, 0.5f, 1f},
                 new float[]{1f, 0.4f, 0.2f, 0.1f, 0.03f});

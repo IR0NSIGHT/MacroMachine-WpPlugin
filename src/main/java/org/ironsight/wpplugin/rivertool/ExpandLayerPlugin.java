@@ -21,7 +21,7 @@ import static org.ironsight.wpplugin.rivertool.Version.VERSION;
  * you rename or copy it, be sure to keep that file up-to-date.
  */
 @SuppressWarnings("unused") // Instantiated by WorldPainter
-public class RiverToolPlugin extends AbstractPlugin implements
+public class ExpandLayerPlugin extends AbstractPlugin implements
         // This demo has the plugin class implementing all of these, but they may also be implemented by separate
         // classes, as long as each class implements Plugin and is mentioned in the org.pepsoft.worldpainter.plugins
         // registry file
@@ -41,7 +41,7 @@ public class RiverToolPlugin extends AbstractPlugin implements
     /**
      * The plugin class must have a default (public, no arguments) constructor.
      */
-    public RiverToolPlugin() {
+    public ExpandLayerPlugin() {
         super(NAME, VERSION);
     }
 
