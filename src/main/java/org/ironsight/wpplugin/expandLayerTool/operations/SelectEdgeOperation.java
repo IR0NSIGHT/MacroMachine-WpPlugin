@@ -1,8 +1,8 @@
-package org.ironsight.wpplugin.rivertool.operations;
+package org.ironsight.wpplugin.expandLayerTool.operations;
 
-import org.ironsight.wpplugin.rivertool.Gui.GradientDisplay;
-import org.ironsight.wpplugin.rivertool.Gui.GradientEditor;
-import org.ironsight.wpplugin.rivertool.pathing.RingFinder;
+import org.ironsight.wpplugin.expandLayerTool.Gui.GradientDisplay;
+import org.ironsight.wpplugin.expandLayerTool.Gui.GradientEditor;
+import org.ironsight.wpplugin.expandLayerTool.pathing.RingFinder;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;

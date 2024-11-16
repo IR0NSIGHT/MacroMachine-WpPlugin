@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.ironsight.wpplugin.rivertool</groupId>
+    <groupId>org.ironsight.wpplugin.expandLayerTool</groupId>
     <artifactId>RiverCreationPlugin</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
@@ -40,7 +40,7 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
-                    <include>org.ironsight.wpplugin.rivertool.properties</include>
+                    <include>org.ironsight.wpplugin.expandLayerTool.properties</include>
                     <include>org.pepsoft.worldpainter.plugins</include>
                 </includes>
                 <filtering>true</filtering>
@@ -48,7 +48,7 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <excludes>
-                    <exclude>org.ironsight.wpplugin.rivertool.properties</exclude>
+                    <exclude>org.ironsight.wpplugin.expandLayerTool.properties</exclude>
                     <exclude>org.pepsoft.worldpainter.plugins</exclude>
                 </excludes>
                 <filtering>false</filtering>

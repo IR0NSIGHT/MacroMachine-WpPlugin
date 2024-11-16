@@ -1,6 +1,6 @@
-package org.ironsight.wpplugin.rivertool;
+package org.ironsight.wpplugin.expandLayerTool;
 
-import org.ironsight.wpplugin.rivertool.operations.SelectEdgeOperation;
+import org.ironsight.wpplugin.expandLayerTool.operations.SelectEdgeOperation;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.AbstractPlugin;
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
-import static org.ironsight.wpplugin.rivertool.Version.VERSION;
+import static org.ironsight.wpplugin.expandLayerTool.Version.VERSION;
 
 /**
  * The main plugin class. This demo combines the various providers in one plugin class. You could of course also

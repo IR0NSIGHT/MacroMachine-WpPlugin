@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.rivertool;
+package org.ironsight.wpplugin.expandLayerTool;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -16,8 +16,8 @@ public class Version {
     static {
         Properties versionProps = new Properties();
         try {
-            versionProps.load(Version.class.getResourceAsStream("/org.ironsight.wpplugin.rivertool.properties"));
-            VERSION = versionProps.getProperty("orig.ironsight.wpplugin.rivertool.version");
+            versionProps.load(Version.class.getResourceAsStream("/org.ironsight.wpplugin.expandLayerTool.properties"));
+            VERSION = versionProps.getProperty("orig.ironsight.wpplugin.expandLayerTool.version");
         } catch (IOException e) {
             throw new RuntimeException("I/O error loading version number from classpath", e);
         }

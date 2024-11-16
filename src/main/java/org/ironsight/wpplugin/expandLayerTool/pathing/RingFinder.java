@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.rivertool.pathing;
+package org.ironsight.wpplugin.expandLayerTool.pathing;
 
 import java.awt.*;
 import java.util.HashMap;
