@@ -170,14 +170,29 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                 }
 
                 // Trigger callback with updated arrays
-                this.options.gradient = new Gradient(updatedPoints, updatedValues);
+                Gradient gr = new Gradient(updatedPoints, updatedValues);
+
+                //validate points are monotone rising
+                for (int i = 1; i < updatedPoints.length; i++) {
+                    if (!(updatedPoints[i - 1] < updatedPoints[i])) {
+                        JOptionPane.showMessageDialog(dialog,
+                                "Warning: points must be greater than the previous point: " + updatedPoints[i - 1] * 100 + ", " + updatedPoints[i] * 100,
+                                "Warning",
+                                JOptionPane.WARNING_MESSAGE);
+                        return; //abort early while keeping dialog open
+                    }
+                }
+
 
                 // Close the dialog
+                this.options.gradient = gr;
                 dialog.dispose();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(dialog, "Invalid input. Please enter valid float values.", "Error",
                         JOptionPane.ERROR_MESSAGE);
             }
+
+
         });
 
         cancelButton.addActionListener(e -> dialog.dispose());
@@ -294,9 +309,9 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         int width = 3;
         DIRECTION dir = DIRECTION.OUTWARD;
 
-        Gradient gradient = new Gradient(new float[]{0.09f, 0.1f, 0.25f, 0.5f, 1f}, new float[]{1f, 0.4f, 0.2f, 0.1f,
-                0.03f});
-
+        Gradient gradient = new Gradient(
+                new float[]{0.01f, 0.15f, 0.25f, 0.5f, 1f},
+                new float[]{1f, 0.4f, 0.2f, 0.1f, 0.03f});
 
         enum DIRECTION {
             OUTWARD, INWARD, BOTH, OUT_AND_KEEP
