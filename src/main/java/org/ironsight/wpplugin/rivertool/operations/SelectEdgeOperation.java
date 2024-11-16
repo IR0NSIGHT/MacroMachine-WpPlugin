@@ -1,5 +1,7 @@
 package org.ironsight.wpplugin.rivertool.operations;
 
+import org.ironsight.wpplugin.rivertool.Gui.GradientDisplay;
+import org.ironsight.wpplugin.rivertool.Gui.GradientEditor;
 import org.ironsight.wpplugin.rivertool.Gui.OptionsLabel;
 import org.ironsight.wpplugin.rivertool.pathing.RingFinder;
 import org.pepsoft.worldpainter.Tile;
@@ -10,8 +12,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.beans.PropertyVetoException;
 import java.util.*;
 
@@ -70,7 +70,7 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             button3.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    showArrayEditorDialog(options.gradient.positions, options.gradient.values);
+                    showArrayEditorDialog();
                 }
             });
 
@@ -109,101 +109,30 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         return panel;
     }
 
-    public void showArrayEditorDialog(float[] points, float[] values) {
+    public void showArrayEditorDialog() {
         // Create the dialog
         JDialog dialog = new JDialog((Frame) null, "Edit Arrays", true); // Modal dialog
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         dialog.setLayout(new BorderLayout(10, 10));
 
-        // Panel for editing points
-        JPanel pointsPanel = new JPanel(new GridLayout(points.length + 1, 2, 5, 5));
-        pointsPanel.setBorder(BorderFactory.createTitledBorder("Points"));
-        JTextField[] pointFields = new JTextField[points.length];
-        JTextField[] valueFields = new JTextField[values.length];
+        // Create the PixelGrid instance with the gradient
+        GradientDisplay pixelGrid = new GradientDisplay(options.gradient);
+        // Create the JFrame to render the PixelGrid
+        JFrame frame = new JFrame("Pixel Grid with Gradient");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setMinimumSize(new Dimension(500, 500));
 
-        pointsPanel.add(new JLabel("Up to width %"));
-        pointsPanel.add(new JLabel("apply with chance %"));
+        frame.setLayout(new BorderLayout());
 
-        for (int i = 0; i < points.length; i++) {
-            {
-                pointFields[i] = new JTextField(String.valueOf(Math.round(points[i] * 100)));
-                JTextField field = pointFields[i];
-                field.addFocusListener(new FocusAdapter() {
-                    @Override
-                    public void focusGained(FocusEvent e) {
-                        field.selectAll();
-                    }
-                });
-                pointsPanel.add(pointFields[i]);
-            }
-
-            {
-                valueFields[i] = new JTextField(String.valueOf(Math.round(values[i] * 100)));
-                JTextField field = valueFields[i];
-                field.addFocusListener(new FocusAdapter() {
-                    @Override
-                    public void focusGained(FocusEvent e) {
-                        field.selectAll();
-                    }
-                });
-                pointsPanel.add(valueFields[i]);
-            }
-
-        }
-
-        // Submit and Cancel buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton submitButton = new JButton("Submit");
-        JButton cancelButton = new JButton("Cancel");
-
-        submitButton.addActionListener((ActionEvent e) -> {
-            try {
-                // Parse updated points and values
-                float[] updatedPoints = new float[points.length];
-                float[] updatedValues = new float[values.length];
-
-                for (int i = 0; i < points.length; i++) {
-                    updatedPoints[i] = Float.parseFloat(pointFields[i].getText()) / 100f;
-                }
-                for (int i = 0; i < values.length; i++) {
-                    updatedValues[i] = Float.parseFloat(valueFields[i].getText()) / 100f;
-                }
-
-                // Trigger callback with updated arrays
-                Gradient gr = new Gradient(updatedPoints, updatedValues);
-
-                //validate points are monotone rising
-                for (int i = 1; i < updatedPoints.length; i++) {
-                    if (!(updatedPoints[i - 1] < updatedPoints[i])) {
-                        JOptionPane.showMessageDialog(dialog,
-                                "Warning: points must be greater than the previous point: " + updatedPoints[i - 1] * 100 + ", " + updatedPoints[i] * 100,
-                                "Warning",
-                                JOptionPane.WARNING_MESSAGE);
-                        return; //abort early while keeping dialog open
-                    }
-                }
-
-
-                // Close the dialog
-                this.options.gradient = gr;
-                dialog.dispose();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog, "Invalid input. Please enter valid float values.", "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-
-
-        });
-
-        cancelButton.addActionListener(e -> dialog.dispose());
-
-        // Add buttons to the button panel
-        buttonPanel.add(cancelButton);
-        buttonPanel.add(submitButton);
+        JPanel gridPanel = new JPanel(new GridLayout(1, 2));
+        gridPanel.add(pixelGrid);
+        gridPanel.add(new GradientEditor(options.gradient, pixelGrid::setGradient, grad -> {
+            this.options.gradient = grad;
+            dialog.dispose();
+        }));
 
         // Add components to the dialog
-        dialog.add(pointsPanel, BorderLayout.NORTH);
-        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        dialog.add(gridPanel, BorderLayout.NORTH);
 
         // Set dialog size and make it visible
         dialog.pack();
