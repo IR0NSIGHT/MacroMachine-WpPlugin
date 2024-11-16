@@ -7,6 +7,7 @@ import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
+import org.pepsoft.worldpainter.selection.SelectionChunk;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -144,6 +145,18 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             });
             panel.add(button);
         }
+        {
+            JButton button = new JButton();
+            button.setText(options.inputSelection ? "input annotation" : "input selection");
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    options.inputSelection = !options.inputSelection;
+                    button.setText(options.inputSelection ? "input annotation" : "input selection");
+                }
+            });
+            panel.add(button);
+        }
         return main;
     }
 
@@ -194,15 +207,24 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         Iterator<? extends Tile> t = getDimension().getTiles().iterator();
         while (t.hasNext()) {
             Tile tile = t.next();
-            if (tile.hasLayer(Annotations.INSTANCE)) {
+            if ((options.inputSelection &&
+                    tile.hasLayer(SelectionBlock.INSTANCE) || tile.hasLayer(SelectionChunk.INSTANCE))
+                    || tile.hasLayer(Annotations.INSTANCE)) {
                 for (int xInTile = 0; xInTile < TILE_SIZE; xInTile++) {
                     for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {
                         final int x = xInTile + (tile.getX() << TILE_SIZE_BITS), y =
                                 yInTile + (tile.getY() << TILE_SIZE_BITS);
-                        int annotation = tile.getLayerValue(Annotations.INSTANCE, xInTile, yInTile);
-                        if (annotation == annotationMatch) {
-                            matches.add(new Point(x, y));
+                        if (options.inputSelection) {
+                            if (tile.getBitLayerValue(SelectionBlock.INSTANCE, xInTile, yInTile) ||
+                                    getDimension().getBitLayerValueAt(SelectionChunk.INSTANCE, x, y))
+                                matches.add(new Point(x, y));
+                        } else {
+                            int annotation = tile.getLayerValue(Annotations.INSTANCE, xInTile, yInTile);
+                            if (annotation == annotationMatch) {
+                                matches.add(new Point(x, y));
+                            }
                         }
+
                     }
                 }
                 if (!options.asSelection)
@@ -280,6 +302,7 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         int width = 3;
         DIRECTION dir = DIRECTION.OUTWARD;
         boolean asSelection = true;
+        boolean inputSelection = false;
         Gradient gradient = new Gradient(
                 new float[]{0.01f, 0.15f, 0.25f, 0.5f, 1f},
                 new float[]{1f, 0.4f, 0.2f, 0.1f, 0.03f});
