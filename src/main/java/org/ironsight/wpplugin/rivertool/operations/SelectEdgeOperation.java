@@ -7,7 +7,6 @@ import org.ironsight.wpplugin.rivertool.pathing.RingFinder;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
-import org.pepsoft.worldpainter.operations.StandardOptionsPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,7 +22,8 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 public class SelectEdgeOperation extends MouseOrTabletOperation {
     static final int CYAN = 9;
     private static final String NAME = "Select Edge Operation";
-    private static final String DESCRIPTION = "Select the edge to select";
+    private static final String DESCRIPTION = "Select the edge of all cyan annotated blocks and expand/reduce them " +
+            "with a spraypaint gradient.";
     private static final String ID = "select_edge_operation";
     private final SelectEdgeOptions options = new SelectEdgeOptions();
     Random r = new Random();
@@ -34,76 +34,84 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
     @Override
     public JPanel getOptionsPanel() {
-        return new StandardOptionsPanel(NAME, DESCRIPTION) {
-            @Override
-            protected void addAdditionalComponents(GridBagConstraints constraints) {
-                JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10));
+        JPanel main = new JPanel();
+        main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
+        main.add(new JLabel(NAME));
 
-                {   //SPINNER WIDTH
-                    OptionsLabel l = numericInput("width", "how wide the edge should be",
-                            new SpinnerNumberModel(options.width, 1, 100, 1.), f -> options.width = f.intValue(),
-                            () -> {
-                            });
-                    panel.add(l.getLabels()[0]);
-                }
+        JTextArea textArea = new JTextArea(DESCRIPTION);
+        // Enable word wrapping
+        textArea.setWrapStyleWord(true);
+        textArea.setLineWrap(true);
 
-                {   //EXECUTE BUTTON
-                    JButton button3 = new JButton("Run");
-                    // Add action listeners to handle button click events
-                    button3.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            run();
-                        }
+        // Make the text area non-editable (optional)
+        textArea.setEditable(false);
+        main.add(textArea);
+
+        JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10));
+        main.add(panel);
+        {   //SPINNER WIDTH
+            OptionsLabel l = numericInput("width", "how wide the edge should be",
+                    new SpinnerNumberModel(options.width, 1, 100, 1.), f -> options.width = f.intValue(),
+                    () -> {
                     });
+            panel.add(l.getLabels()[0]);
+        }
 
-                    panel.add(button3);
+        {   //EXECUTE BUTTON
+            JButton button3 = new JButton("Run");
+            // Add action listeners to handle button click events
+            button3.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    run();
                 }
+            });
 
-                {
-                    JButton button3 = new JButton("Edit gradient");
-                    // Add action listeners to handle button click events
-                    button3.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            showArrayEditorDialog();
-                        }
-                    });
+            panel.add(button3);
+        }
 
-                    panel.add(button3);
-
+        {
+            JButton button3 = new JButton("Edit gradient");
+            // Add action listeners to handle button click events
+            button3.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    showArrayEditorDialog();
                 }
+            });
 
-                {
-                    // Create a JComboBox with options
-                    String[] listOptions = {"Out", "In", "Both", "Out and keep"};
-                    JComboBox<String> dropdown = new JComboBox<>(listOptions);
+            panel.add(button3);
 
-                    // Add an action listener to handle option selection
-                    dropdown.addActionListener(new ActionListener() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            String selectedOption = (String) dropdown.getSelectedItem();
-                            switch (selectedOption) {
-                                case "Out":
-                                    options.dir = SelectEdgeOptions.DIRECTION.OUTWARD;
-                                    break;
-                                case "In":
-                                    options.dir = SelectEdgeOptions.DIRECTION.INWARD;
-                                    break;
-                                case "Both":
-                                    options.dir = SelectEdgeOptions.DIRECTION.BOTH;
-                                    break;
-                                case "Out and keep":
-                                    options.dir = SelectEdgeOptions.DIRECTION.OUT_AND_KEEP;
-                            }
-                        }
-                    });
-                    panel.add(dropdown);
-                    add(panel);
+        }
+
+        {
+            // Create a JComboBox with options
+            String[] listOptions = {"Out", "In", "Both", "Out and keep"};
+            JComboBox<String> dropdown = new JComboBox<>(listOptions);
+
+            // Add an action listener to handle option selection
+            dropdown.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    String selectedOption = (String) dropdown.getSelectedItem();
+                    switch (selectedOption) {
+                        case "Out":
+                            options.dir = SelectEdgeOptions.DIRECTION.OUTWARD;
+                            break;
+                        case "In":
+                            options.dir = SelectEdgeOptions.DIRECTION.INWARD;
+                            break;
+                        case "Both":
+                            options.dir = SelectEdgeOptions.DIRECTION.BOTH;
+                            break;
+                        case "Out and keep":
+                            options.dir = SelectEdgeOptions.DIRECTION.OUT_AND_KEEP;
+                    }
                 }
-            }
-        };
+            });
+            panel.add(dropdown);
+        }
+        return main;
     }
 
     public void showArrayEditorDialog() {
