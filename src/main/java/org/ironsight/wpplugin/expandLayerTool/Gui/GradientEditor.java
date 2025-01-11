@@ -43,34 +43,14 @@ public class GradientEditor extends JPanel {
         JPanel oneP = new JPanel(new GridLayout(0, 1)), twoP = new JPanel(new GridLayout(0, 1)), threeP =
                 new JPanel(new GridLayout(0, 1)), fourP = new JPanel(new GridLayout(0, 1));
 
-
         Consumer<JComponent[]> addRow;
         {
             // Create a panel with GridBagLayout
-            JPanel baseGrid = new JPanel(new GridBagLayout());
-            GridBagConstraints gbc = new GridBagConstraints();
-
-            // Add "oneP" with twice the width
-            gbc.gridx = 0;               // First column
-            gbc.gridy = 0;               // First row
-            gbc.weightx = 2.0;           // Twice the weight
-            gbc.fill = GridBagConstraints.BOTH; // Make it fill the cell
-            baseGrid.add(oneP, gbc);
-
-            // Add "twoP" with normal width
-            gbc.gridx = 1;               // Second column
-            gbc.weightx = 1.0;           // Normal weight
-            baseGrid.add(twoP, gbc);
-
-            // Add "threeP" with normal width
-            gbc.gridx = 2;               // Third column
-            gbc.weightx = 2.0;
-            baseGrid.add(threeP, gbc);
-
-            // Add "fourP" with normal width
-            gbc.gridx = 3;               // Fourth column
-            gbc.weightx = 1.0;
-            baseGrid.add(fourP, gbc);
+            JPanel baseGrid = new JPanel();
+            baseGrid.add(oneP);
+            baseGrid.add(twoP);
+            baseGrid.add(threeP);
+            baseGrid.add(fourP);
 
 
             for (Component comp : baseGrid.getComponents()) {
@@ -222,15 +202,15 @@ public class GradientEditor extends JPanel {
         float[] values = gradient.values.clone();
 
         for (int i = 1; i < points.length; i++) {
-            points[i] = Math.max(points[i-1] + 0.01f, points[i]);
+            points[i] = Math.max(points[i - 1] + 0.01f, points[i]);
         }
 
         for (int i = 0; i < points.length; i++) {
             points[i] = Math.max(0f, points[i]);
-            points[i] = Math.min(1f,points[i]);
+            points[i] = Math.min(1f, points[i]);
 
             values[i] = Math.max(0f, values[i]);
-            values[i] = Math.min(1f,values[i]);
+            values[i] = Math.min(1f, values[i]);
         }
 
         Gradient out = new Gradient(points, values);
