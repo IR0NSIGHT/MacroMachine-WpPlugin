@@ -10,19 +10,21 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 public class GradientEditor extends JPanel {
     private final Consumer<Gradient> submit;
     private final Consumer<Gradient> update;
-    JLabel warning = new JLabel("WARNING:");
-    JLabel warningText = new JLabel("some entries are invalid");
+    JLabel[] warnings = new JLabel[]{new JLabel("WARNING:"), new JLabel("some entries are invalid"), new JLabel(),
+            new JLabel()};
     private Gradient gradient;
     private boolean invalid;
     private boolean blockEventhandling;
-    private JTextField[] pointFields;
-    private JTextField[] valueFields;
-    private JSlider[] sliderFields;
+    private JTextField[] positionTextFields;
+    private JTextField[] valueTextFields;
+    private JSlider[] valueSliders;
+    private JSlider[] positionSliders;
 
     public GradientEditor(Gradient gradient, Consumer<Gradient> update, Consumer<Gradient> submit) {
         this.gradient = gradient;
@@ -31,94 +33,49 @@ public class GradientEditor extends JPanel {
         setup();
     }
 
-    private void onSliderInputChange() {    //this is jank but im lazy
-        if (blockEventhandling)
-            return;
-        for (int i = 0; i < gradient.positions.length; i++) {
-            gradient.values[i] = sliderFields[i].getValue() / 100f;
-        }
-        //trigger input update
-        SwingUtilities.invokeLater(() -> updateGuiFromGradient(gradient));
-    }
-
-    private void updateGuiFromGradient(Gradient gradient) {
-        blockEventhandling = true;
-        invalid = false;
-        try {
-            //validate points are monotone rising
-            for (int i = 1; i < gradient.positions.length; i++) {
-                if (!(gradient.positions[i - 1] < gradient.positions[i])) {
-                    invalid = true;
-                    break;
-                }
-            }
-        } catch (NumberFormatException ignored) {
-            invalid = true;
-        } catch (Exception ex) {
-            invalid = true;
-        } finally {
-            for (int i = 0; i < gradient.positions.length; i++) {
-                int valueInt = Math.round(100 * gradient.values[i]);
-                sliderFields[i].setValue(valueInt);
-                valueFields[i].setText(Integer.toString(valueInt));
-
-                int pointInt = Math.round(100 * gradient.positions[i]);
-                pointFields[i].setText(Integer.toString(pointInt));
-            }
-
-            if (!invalid) {
-                update.accept(gradient);
-            }
-            warning.setVisible(invalid);
-            warningText.setVisible(invalid);
-        }
-        blockEventhandling = false;
-    }
-
-    private void onValueInputChange() {
-        if (blockEventhandling)
-            return;
-        for (int i = 0; i < gradient.positions.length; i++) {
-            try {
-                gradient.values[i] = Float.parseFloat(valueFields[i].getText()) / 100f;
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        //trigger input update
-        SwingUtilities.invokeLater(() -> updateGuiFromGradient(gradient));
-
-    }
-
-    private void onPointInputChange() {
-        if (blockEventhandling)
-            return;
-        for (int i = 0; i < gradient.positions.length; i++) {
-            gradient.values[i] = Float.parseFloat(pointFields[i].getText()) / 100f;
-        }
-        //trigger input update
-        SwingUtilities.invokeLater(() -> updateGuiFromGradient(gradient));
-    }
-
     private void setup() {
         removeAll();
-        valueFields = new JTextField[gradient.positions.length];
-        sliderFields = new JSlider[gradient.positions.length];
-        pointFields = new JTextField[gradient.positions.length];
+        valueTextFields = new JTextField[gradient.positions.length];
+        valueSliders = new JSlider[gradient.positions.length];
+        positionTextFields = new JTextField[gradient.positions.length];
+        positionSliders = new JSlider[gradient.positions.length];
 
-        // Panel for editing points
-        JPanel baseGrid = new JPanel(new GridLayout(gradient.positions.length + 4, 3, 5, 5));
-        baseGrid.setBorder(BorderFactory.createTitledBorder("Points"));
-        {   //warning row
-            baseGrid.add(warning);
-            baseGrid.add(warningText);
-            baseGrid.add(new JLabel());
-        }
+        JPanel oneP = new JPanel(new GridLayout(0, 1)), twoP = new JPanel(new GridLayout(0, 1)), threeP =
+                new JPanel(new GridLayout(0, 1)), fourP = new JPanel(new GridLayout(0, 1));
 
-        {   //HEADER
-            baseGrid.add(new JLabel("Up to width %"));
-            baseGrid.add(new JLabel("apply with chance %"));
-            baseGrid.add(new JLabel());
+
+        Consumer<JComponent[]> addRow;
+        {
+            // Panel for editing points
+            GridBagLayout grid = new GridBagLayout();
+            grid.columnWeights = new double[]{1, 0.3, 1};
+
+            JPanel baseGrid = new JPanel(new GridLayout(1, 4));
+            baseGrid.add(oneP);
+            baseGrid.add(twoP);
+            baseGrid.add(threeP);
+            baseGrid.add(fourP);
+
+            for (Component comp : baseGrid.getComponents()) {
+                ((JComponent) comp).setAlignmentX(Component.TOP_ALIGNMENT); // Center align horizontally
+            }
+
+            addRow = components -> {
+                oneP.add(components[0]);
+                twoP.add(components[1]);
+                threeP.add(components[2]);
+                fourP.add(components[3]);
+            };
+            this.add(baseGrid);
         }
+        oneP.add(new JLabel("one"));
+        twoP.add(new JLabel("two"));
+        threeP.add(new JLabel("three"));
+        fourP.add(new JLabel("four"));
+
+        addRow.accept(warnings);
+        addRow.accept(new JLabel[]{new JLabel("Up to width %"), new JLabel(""), new JLabel("apply with chance %"),
+                new JLabel("")});
 
         DocumentListener pointChangeListener = new DocumentListener() {
             @Override
@@ -136,7 +93,6 @@ public class GradientEditor extends JPanel {
                 // This is fired for attribute changes, which is uncommon for plain text fields.
             }
         };
-
         DocumentListener valueChangeListener = new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -157,8 +113,8 @@ public class GradientEditor extends JPanel {
 
         for (int i = 0; i < gradient.positions.length; i++) {
             {
-                pointFields[i] = new JTextField(String.valueOf(Math.round(gradient.positions[i] * 100)));
-                JTextField field = pointFields[i];
+                positionTextFields[i] = new JTextField(String.valueOf(Math.round(gradient.positions[i] * 100)));
+                JTextField field = positionTextFields[i];
                 field.addFocusListener(new FocusAdapter() {
                     @Override
                     public void focusGained(FocusEvent e) {
@@ -166,12 +122,11 @@ public class GradientEditor extends JPanel {
                     }
                 });
                 field.getDocument().addDocumentListener(pointChangeListener);
-                baseGrid.add(pointFields[i]);
             }
 
             {
-                valueFields[i] = new JTextField(String.valueOf(Math.round(gradient.values[i] * 100)));
-                JTextField field = valueFields[i];
+                valueTextFields[i] = new JTextField(String.valueOf(Math.round(gradient.values[i] * 100)));
+                JTextField field = valueTextFields[i];
                 field.addFocusListener(new FocusAdapter() {
                     @Override
                     public void focusGained(FocusEvent e) {
@@ -179,65 +134,138 @@ public class GradientEditor extends JPanel {
                     }
                 });
                 field.getDocument().addDocumentListener(valueChangeListener);
-                baseGrid.add(valueFields[i]);
             }
 
             {
-                sliderFields[i] = new JSlider(0, 100, Math.round(gradient.values[i] * 100));
-                sliderFields[i].addChangeListener(sliderChangeListener);
-                baseGrid.add(sliderFields[i]);
+                valueSliders[i] = new JSlider(0, 100, Math.round(gradient.values[i] * 100));
+                valueSliders[i].addChangeListener(sliderChangeListener);
+            }
+
+            {
+                positionSliders[i] = new JSlider(0, 100, Math.round(gradient.values[i] * 100));
+                positionSliders[i].addChangeListener(sliderChangeListener);
             }
         }
 
-        JButton increaseRowsButton = new JButton("+");
-        increaseRowsButton.addActionListener(e -> {
-            float[] updatedPoints = new float[gradient.positions.length + 1];
-            float[] updatedValues = new float[gradient.positions.length + 1];
-            for (int i = 0; i < gradient.positions.length; i++) {
-                updatedPoints[i] = gradient.positions[i];
-                updatedValues[i] = gradient.values[i];
-            }
-            gradient = new Gradient(updatedPoints, updatedValues);
-            setup();
-        });
-
-        JButton decreaseRowsButton = new JButton("-");
-        decreaseRowsButton.addActionListener(e -> {
-            float[] updatedPoints = new float[gradient.positions.length - 1];
-            float[] updatedValues = new float[gradient.positions.length - 1];
-            for (int i = 0; i < updatedPoints.length; i++) {
-                updatedPoints[i] = gradient.positions[i];
-                updatedValues[i] = gradient.values[i];
-            }
-            gradient = new Gradient(updatedPoints, updatedValues);
-            setup();
-        });
-
-        JButton submitButton = new JButton("Submit");
-        JButton cancelButton = new JButton("Cancel");
+        Arrays.stream(positionSliders).forEach(oneP::add);
+        Arrays.stream(positionTextFields).forEach(twoP::add);
+        Arrays.stream(valueSliders).forEach(threeP::add);
+        Arrays.stream(valueTextFields).forEach(fourP::add);
 
         {
-            baseGrid.add(increaseRowsButton);
-            baseGrid.add(decreaseRowsButton);
-            baseGrid.add(new JLabel());
-        }
+            JButton increaseRowsButton = new JButton("+");
+            increaseRowsButton.addActionListener(e -> {
+                float[] updatedPoints = new float[gradient.positions.length + 1];
+                float[] updatedValues = new float[gradient.positions.length + 1];
+                for (int i = 0; i < gradient.positions.length; i++) {
+                    updatedPoints[i] = gradient.positions[i];
+                    updatedValues[i] = gradient.values[i];
+                }
+                gradient = new Gradient(updatedPoints, updatedValues);
+                setup();
+            });
 
+            JButton decreaseRowsButton = new JButton("-");
+            decreaseRowsButton.addActionListener(e -> {
+                float[] updatedPoints = new float[gradient.positions.length - 1];
+                float[] updatedValues = new float[gradient.positions.length - 1];
+                for (int i = 0; i < updatedPoints.length; i++) {
+                    updatedPoints[i] = gradient.positions[i];
+                    updatedValues[i] = gradient.values[i];
+                }
+                gradient = new Gradient(updatedPoints, updatedValues);
+                setup();
+            });
+            addRow.accept(new JComponent[]{increaseRowsButton, new JLabel(), decreaseRowsButton, new JLabel()});
+        }
         {
-            baseGrid.add(submitButton);
-            baseGrid.add(cancelButton);
-            baseGrid.add(new JLabel());
+            JButton submitButton = new JButton("Submit");
+            JButton cancelButton = new JButton("Cancel");
+            submitButton.addActionListener((ActionEvent e) -> {
+                submit.accept(this.gradient);
+            });
+            addRow.accept(new JComponent[]{submitButton, new JLabel(), cancelButton, new JLabel()});
         }
 
-        submitButton.addActionListener((ActionEvent e) -> {
-            submit.accept(this.gradient);
-        });
-
-        warning.setVisible(invalid);
-        warningText.setVisible(invalid);
-
-        this.add(baseGrid);
         revalidate();
         repaint();
+    }
+
+
+    private void updateGuiFromGradient(Gradient gradient) {
+        blockEventhandling = true;
+        invalid = false;
+        try {
+            //validate points are monotone rising
+            for (int i = 1; i < gradient.positions.length; i++) {
+                if (!(gradient.positions[i - 1] < gradient.positions[i])) {
+                    invalid = true;
+                    break;
+                }
+            }
+        } catch (NumberFormatException ignored) {
+            invalid = true;
+        } catch (Exception ex) {
+            invalid = true;
+        } finally {
+            for (int i = 0; i < gradient.positions.length; i++) {
+                int valueInt = Math.round(100 * gradient.values[i]);
+                valueSliders[i].setValue(valueInt);
+                valueTextFields[i].setText(Integer.toString(valueInt));
+
+                int pointInt = Math.round(100 * gradient.positions[i]);
+                positionSliders[i].setValue(pointInt);
+                positionTextFields[i].setText(Integer.toString(pointInt));
+            }
+
+            if (!invalid) {
+                update.accept(gradient);
+            }
+            Arrays.stream(warnings).forEach(w -> w.setVisible(invalid));
+        }
+        blockEventhandling = false;
+    }
+
+    private void onSliderInputChange() {
+        if (blockEventhandling) return;
+        for (int i = 0; i < gradient.positions.length; i++) {
+            gradient.values[i] = valueSliders[i].getValue() / 100f;
+            gradient.positions[i] = positionSliders[i].getValue() / 100f;
+        }
+        //trigger input update
+        SwingUtilities.invokeLater(() -> updateGuiFromGradient(gradient));
+    }
+
+    private void onValueInputChange() {
+        if (blockEventhandling) return;
+        for (int i = 0; i < gradient.positions.length; i++) {
+            try {
+                float value = Float.parseFloat(valueTextFields[i].getText()) / 100f;
+                if (value < 0) value = 0;
+                if (value > 1) value = 1;
+                gradient.values[i] = value;
+
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        //trigger input update
+        SwingUtilities.invokeLater(() -> updateGuiFromGradient(gradient));
+
+    }
+
+    private void onPointInputChange() {
+        if (blockEventhandling) return;
+        for (int i = 0; i < gradient.positions.length; i++) {
+            try {
+                float value = Float.parseFloat(positionTextFields[i].getText()) / 100f;
+                if (value < 0) value = 0;
+                if (value > 1) value = 1;
+                gradient.positions[i] = value;
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        //trigger input update
+        SwingUtilities.invokeLater(() -> updateGuiFromGradient(gradient));
     }
 
 
