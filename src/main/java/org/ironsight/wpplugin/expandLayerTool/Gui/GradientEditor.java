@@ -46,15 +46,32 @@ public class GradientEditor extends JPanel {
 
         Consumer<JComponent[]> addRow;
         {
-            // Panel for editing points
-            GridBagLayout grid = new GridBagLayout();
-            grid.columnWeights = new double[]{1, 0.3, 1};
+            // Create a panel with GridBagLayout
+            JPanel baseGrid = new JPanel(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
 
-            JPanel baseGrid = new JPanel(new GridLayout(1, 4));
-            baseGrid.add(oneP);
-            baseGrid.add(twoP);
-            baseGrid.add(threeP);
-            baseGrid.add(fourP);
+            // Add "oneP" with twice the width
+            gbc.gridx = 0;               // First column
+            gbc.gridy = 0;               // First row
+            gbc.weightx = 2.0;           // Twice the weight
+            gbc.fill = GridBagConstraints.BOTH; // Make it fill the cell
+            baseGrid.add(oneP, gbc);
+
+            // Add "twoP" with normal width
+            gbc.gridx = 1;               // Second column
+            gbc.weightx = 1.0;           // Normal weight
+            baseGrid.add(twoP, gbc);
+
+            // Add "threeP" with normal width
+            gbc.gridx = 2;               // Third column
+            gbc.weightx = 2.0;
+            baseGrid.add(threeP, gbc);
+
+            // Add "fourP" with normal width
+            gbc.gridx = 3;               // Fourth column
+            gbc.weightx = 1.0;
+            baseGrid.add(fourP, gbc);
+
 
             for (Component comp : baseGrid.getComponents()) {
                 ((JComponent) comp).setAlignmentX(Component.TOP_ALIGNMENT); // Center align horizontally
@@ -74,6 +91,14 @@ public class GradientEditor extends JPanel {
         fourP.add(new JLabel("four"));
 
         addRow.accept(warnings);
+        Arrays.stream(warnings).forEach(errorLabel -> {
+            errorLabel.setFont(new Font("Arial", Font.BOLD, 24)); // Bold font, size 24
+
+            // Set text color to red
+            errorLabel.setForeground(Color.RED);
+
+        });
+
         addRow.accept(new JLabel[]{new JLabel("Up to width %"), new JLabel(""), new JLabel("apply with chance %"),
                 new JLabel("")});
 
@@ -187,12 +212,34 @@ public class GradientEditor extends JPanel {
             addRow.accept(new JComponent[]{submitButton, new JLabel(), cancelButton, new JLabel()});
         }
 
+        SwingUtilities.invokeLater(() -> updateGradient(gradient));
         revalidate();
         repaint();
     }
 
+    private Gradient validateGradient(Gradient gradient) {
+        float[] points = gradient.positions.clone();
+        float[] values = gradient.values.clone();
 
-    private void updateGuiFromGradient(Gradient gradient) {
+        for (int i = 1; i < points.length; i++) {
+            points[i] = Math.max(points[i-1] + 0.01f, points[i]);
+        }
+
+        for (int i = 0; i < points.length; i++) {
+            points[i] = Math.max(0f, points[i]);
+            points[i] = Math.min(1f,points[i]);
+
+            values[i] = Math.max(0f, values[i]);
+            values[i] = Math.min(1f,values[i]);
+        }
+
+        Gradient out = new Gradient(points, values);
+        return out;
+    }
+
+    private void updateGradient(Gradient gradient) {
+        gradient = validateGradient(gradient);
+        this.gradient = gradient;
         blockEventhandling = true;
         invalid = false;
         try {
@@ -233,7 +280,7 @@ public class GradientEditor extends JPanel {
             gradient.positions[i] = positionSliders[i].getValue() / 100f;
         }
         //trigger input update
-        SwingUtilities.invokeLater(() -> updateGuiFromGradient(gradient));
+        SwingUtilities.invokeLater(() -> updateGradient(gradient));
     }
 
     private void onValueInputChange() {
@@ -249,7 +296,7 @@ public class GradientEditor extends JPanel {
             }
         }
         //trigger input update
-        SwingUtilities.invokeLater(() -> updateGuiFromGradient(gradient));
+        SwingUtilities.invokeLater(() -> updateGradient(gradient));
 
     }
 
@@ -265,7 +312,7 @@ public class GradientEditor extends JPanel {
             }
         }
         //trigger input update
-        SwingUtilities.invokeLater(() -> updateGuiFromGradient(gradient));
+        SwingUtilities.invokeLater(() -> updateGradient(gradient));
     }
 
 
