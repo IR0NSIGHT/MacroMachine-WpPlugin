@@ -16,6 +16,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
+import java.net.URI;
 import java.util.*;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
@@ -104,7 +105,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             panel.add(dropdown);
         }
 
-
         {   // INPUT
             JButton button = new JButton();
             button.setText(options.inputSelection ? "selection" : "cyan annotation");
@@ -147,6 +147,30 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             });
             panel.add(new JLabel("gradient"));
             button3.setToolTipText("the gradient that is used when the layer is expanded.");
+            panel.add(button3);
+        }
+
+
+        {   //HELP BUTTON
+            JButton button3 = new JButton("Help");
+            // Add action listeners to handle button click events
+            button3.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        // The GitHub URL to open
+                        String url = "https://github.com/IR0NSIGHT/ExpandLayerPlugin/blob/master/README.md";
+                        // Open the URL in the default browser
+                        Desktop.getDesktop().browse(new URI(url));
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        Component frame = SwingUtilities.getRoot(main);
+                        JOptionPane.showMessageDialog(frame, "Failed to open online help URL: " + ex.getMessage(),
+                                "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
+            button3.setToolTipText("open online help");
             panel.add(button3);
         }
 
