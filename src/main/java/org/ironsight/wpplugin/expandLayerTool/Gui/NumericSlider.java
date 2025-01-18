@@ -24,12 +24,34 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- *
  * @author Max1M
  */
 public class NumericSlider extends javax.swing.JPanel {
+    private final List<ChangeListener> listeners = new ArrayList<>();
+
+    // Add a ChangeListener
+    public void addChangeListener(ChangeListener listener) {
+        listeners.add(listener);
+    }
+
+    // Remove a ChangeListener
+    public void removeChangeListener(ChangeListener listener) {
+        listeners.remove(listener);
+    }
+
+    // Notify all registered listeners about a value change
+    protected void fireStateChanged() {
+        ChangeEvent event = new ChangeEvent(this);
+        for (ChangeListener listener : listeners) {
+            listener.stateChanged(event);
+        }
+    }
 
     public float getValue() {
         return value;
@@ -37,6 +59,8 @@ public class NumericSlider extends javax.swing.JPanel {
 
     public void setValue(float value) {
         this.value = value;
+        updateGui();
+        fireStateChanged();
     }
 
     private float value = 0f;
@@ -44,7 +68,7 @@ public class NumericSlider extends javax.swing.JPanel {
     private void updateGui() {
         jSpinner1.setValue(value);
         jSlider1.setValue(Math.round(value));
-    };
+    }
 
     /**
      * Creates new form NumericSlider
@@ -76,7 +100,8 @@ public class NumericSlider extends javax.swing.JPanel {
         });
         jSplitPane1.setLeftComponent(jSlider1);
 
-        jSpinner1.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.0f), Float.valueOf(0.0f), Float.valueOf(100.0f), Float.valueOf(1.0f)));
+        jSpinner1.setModel(new javax.swing.SpinnerNumberModel(Float.valueOf(0.0f), Float.valueOf(0.0f),
+                Float.valueOf(100.0f), Float.valueOf(1.0f)));
         jSpinner1.addChangeListener(new javax.swing.event.ChangeListener() {
             public void stateChanged(javax.swing.event.ChangeEvent evt) {
                 jSpinner1StateChanged(evt);
@@ -86,27 +111,22 @@ public class NumericSlider extends javax.swing.JPanel {
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-        );
+        layout.setHorizontalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(jSplitPane1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE));
+        layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addComponent(jSplitPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE));
     }// </editor-fold>//GEN-END:initComponents
 
     private void jSlider1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSlider1StateChanged
         // TODO add your handling code here:
-
         this.setValue(jSlider1.getValue());
+        fireStateChanged();
         SwingUtilities.invokeLater(this::updateGui);
 
     }//GEN-LAST:event_jSlider1StateChanged
 
     private void jSpinner1StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_jSpinner1StateChanged
         // TODO add your handling code here:
-        this.setValue( (Float)jSpinner1.getValue());
+        this.setValue((Float) jSpinner1.getValue());
+        fireStateChanged();
         SwingUtilities.invokeLater(this::updateGui);
     }//GEN-LAST:event_jSpinner1StateChanged
 

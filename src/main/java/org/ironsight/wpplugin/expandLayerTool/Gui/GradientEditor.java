@@ -4,12 +4,8 @@ import org.ironsight.wpplugin.expandLayerTool.operations.Gradient;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
@@ -23,8 +19,8 @@ public class GradientEditor extends JPanel {
     private boolean blockEventhandling;
     private JTextField[] positionTextFields;
     private JTextField[] valueTextFields;
-    private JSlider[] valueSliders;
-    private JSlider[] positionSliders;
+    private NumericSlider[] valueSliders;
+    private NumericSlider[] positionSliders;
 
     public GradientEditor(Gradient gradient, Consumer<Gradient> update, Consumer<Gradient> submit) {
         this.gradient = gradient;
@@ -35,41 +31,24 @@ public class GradientEditor extends JPanel {
 
     private void setup() {
         removeAll();
-        valueTextFields = new JTextField[gradient.positions.length];
-        valueSliders = new JSlider[gradient.positions.length];
-        positionTextFields = new JTextField[gradient.positions.length];
-        positionSliders = new JSlider[gradient.positions.length];
-
-        JPanel oneP = new JPanel(new GridLayout(0, 1)), twoP = new JPanel(new GridLayout(0, 1)), threeP =
-                new JPanel(new GridLayout(0, 1)), fourP = new JPanel(new GridLayout(0, 1));
+        valueSliders = new NumericSlider[gradient.positions.length];
+        positionSliders = new NumericSlider[gradient.positions.length];
 
         Consumer<JComponent[]> addRow;
         {
             // Create a panel with GridBagLayout
-            JPanel baseGrid = new JPanel();
-            baseGrid.add(oneP);
-            baseGrid.add(twoP);
-            baseGrid.add(threeP);
-            baseGrid.add(fourP);
-
+            JPanel baseGrid = new JPanel(new GridLayout(0, 2));
 
             for (Component comp : baseGrid.getComponents()) {
                 ((JComponent) comp).setAlignmentX(Component.TOP_ALIGNMENT); // Center align horizontally
             }
 
             addRow = components -> {
-                oneP.add(components[0]);
-                twoP.add(components[1]);
-                threeP.add(components[2]);
-                fourP.add(components[3]);
+                baseGrid.add(components[0]);
+                baseGrid.add(components[1]);
             };
             this.add(baseGrid);
         }
-        oneP.add(new JLabel("one"));
-        twoP.add(new JLabel("two"));
-        threeP.add(new JLabel("three"));
-        fourP.add(new JLabel("four"));
-
         addRow.accept(warnings);
         Arrays.stream(warnings).forEach(errorLabel -> {
             errorLabel.setFont(new Font("Arial", Font.BOLD, 24)); // Bold font, size 24
@@ -79,83 +58,24 @@ public class GradientEditor extends JPanel {
 
         });
 
-        addRow.accept(new JLabel[]{new JLabel("Up to width %"), new JLabel(""), new JLabel("apply with chance %"),
-                new JLabel("")});
+        addRow.accept(new JLabel[]{new JLabel("Up to width %"), new JLabel("apply with chance %")});
 
-        DocumentListener pointChangeListener = new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                onPointInputChange();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                onPointInputChange();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                // This is fired for attribute changes, which is uncommon for plain text fields.
-            }
-        };
-        DocumentListener valueChangeListener = new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                onValueInputChange();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                onValueInputChange();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                // This is fired for attribute changes, which is uncommon for plain text fields.
-            }
-        };
         ChangeListener sliderChangeListener = e -> onSliderInputChange();
 
         for (int i = 0; i < gradient.positions.length; i++) {
             {
-                positionTextFields[i] = new JTextField(String.valueOf(Math.round(gradient.positions[i] * 100)));
-                JTextField field = positionTextFields[i];
-                field.addFocusListener(new FocusAdapter() {
-                    @Override
-                    public void focusGained(FocusEvent e) {
-                        field.selectAll();
-                    }
-                });
-                field.getDocument().addDocumentListener(pointChangeListener);
-            }
-
-            {
-                valueTextFields[i] = new JTextField(String.valueOf(Math.round(gradient.values[i] * 100)));
-                JTextField field = valueTextFields[i];
-                field.addFocusListener(new FocusAdapter() {
-                    @Override
-                    public void focusGained(FocusEvent e) {
-                        field.selectAll();
-                    }
-                });
-                field.getDocument().addDocumentListener(valueChangeListener);
-            }
-
-            {
-                valueSliders[i] = new JSlider(0, 100, Math.round(gradient.values[i] * 100));
+                valueSliders[i] = new NumericSlider();
                 valueSliders[i].addChangeListener(sliderChangeListener);
             }
 
             {
-                positionSliders[i] = new JSlider(0, 100, Math.round(gradient.values[i] * 100));
+                positionSliders[i] = new NumericSlider();
                 positionSliders[i].addChangeListener(sliderChangeListener);
             }
         }
 
-        Arrays.stream(positionSliders).forEach(oneP::add);
-        Arrays.stream(positionTextFields).forEach(twoP::add);
-        Arrays.stream(valueSliders).forEach(threeP::add);
-        Arrays.stream(valueTextFields).forEach(fourP::add);
+        for (int i = 0; i < positionSliders.length; i++)
+            addRow.accept(new JComponent[]{positionSliders[i], valueSliders[i]});
 
         {
             JButton increaseRowsButton = new JButton("+");
@@ -181,7 +101,7 @@ public class GradientEditor extends JPanel {
                 gradient = new Gradient(updatedPoints, updatedValues);
                 setup();
             });
-            addRow.accept(new JComponent[]{increaseRowsButton, new JLabel(), decreaseRowsButton, new JLabel()});
+            addRow.accept(new JComponent[]{increaseRowsButton, decreaseRowsButton});
         }
         {
             JButton submitButton = new JButton("Submit");
@@ -189,7 +109,7 @@ public class GradientEditor extends JPanel {
             submitButton.addActionListener((ActionEvent e) -> {
                 submit.accept(this.gradient);
             });
-            addRow.accept(new JComponent[]{submitButton, new JLabel(), cancelButton, new JLabel()});
+            addRow.accept(new JComponent[]{submitButton, cancelButton});
         }
 
         SwingUtilities.invokeLater(() -> updateGradient(gradient));
@@ -238,11 +158,9 @@ public class GradientEditor extends JPanel {
             for (int i = 0; i < gradient.positions.length; i++) {
                 int valueInt = Math.round(100 * gradient.values[i]);
                 valueSliders[i].setValue(valueInt);
-                valueTextFields[i].setText(Integer.toString(valueInt));
 
                 int pointInt = Math.round(100 * gradient.positions[i]);
                 positionSliders[i].setValue(pointInt);
-                positionTextFields[i].setText(Integer.toString(pointInt));
             }
 
             if (!invalid) {
