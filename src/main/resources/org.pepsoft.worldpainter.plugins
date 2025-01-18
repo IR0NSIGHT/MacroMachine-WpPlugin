@@ -1,5 +1,5 @@
 {
-  "name": "River Creation Tool",
+  "name": "Expand Layer Plugin",
   "version": "${project.version}",
   "classes": [
     "org.ironsight.wpplugin.expandLayerTool.ExpandLayerPlugin"
