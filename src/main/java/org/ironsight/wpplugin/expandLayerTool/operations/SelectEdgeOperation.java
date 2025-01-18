@@ -25,8 +25,8 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 public class SelectEdgeOperation extends MouseOrTabletOperation {
     static final int CYAN = 9;
     private static final String NAME = "Select Edge Operation";
-    private static final String DESCRIPTION = "Select the edge of all blocks of th laye and expand/reduce them " +
-            "with a spraypaint gradient, then paint it on the map as output layer.";
+    private static final String DESCRIPTION = "<html>Select the edge of all blocks of th laye and expand/reduce them <br>" +
+            "with a spraypaint gradient, then paint it on the map as output layer.</html>";
     private static final String ID = "select_edge_operation";
     private final SelectEdgeOptions options = new SelectEdgeOptions();
     Random r = new Random();
@@ -39,19 +39,9 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     public JPanel getOptionsPanel() {
         JPanel main = new JPanel();
         main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
-        main.add(new JLabel(NAME));
 
-        JTextArea textArea = new JTextArea(DESCRIPTION);
-        // Enable word wrapping
-        textArea.setWrapStyleWord(true);
-        textArea.setLineWrap(true);
+        JPanel panel = new JPanel(new GridLayout(0, 2));
 
-        // Make the text area non-editable (optional)
-        textArea.setEditable(false);
-        main.add(textArea);
-
-        JPanel panel = new JPanel(new GridLayout(0, 2, 5, 5));
-        main.add(panel);
         {   //SPINNER WIDTH
             {
                 JLabel label = new JLabel("width");
@@ -150,7 +140,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             panel.add(button3);
         }
 
-
         {   //HELP BUTTON
             JButton button3 = new JButton("Help");
             // Add action listeners to handle button click events
@@ -186,6 +175,25 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             button3.setToolTipText("execute the tool operation and place down the expanded output layer");
             panel.add(button3);
         }
+
+        for (Component p : panel.getComponents()) {
+            if (p instanceof JLabel) {
+                ((JLabel) p).setHorizontalAlignment(SwingConstants.CENTER); // Horizontal center
+                ((JLabel) p).setVerticalAlignment(SwingConstants.CENTER);   // Vertical center
+            }
+            if (p instanceof JComboBox) {
+                ((JLabel) ((JComboBox) p).getRenderer()).setHorizontalAlignment(SwingConstants.CENTER);
+            }
+        }
+
+        JLabel header = new JLabel(NAME);
+        header.setFont(new Font("Arial", Font.BOLD, 24));
+        main.add(header);
+
+        JLabel text = new JLabel(DESCRIPTION);
+        main.add(text);
+        main.add(panel);
+        main.setPreferredSize(new Dimension(200,400));
         return main;
     }
 
