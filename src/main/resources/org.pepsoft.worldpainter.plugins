@@ -1,5 +1,5 @@
 {
-  "name": "Expand Layer Plugin",
+  "name": "${project.artifactId}",
   "version": "${project.version}",
   "classes": [
     "org.ironsight.wpplugin.expandLayerTool.ExpandLayerPlugin"

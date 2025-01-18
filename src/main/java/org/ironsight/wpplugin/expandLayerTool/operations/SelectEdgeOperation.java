@@ -25,8 +25,8 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 public class SelectEdgeOperation extends MouseOrTabletOperation {
     static final int CYAN = 9;
     private static final String NAME = "Select Edge Operation";
-    private static final String DESCRIPTION = "<html>Select the edge of all blocks of th laye and expand/reduce them <br>" +
-            "with a spraypaint gradient, then paint it on the map as output layer.</html>";
+    private static final String DESCRIPTION = "<html>Select the edge of all blocks of th laye and expand/reduce them " +
+            "<br>" + "with a spraypaint gradient, then paint it on the map as output layer.</html>";
     private static final String ID = "select_edge_operation";
     private final SelectEdgeOptions options = new SelectEdgeOptions();
     Random r = new Random();
@@ -44,7 +44,7 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
         {   //SPINNER WIDTH
             {
-                JLabel label = new JLabel("width");
+                JLabel label = new JLabel("width:");
                 panel.add(label);
                 // Create a SpinnerNumberModel for numeric input
                 SpinnerNumberModel model = new SpinnerNumberModel(options.width, 1, 100, 1f); // initialValue, min,
@@ -90,38 +90,38 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 // Set the selected item based on the current direction
             dropdown.setSelectedItem(reverseMap.get(options.dir));
 
-            panel.add(new JLabel("direction"));
+            panel.add(new JLabel("direction:"));
             dropdown.setToolTipText("in which direction the tool will grow the input layer");
             panel.add(dropdown);
         }
 
         {   // INPUT
             JButton button = new JButton();
-            button.setText(options.inputSelection ? "selection" : "cyan annotation");
+            button.setText(options.inputFromSelection ? "selection" : "cyan annotation");
             button.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    options.inputSelection = !options.inputSelection;
-                    button.setText(options.inputSelection ? "selection" : "cyan annotation");
+                    options.inputFromSelection = !options.inputFromSelection;
+                    button.setText(options.inputFromSelection ? "selection" : "cyan annotation");
                 }
             });
             button.setToolTipText("the layer to be used as an input");
-            panel.add(new JLabel("input"));
+            panel.add(new JLabel("input:"));
             panel.add(button);
         }
 
         {   // OUTPUT
             JButton button = new JButton();
-            button.setText(options.asSelection ? "selection" : "cyan annotation");
+            button.setText(options.outputAsSelection ? "selection" : "cyan annotation");
             button.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    options.asSelection = !options.asSelection;
-                    button.setText(options.asSelection ? "selection" : "cyan annotation");
+                    options.outputAsSelection = !options.outputAsSelection;
+                    button.setText(options.outputAsSelection ? "selection" : "cyan annotation");
 
                 }
             });
-            panel.add(new JLabel("output"));
+            panel.add(new JLabel("output:"));
             button.setToolTipText("the layer to be used as output. Will be painted on the map when the tool is run.");
             panel.add(button);
         }
@@ -138,6 +138,28 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             panel.add(new JLabel("gradient"));
             button3.setToolTipText("the gradient that is used when the layer is expanded.");
             panel.add(button3);
+        }
+        {   // CLEAN OUTPUT
+            JCheckBox checkBox = new JCheckBox("clear output layer");
+            checkBox.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    options.cleanOutput = checkBox.isSelected();
+                }
+            });
+            checkBox.setSelected(options.cleanOutput);
+            panel.add(checkBox);
+        }
+        {   //CLEAN INPUT
+            JCheckBox checkBox = new JCheckBox("clear input layer");
+            checkBox.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    options.cleanInput = checkBox.isSelected();
+                }
+            });
+            checkBox.setSelected(options.cleanInput);
+            panel.add(checkBox);
         }
 
         {   //HELP BUTTON
@@ -193,7 +215,7 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         JLabel text = new JLabel(DESCRIPTION);
         main.add(text);
         main.add(panel);
-        main.setPreferredSize(new Dimension(200,400));
+        main.setPreferredSize(new Dimension(200, 400));
         return main;
     }
 
@@ -244,12 +266,20 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         Iterator<? extends Tile> t = getDimension().getTiles().iterator();
         while (t.hasNext()) {
             Tile tile = t.next();
-            if ((options.inputSelection && tile.hasLayer(SelectionBlock.INSTANCE) || tile.hasLayer(SelectionChunk.INSTANCE)) || tile.hasLayer(Annotations.INSTANCE)) {
+            if (options.cleanOutput) {
+                if (options.outputAsSelection) {
+                    tile.clearLayerData(SelectionBlock.INSTANCE);
+                    tile.clearLayerData(SelectionChunk.INSTANCE);
+                } else {
+                    tile.clearLayerData(Annotations.INSTANCE);
+                }
+            }
+            if ((options.inputFromSelection && tile.hasLayer(SelectionBlock.INSTANCE) || tile.hasLayer(SelectionChunk.INSTANCE)) || tile.hasLayer(Annotations.INSTANCE)) {
                 for (int xInTile = 0; xInTile < TILE_SIZE; xInTile++) {
                     for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {
                         final int x = xInTile + (tile.getX() << TILE_SIZE_BITS), y =
                                 yInTile + (tile.getY() << TILE_SIZE_BITS);
-                        if (options.inputSelection) {
+                        if (options.inputFromSelection) {
                             if (tile.getBitLayerValue(SelectionBlock.INSTANCE, xInTile, yInTile) || getDimension().getBitLayerValueAt(SelectionChunk.INSTANCE, x, y))
                                 matches.add(new Point(x, y));
                         } else {
@@ -261,7 +291,14 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
                     }
                 }
-                if (!options.asSelection) tile.clearLayerData(Annotations.INSTANCE);
+                if (options.cleanInput) {
+                    if (options.inputFromSelection) {
+                        tile.clearLayerData(SelectionBlock.INSTANCE);
+                        tile.clearLayerData(SelectionChunk.INSTANCE);
+                    } else {
+                        tile.clearLayerData(Annotations.INSTANCE);
+                    }
+                }
             }
         }
 
@@ -312,7 +349,8 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     private void applyWithStrength(Collection<Point> points, float strength) {
         for (Point p : points) {
             if (strength > r.nextFloat()) {
-                if (options.asSelection) getDimension().setBitLayerValueAt(SelectionBlock.INSTANCE, p.x, p.y, true);
+                if (options.outputAsSelection)
+                    getDimension().setBitLayerValueAt(SelectionBlock.INSTANCE, p.x, p.y, true);
                 else getDimension().setLayerValueAt(Annotations.INSTANCE, p.x, p.y, CYAN);
             }
         }
@@ -332,8 +370,10 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     private static class SelectEdgeOptions {
         int width = 3;
         DIRECTION dir = DIRECTION.OUTWARD;
-        boolean asSelection = true;
-        boolean inputSelection = false;
+        boolean cleanOutput = false;
+        boolean cleanInput = false;
+        boolean outputAsSelection = true;
+        boolean inputFromSelection = false;
         Gradient gradient = new Gradient(new float[]{0.01f, 0.15f, 0.25f, 0.5f, 1f}, new float[]{1f, 0.4f, 0.2f, 0.1f
                 , 0.03f});
 
