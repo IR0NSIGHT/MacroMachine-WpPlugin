@@ -1,5 +1,5 @@
 # WorldPainter Expand Layer Plugin
-
+[plugin homepage](https://github.com/IR0NSIGHT/ExpandLayerPlugin) <br>
 This plugin allows you to automatically select the edge of a layer and apply a gradient to it, growing outwards or inwards.
 
 ![grafik](https://github.com/user-attachments/assets/4359b455-85a7-4b47-93a2-837773a71523)
