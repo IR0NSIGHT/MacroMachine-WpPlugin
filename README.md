@@ -4,6 +4,15 @@ This plugin allows you to automatically select the edge of a layer and apply a g
 
 ![grafik](https://github.com/user-attachments/assets/4359b455-85a7-4b47-93a2-837773a71523)
 
+## Download
+1. go to the [release page](https://github.com/IR0NSIGHT/ExpandLayerPlugin/releases)
+2. select the top most release
+3. download the Expand-layer-???.jar file
+4. open worldpainter
+5. go to top bar -> tools -> open plugins folder
+6. place the downloaded jar file in the folder
+7. restart worldpainter
+
 ## Usage
 1. The "Select Edge Operation" can be found in the tools section of worldpainter. Select the 2 blue circles.
 2. Specify your wanted settings in the tool-settings section. You will probably need to adjust your layout to see all of the settings tab.
