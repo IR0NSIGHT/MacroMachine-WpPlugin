@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.Gradient;
+import org.pepsoft.worldpainter.layers.Frost;
 
 import javax.swing.*;
 import java.awt.*;
@@ -13,13 +14,6 @@ public class GradientDisplay extends JPanel {
         this.gradient = gradient;
     }
 
-    public static void main(String[] args) {
-        // Example Gradient class for testing (replace with your implementation)
-        Gradient gradient = new Gradient(new float[]{0.1f, 0.25f, 0.5f, 0.75f, 1f}, new float[]{1f, 0.5f, 0.25f, 0.1f
-                , 0.05f});
-
-
-    }
 
     public void setGradient(Gradient gradient) {
         this.gradient = gradient;

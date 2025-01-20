@@ -5,7 +5,9 @@ import org.ironsight.wpplugin.expandLayerTool.Gui.GradientEditor;
 import org.ironsight.wpplugin.expandLayerTool.pathing.RingFinder;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
+import org.pepsoft.worldpainter.layers.DeciduousForest;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
+import org.pepsoft.worldpainter.panels.DefaultFilter;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
 
@@ -25,8 +27,8 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 public class SelectEdgeOperation extends MouseOrTabletOperation {
     static final int CYAN = 9;
     private static final String NAME = "Select Edge Operation";
-    private static final String DESCRIPTION = "<html>Select the edge of all blocks of th laye and expand/reduce them " +
-            "<br>" + "with a spraypaint gradient, then paint it on the map as output layer.</html>";
+    private static final String DESCRIPTION = "<html>Select the edge of all blocks of th laye and expand/reduce them "
+            + "<br>" + "with a spraypaint gradient, then paint it on the map as output layer.</html>";
     private static final String ID = "select_edge_operation";
     private final SelectEdgeOptions options = new SelectEdgeOptions();
     Random r = new Random();
@@ -216,7 +218,37 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         main.add(text);
         main.add(panel);
         main.setPreferredSize(new Dimension(200, 400));
+
+        JButton globalOps = new JButton("global operations");
+        globalOps.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onGlobalOpsPressed();
+            }
+        });
+        main.add(globalOps);
+
         return main;
+    }
+
+    public void onGlobalOpsPressed() {
+        this.getDimension().setEventsInhibited(true);
+        try {
+            LayerMapping mapping = new LayerMapping(new LayerMapping.SlopeProvider(), Annotations.INSTANCE,
+                    new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(10, 1),
+                            new LayerMapping.MappingPoint(20, 2), new LayerMapping.MappingPoint(30, 3),
+                            new LayerMapping.MappingPoint(40, 4), new LayerMapping.MappingPoint(50, 5),
+                            new LayerMapping.MappingPoint(60, 6), new LayerMapping.MappingPoint(70, 7),
+                            new LayerMapping.MappingPoint(80, 8), new LayerMapping.MappingPoint(90, 9)});
+            org.pepsoft.worldpainter.Dimension dim = getDimension();
+            DefaultFilter filter = new DefaultFilter(dim, false, false, -1000, 1000, false, null, null, 0, true);
+            ApplyAction action = new ApplyAction(filter, mapping);
+            action.apply(dim);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        this.getDimension().setEventsInhibited(false);
+
     }
 
     public void showArrayEditorDialog() {
