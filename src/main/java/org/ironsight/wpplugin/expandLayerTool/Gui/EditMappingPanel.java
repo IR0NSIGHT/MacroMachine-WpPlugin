@@ -20,7 +20,10 @@ public class EditMappingPanel extends JPanel {
     }
 
     private void initComponents() {
-        mappingDisplay = new MappingDisplay(mapping);
+        mappingDisplay = new MappingDisplay(mapping, mapping1 -> {
+            this.mapping = mapping1;
+            table.setMapping(mapping1);
+        });
         table = new MappingTextTable(mapping, mapping1 -> {
             this.mapping = mapping1;
             mappingDisplay.setMapping(mapping);
