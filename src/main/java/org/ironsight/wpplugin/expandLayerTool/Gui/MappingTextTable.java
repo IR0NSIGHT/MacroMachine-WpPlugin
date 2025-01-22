@@ -37,6 +37,7 @@ public class MappingTextTable extends JPanel {
 
         // Add a TableModelListener to get a callback when a cell is edited
         numberTable = new JTable();
+
         JScrollPane scrollPane = new JScrollPane(numberTable);
         this.add(scrollPane, BorderLayout.CENTER);
 
@@ -48,31 +49,47 @@ public class MappingTextTable extends JPanel {
                     int row = e.getFirstRow(); // Get the row of the edited cell
                     int column = e.getColumn(); // Get the column of the edited cell
                     Object newValue = tableModel.getValueAt(row, column); // Get the new value
-                    if (!(newValue instanceof String))
-                        return;
-                    try {
-                        int newValueInt = Integer.parseInt((String) newValue);
-                        LayerMapping.MappingPoint[] points = mapping.getMappingPoints();
-                        if (column == 0) {
-                            points[row] = new LayerMapping.MappingPoint(newValueInt, points[row].output);
-                        } else {
-                            points[row] = new LayerMapping.MappingPoint(points[row].input, newValueInt);
-                        }
-                        mapping = new LayerMapping(null, null, points);
-                        onUpdate.accept(mapping);
-                    } catch (NumberFormatException exception) {
-                        exception.printStackTrace();
-                    }
-                    updateComponents();
+                    parseAndSetValue(newValue, row, column);
                 }
             }
         };
     }
 
+    protected boolean parseAndSetValue(Object newValue, int row, int column) {
+        int newValueInt;
+        if (newValue instanceof Integer)
+            newValueInt = (Integer) newValue;
+        else if (newValue instanceof String)
+            try {
+                newValueInt = Integer.parseInt((String) newValue);
+            } catch (NumberFormatException exception) {
+                exception.printStackTrace();
+                return false;
+            }
+        else
+            return false;
+
+        LayerMapping.MappingPoint[] points = mapping.getMappingPoints();
+
+        if (column == 0) {
+            if (points[row].input == newValueInt)
+                return false;
+            points[row] = new LayerMapping.MappingPoint(newValueInt, points[row].output);
+        } else {
+            if (points[row].output == newValueInt)
+                return false;
+            points[row] = new LayerMapping.MappingPoint(points[row].input, newValueInt);
+        }
+        mapping = new LayerMapping(null, null, points);
+        onUpdate.accept(mapping);
+
+        updateComponents();
+        return true;
+    }
+
     private void updateComponents() {
         Object[][] data = new Object[mapping.getMappingPoints().length][];
         Object[] columnNames = new String[]{"input", "output"};
-        //table.setPreferredSize(outerPanel.getPreferredSize());
         for (int i = 0; i < mapping.getMappingPoints().length; i++) {
             LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
             data[i] = new Object[]{a.input, a.output};
@@ -80,8 +97,15 @@ public class MappingTextTable extends JPanel {
 
         this.tableModel = new DefaultTableModel(data, columnNames);
         this.tableModel.addTableModelListener(this.listener);
-        // Set the model to the JTable
         numberTable.setModel(tableModel);
+
+        Font font = new Font("Arial", Font.PLAIN, 24);
+        numberTable.setFont(font);
+        FontMetrics fontMetrics = numberTable.getFontMetrics(font);
+        int rowHeight = fontMetrics.getHeight() + 10;
+        numberTable.setRowHeight(rowHeight);
+
+
         numberTable.revalidate();
         numberTable.repaint();
     }
