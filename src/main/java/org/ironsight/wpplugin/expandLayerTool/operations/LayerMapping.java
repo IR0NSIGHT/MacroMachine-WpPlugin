@@ -4,6 +4,8 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Random;
 
 public class LayerMapping {
@@ -19,16 +21,16 @@ public class LayerMapping {
     public LayerMapping(PositionValueGetter input, PositionValueSetter output, MappingPoint[] mappingPoints) {
         this.input = input;
         this.output = output;
-        this.mappingPoints = mappingPoints;
+        this.mappingPoints = mappingPoints.clone();
+        Arrays.sort(this.mappingPoints, Comparator.comparing(mp -> mp.input));
     }
-
 
 
     int map(int input) {    //TODO do linear interpolation
         if (input < mappingPoints[0].input)
             return mappingPoints[0].output;
-        for (int i = 0; i < mappingPoints.length -1; i++) {
-            if (mappingPoints[i].input <= input && mappingPoints[i+1].input > input) {  //value inbetween i and i+1
+        for (int i = 0; i < mappingPoints.length - 1; i++) {
+            if (mappingPoints[i].input <= input && mappingPoints[i + 1].input > input) {  //value inbetween i and i+1
                 int a = mappingPoints[i].input;
                 int b = mappingPoints[i + 1].input;
                 int dist = b - a;
