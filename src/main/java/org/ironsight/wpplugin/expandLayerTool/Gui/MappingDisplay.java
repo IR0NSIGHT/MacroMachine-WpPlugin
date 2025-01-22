@@ -118,35 +118,11 @@ public class MappingDisplay extends JPanel {
                 });
         MappingDisplay gridPanel = new MappingDisplay(mapper);
 
-        JPanel outerPanel = new JPanel();
-        outerPanel.setLayout(new BorderLayout(20, 20));
-        outerPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
-        outerPanel.add(gridPanel, BorderLayout.CENTER);
 
         // Add the outer panel to the frame
-        frame.add(outerPanel);
+        frame.add(gridPanel);
 
 
-        JPanel all = new JPanel();
-        all.add(gridPanel);
-
-
-        Object[][] data = new Object[mapper.getMappingPoints().length][];
-        //table.setPreferredSize(outerPanel.getPreferredSize());
-        for (int i = 0; i < mapper.getMappingPoints().length; i++) {
-            LayerMapping.MappingPoint a = mapper.getMappingPoints()[i];
-            data[i] = new Object[]{a.input, a.output};
-        }
-        // Column names
-        String[] columnNames = {"Input", "Output"};
-
-        // Create a table with the data and column names
-        JTable table1 = new JTable(data, columnNames);
-        // Place the table inside a JScrollPane (scrollable)
-        JScrollPane scrollPane = new JScrollPane(table1);
-        all.add(scrollPane);
-
-        frame.add(all);
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
