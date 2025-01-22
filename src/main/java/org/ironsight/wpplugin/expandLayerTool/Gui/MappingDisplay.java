@@ -7,14 +7,18 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GridPanel extends JPanel {
+public class MappingDisplay extends JPanel {
     private static final int GRID_SIZE = 100;  // Number of cells in both dimensions
     private static final int CELL_SIZE = 10;  // Size of each cell in pixels
     private final List<Line> lines = new ArrayList<>();  // List to store lines
 
-    public GridPanel() {
+    private LayerMapping mapping;
+
+    public MappingDisplay(LayerMapping mapping) {
         this.setPreferredSize(new Dimension(GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE));
         setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
+
+        setMapping(mapping);
     }
 
     @Override
@@ -62,9 +66,31 @@ public class GridPanel extends JPanel {
      * @param x1 The x-coordinate of the ending point (0 to 100).
      * @param y1 The y-coordinate of the ending point (0 to 100).
      */
-    public void drawLine(int x, int y, int x1, int y1) {
+    public void addLine(int x, int y, int x1, int y1) {
         lines.add(new Line(x, y, x1, y1));
         repaint();  // Request a repaint to update the display
+    }
+
+    public void clearLines() {
+        lines.clear();
+    }
+
+    public void setMapping(LayerMapping mapping) {
+        this.mapping = mapping;
+        clearLines();
+        {
+            LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
+            addLine(0, a.output, a.input, a.output);
+
+            LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
+            addLine(b.input, b.output, 100, b.output);
+        }
+        for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
+            LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
+            LayerMapping.MappingPoint b = mapping.getMappingPoints()[i + 1];
+
+            addLine(a.input, a.output, b.input, b.output);
+        }
     }
 
     // Helper class to represent a line
@@ -79,10 +105,10 @@ public class GridPanel extends JPanel {
         }
     }
 
+
     public static void main(String[] args) {
         JFrame frame = new JFrame("Grid Panel");
 
-        GridPanel gridPanel = new GridPanel();
 
         LayerMapping mapper = new LayerMapping(null, null,
                 new LayerMapping.MappingPoint[]{
@@ -90,24 +116,11 @@ public class GridPanel extends JPanel {
                         new LayerMapping.MappingPoint(50, 50),
                         new LayerMapping.MappingPoint(70, 57),
                 });
-        {
-            LayerMapping.MappingPoint a = mapper.getMappingPoints()[0];
-            gridPanel.drawLine(0, a.output, a.input, a.output);
-
-            LayerMapping.MappingPoint b = mapper.getMappingPoints()[mapper.getMappingPoints().length - 1];
-            gridPanel.drawLine(b.input, b.output, 100, b.output);
-        }
-        for (int i = 0; i < mapper.getMappingPoints().length - 1; i++) {
-            LayerMapping.MappingPoint a = mapper.getMappingPoints()[i];
-            LayerMapping.MappingPoint b = mapper.getMappingPoints()[i + 1];
-
-            gridPanel.drawLine(a.input, a.output, b.input, b.output);
-        }
+        MappingDisplay gridPanel = new MappingDisplay(mapper);
 
         JPanel outerPanel = new JPanel();
         outerPanel.setLayout(new BorderLayout(20, 20));
-        outerPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));  // Set outer panel border (50px all
-        // around)
+        outerPanel.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
         outerPanel.add(gridPanel, BorderLayout.CENTER);
 
         // Add the outer panel to the frame
