@@ -17,24 +17,23 @@ public class EditMappingPanel extends JPanel {
         this.mapping = mapping;
         this.onSubmit = onSubmit;
         initComponents();
-        updateComponents();
     }
 
     private void initComponents() {
         mappingDisplay = new MappingDisplay(mapping);
-        table = new MappingTextTable(mapping, this::setMapping);
+        table = new MappingTextTable(mapping, mapping1 -> {
+            this.mapping = mapping1;
+            mappingDisplay.setMapping(mapping);
+        });
         this.add(mappingDisplay);
         this.add(table);
     }
 
-    private void updateComponents() {
-        mappingDisplay.setMapping(mapping);
-        table.setMapping(mapping);
-    }
 
     public void setMapping(LayerMapping mapping) {
         this.mapping = mapping;
-        updateComponents();
+        mappingDisplay.setMapping(mapping);
+        table.setMapping(mapping);
     }
 
     public static void main(String[] args) {
