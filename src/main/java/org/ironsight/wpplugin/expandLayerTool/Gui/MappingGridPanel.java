@@ -10,25 +10,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class MappingDisplay extends JPanel {
+public class MappingGridPanel extends JPanel {
     private static final int GRID_SIZE = 100;  // Number of cells in both dimensions
     private static final int CELL_SIZE = 10;  // Size of each cell in pixels
     private final List<Line> lines = new ArrayList<>();  // List to store lines
     private LayerMapping.MappingPoint selected;
     private LayerMapping mapping;
-    private final Consumer<LayerMapping> onUpdate;
 
-    public MappingDisplay(LayerMapping mapping, Consumer<LayerMapping> onUpdate) {
+
+    public void setOnUpdate(Consumer<LayerMapping> onUpdate) {
         this.onUpdate = onUpdate;
+    }
+
+    private Consumer<LayerMapping> onUpdate;
+
+    public MappingGridPanel(LayerMapping mapping) {
         this.setPreferredSize(new Dimension(GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE));
         setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
 
         setMapping(mapping);
 
         // Add a MouseListener to detect clicks inside the panel
+        MappingGridPanel panel = this;
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
+
                 // Get the pixel coordinates of the click
                 int pixelX = e.getX();
                 int pixelY = e.getY();
@@ -44,13 +51,14 @@ public class MappingDisplay extends JPanel {
                     if (selected == null)
                         return;
                     LayerMapping.MappingPoint[] newPoints =
-                            new LayerMapping.MappingPoint[mapping.getMappingPoints().length - 1];
+                            new LayerMapping.MappingPoint[panel.mapping.getMappingPoints().length - 1];
                     int i = 0;
-                    for (LayerMapping.MappingPoint p : mapping.getMappingPoints()) {
+                    for (LayerMapping.MappingPoint p : panel.mapping.getMappingPoints()) {
                         if (p.equals(selected))
                             continue;
                         newPoints[i++] = p;
                     }
+                    selected = null;
                     LayerMapping newMap = new LayerMapping(null, null, newPoints);
                     setMapping(newMap);
                 }
@@ -161,7 +169,9 @@ public class MappingDisplay extends JPanel {
             addLine(a.input, a.output, b.input, b.output);
         }
 
-        onUpdate.accept(mapping);
+        if (onUpdate != null)
+            onUpdate.accept(mapping);
+        this.repaint();
     }
 
     // Helper class to represent a line
@@ -187,9 +197,9 @@ public class MappingDisplay extends JPanel {
                         new LayerMapping.MappingPoint(50, 50),
                         new LayerMapping.MappingPoint(70, 57),
                 });
-        MappingDisplay gridPanel = new MappingDisplay(mapper, f -> {
+        MappingGridPanel gridPanel = new MappingGridPanel(mapper);
+        gridPanel.setOnUpdate(f -> {
         });
-
 
         // Add the outer panel to the frame
         frame.add(gridPanel);

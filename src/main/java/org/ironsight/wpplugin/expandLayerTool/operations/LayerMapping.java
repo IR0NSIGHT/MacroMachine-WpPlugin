@@ -64,6 +64,14 @@ public class LayerMapping {
 
         public final int input;
         public final int output;
+
+        @Override
+        public String toString() {
+            return "MappingPoint{" +
+                    "input=" + input +
+                    ", output=" + output +
+                    '}';
+        }
     }
 
     interface PositionValueGetter {

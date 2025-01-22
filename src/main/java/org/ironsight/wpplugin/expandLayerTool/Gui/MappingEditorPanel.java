@@ -5,14 +5,14 @@ import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import javax.swing.*;
 import java.util.function.Consumer;
 
-public class EditMappingPanel extends JPanel {
+public class MappingEditorPanel extends JPanel {
     private final Consumer<LayerMapping> onSubmit;
     private LayerMapping mapping;
 
-    private MappingDisplay mappingDisplay;
+    private MappingGridPanel mappingDisplay;
     private MappingTextTable table;
 
-    public EditMappingPanel(LayerMapping mapping, Consumer<LayerMapping> onSubmit) {
+    public MappingEditorPanel(LayerMapping mapping, Consumer<LayerMapping> onSubmit) {
         super();
         this.mapping = mapping;
         this.onSubmit = onSubmit;
@@ -20,13 +20,14 @@ public class EditMappingPanel extends JPanel {
     }
 
     private void initComponents() {
-        mappingDisplay = new MappingDisplay(mapping, mapping1 -> {
-            this.mapping = mapping1;
-            table.setMapping(mapping1);
-        });
+        mappingDisplay = new MappingGridPanel(mapping);
         table = new MappingTextTable(mapping, mapping1 -> {
             this.mapping = mapping1;
             mappingDisplay.setMapping(mapping);
+        });
+        mappingDisplay.setOnUpdate(mapping1 -> {
+            this.mapping = mapping1;
+            table.setMapping(mapping1);
         });
         this.add(mappingDisplay);
         this.add(table);
@@ -49,7 +50,7 @@ public class EditMappingPanel extends JPanel {
                         new LayerMapping.MappingPoint(70, 57),
                 });
 
-        EditMappingPanel table = new EditMappingPanel(mapper, f -> {
+        MappingEditorPanel table = new MappingEditorPanel(mapper, f -> {
         });
 
         // Add the outer panel to the frame
