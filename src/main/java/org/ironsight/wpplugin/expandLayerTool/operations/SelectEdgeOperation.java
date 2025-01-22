@@ -5,7 +5,6 @@ import org.ironsight.wpplugin.expandLayerTool.Gui.GradientEditor;
 import org.ironsight.wpplugin.expandLayerTool.pathing.RingFinder;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
-import org.pepsoft.worldpainter.layers.DeciduousForest;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
 import org.pepsoft.worldpainter.panels.DefaultFilter;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -234,7 +233,8 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     public void onGlobalOpsPressed() {
         this.getDimension().setEventsInhibited(true);
         try {
-            LayerMapping mapping = new LayerMapping(new LayerMapping.SlopeProvider(), Annotations.INSTANCE,
+            LayerMapping mapping = new LayerMapping(new LayerMapping.SlopeProvider(),
+                    new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
                     new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(10, 1),
                             new LayerMapping.MappingPoint(20, 2), new LayerMapping.MappingPoint(30, 3),
                             new LayerMapping.MappingPoint(40, 4), new LayerMapping.MappingPoint(50, 5),
