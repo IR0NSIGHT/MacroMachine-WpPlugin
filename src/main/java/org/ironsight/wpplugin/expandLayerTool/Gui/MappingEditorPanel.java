@@ -59,7 +59,7 @@ public class MappingEditorPanel extends JPanel {
 
         Consumer<LayerMapping> submit = mapping1 -> {
             onSubmit.accept(mapping1);
-            dialog.dispose();
+       //     dialog.dispose();
         };
         MappingEditorPanel editor = new MappingEditorPanel(mapping, submit);
         dialog.add(editor);
