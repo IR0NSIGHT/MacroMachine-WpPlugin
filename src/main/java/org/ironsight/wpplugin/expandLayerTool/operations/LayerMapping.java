@@ -100,6 +100,14 @@ public class LayerMapping {
         }
     }
 
+    public static class HeightProvider implements  PositionValueGetter {
+
+        @Override
+        public int getValueAt(Dimension dim, int x, int y) {
+            return Math.round(dim.getHeightAt(x,y)* 100 / 255) ;
+        }
+    }
+
     public static class NibbleLayerSetter implements PositionValueSetter {
         private final Layer layer;
 

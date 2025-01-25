@@ -5,6 +5,7 @@ import org.ironsight.wpplugin.expandLayerTool.Gui.GradientEditor;
 import org.ironsight.wpplugin.expandLayerTool.pathing.RingFinder;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
+import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
 import org.pepsoft.worldpainter.panels.DefaultFilter;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -355,12 +356,11 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     }
 
     public void onGlobalOpsPressed() {
-        this.getDimension().setEventsInhibited(true);
         try {
 
             if (mapping == null)
-                mapping = new LayerMapping(new LayerMapping.SlopeProvider(),
-                        new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
+                mapping = new LayerMapping(new LayerMapping.HeightProvider(),
+                        new LayerMapping.BitLayerBinarySpraypaintSetter(Frost.INSTANCE),
                         new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(10, 1),
                                 new LayerMapping.MappingPoint(20, 2), new LayerMapping.MappingPoint(30, 3),
                                 new LayerMapping.MappingPoint(40, 4), new LayerMapping.MappingPoint(50, 5),
@@ -368,21 +368,25 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                                 new LayerMapping.MappingPoint(80, 8), new LayerMapping.MappingPoint(90, 9)});
 
             Consumer<LayerMapping> onSubmit = mapping1 -> {
+                this.getDimension().setEventsInhibited(true);
+
                 org.pepsoft.worldpainter.Dimension dim = getDimension();
                 DefaultFilter filter = new DefaultFilter(dim, false, false, -1000, 1000, false, null, null, 0, true);
                 ApplyAction action = new ApplyAction(filter, mapping1);
                 action.apply(dim);
                 this.mapping = mapping1;
+                this.getDimension().setEventsInhibited(false);
+
             };
 
             JDialog dialog = createDialog(null, mapping, onSubmit);
+
             dialog.setVisible(true);
 
 
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-        this.getDimension().setEventsInhibited(false);
     }
 
     private void applyWithStrength(Collection<Point> points, float strength) {
