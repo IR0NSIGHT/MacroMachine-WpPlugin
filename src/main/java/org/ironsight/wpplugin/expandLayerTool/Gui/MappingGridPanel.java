@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -23,6 +24,7 @@ public class MappingGridPanel extends JPanel {
     }
 
     private Consumer<LayerMapping> onUpdate;
+    private final int pointHitBoxRadius = 5;
 
     public MappingGridPanel(LayerMapping mapping) {
         this.setPreferredSize(new Dimension(GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE));
@@ -45,9 +47,17 @@ public class MappingGridPanel extends JPanel {
                 int gridY = (GRID_SIZE - (pixelY / CELL_SIZE)) - 1; // Flip the Y-axis
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     // Call the callback with the grid coordinates
-                    selectPointNear(gridX, gridY);
+                    boolean hit = selectPointNear(gridX, gridY, pointHitBoxRadius);
+                    if (!hit) {
+                        // INSERT NEW POINT
+                        LayerMapping.MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
+                                panel.mapping.getMappingPoints().length + 1);
+                        newPoints[newPoints.length - 1] = new LayerMapping.MappingPoint(gridX, gridY);
+                        setMapping(new LayerMapping(null, null, newPoints));
+                    }
+
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
-                    selectPointNear(gridX, gridY);
+                    selectPointNear(gridX, gridY, pointHitBoxRadius);
                     if (selected == null)
                         return;
                     LayerMapping.MappingPoint[] newPoints =
@@ -62,28 +72,61 @@ public class MappingGridPanel extends JPanel {
                     LayerMapping newMap = new LayerMapping(null, null, newPoints);
                     setMapping(newMap);
                 }
+            }
 
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
 
+                // Get the pixel coordinates of the click
+                int pixelX = e.getX();
+                int pixelY = e.getY();
+
+                // Convert the pixel coordinates to grid coordinates
+                int gridX = pixelX / CELL_SIZE;
+                int gridY = (GRID_SIZE - (pixelY / CELL_SIZE)) - 1; // Flip the Y-axis
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    if (selected == null)
+                        return;
+                    LayerMapping.MappingPoint[] newPoints =
+                            new LayerMapping.MappingPoint[panel.mapping.getMappingPoints().length];
+                    int i = 0;
+                    for (LayerMapping.MappingPoint p : panel.mapping.getMappingPoints()) {
+                        if (p.equals(selected)) {
+                            newPoints[i] = new LayerMapping.MappingPoint(gridX, gridY);
+                            selected = newPoints[i++];
+                        } else
+                            newPoints[i++] = p;
+                    }
+                    setMapping(new LayerMapping(null, null, newPoints));
+                }
             }
         });
     }
 
     // Callback method to handle the click event (pass the grid coordinates)
-    private void selectPointNear(int x, int y) {
-        System.out.println("Clicked on grid coordinates: (" + x + ", " + y + ")");
-        //find point closest to click
-        LayerMapping.MappingPoint closest = mapping.getMappingPoints()[0];
-        int distMinX = Integer.MAX_VALUE, distMinY = Integer.MAX_VALUE;
+    private boolean selectPointNear(int x, int y, int maxDist) {
+        LayerMapping.MappingPoint closest = null;
+
+        int distTotalSq = Integer.MAX_VALUE;
+
+        float[] distances = new float[mapping.getMappingPoints().length];
+        int i = 0;
         for (LayerMapping.MappingPoint p : mapping.getMappingPoints()) {
             int distX = Math.abs(p.input - x);
             int distY = Math.abs(p.output - y);
-            if (distX < distMinX) {
+            int distSq = distX*distX+distY*distY;
+            distances[i++] =(float) Math.sqrt(distSq);
+            if (closest == null || distSq < distTotalSq) {
                 closest = p;
-                distMinX = distX;
+                distTotalSq = distSq;
             }
         }
+        if (distTotalSq > (maxDist * maxDist))
+            return false;
         selected = closest;
         this.repaint();
+        return true;
     }
 
     @Override

@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 public class MappingTextTable extends JPanel {
     public void setMapping(LayerMapping mapping) {
         this.mapping = mapping;
+        updateComponents();
     }
 
     private LayerMapping mapping;

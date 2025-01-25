@@ -34,12 +34,6 @@ public class MappingEditorPanel extends JPanel {
     }
 
 
-    public void setMapping(LayerMapping mapping) {
-        this.mapping = mapping;
-        mappingDisplay.setMapping(mapping);
-        table.setMapping(mapping);
-    }
-
     public static void main(String[] args) {
         JFrame frame = new JFrame("TEST PANEL");
 
