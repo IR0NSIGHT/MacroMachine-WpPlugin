@@ -17,7 +17,7 @@ public class MappingGridPanel extends JPanel {
     private final List<Line> lines = new ArrayList<>();  // List to store lines
     private LayerMapping.MappingPoint selected;
     private LayerMapping mapping;
-
+    boolean drag;
 
     public void setOnUpdate(Consumer<LayerMapping> onUpdate) {
         this.onUpdate = onUpdate;
@@ -35,9 +35,37 @@ public class MappingGridPanel extends JPanel {
         // Add a MouseListener to detect clicks inside the panel
         MappingGridPanel panel = this;
         addMouseListener(new MouseAdapter() {
+            int gridXPressed, gridYPressed;
+
             @Override
             public void mousePressed(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    // Get the pixel coordinates of the click
+                    int pixelX = e.getX();
+                    int pixelY = e.getY();
 
+                    // Convert the pixel coordinates to grid coordinates
+                    gridXPressed = pixelX / CELL_SIZE;
+                    gridYPressed = (GRID_SIZE - (pixelY / CELL_SIZE)) - 1; // Flip the Y-axis
+
+                    //update selected
+                    boolean hit = selectPointNear(gridXPressed, gridYPressed, pointHitBoxRadius);
+                    if (!hit)
+                        selected = null;
+                    drag = true;
+                }
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                super.mouseMoved(e);
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                drag = false;
                 // Get the pixel coordinates of the click
                 int pixelX = e.getX();
                 int pixelY = e.getY();
@@ -45,20 +73,31 @@ public class MappingGridPanel extends JPanel {
                 // Convert the pixel coordinates to grid coordinates
                 int gridX = pixelX / CELL_SIZE;
                 int gridY = (GRID_SIZE - (pixelY / CELL_SIZE)) - 1; // Flip the Y-axis
+                int MINIMAL_DRAG_DISTANCE = 3;
+                boolean dragged = distanceBetween(gridX,gridY,gridXPressed,gridYPressed) > MINIMAL_DRAG_DISTANCE;
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    // Call the callback with the grid coordinates
-                    boolean hit = selectPointNear(gridX, gridY, pointHitBoxRadius);
-                    if (!hit) {
-                        // INSERT NEW POINT
-                        LayerMapping.MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
-                                panel.mapping.getMappingPoints().length + 1);
-                        newPoints[newPoints.length - 1] = new LayerMapping.MappingPoint(gridX, gridY);
-                        setMapping(new LayerMapping(null, null, newPoints));
-                    }
+                    if (dragged && selected != null) {  // REPOSITION POINT
 
+                    } else {    // INSERT POINT
+                        // Call the callback with the grid coordinates
+                        boolean hit = selectPointNear(gridX, gridY, pointHitBoxRadius);
+                        if (!hit) {
+                            // INSERT NEW POINT
+                            LayerMapping.MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
+                                    panel.mapping.getMappingPoints().length + 1);
+                            newPoints[newPoints.length - 1] = new LayerMapping.MappingPoint(gridX, gridY);
+                            setMapping(new LayerMapping(null, null, newPoints));
+                        } else {
+                            //implicitly set selected point, but dont do anything with it
+                        }
+                    }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
-                    selectPointNear(gridX, gridY, pointHitBoxRadius);
-                    if (selected == null)
+                    //update selected
+                    boolean hit = selectPointNear(gridX, gridY, pointHitBoxRadius);
+                    if (!hit)
+                        selected = null;
+
+                    if (selected == null || panel.mapping.getMappingPoints().length <= 1)
                         return;
                     LayerMapping.MappingPoint[] newPoints =
                             new LayerMapping.MappingPoint[panel.mapping.getMappingPoints().length - 1];
@@ -73,11 +112,11 @@ public class MappingGridPanel extends JPanel {
                     setMapping(newMap);
                 }
             }
+        });
 
+        addMouseMotionListener(new MouseAdapter() {
             @Override
-            public void mouseReleased(MouseEvent e) {
-                super.mouseReleased(e);
-
+            public void mouseDragged(MouseEvent e) {
                 // Get the pixel coordinates of the click
                 int pixelX = e.getX();
                 int pixelY = e.getY();
@@ -85,23 +124,34 @@ public class MappingGridPanel extends JPanel {
                 // Convert the pixel coordinates to grid coordinates
                 int gridX = pixelX / CELL_SIZE;
                 int gridY = (GRID_SIZE - (pixelY / CELL_SIZE)) - 1; // Flip the Y-axis
-                if (e.getButton() == MouseEvent.BUTTON1) {
-                    if (selected == null)
-                        return;
-                    LayerMapping.MappingPoint[] newPoints =
-                            new LayerMapping.MappingPoint[panel.mapping.getMappingPoints().length];
-                    int i = 0;
-                    for (LayerMapping.MappingPoint p : panel.mapping.getMappingPoints()) {
-                        if (p.equals(selected)) {
-                            newPoints[i] = new LayerMapping.MappingPoint(gridX, gridY);
-                            selected = newPoints[i++];
-                        } else
-                            newPoints[i++] = p;
+                if (drag) {
+                    if (selected != null) {
+                        LayerMapping.MappingPoint[] newPoints =
+                                new LayerMapping.MappingPoint[panel.mapping.getMappingPoints().length];
+                        int i = 0;
+                        for (LayerMapping.MappingPoint p : panel.mapping.getMappingPoints()) {
+                            if (p.equals(selected)) {
+                                newPoints[i] = new LayerMapping.MappingPoint(gridX, gridY);
+                                selected = newPoints[i++];
+                            } else
+                                newPoints[i++] = p;
+                        }
+                        setMapping(new LayerMapping(null, null, newPoints));
                     }
-                    setMapping(new LayerMapping(null, null, newPoints));
                 }
             }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                // Optional: Handle mouse movement when not dragging
+            }
         });
+    }
+
+    private float distanceBetween(int x1, int y1, int x2, int y2) {
+        float dX = x1-x2;
+        float dY = y1-y2;
+        return (float)Math.sqrt(dX*dX+dY*dY);
     }
 
     // Callback method to handle the click event (pass the grid coordinates)
@@ -115,8 +165,8 @@ public class MappingGridPanel extends JPanel {
         for (LayerMapping.MappingPoint p : mapping.getMappingPoints()) {
             int distX = Math.abs(p.input - x);
             int distY = Math.abs(p.output - y);
-            int distSq = distX*distX+distY*distY;
-            distances[i++] =(float) Math.sqrt(distSq);
+            int distSq = distX * distX + distY * distY;
+            distances[i++] = (float) Math.sqrt(distSq);
             if (closest == null || distSq < distTotalSq) {
                 closest = p;
                 distTotalSq = distSq;
