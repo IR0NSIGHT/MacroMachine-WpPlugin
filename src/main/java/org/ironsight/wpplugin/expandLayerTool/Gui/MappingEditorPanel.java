@@ -1,8 +1,10 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.pepsoft.worldpainter.layers.Frost;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.function.Consumer;
@@ -22,6 +24,8 @@ public class MappingEditorPanel extends JPanel {
     }
 
     private void initComponents() {
+        this.setLayout(new BorderLayout());
+
         mappingDisplay = new MappingGridPanel(mapping);
         table = new MappingTextTable(mapping);
 
@@ -46,9 +50,16 @@ public class MappingEditorPanel extends JPanel {
             }
         });
 
-        this.add(mappingDisplay);
-        this.add(table);
-        this.add(submitButtom);
+
+        JLabel topBar =
+                new JLabel("Input: " + mapping.input.getName() + "(min:" + mapping.input.getMinValue() + ", " + "max" +
+                        ":" + mapping.input.getMaxValue() + ") ----------------> Output: " + mapping.output.getName() + "(min:" + mapping.output.getMinValue() + ", max:" + mapping.output.getMaxValue() +")");
+        topBar.setFont(new Font(topBar.getFont().getName(), topBar.getFont().getStyle(), 24));
+        this.add(topBar, BorderLayout.NORTH);
+        this.add(table, BorderLayout.EAST);
+        this.add(submitButtom, BorderLayout.SOUTH);
+        this.add(mappingDisplay, BorderLayout.CENTER);
+
     }
 
     public static JDialog createDialog(JFrame parent, LayerMapping mapping, Consumer<LayerMapping> onSubmit) {
@@ -59,7 +70,7 @@ public class MappingEditorPanel extends JPanel {
 
         Consumer<LayerMapping> submit = mapping1 -> {
             onSubmit.accept(mapping1);
-       //     dialog.dispose();
+            //     dialog.dispose();
         };
         MappingEditorPanel editor = new MappingEditorPanel(mapping, submit);
         dialog.add(editor);
@@ -71,7 +82,8 @@ public class MappingEditorPanel extends JPanel {
     public static void main(String[] args) {
         JFrame frame = new JFrame("TEST PANEL");
 
-        LayerMapping mapper = new LayerMapping(null, null,
+        LayerMapping mapper = new LayerMapping(new LayerMapping.HeightProvider(),
+                new LayerMapping.BitLayerBinarySpraypaintSetter(Frost.INSTANCE),
                 new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
                         new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),});
 
