@@ -27,8 +27,6 @@ public class MappingEditorPanel extends JPanel {
         // Create a JDialog with the parent frame
         JDialog dialog = new JDialog(parent, "My Dialog", true); // Modal dialog
 
-        dialog.setSize(1800, 1200);
-
         Consumer<LayerMapping> submit = mapping1 -> {
             onSubmit.accept(mapping1);
             //     dialog.dispose();
@@ -36,7 +34,7 @@ public class MappingEditorPanel extends JPanel {
         MappingEditorPanel editor = new MappingEditorPanel(mapping, submit);
         dialog.add(editor);
         dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
-
+        dialog.pack();
         return dialog;
     }
 
