@@ -40,7 +40,6 @@ public class MappingEditorPanel extends JPanel {
         this.add(table);
     }
 
-
     public static void main(String[] args) {
         JFrame frame = new JFrame("TEST PANEL");
 
@@ -48,11 +47,11 @@ public class MappingEditorPanel extends JPanel {
                 new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
                         new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),});
 
-        MappingEditorPanel table = new MappingEditorPanel(mapper, f -> {
+        MappingEditorPanel editor = new MappingEditorPanel(mapper, f -> {
         });
 
         // Add the outer panel to the frame
-        frame.add(table);
+        frame.add(editor);
 
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

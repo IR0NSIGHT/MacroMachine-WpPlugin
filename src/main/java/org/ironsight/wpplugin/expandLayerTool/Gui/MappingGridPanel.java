@@ -76,7 +76,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                             LayerMapping.MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
                                     panel.mapping.getMappingPoints().length + 1);
                             newPoints[newPoints.length - 1] = new LayerMapping.MappingPoint(gridX, gridY);
-                            setMapping(new LayerMapping(null, null, newPoints));
+                            setMapping(mapping.withNewPoints(newPoints));
                         } else {
                             //implicitly set selected point, but dont do anything with it
                         }
@@ -95,8 +95,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                         newPoints[i++] = p;
                     }
                     selected = null;
-                    LayerMapping newMap = new LayerMapping(null, null, newPoints);
-                    setMapping(newMap);
+                    setMapping(mapping.withNewPoints(newPoints));
                 }
             }
         });
@@ -122,7 +121,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                                 selected = newPoints[i++];
                             } else newPoints[i++] = p;
                         }
-                        setMapping(new LayerMapping(null, null, newPoints));
+                        setMapping(mapping.withNewPoints(newPoints));
                     }
                 }
             }

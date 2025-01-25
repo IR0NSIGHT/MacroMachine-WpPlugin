@@ -115,7 +115,7 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
             if (points[row].output == newValueInt) return false;
             points[row] = new LayerMapping.MappingPoint(points[row].input, newValueInt);
         }
-        mapping = new LayerMapping(null, null, points);
+        mapping = mapping.withNewPoints(points);
         onUpdate.accept(mapping);
 
         updateComponents();

@@ -248,7 +248,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             ex.printStackTrace();
         }
         this.getDimension().setEventsInhibited(false);
-
     }
 
     public void showArrayEditorDialog() {

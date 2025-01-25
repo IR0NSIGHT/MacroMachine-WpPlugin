@@ -25,6 +25,9 @@ public class LayerMapping {
         Arrays.sort(this.mappingPoints, Comparator.comparing(mp -> mp.input));
     }
 
+    public LayerMapping withNewPoints(MappingPoint[] mappingPoints) {
+        return new LayerMapping(this.input, this.output, mappingPoints);
+    }
 
     int map(int input) {    //TODO do linear interpolation
         if (input < mappingPoints[0].input)
