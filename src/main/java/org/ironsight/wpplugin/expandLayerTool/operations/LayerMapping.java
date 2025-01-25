@@ -2,7 +2,6 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -51,10 +50,6 @@ public class LayerMapping {
         }
         //no match, return highest value
         return mappingPoints[mappingPoints.length - 1].output;
-    }
-
-    int reverseMap(int input) {
-        throw new NotImplementedException(); //sorry i was lazy
     }
 
     public static class MappingPoint {
