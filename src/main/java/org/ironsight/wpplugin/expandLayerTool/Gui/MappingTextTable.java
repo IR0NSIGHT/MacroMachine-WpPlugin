@@ -33,7 +33,7 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
 
     private void init() {
         Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
-        Border whiteBorder = new LineBorder(Color.WHITE, 5); // 5px white border
+        Border whiteBorder = new EmptyBorder( 5,5,5,5); // 5px white border
         setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
 
         // Add a TableModelListener to get a callback when a cell is edited
