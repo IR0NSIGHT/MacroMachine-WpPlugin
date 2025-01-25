@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.pepsoft.worldpainter.layers.Annotations;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,10 +13,12 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class MappingGridPanel extends JPanel implements IMappingEditor {
-    private static final int GRID_SIZE = 100;  // Number of cells in both dimensions
-    private static final int CELL_SIZE = 10;  // Size of each cell in pixels
     private final List<Line> lines = new ArrayList<>();  // List to store lines
     private final int pointHitBoxRadius = 5;
+    private final int pixelSizeX = 500;
+    private final int pixelSizeY = 500;
+    private final float GRID_X_SCALE;
+    private final float GRID_Y_SCALE;
     private boolean drag;
     private LayerMapping.MappingPoint selected;
     private LayerMapping mapping;
@@ -25,7 +28,10 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     };
 
     public MappingGridPanel(LayerMapping mapping) {
-        this.setPreferredSize(new Dimension(GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE));
+        this.GRID_X_SCALE = pixelSizeX / ((float)mapping.input.getMaxValue() - mapping.input.getMinValue()) ;
+        this.GRID_Y_SCALE = pixelSizeY / ((float)mapping.output.getMaxValue() - mapping.output.getMinValue()) ;
+
+        this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
         setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
 
         setMapping(mapping);
@@ -33,21 +39,16 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         // Add a MouseListener to detect clicks inside the panel
         MappingGridPanel panel = this;
         addMouseListener(new MouseAdapter() {
-            int gridXPressed, gridYPressed;
+            int gridXDragStart, gridYDragStart;
 
             @Override
             public void mousePressed(MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    // Get the pixel coordinates of the click
-                    int pixelX = e.getX();
-                    int pixelY = e.getY();
-
-                    // Convert the pixel coordinates to grid coordinates
-                    gridXPressed = pixelX / CELL_SIZE;
-                    gridYPressed = (GRID_SIZE - (pixelY / CELL_SIZE)) - 1; // Flip the Y-axis
-
+                    Point grid = pixelToGrid(e.getX(), e.getY());
+                    gridXDragStart = grid.x;
+                    gridYDragStart = grid.y;
                     //update selected
-                    boolean hit = selectPointNear(gridXPressed, gridYPressed, pointHitBoxRadius);
+                    boolean hit = selectPointNear(gridXDragStart, gridYDragStart, pointHitBoxRadius);
                     if (!hit) selected = null;
                     drag = true;
                 }
@@ -60,12 +61,14 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                 // Get the pixel coordinates of the click
                 int pixelX = e.getX();
                 int pixelY = e.getY();
+                Point pressed = pixelToGrid(pixelX, pixelY);
 
                 // Convert the pixel coordinates to grid coordinates
-                int gridX = pixelX / CELL_SIZE;
-                int gridY = (GRID_SIZE - (pixelY / CELL_SIZE)) - 1; // Flip the Y-axis
+                int gridX = pressed.x;
+                int gridY = pressed.y;
+
                 int MINIMAL_DRAG_DISTANCE = 3;
-                boolean dragged = distanceBetween(gridX, gridY, gridXPressed, gridYPressed) > MINIMAL_DRAG_DISTANCE;
+                boolean dragged = distanceBetween(gridX, gridY, gridXDragStart, gridYDragStart) > MINIMAL_DRAG_DISTANCE;
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     if (dragged && selected != null) {  // REPOSITION POINT
 
@@ -105,12 +108,10 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
             @Override
             public void mouseDragged(MouseEvent e) {
                 // Get the pixel coordinates of the click
-                int pixelX = e.getX();
-                int pixelY = e.getY();
+                Point pressed = pixelToGrid(e.getX(), e.getY());
+                int gridX = pressed.x;
+                int gridY = pressed.y;
 
-                // Convert the pixel coordinates to grid coordinates
-                int gridX = pixelX / CELL_SIZE;
-                int gridY = (GRID_SIZE - (pixelY / CELL_SIZE)) - 1; // Flip the Y-axis
                 if (drag) {
                     if (selected != null) {
                         LayerMapping.MappingPoint[] newPoints =
@@ -138,9 +139,10 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         JFrame frame = new JFrame("Grid Panel");
 
 
-        LayerMapping mapper = new LayerMapping(null, null,
-                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
-                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),});
+        LayerMapping mapper = new LayerMapping(new LayerMapping.SlopeProvider(),
+                new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
+                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 2),
+                        new LayerMapping.MappingPoint(50, 3), new LayerMapping.MappingPoint(70, 7),});
         MappingGridPanel gridPanel = new MappingGridPanel(mapper);
         gridPanel.setOnUpdate(f -> {
         });
@@ -152,6 +154,20 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+    }
+
+    private Point pixelToGrid(int pixelX, int pixelY) {
+        // Convert the pixel coordinates to grid coordinates
+        int gridXPressed = Math.round(pixelX / GRID_X_SCALE);
+        int gridYPressed =Math.round ((pixelSizeY - pixelY) / GRID_Y_SCALE); // Flip the Y-axis
+        return new Point(gridXPressed, gridYPressed);
+    }
+
+    private Point gridToPixel(int gridX, int gridY) {
+        int pixelX = Math.round(gridX * GRID_X_SCALE);
+        int pixelY = Math.round(pixelSizeY - (gridY * GRID_Y_SCALE));
+
+        return new Point(pixelX, pixelY);
     }
 
     @Override
@@ -252,30 +268,41 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         // Draw grid
         g2d.setColor(Color.LIGHT_GRAY);
 
-        for (int i = 0; i <= GRID_SIZE; i += 10) {
-            // Vertical lines
-            g2d.drawLine(i * CELL_SIZE, 0, i * CELL_SIZE, GRID_SIZE * CELL_SIZE);
-            // Horizontal lines
-            g2d.drawLine(0, i * CELL_SIZE, GRID_SIZE * CELL_SIZE, i * CELL_SIZE);
+        int rangeX = mapping.input.getMaxValue() - mapping.input.getMinValue();
+        int rangeY = mapping.output.getMaxValue() - mapping.output.getMinValue();
+        for (int i = 0; i <= rangeX; i += 1) {
+            Point start = gridToPixel(i, mapping.output.getMinValue());
+            Point end = gridToPixel(i, mapping.output.getMaxValue());
+            g2d.drawLine(start.x, start.y, end.x, end.y);
+        }
+
+        for (int i = 0; i <= rangeY; i += 1) {
+            Point start = gridToPixel(mapping.input.getMinValue(), i);
+            Point end = gridToPixel(mapping.input.getMaxValue(),i);
+            g2d.drawLine(start.x, start.y, end.x, end.y);
         }
 
         // Draw lines from the list
         g2d.setColor(Color.RED);
         g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 10}, 0));
         for (Line line : lines) {
-            int x1 = line.x * CELL_SIZE;
-            int y1 = (GRID_SIZE - line.y) * CELL_SIZE;  // Flip the y-axis
-            int x2 = line.x1 * CELL_SIZE;
-            int y2 = (GRID_SIZE - line.y1) * CELL_SIZE; // Flip the y-axis
-            g2d.drawLine(x1, y1, x2, y2);
+            Point start = gridToPixel(line.x, line.y);
+            Point end = gridToPixel(line.x1, line.y1);
 
+            int x1 = start.x;
+            int y1 = start.y;  // Flip the y-axis
+            int x2 = end.x;
+            int y2 = end.y;
+            g2d.drawLine(x1, y1, x2, y2);
         }
 
         g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
         for (LayerMapping.MappingPoint p : mapping.getMappingPoints()) {
             int radius = 10;  // Circle radius
-            int x1 = p.input * CELL_SIZE;
-            int y1 = (GRID_SIZE - p.output) * CELL_SIZE;  // Flip the y-axis
+            Point start = gridToPixel(p.input, p.output);
+
+            int x1 = start.x;
+            int y1 = start.y;
 
             if (selected != null && selected.equals(p)) {
                 int width = radius * 4;
