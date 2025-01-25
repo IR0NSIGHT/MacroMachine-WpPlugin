@@ -129,8 +129,11 @@ public class LayerMapping {
          */
         @Override
         public void setValueAt(Dimension dim, int x, int y, int value) {
-            random.setSeed((long) x * x + y);
-            dim.setBitLayerValueAt(layer, x, y, value < random.nextInt(100));
+            long positionHash = ((long) x * 73856093L) ^ ((long) y * 19349663L);
+            random.setSeed(positionHash);
+            int randInt = random.nextInt(100);
+            boolean set = value >= randInt;
+            dim.setBitLayerValueAt(layer, x, y, set );
         }
     }
 }
