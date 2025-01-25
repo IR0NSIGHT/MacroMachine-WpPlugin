@@ -23,45 +23,6 @@ public class MappingEditorPanel extends JPanel {
         initComponents();
     }
 
-    private void initComponents() {
-        this.setLayout(new BorderLayout());
-
-        mappingDisplay = new MappingGridPanel(mapping);
-        table = new MappingTextTable(mapping);
-
-        //set up sync between both components
-        table.setOnUpdate(mapping1 -> {
-            this.mapping = mapping1;
-            mappingDisplay.setMapping(mapping);
-        });
-        table.setOnSelect(mappingDisplay::setSelected);
-
-        mappingDisplay.setOnUpdate(mapping1 -> {
-            this.mapping = mapping1;
-            table.setMapping(mapping1);
-        });
-        mappingDisplay.setOnSelect(table::setSelected);
-
-        JButton submitButtom = new JButton("submit");
-        submitButtom.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onSubmit.accept(mapping);
-            }
-        });
-
-
-        JLabel topBar =
-                new JLabel("Input: " + mapping.input.getName() + "(min:" + mapping.input.getMinValue() + ", " + "max" +
-                        ":" + mapping.input.getMaxValue() + ") ----------------> Output: " + mapping.output.getName() + "(min:" + mapping.output.getMinValue() + ", max:" + mapping.output.getMaxValue() +")");
-        topBar.setFont(new Font(topBar.getFont().getName(), topBar.getFont().getStyle(), 24));
-        this.add(topBar, BorderLayout.NORTH);
-        this.add(table, BorderLayout.EAST);
-        this.add(submitButtom, BorderLayout.SOUTH);
-        this.add(mappingDisplay, BorderLayout.CENTER);
-
-    }
-
     public static JDialog createDialog(JFrame parent, LayerMapping mapping, Consumer<LayerMapping> onSubmit) {
         // Create a JDialog with the parent frame
         JDialog dialog = new JDialog(parent, "My Dialog", true); // Modal dialog
@@ -96,5 +57,42 @@ public class MappingEditorPanel extends JPanel {
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
+    }
+
+    private void initComponents() {
+        this.setLayout(new BorderLayout());
+
+        mappingDisplay = new MappingGridPanel(mapping);
+        table = new MappingTextTable(mapping);
+
+        //set up sync between both components
+        table.setOnUpdate(mapping1 -> {
+            this.mapping = mapping1;
+            mappingDisplay.setMapping(mapping);
+        });
+        table.setOnSelect(mappingDisplay::setSelected);
+
+        mappingDisplay.setOnUpdate(mapping1 -> {
+            this.mapping = mapping1;
+            table.setMapping(mapping1);
+        });
+        mappingDisplay.setOnSelect(table::setSelected);
+
+        JButton submitButtom = new JButton("submit");
+        submitButtom.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onSubmit.accept(mapping);
+            }
+        });
+
+
+        JLabel topBar = new JLabel(mapping.input.getName() + " to " + mapping.output.getName());
+        topBar.setFont(new Font(topBar.getFont().getName(), topBar.getFont().getStyle(), 24));
+        this.add(topBar, BorderLayout.NORTH);
+        this.add(table, BorderLayout.EAST);
+        this.add(submitButtom, BorderLayout.SOUTH);
+        this.add(mappingDisplay, BorderLayout.CENTER);
+
     }
 }
