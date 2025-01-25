@@ -69,7 +69,7 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
 
     private void updateComponents() {
         Object[][] data = new Object[mapping.getMappingPoints().length][];
-        Object[] columnNames = new String[]{"input", "output"};
+        Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
         for (int i = 0; i < mapping.getMappingPoints().length; i++) {
             LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
             data[i] = new Object[]{a.input, a.output};

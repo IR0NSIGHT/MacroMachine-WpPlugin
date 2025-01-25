@@ -9,29 +9,36 @@ import java.util.Comparator;
 import java.util.Random;
 
 public class LayerMapping {
-    PositionValueGetter input;
-    PositionValueSetter output;
-
-    public MappingPoint[] getMappingPoints() {
-        return mappingPoints;
-    }
-
+    public IPositionValueGetter input;
+    public IPositionValueSetter output;
     MappingPoint[] mappingPoints;
 
-    public LayerMapping(PositionValueGetter input, PositionValueSetter output, MappingPoint[] mappingPoints) {
+    public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints) {
         this.input = input;
         this.output = output;
         this.mappingPoints = mappingPoints.clone();
         Arrays.sort(this.mappingPoints, Comparator.comparing(mp -> mp.input));
     }
 
+    public MappingPoint[] getMappingPoints() {
+        return mappingPoints;
+    }
+
     public LayerMapping withNewPoints(MappingPoint[] mappingPoints) {
         return new LayerMapping(this.input, this.output, mappingPoints);
     }
 
+    public void applyToPoint(Dimension dim, int x, int y) {
+        if (x == 20 && y == 70) {
+            System.out.println();
+        }
+        int value = input.getValueAt(dim, x, y);
+        int mapped = map(value);
+        output.setValueAt(dim, x, y, mapped);
+    }
+
     int map(int input) {    //TODO do linear interpolation
-        if (input < mappingPoints[0].input)
-            return mappingPoints[0].output;
+        if (input < mappingPoints[0].input) return mappingPoints[0].output;
         for (int i = 0; i < mappingPoints.length - 1; i++) {
             if (mappingPoints[i].input <= input && mappingPoints[i + 1].input > input) {  //value inbetween i and i+1
                 int a = mappingPoints[i].input;
@@ -46,46 +53,26 @@ public class LayerMapping {
         return mappingPoints[mappingPoints.length - 1].output;
     }
 
-    public void applyToPoint(Dimension dim, int x, int y) {
-        if (x == 20 && y == 70) {
-            System.out.println();
-        }
-        int value = input.getValueAt(dim, x, y);
-        int mapped = map(value);
-        output.setValueAt(dim, x, y, mapped);
-    }
-
     int reverseMap(int input) {
         throw new NotImplementedException(); //sorry i was lazy
     }
 
     public static class MappingPoint {
+        public final int input;
+        public final int output;
+
         public MappingPoint(int input, int output) {
             this.input = input;
             this.output = output;
         }
 
-        public final int input;
-        public final int output;
-
         @Override
         public String toString() {
-            return "MappingPoint{" +
-                    "input=" + input +
-                    ", output=" + output +
-                    '}';
+            return "MappingPoint{" + "input=" + input + ", output=" + output + '}';
         }
     }
 
-    interface PositionValueGetter {
-        int getValueAt(Dimension dim, int x, int y);
-    }
-
-    interface PositionValueSetter {
-        void setValueAt(Dimension dim, int x, int y, int value);
-    }
-
-    public static class SlopeProvider implements PositionValueGetter {
+    public static class SlopeProvider implements IPositionValueGetter {
         /**
          * slope in degrees 0-90
          *
@@ -98,17 +85,57 @@ public class LayerMapping {
         public int getValueAt(Dimension dim, int x, int y) {
             return (int) Math.round(Math.toDegrees(Math.atan(dim.getSlope(x, y))));
         }
-    }
-
-    public static class HeightProvider implements  PositionValueGetter {
 
         @Override
-        public int getValueAt(Dimension dim, int x, int y) {
-            return Math.round(dim.getHeightAt(x,y)* 100 / 255) ;
+        public int getMinValue() {
+            return 0;
+        }
+
+        @Override
+        public int getMaxValue() {
+            return 90;
+        }
+
+        @Override
+        public String getName() {
+            return "Get Slope";
+        }
+
+        @Override
+        public String getDescription() {
+            return "get the slope of a position in degrees from 0 to 90°";
         }
     }
 
-    public static class NibbleLayerSetter implements PositionValueSetter {
+    public static class HeightProvider implements IPositionValueGetter {
+
+        @Override
+        public int getValueAt(Dimension dim, int x, int y) {
+            return Math.round(dim.getHeightAt(x, y));
+        }
+
+        @Override
+        public int getMinValue() {
+            return -64;
+        }
+
+        @Override
+        public int getMaxValue() {
+            return 364; //TODO is the correct?
+        }
+
+        @Override
+        public String getName() {
+            return "Get Height";
+        }
+
+        @Override
+        public String getDescription() {
+            return "get the height of a position in percent for 0 to 255.";
+        }
+    }
+
+    public static class NibbleLayerSetter implements IPositionValueSetter {
         private final Layer layer;
 
         public NibbleLayerSetter(Layer layer) {
@@ -119,9 +146,29 @@ public class LayerMapping {
         public void setValueAt(Dimension dim, int x, int y, int value) {
             dim.setLayerValueAt(layer, x, y, value);
         }
+
+        @Override
+        public int getMinValue() {
+            return 0;
+        }
+
+        @Override
+        public int getMaxValue() {
+            return 15;
+        }
+
+        @Override
+        public String getName() {
+            return "Set layer" + layer.getName();
+        }
+
+        @Override
+        public String getDescription() {
+            return "Set layer " + layer.getName() + " with values 0 to 15, where 0 is absent, 15 is full";
+        }
     }
 
-    public static class BitLayerBinarySpraypaintSetter implements PositionValueSetter {
+    public static class BitLayerBinarySpraypaintSetter implements IPositionValueSetter {
         Random random = new Random();
         Layer layer;
 
@@ -141,7 +188,27 @@ public class LayerMapping {
             random.setSeed(positionHash);
             int randInt = random.nextInt(100);
             boolean set = value >= randInt;
-            dim.setBitLayerValueAt(layer, x, y, set );
+            dim.setBitLayerValueAt(layer, x, y, set);
+        }
+
+        @Override
+        public int getMinValue() {
+            return 0;
+        }
+
+        @Override
+        public int getMaxValue() {
+            return 100;
+        }
+
+        @Override
+        public String getName() {
+            return "Set layer " + layer.getName() + " (spraypaint)";
+        }
+
+        @Override
+        public String getDescription() {
+            return "spraypaint binary layer " + layer.getName() + " (ON or OFF) based on input chance 0 to 100%.";
         }
     }
 }
