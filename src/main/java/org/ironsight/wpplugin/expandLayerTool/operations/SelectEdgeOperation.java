@@ -19,7 +19,9 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Consumer;
 
+import static org.ironsight.wpplugin.expandLayerTool.Gui.MappingEditorPanel.createDialog;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -31,6 +33,7 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     private static final String ID = "select_edge_operation";
     private final SelectEdgeOptions options = new SelectEdgeOptions();
     Random r = new Random();
+    private LayerMapping mapping;
 
     public SelectEdgeOperation() {
         super(NAME, DESCRIPTION, ID);
@@ -230,26 +233,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         return main;
     }
 
-    public void onGlobalOpsPressed() {
-        this.getDimension().setEventsInhibited(true);
-        try {
-            LayerMapping mapping = new LayerMapping(new LayerMapping.SlopeProvider(),
-                    new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
-                    new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(10, 1),
-                            new LayerMapping.MappingPoint(20, 2), new LayerMapping.MappingPoint(30, 3),
-                            new LayerMapping.MappingPoint(40, 4), new LayerMapping.MappingPoint(50, 5),
-                            new LayerMapping.MappingPoint(60, 6), new LayerMapping.MappingPoint(70, 7),
-                            new LayerMapping.MappingPoint(80, 8), new LayerMapping.MappingPoint(90, 9)});
-            org.pepsoft.worldpainter.Dimension dim = getDimension();
-            DefaultFilter filter = new DefaultFilter(dim, false, false, -1000, 1000, false, null, null, 0, true);
-            ApplyAction action = new ApplyAction(filter, mapping);
-            action.apply(dim);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
-        this.getDimension().setEventsInhibited(false);
-    }
-
     public void showArrayEditorDialog() {
         // Create the dialog
         JDialog dialog = new JDialog((Frame) null, "Edit Arrays", true); // Modal dialog
@@ -279,12 +262,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         dialog.pack();
         dialog.setLocationRelativeTo(null); // Center on screen
         dialog.setVisible(true);
-    }
-
-
-    @Override
-    protected void activate() throws PropertyVetoException {
-
     }
 
     private void run() {
@@ -377,6 +354,37 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         this.getDimension().setEventsInhibited(false);
     }
 
+    public void onGlobalOpsPressed() {
+        this.getDimension().setEventsInhibited(true);
+        try {
+
+            if (mapping == null)
+                mapping = new LayerMapping(new LayerMapping.SlopeProvider(),
+                        new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
+                        new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(10, 1),
+                                new LayerMapping.MappingPoint(20, 2), new LayerMapping.MappingPoint(30, 3),
+                                new LayerMapping.MappingPoint(40, 4), new LayerMapping.MappingPoint(50, 5),
+                                new LayerMapping.MappingPoint(60, 6), new LayerMapping.MappingPoint(70, 7),
+                                new LayerMapping.MappingPoint(80, 8), new LayerMapping.MappingPoint(90, 9)});
+
+            Consumer<LayerMapping> onSubmit = mapping1 -> {
+                org.pepsoft.worldpainter.Dimension dim = getDimension();
+                DefaultFilter filter = new DefaultFilter(dim, false, false, -1000, 1000, false, null, null, 0, true);
+                ApplyAction action = new ApplyAction(filter, mapping1);
+                action.apply(dim);
+                this.mapping = mapping1;
+            };
+
+            JDialog dialog = createDialog(null, mapping, onSubmit);
+            dialog.setVisible(true);
+
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        this.getDimension().setEventsInhibited(false);
+    }
+
     private void applyWithStrength(Collection<Point> points, float strength) {
         for (Point p : points) {
             if (strength > r.nextFloat()) {
@@ -385,6 +393,11 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                 else getDimension().setLayerValueAt(Annotations.INSTANCE, p.x, p.y, CYAN);
             }
         }
+    }
+
+    @Override
+    protected void activate() throws PropertyVetoException {
+
     }
 
     @Override
