@@ -21,14 +21,21 @@ public class MappingEditorPanel extends JPanel {
 
     private void initComponents() {
         mappingDisplay = new MappingGridPanel(mapping);
-        table = new MappingTextTable(mapping, mapping1 -> {
+        table = new MappingTextTable(mapping);
+
+        //set up sync between both components
+        table.setOnUpdate(mapping1 -> {
             this.mapping = mapping1;
             mappingDisplay.setMapping(mapping);
         });
+        table.setOnSelect(mappingDisplay::setSelected);
+
         mappingDisplay.setOnUpdate(mapping1 -> {
             this.mapping = mapping1;
             table.setMapping(mapping1);
         });
+        mappingDisplay.setOnSelect(table::setSelected);
+
         this.add(mappingDisplay);
         this.add(table);
     }
@@ -38,11 +45,8 @@ public class MappingEditorPanel extends JPanel {
         JFrame frame = new JFrame("TEST PANEL");
 
         LayerMapping mapper = new LayerMapping(null, null,
-                new LayerMapping.MappingPoint[]{
-                        new LayerMapping.MappingPoint(20, 10),
-                        new LayerMapping.MappingPoint(50, 50),
-                        new LayerMapping.MappingPoint(70, 57),
-                });
+                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
+                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),});
 
         MappingEditorPanel table = new MappingEditorPanel(mapper, f -> {
         });
