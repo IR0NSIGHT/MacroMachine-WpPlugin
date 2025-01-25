@@ -11,20 +11,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class MappingGridPanel extends JPanel {
+public class MappingGridPanel extends JPanel implements IMappingEditor {
     private static final int GRID_SIZE = 100;  // Number of cells in both dimensions
     private static final int CELL_SIZE = 10;  // Size of each cell in pixels
     private final List<Line> lines = new ArrayList<>();  // List to store lines
+    private final int pointHitBoxRadius = 5;
+    private boolean drag;
     private LayerMapping.MappingPoint selected;
     private LayerMapping mapping;
-    boolean drag;
-
-    public void setOnUpdate(Consumer<LayerMapping> onUpdate) {
-        this.onUpdate = onUpdate;
-    }
-
     private Consumer<LayerMapping> onUpdate;
-    private final int pointHitBoxRadius = 5;
+    private Consumer<Integer> onSelect;
+    private int selectedPoint;
 
     public MappingGridPanel(LayerMapping mapping) {
         this.setPreferredSize(new Dimension(GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE));
@@ -50,16 +47,9 @@ public class MappingGridPanel extends JPanel {
 
                     //update selected
                     boolean hit = selectPointNear(gridXPressed, gridYPressed, pointHitBoxRadius);
-                    if (!hit)
-                        selected = null;
+                    if (!hit) selected = null;
                     drag = true;
                 }
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                super.mouseMoved(e);
-
             }
 
             @Override
@@ -74,7 +64,7 @@ public class MappingGridPanel extends JPanel {
                 int gridX = pixelX / CELL_SIZE;
                 int gridY = (GRID_SIZE - (pixelY / CELL_SIZE)) - 1; // Flip the Y-axis
                 int MINIMAL_DRAG_DISTANCE = 3;
-                boolean dragged = distanceBetween(gridX,gridY,gridXPressed,gridYPressed) > MINIMAL_DRAG_DISTANCE;
+                boolean dragged = distanceBetween(gridX, gridY, gridXPressed, gridYPressed) > MINIMAL_DRAG_DISTANCE;
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     if (dragged && selected != null) {  // REPOSITION POINT
 
@@ -94,17 +84,14 @@ public class MappingGridPanel extends JPanel {
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
                     //update selected
                     boolean hit = selectPointNear(gridX, gridY, pointHitBoxRadius);
-                    if (!hit)
-                        selected = null;
+                    if (!hit) selected = null;
 
-                    if (selected == null || panel.mapping.getMappingPoints().length <= 1)
-                        return;
+                    if (selected == null || panel.mapping.getMappingPoints().length <= 1) return;
                     LayerMapping.MappingPoint[] newPoints =
                             new LayerMapping.MappingPoint[panel.mapping.getMappingPoints().length - 1];
                     int i = 0;
                     for (LayerMapping.MappingPoint p : panel.mapping.getMappingPoints()) {
-                        if (p.equals(selected))
-                            continue;
+                        if (p.equals(selected)) continue;
                         newPoints[i++] = p;
                     }
                     selected = null;
@@ -133,8 +120,7 @@ public class MappingGridPanel extends JPanel {
                             if (p.equals(selected)) {
                                 newPoints[i] = new LayerMapping.MappingPoint(gridX, gridY);
                                 selected = newPoints[i++];
-                            } else
-                                newPoints[i++] = p;
+                            } else newPoints[i++] = p;
                         }
                         setMapping(new LayerMapping(null, null, newPoints));
                     }
@@ -148,35 +134,111 @@ public class MappingGridPanel extends JPanel {
         });
     }
 
-    private float distanceBetween(int x1, int y1, int x2, int y2) {
-        float dX = x1-x2;
-        float dY = y1-y2;
-        return (float)Math.sqrt(dX*dX+dY*dY);
+    @Override
+    public void setMapping(LayerMapping mapping) {
+        this.mapping = mapping;
+        clearLines();
+        {
+            LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
+            addLine(0, a.output, a.input, a.output);
+
+            LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
+            addLine(b.input, b.output, 100, b.output);
+        }
+        for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
+            LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
+            LayerMapping.MappingPoint b = mapping.getMappingPoints()[i + 1];
+
+            addLine(a.input, a.output, b.input, b.output);
+        }
+
+        if (onUpdate != null) onUpdate.accept(mapping);
+        this.repaint();
     }
 
     // Callback method to handle the click event (pass the grid coordinates)
     private boolean selectPointNear(int x, int y, int maxDist) {
         LayerMapping.MappingPoint closest = null;
-
+        int selectedIdx = -1;
+        int i = 0;
         int distTotalSq = Integer.MAX_VALUE;
 
-        float[] distances = new float[mapping.getMappingPoints().length];
-        int i = 0;
+
         for (LayerMapping.MappingPoint p : mapping.getMappingPoints()) {
             int distX = Math.abs(p.input - x);
             int distY = Math.abs(p.output - y);
             int distSq = distX * distX + distY * distY;
-            distances[i++] = (float) Math.sqrt(distSq);
             if (closest == null || distSq < distTotalSq) {
                 closest = p;
                 distTotalSq = distSq;
+                selectedIdx = i;
             }
+            i++;
         }
-        if (distTotalSq > (maxDist * maxDist))
-            return false;
+        if (distTotalSq > (maxDist * maxDist)) return false;
         selected = closest;
+        this.onSelect.accept(selectedIdx);
         this.repaint();
         return true;
+    }
+
+    private float distanceBetween(int x1, int y1, int x2, int y2) {
+        float dX = x1 - x2;
+        float dY = y1 - y2;
+        return (float) Math.sqrt(dX * dX + dY * dY);
+    }
+
+    public void clearLines() {
+        lines.clear();
+    }
+
+    /**
+     * Adds a line to be drawn on the grid from (x, y) to (x1, y1).
+     *
+     * @param x  The x-coordinate of the starting point (0 to 100).
+     * @param y  The y-coordinate of the starting point (0 to 100).
+     * @param x1 The x-coordinate of the ending point (0 to 100).
+     * @param y1 The y-coordinate of the ending point (0 to 100).
+     */
+    public void addLine(int x, int y, int x1, int y1) {
+        lines.add(new Line(x, y, x1, y1));
+        repaint();  // Request a repaint to update the display
+    }
+
+    @Override
+    public void setOnUpdate(Consumer<LayerMapping> onUpdate) {
+        this.onUpdate = onUpdate;
+    }
+
+    @Override
+    public void setOnSelect(Consumer<Integer> onSelect) {
+        this.onSelect = onSelect;
+    }
+
+    @Override
+    public void setSelected(Integer selectedPointIdx) {
+        this.selected = mapping.getMappingPoints()[selectedPointIdx];
+        this.repaint();
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Grid Panel");
+
+
+        LayerMapping mapper = new LayerMapping(null, null,
+                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
+                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),});
+        MappingGridPanel gridPanel = new MappingGridPanel(mapper);
+        gridPanel.setOnUpdate(f -> {
+        });
+
+        // Add the outer panel to the frame
+        frame.add(gridPanel);
+
+
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
     }
 
     @Override
@@ -228,45 +290,6 @@ public class MappingGridPanel extends JPanel {
         g2d.setColor(Color.RED);
     }
 
-    /**
-     * Adds a line to be drawn on the grid from (x, y) to (x1, y1).
-     *
-     * @param x  The x-coordinate of the starting point (0 to 100).
-     * @param y  The y-coordinate of the starting point (0 to 100).
-     * @param x1 The x-coordinate of the ending point (0 to 100).
-     * @param y1 The y-coordinate of the ending point (0 to 100).
-     */
-    public void addLine(int x, int y, int x1, int y1) {
-        lines.add(new Line(x, y, x1, y1));
-        repaint();  // Request a repaint to update the display
-    }
-
-    public void clearLines() {
-        lines.clear();
-    }
-
-    public void setMapping(LayerMapping mapping) {
-        this.mapping = mapping;
-        clearLines();
-        {
-            LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
-            addLine(0, a.output, a.input, a.output);
-
-            LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-            addLine(b.input, b.output, 100, b.output);
-        }
-        for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
-            LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
-            LayerMapping.MappingPoint b = mapping.getMappingPoints()[i + 1];
-
-            addLine(a.input, a.output, b.input, b.output);
-        }
-
-        if (onUpdate != null)
-            onUpdate.accept(mapping);
-        this.repaint();
-    }
-
     // Helper class to represent a line
     private static class Line {
         int x, y, x1, y1;
@@ -277,29 +300,5 @@ public class MappingGridPanel extends JPanel {
             this.x1 = x1;
             this.y1 = y1;
         }
-    }
-
-
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Grid Panel");
-
-
-        LayerMapping mapper = new LayerMapping(null, null,
-                new LayerMapping.MappingPoint[]{
-                        new LayerMapping.MappingPoint(20, 10),
-                        new LayerMapping.MappingPoint(50, 50),
-                        new LayerMapping.MappingPoint(70, 57),
-                });
-        MappingGridPanel gridPanel = new MappingGridPanel(mapper);
-        gridPanel.setOnUpdate(f -> {
-        });
-
-        // Add the outer panel to the frame
-        frame.add(gridPanel);
-
-
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
     }
 }
