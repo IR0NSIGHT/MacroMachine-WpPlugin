@@ -19,9 +19,10 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     private boolean drag;
     private LayerMapping.MappingPoint selected;
     private LayerMapping mapping;
-    private Consumer<LayerMapping> onUpdate;
-    private Consumer<Integer> onSelect;
-    private int selectedPoint;
+    private Consumer<LayerMapping> onUpdate = f -> {
+    };
+    private Consumer<Integer> onSelect = f -> {
+    };
 
     public MappingGridPanel(LayerMapping mapping) {
         this.setPreferredSize(new Dimension(GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE));
@@ -133,6 +134,26 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         });
     }
 
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Grid Panel");
+
+
+        LayerMapping mapper = new LayerMapping(null, null,
+                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
+                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),});
+        MappingGridPanel gridPanel = new MappingGridPanel(mapper);
+        gridPanel.setOnUpdate(f -> {
+        });
+
+        // Add the outer panel to the frame
+        frame.add(gridPanel);
+
+
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+
     @Override
     public void setMapping(LayerMapping mapping) {
         this.mapping = mapping;
@@ -218,26 +239,6 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     public void setSelected(Integer selectedPointIdx) {
         this.selected = mapping.getMappingPoints()[selectedPointIdx];
         this.repaint();
-    }
-
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Grid Panel");
-
-
-        LayerMapping mapper = new LayerMapping(null, null,
-                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
-                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),});
-        MappingGridPanel gridPanel = new MappingGridPanel(mapper);
-        gridPanel.setOnUpdate(f -> {
-        });
-
-        // Add the outer panel to the frame
-        frame.add(gridPanel);
-
-
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
     }
 
     @Override
