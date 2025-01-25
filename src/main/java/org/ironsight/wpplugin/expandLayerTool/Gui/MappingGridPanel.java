@@ -28,17 +28,52 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     };
 
     public MappingGridPanel(LayerMapping mapping) {
-        this.GRID_X_SCALE = pixelSizeX / ((float)mapping.input.getMaxValue() - mapping.input.getMinValue()) ;
-        this.GRID_Y_SCALE = pixelSizeY / ((float)mapping.output.getMaxValue() - mapping.output.getMinValue()) ;
+        this.GRID_X_SCALE = pixelSizeX / ((float) mapping.input.getMaxValue() - mapping.input.getMinValue());
+        this.GRID_Y_SCALE = pixelSizeY / ((float) mapping.output.getMaxValue() - mapping.output.getMinValue());
 
         this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
         setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
 
         setMapping(mapping);
+        init();
+
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Grid Panel");
+
+
+        LayerMapping mapper = new LayerMapping(new LayerMapping.SlopeProvider(),
+                new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
+                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 2),
+                        new LayerMapping.MappingPoint(50, 3), new LayerMapping.MappingPoint(70, 7),});
+        MappingGridPanel gridPanel = new MappingGridPanel(mapper);
+        gridPanel.setOnUpdate(f -> {
+        });
+
+        // Add the outer panel to the frame
+        frame.add(gridPanel);
+
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+
+    private void init() {
+        this.setLayout(new BorderLayout());
+        JPanel grid = new JPanel() {
+            @Override
+            public void paint(Graphics g) {
+                super.paint(g);
+                paintGrid(g);
+            }
+        };
+        grid.setSize(new Dimension(pixelSizeX, pixelSizeY));
+
 
         // Add a MouseListener to detect clicks inside the panel
         MappingGridPanel panel = this;
-        addMouseListener(new MouseAdapter() {
+        grid.addMouseListener(new MouseAdapter() {
             int gridXDragStart, gridYDragStart;
 
             @Override
@@ -104,7 +139,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
             }
         });
 
-        addMouseMotionListener(new MouseAdapter() {
+        grid.addMouseMotionListener(new MouseAdapter() {
             @Override
             public void mouseDragged(MouseEvent e) {
                 // Get the pixel coordinates of the click
@@ -133,33 +168,66 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                 // Optional: Handle mouse movement when not dragging
             }
         });
-    }
 
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Grid Panel");
+        this.setLayout(null);
+        int pad = 50;
+        grid.setBounds(pad, 0, pixelSizeX + 1 , pixelSizeY + 1);
+
+        JPanel left = new JPanel(new BorderLayout());
+        left.setBounds(0,0,pad, pixelSizeY);
+        {
+            JLabel leftText = new JLabel("" + mapping.output.getMinValue());
+            leftText.setHorizontalAlignment(SwingConstants.CENTER);
+            leftText.setVerticalAlignment(SwingConstants.CENTER);
+            left.add(leftText, BorderLayout.SOUTH);
+        }
+        {
+            JLabel leftText = new JLabel("" + mapping.output.getMaxValue());
+            leftText.setHorizontalAlignment(SwingConstants.CENTER);
+            leftText.setVerticalAlignment(SwingConstants.CENTER);
+            left.add(leftText, BorderLayout.NORTH);
+        }
+        {
+            JLabel leftText = new JLabel(mapping.output.getName());
+            leftText.setHorizontalAlignment(SwingConstants.CENTER);
+            leftText.setVerticalAlignment(SwingConstants.CENTER);
+            left.add(leftText, BorderLayout.CENTER);
+        }
 
 
-        LayerMapping mapper = new LayerMapping(new LayerMapping.SlopeProvider(),
-                new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
-                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 2),
-                        new LayerMapping.MappingPoint(50, 3), new LayerMapping.MappingPoint(70, 7),});
-        MappingGridPanel gridPanel = new MappingGridPanel(mapper);
-        gridPanel.setOnUpdate(f -> {
-        });
+        JPanel bottom = new JPanel(new BorderLayout());
+        bottom.setBounds(pad,pixelSizeY,pixelSizeX + 1, pad);
+        {
+            JLabel leftText = new JLabel("" + mapping.input.getMinValue());
+            leftText.setHorizontalAlignment(SwingConstants.CENTER);
+            leftText.setVerticalAlignment(SwingConstants.CENTER);
+            bottom.add(leftText, BorderLayout.WEST);
+        }
+        {
+            JLabel leftText = new JLabel("" + mapping.input.getMaxValue());
+            leftText.setHorizontalAlignment(SwingConstants.CENTER);
+            leftText.setVerticalAlignment(SwingConstants.CENTER);
+            bottom.add(leftText, BorderLayout.EAST);
+        }
+        {
+            JLabel leftText = new JLabel(mapping.input.getName());
+            leftText.setHorizontalAlignment(SwingConstants.CENTER);
+            leftText.setVerticalAlignment(SwingConstants.CENTER);
+            bottom.add(leftText, BorderLayout.CENTER);
+        }
 
-        // Add the outer panel to the frame
-        frame.add(gridPanel);
 
 
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
+        this.add(grid, BorderLayout.CENTER);
+        this.add(bottom, BorderLayout.SOUTH);
+        this.add(left, BorderLayout.WEST);
+        this.setPreferredSize( new Dimension(pixelSizeX + pad, pixelSizeY + pad));
     }
 
     private Point pixelToGrid(int pixelX, int pixelY) {
         // Convert the pixel coordinates to grid coordinates
         int gridXPressed = Math.round(pixelX / GRID_X_SCALE);
-        int gridYPressed =Math.round ((pixelSizeY - pixelY) / GRID_Y_SCALE); // Flip the Y-axis
+        int gridYPressed = Math.round((pixelSizeY - pixelY) / GRID_Y_SCALE); // Flip the Y-axis
         return new Point(gridXPressed, gridYPressed);
     }
 
@@ -176,10 +244,10 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         clearLines();
         {
             LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
-            addLine(0, a.output, a.input, a.output);
+            addLine(mapping.input.getMinValue(), a.output, a.input, a.output);
 
             LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-            addLine(b.input, b.output, 100, b.output);
+            addLine(b.input, b.output, mapping.input.getMaxValue(), b.output);
         }
         for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
             LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
@@ -257,8 +325,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         this.repaint();
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
+    private void paintGrid(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
@@ -278,7 +345,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
 
         for (int i = 0; i <= rangeY; i += 1) {
             Point start = gridToPixel(mapping.input.getMinValue(), i);
-            Point end = gridToPixel(mapping.input.getMaxValue(),i);
+            Point end = gridToPixel(mapping.input.getMaxValue(), i);
             g2d.drawLine(start.x, start.y, end.x, end.y);
         }
 
