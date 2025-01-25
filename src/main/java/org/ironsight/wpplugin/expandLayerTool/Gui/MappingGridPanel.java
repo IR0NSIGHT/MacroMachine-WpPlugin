@@ -226,14 +226,14 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
 
     private Point pixelToGrid(int pixelX, int pixelY) {
         // Convert the pixel coordinates to grid coordinates
-        int gridXPressed = Math.round(pixelX / GRID_X_SCALE);
-        int gridYPressed = Math.round((pixelSizeY - pixelY) / GRID_Y_SCALE); // Flip the Y-axis
+        int gridXPressed = Math.round(pixelX / GRID_X_SCALE)+mapping.input.getMinValue();
+        int gridYPressed = Math.round((pixelSizeY - pixelY) / GRID_Y_SCALE)+mapping.output.getMinValue(); // Flip the Y-axis
         return new Point(gridXPressed, gridYPressed);
     }
 
     private Point gridToPixel(int gridX, int gridY) {
-        int pixelX = Math.round(gridX * GRID_X_SCALE);
-        int pixelY = Math.round(pixelSizeY - (gridY * GRID_Y_SCALE));
+        int pixelX = Math.round((gridX-mapping.input.getMinValue()) * GRID_X_SCALE);
+        int pixelY = Math.round(pixelSizeY - ((gridY-mapping.output.getMinValue()) * GRID_Y_SCALE));
 
         return new Point(pixelX, pixelY);
     }
