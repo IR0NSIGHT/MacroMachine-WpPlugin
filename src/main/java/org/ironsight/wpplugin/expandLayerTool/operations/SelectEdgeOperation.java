@@ -361,12 +361,12 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                 IPositionValueSetter output = new LayerMapping.StonePaletteApplicator();
                 mapping = new LayerMapping(input, output,
                         new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),
-                                output.getMinValue())}, LayerMapping.ActionType.SET);
+                                output.getMinValue())}, LayerMapping.ActionType.SET,"Default","starter action");
 
             }
 
 
-            JDialog dialog = createDialog(null, mapping, this::applyLayerAction);
+            JDialog dialog = createDialog(null, this::applyLayerAction);
 
             dialog.setVisible(true);
 

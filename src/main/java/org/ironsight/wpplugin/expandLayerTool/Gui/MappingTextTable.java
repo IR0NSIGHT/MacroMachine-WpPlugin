@@ -75,6 +75,8 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
             data[i] = new Object[]{mapping.input.valueToString(a.input),mapping.output.valueToString(a.output)};
         }
 
+        selectedPointIdx = Math.min(selectedPointIdx, mapping.getMappingPoints().length -1);
+
         this.tableModel = new DefaultTableModel(data, columnNames);
         this.tableModel.addTableModelListener(this.listener);
         numberTable.setModel(tableModel);
@@ -127,7 +129,7 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
 
         LayerMapping mapper = new LayerMapping(null, null,
                 new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
-                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),}, LayerMapping.ActionType.SET);
+                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),}, LayerMapping.ActionType.SET, "test","test thing descr");
 
         MappingTextTable table = new MappingTextTable(mapper);
 

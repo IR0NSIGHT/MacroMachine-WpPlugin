@@ -20,3 +20,4 @@ public class ActionTypeComboBox extends JComboBox<String> {
         this.setSelectedIndex(type.ordinal());
     }
 }
+
