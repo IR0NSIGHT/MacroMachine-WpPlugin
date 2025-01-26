@@ -1,12 +1,16 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
+import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
+
+import static org.pepsoft.minecraft.Material.*;
 
 public class LayerMapping {
     public IPositionValueGetter input;
@@ -50,12 +54,17 @@ public class LayerMapping {
         if (input < mappingPoints[0].input) return mappingPoints[0].output;
         for (int i = 0; i < mappingPoints.length - 1; i++) {
             if (mappingPoints[i].input <= input && mappingPoints[i + 1].input > input) {  //value inbetween i and i+1
-                int a = mappingPoints[i].input;
-                int b = mappingPoints[i + 1].input;
-                int dist = b - a;
-                float t = ((float) input - a) / dist;
-                float interpol = (1 - t) * mappingPoints[i].output + t * mappingPoints[i + 1].output;
-                return Math.round(interpol);
+                if (output.isDiscrete()) {
+                    return mappingPoints[i+1].output;
+                } else {
+                    int a = mappingPoints[i].input;
+                    int b = mappingPoints[i + 1].input;
+                    int dist = b - a;
+                    float t = ((float) input - a) / dist;
+                    float interpol = (1 - t) * mappingPoints[i].output + t * mappingPoints[i + 1].output;
+                    return Math.round(interpol);
+                }
+
             }
         }
         //no match, return highest value
@@ -74,6 +83,57 @@ public class LayerMapping {
         @Override
         public String toString() {
             return "MappingPoint{" + "input=" + input + ", output=" + output + '}';
+        }
+    }
+
+    public static class StonePaletteSetter implements IPositionValueSetter {
+        private final static Terrain[] materials = new Terrain[]{
+                Terrain.GRASS,
+                Terrain.GRAVEL,
+                Terrain.STONE,
+                Terrain.COBBLESTONE,
+                Terrain. MOSSY_COBBLESTONE,
+                Terrain.GRANITE,
+                Terrain.DIORITE,
+                Terrain.ANDESITE,
+                Terrain.DEEPSLATE,
+                Terrain.STONE_MIX,
+                Terrain.ROCK
+        };
+
+        @Override
+        public String getName() {
+            return "Stone Palette";
+        }
+
+        @Override
+        public String getDescription() {
+            return "a palette of most common stones";
+        }
+
+        @Override
+        public void setValueAt(Dimension dim, int x, int y, int value) {
+            dim.setTerrainAt(x,y,materials[value]);
+        }
+
+        @Override
+        public int getMinValue() {
+            return 0;
+        }
+
+        @Override
+        public int getMaxValue() {
+            return materials.length-1;
+        }
+
+        @Override
+        public String valueToString(int value) {
+            return materials[value].getName()+"("+value+")";
+        }
+
+        @Override
+        public boolean isDiscrete() {
+            return true;
         }
     }
 
@@ -178,6 +238,11 @@ public class LayerMapping {
         }
 
         @Override
+        public boolean isDiscrete() {
+            return false;
+        }
+
+        @Override
         public String getName() {
             return "Set layer " + layer.getName();
         }
@@ -205,6 +270,11 @@ public class LayerMapping {
                 System.out.println(ex);
             }
             return "ERROR";
+        }
+
+        @Override
+        public boolean isDiscrete() {
+            return true;
         }
     }
 
@@ -244,6 +314,11 @@ public class LayerMapping {
         @Override
         public String valueToString(int value) {
             return value + "%";
+        }
+
+        @Override
+        public boolean isDiscrete() {
+            return false;
         }
 
         @Override

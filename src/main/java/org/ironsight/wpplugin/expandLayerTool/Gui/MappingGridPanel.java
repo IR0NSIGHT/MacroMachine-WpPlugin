@@ -20,7 +20,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     private final int pixelSizeY = 500;
     private final float GRID_X_SCALE;
     private final float GRID_Y_SCALE;
-    private final int shiftGrid = 100;
+    private final int shiftGrid = 150;
     private boolean drag;
     private LayerMapping.MappingPoint selected;
     private LayerMapping mapping;
@@ -45,19 +45,30 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     public void setMapping(LayerMapping mapping) {
         this.mapping = mapping;
         clearLines();
-        {
-            LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
-            addLine(mapping.input.getMinValue(), a.output, a.input, a.output);
+        if (mapping.output.isDiscrete()) {
+            for (int i = 1; i < mapping.getMappingPoints().length; i++) {
+                LayerMapping.MappingPoint a2 = mapping.getMappingPoints()[i];
+                LayerMapping.MappingPoint a1 = mapping.getMappingPoints()[i - 1];
 
-            LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-            addLine(b.input, b.output, mapping.input.getMaxValue(), b.output);
-        }
-        for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
-            LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
-            LayerMapping.MappingPoint b = mapping.getMappingPoints()[i + 1];
+                addLine(a2.input, a2.output, a1.input, a2.output);
+                addLine(a1.input, a1.output, a1.input, a2.output);
+            }
+        } else {
+            {
+                LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
+                addLine(mapping.input.getMinValue(), a.output, a.input, a.output);
 
-            addLine(a.input, a.output, b.input, b.output);
+                LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
+                addLine(b.input, b.output, mapping.input.getMaxValue(), b.output);
+            }
+            for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
+                LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
+                LayerMapping.MappingPoint b = mapping.getMappingPoints()[i + 1];
+
+                addLine(a.input, a.output, b.input, b.output);
+            }
         }
+
 
         if (onUpdate != null) onUpdate.accept(mapping);
         this.repaint();
@@ -233,7 +244,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
             int width = g2d.getFontMetrics().stringWidth(s) ;
             g2d.drawString(s, start.x - 0.3f*width, start.y + fontheight * 1.5f);
         }
-        for (int i = 0; i > mapping.input.getMinValue(); i -= stepX) {
+        for (int i = 0; i >= mapping.input.getMinValue(); i -= stepX) {
             Point start = gridToPixel(i, mapping.output.getMinValue());
             Point end = gridToPixel(i, mapping.output.getMaxValue());
             g2d.drawLine(start.x, start.y, end.x, end.y);
@@ -255,7 +266,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
             int width = g2d.getFontMetrics().stringWidth(s) ;
             g2d.drawString(s, start.x - (width + fontheight), start.y + 0.5f* fontheight);
         }
-        for (int i = 0; i > mapping.output.getMinValue(); i -= stepY) {
+        for (int i = 0; i >= mapping.output.getMinValue(); i -= stepY) {
             Point start = gridToPixel(mapping.input.getMinValue(), i);
             Point end = gridToPixel(mapping.input.getMaxValue(), i);
             g2d.drawLine(start.x, start.y, end.x, end.y);
