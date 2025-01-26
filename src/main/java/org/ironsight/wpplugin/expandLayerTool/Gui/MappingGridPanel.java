@@ -19,6 +19,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     private final int pixelSizeY = 500;
     private final float GRID_X_SCALE;
     private final float GRID_Y_SCALE;
+    private final int shiftGrid = 100;
     private boolean drag;
     private LayerMapping.MappingPoint selected;
     private LayerMapping mapping;
@@ -39,24 +40,26 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
 
     }
 
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Grid Panel");
+    @Override
+    public void setMapping(LayerMapping mapping) {
+        this.mapping = mapping;
+        clearLines();
+        {
+            LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
+            addLine(mapping.input.getMinValue(), a.output, a.input, a.output);
 
+            LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
+            addLine(b.input, b.output, mapping.input.getMaxValue(), b.output);
+        }
+        for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
+            LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
+            LayerMapping.MappingPoint b = mapping.getMappingPoints()[i + 1];
 
-        LayerMapping mapper = new LayerMapping(new LayerMapping.SlopeProvider(),
-                new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
-                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 2),
-                        new LayerMapping.MappingPoint(50, 3), new LayerMapping.MappingPoint(70, 7),});
-        MappingGridPanel gridPanel = new MappingGridPanel(mapper);
-        gridPanel.setOnUpdate(f -> {
-        });
+            addLine(a.input, a.output, b.input, b.output);
+        }
 
-        // Add the outer panel to the frame
-        frame.add(gridPanel);
-
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
+        if (onUpdate != null) onUpdate.accept(mapping);
+        this.repaint();
     }
 
     private void init() {
@@ -170,94 +173,151 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         });
 
         this.setLayout(null);
-        int pad = 50;
-        grid.setBounds(pad, 0, pixelSizeX + 1, pixelSizeY + 1);
 
-        JPanel left = new JPanel(new BorderLayout());
-        left.setBounds(0, 0, pad, pixelSizeY);
-        {
-            JLabel leftText = new JLabel("" + mapping.output.getMinValue());
-            leftText.setHorizontalAlignment(SwingConstants.CENTER);
-            leftText.setVerticalAlignment(SwingConstants.CENTER);
-            left.add(leftText, BorderLayout.SOUTH);
-        }
-        {
-            JLabel leftText = new JLabel("" + mapping.output.getMaxValue());
-            leftText.setHorizontalAlignment(SwingConstants.CENTER);
-            leftText.setVerticalAlignment(SwingConstants.CENTER);
-            left.add(leftText, BorderLayout.NORTH);
-        }
-        {
-            JLabel leftText = new JLabel(mapping.output.getName());
-            leftText.setHorizontalAlignment(SwingConstants.CENTER);
-            leftText.setVerticalAlignment(SwingConstants.CENTER);
-            left.add(leftText, BorderLayout.CENTER);
-        }
-
-
-        JPanel bottom = new JPanel(new BorderLayout());
-        bottom.setBounds(pad, pixelSizeY, pixelSizeX + 1, pad);
-        {
-            JLabel leftText = new JLabel("" + mapping.input.getMinValue());
-            leftText.setHorizontalAlignment(SwingConstants.CENTER);
-            leftText.setVerticalAlignment(SwingConstants.CENTER);
-            bottom.add(leftText, BorderLayout.WEST);
-        }
-        {
-            JLabel leftText = new JLabel("" + mapping.input.getMaxValue());
-            leftText.setHorizontalAlignment(SwingConstants.CENTER);
-            leftText.setVerticalAlignment(SwingConstants.CENTER);
-            bottom.add(leftText, BorderLayout.EAST);
-        }
-        {
-            JLabel leftText = new JLabel(mapping.input.getName());
-            leftText.setHorizontalAlignment(SwingConstants.CENTER);
-            leftText.setVerticalAlignment(SwingConstants.CENTER);
-            bottom.add(leftText, BorderLayout.CENTER);
-        }
+        grid.setBounds(0, 0, pixelSizeX + shiftGrid + 5, pixelSizeY + shiftGrid + 5);
 
 
         this.add(grid, BorderLayout.CENTER);
-        this.add(bottom, BorderLayout.SOUTH);
-        this.add(left, BorderLayout.WEST);
-        this.setPreferredSize(new Dimension(pixelSizeX + pad, pixelSizeY + pad));
+
+        this.setPreferredSize(new Dimension(grid.getWidth(), grid.getHeight()));
+    }
+
+    public void clearLines() {
+        lines.clear();
+    }
+
+    /**
+     * Adds a line to be drawn on the grid from (x, y) to (x1, y1).
+     *
+     * @param x  The x-coordinate of the starting point (0 to 100).
+     * @param y  The y-coordinate of the starting point (0 to 100).
+     * @param x1 The x-coordinate of the ending point (0 to 100).
+     * @param y1 The y-coordinate of the ending point (0 to 100).
+     */
+    public void addLine(int x, int y, int x1, int y1) {
+        lines.add(new Line(x, y, x1, y1));
+        repaint();  // Request a repaint to update the display
+    }
+
+    private void paintGrid(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g;
+
+        // Enable anti-aliasing for smoother lines
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        // Draw grid
+        g2d.setColor(Color.LIGHT_GRAY);
+
+
+        int rangeX = mapping.input.getMaxValue() - mapping.input.getMinValue();
+        int rangeY = mapping.output.getMaxValue() - mapping.output.getMinValue();
+        {
+            g2d.drawRect(shiftGrid, 0, pixelSizeX, pixelSizeY);
+        }
+
+        int stepX = 1;
+        if (rangeX > 20) stepX = 10;
+        if (rangeX > 100) stepX = 50;
+
+        // x axis grid
+        int fontheight = g2d.getFontMetrics().getHeight();
+        for (int i = stepX; i <= mapping.input.getMaxValue(); i += stepX) {
+            Point start = gridToPixel(i, mapping.output.getMinValue());
+            Point end = gridToPixel(i, mapping.output.getMaxValue());
+            g2d.drawLine(start.x, start.y, end.x, end.y);
+            String s = mapping.input.valueToString(i);
+            int width = g2d.getFontMetrics().stringWidth(s) ;
+            g2d.drawString(s, start.x - 0.3f*width, start.y + fontheight * 1.5f);
+        }
+        for (int i = 0; i > mapping.input.getMinValue(); i -= stepX) {
+            Point start = gridToPixel(i, mapping.output.getMinValue());
+            Point end = gridToPixel(i, mapping.output.getMaxValue());
+            g2d.drawLine(start.x, start.y, end.x, end.y);
+            String s = mapping.input.valueToString(i);
+            int width = g2d.getFontMetrics().stringWidth(s) ;
+            g2d.drawString(s, start.x - 0.5f*width, start.y + fontheight * 1.5f);
+        }
+
+        int stepY = 1;
+        if (rangeY > 20) stepY = 10;
+        if (rangeY > 100) stepY = 50;
+
+        // y axis grid
+        for (int i = stepY; i <= mapping.output.getMaxValue(); i += stepY) {
+            Point start = gridToPixel(mapping.input.getMinValue(), i);
+            Point end = gridToPixel(mapping.input.getMaxValue(), i);
+            g2d.drawLine(start.x, start.y, end.x, end.y);
+            String s = mapping.output.valueToString(i);
+            int width = g2d.getFontMetrics().stringWidth(s) ;
+            g2d.drawString(s, start.x - (width + fontheight), start.y + 0.5f* fontheight);
+        }
+        for (int i = 0; i > mapping.output.getMinValue(); i -= stepY) {
+            Point start = gridToPixel(mapping.input.getMinValue(), i);
+            Point end = gridToPixel(mapping.input.getMaxValue(), i);
+            g2d.drawLine(start.x, start.y, end.x, end.y);
+            String s = mapping.output.valueToString(i);
+            int width = g2d.getFontMetrics().stringWidth(s) ;
+            g2d.drawString(s, start.x - (width + fontheight), start.y + 0.5f* fontheight);
+        }
+
+        g2d.setFont(new Font(g2d.getFont().getName(),g2d.getFont().getStyle(),g2d.getFont().getSize()*3));
+        fontheight = g2d.getFontMetrics().getHeight();
+
+        {
+            String s = mapping.input.getName();
+            int width = g2d.getFontMetrics().stringWidth(s);
+            g2d.drawString(s, pixelSizeX * 0.5f + shiftGrid - 0.5f * width, pixelSizeY - fontheight * 0.2f);
+        }
+
+        {
+            String s = mapping.output.getName();
+            int width = g2d.getFontMetrics().stringWidth(s);
+            g2d.translate((pixelSizeX) * 0.5f + shiftGrid, pixelSizeY * 0.5f);
+            g2d.rotate(-Math.toRadians(90));
+            g2d.drawString(s, -0.5f * width, -pixelSizeY * 0.5f + 1.2f * fontheight);
+            g2d.rotate(Math.toRadians(90));
+            g2d.translate(-(pixelSizeX) * 0.5f - shiftGrid, -pixelSizeY * 0.5f);
+        }
+
+        // Draw lines from the list
+        g2d.setColor(Color.RED);
+        g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 10}, 0));
+        for (Line line : lines) {
+            Point start = gridToPixel(line.x, line.y);
+            Point end = gridToPixel(line.x1, line.y1);
+
+            int x1 = start.x;
+            int y1 = start.y;  // Flip the y-axis
+            int x2 = end.x;
+            int y2 = end.y;
+            g2d.drawLine(x1, y1, x2, y2);
+        }
+
+        g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
+        for (LayerMapping.MappingPoint p : mapping.getMappingPoints()) {
+            int radius = 10;  // Circle radius
+            Point start = gridToPixel(p.input, p.output);
+
+            int x1 = start.x;
+            int y1 = start.y;
+
+            if (selected != null && selected.equals(p)) {
+                int width = radius * 4;
+                g2d.drawRect(x1 - width / 2, y1 - width / 2, width, width);
+            }
+            g2d.fillOval(x1 - radius / 2, y1 - radius / 2, radius, radius);
+
+
+        }
     }
 
     private Point pixelToGrid(int pixelX, int pixelY) {
         // Convert the pixel coordinates to grid coordinates
-        int gridXPressed = Math.round(pixelX / GRID_X_SCALE) + mapping.input.getMinValue();
+        int gridXPressed = Math.round((pixelX - shiftGrid) / GRID_X_SCALE) + mapping.input.getMinValue();
         int gridYPressed = Math.round((pixelSizeY - pixelY) / GRID_Y_SCALE) + mapping.output.getMinValue(); // Flip
         // the Y-axis
         return new Point(gridXPressed, gridYPressed);
-    }
-
-    private Point gridToPixel(int gridX, int gridY) {
-        int pixelX = Math.round((gridX - mapping.input.getMinValue()) * GRID_X_SCALE);
-        int pixelY = Math.round(pixelSizeY - ((gridY - mapping.output.getMinValue()) * GRID_Y_SCALE));
-
-        return new Point(pixelX, pixelY);
-    }
-
-    @Override
-    public void setMapping(LayerMapping mapping) {
-        this.mapping = mapping;
-        clearLines();
-        {
-            LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
-            addLine(mapping.input.getMinValue(), a.output, a.input, a.output);
-
-            LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-            addLine(b.input, b.output, mapping.input.getMaxValue(), b.output);
-        }
-        for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
-            LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
-            LayerMapping.MappingPoint b = mapping.getMappingPoints()[i + 1];
-
-            addLine(a.input, a.output, b.input, b.output);
-        }
-
-        if (onUpdate != null) onUpdate.accept(mapping);
-        this.repaint();
     }
 
     // Callback method to handle the click event (pass the grid coordinates)
@@ -292,21 +352,11 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         return (float) Math.sqrt(dX * dX + dY * dY);
     }
 
-    public void clearLines() {
-        lines.clear();
-    }
+    private Point gridToPixel(int gridX, int gridY) {
+        int pixelX = Math.round((gridX - mapping.input.getMinValue()) * GRID_X_SCALE) + shiftGrid;
+        int pixelY = Math.round(pixelSizeY - ((gridY - mapping.output.getMinValue()) * GRID_Y_SCALE));
 
-    /**
-     * Adds a line to be drawn on the grid from (x, y) to (x1, y1).
-     *
-     * @param x  The x-coordinate of the starting point (0 to 100).
-     * @param y  The y-coordinate of the starting point (0 to 100).
-     * @param x1 The x-coordinate of the ending point (0 to 100).
-     * @param y1 The y-coordinate of the ending point (0 to 100).
-     */
-    public void addLine(int x, int y, int x1, int y1) {
-        lines.add(new Line(x, y, x1, y1));
-        repaint();  // Request a repaint to update the display
+        return new Point(pixelX, pixelY);
     }
 
     @Override
@@ -325,85 +375,24 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         this.repaint();
     }
 
-    private void paintGrid(Graphics g) {
-        super.paintComponent(g);
-        Graphics2D g2d = (Graphics2D) g;
-
-        // Enable anti-aliasing for smoother lines
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // Draw grid
-        g2d.setColor(Color.LIGHT_GRAY);
-
-        int rangeX = mapping.input.getMaxValue() - mapping.input.getMinValue();
-        int rangeY = mapping.output.getMaxValue() - mapping.output.getMinValue();
-        int stepX = 1;
-        if (rangeX > 20) stepX = 10;
-        if (rangeX > 100) stepX = 50;
-
-        for (int i = 0; i <= mapping.input.getMaxValue(); i += stepX) {
-            Point start = gridToPixel(i, mapping.output.getMinValue());
-            Point end = gridToPixel(i, mapping.output.getMaxValue());
-            g2d.drawLine(start.x, start.y, end.x, end.y);
-            g2d.drawString(mapping.input.valueToString(i), start.x, start.y);
-        }
-        for (int i = 0; i > mapping.input.getMinValue(); i -= stepX) {
-            Point start = gridToPixel(i, mapping.output.getMinValue());
-            Point end = gridToPixel(i, mapping.output.getMaxValue());
-            g2d.drawLine(start.x, start.y, end.x, end.y);
-            g2d.drawString(mapping.input.valueToString(i), start.x, start.y);
-        }
-
-        int stepY = 1;
-        if (rangeY > 20) stepY = 10;
-        if (rangeY > 100) stepY = 50;
-
-        for (int i = 0; i <= mapping.output.getMaxValue(); i += stepY) {
-            Point start = gridToPixel(mapping.input.getMinValue(), i);
-            Point end = gridToPixel(mapping.input.getMaxValue(), i);
-            g2d.drawLine(start.x, start.y, end.x, end.y);
-            g2d.drawString(mapping.output.valueToString(i), start.x, start.y);
-        }
-        for (int i = 0; i > mapping.output.getMinValue(); i -= stepY) {
-            Point start = gridToPixel(mapping.input.getMinValue(), i);
-            Point end = gridToPixel(mapping.input.getMaxValue(), i);
-            g2d.drawLine(start.x, start.y, end.x, end.y);
-            g2d.drawString(mapping.output.valueToString(i), start.x, start.y);
-        }
-
-        // Draw lines from the list
-        g2d.setColor(Color.RED);
-        g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 10}, 0));
-        for (Line line : lines) {
-            Point start = gridToPixel(line.x, line.y);
-            Point end = gridToPixel(line.x1, line.y1);
-
-            int x1 = start.x;
-            int y1 = start.y;  // Flip the y-axis
-            int x2 = end.x;
-            int y2 = end.y;
-            g2d.drawLine(x1, y1, x2, y2);
-        }
-
-        g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
-        for (LayerMapping.MappingPoint p : mapping.getMappingPoints()) {
-            int radius = 10;  // Circle radius
-            Point start = gridToPixel(p.input, p.output);
-
-            int x1 = start.x;
-            int y1 = start.y;
-
-            if (selected != null && selected.equals(p)) {
-                int width = radius * 4;
-                g2d.drawRect(x1 - width / 2, y1 - width / 2, width, width);
-            }
-            g2d.fillOval(x1 - radius / 2, y1 - radius / 2, radius, radius);
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("Grid Panel");
 
 
-        }
+        LayerMapping mapper = new LayerMapping(new LayerMapping.SlopeProvider(),
+                new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
+                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 2),
+                        new LayerMapping.MappingPoint(50, 3), new LayerMapping.MappingPoint(70, 7),});
+        MappingGridPanel gridPanel = new MappingGridPanel(mapper);
+        gridPanel.setOnUpdate(f -> {
+        });
 
-        // Draw circles at points
-        g2d.setColor(Color.RED);
+        // Add the outer panel to the frame
+        frame.add(gridPanel);
+
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
     }
 
     // Helper class to represent a line
