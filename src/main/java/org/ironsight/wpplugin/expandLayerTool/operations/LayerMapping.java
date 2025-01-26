@@ -1,16 +1,15 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
-import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
+import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
 import org.pepsoft.worldpainter.layers.Annotations;
+import org.pepsoft.worldpainter.layers.Biome;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
-
-import static org.pepsoft.minecraft.Material.*;
 
 public class LayerMapping {
     public IPositionValueGetter input;
@@ -41,21 +40,12 @@ public class LayerMapping {
         output.setValueAt(dim, x, y, mapped);
     }
 
-    public int sanitizeInput(int value) {
-        return Math.min(input.getMaxValue() ,Math.max(input.getMinValue(), value));
-    }
-
-    public int sanitizeOutput(int value) {
-        return Math.min(output.getMaxValue() ,Math.max(output.getMinValue()
-                , value));
-    }
-
     int map(int input) {    //TODO do linear interpolation
         if (input < mappingPoints[0].input) return mappingPoints[0].output;
         for (int i = 0; i < mappingPoints.length - 1; i++) {
             if (mappingPoints[i].input <= input && mappingPoints[i + 1].input > input) {  //value inbetween i and i+1
                 if (output.isDiscrete()) {
-                    return mappingPoints[i+1].output;
+                    return mappingPoints[i + 1].output;
                 } else {
                     int a = mappingPoints[i].input;
                     int b = mappingPoints[i + 1].input;
@@ -69,6 +59,14 @@ public class LayerMapping {
         }
         //no match, return highest value
         return mappingPoints[mappingPoints.length - 1].output;
+    }
+
+    public int sanitizeInput(int value) {
+        return Math.min(input.getMaxValue(), Math.max(input.getMinValue(), value));
+    }
+
+    public int sanitizeOutput(int value) {
+        return Math.min(output.getMaxValue(), Math.max(output.getMinValue(), value));
     }
 
     public static class MappingPoint {
@@ -87,19 +85,9 @@ public class LayerMapping {
     }
 
     public static class StonePaletteSetter implements IPositionValueSetter {
-        private final static Terrain[] materials = new Terrain[]{
-                Terrain.GRASS,
-                Terrain.GRAVEL,
-                Terrain.STONE,
-                Terrain.COBBLESTONE,
-                Terrain. MOSSY_COBBLESTONE,
-                Terrain.GRANITE,
-                Terrain.DIORITE,
-                Terrain.ANDESITE,
-                Terrain.DEEPSLATE,
-                Terrain.STONE_MIX,
-                Terrain.ROCK
-        };
+        private final static Terrain[] materials = new Terrain[]{Terrain.GRASS, Terrain.GRAVEL, Terrain.STONE,
+                Terrain.COBBLESTONE, Terrain.MOSSY_COBBLESTONE, Terrain.GRANITE, Terrain.DIORITE, Terrain.ANDESITE,
+                Terrain.DEEPSLATE, Terrain.STONE_MIX, Terrain.ROCK};
 
         @Override
         public String getName() {
@@ -113,7 +101,7 @@ public class LayerMapping {
 
         @Override
         public void setValueAt(Dimension dim, int x, int y, int value) {
-            dim.setTerrainAt(x,y,materials[value]);
+            dim.setTerrainAt(x, y, materials[value]);
         }
 
         @Override
@@ -123,17 +111,50 @@ public class LayerMapping {
 
         @Override
         public int getMaxValue() {
-            return materials.length-1;
+            return materials.length - 1;
         }
 
         @Override
         public String valueToString(int value) {
-            return materials[value].getName()+"("+value+")";
+            return materials[value].getName() + "(" + value + ")";
         }
 
         @Override
         public boolean isDiscrete() {
             return true;
+        }
+    }
+
+    public static class BiomeProvider implements IPositionValueGetter {
+
+        @Override
+        public String getName() {
+            return "Get Biome";
+        }
+
+        @Override
+        public String getDescription() {
+            return "Get biome type";
+        }
+
+        @Override
+        public int getValueAt(Dimension dim, int x, int y) {
+            return dim.getLayerValueAt(Biome.INSTANCE, x, y);
+        }
+
+        @Override
+        public int getMinValue() {
+            return 0;
+        }
+
+        @Override
+        public int getMaxValue() {
+            return Layer.DataSize.BIT.maxValue;
+        }
+
+        @Override
+        public String valueToString(int value) {
+            return Minecraft1_20Biomes.BIOME_NAMES[value];
         }
     }
 
@@ -261,11 +282,10 @@ public class LayerMapping {
 
         @Override
         public String valueToString(int value) {
-            if (value == 0)
-                return "Absent (0)";
+            if (value == 0) return "Absent (0)";
             try {
                 String name = Annotations.getColourName(value);
-                return name+"("+Integer.toString(value)+")";
+                return name + "(" + value + ")";
             } catch (ArrayIndexOutOfBoundsException ex) {
                 System.out.println(ex);
             }

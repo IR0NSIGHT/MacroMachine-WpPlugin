@@ -43,6 +43,30 @@ public class MappingEditorPanel extends JPanel {
         });
         mappingDisplay.setOnSelect(table::setSelected);
 
+        JPanel top = new JPanel(new FlowLayout());
+        Font inputOutputFont = new Font("SansSerif", Font.BOLD, 24);
+        InputGetterComboBox inputSelect = new InputGetterComboBox();
+        inputSelect.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                IPositionValueGetter getter = inputSelect.getSelectedProvider();
+                setMapping(new LayerMapping(getter, mapping.output,mapping.getMappingPoints()));
+            }
+        });
+        inputSelect.setFont(inputOutputFont);
+        top.add(inputSelect);
+
+        OutputComboBox outputSelect = new OutputComboBox();
+        top.add(outputSelect);
+        outputSelect.setFont(inputOutputFont);
+        outputSelect.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                IPositionValueSetter setter = outputSelect.getSelectedProvider();
+                setMapping(new LayerMapping(mapping.input, setter, mapping.getMappingPoints()));
+            }
+        });
+
         JButton submitButtom = new JButton("submit");
         submitButtom.addActionListener(new ActionListener() {
             @Override
@@ -52,13 +76,18 @@ public class MappingEditorPanel extends JPanel {
         });
 
 
-        JLabel topBar = new JLabel(mapping.input.getName() + " to " + mapping.output.getName());
-        topBar.setFont(new Font(topBar.getFont().getName(), topBar.getFont().getStyle(), 24));
-        this.add(topBar, BorderLayout.NORTH);
+
+        this.add(top,BorderLayout.NORTH);
         this.add(table, BorderLayout.EAST);
         this.add(submitButtom, BorderLayout.SOUTH);
         this.add(mappingDisplay, BorderLayout.CENTER);
 
+    }
+
+    public void setMapping(LayerMapping mapping) {
+        table.setMapping(mapping);
+        mappingDisplay.setMapping(mapping);
+        this.mapping = mapping;
     }
 
     public static JDialog createDialog(JFrame parent, LayerMapping mapping, Consumer<LayerMapping> onSubmit) {
