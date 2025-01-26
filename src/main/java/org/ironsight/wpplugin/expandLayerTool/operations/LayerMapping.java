@@ -18,8 +18,25 @@ public class LayerMapping implements IDisplayUnit {
     private String name = "Mapping";
     private String description = "Mapping one property to another";
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LayerMapping mapping = (LayerMapping) o;
+        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) && actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) && Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(input, output, actionType, name, description);
+        result = 31 * result + Arrays.hashCode(mappingPoints);
+        return result;
+    }
+
     public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
-                        ActionType type) {
+                        ActionType type, String name, String description) {
+        this.name = name;
+        this.description = description;
         this.input = input;
         this.output = output;
         this.mappingPoints = mappingPoints.clone();
@@ -32,7 +49,7 @@ public class LayerMapping implements IDisplayUnit {
     }
 
     public LayerMapping withNewPoints(MappingPoint[] mappingPoints) {
-        return new LayerMapping(this.input, this.output, mappingPoints, this.getActionType());
+        return new LayerMapping(this.input, this.output, mappingPoints, this.getActionType(), this.getName(), this.getDescription());
     }
 
     public ActionType getActionType() {

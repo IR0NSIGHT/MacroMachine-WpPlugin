@@ -17,9 +17,9 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     private final int pointHitBoxRadius = 5;
     private final int pixelSizeX = 500;
     private final int pixelSizeY = 500;
+    private final int shiftGrid = 150;
     private float GRID_X_SCALE;
     private float GRID_Y_SCALE;
-    private final int shiftGrid = 150;
     private boolean drag;
     private LayerMapping.MappingPoint selected;
     private LayerMapping mapping;
@@ -32,7 +32,6 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
 
         this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
         setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
-
         setMapping(mapping);
         init();
 
@@ -55,11 +54,13 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
             }
         } else {
             {
-                LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
-                addLine(mapping.input.getMinValue(), a.output, a.input, a.output);
+                if (mapping.getMappingPoints().length != 0) {
+                    LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
+                    addLine(mapping.input.getMinValue(), a.output, a.input, a.output);
 
-                LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-                addLine(b.input, b.output, mapping.input.getMaxValue(), b.output);
+                    LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
+                    addLine(b.input, b.output, mapping.input.getMaxValue(), b.output);
+                }
             }
             for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
                 LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
@@ -130,7 +131,9 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                             LayerMapping.MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
                                     panel.mapping.getMappingPoints().length + 1);
 
-                            newPoints[newPoints.length - 1] = new LayerMapping.MappingPoint( mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
+                            newPoints[newPoints.length - 1] =
+                                    new LayerMapping.MappingPoint(mapping.sanitizeInput(gridX),
+                                            mapping.sanitizeOutput(gridY));
                             setMapping(mapping.withNewPoints(newPoints));
                         } else {
                             //implicitly set selected point, but dont do anything with it
@@ -171,7 +174,8 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                         int i = 0;
                         for (LayerMapping.MappingPoint p : panel.mapping.getMappingPoints()) {
                             if (p.equals(selected)) {
-                                newPoints[i] = new LayerMapping.MappingPoint( mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
+                                newPoints[i] = new LayerMapping.MappingPoint(mapping.sanitizeInput(gridX),
+                                        mapping.sanitizeOutput(gridY));
                                 selected = newPoints[i++];
                             } else newPoints[i++] = p;
                         }
@@ -241,16 +245,16 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
             Point end = gridToPixel(i, mapping.output.getMaxValue());
             g2d.drawLine(start.x, start.y, end.x, end.y);
             String s = mapping.input.valueToString(i);
-            int width = g2d.getFontMetrics().stringWidth(s) ;
-            g2d.drawString(s, start.x - 0.3f*width, start.y + fontheight * 1.5f);
+            int width = g2d.getFontMetrics().stringWidth(s);
+            g2d.drawString(s, start.x - 0.3f * width, start.y + fontheight * 1.5f);
         }
         for (int i = 0; i >= mapping.input.getMinValue(); i -= stepX) {
             Point start = gridToPixel(i, mapping.output.getMinValue());
             Point end = gridToPixel(i, mapping.output.getMaxValue());
             g2d.drawLine(start.x, start.y, end.x, end.y);
             String s = mapping.input.valueToString(i);
-            int width = g2d.getFontMetrics().stringWidth(s) ;
-            g2d.drawString(s, start.x - 0.5f*width, start.y + fontheight * 1.5f);
+            int width = g2d.getFontMetrics().stringWidth(s);
+            g2d.drawString(s, start.x - 0.5f * width, start.y + fontheight * 1.5f);
         }
 
         int stepY = 1;
@@ -263,19 +267,19 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
             Point end = gridToPixel(mapping.input.getMaxValue(), i);
             g2d.drawLine(start.x, start.y, end.x, end.y);
             String s = mapping.output.valueToString(i);
-            int width = g2d.getFontMetrics().stringWidth(s) ;
-            g2d.drawString(s, start.x - (width + fontheight), start.y + 0.5f* fontheight);
+            int width = g2d.getFontMetrics().stringWidth(s);
+            g2d.drawString(s, start.x - (width + fontheight), start.y + 0.5f * fontheight);
         }
         for (int i = 0; i >= mapping.output.getMinValue(); i -= stepY) {
             Point start = gridToPixel(mapping.input.getMinValue(), i);
             Point end = gridToPixel(mapping.input.getMaxValue(), i);
             g2d.drawLine(start.x, start.y, end.x, end.y);
             String s = mapping.output.valueToString(i);
-            int width = g2d.getFontMetrics().stringWidth(s) ;
-            g2d.drawString(s, start.x - (width + fontheight), start.y + 0.5f* fontheight);
+            int width = g2d.getFontMetrics().stringWidth(s);
+            g2d.drawString(s, start.x - (width + fontheight), start.y + 0.5f * fontheight);
         }
 
-        g2d.setFont(new Font(g2d.getFont().getName(),g2d.getFont().getStyle(),g2d.getFont().getSize()*3));
+        g2d.setFont(new Font(g2d.getFont().getName(), g2d.getFont().getStyle(), g2d.getFont().getSize() * 3));
         fontheight = g2d.getFontMetrics().getHeight();
 
         {
@@ -396,7 +400,8 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         LayerMapping mapper = new LayerMapping(new LayerMapping.SlopeProvider(),
                 new LayerMapping.BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
                 new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 2),
-                        new LayerMapping.MappingPoint(50, 3), new LayerMapping.MappingPoint(70, 7),}, LayerMapping.ActionType.SET);
+                        new LayerMapping.MappingPoint(50, 3), new LayerMapping.MappingPoint(70, 7),},
+                LayerMapping.ActionType.SET, "test", "test thing descr");
         MappingGridPanel gridPanel = new MappingGridPanel(mapper);
         gridPanel.setOnUpdate(f -> {
         });
