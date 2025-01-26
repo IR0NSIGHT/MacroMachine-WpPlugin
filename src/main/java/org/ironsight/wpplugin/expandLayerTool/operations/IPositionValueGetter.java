@@ -7,4 +7,5 @@ public interface IPositionValueGetter extends IDisplayUnit {
 
     int getMinValue();
     int getMaxValue();
+    String valueToString(int value);
 }

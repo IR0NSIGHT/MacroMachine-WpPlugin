@@ -171,10 +171,10 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
 
         this.setLayout(null);
         int pad = 50;
-        grid.setBounds(pad, 0, pixelSizeX + 1 , pixelSizeY + 1);
+        grid.setBounds(pad, 0, pixelSizeX + 1, pixelSizeY + 1);
 
         JPanel left = new JPanel(new BorderLayout());
-        left.setBounds(0,0,pad, pixelSizeY);
+        left.setBounds(0, 0, pad, pixelSizeY);
         {
             JLabel leftText = new JLabel("" + mapping.output.getMinValue());
             leftText.setHorizontalAlignment(SwingConstants.CENTER);
@@ -196,7 +196,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
 
 
         JPanel bottom = new JPanel(new BorderLayout());
-        bottom.setBounds(pad,pixelSizeY,pixelSizeX + 1, pad);
+        bottom.setBounds(pad, pixelSizeY, pixelSizeX + 1, pad);
         {
             JLabel leftText = new JLabel("" + mapping.input.getMinValue());
             leftText.setHorizontalAlignment(SwingConstants.CENTER);
@@ -217,23 +217,23 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         }
 
 
-
         this.add(grid, BorderLayout.CENTER);
         this.add(bottom, BorderLayout.SOUTH);
         this.add(left, BorderLayout.WEST);
-        this.setPreferredSize( new Dimension(pixelSizeX + pad, pixelSizeY + pad));
+        this.setPreferredSize(new Dimension(pixelSizeX + pad, pixelSizeY + pad));
     }
 
     private Point pixelToGrid(int pixelX, int pixelY) {
         // Convert the pixel coordinates to grid coordinates
-        int gridXPressed = Math.round(pixelX / GRID_X_SCALE)+mapping.input.getMinValue();
-        int gridYPressed = Math.round((pixelSizeY - pixelY) / GRID_Y_SCALE)+mapping.output.getMinValue(); // Flip the Y-axis
+        int gridXPressed = Math.round(pixelX / GRID_X_SCALE) + mapping.input.getMinValue();
+        int gridYPressed = Math.round((pixelSizeY - pixelY) / GRID_Y_SCALE) + mapping.output.getMinValue(); // Flip
+        // the Y-axis
         return new Point(gridXPressed, gridYPressed);
     }
 
     private Point gridToPixel(int gridX, int gridY) {
-        int pixelX = Math.round((gridX-mapping.input.getMinValue()) * GRID_X_SCALE);
-        int pixelY = Math.round(pixelSizeY - ((gridY-mapping.output.getMinValue()) * GRID_Y_SCALE));
+        int pixelX = Math.round((gridX - mapping.input.getMinValue()) * GRID_X_SCALE);
+        int pixelY = Math.round(pixelSizeY - ((gridY - mapping.output.getMinValue()) * GRID_Y_SCALE));
 
         return new Point(pixelX, pixelY);
     }
@@ -338,41 +338,37 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         int rangeX = mapping.input.getMaxValue() - mapping.input.getMinValue();
         int rangeY = mapping.output.getMaxValue() - mapping.output.getMinValue();
         int stepX = 1;
-        if (rangeX > 20)
-            stepX = 10;
-        if (rangeX > 100)
-            stepX = 50;
+        if (rangeX > 20) stepX = 10;
+        if (rangeX > 100) stepX = 50;
 
         for (int i = 0; i <= mapping.input.getMaxValue(); i += stepX) {
             Point start = gridToPixel(i, mapping.output.getMinValue());
             Point end = gridToPixel(i, mapping.output.getMaxValue());
             g2d.drawLine(start.x, start.y, end.x, end.y);
-            g2d.drawString(""+i,start.x,start.y);
+            g2d.drawString(mapping.input.valueToString(i), start.x, start.y);
         }
         for (int i = 0; i > mapping.input.getMinValue(); i -= stepX) {
             Point start = gridToPixel(i, mapping.output.getMinValue());
             Point end = gridToPixel(i, mapping.output.getMaxValue());
             g2d.drawLine(start.x, start.y, end.x, end.y);
-            g2d.drawString(""+i,start.x,start.y);
+            g2d.drawString(mapping.input.valueToString(i), start.x, start.y);
         }
 
         int stepY = 1;
-        if (rangeY > 20)
-            stepY = 10;
-        if (rangeY > 100)
-            stepY = 50;
+        if (rangeY > 20) stepY = 10;
+        if (rangeY > 100) stepY = 50;
 
         for (int i = 0; i <= mapping.output.getMaxValue(); i += stepY) {
             Point start = gridToPixel(mapping.input.getMinValue(), i);
             Point end = gridToPixel(mapping.input.getMaxValue(), i);
             g2d.drawLine(start.x, start.y, end.x, end.y);
-            g2d.drawString(""+i,start.x,start.y);
+            g2d.drawString(mapping.output.valueToString(i), start.x, start.y);
         }
         for (int i = 0; i > mapping.output.getMinValue(); i -= stepY) {
             Point start = gridToPixel(mapping.input.getMinValue(), i);
             Point end = gridToPixel(mapping.input.getMaxValue(), i);
             g2d.drawLine(start.x, start.y, end.x, end.y);
-            g2d.drawString(""+i,start.x,start.y);
+            g2d.drawString(mapping.output.valueToString(i), start.x, start.y);
         }
 
         // Draw lines from the list

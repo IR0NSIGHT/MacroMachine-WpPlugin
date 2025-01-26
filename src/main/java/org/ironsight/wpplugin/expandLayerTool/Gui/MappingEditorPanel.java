@@ -42,7 +42,7 @@ public class MappingEditorPanel extends JPanel {
         JFrame frame = new JFrame("TEST PANEL");
 
         LayerMapping mapper = new LayerMapping(new LayerMapping.HeightProvider(),
-                new LayerMapping.BitLayerBinarySpraypaintSetter(Frost.INSTANCE),
+                new LayerMapping.AnnotationSetter(),
                 new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
                         new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),});
 

@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.util.Arrays;
@@ -92,6 +93,11 @@ public class LayerMapping {
         }
 
         @Override
+        public String valueToString(int value) {
+            return value + "°";
+        }
+
+        @Override
         public String getName() {
             return "Get Slope";
         }
@@ -117,6 +123,11 @@ public class LayerMapping {
         @Override
         public int getMaxValue() {
             return 364; //TODO is the correct?
+        }
+
+        @Override
+        public String valueToString(int value) {
+            return value + "H";
         }
 
         @Override
@@ -153,6 +164,11 @@ public class LayerMapping {
         }
 
         @Override
+        public String valueToString(int value) {
+            return Integer.toString(value);
+        }
+
+        @Override
         public String getName() {
             return "Set layer" + layer.getName();
         }
@@ -160,6 +176,26 @@ public class LayerMapping {
         @Override
         public String getDescription() {
             return "Set layer " + layer.getName() + " with values 0 to 15, where 0 is absent, 15 is full";
+        }
+    }
+
+    public static class AnnotationSetter extends NibbleLayerSetter {
+
+        public AnnotationSetter() {
+            super(Annotations.INSTANCE);
+        }
+
+        @Override
+        public String valueToString(int value) {
+            if (value == 0)
+                return "Absent (0)";
+            try {
+                String name = Annotations.getColourName(value);
+                return name+"("+Integer.toString(value)+")";
+            } catch (ArrayIndexOutOfBoundsException ex) {
+                System.out.println(ex);
+            }
+            return "ERROR";
         }
     }
 
@@ -194,6 +230,11 @@ public class LayerMapping {
         @Override
         public int getMaxValue() {
             return 100;
+        }
+
+        @Override
+        public String valueToString(int value) {
+            return value + "%";
         }
 
         @Override
