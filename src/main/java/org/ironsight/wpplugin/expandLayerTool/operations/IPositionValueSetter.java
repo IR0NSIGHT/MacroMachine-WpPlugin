@@ -7,4 +7,11 @@ public interface IPositionValueSetter extends IDisplayUnit {
     int getMinValue();
     int getMaxValue();
     String valueToString(int value);
+
+    /**
+     * if the output layer can be smoothly interpolated or only knows discrete values
+     * @return
+     */
+    boolean isDiscrete();
+
 }

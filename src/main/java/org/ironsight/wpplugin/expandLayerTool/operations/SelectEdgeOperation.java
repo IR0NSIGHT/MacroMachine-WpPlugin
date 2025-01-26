@@ -358,14 +358,12 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     public void onGlobalOpsPressed() {
         try {
 
-            if (mapping == null)
-                mapping = new LayerMapping(new LayerMapping.HeightProvider(),
-                        new LayerMapping.BitLayerBinarySpraypaintSetter(Frost.INSTANCE),
-                        new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(10, 1),
-                                new LayerMapping.MappingPoint(20, 2), new LayerMapping.MappingPoint(30, 3),
-                                new LayerMapping.MappingPoint(40, 4), new LayerMapping.MappingPoint(50, 5),
-                                new LayerMapping.MappingPoint(60, 6), new LayerMapping.MappingPoint(70, 7),
-                                new LayerMapping.MappingPoint(80, 8), new LayerMapping.MappingPoint(90, 9)});
+            if (mapping == null) {
+                IPositionValueGetter input = new LayerMapping.SlopeProvider();
+                IPositionValueSetter output = new LayerMapping.StonePaletteSetter();
+                mapping = new LayerMapping(input, output, new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),output.getMinValue())});
+
+            }
 
             Consumer<LayerMapping> onSubmit = mapping1 -> {
                 this.getDimension().setEventsInhibited(true);

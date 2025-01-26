@@ -1,7 +1,8 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.IPositionValueGetter;
+import org.ironsight.wpplugin.expandLayerTool.operations.IPositionValueSetter;
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
-import org.pepsoft.worldpainter.layers.Frost;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,42 +22,6 @@ public class MappingEditorPanel extends JPanel {
         this.mapping = mapping;
         this.onSubmit = onSubmit;
         initComponents();
-    }
-
-    public static JDialog createDialog(JFrame parent, LayerMapping mapping, Consumer<LayerMapping> onSubmit) {
-        // Create a JDialog with the parent frame
-        JDialog dialog = new JDialog(parent, "My Dialog", true); // Modal dialog
-
-        Consumer<LayerMapping> submit = mapping1 -> {
-            onSubmit.accept(mapping1);
-            //     dialog.dispose();
-        };
-        MappingEditorPanel editor = new MappingEditorPanel(mapping, submit);
-        dialog.add(editor);
-        dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
-        dialog.pack();
-        return dialog;
-    }
-
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("TEST PANEL");
-
-        LayerMapping mapper = new LayerMapping(new LayerMapping.HeightProvider(),
-                new LayerMapping.BitLayerBinarySpraypaintSetter(Frost.INSTANCE),
-                new LayerMapping.MappingPoint[]{
-                        new LayerMapping.MappingPoint(20, 10),
-                        new LayerMapping.MappingPoint(50, 50),
-                        new LayerMapping.MappingPoint(70, 57),});
-
-        MappingEditorPanel editor = new MappingEditorPanel(mapper, f -> {
-        });
-
-        // Add the outer panel to the frame
-        frame.add(editor);
-
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
     }
 
     private void initComponents() {
@@ -94,5 +59,38 @@ public class MappingEditorPanel extends JPanel {
         this.add(submitButtom, BorderLayout.SOUTH);
         this.add(mappingDisplay, BorderLayout.CENTER);
 
+    }
+
+    public static JDialog createDialog(JFrame parent, LayerMapping mapping, Consumer<LayerMapping> onSubmit) {
+        // Create a JDialog with the parent frame
+        JDialog dialog = new JDialog(parent, "My Dialog", false); // Modal dialog
+
+        Consumer<LayerMapping> submit = mapping1 -> {
+            onSubmit.accept(mapping1);
+            //     dialog.dispose();
+        };
+        MappingEditorPanel editor = new MappingEditorPanel(mapping, submit);
+        dialog.add(editor);
+        dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
+        dialog.pack();
+        return dialog;
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("TEST PANEL");
+
+        IPositionValueGetter input = new LayerMapping.SlopeProvider();
+        IPositionValueSetter output = new LayerMapping.StonePaletteSetter();
+        LayerMapping mapper = new LayerMapping(input, output, new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),output.getMinValue())});
+
+        MappingEditorPanel editor = new MappingEditorPanel(mapper, f -> {
+        });
+
+        // Add the outer panel to the frame
+        frame.add(editor);
+
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
     }
 }
