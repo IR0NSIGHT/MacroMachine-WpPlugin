@@ -6,20 +6,24 @@ import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Biome;
 import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.selection.SelectionBlock;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Random;
+import java.util.*;
 
-public class LayerMapping {
-    public IPositionValueGetter input;
-    public IPositionValueSetter output;
+public class LayerMapping implements IDisplayUnit {
+    public final IPositionValueGetter input;
+    public final IPositionValueSetter output;
+    public ActionType actionType = ActionType.SET;
     MappingPoint[] mappingPoints;
+    private String name = "Mapping";
+    private String description = "Mapping one property to another";
 
-    public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints) {
+    public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
+                        ActionType type) {
         this.input = input;
         this.output = output;
         this.mappingPoints = mappingPoints.clone();
+        this.actionType = type;
         Arrays.sort(this.mappingPoints, Comparator.comparing(mp -> mp.input));
     }
 
@@ -28,16 +32,51 @@ public class LayerMapping {
     }
 
     public LayerMapping withNewPoints(MappingPoint[] mappingPoints) {
-        return new LayerMapping(this.input, this.output, mappingPoints);
+        return new LayerMapping(this.input, this.output, mappingPoints, this.getActionType());
+    }
+
+    public ActionType getActionType() {
+        return actionType;
+    }
+
+    public void setActionType(ActionType actionType) {
+        this.actionType = actionType;
     }
 
     public void applyToPoint(Dimension dim, int x, int y) {
-        if (x == 20 && y == 70) {
-            System.out.println();
-        }
         int value = input.getValueAt(dim, x, y);
-        int mapped = map(value);
-        output.setValueAt(dim, x, y, mapped);
+        int modifier = map(value);
+
+        int existingValue = output instanceof IPositionValueGetter ? ((IPositionValueGetter) output).getValueAt(dim,
+                x, y) : 0;
+        int outputValue;
+        switch (actionType) {
+            case SET:
+                outputValue = modifier;
+                break;
+            case DIVIDE:
+                outputValue = Math.round(1f * existingValue / modifier);
+                break;
+            case MULTIPLY:
+                outputValue = existingValue * modifier;
+                break;
+            case DECREMENT:
+                outputValue = existingValue - modifier;
+                break;
+            case INCREMENT:
+                outputValue = existingValue + modifier;
+                break;
+            case MIN:
+                outputValue = Math.min(existingValue, modifier);
+                break;
+            case MAX:
+                outputValue = Math.max(existingValue, modifier);
+                break;
+            default:
+                throw new EnumConstantNotPresentException(ActionType.class, actionType.displayName);
+        }
+
+        output.setValueAt(dim, x, y, outputValue);
     }
 
     int map(int input) {    //TODO do linear interpolation
@@ -69,6 +108,44 @@ public class LayerMapping {
         return Math.min(output.getMaxValue(), Math.max(output.getMinValue(), value));
     }
 
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public enum ActionType {
+        INCREMENT("increment"), DECREMENT("decrement"), MULTIPLY("multiply with"), DIVIDE("divide by"), SET("set to")
+        , MIN("limit to"), MAX("at least");
+
+        private final String displayName;
+
+        ActionType(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
+
     public static class MappingPoint {
         public final int input;
         public final int output;
@@ -84,10 +161,16 @@ public class LayerMapping {
         }
     }
 
-    public static class StonePaletteSetter implements IPositionValueSetter {
-        private final static Terrain[] materials = new Terrain[]{Terrain.GRASS, Terrain.GRAVEL, Terrain.STONE,
-                Terrain.COBBLESTONE, Terrain.MOSSY_COBBLESTONE, Terrain.GRANITE, Terrain.DIORITE, Terrain.ANDESITE,
-                Terrain.DEEPSLATE, Terrain.STONE_MIX, Terrain.ROCK};
+    public static class StonePaletteApplicator implements IPositionValueSetter {
+        private final Terrain[] materials;
+        HashSet<Terrain> mats;
+
+        public StonePaletteApplicator() {
+            materials = new Terrain[]{Terrain.GRASS, Terrain.GRAVEL, Terrain.STONE, Terrain.COBBLESTONE,
+                    Terrain.MOSSY_COBBLESTONE, Terrain.GRANITE, Terrain.DIORITE, Terrain.ANDESITE, Terrain.DEEPSLATE,
+                    Terrain.STONE_MIX, Terrain.ROCK};
+            mats = new HashSet<>(Arrays.asList(materials));
+        }
 
         @Override
         public String getName() {
@@ -116,6 +199,7 @@ public class LayerMapping {
 
         @Override
         public String valueToString(int value) {
+            if (value < 0 || value > materials.length) return "INVALID";
             return materials[value].getName() + "(" + value + ")";
         }
 
@@ -123,9 +207,21 @@ public class LayerMapping {
         public boolean isDiscrete() {
             return true;
         }
+
     }
 
-    public static class BiomeProvider implements IPositionValueGetter {
+    public static class VanillaBiomeProvider implements IPositionValueGetter {
+        Map.Entry<Integer, String>[] biomes;
+
+        public VanillaBiomeProvider() {
+            HashMap<Integer, String> validBiomes = new HashMap<>();
+            for (int biomeIdx = 0; biomeIdx < Minecraft1_20Biomes.BIOME_NAMES.length; biomeIdx++) {
+                String name = Minecraft1_20Biomes.BIOME_NAMES[biomeIdx];
+                if (name != null) validBiomes.put(biomeIdx, name);
+            }
+            biomes = new Map.Entry[validBiomes.size()];
+            biomes = validBiomes.entrySet().toArray(biomes);
+        }
 
         @Override
         public String getName() {
@@ -149,12 +245,13 @@ public class LayerMapping {
 
         @Override
         public int getMaxValue() {
-            return Layer.DataSize.BIT.maxValue;
+            return biomes.length;
         }
 
         @Override
         public String valueToString(int value) {
-            return Minecraft1_20Biomes.BIOME_NAMES[value];
+            if (value < 0 || value >= biomes.length) return "NULL";
+            return biomes[value].getValue();
         }
     }
 
@@ -231,7 +328,52 @@ public class LayerMapping {
         }
     }
 
-    public static class NibbleLayerSetter implements IPositionValueSetter {
+    public static class SelectionSetter implements IPositionValueSetter, IPositionValueGetter {
+        private final String[] names = new String[]{"Not Selected", "Selected", "Dont change"};
+
+        @Override
+        public String getName() {
+            return "Set Selection";
+        }
+
+        @Override
+        public String getDescription() {
+            return "Add or remove a position from the selection layer";
+        }
+
+        @Override
+        public void setValueAt(Dimension dim, int x, int y, int value) {
+            if (value == 2) return;
+            dim.setBitLayerValueAt(SelectionBlock.INSTANCE, x, y, value == 1);
+        }
+
+        @Override
+        public int getMinValue() {
+            return 0;
+        }
+
+        @Override
+        public int getMaxValue() {
+            return names.length;
+        }
+
+        @Override
+        public String valueToString(int value) {
+            return names[value];
+        }
+
+        @Override
+        public boolean isDiscrete() {
+            return true;
+        }
+
+        @Override
+        public int getValueAt(Dimension dim, int x, int y) {
+            return dim.getBitLayerValueAt(SelectionBlock.INSTANCE, x, y) ? 1 : 0;
+        }
+    }
+
+    public static class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter {
         private final Layer layer;
 
         public NibbleLayerSetter(Layer layer) {
@@ -261,6 +403,11 @@ public class LayerMapping {
         @Override
         public boolean isDiscrete() {
             return false;
+        }
+
+        @Override
+        public int getValueAt(Dimension dim, int x, int y) {
+            return dim.getLayerValueAt(layer, x, y);
         }
 
         @Override
@@ -298,11 +445,11 @@ public class LayerMapping {
         }
     }
 
-    public static class BitLayerBinarySpraypaintSetter implements IPositionValueSetter {
+    public static class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter, IPositionValueGetter {
         Random random = new Random();
         Layer layer;
 
-        public BitLayerBinarySpraypaintSetter(Layer layer) {
+        public BitLayerBinarySpraypaintApplicator(Layer layer) {
             this.layer = layer;
         }
 
@@ -339,6 +486,11 @@ public class LayerMapping {
         @Override
         public boolean isDiscrete() {
             return false;
+        }
+
+        @Override
+        public int getValueAt(Dimension dim, int x, int y) {
+            return dim.getBitLayerValueAt(layer, x, y) ? 100 : 0;
         }
 
         @Override

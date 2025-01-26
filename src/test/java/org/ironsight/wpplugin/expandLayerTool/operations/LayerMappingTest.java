@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.junit.jupiter.api.Test;
+import org.pepsoft.worldpainter.layers.Annotations;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -33,11 +34,11 @@ class LayerMappingTest {
         } */
 
         {   // 2 POINT LINEAR AT FIRST THAN PLATEAU
-            LayerMapping mapper = new LayerMapping(null, null,
+            LayerMapping mapper = new LayerMapping(new LayerMapping.HeightProvider(), new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
                     new LayerMapping.MappingPoint[]{
                             new LayerMapping.MappingPoint(50, 0),
                             new LayerMapping.MappingPoint(150, 10),
-                    });
+                    }, LayerMapping.ActionType.SET);
 
             for (int i = 0; i < 50; i ++) { //plateau before first point
                 assertEquals(0, mapper.map(i),i+"->"+mapper.map(i));
