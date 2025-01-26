@@ -37,6 +37,15 @@ public class LayerMapping {
         output.setValueAt(dim, x, y, mapped);
     }
 
+    public int sanitizeInput(int value) {
+        return Math.min(input.getMaxValue() ,Math.max(input.getMinValue(), value));
+    }
+
+    public int sanitizeOutput(int value) {
+        return Math.min(output.getMaxValue() ,Math.max(output.getMinValue()
+                , value));
+    }
+
     int map(int input) {    //TODO do linear interpolation
         if (input < mappingPoints[0].input) return mappingPoints[0].output;
         for (int i = 0; i < mappingPoints.length - 1; i++) {

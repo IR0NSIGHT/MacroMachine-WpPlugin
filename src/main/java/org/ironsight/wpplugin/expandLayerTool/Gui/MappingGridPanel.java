@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.pepsoft.worldpainter.layers.Annotations;
+import org.pepsoft.worldpainter.layers.Frost;
 
 import javax.swing.*;
 import java.awt.*;
@@ -117,13 +118,15 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                             // INSERT NEW POINT
                             LayerMapping.MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
                                     panel.mapping.getMappingPoints().length + 1);
-                            newPoints[newPoints.length - 1] = new LayerMapping.MappingPoint(gridX, gridY);
+
+                            newPoints[newPoints.length - 1] = new LayerMapping.MappingPoint( mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
                             setMapping(mapping.withNewPoints(newPoints));
                         } else {
                             //implicitly set selected point, but dont do anything with it
                         }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {
+                    // DELETE SELECTED POINT
                     //update selected
                     boolean hit = selectPointNear(gridX, gridY, pointHitBoxRadius);
                     if (!hit) selected = null;
@@ -157,7 +160,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                         int i = 0;
                         for (LayerMapping.MappingPoint p : panel.mapping.getMappingPoints()) {
                             if (p.equals(selected)) {
-                                newPoints[i] = new LayerMapping.MappingPoint(gridX, gridY);
+                                newPoints[i] = new LayerMapping.MappingPoint( mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
                                 selected = newPoints[i++];
                             } else newPoints[i++] = p;
                         }
@@ -380,7 +383,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
 
 
         LayerMapping mapper = new LayerMapping(new LayerMapping.SlopeProvider(),
-                new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
+                new LayerMapping.BitLayerBinarySpraypaintSetter(Frost.INSTANCE),
                 new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 2),
                         new LayerMapping.MappingPoint(50, 3), new LayerMapping.MappingPoint(70, 7),});
         MappingGridPanel gridPanel = new MappingGridPanel(mapper);
