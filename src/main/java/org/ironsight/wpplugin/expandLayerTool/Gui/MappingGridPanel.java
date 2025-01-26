@@ -18,8 +18,8 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     private final int pointHitBoxRadius = 5;
     private final int pixelSizeX = 500;
     private final int pixelSizeY = 500;
-    private final float GRID_X_SCALE;
-    private final float GRID_Y_SCALE;
+    private float GRID_X_SCALE;
+    private float GRID_Y_SCALE;
     private final int shiftGrid = 150;
     private boolean drag;
     private LayerMapping.MappingPoint selected;
@@ -30,8 +30,6 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     };
 
     public MappingGridPanel(LayerMapping mapping) {
-        this.GRID_X_SCALE = pixelSizeX / ((float) mapping.input.getMaxValue() - mapping.input.getMinValue());
-        this.GRID_Y_SCALE = pixelSizeY / ((float) mapping.output.getMaxValue() - mapping.output.getMinValue());
 
         this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
         setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
@@ -44,6 +42,9 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     @Override
     public void setMapping(LayerMapping mapping) {
         this.mapping = mapping;
+        this.GRID_X_SCALE = pixelSizeX / ((float) mapping.input.getMaxValue() - mapping.input.getMinValue());
+        this.GRID_Y_SCALE = pixelSizeY / ((float) mapping.output.getMaxValue() - mapping.output.getMinValue());
+
         clearLines();
         if (mapping.output.isDiscrete()) {
             for (int i = 1; i < mapping.getMappingPoints().length; i++) {
