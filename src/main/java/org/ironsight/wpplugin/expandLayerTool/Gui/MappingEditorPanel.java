@@ -67,6 +67,7 @@ public class MappingEditorPanel extends JPanel {
             }
         });
 
+        this.setMapping(new LayerMapping(inputSelect.getSelectedProvider(), outputSelect.getSelectedProvider(),mapping.getMappingPoints()));
         JButton submitButtom = new JButton("submit");
         submitButtom.addActionListener(new ActionListener() {
             @Override
