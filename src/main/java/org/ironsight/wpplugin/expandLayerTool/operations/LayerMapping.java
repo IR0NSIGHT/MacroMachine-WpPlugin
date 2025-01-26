@@ -170,7 +170,7 @@ public class LayerMapping {
 
         @Override
         public String getName() {
-            return "Set layer" + layer.getName();
+            return "Set layer " + layer.getName();
         }
 
         @Override
