@@ -55,6 +55,8 @@ public class ApplyAction {
 
     public void apply(Dimension dim) {
         applyToDimensionWithFilter(dim, filter, pos -> {
+            if (pos.x == 0 && pos.y == 0)
+                System.out.println("owo!");
             mapping.applyToPoint(dim, pos.x, pos.y);
         });
     }

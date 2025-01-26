@@ -45,16 +45,37 @@ public class MappingEditorPanel extends JPanel {
 
         JPanel top = new JPanel(new FlowLayout());
         Font inputOutputFont = new Font("SansSerif", Font.BOLD, 24);
+
+        JTextField nameField = new JTextField(mapping.getName());
+        nameField.setFont(inputOutputFont);
+        top.add(nameField);
+        nameField.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mapping.setName(nameField.getText());
+            }
+        });
+        JTextField description = new JTextField(mapping.getDescription());
+        description.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mapping.setDescription(description.getText());
+            }
+        });
+        description.setFont(inputOutputFont);
+        top.add(description);
+
         InputGetterComboBox inputSelect = new InputGetterComboBox();
         inputSelect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 IPositionValueGetter getter = inputSelect.getSelectedProvider();
-                setMapping(new LayerMapping(getter, mapping.output,mapping.getMappingPoints()));
+                setMapping(new LayerMapping(getter, mapping.output, mapping.getMappingPoints(), mapping.actionType));
             }
         });
         inputSelect.setFont(inputOutputFont);
         top.add(inputSelect);
+        inputSelect.SetSelected(mapping.input);
 
         OutputComboBox outputSelect = new OutputComboBox();
         top.add(outputSelect);
@@ -63,12 +84,24 @@ public class MappingEditorPanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 IPositionValueSetter setter = outputSelect.getSelectedProvider();
-                setMapping(new LayerMapping(mapping.input, setter, mapping.getMappingPoints()));
+                setMapping(new LayerMapping(mapping.input, setter, mapping.getMappingPoints(), mapping.actionType));
+            }
+        });
+        outputSelect.SetSelected(mapping.output);
+
+        ActionTypeComboBox actionTypeComboBox = new ActionTypeComboBox();
+        actionTypeComboBox.setFont(inputOutputFont);
+        top.add(actionTypeComboBox);
+        actionTypeComboBox.setTo(mapping.getActionType());
+        actionTypeComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                mapping.setActionType(actionTypeComboBox.getSelectedProvider());
+                setMapping(mapping);
             }
         });
 
-        this.setMapping(new LayerMapping(inputSelect.getSelectedProvider(), outputSelect.getSelectedProvider(),mapping.getMappingPoints()));
-        JButton submitButtom = new JButton("submit");
+        JButton submitButtom = new JButton("save");
         submitButtom.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -77,8 +110,7 @@ public class MappingEditorPanel extends JPanel {
         });
 
 
-
-        this.add(top,BorderLayout.NORTH);
+        this.add(top, BorderLayout.NORTH);
         this.add(table, BorderLayout.EAST);
         this.add(submitButtom, BorderLayout.SOUTH);
         this.add(mappingDisplay, BorderLayout.CENTER);
@@ -91,16 +123,29 @@ public class MappingEditorPanel extends JPanel {
         this.mapping = mapping;
     }
 
-    public static JDialog createDialog(JFrame parent, LayerMapping mapping, Consumer<LayerMapping> onSubmit) {
+    public static JDialog createDialog(JFrame parent, LayerMapping mapping, Consumer<LayerMapping> applyToMap) {
         // Create a JDialog with the parent frame
         JDialog dialog = new JDialog(parent, "My Dialog", false); // Modal dialog
+        JPanel all = new JPanel(new BorderLayout());
 
         Consumer<LayerMapping> submit = mapping1 -> {
-            onSubmit.accept(mapping1);
-            //     dialog.dispose();
+
         };
         MappingEditorPanel editor = new MappingEditorPanel(mapping, submit);
-        dialog.add(editor);
+        all.add(editor, BorderLayout.CENTER);
+
+        JPanel buttons = new JPanel(new FlowLayout());
+        JButton apply = new JButton("apply");
+        apply.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                applyToMap.accept(editor.mapping);
+            }
+        });
+        buttons.add(apply);
+        all.add(buttons, BorderLayout.SOUTH);
+
+        dialog.add(all);
         dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
         dialog.pack();
         return dialog;
@@ -110,8 +155,10 @@ public class MappingEditorPanel extends JPanel {
         JFrame frame = new JFrame("TEST PANEL");
 
         IPositionValueGetter input = new LayerMapping.SlopeProvider();
-        IPositionValueSetter output = new LayerMapping.StonePaletteSetter();
-        LayerMapping mapper = new LayerMapping(input, output, new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),output.getMinValue())});
+        IPositionValueSetter output = new LayerMapping.StonePaletteApplicator();
+        LayerMapping mapper = new LayerMapping(input, output,
+                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),
+                        output.getMinValue())}, LayerMapping.ActionType.SET);
 
         MappingEditorPanel editor = new MappingEditorPanel(mapper, f -> {
         });

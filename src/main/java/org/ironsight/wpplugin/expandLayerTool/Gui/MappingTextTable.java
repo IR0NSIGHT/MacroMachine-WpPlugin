@@ -127,7 +127,7 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
 
         LayerMapping mapper = new LayerMapping(null, null,
                 new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
-                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),});
+                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),}, LayerMapping.ActionType.SET);
 
         MappingTextTable table = new MappingTextTable(mapper);
 

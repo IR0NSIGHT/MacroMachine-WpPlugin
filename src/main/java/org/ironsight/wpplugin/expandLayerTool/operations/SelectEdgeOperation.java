@@ -5,7 +5,6 @@ import org.ironsight.wpplugin.expandLayerTool.Gui.GradientEditor;
 import org.ironsight.wpplugin.expandLayerTool.pathing.RingFinder;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
-import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
 import org.pepsoft.worldpainter.panels.DefaultFilter;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -20,7 +19,6 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyVetoException;
 import java.net.URI;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.expandLayerTool.Gui.MappingEditorPanel.createDialog;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
@@ -360,24 +358,15 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
             if (mapping == null) {
                 IPositionValueGetter input = new LayerMapping.SlopeProvider();
-                IPositionValueSetter output = new LayerMapping.StonePaletteSetter();
-                mapping = new LayerMapping(input, output, new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),output.getMinValue())});
+                IPositionValueSetter output = new LayerMapping.StonePaletteApplicator();
+                mapping = new LayerMapping(input, output,
+                        new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),
+                                output.getMinValue())}, LayerMapping.ActionType.SET);
 
             }
 
-            Consumer<LayerMapping> onSubmit = mapping1 -> {
-                this.getDimension().setEventsInhibited(true);
 
-                org.pepsoft.worldpainter.Dimension dim = getDimension();
-                DefaultFilter filter = new DefaultFilter(dim, false, false, -1000, 1000, false, null, null, 0, true);
-                ApplyAction action = new ApplyAction(filter, mapping1);
-                action.apply(dim);
-                this.mapping = mapping1;
-                this.getDimension().setEventsInhibited(false);
-
-            };
-
-            JDialog dialog = createDialog(null, mapping, onSubmit);
+            JDialog dialog = createDialog(null, mapping, this::applyLayerAction);
 
             dialog.setVisible(true);
 
@@ -394,6 +383,21 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                     getDimension().setBitLayerValueAt(SelectionBlock.INSTANCE, p.x, p.y, true);
                 else getDimension().setLayerValueAt(Annotations.INSTANCE, p.x, p.y, CYAN);
             }
+        }
+    }
+
+    public void applyLayerAction(LayerMapping mapping) {
+        this.getDimension().setEventsInhibited(true);
+        try {
+            org.pepsoft.worldpainter.Dimension dim = getDimension();
+            DefaultFilter filter = new DefaultFilter(dim, false, false, -1000, 1000, false, null, null, 0, true);
+            ApplyAction action = new ApplyAction(filter, mapping);
+            action.apply(dim);
+            this.mapping = mapping;
+        } catch (Exception ex) {
+            System.out.println(ex);
+        } finally {
+            this.getDimension().setEventsInhibited(false);
         }
     }
 
