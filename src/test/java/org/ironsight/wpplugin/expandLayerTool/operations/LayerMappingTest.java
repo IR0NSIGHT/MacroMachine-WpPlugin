@@ -34,20 +34,19 @@ class LayerMappingTest {
         } */
 
         {   // 2 POINT LINEAR AT FIRST THAN PLATEAU
-            LayerMapping mapper = new LayerMapping(new LayerMapping.HeightProvider(), new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
-                    new LayerMapping.MappingPoint[]{
-                            new LayerMapping.MappingPoint(50, 0),
-                            new LayerMapping.MappingPoint(150, 10),
-                    }, LayerMapping.ActionType.SET);
+            LayerMapping mapper = new LayerMapping(new LayerMapping.HeightProvider(),
+                    new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
+                    new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(50, 0),
+                            new LayerMapping.MappingPoint(150, 10),}, LayerMapping.ActionType.SET, "", "");
 
-            for (int i = 0; i < 50; i ++) { //plateau before first point
-                assertEquals(0, mapper.map(i),i+"->"+mapper.map(i));
+            for (int i = 0; i < 50; i++) { //plateau before first point
+                assertEquals(0, mapper.map(i), i + "->" + mapper.map(i));
             }
-            for (int i = 50; i < 150; i ++) { //linear between points
-                assertEquals(Math.round(((float)i-50)/10), mapper.map(i),i+"->"+mapper.map(i));
+            for (int i = 50; i < 150; i++) { //linear between points
+                assertEquals(Math.round(((float) i - 50) / 10), mapper.map(i), i + "->" + mapper.map(i));
             }
             for (int i = 150; i < 300; i++) { //plateau after second point
-                assertEquals(10,mapper.map(i));
+                assertEquals(10, mapper.map(i));
             }
         }
     }

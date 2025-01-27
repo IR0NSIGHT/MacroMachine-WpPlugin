@@ -30,6 +30,63 @@ public class MappingEditorPanel extends JPanel {
         setMapping(mapping);
     }
 
+    public static JDialog createDialog(JFrame parent, Consumer<LayerMapping> applyToMap) {
+        // Create a JDialog with the parent frame
+        JDialog dialog = new JDialog(parent, "My Dialog", false); // Modal dialog
+        JPanel all = new JPanel(new BorderLayout());
+
+        Consumer<LayerMapping> submit = mapping1 -> {
+            LayerMappingContainer.INSTANCE.updateMapping(mapping1);
+        };
+
+        MappingEditorPanel editor = new MappingEditorPanel(LayerMappingContainer.INSTANCE.queryMappingsAll()[0],
+                submit);
+        all.add(editor, BorderLayout.CENTER);
+
+        SavedMappingsSelector mappingSelector = new SavedMappingsSelector(editor::setMapping);
+        mappingSelector.setTo(LayerMappingContainer.INSTANCE.queryMappingsAll()[0]);
+        all.add(mappingSelector, BorderLayout.WEST);
+
+        editor.setMapping(mappingSelector.getSelectedProvider());
+
+        JPanel buttons = new JPanel(new FlowLayout());
+        JButton apply = new JButton("apply");
+        apply.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                submit.accept(editor.mapping);  //SAVE TO CONTAINER ON APPLY
+                applyToMap.accept(editor.mapping);
+            }
+        });
+        buttons.add(apply);
+        all.add(buttons, BorderLayout.SOUTH);
+
+        dialog.add(all);
+        dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
+        dialog.pack();
+        return dialog;
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("TEST PANEL");
+
+        IPositionValueGetter input = new LayerMapping.SlopeProvider();
+        IPositionValueSetter output = new LayerMapping.StonePaletteApplicator();
+        LayerMapping mapper = new LayerMapping(input, output,
+                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),
+                        output.getMinValue())}, LayerMapping.ActionType.SET, "Test", "test description");
+
+        MappingEditorPanel editor = new MappingEditorPanel(mapper, f -> {
+        });
+
+        // Add the outer panel to the frame
+        frame.add(editor);
+
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+
     private void initComponents() {
         this.setLayout(new BorderLayout());
 
@@ -58,9 +115,9 @@ public class MappingEditorPanel extends JPanel {
         nameField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (mapping.getName().equals(nameField.getText()))
-                    return;
-                setMapping(new LayerMapping(mapping.input,mapping.output,mapping.getMappingPoints(),mapping.actionType,nameField.getText(), mapping.getDescription()));
+                if (mapping.getName().equals(nameField.getText())) return;
+                setMapping(new LayerMapping(mapping.input, mapping.output, mapping.getMappingPoints(),
+                        mapping.actionType, nameField.getText(), mapping.getDescription()));
             }
         });
         description = new JTextField(mapping.getDescription());
@@ -69,7 +126,8 @@ public class MappingEditorPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 if (mapping.getDescription().equals(description.getText())) return;
                 mapping.setDescription(description.getText());
-                setMapping(new LayerMapping(mapping.input,mapping.output,mapping.getMappingPoints(),mapping.actionType,mapping.getName(), description.getText()));
+                setMapping(new LayerMapping(mapping.input, mapping.output, mapping.getMappingPoints(),
+                        mapping.actionType, mapping.getName(), description.getText()));
             }
         });
         description.setFont(inputOutputFont);
@@ -95,8 +153,7 @@ public class MappingEditorPanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 IPositionValueSetter setter = outputSelect.getSelectedProvider();
-                if (mapping.output.equals(outputSelect.getSelectedProvider()))
-                    return;
+                if (mapping.output.equals(outputSelect.getSelectedProvider())) return;
                 setMapping(new LayerMapping(mapping.input, setter, mapping.getMappingPoints(), mapping.actionType,
                         mapping.getName(), mapping.getDescription()));
             }
@@ -141,61 +198,5 @@ public class MappingEditorPanel extends JPanel {
 
         this.mapping = mapping;
         this.repaint();
-    }
-
-    public static JDialog createDialog(JFrame parent, Consumer<LayerMapping> applyToMap) {
-        // Create a JDialog with the parent frame
-        JDialog dialog = new JDialog(parent, "My Dialog", false); // Modal dialog
-        JPanel all = new JPanel(new BorderLayout());
-
-        Consumer<LayerMapping> submit = mapping1 -> {
-            LayerMappingContainer.INSTANCE.putMapping(mapping1, mapping1.getName());
-        };
-
-        MappingEditorPanel editor = new MappingEditorPanel(LayerMappingContainer.INSTANCE.getMappings()[0], submit);
-        all.add(editor, BorderLayout.CENTER);
-
-        SavedMappingsSelector mappingSelector = new SavedMappingsSelector(editor::setMapping);
-        mappingSelector.setTo(LayerMappingContainer.INSTANCE.getMappings()[0]);
-        all.add(mappingSelector, BorderLayout.WEST);
-
-        editor.setMapping(mappingSelector.getSelectedProvider());
-
-        JPanel buttons = new JPanel(new FlowLayout());
-        JButton apply = new JButton("apply");
-        apply.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                submit.accept(editor.mapping);  //SAVE TO CONTAINER ON APPLY
-                applyToMap.accept(editor.mapping);
-            }
-        });
-        buttons.add(apply);
-        all.add(buttons, BorderLayout.SOUTH);
-
-        dialog.add(all);
-        dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
-        dialog.pack();
-        return dialog;
-    }
-
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("TEST PANEL");
-
-        IPositionValueGetter input = new LayerMapping.SlopeProvider();
-        IPositionValueSetter output = new LayerMapping.StonePaletteApplicator();
-        LayerMapping mapper = new LayerMapping(input, output,
-                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),
-                        output.getMinValue())}, LayerMapping.ActionType.SET, "Test", "test description");
-
-        MappingEditorPanel editor = new MappingEditorPanel(mapper, f -> {
-        });
-
-        // Add the outer panel to the frame
-        frame.add(editor);
-
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
     }
 }
