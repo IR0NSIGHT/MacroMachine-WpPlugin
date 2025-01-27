@@ -14,9 +14,31 @@ public class LayerMapping implements IDisplayUnit {
     public final IPositionValueGetter input;
     public final IPositionValueSetter output;
     public ActionType actionType = ActionType.SET;
+    transient int uid;
     MappingPoint[] mappingPoints;
     private String name = "Mapping";
     private String description = "Mapping one property to another";
+
+    public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
+                        ActionType type, String name, String description) {
+        this(input, output, mappingPoints, type, name, description, -1);
+    }
+
+    LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
+                 ActionType type, String name, String description, int uid) {
+        this.name = name;
+        this.description = description;
+        this.input = input;
+        this.output = output;
+        this.mappingPoints = mappingPoints.clone();
+        this.actionType = type;
+        this.uid = uid;
+        Arrays.sort(this.mappingPoints, Comparator.comparing(mp -> mp.input));
+    }
+
+    public int getUid() {
+        return uid;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -33,23 +55,13 @@ public class LayerMapping implements IDisplayUnit {
         return result;
     }
 
-    public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
-                        ActionType type, String name, String description) {
-        this.name = name;
-        this.description = description;
-        this.input = input;
-        this.output = output;
-        this.mappingPoints = mappingPoints.clone();
-        this.actionType = type;
-        Arrays.sort(this.mappingPoints, Comparator.comparing(mp -> mp.input));
-    }
-
     public MappingPoint[] getMappingPoints() {
         return mappingPoints;
     }
 
     public LayerMapping withNewPoints(MappingPoint[] mappingPoints) {
-        return new LayerMapping(this.input, this.output, mappingPoints, this.getActionType(), this.getName(), this.getDescription());
+        return new LayerMapping(this.input, this.output, mappingPoints, this.getActionType(), this.getName(),
+                this.getDescription(), this.uid);
     }
 
     public ActionType getActionType() {

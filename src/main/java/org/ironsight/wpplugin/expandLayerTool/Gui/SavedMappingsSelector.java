@@ -6,25 +6,23 @@ import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 
 public class SavedMappingsSelector extends JPanel {
+    private final Consumer<LayerMapping> onSelection;
     JList<String> list;
     JScrollPane scrollPane;
 
-    private final Consumer<LayerMapping> onSelection;
     public SavedMappingsSelector(Consumer<LayerMapping> onSelection) {
         this.onSelection = onSelection;
-        LayerMappingContainer.INSTANCE.onChange = e -> updateSelf();
+        LayerMappingContainer.INSTANCE.subscribe(this::updateSelf);
         initComponents();
         updateSelf();
     }
 
     private void updateSelf() {
         DefaultListModel<String> model = new DefaultListModel<>();
-        for (LayerMapping m : LayerMappingContainer.INSTANCE.getMappings())
+        for (LayerMapping m : LayerMappingContainer.INSTANCE.queryMappingsAll())
             model.addElement(m.getName());
         list.setModel(model);
         list.repaint();
@@ -41,7 +39,7 @@ public class SavedMappingsSelector extends JPanel {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 String selected = list.getSelectedValue();
-                LayerMapping mapping = LayerMappingContainer.INSTANCE.getMapping(selected);
+                LayerMapping mapping = LayerMappingContainer.INSTANCE.queryMappingById(-1); //FIXME
                 if (mapping != null) onSelection.accept(mapping);
             }
         });
@@ -49,7 +47,7 @@ public class SavedMappingsSelector extends JPanel {
     }
 
     public LayerMapping getSelectedProvider() {
-        return LayerMappingContainer.INSTANCE.getMapping(list.getSelectedValue());
+        return LayerMappingContainer.INSTANCE.queryMappingById(-1); //FIXME
     }
 
     public void setTo(LayerMapping m) {
