@@ -8,16 +8,21 @@ import org.pepsoft.worldpainter.layers.Biome;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 
+import java.io.IOException;
+import java.io.ObjectStreamException;
+import java.io.Serializable;
 import java.util.*;
 
-public class LayerMapping implements IDisplayUnit {
+public class LayerMapping implements IDisplayUnit, Serializable {
+
+
     public final IPositionValueGetter input;
     public final IPositionValueSetter output;
     public final ActionType actionType;
     private final MappingPoint[] mappingPoints;
     private final String name;
     private final String description;
-    int uid;
+    transient int uid;
 
     public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
                         ActionType type, String name, String description, int uid) {
@@ -60,7 +65,7 @@ public class LayerMapping implements IDisplayUnit {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LayerMapping mapping = (LayerMapping) o;
-        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) && actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) && Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
+        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) && actionType == mapping.actionType && Objects.deepEquals(mappingPoints, mapping.mappingPoints) && Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
     }
 
     @Override
@@ -178,7 +183,7 @@ public class LayerMapping implements IDisplayUnit {
         }
     }
 
-    public static class MappingPoint {
+    public static class MappingPoint implements Serializable {
         public final int input;
         public final int output;
 
@@ -216,7 +221,7 @@ public class LayerMapping implements IDisplayUnit {
 
         @Override
         public String valueToString(int value) {
-            return "testvalue-"+value;
+            return "testvalue-" + value;
         }
 
         @Override
@@ -371,6 +376,8 @@ public class LayerMapping implements IDisplayUnit {
 
     public static class HeightProvider implements IPositionValueGetter {
 
+        public HeightProvider() {};
+
         @Override
         public int getValueAt(Dimension dim, int x, int y) {
             return Math.round(dim.getHeightAt(x, y));
@@ -403,7 +410,7 @@ public class LayerMapping implements IDisplayUnit {
     }
 
     public static class SelectionSetter implements IPositionValueSetter, IPositionValueGetter {
-        private final String[] names = new String[]{"Not Selected", "Selected", "Dont change"};
+        private transient static final String[] names = new String[]{"Not Selected", "Selected", "Dont change"};
 
         @Override
         public String getName() {
@@ -450,15 +457,13 @@ public class LayerMapping implements IDisplayUnit {
     public static class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter {
         private final Layer layer;
 
-        @Override
-        public String toString() {
-            return "NibbleLayerSetter{" +
-                    "layer=" + layer +
-                    '}';
-        }
-
         public NibbleLayerSetter(Layer layer) {
             this.layer = layer;
+        }
+
+        @Override
+        public String toString() {
+            return "NibbleLayerSetter{" + "layer=" + layer + '}';
         }
 
         @Override
@@ -533,6 +538,8 @@ public class LayerMapping implements IDisplayUnit {
         public BitLayerBinarySpraypaintApplicator(Layer layer) {
             this.layer = layer;
         }
+
+
 
         /**
          * @param dim

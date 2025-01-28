@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.IPositionValueGetter;
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.ironsight.wpplugin.expandLayerTool.operations.InputOutputProvider;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -11,8 +11,14 @@ public class InputGetterComboBox extends JComboBox<String> {
     Map<String, IPositionValueGetter> stringToGetter = new HashMap<>();
 
     public InputGetterComboBox() {
-        addGetter(new LayerMapping.HeightProvider());
-        addGetter(new LayerMapping.SlopeProvider());
+        InputOutputProvider.INSTANCE.subscribe(this::updateSelf);
+        updateSelf();
+    }
+
+    public void updateSelf() {
+        for (IPositionValueGetter getter : InputOutputProvider.INSTANCE.getters) {
+            addGetter(getter);
+        }
     }
 
     private void addGetter(IPositionValueGetter getter) {

@@ -3,9 +3,38 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.layers.Annotations;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.io.*;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class LayerMappingTest {
+
+    @Test
+    void serialize() {
+        try {
+            // Create an instance of the object
+            LayerMapping originalObject = new LayerMapping(new LayerMapping.HeightProvider(),
+                    new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
+                    new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(7, 12)},
+                    LayerMapping.ActionType.DIVIDE, "hello", "world with a space", -1);
+
+
+            // Serialize the object
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            java.io.ObjectOutputStream oos = new ObjectOutputStream(baos);
+            oos.writeObject(originalObject);
+            oos.close();
+
+            // Deserialize the object
+            ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+            ObjectInputStream ois = new ObjectInputStream(bais);
+            LayerMapping deserializedObject = (LayerMapping) ois.readObject();
+            assertEquals(originalObject, deserializedObject);
+
+        } catch (IOException | ClassNotFoundException e) {
+            fail("Exception occurred during serialization/deserialization: " + e.getMessage());
+        }
+    }
 
     @Test
     void map() {
@@ -37,7 +66,7 @@ class LayerMappingTest {
             LayerMapping mapper = new LayerMapping(new LayerMapping.HeightProvider(),
                     new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
                     new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(50, 0),
-                            new LayerMapping.MappingPoint(150, 10),}, LayerMapping.ActionType.SET, "", "",-1);
+                            new LayerMapping.MappingPoint(150, 10),}, LayerMapping.ActionType.SET, "", "", -1);
 
             for (int i = 0; i < 50; i++) { //plateau before first point
                 assertEquals(0, mapper.map(i), i + "->" + mapper.map(i));
