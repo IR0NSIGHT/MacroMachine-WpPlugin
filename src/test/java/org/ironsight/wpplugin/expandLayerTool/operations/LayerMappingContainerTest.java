@@ -12,7 +12,7 @@ class LayerMappingContainerTest {
     void updateMapping() {
         LayerMappingContainer container = new LayerMappingContainer();
         LayerMapping mapping = new LayerMapping(null, null, new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "hello", "world");
+                LayerMapping.ActionType.SET, "hello", "world",-1);
 
         int uid = container.addMapping(mapping);
         assertEquals(uid, mapping.getUid());
@@ -34,7 +34,7 @@ class LayerMappingContainerTest {
     void deleteMapping() {
         LayerMappingContainer container = new LayerMappingContainer();
         LayerMapping mapping = new LayerMapping(null, null, new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "hello", "world");
+                LayerMapping.ActionType.SET, "hello", "world",-1);
 
         int uid = container.addMapping(mapping);
         assertEquals(uid, mapping.getUid());
@@ -47,7 +47,7 @@ class LayerMappingContainerTest {
     void addMapping() {
         LayerMappingContainer container = new LayerMappingContainer();
         LayerMapping mapping = new LayerMapping(null, null, new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "hello", "world");
+                LayerMapping.ActionType.SET, "hello", "world",-1);
 
         int uid = container.addMapping(mapping);
         assertEquals(uid, mapping.getUid());
@@ -73,7 +73,7 @@ class LayerMappingContainerTest {
         container.subscribe(runnable);
 
         LayerMapping mapping = new LayerMapping(null, null, new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "hello", "world");
+                LayerMapping.ActionType.SET, "hello", "world",-1);
 
         int uid = container.addMapping(mapping);
         assertEquals(1,ran[0]);
@@ -104,7 +104,7 @@ class LayerMappingContainerTest {
         LayerMappingContainer container = new LayerMappingContainer();
 
         LayerMapping mapping = new LayerMapping(null, null, new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "hello", "world");
+                LayerMapping.ActionType.SET, "hello", "world",-1);
 
         int uid = container.addMapping(mapping);
         container.subscribeToMapping(uid, runnable);
@@ -116,7 +116,7 @@ class LayerMappingContainerTest {
         assertEquals(2,ran[0]);
 
         container.addMapping(new LayerMapping(null, null, new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "hello", "world"));
+                LayerMapping.ActionType.SET, "hello", "world",-1));
         assertEquals(2,ran[0]);
 
         container.unsubscribe(runnable);

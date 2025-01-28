@@ -19,11 +19,7 @@ public class OutputComboBox extends JComboBox<String> {
     Map<String, IPositionValueSetter> stringToGetter = new HashMap<>();
 
     public OutputComboBox() {
-        addGetter(new LayerMapping.BitLayerBinarySpraypaintApplicator(Frost.INSTANCE));
-        addGetter(new LayerMapping.NibbleLayerSetter(DeciduousForest.INSTANCE));
-        addGetter(new LayerMapping.NibbleLayerSetter(PineForest.INSTANCE));
-        addGetter(new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE));
-        addGetter(new LayerMapping.StonePaletteApplicator());
+        addGetter(new LayerMapping.TestInputOutput());
     }
 
     private void addGetter(IPositionValueSetter getter) {

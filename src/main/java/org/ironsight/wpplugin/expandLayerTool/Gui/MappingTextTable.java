@@ -5,7 +5,6 @@ import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
@@ -24,16 +23,31 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
     private LayerMapping mapping;
     private JTable numberTable;
 
-    public MappingTextTable(LayerMapping mapping) {
-        this.mapping = mapping;
-
+    public MappingTextTable() {
         init();
-        updateComponents();
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame("TEST PANEL");
+
+        LayerMapping mapper = new LayerMapping(null, null,
+                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
+                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),},
+                LayerMapping.ActionType.SET, "test", "test thing descr",1);
+
+        MappingTextTable table = new MappingTextTable();
+        table.setMapping(mapper);
+        // Add the outer panel to the frame
+        frame.add(table);
+
+        frame.pack();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
     }
 
     private void init() {
         Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
-        Border whiteBorder = new EmptyBorder( 5,5,5,5); // 5px white border
+        Border whiteBorder = new EmptyBorder(5, 5, 5, 5); // 5px white border
         setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
 
         // Add a TableModelListener to get a callback when a cell is edited
@@ -72,10 +86,10 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
         Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
         for (int i = 0; i < mapping.getMappingPoints().length; i++) {
             LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
-            data[i] = new Object[]{mapping.input.valueToString(a.input),mapping.output.valueToString(a.output)};
+            data[i] = new Object[]{mapping.input.valueToString(a.input), mapping.output.valueToString(a.output)};
         }
 
-        selectedPointIdx = Math.min(selectedPointIdx, mapping.getMappingPoints().length -1);
+        selectedPointIdx = Math.min(selectedPointIdx, mapping.getMappingPoints().length - 1);
 
         this.tableModel = new DefaultTableModel(data, columnNames);
         this.tableModel.addTableModelListener(this.listener);
@@ -122,23 +136,6 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
 
         updateComponents();
         return true;
-    }
-
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("TEST PANEL");
-
-        LayerMapping mapper = new LayerMapping(null, null,
-                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
-                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),}, LayerMapping.ActionType.SET, "test","test thing descr");
-
-        MappingTextTable table = new MappingTextTable(mapper);
-
-        // Add the outer panel to the frame
-        frame.add(table);
-
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
     }
 
     public void setMapping(LayerMapping mapping) {
