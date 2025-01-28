@@ -11,7 +11,6 @@ public class ActionTypeComboBox extends JComboBox<String> {
             addItem(t.getDisplayName());
     }
 
-
     public LayerMapping.ActionType getSelectedProvider() {
         return LayerMapping.ActionType.values()[getSelectedIndex()];
     }

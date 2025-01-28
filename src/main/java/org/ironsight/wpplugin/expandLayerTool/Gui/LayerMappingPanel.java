@@ -7,11 +7,16 @@ import java.util.function.Consumer;
 
 public abstract class LayerMappingPanel extends JPanel {
     protected LayerMapping mapping;
+    private boolean allowEvents = true;
     private Consumer<LayerMapping> onUpdate = f -> {
     };
 
     public LayerMappingPanel() {
         initComponents();
+    }
+
+    public void allowEvents(boolean allow) {
+        allowEvents = allow;
     }
 
     protected abstract void updateComponents();
@@ -20,14 +25,16 @@ public abstract class LayerMappingPanel extends JPanel {
 
     /**
      * will set mapping, call onUpdate and trigger internal update()
+     *
      * @param mapping
      */
     protected final void updateMapping(LayerMapping mapping) {
+        boolean isInitialSet = this.mapping == null;
         if (this.mapping != null && this.mapping.equals(mapping)) {
             return;
         }
         setMapping(mapping);
-        if (onUpdate != null) onUpdate.accept(mapping);
+        if (!isInitialSet && onUpdate != null && allowEvents) onUpdate.accept(mapping);
     }
 
     public final void setMapping(LayerMapping mapping) {

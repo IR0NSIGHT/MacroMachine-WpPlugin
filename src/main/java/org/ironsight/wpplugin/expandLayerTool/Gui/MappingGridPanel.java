@@ -375,6 +375,12 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
 
     @Override
     public void setSelected(Integer selectedPointIdx) {
+        if (mapping == null)
+            return;
+        int l = mapping.getMappingPoints().length;
+        if (selectedPointIdx < 0 || selectedPointIdx > l - 1) {
+            selectedPointIdx = 0;
+        }
         this.selected = mapping.getMappingPoints()[selectedPointIdx];
         this.repaint();
     }

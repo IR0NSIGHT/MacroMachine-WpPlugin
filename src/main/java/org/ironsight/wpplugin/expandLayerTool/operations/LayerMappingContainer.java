@@ -17,8 +17,15 @@ public class LayerMappingContainer {
     private int nextUid = 1;
 
     public LayerMappingContainer() {
-
-    }
+        addMapping(new LayerMapping(new LayerMapping.SlopeProvider(),
+                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0],
+                LayerMapping.ActionType.SET, "paint mountainsides", "", -1));
+        addMapping(new LayerMapping(new LayerMapping.HeightProvider(),
+                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0]
+                , LayerMapping.ActionType.SET, "frost mountain tops", "", -1));
+        addMapping(new LayerMapping(new LayerMapping.SlopeProvider(),
+                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0],
+                LayerMapping.ActionType.SET, "no steep pines", "", -1));    }
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("TEST PANEL");
