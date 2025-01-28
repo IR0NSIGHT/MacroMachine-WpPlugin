@@ -9,9 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 
-public class MappingEditorPanel extends JPanel {
+public class MappingEditorPanel extends LayerMappingPanel {
     private final Consumer<LayerMapping> onSubmit;
-    private LayerMapping mapping;
 
     private MappingGridPanel mappingDisplay;
     private MappingTextTable table;
@@ -20,7 +19,6 @@ public class MappingEditorPanel extends JPanel {
     public MappingEditorPanel(Consumer<LayerMapping> onSubmit) {
         super();
         this.onSubmit = onSubmit;
-        initComponents();
     }
 
     public static JDialog createDialog(JFrame parent, Consumer<LayerMapping> applyToMap) {
@@ -36,11 +34,10 @@ public class MappingEditorPanel extends JPanel {
         all.add(editor, BorderLayout.CENTER);
 
         SavedMappingsSelector mappingSelector = new SavedMappingsSelector(editor::setMapping);
-        mappingSelector.setTo(LayerMappingContainer.INSTANCE.queryMappingsAll()[0]);
+        mappingSelector.setMapping(LayerMappingContainer.INSTANCE.queryMappingsAll()[0]);
         all.add(mappingSelector, BorderLayout.WEST);
 
-        LayerMapping m = LayerMappingContainer.INSTANCE.queryMappingById(mappingSelector.getSelectedProvider());
-        editor.setMapping(m);
+        editor.setMapping(mappingSelector.mapping);
 
         JPanel buttons = new JPanel(new FlowLayout());
         JButton apply = new JButton("apply");
@@ -60,21 +57,30 @@ public class MappingEditorPanel extends JPanel {
         return dialog;
     }
 
-    private void initComponents() {
+    @Override
+    protected void updateComponents() {
+        table.setMapping(mapping);
+        mappingDisplay.setMapping(mapping);
+        topBar.setMapping(mapping);
+        this.repaint();
+    }
+
+    @Override
+    protected void initComponents() {
         this.setLayout(new BorderLayout());
 
         mappingDisplay = new MappingGridPanel();
         table = new MappingTextTable();
 
         //set up sync between both components
-        table.setOnUpdate(this::setMapping);
+        table.setOnUpdate(this::updateMapping);
         table.setOnSelect(mappingDisplay::setSelected);
 
-        mappingDisplay.setOnUpdate(this::setMapping);
+        mappingDisplay.setOnUpdate(this::updateMapping);
         mappingDisplay.setOnSelect(table::setSelected);
 
         topBar = new LayerMappingTopPanel();
-        topBar.setOnChange(this::setMapping);
+        topBar.setOnUpdate(this::updateMapping);
 
         JButton submitButtom = new JButton("save");
         submitButtom.addActionListener(new ActionListener() {
@@ -84,21 +90,9 @@ public class MappingEditorPanel extends JPanel {
             }
         });
 
-
         this.add(topBar, BorderLayout.NORTH);
         this.add(table, BorderLayout.EAST);
         this.add(submitButtom, BorderLayout.SOUTH);
         this.add(mappingDisplay, BorderLayout.CENTER);
-
-    }
-
-    public void setMapping(LayerMapping mapping) {
-        if (this.mapping != null && this.mapping.equals(mapping)) return;
-        table.setMapping(mapping);
-        mappingDisplay.setMapping(mapping);
-        topBar.setMapping(mapping);
-
-        this.mapping = mapping;
-        this.repaint();
     }
 }

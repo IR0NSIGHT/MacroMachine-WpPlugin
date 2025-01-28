@@ -9,20 +9,20 @@ import javax.swing.event.ListSelectionListener;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
-public class SavedMappingsSelector extends JPanel {
-    private final Consumer<LayerMapping> onSelection;
+public class SavedMappingsSelector extends LayerMappingPanel {
     JList<String> list;
     JScrollPane scrollPane;
     HashMap<String, Integer> nameToUid = new HashMap<>();
 
     public SavedMappingsSelector(Consumer<LayerMapping> onSelection) {
-        this.onSelection = onSelection;
-        initComponents();
-        updateSelf();
-        LayerMappingContainer.INSTANCE.subscribe(this::updateSelf);
+        super();
+        LayerMappingContainer.INSTANCE.subscribe(this::updateComponents);
+        updateComponents();
+        this.setOnUpdate(onSelection);
     }
 
-    private void updateSelf() {
+    @Override
+    protected void updateComponents() {
         int uid = getSelectedProvider();
         nameToUid.clear();
         DefaultListModel<String> model = new DefaultListModel<>();
@@ -31,11 +31,12 @@ public class SavedMappingsSelector extends JPanel {
             model.addElement(m.getName());
         }
         list.setModel(model);
-        setTo(LayerMappingContainer.INSTANCE.queryMappingById(uid));
+        list.setSelectedValue(LayerMappingContainer.INSTANCE.queryMappingById(uid), true);
         list.repaint();
     }
 
-    private void initComponents() {
+    @Override
+    protected void initComponents() {
         // Create the JList
         list = new JList<>();
 
@@ -48,7 +49,7 @@ public class SavedMappingsSelector extends JPanel {
                 String selected = list.getSelectedValue();
                 LayerMapping mapping =
                         LayerMappingContainer.INSTANCE.queryMappingById(nameToUid.getOrDefault(selected, -1)); //FIXME
-                if (mapping != null) onSelection.accept(mapping);
+                if (mapping != null) updateMapping(mapping);
             }
         });
         this.add(scrollPane);
@@ -56,9 +57,5 @@ public class SavedMappingsSelector extends JPanel {
 
     public int getSelectedProvider() {
         return nameToUid.getOrDefault(list.getSelectedValue(), -1);
-    }
-
-    public void setTo(LayerMapping m) {
-        list.setSelectedValue(m == null ? "null" : m.getName(), true);
     }
 }

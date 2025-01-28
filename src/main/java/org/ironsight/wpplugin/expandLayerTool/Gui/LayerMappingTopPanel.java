@@ -2,28 +2,35 @@ package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.IPositionValueGetter;
 import org.ironsight.wpplugin.expandLayerTool.operations.IPositionValueSetter;
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.function.Consumer;
 
-public class LayerMappingTopPanel extends JPanel {
-    private Consumer<LayerMapping> onChange;
+public class LayerMappingTopPanel extends LayerMappingPanel {
     private JTextField description;
     private JTextField nameField;
     private ActionTypeComboBox actionTypeComboBox;
     private OutputComboBox outputSelect;
     private InputGetterComboBox inputSelect;
-    private LayerMapping mapping;
 
     public LayerMappingTopPanel() {
-        init();
+        super();
     }
 
-    private void init() {
+    @Override
+    protected void updateComponents() {
+        actionTypeComboBox.setTo(mapping.getActionType());
+        outputSelect.SetSelected(mapping.output);
+        inputSelect.SetSelected(mapping.input);
+        description.setText(mapping.getDescription());
+        nameField.setText(mapping.getName());
+        this.repaint();
+    }
+
+    @Override
+    protected void initComponents() {
         this.setLayout(new BorderLayout());
 
         JPanel textInputs = new JPanel(new BorderLayout());
@@ -84,31 +91,5 @@ public class LayerMappingTopPanel extends JPanel {
                 updateMapping(mapping.withType(actionTypeComboBox.getSelectedProvider()));
             }
         });
-    }
-
-    private void update() {
-        actionTypeComboBox.setTo(mapping.getActionType());
-        outputSelect.SetSelected(mapping.output);
-        inputSelect.SetSelected(mapping.input);
-        description.setText(mapping.getDescription());
-        nameField.setText(mapping.getName());
-    }
-
-    private void updateMapping(LayerMapping layerMapping) {
-        if (this.mapping != null && this.mapping.equals(layerMapping)) return;
-        setMapping(layerMapping);
-        onChange.accept(layerMapping);
-    }
-
-    public void setMapping(LayerMapping layerMapping) {
-        if (this.mapping != null && this.mapping.equals(layerMapping)) {
-            return;
-        }
-        this.mapping = layerMapping;
-        update();
-    }
-
-    public void setOnChange(Consumer<LayerMapping> onChange) {
-        this.onChange = onChange;
     }
 }
