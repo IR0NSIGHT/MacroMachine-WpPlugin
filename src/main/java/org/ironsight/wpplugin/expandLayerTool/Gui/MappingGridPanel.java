@@ -32,12 +32,9 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
         this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
         setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
         init();
-
     }
 
-    @Override
-    public void setMapping(LayerMapping mapping) {
-        this.mapping = mapping;
+    private void update() {
         this.GRID_X_SCALE = pixelSizeX / ((float) mapping.input.getMaxValue() - mapping.input.getMinValue());
         this.GRID_Y_SCALE = pixelSizeY / ((float) mapping.output.getMaxValue() - mapping.output.getMinValue());
 
@@ -67,10 +64,24 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                 addLine(a.input, a.output, b.input, b.output);
             }
         }
-
-
-        if (onUpdate != null) onUpdate.accept(mapping);
         this.repaint();
+    }
+
+    private void updateMapping(LayerMapping mapping) {
+        if (this.mapping != null && this.mapping.equals(mapping)) {
+            return;
+        }
+        setMapping(mapping);
+        if (onUpdate != null) onUpdate.accept(mapping);
+    }
+
+    @Override
+    public void setMapping(LayerMapping mapping) {
+        if (this.mapping != null && this.mapping.equals(mapping)) {
+            return;
+        }
+        this.mapping = mapping;
+        update();
     }
 
     private void init() {
@@ -132,7 +143,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                             newPoints[newPoints.length - 1] =
                                     new LayerMapping.MappingPoint(mapping.sanitizeInput(gridX),
                                             mapping.sanitizeOutput(gridY));
-                            setMapping(mapping.withNewPoints(newPoints));
+                            updateMapping(mapping.withNewPoints(newPoints));
                         } else {
                             //implicitly set selected point, but dont do anything with it
                         }
@@ -152,7 +163,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                         newPoints[i++] = p;
                     }
                     selected = null;
-                    setMapping(mapping.withNewPoints(newPoints));
+                    updateMapping(mapping.withNewPoints(newPoints));
                 }
             }
         });
@@ -177,7 +188,7 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
                                 selected = newPoints[i++];
                             } else newPoints[i++] = p;
                         }
-                        setMapping(mapping.withNewPoints(newPoints));
+                        updateMapping(mapping.withNewPoints(newPoints));
                     }
                 }
             }
