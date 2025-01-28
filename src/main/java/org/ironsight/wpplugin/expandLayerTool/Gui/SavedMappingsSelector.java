@@ -30,8 +30,8 @@ public class SavedMappingsSelector extends JPanel {
             nameToUid.put(m.getName(), m.getUid());
             model.addElement(m.getName());
         }
-        setTo(LayerMappingContainer.INSTANCE.queryMappingById(uid));
         list.setModel(model);
+        setTo(LayerMappingContainer.INSTANCE.queryMappingById(uid));
         list.repaint();
     }
 
@@ -46,7 +46,8 @@ public class SavedMappingsSelector extends JPanel {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 String selected = list.getSelectedValue();
-                LayerMapping mapping = LayerMappingContainer.INSTANCE.queryMappingById(nameToUid.getOrDefault(selected,-1)); //FIXME
+                LayerMapping mapping =
+                        LayerMappingContainer.INSTANCE.queryMappingById(nameToUid.getOrDefault(selected, -1)); //FIXME
                 if (mapping != null) onSelection.accept(mapping);
             }
         });
@@ -54,10 +55,10 @@ public class SavedMappingsSelector extends JPanel {
     }
 
     public int getSelectedProvider() {
-        return nameToUid.getOrDefault(list.getSelectedValue(),-1);
+        return nameToUid.getOrDefault(list.getSelectedValue(), -1);
     }
 
     public void setTo(LayerMapping m) {
-        list.setSelectedValue(m == null ? "null":m.getName(), true);
+        list.setSelectedValue(m == null ? "null" : m.getName(), true);
     }
 }
