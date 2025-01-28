@@ -33,7 +33,7 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
         LayerMapping mapper = new LayerMapping(null, null,
                 new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
                         new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),},
-                LayerMapping.ActionType.SET, "test", "test thing descr",1);
+                LayerMapping.ActionType.SET, "test", "test thing descr", 1);
 
         MappingTextTable table = new MappingTextTable();
         table.setMapping(mapper);
@@ -139,6 +139,7 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
     }
 
     public void setMapping(LayerMapping mapping) {
+        if (this.mapping != null && this.mapping.equals(mapping)) return;
         this.mapping = mapping;
         updateComponents();
     }
