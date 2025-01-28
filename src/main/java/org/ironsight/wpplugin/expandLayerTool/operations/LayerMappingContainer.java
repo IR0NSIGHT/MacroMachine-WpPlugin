@@ -1,11 +1,11 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.ironsight.wpplugin.expandLayerTool.Gui.MappingEditorPanel;
-import org.pepsoft.worldpainter.layers.Frost;
-import org.pepsoft.worldpainter.layers.PineForest;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 
 
@@ -24,14 +24,14 @@ public class LayerMappingContainer {
         JFrame frame = new JFrame("TEST PANEL");
 
         INSTANCE.addMapping(new LayerMapping(new LayerMapping.SlopeProvider(),
-                new LayerMapping.StonePaletteApplicator(), new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "paint mountainsides", ""));
+                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0],
+                LayerMapping.ActionType.SET, "paint mountainsides", "", -1));
         INSTANCE.addMapping(new LayerMapping(new LayerMapping.HeightProvider(),
-                new LayerMapping.BitLayerBinarySpraypaintApplicator(Frost.INSTANCE), new LayerMapping.MappingPoint[0]
-                , LayerMapping.ActionType.SET, "frost mountain tops", ""));
+                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0]
+                , LayerMapping.ActionType.SET, "frost mountain tops", "", -1));
         INSTANCE.addMapping(new LayerMapping(new LayerMapping.SlopeProvider(),
-                new LayerMapping.NibbleLayerSetter(PineForest.INSTANCE), new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "no steep pines", ""));
+                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0],
+                LayerMapping.ActionType.SET, "no steep pines", "", -1));
 
         JDialog log = MappingEditorPanel.createDialog(frame, f -> {
         });
@@ -45,8 +45,7 @@ public class LayerMappingContainer {
 
     public void updateMapping(LayerMapping mapping) {
         //filter for identity
-        if (!mappings.containsKey(mapping.uid))
-            return;
+        if (!mappings.containsKey(mapping.uid)) return;
         mappings.put(mapping.uid, mapping);
         notify(mapping);
     }
@@ -89,7 +88,14 @@ public class LayerMappingContainer {
     }
 
     public LayerMapping[] queryMappingsAll() {
-        return mappings.values().toArray(new LayerMapping[0]);
+        LayerMapping[] arr = mappings.values().toArray(new LayerMapping[0]);
+        Arrays.sort(arr, new Comparator<LayerMapping>() {
+            @Override
+            public int compare(LayerMapping o1, LayerMapping o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+        return arr;
     }
 
     private void notify(LayerMapping mapping) {

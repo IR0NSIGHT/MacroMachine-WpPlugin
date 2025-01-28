@@ -37,7 +37,7 @@ class LayerMappingTest {
             LayerMapping mapper = new LayerMapping(new LayerMapping.HeightProvider(),
                     new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
                     new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(50, 0),
-                            new LayerMapping.MappingPoint(150, 10),}, LayerMapping.ActionType.SET, "", "");
+                            new LayerMapping.MappingPoint(150, 10),}, LayerMapping.ActionType.SET, "", "",-1);
 
             for (int i = 0; i < 50; i++) { //plateau before first point
                 assertEquals(0, mapper.map(i), i + "->" + mapper.map(i));

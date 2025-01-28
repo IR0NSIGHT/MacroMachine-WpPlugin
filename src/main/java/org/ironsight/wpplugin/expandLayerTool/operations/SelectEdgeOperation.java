@@ -361,7 +361,7 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                 IPositionValueSetter output = new LayerMapping.StonePaletteApplicator();
                 mapping = new LayerMapping(input, output,
                         new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),
-                                output.getMinValue())}, LayerMapping.ActionType.SET,"Default","starter action");
+                                output.getMinValue())}, LayerMapping.ActionType.SET, "Default", "starter action", -1);
 
             }
 

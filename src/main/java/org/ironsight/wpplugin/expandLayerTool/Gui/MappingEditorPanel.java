@@ -22,12 +22,10 @@ public class MappingEditorPanel extends JPanel {
     private JTextField nameField;
     private ActionTypeComboBox actionTypeComboBox;
 
-    public MappingEditorPanel(LayerMapping mapping, Consumer<LayerMapping> onSubmit) {
+    public MappingEditorPanel(Consumer<LayerMapping> onSubmit) {
         super();
         this.onSubmit = onSubmit;
-        this.mapping = mapping;
         initComponents();
-        setMapping(mapping);
     }
 
     public static JDialog createDialog(JFrame parent, Consumer<LayerMapping> applyToMap) {
@@ -39,15 +37,15 @@ public class MappingEditorPanel extends JPanel {
             LayerMappingContainer.INSTANCE.updateMapping(mapping1);
         };
 
-        MappingEditorPanel editor = new MappingEditorPanel(LayerMappingContainer.INSTANCE.queryMappingsAll()[0],
-                submit);
+        MappingEditorPanel editor = new MappingEditorPanel(submit);
         all.add(editor, BorderLayout.CENTER);
 
         SavedMappingsSelector mappingSelector = new SavedMappingsSelector(editor::setMapping);
         mappingSelector.setTo(LayerMappingContainer.INSTANCE.queryMappingsAll()[0]);
         all.add(mappingSelector, BorderLayout.WEST);
 
-        editor.setMapping(mappingSelector.getSelectedProvider());
+        LayerMapping m = LayerMappingContainer.INSTANCE.queryMappingById(mappingSelector.getSelectedProvider());
+        editor.setMapping(m);
 
         JPanel buttons = new JPanel(new FlowLayout());
         JButton apply = new JButton("apply");
@@ -74,10 +72,11 @@ public class MappingEditorPanel extends JPanel {
         IPositionValueSetter output = new LayerMapping.StonePaletteApplicator();
         LayerMapping mapper = new LayerMapping(input, output,
                 new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),
-                        output.getMinValue())}, LayerMapping.ActionType.SET, "Test", "test description");
+                        output.getMinValue())}, LayerMapping.ActionType.SET, "Test", "test description", 1);
 
-        MappingEditorPanel editor = new MappingEditorPanel(mapper, f -> {
+        MappingEditorPanel editor = new MappingEditorPanel(f -> {
         });
+        editor.setMapping(mapper);
 
         // Add the outer panel to the frame
         frame.add(editor);
@@ -90,8 +89,8 @@ public class MappingEditorPanel extends JPanel {
     private void initComponents() {
         this.setLayout(new BorderLayout());
 
-        mappingDisplay = new MappingGridPanel(mapping);
-        table = new MappingTextTable(mapping);
+        mappingDisplay = new MappingGridPanel();
+        table = new MappingTextTable();
 
         //set up sync between both components
         table.setOnUpdate(mapping1 -> {
@@ -109,25 +108,22 @@ public class MappingEditorPanel extends JPanel {
         JPanel top = new JPanel(new FlowLayout());
         Font inputOutputFont = new Font("SansSerif", Font.BOLD, 24);
 
-        nameField = new JTextField(mapping.getName());
+        nameField = new JTextField();
         nameField.setFont(inputOutputFont);
         top.add(nameField);
         nameField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (mapping.getName().equals(nameField.getText())) return;
-                setMapping(new LayerMapping(mapping.input, mapping.output, mapping.getMappingPoints(),
-                        mapping.actionType, nameField.getText(), mapping.getDescription()));
+                setMapping(mapping.withName(nameField.getText()));
             }
         });
-        description = new JTextField(mapping.getDescription());
+        description = new JTextField();
         description.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (mapping.getDescription().equals(description.getText())) return;
-                mapping.setDescription(description.getText());
-                setMapping(new LayerMapping(mapping.input, mapping.output, mapping.getMappingPoints(),
-                        mapping.actionType, mapping.getName(), description.getText()));
+                setMapping(mapping.withDescription(description.getText()));
             }
         });
         description.setFont(inputOutputFont);
@@ -139,8 +135,7 @@ public class MappingEditorPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 IPositionValueGetter getter = inputSelect.getSelectedProvider();
                 if (getter.equals(mapping.input)) return;
-                setMapping(new LayerMapping(getter, mapping.output, mapping.getMappingPoints(), mapping.actionType,
-                        mapping.getName(), mapping.getDescription()));
+                setMapping(mapping.withInput(getter));
             }
         });
         inputSelect.setFont(inputOutputFont);
@@ -154,8 +149,7 @@ public class MappingEditorPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 IPositionValueSetter setter = outputSelect.getSelectedProvider();
                 if (mapping.output.equals(outputSelect.getSelectedProvider())) return;
-                setMapping(new LayerMapping(mapping.input, setter, mapping.getMappingPoints(), mapping.actionType,
-                        mapping.getName(), mapping.getDescription()));
+                setMapping(mapping.withOutput(setter));
             }
         });
 
@@ -165,8 +159,7 @@ public class MappingEditorPanel extends JPanel {
         actionTypeComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                mapping.setActionType(actionTypeComboBox.getSelectedProvider());
-                setMapping(mapping);
+                setMapping(mapping.withType(actionTypeComboBox.getSelectedProvider()));
             }
         });
 
@@ -187,7 +180,7 @@ public class MappingEditorPanel extends JPanel {
     }
 
     public void setMapping(LayerMapping mapping) {
-        if (this.mapping.equals(mapping)) return;
+        if (this.mapping != null && this.mapping.equals(mapping)) return;
         table.setMapping(mapping);
         mappingDisplay.setMapping(mapping);
         actionTypeComboBox.setTo(mapping.getActionType());

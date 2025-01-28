@@ -6,24 +6,31 @@ import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.util.HashMap;
 import java.util.function.Consumer;
 
 public class SavedMappingsSelector extends JPanel {
     private final Consumer<LayerMapping> onSelection;
     JList<String> list;
     JScrollPane scrollPane;
+    HashMap<String, Integer> nameToUid = new HashMap<>();
 
     public SavedMappingsSelector(Consumer<LayerMapping> onSelection) {
         this.onSelection = onSelection;
-        LayerMappingContainer.INSTANCE.subscribe(this::updateSelf);
         initComponents();
         updateSelf();
+        LayerMappingContainer.INSTANCE.subscribe(this::updateSelf);
     }
 
     private void updateSelf() {
+        int uid = getSelectedProvider();
+        nameToUid.clear();
         DefaultListModel<String> model = new DefaultListModel<>();
-        for (LayerMapping m : LayerMappingContainer.INSTANCE.queryMappingsAll())
+        for (LayerMapping m : LayerMappingContainer.INSTANCE.queryMappingsAll()) {
+            nameToUid.put(m.getName(), m.getUid());
             model.addElement(m.getName());
+        }
+        setTo(LayerMappingContainer.INSTANCE.queryMappingById(uid));
         list.setModel(model);
         list.repaint();
     }
@@ -39,18 +46,18 @@ public class SavedMappingsSelector extends JPanel {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 String selected = list.getSelectedValue();
-                LayerMapping mapping = LayerMappingContainer.INSTANCE.queryMappingById(-1); //FIXME
+                LayerMapping mapping = LayerMappingContainer.INSTANCE.queryMappingById(nameToUid.getOrDefault(selected,-1)); //FIXME
                 if (mapping != null) onSelection.accept(mapping);
             }
         });
         this.add(scrollPane);
     }
 
-    public LayerMapping getSelectedProvider() {
-        return LayerMappingContainer.INSTANCE.queryMappingById(-1); //FIXME
+    public int getSelectedProvider() {
+        return nameToUid.getOrDefault(list.getSelectedValue(),-1);
     }
 
     public void setTo(LayerMapping m) {
-        list.setSelectedValue(m.getName(), true);
+        list.setSelectedValue(m == null ? "null":m.getName(), true);
     }
 }

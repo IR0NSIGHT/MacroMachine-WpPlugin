@@ -1,7 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
-import org.pepsoft.worldpainter.layers.Frost;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,11 +27,10 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     private Consumer<Integer> onSelect = f -> {
     };
 
-    public MappingGridPanel(LayerMapping mapping) {
+    public MappingGridPanel() {
 
         this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
         setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
-        setMapping(mapping);
         init();
 
     }
@@ -391,27 +389,6 @@ public class MappingGridPanel extends JPanel implements IMappingEditor {
     public void setSelected(Integer selectedPointIdx) {
         this.selected = mapping.getMappingPoints()[selectedPointIdx];
         this.repaint();
-    }
-
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("Grid Panel");
-
-
-        LayerMapping mapper = new LayerMapping(new LayerMapping.SlopeProvider(),
-                new LayerMapping.BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
-                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 2),
-                        new LayerMapping.MappingPoint(50, 3), new LayerMapping.MappingPoint(70, 7),},
-                LayerMapping.ActionType.SET, "test", "test thing descr");
-        MappingGridPanel gridPanel = new MappingGridPanel(mapper);
-        gridPanel.setOnUpdate(f -> {
-        });
-
-        // Add the outer panel to the frame
-        frame.add(gridPanel);
-
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
     }
 
     // Helper class to represent a line

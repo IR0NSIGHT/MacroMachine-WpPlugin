@@ -2,7 +2,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
-import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
+import org.pepsoft.worldpainter.biomeschemes.Minecraft1_19Biomes;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Biome;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -13,19 +13,14 @@ import java.util.*;
 public class LayerMapping implements IDisplayUnit {
     public final IPositionValueGetter input;
     public final IPositionValueSetter output;
-    public ActionType actionType = ActionType.SET;
-    transient int uid;
-    MappingPoint[] mappingPoints;
-    private String name = "Mapping";
-    private String description = "Mapping one property to another";
+    public final ActionType actionType;
+    private final MappingPoint[] mappingPoints;
+    private final String name;
+    private final String description;
+    int uid;
 
     public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
-                        ActionType type, String name, String description) {
-        this(input, output, mappingPoints, type, name, description, -1);
-    }
-
-    LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
-                 ActionType type, String name, String description, int uid) {
+                        ActionType type, String name, String description, int uid) {
         this.name = name;
         this.description = description;
         this.input = input;
@@ -34,6 +29,26 @@ public class LayerMapping implements IDisplayUnit {
         this.actionType = type;
         this.uid = uid;
         Arrays.sort(this.mappingPoints, Comparator.comparing(mp -> mp.input));
+    }
+
+    public LayerMapping withInput(IPositionValueGetter input) {
+        return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
+    }
+
+    public LayerMapping withOutput(IPositionValueSetter output) {
+        return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
+    }
+
+    public LayerMapping withType(ActionType actionType) {
+        return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
+    }
+
+    public LayerMapping withName(String name) {
+        return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
+    }
+
+    public LayerMapping withDescription(String description) {
+        return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
     }
 
     public int getUid() {
@@ -66,10 +81,6 @@ public class LayerMapping implements IDisplayUnit {
 
     public ActionType getActionType() {
         return actionType;
-    }
-
-    public void setActionType(ActionType actionType) {
-        this.actionType = actionType;
     }
 
     public void applyToPoint(Dimension dim, int x, int y) {
@@ -142,17 +153,9 @@ public class LayerMapping implements IDisplayUnit {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     @Override
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public enum ActionType {
@@ -187,6 +190,48 @@ public class LayerMapping implements IDisplayUnit {
         @Override
         public String toString() {
             return "MappingPoint{" + "input=" + input + ", output=" + output + '}';
+        }
+    }
+
+    public static class TestInputOutput implements IPositionValueSetter, IPositionValueGetter {
+        @Override
+        public void setValueAt(Dimension dim, int x, int y, int value) {
+
+        }
+
+        @Override
+        public int getValueAt(Dimension dim, int x, int y) {
+            return 7;
+        }
+
+        @Override
+        public int getMinValue() {
+            return 0;
+        }
+
+        @Override
+        public int getMaxValue() {
+            return 15;
+        }
+
+        @Override
+        public String valueToString(int value) {
+            return "testvalue-"+value;
+        }
+
+        @Override
+        public boolean isDiscrete() {
+            return false;
+        }
+
+        @Override
+        public String getName() {
+            return "Test Getter";
+        }
+
+        @Override
+        public String getDescription() {
+            return "test class for getting values";
         }
     }
 
@@ -244,8 +289,8 @@ public class LayerMapping implements IDisplayUnit {
 
         public VanillaBiomeProvider() {
             HashMap<Integer, String> validBiomes = new HashMap<>();
-            for (int biomeIdx = 0; biomeIdx < Minecraft1_20Biomes.BIOME_NAMES.length; biomeIdx++) {
-                String name = Minecraft1_20Biomes.BIOME_NAMES[biomeIdx];
+            for (int biomeIdx = 0; biomeIdx < Minecraft1_19Biomes.BIOME_NAMES.length; biomeIdx++) {
+                String name = Minecraft1_19Biomes.BIOME_NAMES[biomeIdx];
                 if (name != null) validBiomes.put(biomeIdx, name);
             }
             biomes = new Map.Entry[validBiomes.size()];
