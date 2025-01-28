@@ -2,7 +2,9 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.pepsoft.worldpainter.Dimension;
 
-public interface IPositionValueGetter extends IDisplayUnit {
+import java.io.Serializable;
+
+public interface IPositionValueGetter extends IDisplayUnit, Serializable {
     int getValueAt(Dimension dim, int x, int y);
 
     int getMinValue();
