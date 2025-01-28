@@ -2,7 +2,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
-import org.pepsoft.worldpainter.biomeschemes.Minecraft1_19Biomes;
+import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Biome;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -289,8 +289,8 @@ public class LayerMapping implements IDisplayUnit {
 
         public VanillaBiomeProvider() {
             HashMap<Integer, String> validBiomes = new HashMap<>();
-            for (int biomeIdx = 0; biomeIdx < Minecraft1_19Biomes.BIOME_NAMES.length; biomeIdx++) {
-                String name = Minecraft1_19Biomes.BIOME_NAMES[biomeIdx];
+            for (int biomeIdx = 0; biomeIdx < Minecraft1_20Biomes.BIOME_NAMES.length; biomeIdx++) {
+                String name = Minecraft1_20Biomes.BIOME_NAMES[biomeIdx];
                 if (name != null) validBiomes.put(biomeIdx, name);
             }
             biomes = new Map.Entry[validBiomes.size()];
@@ -449,6 +449,13 @@ public class LayerMapping implements IDisplayUnit {
 
     public static class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter {
         private final Layer layer;
+
+        @Override
+        public String toString() {
+            return "NibbleLayerSetter{" +
+                    "layer=" + layer +
+                    '}';
+        }
 
         public NibbleLayerSetter(Layer layer) {
             this.layer = layer;

@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.InputOutputProvider;
 import org.ironsight.wpplugin.expandLayerTool.operations.SelectEdgeOperation;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;

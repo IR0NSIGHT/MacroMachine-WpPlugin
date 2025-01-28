@@ -365,7 +365,7 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
             }
 
-
+            InputOutputProvider.INSTANCE.updateFrom(getDimension());
             JDialog dialog = createDialog(null, this::applyLayerAction);
 
             dialog.setVisible(true);
