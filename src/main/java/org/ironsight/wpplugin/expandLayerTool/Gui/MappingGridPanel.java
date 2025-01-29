@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +20,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
     private float GRID_X_SCALE;
     private float GRID_Y_SCALE;
     private boolean drag;
-    private LayerMapping.MappingPoint selected;
+    private MappingPoint selected;
     private Consumer<Integer> onSelect = f -> {
     };
 
@@ -85,11 +85,11 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
                         boolean hit = selectPointNear(gridX, gridY, pointHitBoxRadius);
                         if (!hit) {
                             // INSERT NEW POINT
-                            LayerMapping.MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
+                            MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
                                     panel.mapping.getMappingPoints().length + 1);
 
                             newPoints[newPoints.length - 1] =
-                                    new LayerMapping.MappingPoint(mapping.sanitizeInput(gridX),
+                                    new MappingPoint(mapping.sanitizeInput(gridX),
                                             mapping.sanitizeOutput(gridY));
                             updateMapping(mapping.withNewPoints(newPoints));
                         } else {
@@ -103,10 +103,10 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
                     if (!hit) selected = null;
 
                     if (selected == null || panel.mapping.getMappingPoints().length <= 1) return;
-                    LayerMapping.MappingPoint[] newPoints =
-                            new LayerMapping.MappingPoint[panel.mapping.getMappingPoints().length - 1];
+                    MappingPoint[] newPoints =
+                            new MappingPoint[panel.mapping.getMappingPoints().length - 1];
                     int i = 0;
-                    for (LayerMapping.MappingPoint p : panel.mapping.getMappingPoints()) {
+                    for (MappingPoint p : panel.mapping.getMappingPoints()) {
                         if (p.equals(selected)) continue;
                         newPoints[i++] = p;
                     }
@@ -126,12 +126,12 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
 
                 if (drag) {
                     if (selected != null) {
-                        LayerMapping.MappingPoint[] newPoints =
-                                new LayerMapping.MappingPoint[panel.mapping.getMappingPoints().length];
+                        MappingPoint[] newPoints =
+                                new MappingPoint[panel.mapping.getMappingPoints().length];
                         int i = 0;
-                        for (LayerMapping.MappingPoint p : panel.mapping.getMappingPoints()) {
+                        for (MappingPoint p : panel.mapping.getMappingPoints()) {
                             if (p.equals(selected)) {
-                                newPoints[i] = new LayerMapping.MappingPoint(mapping.sanitizeInput(gridX),
+                                newPoints[i] = new MappingPoint(mapping.sanitizeInput(gridX),
                                         mapping.sanitizeOutput(gridY));
                                 selected = newPoints[i++];
                             } else newPoints[i++] = p;
@@ -165,8 +165,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
         clearLines();
         if (mapping.output.isDiscrete()) {
             for (int i = 1; i < mapping.getMappingPoints().length; i++) {
-                LayerMapping.MappingPoint a2 = mapping.getMappingPoints()[i];
-                LayerMapping.MappingPoint a1 = mapping.getMappingPoints()[i - 1];
+                MappingPoint a2 = mapping.getMappingPoints()[i];
+                MappingPoint a1 = mapping.getMappingPoints()[i - 1];
 
                 addLine(a2.input, a2.output, a1.input, a2.output);
                 addLine(a1.input, a1.output, a1.input, a2.output);
@@ -174,16 +174,16 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
         } else {
             {
                 if (mapping.getMappingPoints().length != 0) {
-                    LayerMapping.MappingPoint a = mapping.getMappingPoints()[0];
+                    MappingPoint a = mapping.getMappingPoints()[0];
                     addLine(mapping.input.getMinValue(), a.output, a.input, a.output);
 
-                    LayerMapping.MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
+                    MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
                     addLine(b.input, b.output, mapping.input.getMaxValue(), b.output);
                 }
             }
             for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
-                LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
-                LayerMapping.MappingPoint b = mapping.getMappingPoints()[i + 1];
+                MappingPoint a = mapping.getMappingPoints()[i];
+                MappingPoint b = mapping.getMappingPoints()[i + 1];
 
                 addLine(a.input, a.output, b.input, b.output);
             }
@@ -304,7 +304,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
         }
 
         g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
-        for (LayerMapping.MappingPoint p : mapping.getMappingPoints()) {
+        for (MappingPoint p : mapping.getMappingPoints()) {
             int radius = 10;  // Circle radius
             Point start = gridToPixel(p.input, p.output);
 
@@ -331,13 +331,13 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
 
     // Callback method to handle the click event (pass the grid coordinates)
     private boolean selectPointNear(int x, int y, int maxDist) {
-        LayerMapping.MappingPoint closest = null;
+        MappingPoint closest = null;
         int selectedIdx = -1;
         int i = 0;
         int distTotalSq = Integer.MAX_VALUE;
 
 
-        for (LayerMapping.MappingPoint p : mapping.getMappingPoints()) {
+        for (MappingPoint p : mapping.getMappingPoints()) {
             int distX = Math.abs(p.input - x);
             int distY = Math.abs(p.output - y);
             int distSq = distX * distX + distY * distY;

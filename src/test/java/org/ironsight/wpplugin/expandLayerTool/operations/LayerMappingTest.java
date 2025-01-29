@@ -13,10 +13,10 @@ class LayerMappingTest {
     void serialize() {
         try {
             // Create an instance of the object
-            LayerMapping originalObject = new LayerMapping(new LayerMapping.HeightProvider(),
-                    new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
-                    new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(7, 12)},
-                    LayerMapping.ActionType.DIVIDE, "hello", "world with a space", -1);
+            LayerMapping originalObject = new LayerMapping(new HeightProvider(),
+                    new NibbleLayerSetter(Annotations.INSTANCE),
+                    new MappingPoint[]{new MappingPoint(7, 12)},
+                    ActionType.DIVIDE, "hello", "world with a space", -1);
 
 
             // Serialize the object
@@ -63,10 +63,10 @@ class LayerMappingTest {
         } */
 
         {   // 2 POINT LINEAR AT FIRST THAN PLATEAU
-            LayerMapping mapper = new LayerMapping(new LayerMapping.HeightProvider(),
-                    new LayerMapping.NibbleLayerSetter(Annotations.INSTANCE),
-                    new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(50, 0),
-                            new LayerMapping.MappingPoint(150, 10),}, LayerMapping.ActionType.SET, "", "", -1);
+            LayerMapping mapper = new LayerMapping(new HeightProvider(),
+                    new NibbleLayerSetter(Annotations.INSTANCE),
+                    new MappingPoint[]{new MappingPoint(50, 0),
+                            new MappingPoint(150, 10),}, ActionType.SET, "", "", -1);
 
             for (int i = 0; i < 50; i++) { //plateau before first point
                 assertEquals(0, mapper.map(i), i + "->" + mapper.map(i));

@@ -1,21 +1,21 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.ironsight.wpplugin.expandLayerTool.operations.ActionType;
 
 import javax.swing.*;
 
 public class ActionTypeComboBox extends JComboBox<String> {
 
     public ActionTypeComboBox() {
-        for (LayerMapping.ActionType t : LayerMapping.ActionType.values())
+        for (ActionType t : ActionType.values())
             addItem(t.getDisplayName());
     }
 
-    public LayerMapping.ActionType getSelectedProvider() {
-        return LayerMapping.ActionType.values()[getSelectedIndex()];
+    public ActionType getSelectedProvider() {
+        return ActionType.values()[getSelectedIndex()];
     }
 
-    public void setTo(LayerMapping.ActionType type) {
+    public void setTo(ActionType type) {
         this.setSelectedIndex(type.ordinal());
     }
 }

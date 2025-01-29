@@ -2,7 +2,7 @@ package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.IPositionValueSetter;
 import org.ironsight.wpplugin.expandLayerTool.operations.InputOutputProvider;
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.ironsight.wpplugin.expandLayerTool.operations.TestInputOutput;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -13,7 +13,7 @@ public class OutputComboBox extends JComboBox<String> {
 
     public OutputComboBox() {
         InputOutputProvider.INSTANCE.subscribe(this::updateSelf);
-        addItem(new LayerMapping.TestInputOutput());
+        addItem(new TestInputOutput());
         updateSelf();
     }
 
