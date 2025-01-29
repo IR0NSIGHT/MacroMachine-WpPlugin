@@ -84,6 +84,10 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
     }
 
     private void updateComponents() {
+        assert mapping != null;
+        assert mapping.getMappingPoints() != null;
+        assert mapping.input != null;
+        assert mapping.output != null;
         Object[][] data = new Object[mapping.getMappingPoints().length][];
         Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
         for (int i = 0; i < mapping.getMappingPoints().length; i++) {

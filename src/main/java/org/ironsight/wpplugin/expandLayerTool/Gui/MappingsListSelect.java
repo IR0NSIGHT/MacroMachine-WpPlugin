@@ -1,20 +1,23 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
+import org.ironsight.wpplugin.expandLayerTool.operations.*;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
-public class SavedMappingsSelector extends LayerMappingPanel {
+public class MappingsListSelect extends LayerMappingPanel {
     JList<String> list;
     JScrollPane scrollPane;
+    JButton addButton;
+    JButton removeButton;
     HashMap<String, Integer> nameToUid = new HashMap<>();
 
-    public SavedMappingsSelector(Consumer<LayerMapping> onSelection) {
+    public MappingsListSelect(Consumer<LayerMapping> onSelection) {
         super();
         LayerMappingContainer.INSTANCE.subscribe(this::updateComponents);
         updateComponents();
@@ -52,7 +55,28 @@ public class SavedMappingsSelector extends LayerMappingPanel {
                 if (mapping != null) updateMapping(mapping);
             }
         });
+
+        addButton = new JButton("Add");
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                LayerMapping newMap = new LayerMapping(new SlopeProvider(), new StonePaletteApplicator(),
+                        new MappingPoint[0], ActionType.SET, "new mapping", "description of mapping", -1);
+                LayerMappingContainer.INSTANCE.addMapping(newMap);
+            }
+        });
+        removeButton = new JButton("Remove");
+        removeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int uid = getSelectedProvider();
+                LayerMappingContainer.INSTANCE.deleteMapping(uid);
+            }
+        });
+
         this.add(scrollPane);
+        this.add(addButton);
+        this.add(removeButton);
     }
 
     public int getSelectedProvider() {

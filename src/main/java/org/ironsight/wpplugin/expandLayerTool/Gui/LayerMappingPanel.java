@@ -29,6 +29,9 @@ public abstract class LayerMappingPanel extends JPanel {
      * @param mapping
      */
     protected final void updateMapping(LayerMapping mapping) {
+        if (mapping == null) {
+            return;
+        }
         boolean isInitialSet = this.mapping == null;
         if (this.mapping != null && this.mapping.equals(mapping)) {
             return;
