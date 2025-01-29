@@ -33,11 +33,8 @@ public class MappingEditorPanel extends LayerMappingPanel {
         MappingEditorPanel editor = new MappingEditorPanel(submit);
         all.add(editor, BorderLayout.CENTER);
 
-        SavedMappingsSelector mappingSelector = new SavedMappingsSelector(editor::setMapping);
-        mappingSelector.setMapping(LayerMappingContainer.INSTANCE.queryMappingsAll()[0]);
+        MappingsListSelect mappingSelector = new MappingsListSelect(editor::setMapping);
         all.add(mappingSelector, BorderLayout.WEST);
-
-        editor.setMapping(mappingSelector.mapping);
 
         JPanel buttons = new JPanel(new FlowLayout());
         JButton apply = new JButton("apply");

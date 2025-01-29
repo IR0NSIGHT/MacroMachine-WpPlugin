@@ -8,7 +8,7 @@ import java.util.HashSet;
 
 public class StonePaletteApplicator implements IPositionValueSetter {
     private final Terrain[] materials;
-    HashSet<Terrain> mats;
+    private transient HashSet<Terrain> mats;
 
     public StonePaletteApplicator() {
         materials = new Terrain[]{Terrain.GRASS, Terrain.GRAVEL, Terrain.STONE, Terrain.COBBLESTONE,

@@ -88,9 +88,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
                             MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
                                     panel.mapping.getMappingPoints().length + 1);
 
-                            newPoints[newPoints.length - 1] =
-                                    new MappingPoint(mapping.sanitizeInput(gridX),
-                                            mapping.sanitizeOutput(gridY));
+                            newPoints[newPoints.length - 1] = new MappingPoint(mapping.sanitizeInput(gridX),
+                                    mapping.sanitizeOutput(gridY));
                             updateMapping(mapping.withNewPoints(newPoints));
                         } else {
                             //implicitly set selected point, but dont do anything with it
@@ -103,8 +102,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
                     if (!hit) selected = null;
 
                     if (selected == null || panel.mapping.getMappingPoints().length <= 1) return;
-                    MappingPoint[] newPoints =
-                            new MappingPoint[panel.mapping.getMappingPoints().length - 1];
+                    MappingPoint[] newPoints = new MappingPoint[panel.mapping.getMappingPoints().length - 1];
                     int i = 0;
                     for (MappingPoint p : panel.mapping.getMappingPoints()) {
                         if (p.equals(selected)) continue;
@@ -126,8 +124,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
 
                 if (drag) {
                     if (selected != null) {
-                        MappingPoint[] newPoints =
-                                new MappingPoint[panel.mapping.getMappingPoints().length];
+                        MappingPoint[] newPoints = new MappingPoint[panel.mapping.getMappingPoints().length];
                         int i = 0;
                         for (MappingPoint p : panel.mapping.getMappingPoints()) {
                             if (p.equals(selected)) {
@@ -209,6 +206,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
     }
 
     private void paintGrid(Graphics g) {
+        if (this.mapping == null) return;
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
@@ -375,8 +373,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
 
     @Override
     public void setSelected(Integer selectedPointIdx) {
-        if (mapping == null)
-            return;
+        if (mapping == null) return;
         int l = mapping.getMappingPoints().length;
         if (selectedPointIdx < 0 || selectedPointIdx > l - 1) {
             selectedPointIdx = 0;

@@ -368,7 +368,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             InputOutputProvider.INSTANCE.updateFrom(getDimension());
             LayerMappingContainer.INSTANCE.readFromFile();
             JDialog dialog = createDialog(null, this::applyLayerAction);
-            LayerMappingContainer.INSTANCE.writeToFile();
             dialog.setVisible(true);
 
 

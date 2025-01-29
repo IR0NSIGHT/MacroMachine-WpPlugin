@@ -67,6 +67,7 @@ class LayerMappingContainerTest {
 
         int uid = container.addMapping(mapping);
         assertEquals(uid, mapping.getUid());
+        container.filePath = System.getProperty("user.dir")  + "/test_saves.txt";
         container.writeToFile();
         container.readFromFile();
     }
@@ -89,7 +90,7 @@ class LayerMappingContainerTest {
 
         int uid = container.addMapping(mapping);
         assertEquals(1,ran[0]);
-        container.updateMapping(mapping.withNewPoints(new MappingPoint[0]));
+        container.updateMapping(mapping.withNewPoints(new MappingPoint[]{new MappingPoint(10, 20)}));
         assertEquals(2,ran[0]);
         container.deleteMapping(uid);
         assertEquals(3,ran[0]);
@@ -122,7 +123,7 @@ class LayerMappingContainerTest {
         container.subscribeToMapping(uid, runnable);
 
         assertEquals(0,ran[0]);
-        container.updateMapping(mapping.withNewPoints(new MappingPoint[0]));
+        container.updateMapping(mapping.withNewPoints(new MappingPoint[]{new MappingPoint(1,2)}));
         assertEquals(1,ran[0]);
         container.deleteMapping(uid);
         assertEquals(2,ran[0]);
