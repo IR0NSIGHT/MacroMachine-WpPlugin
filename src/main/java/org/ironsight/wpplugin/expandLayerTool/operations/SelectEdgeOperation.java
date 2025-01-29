@@ -357,17 +357,18 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         try {
 
             if (mapping == null) {
-                IPositionValueGetter input = new LayerMapping.SlopeProvider();
-                IPositionValueSetter output = new LayerMapping.StonePaletteApplicator();
+                IPositionValueGetter input = new SlopeProvider();
+                IPositionValueSetter output = new StonePaletteApplicator();
                 mapping = new LayerMapping(input, output,
-                        new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(input.getMinValue(),
-                                output.getMinValue())}, LayerMapping.ActionType.SET, "Default", "starter action", -1);
+                        new MappingPoint[]{new MappingPoint(input.getMinValue(),
+                                output.getMinValue())}, ActionType.SET, "Default", "starter action", -1);
 
             }
 
             InputOutputProvider.INSTANCE.updateFrom(getDimension());
+            LayerMappingContainer.INSTANCE.readFromFile();
             JDialog dialog = createDialog(null, this::applyLayerAction);
-
+            LayerMappingContainer.INSTANCE.writeToFile();
             dialog.setVisible(true);
 
 

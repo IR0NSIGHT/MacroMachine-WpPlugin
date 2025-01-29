@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import org.ironsight.wpplugin.expandLayerTool.Gui.MappingEditorPanel;
 
 import javax.swing.*;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -17,28 +18,28 @@ public class LayerMappingContainer {
     private int nextUid = 1;
 
     public LayerMappingContainer() {
-        addMapping(new LayerMapping(new LayerMapping.SlopeProvider(),
-                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "paint mountainsides", "", -1));
-        addMapping(new LayerMapping(new LayerMapping.HeightProvider(),
-                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0]
-                , LayerMapping.ActionType.SET, "frost mountain tops", "", -1));
-        addMapping(new LayerMapping(new LayerMapping.SlopeProvider(),
-                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "no steep pines", "", -1));    }
+        addMapping(new LayerMapping(new SlopeProvider(),
+                new TestInputOutput(), new MappingPoint[0],
+                ActionType.SET, "paint mountainsides", "", -1));
+        addMapping(new LayerMapping(new HeightProvider(),
+                new TestInputOutput(), new MappingPoint[0]
+                , ActionType.SET, "frost mountain tops", "", -1));
+        addMapping(new LayerMapping(new SlopeProvider(),
+                new TestInputOutput(), new MappingPoint[0],
+                ActionType.SET, "no steep pines", "", -1));    }
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("TEST PANEL");
 
-        INSTANCE.addMapping(new LayerMapping(new LayerMapping.SlopeProvider(),
-                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "paint mountainsides", "", -1));
-        INSTANCE.addMapping(new LayerMapping(new LayerMapping.HeightProvider(),
-                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0]
-                , LayerMapping.ActionType.SET, "frost mountain tops", "", -1));
-        INSTANCE.addMapping(new LayerMapping(new LayerMapping.SlopeProvider(),
-                new LayerMapping.TestInputOutput(), new LayerMapping.MappingPoint[0],
-                LayerMapping.ActionType.SET, "no steep pines", "", -1));
+        INSTANCE.addMapping(new LayerMapping(new SlopeProvider(),
+                new TestInputOutput(), new MappingPoint[0],
+                ActionType.SET, "paint mountainsides", "", -1));
+        INSTANCE.addMapping(new LayerMapping(new HeightProvider(),
+                new TestInputOutput(), new MappingPoint[0]
+                , ActionType.SET, "frost mountain tops", "", -1));
+        INSTANCE.addMapping(new LayerMapping(new SlopeProvider(),
+                new TestInputOutput(), new MappingPoint[0],
+                ActionType.SET, "no steep pines", "", -1));
 
         JDialog log = MappingEditorPanel.createDialog(frame, f -> {
         });
@@ -111,6 +112,36 @@ public class LayerMappingContainer {
         if (mapping != null && uidNotifies.containsKey(mapping.uid)) {
             for (Runnable r : uidNotifies.get(mapping.uid))
                 r.run();
+        }
+    }
+
+    private static String filePath = "/home/klipper/Documents/worldpainter/mappings.txt";
+    public void readFromFile() {
+        mappings.clear();
+        Object deserializedObject;
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+            // Read the object from the file
+            deserializedObject = ois.readObject();
+
+            Object[] arr = (Object[]) deserializedObject;
+            for (Object o: arr) {
+                if (o instanceof LayerMapping)
+                    addMapping((LayerMapping) o);
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error during deserialization: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public void writeToFile() {
+        Object obj = mappings.values().toArray();
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(obj);
+            System.out.println("Object successfully serialized to " + filePath);
+        } catch (IOException e) {
+            System.err.println("Error during serialization: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

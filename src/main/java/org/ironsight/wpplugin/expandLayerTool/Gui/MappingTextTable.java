@@ -1,6 +1,8 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ActionType;
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -31,9 +33,9 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
         JFrame frame = new JFrame("TEST PANEL");
 
         LayerMapping mapper = new LayerMapping(null, null,
-                new LayerMapping.MappingPoint[]{new LayerMapping.MappingPoint(20, 10),
-                        new LayerMapping.MappingPoint(50, 50), new LayerMapping.MappingPoint(70, 57),},
-                LayerMapping.ActionType.SET, "test", "test thing descr", 1);
+                new MappingPoint[]{new MappingPoint(20, 10),
+                        new MappingPoint(50, 50), new MappingPoint(70, 57),},
+                ActionType.SET, "test", "test thing descr", 1);
 
         MappingTextTable table = new MappingTextTable();
         table.setMapping(mapper);
@@ -85,7 +87,7 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
         Object[][] data = new Object[mapping.getMappingPoints().length][];
         Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
         for (int i = 0; i < mapping.getMappingPoints().length; i++) {
-            LayerMapping.MappingPoint a = mapping.getMappingPoints()[i];
+            MappingPoint a = mapping.getMappingPoints()[i];
             data[i] = new Object[]{mapping.input.valueToString(a.input), mapping.output.valueToString(a.output)};
         }
 
@@ -122,14 +124,14 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
         }
         else return false;
 
-        LayerMapping.MappingPoint[] points = mapping.getMappingPoints();
+        MappingPoint[] points = mapping.getMappingPoints();
 
         if (column == 0) {
             if (points[row].input == newValueInt) return false;
-            points[row] = new LayerMapping.MappingPoint(newValueInt, points[row].output);
+            points[row] = new MappingPoint(newValueInt, points[row].output);
         } else {
             if (points[row].output == newValueInt) return false;
-            points[row] = new LayerMapping.MappingPoint(points[row].input, newValueInt);
+            points[row] = new MappingPoint(points[row].input, newValueInt);
         }
         mapping = mapping.withNewPoints(points);
         onUpdate.accept(mapping);
