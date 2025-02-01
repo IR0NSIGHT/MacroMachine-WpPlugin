@@ -1,18 +1,27 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.HeightProvider;
-import org.ironsight.wpplugin.expandLayerTool.operations.IMappingValue;
-import org.ironsight.wpplugin.expandLayerTool.operations.SlopeProvider;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.AnnotationSetter;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IMappingValue;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class MappingValuePreviewPanel extends JPanel {
-    private IMappingValue mappingValue;
-    private int value;
+    private final IMappingValue mappingValue;
+    private final int value;
+
     public MappingValuePreviewPanel(IMappingValue mappingValue, int value) {
         this.mappingValue = mappingValue;
         this.value = value;
+    }
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame();
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(new MappingValuePreviewPanel(new AnnotationSetter(), 9));
+        frame.setPreferredSize(new Dimension(450, 450));
+        frame.pack();
+        frame.setVisible(true);
     }
 
     @Override
@@ -20,15 +29,5 @@ public class MappingValuePreviewPanel extends JPanel {
         super.paint(g);
         g.setColor(Color.red);
         mappingValue.paint(g, value, getSize());
-    }
-
-    public static void main(String[] args) {
-        JFrame frame = new JFrame();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new MappingValuePreviewPanel(new SlopeProvider(), 15));
-        frame.setPreferredSize(new Dimension(450, 450))
-        ;
-        frame.pack();
-        frame.setVisible(true);
     }
 }

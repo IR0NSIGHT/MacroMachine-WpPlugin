@@ -1,6 +1,8 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.*;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.SlopeProvider;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.StonePaletteApplicator;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.IPositionValueGetter;
-import org.ironsight.wpplugin.expandLayerTool.operations.IPositionValueSetter;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
 import java.awt.*;

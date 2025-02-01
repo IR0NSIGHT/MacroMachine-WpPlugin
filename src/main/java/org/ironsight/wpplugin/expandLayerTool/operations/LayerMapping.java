@@ -1,5 +1,8 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IDisplayUnit;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueSetter;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.io.Serializable;
