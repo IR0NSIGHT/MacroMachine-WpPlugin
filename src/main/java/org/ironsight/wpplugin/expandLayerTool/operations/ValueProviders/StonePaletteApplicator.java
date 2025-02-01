@@ -9,7 +9,31 @@ import java.util.HashSet;
 
 public class StonePaletteApplicator implements IPositionValueSetter {
     private final Terrain[] materials;
-    private transient HashSet<Terrain> mats;
+    private final transient HashSet<Terrain> mats;
+    Color[] colors = new Color[]{
+            // Terrain.GRASS (Grass Block)
+            new Color(85, 107, 47),      // Dark Olive Green
+            // Terrain.GRAVEL (Gravel)
+            new Color(112, 112, 112),    // Gray
+            // Terrain.STONE (Stone)
+            new Color(169, 169, 169),    // Dark Gray
+            // Terrain.COBBLESTONE (Cobblestone)
+            new Color(128, 128, 128),    // Gray
+            // Terrain.MOSSY_COBBLESTONE (Mossy Cobblestone)
+            new Color(85, 107, 47),      // Dark Olive Green
+            // Terrain.GRANITE (Granite)
+            new Color(179, 83, 57),      // Reddish Granite
+            // Terrain.DIORITE (Diorite)
+            new Color(212, 212, 212),    // Light Gray
+            // Terrain.ANDESITE (Andesite)
+            new Color(128, 128, 128),    // Gray
+            // Terrain.DEEPSLATE (Deepslate)
+            new Color(44, 44, 48),       // Dark Slate
+            // Terrain.STONE_MIX (Stone Mix)
+            new Color(128, 128, 128),    // Mixed Gray
+            // Terrain.ROCK (Rock)
+            new Color(169, 169, 169)     // Dark Gray (similar to Stone)
+    };
 
     public StonePaletteApplicator() {
         materials = new Terrain[]{Terrain.GRASS, Terrain.GRAVEL, Terrain.STONE, Terrain.COBBLESTONE,
@@ -56,7 +80,7 @@ public class StonePaletteApplicator implements IPositionValueSetter {
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        g.setColor(Color.gray);
+        g.setColor(colors[value]);
         g.fillRect(0, 0, dim.width, dim.height);
     }
 
