@@ -35,10 +35,11 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
 
         JPanel textInputs = new JPanel(new BorderLayout());
         this.add(textInputs, BorderLayout.NORTH);
-        Font inputOutputFont = new Font("SansSerif", Font.BOLD, 24);
+        Font header1Font = new Font("SansSerif", Font.BOLD, 24);
+        Font header2Font = new Font("SansSerif", Font.BOLD, 18);
 
         nameField = new JTextField();
-        nameField.setFont(inputOutputFont);
+        nameField.setFont(header1Font);
         textInputs.add(nameField, BorderLayout.WEST);
         nameField.addActionListener(new ActionListener() {
             @Override
@@ -53,7 +54,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
                 updateMapping(mapping.withDescription(description.getText()));
             }
         });
-        description.setFont(inputOutputFont);
+        description.setFont(header2Font);
         textInputs.add(description, BorderLayout.CENTER);
 
 
@@ -67,13 +68,13 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
                 updateMapping(mapping.withInput(getter));
             }
         });
-        inputSelect.setFont(inputOutputFont);
+        inputSelect.setFont(header2Font);
         comboboxes.add(inputSelect);
 
 
         outputSelect = new OutputComboBox();
         comboboxes.add(outputSelect);
-        outputSelect.setFont(inputOutputFont);
+        outputSelect.setFont(header2Font);
         outputSelect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -83,7 +84,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         });
 
         actionTypeComboBox = new ActionTypeComboBox();
-        actionTypeComboBox.setFont(inputOutputFont);
+        actionTypeComboBox.setFont(header2Font);
         comboboxes.add(actionTypeComboBox);
         actionTypeComboBox.addActionListener(new ActionListener() {
             @Override
