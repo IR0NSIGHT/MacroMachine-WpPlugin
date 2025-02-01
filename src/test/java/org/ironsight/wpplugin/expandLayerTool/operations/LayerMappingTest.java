@@ -1,5 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.HeightProvider;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.NibbleLayerSetter;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.layers.Annotations;
 

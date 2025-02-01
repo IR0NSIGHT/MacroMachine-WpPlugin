@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.IMappingValue;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IMappingValue;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;

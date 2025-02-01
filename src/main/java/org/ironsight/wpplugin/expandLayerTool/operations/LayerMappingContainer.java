@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.ironsight.wpplugin.expandLayerTool.Gui.MappingEditorPanel;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
 

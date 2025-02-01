@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.expandLayerTool.operations;
+package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.*;

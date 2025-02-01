@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.IPositionValueGetter;
-import org.ironsight.wpplugin.expandLayerTool.operations.InputOutputProvider;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.InputOutputProvider;
 
 import javax.swing.*;
 import java.util.HashMap;
