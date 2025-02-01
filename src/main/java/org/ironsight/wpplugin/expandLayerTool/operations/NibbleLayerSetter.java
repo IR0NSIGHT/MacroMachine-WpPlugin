@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 
+import java.awt.*;
 import java.util.Objects;
 
 public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter {
@@ -40,6 +41,12 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     @Override
     public boolean isDiscrete() {
         return false;
+    }
+
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        g.setColor(new Color(255 - 255 * value / 15, 255, 255));
+        g.fillRect(0, 0, dim.width, dim.height);
     }
 
     @Override

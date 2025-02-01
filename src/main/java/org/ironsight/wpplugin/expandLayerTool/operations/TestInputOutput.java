@@ -2,6 +2,8 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.pepsoft.worldpainter.Dimension;
 
+import java.awt.*;
+
 public class TestInputOutput implements IPositionValueSetter, IPositionValueGetter {
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
@@ -31,6 +33,12 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     @Override
     public boolean isDiscrete() {
         return false;
+    }
+
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        g.setColor(Color.RED);
+        g.fillRect(0, 0, dim.width, dim.height);
     }
 
     @Override

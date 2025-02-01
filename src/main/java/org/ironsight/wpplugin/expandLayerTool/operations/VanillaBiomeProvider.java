@@ -4,6 +4,7 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
 import org.pepsoft.worldpainter.layers.Biome;
 
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,5 +55,16 @@ public class VanillaBiomeProvider implements IPositionValueGetter {
     public String valueToString(int value) {
         if (value < 0 || value >= biomes.length) return "NULL";
         return biomes[value].getValue();
+    }
+
+    @Override
+    public boolean isDiscrete() {
+        return true;
+    }
+
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, dim.width, dim.height);
     }
 }
