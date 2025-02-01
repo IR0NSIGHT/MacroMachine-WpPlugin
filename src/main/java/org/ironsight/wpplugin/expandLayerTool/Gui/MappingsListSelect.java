@@ -5,6 +5,7 @@ import org.ironsight.wpplugin.expandLayerTool.operations.*;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
@@ -40,6 +41,7 @@ public class MappingsListSelect extends LayerMappingPanel {
 
     @Override
     protected void initComponents() {
+        this.setLayout(new BorderLayout());
         // Create the JList
         list = new JList<>();
 
@@ -74,9 +76,11 @@ public class MappingsListSelect extends LayerMappingPanel {
             }
         });
 
-        this.add(scrollPane);
-        this.add(addButton);
-        this.add(removeButton);
+        JPanel buttonPanel = new JPanel(new BorderLayout());
+        buttonPanel.add(addButton, BorderLayout.EAST);
+        buttonPanel.add(removeButton, BorderLayout.WEST);
+        this.add(buttonPanel, BorderLayout.SOUTH);
+        this.add(scrollPane, BorderLayout.CENTER);
     }
 
     public int getSelectedProvider() {
