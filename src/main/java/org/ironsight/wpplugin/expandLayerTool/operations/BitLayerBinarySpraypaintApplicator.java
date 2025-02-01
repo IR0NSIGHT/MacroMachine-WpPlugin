@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 
+import java.awt.*;
 import java.util.Objects;
 import java.util.Random;
 
@@ -75,5 +76,16 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     @Override
     public String getDescription() {
         return "spraypaint binary layer " + layer.getName() + " (ON or OFF) based on input chance 0 to 100%.";
+    }
+
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        //value is 0 to 100
+        int cellSize = dim.width / 100;
+
+        for (int i = getMinValue(); i < getMaxValue(); i++) {
+            if (Math.random() < value / 100f)
+                g.fillRect(i * cellSize, 0, cellSize, cellSize);
+        }
     }
 }

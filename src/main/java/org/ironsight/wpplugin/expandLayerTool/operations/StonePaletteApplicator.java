@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
 
+import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -51,6 +52,12 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     @Override
     public boolean isDiscrete() {
         return true;
+    }
+
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        g.setColor(Color.gray);
+        g.fillRect(0, 0, dim.width, dim.height);
     }
 
     @Override

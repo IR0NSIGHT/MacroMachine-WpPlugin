@@ -2,6 +2,8 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.pepsoft.worldpainter.Dimension;
 
+import java.awt.*;
+
 public class SlopeProvider implements IPositionValueGetter {
     /**
      * slope in degrees 0-90
@@ -34,6 +36,19 @@ public class SlopeProvider implements IPositionValueGetter {
     @Override
     public String valueToString(int value) {
         return value + "°";
+    }
+
+    @Override
+    public boolean isDiscrete() {
+        return false;
+    }
+
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.rotate(Math.toRadians(value), dim.width / 2f, dim.height / 2f);
+        g2d.setColor(Color.RED);
+        g2d.fillRect(dim.width / 2, dim.height / 2, dim.width, dim.height);
     }
 
     @Override
