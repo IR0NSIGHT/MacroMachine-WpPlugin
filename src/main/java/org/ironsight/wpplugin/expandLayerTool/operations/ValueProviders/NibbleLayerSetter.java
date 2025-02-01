@@ -7,6 +7,24 @@ import java.awt.*;
 import java.util.Objects;
 
 public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter {
+    private final static Color[] COLORS = new Color[]{new Color(0, 0, 0),       // Black
+            new Color(0, 0, 0),       // Black
+            new Color(0, 16, 0),      // Very dark green
+            new Color(0, 32, 0),      // Dark green
+            new Color(0, 48, 0),      // Darker green
+            new Color(0, 64, 0),      // Medium-dark green
+            new Color(0, 80, 0),      // Medium green
+            new Color(0, 96, 0),      // Slightly lighter green
+            new Color(0, 112, 0),     // Light green
+            new Color(0, 128, 0),     // Lighter green
+            new Color(0, 144, 0),     // Bright green
+            new Color(0, 160, 0),     // Brighter green
+            new Color(0, 176, 0),     // Vibrant green
+            new Color(0, 192, 0),     // Very vibrant green
+            new Color(0, 208, 0),     // Almost neon green
+            new Color(0, 224, 0),     // Neon green
+            new Color(0, 255, 0)      // Pure green
+    };
     private final Layer layer;
 
     public NibbleLayerSetter(Layer layer) {
@@ -45,7 +63,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        g.setColor(new Color(255 - 255 * value / 15, 255, 255));
+        g.setColor(COLORS[value]);
         g.fillRect(0, 0, dim.width, dim.height);
     }
 
