@@ -1,9 +1,14 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.ironsight.wpplugin.expandLayerTool.Gui.MappingEditorPanel;
+import org.pepsoft.worldpainter.layers.Frost;
+import org.pepsoft.worldpainter.layers.PineForest;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -13,31 +18,29 @@ import java.util.HashMap;
 
 
 public class LayerMappingContainer {
-    public String filePath = "/home/klipper/Documents/worldpainter/mappings.txt";
     public static LayerMappingContainer INSTANCE = new LayerMappingContainer();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
     private final HashMap<Integer, ArrayList<Runnable>> uidNotifies = new HashMap<>();
     private final HashMap<Integer, LayerMapping> mappings = new HashMap<>();
+    public String filePath = "/home/klipper/Documents/worldpainter/mappings.txt";
     private int nextUid = 1;
+    private boolean suppressFileWriting = false;
 
     public LayerMappingContainer() {
-        addMapping(new LayerMapping(new SlopeProvider(), new TestInputOutput(), new MappingPoint[0], ActionType.SET,
-                "paint mountainsides", "", -1));
-        addMapping(new LayerMapping(new HeightProvider(), new TestInputOutput(), new MappingPoint[0], ActionType.SET,
-                "frost mountain tops", "", -1));
-        addMapping(new LayerMapping(new SlopeProvider(), new TestInputOutput(), new MappingPoint[0], ActionType.SET,
-                "no steep pines", "", -1));
+        addMapping(new LayerMapping(new SlopeProvider(), new TestInputOutput(),
+                new MappingPoint[]{new MappingPoint(30, 3), new MappingPoint(50, 8), new MappingPoint(70, 5),
+                        new MappingPoint(80, 9)}, ActionType.SET, "paint mountainsides", "apply stone and rocks " +
+                "based" + " on slope to make mountain sides colorful and interesting", -1));
+        addMapping(new LayerMapping(new HeightProvider(), new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
+                new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)}, ActionType.MAX,
+                "frosted " + "peaks", "gradually add snow the higher a mountain goes", -1));
+        addMapping(new LayerMapping(new SlopeProvider(), new NibbleLayerSetter(PineForest.INSTANCE),
+                new MappingPoint[]{new MappingPoint(0, 15), new MappingPoint(70, 15), new MappingPoint(80, 0)},
+                ActionType.MIN, "no steep pines", "limit pines from growing on vertical cliffs", -1));
     }
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("TEST PANEL");
-
-        INSTANCE.addMapping(new LayerMapping(new SlopeProvider(), new TestInputOutput(), new MappingPoint[0],
-                ActionType.SET, "paint mountainsides", "", -1));
-        INSTANCE.addMapping(new LayerMapping(new HeightProvider(), new TestInputOutput(), new MappingPoint[0],
-                ActionType.SET, "frost mountain tops", "", -1));
-        INSTANCE.addMapping(new LayerMapping(new SlopeProvider(), new TestInputOutput(), new MappingPoint[0],
-                ActionType.SET, "no steep pines", "", -1));
 
         JDialog log = MappingEditorPanel.createDialog(frame, f -> {
         });
@@ -116,7 +119,6 @@ public class LayerMappingContainer {
         }
     }
 
-    private boolean suppressFileWriting = false;
     public void readFromFile() {
         mappings.clear();
         Object deserializedObject;
