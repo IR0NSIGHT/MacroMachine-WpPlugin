@@ -22,28 +22,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingEdito
     };
     private JTable numberTable;
 
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("TEST PANEL");
-
-        LayerMapping mapper = new LayerMapping(null, null, new MappingPoint[]{new MappingPoint(20, 10),
-                new MappingPoint(50, 50), new MappingPoint(70, 57),}, ActionType.SET, "test", "test thing descr", 1);
-
-        MappingTextTable table = new MappingTextTable();
-        table.setMapping(mapper);
-        // Add the outer panel to the frame
-        frame.add(table);
-
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
-    }
-
     @Override
     protected void updateComponents() {
-        assert mapping != null;
-        assert mapping.getMappingPoints() != null;
-        assert mapping.input != null;
-        assert mapping.output != null;
         Object[][] data = new Object[mapping.getMappingPoints().length][];
         Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
         for (int i = 0; i < mapping.getMappingPoints().length; i++) {
@@ -145,3 +125,5 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingEdito
         }
     }
 }
+
+

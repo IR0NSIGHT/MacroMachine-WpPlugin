@@ -43,6 +43,9 @@ public abstract class LayerMappingPanel extends JPanel {
 
     public final void setMapping(LayerMapping mapping) {
         assert mapping != null;
+        assert mapping.getMappingPoints() != null;
+        assert mapping.input != null;
+        assert mapping.output != null;
         if (this.mapping != null && this.mapping.equals(mapping)) {
             return;
         }
