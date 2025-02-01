@@ -13,29 +13,20 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.function.Consumer;
 
-public class MappingTextTable extends JPanel implements IMappingEditor {
+public class MappingTextTable extends LayerMappingPanel implements IMappingEditor {
     int selectedPointIdx;
     DefaultTableModel tableModel;
     TableModelListener listener;
-    private Consumer<LayerMapping> onUpdate = f -> {
-    };
 
     private Consumer<Integer> onSelect = f -> {
     };
-    private LayerMapping mapping;
     private JTable numberTable;
-
-    public MappingTextTable() {
-        init();
-    }
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("TEST PANEL");
 
-        LayerMapping mapper = new LayerMapping(null, null,
-                new MappingPoint[]{new MappingPoint(20, 10),
-                        new MappingPoint(50, 50), new MappingPoint(70, 57),},
-                ActionType.SET, "test", "test thing descr", 1);
+        LayerMapping mapper = new LayerMapping(null, null, new MappingPoint[]{new MappingPoint(20, 10),
+                new MappingPoint(50, 50), new MappingPoint(70, 57),}, ActionType.SET, "test", "test thing descr", 1);
 
         MappingTextTable table = new MappingTextTable();
         table.setMapping(mapper);
@@ -47,7 +38,40 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
         frame.setVisible(true);
     }
 
-    private void init() {
+    @Override
+    protected void updateComponents() {
+        assert mapping != null;
+        assert mapping.getMappingPoints() != null;
+        assert mapping.input != null;
+        assert mapping.output != null;
+        Object[][] data = new Object[mapping.getMappingPoints().length][];
+        Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
+        for (int i = 0; i < mapping.getMappingPoints().length; i++) {
+            MappingPoint a = mapping.getMappingPoints()[i];
+            data[i] = new Object[]{mapping.input.valueToString(a.input), mapping.output.valueToString(a.output)};
+        }
+
+        selectedPointIdx = Math.min(selectedPointIdx, mapping.getMappingPoints().length - 1);
+
+        this.tableModel = new DefaultTableModel(data, columnNames);
+        this.tableModel.addTableModelListener(this.listener);
+        numberTable.setModel(tableModel);
+
+        Font font = new Font("Arial", Font.PLAIN, 24);
+        numberTable.setFont(font);
+        FontMetrics fontMetrics = numberTable.getFontMetrics(font);
+        int rowHeight = fontMetrics.getHeight() + 10;
+        numberTable.setRowHeight(rowHeight);
+
+        // Place the selection cursor in the i-th row
+        if (selectedPointIdx >= 0 && selectedPointIdx < numberTable.getRowCount()) {
+            numberTable.setRowSelectionInterval(selectedPointIdx, selectedPointIdx);
+            numberTable.scrollRectToVisible(numberTable.getCellRect(selectedPointIdx, 0, true));
+        }
+    }
+
+    @Override
+    protected void initComponents() {
         Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
         Border whiteBorder = new EmptyBorder(5, 5, 5, 5); // 5px white border
         setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
@@ -83,40 +107,6 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
         });
     }
 
-    private void updateComponents() {
-        assert mapping != null;
-        assert mapping.getMappingPoints() != null;
-        assert mapping.input != null;
-        assert mapping.output != null;
-        Object[][] data = new Object[mapping.getMappingPoints().length][];
-        Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
-        for (int i = 0; i < mapping.getMappingPoints().length; i++) {
-            MappingPoint a = mapping.getMappingPoints()[i];
-            data[i] = new Object[]{mapping.input.valueToString(a.input), mapping.output.valueToString(a.output)};
-        }
-
-        selectedPointIdx = Math.min(selectedPointIdx, mapping.getMappingPoints().length - 1);
-
-        this.tableModel = new DefaultTableModel(data, columnNames);
-        this.tableModel.addTableModelListener(this.listener);
-        numberTable.setModel(tableModel);
-
-        Font font = new Font("Arial", Font.PLAIN, 24);
-        numberTable.setFont(font);
-        FontMetrics fontMetrics = numberTable.getFontMetrics(font);
-        int rowHeight = fontMetrics.getHeight() + 10;
-        numberTable.setRowHeight(rowHeight);
-
-        // Place the selection cursor in the i-th row
-        if (selectedPointIdx >= 0 && selectedPointIdx < numberTable.getRowCount()) {
-            numberTable.setRowSelectionInterval(selectedPointIdx, selectedPointIdx);
-            numberTable.scrollRectToVisible(numberTable.getCellRect(selectedPointIdx, 0, true));
-        }
-
-        numberTable.revalidate();
-        numberTable.repaint();
-    }
-
     protected boolean parseAndSetValue(Object newValue, int row, int column) {
         int newValueInt;
         if (newValue instanceof Integer) newValueInt = (Integer) newValue;
@@ -138,21 +128,8 @@ public class MappingTextTable extends JPanel implements IMappingEditor {
             points[row] = new MappingPoint(points[row].input, newValueInt);
         }
         mapping = mapping.withNewPoints(points);
-        onUpdate.accept(mapping);
-
-        updateComponents();
+        updateMapping(mapping);
         return true;
-    }
-
-    public void setMapping(LayerMapping mapping) {
-        if (this.mapping != null && this.mapping.equals(mapping)) return;
-        this.mapping = mapping;
-        updateComponents();
-    }
-
-    @Override
-    public void setOnUpdate(Consumer<LayerMapping> onUpdate) {
-        this.onUpdate = onUpdate;
     }
 
     @Override

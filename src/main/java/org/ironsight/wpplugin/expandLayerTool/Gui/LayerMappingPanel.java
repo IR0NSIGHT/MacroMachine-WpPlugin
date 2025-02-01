@@ -24,6 +24,7 @@ public abstract class LayerMappingPanel extends JPanel {
     protected abstract void initComponents();
 
     /**
+     * internal way to signalize "i changed the mapping, do the events"
      * will set mapping, call onUpdate and trigger internal update()
      *
      * @param mapping
@@ -47,6 +48,8 @@ public abstract class LayerMappingPanel extends JPanel {
         }
         this.mapping = mapping;
         updateComponents();
+        this.revalidate();
+        this.repaint();
     }
 
     public final void setOnUpdate(Consumer<LayerMapping> onUpdate) {
