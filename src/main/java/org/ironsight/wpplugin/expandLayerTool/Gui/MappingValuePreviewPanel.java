@@ -25,7 +25,7 @@ public class MappingValuePreviewPanel extends JPanel {
     public static void main(String[] args) {
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new MappingValuePreviewPanel(new HeightProvider(), 255));
+        frame.add(new MappingValuePreviewPanel(new SlopeProvider(), 15));
         frame.setPreferredSize(new Dimension(450, 450))
         ;
         frame.pack();
