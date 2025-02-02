@@ -9,8 +9,9 @@ import java.awt.*;
 public class MappingPointCellEditor extends DefaultCellEditor implements TableCellEditor {
     static JComboBox<MappingPointValue> dropdown = new JComboBox<>();  //FIXME will static cause problems?
 
-    public MappingPointCellEditor(IMappingValue input, IMappingValue output) {
+    public MappingPointCellEditor() {
         super(dropdown);
+        dropdown.setRenderer(new MappingPointCellRenderer());
     }
 
     @Override
