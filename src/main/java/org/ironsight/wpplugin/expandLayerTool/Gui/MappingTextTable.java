@@ -8,8 +8,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.function.Consumer;
 
@@ -28,7 +26,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingEdito
         Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
         for (int i = 0; i < mapping.getMappingPoints().length; i++) {
             MappingPoint a = mapping.getMappingPoints()[i];
-            data[i] = new Object[]{mapping.input.valueToString(a.input), mapping.output.valueToString(a.output)};
+            data[i] = new Object[]{a, a};
         }
 
         selectedPointIdx = Math.min(selectedPointIdx, mapping.getMappingPoints().length - 1);
@@ -48,6 +46,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingEdito
             numberTable.setRowSelectionInterval(selectedPointIdx, selectedPointIdx);
             numberTable.scrollRectToVisible(numberTable.getCellRect(selectedPointIdx, 0, true));
         }
+
+        numberTable.setDefaultRenderer(Object.class, new MappingPointCellRenderer(mapping.input, mapping.output));
     }
 
     @Override
@@ -57,21 +57,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingEdito
         setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
 
         // Add a TableModelListener to get a callback when a cell is edited
-        numberTable = new JTable() {
-            @Override
-            public TableCellRenderer getCellRenderer(int row, int column) {
-                if (column == 0) {
-                    return new MappingPointCellRenderer(mapping.input, mapping.getMappingPoints()[row].input);
-                } else {
-                    return new MappingPointCellRenderer(mapping.output, mapping.getMappingPoints()[row].output);
-                }
-            }
-
-            @Override
-            public TableCellEditor getCellEditor(int row, int column) {
-                return super.getCellEditor(row, column);
-            }
-        };
+        numberTable = new JTable();
 
         JScrollPane scrollPane = new JScrollPane(numberTable);
         this.add(scrollPane, BorderLayout.CENTER);

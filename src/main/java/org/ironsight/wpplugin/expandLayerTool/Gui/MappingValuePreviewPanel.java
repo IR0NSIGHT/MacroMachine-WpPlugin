@@ -2,26 +2,37 @@ package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.BitLayerBinarySpraypaintApplicator;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IMappingValue;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.StonePaletteApplicator;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class MappingValuePreviewPanel extends JPanel {
-    private final IMappingValue mappingValue;
-    private final int value;
+    private IMappingValue mappingValue;
+    private int value;
 
-    public MappingValuePreviewPanel(IMappingValue mappingValue, int value) {
-        this.mappingValue = mappingValue;
-        this.value = value;
+    public MappingValuePreviewPanel() {
     }
 
     public static void main(String[] args) {
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new MappingValuePreviewPanel(new BitLayerBinarySpraypaintApplicator(null), 50));
+        MappingValuePreviewPanel panel = new MappingValuePreviewPanel();
+        panel.setMappingValue(new StonePaletteApplicator());
+        panel.setValue(12);
+        frame.add(new MappingValuePreviewPanel());
         frame.setPreferredSize(new Dimension(450, 450));
         frame.pack();
         frame.setVisible(true);
+    }
+
+    public void setMappingValue(IMappingValue mappingValue) {
+        this.mappingValue = mappingValue;
+    }
+
+    public void setValue(int value) {
+        if (mappingValue != null)
+        this.value = value;
     }
 
     @Override
