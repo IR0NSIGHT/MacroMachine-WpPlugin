@@ -29,8 +29,7 @@ public class ApplyAction {
 
             {   // EARLY ABORT IF TILE DOESNT MEET MINIMAL CRITERIA
                 if ((filter.isInSelection() && !tile.hasLayer(SelectionBlock.INSTANCE) &&
-                        !tile.hasLayer(SelectionChunk.INSTANCE)))
-                    continue;
+                        !tile.hasLayer(SelectionChunk.INSTANCE))) continue;
 
                 if (filter.getOnlyOnLayer() != null && !tile.hasLayer(filter.getOnlyOnLayer())) continue;
 
@@ -55,9 +54,9 @@ public class ApplyAction {
     }
 
     public void apply(Dimension dim) {
+        assert mapping.getMappingPoints().length != 0;
         applyToDimensionWithFilter(dim, filter, pos -> {
-            if (pos.x == 0 && pos.y == 0)
-                System.out.println("owo!");
+            if (pos.x == 0 && pos.y == 0) System.out.println("owo!");
             mapping.applyToPoint(dim, pos.x, pos.y);
         });
     }

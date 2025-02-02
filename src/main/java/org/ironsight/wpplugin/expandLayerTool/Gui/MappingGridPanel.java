@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class MappingGridPanel extends LayerMappingPanel implements IMappingEditor {
+public class MappingGridPanel extends LayerMappingPanel implements IMappingPointSelector {
     private final List<Line> lines = new ArrayList<>();  // List to store lines
     private final int pointHitBoxRadius = 5;
     private final int pixelSizeX = 500;

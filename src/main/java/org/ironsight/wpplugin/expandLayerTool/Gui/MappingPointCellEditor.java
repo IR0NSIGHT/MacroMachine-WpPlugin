@@ -27,5 +27,4 @@ public class MappingPointCellEditor extends DefaultCellEditor implements TableCe
         }
         return this.getComponent();
     }
-
 }
