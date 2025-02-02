@@ -8,7 +8,7 @@ import java.util.UUID;
 
 public class MappingMacro implements IDisplayUnit {
     //ordered list of layermappings
-    public UUID[] mappingUids;
+    public final UUID[] mappingUids;
 
     public MappingMacro(LayerMapping[] layerMappings) {
         mappingUids = new UUID[layerMappings.length];
@@ -19,12 +19,12 @@ public class MappingMacro implements IDisplayUnit {
 
     @Override
     public String getName() {
-        return "";
+        return "Mapping Macro";
     }
 
     @Override
     public String getDescription() {
-        return "";
+        return "this macro globally applies multiple actions in fixed order to achieve cool outcomes.";
     }
 
     public boolean allMappingsReady(LayerMappingContainer container) {
