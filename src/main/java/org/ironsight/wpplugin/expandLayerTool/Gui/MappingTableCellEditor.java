@@ -95,7 +95,6 @@ class MappingTableCellEditor extends DefaultCellEditor {
             mappingDropdown.addItem(m);
         }
         mappingDropdown.setSelectedItem(mapping);
-        table.setRowHeight(row, panel.getPreferredSize().height);
         return panel; // Return the custom panel
     }
 }
