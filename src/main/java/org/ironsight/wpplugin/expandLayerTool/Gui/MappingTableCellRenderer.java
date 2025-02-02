@@ -15,6 +15,7 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<La
 
     public MappingTableCellRenderer() {
         panel.add(nameLabel, BorderLayout.WEST);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
         nameLabel.setFont(LayerMappingTopPanel.header1Font);
         nameLabel.setVerticalAlignment(JLabel.CENTER);
 
