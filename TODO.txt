@@ -2,3 +2,9 @@
 - selected point is not properly updated from table -> grid panel
 
 - GUI editor for macro building
+- zoom feature for grid panel
+- type to select from mappint table dropdown
+- order values alpabetically for discrete MappingValues
+- order + search in global list display
+- bug: mapping editor only updated on second selection of mapping from global list
+- investigate: sometimes saveing/loading doesnt seem  to work?
