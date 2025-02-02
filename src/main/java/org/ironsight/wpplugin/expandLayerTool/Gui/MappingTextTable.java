@@ -39,8 +39,6 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         Font font = new Font("Arial", Font.PLAIN, 24);
         numberTable.setFont(font);
         FontMetrics fontMetrics = numberTable.getFontMetrics(font);
-        int rowHeight = fontMetrics.getHeight() + 10;
-        numberTable.setRowHeight(rowHeight);
 
         // Place the selection cursor in the i-th row
         if (selectedPointIdx >= 0 && selectedPointIdx < numberTable.getRowCount()) {
@@ -50,6 +48,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
         numberTable.setDefaultRenderer(Object.class, new MappingPointCellRenderer());
         numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
+
     }
 
     @Override

@@ -7,6 +7,7 @@ import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -18,6 +19,9 @@ public class MacroDesigner extends JPanel {
 
     private JLabel name, description;
     private JTable table;
+    private JButton addButton, removeButton;
+    private JScrollPane scrollPane;
+    private int selectedRow;
 
     MacroDesigner() {
         init();
@@ -45,6 +49,8 @@ public class MacroDesigner extends JPanel {
     }
 
     private void init() {
+        this.setLayout(new BorderLayout());
+
         name = new JLabel("Name goes here");
         name.setFont(LayerMappingTopPanel.header1Font);
         description = new JLabel("Description goes here");
@@ -56,14 +62,15 @@ public class MacroDesigner extends JPanel {
                         this::onMoveUpMapping,
                         this::onMoveDownMapping));
         table.setDefaultRenderer(Object.class, new MappingTableCellRenderer());
+        scrollPane = new JScrollPane(table);
+        this.add(scrollPane, BorderLayout.CENTER);
 
-
-        this.setLayout(new BorderLayout());
         JPanel top = new JPanel(new GridLayout(0, 1));
         top.add(name);
         top.add(description);
         this.add(top, BorderLayout.NORTH);
 
+        JPanel buttons = new JPanel(new FlowLayout());
         JButton applyButton = new JButton("Apply");
         applyButton.addActionListener(new ActionListener() {
             @Override
@@ -71,8 +78,23 @@ public class MacroDesigner extends JPanel {
                 onApplyButtonPressed();
             }
         });
-        this.add(table, BorderLayout.CENTER);
+        buttons.add(applyButton);
 
+        addButton = new JButton("Add");
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                LayerMapping[] all = LayerMappingContainer.INSTANCE.queryMappingsAll();
+                if (all.length == 0) return;
+                UUID next = all[0].getUid();
+                UUID[] ids = Arrays.copyOf(macro.mappingUids, macro.mappingUids.length + 1);
+                ids[ids.length - 1] = next;
+                MappingMacro mappingMacro = macro.withUUIDs(ids);
+                setMacro(mappingMacro);
+            }
+        });
+        buttons.add(addButton);
+        this.add(buttons, BorderLayout.SOUTH);
     }
 
     private void onMoveUpMapping(LayerMapping mapping) {
@@ -118,16 +140,38 @@ public class MacroDesigner extends JPanel {
             if (e.getType() == TableModelEvent.UPDATE) {
                 //collect the UUIDs in order
                 UUID[] ids = new UUID[table.getModel().getRowCount()];
-                for (int ii = 0; ii < ids.length; ii++)
+                //get edited cell
+                for (int ii = 0; ii < ids.length; ii++) {
                     ids[ii] = ((LayerMapping) table.getModel().getValueAt(ii, 0)).getUid();
+                }
                 SwingUtilities.invokeLater(() -> {
+                    int editedRow = e.getFirstRow();
+                    selectedRow = editedRow;
                     this.setMacro(macro.withUUIDs(ids));
                 });
             }
         });
 
+
+        final int rowCount = table.getRowCount();
+        final int colCount = table.getColumnCount();
+        for (int ix = 0; ix < rowCount; ix++) {
+            int maxHeight = 0;
+            for (int j = 0; j < colCount; j++) {
+                final TableCellRenderer renderer = table.getCellRenderer(ix, j);
+                maxHeight = Math.max(maxHeight, table.prepareRenderer(renderer, ix, j).getPreferredSize().height);
+            }
+            table.setRowHeight(ix, maxHeight );
+        }
         invalidate();
         repaint();
+
+        // Get the row index of the edited row (the row that triggered the update)
+        if (selectedRow < table.getRowCount()) {
+            System.out.println("scroll to row:" + selectedRow);
+            Rectangle view = table.getCellRect(selectedRow, 0, true);
+            scrollPane.getViewport().scrollRectToVisible(view);
+        }
     }
 
     public void setMacro(MappingMacro macro) {
