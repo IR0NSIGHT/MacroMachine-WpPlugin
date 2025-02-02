@@ -17,4 +17,8 @@ public interface IMappingValue {
     boolean isDiscrete();
 
     void paint(Graphics g, int value, java.awt.Dimension dim);
+
+    static int sanitizeValue(int value, IMappingValue mappingValue) {
+        return Math.max(Math.min(value, mappingValue.getMaxValue()), mappingValue.getMinValue());
+    }
 }
