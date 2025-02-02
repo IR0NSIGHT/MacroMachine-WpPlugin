@@ -10,8 +10,8 @@ import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 
 public class MappingEditorPanel extends LayerMappingPanel {
+    private static JDialog dialog;
     private final Consumer<LayerMapping> onSubmit;
-
     private MappingGridPanel mappingDisplay;
     private MappingTextTable table;
     private LayerMappingTopPanel topBar;
@@ -22,8 +22,17 @@ public class MappingEditorPanel extends LayerMappingPanel {
     }
 
     public static JDialog createDialog(JFrame parent, Consumer<LayerMapping> applyToMap) {
+        if (dialog != null) {
+            dialog.setVisible(true);
+            dialog.toFront();        // Bring it to the front
+            dialog.requestFocus();   // Request focus (optional)
+            return dialog;
+        }
+
         // Create a JDialog with the parent frame
-        JDialog dialog = new JDialog(parent, "My Dialog", false); // Modal dialog
+        dialog = new JDialog(parent, "My Dialog", false); // Modal dialog
+        dialog.setLocationRelativeTo(null); // Centers the dialog
+
         JPanel all = new JPanel(new BorderLayout());
 
         Consumer<LayerMapping> submit = mapping1 -> {

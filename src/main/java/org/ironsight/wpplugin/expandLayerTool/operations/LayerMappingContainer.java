@@ -12,32 +12,43 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 
 
 public class LayerMappingContainer {
     public static LayerMappingContainer INSTANCE = new LayerMappingContainer();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
-    private final HashMap<Integer, ArrayList<Runnable>> uidNotifies = new HashMap<>();
-    private final HashMap<Integer, LayerMapping> mappings = new HashMap<>();
+    private final HashMap<UUID, ArrayList<Runnable>> uidNotifies = new HashMap<>();
+    private final HashMap<UUID, LayerMapping> mappings = new HashMap<>();
     public String filePath = "/home/klipper/Documents/worldpainter/mappings.txt";
-    private int nextUid = 1;
     private boolean suppressFileWriting = false;
 
-    public LayerMappingContainer() {
-        addMapping(new LayerMapping(new SlopeProvider(), new TestInputOutput(),
+    public LayerMappingContainer() {}
+
+    private static void addDefaultMappings(LayerMappingContainer container) {
+        LayerMapping m = container.addMapping();
+        m = new LayerMapping(new SlopeProvider(), new StonePaletteApplicator(),
                 new MappingPoint[]{new MappingPoint(30, 3), new MappingPoint(50, 8), new MappingPoint(70, 5),
                         new MappingPoint(80, 9)}, ActionType.SET, "paint mountainsides", "apply stone and rocks " +
-                "based" + " on slope to make mountain sides colorful and interesting", -1));
-        addMapping(new LayerMapping(new HeightProvider(), new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
+                "based" + " on slope to make mountain sides colorful and interesting", m.getUid());
+        container.updateMapping(m);
+
+        m = container.addMapping();
+        m = new LayerMapping(new HeightProvider(), new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
                 new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)}, ActionType.MAX,
-                "frosted " + "peaks", "gradually add snow the higher a mountain goes", -1));
-        addMapping(new LayerMapping(new SlopeProvider(), new NibbleLayerSetter(PineForest.INSTANCE),
+                "frosted " + "peaks", "gradually add snow the higher a mountain goes", m.getUid());
+        container.updateMapping(m);
+
+        m = container.addMapping();
+        m = new LayerMapping(new SlopeProvider(), new NibbleLayerSetter(PineForest.INSTANCE),
                 new MappingPoint[]{new MappingPoint(0, 15), new MappingPoint(70, 15), new MappingPoint(80, 0)},
-                ActionType.MIN, "no steep pines", "limit pines from growing on vertical cliffs", -1));
+                ActionType.MIN, "no steep pines", "limit pines from growing on vertical cliffs", m.getUid());
+        container.updateMapping(m);
+
+        m = container.addMapping();
+        m = new LayerMapping(new AnnotationSetter(), new TestInputOutput(), new MappingPoint[0], ActionType.SET,
+                "colors", "", m.getUid());
+        container.updateMapping(m);
     }
 
     public static void main(String[] args) {
@@ -55,26 +66,30 @@ public class LayerMappingContainer {
 
     public void updateMapping(LayerMapping mapping) {
         //filter for identity
-        if (!mappings.containsKey(mapping.uid) || mappings.get(mapping.uid).equals(mapping)) return;
-        mappings.put(mapping.uid, mapping);
+        if (!mappings.containsKey(mapping.getUid()) || mappings.get(mapping.getUid()).equals(mapping)) return;
+        mappings.put(mapping.getUid(), mapping);
         notify(mapping);
     }
 
-    public void deleteMapping(int uid) {
+    public void deleteMapping(UUID uid) {
         LayerMapping removed = mappings.remove(uid);
         if (removed != null) {
             notify(removed);
         }
     }
 
-    public int addMapping(LayerMapping mapping) {
-        assert mapping != null;
-        if (mappings.containsKey(mapping.uid)) return -1;
-        this.mappings.put(nextUid, mapping);
-        mapping.uid = nextUid;
-        nextUid++;
-        notify(mapping);
-        return mapping.uid;
+    private UUID getUUID() {
+        return UUID.randomUUID();
+    }
+
+    public LayerMapping addMapping() {
+        LayerMapping newMap = new LayerMapping(new HeightProvider(), new AnnotationSetter(), new MappingPoint[0],
+                ActionType.SET, "colors", "", getUUID());
+
+        mappings.put(newMap.getUid(), newMap);
+
+        notify(newMap);
+        return newMap;
     }
 
     public void subscribe(Runnable runnable) {
@@ -85,18 +100,18 @@ public class LayerMappingContainer {
         genericNotifies.remove(runnable);
     }
 
-    public void subscribeToMapping(int uid, Runnable runnable) {
+    public void subscribeToMapping(UUID uid, Runnable runnable) {
         ArrayList<Runnable> listeners = uidNotifies.getOrDefault(uid, new ArrayList<>());
         listeners.add(runnable);
         uidNotifies.put(uid, listeners);
     }
 
-    public void unsubscribeToMapping(int uid, Runnable runnable) {
+    public void unsubscribeToMapping(UUID uid, Runnable runnable) {
         ArrayList<Runnable> listeners = uidNotifies.getOrDefault(uid, new ArrayList<>());
         listeners.remove(runnable);
     }
 
-    public LayerMapping queryMappingById(int uid) {
+    public LayerMapping queryMappingById(UUID uid) {
         return mappings.get(uid);
     }
 
@@ -111,11 +126,16 @@ public class LayerMappingContainer {
         return arr;
     }
 
+    private void putMapping(LayerMapping mapping) {
+        assert !mappings.containsKey(mapping.getUid());
+        mappings.put(mapping.getUid(), mapping);
+    }
+
     private void notify(LayerMapping mapping) {
         for (Runnable r : genericNotifies)
             r.run();
-        if (mapping != null && uidNotifies.containsKey(mapping.uid)) {
-            for (Runnable r : uidNotifies.get(mapping.uid))
+        if (mapping != null && uidNotifies.containsKey(mapping.getUid())) {
+            for (Runnable r : uidNotifies.get(mapping.getUid()))
                 r.run();
         }
     }
@@ -130,7 +150,9 @@ public class LayerMappingContainer {
 
             Object[] arr = (Object[]) deserializedObject;
             for (Object o : arr) {
-                if (o instanceof LayerMapping) addMapping((LayerMapping) o);
+                if (o instanceof LayerMapping) {
+                    putMapping((LayerMapping) o);
+                }
             }
         } catch (IOException | ClassNotFoundException e) {
             System.err.println("Error during deserialization: " + e.getMessage());

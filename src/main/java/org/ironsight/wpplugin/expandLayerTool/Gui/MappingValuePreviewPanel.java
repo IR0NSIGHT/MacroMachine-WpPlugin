@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.BitLayerBinarySpraypaintApplicator;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IMappingValue;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.StonePaletteApplicator;
 
@@ -18,7 +19,7 @@ public class MappingValuePreviewPanel extends JPanel {
     public static void main(String[] args) {
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new MappingValuePreviewPanel(new StonePaletteApplicator(), 5));
+        frame.add(new MappingValuePreviewPanel(new BitLayerBinarySpraypaintApplicator(null), 50));
         frame.setPreferredSize(new Dimension(450, 450));
         frame.pack();
         frame.setVisible(true);
@@ -27,7 +28,6 @@ public class MappingValuePreviewPanel extends JPanel {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        g.setColor(Color.red);
         mappingValue.paint(g, value, getSize());
     }
 }

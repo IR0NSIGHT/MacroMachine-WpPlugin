@@ -1,8 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.*;
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.SlopeProvider;
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.StonePaletteApplicator;
+import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -10,15 +9,14 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class MappingsListSelect extends LayerMappingPanel {
-    JList<String> list;
+    JList<ListItem> list;
     JScrollPane scrollPane;
     JButton addButton;
     JButton removeButton;
-    HashMap<String, Integer> nameToUid = new HashMap<>();
 
     public MappingsListSelect(Consumer<LayerMapping> onSelection) {
         super();
@@ -29,15 +27,12 @@ public class MappingsListSelect extends LayerMappingPanel {
 
     @Override
     protected void updateComponents() {
-        int uid = getSelectedProvider();
-        nameToUid.clear();
-        DefaultListModel<String> model = new DefaultListModel<>();
+        DefaultListModel<ListItem> model = new DefaultListModel<>();
         for (LayerMapping m : LayerMappingContainer.INSTANCE.queryMappingsAll()) {
-            nameToUid.put(m.getName(), m.getUid());
-            model.addElement(m.getName());
+            model.addElement(new ListItem(m));
         }
         list.setModel(model);
-        list.setSelectedValue(LayerMappingContainer.INSTANCE.queryMappingById(uid), true);
+        if (this.mapping != null) list.setSelectedValue(new ListItem(this.mapping), true);
         list.repaint();
     }
 
@@ -53,10 +48,9 @@ public class MappingsListSelect extends LayerMappingPanel {
         list.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                String selected = list.getSelectedValue();
-                LayerMapping mapping =
-                        LayerMappingContainer.INSTANCE.queryMappingById(nameToUid.getOrDefault(selected, -1)); //FIXME
-                if (mapping != null) updateMapping(mapping);
+                ListItem item = list.getSelectedValue();
+                if (item == null) return;
+                updateMapping(item.mappingItem);
             }
         });
 
@@ -64,16 +58,14 @@ public class MappingsListSelect extends LayerMappingPanel {
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                LayerMapping newMap = new LayerMapping(new SlopeProvider(), new StonePaletteApplicator(),
-                        new MappingPoint[0], ActionType.SET, "new mapping", "description of mapping", -1);
-                LayerMappingContainer.INSTANCE.addMapping(newMap);
+                LayerMapping ignored = LayerMappingContainer.INSTANCE.addMapping();
             }
         });
         removeButton = new JButton("Remove");
         removeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int uid = getSelectedProvider();
+                UUID uid = getSelectedProvider();
                 LayerMappingContainer.INSTANCE.deleteMapping(uid);
             }
         });
@@ -85,7 +77,26 @@ public class MappingsListSelect extends LayerMappingPanel {
         this.add(scrollPane, BorderLayout.CENTER);
     }
 
-    public int getSelectedProvider() {
-        return nameToUid.getOrDefault(list.getSelectedValue(), -1);
+    public UUID getSelectedProvider() {
+        return (this.mapping != null) ? this.mapping.getUid() : null;
+    }
+
+    private static class ListItem {
+        final LayerMapping mappingItem;
+
+        public ListItem(LayerMapping mappingItem) {
+            assert mappingItem != null;
+            this.mappingItem = mappingItem;
+        }
+
+        @Override
+        public String toString() {
+            return this.mappingItem.getName();
+        }
+
+        @Override
+        public boolean equals(Object obj) { //by UID
+            return obj instanceof ListItem && this.mappingItem.getUid().equals(((ListItem) obj).mappingItem.getUid());
+        }
     }
 }

@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
+import java.util.UUID;
 
 public class LayerMapping implements IDisplayUnit, Serializable {
     public final IPositionValueGetter input;
@@ -17,10 +18,10 @@ public class LayerMapping implements IDisplayUnit, Serializable {
     private final MappingPoint[] mappingPoints;
     private final String name;
     private final String description;
-    transient int uid;
+    private final UUID uid;    //TODO make final and private
 
     public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
-                        ActionType type, String name, String description, int uid) {
+                        ActionType type, String name, String description, UUID uid) {
         this.name = name;
         this.description = description;
         this.input = input;
@@ -51,7 +52,7 @@ public class LayerMapping implements IDisplayUnit, Serializable {
         return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
     }
 
-    public int getUid() {
+    public UUID getUid() {
         return uid;
     }
 
@@ -60,7 +61,16 @@ public class LayerMapping implements IDisplayUnit, Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LayerMapping mapping = (LayerMapping) o;
-        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) && actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) && Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
+        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) &&
+                actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) &&
+                Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description) &&
+                Objects.equals(this.getUid(), mapping.getUid());
+    }
+
+    @Override
+    public String toString() {
+        return "LayerMapping{" + "name='" + name + '\'' + ", uid=" + uid + ", input=" + input + ", output=" + output +
+                ", actionType=" + actionType + '}';
     }
 
     @Override
@@ -75,8 +85,13 @@ public class LayerMapping implements IDisplayUnit, Serializable {
     }
 
     public LayerMapping withNewPoints(MappingPoint[] mappingPoints) {
-        return new LayerMapping(this.input, this.output, mappingPoints, this.getActionType(), this.getName(),
-                this.getDescription(), this.uid);
+        return new LayerMapping(this.input,
+                this.output,
+                mappingPoints,
+                this.getActionType(),
+                this.getName(),
+                this.getDescription(),
+                this.uid);
     }
 
     public ActionType getActionType() {
@@ -87,8 +102,8 @@ public class LayerMapping implements IDisplayUnit, Serializable {
         int value = input.getValueAt(dim, x, y);
         int modifier = map(value);
 
-        int existingValue = output instanceof IPositionValueGetter ? ((IPositionValueGetter) output).getValueAt(dim,
-                x, y) : 0;
+        int existingValue =
+                output instanceof IPositionValueGetter ? ((IPositionValueGetter) output).getValueAt(dim, x, y) : 0;
         int outputValue;
         switch (actionType) {
             case SET:

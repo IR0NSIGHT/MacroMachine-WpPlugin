@@ -2,12 +2,11 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.ironsight.wpplugin.expandLayerTool.Gui.GradientDisplay;
 import org.ironsight.wpplugin.expandLayerTool.Gui.GradientEditor;
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.*;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.InputOutputProvider;
 import org.ironsight.wpplugin.expandLayerTool.pathing.RingFinder;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
-import org.pepsoft.worldpainter.panels.DefaultFilter;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
 
@@ -28,12 +27,12 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 public class SelectEdgeOperation extends MouseOrTabletOperation {
     static final int CYAN = 9;
     private static final String NAME = "Select Edge Operation";
-    private static final String DESCRIPTION = "<html>Select the edge of all blocks of th laye and expand/reduce them "
-            + "<br>" + "with a spraypaint gradient, then paint it on the map as output layer.</html>";
+    private static final String DESCRIPTION =
+            "<html>Select the edge of all blocks of th laye and expand/reduce them " + "<br>" +
+                    "with a spraypaint gradient, then paint it on the map as output layer.</html>";
     private static final String ID = "select_edge_operation";
     private final SelectEdgeOptions options = new SelectEdgeOptions();
     Random r = new Random();
-    private LayerMapping mapping;
 
     public SelectEdgeOperation() {
         super(NAME, DESCRIPTION, ID);
@@ -180,8 +179,10 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         Component frame = SwingUtilities.getRoot(main);
-                        JOptionPane.showMessageDialog(frame, "Failed to open online help URL: " + ex.getMessage(),
-                                "Error", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(frame,
+                                "Failed to open online help URL: " + ex.getMessage(),
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE);
                     }
                 }
             });
@@ -282,13 +283,15 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                     tile.clearLayerData(Annotations.INSTANCE);
                 }
             }
-            if ((options.inputFromSelection && tile.hasLayer(SelectionBlock.INSTANCE) || tile.hasLayer(SelectionChunk.INSTANCE)) || tile.hasLayer(Annotations.INSTANCE)) {
+            if ((options.inputFromSelection && tile.hasLayer(SelectionBlock.INSTANCE) ||
+                    tile.hasLayer(SelectionChunk.INSTANCE)) || tile.hasLayer(Annotations.INSTANCE)) {
                 for (int xInTile = 0; xInTile < TILE_SIZE; xInTile++) {
                     for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {
                         final int x = xInTile + (tile.getX() << TILE_SIZE_BITS), y =
                                 yInTile + (tile.getY() << TILE_SIZE_BITS);
                         if (options.inputFromSelection) {
-                            if (tile.getBitLayerValue(SelectionBlock.INSTANCE, xInTile, yInTile) || getDimension().getBitLayerValueAt(SelectionChunk.INSTANCE, x, y))
+                            if (tile.getBitLayerValue(SelectionBlock.INSTANCE, xInTile, yInTile) ||
+                                    getDimension().getBitLayerValueAt(SelectionChunk.INSTANCE, x, y))
                                 matches.add(new Point(x, y));
                         } else {
                             int annotation = tile.getLayerValue(Annotations.INSTANCE, xInTile, yInTile);
@@ -356,22 +359,10 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
     public void onGlobalOpsPressed() {
         try {
-
-            if (mapping == null) {
-                IPositionValueGetter input = new SlopeProvider();
-                IPositionValueSetter output = new StonePaletteApplicator();
-                mapping = new LayerMapping(input, output,
-                        new MappingPoint[]{new MappingPoint(input.getMinValue(),
-                                output.getMinValue())}, ActionType.SET, "Default", "starter action", -1);
-
-            }
-
             InputOutputProvider.INSTANCE.updateFrom(getDimension());
             LayerMappingContainer.INSTANCE.readFromFile();
             JDialog dialog = createDialog(null, this::applyLayerAction);
             dialog.setVisible(true);
-
-
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -388,13 +379,10 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     }
 
     public void applyLayerAction(LayerMapping mapping) {
-        this.getDimension().setEventsInhibited(true);
         try {
-            org.pepsoft.worldpainter.Dimension dim = getDimension();
-            DefaultFilter filter = new DefaultFilter(dim, false, false, -1000, 1000, false, null, null, 0, true);
-            ApplyAction action = new ApplyAction(filter, mapping);
-            action.apply(dim);
-            this.mapping = mapping;
+            this.getDimension().setEventsInhibited(true);
+            MappingMacro macro = new MappingMacro(LayerMappingContainer.INSTANCE.queryMappingsAll());
+            macro.apply(getDimension(), LayerMappingContainer.INSTANCE);
         } catch (Exception ex) {
             System.out.println(ex);
         } finally {
@@ -425,8 +413,8 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         boolean cleanInput = false;
         boolean outputAsSelection = true;
         boolean inputFromSelection = false;
-        Gradient gradient = new Gradient(new float[]{0.01f, 0.15f, 0.25f, 0.5f, 1f}, new float[]{1f, 0.4f, 0.2f, 0.1f
-                , 0.03f});
+        Gradient gradient =
+                new Gradient(new float[]{0.01f, 0.15f, 0.25f, 0.5f, 1f}, new float[]{1f, 0.4f, 0.2f, 0.1f, 0.03f});
 
         enum DIRECTION {
             OUTWARD, INWARD, BOTH, OUT_AND_KEEP

@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
-import org.checkerframework.checker.units.qual.C;
 import org.pepsoft.worldpainter.layers.Annotations;
 
 import java.awt.*;
@@ -30,13 +29,13 @@ public class AnnotationSetter extends NibbleLayerSetter {
 
     private static final Color[] COLORS = new Color[]{
             Color.WHITE,
+            Color.WHITE,
             Color.ORANGE,
             Color.MAGENTA,
             new Color(107, 177, 255),   //LIGHT BLUE
             Color.YELLOW,
             new Color( 34, 153, 84), //LIME
             Color.pink,
-            Color.gray,
             Color.lightGray,
             Color.cyan,
             new Color(128, 0, 128), //purple
