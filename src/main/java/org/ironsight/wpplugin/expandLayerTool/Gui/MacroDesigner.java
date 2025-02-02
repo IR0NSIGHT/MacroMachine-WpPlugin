@@ -5,10 +5,12 @@ import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.UUID;
 
 public class MacroDesigner extends JPanel {
@@ -27,7 +29,12 @@ public class MacroDesigner extends JPanel {
         frame.setTitle("Macro Designer");
 
         LayerMappingContainer.addDefaultMappings(LayerMappingContainer.INSTANCE);
-        MappingMacro mappingMacro = new MappingMacro(LayerMappingContainer.INSTANCE.queryMappingsAll());
+        MappingMacro mappingMacro = new MappingMacro("test macro",
+                "it does cool things on your map",
+                Arrays.stream(LayerMappingContainer.INSTANCE.queryMappingsAll())
+                        .map(LayerMapping::getUid)
+                        .toArray(UUID[]::new),
+                UUID.randomUUID());
 
         MacroDesigner designer = new MacroDesigner();
         designer.setMacro(mappingMacro);
@@ -49,6 +56,7 @@ public class MacroDesigner extends JPanel {
                         this::onMoveUpMapping,
                         this::onMoveDownMapping));
         table.setDefaultRenderer(Object.class, new MappingTableCellRenderer());
+
 
         this.setLayout(new BorderLayout());
         JPanel top = new JPanel(new GridLayout(0, 1));
@@ -106,6 +114,17 @@ public class MacroDesigner extends JPanel {
         }
         model.setDataVector(data, columns);
         table.setModel(model);
+        table.getModel().addTableModelListener(e -> {
+            if (e.getType() == TableModelEvent.UPDATE) {
+                //collect the UUIDs in order
+                UUID[] ids = new UUID[table.getModel().getRowCount()];
+                for (int ii = 0; ii < ids.length; ii++)
+                    ids[ii] = ((LayerMapping) table.getModel().getValueAt(ii, 0)).getUid();
+                SwingUtilities.invokeLater(() -> {
+                    this.setMacro(macro.withUUIDs(ids));
+                });
+            }
+        });
 
         invalidate();
         repaint();
@@ -113,6 +132,7 @@ public class MacroDesigner extends JPanel {
 
     public void setMacro(MappingMacro macro) {
         assert macro != null;
+        if (this.macro != null && this.macro.equals(macro)) return; //dont update if nothing changed
         this.macro = macro;
         update();
     }

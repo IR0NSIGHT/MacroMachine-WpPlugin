@@ -4,17 +4,41 @@ import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IDisplay
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.panels.DefaultFilter;
 
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 
 public class MappingMacro implements IDisplayUnit {
     //ordered list of layermappings
     public final UUID[] mappingUids;
+    private final String name;
+    private final String description;
+    private final UUID id;
 
-    public MappingMacro(LayerMapping[] layerMappings) {
-        mappingUids = new UUID[layerMappings.length];
-        for (int i = 0; i < layerMappings.length; i++) {
-            mappingUids[i] = layerMappings[i].getUid();
-        }
+    public MappingMacro(String name, String description, UUID[] ids, UUID id) {
+        this.name = name;
+        this.description = description;
+        this.id = id;
+        mappingUids = ids;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MappingMacro that = (MappingMacro) o;
+        return Arrays.equals(mappingUids, that.mappingUids) && Objects.equals(name, that.name) &&
+                Objects.equals(description, that.description) && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(Arrays.hashCode(mappingUids), name, description, id);
+    }
+
+    public MappingMacro withUUIDs(UUID[] uuid) {
+        MappingMacro mappingMacro = new MappingMacro(this.name, this.description, uuid, this.id);
+        return mappingMacro;
     }
 
     @Override
