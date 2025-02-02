@@ -1,12 +1,10 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IMappingValue;
-
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-public class MappingPointCellRenderer implements TableCellRenderer {
+public class MappingPointCellRenderer implements TableCellRenderer, ListCellRenderer<MappingPointValue> {
     private final JPanel panel;
     private final JLabel textLabel;
     private final MappingValuePreviewPanel valueRenderer;
@@ -32,6 +30,7 @@ public class MappingPointCellRenderer implements TableCellRenderer {
         valueRenderer.setValue(point.numericValue);
     }
 
+
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
@@ -46,6 +45,23 @@ public class MappingPointCellRenderer implements TableCellRenderer {
         assert value instanceof MappingPointValue;
 
         updateTo((MappingPointValue) value);
+
+        return panel;
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList<? extends MappingPointValue> list, MappingPointValue value,
+                                                  int index, boolean isSelected, boolean cellHasFocus) {
+        if (isSelected) {
+            textLabel.setBackground(list.getSelectionBackground());
+            textLabel.setForeground(list.getSelectionForeground());
+        } else {
+            textLabel.setBackground(list.getBackground());
+            textLabel.setForeground(list.getForeground());
+        }
+        assert value != null;
+
+        updateTo(value);
 
         return panel;
     }

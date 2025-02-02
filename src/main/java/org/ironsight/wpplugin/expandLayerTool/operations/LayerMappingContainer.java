@@ -72,6 +72,7 @@ public class LayerMappingContainer {
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("TEST PANEL");
+        LayerMappingContainer.addDefaultMappings(INSTANCE);
 
         JDialog log = MappingEditorPanel.createDialog(frame, f -> {
         });
