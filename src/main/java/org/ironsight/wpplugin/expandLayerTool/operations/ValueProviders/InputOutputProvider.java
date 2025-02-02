@@ -6,10 +6,10 @@ import org.pepsoft.worldpainter.layers.*;
 import java.util.ArrayList;
 
 public class InputOutputProvider {
+    public static InputOutputProvider INSTANCE = new InputOutputProvider();
+    public final ArrayList<IPositionValueSetter> setters = new ArrayList<>();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
     public ArrayList<IPositionValueGetter> getters = new ArrayList<>();
-    public final ArrayList<IPositionValueSetter> setters = new ArrayList<>();
-    public static InputOutputProvider INSTANCE = new InputOutputProvider();
 
     public void subscribe(Runnable runnable) {
         genericNotifies.add(runnable);

@@ -41,7 +41,7 @@ public class HeightProvider implements IPositionValueGetter {
         g.setColor(Color.BLUE);
         g.fillRect(0, 0, dim.width, dim.height);
         g.setColor(Color.gray);
-        g.fillRect(0, (int) (dim.height * (1-percent)), dim.width, (int)(dim.height * (percent)));
+        g.fillRect(0, (int) (dim.height * (1 - percent)), dim.width, (int) (dim.height * (percent)));
     }
 
     @Override

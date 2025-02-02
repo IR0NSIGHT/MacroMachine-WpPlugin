@@ -88,8 +88,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
                             MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
                                     panel.mapping.getMappingPoints().length + 1);
 
-                            newPoints[newPoints.length - 1] = new MappingPoint(mapping.sanitizeInput(gridX),
-                                    mapping.sanitizeOutput(gridY));
+                            newPoints[newPoints.length - 1] =
+                                    new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
                             updateMapping(mapping.withNewPoints(newPoints));
                         } else {
                             //implicitly set selected point, but dont do anything with it
@@ -128,8 +128,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingEdito
                         int i = 0;
                         for (MappingPoint p : panel.mapping.getMappingPoints()) {
                             if (p.equals(selected)) {
-                                newPoints[i] = new MappingPoint(mapping.sanitizeInput(gridX),
-                                        mapping.sanitizeOutput(gridY));
+                                newPoints[i] =
+                                        new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
                                 selected = newPoints[i++];
                             } else newPoints[i++] = p;
                         }

@@ -66,6 +66,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingEdito
                     return new MappingPointCellRenderer(mapping.output, mapping.getMappingPoints()[row].output);
                 }
             }
+
             @Override
             public TableCellEditor getCellEditor(int row, int column) {
                 return super.getCellEditor(row, column);
