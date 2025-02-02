@@ -2,7 +2,6 @@ package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.BitLayerBinarySpraypaintApplicator;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IMappingValue;
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.StonePaletteApplicator;
 
 import javax.swing.*;
 import java.awt.*;

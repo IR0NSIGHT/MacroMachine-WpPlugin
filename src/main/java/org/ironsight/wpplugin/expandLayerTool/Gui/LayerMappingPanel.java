@@ -24,8 +24,8 @@ public abstract class LayerMappingPanel extends JPanel {
     protected abstract void initComponents();
 
     /**
-     * internal way to signalize "i changed the mapping, do the events"
-     * will set mapping, call onUpdate and trigger internal update()
+     * internal way to signalize "i changed the mapping, do the events" will set mapping, call onUpdate and trigger
+     * internal update()
      *
      * @param mapping
      */
@@ -34,7 +34,7 @@ public abstract class LayerMappingPanel extends JPanel {
         if (mapping == null) {
             return;
         }
-         boolean isInitialSet = this.mapping == null;
+        boolean isInitialSet = this.mapping == null;
         if (this.mapping != null && this.mapping.equals(mapping)) {
             return;
         }

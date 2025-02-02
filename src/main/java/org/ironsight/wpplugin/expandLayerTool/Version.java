@@ -7,10 +7,6 @@ import java.util.Properties;
  * Utility class for making the Maven project version number available to code.
  */
 public class Version {
-    private Version() {
-        // Prevent instantiation
-    }
-
     public static final String VERSION;
 
     static {
@@ -21,5 +17,9 @@ public class Version {
         } catch (IOException e) {
             throw new RuntimeException("I/O error loading version number from classpath", e);
         }
+    }
+
+    private Version() {
+        // Prevent instantiation
     }
 }

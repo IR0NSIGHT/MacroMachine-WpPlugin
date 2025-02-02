@@ -12,8 +12,8 @@ import java.util.function.Consumer;
 public class GradientEditor extends JPanel {
     private final Consumer<Gradient> submit;
     private final Consumer<Gradient> update;
-    JLabel[] warnings = new JLabel[]{new JLabel("WARNING:"), new JLabel("some entries are invalid"), new JLabel(),
-            new JLabel()};
+    JLabel[] warnings =
+            new JLabel[]{new JLabel("WARNING:"), new JLabel("some entries are invalid"), new JLabel(), new JLabel()};
     private Gradient gradient;
     private boolean invalid;
     private boolean blockEventhandling;

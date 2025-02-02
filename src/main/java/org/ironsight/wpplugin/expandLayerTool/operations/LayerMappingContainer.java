@@ -14,7 +14,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 
-
 public class LayerMappingContainer {
     public static LayerMappingContainer INSTANCE = new LayerMappingContainer();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
@@ -23,31 +22,51 @@ public class LayerMappingContainer {
     public String filePath = "/home/klipper/Documents/worldpainter/mappings.txt";
     private boolean suppressFileWriting = false;
 
-    public LayerMappingContainer() {}
+    public LayerMappingContainer() {
+    }
 
     private static void addDefaultMappings(LayerMappingContainer container) {
         LayerMapping m = container.addMapping();
-        m = new LayerMapping(new SlopeProvider(), new StonePaletteApplicator(),
-                new MappingPoint[]{new MappingPoint(30, 3), new MappingPoint(50, 8), new MappingPoint(70, 5),
-                        new MappingPoint(80, 9)}, ActionType.SET, "paint mountainsides", "apply stone and rocks " +
-                "based" + " on slope to make mountain sides colorful and interesting", m.getUid());
+        m = new LayerMapping(new SlopeProvider(),
+                new StonePaletteApplicator(),
+                new MappingPoint[]{new MappingPoint(30, 3),
+                        new MappingPoint(50, 8),
+                        new MappingPoint(70, 5),
+                        new MappingPoint(80, 9)},
+                ActionType.SET,
+                "paint mountainsides",
+                "apply stone and rocks " + "based" + " on slope to make mountain sides colorful and interesting",
+                m.getUid());
         container.updateMapping(m);
 
         m = container.addMapping();
-        m = new LayerMapping(new HeightProvider(), new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
-                new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)}, ActionType.MAX,
-                "frosted " + "peaks", "gradually add snow the higher a mountain goes", m.getUid());
+        m = new LayerMapping(new HeightProvider(),
+                new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
+                new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)},
+                ActionType.MAX,
+                "frosted " + "peaks",
+                "gradually add snow the higher a mountain goes",
+                m.getUid());
         container.updateMapping(m);
 
         m = container.addMapping();
-        m = new LayerMapping(new SlopeProvider(), new NibbleLayerSetter(PineForest.INSTANCE),
+        m = new LayerMapping(new SlopeProvider(),
+                new NibbleLayerSetter(PineForest.INSTANCE),
                 new MappingPoint[]{new MappingPoint(0, 15), new MappingPoint(70, 15), new MappingPoint(80, 0)},
-                ActionType.MIN, "no steep pines", "limit pines from growing on vertical cliffs", m.getUid());
+                ActionType.MIN,
+                "no steep pines",
+                "limit pines from growing on vertical cliffs",
+                m.getUid());
         container.updateMapping(m);
 
         m = container.addMapping();
-        m = new LayerMapping(new AnnotationSetter(), new TestInputOutput(), new MappingPoint[0], ActionType.SET,
-                "colors", "", m.getUid());
+        m = new LayerMapping(new AnnotationSetter(),
+                new TestInputOutput(),
+                new MappingPoint[0],
+                ActionType.SET,
+                "colors",
+                "",
+                m.getUid());
         container.updateMapping(m);
     }
 
@@ -83,8 +102,13 @@ public class LayerMappingContainer {
     }
 
     public LayerMapping addMapping() {
-        LayerMapping newMap = new LayerMapping(new HeightProvider(), new AnnotationSetter(), new MappingPoint[0],
-                ActionType.SET, "colors", "", getUUID());
+        LayerMapping newMap = new LayerMapping(new HeightProvider(),
+                new AnnotationSetter(),
+                new MappingPoint[0],
+                ActionType.SET,
+                "colors",
+                "",
+                getUUID());
 
         mappings.put(newMap.getUid(), newMap);
 

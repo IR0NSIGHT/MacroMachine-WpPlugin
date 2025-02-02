@@ -1,7 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.Gradient;
-import org.pepsoft.worldpainter.layers.Frost;
 
 import javax.swing.*;
 import java.awt.*;
