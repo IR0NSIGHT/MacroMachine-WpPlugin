@@ -1,0 +1,4 @@
+- gridpanel has wierd collisions on x axis with oter points when dragging
+- selected point is not properly updated from table -> grid panel
+
+- GUI editor for macro building

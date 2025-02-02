@@ -99,6 +99,9 @@ public class LayerMapping implements IDisplayUnit, Serializable {
     }
 
     public void applyToPoint(Dimension dim, int x, int y) {
+        if (mappingPoints.length == 0) {
+            return;
+        }
         int value = input.getValueAt(dim, x, y);
         int modifier = map(value);
 

@@ -11,7 +11,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.function.Consumer;
 
-public class MappingTextTable extends LayerMappingPanel implements IMappingEditor {
+public class MappingTextTable extends LayerMappingPanel implements IMappingPointSelector {
     int selectedPointIdx;
     DefaultTableModel tableModel;
     TableModelListener listener;
@@ -90,27 +90,14 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingEdito
     }
 
     protected boolean parseAndSetValue(Object newValue, int row, int column) {
-        int newValueInt;
-        if (newValue instanceof Integer) newValueInt = (Integer) newValue;
-        else if (newValue instanceof String) try {
-            newValueInt = Integer.parseInt((String) newValue);
-        } catch (NumberFormatException exception) {
-            exception.printStackTrace();
-            return false;
-        }
-        else return false;
-
-        MappingPoint[] points = mapping.getMappingPoints();
-
+        assert newValue instanceof MappingPointValue;
+        MappingPoint[] points = mapping.getMappingPoints().clone();
         if (column == 0) {
-            if (points[row].input == newValueInt) return false;
-            points[row] = new MappingPoint(newValueInt, points[row].output);
+            points[row] = new MappingPoint(((MappingPointValue) newValue).numericValue, points[row].output);
         } else {
-            if (points[row].output == newValueInt) return false;
-            points[row] = new MappingPoint(points[row].input, newValueInt);
+            points[row] = new MappingPoint(points[row].input, ((MappingPointValue) newValue).numericValue);
         }
-        mapping = mapping.withNewPoints(points);
-        updateMapping(mapping);
+        updateMapping(mapping.withNewPoints(points));
         return true;
     }
 

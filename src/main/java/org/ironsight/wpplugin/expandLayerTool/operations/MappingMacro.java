@@ -43,6 +43,7 @@ public class MappingMacro implements IDisplayUnit {
 
         for (UUID mappingUid : mappingUids) {
             LayerMapping mapping = container.queryMappingById(mappingUid);
+            if (mapping.getMappingPoints().length == 0) continue;
             ApplyAction action = new ApplyAction(filter, mapping);
             action.apply(dimension);
         }
