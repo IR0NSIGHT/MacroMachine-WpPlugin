@@ -25,7 +25,7 @@ public class LayerMappingContainer {
     public LayerMappingContainer() {
     }
 
-    private static void addDefaultMappings(LayerMappingContainer container) {
+    public static void addDefaultMappings(LayerMappingContainer container) {
         LayerMapping m = container.addMapping();
         m = new LayerMapping(new SlopeProvider(),
                 new StonePaletteApplicator(),

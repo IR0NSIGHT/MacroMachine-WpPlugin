@@ -9,6 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class LayerMappingTopPanel extends LayerMappingPanel {
+    public static final Font header1Font = new Font("SansSerif", Font.BOLD, 24);
+    public static final Font header2Font = new Font("SansSerif", Font.BOLD, 18);
     private JTextField description;
     private JTextField nameField;
     private ActionTypeComboBox actionTypeComboBox;
@@ -35,8 +37,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
 
         JPanel textInputs = new JPanel(new BorderLayout());
         this.add(textInputs, BorderLayout.NORTH);
-        Font header1Font = new Font("SansSerif", Font.BOLD, 24);
-        Font header2Font = new Font("SansSerif", Font.BOLD, 18);
+
 
         nameField = new JTextField();
         nameField.setFont(header1Font);
@@ -93,4 +94,5 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
             }
         });
     }
+
 }
