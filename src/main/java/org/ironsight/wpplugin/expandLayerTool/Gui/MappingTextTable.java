@@ -22,11 +22,12 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingEdito
 
     @Override
     protected void updateComponents() {
-        Object[][] data = new Object[mapping.getMappingPoints().length][];
+        MappingPointValue[][] data = new MappingPointValue[mapping.getMappingPoints().length][];
         Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
         for (int i = 0; i < mapping.getMappingPoints().length; i++) {
             MappingPoint a = mapping.getMappingPoints()[i];
-            data[i] = new Object[]{a, a};
+            data[i] = new MappingPointValue[]{new MappingPointValue(a.input, mapping.input),
+                    new MappingPointValue(a.output, mapping.output)};
         }
 
         selectedPointIdx = Math.min(selectedPointIdx, mapping.getMappingPoints().length - 1);
@@ -47,7 +48,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingEdito
             numberTable.scrollRectToVisible(numberTable.getCellRect(selectedPointIdx, 0, true));
         }
 
-        numberTable.setDefaultRenderer(Object.class, new MappingPointCellRenderer(mapping.input, mapping.output));
+        numberTable.setDefaultRenderer(Object.class, new MappingPointCellRenderer());
     }
 
     @Override

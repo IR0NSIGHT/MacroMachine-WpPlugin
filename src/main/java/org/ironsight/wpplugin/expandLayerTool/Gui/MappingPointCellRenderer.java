@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IMappingValue;
 
 import javax.swing.*;
@@ -11,17 +10,13 @@ public class MappingPointCellRenderer implements TableCellRenderer {
     private final JPanel panel;
     private final JLabel textLabel;
     private final MappingValuePreviewPanel valueRenderer;
-    IMappingValue input;
-    IMappingValue output;
 
-    public MappingPointCellRenderer(IMappingValue input, IMappingValue output) {
-        this.input = input;
-        this.output = output;
-
+    public MappingPointCellRenderer() {
         panel = new JPanel(new BorderLayout());
         textLabel = new JLabel("NULL");
         textLabel.setHorizontalAlignment(JLabel.CENTER);
         textLabel.setVerticalAlignment(JLabel.CENTER);
+        textLabel.setOpaque(true);
         panel.add(textLabel, BorderLayout.CENTER);
 
         valueRenderer = new MappingValuePreviewPanel();
@@ -29,6 +24,12 @@ public class MappingPointCellRenderer implements TableCellRenderer {
         valueRenderer.setOpaque(true);
         valueRenderer.setBackground(Color.GREEN);
         panel.add(valueRenderer, BorderLayout.EAST);
+    }
+
+    public void updateTo(MappingPointValue point) {
+        textLabel.setText(point.mappingValue.valueToString(point.numericValue));
+        valueRenderer.setMappingValue(point.mappingValue);
+        valueRenderer.setValue(point.numericValue);
     }
 
     @Override
@@ -41,20 +42,11 @@ public class MappingPointCellRenderer implements TableCellRenderer {
             textLabel.setBackground(table.getBackground());
             textLabel.setForeground(table.getForeground());
         }
+        assert value != null;
+        assert value instanceof MappingPointValue;
 
-        IMappingValue mappingValue;
-        int numericValue;
-        if (column == 0) {
-            mappingValue = input;
-            numericValue = ((MappingPoint) value).input;
-        } else {
-            mappingValue = output;
-            numericValue = ((MappingPoint) value).output;
-        }
+        updateTo((MappingPointValue) value);
 
-        textLabel.setText(mappingValue.valueToString(numericValue));
-        valueRenderer.setMappingValue(mappingValue);
-        valueRenderer.setValue(numericValue);
         return panel;
     }
 }
