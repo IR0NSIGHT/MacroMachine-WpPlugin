@@ -1,8 +1,5 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.dynmap.renderer.CustomRenderer;
-import org.ironsight.wpplugin.expandLayerTool.operations.ActionType;
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 
 import javax.swing.*;

@@ -86,10 +86,15 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         //value is 0 to 100
-        int cellSize = dim.width / 100;
-        for (int y = getMinValue(); y <= getMaxValue(); y++) {
-            for (int x = getMinValue(); x <= getMaxValue(); x++) {
-                if (doPaintPos(x, y, value)) g.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+        g.setColor(Color.black);
+        g.fillRect(0, 0, dim.width, dim.height);
+        g.setColor(Color.RED);
+        int range = dim.width < 100 ? 10 : 100;
+        int cellSize = dim.width / range;
+        for (int y = 0; y <= range; y++) {
+            for (int x = 0; x <= range; x++) {
+                if (doPaintPos(x, y, value))
+                    g.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
             }
         }
     }

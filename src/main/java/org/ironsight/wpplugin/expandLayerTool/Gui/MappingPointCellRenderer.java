@@ -13,15 +13,8 @@ public class MappingPointCellRenderer implements TableCellRenderer {
         JLabel label = new JLabel(getter.valueToString(value));
         label.setHorizontalAlignment(JLabel.CENTER);
         label.setVerticalAlignment(JLabel.CENTER);
-        JLabel icon = new JLabel() {
-            @Override
-            public Dimension getPreferredSize() {
-                Dimension size = super.getPreferredSize();
-                int max = Math.min(size.width, size.height); // Ensure it's square
-                return new Dimension(max, max);
-            }
-        };
-        icon.setPreferredSize(new Dimension(50,50));
+        JPanel icon = new MappingValuePreviewPanel(getter, value);
+        icon.setPreferredSize(new Dimension(50, 50));
         icon.setOpaque(true);
         icon.setBackground(Color.GREEN);
 

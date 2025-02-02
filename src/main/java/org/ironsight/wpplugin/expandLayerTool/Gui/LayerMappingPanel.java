@@ -30,10 +30,11 @@ public abstract class LayerMappingPanel extends JPanel {
      * @param mapping
      */
     protected final void updateMapping(LayerMapping mapping) {
+        System.out.println("EVENT: " + this.getClass() + " UPDATE MAPPING TO " + mapping);
         if (mapping == null) {
             return;
         }
-        boolean isInitialSet = this.mapping == null;
+         boolean isInitialSet = this.mapping == null;
         if (this.mapping != null && this.mapping.equals(mapping)) {
             return;
         }
@@ -42,6 +43,7 @@ public abstract class LayerMappingPanel extends JPanel {
     }
 
     public final void setMapping(LayerMapping mapping) {
+        System.out.println("EVENT: " + this.getClass() + " SET MAPPING TO " + mapping);
         assert mapping != null;
         assert mapping.getMappingPoints() != null;
         assert mapping.input != null;
