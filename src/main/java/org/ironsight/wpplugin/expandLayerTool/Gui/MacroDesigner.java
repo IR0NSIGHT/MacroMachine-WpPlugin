@@ -5,7 +5,6 @@ import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
 
 import javax.swing.*;
-import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -19,7 +18,7 @@ public class MacroDesigner extends JPanel {
 
     private JLabel name, description;
     private JTable table;
-    private JButton addButton, removeButton;
+    private JButton addButton, removeButton, moveUpButton, moveDownButton, changeMappingButton;
     private JScrollPane scrollPane;
     private int selectedRow;
 
@@ -76,19 +75,38 @@ public class MacroDesigner extends JPanel {
         buttons.add(applyButton);
 
         addButton = new JButton("Add");
-        addButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                LayerMapping[] all = LayerMappingContainer.INSTANCE.queryMappingsAll();
-                if (all.length == 0) return;
-                UUID next = all[0].getUid();
-                UUID[] ids = Arrays.copyOf(macro.mappingUids, macro.mappingUids.length + 1);
-                ids[ids.length - 1] = next;
-                MappingMacro mappingMacro = macro.withUUIDs(ids);
-                setMacro(mappingMacro);
-            }
+        addButton.addActionListener(e -> {
+            LayerMapping[] all = LayerMappingContainer.INSTANCE.queryMappingsAll();
+            if (all.length == 0) return;
+            UUID next = all[0].getUid();
+            UUID[] ids = Arrays.copyOf(macro.mappingUids, macro.mappingUids.length + 1);
+            ids[ids.length - 1] = next;
+            MappingMacro mappingMacro = macro.withUUIDs(ids);
+            setMacro(mappingMacro);
         });
         buttons.add(addButton);
+
+        removeButton = new JButton("Remove");
+        removeButton.addActionListener(e -> {
+
+        });
+        buttons.add(removeButton);
+
+        moveUpButton = new JButton("Move Up");
+        moveUpButton.addActionListener(e -> {
+        });
+        buttons.add(moveUpButton);
+
+        moveDownButton = new JButton("Move Down");
+        moveDownButton.addActionListener(e -> {
+        });
+        buttons.add(moveDownButton);
+
+        changeMappingButton = new JButton("Change Mapping");
+        changeMappingButton.addActionListener(e -> {
+        });
+        buttons.add(changeMappingButton);
+
         this.add(buttons, BorderLayout.SOUTH);
     }
 
@@ -131,22 +149,10 @@ public class MacroDesigner extends JPanel {
         }
         model.setDataVector(data, columns);
         table.setModel(model);
-        table.getModel().addTableModelListener(e -> {
-            if (e.getType() == TableModelEvent.UPDATE) {
-                //collect the UUIDs in order
-                UUID[] ids = new UUID[table.getModel().getRowCount()];
-                //get edited cell
-                for (int ii = 0; ii < ids.length; ii++) {
-                    ids[ii] = ((LayerMapping) table.getModel().getValueAt(ii, 0)).getUid();
-                }
-                SwingUtilities.invokeLater(() -> {
-                    int editedRow = e.getFirstRow();
-                    selectedRow = editedRow;
-                    this.setMacro(macro.withUUIDs(ids));
-                });
-            }
-        });
 
+        table.getSelectionModel().addListSelectionListener(e -> {
+            selectedRow = e.getFirstIndex();
+        });
 
         final int rowCount = table.getRowCount();
         final int colCount = table.getColumnCount();
@@ -156,11 +162,11 @@ public class MacroDesigner extends JPanel {
                 final TableCellRenderer renderer = table.getCellRenderer(ix, j);
                 maxHeight = Math.max(maxHeight, table.prepareRenderer(renderer, ix, j).getPreferredSize().height);
             }
-            table.setRowHeight(ix, maxHeight );
+            table.setRowHeight(ix, maxHeight);
         }
         invalidate();
         repaint();
-
+        table.setRowSelectionInterval(selectedRow, selectedRow);
         // Get the row index of the edited row (the row that triggered the update)
         if (selectedRow < table.getRowCount()) {
             System.out.println("scroll to row:" + selectedRow);
