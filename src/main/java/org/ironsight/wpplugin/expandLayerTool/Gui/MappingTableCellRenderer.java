@@ -31,10 +31,11 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<La
         panel.add(inputoutput, BorderLayout.CENTER);
     }
 
-    private void updateTo(LayerMapping mapping) {
+    public void updateTo(LayerMapping mapping) {
         input.setText(mapping.input.getName());
         output.setText(mapping.output.getName());
         nameLabel.setText(mapping.getName());
+        panel.setToolTipText(mapping.getDescription());
     }
 
 

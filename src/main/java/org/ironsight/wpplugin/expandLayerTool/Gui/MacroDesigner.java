@@ -56,11 +56,6 @@ public class MacroDesigner extends JPanel {
         description = new JLabel("Description goes here");
         description.setFont(LayerMappingTopPanel.header2Font);
         table = new JTable();
-        table.setDefaultEditor(Object.class,
-                new MappingTableCellEditor(this::onDeleteMapping,
-                        this::onEditMapping,
-                        this::onMoveUpMapping,
-                        this::onMoveDownMapping));
         table.setDefaultRenderer(Object.class, new MappingTableCellRenderer());
         scrollPane = new JScrollPane(table);
         this.add(scrollPane, BorderLayout.CENTER);
