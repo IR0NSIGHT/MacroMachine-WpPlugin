@@ -21,6 +21,7 @@ public class MacroDesigner extends JPanel {
     private JButton addButton, removeButton, moveUpButton, moveDownButton, changeMappingButton;
     private JScrollPane scrollPane;
     private int selectedRow;
+    private boolean isUpdating;
 
     MacroDesigner() {
         init();
@@ -40,7 +41,7 @@ public class MacroDesigner extends JPanel {
                 UUID.randomUUID());
 
         MacroDesigner designer = new MacroDesigner();
-        designer.setMacro(mappingMacro);
+        designer.setMacro(mappingMacro, false);
         frame.add(designer);
 
         frame.setSize(new Dimension(400, 400));
@@ -75,54 +76,68 @@ public class MacroDesigner extends JPanel {
         buttons.add(applyButton);
 
         addButton = new JButton("Add");
-        addButton.addActionListener(e -> {
-            LayerMapping[] all = LayerMappingContainer.INSTANCE.queryMappingsAll();
-            if (all.length == 0) return;
-            UUID next = all[0].getUid();
-            UUID[] ids = Arrays.copyOf(macro.mappingUids, macro.mappingUids.length + 1);
-            ids[ids.length - 1] = next;
-            MappingMacro mappingMacro = macro.withUUIDs(ids);
-            setMacro(mappingMacro);
-        });
+        addButton.addActionListener(e -> onAddMapping());
         buttons.add(addButton);
 
         removeButton = new JButton("Remove");
-        removeButton.addActionListener(e -> {
-
-        });
+        removeButton.addActionListener(e -> onApplyButtonPressed());
         buttons.add(removeButton);
 
         moveUpButton = new JButton("Move Up");
-        moveUpButton.addActionListener(e -> {
-        });
+        moveUpButton.addActionListener(e -> onMoveUpMapping());
         buttons.add(moveUpButton);
 
         moveDownButton = new JButton("Move Down");
-        moveDownButton.addActionListener(e -> {
-        });
+        moveDownButton.addActionListener(e -> onMoveDownMapping());
         buttons.add(moveDownButton);
 
         changeMappingButton = new JButton("Change Mapping");
-        changeMappingButton.addActionListener(e -> {
-        });
+        changeMappingButton.addActionListener(e -> onEditMapping());
         buttons.add(changeMappingButton);
 
         this.add(buttons, BorderLayout.SOUTH);
     }
 
-    private void onMoveUpMapping(LayerMapping mapping) {
+    private void onAddMapping() {
+        //insert any mapping from container at tail of list
+        LayerMapping[] all = LayerMappingContainer.INSTANCE.queryMappingsAll();
+        if (all.length == 0) return;
+        UUID next = all[0].getUid();
+        UUID[] ids = Arrays.copyOf(macro.mappingUids, macro.mappingUids.length + 1);
+        ids[ids.length - 1] = next;
+        selectedRow = ids.length - 1;
+        MappingMacro mappingMacro = macro.withUUIDs(ids);
+        setMacro(mappingMacro, true);
 
     }
 
-    private void onMoveDownMapping(LayerMapping mapping) {
+    private void onMoveUpMapping() {
+        if (selectedRow > 0 && selectedRow < table.getRowCount()) {
+            UUID[] ids = macro.mappingUids.clone();
+            ids[selectedRow - 1] = macro.mappingUids[selectedRow];
+            ids[selectedRow] = macro.mappingUids[selectedRow - 1];
+            selectedRow = selectedRow - 1;
+            setMacro(macro.withUUIDs(ids), true);
+            System.out.println("move mapping up to " + selectedRow);
+        }
+    }
+
+    private void onMoveDownMapping() {
+        if (selectedRow >= 0 && selectedRow < table.getRowCount() - 1) {
+            UUID[] ids = macro.mappingUids.clone();
+            ids[selectedRow + 1] = macro.mappingUids[selectedRow];
+            ids[selectedRow] = macro.mappingUids[selectedRow + 1];
+            selectedRow = selectedRow + 1;
+            setMacro(macro.withUUIDs(ids), true);
+            System.out.println("move mapping down to " + selectedRow);
+        }
+    }
+
+    private void onDeleteMapping() {
 
     }
 
-    private void onDeleteMapping(LayerMapping mapping) {
-
-    }
-
-    private void onEditMapping(LayerMapping mapping) {
+    private void onEditMapping() {
 
     }
 
@@ -131,6 +146,7 @@ public class MacroDesigner extends JPanel {
     }
 
     private void update() {
+        System.out.println("update MACRO DESIGNER");
         assert macro.allMappingsReady(LayerMappingContainer.INSTANCE);
 
         name.setText(macro.getName());
@@ -151,7 +167,9 @@ public class MacroDesigner extends JPanel {
         table.setModel(model);
 
         table.getSelectionModel().addListSelectionListener(e -> {
-            selectedRow = e.getFirstIndex();
+            if (e.getValueIsAdjusting() || isUpdating) return;
+            selectedRow = table.getSelectedRow();
+            System.out.println(" ROW SELECTED:  " + selectedRow);
         });
 
         final int rowCount = table.getRowCount();
@@ -166,7 +184,7 @@ public class MacroDesigner extends JPanel {
         }
         invalidate();
         repaint();
-        table.setRowSelectionInterval(selectedRow, selectedRow);
+        table.getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
         // Get the row index of the edited row (the row that triggered the update)
         if (selectedRow < table.getRowCount()) {
             System.out.println("scroll to row:" + selectedRow);
@@ -175,11 +193,13 @@ public class MacroDesigner extends JPanel {
         }
     }
 
-    public void setMacro(MappingMacro macro) {
+    public void setMacro(MappingMacro macro, boolean forceUpdate) {
+        isUpdating = true;
         assert macro != null;
-        if (this.macro != null && this.macro.equals(macro)) return; //dont update if nothing changed
+        if (!forceUpdate && this.macro != null && this.macro.equals(macro)) return; //dont update if nothing changed
         this.macro = macro;
         update();
+        isUpdating = false;
     }
 
 }
