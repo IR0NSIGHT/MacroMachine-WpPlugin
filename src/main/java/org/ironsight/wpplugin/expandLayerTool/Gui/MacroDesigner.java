@@ -14,8 +14,8 @@ import java.util.UUID;
 public class MacroDesigner extends JPanel {
     private MappingMacro macro;
 
-    private JLabel name;
-    private JLabel description;
+    private JTextField name;
+    private JTextArea description;
     private JTable table;
     private JButton addButton, removeButton, moveUpButton, moveDownButton, changeMappingButton;
     private JScrollPane scrollPane;
@@ -51,18 +51,44 @@ public class MacroDesigner extends JPanel {
     private void init() {
         this.setLayout(new BorderLayout());
 
-        name = new JLabel("Name goes here");
+        name = new JTextField("Name goes here");
+        name.setEditable(true);
         name.setFont(LayerMappingTopPanel.header1Font);
-        description = new JLabel("Description goes here");
+        name.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                setMacro(macro.withName(name.getText()), false);
+            }
+        });
+
+        description = new JTextArea("Description goes here");
+        description.setEditable(true);
         description.setFont(LayerMappingTopPanel.header2Font);
+        description.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                setMacro(macro.withDescription(description.getText()), false);
+            }
+        });
+
+        // Set preferred size to limit to 10 lines
+        int lineCount = 6; // Number of lines
+        FontMetrics metrics = description.getFontMetrics(description.getFont());
+        int lineHeight = metrics.getHeight();
+        description.setLineWrap(true);
+        description.setWrapStyleWord(true);
+        JScrollPane descPane = new JScrollPane(description);
+        descPane.setPreferredSize(new Dimension(0, lineHeight * lineCount));
+
         table = new JTable();
         table.setDefaultRenderer(Object.class, new MappingTableCellRenderer());
         scrollPane = new JScrollPane(table);
         this.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel top = new JPanel(new GridLayout(0, 1));
+        JPanel top = new JPanel();
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
         top.add(name);
-        top.add(description);
+        top.add(descPane);
         this.add(top, BorderLayout.NORTH);
 
         JPanel buttons = new JPanel(new FlowLayout());
