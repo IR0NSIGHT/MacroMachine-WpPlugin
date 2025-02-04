@@ -4,11 +4,12 @@ import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IDisplay
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.panels.DefaultFilter;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
-public class MappingMacro implements IDisplayUnit {
+public class MappingMacro implements IDisplayUnit, Serializable {
     //ordered list of layermappings
     public final UUID[] mappingUids;
     private final String name;
@@ -20,6 +21,14 @@ public class MappingMacro implements IDisplayUnit {
         this.description = description;
         this.id = id;
         mappingUids = ids;
+    }
+
+    public MappingMacro withName(String name) {
+        return new MappingMacro(name, description, mappingUids, id);
+    }
+
+    public MappingMacro withDescription(String description) {
+        return new MappingMacro(name, description, mappingUids, id);
     }
 
     @Override
@@ -43,12 +52,12 @@ public class MappingMacro implements IDisplayUnit {
 
     @Override
     public String getName() {
-        return "Mapping Macro";
+        return name;
     }
 
     @Override
     public String getDescription() {
-        return "this macro globally applies multiple actions in fixed order to achieve cool outcomes.";
+        return description;
     }
 
     public boolean allMappingsReady(LayerMappingContainer container) {
