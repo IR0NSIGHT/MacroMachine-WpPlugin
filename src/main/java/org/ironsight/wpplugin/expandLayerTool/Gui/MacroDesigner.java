@@ -8,15 +8,14 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.UUID;
 
 public class MacroDesigner extends JPanel {
     private MappingMacro macro;
 
-    private JLabel name, description;
+    private JLabel name;
+    private JLabel description;
     private JTable table;
     private JButton addButton, removeButton, moveUpButton, moveDownButton, changeMappingButton;
     private JScrollPane scrollPane;
@@ -45,6 +44,7 @@ public class MacroDesigner extends JPanel {
         frame.add(designer);
 
         frame.setSize(new Dimension(400, 400));
+        frame.pack();
         frame.setVisible(true);
     }
 
@@ -67,12 +67,7 @@ public class MacroDesigner extends JPanel {
 
         JPanel buttons = new JPanel(new FlowLayout());
         JButton applyButton = new JButton("Apply");
-        applyButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onApplyButtonPressed();
-            }
-        });
+        applyButton.addActionListener(e -> onApplyButtonPressed());
         buttons.add(applyButton);
 
         addButton = new JButton("Add");
@@ -80,7 +75,7 @@ public class MacroDesigner extends JPanel {
         buttons.add(addButton);
 
         removeButton = new JButton("Remove");
-        removeButton.addActionListener(e -> onApplyButtonPressed());
+        removeButton.addActionListener(e -> onDeleteMapping());
         buttons.add(removeButton);
 
         moveUpButton = new JButton("Move Up");
@@ -134,12 +129,29 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onDeleteMapping() {
-
+        if (macro.mappingUids.length != 0 && selectedRow != -1) {
+            UUID[] newIds = new UUID[macro.mappingUids.length - 1];
+            int j = 0;
+            for (int i = 0; i < macro.mappingUids.length; i++) {
+                if (i != selectedRow) {
+                    newIds[j++] = macro.mappingUids[i];
+                }
+            }
+            selectedRow = Math.max(0, Math.min(newIds.length - 1, selectedRow));
+            setMacro(macro.withUUIDs(newIds), true);
+        }
     }
 
     private void onEditMapping() {
-
+        new SelectLayerMappingDialog((JFrame) SwingUtilities.getWindowAncestor(this),
+                LayerMappingContainer.INSTANCE.queryMappingsAll(),
+                f -> {
+                    UUID[] newIds = macro.mappingUids.clone();
+                    newIds[selectedRow] = f.getUid();
+                    setMacro(macro.withUUIDs(newIds), true);
+                });
     }
+
 
     private void onApplyButtonPressed() {
 
