@@ -1,17 +1,15 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IDisplayUnit;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueSetter;
 import org.pepsoft.worldpainter.Dimension;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.UUID;
 
-public class LayerMapping implements IDisplayUnit, Serializable {
+public class LayerMapping implements SaveableAction {
     public final IPositionValueGetter input;
     public final IPositionValueSetter output;
     public final ActionType actionType;
