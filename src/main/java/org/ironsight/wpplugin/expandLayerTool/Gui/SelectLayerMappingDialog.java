@@ -5,12 +5,13 @@ import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.function.Consumer;
 
 public class SelectLayerMappingDialog extends JDialog {
-    public SelectLayerMappingDialog(Frame owner, LayerMapping[] layerMappings, Consumer<LayerMapping> onSubmit) {
+    public SelectLayerMappingDialog(Frame owner, ArrayList<LayerMapping> layerMappings,
+                                    Consumer<LayerMapping> onSubmit) {
         super(owner);
         setTitle("Select Layer Mapping");
         init(layerMappings, onSubmit);
@@ -29,20 +30,14 @@ public class SelectLayerMappingDialog extends JDialog {
         new SelectLayerMappingDialog(frame, LayerMappingContainer.INSTANCE.queryMappingsAll(), System.out::println);
     }
 
-    private void init(LayerMapping[] layerMappings, Consumer<LayerMapping> onSubmit) {
+    private void init(ArrayList<LayerMapping> layerMappings, Consumer<LayerMapping> onSubmit) {
         JList<LayerMapping> list = new JList<>();
         DefaultListModel<LayerMapping> listModel = new DefaultListModel<>();
         list.setModel(listModel);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setCellRenderer(new MappingTableCellRenderer());
 
-        Arrays.sort(layerMappings, new Comparator<LayerMapping>() {
-
-            @Override
-            public int compare(LayerMapping o1, LayerMapping o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
+        layerMappings.sort(Comparator.comparing(LayerMapping::getName));
 
         for (LayerMapping mapping : layerMappings) {
             listModel.addElement(mapping);

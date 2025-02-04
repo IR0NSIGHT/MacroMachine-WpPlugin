@@ -8,6 +8,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -34,7 +35,8 @@ public class MacroDesigner extends JPanel {
         LayerMappingContainer.addDefaultMappings(LayerMappingContainer.INSTANCE);
         MappingMacro mappingMacro = new MappingMacro("test macro",
                 "it does cool things on your map",
-                Arrays.stream(LayerMappingContainer.INSTANCE.queryMappingsAll())
+                LayerMappingContainer.INSTANCE.queryMappingsAll()
+                        .stream()
                         .map(LayerMapping::getUid)
                         .toArray(UUID[]::new),
                 UUID.randomUUID());
@@ -121,9 +123,9 @@ public class MacroDesigner extends JPanel {
 
     private void onAddMapping() {
         //insert any mapping from container at tail of list
-        LayerMapping[] all = LayerMappingContainer.INSTANCE.queryMappingsAll();
-        if (all.length == 0) return;
-        UUID next = all[0].getUid();
+        ArrayList<LayerMapping> all = LayerMappingContainer.INSTANCE.queryMappingsAll();
+        if (all.isEmpty()) return;
+        UUID next = all.get(0).getUid();
         UUID[] ids = Arrays.copyOf(macro.mappingUids, macro.mappingUids.length + 1);
         ids[ids.length - 1] = next;
         selectedRow = ids.length - 1;
