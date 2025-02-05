@@ -28,7 +28,7 @@ public class MappingsListSelect extends LayerMappingPanel {
     @Override
     protected void updateComponents() {
         DefaultListModel<ListItem> model = new DefaultListModel<>();
-        for (LayerMapping m : LayerMappingContainer.INSTANCE.queryMappingsAll()) {
+        for (LayerMapping m : LayerMappingContainer.INSTANCE.queryAll()) {
             model.addElement(new ListItem(m));
         }
         list.setModel(model);

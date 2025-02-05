@@ -11,7 +11,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
     public static LayerMappingContainer INSTANCE = new LayerMappingContainer();
 
     public LayerMappingContainer() {
-        super(LayerMapping.class);
+        super(LayerMapping.class, "/home/klipper/Documents/worldpainter/mappings.txt");
     }
 
     public static void addDefaultMappings(LayerMappingContainer container) {

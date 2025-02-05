@@ -13,12 +13,20 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
     private final HashMap<UUID, ArrayList<Runnable>> uidNotifies = new HashMap<>();
     private final HashMap<UUID, T> mappings = new HashMap<>();
-    public String filePath = "/home/klipper/Documents/worldpainter/mappings.txt";
-    Class<T> type;
+    private final Class<T> type;
+    public String filePath;
     private boolean suppressFileWriting = false;
 
-    protected AbstractOperationContainer(Class<T> type) {
+    protected AbstractOperationContainer(Class<T> type, String filePath) {
         this.type = type;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
 
     public void updateMapping(T mapping) {
@@ -68,11 +76,11 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         if (listeners != null) listeners.remove(runnable);
     }
 
-    public T queryMappingById(UUID uid) {
+    public T queryById(UUID uid) {
         return mappings.get(uid);
     }
 
-    public ArrayList<T> queryMappingsAll() {
+    public ArrayList<T> queryAll() {
         ArrayList<T> list = new ArrayList<>(mappings.values());
         return list;
     }
