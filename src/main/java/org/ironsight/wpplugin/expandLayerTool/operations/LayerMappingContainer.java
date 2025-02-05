@@ -59,20 +59,6 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         container.updateMapping(m);
     }
 
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("TEST PANEL");
-        LayerMappingContainer.addDefaultMappings(INSTANCE);
-
-        JDialog log = MappingEditorPanel.createDialog(frame, f -> {
-        });
-        log.setVisible(true);
-
-
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
-    }
-
     @Override
     protected LayerMapping getNewAction() {
         return new LayerMapping(new HeightProvider(),

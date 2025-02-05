@@ -10,14 +10,11 @@ import java.util.Comparator;
 import java.util.function.Consumer;
 
 public class SelectLayerMappingDialog extends JDialog {
-    public SelectLayerMappingDialog(ArrayList<LayerMapping> layerMappings,
-                                    Consumer<LayerMapping> onSubmit) {
+    public SelectLayerMappingDialog(ArrayList<LayerMapping> layerMappings, Consumer<LayerMapping> onSubmit) {
         super();
-        setTitle("Select Layer Mapping");
         init(layerMappings, onSubmit);
-        setModal(true);
+        this.setModal(true);
         this.pack();
-        this.setVisible(true);
     }
 
     public static void main(String[] args) {

@@ -1,8 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -20,6 +18,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
 
     protected AbstractOperationContainer(Class<T> type, String filePath) {
         this.type = type;
+        this.filePath = filePath;
     }
 
     public String getFilePath() {
@@ -107,7 +106,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     public void readFromFile() {
         mappings.clear();
         Object deserializedObject;
-        try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(Paths.get(filePath)))) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
             suppressFileWriting = true;
             // Read the object from the file
             deserializedObject = ois.readObject();
@@ -116,8 +115,14 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
             for (Object o : arr) {
                 if (type.isInstance(o)) putMapping((T) o);
             }
+            System.out.println(
+                    this.getClass().getSimpleName() + " successfully loaded " + mappings.size() + " objects from " +
+                            ": " + filePath);
+
+        } catch (FileNotFoundException ignored) {
+            System.out.println(this.getClass().getSimpleName() + " File not found: " + filePath);
         } catch (IOException | ClassNotFoundException e) {
-            System.err.println("Error during deserialization: " + e.getMessage());
+            System.err.println(this.getClass().getSimpleName() + " Error during deserialization: " + e.getMessage());
             e.printStackTrace();
         } finally {
             suppressFileWriting = false;
@@ -129,9 +134,9 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         Object obj = mappings.values().toArray();
         try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(Paths.get(filePath)))) {
             oos.writeObject(obj);
-            System.out.println("Object successfully serialized to " + filePath);
+            System.out.println(this.getClass().getSimpleName() + " saved successfully to " + filePath);
         } catch (IOException e) {
-            System.err.println("Error during serialization: " + e.getMessage());
+            System.err.println(this.getClass().getSimpleName() + "Error during serialization: " + e.getMessage());
             e.printStackTrace();
         }
     }

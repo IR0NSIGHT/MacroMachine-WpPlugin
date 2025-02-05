@@ -1,10 +1,10 @@
 - gridpanel has wierd collisions on x axis with oter points when dragging
 - selected point is not properly updated from table -> grid panel
 
-- GUI editor for macro building
 - zoom feature for grid panel
-- type to select from mappint table dropdown
 - order values alpabetically for discrete MappingValues
-- order + search in global list display
+- order in global list display
+- search for any type in global list
+- mismatch: after changing name of mapping, the macro editor does not update the names.
 - bug: mapping editor only updated on second selection of mapping from global list
 - investigate: sometimes saveing/loading doesnt seem  to work?

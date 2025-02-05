@@ -2,6 +2,8 @@ package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
+import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
+import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacroContainer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +23,7 @@ public class MappingEditorPanel extends LayerMappingPanel {
         this.onSubmit = onSubmit;
     }
 
-    public static JDialog createDialog(JFrame parent, Consumer<LayerMapping> applyToMap) {
+    public static JDialog createDialog(JFrame parent, Consumer<MappingMacro> applyToMap) {
         if (dialog != null) {
             dialog.setVisible(true);
             dialog.toFront();        // Bring it to the front
@@ -33,31 +35,8 @@ public class MappingEditorPanel extends LayerMappingPanel {
         dialog = new JDialog(parent, "My Dialog", false); // Modal dialog
         dialog.setLocationRelativeTo(null); // Centers the dialog
 
-        JPanel all = new JPanel(new BorderLayout());
 
-        Consumer<LayerMapping> submit = mapping1 -> {
-            LayerMappingContainer.INSTANCE.updateMapping(mapping1);
-        };
-
-        MappingEditorPanel editor = new MappingEditorPanel(submit);
-        all.add(editor, BorderLayout.CENTER);
-
-        MappingsListSelect mappingSelector = new MappingsListSelect(editor::setMapping);
-        all.add(mappingSelector, BorderLayout.WEST);
-
-        JPanel buttons = new JPanel(new FlowLayout());
-        JButton apply = new JButton("apply");
-        apply.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                submit.accept(editor.mapping);  //SAVE TO CONTAINER ON APPLY
-                applyToMap.accept(editor.mapping);
-            }
-        });
-        buttons.add(apply);
-        all.add(buttons, BorderLayout.SOUTH);
-
-        dialog.add(all);
+        dialog.add(new GlobalActionPanel(applyToMap));
         dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
         dialog.pack();
         return dialog;

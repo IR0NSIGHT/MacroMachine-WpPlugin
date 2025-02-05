@@ -1,9 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
-import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
-import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacroContainer;
+import org.ironsight.wpplugin.expandLayerTool.operations.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -13,24 +10,31 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class MacroTreePanel extends JPanel {
     private final MappingMacroContainer container;
     private final LayerMappingContainer mappingContainer;
+    private final Consumer<MappingMacro> applyToMap;
     DefaultMutableTreeNode root;
     DefaultTreeModel treeModel;
     JTree tree;
     TreePath[] selectionpaths;
+    Consumer<SaveableAction> onSelectAction;
     private LinkedList<UUID> selectedMacros;
     private String filterString = "";
 
-    MacroTreePanel(MappingMacroContainer container, LayerMappingContainer mappingContainer) {
+    MacroTreePanel(MappingMacroContainer container, LayerMappingContainer mappingContainer,
+                   Consumer<MappingMacro> applyToMap, Consumer<SaveableAction> onSelectAction) {
+        this.applyToMap = applyToMap;
         this.container = container;
         this.mappingContainer = mappingContainer;
+        this.onSelectAction = onSelectAction;
         init();
         update();
     }
+
 
     public static void main(String[] args) {
         JFrame frame = new JFrame();
@@ -52,7 +56,10 @@ public class MacroTreePanel extends JPanel {
             macros.updateMapping(macro);
         }
         frame.getContentPane().setLayout(new BorderLayout());
-        frame.getContentPane().add(new MacroTreePanel(macros, layers), BorderLayout.CENTER);
+        frame.getContentPane().add(new MacroTreePanel(macros, layers, f -> {
+            System.out.println("apply macro " + f);
+        }, f -> {
+        }), BorderLayout.CENTER);
         frame.pack();
         frame.setVisible(true);
     }
@@ -93,6 +100,7 @@ public class MacroTreePanel extends JPanel {
     }
 
     private void update() {
+        System.out.println("update macro tree panel");
         root.removeAllChildren();
         ArrayList<MappingMacro> macros = container.queryAll();
         macros.sort(Comparator.comparing(MappingMacro::getName));
@@ -169,17 +177,33 @@ public class MacroTreePanel extends JPanel {
                     .map(node -> (MappingMacro) node.getUserObject())
                     .map(MappingMacro::getUid)
                     .collect(Collectors.toCollection(LinkedList::new));
+            Object o = tree.getLastSelectedPathComponent();
+            if (o instanceof DefaultMutableTreeNode) {
+                if (((DefaultMutableTreeNode) o).getUserObject() instanceof SaveableAction) {
+                    onSelectAction.accept((SaveableAction) (((DefaultMutableTreeNode) o).getUserObject()));
+                }
+            }
+
         });
-        JScrollPane scrollPane = new JScrollPane(tree);
+        JScrollPane scrollPane = new JScrollPane(tree,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         this.add(scrollPane, BorderLayout.CENTER);
 
         JPanel buttons = new JPanel(new FlowLayout());
-        JButton addButton = new JButton("Add");
+        JButton addButton = new JButton("Add macro");
         addButton.addActionListener(e -> {
             container.addMapping();
             update();
         });
         buttons.add(addButton);
+
+        JButton addActionButton = new JButton("Add action");
+        addActionButton.addActionListener(e -> {
+            mappingContainer.addMapping();
+            update();
+        });
+        buttons.add(addActionButton);
 
         JButton removeButton = new JButton("Remove");
         removeButton.addActionListener(e -> {
@@ -194,8 +218,9 @@ public class MacroTreePanel extends JPanel {
                 DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) obj;
                 Object userObj = treeNode.getUserObject();
                 if (userObj instanceof MappingMacro) {
+                    Window parent = SwingUtilities.getWindowAncestor(this);
                     JDialog macroDialog =
-                            MacroDesigner.getDesignerDialog((Frame) SwingUtilities.getWindowAncestor(this),
+                            MacroDesigner.getDesignerDialog(parent instanceof Frame ? (Frame) parent : null,
                                     (MappingMacro) userObj,
                                     container::updateMapping);
                     macroDialog.setVisible(true);
@@ -203,11 +228,29 @@ public class MacroTreePanel extends JPanel {
                 }
             }
         });
-        scrollPane.setPreferredSize(new Dimension(800, 600));
-
         buttons.add(editButton);
+
+        JButton applyButton = new JButton("Apply");
+        applyButton.addActionListener(f -> onApply());
+        buttons.add(applyButton);
+
+        scrollPane.setPreferredSize(new Dimension(500, 600));
+
+
         this.add(buttons, BorderLayout.SOUTH);
         this.invalidate();
+    }
+
+    private void onApply() {
+        //get macros
+        for (UUID id : selectedMacros) {
+            MappingMacro macro = container.queryById(id);
+            if (macro != null) {
+                System.out.println("apply macro " + macro);
+                applyToMap.accept(macro);
+            }
+        }
+
     }
 }
 
