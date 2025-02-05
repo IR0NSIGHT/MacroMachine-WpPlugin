@@ -64,6 +64,59 @@ public class MacroTreePanel extends JPanel {
         frame.setVisible(true);
     }
 
+    private static void getExpansionAndSelection(JTree tree, DefaultMutableTreeNode node, LinkedList<UUID> expanded,
+                                                 LinkedList<UUID> selected) {
+        Object userObject = node.getUserObject();
+
+        // Check if the node's userObject is a valid type with UUID
+        if (userObject instanceof SaveableAction) {
+            UUID uid = ((SaveableAction) userObject).getUid();
+
+            // Add to expanded if the node is expanded
+            if (tree.isExpanded(new TreePath(node.getPath()))) {
+                expanded.add(uid);
+            }
+
+            // Add to selected if the node is selected
+            TreePath selectionPath = tree.getSelectionPath();
+            if (selectionPath != null && selectionPath.getLastPathComponent() == node) {
+                selected.add(uid);
+            }
+        }
+
+        // Recursively process child nodes
+        for (int i = 0; i < node.getChildCount(); i++) {
+            DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) node.getChildAt(i);
+            getExpansionAndSelection(tree, childNode, expanded, selected);
+        }
+    }
+
+    private static void applyExpansionAndSelection(JTree tree, DefaultMutableTreeNode node, Set<UUID> expanded,
+                                                   Set<UUID> selected) {
+        Object userObject = node.getUserObject();
+
+        // Check if the node's userObject is a valid type with UUID
+        if (userObject instanceof SaveableAction) {
+            UUID uid = ((SaveableAction) userObject).getUid();
+
+            // Add to expanded if the node is expanded
+            if (expanded.contains(uid)) {
+                tree.expandPath(new TreePath(node.getPath()));
+            }
+
+            // Add to selected if the node is selected
+            if (selected.contains(uid)) {
+                tree.addSelectionPath(new TreePath(node.getPath()));
+            }
+        }
+
+        // Recursively process child nodes
+        for (int i = 0; i < node.getChildCount(); i++) {
+            DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) node.getChildAt(i);
+            applyExpansionAndSelection(tree, childNode, expanded, selected);
+        }
+    }
+
     private void restoreSelectionPaths(JTree tree, TreePath[] savedPaths) {
         if (savedPaths != null) {
             ArrayList<TreePath> validPaths = new ArrayList<TreePath>();
@@ -100,6 +153,14 @@ public class MacroTreePanel extends JPanel {
     }
 
     private void update() {
+        LinkedList<UUID> expanded = new LinkedList<>();
+        LinkedList<UUID> selected = new LinkedList<>();
+        if (tree.getModel().getRoot() != null) {
+            //save the currently expanded ones
+            getExpansionAndSelection(tree, (DefaultMutableTreeNode) tree.getModel().getRoot(), expanded, selected);
+        }
+
+
         System.out.println("update macro tree panel");
         root.removeAllChildren();
         ArrayList<MappingMacro> macros = container.queryAll();
@@ -126,10 +187,12 @@ public class MacroTreePanel extends JPanel {
                     root.add(macroNode);
                 });
         treeModel.reload(root);
-        // Collapse all nodes initially
-        for (int i = 1; i < tree.getRowCount(); i++) {
-            tree.collapseRow(i);
-        }
+
+        if (!expanded.isEmpty() && !selected.isEmpty() && tree.getModel().getRoot() != null) applyExpansionAndSelection(
+                tree,
+                (DefaultMutableTreeNode) tree.getModel().getRoot(),
+                new HashSet<>(expanded),
+                new HashSet<>(selected));
 
         restoreSelectionPaths(tree, selectionpaths);
         revalidate();
