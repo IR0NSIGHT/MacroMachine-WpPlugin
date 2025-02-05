@@ -11,10 +11,18 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class MacroDesigner extends JPanel {
+    private static final String helpString = "The macro designer allows you to design a macro.\n" +
+            "A macro is a collection of actions, like a container. When a macro is applied to the map, it runs each " +
+            "action in the specified order, one after the other. Think of it as a collection of simple global " +
+            "operations that are bundeled together to achieve a more complex task.\n" +
+            "You can add, remove, reorder and edit the actions of the macro here. Be aware that macros can share " +
+            "actions, so if you edit one, you will also edit the other. Removed actions are not lost, they remain in " +
+            "the global list of actions.";
+    Consumer<MappingMacro> onSubmit;
     private MappingMacro macro;
-
     private JTextField name;
     private JTextArea description;
     private JTable table;
@@ -28,26 +36,43 @@ public class MacroDesigner extends JPanel {
     }
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setTitle("Macro Designer");
-
         LayerMappingContainer.addDefaultMappings(LayerMappingContainer.INSTANCE);
         MappingMacro mappingMacro = new MappingMacro("test macro",
                 "it does cool things on your map",
-                LayerMappingContainer.INSTANCE.queryAll()
-                        .stream()
-                        .map(LayerMapping::getUid)
-                        .toArray(UUID[]::new),
+                LayerMappingContainer.INSTANCE.queryAll().stream().map(LayerMapping::getUid).toArray(UUID[]::new),
                 UUID.randomUUID());
 
-        MacroDesigner designer = new MacroDesigner();
-        designer.setMacro(mappingMacro, false);
-        frame.add(designer);
+        JDialog dialog = getDesignerDialog(mappingMacro, f -> {
+        });
+        dialog.setVisible(true);
+    }
 
-        frame.setSize(new Dimension(400, 400));
-        frame.pack();
-        frame.setVisible(true);
+    public static JDialog getDesignerDialog(MappingMacro macro, Consumer<MappingMacro> onSubmit) {
+        JDialog dialog = new JDialog();
+        dialog.setTitle("Macro Designer");
+        MacroDesigner designer = new MacroDesigner();
+        designer.onSubmit = onSubmit;
+        designer.setMacro(macro, true);
+
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(designer, BorderLayout.CENTER);
+        JPanel buttons = new JPanel(new FlowLayout());
+        panel.add(buttons, BorderLayout.SOUTH);
+
+        JButton submitButton = new JButton("submit");
+        buttons.add(submitButton);
+        submitButton.addActionListener(e -> {
+            onSubmit.accept(designer.macro);
+            dialog.dispose();
+        });
+
+        JButton helpButton = HelpDialog.getHelpButton("Macro Designer", helpString);
+        buttons.add(helpButton);
+
+        dialog.setContentPane(panel);
+        dialog.setModal(true);
+        dialog.pack();
+        return dialog;
     }
 
     private void init() {
