@@ -45,7 +45,7 @@ public class MacroTreePanel extends JPanel {
             macro = macro.withUUIDs(ids).withName("ActionMacro_" + i);
             macros.updateMapping(macro);
         }
-
+        frame.getContentPane().setLayout(new BorderLayout());
         frame.getContentPane().add(new MacroTreePanel(macros, layers), BorderLayout.CENTER);
         frame.pack();
         frame.setVisible(true);
@@ -74,10 +74,14 @@ public class MacroTreePanel extends JPanel {
             root.add(macroNode);
         }
         treeModel.reload(root);
+        // Collapse all nodes initially
+        for (int i = 1; i < tree.getRowCount(); i++) {
+            tree.collapseRow(i);
+        }
         revalidate();
         repaint();
     }
-
+    JTree tree;
     private void init() {
         container.subscribe(this::update);
         mappingContainer.subscribe(this::update);
@@ -85,8 +89,7 @@ public class MacroTreePanel extends JPanel {
         this.setLayout(new BorderLayout());
         root = new DefaultMutableTreeNode("All Macros");
         treeModel = new DefaultTreeModel(root);
-        JTree tree = new JTree(treeModel);
-        tree.setLayout(new BorderLayout());
+        tree = new JTree(treeModel);
         tree.setCellRenderer(new IDisplayUnitCellRenderer());
         JScrollPane scrollPane = new JScrollPane(tree);
         this.add(scrollPane, BorderLayout.CENTER);
@@ -121,15 +124,19 @@ public class MacroTreePanel extends JPanel {
                 Object userObj = treeNode.getUserObject();
                 if (userObj instanceof MappingMacro) {
                     JDialog macroDialog =
-                            MacroDesigner.getDesignerDialog((MappingMacro) userObj, container::updateMapping);
+                            MacroDesigner.getDesignerDialog((Frame) SwingUtilities.getWindowAncestor(this),
+                                    (MappingMacro) userObj,
+                                    container::updateMapping);
                     macroDialog.setVisible(true);
 
                 }
             }
         });
-        buttons.add(editButton);
+        scrollPane.setPreferredSize(new Dimension(800, 600));
 
+        buttons.add(editButton);
         this.add(buttons, BorderLayout.SOUTH);
+        this.invalidate();
     }
 }
 
