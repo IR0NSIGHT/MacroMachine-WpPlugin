@@ -42,13 +42,13 @@ public class MacroDesigner extends JPanel {
                 LayerMappingContainer.INSTANCE.queryAll().stream().map(LayerMapping::getUid).toArray(UUID[]::new),
                 UUID.randomUUID());
 
-        JDialog dialog = getDesignerDialog(mappingMacro, f -> {
+        JDialog dialog = getDesignerDialog(null, mappingMacro, f -> {
         });
         dialog.setVisible(true);
     }
 
-    public static JDialog getDesignerDialog(MappingMacro macro, Consumer<MappingMacro> onSubmit) {
-        JDialog dialog = new JDialog();
+    public static JDialog getDesignerDialog(Frame parent, MappingMacro macro, Consumer<MappingMacro> onSubmit) {
+        JDialog dialog = new JDialog(parent);
         dialog.setTitle("Macro Designer");
         MacroDesigner designer = new MacroDesigner();
         designer.onSubmit = onSubmit;
@@ -196,7 +196,8 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onEditMapping() {
-        new SelectLayerMappingDialog((JFrame) SwingUtilities.getWindowAncestor(this),
+
+        new SelectLayerMappingDialog(
                 LayerMappingContainer.INSTANCE.queryAll(),
                 f -> {
                     UUID[] newIds = macro.mappingUids.clone();
