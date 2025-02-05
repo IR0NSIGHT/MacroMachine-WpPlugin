@@ -383,7 +383,7 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             this.getDimension().setEventsInhibited(true);
             MappingMacro macro = new MappingMacro("Simple macro",
                     "it does things",
-                    LayerMappingContainer.INSTANCE.queryMappingsAll()
+                    LayerMappingContainer.INSTANCE.queryAll()
                             .stream()
                             .map(LayerMapping::getUid)
                             .toArray(UUID[]::new),

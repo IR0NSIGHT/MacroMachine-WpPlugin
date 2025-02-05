@@ -27,7 +27,7 @@ public class SelectLayerMappingDialog extends JDialog {
         frame.setTitle("Select Layer Mapping");
         for (int i = 0; i < 20; i++)
             LayerMappingContainer.addDefaultMappings(LayerMappingContainer.INSTANCE);
-        new SelectLayerMappingDialog(frame, LayerMappingContainer.INSTANCE.queryMappingsAll(), System.out::println);
+        new SelectLayerMappingDialog(frame, LayerMappingContainer.INSTANCE.queryAll(), System.out::println);
     }
 
     private void init(ArrayList<LayerMapping> layerMappings, Consumer<LayerMapping> onSubmit) {

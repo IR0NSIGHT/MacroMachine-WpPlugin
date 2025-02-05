@@ -35,7 +35,7 @@ public class MacroDesigner extends JPanel {
         LayerMappingContainer.addDefaultMappings(LayerMappingContainer.INSTANCE);
         MappingMacro mappingMacro = new MappingMacro("test macro",
                 "it does cool things on your map",
-                LayerMappingContainer.INSTANCE.queryMappingsAll()
+                LayerMappingContainer.INSTANCE.queryAll()
                         .stream()
                         .map(LayerMapping::getUid)
                         .toArray(UUID[]::new),
@@ -123,7 +123,7 @@ public class MacroDesigner extends JPanel {
 
     private void onAddMapping() {
         //insert any mapping from container at tail of list
-        ArrayList<LayerMapping> all = LayerMappingContainer.INSTANCE.queryMappingsAll();
+        ArrayList<LayerMapping> all = LayerMappingContainer.INSTANCE.queryAll();
         if (all.isEmpty()) return;
         UUID next = all.get(0).getUid();
         UUID[] ids = Arrays.copyOf(macro.mappingUids, macro.mappingUids.length + 1);
@@ -172,7 +172,7 @@ public class MacroDesigner extends JPanel {
 
     private void onEditMapping() {
         new SelectLayerMappingDialog((JFrame) SwingUtilities.getWindowAncestor(this),
-                LayerMappingContainer.INSTANCE.queryMappingsAll(),
+                LayerMappingContainer.INSTANCE.queryAll(),
                 f -> {
                     UUID[] newIds = macro.mappingUids.clone();
                     newIds[selectedRow] = f.getUid();
@@ -198,7 +198,7 @@ public class MacroDesigner extends JPanel {
 
         int i = 0;
         for (UUID id : macro.mappingUids) {
-            LayerMapping m = LayerMappingContainer.INSTANCE.queryMappingById(id);
+            LayerMapping m = LayerMappingContainer.INSTANCE.queryById(id);
             assert m != null;
 
             data[i++] = new Object[]{m};

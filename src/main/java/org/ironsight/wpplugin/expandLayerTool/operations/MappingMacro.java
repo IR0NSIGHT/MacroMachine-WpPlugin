@@ -1,15 +1,13 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IDisplayUnit;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.panels.DefaultFilter;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
-public class MappingMacro implements IDisplayUnit, Serializable {
+public class MappingMacro implements SaveableAction {
     //ordered list of layermappings
     public final UUID[] mappingUids;
     private final String name;
@@ -46,8 +44,7 @@ public class MappingMacro implements IDisplayUnit, Serializable {
     }
 
     public MappingMacro withUUIDs(UUID[] uuid) {
-        MappingMacro mappingMacro = new MappingMacro(this.name, this.description, uuid, this.id);
-        return mappingMacro;
+        return new MappingMacro(this.name, this.description, uuid, this.id);
     }
 
     @Override
@@ -62,7 +59,7 @@ public class MappingMacro implements IDisplayUnit, Serializable {
 
     public boolean allMappingsReady(LayerMappingContainer container) {
         for (UUID mappingUid : mappingUids) {
-            LayerMapping mapping = container.queryMappingById(mappingUid);
+            LayerMapping mapping = container.queryById(mappingUid);
             if (mapping == null) {
                 return false;
             }
@@ -75,10 +72,15 @@ public class MappingMacro implements IDisplayUnit, Serializable {
         DefaultFilter filter = new DefaultFilter(dimension, false, false, -1000, 1000, false, null, null, 0, true);
 
         for (UUID mappingUid : mappingUids) {
-            LayerMapping mapping = container.queryMappingById(mappingUid);
+            LayerMapping mapping = container.queryById(mappingUid);
             if (mapping.getMappingPoints().length == 0) continue;
             ApplyAction action = new ApplyAction(filter, mapping);
             action.apply(dimension);
         }
+    }
+
+    @Override
+    public UUID getUid() {
+        return id;
     }
 }

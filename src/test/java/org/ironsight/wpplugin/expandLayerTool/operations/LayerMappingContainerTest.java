@@ -23,7 +23,7 @@ class LayerMappingContainerTest {
 
         container.updateMapping(newMapping);
 
-        assertSame(newMapping, container.queryMappingById(mapping.getUid()));
+        assertSame(newMapping, container.queryById(mapping.getUid()));
 
     }
 
@@ -32,17 +32,17 @@ class LayerMappingContainerTest {
         LayerMappingContainer container = new LayerMappingContainer();
 
         UUID uid = container.addMapping().getUid();
-        assertEquals(uid, container.queryMappingById(uid).getUid());
+        assertEquals(uid, container.queryById(uid).getUid());
 
         container.deleteMapping(uid);
-        assertNull(container.queryMappingById(uid));
+        assertNull(container.queryById(uid));
     }
 
     @Test
     void addMapping() {
         LayerMappingContainer container = new LayerMappingContainer();
         UUID uid = container.addMapping().getUid();
-        assertEquals(uid, container.queryMappingById(uid).getUid());
+        assertEquals(uid, container.queryById(uid).getUid());
 
         {
             UUID uid2 = container.addMapping().getUid();
@@ -55,13 +55,13 @@ class LayerMappingContainerTest {
         LayerMappingContainer container = new LayerMappingContainer();
         LayerMapping saved = container.addMapping().withName("hello i am a test mapping");
         container.updateMapping(saved);
-        assertEquals(saved, container.queryMappingById(saved.getUid()));
+        assertEquals(saved, container.queryById(saved.getUid()));
 
         container.filePath = System.getProperty("user.dir") + "/test_saves.txt";
         container.writeToFile();
         container.readFromFile();
 
-        LayerMapping loaded = container.queryMappingById(saved.getUid());
+        LayerMapping loaded = container.queryById(saved.getUid());
         assertEquals(saved, loaded);
     }
 
