@@ -7,17 +7,23 @@ import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacroContainer;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.UUID;
 
 public class MacroTreePanel extends JPanel {
     private final MappingMacroContainer container;
     private final LayerMappingContainer mappingContainer;
+    DefaultMutableTreeNode root;
+    DefaultTreeModel treeModel;
 
     MacroTreePanel(MappingMacroContainer container, LayerMappingContainer mappingContainer) {
         this.container = container;
         this.mappingContainer = mappingContainer;
         init();
+        update();
     }
 
     public static void main(String[] args) {
@@ -45,11 +51,13 @@ public class MacroTreePanel extends JPanel {
         frame.setVisible(true);
     }
 
-    private void init() {
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Root");
-
-        for (MappingMacro macro : container.queryAll()) {
+    private void update() {
+        root.removeAllChildren();
+        ArrayList<MappingMacro> macros = container.queryAll();
+        macros.sort(Comparator.comparing(MappingMacro::getName));
+        for (MappingMacro macro : macros) {
             DefaultMutableTreeNode macroNode = new DefaultMutableTreeNode(macro);
+            System.out.println(" create macro node: " + macro.getName());
             for (UUID uuid : macro.mappingUids) {
                 LayerMapping m = mappingContainer.queryById(uuid);
                 if (m == null) {
@@ -65,12 +73,63 @@ public class MacroTreePanel extends JPanel {
             }
             root.add(macroNode);
         }
+        treeModel.reload(root);
+        revalidate();
+        repaint();
+    }
 
-        JTree tree = new JTree(root);
+    private void init() {
+        container.subscribe(this::update);
+        mappingContainer.subscribe(this::update);
+
+        this.setLayout(new BorderLayout());
+        root = new DefaultMutableTreeNode("All Macros");
+        treeModel = new DefaultTreeModel(root);
+        JTree tree = new JTree(treeModel);
         tree.setLayout(new BorderLayout());
         tree.setCellRenderer(new IDisplayUnitCellRenderer());
         JScrollPane scrollPane = new JScrollPane(tree);
-        this.add(scrollPane);
+        this.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel buttons = new JPanel(new FlowLayout());
+        JButton addButton = new JButton("Add");
+        addButton.addActionListener(e -> {
+            container.addMapping();
+            update();
+        });
+        buttons.add(addButton);
+
+        JButton removeButton = new JButton("Remove");
+        removeButton.addActionListener(e -> {
+            Object obj = tree.getLastSelectedPathComponent();
+            if (obj instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) obj;
+                Object userObj = treeNode.getUserObject();
+                if (userObj instanceof MappingMacro) {
+                    container.deleteMapping(((MappingMacro) userObj).getUid());
+                    update();
+                }
+            }
+        });
+        buttons.add(removeButton);
+
+        JButton editButton = new JButton("Edit");
+        editButton.addActionListener(e -> {
+            Object obj = tree.getLastSelectedPathComponent();
+            if (obj instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) obj;
+                Object userObj = treeNode.getUserObject();
+                if (userObj instanceof MappingMacro) {
+                    JDialog macroDialog =
+                            MacroDesigner.getDesignerDialog((MappingMacro) userObj, container::updateMapping);
+                    macroDialog.setVisible(true);
+
+                }
+            }
+        });
+        buttons.add(editButton);
+
+        this.add(buttons, BorderLayout.SOUTH);
     }
 }
 

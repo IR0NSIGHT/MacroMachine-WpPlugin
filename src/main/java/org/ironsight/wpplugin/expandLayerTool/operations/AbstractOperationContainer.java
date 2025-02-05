@@ -41,6 +41,8 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         if (removed != null) {
             notify(removed);
         }
+        System.out.println("removed object from container: " + removed.getName());
+
     }
 
     protected UUID getUUID() {
