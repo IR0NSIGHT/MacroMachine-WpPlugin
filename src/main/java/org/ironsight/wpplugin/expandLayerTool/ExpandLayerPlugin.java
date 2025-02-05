@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
+import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacroContainer;
 import org.ironsight.wpplugin.expandLayerTool.operations.SelectEdgeOperation;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;
@@ -45,6 +46,7 @@ public class ExpandLayerPlugin extends AbstractPlugin implements
     public ExpandLayerPlugin() {
         super(NAME, VERSION);
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
+        MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
     }
 
     @Override

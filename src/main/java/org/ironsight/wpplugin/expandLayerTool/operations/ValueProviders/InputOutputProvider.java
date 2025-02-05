@@ -22,23 +22,19 @@ public class InputOutputProvider {
     public void updateFrom(Dimension dimension) {
         setters.clear();
         getters.clear();
-
-        Layer[] layers = new Layer[]{
-                Frost.INSTANCE,
+        Layer[] layers = new Layer[]{Frost.INSTANCE,
                 DeciduousForest.INSTANCE,
                 PineForest.INSTANCE,
                 ReadOnly.INSTANCE,
                 Resources.INSTANCE,
                 Caverns.INSTANCE,
-                Caves.INSTANCE,
-        };
+                Caves.INSTANCE,};
         for (Layer l : layers) {
             if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
                 setters.add(new NibbleLayerSetter(l));
                 getters.add(new NibbleLayerSetter(l));
             }
-            if (l.dataSize.equals(Layer.DataSize.BIT))
-                setters.add(new BitLayerBinarySpraypaintApplicator(l));
+            if (l.dataSize.equals(Layer.DataSize.BIT)) setters.add(new BitLayerBinarySpraypaintApplicator(l));
         }
 
         for (Layer l : dimension.getAllLayers(false)) {
@@ -46,8 +42,7 @@ public class InputOutputProvider {
                 setters.add(new NibbleLayerSetter(l));
                 getters.add(new NibbleLayerSetter(l));
             }
-            if (l.dataSize.equals(Layer.DataSize.BIT))
-                setters.add(new BitLayerBinarySpraypaintApplicator(l));
+            if (l.dataSize.equals(Layer.DataSize.BIT)) setters.add(new BitLayerBinarySpraypaintApplicator(l));
         }
         setters.add(new StonePaletteApplicator());
         setters.add(new AnnotationSetter());

@@ -16,6 +16,7 @@ public class InputGetterComboBox extends JComboBox<String> {
     }
 
     public void updateSelf() {
+        this.removeAllItems();
         for (IPositionValueGetter getter : InputOutputProvider.INSTANCE.getters) {
             addGetter(getter);
         }

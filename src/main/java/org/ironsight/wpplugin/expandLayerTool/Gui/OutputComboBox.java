@@ -2,7 +2,6 @@ package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueSetter;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.InputOutputProvider;
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.TestInputOutput;
 
 import javax.swing.*;
 import java.util.HashMap;
@@ -13,11 +12,11 @@ public class OutputComboBox extends JComboBox<String> {
 
     public OutputComboBox() {
         InputOutputProvider.INSTANCE.subscribe(this::updateSelf);
-        addItem(new TestInputOutput());
         updateSelf();
     }
 
     public void updateSelf() {
+        this.removeAllItems();
         for (IPositionValueSetter s : InputOutputProvider.INSTANCE.setters) {
             addItem(s);
         }
