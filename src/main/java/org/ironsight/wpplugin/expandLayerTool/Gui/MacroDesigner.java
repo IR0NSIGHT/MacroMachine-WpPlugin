@@ -31,7 +31,8 @@ public class MacroDesigner extends JPanel {
     private int selectedRow;
     private boolean isUpdating;
 
-    MacroDesigner() {
+    MacroDesigner(Consumer<MappingMacro> onSubmit) {
+        this.onSubmit = onSubmit;
         init();
     }
 
@@ -50,8 +51,7 @@ public class MacroDesigner extends JPanel {
     public static JDialog getDesignerDialog(Frame parent, MappingMacro macro, Consumer<MappingMacro> onSubmit) {
         JDialog dialog = new JDialog(parent);
         dialog.setTitle("Macro Designer");
-        MacroDesigner designer = new MacroDesigner();
-        designer.onSubmit = onSubmit;
+        MacroDesigner designer = new MacroDesigner(onSubmit);
         designer.setMacro(macro, true);
 
         JPanel panel = new JPanel(new BorderLayout());
@@ -119,10 +119,6 @@ public class MacroDesigner extends JPanel {
         this.add(top, BorderLayout.NORTH);
 
         JPanel buttons = new JPanel(new FlowLayout());
-        JButton applyButton = new JButton("Apply");
-        applyButton.addActionListener(e -> onApplyButtonPressed());
-        buttons.add(applyButton);
-
         addButton = new JButton("Add");
         addButton.addActionListener(e -> onAddMapping());
         buttons.add(addButton);
@@ -140,9 +136,12 @@ public class MacroDesigner extends JPanel {
         buttons.add(moveDownButton);
 
         changeMappingButton = new JButton("Change Mapping");
-        changeMappingButton.addActionListener(e -> onEditMapping());
+        changeMappingButton.addActionListener(e -> onChangeMapping());
         buttons.add(changeMappingButton);
 
+        JButton submitButton = new JButton("Submit");
+        submitButton.addActionListener(e -> onSubmit.accept(this.macro));
+        buttons.add(submitButton);
         this.add(buttons, BorderLayout.SOUTH);
     }
 
@@ -195,20 +194,14 @@ public class MacroDesigner extends JPanel {
         }
     }
 
-    private void onEditMapping() {
-
-        new SelectLayerMappingDialog(
-                LayerMappingContainer.INSTANCE.queryAll(),
-                f -> {
-                    UUID[] newIds = macro.mappingUids.clone();
-                    newIds[selectedRow] = f.getUid();
-                    setMacro(macro.withUUIDs(newIds), true);
-                });
-    }
-
-
-    private void onApplyButtonPressed() {
-
+    private void onChangeMapping() {
+        JDialog dialog = new SelectLayerMappingDialog(LayerMappingContainer.INSTANCE.queryAll(), f -> {
+            UUID[] newIds = macro.mappingUids.clone();
+            newIds[selectedRow] = f.getUid();
+            setMacro(macro.withUUIDs(newIds), true);
+        });
+        dialog.setModal(true);
+        dialog.setVisible(true);
     }
 
     private void update() {

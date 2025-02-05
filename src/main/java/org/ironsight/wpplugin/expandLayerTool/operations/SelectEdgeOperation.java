@@ -379,16 +379,9 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         }
     }
 
-    public void applyLayerAction(LayerMapping mapping) {
+    public void applyLayerAction(MappingMacro macro) {
         try {
             this.getDimension().setEventsInhibited(true);
-            MappingMacro macro = new MappingMacro("Simple macro",
-                    "it does things",
-                    LayerMappingContainer.INSTANCE.queryAll()
-                            .stream()
-                            .map(LayerMapping::getUid)
-                            .toArray(UUID[]::new),
-                    UUID.randomUUID());
             macro.apply(getDimension(), LayerMappingContainer.INSTANCE);
         } catch (Exception ex) {
             System.out.println(ex);
