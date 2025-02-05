@@ -6,18 +6,24 @@ import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacroContainer;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class MacroTreePanel extends JPanel {
     private final MappingMacroContainer container;
     private final LayerMappingContainer mappingContainer;
     DefaultMutableTreeNode root;
     DefaultTreeModel treeModel;
+    JTree tree;
+    TreePath[] selectionpaths;
+    private LinkedList<UUID> selectedMacros;
+    private String filterString = "";
 
     MacroTreePanel(MappingMacroContainer container, LayerMappingContainer mappingContainer) {
         this.container = container;
@@ -51,46 +57,119 @@ public class MacroTreePanel extends JPanel {
         frame.setVisible(true);
     }
 
+    private void restoreSelectionPaths(JTree tree, TreePath[] savedPaths) {
+        if (savedPaths != null) {
+            ArrayList<TreePath> validPaths = new ArrayList<TreePath>();
+            for (TreePath path : savedPaths) {
+                if (pathStillExists(tree, path)) {
+                    validPaths.add(path);
+                }
+            }
+            tree.setSelectionPaths(validPaths.toArray(new TreePath[0]));
+        }
+    }
+
+    // Helper method to check if a path still exists in the tree
+    private boolean pathStillExists(JTree tree, TreePath path) {
+        javax.swing.tree.TreeModel model = tree.getModel();
+        Object[] nodes = path.getPath();
+        Object currentNode = model.getRoot();
+
+        for (int i = 1; i < nodes.length; i++) { // Skip the root
+            boolean found = false;
+            for (int j = 0; j < model.getChildCount(currentNode); j++) {
+                Object child = model.getChild(currentNode, j);
+                if (child.equals(nodes[i])) {
+                    currentNode = child;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void update() {
         root.removeAllChildren();
         ArrayList<MappingMacro> macros = container.queryAll();
         macros.sort(Comparator.comparing(MappingMacro::getName));
-        for (MappingMacro macro : macros) {
-            DefaultMutableTreeNode macroNode = new DefaultMutableTreeNode(macro);
-            System.out.println(" create macro node: " + macro.getName());
-            for (UUID uuid : macro.mappingUids) {
-                LayerMapping m = mappingContainer.queryById(uuid);
-                if (m == null) {
-                    macroNode.add(new DefaultMutableTreeNode("Unknown Mapping"));
-                } else {
-                    DefaultMutableTreeNode mappingNode = new DefaultMutableTreeNode(m);
-                    macroNode.add(mappingNode);
-                    DefaultMutableTreeNode inputNode = new DefaultMutableTreeNode(m.input);
-                    DefaultMutableTreeNode outputNode = new DefaultMutableTreeNode(m.output);
-                    mappingNode.add(inputNode);
-                    mappingNode.add(outputNode);
-                }
-            }
-            root.add(macroNode);
-        }
+        macros.stream()
+                .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
+                        f.getDescription().toLowerCase().contains(filterString))
+                .forEach(macro -> {
+                    DefaultMutableTreeNode macroNode = new DefaultMutableTreeNode(macro);
+                    System.out.println(" create macro node: " + macro.getName());
+                    for (UUID uuid : macro.mappingUids) {
+                        LayerMapping m = mappingContainer.queryById(uuid);
+                        if (m == null) {
+                            macroNode.add(new DefaultMutableTreeNode("Unknown Mapping"));
+                        } else {
+                            DefaultMutableTreeNode mappingNode = new DefaultMutableTreeNode(m);
+                            macroNode.add(mappingNode);
+                            DefaultMutableTreeNode inputNode = new DefaultMutableTreeNode(m.input);
+                            DefaultMutableTreeNode outputNode = new DefaultMutableTreeNode(m.output);
+                            mappingNode.add(inputNode);
+                            mappingNode.add(outputNode);
+                        }
+                    }
+                    root.add(macroNode);
+                });
         treeModel.reload(root);
         // Collapse all nodes initially
         for (int i = 1; i < tree.getRowCount(); i++) {
             tree.collapseRow(i);
         }
+
+        restoreSelectionPaths(tree, selectionpaths);
         revalidate();
         repaint();
     }
-    JTree tree;
+
     private void init() {
         container.subscribe(this::update);
         mappingContainer.subscribe(this::update);
-
         this.setLayout(new BorderLayout());
+
+        // Create a search field
+        JTextField searchField = new JTextField();
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                filterString = searchField.getText().toLowerCase();
+                update();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                filterString = searchField.getText().toLowerCase();
+                update();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                filterString = searchField.getText().toLowerCase();
+                update();
+            }
+        });
+        this.add(searchField, BorderLayout.NORTH);
+
+
         root = new DefaultMutableTreeNode("All Macros");
         treeModel = new DefaultTreeModel(root);
         tree = new JTree(treeModel);
         tree.setCellRenderer(new IDisplayUnitCellRenderer());
+        tree.getSelectionModel().addTreeSelectionListener(x -> {
+            if (tree.getSelectionPaths() != null) selectedMacros = Arrays.stream(tree.getSelectionPaths())
+                    .filter(path -> path.getLastPathComponent() instanceof DefaultMutableTreeNode)
+                    .map(path -> (DefaultMutableTreeNode) path.getLastPathComponent())
+                    .filter(node -> node.getUserObject() instanceof MappingMacro)
+                    .map(node -> (MappingMacro) node.getUserObject())
+                    .map(MappingMacro::getUid)
+                    .collect(Collectors.toCollection(LinkedList::new));
+        });
         JScrollPane scrollPane = new JScrollPane(tree);
         this.add(scrollPane, BorderLayout.CENTER);
 
@@ -104,15 +183,7 @@ public class MacroTreePanel extends JPanel {
 
         JButton removeButton = new JButton("Remove");
         removeButton.addActionListener(e -> {
-            Object obj = tree.getLastSelectedPathComponent();
-            if (obj instanceof DefaultMutableTreeNode) {
-                DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) obj;
-                Object userObj = treeNode.getUserObject();
-                if (userObj instanceof MappingMacro) {
-                    container.deleteMapping(((MappingMacro) userObj).getUid());
-                    update();
-                }
-            }
+            container.deleteMapping(selectedMacros.toArray(new UUID[0]));
         });
         buttons.add(removeButton);
 

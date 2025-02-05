@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.UUID;
 
 public abstract class AbstractOperationContainer<T extends SaveableAction> {
@@ -33,16 +34,17 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         //filter for identity
         if (!mappings.containsKey(mapping.getUid()) || mappings.get(mapping.getUid()).equals(mapping)) return;
         mappings.put(mapping.getUid(), mapping);
-        notify(mapping);
+        notify(mapping.getUid());
     }
 
-    public void deleteMapping(UUID uid) {
-        T removed = mappings.remove(uid);
-        if (removed != null) {
-            notify(removed);
+    public void deleteMapping(UUID... uid) {
+        LinkedList<UUID> list = new LinkedList<>();
+        for (UUID u : uid) {
+            T removed = mappings.remove(u);
+            if (removed != null) list.add(removed.getUid());
+            System.out.println("removed objet from container: " + removed.getName());
         }
-        System.out.println("removed object from container: " + removed.getName());
-
+        notify(list.toArray(new UUID[0]));
     }
 
     protected UUID getUUID() {
@@ -55,7 +57,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         T newMap = getNewAction();
         mappings.put(newMap.getUid(), newMap);
 
-        notify(newMap);
+        notify(newMap.getUid());
         return newMap;
     }
 
@@ -92,13 +94,14 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         mappings.put(mapping.getUid(), mapping);
     }
 
-    private void notify(T mapping) {
+    private void notify(UUID... mapping) {
         for (Runnable r : genericNotifies)
             r.run();
-        if (mapping != null && uidNotifies.containsKey(mapping.getUid())) {
-            for (Runnable r : uidNotifies.get(mapping.getUid()))
-                r.run();
-        }
+        for (UUID obj : mapping)
+            if (uidNotifies.containsKey(obj)) {
+                for (Runnable r : uidNotifies.get(obj))
+                    r.run();
+            }
     }
 
     public void readFromFile() {

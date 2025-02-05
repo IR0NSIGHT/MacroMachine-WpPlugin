@@ -359,8 +359,9 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
     public void onGlobalOpsPressed() {
         try {
-            InputOutputProvider.INSTANCE.updateFrom(getDimension());
             LayerMappingContainer.INSTANCE.readFromFile();
+            MappingMacroContainer.getInstance().readFromFile();
+            InputOutputProvider.INSTANCE.updateFrom(getDimension());
             JDialog dialog = createDialog(null, this::applyLayerAction);
             dialog.setVisible(true);
         } catch (Exception ex) {
@@ -408,7 +409,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
     @Override
     protected void tick(int i, int i1, boolean b, boolean b1, float v) {
-
 
     }
 
