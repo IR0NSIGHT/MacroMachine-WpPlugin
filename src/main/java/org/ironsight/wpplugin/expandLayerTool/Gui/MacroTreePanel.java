@@ -64,8 +64,7 @@ public class MacroTreePanel extends JPanel {
         frame.setVisible(true);
     }
 
-    private static void getExpansionAndSelection(JTree tree, DefaultMutableTreeNode node, LinkedList<UUID> expanded,
-                                                 LinkedList<UUID> selected) {
+    private static void getExpansionAndSelection(JTree tree, DefaultMutableTreeNode node, LinkedList<UUID> expanded) {
         Object userObject = node.getUserObject();
 
         // Check if the node's userObject is a valid type with UUID
@@ -77,17 +76,12 @@ public class MacroTreePanel extends JPanel {
                 expanded.add(uid);
             }
 
-            // Add to selected if the node is selected
-            TreePath selectionPath = tree.getSelectionPath();
-            if (selectionPath != null && selectionPath.getLastPathComponent() == node) {
-                selected.add(uid);
-            }
         }
 
         // Recursively process child nodes
         for (int i = 0; i < node.getChildCount(); i++) {
             DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) node.getChildAt(i);
-            getExpansionAndSelection(tree, childNode, expanded, selected);
+            getExpansionAndSelection(tree, childNode, expanded);
         }
     }
 
@@ -156,8 +150,16 @@ public class MacroTreePanel extends JPanel {
         LinkedList<UUID> expanded = new LinkedList<>();
         LinkedList<UUID> selected = new LinkedList<>();
         if (tree.getModel().getRoot() != null) {
+            TreePath[] selectionPaths = tree.getSelectionPaths();
+            if (selectionPaths != null) Arrays.stream(selectionPaths).forEach(p -> {
+                Object o = p.getLastPathComponent();
+                if (o instanceof DefaultMutableTreeNode &&
+                        ((DefaultMutableTreeNode) o).getUserObject() instanceof SaveableAction)
+                    selected.add(((SaveableAction) ((DefaultMutableTreeNode) o).getUserObject()).getUid());
+            });
+
             //save the currently expanded ones
-            getExpansionAndSelection(tree, (DefaultMutableTreeNode) tree.getModel().getRoot(), expanded, selected);
+            getExpansionAndSelection(tree, (DefaultMutableTreeNode) tree.getModel().getRoot(), expanded);
         }
 
 
