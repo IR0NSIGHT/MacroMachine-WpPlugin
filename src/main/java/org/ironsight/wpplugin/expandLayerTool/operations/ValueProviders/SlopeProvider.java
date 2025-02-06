@@ -62,6 +62,6 @@ public class SlopeProvider implements IPositionValueGetter {
 
     @Override
     public String getDescription() {
-        return "the slope of a position in degrees from 0 to 90°";
+        return "get the slope of a position in degrees from 0 to 90°";
     }
 }

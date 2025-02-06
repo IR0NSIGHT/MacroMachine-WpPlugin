@@ -66,8 +66,8 @@ class LayerMappingTest {
         }
 
         {   // STATIC ONE POINT
-            LayerMapping mapper = new LayerMapping(null,
-                    null,
+            LayerMapping mapper = new LayerMapping(new TestInputOutput(),
+                    new TestInputOutput(),
                     new MappingPoint[]{new MappingPoint(57, 89)},
                     ActionType.SET,
                     "",

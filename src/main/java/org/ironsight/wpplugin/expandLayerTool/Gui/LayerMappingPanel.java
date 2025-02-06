@@ -28,7 +28,7 @@ public abstract class LayerMappingPanel extends JPanel {
      * @param mapping
      */
     protected final void updateMapping(LayerMapping mapping) {
-        System.out.println("EVENT: " + this.getClass() + " UPDATE MAPPING TO " + mapping);
+        System.out.println("EVENT: " + this.getClass().getSimpleName() + " UPDATE MAPPING TO " + mapping);
         if (mapping == null) {
             return;
         }
@@ -41,7 +41,7 @@ public abstract class LayerMappingPanel extends JPanel {
     }
 
     public final void setMapping(LayerMapping mapping) {
-        System.out.println("EVENT: " + this.getClass() + " SET MAPPING TO " + mapping);
+        System.out.println("EVENT: " + this.getClass().getSimpleName() + " SET MAPPING TO " + mapping);
         assert mapping != null;
         assert mapping.getMappingPoints() != null;
         assert mapping.input != null;

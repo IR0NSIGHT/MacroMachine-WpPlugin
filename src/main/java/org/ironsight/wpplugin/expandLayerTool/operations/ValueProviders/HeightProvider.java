@@ -56,7 +56,7 @@ public class HeightProvider implements IPositionValueGetter, IPositionValueSette
 
     @Override
     public String getDescription() {
-        return "the height of a position in percent for 0 to 255.";
+        return "get the height of a position in percent for 0 to 255.";
     }
 
     @Override
