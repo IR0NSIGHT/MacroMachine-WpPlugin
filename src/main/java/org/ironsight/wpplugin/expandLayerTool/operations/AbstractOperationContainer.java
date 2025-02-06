@@ -31,7 +31,9 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
 
     public void updateMapping(T mapping) {
         //filter for identity
-        if (!mappings.containsKey(mapping.getUid()) || mappings.get(mapping.getUid()).equals(mapping)) return;
+        if (!mappings.containsKey(mapping.getUid()) || queryById(mapping.getUid()).equals(mapping)) {
+            return;
+        }
         mappings.put(mapping.getUid(), mapping);
         notify(mapping.getUid());
     }
