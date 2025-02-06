@@ -20,6 +20,15 @@ public class LayerMapping implements SaveableAction {
 
     public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
                         ActionType type, String name, String description, UUID uid) {
+        assert name != null;
+        assert description != null;
+        assert input != null;
+        assert output != null;
+        assert mappingPoints != null;
+        assert uid != null;
+        assert type != null;
+        assert Arrays.stream(mappingPoints).noneMatch(Objects::isNull);
+
         this.name = name;
         this.description = description;
         this.input = input;
@@ -27,9 +36,8 @@ public class LayerMapping implements SaveableAction {
         this.actionType = type;
         this.uid = uid;
         this.mappingPoints = Arrays.stream(mappingPoints)
-               // .map(mp -> new MappingPoint(sanitizeInput(mp.input), sanitizeOutput(mp.output)))
-                .sorted(Comparator.comparing(mp -> mp.input))
-                .toArray(MappingPoint[]::new);
+                // .map(mp -> new MappingPoint(sanitizeInput(mp.input), sanitizeOutput(mp.output)))
+                .sorted(Comparator.comparing(mp -> mp.input)).toArray(MappingPoint[]::new);
     }
 
     public LayerMapping withInput(IPositionValueGetter input) {
@@ -159,10 +167,8 @@ public class LayerMapping implements SaveableAction {
     }
 
     public boolean isIllegalValue(int value, boolean input) {
-        if (input)
-            return value == sanitizeInput(value);
-        else
-            return value == sanitizeOutput(value);
+        if (input) return value == sanitizeInput(value);
+        else return value == sanitizeOutput(value);
     }
 
     public int sanitizeInput(int value) {

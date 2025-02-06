@@ -26,6 +26,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
         for (int i = 0; i < mapping.getMappingPoints().length; i++) {
             MappingPoint a = mapping.getMappingPoints()[i];
+            assert mapping != null;
             data[i] = new MappingPointValue[]{new MappingPointValue(a.input, mapping.input),
                     new MappingPointValue(a.output, mapping.output)};
         }
