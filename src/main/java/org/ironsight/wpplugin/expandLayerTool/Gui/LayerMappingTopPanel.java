@@ -1,16 +1,17 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.*;
 
 public class LayerMappingTopPanel extends LayerMappingPanel {
     public static final Font header1Font = new Font("SansSerif", Font.BOLD, 24);
     public static final Font header2Font = new Font("SansSerif", Font.BOLD, 18);
+    boolean isInit;
     private JTextField description;
     private JTextField nameField;
     private ActionTypeComboBox actionTypeComboBox;
@@ -30,10 +31,21 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         nameField.setText(mapping.getName());
         this.repaint();
     }
-    boolean isInit = true;
+
+    private void updateFromInputs() {
+        if (!isInit && mapping != null) {
+            LayerMapping newMap = mapping.withName(nameField.getText())
+                    .withDescription(mapping.getDescription())
+                    .withInput(inputSelect.getSelectedProvider())
+                    .withOutput(outputSelect.getSelectedProvider())
+                    .withType(actionTypeComboBox.getSelectedProvider());
+            updateMapping(newMap);
+        }
+    }
 
     @Override
     protected void initComponents() {
+        isInit = true;
         this.setLayout(new BorderLayout());
 
         JPanel textInputs = new JPanel(new BorderLayout());
@@ -42,23 +54,19 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         nameField = new JTextField();
         nameField.setFont(header1Font);
         textInputs.add(nameField, BorderLayout.WEST);
-        nameField.addActionListener(new ActionListener() {
+        nameField.setColumns(10);
+
+        FocusListener focusListener = new FocusAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                if (isInit)
-                    return;
-                updateMapping(mapping.withName(nameField.getText()));
+            public void focusLost(FocusEvent e) {
+                super.focusLost(e);
+                SwingUtilities.invokeLater(() -> updateFromInputs());
             }
-        });
+        };
+
+        nameField.addFocusListener(focusListener);
         description = new JTextField();
-        description.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (isInit)
-                    return;
-                updateMapping(mapping.withDescription(description.getText()));
-            }
-        });
+        description.addFocusListener(focusListener);
         description.setFont(header2Font);
         textInputs.add(description, BorderLayout.CENTER);
 
@@ -69,10 +77,12 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         inputSelect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (isInit)
-                    return;
+                if (isInit || mapping == null) return;
                 IPositionValueGetter getter = inputSelect.getSelectedProvider();
-                updateMapping(mapping.withInput(getter));
+                SwingUtilities.invokeLater(() -> {
+
+                    updateMapping(mapping.withInput(getter));
+                });
             }
         });
         inputSelect.setFont(header2Font);
@@ -85,10 +95,11 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         outputSelect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (isInit)
-                    return;
+                if (isInit || mapping == null) return;
                 IPositionValueSetter setter = outputSelect.getSelectedProvider();
-                updateMapping(mapping.withOutput(setter));
+                SwingUtilities.invokeLater(() -> {
+                    updateMapping(mapping.withOutput(setter));
+                });
             }
         });
 
@@ -98,9 +109,10 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         actionTypeComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (isInit)
-                    return;
-                updateMapping(mapping.withType(actionTypeComboBox.getSelectedProvider()));
+                if (isInit || mapping == null) return;
+                SwingUtilities.invokeLater(() -> {
+                    updateMapping(mapping.withType(actionTypeComboBox.getSelectedProvider()));
+                });
             }
         });
         isInit = false;
