@@ -17,12 +17,12 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
 
     @Override
     public int getMinValue() {
-        return 0;
+        return Integer.MIN_VALUE;
     }
 
     @Override
     public int getMaxValue() {
-        return 15;
+        return Integer.MAX_VALUE;
     }
 
     @Override

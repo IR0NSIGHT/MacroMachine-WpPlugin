@@ -33,7 +33,7 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     @Override
     public String getDescription() {
-        return "biome type of a position";
+        return "Get biome type of a position";
     }
 
     @Override

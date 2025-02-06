@@ -24,10 +24,12 @@ public class LayerMapping implements SaveableAction {
         this.description = description;
         this.input = input;
         this.output = output;
-        this.mappingPoints = mappingPoints.clone();
         this.actionType = type;
         this.uid = uid;
-        Arrays.sort(this.mappingPoints, Comparator.comparing(mp -> mp.input));
+        this.mappingPoints = Arrays.stream(mappingPoints)
+               // .map(mp -> new MappingPoint(sanitizeInput(mp.input), sanitizeOutput(mp.output)))
+                .sorted(Comparator.comparing(mp -> mp.input))
+                .toArray(MappingPoint[]::new);
     }
 
     public LayerMapping withInput(IPositionValueGetter input) {
@@ -154,6 +156,13 @@ public class LayerMapping implements SaveableAction {
         }
         //no match, return highest value
         return mappingPoints[mappingPoints.length - 1].output;
+    }
+
+    public boolean isIllegalValue(int value, boolean input) {
+        if (input)
+            return value == sanitizeInput(value);
+        else
+            return value == sanitizeOutput(value);
     }
 
     public int sanitizeInput(int value) {

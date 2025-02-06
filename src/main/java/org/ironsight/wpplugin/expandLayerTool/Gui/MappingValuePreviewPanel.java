@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.BitLayerBinarySpraypaintApplicator;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IMappingValue;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.StonePaletteApplicator;
 
@@ -31,13 +30,12 @@ public class MappingValuePreviewPanel extends JPanel {
     }
 
     public void setValue(int value) {
-        if (mappingValue != null)
-        this.value = value;
+        if (mappingValue != null) this.value = value;
     }
 
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        mappingValue.paint(g, value, getSize());
+        mappingValue.paint(g, IMappingValue.sanitizeValue(value, mappingValue), getSize());
     }
 }
