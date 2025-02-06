@@ -74,12 +74,12 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public String getName() {
-        return "Set layer " + layer.getName();
+        return layer.getName();
     }
 
     @Override
     public String getDescription() {
-        return "Set layer " + layer.getName() + " with values 0 to 15, where 0 is absent, 15 is full";
+        return "layer " + layer.getName() + " with values 0 to 15, where 0 is absent, 15 is full";
     }
 
     @Override

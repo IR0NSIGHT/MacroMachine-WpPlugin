@@ -77,12 +77,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         inputSelect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (isInit || mapping == null) return;
-                IPositionValueGetter getter = inputSelect.getSelectedProvider();
-                SwingUtilities.invokeLater(() -> {
-
-                    updateMapping(mapping.withInput(getter));
-                });
+                SwingUtilities.invokeLater(() -> updateFromInputs());
             }
         });
         inputSelect.setFont(header2Font);
@@ -95,11 +90,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         outputSelect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (isInit || mapping == null) return;
-                IPositionValueSetter setter = outputSelect.getSelectedProvider();
-                SwingUtilities.invokeLater(() -> {
-                    updateMapping(mapping.withOutput(setter));
-                });
+                SwingUtilities.invokeLater(() -> updateFromInputs());
             }
         });
 
@@ -109,10 +100,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         actionTypeComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (isInit || mapping == null) return;
-                SwingUtilities.invokeLater(() -> {
-                    updateMapping(mapping.withType(actionTypeComboBox.getSelectedProvider()));
-                });
+                SwingUtilities.invokeLater(() -> updateFromInputs());
             }
         });
         isInit = false;

@@ -8,7 +8,7 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-public class VanillaBiomeProvider implements IPositionValueGetter {
+public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValueSetter {
     Map.Entry<Integer, String>[] biomes;
 
     public VanillaBiomeProvider() {
@@ -28,12 +28,12 @@ public class VanillaBiomeProvider implements IPositionValueGetter {
 
     @Override
     public String getName() {
-        return "Get Biome";
+        return "Biome";
     }
 
     @Override
     public String getDescription() {
-        return "Get biome type";
+        return "biome type of a position";
     }
 
     @Override
@@ -66,5 +66,10 @@ public class VanillaBiomeProvider implements IPositionValueGetter {
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, dim.width, dim.height);
+    }
+
+    @Override
+    public void setValueAt(Dimension dim, int x, int y, int value) {
+        dim.setLayerValueAt(Biome.INSTANCE, x, y, value);
     }
 }
