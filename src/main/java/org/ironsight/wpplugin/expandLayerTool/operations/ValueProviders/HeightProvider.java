@@ -4,7 +4,7 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
-public class HeightProvider implements IPositionValueGetter {
+public class HeightProvider implements IPositionValueGetter, IPositionValueSetter {
 
     public HeightProvider() {
     }
@@ -46,7 +46,7 @@ public class HeightProvider implements IPositionValueGetter {
 
     @Override
     public String getName() {
-        return "Get Height";
+        return "Height";
     }
 
     @Override
@@ -56,6 +56,11 @@ public class HeightProvider implements IPositionValueGetter {
 
     @Override
     public String getDescription() {
-        return "get the height of a position in percent for 0 to 255.";
+        return "the height of a position in percent for 0 to 255.";
+    }
+
+    @Override
+    public void setValueAt(Dimension dim, int x, int y, int value) {
+        dim.setHeightAt(x, y, value);
     }
 }

@@ -12,11 +12,9 @@ public abstract class LayerMappingPanel extends JPanel {
     };
 
     public LayerMappingPanel() {
+        allowEvents = false;
         initComponents();
-    }
-
-    public void allowEvents(boolean allow) {
-        allowEvents = allow;
+        allowEvents = true;
     }
 
     protected abstract void updateComponents();
@@ -35,11 +33,11 @@ public abstract class LayerMappingPanel extends JPanel {
             return;
         }
         boolean isInitialSet = this.mapping == null;
-        if (this.mapping != null && this.mapping.equals(mapping)) {
+        if (this.mapping == null || this.mapping.equals(mapping) || !allowEvents) {
             return;
         }
         setMapping(mapping);
-        if (!isInitialSet && onUpdate != null && allowEvents) onUpdate.accept(mapping);
+        if (!isInitialSet && onUpdate != null) onUpdate.accept(mapping);
     }
 
     public final void setMapping(LayerMapping mapping) {

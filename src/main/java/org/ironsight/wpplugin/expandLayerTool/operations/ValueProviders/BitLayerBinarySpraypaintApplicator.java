@@ -75,7 +75,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public String getName() {
-        return "Set layer " + layer.getName() + " (spraypaint)";
+        return layer.getName() + " (spraypaint)";
     }
 
     @Override

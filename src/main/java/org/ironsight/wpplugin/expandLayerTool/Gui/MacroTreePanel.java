@@ -295,7 +295,17 @@ public class MacroTreePanel extends JPanel {
 
         JButton addActionButton = new JButton("Add action");
         addActionButton.addActionListener(e -> {
-            mappingContainer.addMapping();
+            LayerMapping m = mappingContainer.addMapping();
+            if (tree.getLastSelectedPathComponent() instanceof DefaultMutableTreeNode) {
+                if (((DefaultMutableTreeNode) tree.getLastSelectedPathComponent()).getUserObject() instanceof MappingMacro) {
+                    MappingMacro macro =
+                            (MappingMacro) ((DefaultMutableTreeNode) tree.getLastSelectedPathComponent()).getUserObject();
+                    ArrayList<UUID> ids = new ArrayList<>(macro.mappingUids.length + 1);
+                    Collections.addAll(ids, macro.mappingUids);
+                    ids.add(m.getUid());
+                    container.updateMapping(macro.withUUIDs(ids.toArray(new UUID[0])));
+                }
+            }
             update();
         });
         buttons.add(addActionButton);
