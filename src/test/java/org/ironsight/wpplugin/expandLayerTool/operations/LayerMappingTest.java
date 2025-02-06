@@ -55,7 +55,7 @@ class LayerMappingTest {
                     ActionType.SET,
                     "",
                     "",
-                    null);
+                    UUID.randomUUID());
 
             assertEquals(100, linear.map(10));
             assertEquals(600, linear.map(60));
@@ -72,7 +72,7 @@ class LayerMappingTest {
                     ActionType.SET,
                     "",
                     "",
-                    null);
+                    UUID.randomUUID());
 
             for (int i = -1000; i < 1000; i += 7) {
                 assertEquals(89, mapper.map(i));

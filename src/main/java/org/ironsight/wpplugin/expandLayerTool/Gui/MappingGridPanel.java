@@ -102,12 +102,9 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                     if (!hit) selected = null;
 
                     if (selected == null || panel.mapping.getMappingPoints().length <= 1) return;
-                    MappingPoint[] newPoints = new MappingPoint[panel.mapping.getMappingPoints().length - 1];
-                    int i = 0;
-                    for (MappingPoint p : panel.mapping.getMappingPoints()) {
-                        if (p.equals(selected)) continue;
-                        newPoints[i++] = p;
-                    }
+                    MappingPoint[] newPoints = Arrays.stream(panel.mapping.getMappingPoints())
+                            .filter(f -> !f.equals(selected))
+                            .toArray(MappingPoint[]::new);
                     selected = null;
                     updateMapping(mapping.withNewPoints(newPoints));
                 }
