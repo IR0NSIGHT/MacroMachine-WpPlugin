@@ -146,6 +146,19 @@ public class MacroTreePanel extends JPanel {
         return true;
     }
 
+    private DefaultMutableTreeNode LayerToNode(LayerMapping m) {
+        if (m == null) {
+            return new DefaultMutableTreeNode("Unknown Mapping");
+        } else {
+            DefaultMutableTreeNode mappingNode = new DefaultMutableTreeNode(m);
+            DefaultMutableTreeNode inputNode = new DefaultMutableTreeNode(m.input);
+            DefaultMutableTreeNode outputNode = new DefaultMutableTreeNode(m.output);
+            mappingNode.add(inputNode);
+            mappingNode.add(outputNode);
+            return mappingNode;
+        }
+    }
+
     private void update() {
         LinkedList<UUID> expanded = new LinkedList<>();
         LinkedList<UUID> selected = new LinkedList<>();
@@ -175,19 +188,36 @@ public class MacroTreePanel extends JPanel {
                     System.out.println(" create macro node: " + macro.getName());
                     for (UUID uuid : macro.mappingUids) {
                         LayerMapping m = mappingContainer.queryById(uuid);
-                        if (m == null) {
-                            macroNode.add(new DefaultMutableTreeNode("Unknown Mapping"));
-                        } else {
-                            DefaultMutableTreeNode mappingNode = new DefaultMutableTreeNode(m);
-                            macroNode.add(mappingNode);
-                            DefaultMutableTreeNode inputNode = new DefaultMutableTreeNode(m.input);
-                            DefaultMutableTreeNode outputNode = new DefaultMutableTreeNode(m.output);
-                            mappingNode.add(inputNode);
-                            mappingNode.add(outputNode);
-                        }
+                        DefaultMutableTreeNode node = LayerToNode(m);
+                        macroNode.add(node);
                     }
                     root.add(macroNode);
                 });
+
+        DefaultMutableTreeNode allNode = new DefaultMutableTreeNode(new SaveableAction() {
+            @Override
+            public UUID getUid() {
+                return UUID.fromString("123e4567-e89b-12d3-a456-426614174000"); //hardcoded random UUID to make note
+                // saveable for slection and expansion.
+            }
+
+            @Override
+            public String getName() {
+                return "All Actions";
+            }
+
+            @Override
+            public String getDescription() {
+                return "all existing actions list";
+            }
+        });
+        mappingContainer.queryAll()
+                .stream()
+                .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
+                        f.getDescription().toLowerCase().contains(filterString))
+                .forEach(m -> allNode.add(LayerToNode(m)));
+        root.add(allNode);
+
         treeModel.reload(root);
 
         if (!expanded.isEmpty() && !selected.isEmpty() && tree.getModel().getRoot() != null) applyExpansionAndSelection(

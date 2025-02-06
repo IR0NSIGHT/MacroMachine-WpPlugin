@@ -30,6 +30,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         nameField.setText(mapping.getName());
         this.repaint();
     }
+    boolean isInit = true;
 
     @Override
     protected void initComponents() {
@@ -38,13 +39,14 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         JPanel textInputs = new JPanel(new BorderLayout());
         this.add(textInputs, BorderLayout.NORTH);
 
-
         nameField = new JTextField();
         nameField.setFont(header1Font);
         textInputs.add(nameField, BorderLayout.WEST);
         nameField.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (isInit)
+                    return;
                 updateMapping(mapping.withName(nameField.getText()));
             }
         });
@@ -52,6 +54,8 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         description.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (isInit)
+                    return;
                 updateMapping(mapping.withDescription(description.getText()));
             }
         });
@@ -65,6 +69,8 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         inputSelect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (isInit)
+                    return;
                 IPositionValueGetter getter = inputSelect.getSelectedProvider();
                 updateMapping(mapping.withInput(getter));
             }
@@ -79,6 +85,8 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         outputSelect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (isInit)
+                    return;
                 IPositionValueSetter setter = outputSelect.getSelectedProvider();
                 updateMapping(mapping.withOutput(setter));
             }
@@ -90,9 +98,12 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         actionTypeComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                if (isInit)
+                    return;
                 updateMapping(mapping.withType(actionTypeComboBox.getSelectedProvider()));
             }
         });
+        isInit = false;
     }
 
 }

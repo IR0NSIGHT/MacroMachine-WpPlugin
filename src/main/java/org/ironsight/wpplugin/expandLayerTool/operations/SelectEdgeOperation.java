@@ -363,6 +363,8 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             MappingMacroContainer.getInstance().readFromFile();
             InputOutputProvider.INSTANCE.updateFrom(getDimension());
             JDialog dialog = createDialog(null, this::applyLayerAction);
+            dialog.toFront();              // Bring it to the front
+            dialog.requestFocusInWindow();
             dialog.setVisible(true);
         } catch (Exception ex) {
             ex.printStackTrace();
