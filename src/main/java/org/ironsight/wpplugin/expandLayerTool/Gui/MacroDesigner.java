@@ -206,7 +206,7 @@ public class MacroDesigner extends JPanel {
 
     private void updateComponents() {
         System.out.println(getClass().getSimpleName() + ": update components");
-        assert macro.allMappingsReady(LayerMappingContainer.INSTANCE);
+        assert macro.allMappingsReady(LayerMappingContainer.INSTANCE) : "some actions in macro are null/dont exist";
 
         name.setText(macro.getName());
         description.setText(macro.getDescription());

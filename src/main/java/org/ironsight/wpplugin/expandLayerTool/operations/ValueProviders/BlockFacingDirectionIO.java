@@ -29,7 +29,9 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
 
         // Calculate the angle using atan2 (note the negative gradientY for north alignment)
         double angleRadians = Math.atan2(-gradientY, gradientX);
-        double angleDegrees = Math.toDegrees(angleRadians);
+        double angleDegrees = (Math.toDegrees(angleRadians) + 90) % 360;    //ChatGPT made it look to the east, 90°
+        // offset
+        // corerctts it
 
         // Normalize angle to the range [0, 360)
         if (angleDegrees < 0) {
@@ -42,7 +44,8 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        if (x <= dim.getLowestX() * TILE_SIZE || y <= dim.getLowestY() * TILE_SIZE|| x >= dim.getHighestX() * TILE_SIZE|| y >= dim.getHighestY() * TILE_SIZE) {
+        if (x <= dim.getLowestX() * TILE_SIZE || y <= dim.getLowestY() * TILE_SIZE ||
+                x >= (dim.getHighestX() + 1) * TILE_SIZE || y >= (dim.getHighestY() + 1) * TILE_SIZE) {
             return 0;
         }
         return calculateSlopeFacing(x, y, dim);
@@ -72,7 +75,7 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
     public String valueToString(int value) {
         assert value >= 0;
         assert value < 360 : "value = " + value;
-        int point = Math.round(value/45f) % 8;
+        int point = Math.round(value / 45f) % 8;
         assert point >= 0;
         assert point < 8;
         return value + "° " + directionNames[point];

@@ -81,7 +81,7 @@ public class InputOutputProvider {
 
         getters.add(new SelectionIO());
         setters.add(new SelectionIO());
-        getters.add(new BitLayerBinarySpraypaintApplicator(SelectionBlock.INSTANCE));
+        setters.add(new BitLayerBinarySpraypaintApplicator(SelectionBlock.INSTANCE));
 
         getters.add(new VanillaBiomeProvider());
         setters.add(new VanillaBiomeProvider());
