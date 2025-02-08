@@ -132,10 +132,10 @@ public class LayerMapping implements SaveableAction {
             case INCREMENT:
                 outputValue = existingValue + modifier;
                 break;
-            case MIN:
+            case LIMIT_TO:
                 outputValue = Math.min(existingValue, modifier);
                 break;
-            case MAX:
+            case AT_LEAST:
                 outputValue = Math.max(existingValue, modifier);
                 break;
             default:

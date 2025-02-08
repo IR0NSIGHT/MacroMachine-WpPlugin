@@ -1,11 +1,8 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
-import org.ironsight.wpplugin.expandLayerTool.Gui.MappingEditorPanel;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
-
-import javax.swing.*;
 
 public class LayerMappingContainer extends AbstractOperationContainer<LayerMapping> {
     public static LayerMappingContainer INSTANCE = new LayerMappingContainer();
@@ -32,7 +29,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         m = new LayerMapping(new HeightProvider(),
                 new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
                 new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)},
-                ActionType.MAX,
+                ActionType.AT_LEAST,
                 "frosted " + "peaks",
                 "gradually add snow the higher a mountain goes",
                 m.getUid());
@@ -42,7 +39,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         m = new LayerMapping(new SlopeProvider(),
                 new NibbleLayerSetter(PineForest.INSTANCE),
                 new MappingPoint[]{new MappingPoint(0, 15), new MappingPoint(70, 15), new MappingPoint(80, 0)},
-                ActionType.MIN,
+                ActionType.LIMIT_TO,
                 "no steep pines",
                 "limit pines from growing on vertical cliffs",
                 m.getUid());
