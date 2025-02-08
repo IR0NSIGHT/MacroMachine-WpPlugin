@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
+import static org.ironsight.wpplugin.expandLayerTool.operations.ApplyAction.applyToDimensionWithFilter;
+
 public class MappingMacro implements SaveableAction {
     //ordered list of layermappings
     public final UUID[] mappingUids;
@@ -71,12 +73,14 @@ public class MappingMacro implements SaveableAction {
         assert allMappingsReady(container);
         DefaultFilter filter = new DefaultFilter(dimension, false, false, -1000, 1000, false, null, null, 0, true);
 
-        for (UUID mappingUid : mappingUids) {
-            LayerMapping mapping = container.queryById(mappingUid);
-            if (mapping.getMappingPoints().length == 0) continue;
-            ApplyAction action = new ApplyAction(filter, mapping);
-            action.apply(dimension);
-        }
+        applyToDimensionWithFilter(dimension, filter, pos -> {
+            for (UUID mappingUid : mappingUids) {
+                LayerMapping mapping = container.queryById(mappingUid);
+                if (mapping.getMappingPoints().length == 0) continue;
+                mapping.applyToPoint(dimension, pos.x, pos.y);
+            }
+        });
+
     }
 
     @Override

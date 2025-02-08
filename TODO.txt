@@ -8,3 +8,5 @@
 - mismatch: after changing name of mapping, the macro editor does not update the names.
 - bug: mapping editor only updated on second selection of mapping from global list
 - investigate: sometimes saveing/loading doesnt seem  to work?
+- tooltip for Mappin gText table, explanation for each value
+    "for height=50, take the existing value of pine and multiply it with 37. apply the result to the map"

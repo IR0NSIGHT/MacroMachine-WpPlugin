@@ -85,6 +85,9 @@ public class InputOutputProvider {
 
         getters.add(new VanillaBiomeProvider());
         setters.add(new VanillaBiomeProvider());
+
+        getters.add(new IntermediateValueIO());
+        setters.add(new IntermediateValueIO());
         notifyListeners();
     }
 
