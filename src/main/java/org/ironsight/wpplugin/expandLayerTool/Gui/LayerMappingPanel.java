@@ -7,11 +7,6 @@ import java.util.function.Consumer;
 
 public abstract class LayerMappingPanel extends JPanel {
     protected LayerMapping mapping;
-
-    public boolean isAllowEvents() {
-        return allowEvents;
-    }
-
     private boolean allowEvents = true;
     private Consumer<LayerMapping> onUpdate = f -> {
     };
@@ -20,6 +15,10 @@ public abstract class LayerMappingPanel extends JPanel {
         allowEvents = false;
         initComponents();
         allowEvents = true;
+    }
+
+    public boolean isAllowEvents() {
+        return allowEvents;
     }
 
     protected abstract void updateComponents();
@@ -33,20 +32,16 @@ public abstract class LayerMappingPanel extends JPanel {
      * @param mapping
      */
     protected final void updateMapping(LayerMapping mapping) {
+        if (mapping == null || this.mapping == null || this.mapping.equals(mapping) || !allowEvents) {
+            return;
+        }
         System.out.println("EVENT: " + this.getClass().getSimpleName() + " UPDATE MAPPING TO " + mapping);
-        if (mapping == null) {
-            return;
-        }
-        boolean isInitialSet = this.mapping == null;
-        if (this.mapping == null || this.mapping.equals(mapping) || !allowEvents) {
-            return;
-        }
+
         setMapping(mapping);
-        if (!isInitialSet && onUpdate != null) onUpdate.accept(mapping);
+        if (onUpdate != null) onUpdate.accept(mapping);
     }
 
     public final void setMapping(LayerMapping mapping) {
-        System.out.println("EVENT: " + this.getClass().getSimpleName() + " SET MAPPING TO " + mapping);
         assert mapping != null;
         assert mapping.getMappingPoints() != null;
         assert mapping.input != null;
@@ -54,6 +49,7 @@ public abstract class LayerMappingPanel extends JPanel {
         if (this.mapping != null && this.mapping.equals(mapping)) {
             return;
         }
+        System.out.println("EVENT: " + this.getClass().getSimpleName() + " SET MAPPING TO " + mapping);
         allowEvents = false;
         this.mapping = mapping;
         updateComponents();

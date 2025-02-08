@@ -204,8 +204,8 @@ public class MacroDesigner extends JPanel {
         dialog.setVisible(true);
     }
 
-    private void update() {
-        System.out.println("update MACRO DESIGNER");
+    private void updateComponents() {
+        System.out.println(getClass().getSimpleName() + ": update components");
         assert macro.allMappingsReady(LayerMappingContainer.INSTANCE);
 
         name.setText(macro.getName());
@@ -253,11 +253,13 @@ public class MacroDesigner extends JPanel {
     }
 
     public void setMacro(MappingMacro macro, boolean forceUpdate) {
-        isUpdating = true;
         assert macro != null;
         if (!forceUpdate && this.macro != null && this.macro.equals(macro)) return; //dont update if nothing changed
+        isUpdating = true;
+        System.out.println(getClass().getSimpleName() + ": set macro");
+
         this.macro = macro;
-        update();
+        updateComponents();
         isUpdating = false;
     }
 
