@@ -56,7 +56,6 @@ public class ApplyAction {
     public void apply(Dimension dim) {
         assert mapping.getMappingPoints().length != 0;
         applyToDimensionWithFilter(dim, filter, pos -> {
-            if (pos.x == 0 && pos.y == 0) System.out.println("owo!");
             mapping.applyToPoint(dim, pos.x, pos.y);
         });
     }

@@ -37,7 +37,6 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
      */
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
-
         dim.setBitLayerValueAt(layer, x, y, doPaintPos(x, y, value));
     }
 
@@ -46,7 +45,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         long positionHash = ((long) x * 73856093L) ^ ((long) y * 19349663L);
         random.setSeed(positionHash);
         int randInt = random.nextInt(100);
-        boolean set = value >= randInt;
+        boolean set = value > randInt;
         return set;
     }
 
