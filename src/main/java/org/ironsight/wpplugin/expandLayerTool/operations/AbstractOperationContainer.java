@@ -29,13 +29,14 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         this.filePath = filePath;
     }
 
-    public void updateMapping(T mapping) {
+    public UUID updateMapping(T mapping) {
         //filter for identity
         if (!mappings.containsKey(mapping.getUid()) || queryById(mapping.getUid()).equals(mapping)) {
-            return;
+            return mapping.getUid();
         }
         mappings.put(mapping.getUid(), mapping);
         notify(mapping.getUid());
+        return mapping.getUid();
     }
 
     public void deleteMapping(UUID... uid) {

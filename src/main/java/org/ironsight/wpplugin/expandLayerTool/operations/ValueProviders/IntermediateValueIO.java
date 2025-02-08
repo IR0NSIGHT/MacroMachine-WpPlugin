@@ -5,16 +5,22 @@ import org.pepsoft.worldpainter.Dimension;
 import java.awt.*;
 
 public class IntermediateValueIO implements IPositionValueSetter, IPositionValueGetter {
-    private int value;
+    private static int value;
+    private static int lastX;
+    private static int lastY;
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
+        if (lastX != x || lastY != y) return 0;
+        System.out.printf("%d, %d has %d%n", x, y, value);
         return value;
     }
 
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
-        this.value = value;
+        IntermediateValueIO.value = value;
+        lastX = x;
+        lastY = y;
     }
 
     @Override
@@ -24,8 +30,8 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
 
     @Override
     public String getDescription() {
-        return "a value to temporarily store an intermediate result. will not exist before or after macro execution, " +
-                "only while the macro runs.";
+        return "a value to temporarily store an intermediate result. will not exist before or after macro execution, "
+                + "only while the macro runs.";
     }
 
     @Override
