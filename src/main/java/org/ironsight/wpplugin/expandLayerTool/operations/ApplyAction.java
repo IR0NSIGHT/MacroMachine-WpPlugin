@@ -22,14 +22,21 @@ public class ApplyAction {
         this.mapping = mapping;
     }
 
+    public void apply(Dimension dim) {
+        assert mapping.getMappingPoints().length != 0;
+        applyToDimensionWithFilter(dim, filter, pos -> {
+            mapping.applyToPoint(dim, pos.x, pos.y);
+        });
+    }
+
     public static void applyToDimensionWithFilter(Dimension dim, DefaultFilter filter, Consumer<Point> applyOnBlock) {
         Iterator<? extends Tile> t = dim.getTiles().iterator();
         while (t.hasNext()) {
             Tile tile = t.next();
 
             {   // EARLY ABORT IF TILE DOESNT MEET MINIMAL CRITERIA
-                if ((filter.isInSelection() && !tile.hasLayer(SelectionBlock.INSTANCE) &&
-                        !tile.hasLayer(SelectionChunk.INSTANCE))) continue;
+                if ((filter.isInSelection() && !tile.hasLayer(SelectionBlock.INSTANCE) && !tile.hasLayer(SelectionChunk.INSTANCE)))
+                    continue;
 
                 if (filter.getOnlyOnLayer() != null && !tile.hasLayer(filter.getOnlyOnLayer())) continue;
 
@@ -41,8 +48,9 @@ public class ApplyAction {
             }
 
             Point p = new Point(0, 0);
-            for (int xInTile = 0; xInTile < TILE_SIZE; xInTile++) {
-                for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {
+            for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {
+                for (int xInTile = 0; xInTile < TILE_SIZE; xInTile++) {
+
                     final int x = xInTile + (tile.getX() << TILE_SIZE_BITS);
                     final int y = yInTile + (tile.getY() << TILE_SIZE_BITS);
                     p.x = x;
@@ -51,12 +59,5 @@ public class ApplyAction {
                 }
             }
         }
-    }
-
-    public void apply(Dimension dim) {
-        assert mapping.getMappingPoints().length != 0;
-        applyToDimensionWithFilter(dim, filter, pos -> {
-            mapping.applyToPoint(dim, pos.x, pos.y);
-        });
     }
 }

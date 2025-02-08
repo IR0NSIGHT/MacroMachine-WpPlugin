@@ -17,6 +17,7 @@ public class LayerMapping implements SaveableAction {
     private final String name;
     private final String description;
     private final UUID uid;    //TODO make final and private
+    private final int[] mappings;
 
     public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
                         ActionType type, String name, String description, UUID uid) {
@@ -38,6 +39,19 @@ public class LayerMapping implements SaveableAction {
         this.mappingPoints = Arrays.stream(mappingPoints)
                 // .map(mp -> new MappingPoint(sanitizeInput(mp.input), sanitizeOutput(mp.output)))
                 .sorted(Comparator.comparing(mp -> mp.input)).toArray(MappingPoint[]::new);
+
+        //direct mapping: mappings[input] = output. fast and reliable
+        this.mappings = new int[input.getMaxValue() + 1 - input.getMinValue()];
+        if (this.mappingPoints.length == 0) return;
+        int j = -1;
+        for (int i = input.getMinValue(); i <= input.getMaxValue(); i++) {
+            MappingPoint point = mappingPoints[Math.max(Math.min(j + 1, mappingPoints.length - 1), 0)];
+            if (point.input == i) j++;
+            point = mappingPoints[Math.max(j, 0)];
+
+            mappings[i - input.getMinValue()] = point.output;
+        }
+
     }
 
     public LayerMapping withInput(IPositionValueGetter input) {
@@ -60,27 +74,6 @@ public class LayerMapping implements SaveableAction {
         return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
     }
 
-    public UUID getUid() {
-        return uid;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        LayerMapping mapping = (LayerMapping) o;
-        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) &&
-                actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) &&
-                Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description) &&
-                Objects.equals(this.getUid(), mapping.getUid());
-    }
-
-    @Override
-    public String toString() {
-        return "LayerMapping{" + "name='" + name + '\'' + ", uid=" + uid + ", input=" + input + ", output=" + output +
-                ", actionType=" + actionType + '}';
-    }
-
     @Override
     public int hashCode() {
         int result = Objects.hash(input, output, actionType, name, description);
@@ -88,26 +81,44 @@ public class LayerMapping implements SaveableAction {
         return result;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LayerMapping mapping = (LayerMapping) o;
+        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) && actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) && Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description) && Objects.equals(this.getUid(), mapping.getUid());
+    }
+
+    public UUID getUid() {
+        return uid;
+    }
+
+    @Override
+    public String toString() {
+        return "LayerMapping{" + "name='" + name + '\'' + ", uid=" + uid + ", input=" + input + ", output=" + output + ", actionType=" + actionType + '}';
+    }
+
     public MappingPoint[] getMappingPoints() {
         return mappingPoints;
     }
 
     public LayerMapping withNewPoints(MappingPoint[] mappingPoints) {
-        return new LayerMapping(this.input,
-                this.output,
-                mappingPoints,
-                this.getActionType(),
-                this.getName(),
-                this.getDescription(),
-                this.uid);
+        return new LayerMapping(this.input, this.output, mappingPoints, this.getActionType(), this.getName(),
+                this.getDescription(), this.uid);
     }
 
     public ActionType getActionType() {
         return actionType;
     }
 
-    private boolean hasValueForInput(int input) {
-        return Arrays.stream(mappingPoints).anyMatch(p -> p.input == input);
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getDescription() {
+        return description;
     }
 
     public void applyToPoint(Dimension dim, int x, int y) {
@@ -119,10 +130,10 @@ public class LayerMapping implements SaveableAction {
             return;
         }
 
-            int modifier = map(value);
+        int modifier = map(value);
 
-        int existingValue =
-                output instanceof IPositionValueGetter ? ((IPositionValueGetter) output).getValueAt(dim, x, y) : 0;
+        int existingValue = output instanceof IPositionValueGetter ? ((IPositionValueGetter) output).getValueAt(dim,
+                x, y) : 0;
         int outputValue;
         switch (actionType) {
             case SET:
@@ -149,29 +160,18 @@ public class LayerMapping implements SaveableAction {
             default:
                 throw new EnumConstantNotPresentException(ActionType.class, actionType.displayName);
         }
-
         output.setValueAt(dim, x, y, outputValue);
     }
 
-    int map(int input) {    //TODO do linear interpolation
-        if (input < mappingPoints[0].input) return mappingPoints[0].output;
-        for (int i = 0; i < mappingPoints.length - 1; i++) {
-            if (mappingPoints[i].input <= input && mappingPoints[i + 1].input > input) {  //value inbetween i and i+1
-                if (output.isDiscrete()) {
-                    return mappingPoints[i + 1].output;
-                } else {
-                    int a = mappingPoints[i].input;
-                    int b = mappingPoints[i + 1].input;
-                    int dist = b - a;
-                    float t = ((float) input - a) / dist;
-                    float interpol = (1 - t) * mappingPoints[i].output + t * mappingPoints[i + 1].output;
-                    return Math.round(interpol);
-                }
+    private boolean hasValueForInput(int input) {
+        return Arrays.stream(mappingPoints).anyMatch(p -> p.input == input);
+    }
 
-            }
-        }
-        //no match, return highest value
-        return mappingPoints[mappingPoints.length - 1].output;
+    public int map(int input) {    //TODO do linear interpolation
+        assert input >= this.input.getMinValue();
+        assert input <= this.input.getMaxValue();
+        int value = mappings[input - this.input.getMinValue()];
+        return value;
     }
 
     public boolean isIllegalValue(int value, boolean input) {
@@ -185,16 +185,6 @@ public class LayerMapping implements SaveableAction {
 
     public int sanitizeOutput(int value) {
         return Math.min(output.getMaxValue(), Math.max(output.getMinValue(), value));
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String getDescription() {
-        return description;
     }
 
 }
