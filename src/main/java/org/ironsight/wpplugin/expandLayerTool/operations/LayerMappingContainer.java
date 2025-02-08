@@ -60,6 +60,14 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
     }
 
     @Override
+    public void readFromFile() {
+        super.readFromFile();
+        for (LayerMapping m : queryAll()) { //force through constructor to enforce assertions
+            LayerMapping ignored = m.withName(m.getName());
+        }
+    }
+
+    @Override
     protected LayerMapping getNewAction() {
         return new LayerMapping(new HeightProvider(),
                 new AnnotationSetter(),

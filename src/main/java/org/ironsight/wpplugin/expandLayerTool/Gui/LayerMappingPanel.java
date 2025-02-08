@@ -7,6 +7,11 @@ import java.util.function.Consumer;
 
 public abstract class LayerMappingPanel extends JPanel {
     protected LayerMapping mapping;
+
+    public boolean isAllowEvents() {
+        return allowEvents;
+    }
+
     private boolean allowEvents = true;
     private Consumer<LayerMapping> onUpdate = f -> {
     };
@@ -49,10 +54,12 @@ public abstract class LayerMappingPanel extends JPanel {
         if (this.mapping != null && this.mapping.equals(mapping)) {
             return;
         }
+        allowEvents = false;
         this.mapping = mapping;
         updateComponents();
         this.revalidate();
         this.repaint();
+        allowEvents = true;
     }
 
     public final void setOnUpdate(Consumer<LayerMapping> onUpdate) {

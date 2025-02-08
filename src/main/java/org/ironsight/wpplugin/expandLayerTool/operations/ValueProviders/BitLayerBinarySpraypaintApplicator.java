@@ -8,12 +8,13 @@ import java.util.Objects;
 import java.util.Random;
 
 public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter, IPositionValueGetter {
-    transient Random random = new Random();
+    Random random = new Random();
     Layer layer;
 
     public BitLayerBinarySpraypaintApplicator(Layer layer) {
         this.layer = layer;
     }
+
 
     @Override
     public boolean equals(Object o) {
@@ -41,6 +42,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     }
 
     private boolean doPaintPos(int x, int y, int value) {
+        assert random != null;
         long positionHash = ((long) x * 73856093L) ^ ((long) y * 19349663L);
         random.setSeed(positionHash);
         int randInt = random.nextInt(100);
@@ -93,8 +95,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         int cellSize = dim.width / range;
         for (int y = 0; y <= range; y++) {
             for (int x = 0; x <= range; x++) {
-                if (doPaintPos(x, y, value))
-                    g.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                if (doPaintPos(x, y, value)) g.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
             }
         }
     }
