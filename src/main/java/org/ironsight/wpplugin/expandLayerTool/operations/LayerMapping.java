@@ -106,12 +106,20 @@ public class LayerMapping implements SaveableAction {
         return actionType;
     }
 
+    private boolean hasValueForInput(int input) {
+        return Arrays.stream(mappingPoints).anyMatch(p -> p.input == input);
+    }
+
     public void applyToPoint(Dimension dim, int x, int y) {
         if (mappingPoints.length == 0) {
             return;
         }
         int value = input.getValueAt(dim, x, y);
-        int modifier = map(value);
+        if (input.isDiscrete() && !hasValueForInput(value)) {
+            return;
+        }
+
+            int modifier = map(value);
 
         int existingValue =
                 output instanceof IPositionValueGetter ? ((IPositionValueGetter) output).getValueAt(dim, x, y) : 0;

@@ -6,9 +6,14 @@ import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.colourschemes.HardcodedColourScheme;
 
 import java.awt.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
 public class TerrainIO implements IPositionValueGetter, IPositionValueSetter {
-    private final ColourScheme colorScheme = new HardcodedColourScheme();
+    private static ColourScheme colorScheme = new HardcodedColourScheme();
+
+    public TerrainIO() {
+    }
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
@@ -51,6 +56,7 @@ public class TerrainIO implements IPositionValueGetter, IPositionValueSetter {
     }
 
     public int getColour(int value) {
+        assert colorScheme != null;
         Terrain t = Terrain.values()[value];
         return t.getColour(1234L, 0, 0, 0, 0, null, colorScheme);
     }
