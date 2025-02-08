@@ -1,12 +1,13 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueGetter;
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 public class LayerMappingTopPanel extends LayerMappingPanel {
     public static final Font header1Font = new Font("SansSerif", Font.BOLD, 24);
@@ -22,6 +23,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         super();
     }
 
+
     @Override
     protected void updateComponents() {
         actionTypeComboBox.setTo(mapping.getActionType());
@@ -33,15 +35,16 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
     }
 
     private void updateFromInputs() {
-        if (!isInit && mapping != null) {
+        if (!isInit && isAllowEvents() && mapping != null) {
             LayerMapping newMap = mapping.withName(nameField.getText())
-                    .withDescription(mapping.getDescription())
+                    .withDescription(description.getText())
                     .withInput(inputSelect.getSelectedProvider())
                     .withOutput(outputSelect.getSelectedProvider())
                     .withType(actionTypeComboBox.getSelectedProvider());
             updateMapping(newMap);
         }
     }
+
 
     @Override
     protected void initComponents() {
@@ -55,18 +58,22 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         nameField.setFont(header1Font);
         textInputs.add(nameField, BorderLayout.WEST);
         nameField.setColumns(10);
-
-        FocusListener focusListener = new FocusAdapter() {
+        nameField.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
                 super.focusLost(e);
-                SwingUtilities.invokeLater(() -> updateFromInputs());
+                if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
             }
-        };
+        });
 
-        nameField.addFocusListener(focusListener);
         description = new JTextField();
-        description.addFocusListener(focusListener);
+        description.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                super.focusLost(e);
+                if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
+            }
+        });
         description.setFont(header2Font);
         textInputs.add(description, BorderLayout.CENTER);
 
@@ -75,9 +82,10 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         this.add(comboboxes, BorderLayout.CENTER);
         inputSelect = new InputGetterComboBox();
         inputSelect.addActionListener(new ActionListener() {
+
             @Override
             public void actionPerformed(ActionEvent e) {
-                SwingUtilities.invokeLater(() -> updateFromInputs());
+                if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
             }
         });
         inputSelect.setFont(header2Font);
@@ -90,7 +98,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         outputSelect.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                SwingUtilities.invokeLater(() -> updateFromInputs());
+                if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
             }
         });
 
@@ -100,7 +108,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         actionTypeComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                SwingUtilities.invokeLater(() -> updateFromInputs());
+                if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
             }
         });
         isInit = false;

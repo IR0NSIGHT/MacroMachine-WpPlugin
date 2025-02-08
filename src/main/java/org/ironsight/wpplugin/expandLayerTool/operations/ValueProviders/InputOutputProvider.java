@@ -14,6 +14,10 @@ public class InputOutputProvider {
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
     public ArrayList<IPositionValueGetter> getters = new ArrayList<>();
 
+    private InputOutputProvider() {
+        updateFrom(null);
+    }
+
     public void subscribe(Runnable runnable) {
         genericNotifies.add(runnable);
     }
@@ -26,26 +30,28 @@ public class InputOutputProvider {
         setters.clear();
         getters.clear();
 
-        for (Layer l : LayerManager.getInstance().getLayers()) {
-            if (l instanceof Annotations || l instanceof Biome) continue;
-            if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
-                setters.add(new NibbleLayerSetter(l));
-                getters.add(new NibbleLayerSetter(l));
-            }
-            if (l.dataSize.equals(Layer.DataSize.BIT)) {
-                setters.add(new BitLayerBinarySpraypaintApplicator(l));
-                setters.add(new BinaryLayerIO(l));
-                getters.add(new BinaryLayerIO(l));
+        if (dimension != null) {
+            for (Layer l : LayerManager.getInstance().getLayers()) {
+                if (l instanceof Annotations || l instanceof Biome) continue;
+                if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
+                    setters.add(new NibbleLayerSetter(l));
+                    getters.add(new NibbleLayerSetter(l));
+                }
+                if (l.dataSize.equals(Layer.DataSize.BIT)) {
+                    setters.add(new BitLayerBinarySpraypaintApplicator(l));
+                    setters.add(new BinaryLayerIO(l));
+                    getters.add(new BinaryLayerIO(l));
+                }
+
             }
 
-        }
-
-        for (Layer l : dimension.getAllLayers(false)) {
-            if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
-                setters.add(new NibbleLayerSetter(l));
-                getters.add(new NibbleLayerSetter(l));
+            for (Layer l : dimension.getAllLayers(false)) {
+                if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
+                    setters.add(new NibbleLayerSetter(l));
+                    getters.add(new NibbleLayerSetter(l));
+                }
+                if (l.dataSize.equals(Layer.DataSize.BIT)) setters.add(new BitLayerBinarySpraypaintApplicator(l));
             }
-            if (l.dataSize.equals(Layer.DataSize.BIT)) setters.add(new BitLayerBinarySpraypaintApplicator(l));
         }
         setters.add(new StonePaletteApplicator());
 
