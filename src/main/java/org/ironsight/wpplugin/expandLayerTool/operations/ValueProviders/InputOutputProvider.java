@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.layers.Annotations;
-import org.pepsoft.worldpainter.layers.Biome;
-import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.layers.LayerManager;
+import org.pepsoft.worldpainter.layers.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class InputOutputProvider {
     public static InputOutputProvider INSTANCE = new InputOutputProvider();
@@ -30,21 +29,28 @@ public class InputOutputProvider {
         setters.clear();
         getters.clear();
 
+        Iterable<Layer> layers;
         if (dimension != null) {
-            for (Layer l : LayerManager.getInstance().getLayers()) {
-                if (l instanceof Annotations || l instanceof Biome) continue;
-                if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
-                    setters.add(new NibbleLayerSetter(l));
-                    getters.add(new NibbleLayerSetter(l));
-                }
-                if (l.dataSize.equals(Layer.DataSize.BIT)) {
-                    setters.add(new BitLayerBinarySpraypaintApplicator(l));
-                    setters.add(new BinaryLayerIO(l));
-                    getters.add(new BinaryLayerIO(l));
-                }
-
+            layers = LayerManager.getInstance().getLayers();
+        } else {
+            layers = Arrays.stream(new Layer[]{PineForest.INSTANCE, DeciduousForest.INSTANCE, Frost.INSTANCE,})
+                    .collect(Collectors.toCollection(ArrayList::new));
+        }
+        for (Layer l : layers) {
+            if (l instanceof Annotations || l instanceof Biome) continue;
+            if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
+                setters.add(new NibbleLayerSetter(l));
+                getters.add(new NibbleLayerSetter(l));
+            }
+            if (l.dataSize.equals(Layer.DataSize.BIT)) {
+                setters.add(new BitLayerBinarySpraypaintApplicator(l));
+                setters.add(new BinaryLayerIO(l));
+                getters.add(new BinaryLayerIO(l));
             }
 
+        }
+
+        if (dimension != null) {    //TODO check: does this actually collect custom layers?
             for (Layer l : dimension.getAllLayers(false)) {
                 if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
                     setters.add(new NibbleLayerSetter(l));
@@ -53,6 +59,7 @@ public class InputOutputProvider {
                 if (l.dataSize.equals(Layer.DataSize.BIT)) setters.add(new BitLayerBinarySpraypaintApplicator(l));
             }
         }
+
         setters.add(new StonePaletteApplicator());
 
         setters.add(new AnnotationSetter());
