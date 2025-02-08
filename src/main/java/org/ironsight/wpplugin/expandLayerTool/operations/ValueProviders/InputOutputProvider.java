@@ -69,7 +69,14 @@ public class InputOutputProvider {
         getters.add(new HeightProvider());
         setters.add(new HeightProvider());
 
+        getters.add(new WaterHeightAbsoluteIO());
+        setters.add(new WaterHeightAbsoluteIO());
+
+        getters.add(new WaterDepthIO());
+        setters.add(new WaterDepthIO());
+
         getters.add(new SlopeProvider());
+        getters.add(new BlockFacingDirectionIO());
 
         getters.add(new VanillaBiomeProvider());
         setters.add(new VanillaBiomeProvider());
