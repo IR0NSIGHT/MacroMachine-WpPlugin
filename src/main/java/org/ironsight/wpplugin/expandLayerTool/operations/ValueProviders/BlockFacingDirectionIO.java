@@ -4,6 +4,8 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
 public class BlockFacingDirectionIO implements IPositionValueGetter {
     private final String[] directionNames = new String[]{"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
 
@@ -40,7 +42,7 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        if (x <= dim.getLowestX() || y <= dim.getLowestY() || x >= dim.getHighestX() || y >= dim.getHighestY()) {
+        if (x <= dim.getLowestX() * TILE_SIZE || y <= dim.getLowestY() * TILE_SIZE|| x >= dim.getHighestX() * TILE_SIZE|| y >= dim.getHighestY() * TILE_SIZE) {
             return 0;
         }
         return calculateSlopeFacing(x, y, dim);
@@ -63,13 +65,13 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
 
     @Override
     public int getMaxValue() {
-        return 360;
+        return 359;
     }
 
     @Override
     public String valueToString(int value) {
         assert value >= 0;
-        assert value < 360;
+        assert value < 360 : "value = " + value;
         int point = Math.round(value/45f) % 8;
         assert point >= 0;
         assert point < 8;

@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.*;
+import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,6 +78,10 @@ public class InputOutputProvider {
 
         getters.add(new SlopeProvider());
         getters.add(new BlockFacingDirectionIO());
+
+        getters.add(new SelectionIO());
+        setters.add(new SelectionIO());
+        getters.add(new BitLayerBinarySpraypaintApplicator(SelectionBlock.INSTANCE));
 
         getters.add(new VanillaBiomeProvider());
         setters.add(new VanillaBiomeProvider());
