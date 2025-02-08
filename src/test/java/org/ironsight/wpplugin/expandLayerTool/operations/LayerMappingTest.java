@@ -1,16 +1,20 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.AnnotationSetter;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.HeightProvider;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.NibbleLayerSetter;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.TestInputOutput;
 import org.junit.jupiter.api.Test;
+import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;
 
+import java.awt.*;
 import java.io.*;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 
 class LayerMappingTest {
 
@@ -19,12 +23,8 @@ class LayerMappingTest {
         try {
             // Create an instance of the object
             LayerMapping originalObject = new LayerMapping(new HeightProvider(),
-                    new NibbleLayerSetter(Annotations.INSTANCE),
-                    new MappingPoint[]{new MappingPoint(7, 12)},
-                    ActionType.DIVIDE,
-                    "hello",
-                    "world with a space",
-                    UUID.randomUUID());
+                    new NibbleLayerSetter(Annotations.INSTANCE), new MappingPoint[]{new MappingPoint(7, 12)},
+                    ActionType.DIVIDE, "hello", "world with a space", UUID.randomUUID());
 
             // Serialize the object
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -47,15 +47,9 @@ class LayerMappingTest {
     void map() {
 
         {   // LINEAR WITH 3 POINTS
-            LayerMapping linear = new LayerMapping(new TestInputOutput(),
-                    new TestInputOutput(),
-                    new MappingPoint[]{new MappingPoint(10, 100),
-                            new MappingPoint(50 + 10, 100 + 500),
-                            new MappingPoint(110, 1100)},
-                    ActionType.SET,
-                    "",
-                    "",
-                    UUID.randomUUID());
+            LayerMapping linear = new LayerMapping(new TestInputOutput(), new TestInputOutput(),
+                    new MappingPoint[]{new MappingPoint(10, 100), new MappingPoint(50 + 10, 100 + 500),
+                            new MappingPoint(110, 1100)}, ActionType.SET, "", "", UUID.randomUUID());
 
             assertEquals(100, linear.map(10));
             assertEquals(600, linear.map(60));
@@ -66,13 +60,8 @@ class LayerMappingTest {
         }
 
         {   // STATIC ONE POINT
-            LayerMapping mapper = new LayerMapping(new TestInputOutput(),
-                    new TestInputOutput(),
-                    new MappingPoint[]{new MappingPoint(57, 89)},
-                    ActionType.SET,
-                    "",
-                    "",
-                    UUID.randomUUID());
+            LayerMapping mapper = new LayerMapping(new TestInputOutput(), new TestInputOutput(),
+                    new MappingPoint[]{new MappingPoint(57, 89)}, ActionType.SET, "", "", UUID.randomUUID());
 
             for (int i = -1000; i < 1000; i += 7) {
                 assertEquals(89, mapper.map(i));
@@ -80,12 +69,8 @@ class LayerMappingTest {
         }
 
         {   // 2 POINT LINEAR AT FIRST THAN PLATEAU
-            LayerMapping mapper = new LayerMapping(new HeightProvider(),
-                    new NibbleLayerSetter(Annotations.INSTANCE),
-                    new MappingPoint[]{new MappingPoint(50, 0), new MappingPoint(150, 10),},
-                    ActionType.SET,
-                    "",
-                    "",
+            LayerMapping mapper = new LayerMapping(new HeightProvider(), new NibbleLayerSetter(Annotations.INSTANCE),
+                    new MappingPoint[]{new MappingPoint(50, 0), new MappingPoint(150, 10),}, ActionType.SET, "", "",
                     UUID.randomUUID());
 
             for (int i = 0; i < 50; i++) { //plateau before first point
@@ -101,7 +86,25 @@ class LayerMappingTest {
     }
 
     @Test
-    void applyToPoint() {
+    void applyToPoint() {   //an most simple test to check it can run without crashing
+        {   //one point
+            Dimension dim = TestData.createDimension(new Rectangle(-2 * TILE_SIZE, -2 * TILE_SIZE, 3 * TILE_SIZE,
+                    3 * TILE_SIZE), 0);
+            LayerMapping mapper = new LayerMapping(new TestInputOutput(), new AnnotationSetter(),
+                    new MappingPoint[]{new MappingPoint(57, 3)}, ActionType.SET, "", "", UUID.randomUUID());
+
+            mapper.applyToPoint(dim, 0, 0);
+            assertEquals(3, dim.getLayerValueAt(Annotations.INSTANCE, 0, 0));
+        }
+        {   // no points
+            Dimension dim = TestData.createDimension(new Rectangle(-2 * TILE_SIZE, -2 * TILE_SIZE, 3 * TILE_SIZE,
+                    3 * TILE_SIZE), 0);
+            LayerMapping mapper = new LayerMapping(new TestInputOutput(), new AnnotationSetter(),
+                    new MappingPoint[]{}, ActionType.SET, "", "", UUID.randomUUID());
+
+            mapper.applyToPoint(dim, 0, 0);
+            assertEquals(0, dim.getLayerValueAt(Annotations.INSTANCE, 0, 0));
+        }
     }
 
     @Test
