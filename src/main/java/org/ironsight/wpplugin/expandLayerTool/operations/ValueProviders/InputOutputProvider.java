@@ -59,7 +59,8 @@ public class InputOutputProvider {
                 if (l.dataSize.equals(Layer.DataSize.BIT)) setters.add(new BitLayerBinarySpraypaintApplicator(l));
             }
         }
-
+        getters.add(new TerrainIO());
+        setters.add(new TerrainIO());
         setters.add(new StonePaletteApplicator());
 
         setters.add(new AnnotationSetter());
