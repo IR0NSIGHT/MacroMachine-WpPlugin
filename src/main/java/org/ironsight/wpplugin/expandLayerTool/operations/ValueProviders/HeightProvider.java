@@ -38,9 +38,9 @@ public class HeightProvider implements IPositionValueGetter, IPositionValueSette
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         float percent = (value - getMinValue() * 1f) / (getMaxValue() - getMinValue());
 
-        g.setColor(Color.BLUE);
+        g.setColor(new Color(131, 154, 255));
         g.fillRect(0, 0, dim.width, dim.height);
-        g.setColor(Color.gray);
+        g.setColor(new Color(0, 142, 7));
         g.fillRect(0, (int) (dim.height * (1 - percent)), dim.width, (int) (dim.height * (percent)));
     }
 
