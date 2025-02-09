@@ -3,10 +3,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -20,7 +17,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     private final HashMap<UUID, T> mappings = new HashMap<>();
     private final Class<T> type;
     private final boolean suppressFileWriting = false;
-    public String filePath;
+    private String filePath;
 
     protected AbstractOperationContainer(Class<T> type, String filePath) {
         this.type = type;
@@ -139,7 +136,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
             String jsonString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(toSaveObject());
 
             // Write the formatted JSON string to a file
-            try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(Paths.get(filePath)))) {
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
                 oos.writeObject(jsonString);
                 System.out.println(getClass().getSimpleName() + " saved successfully to " + filePath);
             }

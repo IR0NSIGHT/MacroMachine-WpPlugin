@@ -17,12 +17,12 @@ class MappingMacroContainerTest {
         container.updateMapping(saved);
         assertEquals(saved, container.queryById(saved.getUid()));
 
-        container.filePath = System.getProperty("user.dir") + "/test_saves.txt";
+        container.setFilePath(System.getProperty("user.dir") + "/test_saves.txt");
         container.writeToFile();
         container.readFromFile();
 
         MappingMacroContainer newContainer = new MappingMacroContainer();
-        newContainer.setFilePath(container.filePath);
+        newContainer.setFilePath(container.getFilePath());
         newContainer.readFromFile();
         MappingMacro loaded = newContainer.queryById(saved.getUid());
         assertEquals(saved, loaded);

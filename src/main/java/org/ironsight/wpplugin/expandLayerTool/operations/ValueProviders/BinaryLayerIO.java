@@ -7,41 +7,32 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.awt.*;
 
-public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter {
-    private final Layer layer;
-
+public class BinaryLayerIO extends NibbleLayerSetter {
     public BinaryLayerIO(Layer layer) {
-        assert layer != null;
+        super(layer);
         assert layer.dataSize.equals(Layer.DataSize.BIT);
-        this.layer = layer;
     }
 
-    public String getName() {
-        return layer.getName();
-    }
 
-    public String getDescription() {
-        return layer.getDescription();
-    }
 
     public void setValueAt(Dimension dim, int x, int y, int value) {
         if (value == 2) return;
         dim.setBitLayerValueAt(layer, x, y, value == 1);
     }
 
-    public int getMinValue() {
-        return 0;
-    }
-
     public int getMaxValue() {
         return 1;
     }
 
+    public int getMinValue() {
+        return 0;
+    }
+
     public String valueToString(int value) {
         if (value == 0) {
-            return "NOT " + layer.getName();
+            return layerName + " ON (1)";
         } else {
-            return layer.getName();
+            return layerName + " OFF (0)";
         }
     }
 
@@ -58,11 +49,6 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     @Override
     public ProviderType getProviderType() {
         return ProviderType.BINARY_LAYER;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return obj != null && this.getClass().equals(obj.getClass());
     }
 
     public int getValueAt(Dimension dim, int x, int y) {

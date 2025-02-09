@@ -4,8 +4,10 @@ import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
 import org.pepsoft.worldpainter.layers.Biome;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,6 +50,16 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     }
 
     @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new VanillaBiomeProvider();
+    }
+
+    @Override
+    public Object[] getSaveData() {
+        return new Object[0];
+    }
+
+    @Override
     public int getMaxValue() {
         return biomes.length;
     }
@@ -77,5 +89,10 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
         dim.setLayerValueAt(Biome.INSTANCE, x, y, value);
+    }
+
+    @Override
+    public void prepareForDimension(Dimension dim) {
+
     }
 }

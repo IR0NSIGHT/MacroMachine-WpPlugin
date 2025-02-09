@@ -2,10 +2,13 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Collection;
 
 public class HeightProvider implements IPositionValueGetter, IPositionValueSetter {
+    private HeightProvider instance;
 
     public HeightProvider() {
     }
@@ -16,9 +19,47 @@ public class HeightProvider implements IPositionValueGetter, IPositionValueSette
     }
 
     @Override
+    public String getName() {
+        return "Height";
+    }
+
+    @Override
+    public String getDescription() {
+        return "get the height of a position in percent for 0 to 255.";
+    }    private HeightProvider getInstance() {
+        if (instance == null) instance = new HeightProvider();
+        return instance;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj != null && this.getClass().equals(obj.getClass());
+    }
+
+    @Override
+    public void setValueAt(Dimension dim, int x, int y, int value) {
+        dim.setHeightAt(x, y, value);
+    }
+
+
+
+    @Override
     public int getMinValue() {
         return -64;
     }
+
+
+    @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return getInstance();
+    }
+
+
+    @Override
+    public Object[] getSaveData() {
+        return new Object[0];
+    }
+
 
     @Override
     public int getMaxValue() {
@@ -50,23 +91,9 @@ public class HeightProvider implements IPositionValueGetter, IPositionValueSette
         return ProviderType.HEIGHT;
     }
 
-    @Override
-    public String getName() {
-        return "Height";
-    }
 
     @Override
-    public boolean equals(Object obj) {
-        return obj != null && this.getClass().equals(obj.getClass());
-    }
+    public void prepareForDimension(Dimension dim) {
 
-    @Override
-    public String getDescription() {
-        return "get the height of a position in percent for 0 to 255.";
-    }
-
-    @Override
-    public void setValueAt(Dimension dim, int x, int y, int value) {
-        dim.setHeightAt(x, y, value);
     }
 }

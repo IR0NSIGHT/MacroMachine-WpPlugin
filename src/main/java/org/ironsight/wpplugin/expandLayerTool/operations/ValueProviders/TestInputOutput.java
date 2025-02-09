@@ -12,8 +12,18 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     }
 
     @Override
+    public void prepareForDimension(Dimension dim) {
+
+    }
+
+    @Override
     public int getValueAt(Dimension dim, int x, int y) {
         return 7;
+    }
+
+    @Override
+    public int getMaxValue() {
+        return 1000;
     }
 
     @Override
@@ -22,8 +32,13 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     }
 
     @Override
-    public int getMaxValue() {
-        return 1000;
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new TestInputOutput();
+    }
+
+    @Override
+    public Object[] getSaveData() {
+        return new Object[0];
     }
 
     @Override

@@ -3,8 +3,11 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.layers.LayerManager;
 
 import java.awt.*;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Objects;
 
 public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter {
@@ -26,15 +29,20 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
             new Color(0, 224, 0),     // Neon green
             new Color(0, 255, 0)      // Pure green
     };
-    private final Layer layer;
+    protected String layerId;
+    protected String layerName;
+    protected Layer layer = null;
 
-    public NibbleLayerSetter(Layer layer) {
-        this.layer = layer;
+    private NibbleLayerSetter(String name, String id) {
+        this.layerId = id;
+        this.layerName = name;
     }
 
-    @Override
-    public String toString() {
-        return "NibbleLayerSetter{" + "layer=" + layer + '}';
+    public NibbleLayerSetter() {};
+
+    public NibbleLayerSetter(Layer layer) {
+        this.layerName = layer.getName();
+        this.layerId = layer.getId();
     }
 
     @Override
@@ -43,13 +51,31 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     }
 
     @Override
-    public int getMinValue() {
-        return 0;
+    public void prepareForDimension(Dimension dim) {
+        Collection<Layer> allLayers = new LinkedList<>();
+        allLayers.addAll(dim.getCustomLayers());
+        allLayers.addAll(LayerManager.getInstance().getLayers());
+        allLayers.stream().filter(f -> f.getId().equals(layerId)).findFirst().map(l -> this.layer = l).orElseThrow(IllegalAccessError::new);
     }
 
     @Override
     public int getMaxValue() {
         return 15;
+    }
+
+    @Override
+    public int getMinValue() {
+        return 0;
+    }
+
+    @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new NibbleLayerSetter((String) data[0], (String) data[1]);
+    }
+
+    @Override
+    public Object[] getSaveData() {
+        return new Object[]{layerName, layerId};
     }
 
     @Override
@@ -80,12 +106,17 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public String getName() {
-        return layer.getName();
+        return layerName;
     }
 
     @Override
     public String getDescription() {
-        return "layer " + layer.getName() + " with values 0 to 15, where 0 is absent, 15 is full";
+        return "layer " + layerName + " with values 0 to 15, where 0 is absent, 15 is full";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(layer);
     }
 
     @Override
@@ -93,11 +124,11 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         NibbleLayerSetter that = (NibbleLayerSetter) o;
-        return Objects.equals(layer, that.layer);
+        return Objects.equals(layerId, that.layerId);
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(layer);
+    public String toString() {
+        return "NibbleLayerSetter{" + "layer=" + layer + '}';
     }
 }

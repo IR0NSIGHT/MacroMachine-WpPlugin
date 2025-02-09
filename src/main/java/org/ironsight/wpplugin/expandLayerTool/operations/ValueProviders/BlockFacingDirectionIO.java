@@ -2,8 +2,10 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Collection;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
@@ -62,13 +64,28 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
     }
 
     @Override
+    public int getMaxValue() {
+        return 359;
+    }
+
+    @Override
     public int getMinValue() {
         return 0;
     }
 
     @Override
-    public int getMaxValue() {
-        return 359;
+    public void prepareForDimension(Dimension dim) {
+
+    }
+
+    @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new BlockFacingDirectionIO();
+    }
+
+    @Override
+    public Object[] getSaveData() {
+        return new Object[0];
     }
 
     @Override

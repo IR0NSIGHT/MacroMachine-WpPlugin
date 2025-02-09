@@ -106,7 +106,8 @@ class LayerMappingTest {
                     3 * TILE_SIZE), 0);
             LayerMapping mapper = new LayerMapping(new TestInputOutput(), new AnnotationSetter(),
                     new MappingPoint[]{new MappingPoint(57, 3)}, ActionType.SET, "", "", UUID.randomUUID());
-
+            mapper.input.prepareForDimension(dim);
+            mapper.output.prepareForDimension(dim);
             mapper.applyToPoint(dim, 0, 0);
             assertEquals(3, dim.getLayerValueAt(Annotations.INSTANCE, 0, 0));
         }
