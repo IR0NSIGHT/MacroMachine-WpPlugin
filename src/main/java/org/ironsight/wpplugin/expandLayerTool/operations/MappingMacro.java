@@ -11,24 +11,42 @@ import static org.ironsight.wpplugin.expandLayerTool.operations.ApplyAction.appl
 
 public class MappingMacro implements SaveableAction {
     //ordered list of layermappings
-    public final UUID[] mappingUids;
-    private final String name;
-    private final String description;
-    private final UUID id;
+    public UUID[] mappingUids;
+    private String name;
+    private String description;
+    private UUID uid;
+
+    MappingMacro() {
+    }
 
     public MappingMacro(String name, String description, UUID[] ids, UUID id) {
         this.name = name;
         this.description = description;
-        this.id = id;
+        this.uid = id;
         mappingUids = ids;
     }
 
+    //for json deserialization
+
+    public UUID[] getMappingUids() {
+        return mappingUids;
+    }
+
+    public void setMappingUids(UUID[] mappingUids) {
+        this.mappingUids = mappingUids;
+    }
+
     public MappingMacro withName(String name) {
-        return new MappingMacro(name, description, mappingUids, id);
+        return new MappingMacro(name, description, mappingUids, uid);
     }
 
     public MappingMacro withDescription(String description) {
-        return new MappingMacro(name, description, mappingUids, id);
+        return new MappingMacro(name, description, mappingUids, uid);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(Arrays.hashCode(mappingUids), name, description, uid);
     }
 
     @Override
@@ -36,17 +54,11 @@ public class MappingMacro implements SaveableAction {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MappingMacro that = (MappingMacro) o;
-        return Arrays.equals(mappingUids, that.mappingUids) && Objects.equals(name, that.name) &&
-                Objects.equals(description, that.description) && Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(Arrays.hashCode(mappingUids), name, description, id);
+        return Arrays.equals(mappingUids, that.mappingUids) && Objects.equals(name, that.name) && Objects.equals(description, that.description) && Objects.equals(uid, that.uid);
     }
 
     public MappingMacro withUUIDs(UUID[] uuid) {
-        return new MappingMacro(this.name, this.description, uuid, this.id);
+        return new MappingMacro(this.name, this.description, uuid, this.uid);
     }
 
     @Override
@@ -54,19 +66,17 @@ public class MappingMacro implements SaveableAction {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
+
     @Override
     public String getDescription() {
         return description;
     }
 
-    public boolean allMappingsReady(LayerMappingContainer container) {
-        for (UUID mappingUid : mappingUids) {
-            LayerMapping mapping = container.queryById(mappingUid);
-            if (mapping == null) {
-                return false;
-            }
-        }
-        return true;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void apply(Dimension dimension, LayerMappingContainer container) {
@@ -83,8 +93,22 @@ public class MappingMacro implements SaveableAction {
 
     }
 
+    public boolean allMappingsReady(LayerMappingContainer container) {
+        for (UUID mappingUid : mappingUids) {
+            LayerMapping mapping = container.queryById(mappingUid);
+            if (mapping == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public UUID getUid() {
-        return id;
+        return uid;
+    }
+
+    public void setUid(UUID uid) {
+        this.uid = uid;
     }
 }
