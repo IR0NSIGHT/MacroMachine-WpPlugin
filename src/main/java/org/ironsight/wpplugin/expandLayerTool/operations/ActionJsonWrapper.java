@@ -1,5 +1,8 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.UUID;
 
 public class ActionJsonWrapper {
@@ -12,6 +15,8 @@ public class ActionJsonWrapper {
     private String description;
     private UUID uid;
 
+    public ActionJsonWrapper() {
+    }
 
     public ActionJsonWrapper(LayerMapping mapping) {
         setInputId(mapping.input.getProviderType());
@@ -94,5 +99,10 @@ public class ActionJsonWrapper {
 
     public void setUid(UUID uid) {
         this.uid = uid;
+    }
+
+    public String asJsonString(ObjectMapper mapper) throws JsonProcessingException {
+        // Convert Java object to JSON string
+        return mapper.writeValueAsString(this);
     }
 }

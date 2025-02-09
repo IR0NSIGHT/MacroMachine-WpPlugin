@@ -61,7 +61,10 @@ class LayerMappingContainerTest {
         container.writeToFile();
         container.readFromFile();
 
-        LayerMapping loaded = container.queryById(saved.getUid());
+        LayerMappingContainer newContainer = new LayerMappingContainer();
+        newContainer.setFilePath(container.filePath);
+        newContainer.readFromFile();
+        LayerMapping loaded = newContainer.queryById(saved.getUid());
         assertEquals(saved, loaded);
     }
 
