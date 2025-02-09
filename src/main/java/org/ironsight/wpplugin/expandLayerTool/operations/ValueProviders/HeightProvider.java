@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
@@ -42,6 +43,11 @@ public class HeightProvider implements IPositionValueGetter, IPositionValueSette
         g.fillRect(0, 0, dim.width, dim.height);
         g.setColor(new Color(0, 142, 7));
         g.fillRect(0, (int) (dim.height * (1 - percent)), dim.width, (int) (dim.height * (percent)));
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.HEIGHT;
     }
 
     @Override

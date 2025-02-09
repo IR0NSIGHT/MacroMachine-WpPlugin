@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 
@@ -15,6 +16,10 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         this.layer = layer;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(layer);
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -22,11 +27,6 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         if (o == null || getClass() != o.getClass()) return false;
         BitLayerBinarySpraypaintApplicator that = (BitLayerBinarySpraypaintApplicator) o;
         return Objects.equals(layer, that.layer);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(layer);
     }
 
     /**
@@ -70,21 +70,6 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     }
 
     @Override
-    public int getValueAt(Dimension dim, int x, int y) {
-        return dim.getBitLayerValueAt(layer, x, y) ? 100 : 0;
-    }
-
-    @Override
-    public String getName() {
-        return layer.getName() + " (spraypaint)";
-    }
-
-    @Override
-    public String getDescription() {
-        return "spraypaint binary layer " + layer.getName() + " (ON or OFF) based on input chance 0 to 100%.";
-    }
-
-    @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         //value is 0 to 100
         g.setColor(Color.black);
@@ -97,5 +82,25 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
                 if (doPaintPos(x, y, value)) g.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
             }
         }
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.BINARY_SPRAYPAINT;
+    }
+
+    @Override
+    public int getValueAt(Dimension dim, int x, int y) {
+        return dim.getBitLayerValueAt(layer, x, y) ? 100 : 0;
+    }
+
+    @Override
+    public String getName() {
+        return layer.getName() + " (spraypaint)";
+    }
+
+    @Override
+    public String getDescription() {
+        return "spraypaint binary layer " + layer.getName() + " (ON or OFF) based on input chance 0 to 100%.";
     }
 }

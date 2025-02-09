@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 
@@ -65,6 +66,11 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         g.setColor(COLORS[value]);
         g.fillRect(0, 0, dim.width, dim.height);
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.NIBBLE_LAYER;
     }
 
     @Override

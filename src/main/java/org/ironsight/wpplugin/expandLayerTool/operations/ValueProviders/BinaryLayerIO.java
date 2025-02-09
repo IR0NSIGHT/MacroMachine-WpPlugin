@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -52,6 +53,11 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         if (value == 0) return;
         g.setColor(Color.red);
         g.fillRect(0, 0, dim.width, dim.height);
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.BINARY_LAYER;
     }
 
     @Override

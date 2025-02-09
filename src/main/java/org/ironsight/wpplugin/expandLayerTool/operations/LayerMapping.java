@@ -4,10 +4,9 @@ import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositio
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueSetter;
 import org.pepsoft.worldpainter.Dimension;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+
+import static org.ironsight.wpplugin.expandLayerTool.operations.ProviderType.fromType;
 
 public class LayerMapping implements SaveableAction {
     public final IPositionValueGetter input;
@@ -42,16 +41,54 @@ public class LayerMapping implements SaveableAction {
 
         //direct mapping: mappings[input] = output. fast and reliable
         this.mappings = new int[input.getMaxValue() + 1 - input.getMinValue()];
-        if (this.mappingPoints.length == 0) return;
-        int j = -1;
-        for (int i = input.getMinValue(); i <= input.getMaxValue(); i++) {
-            MappingPoint point = mappingPoints[Math.max(Math.min(j + 1, mappingPoints.length - 1), 0)];
-            if (point.input == i) j++;
-            point = mappingPoints[Math.max(j, 0)];
+        if (output.isDiscrete()) {  // DO NOT INTERPOLATE OUTPUT
+            if (this.mappingPoints.length == 0) return;
+            int j = -1;
+            for (int i = input.getMinValue(); i <= input.getMaxValue(); i++) {
+                MappingPoint point = mappingPoints[Math.max(Math.min(j + 1, mappingPoints.length - 1), 0)];
+                if (point.input == i) j++;
+                point = mappingPoints[Math.max(j, 0)];
 
-            mappings[i - input.getMinValue()] = point.output;
+                mappings[i - input.getMinValue()] = point.output;
+            }
+        } else {
+            if (this.mappingPoints.length == 0) return;
+            //prepare input points by adding min-input and max-input points for easier index finding of interpolation
+            LinkedList<MappingPoint> points = new LinkedList<>(Arrays.asList(mappingPoints));
+            if (points.getFirst().input != input.getMinValue())
+                points.addFirst(new MappingPoint(input.getMinValue(), points.getFirst().output));
+
+            if (points.getLast().input != input.getMaxValue())
+                points.addLast(new MappingPoint(input.getMaxValue(), points.getLast().output));
+            assert points.size() >= 2 : "at least min and max points on the input scale are defined";
+
+            for (int i = 0; i < points.size() - 1; i++) {
+                MappingPoint low = points.get(i);
+                MappingPoint high = points.get(i + 1);
+                mappings[low.input - input.getMinValue()] = low.output;
+                int range = (high.input - low.input);
+                for (int inputValue = low.input + 1; inputValue <= high.input; inputValue++) {
+                    float t = (1f * inputValue - low.input) / range;
+                    int outputValue = Math.round((1 - t) * low.output + (t) * high.output);
+                    mappings[inputValue - input.getMinValue()] = outputValue;
+                }
+
+
+            }
         }
 
+    }
+
+    public static LayerMapping fromJsonWrapper(ActionJsonWrapper wrapper) {
+        IPositionValueGetter input = (IPositionValueGetter) fromType(wrapper.getInputId());
+        IPositionValueSetter output = (IPositionValueSetter) fromType(wrapper.getOutputId());
+        MappingPoint[] points = new MappingPoint[wrapper.getInputPoints().length];
+        for (int i = 0; i < points.length; i++) {
+            points[i] = new MappingPoint(wrapper.getInputPoints()[i], wrapper.getOutputPoints()[i]);
+        }
+        LayerMapping mapping = new LayerMapping(input, output, points, wrapper.getActionType(), wrapper.getName(),
+                wrapper.getDescription(), wrapper.getUid());
+        return mapping;
     }
 
     public LayerMapping withInput(IPositionValueGetter input) {

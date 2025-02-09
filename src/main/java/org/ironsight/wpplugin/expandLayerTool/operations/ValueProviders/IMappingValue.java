@@ -1,5 +1,8 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
+
 import java.awt.*;
 
 public interface IMappingValue {
@@ -21,4 +24,6 @@ public interface IMappingValue {
     static int sanitizeValue(int value, IMappingValue mappingValue) {
         return Math.max(Math.min(value, mappingValue.getMaxValue()), mappingValue.getMinValue());
     }
+
+    ProviderType getProviderType();
 }

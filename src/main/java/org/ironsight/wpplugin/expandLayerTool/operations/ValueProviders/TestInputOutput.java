@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
@@ -17,12 +18,12 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
 
     @Override
     public int getMinValue() {
-        return Integer.MIN_VALUE;
+        return -5;
     }
 
     @Override
     public int getMaxValue() {
-        return Integer.MAX_VALUE;
+        return 1000;
     }
 
     @Override
@@ -39,6 +40,11 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         g.setColor(Color.RED);
         g.fillRect(0, 0, dim.width, dim.height);
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.TEST;
     }
 
     @Override

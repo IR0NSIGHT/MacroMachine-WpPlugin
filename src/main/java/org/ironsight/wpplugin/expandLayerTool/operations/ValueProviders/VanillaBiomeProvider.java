@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
 import org.pepsoft.worldpainter.layers.Biome;
@@ -66,6 +67,11 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         g.setColor(Color.WHITE);
         g.fillRect(0, 0, dim.width, dim.height);
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.VANILLA_BIOME;
     }
 
     @Override
