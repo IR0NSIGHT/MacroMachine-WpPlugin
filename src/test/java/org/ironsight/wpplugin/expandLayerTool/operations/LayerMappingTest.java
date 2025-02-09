@@ -120,8 +120,4 @@ class LayerMappingTest {
             assertEquals(0, dim.getLayerValueAt(Annotations.INSTANCE, 0, 0));
         }
     }
-
-    @Test
-    void reverseMap() {
-    }
 }
