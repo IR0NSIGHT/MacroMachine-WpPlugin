@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -8,25 +9,15 @@ import java.awt.*;
 import java.util.Objects;
 import java.util.Random;
 
-public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter, IPositionValueGetter {
+public class BitLayerBinarySpraypaintApplicator extends NibbleLayerSetter {
     Random random = new Random();
-    Layer layer;
+
+    public BitLayerBinarySpraypaintApplicator() {
+        super();
+    }
 
     public BitLayerBinarySpraypaintApplicator(Layer layer) {
-        this.layer = layer;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(layer);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        BitLayerBinarySpraypaintApplicator that = (BitLayerBinarySpraypaintApplicator) o;
-        return Objects.equals(layer, that.layer);
+        super(layer);
     }
 
     /**
@@ -40,23 +31,14 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         dim.setBitLayerValueAt(layer, x, y, doPaintPos(x, y, value));
     }
 
-    private boolean doPaintPos(int x, int y, int value) {
-        assert random != null;
-        long positionHash = ((long) x * 73856093L) ^ ((long) y * 19349663L);
-        random.setSeed(positionHash);
-        int randInt = random.nextInt(100);
-        boolean set = value > randInt;
-        return set;
+    @Override
+    public int getMaxValue() {
+        return 100;
     }
 
     @Override
     public int getMinValue() {
         return 0;
-    }
-
-    @Override
-    public int getMaxValue() {
-        return 100;
     }
 
     @Override
@@ -96,11 +78,25 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public String getName() {
-        return layer.getName() + " (spraypaint)";
+        return layerName + " (spraypaint)";
     }
 
     @Override
     public String getDescription() {
         return "spraypaint binary layer " + layer.getName() + " (ON or OFF) based on input chance 0 to 100%.";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(layer);
+    }
+
+    private boolean doPaintPos(int x, int y, int value) {
+        assert random != null;
+        long positionHash = ((long) x * 73856093L) ^ ((long) y * 19349663L);
+        random.setSeed(positionHash);
+        int randInt = random.nextInt(100);
+        boolean set = value > randInt;
+        return set;
     }
 }

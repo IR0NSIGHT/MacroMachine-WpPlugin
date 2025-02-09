@@ -52,7 +52,7 @@ public class InputOutputProvider {
         }
 
         if (dimension != null) {    //TODO check: does this actually collect custom layers?
-            for (Layer l : dimension.getAllLayers(false)) {
+            for (Layer l : dimension.getCustomLayers()) {
                 if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
                     setters.add(new NibbleLayerSetter(l));
                     getters.add(new NibbleLayerSetter(l));

@@ -2,8 +2,10 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Collection;
 
 public class WaterDepthProvider implements IPositionValueSetter, IPositionValueGetter {
     @Override
@@ -14,6 +16,11 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
         dim.setHeightAt(x, y, Math.round(dim.getHeightAt(x, y) - value));
+    }
+
+    @Override
+    public void prepareForDimension(Dimension dim) {
+
     }
 
     @Override
@@ -29,6 +36,16 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     @Override
     public int getMinValue() {
         return 0;
+    }
+
+    @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new WaterDepthProvider();
+    }
+
+    @Override
+    public Object[] getSaveData() {
+        return new Object[0];
     }
 
     @Override

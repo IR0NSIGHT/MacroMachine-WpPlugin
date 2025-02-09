@@ -2,8 +2,10 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Collection;
 
 public class SlopeProvider implements IPositionValueGetter {
     /**
@@ -27,6 +29,21 @@ public class SlopeProvider implements IPositionValueGetter {
     @Override
     public int getMinValue() {
         return 0;
+    }
+
+    @Override
+    public void prepareForDimension(Dimension dim) {
+
+    }
+
+    @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new SlopeProvider();
+    }
+
+    @Override
+    public Object[] getSaveData() {
+        return new Object[0];
     }
 
     @Override

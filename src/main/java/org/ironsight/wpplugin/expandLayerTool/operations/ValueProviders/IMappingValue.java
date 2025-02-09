@@ -6,9 +6,19 @@ import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import java.awt.*;
 
 public interface IMappingValue {
-    int getMinValue();
+    static int sanitizeValue(int value, IMappingValue mappingValue) {
+        return Math.max(Math.min(value, mappingValue.getMaxValue()), mappingValue.getMinValue());
+    }
 
     int getMaxValue();
+
+    int getMinValue();
+
+    void prepareForDimension(org.pepsoft.worldpainter.Dimension dim);
+
+    IMappingValue instantiateFrom(Object[] data);
+
+    Object[] getSaveData();
 
     String valueToString(int value);
 
@@ -20,10 +30,6 @@ public interface IMappingValue {
     boolean isDiscrete();
 
     void paint(Graphics g, int value, java.awt.Dimension dim);
-
-    static int sanitizeValue(int value, IMappingValue mappingValue) {
-        return Math.max(Math.min(value, mappingValue.getMaxValue()), mappingValue.getMinValue());
-    }
 
     ProviderType getProviderType();
 }

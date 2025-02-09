@@ -5,8 +5,10 @@ import org.pepsoft.worldpainter.ColourScheme;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.colourschemes.HardcodedColourScheme;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Collection;
 
 public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter {
     private static ColourScheme colorScheme = new HardcodedColourScheme();
@@ -25,6 +27,11 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     }
 
     @Override
+    public void prepareForDimension(Dimension dim) {
+
+    }
+
+    @Override
     public String getName() {
         return "Terrain";
     }
@@ -37,6 +44,16 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     @Override
     public int getMinValue() {
         return 0;
+    }
+
+    @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new TerrainProvider();
+    }
+
+    @Override
+    public Object[] getSaveData() {
+        return new Object[0];
     }
 
     @Override

@@ -2,7 +2,9 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.pepsoft.worldpainter.Configuration;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.UUID;
 
@@ -10,7 +12,7 @@ public class MappingMacroContainer extends AbstractOperationContainer<MappingMac
     private final static MappingMacroContainer instance = new MappingMacroContainer();
 
     public MappingMacroContainer() {
-        super(MappingMacro.class, "/home/klipper/Documents/worldpainter/macros.txt");
+        super(MappingMacro.class, new File(Configuration.getConfigDir(), "plugins").getPath() + "macros.txt");
     }
 
     public static MappingMacroContainer getInstance() {
@@ -19,8 +21,9 @@ public class MappingMacroContainer extends AbstractOperationContainer<MappingMac
 
     @Override
     protected MappingMacro getNewAction() {
-        return new MappingMacro("New Mapping Macro", "this macro is a collection of Mappings, each applied in order " +
-                "to" + " the map to achieve complex, reusable, one-click operations.", new UUID[0], getUUID());
+        return new MappingMacro("New Mapping Macro",
+                "this macro is a collection of Mappings, each applied in order " + "to" + " the map to achieve " +
+                        "complex, reusable, one-click operations.", new UUID[0], getUUID());
     }
 
     @Override

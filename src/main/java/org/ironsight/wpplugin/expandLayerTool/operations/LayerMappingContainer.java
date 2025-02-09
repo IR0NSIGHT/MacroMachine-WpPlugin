@@ -3,16 +3,18 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.*;
+import org.pepsoft.worldpainter.Configuration;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
 
+import java.io.File;
 import java.io.Serializable;
 
 public class LayerMappingContainer extends AbstractOperationContainer<LayerMapping> {
     public static LayerMappingContainer INSTANCE = new LayerMappingContainer();
 
     public LayerMappingContainer() {
-        super(LayerMapping.class, "/home/klipper/Documents/worldpainter/mappings.txt");
+        super(LayerMapping.class, new File(Configuration.getConfigDir(), "plugins").getPath() + "/mappings.txt");
     }
 
     public static void addDefaultMappings(LayerMappingContainer container) {

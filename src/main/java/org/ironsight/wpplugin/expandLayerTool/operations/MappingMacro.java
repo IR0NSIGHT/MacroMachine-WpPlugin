@@ -3,9 +3,8 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.panels.DefaultFilter;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.expandLayerTool.operations.ApplyAction.applyToDimensionWithFilter;
 
@@ -82,6 +81,12 @@ public class MappingMacro implements SaveableAction {
     public void apply(Dimension dimension, LayerMappingContainer container) {
         assert allMappingsReady(container);
         DefaultFilter filter = new DefaultFilter(dimension, false, false, -1000, 1000, false, null, null, 0, true);
+        Collection<LayerMapping> actions =
+                Arrays.stream(mappingUids).map(container::queryById).collect(Collectors.toCollection(ArrayList::new));
+        for (LayerMapping lm : actions) {
+            lm.output.prepareForDimension(dimension);
+            lm.input.prepareForDimension(dimension);
+        }
 
         applyToDimensionWithFilter(dimension, filter, pos -> {
             for (UUID mappingUid : mappingUids) {

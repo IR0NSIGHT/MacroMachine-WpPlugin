@@ -5,7 +5,9 @@ import java.util.UUID;
 
 public class ActionJsonWrapper {
     private ProviderType inputId;
+    private Object[] inputData;
     private ProviderType outputId;
+    private Object[] outputData;
     private ActionType actionType;
     private int[] inputPoints;
     private int[] outputPoints;
@@ -18,7 +20,11 @@ public class ActionJsonWrapper {
 
     public ActionJsonWrapper(LayerMapping mapping) {
         setInputId(mapping.input.getProviderType());
+        setInputData(mapping.input.getSaveData());
+
         setOutputId(mapping.output.getProviderType());
+        setOutputData(mapping.output.getSaveData());
+
         setActionType(mapping.getActionType());
         setName(mapping.getName());
         setDescription(mapping.getDescription());
@@ -33,6 +39,22 @@ public class ActionJsonWrapper {
         }
         setInputPoints(ins);
         setOutputPoints(outs);
+    }
+
+    public Object[] getInputData() {
+        return inputData;
+    }
+
+    public void setInputData(Object[] inputData) {
+        this.inputData = inputData;
+    }
+
+    public Object[] getOutputData() {
+        return outputData;
+    }
+
+    public void setOutputData(Object[] outputData) {
+        this.outputData = outputData;
     }
 
     public ProviderType getInputId() {

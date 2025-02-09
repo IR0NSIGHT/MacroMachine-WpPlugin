@@ -70,6 +70,8 @@ public class LayerMapping implements SaveableAction {
                 for (int inputValue = low.input + 1; inputValue <= high.input; inputValue++) {
                     float t = (1f * inputValue - low.input) / range;
                     int outputValue = Math.round((1 - t) * low.output + (t) * high.output);
+
+                    if (inputValue > input.getMaxValue()) return;
                     mappings[inputValue - input.getMinValue()] = outputValue;
                 }
 
@@ -80,8 +82,11 @@ public class LayerMapping implements SaveableAction {
     }
 
     public static LayerMapping fromJsonWrapper(ActionJsonWrapper wrapper) {
-        IPositionValueGetter input = (IPositionValueGetter) fromType(wrapper.getInputId());
-        IPositionValueSetter output = (IPositionValueSetter) fromType(wrapper.getOutputId());
+        IPositionValueGetter input = (IPositionValueGetter) fromType(wrapper.getInputData(), wrapper.getInputId());
+        IPositionValueSetter output = (IPositionValueSetter) fromType(wrapper.getOutputData(), wrapper.getOutputId());
+
+        assert input != null;
+        assert output != null;
         MappingPoint[] points = new MappingPoint[wrapper.getInputPoints().length];
         for (int i = 0; i < points.length; i++) {
             points[i] = new MappingPoint(wrapper.getInputPoints()[i], wrapper.getOutputPoints()[i]);

@@ -3,14 +3,13 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collection;
 
 public class StonePaletteApplicator implements IPositionValueSetter {
-    private final Terrain[] materials;
-    private final transient HashSet<Terrain> mats;
     Color[] colors = new Color[]{
             // Terrain.GRASS (Grass Block)
             new Color(85, 107, 47),      // Dark Olive Green
@@ -35,12 +34,16 @@ public class StonePaletteApplicator implements IPositionValueSetter {
             // Terrain.ROCK (Rock)
             new Color(169, 169, 169)     // Dark Gray (similar to Stone)
     };
+    private final Terrain[] materials;
 
     public StonePaletteApplicator() {
         materials = new Terrain[]{Terrain.GRASS, Terrain.GRAVEL, Terrain.STONE, Terrain.COBBLESTONE,
                 Terrain.MOSSY_COBBLESTONE, Terrain.GRANITE, Terrain.DIORITE, Terrain.ANDESITE, Terrain.DEEPSLATE,
                 Terrain.STONE_MIX, Terrain.ROCK};
-        mats = new HashSet<>(Arrays.asList(materials));
+    }
+
+    public StonePaletteApplicator(Terrain[] materials) {
+        this.materials = materials;
     }
 
     @Override
@@ -59,13 +62,28 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     }
 
     @Override
-    public int getMinValue() {
-        return 0;
+    public void prepareForDimension(Dimension dim) {
+
     }
 
     @Override
     public int getMaxValue() {
         return materials.length - 1;
+    }
+
+    @Override
+    public int getMinValue() {
+        return 0;
+    }
+
+    @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new StonePaletteApplicator((Terrain[]) data[0]);
+    }
+
+    @Override
+    public Object[] getSaveData() {
+        return materials;
     }
 
     @Override

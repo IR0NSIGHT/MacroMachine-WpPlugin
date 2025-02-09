@@ -57,12 +57,12 @@ class LayerMappingContainerTest {
         container.updateMapping(saved);
         assertEquals(saved, container.queryById(saved.getUid()));
 
-        container.filePath = System.getProperty("user.dir") + "/test_saves.txt";
+        container.setFilePath(System.getProperty("user.dir") + "/test_saves.txt");
         container.writeToFile();
         container.readFromFile();
 
         LayerMappingContainer newContainer = new LayerMappingContainer();
-        newContainer.setFilePath(container.filePath);
+        newContainer.setFilePath(container.getFilePath());
         newContainer.readFromFile();
         LayerMapping loaded = newContainer.queryById(saved.getUid());
         assertEquals(saved, loaded);
