@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 public class MappingMacroContainer extends AbstractOperationContainer<MappingMacro> {
@@ -20,5 +21,15 @@ public class MappingMacroContainer extends AbstractOperationContainer<MappingMac
                         " the map to achieve complex, reusable, one-click operations.",
                 new UUID[0],
                 getUUID());
+    }
+
+    @Override
+    protected void fromSaveObject(String jsonString) {
+        //FIXME
+    }
+
+    @Override
+    protected <T extends Serializable> T toSaveObject() {
+        return null;    //FIXME
     }
 }
