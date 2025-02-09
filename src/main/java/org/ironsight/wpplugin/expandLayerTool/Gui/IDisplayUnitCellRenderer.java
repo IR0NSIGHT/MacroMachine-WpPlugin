@@ -52,6 +52,7 @@ class IDisplayUnitCellRenderer extends DefaultTreeCellRenderer {
 
         if (selected) panel.setBackground(Color.LIGHT_GRAY);
         else panel.setBackground(Color.WHITE);
+        panel.invalidate();
         return panel;
     }
 }
