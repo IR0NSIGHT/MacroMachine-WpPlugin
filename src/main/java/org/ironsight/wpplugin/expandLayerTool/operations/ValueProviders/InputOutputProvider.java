@@ -60,8 +60,8 @@ public class InputOutputProvider {
                 if (l.dataSize.equals(Layer.DataSize.BIT)) setters.add(new BitLayerBinarySpraypaintApplicator(l));
             }
         }
-        getters.add(new TerrainIO());
-        setters.add(new TerrainIO());
+        getters.add(new TerrainProvider());
+        setters.add(new TerrainProvider());
         setters.add(new StonePaletteApplicator());
 
         setters.add(new AnnotationSetter());
@@ -73,8 +73,8 @@ public class InputOutputProvider {
         getters.add(new WaterHeightAbsoluteIO());
         setters.add(new WaterHeightAbsoluteIO());
 
-        getters.add(new WaterDepthIO());
-        setters.add(new WaterDepthIO());
+        getters.add(new WaterDepthProvider());
+        setters.add(new WaterDepthProvider());
 
         getters.add(new SlopeProvider());
         getters.add(new BlockFacingDirectionIO());

@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
@@ -53,6 +54,11 @@ public class SlopeProvider implements IPositionValueGetter {
         g2d.setColor(new Color(34, 153, 84));
 
         g2d.fillRect(-dim.width, 0, 2 * dim.width, (int) (dim.height * 1.41f));
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.SLOPE;
     }
 
     @Override

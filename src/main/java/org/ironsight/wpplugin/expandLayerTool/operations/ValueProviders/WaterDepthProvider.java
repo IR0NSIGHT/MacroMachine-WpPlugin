@@ -1,10 +1,11 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
-public class WaterDepthIO implements IPositionValueSetter, IPositionValueGetter {
+public class WaterDepthProvider implements IPositionValueSetter, IPositionValueGetter {
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         return Math.round(dim.getHeightAt(x, y) - dim.getWaterLevelAt(x, y));
@@ -54,5 +55,10 @@ public class WaterDepthIO implements IPositionValueSetter, IPositionValueGetter 
         float percent = (value - getMinValue() * 1f) / (getMaxValue() - getMinValue());
         g.setColor(Color.BLUE);
         g.fillRect(0, 0, dim.width, (int) (dim.height * (percent)));
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.WATER_DEPTH;
     }
 }

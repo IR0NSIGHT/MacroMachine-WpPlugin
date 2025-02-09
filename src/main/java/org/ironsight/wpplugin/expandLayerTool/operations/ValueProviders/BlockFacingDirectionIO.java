@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
@@ -8,6 +9,14 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 public class BlockFacingDirectionIO implements IPositionValueGetter {
     private final String[] directionNames = new String[]{"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
+
+    @Override
+    public int getValueAt(Dimension dim, int x, int y) {
+        if (x <= dim.getLowestX() * TILE_SIZE || y <= dim.getLowestY() * TILE_SIZE || x >= (dim.getHighestX() + 1) * TILE_SIZE || y >= (dim.getHighestY() + 1) * TILE_SIZE) {
+            return 0;
+        }
+        return calculateSlopeFacing(x, y, dim);
+    }
 
     /**
      * Calculates the slope's facing direction (0-360 degrees) at (x, y).
@@ -40,15 +49,6 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
         assert angleDegrees >= 0;
         assert angleDegrees < 360;
         return (int) Math.round(angleDegrees);
-    }
-
-    @Override
-    public int getValueAt(Dimension dim, int x, int y) {
-        if (x <= dim.getLowestX() * TILE_SIZE || y <= dim.getLowestY() * TILE_SIZE ||
-                x >= (dim.getHighestX() + 1) * TILE_SIZE || y >= (dim.getHighestY() + 1) * TILE_SIZE) {
-            return 0;
-        }
-        return calculateSlopeFacing(x, y, dim);
     }
 
     @Override
@@ -96,5 +96,10 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
         ((Graphics2D) g).setStroke(new BasicStroke(dim.width * 0.05f));
         //g.fillRect(0, 0, (int) (dim.width * 0.1f), dim.height);
         g.drawLine(0, -dim.height, 0, 0);  //pointing north in local space always
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.BLOCK_DIRECTION;
     }
 }

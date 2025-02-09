@@ -1,18 +1,17 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.ColourScheme;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.colourschemes.HardcodedColourScheme;
 
 import java.awt.*;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 
-public class TerrainIO implements IPositionValueGetter, IPositionValueSetter {
+public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter {
     private static ColourScheme colorScheme = new HardcodedColourScheme();
 
-    public TerrainIO() {
+    public TerrainProvider() {
     }
 
     @Override
@@ -66,5 +65,10 @@ public class TerrainIO implements IPositionValueGetter, IPositionValueSetter {
         int color = getColour(value);
         g.setColor(new Color(color));
         g.fillRect(0, 0, dim.width, dim.height);
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.TERRAIN;
     }
 }

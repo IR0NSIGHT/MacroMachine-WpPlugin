@@ -46,6 +46,20 @@ class LayerMappingTest {
     @Test
     void map() {
 
+        {   // SHORT RANGE MAPPING
+            LayerMapping linear = new LayerMapping(new TestInputOutput(), new TestInputOutput(),
+                    new MappingPoint[]{new MappingPoint(1, 100), new MappingPoint(6, 100 + 500),
+                            new MappingPoint(11, 1100)}, ActionType.SET, "", "", UUID.randomUUID());
+
+            assertEquals(100, linear.map(1));
+            assertEquals(600, linear.map(6));
+            assertEquals(1100, linear.map(11));
+
+            assertEquals(100 + 500, linear.map(6));
+            assertEquals(100 + 300, linear.map(4));
+        }
+
+
         {   // LINEAR WITH 3 POINTS
             LayerMapping linear = new LayerMapping(new TestInputOutput(), new TestInputOutput(),
                     new MappingPoint[]{new MappingPoint(10, 100), new MappingPoint(50 + 10, 100 + 500),
@@ -63,7 +77,7 @@ class LayerMappingTest {
             LayerMapping mapper = new LayerMapping(new TestInputOutput(), new TestInputOutput(),
                     new MappingPoint[]{new MappingPoint(57, 89)}, ActionType.SET, "", "", UUID.randomUUID());
 
-            for (int i = -1000; i < 1000; i += 7) {
+            for (int i = new TestInputOutput().getMinValue(); i < new TestInputOutput().getMaxValue(); i ++) {
                 assertEquals(89, mapper.map(i));
             }
         }

@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
 
@@ -82,6 +83,11 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         g.setColor(colors[value]);
         g.fillRect(0, 0, dim.width, dim.height);
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.STONE_PALETTE;
     }
 
     @Override

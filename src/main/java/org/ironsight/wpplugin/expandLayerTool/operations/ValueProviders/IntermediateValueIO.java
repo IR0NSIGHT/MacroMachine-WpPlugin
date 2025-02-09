@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
@@ -12,7 +13,6 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (lastX != x || lastY != y) return 0;
-        System.out.printf("%d, %d has %d%n", x, y, value);
         return value;
     }
 
@@ -57,5 +57,10 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
 
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.INTERMEDIATE;
     }
 }
