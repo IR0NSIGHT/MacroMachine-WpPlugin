@@ -14,21 +14,6 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ApplyAction {
-    private final DefaultFilter filter;
-    private final LayerMapping mapping;
-
-    public ApplyAction(DefaultFilter filter, LayerMapping mapping) {
-        this.filter = filter;
-        this.mapping = mapping;
-    }
-
-    public void apply(Dimension dim) {
-        assert mapping.getMappingPoints().length != 0;
-        applyToDimensionWithFilter(dim, filter, pos -> {
-            mapping.applyToPoint(dim, pos.x, pos.y);
-        });
-    }
-
     public static void applyToDimensionWithFilter(Dimension dim, DefaultFilter filter, Consumer<Point> applyOnBlock) {
         Iterator<? extends Tile> t = dim.getTiles().iterator();
         while (t.hasNext()) {
