@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
-import org.checkerframework.checker.units.qual.A;
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.layers.Annotations;
 
@@ -14,6 +13,11 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
             Color.BLUE, new Color(165, 42, 42), // brown
             Color.GREEN, Color.RED, Color.BLACK};
     private static AnnotationSetter instance;
+
+    private static AnnotationSetter getInstance() {
+        if (instance == null) instance = new AnnotationSetter();
+        return instance;
+    }
 
     @Override
     public int getMaxValue() {
@@ -33,11 +37,6 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
         return getInstance();
-    }
-
-    private static AnnotationSetter getInstance() {
-        if (instance == null) instance = new AnnotationSetter();
-        return instance;
     }
 
     @Override

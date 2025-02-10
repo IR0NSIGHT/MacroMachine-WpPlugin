@@ -53,7 +53,8 @@ public class MappingMacro implements SaveableAction {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MappingMacro that = (MappingMacro) o;
-        return Arrays.equals(mappingUids, that.mappingUids) && Objects.equals(name, that.name) && Objects.equals(description, that.description) && Objects.equals(uid, that.uid);
+        return Arrays.equals(mappingUids, that.mappingUids) && Objects.equals(name, that.name) &&
+                Objects.equals(description, that.description) && Objects.equals(uid, that.uid);
     }
 
     public MappingMacro withUUIDs(UUID[] uuid) {

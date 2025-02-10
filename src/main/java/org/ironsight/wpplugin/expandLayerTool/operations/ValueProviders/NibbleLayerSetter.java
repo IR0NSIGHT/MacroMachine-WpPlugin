@@ -38,7 +38,8 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         this.layerName = name;
     }
 
-    public NibbleLayerSetter() {};
+    public NibbleLayerSetter() {
+    }
 
     public NibbleLayerSetter(Layer layer) {
         this.layerName = layer.getName();
@@ -55,7 +56,11 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         Collection<Layer> allLayers = new LinkedList<>();
         allLayers.addAll(dim.getCustomLayers());
         allLayers.addAll(LayerManager.getInstance().getLayers());
-        allLayers.stream().filter(f -> f.getId().equals(layerId)).findFirst().map(l -> this.layer = l).orElseThrow(IllegalAccessError::new);
+        allLayers.stream()
+                .filter(f -> f.getId().equals(layerId))
+                .findFirst()
+                .map(l -> this.layer = l)
+                .orElseThrow(IllegalAccessError::new);
     }
 
     @Override

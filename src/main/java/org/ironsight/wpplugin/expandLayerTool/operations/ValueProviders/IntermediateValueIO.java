@@ -2,10 +2,8 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
-import java.util.Collection;
 
 public class IntermediateValueIO implements IPositionValueSetter, IPositionValueGetter {
     private static int value;

@@ -12,6 +12,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 class IntermediateValueIOTest {
+    public static int mod(int a, int b) {
+        int result = a % b;
+        return (result < 0) ? result + Math.abs(b) : result;
+    }
+
     @Test
     void getValueAt() {
         int EVEN_OUTPUT = 2, UNEVEN_OUTPUT = 3;
@@ -36,12 +41,22 @@ class IntermediateValueIOTest {
         LayerMappingContainer container = LayerMappingContainer.INSTANCE;
         IntermediateValueIO intermediateValueIO = new IntermediateValueIO();
         UUID set =
-                container.updateMapping(container.addMapping().withInput(new HeightProvider()).withOutput(intermediateValueIO).withNewPoints(new MappingPoint[]{new MappingPoint(EVEN_HEIGHT, 4), new MappingPoint(UNEVEN_HEIGHT, 7)}).withName("set intermediate"));
+                container.updateMapping(container.addMapping()
+                        .withInput(new HeightProvider())
+                        .withOutput(intermediateValueIO)
+                        .withNewPoints(new MappingPoint[]{new MappingPoint(EVEN_HEIGHT, 4),
+                                new MappingPoint(UNEVEN_HEIGHT, 7)})
+                        .withName("set intermediate"));
         assertEquals(4, container.queryById(set).map(EVEN_HEIGHT));
         assertEquals(7, container.queryById(set).map(UNEVEN_HEIGHT));
 
         UUID get =
-                container.updateMapping(container.addMapping().withInput(intermediateValueIO).withOutput(new AnnotationSetter()).withNewPoints(new MappingPoint[]{new MappingPoint(4, EVEN_OUTPUT), new MappingPoint(7, UNEVEN_OUTPUT)}).withName("get intermediate"));
+                container.updateMapping(container.addMapping()
+                        .withInput(intermediateValueIO)
+                        .withOutput(new AnnotationSetter())
+                        .withNewPoints(new MappingPoint[]{new MappingPoint(4, EVEN_OUTPUT),
+                                new MappingPoint(7, UNEVEN_OUTPUT)})
+                        .withName("get intermediate"));
         assertEquals(EVEN_OUTPUT, container.queryById(get).map(4));
         assertEquals(UNEVEN_OUTPUT, container.queryById(get).map(7));
 
@@ -81,11 +96,6 @@ class IntermediateValueIOTest {
 
             }
         }
-    }
-
-    public static int mod(int a, int b) {
-        int result = a % b;
-        return (result < 0) ? result + Math.abs(b) : result;
     }
 
     @Test

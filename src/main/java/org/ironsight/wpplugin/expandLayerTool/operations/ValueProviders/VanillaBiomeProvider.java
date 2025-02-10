@@ -4,10 +4,8 @@ import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
 import org.pepsoft.worldpainter.layers.Biome;
-import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
