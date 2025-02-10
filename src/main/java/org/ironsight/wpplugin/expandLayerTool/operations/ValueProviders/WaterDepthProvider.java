@@ -14,6 +14,11 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     }
 
     @Override
+    public boolean equals(Object obj) {
+        return obj != null && this.getClass().equals(obj.getClass());
+    }
+
+    @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
         dim.setHeightAt(x, y, Math.round(dim.getHeightAt(x, y) - value));
     }

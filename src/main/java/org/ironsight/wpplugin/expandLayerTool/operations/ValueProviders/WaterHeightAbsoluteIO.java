@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
@@ -27,9 +28,15 @@ public class WaterHeightAbsoluteIO extends HeightProvider {
     }
 
     @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new WaterHeightAbsoluteIO();
+    }
+
+    @Override
     public String valueToString(int value) {
         return Integer.toString(value);
     }
+
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         float percent = (value - getMinValue() * 1f) / (getMaxValue() - getMinValue());
@@ -38,5 +45,15 @@ public class WaterHeightAbsoluteIO extends HeightProvider {
         g.fillRect(0, 0, dim.width, dim.height);
         g.setColor(Color.BLUE);
         g.fillRect(0, (int) (dim.height * (1 - percent)), dim.width, (int) (dim.height * (percent)));
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.WATER_HEIGHT;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj != null && this.getClass() == obj.getClass();
     }
 }

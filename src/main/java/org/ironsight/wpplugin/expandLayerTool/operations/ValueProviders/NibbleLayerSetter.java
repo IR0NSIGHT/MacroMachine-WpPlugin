@@ -33,7 +33,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     protected String layerName;
     protected Layer layer = null;
 
-    private NibbleLayerSetter(String name, String id) {
+    protected NibbleLayerSetter(String name, String id) {
         this.layerId = id;
         this.layerName = name;
     }
@@ -122,7 +122,8 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (o == null || getClass() != o.getClass())
+            return false;
         NibbleLayerSetter that = (NibbleLayerSetter) o;
         return Objects.equals(layerId, that.layerId);
     }

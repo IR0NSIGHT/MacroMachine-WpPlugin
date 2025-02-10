@@ -17,6 +17,11 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     }
 
     @Override
+    public boolean equals(Object obj) {
+        return obj != null && this.getClass().equals(obj.getClass());
+    }
+
+    @Override
     public int getValueAt(Dimension dim, int x, int y) {
         return dim.getTerrainAt(x, y).ordinal();
     }
