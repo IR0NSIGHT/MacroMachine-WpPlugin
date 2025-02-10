@@ -271,9 +271,9 @@ public class MacroTreePanel extends JPanel {
             if (tree.getSelectionPaths() != null) selectedMacros = Arrays.stream(tree.getSelectionPaths())
                     .filter(path -> path.getLastPathComponent() instanceof DefaultMutableTreeNode)
                     .map(path -> (DefaultMutableTreeNode) path.getLastPathComponent())
-                    .filter(node -> node.getUserObject() instanceof MappingMacro)
-                    .map(node -> (MappingMacro) node.getUserObject())
-                    .map(MappingMacro::getUid)
+                    .filter(node -> node.getUserObject() instanceof SaveableAction)
+                    .map(node -> (SaveableAction) node.getUserObject())
+                    .map(SaveableAction::getUid)
                     .collect(Collectors.toCollection(LinkedList::new));
             Object o = tree.getLastSelectedPathComponent();
             if (o instanceof DefaultMutableTreeNode) {
@@ -289,14 +289,14 @@ public class MacroTreePanel extends JPanel {
         this.add(scrollPane, BorderLayout.CENTER);
 
         JPanel buttons = new JPanel(new FlowLayout());
-        JButton addButton = new JButton("Add macro");
+        JButton addButton = new JButton("Create macro");
         addButton.addActionListener(e -> {
             container.addMapping();
             update();
         });
         buttons.add(addButton);
 
-        JButton addActionButton = new JButton("Add action");
+        JButton addActionButton = new JButton("Create action");
         addActionButton.addActionListener(e -> {
             LayerMapping m = mappingContainer.addMapping();
             if (tree.getLastSelectedPathComponent() instanceof DefaultMutableTreeNode) {
@@ -313,9 +313,10 @@ public class MacroTreePanel extends JPanel {
         });
         buttons.add(addActionButton);
 
-        JButton removeButton = new JButton("Remove");
+        JButton removeButton = new JButton("Delete");
         removeButton.addActionListener(e -> {
             container.deleteMapping(selectedMacros.toArray(new UUID[0]));
+            mappingContainer.deleteMapping(selectedMacros.toArray(new UUID[0]));
         });
         buttons.add(removeButton);
 
