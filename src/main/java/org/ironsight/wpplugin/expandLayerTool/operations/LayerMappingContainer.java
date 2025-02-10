@@ -19,34 +19,58 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
 
     public static void addDefaultMappings(LayerMappingContainer container) {
         LayerMapping m = container.addMapping();
-        m = new LayerMapping(new SlopeProvider(), new StonePaletteApplicator(),
-                new MappingPoint[]{new MappingPoint(30, 3), new MappingPoint(50, 8), new MappingPoint(70, 5),
-                        new MappingPoint(80, 9)}, ActionType.SET, "paint mountainsides", "apply stone and rocks " +
-                "based" + " on slope to make mountain sides colorful and interesting", m.getUid());
+        m = new LayerMapping(new SlopeProvider(),
+                new StonePaletteApplicator(),
+                new MappingPoint[]{new MappingPoint(30, 3),
+                        new MappingPoint(50, 8),
+                        new MappingPoint(70, 5),
+                        new MappingPoint(80, 9)},
+                ActionType.SET,
+                "paint mountainsides",
+                "apply stone and rocks " + "based" + " on slope to make mountain sides colorful and interesting",
+                m.getUid());
         container.updateMapping(m);
 
         m = container.addMapping();
-        m = new LayerMapping(new HeightProvider(), new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
-                new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)}, ActionType.AT_LEAST,
-                "frosted " + "peaks", "gradually add snow the higher a mountain goes", m.getUid());
+        m = new LayerMapping(new HeightProvider(),
+                new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
+                new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)},
+                ActionType.AT_LEAST,
+                "frosted " + "peaks",
+                "gradually add snow the higher a mountain goes",
+                m.getUid());
         container.updateMapping(m);
 
         m = container.addMapping();
-        m = new LayerMapping(new SlopeProvider(), new NibbleLayerSetter(PineForest.INSTANCE),
+        m = new LayerMapping(new SlopeProvider(),
+                new NibbleLayerSetter(PineForest.INSTANCE),
                 new MappingPoint[]{new MappingPoint(0, 15), new MappingPoint(70, 15), new MappingPoint(80, 0)},
-                ActionType.LIMIT_TO, "no steep pines", "limit pines from growing on vertical cliffs", m.getUid());
+                ActionType.LIMIT_TO,
+                "no steep pines",
+                "limit pines from growing on vertical cliffs",
+                m.getUid());
         container.updateMapping(m);
 
         m = container.addMapping();
-        m = new LayerMapping(new AnnotationSetter(), new TestInputOutput(), new MappingPoint[0], ActionType.SET,
-                "colors", "", m.getUid());
+        m = new LayerMapping(new AnnotationSetter(),
+                new TestInputOutput(),
+                new MappingPoint[0],
+                ActionType.SET,
+                "colors",
+                "",
+                m.getUid());
         container.updateMapping(m);
     }
 
     @Override
     protected LayerMapping getNewAction() {
-        return new LayerMapping(new HeightProvider(), new AnnotationSetter(), new MappingPoint[0], ActionType.SET,
-                "Height-to-colors", "paint annotations based on terrain height", getUUID());
+        return new LayerMapping(new HeightProvider(),
+                new AnnotationSetter(),
+                new MappingPoint[0],
+                ActionType.SET,
+                "New Action " + Math.round(Math.random() * 1000),
+                "description of the action",
+                getUUID());
 
     }
 
