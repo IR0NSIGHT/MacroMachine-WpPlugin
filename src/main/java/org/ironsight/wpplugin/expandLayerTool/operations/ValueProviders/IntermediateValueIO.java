@@ -13,6 +13,11 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
     private static int lastY;
 
     @Override
+    public boolean equals(Object obj) {
+        return obj != null && this.getClass().equals(obj.getClass());
+    }
+
+    @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (lastX != x || lastY != y) return 0;
         return value;

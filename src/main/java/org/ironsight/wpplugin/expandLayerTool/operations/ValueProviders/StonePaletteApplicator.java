@@ -3,13 +3,12 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
-import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Collection;
 
 public class StonePaletteApplicator implements IPositionValueSetter {
+    private final Terrain[] materials;
     Color[] colors = new Color[]{
             // Terrain.GRASS (Grass Block)
             new Color(85, 107, 47),      // Dark Olive Green
@@ -34,12 +33,19 @@ public class StonePaletteApplicator implements IPositionValueSetter {
             // Terrain.ROCK (Rock)
             new Color(169, 169, 169)     // Dark Gray (similar to Stone)
     };
-    private final Terrain[] materials;
 
     public StonePaletteApplicator() {
-        materials = new Terrain[]{Terrain.GRASS, Terrain.GRAVEL, Terrain.STONE, Terrain.COBBLESTONE,
-                Terrain.MOSSY_COBBLESTONE, Terrain.GRANITE, Terrain.DIORITE, Terrain.ANDESITE, Terrain.DEEPSLATE,
-                Terrain.STONE_MIX, Terrain.ROCK};
+        materials = new Terrain[]{Terrain.GRASS,
+                Terrain.GRAVEL,
+                Terrain.STONE,
+                Terrain.COBBLESTONE,
+                Terrain.MOSSY_COBBLESTONE,
+                Terrain.GRANITE,
+                Terrain.DIORITE,
+                Terrain.ANDESITE,
+                Terrain.DEEPSLATE,
+                Terrain.STONE_MIX,
+                Terrain.ROCK};
     }
 
     public StonePaletteApplicator(Terrain[] materials) {
@@ -78,11 +84,11 @@ public class StonePaletteApplicator implements IPositionValueSetter {
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return new StonePaletteApplicator((Terrain[]) data[0]);
+        return new StonePaletteApplicator((Terrain[]) data);
     }
 
     @Override
-    public Object[] getSaveData() {
+    public Object[] getSaveData() { //int[] with enum ordinals
         return materials;
     }
 
@@ -110,7 +116,7 @@ public class StonePaletteApplicator implements IPositionValueSetter {
 
     @Override
     public boolean equals(Object obj) {
-        return obj != null && this.getClass().equals(obj.getClass()) && Arrays.equals(materials,
-                ((StonePaletteApplicator) obj).materials);
+        return obj != null && this.getClass().equals(obj.getClass()) &&
+                Arrays.equals(materials, ((StonePaletteApplicator) obj).materials);
     }
 }

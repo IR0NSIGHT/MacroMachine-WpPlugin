@@ -32,4 +32,6 @@ public interface IMappingValue {
     void paint(Graphics g, int value, java.awt.Dimension dim);
 
     ProviderType getProviderType();
+
+    boolean equals(Object o);
 }

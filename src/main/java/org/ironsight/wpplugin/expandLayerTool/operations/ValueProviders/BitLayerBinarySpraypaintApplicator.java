@@ -1,23 +1,34 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.layers.LayerManager;
 
 import java.awt.*;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Random;
 
-public class BitLayerBinarySpraypaintApplicator extends NibbleLayerSetter {
+public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter {
     Random random = new Random();
+    private String layerName;
+    private String layerId;
+    private Layer layer;
 
     public BitLayerBinarySpraypaintApplicator() {
         super();
     }
 
     public BitLayerBinarySpraypaintApplicator(Layer layer) {
-        super(layer);
+        this.layerId = layer.getId();
+        this.layerName = layer.getName();
+    }
+
+    BitLayerBinarySpraypaintApplicator(String layerId, String layerName) {
+        this.layerId = layerId;
+        this.layerName = layerName;
     }
 
     /**
@@ -39,6 +50,28 @@ public class BitLayerBinarySpraypaintApplicator extends NibbleLayerSetter {
     @Override
     public int getMinValue() {
         return 0;
+    }
+
+    @Override
+    public void prepareForDimension(Dimension dim) {
+        Collection<Layer> allLayers = new LinkedList<>();
+        allLayers.addAll(dim.getCustomLayers());
+        allLayers.addAll(LayerManager.getInstance().getLayers());
+        allLayers.stream()
+                .filter(f -> f.getId().equals(layerId))
+                .findFirst()
+                .map(l -> this.layer = l)
+                .orElseThrow(IllegalAccessError::new);
+    }
+
+    @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new BitLayerBinarySpraypaintApplicator((String) data[0], (String) data[1]);
+    }
+
+    @Override
+    public Object[] getSaveData() {
+        return new Object[]{layerId, layerName};
     }
 
     @Override
@@ -72,11 +105,6 @@ public class BitLayerBinarySpraypaintApplicator extends NibbleLayerSetter {
     }
 
     @Override
-    public int getValueAt(Dimension dim, int x, int y) {
-        return dim.getBitLayerValueAt(layer, x, y) ? 100 : 0;
-    }
-
-    @Override
     public String getName() {
         return layerName + " (spraypaint)";
     }
@@ -98,5 +126,19 @@ public class BitLayerBinarySpraypaintApplicator extends NibbleLayerSetter {
         int randInt = random.nextInt(100);
         boolean set = value > randInt;
         return set;
+    }
+
+    @Override
+    public String toString() {
+        return "BitLayerBinarySpraypaintApplicator{" + ", layerName='" + layerName + '\'' + ", layerId='" + layerId +
+                '\'' + '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BitLayerBinarySpraypaintApplicator that = (BitLayerBinarySpraypaintApplicator) o;
+        return Objects.equals(layerId, that.layerId);
     }
 }

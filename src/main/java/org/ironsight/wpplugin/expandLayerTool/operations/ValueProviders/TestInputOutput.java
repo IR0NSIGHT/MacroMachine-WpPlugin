@@ -12,6 +12,11 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     }
 
     @Override
+    public boolean equals(Object obj) {
+        return obj != null && this.getClass().equals(obj.getClass());
+    }
+
+    @Override
     public void prepareForDimension(Dimension dim) {
 
     }
