@@ -160,6 +160,7 @@ public class MacroTreePanel extends JPanel {
     }
 
     private void update() {
+        System.out.println(this.getClass().getSimpleName() + " UPDATE ");
         LinkedList<UUID> expanded = new LinkedList<>();
         LinkedList<UUID> selected = new LinkedList<>();
         if (tree.getModel().getRoot() != null) {
