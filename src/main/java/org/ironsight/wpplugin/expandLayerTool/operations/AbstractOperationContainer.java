@@ -60,8 +60,10 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         LinkedList<UUID> list = new LinkedList<>();
         for (UUID u : uid) {
             T removed = mappings.remove(u);
-            if (removed != null) list.add(removed.getUid());
-            System.out.println("removed objet from container: " + removed.getName());
+            if (removed != null) {
+                list.add(removed.getUid());
+                System.out.println("removed objet from container: " + removed.getName());
+            }
         }
         notify(list.toArray(new UUID[0]));
     }
