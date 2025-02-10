@@ -2,14 +2,13 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.util.Box;
-import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.exporting.MinecraftWorld;
 import org.pepsoft.worldpainter.heightMaps.ConstantHeightMap;
 import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
 import org.pepsoft.worldpainter.themes.SimpleTheme;
 import org.pepsoft.worldpainter.themes.Theme;
-
 
 import java.awt.*;
 
@@ -19,18 +18,31 @@ import static org.pepsoft.worldpainter.Dimension.Anchor.NORMAL_DETAIL;
 import static org.pepsoft.worldpainter.Terrain.GRASS;
 
 public final class TestData {
+    public static final Platform PLATFORM = DefaultPlugin.JAVA_ANVIL_1_19;
+    public static final int MIN_HEIGHT = PLATFORM.minZ;
+    public static final int MAX_HEIGHT = PLATFORM.standardMaxHeight;
+    public static final World2 WORLD = new World2(PLATFORM, MIN_HEIGHT, MAX_HEIGHT);
+    public static final Theme THEME = SimpleTheme.createSingleTerrain(GRASS, MIN_HEIGHT, MAX_HEIGHT, 62);
+    public static final long SEED = 0L;
+
     private TestData() {
         // Prevent instantiation
     }
 
     public static TileFactory createTileFactory(int terrainHeight) {
-        return new HeightMapTileFactory(SEED, new ConstantHeightMap(terrainHeight), MIN_HEIGHT, MAX_HEIGHT, false, THEME);
+        return new HeightMapTileFactory(SEED,
+                new ConstantHeightMap(terrainHeight),
+                MIN_HEIGHT,
+                MAX_HEIGHT,
+                false,
+                THEME);
     }
 
     public static Dimension createDimension(Rectangle area, int terrainHeight) {
         final TileFactory tileFactory = createTileFactory(terrainHeight);
         final Dimension dimension = new Dimension(WORLD, "Surface", SEED, tileFactory, NORMAL_DETAIL);
-        final int tileX1 = area.x / TILE_SIZE, tileX2 = (area.x + area.width - 1) / TILE_SIZE, tileY1 = area.y / TILE_SIZE, tileY2 = (area.y + area.height - 1) / TILE_SIZE;
+        final int tileX1 = area.x / TILE_SIZE, tileX2 = (area.x + area.width - 1) / TILE_SIZE, tileY1 =
+                area.y / TILE_SIZE, tileY2 = (area.y + area.height - 1) / TILE_SIZE;
         for (int tileX = tileX1; tileX <= tileX2; tileX++) {
             for (int tileY = tileY1; tileY <= tileY2; tileY++) {
                 dimension.addTile(tileFactory.createTile(tileX, tileY));
@@ -62,16 +74,4 @@ public final class TestData {
         }
         return new MinecraftWorldObject("Test", volume, MAX_HEIGHT, 0, lowestBlocks, null);
     }
-
-    public static final Platform PLATFORM = DefaultPlugin.JAVA_ANVIL_1_19;
-
-    public static final int MIN_HEIGHT = PLATFORM.minZ;
-
-    public static final int MAX_HEIGHT = PLATFORM.standardMaxHeight;
-
-    public static final World2 WORLD = new World2(PLATFORM, MIN_HEIGHT, MAX_HEIGHT);
-
-    public static final long SEED = 0L;
-
-    public static final Theme THEME = SimpleTheme.createSingleTerrain(GRASS, MIN_HEIGHT, MAX_HEIGHT, 62);
 }

@@ -20,7 +20,8 @@ public class ApplyAction {
             Tile tile = t.next();
 
             {   // EARLY ABORT IF TILE DOESNT MEET MINIMAL CRITERIA
-                if ((filter.isInSelection() && !tile.hasLayer(SelectionBlock.INSTANCE) && !tile.hasLayer(SelectionChunk.INSTANCE)))
+                if ((filter.isInSelection() && !tile.hasLayer(SelectionBlock.INSTANCE) &&
+                        !tile.hasLayer(SelectionChunk.INSTANCE)))
                     continue;
 
                 if (filter.getOnlyOnLayer() != null && !tile.hasLayer(filter.getOnlyOnLayer())) continue;

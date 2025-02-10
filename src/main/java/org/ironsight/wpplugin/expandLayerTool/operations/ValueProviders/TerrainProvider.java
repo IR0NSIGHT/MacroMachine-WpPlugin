@@ -5,13 +5,11 @@ import org.pepsoft.worldpainter.ColourScheme;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.colourschemes.HardcodedColourScheme;
-import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
-import java.util.Collection;
 
 public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter {
-    private static ColourScheme colorScheme = new HardcodedColourScheme();
+    private static final ColourScheme colorScheme = new HardcodedColourScheme();
 
     public TerrainProvider() {
     }

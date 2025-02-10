@@ -2,10 +2,8 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
-import java.util.Collection;
 
 public class HeightProvider implements IPositionValueGetter, IPositionValueSetter {
     private HeightProvider instance;
@@ -26,7 +24,9 @@ public class HeightProvider implements IPositionValueGetter, IPositionValueSette
     @Override
     public String getDescription() {
         return "get the height of a position in percent for 0 to 255.";
-    }    private HeightProvider getInstance() {
+    }
+
+    private HeightProvider getInstance() {
         if (instance == null) instance = new HeightProvider();
         return instance;
     }
@@ -40,7 +40,6 @@ public class HeightProvider implements IPositionValueGetter, IPositionValueSette
     public void setValueAt(Dimension dim, int x, int y, int value) {
         dim.setHeightAt(x, y, value);
     }
-
 
 
     @Override

@@ -1,9 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
-import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacroContainer;
 
 import javax.swing.*;
 import java.awt.*;
