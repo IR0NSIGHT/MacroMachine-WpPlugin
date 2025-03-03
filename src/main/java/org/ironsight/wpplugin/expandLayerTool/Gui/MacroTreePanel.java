@@ -290,6 +290,7 @@ public class MacroTreePanel extends JPanel {
 
         JPanel buttons = new JPanel(new FlowLayout());
         JButton addButton = new JButton("Create macro");
+        addButton.setToolTipText("Create a new, empty macro.");
         addButton.addActionListener(e -> {
             container.addMapping();
             update();
@@ -297,23 +298,24 @@ public class MacroTreePanel extends JPanel {
         buttons.add(addButton);
 
         JButton addActionButton = new JButton("Create action");
+        addActionButton.setToolTipText("Create an new, empty action and add it to all selected macros.");
         addActionButton.addActionListener(e -> {
             LayerMapping m = mappingContainer.addMapping();
-            if (tree.getLastSelectedPathComponent() instanceof DefaultMutableTreeNode) {
-                if (((DefaultMutableTreeNode) tree.getLastSelectedPathComponent()).getUserObject() instanceof MappingMacro) {
-                    MappingMacro macro =
-                            (MappingMacro) ((DefaultMutableTreeNode) tree.getLastSelectedPathComponent()).getUserObject();
-                    ArrayList<UUID> ids = new ArrayList<>(macro.mappingUids.length + 1);
-                    Collections.addAll(ids, macro.mappingUids);
-                    ids.add(m.getUid());
-                    container.updateMapping(macro.withUUIDs(ids.toArray(new UUID[0])));
-                }
+
+            for (UUID macroId : selectedMacros) {
+                MappingMacro macro = container.queryById(macroId);
+                ArrayList<UUID> ids = new ArrayList<>(macro.mappingUids.length + 1);
+                Collections.addAll(ids, macro.mappingUids);
+                ids.add(m.getUid());
+                container.updateMapping(macro.withUUIDs(ids.toArray(new UUID[0])));
             }
+
             update();
         });
         buttons.add(addActionButton);
 
         JButton removeButton = new JButton("Delete");
+        removeButton.setToolTipText("Delete all selected macros permanently");
         removeButton.addActionListener(e -> {
             container.deleteMapping(selectedMacros.toArray(new UUID[0]));
             mappingContainer.deleteMapping(selectedMacros.toArray(new UUID[0]));
@@ -321,7 +323,8 @@ public class MacroTreePanel extends JPanel {
         buttons.add(removeButton);
 
         JButton applyButton = new JButton("Apply");
-        applyButton.setToolTipText("Apply the selected macro to the map");
+        applyButton.setToolTipText(
+                "Apply all selected macros to the map. The order in which macros are applied is " + "random.");
         applyButton.addActionListener(f -> onApply());
         buttons.add(applyButton);
 
