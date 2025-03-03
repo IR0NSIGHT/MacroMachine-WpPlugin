@@ -216,7 +216,7 @@ public class LayerMapping implements SaveableAction {
             default:
                 throw new EnumConstantNotPresentException(ActionType.class, actionType.displayName);
         }
-        output.setValueAt(dim, x, y, outputValue);
+        output.setValueAt(dim, x, y, this.sanitizeOutput(outputValue));
     }
 
     private boolean hasValueForInput(int input) {
@@ -224,8 +224,13 @@ public class LayerMapping implements SaveableAction {
     }
 
     public int map(int input) {    //TODO do linear interpolation
+        if (input == 360) {
+            System.out.println("");
+        }
         assert input >= this.input.getMinValue();
-        assert input <= this.input.getMaxValue();
+        assert input <= this.input.getMaxValue() :
+                "invalid input"+input + " has to be lower equal than " + this.input.getMaxValue();
+
         int value = mappings[input - this.input.getMinValue()];
         return value;
     }

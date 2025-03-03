@@ -40,7 +40,7 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
         }
         assert angleDegrees >= 0;
         assert angleDegrees < 360;
-        return (int) Math.round(angleDegrees);
+        return (int) Math.floor(angleDegrees);
     }
 
     @Override

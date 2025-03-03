@@ -36,9 +36,14 @@ public class GlobalActionPanel extends JPanel {
         MappingMacroContainer macros = MappingMacroContainer.getInstance();
         LayerMappingContainer layers = LayerMappingContainer.INSTANCE;
 
-        for (int i = 0; i < 10; i++) {
+        macros.readFromFile();
+        layers.readFromFile();
+        LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
+        MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
+/*
+        for (int i = 0; i < 3; i++) {
             MappingMacro macro = macros.addMapping();
-            UUID[] ids = new UUID[13];
+            UUID[] ids = new UUID[5];
             for (int j = 0; j < ids.length; j++) {
                 LayerMapping mapping = layers.addMapping().withName("Mapping Action" + i + "_" + j);
                 layers.updateMapping(mapping);
@@ -47,7 +52,7 @@ public class GlobalActionPanel extends JPanel {
             macro = macro.withUUIDs(ids).withName("ActionMacro_" + i);
             macros.updateMapping(macro);
         }
-
+*/
         frame.add(new GlobalActionPanel(f -> {
         }));
 

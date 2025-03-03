@@ -141,6 +141,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
             try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
                 oos.writeObject(jsonString);
                 System.out.println(getClass().getSimpleName() + " saved successfully to " + filePath);
+                System.out.println(jsonString);
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error serializing object to JSON", e);
