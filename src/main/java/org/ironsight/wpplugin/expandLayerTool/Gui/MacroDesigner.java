@@ -36,45 +36,6 @@ public class MacroDesigner extends JPanel {
         init();
     }
 
-    public static void main(String[] args) {
-        LayerMappingContainer.addDefaultMappings(LayerMappingContainer.INSTANCE);
-        MappingMacro mappingMacro = new MappingMacro("test macro",
-                "it does cool things on your map",
-                LayerMappingContainer.INSTANCE.queryAll().stream().map(LayerMapping::getUid).toArray(UUID[]::new),
-                UUID.randomUUID());
-
-        JDialog dialog = getDesignerDialog(null, mappingMacro, f -> {
-        });
-        dialog.setVisible(true);
-    }
-
-    public static JDialog getDesignerDialog(Frame parent, MappingMacro macro, Consumer<MappingMacro> onSubmit) {
-        JDialog dialog = new JDialog(parent);
-        dialog.setTitle("Macro Designer");
-        MacroDesigner designer = new MacroDesigner(onSubmit);
-        designer.setMacro(macro, true);
-
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(designer, BorderLayout.CENTER);
-        JPanel buttons = new JPanel(new FlowLayout());
-        panel.add(buttons, BorderLayout.SOUTH);
-
-        JButton submitButton = new JButton("submit");
-        buttons.add(submitButton);
-        submitButton.addActionListener(e -> {
-            onSubmit.accept(designer.macro);
-            dialog.dispose();
-        });
-
-        JButton helpButton = HelpDialog.getHelpButton("Macro Designer", helpString);
-        buttons.add(helpButton);
-
-        dialog.setContentPane(panel);
-        dialog.setModal(true);
-        dialog.pack();
-        return dialog;
-    }
-
     private void init() {
         this.setLayout(new BorderLayout());
 
@@ -120,26 +81,33 @@ public class MacroDesigner extends JPanel {
 
         JPanel buttons = new JPanel(new FlowLayout());
         addButton = new JButton("Add");
+        addButton.setToolTipText("Add an existing action to this macro.");
         addButton.addActionListener(e -> onAddMapping());
         buttons.add(addButton);
 
         removeButton = new JButton("Remove");
+        removeButton.setToolTipText("Remove an existing action from this macro. Action is not permanently deleted and" +
+                " still exists in global list.");
         removeButton.addActionListener(e -> onDeleteMapping());
         buttons.add(removeButton);
 
         moveUpButton = new JButton("Move Up");
+        moveUpButton.setToolTipText("Move up the selected action in the order of execution.");
         moveUpButton.addActionListener(e -> onMoveUpMapping());
         buttons.add(moveUpButton);
 
         moveDownButton = new JButton("Move Down");
+        moveDownButton.setToolTipText("Move down the selected action in the order of execution.");
         moveDownButton.addActionListener(e -> onMoveDownMapping());
         buttons.add(moveDownButton);
 
         changeMappingButton = new JButton("Change Mapping");
+        changeMappingButton.setToolTipText("Change action to another one from the global list.");
         changeMappingButton.addActionListener(e -> onChangeMapping());
         buttons.add(changeMappingButton);
 
-        JButton submitButton = new JButton("Submit");
+        JButton submitButton = new JButton("Save");
+        submitButton.setToolTipText("submit macro and save changes to global list.");
         submitButton.addActionListener(e -> onSubmit.accept(this.macro));
         buttons.add(submitButton);
         this.add(buttons, BorderLayout.SOUTH);

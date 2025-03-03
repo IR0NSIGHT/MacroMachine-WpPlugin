@@ -9,14 +9,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.function.Consumer;
 
-public class MappingEditorPanel extends LayerMappingPanel {
+public class ActionEditor extends LayerMappingPanel {
     private static JDialog dialog;
     private final Consumer<LayerMapping> onSubmit;
     private MappingGridPanel mappingDisplay;
     private MappingTextTable table;
     private LayerMappingTopPanel topBar;
 
-    public MappingEditorPanel(Consumer<LayerMapping> onSubmit) {
+    public ActionEditor(Consumer<LayerMapping> onSubmit) {
         super();
         this.onSubmit = onSubmit;
     }
@@ -66,6 +66,7 @@ public class MappingEditorPanel extends LayerMappingPanel {
         topBar.setOnUpdate(this::updateMapping);
 
         JButton submitButtom = new JButton("save");
+        submitButtom.setToolTipText("Submit action and save to global list.");
         submitButtom.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

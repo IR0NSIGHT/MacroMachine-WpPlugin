@@ -20,7 +20,7 @@ import java.beans.PropertyVetoException;
 import java.net.URI;
 import java.util.*;
 
-import static org.ironsight.wpplugin.expandLayerTool.Gui.MappingEditorPanel.createDialog;
+import static org.ironsight.wpplugin.expandLayerTool.Gui.ActionEditor.createDialog;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
