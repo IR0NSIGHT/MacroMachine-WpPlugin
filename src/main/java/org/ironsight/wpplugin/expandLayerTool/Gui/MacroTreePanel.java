@@ -13,6 +13,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static org.ironsight.wpplugin.expandLayerTool.Gui.HelpDialog.getHelpButton;
+
 public class MacroTreePanel extends JPanel {
     private final MappingMacroContainer container;
     private final LayerMappingContainer mappingContainer;
@@ -185,7 +187,8 @@ public class MacroTreePanel extends JPanel {
                 .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
                         f.getDescription().toLowerCase().contains(filterString) || Arrays.stream(f.mappingUids)
                         .map(LayerMappingContainer.INSTANCE::queryById)
-                        .anyMatch(action -> action.getName().contains(filterString) || action.getDescription().contains(filterString)) )
+                        .anyMatch(action -> action.getName().contains(filterString) ||
+                                action.getDescription().contains(filterString)))
                 .sorted(new Comparator<MappingMacro>() {
                     @Override
                     public int compare(MappingMacro o1, MappingMacro o2) {
@@ -342,6 +345,17 @@ public class MacroTreePanel extends JPanel {
                 "Apply all selected macros to the map. The order in which macros are applied is " + "random.");
         applyButton.addActionListener(f -> onApply());
         buttons.add(applyButton);
+
+        buttons.add(getHelpButton("Global Tree View",
+                "This view shows your global list of macros and actions. You can" + " " +
+                        "expand the macros, actions and their values.\n" +
+                        "Select a macro to open the macro-editor.\n" +
+                        "Select an action from a macro or from the 'All actions' node to open the action editor.\n" +
+                        "You can create and " +
+                        "delete actions and macros in this view. All changes in the global list are directly saved to" +
+                        " your " + "save-files. These are global and the same for all projects.\n" + " Press 'Apply'" +
+                        " to " +
+                        "apply a macro as a global operation to " + "your map."));
 
         scrollPane.setPreferredSize(new Dimension(500, 600));
 
