@@ -36,24 +36,28 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<La
         panel.add(inputoutput, BorderLayout.CENTER);
     }
 
-    public void updateTo(LayerMapping mapping) {
-        if (mapping == null) {
-            nameLabel.setText("INVALID ACTION");
-            return;
+    public void updateTo(Object mapping) {
+        if (mapping instanceof LayerMapping) {
+            LayerMapping lm = (LayerMapping) mapping;
+            input.setText(lm.input.getName());
+            output.setText(lm.output.getName());
+            actionType.setText(lm.actionType.getDisplayName());
+            nameLabel.setText(lm.getName());
+            panel.setToolTipText(lm.getDescription());
+        } else {
+            nameLabel.setText("UNKNOWN ACTION");
+            input.setText("");
+            output.setText("");
+            actionType.setText("");
+            panel.setToolTipText("this action does not exist. It will be ignored.");
         }
-
-        input.setText(mapping.input.getName());
-        output.setText(mapping.output.getName());
-        actionType.setText(mapping.actionType.getDisplayName());
-        nameLabel.setText(mapping.getName());
-        panel.setToolTipText(mapping.getDescription());
     }
 
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
-        updateTo((LayerMapping) value);
+        updateTo(value);
         if (isSelected) {
             panel.setBackground(table.getSelectionBackground());
         } else panel.setBackground(table.getBackground());
