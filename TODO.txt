@@ -10,4 +10,9 @@
 - investigate: sometimes saveing/loading doesnt seem  to work?
 - tooltip for Mappin gText table, explanation for each value
     "for height=50, take the existing value of pine and multiply it with 37. apply the result to the map"
+- add value table to preview a macros output:
+    use all possible inputs and give all outputs for it, so user can see if his actions have the intended effect:
 
+    inputs: slope X slope-dir X height -> frost spraypaint
+            0, 0, 0 -> 0
+            0, 0, 1 -> 0 [...]
