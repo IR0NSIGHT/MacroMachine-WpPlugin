@@ -14,7 +14,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
     public static LayerMappingContainer INSTANCE = new LayerMappingContainer();
 
     public LayerMappingContainer() {
-        super(LayerMapping.class, new File(Configuration.getConfigDir(), "plugins").getPath() + "/mappings.txt");
+        super(LayerMapping.class, new File(Configuration.getConfigDir(), "plugins").getPath() + "/mappings.json");
     }
 
     public static void addDefaultMappings(LayerMappingContainer container) {

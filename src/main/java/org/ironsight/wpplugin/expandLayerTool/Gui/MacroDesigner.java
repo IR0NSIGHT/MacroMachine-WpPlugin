@@ -70,7 +70,12 @@ public class MacroDesigner extends JPanel {
         JScrollPane descPane = new JScrollPane(description);
         descPane.setPreferredSize(new Dimension(0, lineHeight * lineCount));
 
-        table = new JTable();
+        table = new JTable() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Disable editing
+            }
+        };;
         table.setDefaultRenderer(Object.class, new MappingTableCellRenderer());
         scrollPane = new JScrollPane(table);
         this.add(scrollPane, BorderLayout.CENTER);
