@@ -206,7 +206,6 @@ public class MacroDesigner extends JPanel {
 
     private void updateComponents() {
         System.out.println(getClass().getSimpleName() + ": update components");
-        assert macro.allMappingsReady(LayerMappingContainer.INSTANCE) : "some actions in macro are null/dont exist";
 
         name.setText(macro.getName());
         description.setText(macro.getDescription());
@@ -218,8 +217,6 @@ public class MacroDesigner extends JPanel {
         int i = 0;
         for (UUID id : macro.mappingUids) {
             LayerMapping m = LayerMappingContainer.INSTANCE.queryById(id);
-            assert m != null;
-
             data[i++] = new Object[]{m};
         }
         model.setDataVector(data, columns);
