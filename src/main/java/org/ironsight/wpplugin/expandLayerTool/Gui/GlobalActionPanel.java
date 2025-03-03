@@ -11,17 +11,21 @@ import java.util.function.Consumer;
 // and an editor for the currently selected action on the right
 public class GlobalActionPanel extends JPanel {
     public static final String MAPPING_EDITOR = "mappingEditor";
+    public static final String INVALID_SELECTION = "invalidSelection";
     public static final String MACRO_DESIGNER = "macroDesigner";
     MacroTreePanel macroTreePanel;
     MacroDesigner macroDesigner;
     MappingEditorPanel mappingEditor;
 
-    Consumer<MappingMacro> macroConsumer;
+    //consumes macro to apply to map. callback for "user pressed apply-macro"
+    Consumer<MappingMacro> applyMacro;
     CardLayout layout;
     JPanel editorPanel;
+    private UUID currentSelectedMacro;
+    private UUID currentSelectedLayer;
 
-    public GlobalActionPanel(Consumer<MappingMacro> macroConsumer) {
-        this.macroConsumer = macroConsumer;
+    public GlobalActionPanel(Consumer<MappingMacro> applyMacro) {
+        this.applyMacro = applyMacro;
         init();
     }
 
@@ -51,11 +55,39 @@ public class GlobalActionPanel extends JPanel {
         frame.setVisible(true);
     }
 
+    private void onUpdate() {
+        LayerMapping mapping = LayerMappingContainer.INSTANCE.queryById(currentSelectedLayer);
+        MappingMacro macro = MappingMacroContainer.getInstance().queryById(currentSelectedMacro);
+        if (macro == null && selectionType == SELECTION_TPYE.MACRO)
+            selectionType = SELECTION_TPYE.INVALID;
+
+        if (mapping == null && selectionType == SELECTION_TPYE.ACTION)
+            selectionType = SELECTION_TPYE.INVALID;
+
+
+        switch (selectionType) {
+            case MACRO:
+                macroDesigner.setMacro(macro, true);
+                layout.show(editorPanel, MACRO_DESIGNER);
+                break;
+            case ACTION:
+                mappingEditor.setMapping(mapping);
+                layout.show(editorPanel, MAPPING_EDITOR);
+                break;
+            case INVALID:
+                layout.show(editorPanel, INVALID_SELECTION);
+                break;
+        }
+    }
+
     private void init() {
+        MappingMacroContainer.getInstance().subscribe(this::onUpdate);
+        LayerMappingContainer.INSTANCE.subscribe(this::onUpdate);
+
         this.setLayout(new BorderLayout());
         macroTreePanel = new MacroTreePanel(MappingMacroContainer.getInstance(),
                 LayerMappingContainer.INSTANCE,
-                this.macroConsumer,
+                this.applyMacro,
                 this::onSelect);
         macroTreePanel.setMaximumSize(new Dimension(200, 0));
 
@@ -65,20 +97,28 @@ public class GlobalActionPanel extends JPanel {
         editorPanel = new JPanel(new CardLayout());
         editorPanel.add(mappingEditor, MAPPING_EDITOR);
         editorPanel.add(macroDesigner, MACRO_DESIGNER);
+        editorPanel.add(new JPanel(), INVALID_SELECTION);
         layout = (CardLayout) editorPanel.getLayout();
         layout.show(editorPanel, MACRO_DESIGNER);
         this.add(macroTreePanel, BorderLayout.WEST);
         this.add(editorPanel, BorderLayout.CENTER);
     }
 
+    enum SELECTION_TPYE {
+        MACRO,
+        ACTION,
+        INVALID
+    }
+    private SELECTION_TPYE selectionType = SELECTION_TPYE.INVALID;
     private void onSelect(SaveableAction action) {
         if (action instanceof MappingMacro) {
-            macroDesigner.setMacro((MappingMacro) action, false);
-            layout.show(editorPanel, MACRO_DESIGNER);
+            currentSelectedMacro = action.getUid();
+            selectionType = SELECTION_TPYE.MACRO;
         } else if (action instanceof LayerMapping) {
-            mappingEditor.setMapping((LayerMapping) action);
-            layout.show(editorPanel, MAPPING_EDITOR);
+            currentSelectedLayer = action.getUid();
+            selectionType = SELECTION_TPYE.ACTION;
         }
+        onUpdate();
     }
 
     private void onSubmitMapping(LayerMapping mapping) {
@@ -89,13 +129,4 @@ public class GlobalActionPanel extends JPanel {
         MappingMacroContainer.getInstance().updateMapping(macro);
     }
 
-    private void onEditMacro(MappingMacro mapping) {
-    }
-
-    private void onEditMapping(LayerMapping mapping) {
-    }
-
-    private void update() {
-
-    }
 }
