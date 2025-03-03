@@ -320,26 +320,8 @@ public class MacroTreePanel extends JPanel {
         });
         buttons.add(removeButton);
 
-        JButton editButton = new JButton("Edit");
-        editButton.addActionListener(e -> {
-            Object obj = tree.getLastSelectedPathComponent();
-            if (obj instanceof DefaultMutableTreeNode) {
-                DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) obj;
-                Object userObj = treeNode.getUserObject();
-                if (userObj instanceof MappingMacro) {
-                    Window parent = SwingUtilities.getWindowAncestor(this);
-                    JDialog macroDialog =
-                            MacroDesigner.getDesignerDialog(parent instanceof Frame ? (Frame) parent : null,
-                                    (MappingMacro) userObj,
-                                    container::updateMapping);
-                    macroDialog.setVisible(true);
-
-                }
-            }
-        });
-        buttons.add(editButton);
-
         JButton applyButton = new JButton("Apply");
+        applyButton.setToolTipText("Apply the selected macro to the map");
         applyButton.addActionListener(f -> onApply());
         buttons.add(applyButton);
 
