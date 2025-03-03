@@ -102,6 +102,8 @@ public class GlobalActionPanel extends JPanel {
         layout.show(editorPanel, MACRO_DESIGNER);
         this.add(macroTreePanel, BorderLayout.WEST);
         this.add(editorPanel, BorderLayout.CENTER);
+
+        onUpdate();
     }
 
     enum SELECTION_TPYE {
