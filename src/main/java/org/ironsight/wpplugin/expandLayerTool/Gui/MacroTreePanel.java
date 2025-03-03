@@ -333,7 +333,7 @@ public class MacroTreePanel extends JPanel {
         });
         buttons.add(removeButton);
 
-        JButton applyButton = new JButton("Apply");
+        JButton applyButton = new JButton("Apply macros");
         applyButton.setToolTipText(
                 "Apply all selected macros to the map. The order in which macros are applied is " + "random.");
         applyButton.addActionListener(f -> onApply());
@@ -355,7 +355,6 @@ public class MacroTreePanel extends JPanel {
                 applyToMap.accept(macro);
             }
         }
-
     }
 }
 

@@ -15,7 +15,7 @@ public class GlobalActionPanel extends JPanel {
     public static final String MACRO_DESIGNER = "macroDesigner";
     MacroTreePanel macroTreePanel;
     MacroDesigner macroDesigner;
-    MappingEditorPanel mappingEditor;
+    ActionEditor mappingEditor;
 
     //consumes macro to apply to map. callback for "user pressed apply-macro"
     Consumer<MappingMacro> applyMacro;
@@ -92,7 +92,7 @@ public class GlobalActionPanel extends JPanel {
         macroTreePanel.setMaximumSize(new Dimension(200, 0));
 
         macroDesigner = new MacroDesigner(this::onSubmitMacro);
-        mappingEditor = new MappingEditorPanel(this::onSubmitMapping);
+        mappingEditor = new ActionEditor(this::onSubmitMapping);
 
         editorPanel = new JPanel(new CardLayout());
         editorPanel.add(mappingEditor, MAPPING_EDITOR);
