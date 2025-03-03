@@ -183,7 +183,12 @@ public class MacroTreePanel extends JPanel {
         macros.sort(Comparator.comparing(MappingMacro::getName));
         macros.stream()
                 .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
-                        f.getDescription().toLowerCase().contains(filterString))
+                        f.getDescription().toLowerCase().contains(filterString)).sorted(new Comparator<MappingMacro>() {
+                    @Override
+                    public int compare(MappingMacro o1, MappingMacro o2) {
+                        return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
+                    }
+                })
                 .forEach(macro -> {
                     DefaultMutableTreeNode macroNode = new DefaultMutableTreeNode(macro);
                     System.out.println(" create macro node: " + macro.getName());
@@ -216,6 +221,12 @@ public class MacroTreePanel extends JPanel {
                 .stream()
                 .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
                         f.getDescription().toLowerCase().contains(filterString))
+                .sorted(new Comparator<LayerMapping>() {
+                    @Override
+                    public int compare(LayerMapping o1, LayerMapping o2) {
+                        return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
+                    }
+                })
                 .forEach(m -> allNode.add(LayerToNode(m)));
         root.add(allNode);
 
