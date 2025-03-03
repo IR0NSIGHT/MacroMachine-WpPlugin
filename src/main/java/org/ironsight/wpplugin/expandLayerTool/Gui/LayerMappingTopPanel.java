@@ -58,6 +58,8 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         nameField.setFont(header1Font);
         textInputs.add(nameField, BorderLayout.WEST);
         nameField.setColumns(10);
+        nameField.setBorder(BorderFactory.createTitledBorder("Action name"));
+
         nameField.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
@@ -67,6 +69,8 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         });
 
         description = new JTextField();
+        description.setBorder(BorderFactory.createTitledBorder("Description"));
+
         description.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
@@ -81,6 +85,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         JPanel comboboxes = new JPanel(new GridLayout(0, 3));
         this.add(comboboxes, BorderLayout.CENTER);
         inputSelect = new InputGetterComboBox();
+        inputSelect.setBorder(BorderFactory.createTitledBorder("Input value"));
         inputSelect.addActionListener(new ActionListener() {
 
             @Override
@@ -92,7 +97,19 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         comboboxes.add(inputSelect);
 
 
+        actionTypeComboBox = new ActionTypeComboBox();
+        actionTypeComboBox.setBorder(BorderFactory.createTitledBorder("Action Type"));
+        actionTypeComboBox.setFont(header2Font);
+        comboboxes.add(actionTypeComboBox);
+        actionTypeComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
+            }
+        });
+
         outputSelect = new OutputComboBox();
+        outputSelect.setBorder(BorderFactory.createTitledBorder("Output value"));
         comboboxes.add(outputSelect);
         outputSelect.setFont(header2Font);
         outputSelect.addActionListener(new ActionListener() {
@@ -102,15 +119,6 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
             }
         });
 
-        actionTypeComboBox = new ActionTypeComboBox();
-        actionTypeComboBox.setFont(header2Font);
-        comboboxes.add(actionTypeComboBox);
-        actionTypeComboBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
-            }
-        });
         isInit = false;
     }
 
