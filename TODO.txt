@@ -3,10 +3,11 @@
 
 - zoom feature for grid panel
 - order values alpabetically for discrete MappingValues
-- order in global list display
+- order in global list display (what does that mean???)
 - search for any type in global list
-- mismatch: after changing name of mapping, the macro editor does not update the names.
-- bug: mapping editor only updated on second selection of mapping from global list
+    - search bar only matches macro names, not action names
+
 - investigate: sometimes saveing/loading doesnt seem  to work?
 - tooltip for Mappin gText table, explanation for each value
     "for height=50, take the existing value of pine and multiply it with 37. apply the result to the map"
+
