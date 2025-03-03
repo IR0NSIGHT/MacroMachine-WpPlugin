@@ -6,6 +6,7 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 public class InputOutputProvider {
@@ -88,6 +89,11 @@ public class InputOutputProvider {
 
         getters.add(new IntermediateValueIO());
         setters.add(new IntermediateValueIO());
+
+        setters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
+
+        getters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
+
         notifyListeners();
     }
 
