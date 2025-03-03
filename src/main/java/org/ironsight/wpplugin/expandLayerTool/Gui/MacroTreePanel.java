@@ -322,6 +322,8 @@ public class MacroTreePanel extends JPanel {
 
             for (UUID macroId : selectedMacros) {
                 MappingMacro macro = container.queryById(macroId);
+                if (macro == null)
+                    continue;
                 ArrayList<UUID> ids = new ArrayList<>(macro.mappingUids.length + 1);
                 Collections.addAll(ids, macro.mappingUids);
                 ids.add(m.getUid());
