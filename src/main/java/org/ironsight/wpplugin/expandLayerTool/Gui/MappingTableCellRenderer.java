@@ -37,6 +37,11 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<La
     }
 
     public void updateTo(LayerMapping mapping) {
+        if (mapping == null) {
+            nameLabel.setText("INVALID ACTION");
+            return;
+        }
+
         input.setText(mapping.input.getName());
         output.setText(mapping.output.getName());
         actionType.setText(mapping.actionType.getDisplayName());
@@ -49,13 +54,11 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<La
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
         updateTo((LayerMapping) value);
-        nameLabel.setText(row + ": " + ((LayerMapping) value).getName());
         if (isSelected) {
             panel.setBackground(table.getSelectionBackground());
         } else panel.setBackground(table.getBackground());
         return panel;
     }
-
 
     @Override
     public Component getListCellRendererComponent(JList<? extends LayerMapping> list, LayerMapping value, int index,
