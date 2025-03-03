@@ -183,7 +183,10 @@ public class MacroTreePanel extends JPanel {
         macros.sort(Comparator.comparing(MappingMacro::getName));
         macros.stream()
                 .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
-                        f.getDescription().toLowerCase().contains(filterString)).sorted(new Comparator<MappingMacro>() {
+                        f.getDescription().toLowerCase().contains(filterString) || Arrays.stream(f.mappingUids)
+                        .map(LayerMappingContainer.INSTANCE::queryById)
+                        .anyMatch(action -> action.getName().contains(filterString) || action.getDescription().contains(filterString)) )
+                .sorted(new Comparator<MappingMacro>() {
                     @Override
                     public int compare(MappingMacro o1, MappingMacro o2) {
                         return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
@@ -269,6 +272,7 @@ public class MacroTreePanel extends JPanel {
                 update();
             }
         });
+        searchField.setBorder(BorderFactory.createTitledBorder("Search macro"));
         this.add(searchField, BorderLayout.NORTH);
 
 
