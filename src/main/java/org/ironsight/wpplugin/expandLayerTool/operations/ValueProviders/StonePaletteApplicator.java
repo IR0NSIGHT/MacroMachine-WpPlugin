@@ -84,12 +84,14 @@ public class StonePaletteApplicator implements IPositionValueSetter {
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return new StonePaletteApplicator((Terrain[]) data);
+        return new StonePaletteApplicator(Arrays.stream(data)
+                .map(f -> Terrain.values()[(int) f])
+                .toArray(Terrain[]::new));
     }
 
     @Override
     public Object[] getSaveData() { //int[] with enum ordinals
-        return materials;
+        return Arrays.stream(materials).map(f -> f.ordinal()).toArray();
     }
 
     @Override

@@ -80,7 +80,7 @@ public class MappingMacro implements SaveableAction {
     }
 
     public void apply(Dimension dimension, LayerMappingContainer container) {
-        assert allMappingsReady(container);
+        assert allMappingsReady(container) : "Can not apply macro that has invalid actions.";
         DefaultFilter filter = new DefaultFilter(dimension, false, false, -1000, 1000, false, null, null, 0, true);
         Collection<LayerMapping> actions =
                 Arrays.stream(mappingUids).map(container::queryById).collect(Collectors.toCollection(ArrayList::new));
@@ -88,11 +88,17 @@ public class MappingMacro implements SaveableAction {
             lm.output.prepareForDimension(dimension);
             lm.input.prepareForDimension(dimension);
         }
-
+        System.out.println("apply macro " + this.getName() + " to dimension ");
+        ArrayList<LayerMapping> mappings = new ArrayList<>(mappingUids.length);
+        for (UUID uuid : mappingUids) {
+            LayerMapping mapping = container.queryById(uuid);
+            if (mapping == null) continue;
+            if (mapping.getMappingPoints().length == 0) continue;
+            mappings.add(mapping);
+            System.out.println("Use action: " + mapping.getName());
+        }
         applyToDimensionWithFilter(dimension, filter, pos -> {
-            for (UUID mappingUid : mappingUids) {
-                LayerMapping mapping = container.queryById(mappingUid);
-                if (mapping.getMappingPoints().length == 0) continue;
+            for (LayerMapping mapping : mappings) {
                 mapping.applyToPoint(dimension, pos.x, pos.y);
             }
         });

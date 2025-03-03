@@ -12,7 +12,7 @@ public class MappingMacroContainer extends AbstractOperationContainer<MappingMac
     private final static MappingMacroContainer instance = new MappingMacroContainer();
 
     public MappingMacroContainer() {
-        super(MappingMacro.class, new File(Configuration.getConfigDir(), "plugins").getPath() + "macros.txt");
+        super(MappingMacro.class, new File(Configuration.getConfigDir(), "plugins").getPath() + "/macros.json");
     }
 
     public static MappingMacroContainer getInstance() {
