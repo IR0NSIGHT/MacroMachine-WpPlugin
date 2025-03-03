@@ -13,6 +13,8 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static org.ironsight.wpplugin.expandLayerTool.Gui.HelpDialog.getHelpButton;
+
 public class MacroDesigner extends JPanel {
     private static final String helpString = "The macro designer allows you to design a macro.\n" +
             "A macro is a collection of actions, like a container. When a macro is applied to the map, it runs each " +
@@ -110,6 +112,13 @@ public class MacroDesigner extends JPanel {
         submitButton.setToolTipText("submit macro and save changes to global list.");
         submitButton.addActionListener(e -> onSubmit.accept(this.macro));
         buttons.add(submitButton);
+
+        buttons.add(getHelpButton("Macro Editor","In the macro editor, you define which actions are executed and in " +
+                "which order. The top-most action is run first, then the next one and so on. All actions in a macro " +
+                "are always executed when the macro is executed.\n" +
+                "A macro is a collection of actions, similar to a group of global operations. It has a name and " +
+                "description and can be reused in any project.\n" +
+                "Use the save button to save your changes to the global list."));
         this.add(buttons, BorderLayout.SOUTH);
     }
 
