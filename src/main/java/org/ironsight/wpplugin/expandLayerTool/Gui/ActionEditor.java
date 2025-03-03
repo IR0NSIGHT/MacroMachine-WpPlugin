@@ -79,6 +79,9 @@ public class ActionEditor extends LayerMappingPanel {
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(submitButtom);
         buttonPanel.add(getHelpButton("Action Editor","Use the Action editor the define what your action does.\n" +
+                "\nAn action is somewhat similar to a global operation: It does one thing (change the output value) " +
+                "for many blocks. Its more flexible than a global operation, because you dont set one output value, " +
+                "but many." +
                 "Every action has an input, and output and a type.\n" +
                 "Define which value of the input maps to which value of the output. The action can interpolate " +
                 "between values if the input/output types allow it. This is shown by the dotted line in the graph.\n" +
