@@ -85,8 +85,13 @@ public class MappingMacro implements SaveableAction {
         Collection<LayerMapping> actions =
                 Arrays.stream(mappingUids).map(container::queryById).collect(Collectors.toCollection(ArrayList::new));
         for (LayerMapping lm : actions) {
+            System.out.println(lm);
             lm.output.prepareForDimension(dimension);
             lm.input.prepareForDimension(dimension);
+
+            for (int in = lm.input.getMinValue(); in <= lm.input.getMaxValue(); in++) {
+                System.out.println(lm.input.valueToString(in) + " => " + lm.output.valueToString(lm.map(in)));
+            }
         }
         System.out.println("apply macro " + this.getName() + " to dimension ");
         ArrayList<LayerMapping> mappings = new ArrayList<>(mappingUids.length);

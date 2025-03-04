@@ -47,9 +47,12 @@ public class LayerMapping implements SaveableAction {
             if (this.mappingPoints.length == 0) return;
             int j = -1;
             for (int i = input.getMinValue(); i <= input.getMaxValue(); i++) {
-                MappingPoint point = mappingPoints[Math.max(Math.min(j + 1, mappingPoints.length - 1), 0)];
-                if (point.input == i) j++;
-                point = mappingPoints[Math.max(j, 0)];
+                int mappingPointIdx =Math.max(Math.min(j + 1, mappingPoints.length - 1), 0);
+                MappingPoint point = mappingPoints[mappingPointIdx];
+                if (point.input == i) {
+                    j++;
+                    point = mappingPoints[Math.max(j, 0)];
+                }
 
                 mappings[i - input.getMinValue()] = point.output;
             }
