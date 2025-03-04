@@ -49,6 +49,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
         numberTable.setDefaultRenderer(Object.class, new MappingPointCellRenderer());
         numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
+        numberTable.setCellSelectionEnabled(true);
 
     }
 
