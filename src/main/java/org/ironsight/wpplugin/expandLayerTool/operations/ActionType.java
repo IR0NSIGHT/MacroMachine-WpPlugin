@@ -1,8 +1,8 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
 public enum ActionType {
-    INCREMENT("increments"),
-    DECREMENT("decrements"),
+    INCREMENT("adds"),
+    DECREMENT("subtracts"),
     MULTIPLY("multiplies"),
     DIVIDE("divides"),
     SET("sets"),
