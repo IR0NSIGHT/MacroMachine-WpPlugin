@@ -21,7 +21,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public int getMaxValue() {
-        return 0;
+        return COLORS.length-1;
     }
 
     @Override

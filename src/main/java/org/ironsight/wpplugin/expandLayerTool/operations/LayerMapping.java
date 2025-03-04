@@ -2,10 +2,12 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueSetter;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IntermediateSelectionIO;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.util.*;
 
+import static org.ironsight.wpplugin.expandLayerTool.operations.ProviderType.INTERMEDIATE_SELECTION;
 import static org.ironsight.wpplugin.expandLayerTool.operations.ProviderType.fromType;
 
 public class LayerMapping implements SaveableAction {
@@ -178,6 +180,9 @@ public class LayerMapping implements SaveableAction {
     }
 
     public void applyToPoint(Dimension dim, int x, int y) {
+        if (!output.getProviderType().equals(INTERMEDIATE_SELECTION) && !IntermediateSelectionIO.instance.isSelected())
+            return;
+
         if (mappingPoints.length == 0) {
             return;
         }
@@ -223,10 +228,7 @@ public class LayerMapping implements SaveableAction {
         return Arrays.stream(mappingPoints).anyMatch(p -> p.input == input);
     }
 
-    public int map(int input) {    //TODO do linear interpolation
-        if (input == 360) {
-            System.out.println("");
-        }
+    public int map(int input) {
         assert input >= this.input.getMinValue();
         assert input <= this.input.getMaxValue() :
                 "invalid input"+input + " has to be lower equal than " + this.input.getMaxValue();

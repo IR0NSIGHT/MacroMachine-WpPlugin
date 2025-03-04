@@ -155,6 +155,7 @@ class LayerMappingTest {
 
     @Test
     void applyToPoint() {   //an most simple test to check it can run without crashing
+        IntermediateSelectionIO.instance.setSelected(true);
         {   //one point
             Dimension dim = TestData.createDimension(new Rectangle(-2 * TILE_SIZE,
                     -2 * TILE_SIZE,

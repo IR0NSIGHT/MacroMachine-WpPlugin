@@ -89,6 +89,9 @@ public class InputOutputProvider {
         getters.add(new IntermediateValueIO());
         setters.add(new IntermediateValueIO());
 
+        getters.add(IntermediateSelectionIO.instance);
+        setters.add(IntermediateSelectionIO.instance);
+
         setters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
 
         getters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
