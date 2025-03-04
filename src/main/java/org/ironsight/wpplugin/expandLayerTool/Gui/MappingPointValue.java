@@ -10,4 +10,9 @@ public class MappingPointValue {
         this.numericValue = numericValue;
         this.mappingValue = mappingValue;
     }
+
+    @Override
+    public String toString() {
+        return mappingValue.valueToString(numericValue);
+    }
 }
