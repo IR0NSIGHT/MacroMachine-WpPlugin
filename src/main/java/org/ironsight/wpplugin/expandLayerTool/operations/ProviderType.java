@@ -12,6 +12,7 @@ public enum ProviderType {
     BINARY_SPRAYPAINT,
     BLOCK_DIRECTION,
     INTERMEDIATE,
+    INTERMEDIATE_SELECTION,
     NIBBLE_LAYER,
     SELECTION,
     STONE_PALETTE,
@@ -58,6 +59,8 @@ public enum ProviderType {
                 return new BinaryLayerIO(Frost.INSTANCE);
             case NIBBLE_LAYER:
                 return new NibbleLayerSetter(PineForest.INSTANCE);
+            case INTERMEDIATE_SELECTION:
+                return IntermediateSelectionIO.instance;
             default:
                 throw new IllegalArgumentException(
                         "not implemented: can not instantiate providers that need extra " + "information");

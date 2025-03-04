@@ -19,6 +19,8 @@ class IntermediateValueIOTest {
 
     @Test
     void getValueAt() {
+        IntermediateSelectionIO.instance.setSelected(true);
+
         int EVEN_OUTPUT = 2, UNEVEN_OUTPUT = 3;
         int EVEN_HEIGHT = 20, UNEVEN_HEIGHT = 21;
 
