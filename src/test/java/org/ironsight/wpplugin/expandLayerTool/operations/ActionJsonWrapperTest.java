@@ -11,15 +11,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class ActionJsonWrapperTest {
     @Test
     public void fromMapping() {
-        LayerMapping original = new LayerMapping(new HeightProvider(), new AnnotationSetter(),
-                new MappingPoint[]{new MappingPoint(0, 0), new MappingPoint(62, 3), new MappingPoint(100, 7),
-                        new MappingPoint(255, 0)}, ActionType.AT_LEAST, "My Test Mapping", "my test description",
-                UUID.randomUUID());
-        ActionJsonWrapper wrapper = new ActionJsonWrapper(original);
-        LayerMapping restored = LayerMapping.fromJsonWrapper(wrapper);
+        for (ActionType actionType : ActionType.values()) {
+            LayerMapping original = new LayerMapping(new HeightProvider(), new AnnotationSetter(),
+                    new MappingPoint[]{new MappingPoint(0, 0), new MappingPoint(62, 3), new MappingPoint(100, 7),
+                            new MappingPoint(255, 0)}, actionType, "My Test Mapping", "my test description",
+                    UUID.randomUUID());
+            ActionJsonWrapper wrapper = new ActionJsonWrapper(original);
+            LayerMapping restored = LayerMapping.fromJsonWrapper(wrapper);
 
-        assertEquals(original, restored);
+            assertEquals(original, restored);
+        }
 
-        //FIXME add test for all enum variants to ensure they all properly convert
+
     }
 }
