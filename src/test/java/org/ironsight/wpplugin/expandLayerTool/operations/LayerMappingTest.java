@@ -77,6 +77,30 @@ class LayerMappingTest {
     }
 
     @Test
+    void discreteMap() {
+        LayerMapping action = new LayerMapping(
+                new HeightProvider(),
+                IntermediateSelectionIO.instance,
+                new MappingPoint[]{ new MappingPoint(100,0),
+                new MappingPoint(200, 1),
+                new MappingPoint(250,0)},
+                ActionType.SET,
+                "",
+                "",
+                UUID.randomUUID()
+        );
+        for (int input = action.input.getMinValue(); input <= action.input.getMaxValue(); input++) {
+            int output = action.map(input);
+            if (input <= 100)
+                assertEquals(0, output,""+input);
+            else if (input <= 200)
+                assertEquals(1, output, ""+input);
+            else
+                assertEquals(0, output, ""+input);
+        }
+    }
+
+    @Test
     void map() {
 
         {   // SHORT RANGE MAPPING
