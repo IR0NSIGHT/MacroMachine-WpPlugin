@@ -158,6 +158,15 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
 
         clearLines();
         if (mapping.output.isDiscrete()) {
+            if (mapping.getMappingPoints().length > 1) {
+                MappingPoint p = mapping.getMappingPoints()[0];
+                addLine(mapping.input.getMinValue(),p.output, p.input,p.output);
+
+                p = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
+                addLine( p.input,p.output, mapping.input.getMaxValue(),p.output);
+
+            }
+
             for (int i = 1; i < mapping.getMappingPoints().length; i++) {
                 MappingPoint a2 = mapping.getMappingPoints()[i];
                 MappingPoint a1 = mapping.getMappingPoints()[i - 1];
