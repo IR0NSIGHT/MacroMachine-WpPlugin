@@ -167,10 +167,10 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         if (mapping.output.isDiscrete()) {
             if (mapping.getMappingPoints().length > 1) {
                 MappingPoint p = mapping.getMappingPoints()[0];
-                paintLineInGrid(mapping.input.getMinValue(),p.output, p.input,p.output, g);
+                paintLineInGrid(mapping.input.getMinValue(),p.output, p.input + 0.5f,p.output, g);
 
                 p = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-                paintLineInGrid( p.input,p.output, mapping.input.getMaxValue(),p.output, g);
+                paintLineInGrid( p.input -0.5f,p.output, mapping.input.getMaxValue(),p.output, g);
 
             }
 
@@ -178,8 +178,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 MappingPoint a2 = mapping.getMappingPoints()[i];
                 MappingPoint a1 = mapping.getMappingPoints()[i - 1];
 
-                paintLineInGrid(a2.input, a2.output, a1.input, a2.output, g);
-                paintLineInGrid(a1.input, a1.output, a1.input, a2.output, g);
+                paintLineInGrid(a1.input + 0.5f, a2.output, a2.input, a2.output, g);   //left right
+                paintLineInGrid(a1.input + 0.5f, a1.output, a1.input + 0.5f, a2.output, g);   //up down
             }
         } else {
             {
