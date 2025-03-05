@@ -32,6 +32,11 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     }
 
     @Override
+    protected void updateComponents() {
+
+    }
+
+    @Override
     protected void initComponents() {
         this.setLayout(new BorderLayout());
         JPanel grid = new JPanel() {
@@ -151,19 +156,21 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         this.setPreferredSize(new Dimension(grid.getWidth(), grid.getHeight()));
     }
 
-    @Override
-    protected void updateComponents() {
-        this.GRID_X_SCALE = pixelSizeX / ((float) mapping.input.getMaxValue() - mapping.input.getMinValue());
-        this.GRID_Y_SCALE = pixelSizeY / ((float) mapping.output.getMaxValue() - mapping.output.getMinValue());
+    private void paintLineInGrid(float x1, float x2, float y1, float y2, Graphics g) {
+        Point start, end;
+        start = gridToPixel(x1,x2);
+        end = gridToPixel(y1,y2);
+        g.drawLine(start.x, start.y, end.x, end.y);
+    }
 
-        clearLines();
+    protected void paintLines(Graphics g) {
         if (mapping.output.isDiscrete()) {
             if (mapping.getMappingPoints().length > 1) {
                 MappingPoint p = mapping.getMappingPoints()[0];
-                addLine(mapping.input.getMinValue(),p.output, p.input,p.output);
+                paintLineInGrid(mapping.input.getMinValue(),p.output, p.input,p.output, g);
 
                 p = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-                addLine( p.input,p.output, mapping.input.getMaxValue(),p.output);
+                paintLineInGrid( p.input,p.output, mapping.input.getMaxValue(),p.output, g);
 
             }
 
@@ -171,49 +178,35 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 MappingPoint a2 = mapping.getMappingPoints()[i];
                 MappingPoint a1 = mapping.getMappingPoints()[i - 1];
 
-                addLine(a2.input, a2.output, a1.input, a2.output);
-                addLine(a1.input, a1.output, a1.input, a2.output);
+                paintLineInGrid(a2.input, a2.output, a1.input, a2.output, g);
+                paintLineInGrid(a1.input, a1.output, a1.input, a2.output, g);
             }
         } else {
             {
                 if (mapping.getMappingPoints().length != 0) {
                     MappingPoint a = mapping.getMappingPoints()[0];
-                    addLine(mapping.input.getMinValue(), a.output, a.input, a.output);
+                    paintLineInGrid(mapping.input.getMinValue(), a.output, a.input, a.output, g);
 
                     MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-                    addLine(b.input, b.output, mapping.input.getMaxValue(), b.output);
+                    paintLineInGrid(b.input, b.output, mapping.input.getMaxValue(), b.output,g);
                 }
             }
             for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
                 MappingPoint a = mapping.getMappingPoints()[i];
                 MappingPoint b = mapping.getMappingPoints()[i + 1];
 
-                addLine(a.input, a.output, b.input, b.output);
+                paintLineInGrid(a.input, a.output, b.input, b.output,g);
             }
         }
         this.repaint();
     }
 
-    public void clearLines() {
-        lines.clear();
-    }
-
-    /**
-     * Adds a line to be drawn on the grid from (x, y) to (x1, y1).
-     *
-     * @param x  The x-coordinate of the starting point (0 to 100).
-     * @param y  The y-coordinate of the starting point (0 to 100).
-     * @param x1 The x-coordinate of the ending point (0 to 100).
-     * @param y1 The y-coordinate of the ending point (0 to 100).
-     */
-    public void addLine(int x, int y, int x1, int y1) {
-        lines.add(new Line(x, y, x1, y1));
-        repaint();  // Request a repaint to update the display
-    }
-
     private void paintGrid(Graphics g) {
         if (this.mapping == null) return;
         super.paintComponent(g);
+        this.GRID_X_SCALE = pixelSizeX / ((float) mapping.input.getMaxValue() - mapping.input.getMinValue());
+        this.GRID_Y_SCALE = pixelSizeY / ((float) mapping.output.getMaxValue() - mapping.output.getMinValue());
+
         Graphics2D g2d = (Graphics2D) g;
 
         // Enable anti-aliasing for smoother lines
@@ -323,6 +316,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
 
 
         }
+
+        paintLines(g);
     }
 
     private Point pixelToGrid(int pixelX, int pixelY) {
@@ -365,7 +360,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         return (float) Math.sqrt(dX * dX + dY * dY);
     }
 
-    private Point gridToPixel(int gridX, int gridY) {
+    private Point gridToPixel(float gridX, float gridY) {
         int pixelX = Math.round((gridX - mapping.input.getMinValue()) * GRID_X_SCALE) + shiftGrid;
         int pixelY = Math.round(pixelSizeY - ((gridY - mapping.output.getMinValue()) * GRID_Y_SCALE));
 
