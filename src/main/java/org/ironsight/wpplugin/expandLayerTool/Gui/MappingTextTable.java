@@ -19,17 +19,35 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     private Consumer<Integer> onSelect = f -> {
     };
     private JTable numberTable;
+    private boolean groupValues = true;
 
     @Override
     protected void updateComponents() {
-        MappingPointValue[][] data = new MappingPointValue[mapping.getMappingPoints().length][];
+        MappingPointValue[][] data;
         Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
-        for (int i = 0; i < mapping.getMappingPoints().length; i++) {
-            MappingPoint a = mapping.getMappingPoints()[i];
-            assert mapping != null;
-            data[i] = new MappingPointValue[]{new MappingPointValue(a.input, mapping.input),
-                    new MappingPointValue(a.output, mapping.output)};
+        if (!groupValues) {
+            data = new MappingPointValue[mapping.input.getMaxValue() - mapping.input.getMinValue()][];
+
+            for (int i = mapping.input.getMinValue(); i < mapping.input.getMaxValue(); i++) {
+                data[i - mapping.input.getMinValue()] = new MappingPointValue[]{new MappingPointValue(i, mapping.input),
+                        new MappingPointValue(mapping.map(i), mapping.output)};
+            }
+        } else {
+            data = new MappingPointValue[mapping.getMappingPoints().length * 2 + 2][];
+            int i = 0;
+            data[i++] = new MappingPointValue[]{new MappingPointValue(mapping.input.getMinValue(), mapping.input),
+                    new MappingPointValue(mapping.map(mapping.input.getMinValue()), mapping.output)};
+
+            for (MappingPoint p : mapping.getMappingPoints()) {
+                data[i++] = new MappingPointValue[]{new MappingPointValue(p.input, mapping.input),
+                        new MappingPointValue(p.output, mapping.output)};
+                data[i++] = new MappingPointValue[]{new MappingPointValue(p.input+1, mapping.input),
+                        new MappingPointValue(mapping.map(p.input+1), mapping.output)};
+            }
+            data[i++] = new MappingPointValue[]{new MappingPointValue(mapping.input.getMaxValue(), mapping.input),
+                    new MappingPointValue(mapping.map(mapping.input.getMaxValue()), mapping.output)};
         }
+
 
         selectedPointIdx = Math.min(selectedPointIdx, mapping.getMappingPoints().length - 1);
 
