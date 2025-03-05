@@ -9,6 +9,8 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.function.Consumer;
 
 public class MappingTextTable extends LayerMappingPanel implements IMappingPointSelector {
@@ -33,19 +35,26 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                         new MappingPointValue(mapping.map(i), mapping.output)};
             }
         } else {
-            data = new MappingPointValue[mapping.getMappingPoints().length * 2 + 2][];
-            int i = 0;
-            data[i++] = new MappingPointValue[]{new MappingPointValue(mapping.input.getMinValue(), mapping.input),
-                    new MappingPointValue(mapping.map(mapping.input.getMinValue()), mapping.output)};
-
-            for (MappingPoint p : mapping.getMappingPoints()) {
-                data[i++] = new MappingPointValue[]{new MappingPointValue(p.input, mapping.input),
-                        new MappingPointValue(p.output, mapping.output)};
-                data[i++] = new MappingPointValue[]{new MappingPointValue(p.input+1, mapping.input),
-                        new MappingPointValue(mapping.map(p.input+1), mapping.output)};
+            HashSet<Integer> changeValues = new HashSet<>();
+            int previousOutput = Integer.MAX_VALUE;
+            for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
+                if (mapping.map(i) != previousOutput) {
+                    previousOutput = mapping.map(i);
+                    changeValues.add(mapping.sanitizeInput(i-1));
+                    changeValues.add(mapping.sanitizeInput(i));
+                }
             }
-            data[i++] = new MappingPointValue[]{new MappingPointValue(mapping.input.getMaxValue(), mapping.input),
-                    new MappingPointValue(mapping.map(mapping.input.getMaxValue()), mapping.output)};
+            changeValues.add(mapping.input.getMinValue());
+            changeValues.add(mapping.input.getMaxValue());
+
+            data = new MappingPointValue[changeValues.size()][];
+            int ii = 0;
+            for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
+                if (changeValues.contains(i)) {
+                    data[ii++] = new MappingPointValue[]{new MappingPointValue(i, mapping.input),
+                            new MappingPointValue(mapping.map(i), mapping.output)};
+                }
+            }
         }
 
 
