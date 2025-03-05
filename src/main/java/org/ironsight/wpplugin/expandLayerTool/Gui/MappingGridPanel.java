@@ -24,6 +24,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     private Consumer<Integer> onSelect = f -> {
     };
 
+    private boolean showCursor = true;
+
     public MappingGridPanel() {
 
         this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
@@ -35,6 +37,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     protected void updateComponents() {
 
     }
+
+    private int mousePosX, mousePosY;
 
     @Override
     protected void initComponents() {
@@ -123,7 +127,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 Point pressed = pixelToGrid(e.getX(), e.getY());
                 int gridX = pressed.x;
                 int gridY = pressed.y;
-
+                mousePosX = e.getX();
+                mousePosY = e.getY();
                 if (drag) {
                     if (selected != null) {
                         MappingPoint[] newPoints = new MappingPoint[panel.mapping.getMappingPoints().length];
@@ -143,6 +148,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
             @Override
             public void mouseMoved(MouseEvent e) {
                 // Optional: Handle mouse movement when not dragging
+                mousePosX = e.getX();
+                mousePosY = e.getY();
             }
         });
 
@@ -161,6 +168,26 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         start = gridToPixel(x1,x2);
         end = gridToPixel(y1,y2);
         g.drawLine(start.x, start.y, end.x, end.y);
+    }
+
+    protected void paintCursor(Graphics g) {
+        if (!showCursor)
+            return;
+        g.setColor(Color.gray);
+        ((Graphics2D)g).setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4,
+                10}, 0));
+        // find closest grid pos to mouse
+        Point gridPos = pixelToGrid(mousePosX, mousePosY);
+        if (mapping.sanitizeInput(gridPos.x) != gridPos.x || mapping.sanitizeOutput(gridPos.y) != gridPos.y)
+            return;
+        paintLineInGrid(gridPos.x, mapping.output.getMinValue(), gridPos.x, mapping.output.getMaxValue(), g);
+        paintLineInGrid(mapping.input.getMinValue(), gridPos.y, mapping.input.getMaxValue(), gridPos.y, g);
+        Point pixelPos = gridToPixel(gridPos.x, gridPos.y);
+
+        //circle
+        ((Graphics2D)g).setStroke(new BasicStroke(2));
+        int radius = 30;
+        ((Graphics2D)g).drawOval(pixelPos.x - radius/2, pixelPos.y - radius/2, radius,radius);
     }
 
     protected void paintLines(Graphics g) {
@@ -318,6 +345,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         }
 
         paintLines(g);
+        paintCursor(g);
     }
 
     private Point pixelToGrid(int pixelX, int pixelY) {
