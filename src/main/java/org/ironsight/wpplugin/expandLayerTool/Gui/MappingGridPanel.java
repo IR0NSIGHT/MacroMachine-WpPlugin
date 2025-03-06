@@ -188,7 +188,19 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         ((Graphics2D)g).setStroke(new BasicStroke(2));
         int radius = 30;
         ((Graphics2D)g).drawOval(pixelPos.x - radius/2, pixelPos.y - radius/2, radius,radius);
+
+        //dot on mapped value
+        int mapped = mapping.map(gridPos.x);
+        g.setColor(Color.RED);
+        radius = 8;
+        pixelPos = gridToPixel(gridPos.x, mapped);
+        ((Graphics2D)g).setStroke(new BasicStroke(2));
+        ((Graphics2D)g).drawRect(pixelPos.x - radius/2, pixelPos.y - radius/2, radius,radius);
+        if (lastSelected != gridPos.x)
+            this.onSelect.accept(gridPos.x);
+        lastSelected = gridPos.x;
     }
+    private int lastSelected;
 
     protected void paintLines(Graphics g) {
         if (mapping.output.isDiscrete()) {

@@ -76,8 +76,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
         numberTable.setDefaultRenderer(Object.class, new MappingPointCellRenderer());
         numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
-        numberTable.setCellSelectionEnabled(true);
-
+       // numberTable.setCellSelectionEnabled(false);
     }
 
     @Override
@@ -87,7 +86,12 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
 
         // Add a TableModelListener to get a callback when a cell is edited
-        numberTable = new JTable();
+        numberTable = new JTable(){
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // All cells are non-editable
+            }
+        };
 
         JScrollPane scrollPane = new JScrollPane(numberTable);
         this.add(scrollPane, BorderLayout.CENTER);
@@ -104,8 +108,17 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 }
             }
         };
-
-        numberTable.getSelectionModel().addListSelectionListener(event -> {
+        numberTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        // Add listener to scroll to the selected row
+        numberTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int selectedRow = numberTable.getSelectedRow();
+                if (selectedRow != -1) {
+                    numberTable.scrollRectToVisible(numberTable.getCellRect(selectedRow, 0, true));
+                }
+            }
+        });
+    /*    numberTable.getSelectionModel().addListSelectionListener(event -> {
             // Ignore the event if it's being adjusted (e.g., dragging selection)
             if (!event.getValueIsAdjusting()) {
                 int selectedRow = numberTable.getSelectedRow();
@@ -115,6 +128,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 }
             }
         });
+
+     */
     }
 
     protected boolean parseAndSetValue(Object newValue, int row, int column) {
@@ -136,9 +151,16 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
     @Override
     public void setSelected(Integer selectedPointIdx) {
+        System.out.println("table select input value =" + selectedPointIdx);
         if (selectedPointIdx != this.selectedPointIdx) {
             this.selectedPointIdx = selectedPointIdx;
-            updateComponents();
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i,0);
+                if (value.numericValue == selectedPointIdx) {
+                    numberTable.setRowSelectionInterval(i,i);
+                    return;
+                }
+            }
         }
     }
 }
