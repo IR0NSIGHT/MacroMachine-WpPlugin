@@ -44,6 +44,7 @@ public class ActionEditor extends LayerMappingPanel {
 
     @Override
     protected void updateComponents() {
+        mappingDisplay.setVisible(!mapping.input.isDiscrete());
         table.setMapping(mapping);
         mappingDisplay.setMapping(mapping);
         topBar.setMapping(mapping);
