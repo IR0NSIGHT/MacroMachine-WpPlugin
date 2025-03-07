@@ -4,6 +4,8 @@ import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -26,7 +28,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     private Consumer<Integer> onSelect = f -> {
     };
 
-    private final boolean showCursor = true;
+    private boolean showCursor = true;
     private int mousePosX, mousePosY;
     private int lastSelected;
     private int shiftY = 10;
@@ -154,7 +156,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 mousePosX = e.getX();
                 mousePosY = e.getY();
                 Point gridPos = pixelToGrid(mousePosX, mousePosY);
-                if (mapping.sanitizeInput(gridPos.x) == gridPos.x && mapping.sanitizeOutput(gridPos.y) == gridPos.y) {
+                if (showCursor && mapping.sanitizeInput(gridPos.x) == gridPos.x && mapping.sanitizeOutput(gridPos.y) == gridPos.y) {
                     grid.repaint();
                 }
             }
@@ -163,6 +165,17 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         this.setLayout(new BorderLayout());
         this.add(grid, BorderLayout.CENTER);
 
+        JPanel buttons = new JPanel(new BorderLayout());
+        JCheckBox cursorCheckbox = new JCheckBox("cursor");
+        cursorCheckbox.setSelected(showCursor);
+        buttons.add(cursorCheckbox, BorderLayout.WEST);
+        cursorCheckbox.addActionListener(e -> {
+            if (showCursor != cursorCheckbox.isSelected()) {
+                showCursor = cursorCheckbox.isSelected();
+                grid.repaint();
+            }
+        });
+        this.add(buttons, BorderLayout.SOUTH);
         this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
     }
 
@@ -214,9 +227,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
 
                 p = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
                 paintLineInGrid(p.input - 0.5f, p.output, mapping.input.getMaxValue(), p.output, g);
-
             }
-
             for (int i = 1; i < mapping.getMappingPoints().length; i++) {
                 MappingPoint a2 = mapping.getMappingPoints()[i];
                 MappingPoint a1 = mapping.getMappingPoints()[i - 1];
@@ -253,7 +264,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         shiftX = widthOutputStrings + padding;  //add some empty space ot the right
         // large?
         shiftY = fontheight;
-        pixelSizeY = getHeight() - shiftY - fontheight - padding;
+        pixelSizeY = (int)Math.ceil(getHeight() - shiftY - fontheight * 1.5f - padding);
         pixelSizeX = getWidth() - shiftX - padding; //right padding
         this.GRID_X_SCALE = pixelSizeX / ((float) mapping.input.getMaxValue() - mapping.input.getMinValue());
         this.GRID_Y_SCALE = pixelSizeY / ((float) mapping.output.getMaxValue() - mapping.output.getMinValue());
