@@ -25,6 +25,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
     @Override
     protected void updateComponents() {
+        groupValues = groupValuesCheckBox.isSelected();
+
         MappingPointValue[][] data;
         Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
         if (!groupValues) {
@@ -78,9 +80,10 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
        // numberTable.setCellSelectionEnabled(false);
     }
-
+    private JCheckBox groupValuesCheckBox;
     @Override
     protected void initComponents() {
+        this.setLayout(new BorderLayout());
         Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
         Border whiteBorder = new EmptyBorder(5, 5, 5, 5); // 5px white border
         setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
@@ -95,7 +98,16 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
         JScrollPane scrollPane = new JScrollPane(numberTable);
         this.add(scrollPane, BorderLayout.CENTER);
-
+        JPanel buttons = new JPanel();
+        groupValuesCheckBox = new JCheckBox("Group Values");
+        groupValuesCheckBox.addActionListener(f  -> {
+            if (groupValues != groupValuesCheckBox.isSelected()) {
+                groupValues = groupValuesCheckBox.isSelected();
+                updateComponents();
+            }
+        });
+        buttons.add(groupValuesCheckBox);
+        this.add(buttons, BorderLayout.SOUTH);
         listener = new TableModelListener() {
             @Override
             public void tableChanged(TableModelEvent e) {
