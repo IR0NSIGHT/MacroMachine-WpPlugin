@@ -30,9 +30,9 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         MappingPointValue[][] data;
         Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
         if (!groupValues) {
-            data = new MappingPointValue[mapping.input.getMaxValue() - mapping.input.getMinValue()][];
+            data = new MappingPointValue[mapping.input.getMaxValue() - mapping.input.getMinValue() +1][];
 
-            for (int i = mapping.input.getMinValue(); i < mapping.input.getMaxValue(); i++) {
+            for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
                 data[i - mapping.input.getMinValue()] = new MappingPointValue[]{new MappingPointValue(i, mapping.input),
                         new MappingPointValue(mapping.map(i), mapping.output)};
             }
@@ -163,7 +163,6 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
     @Override
     public void setSelected(Integer selectedPointIdx) {
-        System.out.println("table select input value =" + selectedPointIdx);
         if (selectedPointIdx != this.selectedPointIdx) {
             this.selectedPointIdx = selectedPointIdx;
             for (int i = 0; i < tableModel.getRowCount(); i++) {

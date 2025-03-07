@@ -20,7 +20,8 @@ public enum ProviderType {
     TEST,
     VANILLA_BIOME,
     WATER_DEPTH,
-    WATER_HEIGHT;
+    WATER_HEIGHT,
+    ALWAYS;
 
     public static IMappingValue fromType(Object[] data, ProviderType type) {
         return fromTypeDefault(type).instantiateFrom(data);
@@ -61,6 +62,8 @@ public enum ProviderType {
                 return new NibbleLayerSetter(PineForest.INSTANCE);
             case INTERMEDIATE_SELECTION:
                 return IntermediateSelectionIO.instance;
+            case ALWAYS:
+                return AlwaysIO.instance;
             default:
                 throw new IllegalArgumentException(
                         "not implemented: can not instantiate providers that need extra " + "information");

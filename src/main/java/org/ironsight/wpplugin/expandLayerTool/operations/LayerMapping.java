@@ -183,7 +183,7 @@ public class LayerMapping implements SaveableAction {
     }
 
     public void applyToPoint(Dimension dim, int x, int y) {
-        if (!output.getProviderType().equals(INTERMEDIATE_SELECTION) && !IntermediateSelectionIO.instance.isSelected())
+        if  (!output.getProviderType().equals(INTERMEDIATE_SELECTION) && !IntermediateSelectionIO.instance.isSelected())
             return;
 
         if (mappingPoints.length == 0) {
