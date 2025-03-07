@@ -150,6 +150,10 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 // Optional: Handle mouse movement when not dragging
                 mousePosX = e.getX();
                 mousePosY = e.getY();
+                Point gridPos = pixelToGrid(mousePosX, mousePosY);
+                if (mapping.sanitizeInput(gridPos.x) == gridPos.x && mapping.sanitizeOutput(gridPos.y) == gridPos.y) {
+                    grid.repaint();
+                }
             }
         });
 
@@ -236,10 +240,10 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 paintLineInGrid(a.input, a.output, b.input, b.output,g);
             }
         }
-        this.repaint();
     }
 
     private void paintGrid(Graphics g) {
+        System.out.println("REDRAW");
         if (this.mapping == null) return;
         super.paintComponent(g);
         this.GRID_X_SCALE = pixelSizeX / ((float) mapping.input.getMaxValue() - mapping.input.getMinValue());
@@ -317,11 +321,14 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         {
             String s = mapping.output.getName();
             int width = g2d.getFontMetrics().stringWidth(s);
-            g2d.translate((pixelSizeX) * 0.5f + shiftGrid, pixelSizeY * 0.5f);
-            g2d.rotate(-Math.toRadians(90));
-            g2d.drawString(s, -0.5f * width, -pixelSizeY * 0.5f + 1.2f * fontheight);
-            g2d.rotate(Math.toRadians(90));
-            g2d.translate(-(pixelSizeX) * 0.5f - shiftGrid, -pixelSizeY * 0.5f);
+            Point center = gridToPixel((mapping.input.getMaxValue()+mapping.input.getMinValue())/2f,
+                    (mapping.output.getMinValue()+mapping.output.getMaxValue())/2f);
+        //    g2d.translate(center.x, center.y);
+            g2d.drawRect(center.x,center.y,10,10);
+        //    g2d.rotate(-Math.toRadians(90));
+            g2d.drawString(s, center.x, center.y+ 1.2f * fontheight);
+        //    g2d.rotate(Math.toRadians(90));
+        //    g2d.translate(-center.x, -center.y);
         }
 
         // Draw lines from the list
@@ -362,7 +369,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     private Point pixelToGrid(int pixelX, int pixelY) {
         // Convert the pixel coordinates to grid coordinates
         int gridXPressed = Math.round((pixelX - shiftGrid) / GRID_X_SCALE) + mapping.input.getMinValue();
-        int gridYPressed = Math.round((pixelSizeY - pixelY) / GRID_Y_SCALE) + mapping.output.getMinValue(); // Flip
+        int gridYPressed = Math.round((pixelSizeY - (pixelY - shiftY)) / GRID_Y_SCALE) + mapping.output.getMinValue(); //
+        // Flip
         // the Y-axis
         return new Point(gridXPressed, gridYPressed);
     }
@@ -399,9 +407,11 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         return (float) Math.sqrt(dX * dX + dY * dY);
     }
 
+    private int shiftY = 100;
+
     private Point gridToPixel(float gridX, float gridY) {
         int pixelX = Math.round((gridX - mapping.input.getMinValue()) * GRID_X_SCALE) + shiftGrid;
-        int pixelY = Math.round(pixelSizeY - ((gridY - mapping.output.getMinValue()) * GRID_Y_SCALE));
+        int pixelY = Math.round(pixelSizeY - ((gridY - mapping.output.getMinValue()) * GRID_Y_SCALE)) + shiftY;
 
         return new Point(pixelX, pixelY);
     }
