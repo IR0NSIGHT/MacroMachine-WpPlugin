@@ -90,7 +90,8 @@ public class IntermediateSelectionIO implements IPositionValueSetter, IPositionV
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-
+        g.setColor(value == 1 ? Color.RED: Color.BLACK);
+        g.fillRect(0, 0, dim.width, dim.height);
     }
 
     @Override

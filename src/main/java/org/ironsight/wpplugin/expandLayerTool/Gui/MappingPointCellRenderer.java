@@ -35,7 +35,6 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
         if (isSelected) {
-            System.out.println("MAPPING POINT IS SELECTED!!");
             if (hasFocus) {
                 textLabel.setBackground(table.getSelectionBackground());
                 textLabel.setForeground(table.getSelectionForeground());
