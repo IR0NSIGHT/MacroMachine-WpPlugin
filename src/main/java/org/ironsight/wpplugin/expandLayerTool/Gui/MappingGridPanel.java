@@ -14,8 +14,8 @@ import java.util.function.Consumer;
 public class MappingGridPanel extends LayerMappingPanel implements IMappingPointSelector {
     private final List<Line> lines = new ArrayList<>();  // List to store lines
     private final int pointHitBoxRadius = 5;
-    private final int pixelSizeX = 500;
-    private final int pixelSizeY = 500;
+    private  int pixelSizeX = 500;
+    private  int pixelSizeY = 500;
     private final int shiftGrid = 150;
     private float GRID_X_SCALE;
     private float GRID_Y_SCALE;
@@ -159,7 +159,6 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
 
         this.setLayout(null);
 
-        grid.setBounds(0, 0, pixelSizeX + shiftGrid + 5, pixelSizeY + shiftGrid + 5);
 
 
         this.add(grid, BorderLayout.CENTER);
@@ -199,6 +198,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         radius = 8;
         pixelPos = gridToPixel(gridPos.x, mapped);
         ((Graphics2D)g).setStroke(new BasicStroke(2));
+
         ((Graphics2D)g).drawRect(pixelPos.x - radius/2, pixelPos.y - radius/2, radius,radius);
         if (lastSelected != gridPos.x)
             this.onSelect.accept(gridPos.x);
@@ -246,6 +246,11 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         System.out.println("REDRAW");
         if (this.mapping == null) return;
         super.paintComponent(g);
+        g.setClip(0, 0, getWidth(), getHeight());
+   //     g.setColor(Color.black);
+   //     ((Graphics2D)g).fillRect(0,0,getWidth(),getHeight());
+        pixelSizeY = getHeight()-shiftGrid-shiftY;
+        pixelSizeX = getWidth()-shiftGrid-10;
         this.GRID_X_SCALE = pixelSizeX / ((float) mapping.input.getMaxValue() - mapping.input.getMinValue());
         this.GRID_Y_SCALE = pixelSizeY / ((float) mapping.output.getMaxValue() - mapping.output.getMinValue());
 
@@ -260,9 +265,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
 
         int rangeX = mapping.input.getMaxValue() - mapping.input.getMinValue();
         int rangeY = mapping.output.getMaxValue() - mapping.output.getMinValue();
-        {
-            g2d.drawRect(shiftGrid, 0, pixelSizeX, pixelSizeY);
-        }
+
 
         int stepX = 1;
         if (rangeX > 20) stepX = 10;
@@ -312,23 +315,29 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         g2d.setFont(new Font(g2d.getFont().getName(), g2d.getFont().getStyle(), g2d.getFont().getSize() * 3));
         fontheight = g2d.getFontMetrics().getHeight();
 
+        Point center = gridToPixel((mapping.input.getMaxValue()+mapping.input.getMinValue())/2f,
+                (mapping.output.getMinValue()+mapping.output.getMaxValue())/2f);
+        Point zero = gridToPixel(mapping.input.getMinValue(), mapping.output.getMinValue());
+        Point extent = gridToPixel(mapping.input.getMaxValue(), mapping.output.getMaxValue());
+        {
+            g2d.drawRect(zero.x,zero.y, extent.x - zero.x, extent.y - zero.y);
+        }
         {
             String s = mapping.input.getName();
             int width = g2d.getFontMetrics().stringWidth(s);
-            g2d.drawString(s, pixelSizeX * 0.5f + shiftGrid - 0.5f * width, pixelSizeY - fontheight * 0.2f);
+            g2d.drawString(s, center.x - 0.5f * width, zero.y - fontheight * 0.2f);
         }
 
         {
             String s = mapping.output.getName();
             int width = g2d.getFontMetrics().stringWidth(s);
-            Point center = gridToPixel((mapping.input.getMaxValue()+mapping.input.getMinValue())/2f,
-                    (mapping.output.getMinValue()+mapping.output.getMaxValue())/2f);
-        //    g2d.translate(center.x, center.y);
+
+            g2d.translate(zero.x, center.y);
             g2d.drawRect(center.x,center.y,10,10);
-        //    g2d.rotate(-Math.toRadians(90));
-            g2d.drawString(s, center.x, center.y+ 1.2f * fontheight);
-        //    g2d.rotate(Math.toRadians(90));
-        //    g2d.translate(-center.x, -center.y);
+            g2d.rotate(-Math.toRadians(90));
+            g2d.drawString(s, -width/2f, 1.2f * fontheight);
+            g2d.rotate(Math.toRadians(90));
+            g2d.translate(-zero.x, -center.y);
         }
 
         // Draw lines from the list
