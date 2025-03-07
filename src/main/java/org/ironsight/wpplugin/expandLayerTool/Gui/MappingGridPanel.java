@@ -216,9 +216,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
             for (int i = 1; i < mapping.getMappingPoints().length; i++) {
                 MappingPoint a2 = mapping.getMappingPoints()[i];
                 MappingPoint a1 = mapping.getMappingPoints()[i - 1];
-
                 paintLineInGrid(a1.input + 0.5f, a2.output, a2.input, a2.output, g);   //left right
-                paintLineInGrid(a1.input + 0.5f, a1.output, a1.input + 0.5f, a2.output, g);   //up down
+           //     paintLineInGrid(a1.input + 0.5f, a1.output, a1.input + 0.5f, a2.output, g);   //up down
             }
         } else {
             {
