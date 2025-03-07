@@ -11,12 +11,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static javax.swing.BorderFactory.createLineBorder;
+
 public class MappingGridPanel extends LayerMappingPanel implements IMappingPointSelector {
     private final List<Line> lines = new ArrayList<>();  // List to store lines
     private final int pointHitBoxRadius = 5;
-    private  int pixelSizeX = 500;
-    private  int pixelSizeY = 500;
-    private final int shiftGrid = 150;
+    private int shiftX = 50;
+    private int pixelSizeX = 500;
+    private int pixelSizeY = 500;
     private float GRID_X_SCALE;
     private float GRID_Y_SCALE;
     private boolean drag;
@@ -24,21 +26,21 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     private Consumer<Integer> onSelect = f -> {
     };
 
-    private boolean showCursor = true;
+    private final boolean showCursor = true;
+    private int mousePosX, mousePosY;
+    private int lastSelected;
+    private int shiftY = 10;
 
     public MappingGridPanel() {
 
-        this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
+        //    this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
         setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
         initComponents();
     }
-
+    int widthOutputStrings = 0;
     @Override
     protected void updateComponents() {
-
     }
-
-    private int mousePosX, mousePosY;
 
     @Override
     protected void initComponents() {
@@ -50,7 +52,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 paintGrid(g);
             }
         };
-        grid.setSize(new Dimension(pixelSizeX, pixelSizeY));
+        setBorder(createLineBorder(Color.RED, 1));
+        //    grid.setSize(new Dimension(pixelSizeX, pixelSizeY));
 
 
         // Add a MouseListener to detect clicks inside the panel
@@ -157,63 +160,60 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
             }
         });
 
-        this.setLayout(null);
-
-
-
+        this.setLayout(new BorderLayout());
         this.add(grid, BorderLayout.CENTER);
 
-        this.setPreferredSize(new Dimension(grid.getWidth(), grid.getHeight()));
+        this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
     }
 
     private void paintLineInGrid(float x1, float x2, float y1, float y2, Graphics g) {
         Point start, end;
-        start = gridToPixel(x1,x2);
-        end = gridToPixel(y1,y2);
+        start = gridToPixel(x1, x2);
+        end = gridToPixel(y1, y2);
         g.drawLine(start.x, start.y, end.x, end.y);
     }
 
     protected void paintCursor(Graphics g) {
-        if (!showCursor)
-            return;
+        if (!showCursor) return;
         g.setColor(Color.gray);
-        ((Graphics2D)g).setStroke(new BasicStroke(2, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4,
-                10}, 0));
+        ((Graphics2D) g).setStroke(new BasicStroke(2,
+                BasicStroke.CAP_ROUND,
+                BasicStroke.JOIN_ROUND,
+                0,
+                new float[]{4, 10},
+                0));
         // find closest grid pos to mouse
         Point gridPos = pixelToGrid(mousePosX, mousePosY);
-        if (mapping.sanitizeInput(gridPos.x) != gridPos.x || mapping.sanitizeOutput(gridPos.y) != gridPos.y)
-            return;
+        if (mapping.sanitizeInput(gridPos.x) != gridPos.x || mapping.sanitizeOutput(gridPos.y) != gridPos.y) return;
         paintLineInGrid(gridPos.x, mapping.output.getMinValue(), gridPos.x, mapping.output.getMaxValue(), g);
         paintLineInGrid(mapping.input.getMinValue(), gridPos.y, mapping.input.getMaxValue(), gridPos.y, g);
         Point pixelPos = gridToPixel(gridPos.x, gridPos.y);
 
         //circle
-        ((Graphics2D)g).setStroke(new BasicStroke(2));
+        ((Graphics2D) g).setStroke(new BasicStroke(2));
         int radius = 30;
-        ((Graphics2D)g).drawOval(pixelPos.x - radius/2, pixelPos.y - radius/2, radius,radius);
+        g.drawOval(pixelPos.x - radius / 2, pixelPos.y - radius / 2, radius, radius);
 
         //dot on mapped value
         int mapped = mapping.map(gridPos.x);
         g.setColor(Color.RED);
         radius = 8;
         pixelPos = gridToPixel(gridPos.x, mapped);
-        ((Graphics2D)g).setStroke(new BasicStroke(2));
+        ((Graphics2D) g).setStroke(new BasicStroke(2));
 
-        ((Graphics2D)g).drawRect(pixelPos.x - radius/2, pixelPos.y - radius/2, radius,radius);
-        if (lastSelected != gridPos.x)
-            this.onSelect.accept(gridPos.x);
+        g.drawRect(pixelPos.x - radius / 2, pixelPos.y - radius / 2, radius, radius);
+        if (lastSelected != gridPos.x) this.onSelect.accept(gridPos.x);
         lastSelected = gridPos.x;
     }
-    private int lastSelected;
 
     protected void paintLines(Graphics g) {
         if (mapping.output.isDiscrete()) {
             if (mapping.getMappingPoints().length > 1) {
                 MappingPoint p = mapping.getMappingPoints()[0];
-                paintLineInGrid(mapping.input.getMinValue(),p.output, p.input + 0.5f,p.output, g);
+                paintLineInGrid(mapping.input.getMinValue(), p.output, p.input + 0.5f, p.output, g);
 
                 p = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-                paintLineInGrid( p.input -0.5f,p.output, mapping.input.getMaxValue(),p.output, g);
+                paintLineInGrid(p.input - 0.5f, p.output, mapping.input.getMaxValue(), p.output, g);
 
             }
 
@@ -221,7 +221,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 MappingPoint a2 = mapping.getMappingPoints()[i];
                 MappingPoint a1 = mapping.getMappingPoints()[i - 1];
                 paintLineInGrid(a1.input + 0.5f, a2.output, a2.input, a2.output, g);   //left right
-           //     paintLineInGrid(a1.input + 0.5f, a1.output, a1.input + 0.5f, a2.output, g);   //up down
+                //     paintLineInGrid(a1.input + 0.5f, a1.output, a1.input + 0.5f, a2.output, g);   //up down
             }
         } else {
             {
@@ -230,27 +230,31 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                     paintLineInGrid(mapping.input.getMinValue(), a.output, a.input, a.output, g);
 
                     MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-                    paintLineInGrid(b.input, b.output, mapping.input.getMaxValue(), b.output,g);
+                    paintLineInGrid(b.input, b.output, mapping.input.getMaxValue(), b.output, g);
                 }
             }
             for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
                 MappingPoint a = mapping.getMappingPoints()[i];
                 MappingPoint b = mapping.getMappingPoints()[i + 1];
 
-                paintLineInGrid(a.input, a.output, b.input, b.output,g);
+                paintLineInGrid(a.input, a.output, b.input, b.output, g);
             }
         }
     }
-
+    int fontheight;
     private void paintGrid(Graphics g) {
         System.out.println("REDRAW");
         if (this.mapping == null) return;
         super.paintComponent(g);
-        g.setClip(0, 0, getWidth(), getHeight());
-   //     g.setColor(Color.black);
-   //     ((Graphics2D)g).fillRect(0,0,getWidth(),getHeight());
-        pixelSizeY = getHeight()-shiftGrid-shiftY;
-        pixelSizeX = getWidth()-shiftGrid-10;
+        //    g.setClip(0, 0, getWidth(), getHeight());
+        //     g.setColor(Color.black);
+        //     ((Graphics2D)g).fillRect(0,0,getWidth(),getHeight());
+        int padding = fontheight * 2;
+        shiftX = widthOutputStrings + padding;  //add some empty space ot the right
+        // large?
+        shiftY = fontheight;
+        pixelSizeY = getHeight() - shiftY - fontheight - padding;
+        pixelSizeX = getWidth() - shiftX - padding; //right padding
         this.GRID_X_SCALE = pixelSizeX / ((float) mapping.input.getMaxValue() - mapping.input.getMinValue());
         this.GRID_Y_SCALE = pixelSizeY / ((float) mapping.output.getMaxValue() - mapping.output.getMinValue());
 
@@ -272,7 +276,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         if (rangeX > 100) stepX = 50;
 
         // x axis grid
-        int fontheight = g2d.getFontMetrics().getHeight();
+        fontheight = g2d.getFontMetrics().getHeight();
         for (int i = stepX; i <= mapping.input.getMaxValue(); i += stepX) {
             Point start = gridToPixel(i, mapping.output.getMinValue());
             Point end = gridToPixel(i, mapping.output.getMaxValue());
@@ -301,6 +305,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
             g2d.drawLine(start.x, start.y, end.x, end.y);
             String s = mapping.output.valueToString(i);
             int width = g2d.getFontMetrics().stringWidth(s);
+            widthOutputStrings = Math.max(widthOutputStrings, width + fontheight);
+
             g2d.drawString(s, start.x - (width + fontheight), start.y + 0.5f * fontheight);
         }
         for (int i = 0; i >= mapping.output.getMinValue(); i -= stepY) {
@@ -309,35 +315,38 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
             g2d.drawLine(start.x, start.y, end.x, end.y);
             String s = mapping.output.valueToString(i);
             int width = g2d.getFontMetrics().stringWidth(s);
+            widthOutputStrings = Math.max(widthOutputStrings, width + fontheight);
             g2d.drawString(s, start.x - (width + fontheight), start.y + 0.5f * fontheight);
         }
 
-        g2d.setFont(new Font(g2d.getFont().getName(), g2d.getFont().getStyle(), g2d.getFont().getSize() * 3));
-        fontheight = g2d.getFontMetrics().getHeight();
-
-        Point center = gridToPixel((mapping.input.getMaxValue()+mapping.input.getMinValue())/2f,
-                (mapping.output.getMinValue()+mapping.output.getMaxValue())/2f);
-        Point zero = gridToPixel(mapping.input.getMinValue(), mapping.output.getMinValue());
-        Point extent = gridToPixel(mapping.input.getMaxValue(), mapping.output.getMaxValue());
         {
-            g2d.drawRect(zero.x,zero.y, extent.x - zero.x, extent.y - zero.y);
-        }
-        {
-            String s = mapping.input.getName();
-            int width = g2d.getFontMetrics().stringWidth(s);
-            g2d.drawString(s, center.x - 0.5f * width, zero.y - fontheight * 0.2f);
-        }
+            g2d.setFont(new Font(g2d.getFont().getName(), g2d.getFont().getStyle(), g2d.getFont().getSize() * 3));
+            int fontheight = g2d.getFontMetrics().getHeight();
 
-        {
-            String s = mapping.output.getName();
-            int width = g2d.getFontMetrics().stringWidth(s);
+            Point center = gridToPixel((mapping.input.getMaxValue() + mapping.input.getMinValue()) / 2f,
+                    (mapping.output.getMinValue() + mapping.output.getMaxValue()) / 2f);
+            Point zero = gridToPixel(mapping.input.getMinValue(), mapping.output.getMinValue());
+            Point extent = gridToPixel(mapping.input.getMaxValue(), mapping.output.getMaxValue());
+            {
+                g2d.drawRect(zero.x, zero.y, extent.x - zero.x, extent.y - zero.y);
+            }
+            {
+                String s = mapping.input.getName();
+                int width = g2d.getFontMetrics().stringWidth(s);
+                g2d.drawString(s, center.x - 0.5f * width, zero.y - fontheight * 0.2f);
+            }
 
-            g2d.translate(zero.x, center.y);
-            g2d.drawRect(center.x,center.y,10,10);
-            g2d.rotate(-Math.toRadians(90));
-            g2d.drawString(s, -width/2f, 1.2f * fontheight);
-            g2d.rotate(Math.toRadians(90));
-            g2d.translate(-zero.x, -center.y);
+            {
+                String s = mapping.output.getName();
+                int width = g2d.getFontMetrics().stringWidth(s);
+
+                g2d.translate(zero.x, center.y);
+                g2d.drawRect(center.x, center.y, 10, 10);
+                g2d.rotate(-Math.toRadians(90));
+                g2d.drawString(s, -width / 2f, 1.2f * fontheight);
+                g2d.rotate(Math.toRadians(90));
+                g2d.translate(-zero.x, -center.y);
+            }
         }
 
         // Draw lines from the list
@@ -377,8 +386,9 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
 
     private Point pixelToGrid(int pixelX, int pixelY) {
         // Convert the pixel coordinates to grid coordinates
-        int gridXPressed = Math.round((pixelX - shiftGrid) / GRID_X_SCALE) + mapping.input.getMinValue();
-        int gridYPressed = Math.round((pixelSizeY - (pixelY - shiftY)) / GRID_Y_SCALE) + mapping.output.getMinValue(); //
+        int gridXPressed = Math.round((pixelX - shiftX) / GRID_X_SCALE) + mapping.input.getMinValue();
+        int gridYPressed =
+                Math.round((pixelSizeY - (pixelY - shiftY)) / GRID_Y_SCALE) + mapping.output.getMinValue(); //
         // Flip
         // the Y-axis
         return new Point(gridXPressed, gridYPressed);
@@ -416,10 +426,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         return (float) Math.sqrt(dX * dX + dY * dY);
     }
 
-    private int shiftY = 100;
-
     private Point gridToPixel(float gridX, float gridY) {
-        int pixelX = Math.round((gridX - mapping.input.getMinValue()) * GRID_X_SCALE) + shiftGrid;
+        int pixelX = Math.round((gridX - mapping.input.getMinValue()) * GRID_X_SCALE) + shiftX;
         int pixelY = Math.round(pixelSizeY - ((gridY - mapping.output.getMinValue()) * GRID_Y_SCALE)) + shiftY;
 
         return new Point(pixelX, pixelY);
