@@ -97,7 +97,7 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     @Override
     public String valueToString(int value) {
         if (value < 0 || value > materials.length) return "INVALID";
-        return materials[value].getName() + "(" + value + ")";
+        return materials[value].getName();
     }
 
     @Override
