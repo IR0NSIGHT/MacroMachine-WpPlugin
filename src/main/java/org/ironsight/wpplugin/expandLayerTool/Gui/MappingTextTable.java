@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 
 import javax.swing.*;
@@ -8,9 +9,13 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
+import javax.vecmath.Point2d;
+import javax.vecmath.Tuple2d;
+import javax.vecmath.Tuple2f;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class MappingTextTable extends LayerMappingPanel implements IMappingPointSelector {
@@ -22,40 +27,35 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     };
     private JTable numberTable;
     private boolean groupValues = true;
+    private JCheckBox groupValuesCheckBox;
 
     @Override
     protected void updateComponents() {
         groupValues = groupValuesCheckBox.isSelected();
 
         MappingPointValue[][] data;
-        Object[] columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
+        Object[] columnNames;
         if (!groupValues) {
-            data = new MappingPointValue[mapping.input.getMaxValue() - mapping.input.getMinValue() +1][];
-
+            data = new MappingPointValue[mapping.input.getMaxValue() - mapping.input.getMinValue() + 1][];
+            columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
             for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
                 data[i - mapping.input.getMinValue()] = new MappingPointValue[]{new MappingPointValue(i, mapping.input),
                         new MappingPointValue(mapping.map(i), mapping.output)};
             }
         } else {
-            HashSet<Integer> changeValues = new HashSet<>();
-            int previousOutput = Integer.MAX_VALUE;
-            for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
-                if (mapping.map(i) != previousOutput) {
-                    previousOutput = mapping.map(i);
-                    changeValues.add(mapping.sanitizeInput(i-1));
-                    changeValues.add(mapping.sanitizeInput(i));
-                }
-            }
-            changeValues.add(mapping.input.getMinValue());
-            changeValues.add(mapping.input.getMaxValue());
-
-            data = new MappingPointValue[changeValues.size()][];
+            columnNames = new String[]{"from " + mapping.input.getName(),
+                    " to " + mapping.input.getName(),
+                    mapping.output.getName()};
+            List<Point2d> ranges = LayerMapping.calculateRanges(mapping);
             int ii = 0;
-            for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
-                if (changeValues.contains(i)) {
-                    data[ii++] = new MappingPointValue[]{new MappingPointValue(i, mapping.input),
-                            new MappingPointValue(mapping.map(i), mapping.output)};
-                }
+            data = new MappingPointValue[ranges.size()][];
+            for (Point2d range : ranges) {
+                    int start = (int)range.x;
+                    int end = (int)range.y;
+                    data[ii++] = new MappingPointValue[]{new MappingPointValue(start, mapping.input),
+                            new MappingPointValue(end, mapping.input),
+                            new MappingPointValue(mapping.map(start), mapping.output)};
+
             }
         }
 
@@ -78,9 +78,9 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
         numberTable.setDefaultRenderer(Object.class, new MappingPointCellRenderer());
         numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
-       // numberTable.setCellSelectionEnabled(false);
+        // numberTable.setCellSelectionEnabled(false);
     }
-    private JCheckBox groupValuesCheckBox;
+
     @Override
     protected void initComponents() {
         this.setLayout(new BorderLayout());
@@ -89,7 +89,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
 
         // Add a TableModelListener to get a callback when a cell is edited
-        numberTable = new JTable(){
+        numberTable = new JTable() {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false; // All cells are non-editable
@@ -100,7 +100,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         this.add(scrollPane, BorderLayout.CENTER);
         JPanel buttons = new JPanel();
         groupValuesCheckBox = new JCheckBox("Group Values");
-        groupValuesCheckBox.addActionListener(f  -> {
+        groupValuesCheckBox.addActionListener(f -> {
             if (groupValues != groupValuesCheckBox.isSelected()) {
                 groupValues = groupValuesCheckBox.isSelected();
                 updateComponents();
@@ -166,9 +166,9 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         if (selectedPointIdx != this.selectedPointIdx) {
             this.selectedPointIdx = selectedPointIdx;
             for (int i = 0; i < tableModel.getRowCount(); i++) {
-                MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i,0);
+                MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i, 0);
                 if (value.numericValue == selectedPointIdx) {
-                    numberTable.setRowSelectionInterval(i,i);
+                    numberTable.setRowSelectionInterval(i, i);
                     return;
                 }
             }
