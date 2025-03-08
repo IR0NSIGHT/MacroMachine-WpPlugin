@@ -10,11 +10,9 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.vecmath.Point2d;
-import javax.vecmath.Tuple2d;
-import javax.vecmath.Tuple2f;
 import java.awt.*;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -35,12 +33,27 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
         MappingPointValue[][] data;
         Object[] columnNames;
+        HashMap<Integer, Integer> mappingPointByInput = new HashMap<>();
+        {
+            int index = 0;
+            for (MappingPoint p : mapping.getMappingPoints()) {
+                mappingPointByInput.put(p.input, index++);
+            }
+        }
+
         if (!groupValues) {
             data = new MappingPointValue[mapping.input.getMaxValue() - mapping.input.getMinValue() + 1][];
             columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
             for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
                 data[i - mapping.input.getMinValue()] = new MappingPointValue[]{new MappingPointValue(i, mapping.input),
                         new MappingPointValue(mapping.map(i), mapping.output)};
+                if (mappingPointByInput.containsKey(i)) {
+                    int controlPointIndex = mappingPointByInput.get(i);
+                    data[i - mapping.input.getMinValue()][0].isEditable = true;
+                    data[i - mapping.input.getMinValue()][0].mappingPointIndex = controlPointIndex;
+                    data[i - mapping.input.getMinValue()][1].isEditable = true;
+                    data[i - mapping.input.getMinValue()][1].mappingPointIndex = controlPointIndex;
+                }
             }
         } else {
             columnNames = new String[]{"from " + mapping.input.getName(),
@@ -50,11 +63,11 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             int ii = 0;
             data = new MappingPointValue[ranges.size()][];
             for (Point2d range : ranges) {
-                    int start = (int)range.x;
-                    int end = (int)range.y;
-                    data[ii++] = new MappingPointValue[]{new MappingPointValue(start, mapping.input),
-                            new MappingPointValue(end, mapping.input),
-                            new MappingPointValue(mapping.map(start), mapping.output)};
+                int start = (int) range.x;
+                int end = (int) range.y;
+                data[ii++] = new MappingPointValue[]{new MappingPointValue(start, mapping.input),
+                        new MappingPointValue(end, mapping.input),
+                        new MappingPointValue(mapping.map(start), mapping.output)};
 
             }
         }
@@ -81,6 +94,16 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         // numberTable.setCellSelectionEnabled(false);
     }
 
+    private boolean isControlPoint(MappingPointValue value) {
+        if (value.mappingValue.equals(mapping.input)) {
+            return Arrays.stream(mapping.getMappingPoints()).anyMatch(cp -> cp.input == value.numericValue);
+        } else if (value.mappingValue.equals(mapping.output)) {
+            return Arrays.stream(mapping.getMappingPoints()).anyMatch(cp -> cp.output == value.numericValue);
+        } else {
+            return false;
+        }
+    }
+
     @Override
     protected void initComponents() {
         this.setLayout(new BorderLayout());
@@ -92,6 +115,9 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         numberTable = new JTable() {
             @Override
             public boolean isCellEditable(int row, int column) {
+                MappingPointValue value = (MappingPointValue) numberTable.getModel().getValueAt(row, column);
+                //test if this value is a controlpoint
+                if (!groupValues) return value.isEditable;
                 return false; // All cells are non-editable
             }
         };
@@ -116,7 +142,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                     int row = e.getFirstRow(); // Get the row of the edited cell
                     int column = e.getColumn(); // Get the column of the edited cell
                     Object newValue = tableModel.getValueAt(row, column); // Get the new value
-                    parseAndSetValue(newValue, row, column);
+                    SwingUtilities.invokeLater(() -> parseAndSetValue(newValue, row, column));
                 }
             }
         };
@@ -146,11 +172,13 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
     protected boolean parseAndSetValue(Object newValue, int row, int column) {
         assert newValue instanceof MappingPointValue;
+        MappingPointValue mpv = (MappingPointValue) newValue;
         MappingPoint[] points = mapping.getMappingPoints().clone();
+        //FIXME allow editing
         if (column == 0) {
-            points[row] = new MappingPoint(((MappingPointValue) newValue).numericValue, points[row].output);
+            points[mpv.mappingPointIndex] = new MappingPoint(mpv.numericValue, points[mpv.mappingPointIndex].output);
         } else {
-            points[row] = new MappingPoint(points[row].input, ((MappingPointValue) newValue).numericValue);
+            points[mpv.mappingPointIndex] = new MappingPoint(points[mpv.mappingPointIndex].input, mpv.numericValue);
         }
         updateMapping(mapping.withNewPoints(points));
         return true;
