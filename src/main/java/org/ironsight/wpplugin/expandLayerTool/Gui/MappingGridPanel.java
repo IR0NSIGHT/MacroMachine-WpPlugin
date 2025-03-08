@@ -1,22 +1,18 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
+import org.checkerframework.checker.units.qual.C;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.function.Consumer;
 
 import static javax.swing.BorderFactory.createLineBorder;
 
 public class MappingGridPanel extends LayerMappingPanel implements IMappingPointSelector {
-    private final List<Line> lines = new ArrayList<>();  // List to store lines
     private final int pointHitBoxRadius = 5;
     private int shiftX = 50;
     private int pixelSizeX = 500;
@@ -219,14 +215,16 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         lastSelected = gridPos.x;
     }
 
-    protected void paintLines(Graphics g) {
+    protected void paintCurveLines(Graphics2D g) {
+        g.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
+        g.setColor(Color.red);
         if (mapping.output.isDiscrete()) {
-            if (mapping.getMappingPoints().length > 1) {
+            if (mapping.getMappingPoints().length > 0) {
                 MappingPoint p = mapping.getMappingPoints()[0];
-                paintLineInGrid(mapping.input.getMinValue(), p.output, p.input + 0.5f, p.output, g);
+                paintLineInGrid(mapping.input.getMinValue(), p.output, p.input, p.output, g);
 
                 p = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-                paintLineInGrid(p.input - 0.5f, p.output, mapping.input.getMaxValue(), p.output, g);
+                paintLineInGrid(p.input, p.output, mapping.input.getMaxValue(), p.output, g);
             }
             for (int i = 1; i < mapping.getMappingPoints().length; i++) {
                 MappingPoint a2 = mapping.getMappingPoints()[i];
@@ -360,21 +358,15 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
             }
         }
 
-        // Draw lines from the list
-        g2d.setColor(Color.RED);
-        g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 10}, 0));
-        for (Line line : lines) {
-            Point start = gridToPixel(line.x, line.y);
-            Point end = gridToPixel(line.x1, line.y1);
+        paintMappingPoints(g2d);
+        paintCurveLines((Graphics2D) g);
+        paintCursor(g);
+    }
 
-            int x1 = start.x;
-            int y1 = start.y;  // Flip the y-axis
-            int x2 = end.x;
-            int y2 = end.y;
-            g2d.drawLine(x1, y1, x2, y2);
-        }
-
+    private void paintMappingPoints(Graphics2D g2d) {
+        // Draw mapping points
         g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
+        g2d.setColor(Color.red);
         for (MappingPoint p : mapping.getMappingPoints()) {
             int radius = 10;  // Circle radius
             Point start = gridToPixel(p.input, p.output);
@@ -387,12 +379,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 g2d.drawRect(x1 - width / 2, y1 - width / 2, width, width);
             }
             g2d.fillOval(x1 - radius / 2, y1 - radius / 2, radius, radius);
-
-
         }
-
-        paintLines(g);
-        paintCursor(g);
     }
 
     private Point pixelToGrid(int pixelX, int pixelY) {
