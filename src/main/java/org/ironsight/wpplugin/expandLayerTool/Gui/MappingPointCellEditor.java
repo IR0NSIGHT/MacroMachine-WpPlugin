@@ -31,7 +31,7 @@ public class MappingPointCellEditor extends DefaultCellEditor implements TableCe
         IMappingValue mappingValue = ((MappingPointValue) value).mappingValue;
         ArrayList<MappingPointValue> arr = new ArrayList<>(mappingValue.getMaxValue() - mappingValue.getMinValue());
         for (int i = mappingValue.getMinValue(); i <= mappingValue.getMaxValue(); i++) {
-            MappingPointValue pointValue = new MappingPointValue(i, mappingValue);
+            MappingPointValue pointValue = ((MappingPointValue) value).withValue(i);
             arr.add(pointValue);
         }
 

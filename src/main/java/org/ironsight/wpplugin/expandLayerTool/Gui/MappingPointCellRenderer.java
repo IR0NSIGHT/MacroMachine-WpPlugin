@@ -28,6 +28,11 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
         textLabel.setText(point.mappingValue.valueToString(point.numericValue));
         valueRenderer.setMappingValue(point.mappingValue);
         valueRenderer.setValue(point.numericValue);
+        if (point.isEditable) {
+            textLabel.setForeground(textLabel.getForeground().darker());
+            textLabel.setBackground(textLabel.getBackground().darker());
+        }
+
     }
 
 
