@@ -5,8 +5,11 @@ import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;
 
+import javax.vecmath.Point2d;
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.io.*;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -78,25 +81,18 @@ class LayerMappingTest {
 
     @Test
     void discreteMap() {
-        LayerMapping action = new LayerMapping(
-                new HeightProvider(),
+        LayerMapping action = new LayerMapping(new HeightProvider(),
                 IntermediateSelectionIO.instance,
-                new MappingPoint[]{ new MappingPoint(100,0),
-                new MappingPoint(200, 1),
-                new MappingPoint(250,0)},
+                new MappingPoint[]{new MappingPoint(100, 0), new MappingPoint(200, 1), new MappingPoint(250, 0)},
                 ActionType.SET,
                 "",
                 "",
-                UUID.randomUUID()
-        );
+                UUID.randomUUID());
         for (int input = action.input.getMinValue(); input <= action.input.getMaxValue(); input++) {
             int output = action.map(input);
-            if (input <= 100)
-                assertEquals(0, output,""+input);
-            else if (input <= 200)
-                assertEquals(1, output, ""+input);
-            else
-                assertEquals(0, output, ""+input);
+            if (input <= 100) assertEquals(0, output, "" + input);
+            else if (input <= 200) assertEquals(1, output, "" + input);
+            else assertEquals(0, output, "" + input);
         }
     }
 
@@ -212,6 +208,41 @@ class LayerMappingTest {
 
             mapper.applyToPoint(dim, 0, 0);
             assertEquals(0, dim.getLayerValueAt(Annotations.INSTANCE, 0, 0));
+        }
+    }
+
+    @Test
+    void calculateRanges() {
+        {
+            LayerMapping mapper = new LayerMapping(new TestInputOutput(),   //-5 .. 1000
+                    new AnnotationSetter(), new MappingPoint[]{}, ActionType.SET, "", "", UUID.randomUUID());
+            List<Point2d> ranges = LayerMapping.calculateRanges(mapper);
+            assertEquals(1, ranges.size());
+            assertEquals(new Point2d(-5, 1000), ranges.get(0));
+        }
+
+        {
+            LayerMapping mapper = new LayerMapping(new TestInputOutput(),   //-5 .. 1000
+                    new AnnotationSetter(), new MappingPoint[]{
+                            new MappingPoint(10,3), new MappingPoint(100,7)
+            }, ActionType.SET, "", "", UUID.randomUUID());
+            List<Point2d> ranges = LayerMapping.calculateRanges(mapper);
+            assertEquals(2, ranges.size());
+            assertEquals(new Point2d(-5, 10), ranges.get(0));
+            assertEquals(new Point2d(11, 1000), ranges.get(1));
+            int total =0;
+            for (Point2d range : ranges) {
+                int outValue = mapper.map((int)range.x);
+                for (int i = (int)range.x; i <= range.y; i++) {
+                    assertEquals(mapper.map(i), outValue, "range did not contain only one output value" + range + " " +
+                            "i="+i);
+                    total++;
+                }
+            }
+
+            assertEquals(mapper.input.getMaxValue()-mapper.input.getMinValue() +1, total,"ranges did not cover all " +
+                    "input" +
+                    " values");
         }
     }
 }

@@ -5,6 +5,8 @@ import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositio
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IntermediateSelectionIO;
 import org.pepsoft.worldpainter.Dimension;
 
+import javax.vecmath.Point2d;
+import javax.vecmath.Tuple2d;
 import java.util.*;
 
 import static org.ironsight.wpplugin.expandLayerTool.operations.ProviderType.INTERMEDIATE_SELECTION;
@@ -180,6 +182,23 @@ public class LayerMapping implements SaveableAction {
     @Override
     public String getDescription() {
         return description;
+    }
+
+    public static List<Point2d> calculateRanges(LayerMapping mapping) {
+        LinkedList<Point2d> ranges = new LinkedList<>();
+        int previousOutput = mapping.map(mapping.input.getMinValue());
+        int previousInput = mapping.input.getMinValue();
+        for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
+            if (i == mapping.input.getMaxValue()) {
+                ranges.add(new Point2d(previousInput, i));
+            }
+            if  (mapping.map(i) != previousOutput) {
+                ranges.add(new Point2d(previousInput, i - 1));
+                previousOutput = mapping.map(i);
+                previousInput = i;
+            }
+        }
+        return ranges;
     }
 
     public void applyToPoint(Dimension dim, int x, int y) {
