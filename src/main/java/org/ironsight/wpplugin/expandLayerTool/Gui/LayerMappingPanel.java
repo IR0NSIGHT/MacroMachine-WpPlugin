@@ -1,8 +1,10 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.function.Consumer;
 
 public abstract class LayerMappingPanel extends JPanel {
@@ -35,7 +37,34 @@ public abstract class LayerMappingPanel extends JPanel {
         if (mapping == null || this.mapping == null || this.mapping.equals(mapping) || !allowEvents) {
             return;
         }
+        if (mapping.input != this.mapping.input || mapping.output != this.mapping.output) {
+
+            if (!mapping.input.isDiscrete() && !mapping.output.isDiscrete()) {  // both are interpolatable
+                //1 to 1 interpolation
+                mapping = mapping.withNewPoints(new MappingPoint[]{new MappingPoint(mapping.input.getMinValue(),
+                        mapping.output.getMinValue()),
+                        new MappingPoint(mapping.input.getMaxValue(), mapping.output.getMaxValue())});
+            } else if (mapping.input.isDiscrete()) {
+                //ensure all values have mapping points.
+                HashMap<Integer, MappingPoint> inputToMapping = new HashMap<>();
+                for (MappingPoint mappingPoint : mapping.getMappingPoints()) {
+                    inputToMapping.put(mappingPoint.input, mappingPoint);
+                }
+                MappingPoint[] newPoints =
+                        new MappingPoint[mapping.input.getMaxValue() - mapping.input.getMinValue() + 1];
+                for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
+                    newPoints[i - mapping.input.getMinValue()] =
+                            inputToMapping.getOrDefault(i, new MappingPoint(i, mapping.map(i)));
+                }
+                mapping = mapping.withNewPoints(newPoints);
+            } else { //interpol input, discrete output
+                //input or output changed, wipe control points
+                mapping = mapping.withNewPoints(new MappingPoint[]{new MappingPoint(mapping.input.getMinValue(),
+                        mapping.output.getMinValue())});
+            }
+        }
         System.out.println("EVENT: " + this.getClass().getSimpleName() + " UPDATE MAPPING TO " + mapping);
+
 
         setMapping(mapping);
         if (onUpdate != null) onUpdate.accept(mapping);
