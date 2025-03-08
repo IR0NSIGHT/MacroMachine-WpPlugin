@@ -26,13 +26,16 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
 
     public void updateTo(MappingPointValue point) {
         textLabel.setText(point.mappingValue.valueToString(point.numericValue));
+
         valueRenderer.setMappingValue(point.mappingValue);
         valueRenderer.setValue(point.numericValue);
         if (point.isEditable) {
-            textLabel.setForeground(textLabel.getForeground().darker());
-            textLabel.setBackground(textLabel.getBackground().darker());
+            textLabel.setForeground(Color.BLACK);
+            textLabel.setFont(textLabel.getFont().deriveFont(Font.PLAIN));
+        } else {
+            textLabel.setForeground(Color.GRAY);
+            textLabel.setFont(textLabel.getFont().deriveFont(Font.ITALIC));
         }
-
     }
 
 
@@ -42,9 +45,6 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
         if (isSelected) {
             if (hasFocus) {
                 textLabel.setBackground(table.getSelectionBackground());
-                textLabel.setForeground(table.getSelectionForeground());
-            } {
-                textLabel.setBackground(table.getSelectionBackground().darker());
                 textLabel.setForeground(table.getSelectionForeground());
             }
         } else {
