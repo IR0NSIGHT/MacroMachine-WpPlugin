@@ -13,6 +13,7 @@ import javax.vecmath.Point2d;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -21,7 +22,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     DefaultTableModel tableModel;
     TableModelListener listener;
 
-    private Consumer<Integer> onSelect = f -> {
+    private Consumer<Integer[]> onSelect = f -> {
     };
     private JTable numberTable;
     private boolean groupValues = true;
@@ -186,20 +187,18 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     }
 
     @Override
-    public void setOnSelect(Consumer<Integer> onSelect) {
+    public void setOnSelect(Consumer<Integer[]> onSelect) {
         this.onSelect = onSelect;
     }
 
     @Override
-    public void setSelected(Integer selectedPointIdx) {
-        if (selectedPointIdx != this.selectedPointIdx) {
-            this.selectedPointIdx = selectedPointIdx;
-            for (int i = 0; i < tableModel.getRowCount(); i++) {
-                MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i, 0);
-                if (value.numericValue == selectedPointIdx) {
-                    numberTable.setRowSelectionInterval(i, i);
-                    return;
-                }
+    public void setSelectedInputs(Integer[] selectedPointIdx) {
+        HashSet<Integer> set = new HashSet<>(Arrays.asList(selectedPointIdx));
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i, 0);
+            if (set.contains(value.numericValue)) {
+                numberTable.setRowSelectionInterval(i, i);
+                return;
             }
         }
     }
