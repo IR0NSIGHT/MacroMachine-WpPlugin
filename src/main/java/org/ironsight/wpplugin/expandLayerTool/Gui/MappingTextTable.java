@@ -42,6 +42,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         }
 
         if (!groupValues) {
+            boolean inputEditable = !mapping.input.isDiscrete();
             data = new MappingPointValue[mapping.input.getMaxValue() - mapping.input.getMinValue() + 1][];
             columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
             for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
@@ -49,7 +50,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                         new MappingPointValue(mapping.map(i), mapping.output)};
                 if (mappingPointByInput.containsKey(i)) {
                     int controlPointIndex = mappingPointByInput.get(i);
-                    data[i - mapping.input.getMinValue()][0].isEditable = true;
+                    data[i - mapping.input.getMinValue()][0].isEditable = inputEditable;
                     data[i - mapping.input.getMinValue()][0].mappingPointIndex = controlPointIndex;
                     data[i - mapping.input.getMinValue()][1].isEditable = true;
                     data[i - mapping.input.getMinValue()][1].mappingPointIndex = controlPointIndex;
