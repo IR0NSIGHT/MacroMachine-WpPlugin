@@ -22,7 +22,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     private float GRID_Y_SCALE;
     private boolean drag;
     private boolean[] selectedInputs;
-    private Consumer<Integer[]> onSelect = f -> {
+    private Consumer<boolean[]> onSelect = f -> {
     };
     private boolean showCursor = true;
     private int mousePosX, mousePosY;
@@ -39,19 +39,20 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     @Override
     protected void updateComponents() {
         if (selectedInputs == null ||
-                this.mapping.input.getMaxValue()-this.mapping.input.getMinValue()+1 != selectedInputs.length) {
+                this.mapping.input.getMaxValue() - this.mapping.input.getMinValue() + 1 != selectedInputs.length) {
             resetSelection();
             System.out.println("RESET INPUT SELECTION");
         }
     }
 
     private void setInputSelection(int input, boolean selected) {
-        this.selectedInputs[input] = selected;
-        System.out.println("Set selection to " + selected + " for " + input) ;
+        this.selectedInputs[input - mapping.input.getMinValue()] = selected;
+        System.out.println("Set selection to " + selected + " for " + input);
+        onSelect.accept(selectedInputs);
     }
 
     private boolean isInputSelected(int input) {
-        return selectedInputs[input];
+        return selectedInputs[input - mapping.input.getMinValue()];
     }
 
     private void resetSelection() {
@@ -233,7 +234,9 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         ((Graphics2D) g).setStroke(new BasicStroke(2));
 
         g.drawRect(pixelPos.x - radius / 2, pixelPos.y - radius / 2, radius, radius);
-        if (lastSelected != gridPos.x) this.onSelect.accept(new Integer[]{gridPos.x});
+        resetSelection();
+        if (!isInputSelected(gridPos.x))
+            setInputSelection(gridPos.x, true);
         lastSelected = gridPos.x;
     }
 
@@ -269,6 +272,13 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 MappingPoint b = mapping.getMappingPoints()[i + 1];
 
                 paintLineInGrid(a.input, a.output, b.input, b.output, g);
+            }
+        }
+        for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
+            if (isInputSelected(i)) {
+                Point gridPos = gridToPixel(i, mapping.map(i));
+                int size = 4;
+                g.drawRect(gridPos.x - size / 2, gridPos.y - size / 2, size, size);
             }
         }
     }
@@ -434,7 +444,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
             i++;
         }
         if (distTotalSq > (maxDist * maxDist)) return false;
-        setInputSelection(closest.input,true);
+        setInputSelection(closest.input, true);
         this.repaint();
         return true;
     }
@@ -453,18 +463,16 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     }
 
     @Override
-    public void setOnSelect(Consumer<Integer[]> onSelect) {
+    public void setOnSelect(Consumer<boolean[]> onSelect) {
         this.onSelect = onSelect;
     }
 
     @Override
-    public void setSelectedInputs(Integer[] selectedPointIdx) {
+    public void setSelectedInputs(boolean[] selectedPointIdx) {
         if (mapping == null) return;
         int l = mapping.getMappingPoints().length;
         Arrays.fill(selectedInputs, false);
-        for (Integer input : selectedPointIdx) {
-            selectedInputs[input] = true;
-        }
+        selectedInputs = selectedPointIdx;
         this.repaint();
     }
 
