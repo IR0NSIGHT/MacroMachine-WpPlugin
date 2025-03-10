@@ -36,6 +36,7 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
             textLabel.setForeground(Color.GRAY);
             textLabel.setFont(textLabel.getFont().deriveFont(Font.ITALIC));
         }
+
     }
 
 

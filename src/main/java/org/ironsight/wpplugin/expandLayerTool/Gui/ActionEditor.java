@@ -60,10 +60,10 @@ public class ActionEditor extends LayerMappingPanel {
 
         //set up sync between both components
         table.setOnUpdate(this::updateMapping);
-        table.setOnSelect(mappingDisplay::setSelected);
+        table.setOnSelect(mappingDisplay::setSelectedInputs);
 
         mappingDisplay.setOnUpdate(this::updateMapping);
-        mappingDisplay.setOnSelect(table::setSelected);
+        mappingDisplay.setOnSelect(table::setSelectedInputs);
 
         topBar = new LayerMappingTopPanel();
         topBar.setOnUpdate(this::updateMapping);
