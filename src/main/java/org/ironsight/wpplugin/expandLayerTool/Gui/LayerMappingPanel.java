@@ -59,8 +59,9 @@ public abstract class LayerMappingPanel extends JPanel {
                 mapping = mapping.withNewPoints(newPoints);
             } else { //interpol input, discrete output
                 //input or output changed, wipe control points
-                mapping = mapping.withNewPoints(new MappingPoint[]{new MappingPoint(mapping.input.getMinValue(),
-                        mapping.output.getMinValue())});
+                mapping =
+                        mapping.withNewPoints(new MappingPoint[]{new MappingPoint((mapping.input.getMinValue()+mapping.input.getMaxValue())/2,
+                        (mapping.output.getMinValue()+mapping.output.getMaxValue())/2)});
             }
         }
         System.out.println("EVENT: " + this.getClass().getSimpleName() + " UPDATE MAPPING TO " + mapping);
