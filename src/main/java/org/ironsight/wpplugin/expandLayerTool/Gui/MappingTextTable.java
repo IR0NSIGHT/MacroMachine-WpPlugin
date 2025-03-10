@@ -13,7 +13,6 @@ import javax.vecmath.Point2d;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -22,7 +21,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     DefaultTableModel tableModel;
     TableModelListener listener;
 
-    private Consumer<Integer[]> onSelect = f -> {
+    private Consumer<boolean[]> onSelect = f -> {
     };
     private JTable numberTable;
     private boolean groupValues = true;
@@ -158,18 +157,20 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 }
             }
         });
-    /*    numberTable.getSelectionModel().addListSelectionListener(event -> {
+        numberTable.getSelectionModel().addListSelectionListener(event -> {
             // Ignore the event if it's being adjusted (e.g., dragging selection)
             if (!event.getValueIsAdjusting()) {
                 int selectedRow = numberTable.getSelectedRow();
-                if (selectedRow != -1) {
-                    // Callback when a row is clicked
-                    onSelect.accept(selectedRow);
+                boolean[] selection = new boolean[mapping.input.getMaxValue()-mapping.input.getMinValue()+1];
+                for (Integer row: numberTable.getSelectedRows()) {
+                    MappingPointValue mpv = (MappingPointValue) numberTable.getModel().getValueAt(row, 0);
+                    selection[mpv.numericValue-mapping.input.getMinValue()] = true;
                 }
+                onSelect.accept(selection);
             }
         });
 
-     */
+
     }
 
     protected boolean parseAndSetValue(Object newValue, int row, int column) {
@@ -187,16 +188,15 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     }
 
     @Override
-    public void setOnSelect(Consumer<Integer[]> onSelect) {
+    public void setOnSelect(Consumer<boolean[]> onSelect) {
         this.onSelect = onSelect;
     }
 
     @Override
-    public void setSelectedInputs(Integer[] selectedPointIdx) {
-        HashSet<Integer> set = new HashSet<>(Arrays.asList(selectedPointIdx));
+    public void setSelectedInputs(boolean[] selectedPointIdx) {
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i, 0);
-            if (set.contains(value.numericValue)) {
+            if (selectedPointIdx[value.numericValue-mapping.input.getMinValue()]) {
                 numberTable.setRowSelectionInterval(i, i);
                 return;
             }
