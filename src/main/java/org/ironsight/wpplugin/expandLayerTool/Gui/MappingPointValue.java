@@ -2,6 +2,8 @@ package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IMappingValue;
 
+import java.util.Objects;
+
 public class MappingPointValue {
     IMappingValue mappingValue;
     int numericValue;
@@ -18,6 +20,20 @@ public class MappingPointValue {
         mappingPointValue.isEditable = this.isEditable;
         mappingPointValue.mappingPointIndex = this.mappingPointIndex;
         return mappingPointValue;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MappingPointValue that = (MappingPointValue) o;
+        return numericValue == that.numericValue && Objects.equals(mappingValue, that.mappingValue);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(mappingValue, numericValue);
     }
 
     @Override
