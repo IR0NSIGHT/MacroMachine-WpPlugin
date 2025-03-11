@@ -15,6 +15,13 @@ public class MappingPointValue {
         this.mappingValue = mappingValue;
     }
 
+    public MappingPointValue(IMappingValue mappingValue, int numericValue, boolean isEditable, int mappingPointIndex) {
+        this.mappingValue = mappingValue;
+        this.numericValue = numericValue;
+        this.isEditable = isEditable;
+        this.mappingPointIndex = mappingPointIndex;
+    }
+
     public MappingPointValue withValue(int numericValue) {
         MappingPointValue mappingPointValue = new MappingPointValue(numericValue, mappingValue);
         mappingPointValue.isEditable = this.isEditable;
