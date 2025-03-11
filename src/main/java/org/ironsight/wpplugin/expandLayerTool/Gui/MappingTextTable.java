@@ -12,7 +12,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.vecmath.Point2d;
 import java.awt.*;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -26,11 +25,12 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     private JTable numberTable;
     private boolean groupValues = false;
     private JCheckBox groupValuesCheckBox;
+    private boolean blockTableChanged;
+    private boolean blockSelectionUpdate = false;
 
     private void initTableModel() {
         System.out.println("REBUILD TABLE MODEL");
-        if (mapping == null)
-            return;
+        if (mapping == null) return;
         MappingPointValue[][] data;
         Object[] columnNames;
         HashMap<Integer, Integer> mappingPointByInput = new HashMap<>();
@@ -77,7 +77,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         this.tableModel.addTableModelListener(this.listener);
         numberTable.setModel(tableModel);
     }
-    private boolean blockTableChanged;
+
     @Override
     protected void updateComponents() {
         groupValues = groupValuesCheckBox.isSelected();
@@ -94,9 +94,9 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 tableModel.setValueAt(new MappingPointValue(start, mapping.input), ii, 0);
                 tableModel.setValueAt(new MappingPointValue(end, mapping.input), ii, 1);
                 tableModel.setValueAt(new MappingPointValue(mapping.map(start), mapping.output), ii, 2);
+                ii++;
             }
         } else {
-
             int range = mapping.input.getMaxValue() - mapping.input.getMinValue() + 1;
             if (numberTable.getModel().getRowCount() != range) {
                 initTableModel();   //rebuild
@@ -110,16 +110,18 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             }
             for (int i = 0; i < numberTable.getRowCount(); i++) {
                 MappingPointValue mpv = (MappingPointValue) numberTable.getModel().getValueAt(i, 0);
-                int numeric = i+mapping.input.getMinValue();
+                int numeric = i + mapping.input.getMinValue();
                 boolean editable = mappingPointByInput.containsKey(numeric);
-                int controlPointiD = mappingPointByInput.getOrDefault(numeric,-1);
-                MappingPointValue inputV = new MappingPointValue(mapping.input,numeric, editable, controlPointiD);
+                int controlPointiD = mappingPointByInput.getOrDefault(numeric, -1);
+                MappingPointValue inputV = new MappingPointValue(mapping.input, numeric, editable, controlPointiD);
                 numberTable.getModel().setValueAt(inputV, i, 0);
                 if (groupValues) {
                     initTableModel();
                 }
-                MappingPointValue outputV = new MappingPointValue(mapping.output, mapping.map(inputV.numericValue),
-                        editable, controlPointiD);
+                MappingPointValue outputV = new MappingPointValue(mapping.output,
+                        mapping.map(inputV.numericValue),
+                        editable,
+                        controlPointiD);
                 numberTable.getModel().setValueAt(outputV, i, 1);
             }
         }
@@ -176,24 +178,35 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         numberTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         // Add listener to scroll to the selected row
         numberTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int selectedRow = numberTable.getSelectedRow();
-                if (selectedRow != -1) {
-                    numberTable.scrollRectToVisible(numberTable.getCellRect(selectedRow, 0, true));
-                }
+            if (e.getValueIsAdjusting()) {
+                return;
             }
-        });
-        numberTable.getSelectionModel().addListSelectionListener(event -> {
-            // Ignore the event if it's being adjusted (e.g., dragging selection)
-            if (!event.getValueIsAdjusting()) {
-                int selectedRow = numberTable.getSelectedRow();
+            int selectedRow = numberTable.getSelectedRow();
+            if (selectedRow != -1) {
+                numberTable.scrollRectToVisible(numberTable.getCellRect(selectedRow, 0, true));
+            }
+
+            SwingUtilities.invokeLater(() -> {
                 boolean[] selection = new boolean[mapping.input.getMaxValue() - mapping.input.getMinValue() + 1];
                 for (Integer row : numberTable.getSelectedRows()) {
                     MappingPointValue mpv = (MappingPointValue) numberTable.getModel().getValueAt(row, 0);
-                    selection[mpv.numericValue - mapping.input.getMinValue()] = true;
+                    if (!groupValues) {
+                        selection[mpv.numericValue - mapping.input.getMinValue()] = true;
+                    } else {
+                        MappingPointValue end = (MappingPointValue) numberTable.getModel().getValueAt(row, 1);
+
+                        for (int i = mpv.numericValue; i <= end.numericValue; i++) {
+                            selection[i - mapping.input.getMinValue()] = true;
+                        }
+                    }
                 }
-                onSelect.accept(selection);
-            }
+                if (!blockSelectionUpdate) {
+                    System.out.println("TABLE SEND SELECTION");
+                    onSelect.accept(selection);
+                }
+            });
+
+
         });
 
         initTableModel();
@@ -220,13 +233,20 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
     @Override
     public void setSelectedInputs(boolean[] selectedPointIdx) {
+        blockSelectionUpdate = true;
+        System.out.println("TABLE RECEIVE SELECTION");
+
+        numberTable.clearSelection();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i, 0);
             if (selectedPointIdx[value.numericValue - mapping.input.getMinValue()]) {
-                numberTable.setRowSelectionInterval(i, i);
-                return;
+                numberTable.addRowSelectionInterval(i, i);
             }
         }
+        repaint();
+        System.out.println("TABLE RECEIVED SELECTION");
+        blockSelectionUpdate = false;
+
     }
 }
 
