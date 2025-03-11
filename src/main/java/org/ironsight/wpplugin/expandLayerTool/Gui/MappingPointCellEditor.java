@@ -44,7 +44,6 @@ public class MappingPointCellEditor extends DefaultCellEditor implements TableCe
                 }
             });
         }
-
         for (MappingPointValue mappingPointValue : arr) {
             dropdown.addItem(mappingPointValue);
         }
@@ -52,6 +51,8 @@ public class MappingPointCellEditor extends DefaultCellEditor implements TableCe
             dropdown.requestFocusInWindow();
             dropdown.showPopup();
         });
+        dropdown.setSelectedItem(value);
+        assert value.equals(dropdown.getSelectedItem());
         return this.getComponent();
     }
 
