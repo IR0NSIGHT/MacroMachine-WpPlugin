@@ -120,6 +120,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                             newPoints[newPoints.length - 1] =
                                     new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
                             updateMapping(mapping.withNewPoints(newPoints));
+                            resetSelection();
                             setInputSelection(gridX, true); //select the new point
                         } else {
                             //implicitly set selected point, but dont do anything with it
@@ -444,6 +445,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
             i++;
         }
         if (distTotalSq > (maxDist * maxDist)) return false;
+        resetSelection();
         setInputSelection(closest.input, true);
         this.repaint();
         return true;
