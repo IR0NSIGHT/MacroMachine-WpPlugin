@@ -44,10 +44,8 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
         if (isSelected) {
-            if (hasFocus) {
-                textLabel.setBackground(table.getSelectionBackground());
-                textLabel.setForeground(table.getSelectionForeground());
-            }
+            textLabel.setBackground(table.getSelectionBackground());
+            textLabel.setForeground(table.getSelectionForeground());
         } else {
             textLabel.setBackground(table.getBackground());
             textLabel.setForeground(table.getForeground());

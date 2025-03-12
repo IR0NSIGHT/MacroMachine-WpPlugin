@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class MappingTextTable extends LayerMappingPanel implements IMappingPointSelector {
-    int selectedPointIdx;
     DefaultTableModel tableModel;
     TableModelListener listener;
 
@@ -109,7 +108,6 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 }
             }
             for (int i = 0; i < numberTable.getRowCount(); i++) {
-                MappingPointValue mpv = (MappingPointValue) numberTable.getModel().getValueAt(i, 0);
                 int numeric = i + mapping.input.getMinValue();
                 boolean editable = mappingPointByInput.containsKey(numeric);
                 int controlPointiD = mappingPointByInput.getOrDefault(numeric, -1);
@@ -252,6 +250,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                     i = end.numericValue - mapping.input.getMinValue();
                 }
             }
+
         } else {
             for (int i = 0; i < tableModel.getRowCount(); i++) {
                 MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i, 0);
