@@ -32,44 +32,16 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         if (mapping == null) return;
         MappingPointValue[][] data;
         Object[] columnNames;
-        HashMap<Integer, Integer> mappingPointByInput = new HashMap<>();
-        {
-            int index = 0;
-            for (MappingPoint p : mapping.getMappingPoints()) {
-                mappingPointByInput.put(p.input, index++);
-            }
-        }
 
         if (!groupValues) {
-            boolean inputEditable = !mapping.input.isDiscrete();
             data = new MappingPointValue[mapping.input.getMaxValue() - mapping.input.getMinValue() + 1][];
             columnNames = new String[]{mapping.input.getName(), mapping.output.getName()};
-            for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
-                data[i - mapping.input.getMinValue()] = new MappingPointValue[]{new MappingPointValue(i, mapping.input),
-                        new MappingPointValue(mapping.map(i), mapping.output)};
-                if (mappingPointByInput.containsKey(i)) {
-                    int controlPointIndex = mappingPointByInput.get(i);
-                    data[i - mapping.input.getMinValue()][0].isEditable = inputEditable;
-                    data[i - mapping.input.getMinValue()][0].mappingPointIndex = controlPointIndex;
-                    data[i - mapping.input.getMinValue()][1].isEditable = true;
-                    data[i - mapping.input.getMinValue()][1].mappingPointIndex = controlPointIndex;
-                }
-            }
         } else {
             columnNames = new String[]{"from " + mapping.input.getName(),
                     " to " + mapping.input.getName(),
                     mapping.output.getName()};
             List<Point2d> ranges = LayerMapping.calculateRanges(mapping);
-            int ii = 0;
             data = new MappingPointValue[ranges.size()][];
-            for (Point2d range : ranges) {
-                int start = (int) range.x;
-                int end = (int) range.y;
-                data[ii++] = new MappingPointValue[]{new MappingPointValue(start, mapping.input),
-                        new MappingPointValue(end, mapping.input),
-                        new MappingPointValue(mapping.map(start), mapping.output)};
-
-            }
         }
 
         this.tableModel = new DefaultTableModel(data, columnNames);
@@ -79,6 +51,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
     @Override
     protected void updateComponents() {
+        System.out.println("UPDATE TABLE MODEL");
         groupValues = groupValuesCheckBox.isSelected();
         blockTableChanged = true;
         if (groupValues) {
@@ -111,11 +84,12 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 int numeric = i + mapping.input.getMinValue();
                 boolean editable = mappingPointByInput.containsKey(numeric);
                 int controlPointiD = mappingPointByInput.getOrDefault(numeric, -1);
-                MappingPointValue inputV = new MappingPointValue(mapping.input, numeric, editable, controlPointiD);
+                MappingPointValue inputV = new MappingPointValue(mapping.input,
+                        numeric,
+                        editable && !mapping.input.isDiscrete(),
+                        controlPointiD);
                 numberTable.getModel().setValueAt(inputV, i, 0);
-                if (groupValues) {
-                    initTableModel();
-                }
+
                 MappingPointValue outputV = new MappingPointValue(mapping.output,
                         mapping.map(inputV.numericValue),
                         editable,
@@ -202,8 +176,6 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 onSelect.accept(selection);
             }
         });
-
-        initTableModel();
     }
 
     protected boolean parseAndSetValue(Object newValue, int row, int column) {
