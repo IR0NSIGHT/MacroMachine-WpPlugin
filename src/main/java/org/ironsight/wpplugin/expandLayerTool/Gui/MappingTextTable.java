@@ -186,27 +186,23 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 numberTable.scrollRectToVisible(numberTable.getCellRect(selectedRow, 0, true));
             }
 
-            SwingUtilities.invokeLater(() -> {
-                boolean[] selection = new boolean[mapping.input.getMaxValue() - mapping.input.getMinValue() + 1];
-                for (Integer row : numberTable.getSelectedRows()) {
-                    MappingPointValue mpv = (MappingPointValue) numberTable.getModel().getValueAt(row, 0);
-                    if (!groupValues) {
-                        selection[mpv.numericValue - mapping.input.getMinValue()] = true;
-                    } else {
-                        MappingPointValue end = (MappingPointValue) numberTable.getModel().getValueAt(row, 1);
+            boolean[] selection = new boolean[mapping.input.getMaxValue() - mapping.input.getMinValue() + 1];
+            for (Integer row : numberTable.getSelectedRows()) {
+                MappingPointValue mpv = (MappingPointValue) numberTable.getModel().getValueAt(row, 0);
+                if (!groupValues) {
+                    selection[mpv.numericValue - mapping.input.getMinValue()] = true;
+                } else {
+                    MappingPointValue end = (MappingPointValue) numberTable.getModel().getValueAt(row, 1);
 
-                        for (int i = mpv.numericValue; i <= end.numericValue; i++) {
-                            selection[i - mapping.input.getMinValue()] = true;
-                        }
+                    for (int i = mpv.numericValue; i <= end.numericValue; i++) {
+                        selection[i - mapping.input.getMinValue()] = true;
                     }
                 }
-                if (!blockSelectionUpdate) {
-                    System.out.println("TABLE SEND SELECTION");
-                    onSelect.accept(selection);
-                }
-            });
-
-
+            }
+            if (!blockSelectionUpdate) {
+                System.out.println("TABLE SEND SELECTION");
+                onSelect.accept(selection);
+            }
         });
 
         initTableModel();
@@ -237,12 +233,34 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         System.out.println("TABLE RECEIVE SELECTION");
 
         numberTable.clearSelection();
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i, 0);
-            if (selectedPointIdx[value.numericValue - mapping.input.getMinValue()]) {
-                numberTable.addRowSelectionInterval(i, i);
+        if (groupValues) {
+            int rowIdx = 0;
+            for (int i = 0; i < selectedPointIdx.length; i++) {
+                int numericValue = i + mapping.input.getMinValue();
+                MappingPointValue start = (MappingPointValue) tableModel.getValueAt(rowIdx, 0);
+                MappingPointValue end = (MappingPointValue) tableModel.getValueAt(rowIdx, 1);
+
+                if (numericValue == start.numericValue) {
+                    for (int numericI = start.numericValue; numericI <= end.numericValue; numericI++) {
+                        if (selectedPointIdx[numericI - mapping.input.getMinValue()]) {
+                            numberTable.addRowSelectionInterval(rowIdx, rowIdx);
+                            break;
+                        }
+                    }
+
+                    rowIdx++;
+                    i = end.numericValue - mapping.input.getMinValue();
+                }
+            }
+        } else {
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i, 0);
+                if (selectedPointIdx[value.numericValue - mapping.input.getMinValue()]) {
+                    numberTable.addRowSelectionInterval(i, i);
+                }
             }
         }
+
         repaint();
         System.out.println("TABLE RECEIVED SELECTION");
         blockSelectionUpdate = false;
