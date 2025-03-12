@@ -11,6 +11,8 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
 import javax.vecmath.Point2d;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
@@ -80,6 +82,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                     mappingPointByInput.put(p.input, i++);
                 }
             }
+            ArrayList<MappingPointValue[]> values =
+                    new ArrayList<>(mapping.input.getMaxValue()-mapping.input.getMinValue() + 1);
             for (int i = 0; i < numberTable.getRowCount(); i++) {
                 int numeric = i + mapping.input.getMinValue();
                 boolean editable = mappingPointByInput.containsKey(numeric);
@@ -94,8 +98,23 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                         mapping.map(inputV.numericValue),
                         editable,
                         controlPointiD);
-                numberTable.getModel().setValueAt(outputV, i, 1);
+
+                values.add(new MappingPointValue[]{inputV, outputV});
             }
+            if (mapping.input.isDiscrete()) {
+                values.sort(new Comparator<MappingPointValue[]>() {
+                    @Override
+                    public int compare(MappingPointValue[] o1, MappingPointValue[] o2) {    //compare input string names
+                        return o1[0].mappingValue.valueToString(o1[0].numericValue).compareTo(o2[0].mappingValue.valueToString(o2[0].numericValue));
+                    }
+                });
+            }
+            int i = 0;
+            for (MappingPointValue[] row : values) {
+                numberTable.getModel().setValueAt(row[0], i, 0);
+                numberTable.getModel().setValueAt(row[1], i++, 1);
+            }
+
         }
         blockTableChanged = false;
     }
