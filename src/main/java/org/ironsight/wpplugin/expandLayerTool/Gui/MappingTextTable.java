@@ -9,6 +9,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
 import javax.vecmath.Point2d;
 import java.awt.*;
 import java.util.List;
@@ -130,6 +131,12 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 //test if this value is a controlpoint
                 if (!groupValues) return value.isEditable;
                 return false; // All cells are non-editable
+            }
+
+            @Override
+            public TableCellEditor getCellEditor(int row, int column) {
+                numberTable.addRowSelectionInterval(row, row);
+                return super.getCellEditor(row, column);
             }
         };
 
