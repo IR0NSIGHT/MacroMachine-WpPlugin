@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
+import org.checkerframework.checker.units.qual.C;
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 
@@ -145,7 +146,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         numberTable.setFont(font);
         numberTable.setDefaultRenderer(Object.class, new MappingPointCellRenderer());
         numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
-
+        numberTable.setSelectionModel(new CustomListSelectionModel());
         JScrollPane scrollPane = new JScrollPane(numberTable);
         this.add(scrollPane, BorderLayout.CENTER);
         JPanel buttons = new JPanel();
@@ -171,7 +172,6 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             }
         };
 
-        numberTable.setCellSelectionEnabled(true);
         numberTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         // Add listener to scroll to the selected row
         numberTable.getSelectionModel().addListSelectionListener(e -> {
@@ -200,8 +200,10 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 }
             }
             if (!blockSelectionUpdate) {
+                blockSelectionUpdate = true;
                 System.out.println("TABLE SEND SELECTION");
                 onSelect.accept(selection);
+                blockSelectionUpdate = false;
             }
         });
     }
@@ -218,6 +220,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         for (int row : rows) {
             MappingPointValue rowValue = (MappingPointValue) numberTable.getValueAt(row, column);
             assert rowValue.isEditable : "can not update the value of a non-editable entry:" + rowValue;
+            if (!rowValue.isEditable || rowValue.mappingPointIndex == -1)
+                continue;
             if (column == 0)    //INPUT UPDATED
                 points[rowValue.mappingPointIndex] =
                         new MappingPoint(targetValue, points[rowValue.mappingPointIndex].output);
@@ -274,7 +278,16 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         repaint();
         System.out.println("TABLE RECEIVED SELECTION");
         blockSelectionUpdate = false;
+    }
 
+    // Custom selection model
+     class CustomListSelectionModel extends DefaultListSelectionModel {
+        @Override
+        public void setSelectionInterval(int index0, int index1) {
+            if (numberTable.isEditing())
+                return;
+            super.setSelectionInterval(index0,index1);
+        }
     }
 }
 
