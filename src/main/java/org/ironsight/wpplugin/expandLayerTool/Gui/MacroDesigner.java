@@ -150,8 +150,11 @@ public class MacroDesigner extends JPanel {
     private void onMoveUpMapping() {
         if (selectedRow > 0 && selectedRow < table.getRowCount()) {
             UUID[] ids = macro.mappingUids.clone();
-            ids[selectedRow - 1] = macro.mappingUids[selectedRow];
-            ids[selectedRow] = macro.mappingUids[selectedRow - 1];
+            for (int selectedRow: table.getSelectedRows()) {
+                ids[selectedRow - 1] = macro.mappingUids[selectedRow];
+                ids[selectedRow] = macro.mappingUids[selectedRow - 1];
+            }
+
             shiftRowSelection(table.getSelectedRows(),-1);
             setMacro(macro.withUUIDs(ids), true);
             System.out.println("move mapping up to " + selectedRow);
@@ -171,8 +174,11 @@ public class MacroDesigner extends JPanel {
     private void onMoveDownMapping() {
         if (selectedRow >= 0 && selectedRow < table.getRowCount() - 1) {
             UUID[] ids = macro.mappingUids.clone();
-            ids[selectedRow + 1] = macro.mappingUids[selectedRow];
-            ids[selectedRow] = macro.mappingUids[selectedRow + 1];
+            for (int selectedRow: table.getSelectedRows()) {
+                ids[selectedRow + 1] = macro.mappingUids[selectedRow];
+                ids[selectedRow] = macro.mappingUids[selectedRow + 1];
+            }
+
             shiftRowSelection(table.getSelectedRows(),+1);
             setMacro(macro.withUUIDs(ids), true);
             System.out.println("move mapping down to " + selectedRow);
