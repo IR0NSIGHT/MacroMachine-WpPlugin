@@ -1,28 +1,24 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.checkerframework.checker.units.qual.C;
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.CellEditorListener;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
 import javax.vecmath.Point2d;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class MappingTextTable extends LayerMappingPanel implements IMappingPointSelector {
     DefaultTableModel tableModel;
     TableModelListener listener;
-
+    boolean[] inputSelection = new boolean[0];
     private Consumer<boolean[]> onSelect = f -> {
     };
     private JTable numberTable;
@@ -30,6 +26,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     private JCheckBox groupValuesCheckBox;
     private boolean blockTableChanged;
     private boolean blockSelectionUpdate = false;
+    private int[] selectedRows = new int[0];
 
     private void initTableModel() {
         System.out.println("REBUILD TABLE MODEL");
@@ -122,7 +119,20 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         blockTableChanged = false;
     }
 
-    private int[] selectedRows = new int[0];
+    private void blockSelectionUpdate() {
+        System.out.println("block selection update");
+        this.blockSelectionUpdate = true;
+    }
+
+    private boolean canUpdateSelection() {
+        return !this.blockSelectionUpdate;
+    }
+
+    private void freeSelectionUpdate() {
+        System.out.println("free selection update");
+        this.blockSelectionUpdate = false;
+    }
+
     @Override
     protected void initComponents() {
         this.setLayout(new BorderLayout());
@@ -199,11 +209,12 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                     }
                 }
             }
-            if (!blockSelectionUpdate) {
-                blockSelectionUpdate = true;
+            this.inputSelection = selection;
+            if (canUpdateSelection()) {
+                blockSelectionUpdate();
                 System.out.println("TABLE SEND SELECTION");
                 onSelect.accept(selection);
-                blockSelectionUpdate = false;
+                freeSelectionUpdate();
             }
         });
     }
@@ -220,8 +231,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         for (int row : rows) {
             MappingPointValue rowValue = (MappingPointValue) numberTable.getValueAt(row, column);
             assert rowValue.isEditable : "can not update the value of a non-editable entry:" + rowValue;
-            if (!rowValue.isEditable || rowValue.mappingPointIndex == -1)
-                continue;
+            if (!rowValue.isEditable || rowValue.mappingPointIndex == -1) continue;
             if (column == 0)    //INPUT UPDATED
                 points[rowValue.mappingPointIndex] =
                         new MappingPoint(targetValue, points[rowValue.mappingPointIndex].output);
@@ -242,7 +252,11 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
     @Override
     public void setSelectedInputs(boolean[] selectedPointIdx) {
-        blockSelectionUpdate = true;
+        if (Arrays.equals(this.inputSelection, selectedPointIdx)) {
+            return; //nothing to update here
+        }
+        this.inputSelection = selectedPointIdx;
+        blockSelectionUpdate();
         System.out.println("TABLE RECEIVE SELECTION");
 
         numberTable.clearSelection();
@@ -277,16 +291,15 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
         repaint();
         System.out.println("TABLE RECEIVED SELECTION");
-        blockSelectionUpdate = false;
+        freeSelectionUpdate();
     }
 
     // Custom selection model
-     class CustomListSelectionModel extends DefaultListSelectionModel {
+    class CustomListSelectionModel extends DefaultListSelectionModel {
         @Override
         public void setSelectionInterval(int index0, int index1) {
-            if (numberTable.isEditing())
-                return;
-            super.setSelectionInterval(index0,index1);
+            if (numberTable.isEditing()) return;
+            super.setSelectionInterval(index0, index1);
         }
     }
 }
