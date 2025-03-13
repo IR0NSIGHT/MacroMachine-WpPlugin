@@ -8,10 +8,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.expandLayerTool.Gui.HelpDialog.getHelpButton;
@@ -155,9 +152,19 @@ public class MacroDesigner extends JPanel {
             UUID[] ids = macro.mappingUids.clone();
             ids[selectedRow - 1] = macro.mappingUids[selectedRow];
             ids[selectedRow] = macro.mappingUids[selectedRow - 1];
-            selectedRow = selectedRow - 1;
+            shiftRowSelection(table.getSelectedRows(),-1);
             setMacro(macro.withUUIDs(ids), true);
             System.out.println("move mapping up to " + selectedRow);
+        }
+    }
+
+    private void shiftRowSelection(int[] selectedRows, int shift) {
+        table.clearSelection();
+        for (int row : Arrays.stream(selectedRows).map(i -> i+shift).toArray()) {
+            if (row < 0 || row >= table.getRowCount()) {
+                continue;
+            }
+            table.addRowSelectionInterval(row, row);
         }
     }
 
@@ -166,7 +173,7 @@ public class MacroDesigner extends JPanel {
             UUID[] ids = macro.mappingUids.clone();
             ids[selectedRow + 1] = macro.mappingUids[selectedRow];
             ids[selectedRow] = macro.mappingUids[selectedRow + 1];
-            selectedRow = selectedRow + 1;
+            shiftRowSelection(table.getSelectedRows(),+1);
             setMacro(macro.withUUIDs(ids), true);
             System.out.println("move mapping down to " + selectedRow);
         }
@@ -199,23 +206,30 @@ public class MacroDesigner extends JPanel {
         dialog.setVisible(true);
     }
 
+    private void prepareTableModel() {
+        System.out.println("RESET TABLE MODEL");
+        DefaultTableModel model = new DefaultTableModel();
+        Object[] columns = new Object[]{"Action"};
+        Object[][] data = new Object[macro.mappingUids.length][];
+        model.setDataVector(data, columns);
+        table.setModel(model);
+    }
+
     private void updateComponents() {
         System.out.println(getClass().getSimpleName() + ": update components");
 
         name.setText(macro.getName());
         description.setText(macro.getDescription());
 
-        DefaultTableModel model = new DefaultTableModel();
-        Object[] columns = new Object[]{"Action"};
-        Object[][] data = new Object[macro.mappingUids.length][];
+        if (table.getModel().getRowCount() != macro.mappingUids.length) {
+            prepareTableModel();
+        }
 
-        int i = 0;
+        int row = 0;
         for (UUID id : macro.mappingUids) {
             LayerMapping m = LayerMappingContainer.INSTANCE.queryById(id);
-            data[i++] = new Object[]{m};
+            table.setValueAt(m, row++, 0);
         }
-        model.setDataVector(data, columns);
-        table.setModel(model);
 
         table.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting() || isUpdating || selectedRow == table.getSelectedRow()) return;
@@ -234,13 +248,6 @@ public class MacroDesigner extends JPanel {
         }
         invalidate();
         repaint();
-        table.getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
-        // Get the row index of the edited row (the row that triggered the update)
-        if (selectedRow < table.getRowCount()) {
-            System.out.println("scroll to row:" + selectedRow);
-            Rectangle view = table.getCellRect(selectedRow, 0, true);
-            scrollPane.getViewport().scrollRectToVisible(view);
-        }
     }
 
     public void setMacro(MappingMacro macro, boolean forceUpdate) {
