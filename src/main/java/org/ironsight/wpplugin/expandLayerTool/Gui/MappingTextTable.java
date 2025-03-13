@@ -143,7 +143,9 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
         Font font = new Font("Arial", Font.PLAIN, 24);
         numberTable.setFont(font);
-        numberTable.setDefaultRenderer(Object.class, new MappingPointCellRenderer());
+        MappingPointCellRenderer cellRenderer = new MappingPointCellRenderer();
+        numberTable.setDefaultRenderer(Object.class, cellRenderer);
+        numberTable.setRowHeight(cellRenderer.getPreferredHeight());
         numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
         numberTable.setSelectionModel(new CustomListSelectionModel());
         JScrollPane scrollPane = new JScrollPane(numberTable);
