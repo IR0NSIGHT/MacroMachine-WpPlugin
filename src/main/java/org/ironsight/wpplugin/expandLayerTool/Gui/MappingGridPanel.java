@@ -26,7 +26,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     };
     private boolean showCursor = true;
     private int mousePosX, mousePosY;
-    private int lastSelected;
+    private boolean mouseMoved = false;
     private int shiftY = 10;
 
     public MappingGridPanel() {
@@ -151,6 +151,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 int gridY = pressed.y;
                 mousePosX = e.getX();
                 mousePosY = e.getY();
+                mouseMoved = true;
                 if (drag) {
                     // move selected control points to current mouse position
                     MappingPoint[] points = mapping.getMappingPoints().clone();
@@ -179,6 +180,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                         mapping.sanitizeOutput(gridPos.y) == gridPos.y) {
                     grid.repaint();
                 }
+                mouseMoved = true;
             }
         });
 
@@ -207,6 +209,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     }
 
     protected void paintCursor(Graphics g) {
+        if (!mouseMoved) return;
         if (!showCursor) return;
         g.setColor(Color.gray);
         ((Graphics2D) g).setStroke(new BasicStroke(2,
@@ -238,7 +241,6 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         resetSelection();
         if (!isInputSelected(gridPos.x))
             setInputSelection(gridPos.x, true);
-        lastSelected = gridPos.x;
     }
 
     protected void paintCurveLines(Graphics2D g) {
@@ -394,6 +396,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         paintMappingPoints(g2d);
         paintCurveLines((Graphics2D) g);
         paintCursor(g);
+        mouseMoved = false;
     }
 
     private void paintMappingPoints(Graphics2D g2d) {
