@@ -38,7 +38,6 @@ public abstract class LayerMappingPanel extends JPanel {
             return;
         }
         if (mapping.input != this.mapping.input || mapping.output != this.mapping.output) {
-
             if (!mapping.input.isDiscrete() && !mapping.output.isDiscrete()) {  // both are interpolatable
                 //1 to 1 interpolation
                 mapping = mapping.withNewPoints(new MappingPoint[]{new MappingPoint(mapping.input.getMinValue(),

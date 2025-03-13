@@ -59,7 +59,7 @@ public class MacroTreePanel extends JPanel {
         }
         frame.getContentPane().setLayout(new BorderLayout());
         frame.getContentPane().add(new MacroTreePanel(macros, layers, f -> {
-            System.out.println("apply macro " + f);
+            System.out.println("simulate apply macro " + f);
         }, f -> {
         }), BorderLayout.CENTER);
         frame.pack();
@@ -371,7 +371,6 @@ public class MacroTreePanel extends JPanel {
         for (UUID id : selectedMacros) {
             MappingMacro macro = container.queryById(id);
             if (macro != null) {
-                System.out.println("apply macro " + macro);
                 applyToMap.accept(macro);
             }
         }

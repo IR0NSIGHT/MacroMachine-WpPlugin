@@ -209,9 +209,6 @@ public class LayerMapping implements SaveableAction {
             return;
         }
         int value = input.getValueAt(dim, x, y);
-        if (input.isDiscrete() && !hasValueForInput(value)) {
-            return;
-        }
 
         int modifier = map(value);
 
@@ -251,7 +248,8 @@ public class LayerMapping implements SaveableAction {
     }
 
     public int map(int input) {
-        assert input >= this.input.getMinValue();
+        assert input >= this.input.getMinValue() :
+                "input " + input + " is out of range for minimum" + this.input.getMinValue();
         assert input <= this.input.getMaxValue() :
                 "invalid input"+input + " has to be lower equal than " + this.input.getMaxValue();
 
