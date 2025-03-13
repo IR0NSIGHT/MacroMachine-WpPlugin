@@ -8,8 +8,10 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.expandLayerTool.Gui.HelpDialog.getHelpButton;
@@ -74,7 +76,7 @@ public class MacroDesigner extends JPanel {
             public boolean isCellEditable(int row, int column) {
                 return false; // Disable editing
             }
-        };;
+        };
         table.setDefaultRenderer(Object.class, new MappingTableCellRenderer());
         scrollPane = new JScrollPane(table);
         this.add(scrollPane, BorderLayout.CENTER);
@@ -117,12 +119,13 @@ public class MacroDesigner extends JPanel {
         submitButton.addActionListener(e -> onSubmit.accept(this.macro));
         buttons.add(submitButton);
 
-        buttons.add(getHelpButton("Macro Editor","In the macro editor, you define which actions are executed and in " +
-                "which order. The top-most action is run first, then the next one and so on. All actions in a macro " +
-                "are always executed when the macro is executed.\n" +
-                "A macro is a collection of actions, similar to a group of global operations. It has a name and " +
-                "description and can be reused in any project.\n" +
-                "Use the save button to save your changes to the global list."));
+        buttons.add(getHelpButton("Macro Editor",
+                "In the macro editor, you define which actions are executed and in " +
+                        "which order. The top-most action is run first, then the next one and so on. All actions in a" +
+                        " macro " + "are always executed when the macro is executed.\n" +
+                        "A macro is a collection of actions, similar to a group of global operations. It has a name " +
+                        "and " + "description and can be reused in any project.\n" +
+                        "Use the save button to save your changes to the global list."));
         this.add(buttons, BorderLayout.SOUTH);
     }
 
@@ -132,10 +135,10 @@ public class MacroDesigner extends JPanel {
             ArrayList<UUID> uids = new ArrayList<>();
             Collections.addAll(uids, macro.mappingUids);
 
-            if (selectedRow <0 || selectedRow >= uids.size()) {
+            if (selectedRow < 0 || selectedRow >= uids.size()) {
                 selectedRow = uids.size() - 1;
             }
-            uids.add(selectedRow+1, f.getUid());
+            uids.add(selectedRow + 1, f.getUid());
             selectedRow = selectedRow + 1;
 
             UUID[] ids = uids.toArray(new UUID[0]);
@@ -170,17 +173,18 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onDeleteMapping() {
-        if (macro.mappingUids.length != 0 && selectedRow != -1) {
-            UUID[] newIds = new UUID[macro.mappingUids.length - 1];
-            int j = 0;
-            for (int i = 0; i < macro.mappingUids.length; i++) {
-                if (i != selectedRow) {
-                    newIds[j++] = macro.mappingUids[i];
-                }
-            }
-            selectedRow = Math.max(0, Math.min(newIds.length - 1, selectedRow));
-            setMacro(macro.withUUIDs(newIds), true);
+        HashSet<Integer> toBeRemoved = new HashSet<>();
+        for (int row : this.table.getSelectedRows()) {
+            toBeRemoved.add(row);
         }
+
+        ArrayList<UUID> newUids = new ArrayList<>();
+        for (int i = 0; i < macro.mappingUids.length; i++) {
+            if (toBeRemoved.contains(i)) continue;
+            newUids.add(macro.mappingUids[i]);
+        }
+
+        setMacro(macro.withUUIDs(newUids.toArray(new UUID[0])), true);
     }
 
     private void onChangeMapping() {
