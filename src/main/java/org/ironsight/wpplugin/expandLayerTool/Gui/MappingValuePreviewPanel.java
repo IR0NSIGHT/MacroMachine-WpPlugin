@@ -36,6 +36,8 @@ public class MappingValuePreviewPanel extends JPanel {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
+        g.setColor(this.getBackground());
+        g.fillRect(0, 0, this.getWidth(), this.getHeight());
         mappingValue.paint(g, IMappingValue.sanitizeValue(value, mappingValue), getSize());
     }
 }

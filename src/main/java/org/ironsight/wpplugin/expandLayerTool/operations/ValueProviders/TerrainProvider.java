@@ -82,9 +82,7 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        int color = getColour(value);
-        g.setColor(new Color(color));
-        g.fillRect(0, 0, dim.width, dim.height);
+        g.drawImage(Terrain.values()[value].getScaledIcon(Math.min(dim.height, dim.width),colorScheme),0,0,null);
     }
 
     @Override
