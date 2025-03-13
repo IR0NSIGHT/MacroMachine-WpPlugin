@@ -25,11 +25,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     private boolean groupValues = false;
     private JCheckBox groupValuesCheckBox;
     private boolean blockTableChanged;
-    private boolean blockSelectionUpdate = false;
-    private int[] selectedRows = new int[0];
 
     private void initTableModel() {
-        System.out.println("REBUILD TABLE MODEL");
         if (mapping == null) return;
         MappingPointValue[][] data;
         Object[] columnNames;
@@ -52,7 +49,6 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
     @Override
     protected void updateComponents() {
-        System.out.println("UPDATE TABLE MODEL");
         groupValues = groupValuesCheckBox.isSelected();
         blockTableChanged = true;
         if (groupValues) {
@@ -119,20 +115,6 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         blockTableChanged = false;
     }
 
-    private void blockSelectionUpdate() {
-        System.out.println("block selection update");
-        this.blockSelectionUpdate = true;
-    }
-
-    private boolean canUpdateSelection() {
-        return !this.blockSelectionUpdate;
-    }
-
-    private void freeSelectionUpdate() {
-        System.out.println("free selection update");
-        this.blockSelectionUpdate = false;
-    }
-
     @Override
     protected void initComponents() {
         this.setLayout(new BorderLayout());
@@ -186,11 +168,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         // Add listener to scroll to the selected row
         numberTable.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) {
-                System.out.println("block selection update" + Arrays.toString(numberTable.getSelectedRows()));
                 return;
             }
-            selectedRows = numberTable.getSelectedRows();
-            System.out.println("Table selection changed" + e);
             int selectedRow = numberTable.getSelectedRow();
             if (selectedRow != -1) {
                 numberTable.scrollRectToVisible(numberTable.getCellRect(selectedRow, 0, true));
@@ -210,18 +189,11 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 }
             }
             this.inputSelection = selection;
-            if (canUpdateSelection()) {
-                blockSelectionUpdate();
-                System.out.println("TABLE SEND SELECTION");
-                onSelect.accept(selection);
-                freeSelectionUpdate();
-            }
+            onSelect.accept(selection);
         });
     }
 
     protected boolean parseAndSetValue(Object changedValue, int[] rows, int column) {
-        System.out.println("table selection on value changed:" + numberTable.getSelectedRows());
-
         assert changedValue instanceof MappingPointValue;
         MappingPointValue mpv = (MappingPointValue) changedValue;
         int targetValue = mpv.numericValue;
@@ -256,8 +228,6 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             return; //nothing to update here
         }
         this.inputSelection = selectedPointIdx;
-        blockSelectionUpdate();
-        System.out.println("TABLE RECEIVE SELECTION");
 
         numberTable.clearSelection();
         if (groupValues) {
@@ -290,8 +260,6 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         }
 
         repaint();
-        System.out.println("TABLE RECEIVED SELECTION");
-        freeSelectionUpdate();
     }
 
     // Custom selection model
