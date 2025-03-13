@@ -28,7 +28,6 @@ public class MacroDesigner extends JPanel {
     private JTable table;
     private JButton addButton, removeButton, moveUpButton, moveDownButton, changeMappingButton;
     private JScrollPane scrollPane;
-    private int selectedRow;
     private boolean isUpdating;
 
     MacroDesigner(Consumer<MappingMacro> onSubmit) {
@@ -128,15 +127,21 @@ public class MacroDesigner extends JPanel {
 
     private void onAddMapping() {
         JDialog dialog = new SelectLayerMappingDialog(LayerMappingContainer.INSTANCE.queryAll(), f -> {
+            int[] selection = table.getSelectedRows();
+            if (table.getSelectedRows().length == 0) {
+                selection = new int[]{table.getRowCount()-1};
+            }
+
             //insert any mapping from container at tail of list
             ArrayList<UUID> uids = new ArrayList<>();
             Collections.addAll(uids, macro.mappingUids);
 
-            if (selectedRow < 0 || selectedRow >= uids.size()) {
-                selectedRow = uids.size() - 1;
+            int counter = 0;
+            for (int row: selection) {
+                uids.add(row + counter + 1, f.getUid());
+                counter++;
             }
-            uids.add(selectedRow + 1, f.getUid());
-            selectedRow = selectedRow + 1;
+
 
             UUID[] ids = uids.toArray(new UUID[0]);
             MappingMacro mappingMacro = macro.withUUIDs(ids);
@@ -148,7 +153,10 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onMoveUpMapping() {
-        if (selectedRow > 0 && selectedRow < table.getRowCount()) {
+        if (table.getSelectedRows().length == 0)
+            return;
+        int anchorRow = table.getSelectedRows()[0];
+        if (anchorRow > 0 && anchorRow < table.getRowCount()) {
             UUID[] ids = macro.mappingUids.clone();
             for (int selectedRow: table.getSelectedRows()) {
                 ids[selectedRow - 1] = macro.mappingUids[selectedRow];
@@ -157,7 +165,10 @@ public class MacroDesigner extends JPanel {
 
             shiftRowSelection(table.getSelectedRows(),-1);
             setMacro(macro.withUUIDs(ids), true);
-            System.out.println("move mapping up to " + selectedRow);
+            scrollPane.scrollRectToVisible(table.getCellRect(table.getSelectedRows()[0]
+                    , 0,
+                    true));
+            System.out.println("move mapping up to " + anchorRow);
         }
     }
 
@@ -172,7 +183,10 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onMoveDownMapping() {
-        if (selectedRow >= 0 && selectedRow < table.getRowCount() - 1) {
+        if (table.getSelectedRows().length == 0)
+            return;
+        int anchorRow = table.getSelectedRows()[table.getSelectedRows().length - 1];
+        if (anchorRow >= 0 && anchorRow < table.getRowCount() - 1) {
             UUID[] ids = macro.mappingUids.clone();
             for (int selectedRow: table.getSelectedRows()) {
                 ids[selectedRow + 1] = macro.mappingUids[selectedRow];
@@ -181,7 +195,11 @@ public class MacroDesigner extends JPanel {
 
             shiftRowSelection(table.getSelectedRows(),+1);
             setMacro(macro.withUUIDs(ids), true);
-            System.out.println("move mapping down to " + selectedRow);
+            //scroll to bottom selected row
+            scrollPane.scrollRectToVisible(table.getCellRect(table.getSelectedRows()[table.getSelectedRows().length-1]
+                    , 0,
+                    true));
+            System.out.println("move mapping down to " + anchorRow);
         }
     }
 
@@ -238,8 +256,8 @@ public class MacroDesigner extends JPanel {
         }
 
         table.getSelectionModel().addListSelectionListener(e -> {
-            if (e.getValueIsAdjusting() || isUpdating || selectedRow == table.getSelectedRow()) return;
-            selectedRow = table.getSelectedRow();
+            if (e.getValueIsAdjusting() || isUpdating || Arrays.equals(selectedRows,table.getSelectedRows())) return;
+            selectedRows = table.getSelectedRows();
         });
 
         final int rowCount = table.getRowCount();
@@ -256,6 +274,7 @@ public class MacroDesigner extends JPanel {
         repaint();
     }
 
+    private int[] selectedRows = new int[0];
     public void setMacro(MappingMacro macro, boolean forceUpdate) {
         assert macro != null;
         if (!forceUpdate && this.macro != null && this.macro.equals(macro)) return; //dont update if nothing changed
