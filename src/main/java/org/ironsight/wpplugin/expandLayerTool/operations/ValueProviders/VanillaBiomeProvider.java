@@ -10,16 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValueSetter {
-    Map.Entry<Integer, String>[] biomes;
+    String[] biomes;
 
     public VanillaBiomeProvider() {
-        HashMap<Integer, String> validBiomes = new HashMap<>();
-        for (int biomeIdx = 0; biomeIdx < Minecraft1_20Biomes.BIOME_NAMES.length; biomeIdx++) {
-            String name = Minecraft1_20Biomes.BIOME_NAMES[biomeIdx];
-            if (name != null) validBiomes.put(biomeIdx, name);
-        }
-        biomes = new Map.Entry[validBiomes.size()];
-        biomes = validBiomes.entrySet().toArray(biomes);
+        biomes = Minecraft1_20Biomes.BIOME_NAMES.clone();
     }
 
     @Override
@@ -64,8 +58,9 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     @Override
     public String valueToString(int value) {
-        if (value < 0 || value >= biomes.length) return "NULL";
-        return biomes[value].getValue();
+        if (value < 0 || value >= biomes.length) return "INVALID ("+value+")";
+        if (biomes[value] == null) return "\uFFFCNULL-("+value+")";
+        return biomes[value];
     }
 
     @Override

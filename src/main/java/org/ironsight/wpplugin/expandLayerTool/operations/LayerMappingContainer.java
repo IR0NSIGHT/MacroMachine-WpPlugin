@@ -87,11 +87,11 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         assert jsonString != null;
         ObjectMapper objectMapper = new ObjectMapper();
         ActionJsonWrapper[] obj = objectMapper.readValue(jsonString, ActionJsonWrapper[].class);
-        System.out.println("READ JSON STRING: \n" + jsonString);
+       // System.out.println("READ JSON STRING: \n" + jsonString);
         for (ActionJsonWrapper wrapper : obj) {
             LayerMapping m = LayerMapping.fromJsonWrapper(wrapper);
             this.putMapping(m);
-            System.out.println(m);
+       //     System.out.println(m);
         }
     }
 

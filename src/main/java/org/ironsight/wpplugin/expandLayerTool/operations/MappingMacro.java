@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IntermediateSelectionIO;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.panels.DefaultFilter;
 
@@ -88,10 +89,6 @@ public class MappingMacro implements SaveableAction {
             System.out.println(lm);
             lm.output.prepareForDimension(dimension);
             lm.input.prepareForDimension(dimension);
-
-            for (int in = lm.input.getMinValue(); in <= lm.input.getMaxValue(); in++) {
-                System.out.println(lm.input.valueToString(in) + " => " + lm.output.valueToString(lm.map(in)));
-            }
         }
         System.out.println("apply macro " + this.getName() + " to dimension ");
         ArrayList<LayerMapping> mappings = new ArrayList<>(mappingUids.length);
@@ -103,6 +100,8 @@ public class MappingMacro implements SaveableAction {
             System.out.println("Use action: " + mapping.getName());
         }
         applyToDimensionWithFilter(dimension, filter, pos -> {
+            IntermediateSelectionIO.instance.setSelected(true); //by default, each block is selected. then the macro
+            // can filter out stuff
             for (LayerMapping mapping : mappings) {
                 mapping.applyToPoint(dimension, pos.x, pos.y);
             }
