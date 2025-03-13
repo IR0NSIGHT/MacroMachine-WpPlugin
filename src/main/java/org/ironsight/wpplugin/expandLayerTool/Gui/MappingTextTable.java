@@ -6,14 +6,15 @@ import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
 import javax.vecmath.Point2d;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -83,7 +84,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 }
             }
             ArrayList<MappingPointValue[]> values =
-                    new ArrayList<>(mapping.input.getMaxValue()-mapping.input.getMinValue() + 1);
+                    new ArrayList<>(mapping.input.getMaxValue() - mapping.input.getMinValue() + 1);
             for (int i = 0; i < numberTable.getRowCount(); i++) {
                 int numeric = i + mapping.input.getMinValue();
                 boolean editable = mappingPointByInput.containsKey(numeric);
@@ -105,7 +106,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 values.sort(new Comparator<MappingPointValue[]>() {
                     @Override
                     public int compare(MappingPointValue[] o1, MappingPointValue[] o2) {    //compare input string names
-                        return o1[0].mappingValue.valueToString(o1[0].numericValue).compareTo(o2[0].mappingValue.valueToString(o2[0].numericValue));
+                        return o1[0].mappingValue.valueToString(o1[0].numericValue)
+                                .compareTo(o2[0].mappingValue.valueToString(o2[0].numericValue));
                     }
                 });
             }
@@ -119,6 +121,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         blockTableChanged = false;
     }
 
+    private int[] selectedRows = new int[0];
     @Override
     protected void initComponents() {
         this.setLayout(new BorderLayout());
@@ -136,6 +139,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 return false; // All cells are non-editable
             }
         };
+
 
         Font font = new Font("Arial", Font.PLAIN, 24);
         numberTable.setFont(font);
@@ -162,16 +166,21 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                     int row = e.getFirstRow(); // Get the row of the edited cell
                     int column = e.getColumn(); // Get the column of the edited cell
                     Object newValue = tableModel.getValueAt(row, column); // Get the new value
-                    SwingUtilities.invokeLater(() -> parseAndSetValue(newValue, row, column));
+                    SwingUtilities.invokeLater(() -> parseAndSetValue(newValue, numberTable.getSelectedRows(), column));
                 }
             }
         };
+
+        numberTable.setCellSelectionEnabled(true);
         numberTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         // Add listener to scroll to the selected row
         numberTable.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) {
+                System.out.println("block selection update" + Arrays.toString(numberTable.getSelectedRows()));
                 return;
             }
+            selectedRows = numberTable.getSelectedRows();
+            System.out.println("Table selection changed" + e);
             int selectedRow = numberTable.getSelectedRow();
             if (selectedRow != -1) {
                 numberTable.scrollRectToVisible(numberTable.getCellRect(selectedRow, 0, true));
@@ -197,16 +206,27 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         });
     }
 
-    protected boolean parseAndSetValue(Object newValue, int row, int column) {
-        assert newValue instanceof MappingPointValue;
-        MappingPointValue mpv = (MappingPointValue) newValue;
+    protected boolean parseAndSetValue(Object changedValue, int[] rows, int column) {
+        System.out.println("table selection on value changed:" + numberTable.getSelectedRows());
+
+        assert changedValue instanceof MappingPointValue;
+        MappingPointValue mpv = (MappingPointValue) changedValue;
+        int targetValue = mpv.numericValue;
         MappingPoint[] points = mapping.getMappingPoints().clone();
-        //FIXME allow editing
-        if (column == 0) {
-            points[mpv.mappingPointIndex] = new MappingPoint(mpv.numericValue, points[mpv.mappingPointIndex].output);
-        } else {
-            points[mpv.mappingPointIndex] = new MappingPoint(points[mpv.mappingPointIndex].input, mpv.numericValue);
+
+        // set the same value for all selected rows as a bulk operation
+        for (int row : rows) {
+            MappingPointValue rowValue = (MappingPointValue) numberTable.getValueAt(row, column);
+            assert rowValue.isEditable : "can not update the value of a non-editable entry:" + rowValue;
+            if (column == 0)    //INPUT UPDATED
+                points[rowValue.mappingPointIndex] =
+                        new MappingPoint(targetValue, points[rowValue.mappingPointIndex].output);
+            else    //OUTPUT UPDATED
+                points[rowValue.mappingPointIndex] =
+                        new MappingPoint(points[rowValue.mappingPointIndex].input, targetValue);
+
         }
+
         updateMapping(mapping.withNewPoints(points));
         return true;
     }
