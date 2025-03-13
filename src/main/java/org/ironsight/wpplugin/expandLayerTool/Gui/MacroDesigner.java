@@ -8,9 +8,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.UUID;
+import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.expandLayerTool.Gui.HelpDialog.getHelpButton;
@@ -88,7 +87,7 @@ public class MacroDesigner extends JPanel {
 
         JPanel buttons = new JPanel(new FlowLayout());
         addButton = new JButton("Add");
-        addButton.setToolTipText("Add an existing action to this macro.");
+        addButton.setToolTipText("Add an existing action to this macro below the last selected one.");
         addButton.addActionListener(e -> onAddMapping());
         buttons.add(addButton);
 
@@ -130,10 +129,16 @@ public class MacroDesigner extends JPanel {
     private void onAddMapping() {
         JDialog dialog = new SelectLayerMappingDialog(LayerMappingContainer.INSTANCE.queryAll(), f -> {
             //insert any mapping from container at tail of list
+            ArrayList<UUID> uids = new ArrayList<>();
+            Collections.addAll(uids, macro.mappingUids);
 
-            UUID[] ids = Arrays.copyOf(macro.mappingUids, macro.mappingUids.length + 1);
-            ids[ids.length - 1] = f.getUid();;
-            selectedRow = ids.length - 1;
+            if (selectedRow <0 || selectedRow >= uids.size()) {
+                selectedRow = uids.size() - 1;
+            }
+            uids.add(selectedRow+1, f.getUid());
+            selectedRow = selectedRow + 1;
+
+            UUID[] ids = uids.toArray(new UUID[0]);
             MappingMacro mappingMacro = macro.withUUIDs(ids);
             setMacro(mappingMacro, true);
             setMacro(macro.withUUIDs(ids), true);
@@ -209,7 +214,6 @@ public class MacroDesigner extends JPanel {
         table.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting() || isUpdating || selectedRow == table.getSelectedRow()) return;
             selectedRow = table.getSelectedRow();
-            System.out.println(" ROW SELECTED:  " + selectedRow);
         });
 
         final int rowCount = table.getRowCount();
