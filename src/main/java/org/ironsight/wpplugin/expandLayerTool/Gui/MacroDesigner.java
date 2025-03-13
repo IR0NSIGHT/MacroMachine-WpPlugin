@@ -128,16 +128,18 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onAddMapping() {
-        //insert any mapping from container at tail of list
-        ArrayList<LayerMapping> all = LayerMappingContainer.INSTANCE.queryAll();
-        if (all.isEmpty()) return;
-        UUID next = all.get(0).getUid();
-        UUID[] ids = Arrays.copyOf(macro.mappingUids, macro.mappingUids.length + 1);
-        ids[ids.length - 1] = next;
-        selectedRow = ids.length - 1;
-        MappingMacro mappingMacro = macro.withUUIDs(ids);
-        setMacro(mappingMacro, true);
+        JDialog dialog = new SelectLayerMappingDialog(LayerMappingContainer.INSTANCE.queryAll(), f -> {
+            //insert any mapping from container at tail of list
 
+            UUID[] ids = Arrays.copyOf(macro.mappingUids, macro.mappingUids.length + 1);
+            ids[ids.length - 1] = f.getUid();;
+            selectedRow = ids.length - 1;
+            MappingMacro mappingMacro = macro.withUUIDs(ids);
+            setMacro(mappingMacro, true);
+            setMacro(macro.withUUIDs(ids), true);
+        });
+        dialog.setModal(true);
+        dialog.setVisible(true);
     }
 
     private void onMoveUpMapping() {
@@ -205,7 +207,7 @@ public class MacroDesigner extends JPanel {
         table.setModel(model);
 
         table.getSelectionModel().addListSelectionListener(e -> {
-            if (e.getValueIsAdjusting() || isUpdating) return;
+            if (e.getValueIsAdjusting() || isUpdating || selectedRow == table.getSelectedRow()) return;
             selectedRow = table.getSelectedRow();
             System.out.println(" ROW SELECTED:  " + selectedRow);
         });
