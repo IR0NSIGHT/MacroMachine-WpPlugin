@@ -190,7 +190,9 @@ public class MacroDesigner extends JPanel {
     private void onChangeMapping() {
         JDialog dialog = new SelectLayerMappingDialog(LayerMappingContainer.INSTANCE.queryAll(), f -> {
             UUID[] newIds = macro.mappingUids.clone();
-            newIds[selectedRow] = f.getUid();
+            for (int row: this.table.getSelectedRows()) {
+                newIds[row] = f.getUid();
+            }
             setMacro(macro.withUUIDs(newIds), true);
         });
         dialog.setModal(true);
