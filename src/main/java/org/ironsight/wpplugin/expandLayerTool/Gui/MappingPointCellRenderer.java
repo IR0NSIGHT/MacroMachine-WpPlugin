@@ -18,10 +18,11 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
         panel.add(textLabel, BorderLayout.CENTER);
 
         valueRenderer = new MappingValuePreviewPanel();
-        valueRenderer.setPreferredSize(new Dimension(50, 50));
-        valueRenderer.setOpaque(true);
+        valueRenderer.setPreferredSize(new Dimension(150, 150));
+        valueRenderer.setOpaque(false);
         valueRenderer.setBackground(Color.GREEN);
         panel.add(valueRenderer, BorderLayout.EAST);
+        panel.invalidate();
     }
 
     public void updateTo(MappingPointValue point) {

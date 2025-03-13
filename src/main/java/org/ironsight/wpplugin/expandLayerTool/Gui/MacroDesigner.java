@@ -123,6 +123,8 @@ public class MacroDesigner extends JPanel {
                         "and " + "description and can be reused in any project.\n" +
                         "Use the save button to save your changes to the global list."));
         this.add(buttons, BorderLayout.SOUTH);
+
+        prepareTableModel();
     }
 
     private void onAddMapping() {
@@ -137,16 +139,20 @@ public class MacroDesigner extends JPanel {
             Collections.addAll(uids, macro.mappingUids);
 
             int counter = 0;
+            ArrayList<Integer> newSelection = new ArrayList<>(table.getSelectedRows().length);
             for (int row: selection) {
-                uids.add(row + counter + 1, f.getUid());
+                int idx = row + counter + 1;
+                uids.add(idx, f.getUid());
+                newSelection.add(idx);
                 counter++;
             }
 
-
             UUID[] ids = uids.toArray(new UUID[0]);
-            MappingMacro mappingMacro = macro.withUUIDs(ids);
-            setMacro(mappingMacro, true);
             setMacro(macro.withUUIDs(ids), true);
+            table.clearSelection();
+            for (int row: newSelection) {
+                table.addRowSelectionInterval(row, row);
+            }
         });
         dialog.setModal(true);
         dialog.setVisible(true);
@@ -234,7 +240,7 @@ public class MacroDesigner extends JPanel {
         System.out.println("RESET TABLE MODEL");
         DefaultTableModel model = new DefaultTableModel();
         Object[] columns = new Object[]{"Action"};
-        Object[][] data = new Object[macro.mappingUids.length][];
+        Object[][] data = new Object[0][];
         model.setDataVector(data, columns);
         table.setModel(model);
     }
@@ -245,8 +251,11 @@ public class MacroDesigner extends JPanel {
         name.setText(macro.getName());
         description.setText(macro.getDescription());
 
-        if (table.getModel().getRowCount() != macro.mappingUids.length) {
-            prepareTableModel();
+        while (table.getModel().getRowCount() < macro.mappingUids.length) {
+            ((DefaultTableModel)table.getModel()).addRow(new Object[1]);
+        }
+        while (table.getModel().getRowCount() > macro.mappingUids.length) {
+            ((DefaultTableModel)table.getModel()).removeRow(table.getRowCount() - 1);
         }
 
         int row = 0;
