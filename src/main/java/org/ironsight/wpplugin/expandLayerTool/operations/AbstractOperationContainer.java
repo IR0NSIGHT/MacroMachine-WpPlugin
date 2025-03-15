@@ -3,13 +3,13 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class AbstractOperationContainer<T extends SaveableAction> {
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
@@ -109,14 +109,19 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     public void readFromFile() {
         if (suppressFileWriting) return;
         mappings.clear();
-        try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(Paths.get(filePath)))) {
-            // Read the JSON string from the file
-            String jsonString = (String) ois.readObject();
-
+        List<String> lines = null;
+        try {
+            lines = Files.readAllLines(Paths.get(filePath), StandardCharsets.UTF_8);
+            String jsonString = String.join("", lines);
             fromSaveObject(jsonString);
-        } catch (IOException | ClassNotFoundException e) {
+        }
+        catch (FileNotFoundException e) {
+            System.err.println("save file not found: " + filePath);
+        } catch (JsonProcessingException e) {
             System.err.println(getClass().getSimpleName() + " - Error during file reading: " + e.getMessage());
-            e.printStackTrace();
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -135,14 +140,11 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
 
         try {
             // Serialize the object to a formatted JSON string
-            String jsonString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(toSaveObject());
+            Object o = toSaveObject();
+            String jsonString = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(o);
 
-            // Write the formatted JSON string to a file
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
-                oos.writeObject(jsonString);
-                System.out.println(getClass().getSimpleName() + " saved successfully to " + filePath);
-                System.out.println(jsonString);
-            }
+            // Write the formatted JSON string to a file using UTF-8 encoding
+            Files.write(Paths.get(filePath), jsonString.getBytes(StandardCharsets.UTF_8));
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error serializing object to JSON", e);
         } catch (IOException e) {
