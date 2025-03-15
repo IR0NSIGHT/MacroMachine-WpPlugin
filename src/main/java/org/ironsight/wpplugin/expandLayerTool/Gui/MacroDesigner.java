@@ -67,6 +67,7 @@ public class MacroDesigner extends JPanel {
         JScrollPane descPane = new JScrollPane(description);
         descPane.setPreferredSize(new Dimension(0, lineHeight * lineCount));
 
+        JPanel editorPanel = new JPanel(new BorderLayout());
         table = new JTable() {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -75,13 +76,14 @@ public class MacroDesigner extends JPanel {
         };
         table.setDefaultRenderer(Object.class, new MappingTableCellRenderer());
         scrollPane = new JScrollPane(table);
-        this.add(scrollPane, BorderLayout.CENTER);
+        editorPanel.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel top = new JPanel();
-        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
-        top.add(name);
-        top.add(descPane);
-        this.add(top, BorderLayout.NORTH);
+
+        JPanel nameAndDescriptionPanel = new JPanel();
+        nameAndDescriptionPanel.setLayout(new BoxLayout(nameAndDescriptionPanel, BoxLayout.Y_AXIS));
+        nameAndDescriptionPanel.add(name);
+        nameAndDescriptionPanel.add(descPane);
+        this.add(nameAndDescriptionPanel, BorderLayout.NORTH);
 
         JPanel buttons = new JPanel(new FlowLayout());
         addButton = new JButton("Add");
@@ -122,7 +124,27 @@ public class MacroDesigner extends JPanel {
                         "A macro is a collection of actions, similar to a group of global operations. It has a name " +
                         "and " + "description and can be reused in any project.\n" +
                         "Use the save button to save your changes to the global list."));
-        this.add(buttons, BorderLayout.SOUTH);
+        editorPanel.add(buttons, BorderLayout.SOUTH);
+
+        // Create a JTabbedPane
+        JTabbedPane tabbedPane = new JTabbedPane();
+
+        // Create panels for each tab
+        JPanel panel1 = new JPanel();
+        panel1.add(editorPanel);
+
+        JPanel panel2 = new JPanel();
+        panel2.add(new JLabel("This is the content of Tab 2"));
+
+        JPanel panel3 = new JPanel();
+        panel3.add(new JLabel("This is the content of Tab 3"));
+
+        // Add tabs to the JTabbedPane
+        tabbedPane.addTab("Actions", panel1);
+        tabbedPane.addTab("Values", panel2);
+        tabbedPane.addTab("Owo", panel3);
+
+        this.add(tabbedPane, BorderLayout.CENTER);
 
         prepareTableModel();
     }
