@@ -17,6 +17,11 @@ public class SelectionIO extends BinaryLayerIO {
     }
 
     @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
+    @Override
     public IMappingValue instantiateFrom(Object[] data) {
         return new SelectionIO();
     }

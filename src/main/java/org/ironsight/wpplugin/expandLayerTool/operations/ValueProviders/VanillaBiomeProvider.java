@@ -30,6 +30,11 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     }
 
     @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
+    @Override
     public String getDescription() {
         return "Get biome type of a position";
     }

@@ -67,6 +67,11 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     }
 
     @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
+    @Override
     public void paint(Graphics g, int value, Dimension dim) {
         g.setColor(COLORS[value]);
         g.fillRect(0, 0, dim.width, dim.height);

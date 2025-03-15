@@ -3,19 +3,25 @@ package org.ironsight.wpplugin.expandLayerTool.Gui;
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.UniqueList;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IDisplayUnit;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IMappingValue;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.IntStream;
 
 class VirtualTableModel extends AbstractTableModel {
     private final Map<Integer, Object[]> cache = new HashMap<>();
     private int rowCount = 1000000; // Example large row count
     private ArrayList<LayerMapping> mappings = new ArrayList<>();
-
-    private String[] columnNames = new String[]{"A", "B", "C", "D", "E", "F"};
+    private int[] offsets = new int[0];
+    private int[] offsetsModule = new int[0];
+    private String[] columnNames = new String[0];
+    private IMappingValue[] columnMappers = new IMappingValue[0];
 
     protected void updateComponents() {
         System.out.println("virtual table modle update structure");
@@ -27,23 +33,28 @@ class VirtualTableModel extends AbstractTableModel {
             outputs.add(action.output);
         }
 
-        DefaultTableModel model = new DefaultTableModel();
-        model.setColumnCount(inputs.getList().size() + outputs.getList().size());
+        ArrayList<IMappingValue> columns = new ArrayList<>();
+        inputs.getList().stream().filter(i -> !i.isVirtual()).forEach(columns::add);
+        //columns.addAll(outputs.getList());
 
-        columnNames = new String[inputs.getList().size() + outputs.getList().size()];
-        int i = 0;
-        String[] inputNames = inputs.getList().stream().map(IDisplayUnit::getName).toArray(String[]::new);
-        String[] outputNames = outputs.getList().stream().map(IDisplayUnit::getName).toArray(String[]::new);
-        for (String inputName : inputNames)
-            columnNames[i++] = inputName;
-        for (String outputName : outputNames)
-            columnNames[i++] = outputName;
 
-        /*rowCount = 1;
-        for (IPositionValueGetter input : inputs.getList()) {
-            rowCount = rowCount * IMappingValue.range(input);
-        }*/
-        fetchData(0,60);
+        columnNames = new String[columns.size()];
+        columnNames = columns.stream().map(IDisplayUnit::getName).toArray(String[]::new);
+        columnMappers = columns.toArray(new IMappingValue[0]);
+
+        offsets = new int[columnMappers.length];
+        offsetsModule = new int[columnMappers.length];
+        Arrays.fill(offsets, 1);
+        rowCount = 1;
+        offsets = columns.stream().mapToInt(io -> {
+            int old = rowCount;
+            rowCount *= IMappingValue.range(io);
+            return old;
+        }).toArray();
+        offsetsModule = columns.stream().mapToInt(IMappingValue::range).toArray();
+
+        rowCount = Math.min(rowCount, 1000000);
+        fetchData(0, 60);
     }
 
     public void setMappings(ArrayList<LayerMapping> actions) {
@@ -87,9 +98,8 @@ class VirtualTableModel extends AbstractTableModel {
     }
 
     private Object[] fetchRowData(int rowIndex) {
-        // Simulate fetching data from a data source
-        String[] row = new String[columnNames.length];
-        Arrays.fill(row, "" +rowIndex);
-        return row;
+        return IntStream.range(0, columnMappers.length)
+                .mapToObj(i -> new MappingPointValue(rowIndex / offsets[i] % offsetsModule[i], columnMappers[i]))
+                .toArray(Object[]::new);
     }
 }

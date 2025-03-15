@@ -136,8 +136,8 @@ public class MacroDesigner extends JPanel {
 
         // Add tabs to the JTabbedPane
         tabbedPane.addTab("Actions", editorPanel);
-        tabbedPane.addTab("Values", valueTable);
-        tabbedPane.addTab("Owo", panel3);
+    //    tabbedPane.addTab("Values", valueTable);
+    //    tabbedPane.addTab("Owo", panel3);
 
         this.add(tabbedPane, BorderLayout.CENTER);
 
@@ -274,7 +274,7 @@ public class MacroDesigner extends JPanel {
         ArrayList<LayerMapping> mappings = new ArrayList<>(macro.mappingUids.length);
         for (UUID id : macro.mappingUids) {
             LayerMapping m = LayerMappingContainer.INSTANCE.queryById(id);
-            mappings.add(m);
+            if (m != null) mappings.add(m);
             table.setValueAt(m, row++, 0);
         }
 

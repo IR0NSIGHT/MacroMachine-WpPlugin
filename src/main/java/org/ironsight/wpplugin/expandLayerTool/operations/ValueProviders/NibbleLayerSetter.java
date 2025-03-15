@@ -134,6 +134,11 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     }
 
     @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
+    @Override
     public String toString() {
         return "NibbleLayerSetter{" + "layer=" + layer + '}';
     }

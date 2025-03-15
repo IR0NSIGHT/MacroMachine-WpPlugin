@@ -27,6 +27,11 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     }
 
     @Override
+    public boolean isVirtual() {
+        return true;
+    }
+
+    @Override
     public int getValueAt(Dimension dim, int x, int y) {
         return 7;
     }

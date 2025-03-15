@@ -17,6 +17,11 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter 
     private String layerId;
     private Layer layer;
 
+    @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
     public BitLayerBinarySpraypaintApplicator() {
         super();
     }

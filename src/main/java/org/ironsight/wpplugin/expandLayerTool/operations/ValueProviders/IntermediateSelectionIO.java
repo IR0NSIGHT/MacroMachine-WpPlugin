@@ -22,7 +22,10 @@ public class IntermediateSelectionIO implements IPositionValueSetter, IPositionV
     public boolean isSelected() {
         return value != 0;
     }
-
+    @Override
+    public boolean isVirtual() {
+        return false;
+    }
     public void setSelected(boolean selected) {
         if (selected) {
             value = 1;

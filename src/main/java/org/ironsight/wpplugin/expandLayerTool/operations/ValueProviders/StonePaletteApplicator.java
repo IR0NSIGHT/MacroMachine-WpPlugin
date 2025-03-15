@@ -73,6 +73,11 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     }
 
     @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
+    @Override
     public int getMaxValue() {
         return materials.length - 1;
     }

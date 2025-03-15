@@ -30,6 +30,11 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     }
 
     @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
+    @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
         dim.setTerrainAt(x, y, Terrain.values()[value]);
     }
