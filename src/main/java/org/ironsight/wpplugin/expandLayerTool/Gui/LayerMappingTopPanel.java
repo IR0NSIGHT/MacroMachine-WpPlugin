@@ -41,7 +41,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
                     .withDescription(description.getText());
 
             boolean inputOutputChanged =
-                    !inputSelect.getSelectedProvider().equals(mapping.input) || outputSelect.getSelectedProvider().equals(mapping.output);
+                    !inputSelect.getSelectedProvider().equals(mapping.input) || !outputSelect.getSelectedProvider().equals(mapping.output);
             if (inputOutputChanged) // reset points as input/output may require different values than provided from
                 // old mapping.
                 newMap = newMap.withNewPoints(new MappingPoint[0]);
