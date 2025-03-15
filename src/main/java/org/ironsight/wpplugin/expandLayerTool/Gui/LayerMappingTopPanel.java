@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,8 +38,14 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
     private void updateFromInputs() {
         if (!isInit && isAllowEvents() && mapping != null) {
             LayerMapping newMap = mapping.withName(nameField.getText())
-                    .withDescription(description.getText())
-                    .withInput(inputSelect.getSelectedProvider())
+                    .withDescription(description.getText());
+
+            boolean inputOutputChanged =
+                    !inputSelect.getSelectedProvider().equals(mapping.input) || outputSelect.getSelectedProvider().equals(mapping.output);
+            if (inputOutputChanged) // reset points as input/output may require different values than provided from
+                // old mapping.
+                newMap = newMap.withNewPoints(new MappingPoint[0]);
+            newMap = newMap.withInput(inputSelect.getSelectedProvider())
                     .withOutput(outputSelect.getSelectedProvider())
                     .withType(actionTypeComboBox.getSelectedProvider());
             updateMapping(newMap);

@@ -64,7 +64,7 @@ class LayerMappingTest {
                 original = new LayerMapping(new TestInputOutput(),
                         (IPositionValueSetter) provider,
                         new MappingPoint[]{new MappingPoint(provider.getMinValue(), 5),
-                                new MappingPoint(provider.getMaxValue(), -3)},
+                                new MappingPoint(provider.getMaxValue(), 1)},
                         ActionType.SET,
                         "test",
                         "test description",
@@ -104,7 +104,7 @@ class LayerMappingTest {
                     new TestInputOutput(),
                     new MappingPoint[]{new MappingPoint(1, 100),
                             new MappingPoint(6, 100 + 500),
-                            new MappingPoint(11, 1100)},
+                            new MappingPoint(11, 1000)},
                     ActionType.SET,
                     "",
                     "",
@@ -112,7 +112,7 @@ class LayerMappingTest {
 
             assertEquals(100, linear.map(1));
             assertEquals(600, linear.map(6));
-            assertEquals(1100, linear.map(11));
+            assertEquals(1000, linear.map(11));
 
             assertEquals(100 + 500, linear.map(6));
             assertEquals(100 + 300, linear.map(4));
@@ -124,7 +124,7 @@ class LayerMappingTest {
                     new TestInputOutput(),
                     new MappingPoint[]{new MappingPoint(10, 100),
                             new MappingPoint(50 + 10, 100 + 500),
-                            new MappingPoint(110, 1100)},
+                            new MappingPoint(110, 1000)},
                     ActionType.SET,
                     "",
                     "",
@@ -132,7 +132,7 @@ class LayerMappingTest {
 
             assertEquals(100, linear.map(10));
             assertEquals(600, linear.map(60));
-            assertEquals(1100, linear.map(110));
+            assertEquals(1000, linear.map(110));
 
             assertEquals(100 + 500, linear.map(50 + 10));
             assertEquals(100 + 300, linear.map(30 + 10));
