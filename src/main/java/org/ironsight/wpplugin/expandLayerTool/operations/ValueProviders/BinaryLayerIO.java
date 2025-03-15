@@ -3,9 +3,12 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.layers.LayerManager;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.awt.*;
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.Objects;
 
 public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter {
@@ -25,7 +28,8 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     }
 
     public void setValueAt(Dimension dim, int x, int y, int value) {
-        if (value == 2) return;
+        assert layer != null;
+        assert value == 0 || value == 1;
         dim.setBitLayerValueAt(layer, x, y, value == 1);
     }
 
@@ -39,7 +43,15 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
 
     @Override
     public void prepareForDimension(Dimension dim) {
-
+        Collection<Layer> allLayers = new LinkedList<>();
+        allLayers.addAll(dim.getCustomLayers());
+        allLayers.addAll(LayerManager.getInstance().getLayers());
+        allLayers.stream()
+                .filter(f -> f.getId().equals(layerId))
+                .findFirst()
+                .map(l -> this.layer = l)
+                .orElseThrow(IllegalAccessError::new);
+        assert layer != null;
     }
 
     public String valueToString(int value) {

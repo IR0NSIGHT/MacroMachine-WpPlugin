@@ -54,7 +54,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         blockTableChanged = true;
         if (groupValues) {
             List<Point2d> ranges = LayerMapping.calculateRanges(mapping);
-            if (numberTable.getModel().getRowCount() != ranges.size()) {
+            if (numberTable.getModel().getRowCount() != ranges.size() || numberTable.getColumnCount() != 3) {
                 initTableModel();   //rebuild
             }
             int ii = 0;
@@ -68,7 +68,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             }
         } else {
             int range = mapping.input.getMaxValue() - mapping.input.getMinValue() + 1;
-            if (numberTable.getModel().getRowCount() != range) {
+            if (numberTable.getModel().getRowCount() != range || numberTable.getColumnCount() != 2) {
                 initTableModel();   //rebuild
             }
             HashMap<Integer, Integer> mappingPointByInput = new HashMap<>();
