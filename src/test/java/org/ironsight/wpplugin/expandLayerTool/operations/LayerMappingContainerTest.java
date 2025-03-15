@@ -15,7 +15,7 @@ class LayerMappingContainerTest {
         LayerMapping mapping = container.addMapping();
 
         MappingPoint[] newPoints = new MappingPoint[17];
-        Arrays.fill(newPoints, new MappingPoint(10, 20));
+        Arrays.fill(newPoints, new MappingPoint(10, 7));
         LayerMapping newMapping = mapping.withNewPoints(newPoints);
         assertNotEquals(newMapping, mapping);
         assertEquals(17, newMapping.getMappingPoints().length);
@@ -84,7 +84,7 @@ class LayerMappingContainerTest {
         LayerMapping mapping = container.addMapping();
 
         assertEquals(1, ran[0]);
-        container.updateMapping(mapping.withNewPoints(new MappingPoint[]{new MappingPoint(10, 20)}));
+        container.updateMapping(mapping.withNewPoints(new MappingPoint[]{new MappingPoint(10, 7)}));
         assertEquals(2, ran[0]);
         container.deleteMapping(mapping.getUid());
         assertEquals(3, ran[0]);

@@ -22,6 +22,11 @@ public class SelectionIO extends BinaryLayerIO {
     }
 
     @Override
+    public void prepareForDimension(Dimension dim) {
+        //not required
+    }
+
+    @Override
     public IMappingValue instantiateFrom(Object[] data) {
         return new SelectionIO();
     }

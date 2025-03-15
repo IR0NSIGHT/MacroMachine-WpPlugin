@@ -33,12 +33,18 @@ public class LayerMapping implements SaveableAction {
         assert type != null;
         assert Arrays.stream(mappingPoints).noneMatch(Objects::isNull);
 
+
         this.name = name;
         this.description = description;
         this.input = input;
         this.output = output;
         this.actionType = type;
         this.uid = uid;
+
+        assert Arrays.stream(mappingPoints).noneMatch(p -> sanitizeInput(p.input) != p.input) : "mapping points " +
+                "contain illegal input values";
+        assert Arrays.stream(mappingPoints).noneMatch(p -> sanitizeOutput(p.output) != p.output) : "mapping points " +
+                "contain illegal output values";
         this.mappingPoints = Arrays.stream(mappingPoints)
                 // .map(mp -> new MappingPoint(sanitizeInput(mp.input), sanitizeOutput(mp.output)))
                 .sorted(Comparator.comparing(mp -> mp.input)).toArray(MappingPoint[]::new);
@@ -60,6 +66,12 @@ public class LayerMapping implements SaveableAction {
             }
         } else {
             if (this.mappingPoints.length == 0) return;
+            if (this.mappingPoints.length == 1) {
+                Arrays.fill(mappings, mappingPoints[0].output);
+                return;
+            };
+            // 2 or more mapping points are enough to interpolate
+
             //prepare input points by adding min-input and max-input points for easier index finding of interpolation
             LinkedList<MappingPoint> points = new LinkedList<>(Arrays.asList(mappingPoints));
             if (points.getFirst().input != input.getMinValue())
@@ -81,8 +93,6 @@ public class LayerMapping implements SaveableAction {
                     if (inputValue > input.getMaxValue()) return;
                     mappings[inputValue - input.getMinValue()] = outputValue;
                 }
-
-
             }
         }
 

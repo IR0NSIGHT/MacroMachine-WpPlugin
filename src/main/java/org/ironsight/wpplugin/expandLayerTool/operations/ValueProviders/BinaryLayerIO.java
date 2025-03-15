@@ -50,15 +50,16 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
                 .filter(f -> f.getId().equals(layerId))
                 .findFirst()
                 .map(l -> this.layer = l)
-                .orElseThrow(IllegalAccessError::new);
+                .orElseThrow(() -> new IllegalAccessError("can not prepare binary layer for dimennsion, did not find " +
+                        "a matching layer with name and id" + layerName + " id="+layerId));
         assert layer != null;
     }
 
     public String valueToString(int value) {
         if (value == 0) {
-            return layerName + " ON (1)";
+            return layerName + " OFF ("+value+")";
         } else {
-            return layerName + " OFF (0)";
+            return layerName + " ON ("+value+")";
         }
     }
 

@@ -11,11 +11,15 @@ public class MappingPointValue {
     public int mappingPointIndex = -1;
 
     public MappingPointValue(int numericValue, IMappingValue mappingValue) {
+        assert (IMappingValue.sanitizeValue(numericValue,mappingValue) == numericValue) : "illegal value for this " +
+                "mapping";
         this.numericValue = numericValue;
         this.mappingValue = mappingValue;
     }
 
     public MappingPointValue(IMappingValue mappingValue, int numericValue, boolean isEditable, int mappingPointIndex) {
+        assert (IMappingValue.sanitizeValue(numericValue,mappingValue) == numericValue) : "illegal value for this " +
+                "mapping";
         this.mappingValue = mappingValue;
         this.numericValue = numericValue;
         this.isEditable = isEditable;
