@@ -20,6 +20,11 @@ public class SlopeProvider implements IPositionValueGetter {
     }
 
     @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
+
+    @Override
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());
     }

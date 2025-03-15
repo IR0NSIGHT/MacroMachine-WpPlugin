@@ -7,6 +7,7 @@ import java.awt.*;
 
 public class AlwaysIO implements IPositionValueGetter {
     public static AlwaysIO instance = new AlwaysIO();
+
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         return 0;
@@ -30,6 +31,11 @@ public class AlwaysIO implements IPositionValueGetter {
     @Override
     public int getMinValue() {
         return 0;
+    }
+
+    @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
     }
 
     @Override

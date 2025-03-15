@@ -10,6 +10,10 @@ public interface IMappingValue {
         return Math.max(Math.min(value, mappingValue.getMaxValue()), mappingValue.getMinValue());
     }
 
+    static int range(IMappingValue mappingValue) {
+        return mappingValue.getMaxValue() - mappingValue.getMinValue() + 1;
+    }
+
     int getMaxValue();
 
     int getMinValue();

@@ -22,6 +22,11 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     }
 
     @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
+
+    @Override
     public int getValueAt(Dimension dim, int x, int y) {
         return 7;
     }

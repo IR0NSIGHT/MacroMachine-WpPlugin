@@ -121,7 +121,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(layer);
+        return Objects.hashCode(layerId);
     }
 
     @Override

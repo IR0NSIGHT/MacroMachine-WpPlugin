@@ -81,4 +81,9 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     public ProviderType getProviderType() {
         return ProviderType.WATER_DEPTH;
     }
+
+    @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
 }

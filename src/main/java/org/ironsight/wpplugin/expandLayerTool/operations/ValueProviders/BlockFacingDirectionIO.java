@@ -53,6 +53,11 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
     }
 
     @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
+
+    @Override
     public String getName() {
         return "Slope Direction";
     }
