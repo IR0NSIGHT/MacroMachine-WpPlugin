@@ -19,7 +19,6 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         assert layer.dataSize.equals(Layer.DataSize.BIT);
     }
 
-
     BinaryLayerIO(String name, String id) {
         this.layerId = id;
         this.layerName = name;
@@ -95,6 +94,10 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         return "binary (ON or OFF) layer " + layerName;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(layerId);
+    }
 
     @Override
     public boolean equals(Object o) {

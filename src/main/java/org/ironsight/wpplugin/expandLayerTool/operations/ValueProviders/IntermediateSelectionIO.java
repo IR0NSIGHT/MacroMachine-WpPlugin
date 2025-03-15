@@ -6,23 +6,27 @@ import org.pepsoft.worldpainter.Dimension;
 import java.awt.*;
 
 public class IntermediateSelectionIO implements IPositionValueSetter, IPositionValueGetter {
+    public static IntermediateSelectionIO instance = new IntermediateSelectionIO();
     private static int value;
     private static int lastX;
     private static int lastY;
 
-    public static IntermediateSelectionIO instance = new IntermediateSelectionIO();
+    private IntermediateSelectionIO() {
+    }
 
-    private IntermediateSelectionIO() {}
-
-    public void setSelected(boolean selected) {
-        if (selected) {
-            value = 1;
-        } else
-            value = 0;
+    @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
     }
 
     public boolean isSelected() {
         return value != 0;
+    }
+
+    public void setSelected(boolean selected) {
+        if (selected) {
+            value = 1;
+        } else value = 0;
     }
 
     @Override
@@ -90,7 +94,7 @@ public class IntermediateSelectionIO implements IPositionValueSetter, IPositionV
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        g.setColor(value == 1 ? Color.RED: Color.BLACK);
+        g.setColor(value == 1 ? Color.RED : Color.BLACK);
         g.fillRect(0, 0, dim.width, dim.height);
     }
 

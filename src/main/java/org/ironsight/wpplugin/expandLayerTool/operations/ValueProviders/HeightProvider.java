@@ -22,6 +22,11 @@ public class HeightProvider implements IPositionValueGetter, IPositionValueSette
     }
 
     @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
+
+    @Override
     public String getDescription() {
         return "get the height of a position in percent for 0 to 255.";
     }

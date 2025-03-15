@@ -22,6 +22,11 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
     }
 
     @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
+
+    @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
         IntermediateValueIO.value = value;
         lastX = x;
@@ -40,8 +45,8 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
 
     @Override
     public String getDescription() {
-        return "a value to temporarily store an intermediate result. will not exist before or after macro execution, "
-                + "only while the macro runs.";
+        return "a value to temporarily store an intermediate result. will not exist before or after macro execution, " +
+                "only while the macro runs.";
     }
 
     @Override
@@ -76,11 +81,11 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        float percent =  ((float)value - getMinValue()) / (getMaxValue() - getMinValue());
+        float percent = ((float) value - getMinValue()) / (getMaxValue() - getMinValue());
         g.setColor(Color.black);
-        g.fillRect(0,0,dim.width,dim.height);
+        g.fillRect(0, 0, dim.width, dim.height);
         g.setColor(Color.RED);
-        g.fillRect(0,0,(int)(dim.width*percent),dim.height);
+        g.fillRect(0, 0, (int) (dim.width * percent), dim.height);
     }
 
     @Override

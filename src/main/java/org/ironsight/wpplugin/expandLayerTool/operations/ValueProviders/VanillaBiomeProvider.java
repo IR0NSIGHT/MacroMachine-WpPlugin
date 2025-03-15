@@ -6,8 +6,6 @@ import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
 import org.pepsoft.worldpainter.layers.Biome;
 
 import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
 
 public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValueSetter {
     String[] biomes;
@@ -24,6 +22,11 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     @Override
     public String getName() {
         return "Biome";
+    }
+
+    @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
     }
 
     @Override
@@ -58,8 +61,8 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     @Override
     public String valueToString(int value) {
-        if (value < 0 || value >= biomes.length) return "INVALID ("+value+")";
-        if (biomes[value] == null) return "\uFFFCNULL-("+value+")";
+        if (value < 0 || value >= biomes.length) return "INVALID (" + value + ")";
+        if (biomes[value] == null) return "\uFFFCNULL-(" + value + ")";
         return biomes[value];
     }
 

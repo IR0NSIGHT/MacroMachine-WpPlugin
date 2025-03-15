@@ -6,12 +6,12 @@ import org.pepsoft.worldpainter.layers.Annotations;
 import java.awt.*;
 
 public class AnnotationSetter implements IPositionValueGetter, IPositionValueSetter {
-    private static final Color[] COLORS = new Color[]{Color.WHITE, Color.WHITE, Color.ORANGE, Color.MAGENTA,
-            new Color(107, 177, 255),   //LIGHT BLUE
-            Color.YELLOW, new Color(34, 153, 84), //LIME
-            Color.pink, Color.lightGray, Color.cyan, new Color(128, 0, 128), //purple
-            Color.BLUE, new Color(165, 42, 42), // brown
-            Color.GREEN, Color.RED, Color.BLACK};
+    private static final Color[] COLORS =
+            new Color[]{Color.WHITE, Color.WHITE, Color.ORANGE, Color.MAGENTA, new Color(107, 177, 255),   //LIGHT BLUE
+                    Color.YELLOW, new Color(34, 153, 84), //LIME
+                    Color.pink, Color.lightGray, Color.cyan, new Color(128, 0, 128), //purple
+                    Color.BLUE, new Color(165, 42, 42), // brown
+                    Color.GREEN, Color.RED, Color.BLACK};
     private static AnnotationSetter instance;
 
     private static AnnotationSetter getInstance() {
@@ -21,7 +21,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public int getMaxValue() {
-        return COLORS.length-1;
+        return COLORS.length - 1;
     }
 
     @Override
@@ -59,6 +59,11 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public boolean isDiscrete() {
         return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
     }
 
     @Override

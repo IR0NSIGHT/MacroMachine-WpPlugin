@@ -25,6 +25,11 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     }
 
     @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
+
+    @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
         dim.setTerrainAt(x, y, Terrain.values()[value]);
     }
@@ -82,7 +87,7 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        g.drawImage(Terrain.values()[value].getScaledIcon(Math.min(dim.height, dim.width),colorScheme),0,0,null);
+        g.drawImage(Terrain.values()[value].getScaledIcon(Math.min(dim.height, dim.width), colorScheme), 0, 0, null);
     }
 
     @Override
