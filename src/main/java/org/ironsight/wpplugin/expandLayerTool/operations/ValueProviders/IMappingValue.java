@@ -5,7 +5,7 @@ import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 
 import java.awt.*;
 
-public interface IMappingValue {
+public interface IMappingValue extends IDisplayUnit {
     static int sanitizeValue(int value, IMappingValue mappingValue) {
         return Math.max(Math.min(value, mappingValue.getMaxValue()), mappingValue.getMinValue());
     }
@@ -13,6 +13,14 @@ public interface IMappingValue {
     static int range(IMappingValue mappingValue) {
         return mappingValue.getMaxValue() - mappingValue.getMinValue() + 1;
     }
+
+    /**
+     * virtual values dont exist in the "real world", the dimension. f.e. actionfilter or intermediate values are
+     * virtual
+     * height slope and waterheight are real values from the world.
+     * @return
+     */
+    boolean isVirtual();
 
     int getMaxValue();
 

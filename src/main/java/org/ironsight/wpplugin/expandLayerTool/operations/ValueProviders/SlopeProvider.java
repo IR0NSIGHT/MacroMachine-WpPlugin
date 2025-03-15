@@ -25,6 +25,11 @@ public class SlopeProvider implements IPositionValueGetter {
     }
 
     @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
+    @Override
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());
     }

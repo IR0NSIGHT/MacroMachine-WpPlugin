@@ -83,6 +83,11 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     }
 
     @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
+    @Override
     public int hashCode() {
         return getProviderType().hashCode();
     }

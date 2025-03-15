@@ -36,7 +36,10 @@ public class WaterHeightAbsoluteIO extends HeightProvider {
     public String valueToString(int value) {
         return Integer.toString(value);
     }
-
+    @Override
+    public boolean isVirtual() {
+        return false;
+    }
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         float percent = (value - getMinValue() * 1f) / (getMaxValue() - getMinValue());

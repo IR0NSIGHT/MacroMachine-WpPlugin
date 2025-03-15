@@ -9,6 +9,10 @@ public class AlwaysIO implements IPositionValueGetter {
     public static AlwaysIO instance = new AlwaysIO();
 
     @Override
+    public boolean isVirtual() {
+        return true;
+    }
+    @Override
     public int getValueAt(Dimension dim, int x, int y) {
         return 0;
     }

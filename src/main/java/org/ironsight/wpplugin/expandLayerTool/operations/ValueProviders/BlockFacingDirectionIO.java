@@ -58,6 +58,11 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
     }
 
     @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
+    @Override
     public String getName() {
         return "Slope Direction";
     }

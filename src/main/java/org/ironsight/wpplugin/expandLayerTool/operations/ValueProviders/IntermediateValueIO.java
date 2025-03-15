@@ -27,6 +27,11 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
     }
 
     @Override
+    public boolean isVirtual() {
+        return true;
+    }
+
+    @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
         IntermediateValueIO.value = value;
         lastX = x;

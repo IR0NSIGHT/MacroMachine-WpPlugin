@@ -100,6 +100,11 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     }
 
     @Override
+    public boolean isVirtual() {
+        return false;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
