@@ -118,6 +118,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         catch (FileNotFoundException e) {
             System.err.println("save file not found: " + filePath);
         } catch (JsonProcessingException e) {
+            System.err.println(filePath);
             System.err.println(getClass().getSimpleName() + " - Error during file reading: " + e.getMessage());
             throw new RuntimeException(e);
         } catch (IOException e) {

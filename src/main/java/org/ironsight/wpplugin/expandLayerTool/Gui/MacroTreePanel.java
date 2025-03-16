@@ -185,7 +185,7 @@ public class MacroTreePanel extends JPanel {
         macros.sort(Comparator.comparing(MappingMacro::getName));
         macros.stream()
                 .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
-                        f.getDescription().toLowerCase().contains(filterString) || Arrays.stream(f.mappingUids)
+                        f.getDescription().toLowerCase().contains(filterString) || Arrays.stream(f.executionUUIDs)
                         .map(LayerMappingContainer.INSTANCE::queryById)
                         .anyMatch(action -> action.getName().contains(filterString) ||
                                 action.getDescription().contains(filterString)))
@@ -198,7 +198,7 @@ public class MacroTreePanel extends JPanel {
                 .forEach(macro -> {
                     DefaultMutableTreeNode macroNode = new DefaultMutableTreeNode(macro);
                     System.out.println(" create macro node: " + macro.getName());
-                    for (UUID uuid : macro.mappingUids) {
+                    for (UUID uuid : macro.executionUUIDs) {
                         LayerMapping m = mappingContainer.queryById(uuid);
                         DefaultMutableTreeNode node = LayerToNode(m);
                         macroNode.add(node);
@@ -324,8 +324,8 @@ public class MacroTreePanel extends JPanel {
                 MappingMacro macro = container.queryById(macroId);
                 if (macro == null)
                     continue;
-                ArrayList<UUID> ids = new ArrayList<>(macro.mappingUids.length + 1);
-                Collections.addAll(ids, macro.mappingUids);
+                ArrayList<UUID> ids = new ArrayList<>(macro.executionUUIDs.length + 1);
+                Collections.addAll(ids, macro.executionUUIDs);
                 ids.add(m.getUid());
                 container.updateMapping(macro.withUUIDs(ids.toArray(new UUID[0])));
             }
