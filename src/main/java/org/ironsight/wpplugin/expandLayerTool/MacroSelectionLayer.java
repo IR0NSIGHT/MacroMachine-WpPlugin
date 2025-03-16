@@ -9,9 +9,17 @@ public class MacroSelectionLayer extends Layer {
         return MacroSelectionLayerRenderer.instance;
     }
 
-    private static final String id = "irn-SelectionBitLayer";
+    /**
+     * the purpose of this layer, is to provide a BIT layer the user can paint for selection of areas
+     * the distanceToEdge function provided by worldpainter can only search inside of bit layers, and selection is
+     * split into SelectionBlock and SelecctionChunk which messes up the result.
+     * so this is a single-layer-paintable-selection substitute.
+     */
+
+    private static final String id = "org.ironsight.wpplugin.macropainter.macroselectionlayer";
     private static final String name = "Macro Selection";
-    private static final String description = "a bit layer to select blocks for usage in macros.";
+    private static final String description = "a bit layer to select blocks for usage in macros and especially to " +
+            "search for distances to edge.";
 
     public static MacroSelectionLayer INSTANCE = new MacroSelectionLayer();
 
