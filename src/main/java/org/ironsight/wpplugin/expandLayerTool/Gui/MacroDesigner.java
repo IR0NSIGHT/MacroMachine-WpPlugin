@@ -153,7 +153,7 @@ public class MacroDesigner extends JPanel {
 
             //insert any mapping from container at tail of list
             ArrayList<UUID> uids = new ArrayList<>();
-            Collections.addAll(uids, macro.mappingUids);
+            Collections.addAll(uids, macro.executionUUIDs);
 
             int counter = 0;
             ArrayList<Integer> newSelection = new ArrayList<>(table.getSelectedRows().length);
@@ -179,10 +179,10 @@ public class MacroDesigner extends JPanel {
         if (table.getSelectedRows().length == 0) return;
         int anchorRow = table.getSelectedRows()[0];
         if (anchorRow > 0 && anchorRow < table.getRowCount()) {
-            UUID[] ids = macro.mappingUids.clone();
+            UUID[] ids = macro.executionUUIDs.clone();
             for (int selectedRow : table.getSelectedRows()) {
-                ids[selectedRow - 1] = macro.mappingUids[selectedRow];
-                ids[selectedRow] = macro.mappingUids[selectedRow - 1];
+                ids[selectedRow - 1] = macro.executionUUIDs[selectedRow];
+                ids[selectedRow] = macro.executionUUIDs[selectedRow - 1];
             }
 
             shiftRowSelection(table.getSelectedRows(), -1);
@@ -206,10 +206,10 @@ public class MacroDesigner extends JPanel {
         if (table.getSelectedRows().length == 0) return;
         int anchorRow = table.getSelectedRows()[table.getSelectedRows().length - 1];
         if (anchorRow >= 0 && anchorRow < table.getRowCount() - 1) {
-            UUID[] ids = macro.mappingUids.clone();
+            UUID[] ids = macro.executionUUIDs.clone();
             for (int selectedRow : table.getSelectedRows()) {
-                ids[selectedRow + 1] = macro.mappingUids[selectedRow];
-                ids[selectedRow] = macro.mappingUids[selectedRow + 1];
+                ids[selectedRow + 1] = macro.executionUUIDs[selectedRow];
+                ids[selectedRow] = macro.executionUUIDs[selectedRow + 1];
             }
 
             shiftRowSelection(table.getSelectedRows(), +1);
@@ -228,9 +228,9 @@ public class MacroDesigner extends JPanel {
         }
 
         ArrayList<UUID> newUids = new ArrayList<>();
-        for (int i = 0; i < macro.mappingUids.length; i++) {
+        for (int i = 0; i < macro.executionUUIDs.length; i++) {
             if (toBeRemoved.contains(i)) continue;
-            newUids.add(macro.mappingUids[i]);
+            newUids.add(macro.executionUUIDs[i]);
         }
 
         setMacro(macro.withUUIDs(newUids.toArray(new UUID[0])), true);
@@ -238,7 +238,7 @@ public class MacroDesigner extends JPanel {
 
     private void onChangeMapping() {
         JDialog dialog = new SelectLayerMappingDialog(LayerMappingContainer.INSTANCE.queryAll(), f -> {
-            UUID[] newIds = macro.mappingUids.clone();
+            UUID[] newIds = macro.executionUUIDs.clone();
             for (int row : this.table.getSelectedRows()) {
                 newIds[row] = f.getUid();
             }
@@ -263,16 +263,16 @@ public class MacroDesigner extends JPanel {
         name.setText(macro.getName());
         description.setText(macro.getDescription());
 
-        while (table.getModel().getRowCount() < macro.mappingUids.length) {
+        while (table.getModel().getRowCount() < macro.executionUUIDs.length) {
             ((DefaultTableModel) table.getModel()).addRow(new Object[1]);
         }
-        while (table.getModel().getRowCount() > macro.mappingUids.length) {
+        while (table.getModel().getRowCount() > macro.executionUUIDs.length) {
             ((DefaultTableModel) table.getModel()).removeRow(table.getRowCount() - 1);
         }
 
         int row = 0;
-        ArrayList<LayerMapping> mappings = new ArrayList<>(macro.mappingUids.length);
-        for (UUID id : macro.mappingUids) {
+        ArrayList<LayerMapping> mappings = new ArrayList<>(macro.executionUUIDs.length);
+        for (UUID id : macro.executionUUIDs) {
             LayerMapping m = LayerMappingContainer.INSTANCE.queryById(id);
             if (m != null) mappings.add(m);
             table.setValueAt(m, row++, 0);

@@ -87,7 +87,7 @@ class IntermediateValueIOTest {
 
         MappingMacro mappingMacro = new MappingMacro("test macro", "test intermediate value", new UUID[]{set, get},
                 UUID.randomUUID());
-        mappingMacro.apply(dim, container);
+        mappingMacro.apply(dim, container, MappingMacroContainer.getInstance());
         // mod(x,2) == 0 -> intermediate 5 -> annotation UNEVEN_OUTPUT
         // mod(x,2) == 1 -> intermediate 7 -> annotation EVEN_OUTPUT
 

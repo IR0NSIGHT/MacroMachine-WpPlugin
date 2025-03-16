@@ -383,7 +383,7 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     public void applyLayerAction(MappingMacro macro) {
         try {
             this.getDimension().setEventsInhibited(true);
-            macro.apply(getDimension(), LayerMappingContainer.INSTANCE);
+            macro.apply(getDimension(), LayerMappingContainer.INSTANCE, MappingMacroContainer.getInstance());
         } catch (Exception ex) {
             System.out.println(ex);
         } finally {
