@@ -211,8 +211,9 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         // set the same value for all selected rows as a bulk operation
         for (int row : rows) {
             MappingPointValue rowValue = (MappingPointValue) numberTable.getValueAt(row, column);
-            assert rowValue.isEditable : "can not update the value of a non-editable entry:" + rowValue;
             if (!rowValue.isEditable || rowValue.mappingPointIndex == -1) continue;
+
+            assert rowValue.isEditable : "can not update the value of a non-editable entry:" + rowValue;
             if (column == 0)    //INPUT UPDATED
                 points[rowValue.mappingPointIndex] =
                         new MappingPoint(targetValue, points[rowValue.mappingPointIndex].output);

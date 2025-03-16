@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.LayerManager;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -33,6 +34,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter {
     @Override
     public void prepareForDimension(Dimension dim) {
         if (layerId.equals(SelectionBlock.INSTANCE.getId())) layer = SelectionBlock.INSTANCE;
+        else if (layerId.equals(Annotations.INSTANCE.getId())) layer = Annotations.INSTANCE;
         else {
             Collection<Layer> allLayers = new LinkedList<>();
             allLayers.addAll(dim.getCustomLayers());
@@ -93,8 +95,16 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter {
     public int getValueAt(Dimension dim, int x, int y) {
         float dist = dim.getDistanceToEdge(layer, x, y, getMaxValue());
         if (layerId.equals(SelectionBlock.INSTANCE.getId())) {
-            dist = Math.min(dist, dim.getDistanceToEdge(SelectionChunk.INSTANCE, x, y, getMaxValue()));
+            float distChunkSel =  dim.getDistanceToEdge(SelectionChunk.INSTANCE, x, y, getMaxValue());
+            if (distChunkSel != 0) {
+                dist = Math.min(dist,distChunkSel);
+            } else if (dist == 0)
+                dist = distChunkSel;
         }
+        if (x==82 && y == 67)
+            System.out.println("DEBUG UWU");
+        if (dist == 0)  //position is not part of layer
+            return getMaxValue();
         if (dist != 0) System.out.println(x + "," + y + " dist to" + layer.getName() + " =" + dist);
         return Math.round(dist);
     }
@@ -131,6 +141,6 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter {
 
     @Override
     public String toString() {
-        return "DistanceToEdge{" + "layer=" + layer + '}';
+        return "DistanceToEdge{" + "layer=" + layerName + '}';
     }
 }
