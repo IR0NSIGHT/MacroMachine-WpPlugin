@@ -49,7 +49,6 @@ public class InputOutputProvider {
                 setters.add(new BinaryLayerIO(l));
                 getters.add(new BinaryLayerIO(l));
             }
-            getters.add(new DistanceToLayerEdgeGetter(l));
         }
         if (dimension != null) {    //TODO check: does this actually collect custom layers?
             for (Layer l : dimension.getCustomLayers()) {

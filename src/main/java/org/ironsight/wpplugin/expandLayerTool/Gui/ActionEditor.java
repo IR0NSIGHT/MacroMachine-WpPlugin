@@ -73,6 +73,7 @@ public class ActionEditor extends LayerMappingPanel {
         submitButtom.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                System.out.println("saved action:" + mapping);
                 onSubmit.accept(mapping);
             }
         });

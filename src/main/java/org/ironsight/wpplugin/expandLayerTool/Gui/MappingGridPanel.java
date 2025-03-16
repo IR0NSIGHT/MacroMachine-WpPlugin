@@ -160,10 +160,9 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                         if (isInputSelected(points[i].input)) {
                             setInputSelection(points[i].input, false);
                             points[i] = new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
-                            setInputSelection(gridX, true);
+                            setInputSelection(points[i].input, true);
                             changed = true;
                         }
-
                     }
                     if (changed) updateMapping(mapping.withNewPoints(points));
                 }
