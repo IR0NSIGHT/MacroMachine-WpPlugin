@@ -49,8 +49,8 @@ public class InputOutputProvider {
                 setters.add(new BinaryLayerIO(l));
                 getters.add(new BinaryLayerIO(l));
             }
+            getters.add(new DistanceToLayerEdgeGetter(l));
         }
-
         if (dimension != null) {    //TODO check: does this actually collect custom layers?
             for (Layer l : dimension.getCustomLayers()) {
                 if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
@@ -60,6 +60,8 @@ public class InputOutputProvider {
                 if (l.dataSize.equals(Layer.DataSize.BIT)) setters.add(new BitLayerBinarySpraypaintApplicator(l));
             }
         }
+        getters.add(new DistanceToLayerEdgeGetter(SelectionBlock.INSTANCE));
+
         getters.add(new TerrainProvider());
         setters.add(new TerrainProvider());
         setters.add(new StonePaletteApplicator());

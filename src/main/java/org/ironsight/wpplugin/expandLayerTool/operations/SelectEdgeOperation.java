@@ -299,7 +299,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                                 matches.add(new Point(x, y));
                             }
                         }
-
                     }
                 }
                 if (options.cleanInput) {

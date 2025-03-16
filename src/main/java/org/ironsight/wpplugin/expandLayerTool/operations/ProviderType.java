@@ -21,7 +21,9 @@ public enum ProviderType {
     VANILLA_BIOME,
     WATER_DEPTH,
     WATER_HEIGHT,
-    ALWAYS;
+    ALWAYS,
+    DISTANCE_TO_EDGE,
+    ;
 
     public static IMappingValue fromType(Object[] data, ProviderType type) {
         return fromTypeDefault(type).instantiateFrom(data);
@@ -64,6 +66,8 @@ public enum ProviderType {
                 return IntermediateSelectionIO.instance;
             case ALWAYS:
                 return AlwaysIO.instance;
+            case DISTANCE_TO_EDGE:
+                return new DistanceToLayerEdgeGetter(PineForest.INSTANCE);
             default:
                 throw new IllegalArgumentException(
                         "not implemented: can not instantiate providers that need extra " + "information");
