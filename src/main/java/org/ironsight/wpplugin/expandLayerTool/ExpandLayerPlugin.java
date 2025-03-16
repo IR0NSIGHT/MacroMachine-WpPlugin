@@ -6,9 +6,11 @@ import org.ironsight.wpplugin.expandLayerTool.operations.SelectEdgeOperation;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.AbstractPlugin;
+import org.pepsoft.worldpainter.plugins.LayerProvider;
 import org.pepsoft.worldpainter.plugins.OperationProvider;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -27,6 +29,7 @@ public class ExpandLayerPlugin extends AbstractPlugin implements
         // This demo has the plugin class implementing all of these, but they may also be implemented by separate
         // classes, as long as each class implements Plugin and is mentioned in the org.pepsoft.worldpainter.plugins
         // registry file
+        LayerProvider,          // Implement this to provide one or more singular, unconfigurable layers
         OperationProvider      // Implement this to provide one or more custom operations for the Tools panel
 {
     /**
@@ -35,7 +38,7 @@ public class ExpandLayerPlugin extends AbstractPlugin implements
     static final String NAME = "Expand Layer Tool Plugin";
 
     // LayerProvider
-    private static final List<Layer> LAYERS = new ArrayList<>();
+    private static final List<Layer> LAYERS = new ArrayList<>(Collections.singleton(MacroSelectionLayer.INSTANCE));
 
     // OperationProvider
     private static final List<Operation> OPERATIONS = singletonList(new SelectEdgeOperation());
@@ -47,6 +50,11 @@ public class ExpandLayerPlugin extends AbstractPlugin implements
         super(NAME, VERSION);
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
+    }
+
+    @Override
+    public List<Layer> getLayers() {
+        return LAYERS;
     }
 
     @Override

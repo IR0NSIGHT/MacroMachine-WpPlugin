@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.MacroSelectionLayer;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.*;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -60,7 +61,7 @@ public class InputOutputProvider {
             }
         }
         getters.add(new DistanceToLayerEdgeGetter(SelectionBlock.INSTANCE));
-
+        getters.add(new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE));
         getters.add(new TerrainProvider());
         setters.add(new TerrainProvider());
         setters.add(new StonePaletteApplicator());
