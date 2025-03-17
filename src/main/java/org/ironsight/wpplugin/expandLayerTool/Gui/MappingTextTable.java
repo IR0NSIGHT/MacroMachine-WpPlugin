@@ -26,6 +26,9 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     private boolean groupValues = false;
     private JCheckBox groupValuesCheckBox;
     private boolean blockTableChanged;
+    private Object beforeChange;
+    private int eventRow;
+    private int eventColumn;
 
     private void initTableModel() {
         if (mapping == null) return;
@@ -43,7 +46,15 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             data = new MappingPointValue[ranges.size()][];
         }
 
-        this.tableModel = new DefaultTableModel(data, columnNames);
+        this.tableModel = new DefaultTableModel(data, columnNames) {
+            @Override
+            public void setValueAt(Object aValue, int row, int column) {
+                eventColumn = column;
+                eventRow = row;
+                beforeChange = getValueAt(row, column);
+                super.setValueAt(aValue, row, column);
+            }
+        };
         this.tableModel.addTableModelListener(this.listener);
         numberTable.setModel(tableModel);
     }
@@ -135,7 +146,10 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
             @Override
             public TableCellEditor getCellEditor(int row, int column) {
-                numberTable.addRowSelectionInterval(row, row);
+                if (!numberTable.isRowSelected(row))    //user clicks into unselected column: clear selection and
+                    // only selected the clicked one
+                    numberTable.clearSelection();
+                numberTable.addRowSelectionInterval(row, row);  //otherwise, just
                 return super.getCellEditor(row, column);
             }
         };
@@ -168,7 +182,17 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                     int row = e.getFirstRow(); // Get the row of the edited cell
                     int column = e.getColumn(); // Get the column of the edited cell
                     Object newValue = tableModel.getValueAt(row, column); // Get the new value
-                    SwingUtilities.invokeLater(() -> parseAndSetValue(newValue, numberTable.getSelectedRows(), column));
+                    assert eventColumn == column;
+                    assert eventRow == row;
+                    MappingPointValue previous = beforeChange == null ? null : (MappingPointValue) beforeChange;
+                    int[] selectedRows = numberTable.getSelectedRows();
+                    parseAndSetValue(newValue, selectedRows, column);
+                    int rowDiff = previous.numericValue - ((MappingPointValue) newValue).numericValue;
+                    numberTable.clearSelection();
+                    for (int rowIdx : selectedRows) {
+                        if (rowIdx - rowDiff >= 0 && rowIdx - rowDiff < numberTable.getRowCount())
+                            numberTable.addRowSelectionInterval(rowIdx - rowDiff, rowIdx - rowDiff);
+                    }
                 }
             }
         };
