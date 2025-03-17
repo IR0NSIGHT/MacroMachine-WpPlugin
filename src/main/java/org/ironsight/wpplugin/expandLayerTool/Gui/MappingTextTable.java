@@ -186,7 +186,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                     assert eventRow == row;
                     MappingPointValue previous = beforeChange == null ? null : (MappingPointValue) beforeChange;
                     int[] selectedRows = numberTable.getSelectedRows();
-                    parseAndSetValue(newValue, selectedRows, column);
+                    parseAndSetValue(newValue, previous, selectedRows, column);
                     int rowDiff = previous.numericValue - ((MappingPointValue) newValue).numericValue;
                     numberTable.clearSelection();
                     for (int rowIdx : selectedRows) {
@@ -226,9 +226,14 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         });
     }
 
-    protected boolean parseAndSetValue(Object changedValue, int[] rows, int column) {
+    protected boolean parseAndSetValue(Object changedValue, Object previousValue, int[] rows, int column) {
         assert changedValue instanceof MappingPointValue;
         MappingPointValue mpv = (MappingPointValue) changedValue;
+        int diff = ((MappingPointValue) changedValue).numericValue;
+        if (previousValue instanceof MappingPointValue) {
+            diff = diff - ((MappingPointValue) previousValue).numericValue;
+        }
+
         int targetValue = mpv.numericValue;
         MappingPoint[] points = mapping.getMappingPoints().clone();
 
@@ -238,12 +243,15 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             if (!rowValue.isEditable || rowValue.mappingPointIndex == -1) continue;
 
             assert rowValue.isEditable : "can not update the value of a non-editable entry:" + rowValue;
-            if (column == 0)    //INPUT UPDATED
+            MappingPoint original = points[rowValue.mappingPointIndex];
+            if (column == 0)    //INPUT UPDATED -> shfit all selected by diff value
                 points[rowValue.mappingPointIndex] =
-                        new MappingPoint(targetValue, points[rowValue.mappingPointIndex].output);
-            else    //OUTPUT UPDATED
+                        new MappingPoint(mapping.sanitizeInput(original.input  + diff),
+                                points[rowValue.mappingPointIndex].output);
+            else    //OUTPUT UPDATED -> set target value as output for all selected
                 points[rowValue.mappingPointIndex] =
-                        new MappingPoint(points[rowValue.mappingPointIndex].input, targetValue);
+                        new MappingPoint(points[rowValue.mappingPointIndex].input, mapping.sanitizeOutput(targetValue)
+                        );
 
         }
 
