@@ -171,9 +171,11 @@ public class LayerMapping implements SaveableAction {
     }
 
     public LayerMapping withNewPoints(MappingPoint[] mappingPoints) {
+        TreeSet<MappingPoint> newPoints = new TreeSet<>(Comparator.comparingInt(o -> o.input));
+        newPoints.addAll(Arrays.asList(mappingPoints));
         return new LayerMapping(this.input,
                 this.output,
-                mappingPoints,
+                newPoints.toArray(new MappingPoint[0]),
                 this.getActionType(),
                 this.getName(),
                 this.getDescription(),
