@@ -1,12 +1,15 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
+import org.ironsight.wpplugin.expandLayerTool.operations.SaveableAction;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.util.Objects;
 
-class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<LayerMapping> {
+class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<SaveableAction> {
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     JLabel input = new JLabel();
@@ -37,6 +40,7 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<La
     }
 
     public void updateTo(Object mapping) {
+        assert mapping != null : "not supposed to be null.";
         if (mapping instanceof LayerMapping) {
             LayerMapping lm = (LayerMapping) mapping;
             input.setText(lm.input.getName());
@@ -44,8 +48,16 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<La
             actionType.setText(lm.actionType.getDisplayName());
             nameLabel.setText(lm.getName());
             panel.setToolTipText(lm.getDescription());
-        } else {
-            nameLabel.setText("UNKNOWN ACTION");
+        }  else if (mapping instanceof MappingMacro) {
+            MappingMacro lm = (MappingMacro) mapping;
+            input.setText("");
+            output.setText("");
+            actionType.setText("Macro");
+            nameLabel.setText(lm.getName());
+            panel.setToolTipText(lm.getDescription());
+        }
+        else {
+            nameLabel.setText("UNKNOWN ACTION: " + mapping);
             input.setText("");
             output.setText("");
             actionType.setText("");
@@ -65,7 +77,7 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<La
     }
 
     @Override
-    public Component getListCellRendererComponent(JList<? extends LayerMapping> list, LayerMapping value, int index,
+    public Component getListCellRendererComponent(JList<? extends SaveableAction> list, SaveableAction value, int index,
                                                   boolean isSelected, boolean cellHasFocus) {
         updateTo(value);
         if (isSelected) {
