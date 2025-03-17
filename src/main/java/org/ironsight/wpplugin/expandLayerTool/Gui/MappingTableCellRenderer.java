@@ -40,7 +40,6 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<Sa
     }
 
     public void updateTo(Object mapping) {
-        assert mapping != null : "not supposed to be null.";
         if (mapping instanceof LayerMapping) {
             LayerMapping lm = (LayerMapping) mapping;
             input.setText(lm.input.getName());
