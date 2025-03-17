@@ -82,7 +82,7 @@ public class MappingMacro implements SaveableAction {
 
     public void apply(Dimension dimension, LayerMappingContainer actionContainer,
                       MappingMacroContainer macroContainer) {
-        assert allMappingsReady(actionContainer) : "Can not apply macro that has invalid actions.";
+        assert allMappingsReady(actionContainer, macroContainer) : "Can not apply macro that has invalid actions.";
         DefaultFilter filter = new DefaultFilter(dimension, false, false, -1000, 1000, false, null, null, 0, true);
 
         System.out.println("apply macro " + this.getName() + " to dimension ");
@@ -93,14 +93,16 @@ public class MappingMacro implements SaveableAction {
         for (UUID uuid : executionUUIDs) {
             LayerMapping mapping = actionContainer.queryById(uuid);
             MappingMacro macro = MappingMacroContainer.getInstance().queryById(uuid);
-            if (macro == null) {
+            if (mapping == null) {
+                // one macro -> one execution
                 ArrayList<UUID> steps = new ArrayList<>(1);
                 steps.add(uuid);
                 executionSteps.add(steps);
                 executionIdx++;
                 stepIdx = 0;
             }
-            if (mapping == null) {
+            if (macro == null) {
+                // a mapping -> add to current execution
                 if (stepIdx == 0) {
                     executionSteps.add(new ArrayList<>());
                 }
@@ -137,12 +139,13 @@ public class MappingMacro implements SaveableAction {
         }
     }
 
-    public boolean allMappingsReady(LayerMappingContainer container) {
+    public boolean allMappingsReady(LayerMappingContainer container, MappingMacroContainer macroContainer) {
         for (UUID mappingUid : executionUUIDs) {
             LayerMapping mapping = container.queryById(mappingUid);
-            if (mapping == null) {
-                return false;
-            }
+            MappingMacro nestedMacro = macroContainer.queryById(mappingUid);
+            if (mapping == null && nestedMacro == null) return false;
+            else if (nestedMacro != null && !nestedMacro.allMappingsReady(container, macroContainer)) return false;
+            else continue;
         }
         return true;
     }

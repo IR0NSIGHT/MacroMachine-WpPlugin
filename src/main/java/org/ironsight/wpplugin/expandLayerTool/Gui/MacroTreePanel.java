@@ -148,15 +148,25 @@ public class MacroTreePanel extends JPanel {
         return true;
     }
 
-    private DefaultMutableTreeNode LayerToNode(LayerMapping m) {
+    private DefaultMutableTreeNode LayerToNode(SaveableAction m) {
         if (m == null) {
             return new DefaultMutableTreeNode("Unknown Mapping");
         } else {
             DefaultMutableTreeNode mappingNode = new DefaultMutableTreeNode(m);
-            DefaultMutableTreeNode inputNode = new DefaultMutableTreeNode(m.input);
-            DefaultMutableTreeNode outputNode = new DefaultMutableTreeNode(m.output);
-            mappingNode.add(inputNode);
-            mappingNode.add(outputNode);
+            if (m instanceof LayerMapping) {
+                DefaultMutableTreeNode inputNode = new DefaultMutableTreeNode(((LayerMapping) m).input);
+                DefaultMutableTreeNode outputNode = new DefaultMutableTreeNode(((LayerMapping) m).output);
+                mappingNode.add(inputNode);
+                mappingNode.add(outputNode);
+            } else if (m instanceof MappingMacro) {
+                for (UUID uuid : ((MappingMacro) m).executionUUIDs) {
+                    SaveableAction child = mappingContainer.queryById(uuid);
+                    if (child == null) {
+                        child = container.queryById(uuid);  //FIXME rename container to macroContainer
+                    }
+                    mappingNode.add(LayerToNode(child));
+                }
+            }
             return mappingNode;
         }
     }
@@ -189,17 +199,13 @@ public class MacroTreePanel extends JPanel {
                         .map(LayerMappingContainer.INSTANCE::queryById)
                         .anyMatch(action -> action.getName().contains(filterString) ||
                                 action.getDescription().contains(filterString)))
-                .sorted(new Comparator<MappingMacro>() {
-                    @Override
-                    public int compare(MappingMacro o1, MappingMacro o2) {
-                        return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
-                    }
-                })
+                .sorted(Comparator.comparing(o -> o.getName().toLowerCase()))
                 .forEach(macro -> {
                     DefaultMutableTreeNode macroNode = new DefaultMutableTreeNode(macro);
                     System.out.println(" create macro node: " + macro.getName());
                     for (UUID uuid : macro.executionUUIDs) {
-                        LayerMapping m = mappingContainer.queryById(uuid);
+                        SaveableAction m = mappingContainer.queryById(uuid);
+                        if (m == null) m = container.queryById(uuid);
                         DefaultMutableTreeNode node = LayerToNode(m);
                         macroNode.add(node);
                     }
@@ -227,12 +233,7 @@ public class MacroTreePanel extends JPanel {
                 .stream()
                 .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
                         f.getDescription().toLowerCase().contains(filterString))
-                .sorted(new Comparator<LayerMapping>() {
-                    @Override
-                    public int compare(LayerMapping o1, LayerMapping o2) {
-                        return o1.getName().toLowerCase().compareTo(o2.getName().toLowerCase());
-                    }
-                })
+                .sorted(Comparator.comparing(o -> o.getName().toLowerCase()))
                 .forEach(m -> allNode.add(LayerToNode(m)));
         root.add(allNode);
 
@@ -322,8 +323,7 @@ public class MacroTreePanel extends JPanel {
 
             for (UUID macroId : selectedMacros) {
                 MappingMacro macro = container.queryById(macroId);
-                if (macro == null)
-                    continue;
+                if (macro == null) continue;
                 ArrayList<UUID> ids = new ArrayList<>(macro.executionUUIDs.length + 1);
                 Collections.addAll(ids, macro.executionUUIDs);
                 ids.add(m.getUid());
@@ -356,8 +356,7 @@ public class MacroTreePanel extends JPanel {
                         "You can create and " +
                         "delete actions and macros in this view. All changes in the global list are directly saved to" +
                         " your " + "save-files. These are global and the same for all projects.\n" + " Press 'Apply'" +
-                        " to " +
-                        "apply a macro as a global operation to " + "your map."));
+                        " to " + "apply a macro as a global operation to " + "your map."));
 
         scrollPane.setPreferredSize(new Dimension(500, 600));
 

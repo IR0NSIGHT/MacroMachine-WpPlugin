@@ -95,7 +95,6 @@ class IntermediateValueIOTest {
             for (int y = rect.y; y < rect.y + rect.height; y++) {
                 if (mod(x, 2) == 0) assertEquals(EVEN_OUTPUT, dim.getLayerValueAt(Annotations.INSTANCE, x, y));
                 else assertEquals(UNEVEN_OUTPUT, dim.getLayerValueAt(Annotations.INSTANCE, x, y));
-
             }
         }
     }

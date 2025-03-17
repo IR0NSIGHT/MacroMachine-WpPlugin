@@ -22,6 +22,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     protected AbstractOperationContainer(Class<T> type, String filePath) {
         this.type = type;
         this.filePath = filePath;
+        System.out.println(type + " ---> " + this.filePath);
     }
 
     public String getFilePath() {
