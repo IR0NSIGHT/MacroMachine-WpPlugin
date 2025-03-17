@@ -156,17 +156,22 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                     // move selected control points to current mouse position
                     MappingPoint[] points = mapping.getMappingPoints().clone();
                     boolean changed = false;
+                    boolean anotherPointPresent = Arrays.stream(points).anyMatch(p -> p.input == gridX);
+                    if (anotherPointPresent) {
+                        return; //do not overwrite existing points
+                    }
                     for (int i = 0; i < points.length; i++) {
+                        mapping.getMappingPoints()[i] = points[i];
+
                         if (isInputSelected(points[i].input)) {
-                            setInputSelection(points[i].input, false);
+                            setInputSelection(points[i].input, false);  //deselect old
                             points[i] = new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
-                            setInputSelection(points[i].input, true);
+                            setInputSelection(points[i].input, true);   //reselect updated value
                             changed = true;
                         }
                     }
                     if (changed) updateMapping(mapping.withNewPoints(points));
                 }
-
             }
 
             @Override
@@ -238,8 +243,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
 
         g.drawRect(pixelPos.x - radius / 2, pixelPos.y - radius / 2, radius, radius);
         resetSelection();
-        if (!isInputSelected(gridPos.x))
-            setInputSelection(gridPos.x, true);
+        if (!isInputSelected(gridPos.x)) setInputSelection(gridPos.x, true);
     }
 
     protected void paintCurveLines(Graphics2D g) {
