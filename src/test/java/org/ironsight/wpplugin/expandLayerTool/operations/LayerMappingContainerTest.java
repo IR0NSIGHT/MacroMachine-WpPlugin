@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,17 +15,33 @@ class LayerMappingContainerTest {
         LayerMappingContainer container = new LayerMappingContainer();
         LayerMapping mapping = container.addMapping();
 
-        MappingPoint[] newPoints = new MappingPoint[17];
-        Arrays.fill(newPoints, new MappingPoint(10, 7));
-        LayerMapping newMapping = mapping.withNewPoints(newPoints);
-        assertNotEquals(newMapping, mapping);
-        assertEquals(17, newMapping.getMappingPoints().length);
-        assertEquals(newMapping.getUid(), mapping.getUid());
+        {
+            MappingPoint[] newPoints =
+                    IntStream.range(0, 17).mapToObj(i -> new MappingPoint(i, 3)).toArray(MappingPoint[]::new);
+            LayerMapping newMapping = mapping.withNewPoints(newPoints);
+            assertNotEquals(newMapping, mapping);
+            assertEquals(17, newMapping.getMappingPoints().length);
+            assertEquals(newMapping.getUid(), mapping.getUid());
 
-        container.updateMapping(newMapping);
+            container.updateMapping(newMapping);
 
-        assertSame(newMapping, container.queryById(mapping.getUid()));
+            assertSame(newMapping, container.queryById(mapping.getUid()));
+        }
 
+
+        // update mapping but use mulitple points with same input.
+        {
+            MappingPoint[] newPoints = new MappingPoint[17];
+            Arrays.fill(newPoints, new MappingPoint(0, 3));
+            LayerMapping newMapping = mapping.withNewPoints(newPoints);
+            assertNotEquals(newMapping, mapping);
+            assertEquals(1, newMapping.getMappingPoints().length);
+            assertEquals(newMapping.getUid(), mapping.getUid());
+
+            container.updateMapping(newMapping);
+
+            assertSame(newMapping, container.queryById(mapping.getUid()));
+        }
     }
 
     @Test
