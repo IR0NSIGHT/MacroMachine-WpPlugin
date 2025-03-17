@@ -2,6 +2,8 @@ package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
+import org.ironsight.wpplugin.expandLayerTool.operations.SaveableAction;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IDisplayUnit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,7 +12,7 @@ import java.util.Comparator;
 import java.util.function.Consumer;
 
 public class SelectLayerMappingDialog extends JDialog {
-    public SelectLayerMappingDialog(ArrayList<LayerMapping> layerMappings, Consumer<LayerMapping> onSubmit) {
+    public SelectLayerMappingDialog(ArrayList<SaveableAction> layerMappings, Consumer<SaveableAction> onSubmit) {
         super();
         init(layerMappings, onSubmit);
         this.setModal(true);
@@ -23,19 +25,20 @@ public class SelectLayerMappingDialog extends JDialog {
         frame.setTitle("Select Layer Mapping");
         for (int i = 0; i < 20; i++)
             LayerMappingContainer.addDefaultMappings(LayerMappingContainer.INSTANCE);
-        new SelectLayerMappingDialog(LayerMappingContainer.INSTANCE.queryAll(), System.out::println);
+        ArrayList<SaveableAction> layerMappings = new ArrayList<>(LayerMappingContainer.INSTANCE.queryAll());
+        new SelectLayerMappingDialog(layerMappings , System.out::println);
     }
 
-    private void init(ArrayList<LayerMapping> layerMappings, Consumer<LayerMapping> onSubmit) {
-        JList<LayerMapping> list = new JList<>();
-        DefaultListModel<LayerMapping> listModel = new DefaultListModel<>();
+    private void init(ArrayList<SaveableAction> layerMappings, Consumer<SaveableAction> onSubmit) {
+        JList<SaveableAction> list = new JList<>();
+        DefaultListModel<SaveableAction> listModel = new DefaultListModel<>();
         list.setModel(listModel);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setCellRenderer(new MappingTableCellRenderer());
 
-        layerMappings.sort(Comparator.comparing(LayerMapping::getName));
+        layerMappings.sort(Comparator.comparing(IDisplayUnit::getName));
 
-        for (LayerMapping mapping : layerMappings) {
+        for (SaveableAction mapping : layerMappings) {
             listModel.addElement(mapping);
         }
         JButton okButton = new JButton("OK");

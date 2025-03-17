@@ -1,8 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
-import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
-import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
+import org.ironsight.wpplugin.expandLayerTool.operations.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -22,7 +20,7 @@ public class MacroDesigner extends JPanel {
             "actions, so if you edit one, you will also edit the other. Removed actions are not lost, they remain in " +
             "the global list of actions.";
     Consumer<MappingMacro> onSubmit;
-    VirtualScrollingTableExample valueTable = new VirtualScrollingTableExample();
+    //VirtualScrollingTableExample valueTable; // = new VirtualScrollingTableExample();
     private MappingMacro macro;
     private JTextField name;
     private JTextArea description;
@@ -136,8 +134,8 @@ public class MacroDesigner extends JPanel {
 
         // Add tabs to the JTabbedPane
         tabbedPane.addTab("Actions", editorPanel);
-    //    tabbedPane.addTab("Values", valueTable);
-    //    tabbedPane.addTab("Owo", panel3);
+        //    tabbedPane.addTab("Values", valueTable);
+        //    tabbedPane.addTab("Owo", panel3);
 
         this.add(tabbedPane, BorderLayout.CENTER);
 
@@ -145,7 +143,10 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onAddMapping() {
-        JDialog dialog = new SelectLayerMappingDialog(LayerMappingContainer.INSTANCE.queryAll(), f -> {
+        ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
+        macrosAndActions.addAll(LayerMappingContainer.INSTANCE.queryAll());
+        macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
+        JDialog dialog = new SelectLayerMappingDialog(macrosAndActions, f -> {
             int[] selection = table.getSelectedRows();
             if (table.getSelectedRows().length == 0) {
                 selection = new int[]{table.getRowCount() - 1};
@@ -237,7 +238,10 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onChangeMapping() {
-        JDialog dialog = new SelectLayerMappingDialog(LayerMappingContainer.INSTANCE.queryAll(), f -> {
+        ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
+        macrosAndActions.addAll(LayerMappingContainer.INSTANCE.queryAll());
+        macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
+        JDialog dialog = new SelectLayerMappingDialog(macrosAndActions, f -> {
             UUID[] newIds = macro.executionUUIDs.clone();
             for (int row : this.table.getSelectedRows()) {
                 newIds[row] = f.getUid();
@@ -271,14 +275,12 @@ public class MacroDesigner extends JPanel {
         }
 
         int row = 0;
-        ArrayList<LayerMapping> mappings = new ArrayList<>(macro.executionUUIDs.length);
         for (UUID id : macro.executionUUIDs) {
-            LayerMapping m = LayerMappingContainer.INSTANCE.queryById(id);
-            if (m != null) mappings.add(m);
+            SaveableAction m = LayerMappingContainer.INSTANCE.queryById(id);
+            if (m == null)
+                m = MappingMacroContainer.getInstance().queryById(id);
             table.setValueAt(m, row++, 0);
         }
-
-        valueTable.setMappings(mappings);
 
         table.getSelectionModel().addListSelectionListener(e -> {
             if (e.getValueIsAdjusting() || isUpdating || Arrays.equals(selectedRows, table.getSelectedRows())) return;
