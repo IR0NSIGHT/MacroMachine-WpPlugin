@@ -187,11 +187,13 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                     MappingPointValue previous = beforeChange == null ? null : (MappingPointValue) beforeChange;
                     int[] selectedRows = numberTable.getSelectedRows();
                     parseAndSetValue(newValue, previous, selectedRows, column);
-                    int rowDiff = previous.numericValue - ((MappingPointValue) newValue).numericValue;
-                    numberTable.clearSelection();
-                    for (int rowIdx : selectedRows) {
-                        if (rowIdx - rowDiff >= 0 && rowIdx - rowDiff < numberTable.getRowCount())
-                            numberTable.addRowSelectionInterval(rowIdx - rowDiff, rowIdx - rowDiff);
+                    if (column == 0) {  //input changed, rows moved, update selection
+                        int rowDiff = previous.numericValue - ((MappingPointValue) newValue).numericValue;
+                        numberTable.clearSelection();
+                        for (int rowIdx : selectedRows) {
+                            if (rowIdx - rowDiff >= 0 && rowIdx - rowDiff < numberTable.getRowCount())
+                                numberTable.addRowSelectionInterval(rowIdx - rowDiff, rowIdx - rowDiff);
+                        }
                     }
                 }
             }
