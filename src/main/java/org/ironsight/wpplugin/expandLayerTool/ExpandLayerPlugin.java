@@ -32,6 +32,7 @@ public class ExpandLayerPlugin extends AbstractPlugin implements
         LayerProvider,          // Implement this to provide one or more singular, unconfigurable layers
         OperationProvider      // Implement this to provide one or more custom operations for the Tools panel
 {
+    public static ExpandLayerPlugin instance = new ExpandLayerPlugin();
     /**
      * Short, human-readble name of the plugin.
      */
@@ -48,6 +49,7 @@ public class ExpandLayerPlugin extends AbstractPlugin implements
      */
     public ExpandLayerPlugin() {
         super(NAME, VERSION);
+        instance = this;
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
     }
