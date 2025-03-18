@@ -7,6 +7,8 @@ import java.awt.*;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static org.ironsight.wpplugin.expandLayerTool.Gui.ActionEditor.createDialog;
+
 // top level panel that contains a selection list of macros/layers/input/output on the left, like a file browser
 // and an editor for the currently selected action on the right
 public class GlobalActionPanel extends JPanel {
@@ -26,6 +28,7 @@ public class GlobalActionPanel extends JPanel {
 
     public GlobalActionPanel(Consumer<MappingMacro> applyMacro) {
         this.applyMacro = applyMacro;
+
         init();
     }
 
@@ -40,24 +43,8 @@ public class GlobalActionPanel extends JPanel {
         layers.readFromFile();
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
-/*
-        for (int i = 0; i < 3; i++) {
-            MappingMacro macro = macros.addMapping();
-            UUID[] ids = new UUID[5];
-            for (int j = 0; j < ids.length; j++) {
-                LayerMapping mapping = layers.addMapping().withName("Mapping Action" + i + "_" + j);
-                layers.updateMapping(mapping);
-                ids[j] = mapping.getUid();
-            }
-            macro = macro.withUUIDs(ids).withName("ActionMacro_" + i);
-            macros.updateMapping(macro);
-        }
-*/
-        frame.add(new GlobalActionPanel(f -> {
-        }));
-
-        frame.pack();
-        frame.setVisible(true);
+        JDialog diag = createDialog(null, f -> {});
+        diag.setVisible(true);
     }
 
     private void onUpdate() {

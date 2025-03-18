@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
+import org.ironsight.wpplugin.expandLayerTool.ExpandLayerPlugin;
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
 
@@ -37,6 +38,7 @@ public class ActionEditor extends LayerMappingPanel {
 
 
         dialog.add(new GlobalActionPanel(applyToMap));
+        dialog.setTitle(ExpandLayerPlugin.instance.getName() + " v" + ExpandLayerPlugin.instance.getVersion());
         dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
         dialog.pack();
         return dialog;
