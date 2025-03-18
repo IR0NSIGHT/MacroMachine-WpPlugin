@@ -320,8 +320,8 @@ public class MacroTreePanel extends JPanel {
         addActionButton.setToolTipText("Create an new, empty action and add it to all selected macros.");
         addActionButton.addActionListener(e -> {
             LayerMapping m = mappingContainer.addMapping();
-
-            for (UUID macroId : selectedMacros) {
+            HashSet<UUID> selected = new HashSet<>(selectedMacros);
+            for (UUID macroId : selected) {
                 MappingMacro macro = container.queryById(macroId);
                 if (macro == null) continue;
                 ArrayList<UUID> ids = new ArrayList<>(macro.executionUUIDs.length + 1);
@@ -329,7 +329,6 @@ public class MacroTreePanel extends JPanel {
                 ids.add(m.getUid());
                 container.updateMapping(macro.withUUIDs(ids.toArray(new UUID[0])));
             }
-
             update();
         });
         buttons.add(addActionButton);
