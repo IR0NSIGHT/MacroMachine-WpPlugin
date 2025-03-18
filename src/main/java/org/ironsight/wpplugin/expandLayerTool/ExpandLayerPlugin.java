@@ -2,7 +2,7 @@ package org.ironsight.wpplugin.expandLayerTool;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacroContainer;
-import org.ironsight.wpplugin.expandLayerTool.operations.SelectEdgeOperation;
+import org.ironsight.wpplugin.expandLayerTool.operations.MacroDialogOperation;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.AbstractPlugin;
@@ -42,7 +42,7 @@ public class ExpandLayerPlugin extends AbstractPlugin implements
     private static final List<Layer> LAYERS = new ArrayList<>(Collections.singleton(MacroSelectionLayer.INSTANCE));
 
     // OperationProvider
-    private static final List<Operation> OPERATIONS = singletonList(new SelectEdgeOperation());
+    private static final List<Operation> OPERATIONS = singletonList(new MacroDialogOperation());
 
     /**
      * The plugin class must have a default (public, no arguments) constructor.
@@ -50,8 +50,6 @@ public class ExpandLayerPlugin extends AbstractPlugin implements
     public ExpandLayerPlugin() {
         super(NAME, VERSION);
         instance = this;
-        LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
-        MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
     }
 
     @Override
