@@ -7,6 +7,7 @@ import org.pepsoft.worldpainter.operations.AbstractOperation;
 
 import javax.swing.*;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -45,6 +46,8 @@ public class MacroDialogOperation extends AbstractOperation {
 
     public void applyLayerAction(MappingMacro macro) {
         try {
+            boolean loop = macro.hasLoop(new HashSet<>());
+
             this.getDimension().setEventsInhibited(true);
             LinkedList<List<UUID>> actionIds = new LinkedList<>();
             macro.collectActions(actionIds);
