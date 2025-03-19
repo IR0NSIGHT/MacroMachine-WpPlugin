@@ -3,10 +3,10 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IntermediateSelectionIO;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.operations.Filter;
-import org.pepsoft.worldpainter.panels.DefaultFilter;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.ironsight.wpplugin.expandLayerTool.operations.ApplyAction.applyToDimensionWithFilter;
 
@@ -86,32 +86,36 @@ public class MappingMacro implements SaveableAction {
         assert allMappingsReady(actionContainer, macroContainer) : "Can not apply macro that has invalid actions.";
         Filter filter = new EmptyFilter();
 
-        System.out.println("apply macro " + this.getName() + " to dimension ");
+        //     System.out.println("apply macro " + this.getName() + " to dimension ");
         ArrayList<ArrayList<UUID>> executionSteps = new ArrayList<>(executionUUIDs.length);
-        int executionIdx = 0;
-        int stepIdx = 0;
-        //collect all uuids into steps: macros are one-macro-per-step, actions are many-actions-per-step
-        for (UUID uuid : executionUUIDs) {
-            LayerMapping mapping = actionContainer.queryById(uuid);
-            MappingMacro macro = MappingMacroContainer.getInstance().queryById(uuid);
-            if (mapping == null) {
-                // one macro -> one execution
-                ArrayList<UUID> steps = new ArrayList<>(1);
-                steps.add(uuid);
-                executionSteps.add(steps);
-                executionIdx++;
-                stepIdx = 0;
-            }
-            if (macro == null) {
-                // a mapping -> add to current execution
-                if (stepIdx == 0) {
-                    executionSteps.add(new ArrayList<>());
+        {
+            int executionIdx = 0;
+            int stepIdx = 0;
+            //collect all uuids into steps: macros are one-macro-per-step, actions are many-actions-per-step
+            for (UUID uuid : executionUUIDs) {
+                LayerMapping mapping = actionContainer.queryById(uuid);
+                MappingMacro macro = MappingMacroContainer.getInstance().queryById(uuid);
+                if (mapping == null) {
+                    // one macro -> one execution
+                    ArrayList<UUID> steps = new ArrayList<>(1);
+                    steps.add(uuid);
+                    executionSteps.add(steps);
+                    executionIdx++;
+                    stepIdx = 0;
                 }
-                //get current step
-                executionSteps.get(executionIdx).add(uuid);
-                stepIdx++;
+                if (macro == null) {
+                    // a mapping -> add to current execution
+                    if (stepIdx == 0) {
+                        executionSteps.add(new ArrayList<>());
+                    }
+                    //get current step
+                    executionSteps.get(executionIdx).add(uuid);
+                    stepIdx++;
+                }
             }
         }
+        int stepIdx = 0;
+        long[] executionTimes = new long[executionSteps.size()];
         for (ArrayList<UUID> executionStep : executionSteps) {
             assert !executionStep.isEmpty() : "Invalid execution step: empty";
             MappingMacro macro = macroContainer.queryById(executionStep.get(0));
@@ -127,6 +131,7 @@ public class MappingMacro implements SaveableAction {
                     lm.output.prepareForDimension(dimension);
                     lm.input.prepareForDimension(dimension);
                 }
+                long timeStart = System.currentTimeMillis();
                 //all actions are being applied now, one block at a time
                 applyToDimensionWithFilter(dimension, filter, pos -> {
                     IntermediateSelectionIO.instance.setSelected(true); //by default, each block is selected.
@@ -136,8 +141,47 @@ public class MappingMacro implements SaveableAction {
                         mapping.applyToPoint(dimension, pos.x, pos.y);
                     }
                 });
+                long duration = System.currentTimeMillis() - timeStart;
+                executionTimes[stepIdx++] = duration;
             }
         }
+
+        // LOG EXECUTION TIMES
+        IntStream.range(0, executionSteps.size()).mapToObj(i -> {
+            StringBuilder builder = new StringBuilder("Execution step ").append(i);
+            builder.append(", duration=").append(executionTimes[i]).append(" ms - ");
+            executionSteps.get(i).stream().map(a -> {
+                SaveableAction action = LayerMappingContainer.INSTANCE.queryById(a);
+                if (action == null) {
+                    action = MappingMacroContainer.getInstance().queryById(a);
+                }
+                if (action == null) {
+                    return "NULL ACTION: " + uid;
+                } else {
+                    return action.getName();
+                }
+            }).forEach(b -> builder.append(b).append(", "));
+            return builder.toString();
+        }).forEach(System.out::println);
+
+    }
+
+    public void collectActions(List<List<UUID>> actionList) {
+        List<UUID> step = new ArrayList<>();
+        for (UUID id : this.executionUUIDs) {
+            SaveableAction action = MappingMacroContainer.getInstance().queryById(id);
+            if (action != null) {//macro
+                if (!step.isEmpty()) actionList.add(step);   //add collected stuff until here to actionList
+                step = new ArrayList<>();   //init new list
+
+                //macro adds its own steps
+                ((MappingMacro) action).collectActions(actionList);
+            } else {
+                action = LayerMappingContainer.INSTANCE.queryById(id);
+                if (action != null) step.add(id);
+            }
+        }
+        if (!step.isEmpty()) actionList.add(step);
     }
 
     public boolean allMappingsReady(LayerMappingContainer container, MappingMacroContainer macroContainer) {
@@ -166,7 +210,7 @@ public class MappingMacro implements SaveableAction {
 
         @Override
         public float modifyStrength(int x, int y, float strength) {
-           return 1;
+            return 1;
         }
     }
 }
