@@ -7,6 +7,10 @@ import org.pepsoft.worldpainter.operations.AbstractOperation;
 
 import javax.swing.*;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.UUID;
+
 import static org.ironsight.wpplugin.expandLayerTool.Gui.ActionEditor.createDialog;
 
 public class MacroDialogOperation extends AbstractOperation {
@@ -42,6 +46,16 @@ public class MacroDialogOperation extends AbstractOperation {
     public void applyLayerAction(MappingMacro macro) {
         try {
             this.getDimension().setEventsInhibited(true);
+            LinkedList<List<UUID>> actionIds = new LinkedList<>();
+            macro.collectActions(actionIds);
+            System.out.println("Execution order");
+            actionIds.forEach(step -> {
+                StringBuilder b = new StringBuilder("Step:\n");
+                String[] names =
+                        step.stream().map(LayerMappingContainer.INSTANCE::queryById).map(LayerMapping::getName).map(f -> "\t"+f).toArray(String[]::new);
+                b.append(String.join("\n", names));
+                System.out.println(b);
+            });
             macro.apply(getDimension(), LayerMappingContainer.INSTANCE, MappingMacroContainer.getInstance());
         } catch (Exception ex) {
             System.out.println(ex);
