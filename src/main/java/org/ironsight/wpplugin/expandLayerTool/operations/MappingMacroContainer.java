@@ -6,6 +6,7 @@ import org.pepsoft.worldpainter.Configuration;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.UUID;
 
 public class MappingMacroContainer extends AbstractOperationContainer<MappingMacro> {
@@ -34,6 +35,13 @@ public class MappingMacroContainer extends AbstractOperationContainer<MappingMac
         for (MappingMacro instance : obj) {
             this.putMapping(instance);
         }
+    }
+
+    @Override
+    public UUID updateMapping(MappingMacro macro) {
+        boolean loop = macro.hasLoop(new HashSet<>());
+        assert !loop : "macro has infinite loop";
+        return super.updateMapping(macro);
     }
 
     @Override

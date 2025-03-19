@@ -184,6 +184,17 @@ public class MappingMacro implements SaveableAction {
         if (!step.isEmpty()) actionList.add(step);
     }
 
+    public boolean hasLoop(HashSet<UUID> seen) {
+        if (seen.contains(this.uid)) return true;
+        seen.add(this.uid);
+        boolean childLoop = false;
+        for (UUID uuid : this.executionUUIDs) {
+            MappingMacro macro = MappingMacroContainer.getInstance().queryById(uuid);
+            if (macro != null && macro.hasLoop((HashSet<UUID>) seen.clone())) return true;
+        }
+        return childLoop;
+    }
+
     public boolean allMappingsReady(LayerMappingContainer container, MappingMacroContainer macroContainer) {
         for (UUID mappingUid : executionUUIDs) {
             LayerMapping mapping = container.queryById(mappingUid);
