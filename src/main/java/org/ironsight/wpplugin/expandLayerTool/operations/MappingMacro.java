@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IntermediateSelectionIO;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.operations.Filter;
 import org.pepsoft.worldpainter.panels.DefaultFilter;
 
 import java.util.*;
@@ -83,7 +84,7 @@ public class MappingMacro implements SaveableAction {
     public void apply(Dimension dimension, LayerMappingContainer actionContainer,
                       MappingMacroContainer macroContainer) {
         assert allMappingsReady(actionContainer, macroContainer) : "Can not apply macro that has invalid actions.";
-        DefaultFilter filter = new DefaultFilter(dimension, false, false, -1000, 1000, false, null, null, 0, true);
+        Filter filter = new EmptyFilter();
 
         System.out.println("apply macro " + this.getName() + " to dimension ");
         ArrayList<ArrayList<UUID>> executionSteps = new ArrayList<>(executionUUIDs.length);
@@ -157,5 +158,15 @@ public class MappingMacro implements SaveableAction {
 
     public void setUid(UUID uid) {
         this.uid = uid;
+    }
+
+    private static class EmptyFilter implements Filter {
+        public EmptyFilter() {
+        }
+
+        @Override
+        public float modifyStrength(int x, int y, float strength) {
+           return 1;
+        }
     }
 }
