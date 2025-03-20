@@ -23,8 +23,7 @@ class LayerMappingContainerTest {
             assertEquals(17, newMapping.getMappingPoints().length);
             assertEquals(newMapping.getUid(), mapping.getUid());
 
-            container.updateMapping(newMapping);
-
+            container.updateMapping(newMapping, f -> {});
             assertSame(newMapping, container.queryById(mapping.getUid()));
         }
 
@@ -38,7 +37,8 @@ class LayerMappingContainerTest {
             assertEquals(1, newMapping.getMappingPoints().length);
             assertEquals(newMapping.getUid(), mapping.getUid());
 
-            container.updateMapping(newMapping);
+            container.updateMapping(newMapping, f -> {});
+
 
             assertSame(newMapping, container.queryById(mapping.getUid()));
         }
@@ -71,7 +71,8 @@ class LayerMappingContainerTest {
     void saveLoad() {
         LayerMappingContainer container = new LayerMappingContainer();
         LayerMapping saved = container.addMapping().withName("hello i am a test mapping");
-        container.updateMapping(saved);
+        container.updateMapping(saved, f -> {});
+
         assertEquals(saved, container.queryById(saved.getUid()));
 
         container.setFilePath(System.getProperty("user.dir") + "/test_saves.txt");
@@ -101,7 +102,7 @@ class LayerMappingContainerTest {
         LayerMapping mapping = container.addMapping();
 
         assertEquals(1, ran[0]);
-        container.updateMapping(mapping.withNewPoints(new MappingPoint[]{new MappingPoint(10, 7)}));
+        container.updateMapping(mapping.withNewPoints(new MappingPoint[]{new MappingPoint(10, 7)}), f-> {});
         assertEquals(2, ran[0]);
         container.deleteMapping(mapping.getUid());
         assertEquals(3, ran[0]);
@@ -131,7 +132,7 @@ class LayerMappingContainerTest {
         container.subscribeToMapping(mapping.getUid(), runnable);
 
         assertEquals(0, ran[0]);
-        container.updateMapping(mapping.withNewPoints(new MappingPoint[]{new MappingPoint(1, 2)}));
+        container.updateMapping(mapping.withNewPoints(new MappingPoint[]{new MappingPoint(1, 2)}), f-> {});
         assertEquals(1, ran[0]);
         container.deleteMapping(mapping.getUid());
         assertEquals(2, ran[0]);

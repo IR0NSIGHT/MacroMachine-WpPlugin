@@ -25,6 +25,7 @@ public class GlobalActionPanel extends JPanel {
     JPanel editorPanel;
     private UUID currentSelectedMacro;
     private UUID currentSelectedLayer;
+    private SELECTION_TPYE selectionType = SELECTION_TPYE.INVALID;
 
     public GlobalActionPanel(Consumer<MappingMacro> applyMacro) {
         this.applyMacro = applyMacro;
@@ -43,18 +44,17 @@ public class GlobalActionPanel extends JPanel {
         layers.readFromFile();
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
-        JDialog diag = createDialog(null, f -> {});
+        JDialog diag = createDialog(null, f -> {
+        });
         diag.setVisible(true);
     }
 
     private void onUpdate() {
         LayerMapping mapping = LayerMappingContainer.INSTANCE.queryById(currentSelectedLayer);
         MappingMacro macro = MappingMacroContainer.getInstance().queryById(currentSelectedMacro);
-        if (macro == null && selectionType == SELECTION_TPYE.MACRO)
-            selectionType = SELECTION_TPYE.INVALID;
+        if (macro == null && selectionType == SELECTION_TPYE.MACRO) selectionType = SELECTION_TPYE.INVALID;
 
-        if (mapping == null && selectionType == SELECTION_TPYE.ACTION)
-            selectionType = SELECTION_TPYE.INVALID;
+        if (mapping == null && selectionType == SELECTION_TPYE.ACTION) selectionType = SELECTION_TPYE.INVALID;
 
 
         switch (selectionType) {
@@ -98,12 +98,6 @@ public class GlobalActionPanel extends JPanel {
         onUpdate();
     }
 
-    enum SELECTION_TPYE {
-        MACRO,
-        ACTION,
-        INVALID
-    }
-    private SELECTION_TPYE selectionType = SELECTION_TPYE.INVALID;
     private void onSelect(SaveableAction action) {
         if (action instanceof MappingMacro) {
             currentSelectedMacro = action.getUid();
@@ -116,11 +110,15 @@ public class GlobalActionPanel extends JPanel {
     }
 
     private void onSubmitMapping(LayerMapping mapping) {
-        LayerMappingContainer.INSTANCE.updateMapping(mapping);
+        LayerMappingContainer.INSTANCE.updateMapping(mapping, f -> {
+        });
     }
 
     private void onSubmitMacro(MappingMacro macro) {
-        MappingMacroContainer.getInstance().updateMapping(macro);
+        MappingMacroContainer.getInstance().updateMapping(macro, System.out::println);
     }
 
+    enum SELECTION_TPYE {
+        MACRO, ACTION, INVALID
+    }
 }

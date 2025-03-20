@@ -51,11 +51,11 @@ public class MacroTreePanel extends JPanel {
             UUID[] ids = new UUID[13];
             for (int j = 0; j < ids.length; j++) {
                 LayerMapping mapping = layers.addMapping().withName("Mapping Action" + i + "_" + j);
-                layers.updateMapping(mapping);
+                layers.updateMapping(mapping, f -> {});
                 ids[j] = mapping.getUid();
             }
             macro = macro.withUUIDs(ids).withName("ActionMacro_" + i);
-            macros.updateMapping(macro);
+            macros.updateMapping(macro, f -> {});
         }
         frame.getContentPane().setLayout(new BorderLayout());
         frame.getContentPane().add(new MacroTreePanel(macros, layers, f -> {
@@ -327,7 +327,7 @@ public class MacroTreePanel extends JPanel {
                 ArrayList<UUID> ids = new ArrayList<>(macro.executionUUIDs.length + 1);
                 Collections.addAll(ids, macro.executionUUIDs);
                 ids.add(m.getUid());
-                container.updateMapping(macro.withUUIDs(ids.toArray(new UUID[0])));
+                container.updateMapping(macro.withUUIDs(ids.toArray(new UUID[0])), f -> {});
             }
             update();
         });

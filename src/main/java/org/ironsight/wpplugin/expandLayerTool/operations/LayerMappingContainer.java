@@ -29,7 +29,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
                 "paint mountainsides",
                 "apply stone and rocks " + "based" + " on slope to make mountain sides colorful and interesting",
                 m.getUid());
-        container.updateMapping(m);
+        container.updateMapping(m, f -> {});
 
         m = container.addMapping();
         m = new LayerMapping(new HeightProvider(),
@@ -39,8 +39,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
                 "frosted " + "peaks",
                 "gradually add snow the higher a mountain goes",
                 m.getUid());
-        container.updateMapping(m);
-
+        container.updateMapping(m, f -> {});
         m = container.addMapping();
         m = new LayerMapping(new SlopeProvider(),
                 new NibbleLayerSetter(PineForest.INSTANCE),
@@ -49,8 +48,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
                 "no steep pines",
                 "limit pines from growing on vertical cliffs",
                 m.getUid());
-        container.updateMapping(m);
-
+        container.updateMapping(m, f -> {});
         m = container.addMapping();
         m = new LayerMapping(new AnnotationSetter(),
                 new TestInputOutput(),
@@ -59,8 +57,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
                 "colors",
                 "",
                 m.getUid());
-        container.updateMapping(m);
-    }
+        container.updateMapping(m, f -> {});    }
 
     @Override
     protected LayerMapping getNewAction() {
