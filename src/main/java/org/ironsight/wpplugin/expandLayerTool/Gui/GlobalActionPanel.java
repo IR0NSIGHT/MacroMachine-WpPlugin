@@ -115,7 +115,14 @@ public class GlobalActionPanel extends JPanel {
     }
 
     private void onSubmitMacro(MappingMacro macro) {
-        MappingMacroContainer.getInstance().updateMapping(macro, System.out::println);
+        MappingMacroContainer.getInstance().updateMapping(macro, e -> {
+            JOptionPane.showMessageDialog(
+                    this,                   // Parent component (null for default frame)
+                    "Unable to save macro: " + e,   // Message to display
+                    "Error",                // Title of the dialog
+                    JOptionPane.ERROR_MESSAGE // Type of message (error icon)
+            );
+        });
     }
 
     enum SELECTION_TPYE {
