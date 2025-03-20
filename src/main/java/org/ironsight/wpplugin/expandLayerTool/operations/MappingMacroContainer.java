@@ -41,8 +41,10 @@ public class MappingMacroContainer extends AbstractOperationContainer<MappingMac
     @Override
     public void updateMapping(MappingMacro macro, Consumer<String> onError) {
         boolean loop = macro.hasLoop(new HashSet<>());
-        if (loop)
+        if (loop) {
             onError.accept("Macro has an infinite loop, caused by a nested macro. Can not save.");
+            return;
+        }
         super.updateMapping(macro, onError);
     }
 
