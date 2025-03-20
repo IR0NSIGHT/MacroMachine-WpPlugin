@@ -42,23 +42,24 @@ class IntermediateValueIOTest {
 
         LayerMappingContainer container = LayerMappingContainer.INSTANCE;
         IntermediateValueIO intermediateValueIO = new IntermediateValueIO();
-        UUID set =
-                container.updateMapping(container.addMapping()
-                        .withInput(new HeightProvider())
-                        .withOutput(intermediateValueIO)
-                        .withNewPoints(new MappingPoint[]{new MappingPoint(EVEN_HEIGHT, 4),
-                                new MappingPoint(UNEVEN_HEIGHT, 7)})
-                        .withName("set intermediate"));
+
+        UUID set = container.addMapping().getUid();
+        container.updateMapping(container.queryById(set)
+                .withInput(new HeightProvider())
+                .withOutput(intermediateValueIO)
+                .withNewPoints(new MappingPoint[]{new MappingPoint(EVEN_HEIGHT, 4), new MappingPoint(UNEVEN_HEIGHT, 7)})
+                .withName("set intermediate"), f -> {
+        });
         assertEquals(4, container.queryById(set).map(EVEN_HEIGHT));
         assertEquals(7, container.queryById(set).map(UNEVEN_HEIGHT));
 
-        UUID get =
-                container.updateMapping(container.addMapping()
-                        .withInput(intermediateValueIO)
-                        .withOutput(new AnnotationSetter())
-                        .withNewPoints(new MappingPoint[]{new MappingPoint(4, EVEN_OUTPUT),
-                                new MappingPoint(7, UNEVEN_OUTPUT)})
-                        .withName("get intermediate"));
+        UUID get = container.addMapping().getUid();
+        container.updateMapping(container.queryById(get)
+                .withInput(intermediateValueIO)
+                .withOutput(new AnnotationSetter())
+                .withNewPoints(new MappingPoint[]{new MappingPoint(4, EVEN_OUTPUT), new MappingPoint(7, UNEVEN_OUTPUT)})
+                .withName("get intermediate"), f -> {
+        });
         assertEquals(EVEN_OUTPUT, container.queryById(get).map(4));
         assertEquals(UNEVEN_OUTPUT, container.queryById(get).map(7));
 
@@ -85,8 +86,8 @@ class IntermediateValueIOTest {
         container.queryById(get).applyToPoint(dim, -124, -125);
         assertEquals(EVEN_OUTPUT, dim.getLayerValueAt(Annotations.INSTANCE, -124, -125));
 
-        MappingMacro mappingMacro = new MappingMacro("test macro", "test intermediate value", new UUID[]{set, get},
-                UUID.randomUUID());
+        MappingMacro mappingMacro =
+                new MappingMacro("test macro", "test intermediate value", new UUID[]{set, get}, UUID.randomUUID());
         mappingMacro.apply(dim, container, MappingMacroContainer.getInstance());
         // mod(x,2) == 0 -> intermediate 5 -> annotation UNEVEN_OUTPUT
         // mod(x,2) == 1 -> intermediate 7 -> annotation EVEN_OUTPUT

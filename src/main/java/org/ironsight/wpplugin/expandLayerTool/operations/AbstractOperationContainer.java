@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 
 public abstract class AbstractOperationContainer<T extends SaveableAction> {
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
@@ -33,14 +34,13 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         this.filePath = filePath;
     }
 
-    public UUID updateMapping(T mapping) {
+    public void updateMapping(T mapping, Consumer<String> onError) {
         //filter for identity
         if (!mappings.containsKey(mapping.getUid()) || queryById(mapping.getUid()).equals(mapping)) {
-            return mapping.getUid();
+            mapping.getUid();
         }
         mappings.put(mapping.getUid(), mapping);
         notify(mapping.getUid());
-        return mapping.getUid();
     }
 
     public T queryById(UUID uid) {

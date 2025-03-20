@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class MappingMacroContainer extends AbstractOperationContainer<MappingMacro> {
     private final static MappingMacroContainer instance = new MappingMacroContainer();
@@ -38,10 +39,11 @@ public class MappingMacroContainer extends AbstractOperationContainer<MappingMac
     }
 
     @Override
-    public UUID updateMapping(MappingMacro macro) {
+    public void updateMapping(MappingMacro macro, Consumer<String> onError) {
         boolean loop = macro.hasLoop(new HashSet<>());
-        assert !loop : "macro has infinite loop";
-        return super.updateMapping(macro);
+        if (loop)
+            onError.accept("Macro has an infinite loop, caused by a nested macro. Can not save.");
+        super.updateMapping(macro, onError);
     }
 
     @Override

@@ -14,7 +14,7 @@ class MappingMacroContainerTest {
         MappingMacro saved = container.addMapping().withName("my first " + "macro").withDescription("this is a test " +
                 "description").withUUIDs(new UUID[]{UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID()});
-        container.updateMapping(saved);
+        container.updateMapping(saved, f -> {});
         assertEquals(saved, container.queryById(saved.getUid()));
 
         container.setFilePath(System.getProperty("user.dir") + "/test_saves.txt");
