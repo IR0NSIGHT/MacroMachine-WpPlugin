@@ -60,7 +60,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
                 .filter(f -> f.getId().equals(layerId))
                 .findFirst()
                 .map(l -> this.layer = l)
-                .orElseThrow(IllegalAccessError::new);
+                .orElseThrow(() -> new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")"));
     }
 
     @Override

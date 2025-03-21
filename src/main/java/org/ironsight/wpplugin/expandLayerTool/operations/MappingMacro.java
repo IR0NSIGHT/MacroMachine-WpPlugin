@@ -4,6 +4,7 @@ import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.Intermed
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.operations.Filter;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -16,6 +17,7 @@ public class MappingMacro implements SaveableAction {
     private String name;
     private String description;
     private UUID uid;
+    private final TileFilter tileFilter = TileFilter.onlyAnnotations();
 
     MappingMacro() {
     }
@@ -84,9 +86,7 @@ public class MappingMacro implements SaveableAction {
     public void apply(Dimension dimension, LayerMappingContainer actionContainer,
                       MappingMacroContainer macroContainer) {
         assert allMappingsReady(actionContainer, macroContainer) : "Can not apply macro that has invalid actions.";
-        Filter filter = new EmptyFilter();
 
-        //     System.out.println("apply macro " + this.getName() + " to dimension ");
         ArrayList<ArrayList<UUID>> executionSteps = new ArrayList<>(executionUUIDs.length);
         {
             int executionIdx = 0;
@@ -127,13 +127,10 @@ public class MappingMacro implements SaveableAction {
                         .map(actionContainer::queryById)
                         .collect(Collectors.toCollection(ArrayList::new));
                 assert actions.stream().noneMatch(Objects::isNull) : "Invalid execution step: contains null action";
-                for (LayerMapping lm : actions) {
-                    lm.output.prepareForDimension(dimension);
-                    lm.input.prepareForDimension(dimension);
-                }
                 long timeStart = System.currentTimeMillis();
                 //all actions are being applied now, one block at a time
-                applyToDimensionWithFilter(dimension, filter, pos -> {
+                applyToDimensionWithFilter(dimension, this.tileFilter, pos -> {
+                    //FIXME: this will always use the top level macros filter
                     IntermediateSelectionIO.instance.setSelected(true); //by default, each block is selected.
                     // then the macro
                     // can filter out stuff
@@ -166,7 +163,7 @@ public class MappingMacro implements SaveableAction {
 
     }
 
-    public void collectActions(List<List<UUID>> actionList) {
+    public List<List<UUID>> collectActions(List<List<UUID>> actionList) {
         List<UUID> step = new ArrayList<>();
         for (UUID id : this.executionUUIDs) {
             SaveableAction action = MappingMacroContainer.getInstance().queryById(id);
@@ -182,6 +179,8 @@ public class MappingMacro implements SaveableAction {
             }
         }
         if (!step.isEmpty()) actionList.add(step);
+
+        return actionList;
     }
 
     public boolean hasLoop(HashSet<UUID> seen) {
