@@ -17,12 +17,14 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 public class ApplyAction {
 
     public static void applyToDimensionWithFilter(Dimension dim, TileFilter filter, Consumer<Point> applyOnBlock) {
+        filter.setDimension(dim);
         Iterator<? extends Tile> t = dim.getTiles().iterator();
+        int tileTouched = 0;
         while (t.hasNext()) {
             Tile tile = t.next();
             TileFilter.passType pass = filter.testTile(tile);
             if (pass == TileFilter.passType.NO_BLOCKS) continue;
-
+            tileTouched++;
             Point p = new Point(0, 0);
             for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {
                 for (int xInTile = 0; xInTile < TILE_SIZE; xInTile++) {
@@ -30,9 +32,10 @@ public class ApplyAction {
                     final int y = yInTile + (tile.getY() << TILE_SIZE_BITS);
                     p.x = x;
                     p.y = y;
-                    if (pass == TileFilter.passType.ALL_BLOCKS || 0 != filter.modifyStrength(x, y, 1f)) applyOnBlock.accept(p);
+                    if (pass == TileFilter.passType.ALL_BLOCKS || filter.pass(x, y)) applyOnBlock.accept(p);
                 }
             }
         }
+        System.out.println("tiles touched:" + tileTouched);
     }
 }

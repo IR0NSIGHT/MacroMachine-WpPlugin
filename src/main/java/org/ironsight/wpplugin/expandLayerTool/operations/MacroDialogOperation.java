@@ -2,12 +2,13 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.WorldPainterView;
+import org.pepsoft.worldpainter.layers.DeciduousForest;
+import org.pepsoft.worldpainter.layers.PineForest;
 import org.pepsoft.worldpainter.operations.AbstractOperation;
 
 import javax.swing.*;
-
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +29,14 @@ public class MacroDialogOperation extends AbstractOperation {
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
     }
 
+    public static void ErrorPopUp(String message) {
+        JOptionPane.showMessageDialog(null, message, "Error",
+                // Title of the dialog
+                JOptionPane.ERROR_MESSAGE
+                // Type of message (error icon)
+        );
+    }
+
     private Dimension getDimension() {
         return mWorldPainterView.getDimension();
     }
@@ -42,16 +51,6 @@ public class MacroDialogOperation extends AbstractOperation {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-    }
-
-    public static void ErrorPopUp(String message) {
-        JOptionPane.showMessageDialog(null,
-                message,
-                "Error",
-                // Title of the dialog
-                JOptionPane.ERROR_MESSAGE
-                // Type of message (error icon)
-        );
     }
 
     public void applyLayerAction(MappingMacro macro) {
@@ -71,7 +70,7 @@ public class MacroDialogOperation extends AbstractOperation {
                         action.input.prepareForDimension(getDimension());
                     } catch (IllegalAccessError e) {    //FIXME move this check further up.
                         JOptionPane.showMessageDialog(null,
-                                "Action "+action.getName()+" can not be applied to the map." + e.getMessage(),
+                                "Action " + action.getName() + " can not be applied to the map." + e.getMessage(),
                                 "Error",
                                 // Title of the dialog
                                 JOptionPane.ERROR_MESSAGE
@@ -87,11 +86,22 @@ public class MacroDialogOperation extends AbstractOperation {
             System.out.println("Execution order");
             actionIds.forEach(step -> {
                 StringBuilder b = new StringBuilder("Step:\n");
-                String[] names =
-                        step.stream().map(LayerMappingContainer.INSTANCE::queryById).map(LayerMapping::getName).map(f -> "\t"+f).toArray(String[]::new);
+                String[] names = step.stream()
+                        .map(LayerMappingContainer.INSTANCE::queryById)
+                        .map(LayerMapping::getName)
+                        .map(f -> "\t" + f)
+                        .toArray(String[]::new);
                 b.append(String.join("\n", names));
                 System.out.println(b);
             });
+
+            macro.setTileFilter(new TileFilter().withSelection(TileFilter.FilterType.EXCEPT_ON)
+                    .withLayer(TileFilter.FilterType.ONLY_ON,
+                            PineForest.INSTANCE.getId(),
+                            DeciduousForest.INSTANCE.getId())
+                    .withTerrain(TileFilter.FilterType.ONLY_ON, Terrain.GRASS, Terrain.STONE)
+                    .withHeight(TileFilter.FilterType.EXCEPT_ON, 70, 73));
+
             macro.apply(getDimension(), LayerMappingContainer.INSTANCE, MappingMacroContainer.getInstance());
         } catch (Exception ex) {
             System.out.println(ex);

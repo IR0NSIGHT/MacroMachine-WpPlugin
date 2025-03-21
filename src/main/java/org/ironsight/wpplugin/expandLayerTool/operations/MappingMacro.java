@@ -1,10 +1,10 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IntermediateSelectionIO;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.operations.Filter;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -17,7 +17,8 @@ public class MappingMacro implements SaveableAction {
     private String name;
     private String description;
     private UUID uid;
-    private final TileFilter tileFilter = TileFilter.onlyAnnotations();
+    @JsonIgnore
+    private TileFilter tileFilter = new TileFilter();
 
     MappingMacro() {
     }
@@ -72,6 +73,10 @@ public class MappingMacro implements SaveableAction {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void setTileFilter(TileFilter filter) {
+        this.tileFilter = filter;
     }
 
     @Override
