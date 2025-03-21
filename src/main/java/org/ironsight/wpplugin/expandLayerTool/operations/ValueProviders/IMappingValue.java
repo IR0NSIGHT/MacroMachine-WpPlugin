@@ -26,7 +26,7 @@ public interface IMappingValue extends IDisplayUnit {
 
     int getMinValue();
 
-    void prepareForDimension(org.pepsoft.worldpainter.Dimension dim);
+    void prepareForDimension(org.pepsoft.worldpainter.Dimension dim) throws IllegalAccessError;
 
     IMappingValue instantiateFrom(Object[] data);
 
