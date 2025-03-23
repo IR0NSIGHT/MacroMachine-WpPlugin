@@ -3,12 +3,17 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -18,11 +23,13 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     private final HashMap<UUID, T> mappings = new HashMap<>();
     private final Class<T> type;
     private final boolean suppressFileWriting = false;
+    private final String defaultFileResourcePath;
     private String filePath;
 
-    protected AbstractOperationContainer(Class<T> type, String filePath) {
+    protected AbstractOperationContainer(Class<T> type, String filePath, String defaultFileResourcePath) {
         this.type = type;
         this.filePath = filePath;
+        this.defaultFileResourcePath = defaultFileResourcePath;
         System.out.println(type + " ---> " + this.filePath);
     }
 
@@ -107,8 +114,32 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         return list;
     }
 
+    public static void ensureSaveFileExists(String saveFilePath, String defaultFileResourcePath) {
+        File saveFile = new File(saveFilePath);
+
+        if (!saveFile.exists()) {
+            try {
+                // Path to the default macros file in the resources directory
+                URL url = AbstractOperationContainer.class.getResource(defaultFileResourcePath);
+                assert url != null : "Resource not found: " + defaultFileResourcePath;
+                Path defaultMacrosPath = Paths.get(url.toURI());
+
+                // Copy the default macros file to the save file path
+                Files.copy(defaultMacrosPath, saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+                System.out.println("Default macros file copied to: " + saveFilePath);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.err.println("Failed to copy the default macros file.");
+            }
+        } else {
+            System.out.println("Save file already exists at: " + saveFilePath);
+        }
+    }
+
     public void readFromFile() {
         if (suppressFileWriting) return;
+        ensureSaveFileExists(filePath, defaultFileResourcePath);
         mappings.clear();
         List<String> lines = null;
         try {

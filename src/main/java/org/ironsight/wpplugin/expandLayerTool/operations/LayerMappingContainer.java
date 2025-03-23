@@ -9,12 +9,32 @@ import org.pepsoft.worldpainter.layers.PineForest;
 
 import java.io.File;
 import java.io.Serializable;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.util.List;
 
 public class LayerMappingContainer extends AbstractOperationContainer<LayerMapping> {
     public static LayerMappingContainer INSTANCE = new LayerMappingContainer();
 
     public LayerMappingContainer() {
-        super(LayerMapping.class, new File(Configuration.getConfigDir(), "plugins").getPath() + "/mappings.json");
+        super(LayerMapping.class, getActionsFilePath(), "/DefaultActions.json");
+    }
+
+    private static String getActionsFilePath() {
+        if (isDebugMode()) return "/home/klipper/IdeaProjects/DemoWPPlugin/src/main/resources/DefaultActions.json";
+        else return new File(Configuration.getConfigDir(), "plugins").getPath() + "/mappings.json";
+    }
+
+    public static boolean isDebugMode() {
+        RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+        List<String> arguments = runtimeMXBean.getInputArguments();
+
+        for (String arg : arguments) {
+            if (arg.contains("jdwp") || arg.contains("-Xdebug")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void addDefaultMappings(LayerMappingContainer container) {
@@ -29,7 +49,8 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
                 "paint mountainsides",
                 "apply stone and rocks " + "based" + " on slope to make mountain sides colorful and interesting",
                 m.getUid());
-        container.updateMapping(m, f -> {});
+        container.updateMapping(m, f -> {
+        });
 
         m = container.addMapping();
         m = new LayerMapping(new HeightProvider(),
@@ -39,7 +60,8 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
                 "frosted " + "peaks",
                 "gradually add snow the higher a mountain goes",
                 m.getUid());
-        container.updateMapping(m, f -> {});
+        container.updateMapping(m, f -> {
+        });
         m = container.addMapping();
         m = new LayerMapping(new SlopeProvider(),
                 new NibbleLayerSetter(PineForest.INSTANCE),
@@ -48,7 +70,8 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
                 "no steep pines",
                 "limit pines from growing on vertical cliffs",
                 m.getUid());
-        container.updateMapping(m, f -> {});
+        container.updateMapping(m, f -> {
+        });
         m = container.addMapping();
         m = new LayerMapping(new AnnotationSetter(),
                 new TestInputOutput(),
@@ -57,7 +80,9 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
                 "colors",
                 "",
                 m.getUid());
-        container.updateMapping(m, f -> {});    }
+        container.updateMapping(m, f -> {
+        });
+    }
 
     @Override
     protected LayerMapping getNewAction() {
@@ -84,11 +109,11 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         assert jsonString != null;
         ObjectMapper objectMapper = new ObjectMapper();
         ActionJsonWrapper[] obj = objectMapper.readValue(jsonString, ActionJsonWrapper[].class);
-       // System.out.println("READ JSON STRING: \n" + jsonString);
+        // System.out.println("READ JSON STRING: \n" + jsonString);
         for (ActionJsonWrapper wrapper : obj) {
             LayerMapping m = LayerMapping.fromJsonWrapper(wrapper);
             this.putMapping(m);
-       //     System.out.println(m);
+            //     System.out.println(m);
         }
     }
 

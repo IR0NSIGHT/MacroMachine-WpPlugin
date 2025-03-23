@@ -196,7 +196,7 @@ public class MacroTreePanel extends JPanel {
         macros.stream()
                 .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
                         f.getDescription().toLowerCase().contains(filterString) || Arrays.stream(f.executionUUIDs)
-                        .map(LayerMappingContainer.INSTANCE::queryById)
+                        .map(LayerMappingContainer.INSTANCE::queryById).filter(Objects::nonNull)
                         .anyMatch(action -> action.getName().contains(filterString) ||
                                 action.getDescription().contains(filterString)))
                 .sorted(Comparator.comparing(o -> o.getName().toLowerCase()))

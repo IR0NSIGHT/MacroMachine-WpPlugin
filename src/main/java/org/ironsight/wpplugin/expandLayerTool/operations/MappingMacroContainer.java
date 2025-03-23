@@ -10,22 +10,31 @@ import java.util.HashSet;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer.isDebugMode;
+
 public class MappingMacroContainer extends AbstractOperationContainer<MappingMacro> {
     private final static MappingMacroContainer instance = new MappingMacroContainer();
 
     public MappingMacroContainer() {
-        super(MappingMacro.class, new File(Configuration.getConfigDir(), "plugins").getPath() + "/macros.json");
+        super(MappingMacro.class, getActionsFilePath(), "/DefaultMacros.json");
     }
 
     public static MappingMacroContainer getInstance() {
         return instance;
     }
 
+    private static String getActionsFilePath() {
+        if (isDebugMode()) return "/home/klipper/IdeaProjects/DemoWPPlugin/src/main/resources/DefaultMacros.json";
+        else return new File(Configuration.getConfigDir(), "plugins").getPath() + "/macros.json";
+    }
+
     @Override
     protected MappingMacro getNewAction() {
         return new MappingMacro("New Mapping Macro",
                 "this macro is a collection of Mappings, each applied in order " + "to" + " the map to achieve " +
-                        "complex, reusable, one-click operations.", new UUID[0], getUUID());
+                        "complex, reusable, one-click operations.",
+                new UUID[0],
+                getUUID());
     }
 
     @Override
