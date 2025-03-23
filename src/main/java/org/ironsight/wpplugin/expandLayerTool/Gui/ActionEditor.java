@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.Gui;
 
 import org.ironsight.wpplugin.expandLayerTool.ExpandLayerPlugin;
+import org.ironsight.wpplugin.expandLayerTool.operations.ExecutionStatistic;
 import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
 import org.ironsight.wpplugin.expandLayerTool.operations.MappingMacro;
 
@@ -8,7 +9,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.ironsight.wpplugin.expandLayerTool.Gui.HelpDialog.getHelpButton;
 
@@ -24,7 +27,7 @@ public class ActionEditor extends LayerMappingPanel {
         this.onSubmit = onSubmit;
     }
 
-    public static JDialog createDialog(JFrame parent, Consumer<MappingMacro> applyToMap) {
+    public static JDialog createDialog(JFrame parent, Function<MappingMacro, Collection<ExecutionStatistic>> applyToMap) {
         if (dialog != null) {
             dialog.setVisible(true);
             dialog.toFront();        // Bring it to the front

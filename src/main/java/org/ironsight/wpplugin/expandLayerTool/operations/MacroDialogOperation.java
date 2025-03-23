@@ -2,10 +2,7 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.WorldPainterView;
-import org.pepsoft.worldpainter.layers.DeciduousForest;
-import org.pepsoft.worldpainter.layers.PineForest;
 import org.pepsoft.worldpainter.operations.AbstractOperation;
 
 import javax.swing.*;
@@ -52,7 +49,8 @@ public class MacroDialogOperation extends AbstractOperation {
         }
     }
 
-    public void applyLayerAction(MappingMacro macro) {
+    public Collection<ExecutionStatistic> applyLayerAction(MappingMacro macro) {
+        Collection<ExecutionStatistic> statistics = new ArrayList<>();
         try {
             this.getDimension().setEventsInhibited(true);
             LinkedList<List<UUID>> actionIds = new LinkedList<>();
@@ -67,7 +65,7 @@ public class MacroDialogOperation extends AbstractOperation {
             if (hasNullActions) {
                 ErrorPopUp("Some actions in the execution list are null. This means they were deleted, but are still " +
                         "linked into a macro." + " The macro can" + " " + "not be applied to the " + "map.");
-                return;
+                return statistics;
             }
 
             // prepare actions for dimension
@@ -77,24 +75,23 @@ public class MacroDialogOperation extends AbstractOperation {
                         action.output.prepareForDimension(getDimension());
                         action.input.prepareForDimension(getDimension());
                     } catch (IllegalAccessError e) {
-                        ErrorPopUp( "Action " + action.getName() + " can not be applied to the map." + e.getMessage());
-                        return;
+                        ErrorPopUp("Action " + action.getName() + " can not be applied to the map." + e.getMessage());
+                        return statistics;
                     }
                 }
             }
 
             // ----------------------- macro is ready and can be applied to map
-            Collection<ExecutionStatistic> statistics = ApplyAction.applyExecutionSteps(getDimension(),
-                    new TileFilter(),
-                    executionSteps);
-
+            statistics = ApplyAction.applyExecutionSteps(getDimension(), new TileFilter(), executionSteps);
             statistics.forEach(System.out::println);
 
         } catch (Exception ex) {
             System.out.println(ex);
+            return statistics;
         } finally {
             this.getDimension().setEventsInhibited(false);
         }
+        return statistics;
     }
 
     @Override
