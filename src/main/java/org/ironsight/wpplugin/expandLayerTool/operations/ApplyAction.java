@@ -2,40 +2,51 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
-import org.pepsoft.worldpainter.operations.Filter;
-import org.pepsoft.worldpainter.panels.DefaultFilter;
-import org.pepsoft.worldpainter.selection.SelectionBlock;
-import org.pepsoft.worldpainter.selection.SelectionChunk;
 
-import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.function.Consumer;
+import java.util.List;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ApplyAction {
 
-    public static void applyToDimensionWithFilter(Dimension dim, TileFilter filter, Consumer<Point> applyOnBlock) {
+    public static ExecutionStatistic applyToDimensionWithFilter(Dimension dim, TileFilter filter,
+                                                                PointApplicator applyToPoint) {
         filter.setDimension(dim);
         Iterator<? extends Tile> t = dim.getTiles().iterator();
-        int tileTouched = 0;
+        ExecutionStatistic statistic = applyToPoint.toStatistic();
+        long startTime = System.currentTimeMillis();
         while (t.hasNext()) {
             Tile tile = t.next();
             TileFilter.passType pass = filter.testTile(tile);
             if (pass == TileFilter.passType.NO_BLOCKS) continue;
-            tileTouched++;
-            Point p = new Point(0, 0);
+
+            statistic.touchedTiles++;
             for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {
                 for (int xInTile = 0; xInTile < TILE_SIZE; xInTile++) {
                     final int x = xInTile + (tile.getX() << TILE_SIZE_BITS);
                     final int y = yInTile + (tile.getY() << TILE_SIZE_BITS);
-                    p.x = x;
-                    p.y = y;
-                    if (pass == TileFilter.passType.ALL_BLOCKS || filter.pass(x, y)) applyOnBlock.accept(p);
+                    if (pass == TileFilter.passType.ALL_BLOCKS || filter.pass(x, y)) {
+                        applyToPoint.apply(x, y);
+                        statistic.touchedBlocks++;
+                    }
                 }
             }
         }
-        System.out.println("tiles touched:" + tileTouched);
+        statistic.durationMillis = System.currentTimeMillis() - startTime;
+        return statistic;
     }
+
+    public static ArrayList<ExecutionStatistic> applyExecutionSteps(Dimension dim, TileFilter filter,
+                                                                    List<List<LayerMapping>> actions) {
+        ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
+        for (Collection<LayerMapping> step : actions) {
+            statistics.add(applyToDimensionWithFilter(dim, filter, new PointApplicator(step, dim)));
+        }
+        return statistics;
+    }
+
 }

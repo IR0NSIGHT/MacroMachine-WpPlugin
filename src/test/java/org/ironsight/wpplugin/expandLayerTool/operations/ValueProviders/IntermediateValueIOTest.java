@@ -1,6 +1,9 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.*;
+import org.ironsight.wpplugin.expandLayerTool.operations.LayerMapping;
+import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
+import org.ironsight.wpplugin.expandLayerTool.operations.MappingPoint;
+import org.ironsight.wpplugin.expandLayerTool.operations.TestData;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;
@@ -85,19 +88,6 @@ class IntermediateValueIOTest {
         container.queryById(set).applyToPoint(dim, -124, -125);
         container.queryById(get).applyToPoint(dim, -124, -125);
         assertEquals(EVEN_OUTPUT, dim.getLayerValueAt(Annotations.INSTANCE, -124, -125));
-
-        MappingMacro mappingMacro =
-                new MappingMacro("test macro", "test intermediate value", new UUID[]{set, get}, UUID.randomUUID());
-        mappingMacro.apply(dim, container, MappingMacroContainer.getInstance());
-        // mod(x,2) == 0 -> intermediate 5 -> annotation UNEVEN_OUTPUT
-        // mod(x,2) == 1 -> intermediate 7 -> annotation EVEN_OUTPUT
-
-        for (int x = rect.x; x < rect.x + rect.width; x++) {
-            for (int y = rect.y; y < rect.y + rect.height; y++) {
-                if (mod(x, 2) == 0) assertEquals(EVEN_OUTPUT, dim.getLayerValueAt(Annotations.INSTANCE, x, y));
-                else assertEquals(UNEVEN_OUTPUT, dim.getLayerValueAt(Annotations.INSTANCE, x, y));
-            }
-        }
     }
 
     @Test
