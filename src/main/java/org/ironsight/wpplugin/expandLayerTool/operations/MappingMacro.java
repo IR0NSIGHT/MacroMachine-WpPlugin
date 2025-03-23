@@ -3,7 +3,6 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IntermediateSelectionIO;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.operations.Filter;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -90,7 +89,7 @@ public class MappingMacro implements SaveableAction {
 
     public void apply(Dimension dimension, LayerMappingContainer actionContainer,
                       MappingMacroContainer macroContainer) {
-        assert allMappingsReady(actionContainer, macroContainer) : "Can not apply macro that has invalid actions.";
+        assert containsNoUnknownActions(actionContainer, macroContainer) : "Can not apply macro that has invalid actions.";
 
         ArrayList<ArrayList<UUID>> executionSteps = new ArrayList<>(executionUUIDs.length);
         {
@@ -199,12 +198,12 @@ public class MappingMacro implements SaveableAction {
         return childLoop;
     }
 
-    public boolean allMappingsReady(LayerMappingContainer container, MappingMacroContainer macroContainer) {
+    public boolean containsNoUnknownActions(LayerMappingContainer container, MappingMacroContainer macroContainer) {
         for (UUID mappingUid : executionUUIDs) {
             LayerMapping mapping = container.queryById(mappingUid);
             MappingMacro nestedMacro = macroContainer.queryById(mappingUid);
             if (mapping == null && nestedMacro == null) return false;
-            else if (nestedMacro != null && !nestedMacro.allMappingsReady(container, macroContainer)) return false;
+            else if (nestedMacro != null && !nestedMacro.containsNoUnknownActions(container, macroContainer)) return false;
             else continue;
         }
         return true;
@@ -217,15 +216,5 @@ public class MappingMacro implements SaveableAction {
 
     public void setUid(UUID uid) {
         this.uid = uid;
-    }
-
-    private static class EmptyFilter implements Filter {
-        public EmptyFilter() {
-        }
-
-        @Override
-        public float modifyStrength(int x, int y, float strength) {
-            return 1;
-        }
     }
 }
