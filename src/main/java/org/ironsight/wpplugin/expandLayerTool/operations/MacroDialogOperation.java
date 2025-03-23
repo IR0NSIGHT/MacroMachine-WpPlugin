@@ -9,9 +9,8 @@ import org.pepsoft.worldpainter.layers.PineForest;
 import org.pepsoft.worldpainter.operations.AbstractOperation;
 
 import javax.swing.*;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.expandLayerTool.Gui.ActionEditor.createDialog;
 
@@ -58,51 +57,39 @@ public class MacroDialogOperation extends AbstractOperation {
             this.getDimension().setEventsInhibited(true);
             LinkedList<List<UUID>> actionIds = new LinkedList<>();
             List<List<UUID>> steps = macro.collectActions(actionIds);
-            for (List<UUID> step : steps) {
-                for (UUID actionId : step) {
-                    LayerMapping action = LayerMappingContainer.INSTANCE.queryById(actionId);
-                    if (action == null) {
-                        ErrorPopUp("Action " + actionId + " not found.");
-                        return;
-                    }
+            List<List<LayerMapping>> executionSteps = steps.stream()
+                    .map(stepIds -> stepIds.stream()
+                            .map(LayerMappingContainer.INSTANCE::queryById)
+                            .collect(Collectors.toList()))
+                    .collect(Collectors.toList());
+
+            boolean hasNullActions = executionSteps.stream().anyMatch(step -> step.stream().anyMatch(Objects::isNull));
+            if (hasNullActions) {
+                ErrorPopUp("Some actions in the execution list are null. This means they were deleted, but are still " +
+                        "linked into a macro." + " The macro can" + " " + "not be applied to the " + "map.");
+                return;
+            }
+
+            // prepare actions for dimension
+            for (List<LayerMapping> step : executionSteps) {
+                for (LayerMapping action : step) {
                     try {
                         action.output.prepareForDimension(getDimension());
                         action.input.prepareForDimension(getDimension());
-                    } catch (IllegalAccessError e) {    //FIXME move this check further up.
-                        JOptionPane.showMessageDialog(null,
-                                "Action " + action.getName() + " can not be applied to the map." + e.getMessage(),
-                                "Error",
-                                // Title of the dialog
-                                JOptionPane.ERROR_MESSAGE
-                                // Type of message (error icon)
-                        );
+                    } catch (IllegalAccessError e) {
+                        ErrorPopUp( "Action " + action.getName() + " can not be applied to the map." + e.getMessage());
                         return;
                     }
                 }
             }
 
             // ----------------------- macro is ready and can be applied to map
+            Collection<ExecutionStatistic> statistics = ApplyAction.applyExecutionSteps(getDimension(),
+                    new TileFilter(),
+                    executionSteps);
 
-            System.out.println("Execution order");
-            actionIds.forEach(step -> {
-                StringBuilder b = new StringBuilder("Step:\n");
-                String[] names = step.stream()
-                        .map(LayerMappingContainer.INSTANCE::queryById)
-                        .map(LayerMapping::getName)
-                        .map(f -> "\t" + f)
-                        .toArray(String[]::new);
-                b.append(String.join("\n", names));
-                System.out.println(b);
-            });
+            statistics.forEach(System.out::println);
 
-            macro.setTileFilter(new TileFilter().withSelection(TileFilter.FilterType.EXCEPT_ON)
-                    .withLayer(TileFilter.FilterType.ONLY_ON,
-                            PineForest.INSTANCE.getId(),
-                            DeciduousForest.INSTANCE.getId())
-                    .withTerrain(TileFilter.FilterType.ONLY_ON, Terrain.GRASS, Terrain.STONE)
-                    .withHeight(TileFilter.FilterType.EXCEPT_ON, 70, 73));
-
-            macro.apply(getDimension(), LayerMappingContainer.INSTANCE, MappingMacroContainer.getInstance());
         } catch (Exception ex) {
             System.out.println(ex);
         } finally {
