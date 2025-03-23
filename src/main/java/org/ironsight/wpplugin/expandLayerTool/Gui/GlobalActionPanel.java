@@ -4,8 +4,10 @@ import org.ironsight.wpplugin.expandLayerTool.operations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.ironsight.wpplugin.expandLayerTool.Gui.ActionEditor.createDialog;
 
@@ -20,15 +22,15 @@ public class GlobalActionPanel extends JPanel {
     ActionEditor mappingEditor;
 
     //consumes macro to apply to map. callback for "user pressed apply-macro"
-    Consumer<MappingMacro> applyMacro;
+    Function<MappingMacro, Collection<ExecutionStatistic>> applyMacro;
     CardLayout layout;
     JPanel editorPanel;
     private UUID currentSelectedMacro;
     private UUID currentSelectedLayer;
     private SELECTION_TPYE selectionType = SELECTION_TPYE.INVALID;
 
-    public GlobalActionPanel(Consumer<MappingMacro> applyMacro) {
-        this.applyMacro = applyMacro;
+    public GlobalActionPanel(Function<MappingMacro, Collection<ExecutionStatistic>> applyToMap) {
+        this.applyMacro = applyToMap;
 
         init();
     }
@@ -44,9 +46,12 @@ public class GlobalActionPanel extends JPanel {
         layers.readFromFile();
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
-        JDialog diag = createDialog(null, f -> {
-        });
+        JDialog diag = createDialog(null, f -> Collections.emptyList());
         diag.setVisible(true);
+    }
+
+    private void applyToMap(MappingMacro macro) {
+        Collection<ExecutionStatistic> statistic = applyMacro.apply(macro);
     }
 
     private void onUpdate() {
@@ -79,7 +84,7 @@ public class GlobalActionPanel extends JPanel {
         this.setLayout(new BorderLayout());
         macroTreePanel = new MacroTreePanel(MappingMacroContainer.getInstance(),
                 LayerMappingContainer.INSTANCE,
-                this.applyMacro,
+                this::applyToMap,
                 this::onSelect);
         macroTreePanel.setMaximumSize(new Dimension(200, 0));
 
@@ -116,8 +121,7 @@ public class GlobalActionPanel extends JPanel {
 
     private void onSubmitMacro(MappingMacro macro) {
         MappingMacroContainer.getInstance().updateMapping(macro, e -> {
-            JOptionPane.showMessageDialog(
-                    this,                   // Parent component (null for default frame)
+            JOptionPane.showMessageDialog(this,                   // Parent component (null for default frame)
                     "Unable to save macro: " + e,   // Message to display
                     "Error",                // Title of the dialog
                     JOptionPane.ERROR_MESSAGE // Type of message (error icon)
