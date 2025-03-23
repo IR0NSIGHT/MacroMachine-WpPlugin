@@ -103,14 +103,10 @@ public class TileFilter implements Serializable {
 
     public void setDimension(Dimension dimension) {
         this.dimension = dimension;
-        List<Layer> allLayers = new ArrayList(LayerManager.getInstance()
-                .getLayers());
+        List<Layer> allLayers = new ArrayList(LayerManager.getInstance().getLayers());
         allLayers.add(Annotations.INSTANCE);
 
-        this.layers = allLayers
-                .stream()
-                .filter(layer -> layerIds.contains(layer.getId()))
-                .collect(Collectors.toList());
+        this.layers = allLayers.stream().filter(layer -> layerIds.contains(layer.getId())).collect(Collectors.toList());
     }
 
     public passType testTile(Tile tile) {
@@ -144,7 +140,8 @@ public class TileFilter implements Serializable {
         if (filterByLayer == FilterType.IGNORE) return true;
         if (filterByLayer == FilterType.ONLY_ON) {
             for (Layer layer : layers) {
-                if (dimension.getLayerValueAt(layer, x, y) != 0) return true;
+                if (layer.dataSize.equals(Layer.DataSize.BIT) && dimension.getBitLayerValueAt(layer, x, y)) return true;
+                else if (dimension.getLayerValueAt(layer, x, y) != 0) return true;
             }
             return false;
         }
@@ -205,6 +202,14 @@ public class TileFilter implements Serializable {
 
     public FilterType getFilterByLayer() {
         return filterByLayer;
+    }
+
+    @Override
+    public String toString() {
+        return "TileFilter{" + "filterBySelection=" + filterBySelection + ", layerIds=" + layerIds +
+                ", filterByTerrain=" + filterByTerrain + ", terrainIds=" + terrainIds + ", filterByHeight=" +
+                filterByHeight + ", minHeight=" + minHeight + ", maxHeight=" + maxHeight + ", filterByLayer=" +
+                filterByLayer + '}';
     }
 
     enum passType {

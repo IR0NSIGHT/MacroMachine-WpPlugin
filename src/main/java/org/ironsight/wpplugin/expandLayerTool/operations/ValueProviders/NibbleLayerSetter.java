@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Objects;
 
-public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter {
+public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter, ILayerGetter {
     private final static Color[] COLORS = new Color[]{new Color(0, 0, 0),       // Black
             new Color(0, 0, 0),       // Black
             new Color(0, 16, 0),      // Very dark green
@@ -141,5 +141,15 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     @Override
     public String toString() {
         return "NibbleLayerSetter{" + "layer=" + layer + '}';
+    }
+
+    @Override
+    public String getLayerName() {
+        return layerName;
+    }
+
+    @Override
+    public String getLayerId() {
+        return layerId;
     }
 }

@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Objects;
 
-public class DistanceToLayerEdgeGetter implements IPositionValueGetter {
+public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGetter {
     protected String layerId;
     protected String layerName;
     protected Layer layer = null;
@@ -139,5 +139,15 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter {
     @Override
     public String toString() {
         return "DistanceToEdge{" + "layer=" + layerName + '}';
+    }
+
+    @Override
+    public String getLayerName() {
+        return layerName;
+    }
+
+    @Override
+    public String getLayerId() {
+        return layerId;
     }
 }
