@@ -5,7 +5,7 @@ import org.pepsoft.worldpainter.layers.Annotations;
 
 import java.awt.*;
 
-public class AnnotationSetter implements IPositionValueGetter, IPositionValueSetter {
+public class AnnotationSetter implements IPositionValueGetter, IPositionValueSetter, ILayerGetter {
     private static final Color[] COLORS =
             new Color[]{Color.WHITE, Color.WHITE, Color.ORANGE, Color.MAGENTA, new Color(107, 177, 255),   //LIGHT BLUE
                     Color.YELLOW, new Color(34, 153, 84), //LIME
@@ -105,5 +105,15 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());
+    }
+
+    @Override
+    public String getLayerName() {
+        return Annotations.INSTANCE.getName();
+    }
+
+    @Override
+    public String getLayerId() {
+        return Annotations.INSTANCE.getId();
     }
 }

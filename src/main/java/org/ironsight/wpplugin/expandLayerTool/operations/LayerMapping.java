@@ -22,6 +22,10 @@ public class LayerMapping implements SaveableAction {
     private final UUID uid;    //TODO make final and private
     private final int[] mappings;
 
+    public IPositionValueGetter getInput() {
+        return input;
+    }
+
     public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
                         ActionType type, String name, String description, UUID uid) {
         assert name != null;

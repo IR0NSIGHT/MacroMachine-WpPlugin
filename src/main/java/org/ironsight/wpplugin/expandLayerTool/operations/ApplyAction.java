@@ -44,7 +44,11 @@ public class ApplyAction {
                                                                     List<List<LayerMapping>> actions) {
         ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
         for (Collection<LayerMapping> step : actions) {
-            statistics.add(applyToDimensionWithFilter(dim, filter, new PointApplicator(step, dim)));
+            PointApplicator stepApplicator = new PointApplicator(step, dim);
+            TileFilter earlyAbortFilter = stepApplicator.earlyAbortFilter();
+            System.out.println("STEP:"+ step);
+            System.out.println("filter:" + earlyAbortFilter);
+            statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, stepApplicator));
         }
         return statistics;
     }

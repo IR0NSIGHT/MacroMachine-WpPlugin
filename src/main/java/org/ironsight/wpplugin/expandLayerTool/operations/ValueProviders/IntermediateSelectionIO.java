@@ -24,7 +24,7 @@ public class IntermediateSelectionIO implements IPositionValueSetter, IPositionV
     }
     @Override
     public boolean isVirtual() {
-        return false;
+        return true;
     }
     public void setSelected(boolean selected) {
         if (selected) {

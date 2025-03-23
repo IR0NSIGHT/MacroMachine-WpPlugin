@@ -11,7 +11,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Objects;
 
-public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter {
+public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter, ILayerGetter {
     private final String layerName;
     private final String layerId;
     private Layer layer;
@@ -125,5 +125,15 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         if (o == null || getClass() != o.getClass()) return false;
         BinaryLayerIO that = (BinaryLayerIO) o;
         return Objects.equals(layerId, that.layerId);
+    }
+
+    @Override
+    public String getLayerName() {
+        return layerName;
+    }
+
+    @Override
+    public String getLayerId() {
+        return layerId;
     }
 }
