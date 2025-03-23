@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
+import org.ironsight.wpplugin.expandLayerTool.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.WorldPainterView;
@@ -23,14 +24,6 @@ public class MacroDialogOperation extends AbstractOperation {
         LayerMappingContainer.INSTANCE.readFromFile();
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
-    }
-
-    public static void ErrorPopUp(String message) {
-        JOptionPane.showMessageDialog(null, message, "Error",
-                // Title of the dialog
-                JOptionPane.ERROR_MESSAGE
-                // Type of message (error icon)
-        );
     }
 
     private Dimension getDimension() {
@@ -63,7 +56,7 @@ public class MacroDialogOperation extends AbstractOperation {
 
             boolean hasNullActions = executionSteps.stream().anyMatch(step -> step.stream().anyMatch(Objects::isNull));
             if (hasNullActions) {
-                ErrorPopUp("Some actions in the execution list are null. This means they were deleted, but are still " +
+                GlobalActionPanel.ErrorPopUp("Some actions in the execution list are null. This means they were deleted, but are still " +
                         "linked into a macro." + " The macro can" + " " + "not be applied to the " + "map.");
                 return statistics;
             }
@@ -75,7 +68,7 @@ public class MacroDialogOperation extends AbstractOperation {
                         action.output.prepareForDimension(getDimension());
                         action.input.prepareForDimension(getDimension());
                     } catch (IllegalAccessError e) {
-                        ErrorPopUp("Action " + action.getName() + " can not be applied to the map." + e.getMessage());
+                        GlobalActionPanel.ErrorPopUp("Action " + action.getName() + " can not be applied to the map." + e.getMessage());
                         return statistics;
                     }
                 }

@@ -4,10 +4,13 @@ import org.ironsight.wpplugin.expandLayerTool.operations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.expandLayerTool.Gui.ActionEditor.createDialog;
 
@@ -17,10 +20,11 @@ public class GlobalActionPanel extends JPanel {
     public static final String MAPPING_EDITOR = "mappingEditor";
     public static final String INVALID_SELECTION = "invalidSelection";
     public static final String MACRO_DESIGNER = "macroDesigner";
+    static JTextArea logPanel;
+    static final int MAX_LOG_LINES = 200;
     MacroTreePanel macroTreePanel;
     MacroDesigner macroDesigner;
     ActionEditor mappingEditor;
-
     //consumes macro to apply to map. callback for "user pressed apply-macro"
     Function<MappingMacro, Collection<ExecutionStatistic>> applyMacro;
     CardLayout layout;
@@ -50,8 +54,58 @@ public class GlobalActionPanel extends JPanel {
         diag.setVisible(true);
     }
 
+    /**
+     * Returns the current timestamp in a human-readable format.
+     *
+     * @return The current timestamp as a String in the format "yyyy-MM-dd HH:mm:ss".
+     */
+    public static String getCurrentTimestamp() {
+        // Get the current date and time
+        LocalDateTime now = LocalDateTime.now();
+
+        // Define the formatter for the desired human-readable format
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        // Format the current date and time
+        return now.format(formatter);
+    }
+
+    public static void ErrorPopUp(String message) {
+        logMessage(message);
+        JOptionPane.showMessageDialog(null, message, "Error",
+                // Title of the dialog
+                JOptionPane.ERROR_MESSAGE
+                // Type of message (error icon)
+        );
+
+    }
+
+    // Method to log messages
+    public static void logMessage(String message) {
+        // Append the new log message
+        logPanel.append(getCurrentTimestamp());
+        logPanel.append(message + "\n");
+
+        // Limit the number of lines in the log text area
+        int lineCount = logPanel.getLineCount();
+        if (lineCount > MAX_LOG_LINES) {
+            try {
+                int start = logPanel.getLineStartOffset(lineCount - MAX_LOG_LINES);
+                int end = logPanel.getLineEndOffset(lineCount - 1);
+                logPanel.replaceRange("", 0, end - start);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        // Scroll to the end
+        logPanel.setCaretPosition(logPanel.getDocument().getLength());
+    }
+
     private void applyToMap(MappingMacro macro) {
         Collection<ExecutionStatistic> statistic = applyMacro.apply(macro);
+        logMessage("apply macro " + macro.getName() + " to map:\n" +
+                statistic.stream().map(ExecutionStatistic::toString).collect(Collectors.joining("\n")));
     }
 
     private void onUpdate() {
@@ -97,9 +151,20 @@ public class GlobalActionPanel extends JPanel {
         editorPanel.add(new JPanel(), INVALID_SELECTION);
         layout = (CardLayout) editorPanel.getLayout();
         layout.show(editorPanel, MACRO_DESIGNER);
-        this.add(macroTreePanel, BorderLayout.WEST);
-        this.add(editorPanel, BorderLayout.CENTER);
 
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Designer", editorPanel);
+        this.add(tabbedPane, BorderLayout.CENTER);
+
+        JPanel executionPanel = new JPanel(new BorderLayout());
+        logPanel = new JTextArea();
+        logPanel.setEditable(false); // Make it read-only
+        logPanel.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane writeWindowScroll = new JScrollPane(logPanel);
+        executionPanel.add(writeWindowScroll, BorderLayout.CENTER);
+        tabbedPane.add("Log", executionPanel);
+
+        this.add(macroTreePanel, BorderLayout.WEST);
         onUpdate();
     }
 
@@ -121,11 +186,7 @@ public class GlobalActionPanel extends JPanel {
 
     private void onSubmitMacro(MappingMacro macro) {
         MappingMacroContainer.getInstance().updateMapping(macro, e -> {
-            JOptionPane.showMessageDialog(this,                   // Parent component (null for default frame)
-                    "Unable to save macro: " + e,   // Message to display
-                    "Error",                // Title of the dialog
-                    JOptionPane.ERROR_MESSAGE // Type of message (error icon)
-            );
+            ErrorPopUp("Unable to save macro: " + e);
         });
     }
 
