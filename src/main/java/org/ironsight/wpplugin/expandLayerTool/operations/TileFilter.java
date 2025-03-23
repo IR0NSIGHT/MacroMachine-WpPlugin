@@ -175,11 +175,43 @@ public class TileFilter implements Serializable {
         return passHeight(x, y) && passSelection(x, y) && passLayer(x, y) && passTerrain(x, y);
     }
 
+    public FilterType getFilterBySelection() {
+        return filterBySelection;
+    }
+
+    public Set<String> getLayerIds() {
+        return layerIds;
+    }
+
+    public FilterType getFilterByTerrain() {
+        return filterByTerrain;
+    }
+
+    public Set<Terrain> getTerrainIds() {
+        return terrainIds;
+    }
+
+    public FilterType getFilterByHeight() {
+        return filterByHeight;
+    }
+
+    public int getMinHeight() {
+        return minHeight;
+    }
+
+    public int getMaxHeight() {
+        return maxHeight;
+    }
+
+    public FilterType getFilterByLayer() {
+        return filterByLayer;
+    }
+
     enum passType {
         ALL_BLOCKS, NO_BLOCKS, SOME_BLOCKS
     }
 
-    enum FilterType {
+    public enum FilterType {
         ONLY_ON, EXCEPT_ON, IGNORE
     }
 }
