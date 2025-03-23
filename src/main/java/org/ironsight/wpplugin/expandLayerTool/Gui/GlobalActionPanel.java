@@ -21,7 +21,7 @@ public class GlobalActionPanel extends JPanel {
     public static final String INVALID_SELECTION = "invalidSelection";
     public static final String MACRO_DESIGNER = "macroDesigner";
     static JTextArea logPanel;
-    static final int MAX_LOG_LINES = 200;
+    static final int MAX_LOG_LINES = 2000;
     MacroTreePanel macroTreePanel;
     MacroDesigner macroDesigner;
     ActionEditor mappingEditor;
@@ -51,6 +51,13 @@ public class GlobalActionPanel extends JPanel {
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
         JDialog diag = createDialog(null, f -> Collections.emptyList());
+
+        SwingUtilities.invokeLater(() -> {
+            for (int i = 0; i < 10000; i++) {
+                logMessage("test log " + i);
+            }
+        });
+
         diag.setVisible(true);
     }
 
@@ -83,16 +90,15 @@ public class GlobalActionPanel extends JPanel {
     // Method to log messages
     public static void logMessage(String message) {
         // Append the new log message
-        logPanel.append(getCurrentTimestamp());
+        logPanel.append(getCurrentTimestamp()+":\n");
         logPanel.append(message + "\n");
 
         // Limit the number of lines in the log text area
         int lineCount = logPanel.getLineCount();
         if (lineCount > MAX_LOG_LINES) {
             try {
-                int start = logPanel.getLineStartOffset(lineCount - MAX_LOG_LINES);
-                int end = logPanel.getLineEndOffset(lineCount - 1);
-                logPanel.replaceRange("", 0, end - start);
+                int end = logPanel.getLineEndOffset(lineCount - 1 - MAX_LOG_LINES);
+                logPanel.replaceRange("", 0, end);
             } catch (Exception e) {
                 e.printStackTrace();
             }

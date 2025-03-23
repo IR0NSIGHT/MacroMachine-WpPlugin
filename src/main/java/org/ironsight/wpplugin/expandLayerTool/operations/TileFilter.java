@@ -10,10 +10,7 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TileFilter implements Serializable {
@@ -106,8 +103,11 @@ public class TileFilter implements Serializable {
 
     public void setDimension(Dimension dimension) {
         this.dimension = dimension;
-        if (filterByLayer != FilterType.IGNORE) this.layers = LayerManager.getInstance()
-                .getLayers()
+        List<Layer> allLayers = new ArrayList(LayerManager.getInstance()
+                .getLayers());
+        allLayers.add(Annotations.INSTANCE);
+
+        this.layers = allLayers
                 .stream()
                 .filter(layer -> layerIds.contains(layer.getId()))
                 .collect(Collectors.toList());
