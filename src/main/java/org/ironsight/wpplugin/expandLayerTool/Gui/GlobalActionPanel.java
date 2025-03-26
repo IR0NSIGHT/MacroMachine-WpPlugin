@@ -51,13 +51,6 @@ public class GlobalActionPanel extends JPanel {
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
         JDialog diag = createDialog(null, f -> Collections.emptyList());
-
-        SwingUtilities.invokeLater(() -> {
-            for (int i = 0; i < 10000; i++) {
-                logMessage("test log " + i);
-            }
-        });
-
         diag.setVisible(true);
     }
 
