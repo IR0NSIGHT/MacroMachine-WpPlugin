@@ -11,16 +11,11 @@ import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Random;
 
-public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter {
+public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter, ILayerGetter {
     Random random = new Random();
     private String layerName;
     private String layerId;
     private Layer layer;
-
-    @Override
-    public boolean isVirtual() {
-        return false;
-    }
 
     public BitLayerBinarySpraypaintApplicator() {
         super();
@@ -34,6 +29,11 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter 
     BitLayerBinarySpraypaintApplicator(String layerId, String layerName) {
         this.layerId = layerId;
         this.layerName = layerName;
+    }
+
+    @Override
+    public boolean isVirtual() {
+        return false;
     }
 
     /**
@@ -116,7 +116,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter 
 
     @Override
     public String getDescription() {
-        return "spraypaint binary layer " + layer.getName() + " (ON or OFF) based on input chance 0 to 100%.";
+        return "spraypaint binary layer " + layerName + " (ON or OFF) based on input chance 0 to 100%.";
     }
 
     @Override
@@ -145,5 +145,15 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter 
         if (o == null || getClass() != o.getClass()) return false;
         BitLayerBinarySpraypaintApplicator that = (BitLayerBinarySpraypaintApplicator) o;
         return Objects.equals(layerId, that.layerId);
+    }
+
+    @Override
+    public String getLayerName() {
+        return layerName;
+    }
+
+    @Override
+    public String getLayerId() {
+        return layerId;
     }
 }

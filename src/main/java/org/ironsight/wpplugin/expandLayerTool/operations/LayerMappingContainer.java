@@ -2,22 +2,35 @@ package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.ironsight.wpplugin.expandLayerTool.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Configuration;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class LayerMappingContainer extends AbstractOperationContainer<LayerMapping> {
     public static LayerMappingContainer INSTANCE = new LayerMappingContainer();
 
     public LayerMappingContainer() {
         super(LayerMapping.class, getActionsFilePath(), "/DefaultActions.json");
+
+        // Register a shutdown hook
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutdown hook executed. System.exit() was called.");
+            this.writeToFile();
+        }));
     }
 
     private static String getActionsFilePath() {
@@ -126,5 +139,25 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         }
         return (T) saveObject;
     }
+
+    @Override
+    public void writeToFile() {
+        super.writeToFile();
+        //FIXME also save layers that are used as input?
+        Predicate<LayerMapping> usesLayer = l -> l.output instanceof ILayerGetter;
+        //collect all layers used in all actions
+        HashSet<String> usedLayers = queryAll().stream()
+                .filter(usesLayer)
+                .map(l -> (ILayerGetter) l.output)
+                .map(ILayerGetter::getLayerId)
+                .collect(HashSet::new, HashSet::add, HashSet::addAll);
+        String layerFolder = "/home/klipper/Documents/worldpainter/layers/";
+        ArrayList<IOException> errors = new ArrayList<IOException>();
+        LayerObjectContainer.getInstance().writeToFolder(layerFolder, errors::add, usedLayers.toArray(new String[0]));
+        if (!errors.isEmpty())
+            GlobalActionPanel.logMessage(errors.stream().map(Throwable::getMessage).collect(Collectors.joining("\n")));
+    }
+
+
 }
 

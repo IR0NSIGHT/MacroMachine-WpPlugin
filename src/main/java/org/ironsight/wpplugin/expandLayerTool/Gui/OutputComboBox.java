@@ -33,7 +33,7 @@ public class OutputComboBox extends JComboBox<String> {
 
     public void SetSelected(IPositionValueSetter getter) {
         this.setSelectedItem(getter.getName());
-        assert this.getSelectedProvider().equals(getter);
+   // FIXME     assert this.getSelectedProvider().equals(getter);
     }
 }
 

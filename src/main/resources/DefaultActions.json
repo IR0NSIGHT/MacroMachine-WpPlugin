@@ -10,6 +10,17 @@
   "description" : "filter out all values below 50% intermediate",
   "uid" : "25ae2016-1bd7-44c2-a6c6-4217c3604a1c"
 }, {
+  "inputId" : "ANNOTATION",
+  "inputData" : [ ],
+  "outputId" : "NIBBLE_LAYER",
+  "outputData" : [ "houses", "My Custom Objects.f3680e3339b12d50" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0 ],
+  "name" : "crops layer",
+  "description" : "description of the action",
+  "uid" : "b86668af-bcbc-4a07-8d20-2c25ce4a86fd"
+}, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "HEIGHT",
@@ -87,39 +98,6 @@
   "description" : "description of the action",
   "uid" : "a153590b-5578-456e-a441-4118990b8211"
 }, {
-  "inputId" : "HEIGHT",
-  "inputData" : [ ],
-  "outputId" : "ANNOTATION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ ],
-  "outputPoints" : [ ],
-  "name" : "New Action 779",
-  "description" : "description of the action",
-  "uid" : "a45df04e-d05e-4168-b3fd-a8dcf362aca8"
-}, {
-  "inputId" : "HEIGHT",
-  "inputData" : [ ],
-  "outputId" : "ANNOTATION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ ],
-  "outputPoints" : [ ],
-  "name" : "New Action 722",
-  "description" : "description of the action",
-  "uid" : "1062a482-37ae-4827-ad85-076f3eb5d278"
-}, {
-  "inputId" : "HEIGHT",
-  "inputData" : [ ],
-  "outputId" : "ANNOTATION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ ],
-  "outputPoints" : [ ],
-  "name" : "New Action 311",
-  "description" : "description of the action",
-  "uid" : "aa6f7d1d-69cc-46b8-83cf-bfbd9f6d7149"
-}, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ ],
   "outputId" : "TERRAIN",
@@ -177,6 +155,17 @@
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
+  "outputId" : "TERRAIN",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 21 ],
+  "name" : "beach",
+  "description" : "description of the action",
+  "uid" : "16632d51-fe28-4dfb-b53a-7cfa749062e9"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
   "outputId" : "SELECTION",
   "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
   "actionType" : "SET",
@@ -196,17 +185,6 @@
   "name" : "distance",
   "description" : "description of the action",
   "uid" : "95747dbc-49c4-4975-acab-14613211f1f9"
-}, {
-  "inputId" : "HEIGHT",
-  "inputData" : [ ],
-  "outputId" : "ANNOTATION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ ],
-  "outputPoints" : [ ],
-  "name" : "New Action 870",
-  "description" : "description of the action",
-  "uid" : "a4a2fedf-2d11-4ee7-8e2b-1a6a9d2535b2"
 }, {
   "inputId" : "DISTANCE_TO_EDGE",
   "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
@@ -295,17 +273,6 @@
   "name" : "paint",
   "description" : "description of the action",
   "uid" : "3f31b643-c509-4e37-8e1b-3dd5b97697dc"
-}, {
-  "inputId" : "HEIGHT",
-  "inputData" : [ ],
-  "outputId" : "ANNOTATION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ ],
-  "outputPoints" : [ ],
-  "name" : "New Action 902",
-  "description" : "description of the action",
-  "uid" : "8fc565f4-d6cf-46ec-af1b-9db435827396"
 }, {
   "inputId" : "SLOPE",
   "inputData" : [ ],
@@ -445,7 +412,7 @@
   "outputData" : [ "village houses", "My Custom Objects.cb2251c8730bbcce" ],
   "actionType" : "SET",
   "inputPoints" : [ 0, 15 ],
-  "outputPoints" : [ 4, 15 ],
+  "outputPoints" : [ 0, 15 ],
   "name" : "house layer",
   "description" : "description of the action",
   "uid" : "e79568bc-7ee9-4639-839e-6725ff2d7554"
@@ -466,7 +433,7 @@
   "outputId" : "BINARY_SPRAYPAINT",
   "outputData" : [ "Plants.d3ed9daf2a28297", "Crops" ],
   "actionType" : "SET",
-  "inputPoints" : [ 4, 9 ],
+  "inputPoints" : [ 4, 10 ],
   "outputPoints" : [ 0, 80 ],
   "name" : "crops",
   "description" : "description of the action",
@@ -483,17 +450,6 @@
   "description" : "description of the action",
   "uid" : "d945d70d-ccf7-4a2f-a3eb-6a4fde997050"
 }, {
-  "inputId" : "HEIGHT",
-  "inputData" : [ ],
-  "outputId" : "ANNOTATION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ ],
-  "outputPoints" : [ ],
-  "name" : "New Action 86",
-  "description" : "description of the action",
-  "uid" : "967a7b30-d292-45ec-81a1-b7ef965f711b"
-}, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "BINARY_LAYER",
@@ -504,4 +460,15 @@
   "name" : "No frost",
   "description" : "description of the action",
   "uid" : "8d4d619f-4dd6-45a6-bdda-32c520958c57"
+}, {
+  "inputId" : "WATER_DEPTH",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 10, 89 ],
+  "outputPoints" : [ 0, 1, 0 ],
+  "name" : "filter shallow water",
+  "description" : "description of the action",
+  "uid" : "f7b9a0bd-59cb-4532-a218-0344e77cd122"
 } ]
