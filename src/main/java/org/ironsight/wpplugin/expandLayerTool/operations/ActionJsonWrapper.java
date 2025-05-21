@@ -1,6 +1,8 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
 
+import org.pepsoft.worldpainter.layers.Layer;
+
 import java.util.UUID;
 
 public class ActionJsonWrapper {
@@ -14,7 +16,6 @@ public class ActionJsonWrapper {
     private String name;
     private String description;
     private UUID uid;
-
     public ActionJsonWrapper() {
     }
 

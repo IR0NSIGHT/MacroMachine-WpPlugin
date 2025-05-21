@@ -19,6 +19,16 @@
   "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
   "uid" : "2123515e-ee1b-4928-b133-372e17908f8e"
 }, {
+  "executionUUIDs" : [ "e79568bc-7ee9-4639-839e-6725ff2d7554" ],
+  "name" : "layer export test",
+  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+  "uid" : "db004890-55bf-434c-b3a7-2852969728ec"
+}, {
+  "executionUUIDs" : [ "f7b9a0bd-59cb-4532-a218-0344e77cd122", "16632d51-fe28-4dfb-b53a-7cfa749062e9" ],
+  "name" : "auto beach",
+  "description" : ".",
+  "uid" : "28558748-ff19-4ecf-9feb-7dec9173996f"
+}, {
   "executionUUIDs" : [ "c1124b59-e2eb-460c-8690-f598152f662b" ],
   "name" : "Select black to macro",
   "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
@@ -54,7 +64,7 @@
   "description" : "black annotation to thick, tall stone walls. requires flat space or walls will be wobbly on top.",
   "uid" : "946cf120-4531-4e5a-9c9d-809acc4dbef1"
 }, {
-  "executionUUIDs" : [ "43fd21a0-dd42-4b8e-b655-ff0b7ac77b3b", "328f34b4-9994-422c-a85b-272c93e6263e", "a1f1fa77-387b-4b62-b7aa-aab71f307781", "6b3370ee-ba73-49b0-b64e-155195df7cb7", "a5838003-43b6-402d-85dd-269a0b019ecb", "a09da31d-82c2-47b2-863f-d1f584dbd5ad", "25ae2016-1bd7-44c2-a6c6-4217c3604a1c", "09e5d68d-991c-48e7-a4a8-59e1777be8d1" ],
+  "executionUUIDs" : [ "328f34b4-9994-422c-a85b-272c93e6263e", "a1f1fa77-387b-4b62-b7aa-aab71f307781", "6b3370ee-ba73-49b0-b64e-155195df7cb7", "a5838003-43b6-402d-85dd-269a0b019ecb", "a09da31d-82c2-47b2-863f-d1f584dbd5ad", "25ae2016-1bd7-44c2-a6c6-4217c3604a1c", "09e5d68d-991c-48e7-a4a8-59e1777be8d1" ],
   "name" : "Alpine mountains",
   "description" : "rocky slopes, frosted tips, only on cyan",
   "uid" : "6fa2a28b-3bed-4dc6-9e58-6d753137ef85"
