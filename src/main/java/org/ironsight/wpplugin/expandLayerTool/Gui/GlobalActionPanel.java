@@ -82,23 +82,27 @@ public class GlobalActionPanel extends JPanel {
 
     // Method to log messages
     public static void logMessage(String message) {
-        // Append the new log message
-        logPanel.append(getCurrentTimestamp()+":\n");
-        logPanel.append(message + "\n");
+        if (logPanel != null) {
+            // Append the new log message
+            logPanel.append(getCurrentTimestamp()+":\n");
+            logPanel.append(message + "\n");
 
-        // Limit the number of lines in the log text area
-        int lineCount = logPanel.getLineCount();
-        if (lineCount > MAX_LOG_LINES) {
-            try {
-                int end = logPanel.getLineEndOffset(lineCount - 1 - MAX_LOG_LINES);
-                logPanel.replaceRange("", 0, end);
-            } catch (Exception e) {
-                e.printStackTrace();
+            // Limit the number of lines in the log text area
+            int lineCount = logPanel.getLineCount();
+            if (lineCount > MAX_LOG_LINES) {
+                try {
+                    int end = logPanel.getLineEndOffset(lineCount - 1 - MAX_LOG_LINES);
+                    logPanel.replaceRange("", 0, end);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }
 
-        // Scroll to the end
-        logPanel.setCaretPosition(logPanel.getDocument().getLength());
+            // Scroll to the end
+            logPanel.setCaretPosition(logPanel.getDocument().getLength());
+        } else {
+            System.err.println(message);
+        }
     }
 
     private void applyToMap(MappingMacro macro) {
