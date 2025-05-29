@@ -10,39 +10,6 @@
   "description" : "filter out all values below 50% intermediate",
   "uid" : "25ae2016-1bd7-44c2-a6c6-4217c3604a1c"
 }, {
-  "inputId" : "ANNOTATION",
-  "inputData" : [ ],
-  "outputId" : "NIBBLE_LAYER",
-  "outputData" : [ "houses", "My Custom Objects.f3680e3339b12d50" ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
-  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0 ],
-  "name" : "crops layer",
-  "description" : "description of the action",
-  "uid" : "b86668af-bcbc-4a07-8d20-2c25ce4a86fd"
-}, {
-  "inputId" : "ALWAYS",
-  "inputData" : [ ],
-  "outputId" : "HEIGHT",
-  "outputData" : [ ],
-  "actionType" : "INCREMENT",
-  "inputPoints" : [ 0 ],
-  "outputPoints" : [ 6 ],
-  "name" : "raise wall 6m",
-  "description" : "6x6 meter wall",
-  "uid" : "00e732a8-5ced-4721-acd2-f31d65d934d3"
-}, {
-  "inputId" : "ALWAYS",
-  "inputData" : [ ],
-  "outputId" : "INTERMEDIATE_SELECTION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0 ],
-  "outputPoints" : [ 1 ],
-  "name" : "No Filter",
-  "description" : "description of the action",
-  "uid" : "0331e9d7-1427-450e-be79-2453243f9a1d"
-}, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE",
@@ -67,6 +34,17 @@
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
+  "outputId" : "SELECTION",
+  "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 0 ],
+  "name" : "clear selection",
+  "description" : "description of the action",
+  "uid" : "62912b73-a04e-44a5-8b88-ddd95c058ed6"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
   "outputId" : "WATER_HEIGHT",
   "outputData" : [ ],
   "actionType" : "SET",
@@ -75,17 +53,6 @@
   "name" : "reset water",
   "description" : "description of the action",
   "uid" : "81923515-7df3-4e69-a7b5-f5d1f7bf6eca"
-}, {
-  "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
-  "outputId" : "BINARY_SPRAYPAINT",
-  "outputData" : [ "Frost", "Frost" ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0, 80 ],
-  "outputPoints" : [ 0, 100 ],
-  "name" : "apply frost",
-  "description" : "description of the action",
-  "uid" : "a09da31d-82c2-47b2-863f-d1f584dbd5ad"
 }, {
   "inputId" : "HEIGHT",
   "inputData" : [ ],
@@ -98,17 +65,6 @@
   "description" : "description of the action",
   "uid" : "a153590b-5578-456e-a441-4118990b8211"
 }, {
-  "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
-  "outputId" : "TERRAIN",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 2, 4, 5, 7, 78 ],
-  "outputPoints" : [ 0, 100, 5, 100, 0 ],
-  "name" : "mark walls and path",
-  "description" : "description of the action",
-  "uid" : "aaa1fe99-1aea-4f8b-bb46-9cc74caeee27"
-}, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "HEIGHT",
@@ -120,17 +76,6 @@
   "description" : "description of the action",
   "uid" : "675eb20e-d25a-40ad-8b44-81dfd56265cc"
 }, {
-  "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
-  "outputId" : "INTERMEDIATE_SELECTION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0, 3 ],
-  "outputPoints" : [ 0, 1 ],
-  "name" : "filter outside",
-  "description" : "description of the action",
-  "uid" : "2a46066c-f159-42a2-8a8d-db93c3cc6856"
-}, {
   "inputId" : "BLOCK_DIRECTION",
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE",
@@ -141,50 +86,6 @@
   "name" : "subtract sunny side",
   "description" : "description of the action",
   "uid" : "a5838003-43b6-402d-85dd-269a0b019ecb"
-}, {
-  "inputId" : "ALWAYS",
-  "inputData" : [ ],
-  "outputId" : "VANILLA_BIOME",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0 ],
-  "outputPoints" : [ 1 ],
-  "name" : "Plains",
-  "description" : "description of the action",
-  "uid" : "b7122b2b-951c-4cb0-9ac5-9d78a48928f9"
-}, {
-  "inputId" : "ALWAYS",
-  "inputData" : [ ],
-  "outputId" : "TERRAIN",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0 ],
-  "outputPoints" : [ 21 ],
-  "name" : "beach",
-  "description" : "description of the action",
-  "uid" : "16632d51-fe28-4dfb-b53a-7cfa749062e9"
-}, {
-  "inputId" : "ALWAYS",
-  "inputData" : [ ],
-  "outputId" : "SELECTION",
-  "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0 ],
-  "outputPoints" : [ 0 ],
-  "name" : "Deselect",
-  "description" : "description of the action",
-  "uid" : "f10a62c4-e081-4a51-b6d6-a704bfb527a3"
-}, {
-  "inputId" : "DISTANCE_TO_EDGE",
-  "inputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
-  "outputId" : "ANNOTATION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0, 14, 15 ],
-  "outputPoints" : [ 0, 13, 0 ],
-  "name" : "distance",
-  "description" : "description of the action",
-  "uid" : "95747dbc-49c4-4975-acab-14613211f1f9"
 }, {
   "inputId" : "DISTANCE_TO_EDGE",
   "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
@@ -207,39 +108,6 @@
   "name" : "select black to macro",
   "description" : "description of the action",
   "uid" : "c1124b59-e2eb-460c-8690-f598152f662b"
-}, {
-  "inputId" : "ANNOTATION",
-  "inputData" : [ ],
-  "outputId" : "BINARY_LAYER",
-  "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
-  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ],
-  "name" : "Select red",
-  "description" : "description of the action",
-  "uid" : "3c41f342-f798-4f72-aa3a-1ee5701c9ec9"
-}, {
-  "inputId" : "ANNOTATION",
-  "inputData" : [ ],
-  "outputId" : "BINARY_LAYER",
-  "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
-  "outputPoints" : [ 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-  "name" : "select orange to macro",
-  "description" : "description of the action",
-  "uid" : "0c1677e1-a595-49bc-b2d2-222f9ca37763"
-}, {
-  "inputId" : "VANILLA_BIOME",
-  "inputData" : [ ],
-  "outputId" : "ANNOTATION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256 ],
-  "outputPoints" : [ 0, 13, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-  "name" : "mark biomes",
-  "description" : "description of the action",
-  "uid" : "61f3ea91-5ba6-4769-8365-018ec9cd8eef"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
@@ -276,17 +144,6 @@
 }, {
   "inputId" : "SLOPE",
   "inputData" : [ ],
-  "outputId" : "INTERMEDIATE",
-  "outputData" : [ ],
-  "actionType" : "LIMIT_TO",
-  "inputPoints" : [ 50, 63 ],
-  "outputPoints" : [ 100, 0 ],
-  "name" : "deselect steep",
-  "description" : "description of the action",
-  "uid" : "6b3370ee-ba73-49b0-b64e-155195df7cb7"
-}, {
-  "inputId" : "SLOPE",
-  "inputData" : [ ],
   "outputId" : "STONE_PALETTE",
   "outputData" : [ 0, 10, 4, 12, 13, 72, 73, 74, 150, 75, 5 ],
   "actionType" : "SET",
@@ -295,17 +152,6 @@
   "name" : "paint slopes",
   "description" : "description of the action",
   "uid" : "328f34b4-9994-422c-a85b-272c93e6263e"
-}, {
-  "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
-  "outputId" : "TERRAIN",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 2, 3 ],
-  "outputPoints" : [ 12, 0 ],
-  "name" : "paint road",
-  "description" : "description of the action",
-  "uid" : "de635858-98be-4812-a021-24f161d4d7ff"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
@@ -318,17 +164,6 @@
   "description" : "description of the action",
   "uid" : "b931c559-6e9b-479d-9ab4-a2cf304640fe"
 }, {
-  "inputId" : "DISTANCE_TO_EDGE",
-  "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
-  "outputId" : "ANNOTATION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 1, 7, 14, 15 ],
-  "outputPoints" : [ 2, 7, 10, 0 ],
-  "name" : "distance selection",
-  "description" : "description of the action",
-  "uid" : "e3f17d2d-b494-41ae-83f9-317e646a7066"
-}, {
   "inputId" : "ANNOTATION",
   "inputData" : [ ],
   "outputId" : "BINARY_LAYER",
@@ -339,17 +174,6 @@
   "name" : "frost on cyan",
   "description" : "description of the action",
   "uid" : "ea36ded6-69e2-48e6-aa2e-ef7d56692d70"
-}, {
-  "inputId" : "ALWAYS",
-  "inputData" : [ ],
-  "outputId" : "TERRAIN",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0 ],
-  "outputPoints" : [ 9 ],
-  "name" : "apply snow",
-  "description" : "description of the action",
-  "uid" : "09e5d68d-991c-48e7-a4a8-59e1777be8d1"
 }, {
   "inputId" : "HEIGHT",
   "inputData" : [ ],
@@ -373,6 +197,281 @@
   "description" : "description of the action",
   "uid" : "43fd21a0-dd42-4b8e-b655-ff0b7ac77b3b"
 }, {
+  "inputId" : "SLOPE",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "DECREMENT",
+  "inputPoints" : [ 20, 53 ],
+  "outputPoints" : [ 0, 1 ],
+  "name" : "no steep angles",
+  "description" : "description of the action",
+  "uid" : "8526cdb2-bb3c-4ce3-b6b7-9eeeb5ce2bef"
+}, {
+  "inputId" : "SLOPE",
+  "inputData" : [ ],
+  "outputId" : "SELECTION",
+  "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 45, 70, 71 ],
+  "outputPoints" : [ 0, 1, 0 ],
+  "name" : "45-70°",
+  "description" : "description of the action",
+  "uid" : "68bddcaa-f0a2-4f16-abea-65270bc4fe9e"
+}, {
+  "inputId" : "INTERMEDIATE",
+  "inputData" : [ ],
+  "outputId" : "NIBBLE_LAYER",
+  "outputData" : [ "village houses", "My Custom Objects.cb2251c8730bbcce" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 15 ],
+  "outputPoints" : [ 0, 15 ],
+  "name" : "house layer",
+  "description" : "description of the action",
+  "uid" : "e79568bc-7ee9-4639-839e-6725ff2d7554"
+}, {
+  "inputId" : "INTERMEDIATE",
+  "inputData" : [ ],
+  "outputId" : "BINARY_SPRAYPAINT",
+  "outputData" : [ "org.pepsoft.worldpainter.selection.SelectionBlock", "SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 100 ],
+  "outputPoints" : [ 0, 100 ],
+  "name" : "crops",
+  "description" : "description of the action",
+  "uid" : "f835b8b1-20b8-4f24-a638-d1a9704aeafe"
+}, {
+  "inputId" : "ANNOTATION",
+  "inputData" : [ ],
+  "outputId" : "NIBBLE_LAYER",
+  "outputData" : [ "houses", "My Custom Objects.f3680e3339b12d50" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0 ],
+  "name" : "crops layer",
+  "description" : "description of the action",
+  "uid" : "b86668af-bcbc-4a07-8d20-2c25ce4a86fd"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "HEIGHT",
+  "outputData" : [ ],
+  "actionType" : "INCREMENT",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 6 ],
+  "name" : "raise wall 6m",
+  "description" : "6x6 meter wall",
+  "uid" : "00e732a8-5ced-4721-acd2-f31d65d934d3"
+}, {
+  "inputId" : "WATER_DEPTH",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 50 ],
+  "outputPoints" : [ 1, 0 ],
+  "name" : "except on water",
+  "description" : "description of the action",
+  "uid" : "368f5615-8190-4381-bb00-66977de0603a"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 1 ],
+  "name" : "No Filter",
+  "description" : "description of the action",
+  "uid" : "0331e9d7-1427-450e-be79-2453243f9a1d"
+}, {
+  "inputId" : "VANILLA_BIOME",
+  "inputData" : [ ],
+  "outputId" : "SELECTION",
+  "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ],
+  "name" : "auto biome",
+  "description" : "description of the action",
+  "uid" : "63fd4bd9-e0c5-4d7e-8469-010df68bb4b7"
+}, {
+  "inputId" : "INTERMEDIATE",
+  "inputData" : [ ],
+  "outputId" : "BINARY_SPRAYPAINT",
+  "outputData" : [ "Frost", "Frost" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 80 ],
+  "outputPoints" : [ 0, 100 ],
+  "name" : "apply frost",
+  "description" : "description of the action",
+  "uid" : "a09da31d-82c2-47b2-863f-d1f584dbd5ad"
+}, {
+  "inputId" : "INTERMEDIATE",
+  "inputData" : [ ],
+  "outputId" : "TERRAIN",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 2, 4, 5, 7, 78 ],
+  "outputPoints" : [ 0, 100, 5, 100, 0 ],
+  "name" : "mark walls and path",
+  "description" : "description of the action",
+  "uid" : "aaa1fe99-1aea-4f8b-bb46-9cc74caeee27"
+}, {
+  "inputId" : "INTERMEDIATE",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 3 ],
+  "outputPoints" : [ 0, 1 ],
+  "name" : "filter outside",
+  "description" : "description of the action",
+  "uid" : "2a46066c-f159-42a2-8a8d-db93c3cc6856"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "VANILLA_BIOME",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 1 ],
+  "name" : "Plains",
+  "description" : "description of the action",
+  "uid" : "b7122b2b-951c-4cb0-9ac5-9d78a48928f9"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "TERRAIN",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 21 ],
+  "name" : "apply beach",
+  "description" : "description of the action",
+  "uid" : "16632d51-fe28-4dfb-b53a-7cfa749062e9"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "SELECTION",
+  "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 0 ],
+  "name" : "Deselect",
+  "description" : "description of the action",
+  "uid" : "f10a62c4-e081-4a51-b6d6-a704bfb527a3"
+}, {
+  "inputId" : "DISTANCE_TO_EDGE",
+  "inputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "outputId" : "ANNOTATION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 14, 15 ],
+  "outputPoints" : [ 0, 13, 0 ],
+  "name" : "distance",
+  "description" : "description of the action",
+  "uid" : "95747dbc-49c4-4975-acab-14613211f1f9"
+}, {
+  "inputId" : "ANNOTATION",
+  "inputData" : [ ],
+  "outputId" : "BINARY_LAYER",
+  "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 ],
+  "name" : "Select red",
+  "description" : "description of the action",
+  "uid" : "3c41f342-f798-4f72-aa3a-1ee5701c9ec9"
+}, {
+  "inputId" : "ANNOTATION",
+  "inputData" : [ ],
+  "outputId" : "BINARY_LAYER",
+  "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+  "outputPoints" : [ 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+  "name" : "select orange to macro",
+  "description" : "description of the action",
+  "uid" : "0c1677e1-a595-49bc-b2d2-222f9ca37763"
+}, {
+  "inputId" : "VANILLA_BIOME",
+  "inputData" : [ ],
+  "outputId" : "ANNOTATION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256 ],
+  "outputPoints" : [ 0, 13, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+  "name" : "mark biomes",
+  "description" : "description of the action",
+  "uid" : "61f3ea91-5ba6-4769-8365-018ec9cd8eef"
+}, {
+  "inputId" : "SLOPE",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 50, 63 ],
+  "outputPoints" : [ 100, 0 ],
+  "name" : "deselect steep",
+  "description" : "description of the action",
+  "uid" : "6b3370ee-ba73-49b0-b64e-155195df7cb7"
+}, {
+  "inputId" : "INTERMEDIATE",
+  "inputData" : [ ],
+  "outputId" : "TERRAIN",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 2, 3 ],
+  "outputPoints" : [ 12, 0 ],
+  "name" : "paint road",
+  "description" : "description of the action",
+  "uid" : "de635858-98be-4812-a021-24f161d4d7ff"
+}, {
+  "inputId" : "DISTANCE_TO_EDGE",
+  "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
+  "outputId" : "ANNOTATION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 1, 7, 14, 15 ],
+  "outputPoints" : [ 2, 7, 10, 0 ],
+  "name" : "distance selection",
+  "description" : "description of the action",
+  "uid" : "e3f17d2d-b494-41ae-83f9-317e646a7066"
+}, {
+  "inputId" : "WATER_DEPTH",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 52 ],
+  "outputPoints" : [ 0, 1 ],
+  "name" : "only on water",
+  "description" : "description of the action",
+  "uid" : "ccdb9830-a63a-4b35-a6fb-e55ed4baef15"
+}, {
+  "inputId" : "VANILLA_BIOME",
+  "inputData" : [ ],
+  "outputId" : "SELECTION",
+  "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256 ],
+  "outputPoints" : [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+  "name" : "plains biome",
+  "description" : "description of the action",
+  "uid" : "81a6fd0d-dd2f-4a50-8812-a47acbeccc3f"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "TERRAIN",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 9 ],
+  "name" : "apply snow",
+  "description" : "description of the action",
+  "uid" : "09e5d68d-991c-48e7-a4a8-59e1777be8d1"
+}, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ ],
   "outputId" : "HEIGHT",
@@ -383,17 +482,6 @@
   "name" : "raise walls",
   "description" : "description of the action",
   "uid" : "9444da9f-c5db-44af-ac9d-8d5406f032e5"
-}, {
-  "inputId" : "SLOPE",
-  "inputData" : [ ],
-  "outputId" : "INTERMEDIATE_SELECTION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 30, 45 ],
-  "outputPoints" : [ 1, 0 ],
-  "name" : "no steep angles",
-  "description" : "description of the action",
-  "uid" : "8526cdb2-bb3c-4ce3-b6b7-9eeeb5ce2bef"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
@@ -417,17 +505,6 @@
   "description" : "description of the action",
   "uid" : "4c83e456-3c49-4b4b-81d1-1a0f3f627811"
 }, {
-  "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
-  "outputId" : "NIBBLE_LAYER",
-  "outputData" : [ "village houses", "My Custom Objects.cb2251c8730bbcce" ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0, 15 ],
-  "outputPoints" : [ 0, 15 ],
-  "name" : "house layer",
-  "description" : "description of the action",
-  "uid" : "e79568bc-7ee9-4639-839e-6725ff2d7554"
-}, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE_SELECTION",
@@ -438,17 +515,6 @@
   "name" : "Select all",
   "description" : "description of the action",
   "uid" : "6d48d81a-463f-4d19-b2cc-dff9d4f4914e"
-}, {
-  "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
-  "outputId" : "BINARY_SPRAYPAINT",
-  "outputData" : [ "Plants.d3ed9daf2a28297", "Crops" ],
-  "actionType" : "SET",
-  "inputPoints" : [ 4, 10 ],
-  "outputPoints" : [ 0, 80 ],
-  "name" : "crops",
-  "description" : "description of the action",
-  "uid" : "f835b8b1-20b8-4f24-a638-d1a9704aeafe"
 }, {
   "inputId" : "ANNOTATION",
   "inputData" : [ ],
@@ -476,10 +542,10 @@
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE_SELECTION",
   "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0, 10, 89 ],
-  "outputPoints" : [ 0, 1, 0 ],
+  "actionType" : "DECREMENT",
+  "inputPoints" : [ 30, 36 ],
+  "outputPoints" : [ 0, 1 ],
   "name" : "filter shallow water",
-  "description" : "description of the action",
+  "description" : "filter out water deeper than 30m",
   "uid" : "f7b9a0bd-59cb-4532-a218-0344e77cd122"
 } ]
