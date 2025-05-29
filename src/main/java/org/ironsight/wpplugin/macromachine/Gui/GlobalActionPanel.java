@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 
 import javax.swing.*;
@@ -103,6 +104,7 @@ public class GlobalActionPanel extends JPanel {
         } else {
             System.err.println(message);
         }
+        MacroMachinePlugin.error(message);
     }
 
     private void applyToMap(MappingMacro macro) {

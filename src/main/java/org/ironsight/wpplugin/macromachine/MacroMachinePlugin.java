@@ -6,6 +6,7 @@ import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.AbstractPlugin;
 import org.pepsoft.worldpainter.plugins.LayerProvider;
 import org.pepsoft.worldpainter.plugins.OperationProvider;
+import org.pepsoft.worldpainter.plugins.WPPluginManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,12 +48,22 @@ public class MacroMachinePlugin extends AbstractPlugin implements
     // OperationProvider
     private List<Operation> OPERATIONS;
 
+    public static void error(String mssg) {
+        if (logger != null)
+            logger.error(mssg);
+        else
+            System.err.println(mssg);
+    }
+
+    private static org.slf4j.Logger logger;
+
     /**
      * The plugin class must have a default (public, no arguments) constructor.
      */
     public MacroMachinePlugin() {
         super(NAME, VERSION);
         instance = this;
+        logger = org.slf4j.LoggerFactory.getLogger(MacroMachinePlugin.class);
     }
 
     @Override
