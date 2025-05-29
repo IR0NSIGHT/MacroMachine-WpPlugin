@@ -25,7 +25,7 @@ public class MappingMacroContainer extends AbstractOperationContainer<MappingMac
 
     private static String getActionsFilePath() {
         String currentWorkingDir = System.getProperty("user.dir");
-        if (isDebugMode()) return currentWorkingDir+"/src/main/resources/DefaultMacros.json";
+        if (isDebugMode()) return currentWorkingDir + "/macros.json";
         else return new File(Configuration.getConfigDir(), "plugins").getPath() + "/macros.json";
     }
 

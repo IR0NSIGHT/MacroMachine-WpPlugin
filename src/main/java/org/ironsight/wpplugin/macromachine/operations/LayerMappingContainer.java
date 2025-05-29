@@ -27,11 +27,12 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
 
     private static String getActionsFilePath() {
         String currentWorkingDir = System.getProperty("user.dir");
-        if (isDebugMode()) return currentWorkingDir+"/src/main/resources/DefaultActions.json";
+        if (isDebugMode()) return currentWorkingDir + "/mappings.json";
         else return new File(Configuration.getConfigDir(), "plugins").getPath() + "/mappings.json";
     }
 
     public static boolean isDebugMode() {
+        return false;/*
         RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
         List<String> arguments = runtimeMXBean.getInputArguments();
 
@@ -41,6 +42,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
             }
         }
         return false;
+        */
     }
 
     public static void addDefaultMappings(LayerMappingContainer container) {
