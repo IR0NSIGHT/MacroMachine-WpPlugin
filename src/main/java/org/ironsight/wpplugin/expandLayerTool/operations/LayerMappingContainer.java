@@ -21,10 +21,10 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class LayerMappingContainer extends AbstractOperationContainer<LayerMapping> {
-    public static LayerMappingContainer INSTANCE = new LayerMappingContainer();
+    public static LayerMappingContainer INSTANCE = new LayerMappingContainer(getActionsFilePath());
 
-    public LayerMappingContainer() {
-        super(LayerMapping.class, getActionsFilePath(), "/DefaultActions.json");
+    public LayerMappingContainer(String filePath) {
+        super(LayerMapping.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultActions.json");
 
         // Register a shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -34,7 +34,8 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
     }
 
     private static String getActionsFilePath() {
-        if (isDebugMode()) return "/home/klipper/IdeaProjects/DemoWPPlugin/src/main/resources/DefaultActions.json";
+        String currentWorkingDir = System.getProperty("user.dir");
+        if (isDebugMode()) return currentWorkingDir+"/src/main/resources/DefaultActions.json";
         else return new File(Configuration.getConfigDir(), "plugins").getPath() + "/mappings.json";
     }
 

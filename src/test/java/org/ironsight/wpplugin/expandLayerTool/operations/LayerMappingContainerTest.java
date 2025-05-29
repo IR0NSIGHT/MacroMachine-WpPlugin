@@ -12,7 +12,8 @@ class LayerMappingContainerTest {
 
     @Test
     void updateMapping() {
-        LayerMappingContainer container = new LayerMappingContainer();
+        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+                ".json");
         LayerMapping mapping = container.addMapping();
 
         {
@@ -46,7 +47,8 @@ class LayerMappingContainerTest {
 
     @Test
     void deleteMapping() {
-        LayerMappingContainer container = new LayerMappingContainer();
+        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+                ".json");
 
         UUID uid = container.addMapping().getUid();
         assertEquals(uid, container.queryById(uid).getUid());
@@ -57,7 +59,8 @@ class LayerMappingContainerTest {
 
     @Test
     void addMapping() {
-        LayerMappingContainer container = new LayerMappingContainer();
+        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+                ".json");
         UUID uid = container.addMapping().getUid();
         assertEquals(uid, container.queryById(uid).getUid());
 
@@ -69,7 +72,8 @@ class LayerMappingContainerTest {
 
     @Test
     void saveLoad() {
-        LayerMappingContainer container = new LayerMappingContainer();
+        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+                ".json");
         LayerMapping saved = container.addMapping().withName("hello i am a test mapping");
         container.updateMapping(saved, f -> {});
 
@@ -79,7 +83,8 @@ class LayerMappingContainerTest {
         container.writeToFile();
         container.readFromFile();
 
-        LayerMappingContainer newContainer = new LayerMappingContainer();
+        LayerMappingContainer newContainer = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+                ".json");
         newContainer.setFilePath(container.getFilePath());
         newContainer.readFromFile();
         LayerMapping loaded = newContainer.queryById(saved.getUid());
@@ -96,7 +101,8 @@ class LayerMappingContainerTest {
             }
         };
         assertEquals(0, ran[0]);
-        LayerMappingContainer container = new LayerMappingContainer();
+        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+                ".json");
         container.subscribe(runnable);
 
         LayerMapping mapping = container.addMapping();
@@ -126,7 +132,8 @@ class LayerMappingContainerTest {
             }
         };
         assertEquals(0, ran[0]);
-        LayerMappingContainer container = new LayerMappingContainer();
+        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+                ".json");
 
         LayerMapping mapping = container.addMapping();
         container.subscribeToMapping(mapping.getUid(), runnable);
