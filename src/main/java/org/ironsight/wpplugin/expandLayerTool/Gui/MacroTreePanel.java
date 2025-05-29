@@ -11,6 +11,7 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.expandLayerTool.Gui.HelpDialog.getHelpButton;
@@ -316,26 +317,19 @@ public class MacroTreePanel extends JPanel {
         });
         buttons.add(addButton);
 
-        JButton addActionButton = new JButton("Create action");
-        addActionButton.setToolTipText("Create an new, empty action and add it to all selected macros.");
-        addActionButton.addActionListener(e -> {
-            LayerMapping m = mappingContainer.addMapping();
-            HashSet<UUID> selected = new HashSet<>(selectedMacros);
-            for (UUID macroId : selected) {
-                MappingMacro macro = container.queryById(macroId);
-                if (macro == null) continue;
-                ArrayList<UUID> ids = new ArrayList<>(macro.executionUUIDs.length + 1);
-                Collections.addAll(ids, macro.executionUUIDs);
-                ids.add(m.getUid());
-                container.updateMapping(macro.withUUIDs(ids.toArray(new UUID[0])), f -> {});
-            }
-            update();
-        });
-        buttons.add(addActionButton);
-
         JButton removeButton = new JButton("Delete");
         removeButton.setToolTipText("Delete all selected macros permanently");
         removeButton.addActionListener(e -> {
+
+            //remove Mapping Actions from all macros
+            HashSet<UUID> deletedUUIDS = new HashSet<>();
+            deletedUUIDS.addAll(selectedMacros);
+            for (MappingMacro m: container.queryAll()) {
+                MappingMacro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs).filter(a -> !deletedUUIDS.contains(a)).toArray(UUID[]::new));
+                container.updateMapping(updated, f -> { throw new RuntimeException(f);});
+            }
+
+            // Delete action / Macro in containers
             container.deleteMapping(selectedMacros.toArray(new UUID[0]));
             mappingContainer.deleteMapping(selectedMacros.toArray(new UUID[0]));
         });
