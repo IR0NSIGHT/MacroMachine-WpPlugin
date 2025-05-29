@@ -7,14 +7,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.util.*;
 import java.util.function.Consumer;
+
+import static org.ironsight.wpplugin.macromachine.MacroMachinePlugin.error;
 
 public abstract class AbstractOperationContainer<T extends SaveableAction> {
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
@@ -112,11 +112,12 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         return list;
     }
 
-    public static void ensureSaveFileExists(String saveFilePath, String defaultFileResourcePath) {
+    public static void ensureSaveFileExists(String saveFilePath, String defaultFileResourcePath)
+            throws URISyntaxException, IOException {
         File saveFile = new File(saveFilePath);
 
         if (!saveFile.exists()) {
-            try {
+
                 // Path to the default macros file in the resources directory
                 URL url = AbstractOperationContainer.class.getResource(defaultFileResourcePath);
                 assert url != null : "Resource not found: " + defaultFileResourcePath;
@@ -124,34 +125,32 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
 
                 // Copy the default macros file to the save file path
                 Files.copy(defaultMacrosPath, saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                System.err.println("copy the default resource file from " + defaultFileResourcePath + " to " + saveFilePath);
+                error("copy the default resource file from " + url + " to " + saveFilePath);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.err.println("Failed to copy the default resource file from " + defaultFileResourcePath);
-            }
         } else {
-            System.out.println("Save file already exists at: " + saveFilePath);
+            error("Save file already exists at: " + saveFilePath);
         }
     }
 
     public void readFromFile() {
         if (suppressFileWriting) return;
-        ensureSaveFileExists(filePath, defaultFileResourcePath);
-        mappings.clear();
-        List<String> lines = null;
+
         try {
+            ensureSaveFileExists(filePath, defaultFileResourcePath);
+            mappings.clear();
+            List<String> lines = null;
             lines = Files.readAllLines(Paths.get(filePath), StandardCharsets.UTF_8);
             String jsonString = String.join("", lines);
             fromSaveObject(jsonString);
         }
-        catch (FileNotFoundException e) {
-            System.err.println("save file not found: " + filePath);
+        catch (NoSuchFileException |FileNotFoundException e) {
+            error("save file not found: " + filePath);
         } catch (JsonProcessingException e) {
-            System.err.println(filePath);
-            System.err.println(getClass().getSimpleName() + " - Error during file reading: " + e.getMessage());
+            error(filePath);
+            error(getClass().getSimpleName() + " - Error during file reading: " + e.getMessage());
             throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
+            error(e.toString());
             throw new RuntimeException(e);
         }
     }
@@ -179,7 +178,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error serializing object to JSON", e);
         } catch (IOException e) {
-            System.err.println(getClass().getSimpleName() + " - Error during file writing: " + e.getMessage());
+            error(getClass().getSimpleName() + " - Error during file writing: " + e.getMessage());
             e.printStackTrace();
         }
     }
