@@ -384,6 +384,17 @@
   "description" : "description of the action",
   "uid" : "9444da9f-c5db-44af-ac9d-8d5406f032e5"
 }, {
+  "inputId" : "SLOPE",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 30, 45 ],
+  "outputPoints" : [ 1, 0 ],
+  "name" : "no steep angles",
+  "description" : "description of the action",
+  "uid" : "8526cdb2-bb3c-4ce3-b6b7-9eeeb5ce2bef"
+}, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "TERRAIN",
