@@ -143,6 +143,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
     @Override
     public void writeToFile() {
         super.writeToFile();
+        /* // FIXME DISABLED UNTIL LAYER SAVING/LOADING IS FIGURED OUT
         //FIXME also save layers that are used as input?
         Predicate<LayerMapping> usesLayer = l -> l.output instanceof ILayerGetter;
         //collect all layers used in all actions
@@ -156,6 +157,8 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         LayerObjectContainer.getInstance().writeToFolder(layerFolder, errors::add, usedLayers.toArray(new String[0]));
         if (!errors.isEmpty())
             GlobalActionPanel.logMessage(errors.stream().map(Throwable::getMessage).collect(Collectors.joining("\n")));
+
+         */
     }
 
 
