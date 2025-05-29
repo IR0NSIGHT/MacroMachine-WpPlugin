@@ -14,7 +14,7 @@ import java.lang.management.RuntimeMXBean;
 import java.util.List;
 
 public class LayerMappingContainer extends AbstractOperationContainer<LayerMapping> {
-    public static LayerMappingContainer INSTANCE = new LayerMappingContainer(getActionsFilePath());
+    public static LayerMappingContainer INSTANCE;
 
     public LayerMappingContainer(String filePath) {
         super(LayerMapping.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultActions.json");

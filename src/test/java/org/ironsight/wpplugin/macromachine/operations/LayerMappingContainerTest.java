@@ -72,9 +72,11 @@ class LayerMappingContainerTest {
 
     @Test
     void saveLoad() {
+
         LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
                 ".json");
-        LayerMapping saved = container.addMapping().withName("hello i am a test mapping");
+        LayerMappingContainer.INSTANCE = container;
+                LayerMapping saved = container.addMapping().withName("hello i am a test mapping");
         container.updateMapping(saved, f -> {});
 
         assertEquals(saved, container.queryById(saved.getUid()));
