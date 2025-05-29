@@ -50,7 +50,7 @@ public class MacroMachinePlugin extends AbstractPlugin implements
 
     public static void error(String mssg) {
         if (logger != null)
-            logger.error(mssg);
+            logger.error("MacroMachine:" + mssg);
         else
             System.err.println(mssg);
     }
@@ -63,7 +63,7 @@ public class MacroMachinePlugin extends AbstractPlugin implements
     public MacroMachinePlugin() {
         super(NAME, VERSION);
         instance = this;
-        logger = org.slf4j.LoggerFactory.getLogger(MacroMachinePlugin.class);
+        logger = org.slf4j.LoggerFactory.getLogger(WPPluginManager.class);
     }
 
     @Override
