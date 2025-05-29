@@ -15,6 +15,8 @@ public class InputOutputProvider {
     public final ArrayList<IPositionValueSetter> setters = new ArrayList<>();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
     public ArrayList<IPositionValueGetter> getters = new ArrayList<>();
+    private AllowedLayerSettings inputSettings = new AllowedLayerSettings(false, true, true, true);
+    private AllowedLayerSettings outputSettings = new AllowedLayerSettings(false, true, true, true);
 
     private InputOutputProvider() {
         updateFrom(null);
@@ -51,13 +53,17 @@ public class InputOutputProvider {
                 getters.add(new BinaryLayerIO(l));
             }
         }
-        if (dimension != null) {    //TODO check: does this actually collect custom layers?
+        if (dimension != null) {
             for (Layer l : dimension.getCustomLayers()) {
                 if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
-                    setters.add(new NibbleLayerSetter(l));
-                    getters.add(new NibbleLayerSetter(l));
+                    if (inputSettings.allowCustomLayers)
+                        setters.add(new NibbleLayerSetter(l));
+                    if (outputSettings.allowCustomLayers)
+                        getters.add(new NibbleLayerSetter(l));
                 }
-                if (l.dataSize.equals(Layer.DataSize.BIT)) setters.add(new BitLayerBinarySpraypaintApplicator(l));
+                if (l.dataSize.equals(Layer.DataSize.BIT))
+                    if (outputSettings.allowCustomLayers)
+                        setters.add(new BitLayerBinarySpraypaintApplicator(l));
             }
         }
         getters.add(new DistanceToLayerEdgeGetter(SelectionBlock.INSTANCE));
@@ -108,4 +114,17 @@ public class InputOutputProvider {
     }
 
 
+    private class AllowedLayerSettings {
+        boolean allowCustomLayers;
+        boolean allowDefaultLayers;
+        boolean allowSelection;
+        boolean allowAnnotations;
+        public AllowedLayerSettings(boolean allowCustomLayers, boolean allowDefaultLayers, boolean allowSelection,
+                                    boolean allowAnnotations) {
+            this.allowCustomLayers = allowCustomLayers;
+            this.allowDefaultLayers = allowDefaultLayers;
+            this.allowSelection = allowSelection;
+            this.allowAnnotations = allowAnnotations;
+        }
+    }
 }
