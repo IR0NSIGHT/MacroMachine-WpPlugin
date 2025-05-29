@@ -3,10 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -117,16 +114,26 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         File saveFile = new File(saveFilePath);
 
         if (!saveFile.exists()) {
-
+            try {
                 // Path to the default macros file in the resources directory
                 URL url = AbstractOperationContainer.class.getResource(defaultFileResourcePath);
-                assert url != null : "Resource not found: " + defaultFileResourcePath;
-                Path defaultMacrosPath = Paths.get(url.toURI());
+
+                if (url == null) {
+                    throw new IOException("Resource not found: " + defaultFileResourcePath);
+                }
 
                 // Copy the default macros file to the save file path
-                Files.copy(defaultMacrosPath, saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                error("copy the default resource file from " + url + " to " + saveFilePath);
-
+                try (InputStream inputStream = AbstractOperationContainer.class.getResourceAsStream(defaultFileResourcePath)) {
+                    if (inputStream != null) {
+                        Files.copy(inputStream, saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        System.out.println("Copied the default resource file from " + url + " to " + saveFilePath);
+                    } else {
+                        throw new IOException("Failed to open stream for resource: " + defaultFileResourcePath);
+                    }
+                }
+            } catch (IOException e) {
+                error("Failed to copy the default resource file: " + e.getMessage());
+            }
         } else {
             error("Save file already exists at: " + saveFilePath);
         }
