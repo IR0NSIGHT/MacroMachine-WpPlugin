@@ -2,6 +2,6 @@
   "name": "${project.artifactId}",
   "version": "${project.version}",
   "classes": [
-    "org.ironsight.wpplugin.expandLayerTool.ExpandLayerPlugin"
+    "org.ironsight.wpplugin.macromachine.MacroMachinePlugin"
   ]
 }
