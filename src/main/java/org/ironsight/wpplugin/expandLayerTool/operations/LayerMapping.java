@@ -22,10 +22,6 @@ public class LayerMapping implements SaveableAction {
     private final UUID uid;    //TODO make final and private
     private final int[] mappings;
 
-    public IPositionValueGetter getInput() {
-        return input;
-    }
-
     public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
                         ActionType type, String name, String description, UUID uid) {
         assert name != null;
@@ -66,7 +62,7 @@ public class LayerMapping implements SaveableAction {
             if (this.mappingPoints.length == 0) return;
             int j = -1;
             for (int i = input.getMinValue(); i <= input.getMaxValue(); i++) {
-                int mappingPointIdx =Math.max(Math.min(j + 1, mappingPoints.length - 1), 0);
+                int mappingPointIdx = Math.max(Math.min(j + 1, mappingPoints.length - 1), 0);
                 MappingPoint point = mappingPoints[mappingPointIdx];
                 if (point.input == i) {
                     j++;
@@ -80,7 +76,8 @@ public class LayerMapping implements SaveableAction {
             if (this.mappingPoints.length == 1) {
                 Arrays.fill(mappings, mappingPoints[0].output);
                 return;
-            };
+            }
+            ;
             // 2 or more mapping points are enough to interpolate
 
             //prepare input points by adding min-input and max-input points for easier index finding of interpolation
@@ -127,6 +124,27 @@ public class LayerMapping implements SaveableAction {
                 wrapper.getDescription(),
                 wrapper.getUid());
         return mapping;
+    }
+
+    public static List<Point2d> calculateRanges(LayerMapping mapping) {
+        LinkedList<Point2d> ranges = new LinkedList<>();
+        int previousOutput = mapping.map(mapping.input.getMinValue());
+        int previousInput = mapping.input.getMinValue();
+        for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
+            if (i == mapping.input.getMaxValue()) {
+                ranges.add(new Point2d(previousInput, i));
+            }
+            if (mapping.map(i) != previousOutput) {
+                ranges.add(new Point2d(previousInput, i - 1));
+                previousOutput = mapping.map(i);
+                previousInput = i;
+            }
+        }
+        return ranges;
+    }
+
+    public IPositionValueGetter getInput() {
+        return input;
     }
 
     public LayerMapping withInput(IPositionValueGetter input) {
@@ -181,7 +199,15 @@ public class LayerMapping implements SaveableAction {
         return mappingPoints;
     }
 
+    private MappingPoint sanitize(MappingPoint p) {
+        return new MappingPoint(sanitizeInput(p.input), sanitizeOutput(p.output));
+    }
+
     public LayerMapping withNewPoints(MappingPoint[] mappingPoints) {
+        mappingPoints = Arrays.stream(mappingPoints)
+                .map(this::sanitize)
+                .toArray(MappingPoint[]::new);
+
         TreeSet<MappingPoint> newPoints = new TreeSet<>(Comparator.comparingInt(o -> o.input));
         newPoints.addAll(Arrays.asList(mappingPoints));
         return new LayerMapping(this.input,
@@ -207,25 +233,8 @@ public class LayerMapping implements SaveableAction {
         return description;
     }
 
-    public static List<Point2d> calculateRanges(LayerMapping mapping) {
-        LinkedList<Point2d> ranges = new LinkedList<>();
-        int previousOutput = mapping.map(mapping.input.getMinValue());
-        int previousInput = mapping.input.getMinValue();
-        for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
-            if (i == mapping.input.getMaxValue()) {
-                ranges.add(new Point2d(previousInput, i));
-            }
-            if  (mapping.map(i) != previousOutput) {
-                ranges.add(new Point2d(previousInput, i - 1));
-                previousOutput = mapping.map(i);
-                previousInput = i;
-            }
-        }
-        return ranges;
-    }
-
     public void applyToPoint(Dimension dim, int x, int y) {
-        if  (!output.getProviderType().equals(INTERMEDIATE_SELECTION) && !IntermediateSelectionIO.instance.isSelected())
+        if (!output.getProviderType().equals(INTERMEDIATE_SELECTION) && !IntermediateSelectionIO.instance.isSelected())
             return;
 
         if (mappingPoints.length == 0) {
@@ -274,7 +283,7 @@ public class LayerMapping implements SaveableAction {
         assert input >= this.input.getMinValue() :
                 "input " + input + " is out of range for minimum" + this.input.getMinValue();
         assert input <= this.input.getMaxValue() :
-                "invalid input"+input + " has to be lower equal than " + this.input.getMaxValue();
+                "invalid input" + input + " has to be lower equal than " + this.input.getMaxValue();
 
         int value = mappings[input - this.input.getMinValue()];
         return value;

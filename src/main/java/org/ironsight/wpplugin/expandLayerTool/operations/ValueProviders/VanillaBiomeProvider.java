@@ -67,7 +67,9 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     @Override
     public String valueToString(int value) {
         if (value < 0 || value >= biomes.length) return "INVALID (" + value + ")";
-        if (biomes[value] == null) return "\uFFFCNULL-(" + value + ")";
+        if (value == 255)
+            return "Auto Biome";
+        if (biomes[value] == null) return "zzz-NULL-(" + value + ")";
         return biomes[value];
     }
 
