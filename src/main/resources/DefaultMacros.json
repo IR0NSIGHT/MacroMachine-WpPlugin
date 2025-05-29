@@ -24,9 +24,9 @@
   "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
   "uid" : "db004890-55bf-434c-b3a7-2852969728ec"
 }, {
-  "executionUUIDs" : [ "f7b9a0bd-59cb-4532-a218-0344e77cd122", "16632d51-fe28-4dfb-b53a-7cfa749062e9" ],
+  "executionUUIDs" : [ "8526cdb2-bb3c-4ce3-b6b7-9eeeb5ce2bef", "f7b9a0bd-59cb-4532-a218-0344e77cd122", "16632d51-fe28-4dfb-b53a-7cfa749062e9" ],
   "name" : "auto beach",
-  "description" : ".",
+  "description" : "simple beach under water at flat angles.",
   "uid" : "28558748-ff19-4ecf-9feb-7dec9173996f"
 }, {
   "executionUUIDs" : [ "c1124b59-e2eb-460c-8690-f598152f662b" ],
