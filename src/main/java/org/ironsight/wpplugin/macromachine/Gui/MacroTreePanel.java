@@ -212,31 +212,6 @@ public class MacroTreePanel extends JPanel {
                     root.add(macroNode);
                 });
 
-        DefaultMutableTreeNode allNode = new DefaultMutableTreeNode(new SaveableAction() {
-            @Override
-            public UUID getUid() {
-                return UUID.fromString("123e4567-e89b-12d3-a456-426614174000"); //hardcoded random UUID to make note
-                // saveable for slection and expansion.
-            }
-
-            @Override
-            public String getName() {
-                return "All Actions";
-            }
-
-            @Override
-            public String getDescription() {
-                return "all existing actions list";
-            }
-        });
-        mappingContainer.queryAll()
-                .stream()
-                .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
-                        f.getDescription().toLowerCase().contains(filterString))
-                .sorted(Comparator.comparing(o -> o.getName().toLowerCase()))
-                .forEach(m -> allNode.add(LayerToNode(m)));
-        root.add(allNode);
-
         treeModel.reload(root);
 
         if (!expanded.isEmpty() && !selected.isEmpty() && tree.getModel().getRoot() != null) applyExpansionAndSelection(

@@ -148,13 +148,12 @@ public class MacroDesigner extends JPanel {
         macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
         JDialog dialog = new SelectLayerMappingDialog(macrosAndActions, selected -> {
             MappingMacro macro = this.macro;
-            if (selected.getUid() == null)
-                selected = LayerMappingContainer.INSTANCE.addMapping();
             int[] selection = table.getSelectedRows();
             if (table.getSelectedRows().length == 0) {
                 selection = new int[]{table.getRowCount() - 1};
             }
-
+            assert selected instanceof LayerMapping;
+            LayerMapping selectedAction = (LayerMapping) selected;
             //insert any mapping from container at tail of list
             ArrayList<UUID> uids = new ArrayList<>();
             Collections.addAll(uids, macro.executionUUIDs);
@@ -163,7 +162,10 @@ public class MacroDesigner extends JPanel {
             ArrayList<Integer> newSelection = new ArrayList<>(table.getSelectedRows().length);
             for (int row : selection) {
                 int idx = row + counter + 1;
-                uids.add(idx, selected.getUid());
+                LayerMapping actionClone = LayerMappingContainer.INSTANCE.addMapping();
+                LayerMappingContainer.INSTANCE.updateMapping(actionClone.withValuesFrom(selectedAction),
+                        System.err::println);
+                uids.add(idx, actionClone.getUid());
                 newSelection.add(idx);
                 counter++;
             }
