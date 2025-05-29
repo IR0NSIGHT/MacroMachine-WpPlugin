@@ -33,7 +33,7 @@ public class MacroDialogOperation extends AbstractOperation {
 
     public void openDialog() {
         try {
-            LayerObjectContainer.getInstance().setContainer(LayerManager.getInstance());
+            LayerObjectContainer.getInstance().setWpLayerManager(LayerManager.getInstance());
             LayerObjectContainer.getInstance().setDimension(this.getDimension());
             InputOutputProvider.INSTANCE.updateFrom(getDimension());
             JDialog dialog = createDialog(null, this::applyLayerAction);

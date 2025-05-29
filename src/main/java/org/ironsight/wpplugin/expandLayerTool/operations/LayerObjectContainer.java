@@ -17,8 +17,8 @@ import java.util.zip.GZIPOutputStream;
 public class LayerObjectContainer {
     private static LayerObjectContainer instance = new LayerObjectContainer();
     private Dimension dimension;
-    private LayerManager container;
-
+    private LayerManager wpLayerManager;
+    List<Layer> layers = new ArrayList<>();
     public LayerObjectContainer() {
         instance = this;
     }
@@ -28,13 +28,7 @@ public class LayerObjectContainer {
     }
 
     public Layer queryLayer(String layerId) {
-        List<Layer> layers = new ArrayList<>();
-        if (container != null) layers.addAll(container.getLayers());
-        if (dimension != null) layers.addAll(dimension.getCustomLayers());
-        layers.add(Annotations.INSTANCE);
-        layers.add(SelectionChunk.INSTANCE);
-        layers.add(SelectionBlock.INSTANCE);
-
+        assert layers != null;
         for (Layer layer : layers) {
             if (layer.getId().equals(layerId)) {
                 return layer;
@@ -43,12 +37,22 @@ public class LayerObjectContainer {
         return null;
     }
 
-    public void setDimension(Dimension dimension) {
-        this.dimension = dimension;
+    private void updateLayerList() {
+        layers.clear();
+        if (wpLayerManager != null) layers.addAll(wpLayerManager.getLayers());
+        if (dimension != null) layers.addAll(dimension.getCustomLayers());
+        layers.add(Annotations.INSTANCE);
+        layers.add(SelectionChunk.INSTANCE);
+        layers.add(SelectionBlock.INSTANCE);
     }
 
-    public void setContainer(LayerManager container) {
-        this.container = container;
+    public void setDimension(Dimension dimension) {
+        this.dimension = dimension;
+        updateLayerList();
+    }
+
+    public void setWpLayerManager(LayerManager wpLayerManager) {
+        this.wpLayerManager = wpLayerManager;
     }
 
     public void writeToFolder(String folder, Consumer<IOException> onError, String... layerId) {
