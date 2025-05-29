@@ -34,21 +34,25 @@ public class PointApplicator {
         TileFilter earlyAbortFilter = new TileFilter();
 
         // special case: get-distance-to-edge, then intermediate values, then write to map
-        boolean canFilterByDistance = actions.stream()
+        boolean isDistanceOperation = actions.stream().anyMatch(a -> a.input instanceof  DistanceToLayerEdgeGetter);
+        boolean canFilterByDistance =  actions.stream()
                 .allMatch(a -> (a.input instanceof DistanceToLayerEdgeGetter && a.map(0) == 0) || a.input.isVirtual());
-        if (canFilterByDistance) {
+        if (isDistanceOperation && canFilterByDistance) {
             String[] layerIds = actions.stream()
                     .filter(f -> f.input instanceof DistanceToLayerEdgeGetter)
                     .map(LayerMapping::getInput)
                     .map(in -> ((DistanceToLayerEdgeGetter) in).getLayerId())
                     .toArray(String[]::new);
-            return earlyAbortFilter.withLayer(TileFilter.FilterType.ONLY_ON, layerIds);
+            if (layerIds.length != 0)
+                return earlyAbortFilter.withLayer(TileFilter.FilterType.ONLY_ON, layerIds);
         }
 
         // special case: step filters for layers being present. layer=0 -> output=0
         // similar to ONLY ON LAYER PINES as tool-filter
         Predicate<LayerMapping> absentLayerIsFilteredOut = a -> a.input instanceof ILayerGetter && a.map(0) == 0;
-        boolean filterByLayer = actions.stream().allMatch(a -> absentLayerIsFilteredOut.test(a) || a.input.isVirtual());
+        boolean filterByLayer =
+                actions.stream().allMatch(a -> absentLayerIsFilteredOut.test(a) || a.input.isVirtual()) &&
+        actions.stream().anyMatch(absentLayerIsFilteredOut);
         if (filterByLayer) {
             String[] layerIds = actions.stream()
                     .filter(f -> f.input instanceof ILayerGetter)
