@@ -1,71 +1,31 @@
 [ {
-  "executionUUIDs" : [ "620f4f90-25a7-4f4f-b0c2-89680d068baf", "36a8dee9-3805-495f-bac3-98a4eee8cb8b", "4c83e456-3c49-4b4b-81d1-1a0f3f627811", "928ae9df-60bf-4564-9abe-27ffe8f19446", "e79568bc-7ee9-4639-839e-6725ff2d7554" ],
-  "name" : "Orange houses",
-  "description" : "paint a house schematic layer on orange annotation and mossy cobblestone.",
-  "uid" : "57a09163-98d2-4c4c-8975-278e2f2b45c8"
-}, {
-  "executionUUIDs" : [ "a153590b-5578-456e-a441-4118990b8211", "95747dbc-49c4-4975-acab-14613211f1f9" ],
-  "name" : "Overview",
+  "executionUUIDs" : [ "63fd4bd9-e0c5-4d7e-8469-010df68bb4b7" ],
+  "name" : "Selection Mask: auto biome",
   "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
-  "uid" : "876ddc2e-ffee-484c-a644-7296e1f3374c"
+  "uid" : "1d053e6a-18cc-4d7f-96df-e18013668542"
 }, {
-  "executionUUIDs" : [ "94f78d04-d795-44fb-8f08-794baab9cd6c", "8d4d619f-4dd6-45a6-bdda-32c520958c57", "c5af9fab-47a2-4e3e-89c3-2bb33951979f", "b7122b2b-951c-4cb0-9ac5-9d78a48928f9", "f10a62c4-e081-4a51-b6d6-a704bfb527a3", "81923515-7df3-4e69-a7b5-f5d1f7bf6eca", "d28990b2-f0ef-4150-ab41-d5aac18ee46c" ],
-  "name" : "Reset World",
+  "executionUUIDs" : [ "94f78d04-d795-44fb-8f08-794baab9cd6c", "8d4d619f-4dd6-45a6-bdda-32c520958c57", "c5af9fab-47a2-4e3e-89c3-2bb33951979f", "b7122b2b-951c-4cb0-9ac5-9d78a48928f9", "f10a62c4-e081-4a51-b6d6-a704bfb527a3", "81923515-7df3-4e69-a7b5-f5d1f7bf6eca" ],
+  "name" : "Apply: Reset World",
   "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
   "uid" : "73929b63-5ee8-4839-a78f-58a3852a97aa"
 }, {
-  "executionUUIDs" : [ "3c41f342-f798-4f72-aa3a-1ee5701c9ec9" ],
-  "name" : "Select red to macro",
+  "executionUUIDs" : [ "68bddcaa-f0a2-4f16-abea-65270bc4fe9e" ],
+  "name" : "Selection Mask: 45-70° angle",
   "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
-  "uid" : "2123515e-ee1b-4928-b133-372e17908f8e"
+  "uid" : "d35b2b3b-630b-4ca9-baa7-7928c06997ca"
 }, {
-  "executionUUIDs" : [ "e79568bc-7ee9-4639-839e-6725ff2d7554" ],
-  "name" : "layer export test",
-  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
-  "uid" : "db004890-55bf-434c-b3a7-2852969728ec"
-}, {
-  "executionUUIDs" : [ "8526cdb2-bb3c-4ce3-b6b7-9eeeb5ce2bef", "f7b9a0bd-59cb-4532-a218-0344e77cd122", "16632d51-fe28-4dfb-b53a-7cfa749062e9" ],
-  "name" : "auto beach",
+  "executionUUIDs" : [ "ccdb9830-a63a-4b35-a6fb-e55ed4baef15", "8526cdb2-bb3c-4ce3-b6b7-9eeeb5ce2bef", "f7b9a0bd-59cb-4532-a218-0344e77cd122", "16632d51-fe28-4dfb-b53a-7cfa749062e9" ],
+  "name" : "Apply: auto beach",
   "description" : "simple beach under water at flat angles.",
   "uid" : "28558748-ff19-4ecf-9feb-7dec9173996f"
 }, {
-  "executionUUIDs" : [ "c1124b59-e2eb-460c-8690-f598152f662b" ],
-  "name" : "Select black to macro",
+  "executionUUIDs" : [ "81a6fd0d-dd2f-4a50-8812-a47acbeccc3f" ],
+  "name" : "Selection Mask: plains biome",
   "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
-  "uid" : "ba86aac5-bd12-4232-9a3e-af8264d13a9c"
-}, {
-  "executionUUIDs" : [ "0c1677e1-a595-49bc-b2d2-222f9ca37763" ],
-  "name" : "Select orange to macro",
-  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
-  "uid" : "620f4f90-25a7-4f4f-b0c2-89680d068baf"
-}, {
-  "executionUUIDs" : [ "d945d70d-ccf7-4a2f-a3eb-6a4fde997050" ],
-  "name" : "Select cyan to macro",
-  "description" : "select cyan as the macro selection layer\t",
-  "uid" : "4c6c8337-f15f-4ab6-8fd5-8b4a6b7ea3e6"
-}, {
-  "executionUUIDs" : [ "2123515e-ee1b-4928-b133-372e17908f8e", "36a8dee9-3805-495f-bac3-98a4eee8cb8b", "2a46066c-f159-42a2-8a8d-db93c3cc6856", "de635858-98be-4812-a021-24f161d4d7ff" ],
-  "name" : "Red roads",
-  "description" : "radius 3 pencil with red annotation turned to road",
-  "uid" : "6a113483-2358-4d24-8eeb-f35b5981da6a"
-}, {
-  "executionUUIDs" : [ "4fef6957-1273-406f-867c-e078875ed262", "6a113483-2358-4d24-8eeb-f35b5981da6a", "57a09163-98d2-4c4c-8975-278e2f2b45c8", "946cf120-4531-4e5a-9c9d-809acc4dbef1" ],
-  "name" : "Auto Village from Annotations",
-  "description" : "",
-  "uid" : "0aa30096-2e5a-4ff0-8b47-88dc0e99d544"
-}, {
-  "executionUUIDs" : [ "4c6c8337-f15f-4ab6-8fd5-8b4a6b7ea3e6", "36a8dee9-3805-495f-bac3-98a4eee8cb8b", "9444da9f-c5db-44af-ac9d-8d5406f032e5", "aaa1fe99-1aea-4f8b-bb46-9cc74caeee27", "f835b8b1-20b8-4f24-a638-d1a9704aeafe" ],
-  "name" : "Cyan Crop Field",
-  "description" : "Cyan -> wheat field, surrounded by 1m tall rock wall",
-  "uid" : "4fef6957-1273-406f-867c-e078875ed262"
-}, {
-  "executionUUIDs" : [ "c1124b59-e2eb-460c-8690-f598152f662b", "763e8fa1-c093-488a-b31c-88f465184fde", "00e732a8-5ced-4721-acd2-f31d65d934d3", "b931c559-6e9b-479d-9ab4-a2cf304640fe" ],
-  "name" : "Black castle",
-  "description" : "black annotation to thick, tall stone walls. requires flat space or walls will be wobbly on top.",
-  "uid" : "946cf120-4531-4e5a-9c9d-809acc4dbef1"
+  "uid" : "d1e3e684-024b-473c-b12d-0b7b0464753b"
 }, {
   "executionUUIDs" : [ "328f34b4-9994-422c-a85b-272c93e6263e", "a1f1fa77-387b-4b62-b7aa-aab71f307781", "6b3370ee-ba73-49b0-b64e-155195df7cb7", "a5838003-43b6-402d-85dd-269a0b019ecb", "a09da31d-82c2-47b2-863f-d1f584dbd5ad", "25ae2016-1bd7-44c2-a6c6-4217c3604a1c", "09e5d68d-991c-48e7-a4a8-59e1777be8d1" ],
-  "name" : "Alpine mountains",
+  "name" : "Apply: Alpine mountains",
   "description" : "rocky slopes, frosted tips, only on cyan",
   "uid" : "6fa2a28b-3bed-4dc6-9e58-6d753137ef85"
 } ]
