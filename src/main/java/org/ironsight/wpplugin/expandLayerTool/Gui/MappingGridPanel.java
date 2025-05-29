@@ -24,7 +24,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     private boolean[] selectedInputs;
     private Consumer<boolean[]> onSelect = f -> {
     };
-    private boolean showCursor = true;
+    private boolean showCursor = false;
     private int mousePosX, mousePosY;
     private boolean mouseMoved = false;
     private int shiftY = 10;
@@ -194,7 +194,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         JPanel buttons = new JPanel(new BorderLayout());
         JCheckBox cursorCheckbox = new JCheckBox("cursor");
         cursorCheckbox.setSelected(showCursor);
-        buttons.add(cursorCheckbox, BorderLayout.WEST);
+        //buttons.add(cursorCheckbox, BorderLayout.WEST);
         cursorCheckbox.addActionListener(e -> {
             if (showCursor != cursorCheckbox.isSelected()) {
                 showCursor = cursorCheckbox.isSelected();
