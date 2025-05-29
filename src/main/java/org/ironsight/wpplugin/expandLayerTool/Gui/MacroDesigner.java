@@ -146,7 +146,10 @@ public class MacroDesigner extends JPanel {
         ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
         macrosAndActions.addAll(LayerMappingContainer.INSTANCE.queryAll());
         macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
-        JDialog dialog = new SelectLayerMappingDialog(macrosAndActions, f -> {
+        JDialog dialog = new SelectLayerMappingDialog(macrosAndActions, selected -> {
+            MappingMacro macro = this.macro;
+            if (selected.getUid() == null)
+                selected = LayerMappingContainer.INSTANCE.addMapping();
             int[] selection = table.getSelectedRows();
             if (table.getSelectedRows().length == 0) {
                 selection = new int[]{table.getRowCount() - 1};
@@ -160,18 +163,20 @@ public class MacroDesigner extends JPanel {
             ArrayList<Integer> newSelection = new ArrayList<>(table.getSelectedRows().length);
             for (int row : selection) {
                 int idx = row + counter + 1;
-                uids.add(idx, f.getUid());
+                uids.add(idx, selected.getUid());
                 newSelection.add(idx);
                 counter++;
             }
 
             UUID[] ids = uids.toArray(new UUID[0]);
             setMacro(macro.withUUIDs(ids), true);
+            assert Arrays.deepEquals(macro.executionUUIDs, ids) : "macro was added an action, but action is not " +
+                    "present after gui update";
             table.clearSelection();
             for (int row : newSelection) {
                 table.addRowSelectionInterval(row, row);
             }
-        });
+        }, LayerMapping.getNewEmptyAction());
         dialog.setModal(true);
         dialog.setVisible(true);
     }
@@ -241,13 +246,15 @@ public class MacroDesigner extends JPanel {
         ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
         macrosAndActions.addAll(LayerMappingContainer.INSTANCE.queryAll());
         macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
-        JDialog dialog = new SelectLayerMappingDialog(macrosAndActions, f -> {
+        JDialog dialog = new SelectLayerMappingDialog(macrosAndActions, selected -> {
+            if (selected.getUid() == null)
+                selected = LayerMappingContainer.INSTANCE.addMapping();
             UUID[] newIds = macro.executionUUIDs.clone();
             for (int row : this.table.getSelectedRows()) {
-                newIds[row] = f.getUid();
+                newIds[row] = selected.getUid();
             }
             setMacro(macro.withUUIDs(newIds), true);
-        });
+        }, LayerMapping.getNewEmptyAction());
         dialog.setModal(true);
         dialog.setVisible(true);
     }

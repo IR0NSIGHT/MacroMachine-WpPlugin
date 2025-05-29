@@ -32,17 +32,22 @@ public class ExpandLayerPlugin extends AbstractPlugin implements
         LayerProvider,          // Implement this to provide one or more singular, unconfigurable layers
         OperationProvider      // Implement this to provide one or more custom operations for the Tools panel
 {
-    public static ExpandLayerPlugin instance = new ExpandLayerPlugin();
+    public static ExpandLayerPlugin getInstance() {
+        if (instance == null)
+            instance = new ExpandLayerPlugin();
+        return instance;
+    }
+    private static ExpandLayerPlugin instance;
     /**
      * Short, human-readble name of the plugin.
      */
-    static final String NAME = "Expand Layer Tool Plugin";
+    public static final String NAME = "Expand Layer Tool Plugin";
 
     // LayerProvider
-    private static final List<Layer> LAYERS = new ArrayList<>(Collections.singleton(MacroSelectionLayer.INSTANCE));
+    private List<Layer> LAYERS;
 
     // OperationProvider
-    private static final List<Operation> OPERATIONS = singletonList(new MacroDialogOperation());
+    private List<Operation> OPERATIONS;
 
     /**
      * The plugin class must have a default (public, no arguments) constructor.
@@ -54,11 +59,16 @@ public class ExpandLayerPlugin extends AbstractPlugin implements
 
     @Override
     public List<Layer> getLayers() {
+        if (LAYERS == null) {
+            LAYERS = new ArrayList<>(Collections.singleton(MacroSelectionLayer.INSTANCE));
+        }
         return LAYERS;
     }
 
     @Override
     public List<Operation> getOperations() {
+        if (OPERATIONS == null)
+            OPERATIONS = singletonList(new MacroDialogOperation());
         return OPERATIONS;
     }
 }

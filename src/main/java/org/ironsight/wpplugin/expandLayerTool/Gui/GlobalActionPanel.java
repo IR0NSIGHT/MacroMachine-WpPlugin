@@ -48,8 +48,8 @@ public class GlobalActionPanel extends JPanel {
 
         macros.readFromFile();
         layers.readFromFile();
-        LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
-        MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
+    //    LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
+    //    MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
         JDialog diag = createDialog(null, f -> Collections.emptyList());
         diag.setVisible(true);
     }

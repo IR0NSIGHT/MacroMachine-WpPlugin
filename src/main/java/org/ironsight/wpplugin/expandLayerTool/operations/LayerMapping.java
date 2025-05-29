@@ -1,8 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueGetter;
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IPositionValueSetter;
-import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IntermediateSelectionIO;
+import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Dimension;
 
 import javax.vecmath.Point2d;
@@ -22,6 +20,11 @@ public class LayerMapping implements SaveableAction {
     private final UUID uid;    //TODO make final and private
     private final int[] mappings;
 
+    public static LayerMapping getNewEmptyAction() {
+        return new LayerMapping(new HeightProvider(),
+                new AnnotationSetter(),
+                new MappingPoint[0], ActionType.SET, "create new action", "new description",null);
+    }
     public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
                         ActionType type, String name, String description, UUID uid) {
         assert name != null;
