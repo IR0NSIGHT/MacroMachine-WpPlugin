@@ -29,6 +29,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         this.type = type;
         this.filePath = filePath;
         this.defaultFileResourcePath = defaultFileResourcePath;
+        System.out.println("container" + type + " path="+filePath + " default resource=" + defaultFileResourcePath);
     }
 
     public String getFilePath() {
@@ -123,9 +124,11 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
 
                 // Copy the default macros file to the save file path
                 Files.copy(defaultMacrosPath, saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                System.err.println("copy the default resource file from " + defaultFileResourcePath + " to " + saveFilePath);
+
             } catch (Exception e) {
                 e.printStackTrace();
-                System.err.println("Failed to copy the default macros file.");
+                System.err.println("Failed to copy the default resource file from " + defaultFileResourcePath);
             }
         } else {
             System.out.println("Save file already exists at: " + saveFilePath);
