@@ -21,7 +21,6 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
 
         // Register a shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            System.out.println("Shutdown hook executed. System.exit() was called.");
             this.writeToFile();
         }));
     }

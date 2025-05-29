@@ -63,7 +63,6 @@ public abstract class LayerMappingPanel extends JPanel {
                         (mapping.output.getMinValue()+mapping.output.getMaxValue())/2)});
             }
         }
-        System.out.println("EVENT: " + this.getClass().getSimpleName() + " UPDATE MAPPING TO " + mapping);
 
 
         setMapping(mapping);
@@ -78,7 +77,6 @@ public abstract class LayerMappingPanel extends JPanel {
         if (this.mapping != null && this.mapping.equals(mapping)) {
             return;
         }
-        System.out.println("EVENT: " + this.getClass().getSimpleName() + " SET MAPPING TO " + mapping);
         allowEvents = false;
         this.mapping = mapping;
         updateComponents();

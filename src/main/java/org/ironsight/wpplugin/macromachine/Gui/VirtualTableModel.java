@@ -24,7 +24,6 @@ class VirtualTableModel extends AbstractTableModel {
     private IMappingValue[] columnMappers = new IMappingValue[0];
 
     protected void updateComponents() {
-        System.out.println("virtual table modle update structure");
 
         UniqueList<IPositionValueGetter> inputs = new UniqueList<>();
         UniqueList<IPositionValueSetter> outputs = new UniqueList<>();
@@ -89,7 +88,6 @@ class VirtualTableModel extends AbstractTableModel {
     }
 
     public void fetchData(int firstRow, int lastRow) {
-        System.out.println("Fetching data from " + firstRow + " to " + lastRow);
         // Fetch data for the visible rows
         cache.clear();
         for (int i = firstRow; i <= lastRow; i++) {

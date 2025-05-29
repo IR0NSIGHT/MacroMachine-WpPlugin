@@ -31,11 +31,5 @@ public class UniqueList<T> {
 
     public static void main(String[] args) {
         UniqueList<String> uniqueList = new UniqueList<>();
-
-        System.out.println(uniqueList.add("Apple")); // true
-        System.out.println(uniqueList.add("Banana")); // true
-        System.out.println(uniqueList.add("Apple")); // false, duplicate item
-
-        System.out.println(uniqueList.getList()); // Output: [Apple, Banana]
     }
 }
