@@ -84,7 +84,6 @@ public class MacroDialogOperation extends AbstractOperation {
             statistics.forEach(System.out::println);
 
         } catch (Exception ex) {
-            System.out.println(ex);
             return statistics;
         } finally {
             this.getDimension().setEventsInhibited(false);

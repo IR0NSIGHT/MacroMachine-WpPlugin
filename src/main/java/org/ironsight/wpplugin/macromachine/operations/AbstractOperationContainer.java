@@ -29,7 +29,6 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         this.type = type;
         this.filePath = filePath;
         this.defaultFileResourcePath = defaultFileResourcePath;
-        System.out.println(type + " ---> " + this.filePath);
     }
 
     public String getFilePath() {
@@ -69,7 +68,6 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
             T removed = mappings.remove(u);
             if (removed != null) {
                 list.add(removed.getUid());
-                System.out.println("removed objet from container: " + removed.getName());
             }
         }
         notify(list.toArray(new UUID[0]));
@@ -125,8 +123,6 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
 
                 // Copy the default macros file to the save file path
                 Files.copy(defaultMacrosPath, saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-                System.out.println("Default macros file copied to: " + saveFilePath);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.err.println("Failed to copy the default macros file.");

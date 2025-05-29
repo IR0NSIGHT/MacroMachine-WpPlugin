@@ -32,7 +32,6 @@ public class InputGetterComboBox extends JComboBox<String> {
     }
 
     public void SetSelected(IPositionValueGetter getter) {
-        System.out.println("INPUT DROPDOWN SET TO " + getter.getName());
         this.setSelectedItem(getter.getName());
         assert this.getSelectedProvider().equals(getter) : this.getSelectedProvider() + " != " + getter.getName();
     }

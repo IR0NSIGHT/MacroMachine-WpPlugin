@@ -172,7 +172,6 @@ public class MacroTreePanel extends JPanel {
     }
 
     private void update() {
-        System.out.println(this.getClass().getSimpleName() + " UPDATE ");
         LinkedList<UUID> expanded = new LinkedList<>();
         LinkedList<UUID> selected = new LinkedList<>();
         if (tree.getModel().getRoot() != null) {
@@ -189,7 +188,6 @@ public class MacroTreePanel extends JPanel {
         }
 
 
-        System.out.println("update macro tree panel");
         root.removeAllChildren();
         ArrayList<MappingMacro> macros = container.queryAll();
         macros.sort(Comparator.comparing(MappingMacro::getName));
@@ -202,7 +200,6 @@ public class MacroTreePanel extends JPanel {
                 .sorted(Comparator.comparing(o -> o.getName().toLowerCase()))
                 .forEach(macro -> {
                     DefaultMutableTreeNode macroNode = new DefaultMutableTreeNode(macro);
-                    System.out.println(" create macro node: " + macro.getName());
                     for (UUID uuid : macro.executionUUIDs) {
                         SaveableAction m = mappingContainer.queryById(uuid);
                         if (m == null) m = container.queryById(uuid);

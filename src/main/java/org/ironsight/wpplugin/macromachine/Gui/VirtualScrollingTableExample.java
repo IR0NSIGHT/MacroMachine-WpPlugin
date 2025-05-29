@@ -27,7 +27,6 @@ public class VirtualScrollingTableExample extends JPanel {
             int rowChange = e.getValue()/table.getRowHeight();
             if (rowChange == 0)
                 return;
-            System.out.println("scroll adjust by "+ rowChange + " rows");
             firstVisibleRow = Math.max(firstVisibleRow + rowChange, 0);
             lastVisibleRow = Math.max(lastVisibleRow + rowChange, 0);
             model.fetchData(firstVisibleRow, lastVisibleRow);

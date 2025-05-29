@@ -41,13 +41,11 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         if (selectedInputs == null ||
                 this.mapping.input.getMaxValue() - this.mapping.input.getMinValue() + 1 != selectedInputs.length) {
             resetSelection();
-            System.out.println("RESET INPUT SELECTION");
         }
     }
 
     private void setInputSelection(int input, boolean selected) {
         this.selectedInputs[input - mapping.input.getMinValue()] = selected;
-        System.out.println("Set selection to " + selected + " for " + input);
         onSelect.accept(selectedInputs);
     }
 
@@ -81,7 +79,6 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
             @Override
             public void mousePressed(MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    System.out.println("MOUSE 1 PRESSED");
                     Point grid = pixelToGrid(e.getX(), e.getY());
                     gridXDragStart = grid.x;
                     gridYDragStart = grid.y;
@@ -290,12 +287,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     }
 
     private void paintGrid(Graphics g) {
-        System.out.println("REDRAW");
         if (this.mapping == null) return;
         super.paintComponent(g);
-        //    g.setClip(0, 0, getWidth(), getHeight());
-        //     g.setColor(Color.black);
-        //     ((Graphics2D)g).fillRect(0,0,getWidth(),getHeight());
         int padding = fontheight * 2;
         shiftX = widthOutputStrings + padding;  //add some empty space ot the right
         // large?

@@ -69,7 +69,6 @@ public class LayerObjectContainer {
                          new ObjectOutputStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(
                     layerSaveFile))))) {
                 out.writeObject(layer);
-                System.out.println("saved layer " + layer.getId() + " to " + layerSaveFile.getAbsolutePath());
             } catch (IOException e) {
                 onError.accept(e);
             }

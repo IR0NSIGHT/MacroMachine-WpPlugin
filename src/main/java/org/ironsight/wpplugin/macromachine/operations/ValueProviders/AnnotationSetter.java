@@ -51,7 +51,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
             String name = Annotations.getColourName(value);
             return name + "(" + value + ")";
         } catch (ArrayIndexOutOfBoundsException ex) {
-            System.out.println(ex);
+            System.err.println(ex);
         }
         return "ERROR";
     }

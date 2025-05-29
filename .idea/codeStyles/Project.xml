@@ -2,7 +2,6 @@
   <code_scheme name="Project" version="173">
     <JavaCodeStyleSettings>
       <option name="ANNOTATION_PARAMETER_WRAP" value="1" />
-      <option name="ENUM_FIELD_ANNOTATION_WRAP" value="1" />
     </JavaCodeStyleSettings>
     <codeStyleSettings language="JAVA">
       <option name="CALL_PARAMETERS_WRAP" value="5" />

@@ -46,8 +46,6 @@ public class ApplyAction {
         for (Collection<LayerMapping> step : actions) {
             PointApplicator stepApplicator = new PointApplicator(step, dim);
             TileFilter earlyAbortFilter = stepApplicator.earlyAbortFilter();
-            System.out.println("STEP:"+ step);
-            System.out.println("filter:" + earlyAbortFilter);
             statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, stepApplicator));
         }
         return statistics;

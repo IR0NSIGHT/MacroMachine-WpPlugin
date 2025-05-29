@@ -67,10 +67,8 @@ public class MappingPointCellEditor extends DefaultCellEditor implements TableCe
         @Override
         protected void fireActionEvent() {
             if (keyCharSelection) {
-                System.out.println("SUPPRESS ACTION EVENT");
                 return;
             }
-            System.out.println("FIRE ACTION EVENT");
             super.fireActionEvent();
         }
     }

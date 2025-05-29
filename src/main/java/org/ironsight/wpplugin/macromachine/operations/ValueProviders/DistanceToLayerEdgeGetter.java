@@ -70,7 +70,6 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         float point = ((1f * getMaxValue() - value) / getMaxValue());
         Color c = new Color(0, point, 0, 1);
-        System.out.println("point " + point + " => " + c);
         g.setColor(c);
         g.fillRect(0, 0, dim.width, dim.height);
     }

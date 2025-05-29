@@ -196,7 +196,6 @@ public class MacroDesigner extends JPanel {
             shiftRowSelection(table.getSelectedRows(), -1);
             setMacro(macro.withUUIDs(ids), true);
             scrollPane.scrollRectToVisible(table.getCellRect(table.getSelectedRows()[0], 0, true));
-            System.out.println("move mapping up to " + anchorRow);
         }
     }
 
@@ -225,7 +224,6 @@ public class MacroDesigner extends JPanel {
             //scroll to bottom selected row
             scrollPane.scrollRectToVisible(table.getCellRect(table.getSelectedRows()[table.getSelectedRows().length -
                     1], 0, true));
-            System.out.println("move mapping down to " + anchorRow);
         }
     }
 
@@ -262,7 +260,6 @@ public class MacroDesigner extends JPanel {
     }
 
     private void prepareTableModel() {
-        System.out.println("RESET TABLE MODEL");
         DefaultTableModel model = new DefaultTableModel();
         Object[] columns = new Object[]{"Action"};
         Object[][] data = new Object[0][];
@@ -271,7 +268,6 @@ public class MacroDesigner extends JPanel {
     }
 
     private void updateComponents() {
-        System.out.println(getClass().getSimpleName() + ": update components");
 
         name.setText(macro.getName());
         description.setText(macro.getDescription());
@@ -314,7 +310,6 @@ public class MacroDesigner extends JPanel {
         assert macro != null;
         if (!forceUpdate && this.macro != null && this.macro.equals(macro)) return; //dont update if nothing changed
         isUpdating = true;
-        System.out.println(getClass().getSimpleName() + ": set macro");
 
         this.macro = macro;
         updateComponents();
