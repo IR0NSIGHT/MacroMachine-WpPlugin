@@ -8,7 +8,8 @@ import java.awt.*;
 public class WaterDepthProvider implements IPositionValueSetter, IPositionValueGetter {
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        return Math.round(dim.getHeightAt(x, y) - dim.getWaterLevelAt(x, y));
+        int value = Math.max(0, Math.round(dim.getWaterLevelAt(x, y) - dim.getHeightAt(x, y)));
+        return value;
     }
 
     @Override
@@ -53,7 +54,7 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
 
     @Override
     public int getMaxValue() {
-        return 100;
+        return 500;
     }
 
     @Override
