@@ -153,6 +153,11 @@ public class LayerMapping implements SaveableAction {
         return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
     }
 
+    public LayerMapping withValuesFrom(LayerMapping other) {
+        return new LayerMapping(other.input, other.output, other. mappingPoints,  other.actionType,  other.name,
+                other.description, this.uid);
+    }
+
     public LayerMapping withOutput(IPositionValueSetter output) {
         return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
     }
