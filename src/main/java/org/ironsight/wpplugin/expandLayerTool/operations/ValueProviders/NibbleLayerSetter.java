@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.LayerObjectContainer;
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -53,14 +54,10 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        Collection<Layer> allLayers = new LinkedList<>();
-        allLayers.addAll(dim.getCustomLayers());
-        allLayers.addAll(LayerManager.getInstance().getLayers());
-        allLayers.stream()
-                .filter(f -> f.getId().equals(layerId))
-                .findFirst()
-                .map(l -> this.layer = l)
-                .orElseThrow(() -> new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")"));
+        LayerObjectContainer.getInstance().setDimension(dim);
+        layer = LayerObjectContainer.getInstance().queryLayer(layerId);
+        if (layer == null)
+            throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
     }
 
     @Override

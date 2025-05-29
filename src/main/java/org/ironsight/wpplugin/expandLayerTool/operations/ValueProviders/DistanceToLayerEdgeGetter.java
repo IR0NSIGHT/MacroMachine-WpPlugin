@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders;
 
+import org.ironsight.wpplugin.expandLayerTool.operations.LayerObjectContainer;
 import org.ironsight.wpplugin.expandLayerTool.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;
@@ -33,18 +34,10 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        if (layerId.equals(SelectionBlock.INSTANCE.getId())) layer = SelectionBlock.INSTANCE;
-        else if (layerId.equals(Annotations.INSTANCE.getId())) layer = Annotations.INSTANCE;
-        else {
-            Collection<Layer> allLayers = new LinkedList<>();
-            allLayers.addAll(dim.getCustomLayers());
-            allLayers.addAll(LayerManager.getInstance().getLayers());
-            allLayers.stream()
-                    .filter(f -> f.getId().equals(layerId))
-                    .findFirst()
-                    .map(l -> this.layer = l)
-                    .orElseThrow(() -> new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")"));
-        }
+        LayerObjectContainer.getInstance().setDimension(dim);
+        layer = LayerObjectContainer.getInstance().queryLayer(layerId);
+        if (layer == null)
+            throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
     }
 
     @Override
