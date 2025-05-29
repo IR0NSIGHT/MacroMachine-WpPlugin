@@ -42,12 +42,11 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
 
             boolean inputOutputChanged =
                     !inputSelect.getSelectedProvider().equals(mapping.input) || !outputSelect.getSelectedProvider().equals(mapping.output);
-            if (inputOutputChanged) // reset points as input/output may require different values than provided from
-                // old mapping.
-                newMap = newMap.withNewPoints(new MappingPoint[0]);
-            newMap = newMap.withInput(inputSelect.getSelectedProvider())
+            if (inputOutputChanged)  // rebuild map
+                newMap = newMap.withInput(inputSelect.getSelectedProvider())
                     .withOutput(outputSelect.getSelectedProvider())
-                    .withType(actionTypeComboBox.getSelectedProvider());
+                    .withType(actionTypeComboBox.getSelectedProvider())
+                    .withNewPoints(mapping.getMappingPoints());
             updateMapping(newMap);
         }
     }

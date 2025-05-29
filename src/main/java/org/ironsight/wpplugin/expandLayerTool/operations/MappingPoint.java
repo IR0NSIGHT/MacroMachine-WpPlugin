@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.expandLayerTool.operations;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.Objects;
 
 public class MappingPoint implements Serializable {
