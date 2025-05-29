@@ -18,8 +18,7 @@ public class MacroSelectionLayer extends Layer {
 
     private static final String id = "org.ironsight.wpplugin.macropainter.macroselectionlayer";
     private static final String name = "Macro Selection";
-    private static final String description = "a bit layer to select blocks for usage in macros and especially to " +
-            "search for distances to edge.";
+    private static final String description = "a simple bit layer to make selection easier";
 
     public static MacroSelectionLayer INSTANCE = new MacroSelectionLayer();
 

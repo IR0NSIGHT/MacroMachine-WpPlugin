@@ -66,8 +66,8 @@ public class InputOutputProvider {
                         setters.add(new BitLayerBinarySpraypaintApplicator(l));
             }
         }
-        getters.add(new DistanceToLayerEdgeGetter(SelectionBlock.INSTANCE));
-        getters.add(new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE));
+    //    getters.add(new DistanceToLayerEdgeGetter(SelectionBlock.INSTANCE));
+    //    getters.add(new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE));
         getters.add(new TerrainProvider());
         setters.add(new TerrainProvider());
         setters.add(new StonePaletteApplicator());
