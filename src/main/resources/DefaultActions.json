@@ -67,6 +67,17 @@
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
+  "outputId" : "SELECTION",
+  "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 0 ],
+  "name" : "clear selection",
+  "description" : "description of the action",
+  "uid" : "ba4ae64f-4b96-45a4-9c17-1b7f5be1b72e"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
   "outputId" : "HEIGHT",
   "outputData" : [ ],
   "actionType" : "INCREMENT",
@@ -108,6 +119,17 @@
   "name" : "select black to macro",
   "description" : "description of the action",
   "uid" : "c1124b59-e2eb-460c-8690-f598152f662b"
+}, {
+  "inputId" : "SELECTION",
+  "inputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "outputId" : "ANNOTATION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 1 ],
+  "outputPoints" : [ 0, 9 ],
+  "name" : "selection to cyan",
+  "description" : "description of the action",
+  "uid" : "f805b666-46a0-4253-a324-f09b5843afce"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
@@ -152,6 +174,17 @@
   "name" : "paint slopes",
   "description" : "description of the action",
   "uid" : "328f34b4-9994-422c-a85b-272c93e6263e"
+}, {
+  "inputId" : "ANNOTATION",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 ],
+  "name" : "filter cyan",
+  "description" : "description of the action",
+  "uid" : "a05419d9-4507-4508-8f08-3f15320987ba"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
@@ -251,6 +284,17 @@
   "name" : "crops layer",
   "description" : "description of the action",
   "uid" : "b86668af-bcbc-4a07-8d20-2c25ce4a86fd"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "BINARY_SPRAYPAINT",
+  "outputData" : [ "org.pepsoft.worldpainter.selection.SelectionBlock", "SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 50 ],
+  "name" : "spraypaint 50%",
+  "description" : "in filtered area",
+  "uid" : "07202ae5-b74c-4d70-b312-92419421a4ce"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
