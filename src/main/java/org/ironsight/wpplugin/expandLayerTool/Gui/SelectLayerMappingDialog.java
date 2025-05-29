@@ -5,16 +5,19 @@ import org.ironsight.wpplugin.expandLayerTool.operations.LayerMappingContainer;
 import org.ironsight.wpplugin.expandLayerTool.operations.SaveableAction;
 import org.ironsight.wpplugin.expandLayerTool.operations.ValueProviders.IDisplayUnit;
 
+import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class SelectLayerMappingDialog extends JDialog {
-    public SelectLayerMappingDialog(ArrayList<SaveableAction> layerMappings, Consumer<SaveableAction> onSubmit) {
+    public SelectLayerMappingDialog(ArrayList<SaveableAction> layerMappings, Consumer<SaveableAction> onSubmit,
+                                    @Nullable SaveableAction newAction) {
         super();
-        init(layerMappings, onSubmit);
+        init(layerMappings, onSubmit, newAction);
         this.setModal(true);
         this.pack();
     }
@@ -26,10 +29,11 @@ public class SelectLayerMappingDialog extends JDialog {
         for (int i = 0; i < 20; i++)
             LayerMappingContainer.addDefaultMappings(LayerMappingContainer.INSTANCE);
         ArrayList<SaveableAction> layerMappings = new ArrayList<>(LayerMappingContainer.INSTANCE.queryAll());
-        new SelectLayerMappingDialog(layerMappings , System.out::println);
+        Dialog dlg = new SelectLayerMappingDialog(layerMappings , System.out::println, LayerMapping.getNewEmptyAction());
+        dlg.setVisible(true);
     }
 
-    private void init(ArrayList<SaveableAction> layerMappings, Consumer<SaveableAction> onSubmit) {
+    private void init(ArrayList<SaveableAction> layerMappings, Consumer<SaveableAction> onSubmit,  @Nullable SaveableAction specialTopAction) {
         JList<SaveableAction> list = new JList<>();
         DefaultListModel<SaveableAction> listModel = new DefaultListModel<>();
         list.setModel(listModel);
@@ -37,13 +41,15 @@ public class SelectLayerMappingDialog extends JDialog {
         list.setCellRenderer(new MappingTableCellRenderer());
 
         layerMappings.sort(Comparator.comparing(IDisplayUnit::getName));
-
+        if (specialTopAction != null)
+            listModel.addElement(specialTopAction);
         for (SaveableAction mapping : layerMappings) {
             listModel.addElement(mapping);
         }
         JButton okButton = new JButton("OK");
         okButton.addActionListener(e -> {
-            onSubmit.accept(list.getSelectedValue());
+            SaveableAction selected = list.getSelectedValue();
+            onSubmit.accept(selected);
             this.dispose();
         });
         JButton cancelButton = new JButton("Cancel");

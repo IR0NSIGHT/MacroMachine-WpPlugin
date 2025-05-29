@@ -42,7 +42,7 @@ public class ActionEditor extends LayerMappingPanel {
 
 
         dialog.add(new GlobalActionPanel(applyToMap));
-        dialog.setTitle(ExpandLayerPlugin.instance.getName() + " v" + ExpandLayerPlugin.instance.getVersion());
+        dialog.setTitle(ExpandLayerPlugin.getInstance().getName() + " v" + ExpandLayerPlugin.getInstance().getVersion());
         dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
         dialog.pack();
         return dialog;
