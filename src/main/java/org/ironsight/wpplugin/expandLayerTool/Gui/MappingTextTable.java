@@ -20,6 +20,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     DefaultTableModel tableModel;
     TableModelListener listener;
     boolean[] inputSelection = new boolean[0];
+    boolean blockSendingSelection = false;
     private Consumer<boolean[]> onSelect = f -> {
     };
     private JTable numberTable;
@@ -224,7 +225,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 }
             }
             this.inputSelection = selection;
-            onSelect.accept(selection);
+            if (!blockSendingSelection)
+                onSelect.accept(selection);
         });
     }
 
@@ -248,7 +250,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             MappingPoint original = points[rowValue.mappingPointIndex];
             if (column == 0)    //INPUT UPDATED -> shfit all selected by diff value
                 points[rowValue.mappingPointIndex] =
-                        new MappingPoint(mapping.sanitizeInput(original.input  + diff),
+                        new MappingPoint(mapping.sanitizeInput(original.input + diff),
                                 points[rowValue.mappingPointIndex].output);
             else    //OUTPUT UPDATED -> set target value as output for all selected
                 points[rowValue.mappingPointIndex] =
@@ -271,6 +273,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         if (Arrays.equals(this.inputSelection, selectedPointIdx)) {
             return; //nothing to update here
         }
+        blockSendingSelection = true;
         this.inputSelection = selectedPointIdx;
 
         numberTable.clearSelection();
@@ -304,6 +307,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         }
 
         repaint();
+        blockSendingSelection = false;
     }
 
     // Custom selection model
