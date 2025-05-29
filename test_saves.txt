@@ -1,6 +1,0 @@
-[ {
-  "executionUUIDs" : [ "f906f8f5-5c04-4955-a98b-65836436e06e", "6609c6e7-70d8-4053-9c20-b27bea60a77f", "1ef342c4-7790-4c20-be7f-d50c542d35db", "12e012e2-f21f-4494-b4d1-9c8a78293e36" ],
-  "name" : "my first macro",
-  "description" : "this is a test description",
-  "uid" : "3892c3fb-09d2-42f9-9512-9de8d4b3aaa2"
-} ]
