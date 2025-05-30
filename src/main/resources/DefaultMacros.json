@@ -11,26 +11,26 @@
 }, {
   "executionUUIDs" : [ "63fd4bd9-e0c5-4d7e-8469-010df68bb4b7" ],
   "name" : "Selection Mask: auto biome",
-  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+  "description" : "-",
   "uid" : "1d053e6a-18cc-4d7f-96df-e18013668542"
 }, {
   "executionUUIDs" : [ "81a6fd0d-dd2f-4a50-8812-a47acbeccc3f" ],
   "name" : "Selection Mask: plains biome",
-  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+  "description" : "-",
   "uid" : "d1e3e684-024b-473c-b12d-0b7b0464753b"
 }, {
   "executionUUIDs" : [ "94f78d04-d795-44fb-8f08-794baab9cd6c", "8d4d619f-4dd6-45a6-bdda-32c520958c57", "c5af9fab-47a2-4e3e-89c3-2bb33951979f", "b7122b2b-951c-4cb0-9ac5-9d78a48928f9", "f10a62c4-e081-4a51-b6d6-a704bfb527a3", "81923515-7df3-4e69-a7b5-f5d1f7bf6eca" ],
   "name" : "Apply: Reset World",
-  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+  "description" : "-",
   "uid" : "73929b63-5ee8-4839-a78f-58a3852a97aa"
 }, {
   "executionUUIDs" : [ "328f34b4-9994-422c-a85b-272c93e6263e", "a1f1fa77-387b-4b62-b7aa-aab71f307781", "6b3370ee-ba73-49b0-b64e-155195df7cb7", "a5838003-43b6-402d-85dd-269a0b019ecb", "a09da31d-82c2-47b2-863f-d1f584dbd5ad", "25ae2016-1bd7-44c2-a6c6-4217c3604a1c", "09e5d68d-991c-48e7-a4a8-59e1777be8d1" ],
   "name" : "Apply: Alpine mountains",
-  "description" : "rocky slopes, frosted tips, only on cyan",
+  "description" : "rocky slopes, frosted tips, northern slopes have more snow than southern (sun facing) slopes",
   "uid" : "6fa2a28b-3bed-4dc6-9e58-6d753137ef85"
 }, {
   "executionUUIDs" : [ "68bddcaa-f0a2-4f16-abea-65270bc4fe9e" ],
   "name" : "Selection Mask: 45-70° angle",
-  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+  "description" : "-",
   "uid" : "d35b2b3b-630b-4ca9-baa7-7928c06997ca"
 } ]

@@ -90,6 +90,8 @@ Its also more performance-friendly than saving the value into a layer in the wor
 ### Nesting macros
 You can call a macro inside of another macro. But beware: if macro A calls Macro B and macro B calls Macro A, you get an infinite loop. The system will detect it and now allow you to save such a state.
 
+### Custom layers
+It's not yet possible to use custom layers as inputs or outputs. We are working on it.
 
 ## troubleshooting
 Q: What does this panel do
