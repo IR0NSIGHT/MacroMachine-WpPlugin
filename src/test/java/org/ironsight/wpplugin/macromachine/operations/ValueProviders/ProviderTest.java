@@ -44,7 +44,7 @@ public class ProviderTest {
     }
 
     @Test
-    void AnnotationProviderSetGetValue() {
+    void WaterDepthProviderSetGetValue() {
         WaterDepthProvider h = new WaterDepthProvider();
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
