@@ -5,6 +5,8 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
+import org.pepsoft.worldpainter.selection.SelectionBlock;
+import org.pepsoft.worldpainter.selection.SelectionChunk;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -237,6 +239,33 @@ public class ProviderTest {
         assertEquals(3,dim.getLayerValueAt(PineForest.INSTANCE,18,19));
         io.setValueAt(dim,18,19,1);
         assertEquals(1,dim.getLayerValueAt(PineForest.INSTANCE,18,19));
+    }
 
+    @Test
+    void SelectionTest() {
+        SelectionIO io = new SelectionIO();
+        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
+        io.prepareForDimension(dim);
+
+        //select block
+        dim.setBitLayerValueAt(SelectionBlock.INSTANCE,18,19,true);
+        assertEquals(1,io.getValueAt(dim,18,19),"read from dim");
+        dim.setBitLayerValueAt(SelectionBlock.INSTANCE,18,19,false);
+        assertEquals(0,io.getValueAt(dim,18,19),"read from dim");
+
+        dim.setBitLayerValueAt(SelectionChunk.INSTANCE,18,19,true);
+        assertEquals(1,io.getValueAt(dim,18,19),"read from dim");
+        dim.setBitLayerValueAt(SelectionChunk.INSTANCE,18,19,false);
+        assertEquals(0,io.getValueAt(dim,18,19),"read from dim");
+
+        io.setValueAt(dim,18,19,1);
+        assertEquals(true, dim.getBitLayerValueAt(SelectionBlock.INSTANCE,18,19),"io wrties to block select layer");
+
+        dim.setBitLayerValueAt(SelectionChunk.INSTANCE,18,19,true);
+        io.setValueAt(dim,18,19,0);
+        assertEquals(false, dim.getBitLayerValueAt(SelectionBlock.INSTANCE,18,19),"io sets block and chunk select to " +
+                "zero");
+        assertEquals(false, dim.getBitLayerValueAt(SelectionChunk.INSTANCE,18,19),"io sets block and chunk select to " +
+                "zero");
     }
 }

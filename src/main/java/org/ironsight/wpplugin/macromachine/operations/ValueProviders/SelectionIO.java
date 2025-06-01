@@ -12,7 +12,9 @@ public class SelectionIO extends BinaryLayerIO {
 
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
-        dim.setBitLayerValueAt(SelectionBlock.INSTANCE, x, y, value!= 0);
+        dim.setBitLayerValueAt(SelectionBlock.INSTANCE, x, y, value != 0);
+        if (value == 0)
+            dim.setBitLayerValueAt(SelectionChunk.INSTANCE, x, y, false);
     }
 
     @Override
