@@ -20,6 +20,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     }
 
     public BitLayerBinarySpraypaintApplicator(Layer layer) {
+        this.layer = layer;
         this.layerId = layer.getId();
         this.layerName = layer.getName();
     }
@@ -57,8 +58,10 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        LayerObjectContainer.getInstance().setDimension(dim);
-        layer = LayerObjectContainer.getInstance().queryLayer(layerId);
+        if (layer == null) {
+            LayerObjectContainer.getInstance().setDimension(dim);
+            layer = LayerObjectContainer.getInstance().queryLayer(layerId);
+        }
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
     }
