@@ -31,7 +31,6 @@ public class LayerMapping implements SaveableAction {
         assert input != null;
         assert output != null;
         assert mappingPoints != null;
-        assert uid != null;
         assert type != null;
         assert Arrays.stream(mappingPoints).noneMatch(Objects::isNull);
 
