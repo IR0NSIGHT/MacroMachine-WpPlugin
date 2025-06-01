@@ -3,8 +3,10 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;
+import org.pepsoft.worldpainter.layers.Frost;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class ProviderTest {
 
@@ -89,4 +91,25 @@ public class ProviderTest {
         assertEquals(3, dim.getLayerValueAt(Annotations.INSTANCE, 17,18));
     }
 
+    @Test
+    void AlwaysProviderGetValue() {
+        AlwaysIO h = new AlwaysIO();
+        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
+        h.prepareForDimension(dim);
+
+        assertEquals(0, h.getValueAt(dim,14,15),"always IO always returns value zero, nothing else");
+    }
+
+    @Test
+    void BinaryLayerProviderGetSetValue() {
+        BinaryLayerIO h = new BinaryLayerIO(Frost.INSTANCE);
+        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
+        h.prepareForDimension(dim);
+
+        dim.setBitLayerValueAt(Frost.INSTANCE,17,18,false);
+        assertFalse(dim.getBitLayerValueAt(Frost.INSTANCE, 17, 18));
+        assertEquals(0, h.getValueAt(dim,17,18),"no frost");
+        dim.setBitLayerValueAt(Frost.INSTANCE,17,18,true);
+        assertEquals(1, h.getValueAt(dim,17,18),"has frost");
+    }
 }
