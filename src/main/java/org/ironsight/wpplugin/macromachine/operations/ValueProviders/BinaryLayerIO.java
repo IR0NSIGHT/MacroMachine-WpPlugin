@@ -17,6 +17,7 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     public BinaryLayerIO(Layer layer) {
         this.layerId = layer.getId();
         this.layerName = layer.getName();
+        this.layer = layer;
         assert layer.dataSize.equals(Layer.DataSize.BIT);
     }
 
@@ -41,17 +42,19 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        LayerObjectContainer.getInstance().setDimension(dim);
-        layer = LayerObjectContainer.getInstance().queryLayer(layerId);
+        if (layer == null) {
+            LayerObjectContainer.getInstance().setDimension(dim);
+            layer = LayerObjectContainer.getInstance().queryLayer(layerId);
+        }
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
     }
 
     public String valueToString(int value) {
         if (value == 0) {
-            return layerName + " OFF ("+value+")";
+            return layerName + " OFF (" + value + ")";
         } else {
-            return layerName + " ON ("+value+")";
+            return layerName + " ON (" + value + ")";
         }
     }
 
@@ -86,7 +89,7 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     }
 
     public int getValueAt(Dimension dim, int x, int y) {
-        return dim.getBitLayerValueAt(SelectionBlock.INSTANCE, x, y) ? 1 : 0;
+        return dim.getBitLayerValueAt(layer, x, y) ? 1 : 0;
     }
 
     @Override
