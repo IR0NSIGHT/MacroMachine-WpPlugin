@@ -222,10 +222,11 @@ public class ProviderTest {
         assertEquals(0,io.getValueAt(dim,18,19),"initial value is zero");
         io.setValueAt(dim,18,19,27);
         assertEquals(27, io.getValueAt(dim,18,19),"io remembers last set value");
-        io.setValueAt(dim,18,19,-43);
+        io.setValueAt(dim,18,19,-43);   //io remembers this positions value
         assertEquals(-43, io.getValueAt(dim,18,19),"io can modifiy previously set values");
         assertEquals(0,io.getValueAt(dim,105,107),"other position has initial value, not previous value");
-        assertEquals(27, io.getValueAt(dim,18,19),"value was erased when querying other position");
+        assertEquals(-43, io.getValueAt(dim,18,19),"previous position is remembered as long setter is not called to " +
+                "different coordinats");
     }
 
     @Test
