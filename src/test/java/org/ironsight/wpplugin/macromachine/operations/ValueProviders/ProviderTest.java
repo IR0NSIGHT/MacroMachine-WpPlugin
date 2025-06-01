@@ -268,4 +268,61 @@ public class ProviderTest {
         assertEquals(false, dim.getBitLayerValueAt(SelectionChunk.INSTANCE,18,19),"io sets block and chunk select to " +
                 "zero");
     }
+
+    @Test
+    void SlopeTest() {
+        SlopeProvider io = new SlopeProvider();
+        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
+        io.prepareForDimension(dim);
+
+        assertEquals(0, io.getValueAt(dim, 17, 18));
+
+        {        //create world with slope 45° in y dir
+            for (int y = 0; y < 100; y++) {
+                for (int x = 0; x < 100; x++) {
+                    int height = y;
+                    dim.setHeightAt(x, y, height);
+                }
+            }
+            assertEquals(45, io.getValueAt(dim, 17, 18));
+        }
+        {        //create world with slope 2up, 1 over
+            for (int y = 0; y < 100; y++) {
+                for (int x = 0; x < 100; x++) {
+                    int height = y*2;
+                    dim.setHeightAt(x, y, height);
+                }
+            }
+            assertEquals(63, io.getValueAt(dim, 17, 18));
+        }
+
+        {        //create world with slope 45° in x dir
+            for (int y = 0; y < 100; y++) {
+                for (int x = 0; x < 100; x++) {
+                    int height = x;
+                    dim.setHeightAt(x, y, height);
+                }
+            }
+            assertEquals(45, io.getValueAt(dim, 17, 18));
+        }
+        {        //create world with slope 45° in x dir
+            for (int y = 0; y < 100; y++) {
+                for (int x = 0; x < 100; x++) {
+                    int height = -x;
+                    dim.setHeightAt(x, y, height);
+                }
+            }
+            assertEquals(45, io.getValueAt(dim, 17, 18));
+        }
+        {        //create world with slope 45° in x dir
+            for (int y = 0; y < 100; y++) {
+                for (int x = 0; x < 100; x++) {
+                    int height = -y;
+                    dim.setHeightAt(x, y, height);
+                }
+            }
+            assertEquals(45, io.getValueAt(dim, 17, 18));
+        }
+    }
+
 }
