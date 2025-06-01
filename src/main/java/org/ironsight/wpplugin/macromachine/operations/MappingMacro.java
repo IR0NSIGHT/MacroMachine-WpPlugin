@@ -3,6 +3,8 @@ package org.ironsight.wpplugin.macromachine.operations;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class MappingMacro implements SaveableAction {
     //ordered list of layermappings
@@ -63,8 +65,54 @@ public class MappingMacro implements SaveableAction {
                 Objects.equals(description, that.description) && Objects.equals(uid, that.uid);
     }
 
+    @Override
+    public MappingMacro clone() {
+        return new MappingMacro(this.name, this.description, this.executionUUIDs.clone(), this.uid);
+    }
+
     public MappingMacro withUUIDs(UUID[] uuid) {
         return new MappingMacro(this.name, this.description, uuid, this.uid);
+    }
+
+    /**
+     *
+     * @param macro
+     * @param item action or macro to insert
+     * @param createNewAction getter to clone actions if necessary
+     * @param targetRows    insert item at each of those rows
+     * @param outNewSelection output array with indices of row selection. old rows stay selected.
+     * @return new macro
+     */
+    public static MappingMacro insertSaveableActionToList(MappingMacro macro, SaveableAction item,
+                                                          Supplier<LayerMapping> createNewAction,
+                                                          Consumer<LayerMapping> updateAction, int[] targetRows,
+                                                          ArrayList<Integer> outNewSelection) {
+        if (targetRows.length == 0) {
+            targetRows = new int[]{macro.getExecutionUUIDs().length - 1};
+        }
+        //insert any mapping from container at tail of list
+        ArrayList<UUID> uids = new ArrayList<>();
+        Collections.addAll(uids, macro.executionUUIDs);
+
+        int counter = 0;
+        for (int row : targetRows) {
+            int idx = row + counter + 1;
+            if (item instanceof  LayerMapping) {
+                LayerMapping actionClone = createNewAction.get();
+                updateAction.accept(actionClone.withValuesFrom((LayerMapping) item));
+                uids.add(idx, actionClone.getUid());
+            } else {
+                assert item instanceof MappingMacro;
+                uids.add(idx, item.getUid());
+            }
+
+            outNewSelection.add(idx);
+            counter++;
+        }
+
+        UUID[] ids = uids.toArray(new UUID[0]);
+        MappingMacro newMacro = macro.withUUIDs(ids);
+        return newMacro;
     }
 
     @Override

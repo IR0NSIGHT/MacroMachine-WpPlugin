@@ -38,6 +38,11 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     }
 
     public void updateMapping(T mapping, Consumer<String> onError) {
+        if (mapping.getUid() == null) {
+            onError.accept("mapping has null UID:" + mapping);
+            return;
+        }
+
         //filter for identity
         if (!mappings.containsKey(mapping.getUid()) || queryById(mapping.getUid()).equals(mapping)) {
             mapping.getUid();

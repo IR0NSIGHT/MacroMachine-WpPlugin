@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 
 import javax.swing.*;
@@ -8,7 +9,9 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
+import static com.sun.org.apache.xalan.internal.xsltc.compiler.sym.error;
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 public class MacroDesigner extends JPanel {
@@ -142,36 +145,19 @@ public class MacroDesigner extends JPanel {
         prepareTableModel();
     }
 
+
     private void onAddMapping() {
         ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
         macrosAndActions.addAll(LayerMappingContainer.INSTANCE.queryAll());
         macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
         JDialog dialog = new SelectLayerMappingDialog(macrosAndActions, selected -> {
             MappingMacro macro = this.macro;
-            int[] selection = table.getSelectedRows();
-            if (table.getSelectedRows().length == 0) {
-                selection = new int[]{table.getRowCount() - 1};
-            }
-            assert selected instanceof LayerMapping;
-            LayerMapping selectedAction = (LayerMapping) selected;
-            //insert any mapping from container at tail of list
-            ArrayList<UUID> uids = new ArrayList<>();
-            Collections.addAll(uids, macro.executionUUIDs);
 
-            int counter = 0;
-            ArrayList<Integer> newSelection = new ArrayList<>(table.getSelectedRows().length);
-            for (int row : selection) {
-                int idx = row + counter + 1;
-                LayerMapping actionClone = LayerMappingContainer.INSTANCE.addMapping();
-                LayerMappingContainer.INSTANCE.updateMapping(actionClone.withValuesFrom(selectedAction),
-                        System.err::println);
-                uids.add(idx, actionClone.getUid());
-                newSelection.add(idx);
-                counter++;
-            }
-
-            UUID[] ids = uids.toArray(new UUID[0]);
-            MappingMacro newMacro = macro.withUUIDs(ids);
+            ArrayList<Integer> newSelection = new ArrayList<>();
+            MappingMacro newMacro = MappingMacro.insertSaveableActionToList(macro.clone(), selected,
+                    () -> LayerMappingContainer.INSTANCE.addMapping(),
+                    a -> LayerMappingContainer.INSTANCE.updateMapping(a, MacroMachinePlugin::error),
+                    table.getSelectedRows(), newSelection);
             setMacro(newMacro, true);
             assert this.macro.equals(newMacro) : "macro was added an action, but action is not " +
                     "present after gui update";
