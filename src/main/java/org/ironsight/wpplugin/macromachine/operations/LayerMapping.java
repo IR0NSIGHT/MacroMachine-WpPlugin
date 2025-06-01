@@ -191,6 +191,15 @@ public class LayerMapping implements SaveableAction {
                 Objects.equals(this.getUid(), mapping.getUid());
     }
 
+    public boolean equalIgnoreUUID(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LayerMapping mapping = (LayerMapping) o;
+        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) &&
+                actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) &&
+                Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
+    }
+
     public UUID getUid() {
         return uid;
     }
