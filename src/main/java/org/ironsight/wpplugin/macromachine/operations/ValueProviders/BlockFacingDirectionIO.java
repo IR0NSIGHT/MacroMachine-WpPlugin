@@ -25,7 +25,7 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
         double heightWest = dimension.getHeightAt(x - 1, y); // West (270 degrees)
 
         // Calculate gradients (y-axis points north-south, x-axis points east-west)
-        double gradientX = (heightEast - heightWest) / 2.0; // Change in the east-west direction
+        double gradientX = (heightWest - heightEast) / 2.0; // Change in the east-west direction
         double gradientY = (heightNorth - heightSouth) / 2.0; // Change in the north-south direction
 
         // Calculate the angle using atan2 (note the negative gradientY for north alignment)
