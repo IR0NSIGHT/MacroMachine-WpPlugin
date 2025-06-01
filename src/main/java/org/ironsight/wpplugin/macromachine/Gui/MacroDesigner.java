@@ -171,8 +171,9 @@ public class MacroDesigner extends JPanel {
             }
 
             UUID[] ids = uids.toArray(new UUID[0]);
-            setMacro(macro.withUUIDs(ids), true);
-            assert Arrays.deepEquals(macro.executionUUIDs, ids) : "macro was added an action, but action is not " +
+            MappingMacro newMacro = macro.withUUIDs(ids);
+            setMacro(newMacro, true);
+            assert this.macro.equals(newMacro) : "macro was added an action, but action is not " +
                     "present after gui update";
             table.clearSelection();
             for (int row : newSelection) {
