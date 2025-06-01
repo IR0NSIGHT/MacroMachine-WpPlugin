@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Frost;
+import org.pepsoft.worldpainter.layers.PineForest;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -204,5 +205,38 @@ public class ProviderTest {
             int compassDirAngle = h.getValueAt(dim, 17, 18);
             assertEquals(90, compassDirAngle);
         }
+    }
+
+    @Test
+    void intermediateValueTest() {
+        IntermediateValueIO io = new IntermediateValueIO();
+        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
+        io.prepareForDimension(dim);
+
+        assertEquals(0,io.getValueAt(dim,18,19),"initial value is zero");
+        io.setValueAt(dim,18,19,27);
+        assertEquals(27, io.getValueAt(dim,18,19),"io remembers last set value");
+        io.setValueAt(dim,18,19,-43);
+        assertEquals(-43, io.getValueAt(dim,18,19),"io can modifiy previously set values");
+        assertEquals(0,io.getValueAt(dim,105,107),"other position has initial value, not previous value");
+        assertEquals(27, io.getValueAt(dim,18,19),"value was erased when querying other position");
+    }
+
+    @Test
+    void NibbleLayerTest() {
+        NibbleLayerSetter io = new NibbleLayerSetter(PineForest.INSTANCE);
+        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
+        io.prepareForDimension(dim);
+
+        dim.setLayerValueAt(PineForest.INSTANCE,18,19,5);
+        assertEquals(5,io.getValueAt(dim,18,19),"read from dim");
+        dim.setLayerValueAt(PineForest.INSTANCE,18,19,7);
+        assertEquals(7,io.getValueAt(dim,18,19),"read from dim after modification");
+
+        io.setValueAt(dim,18,19,3);
+        assertEquals(3,dim.getLayerValueAt(PineForest.INSTANCE,18,19));
+        io.setValueAt(dim,18,19,1);
+        assertEquals(1,dim.getLayerValueAt(PineForest.INSTANCE,18,19));
+
     }
 }

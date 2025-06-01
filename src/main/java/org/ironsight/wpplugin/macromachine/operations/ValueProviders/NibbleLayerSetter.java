@@ -40,6 +40,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     }
 
     public NibbleLayerSetter(Layer layer) {
+        this.layer = layer;
         this.layerName = layer.getName();
         this.layerId = layer.getId();
     }
@@ -51,8 +52,10 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        LayerObjectContainer.getInstance().setDimension(dim);
-        layer = LayerObjectContainer.getInstance().queryLayer(layerId);
+        if (layer == null) {
+            LayerObjectContainer.getInstance().setDimension(dim);
+            layer = LayerObjectContainer.getInstance().queryLayer(layerId);
+        }
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
     }
