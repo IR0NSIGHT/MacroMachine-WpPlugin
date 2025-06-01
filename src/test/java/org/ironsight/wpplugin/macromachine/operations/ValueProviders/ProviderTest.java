@@ -3,7 +3,10 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
+import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
+import org.pepsoft.worldpainter.biomeschemes.Minecraft1_7Biomes;
 import org.pepsoft.worldpainter.layers.Annotations;
+import org.pepsoft.worldpainter.layers.Biome;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -343,4 +346,20 @@ public class ProviderTest {
         assertEquals(Terrain.OBSIDIAN, dim.getTerrainAt(19,20));
     }
 
+    @Test
+    void TestVanillaBiomeIO() {
+        VanillaBiomeProvider io = new VanillaBiomeProvider();
+        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
+        io.prepareForDimension(dim);
+
+        dim.setLayerValueAt(Biome.INSTANCE, 17,18, Minecraft1_20Biomes.BIOME_DESERT);
+        assertEquals(Minecraft1_20Biomes.BIOME_DESERT, io.getValueAt(dim,17,18));
+        dim.setLayerValueAt(Biome.INSTANCE, 17,18, Minecraft1_20Biomes.BIOME_BADLANDS);
+        assertEquals(Minecraft1_20Biomes.BIOME_BADLANDS, io.getValueAt(dim,17,18));
+
+        io.setValueAt(dim, 19,20, Minecraft1_20Biomes.BIOME_BADLANDS);
+        assertEquals(Minecraft1_20Biomes.BIOME_BADLANDS, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
+        io.setValueAt(dim, 19,20, Minecraft1_20Biomes.BIOME_BIRCH_FOREST);
+        assertEquals(Minecraft1_20Biomes.BIOME_BIRCH_FOREST, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
+    }
 }
