@@ -5,8 +5,7 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Frost;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ProviderTest {
 
@@ -111,5 +110,43 @@ public class ProviderTest {
         assertEquals(0, h.getValueAt(dim,17,18),"no frost");
         dim.setBitLayerValueAt(Frost.INSTANCE,17,18,true);
         assertEquals(1, h.getValueAt(dim,17,18),"has frost");
+
+        assertFalse(dim.getBitLayerValueAt(Frost.INSTANCE, 21, 22));
+        h.setValueAt(dim,21,22,1);
+        assertTrue(dim.getBitLayerValueAt(Frost.INSTANCE, 21, 22));
+        h.setValueAt(dim,21,22,0);
+        assertFalse(dim.getBitLayerValueAt(Frost.INSTANCE, 21, 22));
+
+    }
+
+    @Test
+    void BitLayerSpraypaintProviderGetSetValue() {
+        IPositionValueSetter h = new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE);
+        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
+        h.prepareForDimension(dim);
+
+        int spraypaintChancePercent = 77;
+
+        int hits = 0;
+        for (int y = 0; y < 100; y ++) {
+            for (int x = 0; x < 100; x++) {
+                assertFalse(dim.getBitLayerValueAt(Frost.INSTANCE, x, y));
+                h.setValueAt(dim, x, y, spraypaintChancePercent);
+                if (dim.getBitLayerValueAt(Frost.INSTANCE, x, y))
+                    hits++;
+            }
+        }
+        assertTrue(100*spraypaintChancePercent*0.99 <= hits, "hits less often than 99% requested chance");
+        assertTrue(100*spraypaintChancePercent*1.01 >= hits, "hits more often than 101% requested chance");
+
+        //check that random decision is stable for coordinates
+        h.setValueAt(dim, 17,18, spraypaintChancePercent);
+        boolean value = dim.getLayerValueAt(Frost.INSTANCE,17,18) == 0;
+        for (int i = 0; i < 100; i++) {
+            h.setValueAt(dim, 17,18, spraypaintChancePercent);
+            assertEquals(value,dim.getLayerValueAt(Frost.INSTANCE,17,18) == 0, "spraypainting again caused change of " +
+                    "value at i="+i);
+        }
+
     }
 }
