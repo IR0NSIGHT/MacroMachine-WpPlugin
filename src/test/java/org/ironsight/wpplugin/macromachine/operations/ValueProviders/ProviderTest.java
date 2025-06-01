@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
@@ -323,6 +324,23 @@ public class ProviderTest {
             }
             assertEquals(45, io.getValueAt(dim, 17, 18));
         }
+    }
+
+    @Test
+    void TestTerrainProvider() {
+        TerrainProvider io = new TerrainProvider();
+        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
+        io.prepareForDimension(dim);
+
+        dim.setTerrainAt(17,18, Terrain.BEACHES);
+        assertEquals(Terrain.BEACHES.ordinal(), io.getValueAt(dim,17,18));
+        dim.setTerrainAt(17,18, Terrain.STONE);
+        assertEquals(Terrain.STONE.ordinal(), io.getValueAt(dim,17,18));
+
+        io.setValueAt(dim, 19,20, Terrain.DIORITE.ordinal());
+        assertEquals(Terrain.DIORITE, dim.getTerrainAt(19,20));
+        io.setValueAt(dim,19,20, Terrain.OBSIDIAN.ordinal());
+        assertEquals(Terrain.OBSIDIAN, dim.getTerrainAt(19,20));
     }
 
 }
