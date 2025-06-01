@@ -149,4 +149,60 @@ public class ProviderTest {
         }
 
     }
+
+    @Test
+    void BlockFacingProviderGetValue() {
+        IPositionValueGetter h = new BlockFacingDirectionIO();
+        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
+        h.prepareForDimension(dim);
+
+        {        //create world with slope 45° all facing -x: west
+            for (int y = 0; y < 100; y++) {
+                for (int x = 0; x < 100; x++) {
+                    int height = y;
+                    dim.setHeightAt(x, y, height);
+                }
+            }
+
+            int compassDirAngle = h.getValueAt(dim, 17, 18);
+            assertEquals(0, compassDirAngle);
+        }
+        {        //create world with slope 45° all facing -x: west
+            for (int y = 0; y < 100; y++) {
+                for (int x = 0; x < 100; x++) {
+                    int height = -y;
+                    dim.setHeightAt(x, y, height);
+                }
+            }
+
+            int compassDirAngle = h.getValueAt(dim, 17, 18);
+            assertEquals(180, compassDirAngle);
+        }
+
+        {        //create world with slope 45° all facing -x: west
+            int hits = 0;
+            for (int y = 0; y < 100; y++) {
+                for (int x = 0; x < 100; x++) {
+                    int height = x;
+                    dim.setHeightAt(x, y, height);
+                }
+            }
+
+            int compassDirAngle = h.getValueAt(dim, 17, 18);
+            assertEquals(270, compassDirAngle);
+        }
+
+        {        //create world with slope 45° all facing -x: west
+            int hits = 0;
+            for (int y = 0; y < 100; y++) {
+                for (int x = 0; x < 100; x++) {
+                    int height = -x;
+                    dim.setHeightAt(x, y, height);
+                }
+            }
+
+            int compassDirAngle = h.getValueAt(dim, 17, 18);
+            assertEquals(90, compassDirAngle);
+        }
+    }
 }
