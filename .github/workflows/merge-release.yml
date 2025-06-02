@@ -1,0 +1,46 @@
+name: Check pom.xml version and merge
+
+on:
+  push:
+    branches:
+      - tool/MacroMachine/main
+
+jobs:
+  check-and-merge:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # Grant write permissions to the contents
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for all branches and tags
+
+      - name: Check for pom.xml changes
+        id: check-pom
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q 'pom.xml'; then
+            echo "pom.xml has changed."
+            VERSION=$(grep -oP '<version>\K.*?(?=</version>)' pom.xml | head -1)
+            echo "Current version is $VERSION"
+            echo "version_changed=true" >> $GITHUB_OUTPUT
+            echo "current_version=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "pom.xml has not changed."
+            echo "version_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Merge main into release
+        if: steps.check-pom.outputs.version_changed == 'true'
+        run: |
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          git checkout master
+          git merge tool/MacroMachine/main -m "release macroMachine version: ${{ steps.check-pom.outputs.current_version }}"
+          git push origin master
+          
+          git checkout tool/MacroMachine/main
+          git tag macroMachine-release-${{ steps.check-pom.outputs.current_version }}
+          git push --tag
