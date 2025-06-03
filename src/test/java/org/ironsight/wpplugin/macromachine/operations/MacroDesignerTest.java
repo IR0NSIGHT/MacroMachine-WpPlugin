@@ -41,8 +41,6 @@ public class MacroDesignerTest {
         assertIterableEquals(expectedSelection, newSelection, "new items are selected");
     }
 
-
-
     @Test
     void insertSingleActionIntoNonEmptyMacroNoSelection() {
         LayerMappingContainer container = new LayerMappingContainer("./TestMappings.json");
@@ -108,7 +106,7 @@ public class MacroDesignerTest {
     }
 
     @Test
-    void insertSingleActionIntoNonEmptyMacroMultiSelection() {
+    void insertManyActionsIntoMacro() {
         LayerMappingContainer container = new LayerMappingContainer("./TestMappings.json");
         UUID[] actionIds = new UUID[4];
         for (int i = 0; i < 4; i++) {
@@ -139,6 +137,49 @@ public class MacroDesignerTest {
         assertEquals(addedIdsInOrder.get(0), inserted.getExecutionUUIDs()[3]);
         assertEquals(actionIds[3], inserted.getExecutionUUIDs()[4]);
         assertEquals(addedIdsInOrder.get(1), inserted.getExecutionUUIDs()[5]);
+
+        ArrayList<Integer> expectedSelection = new ArrayList<>();
+        expectedSelection.add(3);
+        expectedSelection.add(5);
+
+        assertIterableEquals(expectedSelection, newSelection, "new items are selected");
+
+    }
+
+    @Test
+    void insertNestedMacroIntoMacro() {
+        UUID[] actionIds = new UUID[4];
+        for (int i = 0; i < 4; i++) {
+            actionIds[i] = UUID.randomUUID();
+        }
+
+        MappingMacro macro = new MappingMacro("test", "descr", actionIds, UUID.randomUUID());
+        assertEquals(4, macro.getExecutionUUIDs().length);
+        assertArrayEquals(actionIds, macro.getExecutionUUIDs());
+
+        MappingMacro inputItem = new MappingMacro("myNewMacro", "descr", new UUID[0], UUID.randomUUID());
+
+        ArrayList<Integer> newSelection = new ArrayList<>();
+        MappingMacro inserted = MappingMacro.insertSaveableActionToList(
+                macro.clone(),
+                inputItem,
+                () -> { Assertions.fail("not supposed to be called"); return null; },
+                action -> {
+                    Assertions.fail("not supposed to be called");
+                },
+                new int[]{2,3}, //insert after index=2 in list => at index 3
+                newSelection);
+        assertEquals(6, inserted.getExecutionUUIDs().length);
+
+        //ids: 0,1,2, insert, 3, insert
+        assertEquals(actionIds[0], inserted.getExecutionUUIDs()[0]);
+        assertEquals(actionIds[1], inserted.getExecutionUUIDs()[1]);
+        assertEquals(actionIds[2], inserted.getExecutionUUIDs()[2]);
+        assertEquals(inputItem.getUid(), inserted.getExecutionUUIDs()[3], "macro is linked, not cloned so the UID is " +
+                "known");
+        assertEquals(actionIds[3], inserted.getExecutionUUIDs()[4]);
+        assertEquals(inputItem.getUid(), inserted.getExecutionUUIDs()[3]);
+
 
         ArrayList<Integer> expectedSelection = new ArrayList<>();
         expectedSelection.add(3);
