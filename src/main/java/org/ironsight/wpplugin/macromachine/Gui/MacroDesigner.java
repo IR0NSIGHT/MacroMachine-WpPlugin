@@ -9,21 +9,11 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
-import static com.sun.org.apache.xalan.internal.xsltc.compiler.sym.error;
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 public class MacroDesigner extends JPanel {
-    private static final String helpString = "The macro designer allows you to design a macro.\n" +
-            "A macro is a collection of actions, like a container. When a macro is applied to the map, it runs each " +
-            "action in the specified order, one after the other. Think of it as a collection of simple global " +
-            "operations that are bundeled together to achieve a more complex task.\n" +
-            "You can add, remove, reorder and edit the actions of the macro here. Be aware that macros can share " +
-            "actions, so if you edit one, you will also edit the other. Removed actions are not lost, they remain in " +
-            "the global list of actions.";
     Consumer<MappingMacro> onSubmit;
-    //VirtualScrollingTableExample valueTable; // = new VirtualScrollingTableExample();
     private MappingMacro macro;
     private JTextField name;
     private JTextArea description;
@@ -137,8 +127,6 @@ public class MacroDesigner extends JPanel {
 
         // Add tabs to the JTabbedPane
         tabbedPane.addTab("Actions", editorPanel);
-        //    tabbedPane.addTab("Values", valueTable);
-        //    tabbedPane.addTab("Owo", panel3);
 
         this.add(tabbedPane, BorderLayout.CENTER);
 
