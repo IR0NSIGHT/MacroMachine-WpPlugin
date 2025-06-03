@@ -12,9 +12,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.function.Consumer;
 
-public class SelectLayerMappingDialog extends JDialog {
-    public SelectLayerMappingDialog(ArrayList<SaveableAction> layerMappings, Consumer<SaveableAction> onSubmit,
-                                    @Nullable SaveableAction newAction) {
+public class SaveableActionPickerDialog extends JDialog {
+    public SaveableActionPickerDialog(ArrayList<SaveableAction> layerMappings, Consumer<SaveableAction> onSubmit,
+                                      @Nullable SaveableAction newAction) {
         super();
         init(layerMappings, onSubmit, newAction);
         this.setModal(true);
@@ -28,7 +28,7 @@ public class SelectLayerMappingDialog extends JDialog {
         for (int i = 0; i < 20; i++)
             LayerMappingContainer.addDefaultMappings(LayerMappingContainer.INSTANCE);
         ArrayList<SaveableAction> layerMappings = new ArrayList<>(LayerMappingContainer.INSTANCE.queryAll());
-        Dialog dlg = new SelectLayerMappingDialog(layerMappings , System.out::println, LayerMapping.getNewEmptyAction());
+        Dialog dlg = new SaveableActionPickerDialog(layerMappings , System.out::println, LayerMapping.getNewEmptyAction());
         dlg.setVisible(true);
     }
 
