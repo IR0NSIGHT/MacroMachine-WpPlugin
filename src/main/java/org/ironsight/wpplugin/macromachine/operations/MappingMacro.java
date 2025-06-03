@@ -74,6 +74,16 @@ public class MappingMacro implements SaveableAction {
         return new MappingMacro(this.name, this.description, uuid, this.uid);
     }
 
+    public MappingMacro withReplacedUUIDs(int[] overwriteIdcs, UUID uid) {
+        UUID[] newIds = executionUUIDs.clone();
+        for (int row : overwriteIdcs) {
+            assert row >= 0 : "index ouf of bounds";
+            assert row < newIds.length : "index out of bounds";
+            newIds[row] = uid;
+        }
+        return this.withUUIDs(newIds);
+    }
+
     /**
      *
      * @param macro
