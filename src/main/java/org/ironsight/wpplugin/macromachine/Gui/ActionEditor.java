@@ -41,7 +41,7 @@ public class ActionEditor extends LayerMappingPanel {
         dialog.setLocationRelativeTo(null); // Centers the dialog
 
 
-        dialog.add(new GlobalActionPanel(applyToMap));
+        dialog.add(new GlobalActionPanel(applyToMap, dialog));
         dialog.setTitle(MacroMachinePlugin.getInstance().getName() + " v" + MacroMachinePlugin.getInstance().getVersion());
         dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
         dialog.pack();
