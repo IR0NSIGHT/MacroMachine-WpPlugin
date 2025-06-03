@@ -224,11 +224,7 @@ public class MacroDesigner extends JPanel {
         JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
             if (selected.getUid() == null)
                 selected = LayerMappingContainer.INSTANCE.addMapping();
-            UUID[] newIds = macro.executionUUIDs.clone();
-            for (int row : this.table.getSelectedRows()) {
-                newIds[row] = selected.getUid();
-            }
-            setMacro(macro.withUUIDs(newIds), true);
+            setMacro(macro.withReplacedUUIDs(this.table.getSelectedRows(), selected.getUid()), true);
         }, LayerMapping.getNewEmptyAction());
         dialog.setModal(true);
         dialog.setVisible(true);
