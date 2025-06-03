@@ -36,7 +36,6 @@ public class GlobalActionPanel extends JPanel {
 
     public GlobalActionPanel(Function<MappingMacro, Collection<ExecutionStatistic>> applyToMap) {
         this.applyMacro = applyToMap;
-
         init();
     }
 

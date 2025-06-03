@@ -138,7 +138,7 @@ public class MacroDesigner extends JPanel {
         ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
         macrosAndActions.addAll(LayerMappingContainer.INSTANCE.queryAll());
         macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
-        JDialog dialog = new SelectLayerMappingDialog(macrosAndActions, selected -> {
+        JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
             MappingMacro macro = this.macro;
 
             ArrayList<Integer> newSelection = new ArrayList<>();
@@ -221,7 +221,7 @@ public class MacroDesigner extends JPanel {
         ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
         macrosAndActions.addAll(LayerMappingContainer.INSTANCE.queryAll());
         macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
-        JDialog dialog = new SelectLayerMappingDialog(macrosAndActions, selected -> {
+        JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
             if (selected.getUid() == null)
                 selected = LayerMappingContainer.INSTANCE.addMapping();
             UUID[] newIds = macro.executionUUIDs.clone();

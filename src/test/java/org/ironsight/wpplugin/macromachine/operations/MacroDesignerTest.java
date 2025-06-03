@@ -143,7 +143,6 @@ public class MacroDesignerTest {
         expectedSelection.add(5);
 
         assertIterableEquals(expectedSelection, newSelection, "new items are selected");
-
     }
 
     @Test
