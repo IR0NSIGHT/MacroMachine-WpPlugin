@@ -33,9 +33,10 @@ public class GlobalActionPanel extends JPanel {
     private UUID currentSelectedMacro;
     private UUID currentSelectedLayer;
     private SELECTION_TPYE selectionType = SELECTION_TPYE.INVALID;
-
-    public GlobalActionPanel(Function<MappingMacro, Collection<ExecutionStatistic>> applyToMap) {
+    private Window dialog;
+    public GlobalActionPanel(Function<MappingMacro, Collection<ExecutionStatistic>> applyToMap, Window dialog) {
         this.applyMacro = applyToMap;
+        this.dialog = dialog;
         init();
     }
 
@@ -157,7 +158,7 @@ public class GlobalActionPanel extends JPanel {
         layout = (CardLayout) editorPanel.getLayout();
         layout.show(editorPanel, MACRO_DESIGNER);
 
-        JTabbedPane tabbedPane = new JTabbedPane();
+        this.tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Designer", editorPanel);
         this.add(tabbedPane, BorderLayout.CENTER);
 
@@ -170,7 +171,19 @@ public class GlobalActionPanel extends JPanel {
         tabbedPane.add("Log", executionPanel);
 
         this.add(macroTreePanel, BorderLayout.WEST);
+
+        JButton toggleTabbedPane = new JButton("expand/shrink");
+        toggleTabbedPane.addActionListener(e -> { showLargeVersion(!showTabbedPane); });
+        this.add(toggleTabbedPane, BorderLayout.NORTH);
         onUpdate();
+    }
+
+    private  JTabbedPane tabbedPane;
+    private boolean showTabbedPane = true;
+    private void showLargeVersion(boolean show) {
+        tabbedPane.setVisible(show);
+        showTabbedPane = show;
+        this.dialog.pack();
     }
 
     private void onSelect(SaveableAction action) {
