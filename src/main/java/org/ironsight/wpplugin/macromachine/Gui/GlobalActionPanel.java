@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.Gui.ActionEditor.createDialog;
@@ -27,14 +27,14 @@ public class GlobalActionPanel extends JPanel {
     MacroDesigner macroDesigner;
     ActionEditor mappingEditor;
     //consumes macro to apply to map. callback for "user pressed apply-macro"
-    Function<MappingMacro, Collection<ExecutionStatistic>> applyMacro;
+    MacroApplicator applyMacro;
     CardLayout layout;
     JPanel editorPanel;
     private UUID currentSelectedMacro;
     private UUID currentSelectedLayer;
     private SELECTION_TPYE selectionType = SELECTION_TPYE.INVALID;
     private Window dialog;
-    public GlobalActionPanel(Function<MappingMacro, Collection<ExecutionStatistic>> applyToMap, Window dialog) {
+    public GlobalActionPanel(MacroApplicator applyToMap, Window dialog) {
         this.applyMacro = applyToMap;
         this.dialog = dialog;
         init();
@@ -52,7 +52,17 @@ public class GlobalActionPanel extends JPanel {
         layers.readFromFile();
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
-        JDialog diag = createDialog(null, f -> Collections.emptyList());
+        JDialog diag = createDialog(null, (macro, setProgress) -> {
+            for (int i = 0; i < 30; i++) {
+                try {
+                    Thread.sleep(100);
+                    setProgress.accept(new ApplyAction.Progess(0,1, i/30f));
+                } catch (InterruptedException ex) {
+                    ;
+                }
+            }
+            return Collections.emptyList();
+        });
         diag.setVisible(true);
     }
 
@@ -108,8 +118,12 @@ public class GlobalActionPanel extends JPanel {
         MacroMachinePlugin.error(message);
     }
 
-    private void applyToMap(MappingMacro macro) {
-        Collection<ExecutionStatistic> statistic = applyMacro.apply(macro);
+    private void setProgress(ApplyAction.Progess progress) {
+        logMessage("step " + progress.step + "/"+progress.totalSteps +": " + progress.progressInStep + "%");
+    }
+
+    public void applyToMap(MappingMacro macro, ApplyAction.Progess progess) {
+        Collection<ExecutionStatistic> statistic = applyMacro.applyLayerAction(macro, this::setProgress );
         logMessage("apply macro " + macro.getName() + " to map:\n" +
                 statistic.stream().map(ExecutionStatistic::toString).collect(Collectors.joining("\n")));
     }
@@ -138,6 +152,12 @@ public class GlobalActionPanel extends JPanel {
 
     }
 
+    public interface ApplyToMapCallback {
+        void applyToMap(MappingMacro macro, Consumer<ApplyAction.Progess> setProgress);
+
+        void applyToMap(MappingMacro macro, ApplyAction.Progess progess);
+    }
+
     private void init() {
         MappingMacroContainer.getInstance().subscribe(this::onUpdate);
         LayerMappingContainer.INSTANCE.subscribe(this::onUpdate);
@@ -145,7 +165,7 @@ public class GlobalActionPanel extends JPanel {
         this.setLayout(new BorderLayout());
         macroTreePanel = new MacroTreePanel(MappingMacroContainer.getInstance(),
                 LayerMappingContainer.INSTANCE,
-                this::applyToMap,
+                applyMacro,
                 this::onSelect);
         macroTreePanel.setMaximumSize(new Dimension(200, 0));
 

@@ -9,11 +9,12 @@ import org.pepsoft.worldpainter.operations.AbstractOperation;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.Gui.ActionEditor.createDialog;
 
-public class MacroDialogOperation extends AbstractOperation {
+public class MacroDialogOperation extends AbstractOperation implements MacroApplicator {
     private static final String NAME = "Macro Operation";
     private static final String DESCRIPTION = "Create complex reusable global operations to automate your workflow.";
     private static final String ID = "macro_dialog_operation";
@@ -38,7 +39,7 @@ public class MacroDialogOperation extends AbstractOperation {
             LayerObjectContainer.getInstance().setWpLayerManager(LayerManager.getInstance());
             LayerObjectContainer.getInstance().setDimension(this.getDimension());
             InputOutputProvider.INSTANCE.updateFrom(getDimension());
-            JDialog dialog = createDialog(null, this::applyLayerAction);
+            JDialog dialog = createDialog(null, this);
             dialog.toFront();              // Bring it to the front
             dialog.requestFocusInWindow();
             dialog.setVisible(true);
@@ -47,7 +48,9 @@ public class MacroDialogOperation extends AbstractOperation {
         }
     }
 
-    public Collection<ExecutionStatistic> applyLayerAction(MappingMacro macro) {
+    @Override
+    public Collection<ExecutionStatistic> applyLayerAction(MappingMacro macro,
+                                                           Consumer<ApplyAction.Progess> setProgress) {
         Collection<ExecutionStatistic> statistics = new ArrayList<>();
         try {
             this.getDimension().setEventsInhibited(true);
@@ -82,7 +85,7 @@ public class MacroDialogOperation extends AbstractOperation {
             }
 
             // ----------------------- macro is ready and can be applied to map
-            statistics = ApplyAction.applyExecutionSteps(getDimension(), new TileFilter(), executionSteps);
+            statistics = ApplyAction.applyExecutionSteps(getDimension(), new TileFilter(), executionSteps, setProgress);
             statistics.forEach(System.out::println);
 
         } catch (Exception ex) {
