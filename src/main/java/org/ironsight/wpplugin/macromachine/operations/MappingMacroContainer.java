@@ -13,13 +13,16 @@ import java.util.function.Consumer;
 import static org.ironsight.wpplugin.macromachine.operations.LayerMappingContainer.isDebugMode;
 
 public class MappingMacroContainer extends AbstractOperationContainer<MappingMacro> {
-    private final static MappingMacroContainer instance = new MappingMacroContainer();
-
-    public MappingMacroContainer() {
-        super(MappingMacro.class, getActionsFilePath(), "/DefaultMacros.json");
+    private static MappingMacroContainer instance;
+    public static void SetInstance(MappingMacroContainer container) {
+        instance = container;
+    }
+    public MappingMacroContainer(String filePath) {
+        super(MappingMacro.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultMacros.json");
     }
 
     public static MappingMacroContainer getInstance() {
+        assert instance != null: "we have to set a global isntance first";
         return instance;
     }
 

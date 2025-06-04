@@ -43,7 +43,7 @@ public class GlobalActionPanel extends JPanel {
     public static void main(String[] args) {
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
+        MappingMacroContainer.SetInstance(new MappingMacroContainer("./GlobalActionsPanel_Macros.json"));
         MappingMacroContainer macros = MappingMacroContainer.getInstance();
         LayerMappingContainer.INSTANCE = new LayerMappingContainer("./GlobalActionPanel_Actions.json");
         LayerMappingContainer layers = LayerMappingContainer.INSTANCE;
