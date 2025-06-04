@@ -37,14 +37,14 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
     private void updateFromInputs() {
         if (!isInit && isAllowEvents() && mapping != null) {
             LayerMapping newMap = mapping.withName(nameField.getText())
-                    .withDescription(description.getText());
+                    .withDescription(description.getText()).withType(actionTypeComboBox.getSelectedProvider());
 
             boolean inputOutputChanged =
                     !inputSelect.getSelectedProvider().equals(mapping.input) || !outputSelect.getSelectedProvider().equals(mapping.output);
             if (inputOutputChanged)  // rebuild map
                 newMap = newMap.withInput(inputSelect.getSelectedProvider())
                     .withOutput(outputSelect.getSelectedProvider())
-                    .withType(actionTypeComboBox.getSelectedProvider())
+
                     .withNewPoints(mapping.getMappingPoints());
             updateMapping(newMap);
         }
