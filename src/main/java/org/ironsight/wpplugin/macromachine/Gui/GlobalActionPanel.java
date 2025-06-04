@@ -135,6 +135,7 @@ public class GlobalActionPanel extends JPanel {
                 layout.show(editorPanel, INVALID_SELECTION);
                 break;
         }
+
     }
 
     private void init() {
@@ -166,8 +167,11 @@ public class GlobalActionPanel extends JPanel {
         logPanel = new JTextArea();
         logPanel.setEditable(false); // Make it read-only
         logPanel.setFont(new Font("Monospaced", Font.PLAIN, 12));
+
         JScrollPane writeWindowScroll = new JScrollPane(logPanel);
         executionPanel.add(writeWindowScroll, BorderLayout.CENTER);
+        writeWindowScroll.setPreferredSize(new Dimension(500, 600));
+
         tabbedPane.add("Log", executionPanel);
 
         this.add(macroTreePanel, BorderLayout.WEST);
@@ -183,6 +187,8 @@ public class GlobalActionPanel extends JPanel {
     private void showLargeVersion(boolean show) {
         tabbedPane.setVisible(show);
         showTabbedPane = show;
+
+        assert tabbedPane.getPreferredSize().height < 1000 : "debug: sometimes the preferred height is 2000 px";
         this.dialog.pack();
     }
 
