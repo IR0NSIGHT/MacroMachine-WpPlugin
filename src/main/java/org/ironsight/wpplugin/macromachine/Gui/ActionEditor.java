@@ -45,7 +45,7 @@ public class ActionEditor extends LayerMappingPanel {
         dialog.setTitle(MacroMachinePlugin.getInstance().getName() + " v" + MacroMachinePlugin.getInstance().getVersion());
         dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
         dialog.pack();
-        //dialog.setAlwaysOnTop(true);
+        dialog.setAlwaysOnTop(true);
         return dialog;
     }
 
