@@ -21,6 +21,7 @@ public class MacroDialogOperation extends AbstractOperation {
 
     public MacroDialogOperation() {
         super(NAME, DESCRIPTION, "macrooperation");
+        MappingMacroContainer.SetInstance(new MappingMacroContainer(null));
         LayerMappingContainer.INSTANCE = new LayerMappingContainer(null);
         MappingMacroContainer.getInstance().readFromFile();
         LayerMappingContainer.INSTANCE.readFromFile();
