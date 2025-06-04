@@ -10,6 +10,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -18,7 +20,7 @@ import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 public class MacroTreePanel extends JPanel {
     private final MappingMacroContainer container;
     private final LayerMappingContainer mappingContainer;
-    private final Consumer<MappingMacro> applyToMap;
+    private final MacroApplicator applyToMap;
     DefaultMutableTreeNode root;
     DefaultTreeModel treeModel;
     JTree tree;
@@ -26,9 +28,11 @@ public class MacroTreePanel extends JPanel {
     Consumer<SaveableAction> onSelectAction;
     private LinkedList<UUID> selectedMacros;
     private String filterString = "";
+    private JButton applyButton;
+
 
     MacroTreePanel(MappingMacroContainer container, LayerMappingContainer mappingContainer,
-                   Consumer<MappingMacro> applyToMap, Consumer<SaveableAction> onSelectAction) {
+                   MacroApplicator applyToMap, Consumer<SaveableAction> onSelectAction) {
         this.applyToMap = applyToMap;
         this.container = container;
         this.mappingContainer = mappingContainer;
@@ -36,7 +40,6 @@ public class MacroTreePanel extends JPanel {
         init();
         update();
     }
-
 
     public static void main(String[] args) {
         JFrame frame = new JFrame();
@@ -51,15 +54,18 @@ public class MacroTreePanel extends JPanel {
             UUID[] ids = new UUID[13];
             for (int j = 0; j < ids.length; j++) {
                 LayerMapping mapping = layers.addMapping().withName("Mapping Action" + i + "_" + j);
-                layers.updateMapping(mapping, f -> {});
+                layers.updateMapping(mapping, f -> {
+                });
                 ids[j] = mapping.getUid();
             }
             macro = macro.withUUIDs(ids).withName("ActionMacro_" + i);
-            macros.updateMapping(macro, f -> {});
+            macros.updateMapping(macro, f -> {
+            });
         }
         frame.getContentPane().setLayout(new BorderLayout());
-        frame.getContentPane().add(new MacroTreePanel(macros, layers, f -> {
+        frame.getContentPane().add(new MacroTreePanel(macros, layers, (f, g) -> {
             System.out.println("simulate apply macro " + f);
+            return Collections.emptyList();
         }, f -> {
         }), BorderLayout.CENTER);
         frame.pack();
@@ -221,7 +227,7 @@ public class MacroTreePanel extends JPanel {
         revalidate();
         repaint();
     }
-private JButton applyButton;
+
     private void init() {
         container.subscribe(this::update);
         mappingContainer.subscribe(this::update);
@@ -297,9 +303,13 @@ private JButton applyButton;
             //remove Mapping Actions from all macros
             HashSet<UUID> deletedUUIDS = new HashSet<>();
             deletedUUIDS.addAll(selectedMacros);
-            for (MappingMacro m: container.queryAll()) {
-                MappingMacro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs).filter(a -> !deletedUUIDS.contains(a)).toArray(UUID[]::new));
-                container.updateMapping(updated, f -> { throw new RuntimeException(f);});
+            for (MappingMacro m : container.queryAll()) {
+                MappingMacro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs)
+                        .filter(a -> !deletedUUIDS.contains(a))
+                        .toArray(UUID[]::new));
+                container.updateMapping(updated, f -> {
+                    throw new RuntimeException(f);
+                });
             }
 
             // Delete action / Macro in containers
@@ -331,14 +341,40 @@ private JButton applyButton;
         this.invalidate();
     }
 
+    private void onSetProgress(ApplyAction.Progess progess) {
+        SwingUtilities.invokeLater(() -> {
+            applyButton.setText(String.format("%d/%d: %d%%", progess.step+1, progess.totalSteps,
+                    Math.round(progess.progressInStep)));
+            applyButton.repaint();
+        });
+    }
+
     private void onApply() {
-        //get macros
-        for (UUID id : selectedMacros) {
-            MappingMacro macro = container.queryById(id);
-            if (macro != null) {
-                applyToMap.accept(macro);
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        SwingUtilities.invokeLater(() -> {
+            applyButton.setText("Starting...");
+            applyButton.repaint();
+        });
+        // Submit a task to the ExecutorService
+        final MacroTreePanel panel = this;
+        executorService.submit(() -> {
+
+            //get macros
+            for (UUID id : selectedMacros) {
+                MappingMacro macro = container.queryById(id);
+                if (macro != null) {
+                    applyToMap.applyLayerAction(macro, panel::onSetProgress);
+                }
             }
-        }
+            SwingUtilities.invokeLater(() -> {
+                applyButton.setText("Apply macros");
+                applyButton.repaint();
+            });
+        });
+
+        // Shutdown the ExecutorService
+        executorService.shutdown();
+
     }
 }
 

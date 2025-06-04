@@ -1,9 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
-import org.ironsight.wpplugin.macromachine.operations.ExecutionStatistic;
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
-import org.ironsight.wpplugin.macromachine.operations.MappingMacro;
+import org.ironsight.wpplugin.macromachine.operations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +26,7 @@ public class ActionEditor extends LayerMappingPanel {
     }
 
     public static JDialog createDialog(JFrame parent,
-                                       Function<MappingMacro, Collection<ExecutionStatistic>> applyToMap) {
+                                       MacroApplicator applyToMap) {
         if (dialog != null) {
             dialog.setVisible(true);
             dialog.toFront();        // Bring it to the front
