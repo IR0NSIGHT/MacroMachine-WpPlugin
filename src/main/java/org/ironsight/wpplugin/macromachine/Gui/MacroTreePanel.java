@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 
 import javax.swing.*;
@@ -341,24 +342,34 @@ public class MacroTreePanel extends JPanel {
         this.invalidate();
     }
 
+    private long lastProgressUpdate = 0;
     private void onSetProgress(ApplyAction.Progess progess) {
         SwingUtilities.invokeLater(() -> {
+            if (Math.abs(lastProgressUpdate - System.currentTimeMillis()) < 100)
+                return;
+            lastProgressUpdate = System.currentTimeMillis();
             applyButton.setText(String.format("%d/%d: %d%%", progess.step+1, progess.totalSteps,
                     Math.round(progess.progressInStep)));
             applyButton.repaint();
         });
     }
 
+    private boolean macroInAction;
+
     private void onApply() {
+        if (macroInAction)
+            return;
+        macroInAction = true;
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         SwingUtilities.invokeLater(() -> {
+            applyButton.setEnabled(false);
             applyButton.setText("Starting...");
             applyButton.repaint();
         });
         // Submit a task to the ExecutorService
         final MacroTreePanel panel = this;
         executorService.submit(() -> {
-
+            long startTime = System.currentTimeMillis();
             //get macros
             for (UUID id : selectedMacros) {
                 MappingMacro macro = container.queryById(id);
@@ -366,10 +377,27 @@ public class MacroTreePanel extends JPanel {
                     applyToMap.applyLayerAction(macro, panel::onSetProgress);
                 }
             }
+
+            long diff = System.currentTimeMillis() - startTime;
+            try {   //always take at least 1/2 a second for a macro execution to give visual feedback that it ran.
+                long minimumWait = 350;
+                if (diff < minimumWait) {
+                    for (long i = diff; i < minimumWait; i+=10) {
+                        onSetProgress(new ApplyAction.Progess(0,1,(100f*i)/minimumWait));
+                        Thread.sleep(10);
+                    }
+
+                }
+            } catch (InterruptedException ex) {
+                MacroMachinePlugin.error(ex.getMessage());
+            }
+
             SwingUtilities.invokeLater(() -> {
                 applyButton.setText("Apply macros");
                 applyButton.repaint();
             });
+            macroInAction = false;
+            applyButton.setEnabled(true);
         });
 
         // Shutdown the ExecutorService
