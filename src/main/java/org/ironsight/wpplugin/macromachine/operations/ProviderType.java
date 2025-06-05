@@ -23,6 +23,7 @@ public enum ProviderType {
     WATER_HEIGHT,
     ALWAYS,
     DISTANCE_TO_EDGE,
+    PERLIN_NOISE,
     ;
 
     public static IMappingValue fromType(Object[] data, ProviderType type) {
@@ -68,6 +69,8 @@ public enum ProviderType {
                 return AlwaysIO.instance;
             case DISTANCE_TO_EDGE:
                 return new DistanceToLayerEdgeGetter(PineForest.INSTANCE);
+            case PERLIN_NOISE:
+                return new PerlinNoiseIO(1,1, 42069);
             default:
                 throw new IllegalArgumentException(
                         "not implemented: can not instantiate providers that need extra " + "information");
