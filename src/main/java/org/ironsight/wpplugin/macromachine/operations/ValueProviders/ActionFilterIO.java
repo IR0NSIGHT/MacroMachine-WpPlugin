@@ -5,13 +5,13 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
-public class IntermediateSelectionIO implements IPositionValueSetter, IPositionValueGetter {
-    public static IntermediateSelectionIO instance = new IntermediateSelectionIO();
+public class ActionFilterIO implements IPositionValueSetter, IPositionValueGetter {
+    public static ActionFilterIO instance = new ActionFilterIO();
     private static int value;
     private static int lastX;
     private static int lastY;
 
-    private IntermediateSelectionIO() {
+    private ActionFilterIO() {
     }
 
     @Override
@@ -45,7 +45,7 @@ public class IntermediateSelectionIO implements IPositionValueSetter, IPositionV
 
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
-        IntermediateSelectionIO.value = value;
+        ActionFilterIO.value = value;
         lastX = x;
         lastY = y;
     }

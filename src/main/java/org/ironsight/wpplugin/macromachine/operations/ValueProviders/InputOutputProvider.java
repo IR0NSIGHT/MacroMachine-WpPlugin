@@ -96,8 +96,8 @@ public class InputOutputProvider {
         getters.add(new IntermediateValueIO());
         setters.add(new IntermediateValueIO());
 
-        getters.add(IntermediateSelectionIO.instance);
-        setters.add(IntermediateSelectionIO.instance);
+        getters.add(ActionFilterIO.instance);
+        setters.add(ActionFilterIO.instance);
 
         getters.add(AlwaysIO.instance);
 
