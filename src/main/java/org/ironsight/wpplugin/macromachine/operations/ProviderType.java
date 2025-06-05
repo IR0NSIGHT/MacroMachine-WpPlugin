@@ -63,7 +63,7 @@ public enum ProviderType {
             case NIBBLE_LAYER:
                 return new NibbleLayerSetter(PineForest.INSTANCE);
             case INTERMEDIATE_SELECTION:
-                return IntermediateSelectionIO.instance;
+                return ActionFilterIO.instance;
             case ALWAYS:
                 return AlwaysIO.instance;
             case DISTANCE_TO_EDGE:

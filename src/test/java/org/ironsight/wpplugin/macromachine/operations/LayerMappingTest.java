@@ -81,7 +81,7 @@ class LayerMappingTest {
     @Test
     void discreteMap() {
         LayerMapping action = new LayerMapping(new HeightProvider(),
-                IntermediateSelectionIO.instance,
+                ActionFilterIO.instance,
                 new MappingPoint[]{new MappingPoint(100, 0), new MappingPoint(200, 1), new MappingPoint(250, 0)},
                 ActionType.SET,
                 "",
@@ -174,7 +174,7 @@ class LayerMappingTest {
 
     @Test
     void applyToPoint() {   //an most simple test to check it can run without crashing
-        IntermediateSelectionIO.instance.setSelected(true);
+        ActionFilterIO.instance.setSelected(true);
         {   //one point
             Dimension dim = TestData.createDimension(new Rectangle(-2 * TILE_SIZE,
                     -2 * TILE_SIZE,

@@ -2,7 +2,7 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.DistanceToLayerEdgeGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ILayerGetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IntermediateSelectionIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.util.Collection;
@@ -18,7 +18,7 @@ public class PointApplicator {
     }
 
     public void apply(int x, int y) {
-        IntermediateSelectionIO.instance.setSelected(true); //by default, each block is selected.
+        ActionFilterIO.instance.setSelected(true); //by default, each block is selected.
 
         for (LayerMapping action : actions)
             action.applyToPoint(dimension, x, y);
