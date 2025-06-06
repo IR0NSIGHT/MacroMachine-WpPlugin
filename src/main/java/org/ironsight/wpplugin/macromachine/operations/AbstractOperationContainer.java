@@ -55,6 +55,10 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         return mappings.get(uid);
     }
 
+    public boolean queryContains(UUID uuid) {
+        return mappings.containsKey(uuid);
+    }
+
     private void notify(UUID... mapping) {
         for (Runnable r : genericNotifies)
             r.run();
