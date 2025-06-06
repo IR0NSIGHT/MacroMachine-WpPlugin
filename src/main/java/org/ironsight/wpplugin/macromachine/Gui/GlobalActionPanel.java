@@ -2,6 +2,9 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.EditableIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
 import java.awt.*;
@@ -17,15 +20,17 @@ import static org.ironsight.wpplugin.macromachine.Gui.ActionEditor.createDialog;
 
 // top level panel that contains a selection list of macros/layers/input/output on the left, like a file browser
 // and an editor for the currently selected action on the right
-public class GlobalActionPanel extends JPanel {
+public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     public static final String MAPPING_EDITOR = "mappingEditor";
     public static final String INVALID_SELECTION = "invalidSelection";
     public static final String MACRO_DESIGNER = "macroDesigner";
-    static JTextArea logPanel;
+    public static final String INPUT_OUTPUT_DESIGNER = "inputoutputdesigner";
     static final int MAX_LOG_LINES = 2000;
+    static JTextArea logPanel;
     MacroTreePanel macroTreePanel;
     MacroDesigner macroDesigner;
     ActionEditor mappingEditor;
+    InputOutputEditor ioEditor;
     //consumes macro to apply to map. callback for "user pressed apply-macro"
     MacroApplicator applyMacro;
     CardLayout layout;
@@ -34,6 +39,9 @@ public class GlobalActionPanel extends JPanel {
     private UUID currentSelectedLayer;
     private SELECTION_TPYE selectionType = SELECTION_TPYE.INVALID;
     private Window dialog;
+    private JTabbedPane tabbedPane;
+    private boolean showTabbedPane = true;
+
     public GlobalActionPanel(MacroApplicator applyToMap, Window dialog) {
         this.applyMacro = applyToMap;
         this.dialog = dialog;
@@ -41,8 +49,6 @@ public class GlobalActionPanel extends JPanel {
     }
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         MappingMacroContainer.SetInstance(new MappingMacroContainer("./GlobalActionsPanel_Macros.json"));
         MappingMacroContainer macros = MappingMacroContainer.getInstance();
         LayerMappingContainer.INSTANCE = new LayerMappingContainer("./GlobalActionPanel_Actions.json");
@@ -56,7 +62,7 @@ public class GlobalActionPanel extends JPanel {
             for (int i = 0; i < 30; i++) {
                 try {
                     Thread.sleep(100);
-                    setProgress.accept(new ApplyAction.Progess(0,1, i/30f));
+                    setProgress.accept(new ApplyAction.Progess(0, 1, i / 30f));
                 } catch (InterruptedException ex) {
                     ;
                 }
@@ -96,7 +102,7 @@ public class GlobalActionPanel extends JPanel {
     public static void logMessage(String message) {
         if (logPanel != null) {
             // Append the new log message
-            logPanel.append(getCurrentTimestamp()+":\n");
+            logPanel.append(getCurrentTimestamp() + ":\n");
             logPanel.append(message + "\n");
 
             // Limit the number of lines in the log text area
@@ -119,11 +125,11 @@ public class GlobalActionPanel extends JPanel {
     }
 
     private void setProgress(ApplyAction.Progess progress) {
-        logMessage("step " + progress.step + "/"+progress.totalSteps +": " + progress.progressInStep + "%");
+        logMessage("step " + progress.step + "/" + progress.totalSteps + ": " + progress.progressInStep + "%");
     }
 
     public void applyToMap(MappingMacro macro, ApplyAction.Progess progess) {
-        Collection<ExecutionStatistic> statistic = applyMacro.applyLayerAction(macro, this::setProgress );
+        Collection<ExecutionStatistic> statistic = applyMacro.applyLayerAction(macro, this::setProgress);
         logMessage("apply macro " + macro.getName() + " to map:\n" +
                 statistic.stream().map(ExecutionStatistic::toString).collect(Collectors.joining("\n")));
     }
@@ -133,8 +139,7 @@ public class GlobalActionPanel extends JPanel {
         MappingMacro macro = MappingMacroContainer.getInstance().queryById(currentSelectedMacro);
         if (macro == null && selectionType == SELECTION_TPYE.MACRO) selectionType = SELECTION_TPYE.INVALID;
 
-        if (mapping == null && selectionType == SELECTION_TPYE.ACTION) selectionType = SELECTION_TPYE.INVALID;
-
+        if (mapping == null && selectionType != SELECTION_TPYE.MACRO) selectionType = SELECTION_TPYE.INVALID;
 
         switch (selectionType) {
             case MACRO:
@@ -145,17 +150,21 @@ public class GlobalActionPanel extends JPanel {
                 mappingEditor.setMapping(mapping);
                 layout.show(editorPanel, MAPPING_EDITOR);
                 break;
+            case INPUT:
+                ioEditor.setMapping(mapping);
+                ioEditor.setIsInput(true);
+                layout.show(editorPanel, INPUT_OUTPUT_DESIGNER);
+                break;
+            case OUTPUT:
+                ioEditor.setMapping(mapping);
+                ioEditor.setIsInput(false);
+                layout.show(editorPanel, INPUT_OUTPUT_DESIGNER);
+                break;
             case INVALID:
                 layout.show(editorPanel, INVALID_SELECTION);
                 break;
         }
 
-    }
-
-    public interface ApplyToMapCallback {
-        void applyToMap(MappingMacro macro, Consumer<ApplyAction.Progess> setProgress);
-
-        void applyToMap(MappingMacro macro, ApplyAction.Progess progess);
     }
 
     private void init() {
@@ -171,10 +180,12 @@ public class GlobalActionPanel extends JPanel {
 
         macroDesigner = new MacroDesigner(this::onSubmitMacro);
         mappingEditor = new ActionEditor(this::onSubmitMapping);
-
+        ioEditor = new InputOutputEditor(action -> LayerMappingContainer.INSTANCE.updateMapping(action,
+                MacroMachinePlugin::error));
         editorPanel = new JPanel(new CardLayout());
         editorPanel.add(mappingEditor, MAPPING_EDITOR);
         editorPanel.add(macroDesigner, MACRO_DESIGNER);
+        editorPanel.add(ioEditor, INPUT_OUTPUT_DESIGNER );
         editorPanel.add(new JPanel(), INVALID_SELECTION);
         layout = (CardLayout) editorPanel.getLayout();
         layout.show(editorPanel, MACRO_DESIGNER);
@@ -197,13 +208,13 @@ public class GlobalActionPanel extends JPanel {
         this.add(macroTreePanel, BorderLayout.WEST);
 
         JButton toggleTabbedPane = new JButton("expand/shrink");
-        toggleTabbedPane.addActionListener(e -> { showLargeVersion(!showTabbedPane); });
+        toggleTabbedPane.addActionListener(e -> {
+            showLargeVersion(!showTabbedPane);
+        });
         this.add(toggleTabbedPane, BorderLayout.NORTH);
         onUpdate();
     }
 
-    private  JTabbedPane tabbedPane;
-    private boolean showTabbedPane = true;
     private void showLargeVersion(boolean show) {
         tabbedPane.setVisible(show);
         showTabbedPane = show;
@@ -212,13 +223,13 @@ public class GlobalActionPanel extends JPanel {
         this.dialog.pack();
     }
 
-    private void onSelect(SaveableAction action) {
+    @Override
+    public void onSelect(SaveableAction action, SELECTION_TPYE type) {
+        selectionType = type;
         if (action instanceof MappingMacro) {
             currentSelectedMacro = action.getUid();
-            selectionType = SELECTION_TPYE.MACRO;
         } else if (action instanceof LayerMapping) {
             currentSelectedLayer = action.getUid();
-            selectionType = SELECTION_TPYE.ACTION;
         }
         onUpdate();
     }
@@ -234,7 +245,18 @@ public class GlobalActionPanel extends JPanel {
         });
     }
 
+    private void onSubmitInputOutput(EditableIO io) {
+        assert io instanceof IPositionValueGetter || io instanceof IPositionValueSetter;
+
+    }
+
     enum SELECTION_TPYE {
-        MACRO, ACTION, INVALID
+        MACRO, ACTION, INPUT, OUTPUT, INVALID
+    }
+
+    public interface ApplyToMapCallback {
+        void applyToMap(MappingMacro macro, Consumer<ApplyAction.Progess> setProgress);
+
+        void applyToMap(MappingMacro macro, ApplyAction.Progess progess);
     }
 }

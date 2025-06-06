@@ -8,10 +8,10 @@ import org.pepsoft.worldpainter.Dimension;
 import java.awt.*;
 import java.util.Objects;
 
-public class PerlinNoiseIO  implements IPositionValueGetter{
+public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
     private float scale;
-    private final  float amplitude;
-    private final  long seed;
+    private float amplitude;
+    private  long seed;
     private transient ImprovedNoise generator;
 
     public PerlinNoiseIO(float scale, float amplitude, long seed) {
@@ -117,5 +117,39 @@ public class PerlinNoiseIO  implements IPositionValueGetter{
     @Override
     public int hashCode() {
         return Objects.hash(scale, amplitude, seed);
+    }
+
+    @Override
+    public int[] getEditableValues() {
+        return new int[]{Math.round(scale), Math.round(amplitude), (int)seed};
+    }
+
+    @Override
+    public String[] getValueNames() {
+        return new String[]{"scale","amplitude","seed"};
+    }
+
+    @Override
+    public String[] getValueTooltips() {
+        return new String[]{"the size of the noise in x/y direction.","the size of the perlin noise in z direction, " +
+                "values will range from 0 to amplitude","seed that determines the shape of the random noise"};
+    }
+
+    private float clamp(int value, int min, int max) {
+        return Math.min(min, Math.max(value, max));
+    }
+
+    @Override
+    public void setEditableValues(int[] values) {
+        assert values.length == 3;
+        this.scale = clamp(values[0],1,30000);
+        this.amplitude = clamp( values[1], 1,1000);
+        this.seed = (long)clamp(values[2],0,Integer.MAX_VALUE);
+        this.generator = new ImprovedNoise(seed);
+    }
+
+    @Override
+    public boolean sanitizeValue(int value, int index) {
+        return false; // UNUSED MABYE DELETE
     }
 }

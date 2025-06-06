@@ -40,14 +40,20 @@ class PerlinNoiseIOTest {
     @Test
     void getValueAt() {
         float scale = 2000f;
-        float amplitude = 255f;
-        PerlinNoiseIO io = new PerlinNoiseIO(2000, amplitude, 123456);
+        int amplitude = 255;
+        int[] histogram = new int[amplitude+1];
+        PerlinNoiseIO io = new PerlinNoiseIO(scale, amplitude, 123456);
         for (int x = -1000; x < 1000; x++) {
             for (int y = -1000; y <= 2000; y++) {
                 int value = io.getValueAt(null, x, y);
+                histogram[value]++;
                 assertTrue(value <= amplitude, "value=" + value + " at" + Arrays.toString(new int[]{x, y}));
                 assertTrue(0 <= value, "value=" + value + " at" + Arrays.toString(new int[]{x, y}));
             }
+        }
+        //full range from zero to 255 is actually hit
+        for (int hits: histogram) {
+            assertNotEquals(0,hits);
         }
 
     }
