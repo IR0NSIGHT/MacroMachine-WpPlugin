@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.ironsight.wpplugin.macromachine.Gui.MacroTreePanel.MacroTreeNode;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 
 import javax.swing.*;
@@ -30,17 +31,13 @@ class IDisplayUnitCellRenderer extends DefaultTreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
                                                   boolean leaf, int row, boolean hasFocus) {
-        String nameText = null;
+        String nameText = "";
         String descriptionText = "";
-        if (value instanceof DefaultMutableTreeNode) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) value;
-            if (node.getUserObject() instanceof IDisplayUnit) {
-                IDisplayUnit obj = (IDisplayUnit) node.getUserObject();
-                nameText = obj.getName();
-                descriptionText = obj.getDescription();
-            } else {
-                nameText = node.getUserObject().toString();
-            }
+        if (value instanceof MacroTreeNode) {
+            MacroTreeNode node = (MacroTreeNode) value;
+            IDisplayUnit obj = node.getPayload();
+            nameText = obj.getName();
+            descriptionText = obj.getDescription();
         }
         name.setText(nameText);
         if (expanded || leaf) {
@@ -54,5 +51,6 @@ class IDisplayUnitCellRenderer extends DefaultTreeCellRenderer {
         else panel.setBackground(Color.WHITE);
         panel.invalidate();
         return panel;
+
     }
 }

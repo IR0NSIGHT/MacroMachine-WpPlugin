@@ -2,20 +2,18 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.event.*;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
@@ -23,7 +21,6 @@ public class MacroTreePanel extends JPanel {
     private final MappingMacroContainer container;
     private final LayerMappingContainer mappingContainer;
     private final MacroApplicator applyToMap;
-    DefaultMutableTreeNode root;
     DefaultTreeModel treeModel;
     JTree tree;
     TreePath[] selectionpaths;
@@ -31,10 +28,11 @@ public class MacroTreePanel extends JPanel {
     private LinkedList<UUID> selectedMacros;
     private String filterString = "";
     private JButton applyButton;
-
+    private long lastProgressUpdate = 0;
+    private boolean macroInAction;
 
     MacroTreePanel(MappingMacroContainer container, LayerMappingContainer mappingContainer,
-                   MacroApplicator applyToMap,ISelectItemCallback onSelectAction) {
+                   MacroApplicator applyToMap, ISelectItemCallback onSelectAction) {
         this.applyToMap = applyToMap;
         this.container = container;
         this.mappingContainer = mappingContainer;
@@ -43,187 +41,45 @@ public class MacroTreePanel extends JPanel {
         update();
     }
 
-    private static void getExpansionAndSelection(JTree tree, DefaultMutableTreeNode node, LinkedList<UUID> expanded) {
-        Object userObject = node.getUserObject();
-
-        // Check if the node's userObject is a valid type with UUID
-        if (userObject instanceof SaveableAction) {
-            UUID uid = ((SaveableAction) userObject).getUid();
-
-            // Add to expanded if the node is expanded
-            if (tree.isExpanded(new TreePath(node.getPath()))) {
-                expanded.add(uid);
+    private boolean verifyTreePathExists(MacroTreeNode node, Object[] path, int index, Object[] newPath){
+        newPath[index] = node;
+        if (index >= path.length - 1)
+            return node.equals(path[index]);
+        else {
+            for (MacroTreeNode child: node.children) {
+                if (child.equals(path[index+1]))
+                    return verifyTreePathExists(child, path, index+1, newPath);
             }
-
-        }
-
-        // Recursively process child nodes
-        for (int i = 0; i < node.getChildCount(); i++) {
-            DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) node.getChildAt(i);
-            getExpansionAndSelection(tree, childNode, expanded);
-        }
-    }
-
-    private static void applyExpansionAndSelection(JTree tree, DefaultMutableTreeNode node, Set<UUID> expanded,
-                                                   Set<UUID> selected) {
-        Object userObject = node.getUserObject();
-
-        // Check if the node's userObject is a valid type with UUID
-        if (userObject instanceof SaveableAction) {
-            UUID uid = ((SaveableAction) userObject).getUid();
-
-            // Add to expanded if the node is expanded
-            if (expanded.contains(uid)) {
-                tree.expandPath(new TreePath(node.getPath()));
-            }
-
-            // Add to selected if the node is selected
-            if (selected.contains(uid)) {
-                tree.addSelectionPath(new TreePath(node.getPath()));
-            }
-        }
-
-        // Recursively process child nodes
-        for (int i = 0; i < node.getChildCount(); i++) {
-            DefaultMutableTreeNode childNode = (DefaultMutableTreeNode) node.getChildAt(i);
-            applyExpansionAndSelection(tree, childNode, expanded, selected);
-        }
-    }
-
-    private void restoreSelectionPaths(JTree tree, TreePath[] savedPaths) {
-        if (savedPaths != null) {
-            ArrayList<TreePath> validPaths = new ArrayList<TreePath>();
-            for (TreePath path : savedPaths) {
-                if (pathStillExists(tree, path)) {
-                    validPaths.add(path);
-                }
-            }
-            tree.setSelectionPaths(validPaths.toArray(new TreePath[0]));
-        }
-    }
-
-    // Helper method to check if a path still exists in the tree
-    private boolean pathStillExists(JTree tree, TreePath path) {
-        javax.swing.tree.TreeModel model = tree.getModel();
-        Object[] nodes = path.getPath();
-        Object currentNode = model.getRoot();
-
-        for (int i = 1; i < nodes.length; i++) { // Skip the root
-            boolean found = false;
-            for (int j = 0; j < model.getChildCount(currentNode); j++) {
-                Object child = model.getChild(currentNode, j);
-                if (child.equals(nodes[i])) {
-                    currentNode = child;
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private GlobalActionPanel.SELECTION_TPYE isInputOrOutputNode(DefaultMutableTreeNode node) {
-        Object userObject = node.getUserObject();
-        if (node.getParent() instanceof DefaultMutableTreeNode) {
-            Object parentUserObject = ((DefaultMutableTreeNode) node.getParent()).getUserObject();
-            if (!(parentUserObject instanceof LayerMapping))
-                return GlobalActionPanel.SELECTION_TPYE.INVALID;
-            if (userObject.equals(((LayerMapping) parentUserObject).input))
-                return GlobalActionPanel.SELECTION_TPYE.INPUT;
-            if (userObject.equals(((LayerMapping) parentUserObject).output))
-                return GlobalActionPanel.SELECTION_TPYE.OUTPUT;
-            return GlobalActionPanel.SELECTION_TPYE.INVALID;
-        }
-        return GlobalActionPanel.SELECTION_TPYE.INVALID;
-    }
-
-
-    private DefaultMutableTreeNode LayerToNode(SaveableAction m) {
-        if (m == null) {
-            return new DefaultMutableTreeNode("Unknown Mapping");
-        } else {
-            DefaultMutableTreeNode mappingNode = new DefaultMutableTreeNode(m);
-            if (m instanceof LayerMapping) {
-                DefaultMutableTreeNode inputNode = new DefaultMutableTreeNode(((LayerMapping) m).input);
-                DefaultMutableTreeNode outputNode = new DefaultMutableTreeNode(((LayerMapping) m).output);
-                mappingNode.add(inputNode);
-                mappingNode.add(outputNode);
-            } else if (m instanceof MappingMacro) {
-                for (UUID uuid : ((MappingMacro) m).executionUUIDs) {
-                    SaveableAction child = mappingContainer.queryById(uuid);
-                    if (child == null) {
-                        child = container.queryById(uuid);  //FIXME rename container to macroContainer
-                    }
-                    mappingNode.add(LayerToNode(child));
-                }
-            }
-            return mappingNode;
+            return false;
         }
     }
 
     private void update() {
-        LinkedList<UUID> expanded = new LinkedList<>();
-        LinkedList<UUID> selected = new LinkedList<>();
-        if (tree.getModel().getRoot() != null) {
-            TreePath[] selectionPaths = tree.getSelectionPaths();
-            if (selectionPaths != null) Arrays.stream(selectionPaths).forEach(p -> {
-                Object o = p.getLastPathComponent();
-                if (o instanceof DefaultMutableTreeNode &&
-                        ((DefaultMutableTreeNode) o).getUserObject() instanceof SaveableAction)
-                    selected.add(((SaveableAction) ((DefaultMutableTreeNode) o).getUserObject()).getUid());
-            });
+        MappingMacroContainer macroContainer = MappingMacroContainer.getInstance();
+        MacroTreeNode newRoot = new MacroTreeNode(LayerMappingContainer.INSTANCE, macroContainer);
 
-            //save the currently expanded ones
-            getExpansionAndSelection(tree, (DefaultMutableTreeNode) tree.getModel().getRoot(), expanded);
-        }
-
-
-        root.removeAllChildren();
-        ArrayList<MappingMacro> macros = container.queryAll();
-        macros.sort(Comparator.comparing(MappingMacro::getName));
-        macros.stream()
-                .filter(f -> filterString.isEmpty() || f.getName().toLowerCase().contains(filterString) ||
-                        f.getDescription().toLowerCase().contains(filterString) || Arrays.stream(f.executionUUIDs)
-                        .map(LayerMappingContainer.INSTANCE::queryById).filter(Objects::nonNull)
-                        .anyMatch(action -> action.getName().contains(filterString) ||
-                                action.getDescription().contains(filterString)))
-                .sorted(Comparator.comparing(o -> o.getName().toLowerCase()))
-                .forEach(macro -> {
-                    DefaultMutableTreeNode macroNode = new DefaultMutableTreeNode(macro);
-                    for (UUID uuid : macro.executionUUIDs) {
-                        SaveableAction m = mappingContainer.queryById(uuid);
-                        if (m == null) m = container.queryById(uuid);
-                        DefaultMutableTreeNode node = LayerToNode(m);
-                        macroNode.add(node);
-                    }
-                    root.add(macroNode);
-                });
-
-        treeModel.reload(root);
-
-        if (!expanded.isEmpty() && !selected.isEmpty() && tree.getModel().getRoot() != null) applyExpansionAndSelection(
-                tree,
-                (DefaultMutableTreeNode) tree.getModel().getRoot(),
-                new HashSet<>(expanded),
-                new HashSet<>(selected));
-
-        restoreSelectionPaths(tree, selectionpaths);
-        revalidate();
-        repaint();
-    }
-
-    private LayerMapping getParentLayerMapping(DefaultMutableTreeNode node) {
-        TreeNode parent = node.getParent();
-        if (parent instanceof DefaultMutableTreeNode) {
-            Object userObject = ((DefaultMutableTreeNode) parent).getUserObject();
-            if (userObject instanceof LayerMapping) {
-                return (LayerMapping) userObject;
+        // create treepaths to keep previous selection and carry it over to newRoot.
+        TreePath[] selectionPaths = tree.getSelectionPaths();
+        LinkedList<TreePath> validSelections = new LinkedList<>();
+        if (selectionPaths != null) {
+            for (TreePath selectionPath: selectionPaths) {
+                Object[] newTreePath = new Object[selectionPath.getPathCount()];
+                if (verifyTreePathExists(newRoot, selectionPath.getPath(), 0,newTreePath)) {
+                    validSelections.add(new TreePath(newTreePath));
+                }
             }
         }
-        return null;
+
+        for (TreePath selectionPath: validSelections) {
+            tree.expandPath(selectionPath);
+        }
+
+        //apply changes
+        tree.setModel(new DefaultTreeModel(newRoot));
+        tree.setSelectionPaths(validSelections.toArray(new TreePath[0]));
+
+        revalidate();
+        repaint();
     }
 
     private void init() {
@@ -256,49 +112,31 @@ public class MacroTreePanel extends JPanel {
         this.add(searchField, BorderLayout.NORTH);
 
 
-        root = new DefaultMutableTreeNode("All Macros");
-        treeModel = new DefaultTreeModel(root);
+        treeModel = new DefaultTreeModel(new MacroTreeNode(mappingContainer ,container ));
         tree = new JTree(treeModel);
         tree.setCellRenderer(new IDisplayUnitCellRenderer());
         tree.setRowHeight(-1); //auto set cell height
-
-        tree.getSelectionModel().addTreeSelectionListener(x -> {
-            if (tree.getSelectionPaths() != null) selectedMacros = Arrays.stream(tree.getSelectionPaths())
-                    .filter(path -> path.getLastPathComponent() instanceof DefaultMutableTreeNode)
-                    .map(path -> (DefaultMutableTreeNode) path.getLastPathComponent())
-                    .filter(node -> node.getUserObject() instanceof SaveableAction)
-                    .map(node -> (SaveableAction) node.getUserObject())
-                    .map(SaveableAction::getUid)
-                    .collect(Collectors.toCollection(LinkedList::new));
-            Object o = tree.getLastSelectedPathComponent();
-            if (o instanceof DefaultMutableTreeNode) {
-                // Check if the selected node is an input or output node
-                switch (isInputOrOutputNode((DefaultMutableTreeNode)o)) {
+        tree.addTreeSelectionListener(e -> {
+            JTree tree = (JTree) e.getSource();
+            TreePath selectedPath = tree.getSelectionPath();
+            if (selectedPath != null) {
+                MacroTreeNode selectedNode = (MacroTreeNode) selectedPath.getLastPathComponent();
+                switch (selectedNode.getPayloadType()) {
+                    case MACRO:
+                        onSelectAction.onSelect(selectedNode.getMacro(), selectedNode.getPayloadType());
+                        break;
+                    case ACTION:
                     case INPUT:
-                        onSelectAction.onSelect(getParentLayerMapping((DefaultMutableTreeNode)o),
-                                GlobalActionPanel.SELECTION_TPYE.INPUT);
-                        break;
                     case OUTPUT:
-                        onSelectAction.onSelect(getParentLayerMapping((DefaultMutableTreeNode)o),
-                                GlobalActionPanel.SELECTION_TPYE.OUTPUT);
+                        onSelectAction.onSelect(selectedNode.getAction(), selectedNode.getPayloadType());
                         break;
-                    default:
-                        if (((DefaultMutableTreeNode) o).getUserObject() instanceof SaveableAction) {
-                            SaveableAction selectedAction = (SaveableAction) (((DefaultMutableTreeNode) o).getUserObject());
-                            applyButton.setVisible(selectedAction instanceof MappingMacro);
-                            GlobalActionPanel.SELECTION_TPYE type = GlobalActionPanel.SELECTION_TPYE.INVALID;
-                            if (selectedAction instanceof MappingMacro)
-                                type = GlobalActionPanel.SELECTION_TPYE.MACRO;
-                            if (selectedAction instanceof LayerMapping)
-                                type = GlobalActionPanel.SELECTION_TPYE.ACTION;
-                            onSelectAction.onSelect(selectedAction,type);
-                        }
+                    case INVALID:
+                        onSelectAction.onSelect(null, selectedNode.getPayloadType());
+                        break;
                 }
             }
-            else {
-                MacroMachinePlugin.error("the selected tree node is of unknonw type:" + o);
-            }
         });
+
         JScrollPane scrollPane = new JScrollPane(tree,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -358,19 +196,16 @@ public class MacroTreePanel extends JPanel {
         this.invalidate();
     }
 
-    private long lastProgressUpdate = 0;
     private void onSetProgress(ApplyAction.Progess progess) {
         SwingUtilities.invokeLater(() -> {
             if (Math.abs(lastProgressUpdate - System.currentTimeMillis()) < 100)
                 return;
             lastProgressUpdate = System.currentTimeMillis();
-            applyButton.setText(String.format("%d/%d: %d%%", progess.step+1, progess.totalSteps,
+            applyButton.setText(String.format("%d/%d: %d%%", progess.step + 1, progess.totalSteps,
                     Math.round(progess.progressInStep)));
             applyButton.repaint();
         });
     }
-
-    private boolean macroInAction;
 
     private void onApply() {
         if (macroInAction)
@@ -398,8 +233,8 @@ public class MacroTreePanel extends JPanel {
             try {   //always take at least 1/2 a second for a macro execution to give visual feedback that it ran.
                 long minimumWait = 350;
                 if (diff < minimumWait) {
-                    for (long i = diff; i < minimumWait; i+=10) {
-                        onSetProgress(new ApplyAction.Progess(0,1,(100f*i)/minimumWait));
+                    for (long i = diff; i < minimumWait; i += 10) {
+                        onSetProgress(new ApplyAction.Progess(0, 1, (100f * i) / minimumWait));
                         Thread.sleep(10);
                     }
 
@@ -419,6 +254,163 @@ public class MacroTreePanel extends JPanel {
         // Shutdown the ExecutorService
         executorService.shutdown();
 
+    }
+
+    static class MacroTreeNode implements TreeNode {
+        final Object payload;
+        GlobalActionPanel.SELECTION_TPYE payloadType;
+        private MacroTreeNode[] children;
+        public MacroTreeNode(LayerMappingContainer actions, MappingMacroContainer macros) {
+            //ROOT NODE
+            children = new MacroTreeNode[macros.queryAll().size()];
+            int i = 0;
+            for (MappingMacro macro :  macros.queryAll().stream().sorted(Comparator.comparing(MappingMacro::getName)).toArray(MappingMacro[]::new)) {
+                children[i++] = new MacroTreeNode(macro, actions, macros);
+            }
+            for (MacroTreeNode child: children)
+                child.setParent(this);
+            payloadType = GlobalActionPanel.SELECTION_TPYE.INVALID;
+            payload = new IDisplayUnit() {
+                @Override
+                public String getName() {
+                    return "All macros";
+                }
+
+                @Override
+                public String getDescription() {
+                    return "root";
+                }
+            };
+            assert parent == null;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            MacroTreeNode that = (MacroTreeNode) o;
+            if (this.getPayloadType() != that.getPayloadType())
+                return false;
+            switch (getPayloadType()) {
+                case INVALID: //root
+                    return true;
+                case MACRO:
+                    return this.getMacro().getUid().equals(that.getMacro().getUid());
+                case ACTION:
+                case INPUT:
+                case OUTPUT:
+                    return this.getAction().getUid().equals(that.getAction().getUid());
+                default:
+                    throw new RuntimeException("incomplete enum");
+            }
+        }
+
+        public MacroTreeNode(MappingMacro macro, LayerMappingContainer actions, MappingMacroContainer macros) {
+            payload = macro;
+            children = new MacroTreeNode[macro.getExecutionUUIDs().length];
+            int i = 0;
+            for (UUID id: macro.getExecutionUUIDs()) {
+                if (macros.queryContains(id))
+                    children[i++] = new MacroTreeNode(macros.queryById(id), actions, macros);
+                else if (actions.queryContains(id))
+                    children[i++] = new MacroTreeNode(actions.queryById(id));
+                else
+                    MacroMachinePlugin.error("invalid type");
+            }
+            for (MacroTreeNode child: children)
+                child.setParent(this);
+            payloadType = GlobalActionPanel.SELECTION_TPYE.MACRO;
+        }
+
+        public MacroTreeNode(LayerMapping action) {
+            payload = action;
+            children = new MacroTreeNode[2];
+            children[0] = new MacroTreeNode(action.input, action);
+            children[1] = new MacroTreeNode(action.output, action);
+            for (MacroTreeNode child: children)
+                child.setParent(this);
+            payloadType = GlobalActionPanel.SELECTION_TPYE.ACTION;
+        }
+
+        public MacroTreeNode(IPositionValueSetter output,LayerMapping action) {
+            payload = action;
+            children = new MacroTreeNode[0];
+            payloadType = GlobalActionPanel.SELECTION_TPYE.OUTPUT;
+        }
+
+        public MacroTreeNode(IPositionValueGetter input,LayerMapping action) {
+            payload = action;
+            children = new MacroTreeNode[0];
+            payloadType = GlobalActionPanel.SELECTION_TPYE.INPUT;
+        }
+
+        private MacroTreeNode parent;
+        private void setParent(MacroTreeNode node) {
+            this.parent = node;
+        }
+
+        @Override
+        public TreeNode getChildAt(int childIndex) {
+            return children[childIndex];
+        }
+
+        @Override
+        public int getChildCount() {
+            return children.length;
+        }
+
+        @Override
+        public TreeNode getParent() {
+            return parent;
+        }
+
+        @Override
+        public int getIndex(TreeNode node) {
+            if (node == null) {
+                return -1;
+            }
+            for (int i = 0; i < getChildCount(); i++) {
+                if (getChildAt(i) == node) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        @Override
+        public boolean getAllowsChildren() {
+            return true;
+        }
+
+        @Override
+        public boolean isLeaf() {
+            return children.length == 0;
+        }
+
+        @Override
+        public Enumeration<? extends TreeNode> children() {
+            return Collections.enumeration(Arrays.asList(children));
+        }
+
+        public GlobalActionPanel.SELECTION_TPYE getPayloadType() {
+            return payloadType;
+        }
+        public LayerMapping getAction() {
+            return (LayerMapping) payload;
+        }
+        public MappingMacro getMacro() {
+            return (MappingMacro) payload;
+        }
+        public IPositionValueGetter getInput() {
+            return (IPositionValueGetter) payload;
+        }
+        public IPositionValueSetter getOutput() {
+            return (IPositionValueSetter) payload;
+        }
+
+        public IDisplayUnit getPayload() {
+            return (IDisplayUnit) payload;
+        }
     }
 }
 
