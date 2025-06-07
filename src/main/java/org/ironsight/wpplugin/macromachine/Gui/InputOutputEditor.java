@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 public class InputOutputEditor extends LayerMappingPanel {
@@ -40,6 +41,8 @@ public class InputOutputEditor extends LayerMappingPanel {
     }
 
     private void onValueChanged(int[] newValues) {
+        if (Arrays.equals(newValues, io.getEditableValues()))
+            return;
         io.setEditableValues(newValues);
         LayerMapping updated = isInput ? mapping.withInput((IPositionValueGetter) io) :
                 mapping.withOutput((IPositionValueSetter) io);
@@ -49,6 +52,9 @@ public class InputOutputEditor extends LayerMappingPanel {
 
     @Override
     protected void updateComponents() {
+        if (mapping == null)
+            return;
+        System.out.println("update IO editor with values:" + (isInput ? mapping.input : mapping.output));
         if ((isInput && !(mapping.input instanceof EditableIO)) || (!isInput && !(mapping.output instanceof EditableIO))) {
             tableModel.setData(new int[0],new String[0], new String[0]);
         } else {
@@ -90,6 +96,8 @@ public class InputOutputEditor extends LayerMappingPanel {
         // Add a TableModelListener to detect changes
         tableModel.addTableModelListener(e -> {
             if (e.getType() == TableModelEvent.UPDATE) {
+                if (tableModel.getRowCount() == 0)
+                    return;
                 int row = e.getFirstRow();
                 String key = (String) tableModel.getValueAt(row, 0);
                 Integer value = (Integer) tableModel.getValueAt(row, 1);
@@ -130,6 +138,7 @@ public class InputOutputEditor extends LayerMappingPanel {
                 this.data[i][0] = keys[i];
                 this.data[i][1] = values[i];
             }
+            fireTableDataChanged();
         }
 
         @Override

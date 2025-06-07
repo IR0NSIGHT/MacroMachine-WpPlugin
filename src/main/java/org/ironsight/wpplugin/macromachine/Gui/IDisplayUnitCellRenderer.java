@@ -40,7 +40,6 @@ class IDisplayUnitCellRenderer extends DefaultTreeCellRenderer {
              nameText = obj.getName();
             descriptionText = obj.getDescription();
         }
-        System.out.println("render tree node:" + value);
         name.setText(nameText);
         if (expanded || leaf) {
             description.setText(descriptionText);
