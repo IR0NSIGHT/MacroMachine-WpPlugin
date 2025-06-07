@@ -156,8 +156,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
                 layout.show(editorPanel, INPUT_OUTPUT_DESIGNER);
                 break;
             case OUTPUT:
-                ioEditor.setMapping(mapping);
                 ioEditor.setIsInput(false);
+                ioEditor.setMapping(mapping);
                 layout.show(editorPanel, INPUT_OUTPUT_DESIGNER);
                 break;
             case INVALID:

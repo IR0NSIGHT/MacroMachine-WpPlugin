@@ -106,20 +106,6 @@ public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PerlinNoiseIO that = (PerlinNoiseIO) o;
-        return Float.compare(scale, that.scale) == 0 && Float.compare(amplitude, that.amplitude) == 0 &&
-                seed == that.seed;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(scale, amplitude, seed);
-    }
-
-    @Override
     public int[] getEditableValues() {
         return new int[]{Math.round(scale), Math.round(amplitude), (int)seed};
     }
@@ -146,6 +132,30 @@ public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
         this.amplitude = clamp( values[1], 1,1000);
         this.seed = (long)clamp(values[2],0,Integer.MAX_VALUE);
         this.generator = new ImprovedNoise(seed);
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PerlinNoiseIO that = (PerlinNoiseIO) o;
+        return Float.compare(scale, that.scale) == 0 && Float.compare(amplitude, that.amplitude) == 0 &&
+                seed == that.seed;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(scale, amplitude, seed);
+    }
+
+    @Override
+    public String toString() {
+        return "PerlinNoiseIO{" +
+                "scale=" + scale +
+                ", amplitude=" + amplitude +
+                ", seed=" + seed +
+                '}';
     }
 
     @Override

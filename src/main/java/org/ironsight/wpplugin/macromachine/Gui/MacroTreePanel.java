@@ -384,16 +384,18 @@ public class MacroTreePanel extends JPanel {
 
         public MacroTreeNode(MappingMacro macro, LayerMappingContainer actions, MappingMacroContainer macros) {
             payload = macro;
-            children = new MacroTreeNode[macro.getExecutionUUIDs().length];
+            LinkedList<MacroTreeNode> nodes = new LinkedList<>();
             int i = 0;
             for (UUID id : macro.getExecutionUUIDs()) {
                 if (macros.queryContains(id))
-                    children[i++] = new MacroTreeNode(macros.queryById(id), actions, macros);
+                    nodes.add( new MacroTreeNode(macros.queryById(id), actions, macros));
                 else if (actions.queryContains(id))
-                    children[i++] = new MacroTreeNode(actions.queryById(id));
+                    nodes.add(new MacroTreeNode(actions.queryById(id)));
                 else
                     MacroMachinePlugin.error("invalid type");
             }
+            children = nodes.toArray(new MacroTreeNode[0]);
+
             for (MacroTreeNode child : children)
                 child.setParent(this);
             payloadType = GlobalActionPanel.SELECTION_TPYE.MACRO;
