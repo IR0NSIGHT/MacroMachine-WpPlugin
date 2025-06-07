@@ -70,7 +70,7 @@ public enum ProviderType {
             case DISTANCE_TO_EDGE:
                 return new DistanceToLayerEdgeGetter(PineForest.INSTANCE);
             case PERLIN_NOISE:
-                return new PerlinNoiseIO(1,1, 42069);
+                return new PerlinNoiseIO(1,1, 42069,5);
             default:
                 throw new IllegalArgumentException(
                         "not implemented: can not instantiate providers that need extra " + "information");

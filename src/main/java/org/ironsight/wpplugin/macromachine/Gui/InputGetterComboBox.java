@@ -26,7 +26,6 @@ public class InputGetterComboBox extends JComboBox<String> {
         this.stringToGetter.put(getter.getName(), getter);
         this.addItem(getter.getName());
     }
-
     public IPositionValueGetter getSelectedProvider() {
         return stringToGetter.get((String) getSelectedItem());
     }

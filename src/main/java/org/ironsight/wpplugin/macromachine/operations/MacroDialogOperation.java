@@ -22,8 +22,14 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
 
     public MacroDialogOperation() {
         super(NAME, DESCRIPTION, "macrooperation");
+
         MappingMacroContainer.SetInstance(new MappingMacroContainer(null));
         LayerMappingContainer.INSTANCE = new LayerMappingContainer(null);
+
+        // FIXME ONLY FOR DEV
+        MappingMacroContainer.SetInstance(new MappingMacroContainer("./src/main/resources/DefaultMacros.json"));
+        LayerMappingContainer.INSTANCE = new LayerMappingContainer("./src/main/resources/DefaultActions.json");
+
         MappingMacroContainer.getInstance().readFromFile();
         LayerMappingContainer.INSTANCE.readFromFile();
         LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());

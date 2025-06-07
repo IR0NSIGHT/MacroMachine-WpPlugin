@@ -19,7 +19,7 @@ public class InputOutputEditor extends LayerMappingPanel {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
         InputOutputEditor editor = new InputOutputEditor(f -> { System.out.println("update mapping to:" + f); });
-        LayerMapping lm = LayerMapping.getNewEmptyAction().withInput(new PerlinNoiseIO(10,20,123456789));
+        LayerMapping lm = LayerMapping.getNewEmptyAction().withInput(new PerlinNoiseIO(10,20,123456789, 3));
         editor.setMapping(lm);
         frame.add(new JLabel("HELLO WORLD"), BorderLayout.NORTH);
         frame.add(editor, BorderLayout.CENTER);
