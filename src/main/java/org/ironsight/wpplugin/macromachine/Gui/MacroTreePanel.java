@@ -23,7 +23,6 @@ public class MacroTreePanel extends JPanel {
     private final MacroApplicator applyToMap;
     DefaultTreeModel treeModel;
     JTree tree;
-    TreePath[] selectionpaths;
     ISelectItemCallback onSelectAction;
     private LinkedList<UUID> selectedMacros;
     private String filterString = "";
@@ -41,16 +40,41 @@ public class MacroTreePanel extends JPanel {
         update();
     }
 
-    private boolean verifyTreePathExists(MacroTreeNode node, Object[] path, int index, Object[] newPath){
+    private boolean verifyTreePathExists(MacroTreeNode node, Object[] path, int index, Object[] newPath) {
         newPath[index] = node;
         if (index >= path.length - 1)
             return node.equals(path[index]);
         else {
-            for (MacroTreeNode child: node.children) {
-                if (child.equals(path[index+1]))
-                    return verifyTreePathExists(child, path, index+1, newPath);
+            for (MacroTreeNode child : node.children) {
+                if (child.equals(path[index + 1]))
+                    return verifyTreePathExists(child, path, index + 1, newPath);
             }
             return false;
+        }
+    }
+
+    private List<TreePath> findExpandedPaths(JTree tree, MacroTreeNode node, LinkedList<TreePath> expanded) {
+        TreePath path = node.getPath();
+        if (tree.isExpanded(path))
+            expanded.add(path);
+        for (MacroTreeNode child : node.children) {
+            findExpandedPaths(tree, child, expanded);
+        }
+        return expanded;
+    }
+
+    private TreePath findPathEquivalent(Object[] oldPath, MacroTreeNode newNode, int index, Object[] newPath) {
+        newPath[index] = newNode;
+        if (index >= oldPath.length - 1)
+            return new TreePath(newPath);
+        else {
+            for (MacroTreeNode child : newNode.children) {
+                if (child.equals(oldPath[index + 1])) {
+                    return findPathEquivalent(oldPath, child, index + 1, newPath);
+                }
+            }
+            assert false : "could not find equivalent path";
+            return new TreePath(new Object[0]);
         }
     }
 
@@ -62,22 +86,33 @@ public class MacroTreePanel extends JPanel {
         TreePath[] selectionPaths = tree.getSelectionPaths();
         LinkedList<TreePath> validSelections = new LinkedList<>();
         if (selectionPaths != null) {
-            for (TreePath selectionPath: selectionPaths) {
+            for (TreePath selectionPath : selectionPaths) {
                 Object[] newTreePath = new Object[selectionPath.getPathCount()];
-                if (verifyTreePathExists(newRoot, selectionPath.getPath(), 0,newTreePath)) {
+                if (verifyTreePathExists(newRoot, selectionPath.getPath(), 0, newTreePath)) {
                     validSelections.add(new TreePath(newTreePath));
                 }
             }
         }
 
-        for (TreePath selectionPath: validSelections) {
+        for (TreePath selectionPath : validSelections) {
             tree.expandPath(selectionPath);
         }
 
+        //find expanded paths
+        List<TreePath> expanded =
+                findExpandedPaths(tree, (MacroTreeNode) tree.getModel().getRoot(), new LinkedList<>());
+        LinkedList<TreePath> newExpanded = new LinkedList<>();
+        for (TreePath oldPath : expanded) {
+            TreePath newPath = findPathEquivalent(oldPath.getPath(), newRoot, 0,
+                    new Object[oldPath.getPath().length]);
+            newExpanded.add(newPath);
+        }
         //apply changes
         tree.setModel(new DefaultTreeModel(newRoot));
         tree.setSelectionPaths(validSelections.toArray(new TreePath[0]));
-
+        for (TreePath p : newExpanded) {
+            tree.expandPath(p);
+        }
         revalidate();
         repaint();
     }
@@ -112,7 +147,7 @@ public class MacroTreePanel extends JPanel {
         this.add(searchField, BorderLayout.NORTH);
 
 
-        treeModel = new DefaultTreeModel(new MacroTreeNode(mappingContainer ,container ));
+        treeModel = new DefaultTreeModel(new MacroTreeNode(mappingContainer, container));
         tree = new JTree(treeModel);
         tree.setCellRenderer(new IDisplayUnitCellRenderer());
         tree.setRowHeight(-1); //auto set cell height
@@ -260,14 +295,19 @@ public class MacroTreePanel extends JPanel {
         final Object payload;
         GlobalActionPanel.SELECTION_TPYE payloadType;
         private MacroTreeNode[] children;
+        private MacroTreeNode parent;
+
         public MacroTreeNode(LayerMappingContainer actions, MappingMacroContainer macros) {
             //ROOT NODE
             children = new MacroTreeNode[macros.queryAll().size()];
             int i = 0;
-            for (MappingMacro macro :  macros.queryAll().stream().sorted(Comparator.comparing(MappingMacro::getName)).toArray(MappingMacro[]::new)) {
+            for (MappingMacro macro : macros.queryAll()
+                    .stream()
+                    .sorted(Comparator.comparing(MappingMacro::getName))
+                    .toArray(MappingMacro[]::new)) {
                 children[i++] = new MacroTreeNode(macro, actions, macros);
             }
-            for (MacroTreeNode child: children)
+            for (MacroTreeNode child : children)
                 child.setParent(this);
             payloadType = GlobalActionPanel.SELECTION_TPYE.INVALID;
             payload = new IDisplayUnit() {
@@ -282,6 +322,57 @@ public class MacroTreePanel extends JPanel {
                 }
             };
             assert parent == null;
+        }
+
+        public MacroTreeNode(MappingMacro macro, LayerMappingContainer actions, MappingMacroContainer macros) {
+            payload = macro;
+            children = new MacroTreeNode[macro.getExecutionUUIDs().length];
+            int i = 0;
+            for (UUID id : macro.getExecutionUUIDs()) {
+                if (macros.queryContains(id))
+                    children[i++] = new MacroTreeNode(macros.queryById(id), actions, macros);
+                else if (actions.queryContains(id))
+                    children[i++] = new MacroTreeNode(actions.queryById(id));
+                else
+                    MacroMachinePlugin.error("invalid type");
+            }
+            for (MacroTreeNode child : children)
+                child.setParent(this);
+            payloadType = GlobalActionPanel.SELECTION_TPYE.MACRO;
+        }
+
+        public MacroTreeNode(LayerMapping action) {
+            payload = action;
+            children = new MacroTreeNode[2];
+            children[0] = new MacroTreeNode(action.input, action);
+            children[1] = new MacroTreeNode(action.output, action);
+            for (MacroTreeNode child : children)
+                child.setParent(this);
+            payloadType = GlobalActionPanel.SELECTION_TPYE.ACTION;
+        }
+
+        public MacroTreeNode(IPositionValueSetter output, LayerMapping action) {
+            payload = action;
+            children = new MacroTreeNode[0];
+            payloadType = GlobalActionPanel.SELECTION_TPYE.OUTPUT;
+        }
+
+        public MacroTreeNode(IPositionValueGetter input, LayerMapping action) {
+            payload = action;
+            children = new MacroTreeNode[0];
+            payloadType = GlobalActionPanel.SELECTION_TPYE.INPUT;
+        }
+
+        public TreePath getPath() {
+            LinkedList<Object> path = new LinkedList<>();
+            path.add(this);
+            MacroTreeNode it = this;
+            while (it.getParent() != null) {
+                it = (MacroTreeNode) it.getParent();
+                path.add(0, it);
+            }
+
+            return new TreePath(path.toArray(new Object[0]));
         }
 
         @Override
@@ -305,50 +396,6 @@ public class MacroTreePanel extends JPanel {
             }
         }
 
-        public MacroTreeNode(MappingMacro macro, LayerMappingContainer actions, MappingMacroContainer macros) {
-            payload = macro;
-            children = new MacroTreeNode[macro.getExecutionUUIDs().length];
-            int i = 0;
-            for (UUID id: macro.getExecutionUUIDs()) {
-                if (macros.queryContains(id))
-                    children[i++] = new MacroTreeNode(macros.queryById(id), actions, macros);
-                else if (actions.queryContains(id))
-                    children[i++] = new MacroTreeNode(actions.queryById(id));
-                else
-                    MacroMachinePlugin.error("invalid type");
-            }
-            for (MacroTreeNode child: children)
-                child.setParent(this);
-            payloadType = GlobalActionPanel.SELECTION_TPYE.MACRO;
-        }
-
-        public MacroTreeNode(LayerMapping action) {
-            payload = action;
-            children = new MacroTreeNode[2];
-            children[0] = new MacroTreeNode(action.input, action);
-            children[1] = new MacroTreeNode(action.output, action);
-            for (MacroTreeNode child: children)
-                child.setParent(this);
-            payloadType = GlobalActionPanel.SELECTION_TPYE.ACTION;
-        }
-
-        public MacroTreeNode(IPositionValueSetter output,LayerMapping action) {
-            payload = action;
-            children = new MacroTreeNode[0];
-            payloadType = GlobalActionPanel.SELECTION_TPYE.OUTPUT;
-        }
-
-        public MacroTreeNode(IPositionValueGetter input,LayerMapping action) {
-            payload = action;
-            children = new MacroTreeNode[0];
-            payloadType = GlobalActionPanel.SELECTION_TPYE.INPUT;
-        }
-
-        private MacroTreeNode parent;
-        private void setParent(MacroTreeNode node) {
-            this.parent = node;
-        }
-
         @Override
         public TreeNode getChildAt(int childIndex) {
             return children[childIndex];
@@ -362,6 +409,10 @@ public class MacroTreePanel extends JPanel {
         @Override
         public TreeNode getParent() {
             return parent;
+        }
+
+        private void setParent(MacroTreeNode node) {
+            this.parent = node;
         }
 
         @Override
@@ -395,21 +446,44 @@ public class MacroTreePanel extends JPanel {
         public GlobalActionPanel.SELECTION_TPYE getPayloadType() {
             return payloadType;
         }
+
         public LayerMapping getAction() {
             return (LayerMapping) payload;
         }
+
         public MappingMacro getMacro() {
             return (MappingMacro) payload;
         }
+
         public IPositionValueGetter getInput() {
-            return (IPositionValueGetter) payload;
+            return ((LayerMapping) payload).input;
         }
+
         public IPositionValueSetter getOutput() {
-            return (IPositionValueSetter) payload;
+            return ((LayerMapping) payload).output;
         }
 
         public IDisplayUnit getPayload() {
-            return (IDisplayUnit) payload;
+            switch (payloadType) {
+                case INVALID:
+                case MACRO:
+                case ACTION:
+                    return (IDisplayUnit) payload;
+                case INPUT:
+                    return getInput();
+                case OUTPUT:
+                    return getOutput();
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "MacroTreeNode{" +
+                    "payload=" + ((IDisplayUnit) payload).getName() +
+                    ", payloadType=" + payloadType +
+                    '}';
         }
     }
 }
