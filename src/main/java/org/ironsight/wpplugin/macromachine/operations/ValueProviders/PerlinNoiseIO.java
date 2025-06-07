@@ -9,9 +9,9 @@ import java.awt.*;
 import java.util.Objects;
 
 public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
-    private float scale;
-    private float amplitude;
-    private  long seed;
+    private final float scale;
+    private final float amplitude;
+    private final long seed;
     private transient ImprovedNoise generator;
 
     public PerlinNoiseIO(float scale, float amplitude, long seed) {
@@ -86,7 +86,6 @@ public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        scale = 400;
         int value = 0;
         for (int i = 1; i < 32; i*=2) { // harmonic series (?)
             //improved noise wraps at 256 by default implementation and returns [-1,1]
@@ -122,16 +121,16 @@ public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
     }
 
     private float clamp(int value, int min, int max) {
-        return Math.min(min, Math.max(value, max));
+        return Math.max(min, Math.min(value, max));
     }
 
     @Override
-    public void setEditableValues(int[] values) {
+    public PerlinNoiseIO instantiateWithValues(int[] values) {
         assert values.length == 3;
-        this.scale = clamp(values[0],1,30000);
-        this.amplitude = clamp( values[1], 1,1000);
-        this.seed = (long)clamp(values[2],0,Integer.MAX_VALUE);
-        this.generator = new ImprovedNoise(seed);
+        float scale = clamp(values[0],1,30000);
+        float amplitude = clamp( values[1], 1,1000);
+        float seed = (long)clamp(values[2],0,Integer.MAX_VALUE);
+        return new PerlinNoiseIO(scale, amplitude, (long) seed);
     }
 
 

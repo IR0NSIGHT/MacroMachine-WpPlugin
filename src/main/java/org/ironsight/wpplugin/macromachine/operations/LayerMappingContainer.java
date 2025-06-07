@@ -12,6 +12,7 @@ import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class LayerMappingContainer extends AbstractOperationContainer<LayerMapping> {
     public static LayerMappingContainer INSTANCE;
@@ -133,6 +134,12 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
             saveObject[i++] = new ActionJsonWrapper(m);
         }
         return (T) saveObject;
+    }
+
+    @Override
+    public void updateMapping(LayerMapping mapping, Consumer<String> onError) {
+        super.updateMapping(mapping, onError);
+        System.out.println("updated mapping in container with input:" + mapping.getInput());
     }
 
     @Override

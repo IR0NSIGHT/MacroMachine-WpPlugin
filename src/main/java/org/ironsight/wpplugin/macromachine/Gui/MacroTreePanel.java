@@ -385,7 +385,6 @@ public class MacroTreePanel extends JPanel {
         public MacroTreeNode(MappingMacro macro, LayerMappingContainer actions, MappingMacroContainer macros) {
             payload = macro;
             LinkedList<MacroTreeNode> nodes = new LinkedList<>();
-            int i = 0;
             for (UUID id : macro.getExecutionUUIDs()) {
                 if (macros.queryContains(id))
                     nodes.add( new MacroTreeNode(macros.queryById(id), actions, macros));

@@ -43,9 +43,9 @@ public class InputOutputEditor extends LayerMappingPanel {
     private void onValueChanged(int[] newValues) {
         if (Arrays.equals(newValues, io.getEditableValues()))
             return;
-        io.setEditableValues(newValues);
-        LayerMapping updated = isInput ? mapping.withInput((IPositionValueGetter) io) :
-                mapping.withOutput((IPositionValueSetter) io);
+
+        LayerMapping updated = isInput ? mapping.withInput((IPositionValueGetter) io.instantiateWithValues(newValues)) :
+                mapping.withOutput((IPositionValueSetter) io.instantiateWithValues(newValues));
         onChanged.accept(updated);
         setMapping(updated);
     }
