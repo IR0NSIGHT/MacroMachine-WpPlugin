@@ -62,7 +62,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
             for (int i = 0; i < 30; i++) {
                 try {
                     Thread.sleep(100);
-                    setProgress.accept(new ApplyAction.Progess(0, 1, i / 30f));
+                    setProgress.accept(new ApplyAction.Progess(0, 1, 100f*i / 30f));
                 } catch (InterruptedException ex) {
                     ;
                 }
