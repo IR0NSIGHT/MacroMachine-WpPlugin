@@ -9,6 +9,11 @@
   "description" : "each cyan layer point has 50% chance to remain after the macro was executed",
   "uid" : "d4edc006-bcf3-423d-8281-e9a916df0517"
 }, {
+  "executionUUIDs" : [ "3d92c0e6-d7d9-4005-85c2-357479c8827e" ],
+  "name" : "Perlin Hills",
+  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+  "uid" : "d52f1e21-0f7b-4e07-9f68-686c11aaa609"
+}, {
   "executionUUIDs" : [ "63fd4bd9-e0c5-4d7e-8469-010df68bb4b7" ],
   "name" : "Selection Mask: auto biome",
   "description" : "-",

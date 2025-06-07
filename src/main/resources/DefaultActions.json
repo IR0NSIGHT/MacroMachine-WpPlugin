@@ -164,6 +164,17 @@
   "description" : "description of the action",
   "uid" : "3f31b643-c509-4e37-8e1b-3dd5b97697dc"
 }, {
+  "inputId" : "PERLIN_NOISE",
+  "inputData" : [ 100.0, 15.0, 42069.0 ],
+  "outputId" : "NIBBLE_LAYER",
+  "outputData" : [ "Pine", "Pine" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 7, 15 ],
+  "outputPoints" : [ 0, 7, 15 ],
+  "name" : "Perlin ",
+  "description" : "new description",
+  "uid" : "3d92c0e6-d7d9-4005-85c2-357479c8827e"
+}, {
   "inputId" : "SLOPE",
   "inputData" : [ ],
   "outputId" : "STONE_PALETTE",
