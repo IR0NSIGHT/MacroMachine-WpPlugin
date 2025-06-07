@@ -24,11 +24,11 @@ public class MacroTreePanel extends JPanel {
     DefaultTreeModel treeModel;
     JTree tree;
     ISelectItemCallback onSelectAction;
-    private LinkedList<UUID> selectedMacros;
     private String filterString = "";
     private JButton applyButton;
     private long lastProgressUpdate = 0;
     private boolean macroInAction;
+    private boolean blockUpdates = false;
 
     MacroTreePanel(MappingMacroContainer container, LayerMappingContainer mappingContainer,
                    MacroApplicator applyToMap, ISelectItemCallback onSelectAction) {
@@ -79,6 +79,8 @@ public class MacroTreePanel extends JPanel {
     }
 
     private void update() {
+        if (blockUpdates)
+            return;
         MappingMacroContainer macroContainer = MappingMacroContainer.getInstance();
         MacroTreeNode newRoot = new MacroTreeNode(LayerMappingContainer.INSTANCE, macroContainer);
 
@@ -115,6 +117,26 @@ public class MacroTreePanel extends JPanel {
         }
         revalidate();
         repaint();
+    }
+
+    Set<UUID> getSelectedUUIDs(boolean macros, boolean actions) {
+        HashSet<UUID> selectedUUIDs = new HashSet<>();
+        for (TreePath selected : tree.getSelectionPaths()) {
+            MacroTreeNode node = (MacroTreeNode) selected.getLastPathComponent();
+            switch (node.payloadType) {
+                case MACRO:
+                    if (macros)
+                        selectedUUIDs.add(node.getMacro().getUid());
+                    break;
+                case ACTION:
+                    if (actions)
+                        selectedUUIDs.add(node.getAction().getUid());
+                    break;
+                default:
+                    ; //nothing
+            }
+        }
+        return selectedUUIDs;
     }
 
     private void init() {
@@ -189,10 +211,9 @@ public class MacroTreePanel extends JPanel {
         JButton removeButton = new JButton("Delete");
         removeButton.setToolTipText("Delete all selected macros permanently");
         removeButton.addActionListener(e -> {
-
+            blockUpdates = true;
+            Set<UUID> deletedUUIDS = getSelectedUUIDs(true, true);
             //remove Mapping Actions from all macros
-            HashSet<UUID> deletedUUIDS = new HashSet<>();
-            deletedUUIDS.addAll(selectedMacros);
             for (MappingMacro m : container.queryAll()) {
                 MappingMacro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs)
                         .filter(a -> !deletedUUIDS.contains(a))
@@ -203,8 +224,10 @@ public class MacroTreePanel extends JPanel {
             }
 
             // Delete action / Macro in containers
-            container.deleteMapping(selectedMacros.toArray(new UUID[0]));
-            mappingContainer.deleteMapping(selectedMacros.toArray(new UUID[0]));
+            container.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
+            mappingContainer.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
+            blockUpdates = false;
+            update();
         });
         buttons.add(removeButton);
 
@@ -257,7 +280,7 @@ public class MacroTreePanel extends JPanel {
         executorService.submit(() -> {
             long startTime = System.currentTimeMillis();
             //get macros
-            for (UUID id : selectedMacros) {
+            for (UUID id : getSelectedUUIDs(true, false)) {
                 MappingMacro macro = container.queryById(id);
                 if (macro != null) {
                     applyToMap.applyLayerAction(macro, panel::onSetProgress);
