@@ -8,16 +8,18 @@ import org.pepsoft.worldpainter.Dimension;
 import java.awt.*;
 import java.util.Objects;
 
-public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
+public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     private final float scale;
     private final float amplitude;
     private final long seed;
+    private final int octaves;
     private transient ImprovedNoise generator;
 
-    public PerlinNoiseIO(float scale, float amplitude, long seed) {
+    public PerlinNoiseIO(float scale, float amplitude, long seed, int octaves) {
         this.scale = scale;
         this.amplitude = amplitude;
         this.seed = seed;
+        this.octaves = octaves;
         generator = new ImprovedNoise(42069);
     }
 
@@ -53,13 +55,13 @@ public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return  new PerlinNoiseIO (((Double)data[0]).floatValue(),((Double)data[1]).floatValue(),
-                ((Double)data[2]).longValue());
+        return new PerlinNoiseIO(((Double) data[0]).floatValue(), ((Double) data[1]).floatValue(),
+                ((Double) data[2]).longValue(), ((Double) data[3]).intValue());
     }
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{(double)scale, (double)amplitude, (double)seed};
+        return new Object[]{(double) scale, (double) amplitude, (double) seed, (double)octaves};
     }
 
     @Override
@@ -74,9 +76,9 @@ public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        float point = (float)value/getMaxValue();
-        g.setColor(new Color(point,point,point));
-        g.fillRect(0,0,dim.width, dim.height);
+        float point = (float) value / getMaxValue();
+        g.setColor(new Color(point, point, point));
+        g.fillRect(0, 0, dim.width, dim.height);
     }
 
     @Override
@@ -86,38 +88,36 @@ public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        int value = 0;
-        for (int i = 1; i < 32; i*=2) { // harmonic series (?)
+        float value = 0;
+        for (int i = 1; i < Math.pow(2, octaves); i *= 2) { // harmonic series (?)
             //improved noise wraps at 256 by default implementation and returns [-1,1]
-            double rawValue = generator.noise((x) / (scale / i),(y) / (scale/i),0); //-1..1
-            rawValue /= 2;  //bring to 0..2
-            rawValue += .27;  //magic number to force the noise to be as much as possible in [0,1] range
-            rawValue *= 1.975f;
-            rawValue *= amplitude/i;
-            value += Math.round(rawValue);
+            double rawValue = generator.noise((x) / (scale / i), (y) / (scale / i), 0); //-1..1+
+            rawValue += 1 - 0.405; //shift lower bound of histogram upwards
+            rawValue *= .925;
+            value += rawValue;
         }
-        value /= 2;
-        value = (int)Math.max(0,Math.min(amplitude,value));
 
-        assert value >= 0;
-        assert value <= amplitude;
-        return value;
+        int finalValue = (int) Math.max(0, Math.min(amplitude, value * amplitude));
+
+        assert finalValue >= 0;
+        assert finalValue <= amplitude;
+        return finalValue;
     }
 
     @Override
     public int[] getEditableValues() {
-        return new int[]{Math.round(scale), Math.round(amplitude), (int)seed};
+        return new int[]{Math.round(scale), Math.round(amplitude), octaves, (int) seed};
     }
 
     @Override
     public String[] getValueNames() {
-        return new String[]{"scale","amplitude","seed"};
+        return new String[]{"scale", "amplitude","octaves", "seed"};
     }
 
     @Override
     public String[] getValueTooltips() {
-        return new String[]{"the size of the noise in x/y direction.","the size of the perlin noise in z direction, " +
-                "values will range from 0 to amplitude","seed that determines the shape of the random noise"};
+        return new String[]{"the size of the noise in x/y direction.", "the size of the perlin noise in z direction, " +
+                "values will range from 0 to amplitude", "seed that determines the shape of the random noise"};
     }
 
     private float clamp(int value, int min, int max) {
@@ -127,10 +127,11 @@ public class PerlinNoiseIO  implements IPositionValueGetter, EditableIO{
     @Override
     public PerlinNoiseIO instantiateWithValues(int[] values) {
         assert values.length == 3;
-        float scale = clamp(values[0],1,30000);
-        float amplitude = clamp( values[1], 1,1000);
-        float seed = (long)clamp(values[2],0,Integer.MAX_VALUE);
-        return new PerlinNoiseIO(scale, amplitude, (long) seed);
+        float scale = clamp(values[0], 1, 30000);
+        float amplitude = clamp(values[1], 1, 1000);
+        long seed = (long) clamp(values[2], 0, Integer.MAX_VALUE);
+        int octaves = (int) clamp(values[3], 1, 10);
+        return new PerlinNoiseIO(scale, amplitude, (long) seed, octaves);
     }
 
 

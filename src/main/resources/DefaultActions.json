@@ -165,7 +165,7 @@
   "uid" : "3f31b643-c509-4e37-8e1b-3dd5b97697dc"
 }, {
   "inputId" : "PERLIN_NOISE",
-  "inputData" : [ 100.0, 15.0, 42069.0 ],
+  "inputData" : [ 100.0, 15.0, 420691.0 ],
   "outputId" : "NIBBLE_LAYER",
   "outputData" : [ "Pine", "Pine" ],
   "actionType" : "SET",

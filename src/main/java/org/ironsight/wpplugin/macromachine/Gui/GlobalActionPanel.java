@@ -49,9 +49,9 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     public static void main(String[] args) {
-        MappingMacroContainer.SetInstance(new MappingMacroContainer("./GlobalActionsPanel_Macros.json"));
+        MappingMacroContainer.SetInstance(new MappingMacroContainer("./src/main/resources/DefaultMacros.json"));
         MappingMacroContainer macros = MappingMacroContainer.getInstance();
-        LayerMappingContainer.INSTANCE = new LayerMappingContainer("./GlobalActionPanel_Actions.json");
+        LayerMappingContainer.INSTANCE = new LayerMappingContainer("./src/main/resources/DefaultActions.json");
         LayerMappingContainer layers = LayerMappingContainer.INSTANCE;
 
         macros.readFromFile();
