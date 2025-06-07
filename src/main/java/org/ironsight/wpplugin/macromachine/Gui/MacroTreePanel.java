@@ -285,14 +285,17 @@ public class MacroTreePanel extends JPanel {
         this.add(buttons, BorderLayout.SOUTH);
         this.invalidate();
     }
-
     private void onSetProgress(ApplyAction.Progess progess) {
         SwingUtilities.invokeLater(() -> {
             if (Math.abs(lastProgressUpdate - System.currentTimeMillis()) < 100)
                 return;
             lastProgressUpdate = System.currentTimeMillis();
-            applyButton.setText(String.format("%d/%d: %d%%", progess.step + 1, progess.totalSteps,
-                    Math.round(progess.progressInStep)));
+            if (progess.totalSteps != 1) {
+                applyButton.setText(String.format("%d/%d: %d%%", progess.step + 1, progess.totalSteps, Math.round(progess.progressInStep)));
+            } else {
+                applyButton.setText(String.format("%d%%", Math.round(progess.progressInStep)));
+            }
+
             applyButton.repaint();
         });
     }
