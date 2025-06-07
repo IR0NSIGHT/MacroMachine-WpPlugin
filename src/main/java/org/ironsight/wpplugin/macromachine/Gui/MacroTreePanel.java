@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -63,6 +64,15 @@ public class MacroTreePanel extends JPanel {
         return expanded;
     }
 
+    private List<TreePath> findAllPaths(JTree tree, MacroTreeNode node, LinkedList<TreePath> allPaths) {
+        TreePath path = node.getPath();
+        allPaths.add(path);
+        for (MacroTreeNode child : node.children) {
+            findAllPaths(tree, child, allPaths);
+        }
+        return allPaths;
+    }
+
     private TreePath findPathEquivalent(Object[] oldPath, MacroTreeNode newNode, int index, Object[] newPath) {
         newPath[index] = newNode;
         if (index >= oldPath.length - 1)
@@ -79,39 +89,70 @@ public class MacroTreePanel extends JPanel {
     }
 
     private void update() {
+        update(new HashSet<>(0));
+    }
+    private void update(Set<UUID> selectItems) {
         if (blockUpdates)
             return;
         MappingMacroContainer macroContainer = MappingMacroContainer.getInstance();
         MacroTreeNode newRoot = new MacroTreeNode(LayerMappingContainer.INSTANCE, macroContainer);
 
-        // create treepaths to keep previous selection and carry it over to newRoot.
-        TreePath[] selectionPaths = tree.getSelectionPaths();
-        LinkedList<TreePath> validSelections = new LinkedList<>();
-        if (selectionPaths != null) {
-            for (TreePath selectionPath : selectionPaths) {
-                Object[] newTreePath = new Object[selectionPath.getPathCount()];
-                if (verifyTreePathExists(newRoot, selectionPath.getPath(), 0, newTreePath)) {
-                    validSelections.add(new TreePath(newTreePath));
+        LinkedList<TreePath> newSelections = new LinkedList<>();
+        LinkedList<TreePath> newExpanded = new LinkedList<>();
+        if (!selectItems.isEmpty()) {
+            List<TreePath> allPaths = findAllPaths(tree, newRoot, new LinkedList<>());
+            for (TreePath path : allPaths) {
+                MacroTreeNode node = ((MacroTreeNode) path.getLastPathComponent());
+                switch (node.payloadType) {
+                    case MACRO:
+                        if (selectItems.contains(node.getMacro().getUid())) {
+                            newExpanded.add(path);
+                            newSelections.add(path);
+                        }
+                        break;
+                    case ACTION:
+                        if (selectItems.contains(node.getAction().getUid())) {
+                            newExpanded.add(path);
+                            newSelections.add(path);
+                        }
+                        break;
+                    default:
+                        ; //nothing
                 }
+            }
+        } else if (filterString.isEmpty()) { //carry over old state
+            // create treepaths to keep previous selection and carry it over to newRoot.
+            TreePath[] selectionPaths = tree.getSelectionPaths();
+            if (selectionPaths != null) {
+                for (TreePath selectionPath : selectionPaths) {
+                    Object[] newTreePath = new Object[selectionPath.getPathCount()];
+                    if (verifyTreePathExists(newRoot, selectionPath.getPath(), 0, newTreePath)) {
+                        newSelections.add(new TreePath(newTreePath));
+                    }
+                }
+            }
+
+            //find expanded paths
+            List<TreePath> expanded =
+                    findExpandedPaths(tree, (MacroTreeNode) tree.getModel().getRoot(), new LinkedList<>());
+            for (TreePath oldPath : expanded) {
+                TreePath newPath = findPathEquivalent(oldPath.getPath(), newRoot, 0,
+                        new Object[oldPath.getPath().length]);
+                newExpanded.add(newPath);
+            }
+        } else {
+            // find all paths that end in an item that matches the filterstring.
+            List<TreePath> allPaths = findAllPaths(tree, newRoot, new LinkedList<>());
+            for (TreePath path : allPaths) {
+                IDisplayUnit payload = ((MacroTreeNode) path.getLastPathComponent()).getPayload();
+                if (IDisplayUnit.matchesFilterString(filterString, payload))
+                    newSelections.add(path);
             }
         }
 
-        for (TreePath selectionPath : validSelections) {
-            tree.expandPath(selectionPath);
-        }
-
-        //find expanded paths
-        List<TreePath> expanded =
-                findExpandedPaths(tree, (MacroTreeNode) tree.getModel().getRoot(), new LinkedList<>());
-        LinkedList<TreePath> newExpanded = new LinkedList<>();
-        for (TreePath oldPath : expanded) {
-            TreePath newPath = findPathEquivalent(oldPath.getPath(), newRoot, 0,
-                    new Object[oldPath.getPath().length]);
-            newExpanded.add(newPath);
-        }
         //apply changes
         tree.setModel(new DefaultTreeModel(newRoot));
-        tree.setSelectionPaths(validSelections.toArray(new TreePath[0]));
+        tree.setSelectionPaths(newSelections.toArray(new TreePath[0]));
         for (TreePath p : newExpanded) {
             tree.expandPath(p);
         }
@@ -146,21 +187,9 @@ public class MacroTreePanel extends JPanel {
 
         // Create a search field
         JTextField searchField = new JTextField();
-        searchField.getDocument().addDocumentListener(new DocumentListener() {
+        searchField.addActionListener(new AbstractAction() {
             @Override
-            public void insertUpdate(DocumentEvent e) {
-                filterString = searchField.getText().toLowerCase();
-                update();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                filterString = searchField.getText().toLowerCase();
-                update();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
+            public void actionPerformed(ActionEvent e) {
                 filterString = searchField.getText().toLowerCase();
                 update();
             }
@@ -203,8 +232,11 @@ public class MacroTreePanel extends JPanel {
         JButton addButton = new JButton("Create macro");
         addButton.setToolTipText("Create a new, empty macro.");
         addButton.addActionListener(e -> {
-            container.addMapping();
-            update();
+            MappingMacro macro = container.addMapping();
+            HashSet<UUID> set = new HashSet<>();
+            set.add(macro.getUid());
+            update(set);
+
         });
         buttons.add(addButton);
 
