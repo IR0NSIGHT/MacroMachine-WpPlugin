@@ -33,12 +33,14 @@ class IDisplayUnitCellRenderer extends DefaultTreeCellRenderer {
                                                   boolean leaf, int row, boolean hasFocus) {
         String nameText = "";
         String descriptionText = "";
+        assert value instanceof MacroTreeNode;
         if (value instanceof MacroTreeNode) {
             MacroTreeNode node = (MacroTreeNode) value;
             IDisplayUnit obj = node.getPayload();
-            nameText = obj.getName();
+             nameText = obj.getName();
             descriptionText = obj.getDescription();
         }
+        System.out.println("render tree node:" + value);
         name.setText(nameText);
         if (expanded || leaf) {
             description.setText(descriptionText);
