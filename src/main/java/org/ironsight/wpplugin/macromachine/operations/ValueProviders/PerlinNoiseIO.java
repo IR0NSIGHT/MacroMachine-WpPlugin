@@ -55,6 +55,8 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
+        if (data.length != 4)
+            data = new Object[]{1,2,3,4};
         return new PerlinNoiseIO(((Double) data[0]).floatValue(), ((Double) data[1]).floatValue(),
                 ((Double) data[2]).longValue(), ((Double) data[3]).intValue());
     }
@@ -126,7 +128,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
 
     @Override
     public PerlinNoiseIO instantiateWithValues(int[] values) {
-        assert values.length == 3;
+        assert values.length == 4;
         float scale = clamp(values[0], 1, 30000);
         float amplitude = clamp(values[1], 1, 1000);
         long seed = (long) clamp(values[2], 0, Integer.MAX_VALUE);

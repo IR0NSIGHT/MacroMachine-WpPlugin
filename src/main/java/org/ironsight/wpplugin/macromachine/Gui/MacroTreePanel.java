@@ -83,14 +83,14 @@ public class MacroTreePanel extends JPanel {
                     return findPathEquivalent(oldPath, child, index + 1, newPath);
                 }
             }
-            assert false : "could not find equivalent path";
-            return new TreePath(new Object[0]);
+            return null;
         }
     }
 
     private void update() {
         update(new HashSet<>(0));
     }
+
     private void update(Set<UUID> selectItems) {
         if (blockUpdates)
             return;
@@ -138,7 +138,8 @@ public class MacroTreePanel extends JPanel {
             for (TreePath oldPath : expanded) {
                 TreePath newPath = findPathEquivalent(oldPath.getPath(), newRoot, 0,
                         new Object[oldPath.getPath().length]);
-                newExpanded.add(newPath);
+                if (newPath != null)
+                    newExpanded.add(newPath);
             }
         } else {
             // find all paths that end in an item that matches the filterstring.
@@ -285,13 +286,17 @@ public class MacroTreePanel extends JPanel {
         this.add(buttons, BorderLayout.SOUTH);
         this.invalidate();
     }
+
     private void onSetProgress(ApplyAction.Progess progess) {
         SwingUtilities.invokeLater(() -> {
             if (Math.abs(lastProgressUpdate - System.currentTimeMillis()) < 100)
                 return;
             lastProgressUpdate = System.currentTimeMillis();
             if (progess.totalSteps != 1) {
-                applyButton.setText(String.format("%d/%d: %d%%", progess.step + 1, progess.totalSteps, Math.round(progess.progressInStep)));
+                applyButton.setText(String.format("%d/%d: %d%%",
+                        progess.step + 1,
+                        progess.totalSteps,
+                        Math.round(progess.progressInStep)));
             } else {
                 applyButton.setText(String.format("%d%%", Math.round(progess.progressInStep)));
             }
@@ -387,11 +392,9 @@ public class MacroTreePanel extends JPanel {
             LinkedList<MacroTreeNode> nodes = new LinkedList<>();
             for (UUID id : macro.getExecutionUUIDs()) {
                 if (macros.queryContains(id))
-                    nodes.add( new MacroTreeNode(macros.queryById(id), actions, macros));
+                    nodes.add(new MacroTreeNode(macros.queryById(id), actions, macros));
                 else if (actions.queryContains(id))
                     nodes.add(new MacroTreeNode(actions.queryById(id)));
-                else
-                    MacroMachinePlugin.error("invalid type");
             }
             children = nodes.toArray(new MacroTreeNode[0]);
 
