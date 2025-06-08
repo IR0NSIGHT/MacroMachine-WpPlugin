@@ -10,6 +10,39 @@
   "description" : "filter out all values below 50% intermediate",
   "uid" : "25ae2016-1bd7-44c2-a6c6-4217c3604a1c"
 }, {
+  "inputId" : "PERLIN_NOISE",
+  "inputData" : [ 500, 100, 5, 3 ],
+  "outputId" : "NIBBLE_LAYER",
+  "outputData" : [ "Pine", "Pine" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 37, 41, 67, 73, 80 ],
+  "outputPoints" : [ 0, 0, 5, 10, 5, 0 ],
+  "name" : "perlin to pines",
+  "description" : "0-37: meadow, 38-40: meadow edge, 41-73: forest, 74-80: forest edge, 81: clear",
+  "uid" : "3acc036b-d19e-434d-9ed2-110aad2a0a06"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "HEIGHT",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 70 ],
+  "name" : "flatten all",
+  "description" : "new description",
+  "uid" : "3b0be65a-b601-4e69-b7d6-33a369625ea8"
+}, {
+  "inputId" : "ANNOTATION",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+  "outputPoints" : [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+  "name" : "except on annotation",
+  "description" : "new description",
+  "uid" : "1372025a-0b37-4ec4-b883-73f944c0ef66"
+}, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE",
@@ -164,6 +197,17 @@
   "description" : "description of the action",
   "uid" : "3f31b643-c509-4e37-8e1b-3dd5b97697dc"
 }, {
+  "inputId" : "PERLIN_NOISE",
+  "inputData" : [ 500, 200, 5, 3123 ],
+  "outputId" : "HEIGHT",
+  "outputData" : [ ],
+  "actionType" : "INCREMENT",
+  "inputPoints" : [ 30, 60, 150, 200 ],
+  "outputPoints" : [ -22, 1, 50, 100 ],
+  "name" : "Perlin Hills",
+  "description" : "description of the action",
+  "uid" : "72172d29-1d85-4da8-88ac-28fdcae6428c"
+}, {
   "inputId" : "SLOPE",
   "inputData" : [ ],
   "outputId" : "STONE_PALETTE",
@@ -213,7 +257,7 @@
   "outputId" : "INTERMEDIATE",
   "outputData" : [ ],
   "actionType" : "SET",
-  "inputPoints" : [ 38, 203 ],
+  "inputPoints" : [ 80, 203 ],
   "outputPoints" : [ 0, 100 ],
   "name" : "select heights",
   "description" : "description of the action",
@@ -550,14 +594,14 @@
   "uid" : "09e5d68d-991c-48e7-a4a8-59e1777be8d1"
 }, {
   "inputId" : "PERLIN_NOISE",
-  "inputData" : [ 500, 100, 5, 123456 ],
+  "inputData" : [ 500, 100, 5, 3 ],
   "outputId" : "ANNOTATION",
   "outputData" : [ ],
   "actionType" : "SET",
-  "inputPoints" : [ 36, 41, 59, 64, 98 ],
-  "outputPoints" : [ 0, 10, 9, 10, 0 ],
+  "inputPoints" : [ 37, 40, 73, 80, 100 ],
+  "outputPoints" : [ 5, 9, 10, 7, 0 ],
   "name" : "perlin to annotation",
-  "description" : "new description",
+  "description" : "0-37: meadow, 38-40: meadow edge, 41-73: forest, 74-80: forest edge, 81: clear",
   "uid" : "ff260003-823f-4374-bbc6-139624dc7910"
 }, {
   "inputId" : "INTERMEDIATE",
