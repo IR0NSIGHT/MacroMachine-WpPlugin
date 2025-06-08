@@ -14,19 +14,24 @@
   "description" : "-",
   "uid" : "1d053e6a-18cc-4d7f-96df-e18013668542"
 }, {
+  "executionUUIDs" : [ "3b0be65a-b601-4e69-b7d6-33a369625ea8", "72172d29-1d85-4da8-88ac-28fdcae6428c", "6fa2a28b-3bed-4dc6-9e58-6d753137ef85" ],
+  "name" : "Perlin Rocky Hills",
+  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+  "uid" : "f501c350-3fa7-45f1-9c92-7e69ccd010a4"
+}, {
   "executionUUIDs" : [ "81a6fd0d-dd2f-4a50-8812-a47acbeccc3f" ],
   "name" : "Selection Mask: plains biome",
   "description" : "-",
   "uid" : "d1e3e684-024b-473c-b12d-0b7b0464753b"
 }, {
-  "executionUUIDs" : [ "ff260003-823f-4374-bbc6-139624dc7910" ],
+  "executionUUIDs" : [ "ff260003-823f-4374-bbc6-139624dc7910", "3acc036b-d19e-434d-9ed2-110aad2a0a06" ],
   "name" : "Perlin Forest",
   "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
   "uid" : "5810f759-1151-4f7c-b086-304923f3dab1"
 }, {
-  "executionUUIDs" : [ "600f91f1-6bd5-40f0-8dbd-bf6e001906f9", "d2d8aa86-d534-4158-924d-a36384429037" ],
+  "executionUUIDs" : [ "1372025a-0b37-4ec4-b883-73f944c0ef66", "600f91f1-6bd5-40f0-8dbd-bf6e001906f9", "d2d8aa86-d534-4158-924d-a36384429037" ],
   "name" : "Perlin Flower Patches",
-  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+  "description" : "flowers execpt on annotations",
   "uid" : "042248e3-2760-434e-a31b-d6b44023231a"
 }, {
   "executionUUIDs" : [ "94f78d04-d795-44fb-8f08-794baab9cd6c", "8d4d619f-4dd6-45a6-bdda-32c520958c57", "c5af9fab-47a2-4e3e-89c3-2bb33951979f", "b7122b2b-951c-4cb0-9ac5-9d78a48928f9", "f10a62c4-e081-4a51-b6d6-a704bfb527a3", "81923515-7df3-4e69-a7b5-f5d1f7bf6eca" ],
