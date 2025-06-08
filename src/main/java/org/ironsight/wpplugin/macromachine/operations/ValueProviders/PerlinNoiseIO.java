@@ -57,13 +57,13 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     public IMappingValue instantiateFrom(Object[] data) {
         if (data.length != 4)
             data = new Object[]{1,2,3,4};
-        return new PerlinNoiseIO(((Double) data[0]).floatValue(), ((Double) data[1]).floatValue(),
-                ((Double) data[2]).longValue(), ((Double) data[3]).intValue());
+        return new PerlinNoiseIO(((Double) data[SCALE_IDX]).floatValue(), ((Double) data[OCTAVES_IDX]).floatValue(),
+                ((Double) data[AMPLITUDE_IDX]).longValue(), ((Double) data[SEED_IDX]).intValue());
     }
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{(double) scale, (double) amplitude, (double) seed, (double)octaves};
+        return new Object[]{(double) scale, (double) amplitude, (double)octaves,(double) seed};
     }
 
     @Override
@@ -87,18 +87,31 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     public ProviderType getProviderType() {
         return ProviderType.PERLIN_NOISE;
     }
-
+    private static final float[] octaveNormalizer = new float[]{
+            1,  //should be zero but would cause division error
+            1,
+            1 + 1/2f,
+            1 + 1/2f + 1/4f,
+            1 + 1/2f + 1/4f + 1/8f,
+            1 + 1/2f + 1/4f + 1/8f + 1/16f,
+            1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f,
+            1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f + 1/64f,
+            1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f + 1/64f + 1/128f,
+            1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f + 1/64f + 1/128f + 1/256f,
+            1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f + 1/64f + 1/128f + 1/256f + 1/512f,
+    };
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         float value = 0;
         for (int i = 1; i < Math.pow(2, octaves); i *= 2) { // harmonic series (?)
             //improved noise wraps at 256 by default implementation and returns [-1,1]
-            double rawValue = generator.noise((x) / (scale / i), (y) / (scale / i), 0); //-1..1+
-            rawValue += 1 - 0.405; //shift lower bound of histogram upwards
-            rawValue *= .925;
-            value += rawValue;
+            double rawValue = generator.noise((x) / (scale / i), (y) / (scale / i), seed); //-1..1+
+            rawValue += 1 - 0.495; //shift lower bound of histogram upwards
+            rawValue *= 1.5375;
+            value += (float) rawValue / i;
         }
-
+        assert octaves < octaveNormalizer.length;
+        value = value / octaveNormalizer[octaves];
         int finalValue = (int) Math.max(0, Math.min(amplitude, value * amplitude));
 
         assert finalValue >= 0;
@@ -113,27 +126,37 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
 
     @Override
     public String[] getValueNames() {
-        return new String[]{"scale", "amplitude","octaves", "seed"};
+        return new String[]{"scale", "amplitude","octaves","seed"};
     }
 
     @Override
     public String[] getValueTooltips() {
-        return new String[]{"the size of the noise in x/y direction.", "the size of the perlin noise in z direction, " +
-                "values will range from 0 to amplitude", "seed that determines the shape of the random noise"};
+        return new String[]{"the size of the noise in x/y direction.",
+                "the size of the perlin noise in z direction, will produce exactly <amplitude> amount of values " +
+                        "starting at zero",
+                "less octaves = smoother, more octaves = bumpier",
+                "seed that determines the shape of the random noise"};
     }
 
     private float clamp(int value, int min, int max) {
         return Math.max(min, Math.min(value, max));
     }
 
+    private static final int SCALE_IDX = 0;
+    private static final int AMPLITUDE_IDX = 1;
+    private static final int OCTAVES_IDX = 2;
+    private static final int SEED_IDX = 3;
+
+
+
     @Override
     public PerlinNoiseIO instantiateWithValues(int[] values) {
         assert values.length == 4;
-        float scale = clamp(values[0], 1, 30000);
-        float amplitude = clamp(values[1], 1, 1000);
-        long seed = (long) clamp(values[2], 0, Integer.MAX_VALUE);
-        int octaves = (int) clamp(values[3], 1, 10);
-        return new PerlinNoiseIO(scale, amplitude, (long) seed, octaves);
+        float scale = clamp(values[SCALE_IDX], 1, 30000);
+        float amplitude = clamp(values[AMPLITUDE_IDX], 1, 1000);
+        int octaves = (int) clamp(values[OCTAVES_IDX], 1, octaveNormalizer.length);
+        long seed = (long) clamp(values[SEED_IDX], 0, Integer.MAX_VALUE);
+        return new PerlinNoiseIO(scale, amplitude, seed, octaves);
     }
 
 
