@@ -12,6 +12,7 @@ class PerlinNoiseIOTest {
 
     @Test
     void PerlinGenerator() {
+        // test for myself to gather understanding on what values the ImprovedNoise perlin generator produces
         float amplitude = 1;
         ImprovedNoise gen = new ImprovedNoise(1234567);
         //period is 256
@@ -39,32 +40,13 @@ class PerlinNoiseIOTest {
 
     @Test
     void getValueAt() {
+        // unit test to ensure the perlin IO produces values across the whole intervall of [0, amplitude] and doesnt
+        // just cluster around the median
         float scale = 2000f;
         int amplitude = 100;
         int[] histogram = new int[amplitude + 1];
         PerlinNoiseIO io = new PerlinNoiseIO(scale, amplitude, 123456, 1);
-        for (int x = -1000; x < 1000; x++) {
-            for (int y = -1000; y <= 2000; y++) {
-                int value = io.getValueAt(null, x, y);
-                histogram[value]++;
-                assertTrue(value <= amplitude, "value=" + value + " at" + Arrays.toString(new int[]{x, y}));
-                assertTrue(0 <= value, "value=" + value + " at" + Arrays.toString(new int[]{x, y}));
-            }
-        }
-        //full range from zero to 255 is actually hit
-        for (int hits : histogram) {
-            assertNotEquals(0, hits);
-        }
 
-    }
-    /*
-    @Test
-    void getValueAtBinary() {
-        float scale = 250f;
-        int amplitude = 10;
-        int[] histogram = new int[amplitude+1];
-        PerlinNoiseIO io = new PerlinNoiseIO(scale, amplitude, 123456,1);
-        int total = 0;
         for (int x = -1000; x < 1000; x++) {
             for (int y = -1000; y <= 2000; y++) {
                 int value = io.getValueAt(null, x, y);
@@ -74,16 +56,24 @@ class PerlinNoiseIOTest {
                 total++;
             }
         }
-        int i = 0;
         //full range from zero to 255 is actually hit
-        for (int hits: histogram) {
-            float percent = hits/(float)total;
-            int repetitions = (int)Math.ceil(percent*10)*5;
-           // assertNotEquals(0,hits);
-            System.out.println(i++ +":" + "#".repeat(repetitions));
+        for (int hits : histogram) {
+            assertNotEquals(0, hits);
         }
-
     }
 
-     */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
