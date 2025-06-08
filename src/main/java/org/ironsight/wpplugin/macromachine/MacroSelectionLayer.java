@@ -3,10 +3,18 @@ package org.ironsight.wpplugin.macromachine;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.renderers.LayerRenderer;
 
+import java.awt.image.BufferedImage;
+
 public class MacroSelectionLayer extends Layer {
     @Override
     public LayerRenderer getRenderer() {
         return MacroSelectionLayerRenderer.instance;
+    }
+    //fixed UID from class on first release. do not change or all world files will be broken/unloadable
+    private static final long serialVersionUID = -6448177550160813133L;
+    @Override
+    public BufferedImage getIcon() {
+        return super.getIcon();
     }
 
     /**
