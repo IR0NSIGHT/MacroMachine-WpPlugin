@@ -55,15 +55,23 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        if (data.length != 4)
-            data = new Object[]{1,2,3,4};
-        return new PerlinNoiseIO(((Double) data[SCALE_IDX]).floatValue(), ((Double) data[OCTAVES_IDX]).floatValue(),
-                ((Double) data[AMPLITUDE_IDX]).longValue(), ((Double) data[SEED_IDX]).intValue());
+        int[] intArray = new int[data.length];
+
+        for (int i = 0; i < data.length; i++) {
+            intArray[i] = (int)data[i]; // Autoboxing converts int to Integer
+        }
+        return instantiateWithValues(intArray);
     }
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{(double) scale, (double) amplitude, (double)octaves,(double) seed};
+        int[] intArray = getEditableValues();
+        Object[] objectArray = new Object[intArray.length];
+
+        for (int i = 0; i < intArray.length; i++) {
+            objectArray[i] = intArray[i]; // Autoboxing converts int to Integer
+        }
+        return objectArray;
     }
 
     @Override
@@ -180,6 +188,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
                 "scale=" + scale +
                 ", amplitude=" + amplitude +
                 ", seed=" + seed +
+                ", octaves" + octaves +
                 '}';
     }
 

@@ -39,6 +39,21 @@ class PerlinNoiseIOTest {
     }
 
     @Test
+    void serialize() {
+        PerlinNoiseIO io = new PerlinNoiseIO(1,2,3,4);
+        Object[] data = io.getSaveData();
+        IMappingValue instantiated = io.instantiateFrom(data);
+        assertEquals(io, instantiated);
+    }
+
+    @Test
+    void instantiateFromEditableValues() {
+        PerlinNoiseIO io = new PerlinNoiseIO(1,2,3,4);
+        IMappingValue instantiated = io.instantiateWithValues(io.getEditableValues());
+        assertEquals(io, instantiated);
+    }
+
+    @Test
     void getValueAt() {
         // unit test to ensure the perlin IO produces values across the whole intervall of [0, amplitude] and doesnt
         // just cluster around the median
@@ -53,7 +68,6 @@ class PerlinNoiseIOTest {
                 histogram[value]++;
                 assertTrue(value <= amplitude, "value=" + value + " at" + Arrays.toString(new int[]{x, y}));
                 assertTrue(0 <= value, "value=" + value + " at" + Arrays.toString(new int[]{x, y}));
-                total++;
             }
         }
         //full range from zero to 255 is actually hit
