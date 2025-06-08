@@ -252,6 +252,17 @@
   "description" : "description of the action",
   "uid" : "68bddcaa-f0a2-4f16-abea-65270bc4fe9e"
 }, {
+  "inputId" : "PERLIN_NOISE",
+  "inputData" : [ 30, 100, 5, 67823 ],
+  "outputId" : "ANNOTATION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 90, 100 ],
+  "outputPoints" : [ 0, 9 ],
+  "name" : "debug: highlight 50%",
+  "description" : "new description",
+  "uid" : "d2261d28-4b7a-410b-acea-6144e726b3c1"
+}, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ ],
   "outputId" : "NIBBLE_LAYER",
@@ -450,6 +461,17 @@
   "description" : "description of the action",
   "uid" : "61f3ea91-5ba6-4769-8365-018ec9cd8eef"
 }, {
+  "inputId" : "PERLIN_NOISE",
+  "inputData" : [ 30, 100, 5, 67823 ],
+  "outputId" : "INTERMEDIATE",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 12, 42, 91 ],
+  "outputPoints" : [ 50, 5, 0 ],
+  "name" : "perlin spots",
+  "description" : "new description",
+  "uid" : "600f91f1-6bd5-40f0-8dbd-bf6e001906f9"
+}, {
   "inputId" : "SLOPE",
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE",
@@ -460,6 +482,17 @@
   "name" : "deselect steep",
   "description" : "description of the action",
   "uid" : "6b3370ee-ba73-49b0-b64e-155195df7cb7"
+}, {
+  "inputId" : "INTERMEDIATE",
+  "inputData" : [ ],
+  "outputId" : "BINARY_SPRAYPAINT",
+  "outputData" : [ "org.ironsight.wpplugin.macropainter.macroselectionlayer", "Macro Selection" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 100 ],
+  "outputPoints" : [ 0, 100 ],
+  "name" : "reduce by 50%",
+  "description" : "new description",
+  "uid" : "d2d8aa86-d534-4158-924d-a36384429037"
 }, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ ],
@@ -515,6 +548,17 @@
   "name" : "apply snow",
   "description" : "description of the action",
   "uid" : "09e5d68d-991c-48e7-a4a8-59e1777be8d1"
+}, {
+  "inputId" : "PERLIN_NOISE",
+  "inputData" : [ 500, 100, 5, 123456 ],
+  "outputId" : "ANNOTATION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 36, 41, 59, 64, 98 ],
+  "outputPoints" : [ 0, 10, 9, 10, 0 ],
+  "name" : "perlin to annotation",
+  "description" : "new description",
+  "uid" : "ff260003-823f-4374-bbc6-139624dc7910"
 }, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ ],
