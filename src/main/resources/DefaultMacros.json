@@ -19,6 +19,16 @@
   "description" : "-",
   "uid" : "d1e3e684-024b-473c-b12d-0b7b0464753b"
 }, {
+  "executionUUIDs" : [ "ff260003-823f-4374-bbc6-139624dc7910" ],
+  "name" : "Perlin Forest",
+  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+  "uid" : "5810f759-1151-4f7c-b086-304923f3dab1"
+}, {
+  "executionUUIDs" : [ "600f91f1-6bd5-40f0-8dbd-bf6e001906f9", "d2d8aa86-d534-4158-924d-a36384429037" ],
+  "name" : "Perlin Flower Patches",
+  "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+  "uid" : "042248e3-2760-434e-a31b-d6b44023231a"
+}, {
   "executionUUIDs" : [ "94f78d04-d795-44fb-8f08-794baab9cd6c", "8d4d619f-4dd6-45a6-bdda-32c520958c57", "c5af9fab-47a2-4e3e-89c3-2bb33951979f", "b7122b2b-951c-4cb0-9ac5-9d78a48928f9", "f10a62c4-e081-4a51-b6d6-a704bfb527a3", "81923515-7df3-4e69-a7b5-f5d1f7bf6eca" ],
   "name" : "Apply: Reset World",
   "description" : "-",
