@@ -74,8 +74,8 @@ public class InputOutputProvider {
         setters.add(new AnnotationSetter());
         getters.add(new AnnotationSetter());
 
-        getters.add(new HeightProvider());
-        setters.add(new HeightProvider());
+        getters.add(new TerrainHeightIO());
+        setters.add(new TerrainHeightIO());
 
         getters.add(new WaterHeightAbsoluteIO());
         setters.add(new WaterHeightAbsoluteIO());

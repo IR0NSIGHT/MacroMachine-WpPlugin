@@ -48,7 +48,7 @@ class IntermediateValueIOTest {
 
         UUID set = container.addMapping().getUid();
         container.updateMapping(container.queryById(set)
-                .withInput(new HeightProvider())
+                .withInput(new TerrainHeightIO())
                 .withOutput(intermediateValueIO)
                 .withNewPoints(new MappingPoint[]{new MappingPoint(EVEN_HEIGHT, 4), new MappingPoint(UNEVEN_HEIGHT, 7)})
                 .withName("set intermediate"), f -> {

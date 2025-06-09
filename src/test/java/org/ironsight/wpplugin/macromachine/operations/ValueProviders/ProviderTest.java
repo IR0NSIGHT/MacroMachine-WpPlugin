@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
-import org.pepsoft.worldpainter.biomeschemes.Minecraft1_7Biomes;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Biome;
 import org.pepsoft.worldpainter.layers.Frost;
@@ -18,7 +17,7 @@ public class ProviderTest {
 
     @Test
     void HeightProviderGetSetValue() {
-        HeightProvider h = new HeightProvider();
+        TerrainHeightIO h = new TerrainHeightIO();
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 

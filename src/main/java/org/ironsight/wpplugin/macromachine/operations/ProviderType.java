@@ -37,7 +37,7 @@ public enum ProviderType {
             case SLOPE:
                 return new SlopeProvider();
             case HEIGHT:
-                return new HeightProvider();
+                return new TerrainHeightIO();
             case TERRAIN:
                 return new TerrainProvider();
             case WATER_DEPTH:
