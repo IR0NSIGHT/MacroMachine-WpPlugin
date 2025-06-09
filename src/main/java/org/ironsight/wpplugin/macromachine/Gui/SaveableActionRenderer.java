@@ -8,16 +8,26 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<SaveableAction> {
+import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.actionFont;
+import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.macroFont;
+
+class SaveableActionRenderer implements TableCellRenderer, ListCellRenderer<SaveableAction> {
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     JLabel input = new JLabel();
     JLabel output = new JLabel();
     JPanel panel = new JPanel(new BorderLayout());
     JLabel actionType = new JLabel();
+    JLabel iconLabel = new JLabel();
 
-    public MappingTableCellRenderer() {
-        panel.add(nameLabel, BorderLayout.WEST);
+    public SaveableActionRenderer() {
+        JPanel iconAndName = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        iconAndName.setOpaque(false);
+        iconLabel.setPreferredSize(new Dimension(20,20));
+        iconAndName.add(iconLabel);
+        iconAndName.add(nameLabel);
+
+        panel.add(iconAndName, BorderLayout.WEST);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
         nameLabel.setFont(LayerMappingTopPanel.header1Font);
         nameLabel.setVerticalAlignment(JLabel.CENTER);
@@ -45,14 +55,18 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<Sa
             output.setText(lm.output.getName());
             actionType.setText(lm.actionType.getDisplayName());
             nameLabel.setText(lm.getName());
-            panel.setToolTipText(lm.getDescription());
+            panel.setToolTipText(lm.getToolTipText());
+            nameLabel.setFont(actionFont);
+            iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.ACTION));
         }  else if (mapping instanceof Macro) {
             Macro lm = (Macro) mapping;
             input.setText("");
-            output.setText("");
+            output.setText(lm.getExecutionUUIDs().length+" steps");
             actionType.setText("Macro");
             nameLabel.setText(lm.getName());
-            panel.setToolTipText(lm.getDescription());
+            panel.setToolTipText(lm.getToolTipText());
+            nameLabel.setFont(macroFont);
+            iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.MACRO));
         }
         else {
             nameLabel.setText("UNKNOWN ACTION: " + mapping);

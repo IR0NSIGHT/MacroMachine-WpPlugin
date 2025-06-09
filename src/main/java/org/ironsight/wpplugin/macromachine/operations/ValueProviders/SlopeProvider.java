@@ -90,7 +90,10 @@ public class SlopeProvider implements IPositionValueGetter {
     public String getName() {
         return "Slope";
     }
-
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
     @Override
     public String getDescription() {
         return "get the slope of a position in degrees from 0 to 90°";

@@ -13,7 +13,10 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     public VanillaBiomeProvider() {
         biomes = Minecraft1_20Biomes.BIOME_NAMES.clone();
     }
-
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
     @Override
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());

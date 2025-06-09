@@ -89,6 +89,11 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     }
 
     @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
+
+    @Override
     public int hashCode() {
         return getProviderType().hashCode();
     }

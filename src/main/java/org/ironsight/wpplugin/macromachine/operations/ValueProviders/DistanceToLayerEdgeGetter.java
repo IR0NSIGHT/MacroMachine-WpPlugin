@@ -131,7 +131,10 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
     public String getLayerName() {
         return layerName;
     }
-
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
     @Override
     public String getLayerId() {
         return layerId;

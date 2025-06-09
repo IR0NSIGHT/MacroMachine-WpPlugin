@@ -5,6 +5,7 @@ public interface IDisplayUnit {
 
     String getDescription();
 
+    String getToolTipText();
     static boolean matchesFilterString(String s, IDisplayUnit item) {
         String lowerCaseString = s.toLowerCase();
         return item.getName().toLowerCase().contains(lowerCaseString) ||

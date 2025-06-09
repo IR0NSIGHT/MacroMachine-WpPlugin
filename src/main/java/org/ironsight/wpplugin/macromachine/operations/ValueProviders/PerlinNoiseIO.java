@@ -215,4 +215,8 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
                 ", octaves" + octaves +
                 '}';
     }
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
 }

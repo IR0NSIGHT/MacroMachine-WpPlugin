@@ -81,7 +81,10 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     public String getName() {
         return "Test Getter";
     }
-
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
     @Override
     public String getDescription() {
         return "test class for getting values";

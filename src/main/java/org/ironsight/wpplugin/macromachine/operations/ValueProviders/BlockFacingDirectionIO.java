@@ -73,6 +73,11 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
     }
 
     @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
+
+    @Override
     public int getMaxValue() {
         return 359;
     }

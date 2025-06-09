@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -13,6 +14,7 @@ import java.util.function.Supplier;
  * macros can container Actions or other Macros (nesting)
  * recursion is technically possible but not allowed because there is no way to detect infinite recursion.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Macro implements SaveableAction {
     //ordered list of layermappings
     public UUID[] executionUUIDs;
@@ -24,7 +26,10 @@ public class Macro implements SaveableAction {
 
     Macro() {
     }
-
+    @Override
+    public String getToolTipText() {
+        return "" + executionUUIDs.length + " steps\n"+getDescription();
+    }
     public Macro(String name, String description, UUID[] ids, UUID id) {
         this.name = name;
         this.description = description;

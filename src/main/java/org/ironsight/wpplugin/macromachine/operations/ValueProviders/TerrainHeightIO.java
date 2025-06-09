@@ -13,7 +13,10 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;
     }
-
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         return (int)EditableIO.clamp(Math.round(dim.getHeightAt(x, y)),getMinValue(),getMaxValue());

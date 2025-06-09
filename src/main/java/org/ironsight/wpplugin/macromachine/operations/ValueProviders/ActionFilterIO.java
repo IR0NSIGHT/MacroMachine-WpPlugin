@@ -100,7 +100,10 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
         g.setColor(value == 1 ? Color.RED : Color.BLACK);
         g.fillRect(0, 0, dim.width, dim.height);
     }
-
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
     @Override
     public ProviderType getProviderType() {
         return ProviderType.INTERMEDIATE_SELECTION;

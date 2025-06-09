@@ -383,6 +383,11 @@ public class MacroTreePanel extends JPanel {
                 public String getDescription() {
                     return "root";
                 }
+
+                @Override
+                public String getToolTipText() {
+                    return "";
+                }
             };
             assert parent == null;
         }

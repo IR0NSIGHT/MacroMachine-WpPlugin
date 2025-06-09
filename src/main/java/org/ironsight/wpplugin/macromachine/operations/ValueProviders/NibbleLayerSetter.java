@@ -117,6 +117,11 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     }
 
     @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
+
+    @Override
     public int hashCode() {
         return Objects.hashCode(layerId);
     }

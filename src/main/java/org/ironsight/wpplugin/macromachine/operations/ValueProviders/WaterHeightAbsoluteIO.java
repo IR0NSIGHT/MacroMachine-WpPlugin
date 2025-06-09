@@ -121,4 +121,8 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
     public EditableIO instantiateWithValues(int[] values) {
         return new WaterHeightAbsoluteIO(values[0],values[1]);
     }
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
 }
