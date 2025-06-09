@@ -12,6 +12,11 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.function.Consumer;
 
+/**
+ * this class stores MappingActions by UUID
+ * it can read and write to file
+ * its the central authority on which actions exist. if its not in the container, its considered non-existent.
+ */
 public class MappingActionContainer extends AbstractOperationContainer<MappingAction> {
     private static MappingActionContainer INSTANCE;
 

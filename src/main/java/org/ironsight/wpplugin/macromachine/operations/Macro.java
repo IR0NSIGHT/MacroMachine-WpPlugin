@@ -6,6 +6,13 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * this class is a collection of MappingActions
+ * the actions are ordered and executed in this order
+ * a macro can be executed and will apply each of its nested actions to the map
+ * macros can container Actions or other Macros (nesting)
+ * recursion is technically possible but not allowed because there is no way to detect infinite recursion.
+ */
 public class Macro implements SaveableAction {
     //ordered list of layermappings
     public UUID[] executionUUIDs;

@@ -8,7 +8,15 @@ import java.util.*;
 
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.INTERMEDIATE_SELECTION;
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.fromType;
-
+/**
+ * this class represents a single global-operation.
+ * it can be applied to the map
+ * each Actions has an input (f.e. terrain height) and an output (f.e. annotation)
+ * the MappingPoints define which input value is mapped to which output value
+ * f.e. ranges 62H to 85H -> Annotation.WHITE
+ * Actions modifiy the output value, they can either Set the value (easiest) or do math. this is decided by the
+ * action Type
+ */
 public class MappingAction implements SaveableAction {
     public final IPositionValueGetter input;
     public final IPositionValueSetter output;
