@@ -11,13 +11,14 @@ import org.pepsoft.worldpainter.layers.PineForest;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
 
+import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ProviderTest {
 
     @Test
     void HeightProviderGetSetValue() {
-        TerrainHeightIO h = new TerrainHeightIO();
+        TerrainHeightIO h = new TerrainHeightIO(-64,319);
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
@@ -30,11 +31,30 @@ public class ProviderTest {
         assertEquals(19, dim.getHeightAt(17,18));
         h.setValueAt(dim, 17,18,21);
         assertEquals(21, dim.getHeightAt(17,18));
+
+        //correct instantiation
+        IMappingValue v = fromType(new Object[]{0,255},HEIGHT);
+        assertTrue(v instanceof TerrainHeightIO);
+        assertEquals(HEIGHT, v.getProviderType());
+        assertEquals(0, v.getMinValue());
+        assertEquals(255,v.getMaxValue());
+
+        // can be saved and loaded with these values
+        h = (TerrainHeightIO) v.instantiateFrom(v.getSaveData());
+        assertEquals(0, h.getMinValue());
+        assertEquals(255,h.getMaxValue());
+
+        // can handle wrong inputs
+        h = (TerrainHeightIO) fromType(new Object[]{},HEIGHT);
+        assertEquals(-64, h.getMinValue());
+        assertEquals(319,h.getMaxValue());
+
+        assertNotEquals(new TerrainHeightIO(3,12),new TerrainHeightIO(27,99));
     }
 
     @Test
     void WaterLevelProviderGetSetValue() {
-        WaterHeightAbsoluteIO h = new WaterHeightAbsoluteIO();
+        WaterHeightAbsoluteIO h = new WaterHeightAbsoluteIO(-64,319);
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
@@ -47,6 +67,26 @@ public class ProviderTest {
         assertEquals(19, dim.getWaterLevelAt(17,18));
         h.setValueAt(dim, 17,18,21);
         assertEquals(21, dim.getWaterLevelAt(17,18));
+
+        //correct instantiation
+        IMappingValue v = fromType(new Object[]{0,255},WATER_HEIGHT);
+        assertTrue(v instanceof WaterHeightAbsoluteIO);
+        assertEquals(WATER_HEIGHT, v.getProviderType());
+        assertEquals(0, v.getMinValue());
+        assertEquals(255,v.getMaxValue());
+
+        // can be saved and loaded with these values
+        h = (WaterHeightAbsoluteIO) v.instantiateFrom(v.getSaveData());
+        assertEquals(0, h.getMinValue());
+        assertEquals(255,h.getMaxValue());
+
+        // can handle wrong inputs
+        h = (WaterHeightAbsoluteIO) fromType(new Object[]{},WATER_HEIGHT);
+        assertEquals(-64, h.getMinValue());
+        assertEquals(319,h.getMaxValue());
+
+        assertNotEquals(new WaterHeightAbsoluteIO(3,12),new WaterHeightAbsoluteIO(27,99));
+
     }
 
     @Test
@@ -214,7 +254,7 @@ public class ProviderTest {
 
     @Test
     void intermediateValueTest() {
-        IntermediateValueIO io = new IntermediateValueIO();
+        IntermediateValueIO io = new IntermediateValueIO(0,100,"");
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         io.prepareForDimension(dim);
 
@@ -226,6 +266,25 @@ public class ProviderTest {
         assertEquals(0,io.getValueAt(dim,105,107),"other position has initial value, not previous value");
         assertEquals(-43, io.getValueAt(dim,18,19),"previous position is remembered as long setter is not called to " +
                 "different coordinats");
+
+        //correct instantiation
+        IMappingValue v = fromType(new Object[]{0,27,"hello world"},INTERMEDIATE);
+        assertTrue(v instanceof IntermediateValueIO);
+        assertEquals(INTERMEDIATE, v.getProviderType());
+        assertEquals(0, v.getMinValue());
+        assertEquals(27,v.getMaxValue());
+
+        // can be saved and loaded with these values
+        IntermediateValueIO h = (IntermediateValueIO) v.instantiateFrom(v.getSaveData());
+        assertEquals(0, h.getMinValue());
+        assertEquals(27,h.getMaxValue());
+
+        // can handle wrong inputs
+        h = (IntermediateValueIO) fromType(new Object[]{},INTERMEDIATE);
+        assertEquals(0, h.getMinValue());
+        assertEquals(100,h.getMaxValue());
+
+        assertNotEquals(new IntermediateValueIO(3,12,""),new IntermediateValueIO(27,99,"hello"));
     }
 
     @Test

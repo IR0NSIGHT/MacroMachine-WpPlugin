@@ -1,6 +1,6 @@
 [ {
   "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
+  "inputData" : [ 0, 100, "" ],
   "outputId" : "INTERMEDIATE_SELECTION",
   "outputData" : [ ],
   "actionType" : "SET",
@@ -24,7 +24,7 @@
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "HEIGHT",
-  "outputData" : [ ],
+  "outputData" : [ -64, 319 ],
   "actionType" : "SET",
   "inputPoints" : [ 0 ],
   "outputPoints" : [ 70 ],
@@ -55,9 +55,9 @@
   "uid" : "92537724-f6c2-4152-896c-2d4abdc32385"
 }, {
   "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
+  "inputData" : [ 0, 100, "" ],
   "outputId" : "INTERMEDIATE",
-  "outputData" : [ ],
+  "outputData" : [ 0, 100, "" ],
   "actionType" : "DECREMENT",
   "inputPoints" : [ 0 ],
   "outputPoints" : [ 1 ],
@@ -88,7 +88,7 @@
   "uid" : "62912b73-a04e-44a5-8b88-ddd95c058ed6"
 }, {
   "inputId" : "HEIGHT",
-  "inputData" : [ ],
+  "inputData" : [ -64, 319 ],
   "outputId" : "NIBBLE_LAYER",
   "outputData" : [ "Pine", "Pine" ],
   "actionType" : "LIMIT_TO",
@@ -101,7 +101,7 @@
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "WATER_HEIGHT",
-  "outputData" : [ ],
+  "outputData" : [ -64, 319 ],
   "actionType" : "SET",
   "inputPoints" : [ 0 ],
   "outputPoints" : [ 62 ],
@@ -110,7 +110,7 @@
   "uid" : "81923515-7df3-4e69-a7b5-f5d1f7bf6eca"
 }, {
   "inputId" : "HEIGHT",
-  "inputData" : [ ],
+  "inputData" : [ -64, 319 ],
   "outputId" : "ANNOTATION",
   "outputData" : [ ],
   "actionType" : "SET",
@@ -134,7 +134,7 @@
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "HEIGHT",
-  "outputData" : [ ],
+  "outputData" : [ -64, 319 ],
   "actionType" : "INCREMENT",
   "inputPoints" : [ 0 ],
   "outputPoints" : [ 30 ],
@@ -145,7 +145,7 @@
   "inputId" : "BLOCK_DIRECTION",
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE",
-  "outputData" : [ ],
+  "outputData" : [ 0, 100, "" ],
   "actionType" : "DECREMENT",
   "inputPoints" : [ 0, 180, 359 ],
   "outputPoints" : [ 0, 70, 0 ],
@@ -156,7 +156,7 @@
   "inputId" : "DISTANCE_TO_EDGE",
   "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
   "outputId" : "INTERMEDIATE",
-  "outputData" : [ ],
+  "outputData" : [ 0, 100, "" ],
   "actionType" : "SET",
   "inputPoints" : [ 0, 15 ],
   "outputPoints" : [ 0, 15 ],
@@ -222,7 +222,7 @@
   "inputId" : "PERLIN_NOISE",
   "inputData" : [ 500, 400, 7, 123123 ],
   "outputId" : "HEIGHT",
-  "outputData" : [ ],
+  "outputData" : [ -64, 319 ],
   "actionType" : "INCREMENT",
   "inputPoints" : [ 30, 130, 250, 310, 354, 399 ],
   "outputPoints" : [ -22, 10, 30, 79, 113, 180 ],
@@ -308,12 +308,12 @@
   "uid" : "f25c73db-d735-44e4-b2f4-1631d6df247e"
 }, {
   "inputId" : "HEIGHT",
-  "inputData" : [ ],
+  "inputData" : [ -64, 1000 ],
   "outputId" : "INTERMEDIATE",
-  "outputData" : [ ],
+  "outputData" : [ 0, 100, "" ],
   "actionType" : "SET",
-  "inputPoints" : [ 80, 203 ],
-  "outputPoints" : [ 0, 100 ],
+  "inputPoints" : [ -8, 294, 800 ],
+  "outputPoints" : [ 8, 29, 60 ],
   "name" : "select heights",
   "description" : "description of the action",
   "uid" : "a1f1fa77-387b-4b62-b7aa-aab71f307781"
@@ -374,9 +374,9 @@
   "uid" : "a555c3ff-ff46-4b9e-87de-839106b28eb8"
 }, {
   "inputId" : "HEIGHT",
-  "inputData" : [ ],
+  "inputData" : [ -64, 319 ],
   "outputId" : "INTERMEDIATE",
-  "outputData" : [ ],
+  "outputData" : [ 0, 100, "" ],
   "actionType" : "DECREMENT",
   "inputPoints" : [ 100, 225 ],
   "outputPoints" : [ 1, 100 ],
@@ -385,7 +385,7 @@
   "uid" : "6f4467b3-a9f9-496a-8331-309359081376"
 }, {
   "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
+  "inputData" : [ 0, 100, "" ],
   "outputId" : "NIBBLE_LAYER",
   "outputData" : [ "village houses", "My Custom Objects.cb2251c8730bbcce" ],
   "actionType" : "SET",
@@ -396,7 +396,7 @@
   "uid" : "e79568bc-7ee9-4639-839e-6725ff2d7554"
 }, {
   "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
+  "inputData" : [ 0, 100, "" ],
   "outputId" : "BINARY_SPRAYPAINT",
   "outputData" : [ "org.pepsoft.worldpainter.selection.SelectionBlock", "SelectionBlock" ],
   "actionType" : "SET",
@@ -431,7 +431,7 @@
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "HEIGHT",
-  "outputData" : [ ],
+  "outputData" : [ -64, 319 ],
   "actionType" : "INCREMENT",
   "inputPoints" : [ 0 ],
   "outputPoints" : [ 6 ],
@@ -484,7 +484,7 @@
   "uid" : "63fd4bd9-e0c5-4d7e-8469-010df68bb4b7"
 }, {
   "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
+  "inputData" : [ 0, 100, "" ],
   "outputId" : "BINARY_SPRAYPAINT",
   "outputData" : [ "Frost", "Frost" ],
   "actionType" : "SET",
@@ -495,7 +495,7 @@
   "uid" : "a09da31d-82c2-47b2-863f-d1f584dbd5ad"
 }, {
   "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
+  "inputData" : [ 0, 100, "" ],
   "outputId" : "TERRAIN",
   "outputData" : [ ],
   "actionType" : "SET",
@@ -506,7 +506,7 @@
   "uid" : "aaa1fe99-1aea-4f8b-bb46-9cc74caeee27"
 }, {
   "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
+  "inputData" : [ 0, 100, "" ],
   "outputId" : "INTERMEDIATE_SELECTION",
   "outputData" : [ ],
   "actionType" : "SET",
@@ -618,7 +618,7 @@
   "inputId" : "PERLIN_NOISE",
   "inputData" : [ 30, 100, 5, 467823 ],
   "outputId" : "INTERMEDIATE",
-  "outputData" : [ ],
+  "outputData" : [ 0, 100, "" ],
   "actionType" : "SET",
   "inputPoints" : [ 12, 42, 91 ],
   "outputPoints" : [ 100, 10, 0 ],
@@ -629,7 +629,7 @@
   "inputId" : "SLOPE",
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE",
-  "outputData" : [ ],
+  "outputData" : [ 0, 100, "" ],
   "actionType" : "LIMIT_TO",
   "inputPoints" : [ 50, 63 ],
   "outputPoints" : [ 100, 0 ],
@@ -638,7 +638,7 @@
   "uid" : "6b3370ee-ba73-49b0-b64e-155195df7cb7"
 }, {
   "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
+  "inputData" : [ 0, 100, "" ],
   "outputId" : "BINARY_SPRAYPAINT",
   "outputData" : [ "org.ironsight.wpplugin.macropainter.macroselectionlayer", "Macro Selection" ],
   "actionType" : "SET",
@@ -649,7 +649,7 @@
   "uid" : "d2d8aa86-d534-4158-924d-a36384429037"
 }, {
   "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
+  "inputData" : [ 0, 100, "" ],
   "outputId" : "TERRAIN",
   "outputData" : [ ],
   "actionType" : "SET",
@@ -737,9 +737,9 @@
   "uid" : "ff260003-823f-4374-bbc6-139624dc7910"
 }, {
   "inputId" : "INTERMEDIATE",
-  "inputData" : [ ],
+  "inputData" : [ 0, 100, "" ],
   "outputId" : "HEIGHT",
-  "outputData" : [ ],
+  "outputData" : [ -64, 319 ],
   "actionType" : "INCREMENT",
   "inputPoints" : [ 4, 5, 6 ],
   "outputPoints" : [ 0, 1, 0 ],
@@ -748,12 +748,12 @@
   "uid" : "9444da9f-c5db-44af-ac9d-8d5406f032e5"
 }, {
   "inputId" : "HEIGHT",
-  "inputData" : [ ],
+  "inputData" : [ -64, 319 ],
   "outputId" : "INTERMEDIATE_SELECTION",
   "outputData" : [ ],
   "actionType" : "SET",
-  "inputPoints" : [ -64, 66, 358 ],
-  "outputPoints" : [ 0, 1, 0 ],
+  "inputPoints" : [ -64, 66 ],
+  "outputPoints" : [ 0, 1 ],
   "name" : "near 62",
   "description" : "new description",
   "uid" : "8d4095c8-f984-486a-a6b7-fe9be9457478"

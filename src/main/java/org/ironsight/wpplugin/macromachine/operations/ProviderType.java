@@ -27,7 +27,9 @@ public enum ProviderType {
     ;
 
     public static IMappingValue fromType(Object[] data, ProviderType type) {
-        return fromTypeDefault(type).instantiateFrom(data);
+        IMappingValue newV = fromTypeDefault(type).instantiateFrom(data);
+        assert newV.getProviderType() == type;
+        return newV;
     }
 
     public static IMappingValue fromTypeDefault(ProviderType type) {
@@ -37,13 +39,13 @@ public enum ProviderType {
             case SLOPE:
                 return new SlopeProvider();
             case HEIGHT:
-                return new TerrainHeightIO();
+                return new TerrainHeightIO(-64,319);
             case TERRAIN:
                 return new TerrainProvider();
             case WATER_DEPTH:
                 return new WaterDepthProvider();
             case INTERMEDIATE:
-                return new IntermediateValueIO();
+                return new IntermediateValueIO(0,100,"");
             case STONE_PALETTE:
                 return new StonePaletteApplicator();
             case VANILLA_BIOME:
@@ -55,8 +57,7 @@ public enum ProviderType {
             case ANNOTATION:
                 return new AnnotationSetter();
             case WATER_HEIGHT:
-                return new WaterHeightAbsoluteIO();
-
+                return new WaterHeightAbsoluteIO(-64,319);
             case BINARY_SPRAYPAINT:
                 return new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE);
             case BINARY_LAYER:
