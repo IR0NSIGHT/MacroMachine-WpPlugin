@@ -136,15 +136,15 @@ public class MacroDesigner extends JPanel {
 
     private void onAddMapping() {
         ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
-        macrosAndActions.addAll(LayerMappingContainer.INSTANCE.queryAll());
+        macrosAndActions.addAll(LayerMappingContainer.getInstance().queryAll());
         macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
         JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
             MappingMacro macro = this.macro;
 
             ArrayList<Integer> newSelection = new ArrayList<>();
             MappingMacro newMacro = MappingMacro.insertSaveableActionToList(macro.clone(), selected,
-                    () -> LayerMappingContainer.INSTANCE.addMapping(),
-                    a -> LayerMappingContainer.INSTANCE.updateMapping(a, MacroMachinePlugin::error),
+                    () -> LayerMappingContainer.getInstance().addMapping(),
+                    a -> LayerMappingContainer.getInstance().updateMapping(a, MacroMachinePlugin::error),
                     table.getSelectedRows(), newSelection);
             setMacro(newMacro, true);
             assert this.macro.equals(newMacro) : "macro was added an action, but action is not " +
@@ -219,18 +219,18 @@ public class MacroDesigner extends JPanel {
 
     private void onChangeMapping() {
         ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
-        macrosAndActions.addAll(LayerMappingContainer.INSTANCE.queryAll());
+        macrosAndActions.addAll(LayerMappingContainer.getInstance().queryAll());
         macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
         JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
             if (selected instanceof MappingMacro) {
                 setMacro(macro.withReplacedUUIDs(this.table.getSelectedRows(), selected.getUid()), true);
             } else {
                 if (selected.getUid() == null)
-                    selected = LayerMappingContainer.INSTANCE.addMapping();
+                    selected = LayerMappingContainer.getInstance().addMapping();
                 MappingMacro temp = this.macro;
                 for (int targetIdx : this.table.getSelectedRows()) {
-                    LayerMapping action = LayerMappingContainer.INSTANCE.addMapping();
-                    LayerMappingContainer.INSTANCE.updateMapping(action.withValuesFrom((LayerMapping) selected),
+                    LayerMapping action = LayerMappingContainer.getInstance().addMapping();
+                    LayerMappingContainer.getInstance().updateMapping(action.withValuesFrom((LayerMapping) selected),
                             MacroMachinePlugin::error);
                     temp = temp.withReplacedUUIDs(new int[]{targetIdx}, action.getUid());
                 }
@@ -265,7 +265,7 @@ public class MacroDesigner extends JPanel {
 
         int row = 0;
         for (UUID id : macro.executionUUIDs) {
-            SaveableAction m = LayerMappingContainer.INSTANCE.queryById(id);
+            SaveableAction m = LayerMappingContainer.getInstance().queryById(id);
             if (m == null)
                 m = MappingMacroContainer.getInstance().queryById(id);
             table.setValueAt(m, row++, 0);

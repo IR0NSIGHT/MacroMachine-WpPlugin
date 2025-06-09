@@ -20,7 +20,7 @@ public class MappingsListSelect extends LayerMappingPanel {
 
     public MappingsListSelect(Consumer<LayerMapping> onSelection) {
         super();
-        LayerMappingContainer.INSTANCE.subscribe(this::updateComponents);
+        LayerMappingContainer.getInstance().subscribe(this::updateComponents);
         updateComponents();
         this.setOnUpdate(onSelection);
     }
@@ -28,7 +28,7 @@ public class MappingsListSelect extends LayerMappingPanel {
     @Override
     protected void updateComponents() {
         DefaultListModel<ListItem> model = new DefaultListModel<>();
-        for (LayerMapping m : LayerMappingContainer.INSTANCE.queryAll()) {
+        for (LayerMapping m : LayerMappingContainer.getInstance().queryAll()) {
             model.addElement(new ListItem(m));
         }
         list.setModel(model);
@@ -58,7 +58,7 @@ public class MappingsListSelect extends LayerMappingPanel {
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                LayerMapping ignored = LayerMappingContainer.INSTANCE.addMapping();
+                LayerMapping ignored = LayerMappingContainer.getInstance().addMapping();
             }
         });
         removeButton = new JButton("Remove");
@@ -66,7 +66,7 @@ public class MappingsListSelect extends LayerMappingPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 UUID uid = getSelectedProvider();
-                LayerMappingContainer.INSTANCE.deleteMapping(uid);
+                LayerMappingContainer.getInstance().deleteMapping(uid);
             }
         });
 

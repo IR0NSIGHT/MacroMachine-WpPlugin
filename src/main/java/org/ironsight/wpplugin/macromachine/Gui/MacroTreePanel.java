@@ -95,7 +95,7 @@ public class MacroTreePanel extends JPanel {
         if (blockUpdates)
             return;
         MappingMacroContainer macroContainer = MappingMacroContainer.getInstance();
-        MacroTreeNode newRoot = new MacroTreeNode(LayerMappingContainer.INSTANCE, macroContainer);
+        MacroTreeNode newRoot = new MacroTreeNode(LayerMappingContainer.getInstance(), macroContainer);
 
         LinkedList<TreePath> newSelections = new LinkedList<>();
         LinkedList<TreePath> newExpanded = new LinkedList<>();
