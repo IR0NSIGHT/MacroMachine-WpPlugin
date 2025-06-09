@@ -3,15 +3,21 @@ package org.ironsight.wpplugin.macromachine.Gui;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
-import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.actionFont;
-import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.macroFont;
+import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
 
-class SaveableActionRenderer implements TableCellRenderer, ListCellRenderer<SaveableAction> {
+class SaveableActionRenderer extends DefaultTreeCellRenderer
+        implements TableCellRenderer, ListCellRenderer<SaveableAction> {
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     JLabel input = new JLabel();
@@ -23,7 +29,7 @@ class SaveableActionRenderer implements TableCellRenderer, ListCellRenderer<Save
     public SaveableActionRenderer() {
         JPanel iconAndName = new JPanel(new FlowLayout(FlowLayout.LEFT));
         iconAndName.setOpaque(false);
-        iconLabel.setPreferredSize(new Dimension(20,20));
+        iconLabel.setPreferredSize(new Dimension(20, 20));
         iconAndName.add(iconLabel);
         iconAndName.add(nameLabel);
 
@@ -58,17 +64,34 @@ class SaveableActionRenderer implements TableCellRenderer, ListCellRenderer<Save
             panel.setToolTipText(lm.getToolTipText());
             nameLabel.setFont(actionFont);
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.ACTION));
-        }  else if (mapping instanceof Macro) {
+        } else if (mapping instanceof Macro) {
             Macro lm = (Macro) mapping;
             input.setText("");
-            output.setText(lm.getExecutionUUIDs().length+" steps");
+            output.setText(lm.getExecutionUUIDs().length + " steps");
             actionType.setText("Macro");
             nameLabel.setText(lm.getName());
             panel.setToolTipText(lm.getToolTipText());
             nameLabel.setFont(macroFont);
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.MACRO));
-        }
-        else {
+        } else if (mapping instanceof IPositionValueGetter) {
+            IPositionValueGetter lm = (IPositionValueGetter) mapping;
+            input.setText("");
+            output.setText("");
+            actionType.setText("");
+            nameLabel.setText(lm.getName());
+            panel.setToolTipText(lm.getToolTipText());
+            nameLabel.setFont(ioFont);
+            iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.INPUT));
+        } else if (mapping instanceof IPositionValueSetter) {
+            IPositionValueSetter lm = (IPositionValueSetter) mapping;
+            input.setText("");
+            output.setText("");
+            actionType.setText("");
+            nameLabel.setText(lm.getName());
+            panel.setToolTipText(lm.getToolTipText());
+            nameLabel.setFont(ioFont);
+            iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.OUTPUT));
+        } else {
             nameLabel.setText("UNKNOWN ACTION: " + mapping);
             input.setText("");
             output.setText("");
@@ -96,5 +119,34 @@ class SaveableActionRenderer implements TableCellRenderer, ListCellRenderer<Save
             panel.setBackground(list.getSelectionBackground());
         } else panel.setBackground(list.getBackground());
         return panel;
+    }
+
+    @Override
+    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
+                                                  boolean leaf, int row, boolean hasFocus) {
+        assert value instanceof MacroTreePanel.MacroTreeNode;
+        if (value instanceof MacroTreePanel.MacroTreeNode) {
+            switch (((MacroTreePanel.MacroTreeNode) value).payloadType) {
+                case MACRO:
+                case ACTION:
+                    updateTo(((MacroTreePanel.MacroTreeNode) value).payload);
+                    break;
+                case OUTPUT:
+                    updateTo(((MacroTreePanel.MacroTreeNode) value).getOutput());
+
+                    break;
+                case INPUT:
+                    updateTo(((MacroTreePanel.MacroTreeNode) value).getInput());
+                    break;
+                case INVALID:
+            }
+        }
+
+        if (selected) {
+            panel.setBackground(getBackgroundSelectionColor());
+        } else panel.setBackground(getBackground());
+        panel.invalidate();
+        return panel;
+
     }
 }
