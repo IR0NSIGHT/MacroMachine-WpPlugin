@@ -201,6 +201,7 @@ public class MacroTreePanel extends JPanel {
 
         treeModel = new DefaultTreeModel(new MacroTreeNode(mappingContainer, container));
         tree = new JTree(treeModel);
+        tree.setRootVisible(false);
         tree.setCellRenderer(new IDisplayUnitCellRenderer());
         tree.setRowHeight(-1); //auto set cell height
         tree.addTreeSelectionListener(e -> {
