@@ -29,7 +29,7 @@ public class IconManager {
         if (iconUrl != null) {
 
             ImageIcon originalIcon = new ImageIcon(iconUrl);
-            Image scaledImage = originalIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
+            Image scaledImage = originalIcon.getImage().getScaledInstance(20,20, Image.SCALE_SMOOTH);
             ImageIcon scaledIcon = new ImageIcon(scaledImage);
             return scaledIcon;
         } else {

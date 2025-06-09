@@ -67,17 +67,6 @@
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
-  "outputId" : "TERRAIN",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0 ],
-  "outputPoints" : [ 0 ],
-  "name" : "Grass",
-  "description" : "description of the action",
-  "uid" : "94f78d04-d795-44fb-8f08-794baab9cd6c"
-}, {
-  "inputId" : "ALWAYS",
-  "inputData" : [ ],
   "outputId" : "SELECTION",
   "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
   "actionType" : "SET",
@@ -185,17 +174,6 @@
   "name" : "selection to cyan",
   "description" : "description of the action",
   "uid" : "f805b666-46a0-4253-a324-f09b5843afce"
-}, {
-  "inputId" : "ALWAYS",
-  "inputData" : [ ],
-  "outputId" : "ANNOTATION",
-  "outputData" : [ ],
-  "actionType" : "SET",
-  "inputPoints" : [ 0 ],
-  "outputPoints" : [ 0 ],
-  "name" : "No Annotation",
-  "description" : "description of the action",
-  "uid" : "c5af9fab-47a2-4e3e-89c3-2bb33951979f"
 }, {
   "inputId" : "DISTANCE_TO_EDGE",
   "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
