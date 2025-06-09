@@ -20,11 +20,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
 
     public LayerMappingContainer(String filePath) {
         super(LayerMapping.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultActions.json");
-
-        // Register a shutdown hook
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            this.writeToFile();
-        }));
+        MacroMachinePlugin.error("INSTANTIATE NEW MAPPING CONTAINER:" + this);
     }
 
     private static String getActionsFilePath() {
