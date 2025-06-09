@@ -28,7 +28,7 @@ public class MappingAction implements SaveableAction {
     private final int[] mappings;
 
     public static MappingAction getNewEmptyAction() {
-        return new MappingAction(new TerrainHeightIO(),
+        return new MappingAction(new TerrainHeightIO(-64,319),
                 new AnnotationSetter(),
                 new MappingPoint[0], ActionType.SET, "create new action", "new description",null);
     }
@@ -263,7 +263,7 @@ public class MappingAction implements SaveableAction {
         if (mappingPoints.length == 0) {
             return;
         }
-        int value = input.getValueAt(dim, x, y);
+        int value = (int)EditableIO.clamp( input.getValueAt(dim, x, y), input.getMinValue(), input.getMaxValue());
 
         int modifier = map(value);
 

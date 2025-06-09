@@ -2,13 +2,10 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import com.kenperlin.ImprovedNoise;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.util.PerlinNoise;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 import java.util.Objects;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     private final float scale;
@@ -177,10 +174,6 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
                 "seed that determines the shape of the random noise"};
     }
 
-    private float clamp(int value, int min, int max) {
-        return Math.max(min, Math.min(value, max));
-    }
-
     private static final int SCALE_IDX = 0;
     private static final int AMPLITUDE_IDX = 1;
     private static final int OCTAVES_IDX = 2;
@@ -191,10 +184,10 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     @Override
     public PerlinNoiseIO instantiateWithValues(int[] values) {
         assert values.length == 4;
-        float scale = clamp(values[SCALE_IDX], 1, 30000);
-        float amplitude = clamp(values[AMPLITUDE_IDX], 1, 1000);
-        int octaves = (int) clamp(values[OCTAVES_IDX], 1, octaveNormalizer.length-1);
-        long seed = (long) clamp(values[SEED_IDX], 0, Integer.MAX_VALUE);
+        float scale = EditableIO.clamp(values[SCALE_IDX], 1, 30000);
+        float amplitude = EditableIO.clamp(values[AMPLITUDE_IDX], 1, 1000);
+        int octaves = (int) EditableIO.clamp(values[OCTAVES_IDX], 1, octaveNormalizer.length-1);
+        long seed = (long) EditableIO.clamp(values[SEED_IDX], 0, Integer.MAX_VALUE);
         return new PerlinNoiseIO(scale, amplitude, seed, octaves);
     }
 
@@ -221,10 +214,5 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
                 ", seed=" + seed +
                 ", octaves" + octaves +
                 '}';
-    }
-
-    @Override
-    public boolean sanitizeValue(int value, int index) {
-        return false; // UNUSED MABYE DELETE
     }
 }

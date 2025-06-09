@@ -20,7 +20,7 @@ class LayerMappingTest {
     void serialize() {
         try {
             // Create an instance of the object
-            MappingAction originalObject = new MappingAction(new TerrainHeightIO(),
+            MappingAction originalObject = new MappingAction(new TerrainHeightIO(-64,319),
                     new NibbleLayerSetter(Annotations.INSTANCE),
                     new MappingPoint[]{new MappingPoint(7, 12)},
                     ActionType.DIVIDE,
@@ -80,7 +80,7 @@ class LayerMappingTest {
 
     @Test
     void discreteMap() {
-        MappingAction action = new MappingAction(new TerrainHeightIO(),
+        MappingAction action = new MappingAction(new TerrainHeightIO(-64,319),
                 ActionFilterIO.instance,
                 new MappingPoint[]{new MappingPoint(100, 0), new MappingPoint(200, 1), new MappingPoint(250, 0)},
                 ActionType.SET,
@@ -152,7 +152,7 @@ class LayerMappingTest {
         }
 
         {   // 2 POINT LINEAR AT FIRST THAN PLATEAU
-            MappingAction mapper = new MappingAction(new TerrainHeightIO(),
+            MappingAction mapper = new MappingAction(new TerrainHeightIO(-64,319),
                     new NibbleLayerSetter(Annotations.INSTANCE),
                     new MappingPoint[]{new MappingPoint(50, 0), new MappingPoint(150, 10),},
                     ActionType.SET,

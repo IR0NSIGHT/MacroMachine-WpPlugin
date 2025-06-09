@@ -12,6 +12,7 @@ import java.awt.*;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 class IntermediateValueIOTest {
@@ -44,11 +45,11 @@ class IntermediateValueIOTest {
 
 
         MappingActionContainer container = MappingActionContainer.getInstance();
-        IntermediateValueIO intermediateValueIO = new IntermediateValueIO();
+        IntermediateValueIO intermediateValueIO = new IntermediateValueIO(0,100,"");
 
         UUID set = container.addMapping().getUid();
         container.updateMapping(container.queryById(set)
-                .withInput(new TerrainHeightIO())
+                .withInput(new TerrainHeightIO(-64,319))
                 .withOutput(intermediateValueIO)
                 .withNewPoints(new MappingPoint[]{new MappingPoint(EVEN_HEIGHT, 4), new MappingPoint(UNEVEN_HEIGHT, 7)})
                 .withName("set intermediate"), f -> {
@@ -90,6 +91,13 @@ class IntermediateValueIOTest {
         assertEquals(EVEN_OUTPUT, dim.getLayerValueAt(Annotations.INSTANCE, -124, -125));
     }
 
+    @Test
+    void notEditable() {
+        // currently, the plugin can not handle intermediatevalue havimg multiple instances with different values
+        // therefore, we can not allow the user to edit the min, max values of this IO type.
+        IntermediateValueIO io = new IntermediateValueIO(12,13,"uwu");
+        assertFalse(io instanceof EditableIO);
+    }
     @Test
     void setValueAt() {
     }

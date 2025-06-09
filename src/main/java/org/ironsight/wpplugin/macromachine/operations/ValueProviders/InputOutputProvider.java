@@ -74,11 +74,11 @@ public class InputOutputProvider {
         setters.add(new AnnotationSetter());
         getters.add(new AnnotationSetter());
 
-        getters.add(new TerrainHeightIO());
-        setters.add(new TerrainHeightIO());
+        getters.add(new TerrainHeightIO(-64,319));
+        setters.add(new TerrainHeightIO(-64,319));
 
-        getters.add(new WaterHeightAbsoluteIO());
-        setters.add(new WaterHeightAbsoluteIO());
+        getters.add(new WaterHeightAbsoluteIO(-64,319));
+        setters.add(new WaterHeightAbsoluteIO(-64,319));
 
         getters.add(new WaterDepthProvider());
         setters.add(new WaterDepthProvider());
@@ -93,8 +93,8 @@ public class InputOutputProvider {
         getters.add(new VanillaBiomeProvider());
         setters.add(new VanillaBiomeProvider());
 
-        getters.add(new IntermediateValueIO());
-        setters.add(new IntermediateValueIO());
+        setters.add(new IntermediateValueIO(0,100,""));
+        getters.add(new IntermediateValueIO(0,100,""));
 
         getters.add(ActionFilterIO.instance);
         setters.add(ActionFilterIO.instance);

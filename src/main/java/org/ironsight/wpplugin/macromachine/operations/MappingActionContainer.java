@@ -70,7 +70,7 @@ public class MappingActionContainer extends AbstractOperationContainer<MappingAc
         });
 
         m = container.addMapping();
-        m = new MappingAction(new TerrainHeightIO(),
+        m = new MappingAction(new TerrainHeightIO(-64,319),
                 new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
                 new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)},
                 ActionType.AT_LEAST,
@@ -103,7 +103,7 @@ public class MappingActionContainer extends AbstractOperationContainer<MappingAc
 
     @Override
     protected MappingAction getNewAction() {
-        return new MappingAction(new TerrainHeightIO(),
+        return new MappingAction(new TerrainHeightIO(-64,319),
                 new AnnotationSetter(),
                 new MappingPoint[0],
                 ActionType.SET,

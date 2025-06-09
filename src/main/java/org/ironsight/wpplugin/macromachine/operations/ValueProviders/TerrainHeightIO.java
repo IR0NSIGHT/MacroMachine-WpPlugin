@@ -5,15 +5,18 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
-public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSetter {
-    private TerrainHeightIO instance;
+public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSetter, EditableIO {
+    private final int minHeight;
+    private final int maxHeight;
 
-    public TerrainHeightIO() {
+    public TerrainHeightIO(int minHeight, int maxHeight) {
+        this.minHeight = minHeight;
+        this.maxHeight = maxHeight;
     }
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        return Math.round(dim.getHeightAt(x, y));
+        return (int)EditableIO.clamp(Math.round(dim.getHeightAt(x, y)),getMinValue(),getMaxValue());
     }
 
     @Override
@@ -36,14 +39,12 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
         return "get the height of a position in percent for 0 to 255.";
     }
 
-    private TerrainHeightIO getInstance() {
-        if (instance == null) instance = new TerrainHeightIO();
-        return instance;
-    }
-
     @Override
-    public boolean equals(Object obj) {
-        return obj != null && this.getClass().equals(obj.getClass());
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TerrainHeightIO that = (TerrainHeightIO) o;
+        return minHeight == that.minHeight && maxHeight == that.maxHeight;
     }
 
     @Override
@@ -54,25 +55,29 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public int getMinValue() {
-        return -64;
+        return minHeight;
     }
 
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return getInstance();
+        if (data.length == 0)
+            return new TerrainHeightIO(-64,319);
+        int minHeight = (int)data[0];
+        int maxHeight = (int)data[1];
+        return new TerrainHeightIO(minHeight,maxHeight);
     }
 
 
     @Override
     public Object[] getSaveData() {
-        return new Object[0];
+        return new Object[]{(Integer)minHeight,(Integer)maxHeight};
     }
 
 
     @Override
     public int getMaxValue() {
-        return 364; //TODO is the correct?
+        return maxHeight;
     }
 
     @Override
@@ -105,4 +110,26 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     public void prepareForDimension(Dimension dim) {
 
     }
+
+    @Override
+    public int[] getEditableValues() {
+        return new int[]{minHeight,maxHeight};
+    }
+
+    @Override
+    public String[] getValueNames() {
+        return new String[]{"min","max"};
+    }
+
+    @Override
+    public String[] getValueTooltips() {
+        return new String[]{"lowest value allowed","highest value allowed"};
+    }
+
+    @Override
+    public EditableIO instantiateWithValues(int[] values) {
+        return new TerrainHeightIO(values[0],values[1]);
+    }
+
+
 }

@@ -4,15 +4,28 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.util.Objects;
 
 public class IntermediateValueIO implements IPositionValueSetter, IPositionValueGetter {
     private static int value;
     private static int lastX;
     private static int lastY;
 
+    private final int min, max;
+    private final String customName;    //user names this intermediat value to represetn "snow chance" f.e.
+
+    public IntermediateValueIO(int min, int max, String customName) {
+        this.min = min;
+        this.max = max;
+        this.customName = customName;
+    }
+
     @Override
-    public boolean equals(Object obj) {
-        return obj != null && this.getClass().equals(obj.getClass());
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        IntermediateValueIO that = (IntermediateValueIO) o;
+        return min == that.min && max == that.max && Objects.equals(customName, that.customName);
     }
 
     @Override
@@ -45,7 +58,7 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
 
     @Override
     public String getName() {
-        return "Intermediate Value";
+        return "Intermediate Value" + (customName.isEmpty() ? "" : "("+customName+")");
     }
 
     @Override
@@ -56,22 +69,32 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
 
     @Override
     public int getMaxValue() {
-        return 100;
+        return max;
     }
 
     @Override
     public int getMinValue() {
-        return 0;
+        return min;
     }
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return new IntermediateValueIO();
+        try {
+            int min = (int)EditableIO.clamp ((Integer)data[0], -100,100);
+            int max =(int)EditableIO.clamp ((Integer)data[1], -100,100);
+            return new IntermediateValueIO(min, max, (String)data[2]);
+        } catch (Exception ex) {
+            return new IntermediateValueIO(0,100,"");
+        }
     }
 
     @Override
     public Object[] getSaveData() {
-        return new Object[0];
+        return new Object[]{
+                min,
+                max,
+                customName
+        };
     }
 
     @Override
