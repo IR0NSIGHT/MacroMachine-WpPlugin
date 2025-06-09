@@ -45,8 +45,8 @@ public class LayerMapping implements SaveableAction {
         //filter out illegal mapping points (user might have edited save file)
         mappingPoints =
                 Arrays.stream(mappingPoints)
-                        .filter(p -> sanitizeInput(p.input) == p.input)
-                        .filter(p -> sanitizeOutput(p.output) == p.output)
+                        .filter(p -> sanitizeInput(p.input) == p.input) //input points
+                        .map(p -> new MappingPoint(p.input,sanitizeOutput(p.output)))
                         .toArray(MappingPoint[]::new);
 
         assert Arrays.stream(mappingPoints).noneMatch(p -> sanitizeInput(p.input) != p.input) : "mapping points " +

@@ -10,14 +10,14 @@
   "description" : "filter out all values below 50% intermediate",
   "uid" : "25ae2016-1bd7-44c2-a6c6-4217c3604a1c"
 }, {
-  "inputId" : "PERLIN_NOISE",
-  "inputData" : [ 500, 100, 5, 3 ],
+  "inputId" : "ANNOTATION",
+  "inputData" : [ ],
   "outputId" : "NIBBLE_LAYER",
   "outputData" : [ "Pine", "Pine" ],
   "actionType" : "SET",
-  "inputPoints" : [ 0, 37, 41, 67, 73, 80 ],
-  "outputPoints" : [ 0, 0, 5, 10, 5, 0 ],
-  "name" : "perlin to pines",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 4, 0, 5, 9, 0, 0, 0, 0, 0 ],
+  "name" : "paint pine",
   "description" : "0-37: meadow, 38-40: meadow edge, 41-73: forest, 74-80: forest edge, 81: clear",
   "uid" : "3acc036b-d19e-434d-9ed2-110aad2a0a06"
 }, {
@@ -36,12 +36,23 @@
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE_SELECTION",
   "outputData" : [ ],
-  "actionType" : "SET",
+  "actionType" : "LIMIT_TO",
   "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
   "outputPoints" : [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
   "name" : "except on annotation",
   "description" : "new description",
   "uid" : "1372025a-0b37-4ec4-b883-73f944c0ef66"
+}, {
+  "inputId" : "PERLIN_NOISE",
+  "inputData" : [ 500, 100, 6, 42069 ],
+  "outputId" : "ANNOTATION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 31, 100 ],
+  "outputPoints" : [ 2, 9 ],
+  "name" : "perlin color",
+  "description" : "new description",
+  "uid" : "92537724-f6c2-4152-896c-2d4abdc32385"
 }, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ ],
@@ -75,6 +86,17 @@
   "name" : "clear selection",
   "description" : "description of the action",
   "uid" : "62912b73-a04e-44a5-8b88-ddd95c058ed6"
+}, {
+  "inputId" : "HEIGHT",
+  "inputData" : [ ],
+  "outputId" : "NIBBLE_LAYER",
+  "outputData" : [ "Pine", "Pine" ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 62, 255 ],
+  "outputPoints" : [ 15, 0 ],
+  "name" : "pines prefer lowland",
+  "description" : "new description",
+  "uid" : "1303c32c-ee2d-4322-83b3-819199151d1c"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
@@ -126,7 +148,7 @@
   "outputData" : [ ],
   "actionType" : "DECREMENT",
   "inputPoints" : [ 0, 180, 359 ],
-  "outputPoints" : [ 0, 50, 0 ],
+  "outputPoints" : [ 0, 70, 0 ],
   "name" : "subtract sunny side",
   "description" : "description of the action",
   "uid" : "a5838003-43b6-402d-85dd-269a0b019ecb"
@@ -198,23 +220,34 @@
   "uid" : "3f31b643-c509-4e37-8e1b-3dd5b97697dc"
 }, {
   "inputId" : "PERLIN_NOISE",
-  "inputData" : [ 500, 200, 5, 3123 ],
+  "inputData" : [ 500, 400, 7, 123123 ],
   "outputId" : "HEIGHT",
   "outputData" : [ ],
   "actionType" : "INCREMENT",
-  "inputPoints" : [ 30, 60, 150, 200 ],
-  "outputPoints" : [ -22, 1, 50, 100 ],
+  "inputPoints" : [ 30, 130, 250, 310, 354, 399 ],
+  "outputPoints" : [ -22, 10, 30, 79, 113, 180 ],
   "name" : "Perlin Hills",
   "description" : "description of the action",
   "uid" : "72172d29-1d85-4da8-88ac-28fdcae6428c"
+}, {
+  "inputId" : "WATER_DEPTH",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 80 ],
+  "outputPoints" : [ 1, 0 ],
+  "name" : "except on water",
+  "description" : "new description",
+  "uid" : "f9096f37-5efa-4230-9a32-79abf5de4a1a"
 }, {
   "inputId" : "SLOPE",
   "inputData" : [ ],
   "outputId" : "STONE_PALETTE",
   "outputData" : [ 0, 10, 4, 12, 13, 72, 73, 74, 150, 75, 5 ],
   "actionType" : "SET",
-  "inputPoints" : [ 40, 50, 70, 80 ],
-  "outputPoints" : [ 0, 9, 8, 10 ],
+  "inputPoints" : [ 40, 61, 70 ],
+  "outputPoints" : [ 0, 9, 8 ],
   "name" : "paint slopes",
   "description" : "description of the action",
   "uid" : "328f34b4-9994-422c-a85b-272c93e6263e"
@@ -251,6 +284,28 @@
   "name" : "frost on cyan",
   "description" : "description of the action",
   "uid" : "ea36ded6-69e2-48e6-aa2e-ef7d56692d70"
+}, {
+  "inputId" : "SLOPE",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 62, 90 ],
+  "outputPoints" : [ 1, 0 ],
+  "name" : "no cliffs",
+  "description" : "new description",
+  "uid" : "602c6cd6-5679-4059-98cd-8410f02cf204"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "BINARY_LAYER",
+  "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 0 ],
+  "name" : "reset MacroSelectionLayer",
+  "description" : "new description",
+  "uid" : "f25c73db-d735-44e4-b2f4-1631d6df247e"
 }, {
   "inputId" : "HEIGHT",
   "inputData" : [ ],
@@ -306,6 +361,28 @@
   "name" : "debug: highlight 50%",
   "description" : "new description",
   "uid" : "d2261d28-4b7a-410b-acea-6144e726b3c1"
+}, {
+  "inputId" : "TERRAIN",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160 ],
+  "outputPoints" : [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+  "name" : "only on grass",
+  "description" : "new description",
+  "uid" : "a555c3ff-ff46-4b9e-87de-839106b28eb8"
+}, {
+  "inputId" : "HEIGHT",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE",
+  "outputData" : [ ],
+  "actionType" : "DECREMENT",
+  "inputPoints" : [ 100, 225 ],
+  "outputPoints" : [ 1, 100 ],
+  "name" : "prefer lowland",
+  "description" : "new description",
+  "uid" : "6f4467b3-a9f9-496a-8331-309359081376"
 }, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ ],
@@ -372,6 +449,17 @@
   "name" : "except on water",
   "description" : "description of the action",
   "uid" : "368f5615-8190-4381-bb00-66977de0603a"
+}, {
+  "inputId" : "WATER_DEPTH",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0, 50 ],
+  "outputPoints" : [ 1, 0 ],
+  "name" : "except on water",
+  "description" : "description of the action",
+  "uid" : "4e271b87-71f9-4316-9154-ca98d37c90b9"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
@@ -472,6 +560,17 @@
   "description" : "description of the action",
   "uid" : "95747dbc-49c4-4975-acab-14613211f1f9"
 }, {
+  "inputId" : "SLOPE",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 49, 71 ],
+  "outputPoints" : [ 1, 0 ],
+  "name" : "only on flats",
+  "description" : "description of the action",
+  "uid" : "7277f40e-992a-42f6-83ac-292b95b8a8c4"
+}, {
   "inputId" : "ANNOTATION",
   "inputData" : [ ],
   "outputId" : "BINARY_LAYER",
@@ -505,13 +604,24 @@
   "description" : "description of the action",
   "uid" : "61f3ea91-5ba6-4769-8365-018ec9cd8eef"
 }, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "ANNOTATION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 9 ],
+  "name" : "mark all",
+  "description" : "new description",
+  "uid" : "2d8a03a8-d14b-4c9c-949d-81a6c15d8ef4"
+}, {
   "inputId" : "PERLIN_NOISE",
-  "inputData" : [ 30, 100, 5, 67823 ],
+  "inputData" : [ 30, 100, 5, 467823 ],
   "outputId" : "INTERMEDIATE",
   "outputData" : [ ],
   "actionType" : "SET",
   "inputPoints" : [ 12, 42, 91 ],
-  "outputPoints" : [ 50, 5, 0 ],
+  "outputPoints" : [ 100, 10, 0 ],
   "name" : "perlin spots",
   "description" : "new description",
   "uid" : "600f91f1-6bd5-40f0-8dbd-bf6e001906f9"
@@ -533,7 +643,7 @@
   "outputData" : [ "org.ironsight.wpplugin.macropainter.macroselectionlayer", "Macro Selection" ],
   "actionType" : "SET",
   "inputPoints" : [ 0, 100 ],
-  "outputPoints" : [ 0, 100 ],
+  "outputPoints" : [ 0, 40 ],
   "name" : "reduce by 50%",
   "description" : "new description",
   "uid" : "d2d8aa86-d534-4158-924d-a36384429037"
@@ -548,6 +658,17 @@
   "name" : "paint road",
   "description" : "description of the action",
   "uid" : "de635858-98be-4812-a021-24f161d4d7ff"
+}, {
+  "inputId" : "SLOPE",
+  "inputData" : [ ],
+  "outputId" : "TERRAIN",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 30, 40, 62, 90 ],
+  "outputPoints" : [ 21, 0, 13, 5 ],
+  "name" : "beach by slope",
+  "description" : "new description",
+  "uid" : "67a21e10-d434-4e3b-b340-5d6fddabbdd5"
 }, {
   "inputId" : "DISTANCE_TO_EDGE",
   "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
@@ -570,6 +691,17 @@
   "name" : "only on water",
   "description" : "description of the action",
   "uid" : "ccdb9830-a63a-4b35-a6fb-e55ed4baef15"
+}, {
+  "inputId" : "WATER_DEPTH",
+  "inputData" : [ ],
+  "outputId" : "NIBBLE_LAYER",
+  "outputData" : [ "Pine", "Pine" ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 62, 100 ],
+  "outputPoints" : [ 15, 0 ],
+  "name" : "pines not on water",
+  "description" : "new description",
+  "uid" : "10f05c93-7a76-4454-beca-0f436d337315"
 }, {
   "inputId" : "VANILLA_BIOME",
   "inputData" : [ ],
@@ -594,13 +726,13 @@
   "uid" : "09e5d68d-991c-48e7-a4a8-59e1777be8d1"
 }, {
   "inputId" : "PERLIN_NOISE",
-  "inputData" : [ 500, 100, 5, 3 ],
+  "inputData" : [ 250, 100, 5, 3 ],
   "outputId" : "ANNOTATION",
   "outputData" : [ ],
   "actionType" : "SET",
-  "inputPoints" : [ 37, 40, 73, 80, 100 ],
+  "inputPoints" : [ 11, 15, 43, 54, 100 ],
   "outputPoints" : [ 5, 9, 10, 7, 0 ],
-  "name" : "perlin to annotation",
+  "name" : "select forest types",
   "description" : "0-37: meadow, 38-40: meadow edge, 41-73: forest, 74-80: forest edge, 81: clear",
   "uid" : "ff260003-823f-4374-bbc6-139624dc7910"
 }, {
@@ -614,6 +746,17 @@
   "name" : "raise walls",
   "description" : "description of the action",
   "uid" : "9444da9f-c5db-44af-ac9d-8d5406f032e5"
+}, {
+  "inputId" : "HEIGHT",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ -64, 66, 358 ],
+  "outputPoints" : [ 0, 1, 0 ],
+  "name" : "near 62",
+  "description" : "new description",
+  "uid" : "8d4095c8-f984-486a-a6b7-fe9be9457478"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
