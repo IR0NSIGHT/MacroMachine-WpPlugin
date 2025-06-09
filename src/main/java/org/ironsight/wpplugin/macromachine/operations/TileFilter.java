@@ -13,6 +13,9 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * a filter to check if a tile should be further touched or if we can abort early.
+ */
 public class TileFilter implements Serializable {
     private FilterType filterBySelection = FilterType.IGNORE;
     private Set<String> layerIds = new HashSet<>();
