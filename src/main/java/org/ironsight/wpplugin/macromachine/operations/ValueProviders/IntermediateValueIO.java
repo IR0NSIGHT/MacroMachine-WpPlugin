@@ -19,7 +19,10 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
         this.max = max;
         this.customName = customName;
     }
-
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

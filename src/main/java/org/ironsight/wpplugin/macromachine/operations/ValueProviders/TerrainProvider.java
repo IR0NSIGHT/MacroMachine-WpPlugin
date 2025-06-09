@@ -94,7 +94,10 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         g.drawImage(Terrain.values()[value].getScaledIcon(Math.min(dim.height, dim.width), colorScheme), 0, 0, null);
     }
-
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
     @Override
     public ProviderType getProviderType() {
         return ProviderType.TERRAIN;

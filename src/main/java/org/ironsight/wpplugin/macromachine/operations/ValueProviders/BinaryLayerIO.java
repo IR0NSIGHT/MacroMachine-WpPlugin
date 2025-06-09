@@ -124,7 +124,10 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     public String getLayerName() {
         return layerName;
     }
-
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
     @Override
     public String getLayerId() {
         return layerId;

@@ -256,6 +256,11 @@ public class MappingAction implements SaveableAction {
         return description;
     }
 
+    @Override
+    public String getToolTipText() {
+        return input.getName() +" " + actionType.displayName + " " + output.getName();
+    }
+
     public void applyToPoint(Dimension dim, int x, int y) {
         if (!output.getProviderType().equals(INTERMEDIATE_SELECTION) && !ActionFilterIO.instance.isSelected())
             return;

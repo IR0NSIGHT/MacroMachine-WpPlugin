@@ -67,7 +67,7 @@ public class MacroDesigner extends JPanel {
                 return false; // Disable editing
             }
         };
-        table.setDefaultRenderer(Object.class, new MappingTableCellRenderer());
+        table.setDefaultRenderer(Object.class, new SaveableActionRenderer());
         scrollPane = new JScrollPane(table);
         editorPanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -153,7 +153,7 @@ public class MacroDesigner extends JPanel {
             for (int row : newSelection) {
                 table.addRowSelectionInterval(row, row);
             }
-        }, MappingAction.getNewEmptyAction());
+        }, MappingAction.getNewEmptyAction(), this);
         dialog.setModal(true);
         dialog.setVisible(true);
     }
@@ -238,7 +238,7 @@ public class MacroDesigner extends JPanel {
             }
 
 
-        }, MappingAction.getNewEmptyAction());
+        }, MappingAction.getNewEmptyAction(), this);
         dialog.setModal(true);
         dialog.setVisible(true);
     }

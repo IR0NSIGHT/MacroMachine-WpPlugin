@@ -14,7 +14,10 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
                     Color.BLUE, new Color(165, 42, 42), // brown
                     Color.GREEN, Color.RED, Color.BLACK};
     private static AnnotationSetter instance;
-
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
     private static AnnotationSetter getInstance() {
         if (instance == null) instance = new AnnotationSetter();
         return instance;
