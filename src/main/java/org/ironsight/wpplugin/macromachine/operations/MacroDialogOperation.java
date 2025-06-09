@@ -24,11 +24,11 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
         super(NAME, DESCRIPTION, "macrooperation");
 
         MappingMacroContainer.SetInstance(new MappingMacroContainer(null));
-        LayerMappingContainer.INSTANCE = new LayerMappingContainer(null);
+        LayerMappingContainer.SetInstance( new LayerMappingContainer(null));
 
         MappingMacroContainer.getInstance().readFromFile();
-        LayerMappingContainer.INSTANCE.readFromFile();
-        LayerMappingContainer.INSTANCE.subscribe(() -> LayerMappingContainer.INSTANCE.writeToFile());
+        LayerMappingContainer.getInstance().readFromFile();
+        LayerMappingContainer.getInstance().subscribe(() -> LayerMappingContainer.getInstance().writeToFile());
         MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
     }
 
@@ -60,7 +60,7 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
             List<List<UUID>> steps = macro.collectActions(actionIds);
             List<List<LayerMapping>> executionSteps = steps.stream()
                     .map(stepIds -> stepIds.stream()
-                            .map(LayerMappingContainer.INSTANCE::queryById)
+                            .map(LayerMappingContainer.getInstance()::queryById)
                             .collect(Collectors.toList()))
                     .collect(Collectors.toList());
 

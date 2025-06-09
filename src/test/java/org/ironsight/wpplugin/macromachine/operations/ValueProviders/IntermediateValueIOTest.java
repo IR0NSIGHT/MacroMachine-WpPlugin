@@ -43,7 +43,7 @@ class IntermediateValueIOTest {
         assertEquals(UNEVEN_HEIGHT, dim.getHeightAt(-125, -125));
 
 
-        LayerMappingContainer container = LayerMappingContainer.INSTANCE;
+        LayerMappingContainer container = LayerMappingContainer.getInstance();
         IntermediateValueIO intermediateValueIO = new IntermediateValueIO();
 
         UUID set = container.addMapping().getUid();

@@ -154,7 +154,7 @@ public class MappingMacro implements SaveableAction {
                 //macro adds its own steps
                 ((MappingMacro) action).collectActions(actionList);
             } else {
-                action = LayerMappingContainer.INSTANCE.queryById(id);
+                action = LayerMappingContainer.getInstance().queryById(id);
                 if (action != null) step.add(id);
             }
         }

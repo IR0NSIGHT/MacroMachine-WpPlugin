@@ -16,11 +16,20 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class LayerMappingContainer extends AbstractOperationContainer<LayerMapping> {
-    public static LayerMappingContainer INSTANCE;
+    private static LayerMappingContainer INSTANCE;
 
     public LayerMappingContainer(String filePath) {
         super(LayerMapping.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultActions.json");
         MacroMachinePlugin.error("INSTANTIATE NEW MAPPING CONTAINER:" + this);
+    }
+
+    public static LayerMappingContainer getInstance() {
+        return INSTANCE;
+    }
+
+    public static void SetInstance(LayerMappingContainer container) {
+        assert INSTANCE == null;
+        INSTANCE = container;
     }
 
     private static String getActionsFilePath() {
