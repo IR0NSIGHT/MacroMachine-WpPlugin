@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.UniqueList;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
@@ -14,14 +14,14 @@ import java.util.ArrayList;
 
 public class MappingValueTable extends JPanel {
     private JTable table;
-    private final ArrayList<LayerMapping> mappings = new ArrayList<>();
+    private final ArrayList<MappingAction> mappings = new ArrayList<>();
 
     public MappingValueTable() {
 
         initComponents();
     }
 
-    public void setMappings(ArrayList<LayerMapping> mappings) {
+    public void setMappings(ArrayList<MappingAction> mappings) {
         this.mappings.clear();
         this.mappings.addAll(mappings);
         updateComponents();
@@ -30,7 +30,7 @@ public class MappingValueTable extends JPanel {
     protected void updateComponents() {
         UniqueList<IPositionValueGetter> inputs = new UniqueList<>();
         UniqueList<IPositionValueSetter> outputs = new UniqueList<>();
-        for (LayerMapping action : mappings) {
+        for (MappingAction action : mappings) {
             inputs.add(action.input);
             outputs.add(action.output);
         }

@@ -12,12 +12,12 @@ class ActionJsonWrapperTest {
     @Test
     public void fromMapping() {
         for (ActionType actionType : ActionType.values()) {
-            LayerMapping original = new LayerMapping(new HeightProvider(), new AnnotationSetter(),
+            MappingAction original = new MappingAction(new HeightProvider(), new AnnotationSetter(),
                     new MappingPoint[]{new MappingPoint(0, 0), new MappingPoint(62, 3), new MappingPoint(100, 7),
                             new MappingPoint(255, 0)}, actionType, "My Test Mapping", "my test description",
                     UUID.randomUUID());
             ActionJsonWrapper wrapper = new ActionJsonWrapper(original);
-            LayerMapping restored = LayerMapping.fromJsonWrapper(wrapper);
+            MappingAction restored = MappingAction.fromJsonWrapper(wrapper);
 
             assertEquals(original, restored);
         }

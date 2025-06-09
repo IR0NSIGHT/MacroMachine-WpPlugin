@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.UniqueList;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
@@ -17,7 +17,7 @@ import java.util.stream.IntStream;
 class VirtualTableModel extends AbstractTableModel {
     private final Map<Integer, Object[]> cache = new HashMap<>();
     private int rowCount = 1000000; // Example large row count
-    private ArrayList<LayerMapping> mappings = new ArrayList<>();
+    private ArrayList<MappingAction> mappings = new ArrayList<>();
     private int[] offsets = new int[0];
     private int[] offsetsModule = new int[0];
     private String[] columnNames = new String[0];
@@ -27,7 +27,7 @@ class VirtualTableModel extends AbstractTableModel {
 
         UniqueList<IPositionValueGetter> inputs = new UniqueList<>();
         UniqueList<IPositionValueSetter> outputs = new UniqueList<>();
-        for (LayerMapping action : mappings) {
+        for (MappingAction action : mappings) {
             inputs.add(action.input);
             outputs.add(action.output);
         }
@@ -56,7 +56,7 @@ class VirtualTableModel extends AbstractTableModel {
         fetchData(0, 60);
     }
 
-    public void setMappings(ArrayList<LayerMapping> actions) {
+    public void setMappings(ArrayList<MappingAction> actions) {
         this.mappings = actions;
         updateComponents();
         fireTableStructureChanged();

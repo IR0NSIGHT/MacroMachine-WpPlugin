@@ -10,24 +10,21 @@ import org.pepsoft.worldpainter.layers.PineForest;
 
 import java.io.File;
 import java.io.Serializable;
-import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
-import java.util.List;
 import java.util.function.Consumer;
 
-public class LayerMappingContainer extends AbstractOperationContainer<LayerMapping> {
-    private static LayerMappingContainer INSTANCE;
+public class MappingActionContainer extends AbstractOperationContainer<MappingAction> {
+    private static MappingActionContainer INSTANCE;
 
-    public LayerMappingContainer(String filePath) {
-        super(LayerMapping.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultActions.json");
+    public MappingActionContainer(String filePath) {
+        super(MappingAction.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultActions.json");
         MacroMachinePlugin.error("INSTANTIATE NEW MAPPING CONTAINER:" + this);
     }
 
-    public static LayerMappingContainer getInstance() {
+    public static MappingActionContainer getInstance() {
         return INSTANCE;
     }
 
-    public static void SetInstance(LayerMappingContainer container) {
+    public static void SetInstance(MappingActionContainer container) {
         assert INSTANCE == null;
         INSTANCE = container;
     }
@@ -52,9 +49,9 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         */
     }
 
-    public static void addDefaultMappings(LayerMappingContainer container) {
-        LayerMapping m = container.addMapping();
-        m = new LayerMapping(new SlopeProvider(),
+    public static void addDefaultMappings(MappingActionContainer container) {
+        MappingAction m = container.addMapping();
+        m = new MappingAction(new SlopeProvider(),
                 new StonePaletteApplicator(),
                 new MappingPoint[]{new MappingPoint(30, 3),
                         new MappingPoint(50, 8),
@@ -68,7 +65,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         });
 
         m = container.addMapping();
-        m = new LayerMapping(new HeightProvider(),
+        m = new MappingAction(new HeightProvider(),
                 new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
                 new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)},
                 ActionType.AT_LEAST,
@@ -78,7 +75,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         container.updateMapping(m, f -> {
         });
         m = container.addMapping();
-        m = new LayerMapping(new SlopeProvider(),
+        m = new MappingAction(new SlopeProvider(),
                 new NibbleLayerSetter(PineForest.INSTANCE),
                 new MappingPoint[]{new MappingPoint(0, 15), new MappingPoint(70, 15), new MappingPoint(80, 0)},
                 ActionType.LIMIT_TO,
@@ -88,7 +85,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         container.updateMapping(m, f -> {
         });
         m = container.addMapping();
-        m = new LayerMapping(new AnnotationSetter(),
+        m = new MappingAction(new AnnotationSetter(),
                 new TestInputOutput(),
                 new MappingPoint[0],
                 ActionType.SET,
@@ -100,8 +97,8 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
     }
 
     @Override
-    protected LayerMapping getNewAction() {
-        return new LayerMapping(new HeightProvider(),
+    protected MappingAction getNewAction() {
+        return new MappingAction(new HeightProvider(),
                 new AnnotationSetter(),
                 new MappingPoint[0],
                 ActionType.SET,
@@ -114,8 +111,8 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
     @Override
     public void readFromFile() {
         super.readFromFile();
-        for (LayerMapping m : queryAll()) { //force through constructor to enforce assertions
-            LayerMapping ignored = m.withName(m.getName());
+        for (MappingAction m : queryAll()) { //force through constructor to enforce assertions
+            MappingAction ignored = m.withName(m.getName());
         }
         assert !queryAll().isEmpty() : "not supposed to happen";
     }
@@ -127,7 +124,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         ActionJsonWrapper[] obj = objectMapper.readValue(jsonString, ActionJsonWrapper[].class);
         // System.out.println("READ JSON STRING: \n" + jsonString);
         for (ActionJsonWrapper wrapper : obj) {
-            LayerMapping m = LayerMapping.fromJsonWrapper(wrapper);
+            MappingAction m = MappingAction.fromJsonWrapper(wrapper);
             this.putMapping(m);
             //     System.out.println(m);
         }
@@ -137,14 +134,14 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
     protected <T extends Serializable> T toSaveObject() {
         ActionJsonWrapper[] saveObject = new ActionJsonWrapper[this.queryAll().size()];
         int i = 0;
-        for (LayerMapping m : queryAll()) {
+        for (MappingAction m : queryAll()) {
             saveObject[i++] = new ActionJsonWrapper(m);
         }
         return (T) saveObject;
     }
 
     @Override
-    public void updateMapping(LayerMapping mapping, Consumer<String> onError) {
+    public void updateMapping(MappingAction mapping, Consumer<String> onError) {
         super.updateMapping(mapping, onError);
         System.out.println("updated mapping in container with input:" + mapping.getInput());
     }

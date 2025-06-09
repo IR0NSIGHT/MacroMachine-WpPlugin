@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +36,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
 
     private void updateFromInputs() {
         if (!isInit && isAllowEvents() && mapping != null) {
-            LayerMapping newMap = mapping.withName(nameField.getText())
+            MappingAction newMap = mapping.withName(nameField.getText())
                     .withDescription(description.getText()).withType(actionTypeComboBox.getSelectedProvider());
             if (!inputSelect.getSelectedProvider().getName().equals(mapping.input.getName()))  // rebuild map
                 newMap = newMap.withInput(inputSelect.getSelectedProvider())

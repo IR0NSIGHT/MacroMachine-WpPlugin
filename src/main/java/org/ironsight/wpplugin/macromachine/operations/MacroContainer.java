@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static org.ironsight.wpplugin.macromachine.operations.LayerMappingContainer.isDebugMode;
+import static org.ironsight.wpplugin.macromachine.operations.MappingActionContainer.isDebugMode;
 
 public class MacroContainer extends AbstractOperationContainer<Macro> {
     private static MacroContainer instance;

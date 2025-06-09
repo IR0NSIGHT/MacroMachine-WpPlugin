@@ -58,11 +58,11 @@ public class ApplyAction {
         public final float progressInStep; //0..1
     }
     public static ArrayList<ExecutionStatistic> applyExecutionSteps(Dimension dim, TileFilter filter,
-                                                                    List<List<LayerMapping>> actions,
+                                                                    List<List<MappingAction>> actions,
                                                                     Consumer<Progess> setProgress) {
         ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
         int i = 0;
-        for (Collection<LayerMapping> step : actions) {
+        for (Collection<MappingAction> step : actions) {
             PointApplicator stepApplicator = new PointApplicator(step, dim);
             TileFilter earlyAbortFilter = stepApplicator.earlyAbortFilter();
             statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, stepApplicator,

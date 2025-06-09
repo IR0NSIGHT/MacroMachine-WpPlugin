@@ -12,11 +12,11 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MacroDesignerTest {
     @Test
     void insertSingleActionIntoEmptyMacro() {
-        LayerMappingContainer container = new LayerMappingContainer("./TestMappings.json");
+        MappingActionContainer container = new MappingActionContainer("./TestMappings.json");
 
         Macro macro = new Macro("test", "descr", new UUID[0], UUID.randomUUID());
 
-        LayerMapping inputItem = LayerMapping.getNewEmptyAction().withName("hello world");
+        MappingAction inputItem = MappingAction.getNewEmptyAction().withName("hello world");
         assertEquals(0, container.queryAll().size());
 
         ArrayList<Integer> newSelection = new ArrayList<>();
@@ -30,7 +30,7 @@ public class MacroDesignerTest {
         assertEquals(1, inserted.getExecutionUUIDs().length);
         assertNotEquals(inputItem.getUid(), inserted.getExecutionUUIDs()[0],"macro receives a clone, not the original " +
                 "input");
-        LayerMapping addedItem = container.queryById(inserted.getExecutionUUIDs()[0]);
+        MappingAction addedItem = container.queryById(inserted.getExecutionUUIDs()[0]);
         assertTrue(addedItem.equalIgnoreUUID(inputItem),"input and added item have same values, but not UUID");
         assertNotEquals(addedItem.getUid(), inputItem.getUid(),"input and added item are not true equal (different uuid)");
         assertEquals(1, container.queryAll().size(), "inserting cloned the action and updated the container");
@@ -42,7 +42,7 @@ public class MacroDesignerTest {
 
     @Test
     void insertSingleActionIntoNonEmptyMacroNoSelection() {
-        LayerMappingContainer container = new LayerMappingContainer("./TestMappings.json");
+        MappingActionContainer container = new MappingActionContainer("./TestMappings.json");
         UUID[] actionIds = new UUID[4];
         for (int i = 0; i < 4; i++) {
             actionIds[i] = UUID.randomUUID();
@@ -52,7 +52,7 @@ public class MacroDesignerTest {
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
-        LayerMapping inputItem = LayerMapping.getNewEmptyAction().withName("my new item");
+        MappingAction inputItem = MappingAction.getNewEmptyAction().withName("my new item");
 
         ArrayList<Integer> newSelection = new ArrayList<>();
         Macro inserted = Macro.insertSaveableActionToList(
@@ -75,7 +75,7 @@ public class MacroDesignerTest {
 
     @Test
     void insertSingleActionIntoNonEmptyMacroMiddleSelection() {
-        LayerMappingContainer container = new LayerMappingContainer("./TestMappings.json");
+        MappingActionContainer container = new MappingActionContainer("./TestMappings.json");
         UUID[] actionIds = new UUID[4];
         for (int i = 0; i < 4; i++) {
             actionIds[i] = UUID.randomUUID();
@@ -85,7 +85,7 @@ public class MacroDesignerTest {
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
-        LayerMapping inputItem = LayerMapping.getNewEmptyAction().withName("my new item");
+        MappingAction inputItem = MappingAction.getNewEmptyAction().withName("my new item");
 
         ArrayList<Integer> newSelection = new ArrayList<>();
         Macro inserted = Macro.insertSaveableActionToList(
@@ -106,7 +106,7 @@ public class MacroDesignerTest {
 
     @Test
     void insertManyActionsIntoMacro() {
-        LayerMappingContainer container = new LayerMappingContainer("./TestMappings.json");
+        MappingActionContainer container = new MappingActionContainer("./TestMappings.json");
         UUID[] actionIds = new UUID[4];
         for (int i = 0; i < 4; i++) {
             actionIds[i] = UUID.randomUUID();
@@ -116,14 +116,14 @@ public class MacroDesignerTest {
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
-        LayerMapping inputItem = LayerMapping.getNewEmptyAction().withName("my new item");
+        MappingAction inputItem = MappingAction.getNewEmptyAction().withName("my new item");
 
         ArrayList<Integer> newSelection = new ArrayList<>();
         ArrayList<UUID> addedIdsInOrder = new ArrayList<>();
         Macro inserted = Macro.insertSaveableActionToList(
                 macro.clone(),
                 inputItem,
-                () -> { LayerMapping lm = container.addMapping(); addedIdsInOrder.add(lm.getUid()); return lm; },
+                () -> { MappingAction lm = container.addMapping(); addedIdsInOrder.add(lm.getUid()); return lm; },
                 action -> container.updateMapping(action, Assertions::fail),
                 new int[]{2,3}, //insert after index=2 in list => at index 3
                 newSelection);

@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.EditableIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
@@ -19,7 +19,7 @@ public class InputOutputEditor extends LayerMappingPanel {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
         InputOutputEditor editor = new InputOutputEditor(f -> { System.out.println("update mapping to:" + f); });
-        LayerMapping lm = LayerMapping.getNewEmptyAction().withInput(new PerlinNoiseIO(10,20,123456789, 3));
+        MappingAction lm = MappingAction.getNewEmptyAction().withInput(new PerlinNoiseIO(10,20,123456789, 3));
         editor.setMapping(lm);
         frame.add(new JLabel("HELLO WORLD"), BorderLayout.NORTH);
         frame.add(editor, BorderLayout.CENTER);
@@ -27,7 +27,7 @@ public class InputOutputEditor extends LayerMappingPanel {
         frame.setVisible(true);
     }
     private EditableIO io;
-    private Consumer<LayerMapping> onChanged;
+    private Consumer<MappingAction> onChanged;
 
     public void setIsInput(boolean input) {
         isInput = input;
@@ -36,7 +36,7 @@ public class InputOutputEditor extends LayerMappingPanel {
 
     private boolean isInput = true;
     private KeyValueTableModel tableModel;
-    public InputOutputEditor(Consumer<LayerMapping> onChanged) {
+    public InputOutputEditor(Consumer<MappingAction> onChanged) {
         this.onChanged = onChanged;
     }
 
@@ -44,7 +44,7 @@ public class InputOutputEditor extends LayerMappingPanel {
         if (Arrays.equals(newValues, io.getEditableValues()))
             return;
 
-        LayerMapping updated = isInput ? mapping.withInput((IPositionValueGetter) io.instantiateWithValues(newValues)) :
+        MappingAction updated = isInput ? mapping.withInput((IPositionValueGetter) io.instantiateWithValues(newValues)) :
                 mapping.withOutput((IPositionValueSetter) io.instantiateWithValues(newValues));
         onChanged.accept(updated);
         setMapping(updated);

@@ -20,7 +20,7 @@ class LayerMappingTest {
     void serialize() {
         try {
             // Create an instance of the object
-            LayerMapping originalObject = new LayerMapping(new HeightProvider(),
+            MappingAction originalObject = new MappingAction(new HeightProvider(),
                     new NibbleLayerSetter(Annotations.INSTANCE),
                     new MappingPoint[]{new MappingPoint(7, 12)},
                     ActionType.DIVIDE,
@@ -37,7 +37,7 @@ class LayerMappingTest {
             // Deserialize the object
             ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
             ObjectInputStream ois = new ObjectInputStream(bais);
-            LayerMapping deserializedObject = (LayerMapping) ois.readObject();
+            MappingAction deserializedObject = (MappingAction) ois.readObject();
             assertEquals(originalObject, deserializedObject);
 
         } catch (IOException | ClassNotFoundException e) {
@@ -49,9 +49,9 @@ class LayerMappingTest {
     void serializeAll() {
         for (ProviderType type : ProviderType.values()) {
             IMappingValue provider = ProviderType.fromTypeDefault(type);
-            LayerMapping original = null;
+            MappingAction original = null;
             if (provider instanceof IPositionValueGetter) {
-                original = new LayerMapping((IPositionValueGetter) provider,
+                original = new MappingAction((IPositionValueGetter) provider,
                         new TestInputOutput(),
                         new MappingPoint[]{new MappingPoint(provider.getMinValue(), 5),
                                 new MappingPoint(provider.getMaxValue(), -3)},
@@ -60,7 +60,7 @@ class LayerMappingTest {
                         "test description",
                         UUID.randomUUID());
             } else if (provider instanceof IPositionValueSetter) {
-                original = new LayerMapping(new TestInputOutput(),
+                original = new MappingAction(new TestInputOutput(),
                         (IPositionValueSetter) provider,
                         new MappingPoint[]{new MappingPoint(provider.getMinValue(), 5),
                                 new MappingPoint(provider.getMaxValue(), 1)},
@@ -73,14 +73,14 @@ class LayerMappingTest {
             }
             assertNotNull(original);
             ActionJsonWrapper wrapper = new ActionJsonWrapper(original);
-            LayerMapping restored = LayerMapping.fromJsonWrapper(wrapper);
+            MappingAction restored = MappingAction.fromJsonWrapper(wrapper);
             assertEquals(original, restored);
         }
     }
 
     @Test
     void discreteMap() {
-        LayerMapping action = new LayerMapping(new HeightProvider(),
+        MappingAction action = new MappingAction(new HeightProvider(),
                 ActionFilterIO.instance,
                 new MappingPoint[]{new MappingPoint(100, 0), new MappingPoint(200, 1), new MappingPoint(250, 0)},
                 ActionType.SET,
@@ -99,7 +99,7 @@ class LayerMappingTest {
     void map() {
 
         {   // SHORT RANGE MAPPING
-            LayerMapping linear = new LayerMapping(new TestInputOutput(),
+            MappingAction linear = new MappingAction(new TestInputOutput(),
                     new TestInputOutput(),
                     new MappingPoint[]{new MappingPoint(1, 100),
                             new MappingPoint(6, 100 + 500),
@@ -119,7 +119,7 @@ class LayerMappingTest {
 
 
         {   // LINEAR WITH 3 POINTS
-            LayerMapping linear = new LayerMapping(new TestInputOutput(),
+            MappingAction linear = new MappingAction(new TestInputOutput(),
                     new TestInputOutput(),
                     new MappingPoint[]{new MappingPoint(10, 100),
                             new MappingPoint(50 + 10, 100 + 500),
@@ -138,7 +138,7 @@ class LayerMappingTest {
         }
 
         {   // STATIC ONE POINT
-            LayerMapping mapper = new LayerMapping(new TestInputOutput(),
+            MappingAction mapper = new MappingAction(new TestInputOutput(),
                     new TestInputOutput(),
                     new MappingPoint[]{new MappingPoint(57, 89)},
                     ActionType.SET,
@@ -152,7 +152,7 @@ class LayerMappingTest {
         }
 
         {   // 2 POINT LINEAR AT FIRST THAN PLATEAU
-            LayerMapping mapper = new LayerMapping(new HeightProvider(),
+            MappingAction mapper = new MappingAction(new HeightProvider(),
                     new NibbleLayerSetter(Annotations.INSTANCE),
                     new MappingPoint[]{new MappingPoint(50, 0), new MappingPoint(150, 10),},
                     ActionType.SET,
@@ -180,7 +180,7 @@ class LayerMappingTest {
                     -2 * TILE_SIZE,
                     3 * TILE_SIZE,
                     3 * TILE_SIZE), 0);
-            LayerMapping mapper = new LayerMapping(new TestInputOutput(),
+            MappingAction mapper = new MappingAction(new TestInputOutput(),
                     new AnnotationSetter(),
                     new MappingPoint[]{new MappingPoint(57, 3)},
                     ActionType.SET,
@@ -197,7 +197,7 @@ class LayerMappingTest {
                     -2 * TILE_SIZE,
                     3 * TILE_SIZE,
                     3 * TILE_SIZE), 0);
-            LayerMapping mapper = new LayerMapping(new TestInputOutput(),
+            MappingAction mapper = new MappingAction(new TestInputOutput(),
                     new AnnotationSetter(),
                     new MappingPoint[]{},
                     ActionType.SET,
@@ -213,19 +213,19 @@ class LayerMappingTest {
     @Test
     void calculateRanges() {
         {
-            LayerMapping mapper = new LayerMapping(new TestInputOutput(),   //-5 .. 1000
+            MappingAction mapper = new MappingAction(new TestInputOutput(),   //-5 .. 1000
                     new AnnotationSetter(), new MappingPoint[]{}, ActionType.SET, "", "", UUID.randomUUID());
-            List<Point2d> ranges = LayerMapping.calculateRanges(mapper);
+            List<Point2d> ranges = MappingAction.calculateRanges(mapper);
             assertEquals(1, ranges.size());
             assertEquals(new Point2d(-5, 1000), ranges.get(0));
         }
 
         {
-            LayerMapping mapper = new LayerMapping(new TestInputOutput(),   //-5 .. 1000
+            MappingAction mapper = new MappingAction(new TestInputOutput(),   //-5 .. 1000
                     new AnnotationSetter(), new MappingPoint[]{
                             new MappingPoint(10,3), new MappingPoint(100,7)
             }, ActionType.SET, "", "", UUID.randomUUID());
-            List<Point2d> ranges = LayerMapping.calculateRanges(mapper);
+            List<Point2d> ranges = MappingAction.calculateRanges(mapper);
             assertEquals(2, ranges.size());
             assertEquals(new Point2d(-5, 10), ranges.get(0));
             assertEquals(new Point2d(11, 1000), ranges.get(1));

@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,7 +11,7 @@ public class VirtualScrollingTableExample extends JPanel {
     int lastVisibleRow = 100;
     VirtualTableModel model = new VirtualTableModel();
 
-    public void setMappings(ArrayList<LayerMapping> actions) {
+    public void setMappings(ArrayList<MappingAction> actions) {
         model.setMappings(actions);
     }
 

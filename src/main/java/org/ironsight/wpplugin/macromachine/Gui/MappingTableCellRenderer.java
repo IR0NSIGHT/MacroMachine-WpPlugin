@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
 
@@ -39,8 +39,8 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<Sa
     }
 
     public void updateTo(Object mapping) {
-        if (mapping instanceof LayerMapping) {
-            LayerMapping lm = (LayerMapping) mapping;
+        if (mapping instanceof MappingAction) {
+            MappingAction lm = (MappingAction) mapping;
             input.setText(lm.input.getName());
             output.setText(lm.output.getName());
             actionType.setText(lm.actionType.getDisplayName());

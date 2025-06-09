@@ -12,14 +12,14 @@ class LayerMappingContainerTest {
 
     @Test
     void updateMapping() {
-        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+        MappingActionContainer container = new MappingActionContainer(System.getProperty("user.dir") + "/TestActions" +
                 ".json");
-        LayerMapping mapping = container.addMapping();
+        MappingAction mapping = container.addMapping();
 
         {
             MappingPoint[] newPoints =
                     IntStream.range(0, 17).mapToObj(i -> new MappingPoint(i, 3)).toArray(MappingPoint[]::new);
-            LayerMapping newMapping = mapping.withNewPoints(newPoints);
+            MappingAction newMapping = mapping.withNewPoints(newPoints);
             assertNotEquals(newMapping, mapping);
             assertEquals(17, newMapping.getMappingPoints().length);
             assertEquals(newMapping.getUid(), mapping.getUid());
@@ -33,7 +33,7 @@ class LayerMappingContainerTest {
         {
             MappingPoint[] newPoints = new MappingPoint[17];
             Arrays.fill(newPoints, new MappingPoint(0, 3));
-            LayerMapping newMapping = mapping.withNewPoints(newPoints);
+            MappingAction newMapping = mapping.withNewPoints(newPoints);
             assertNotEquals(newMapping, mapping);
             assertEquals(1, newMapping.getMappingPoints().length);
             assertEquals(newMapping.getUid(), mapping.getUid());
@@ -47,7 +47,7 @@ class LayerMappingContainerTest {
 
     @Test
     void deleteMapping() {
-        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+        MappingActionContainer container = new MappingActionContainer(System.getProperty("user.dir") + "/TestActions" +
                 ".json");
 
         UUID uid = container.addMapping().getUid();
@@ -59,7 +59,7 @@ class LayerMappingContainerTest {
 
     @Test
     void addMapping() {
-        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+        MappingActionContainer container = new MappingActionContainer(System.getProperty("user.dir") + "/TestActions" +
                 ".json");
         UUID uid = container.addMapping().getUid();
         assertEquals(uid, container.queryById(uid).getUid());
@@ -72,10 +72,10 @@ class LayerMappingContainerTest {
 
     @Test
     void saveLoad() {
-        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+        MappingActionContainer container = new MappingActionContainer(System.getProperty("user.dir") + "/TestActions" +
                 ".json");
-        LayerMappingContainer.SetInstance(container);
-                LayerMapping saved = container.addMapping().withName("hello i am a test mapping");
+        MappingActionContainer.SetInstance(container);
+                MappingAction saved = container.addMapping().withName("hello i am a test mapping");
         container.updateMapping(saved, f -> {});
 
         assertEquals(saved, container.queryById(saved.getUid()));
@@ -84,11 +84,11 @@ class LayerMappingContainerTest {
         container.writeToFile();
         container.readFromFile();
 
-        LayerMappingContainer newContainer = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+        MappingActionContainer newContainer = new MappingActionContainer(System.getProperty("user.dir") + "/TestActions" +
                 ".json");
         newContainer.setFilePath(container.getFilePath());
         newContainer.readFromFile();
-        LayerMapping loaded = newContainer.queryById(saved.getUid());
+        MappingAction loaded = newContainer.queryById(saved.getUid());
         assertEquals(saved, loaded);
     }
 
@@ -102,11 +102,11 @@ class LayerMappingContainerTest {
             }
         };
         assertEquals(0, ran[0]);
-        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+        MappingActionContainer container = new MappingActionContainer(System.getProperty("user.dir") + "/TestActions" +
                 ".json");
         container.subscribe(runnable);
 
-        LayerMapping mapping = container.addMapping();
+        MappingAction mapping = container.addMapping();
 
         assertEquals(1, ran[0]);
         container.updateMapping(mapping.withNewPoints(new MappingPoint[]{new MappingPoint(10, 7)}), f-> {});
@@ -133,10 +133,10 @@ class LayerMappingContainerTest {
             }
         };
         assertEquals(0, ran[0]);
-        LayerMappingContainer container = new LayerMappingContainer(System.getProperty("user.dir") + "/TestActions" +
+        MappingActionContainer container = new MappingActionContainer(System.getProperty("user.dir") + "/TestActions" +
                 ".json");
 
-        LayerMapping mapping = container.addMapping();
+        MappingAction mapping = container.addMapping();
         container.subscribeToMapping(mapping.getUid(), runnable);
 
         assertEquals(0, ran[0]);
@@ -149,7 +149,7 @@ class LayerMappingContainerTest {
         assertEquals(2, ran[0], "update by UID ran for unrelated new mapping.");
 
         container.unsubscribe(runnable);
-        LayerMapping newMapping = mapping.withNewPoints(new MappingPoint[0]);
+        MappingAction newMapping = mapping.withNewPoints(new MappingPoint[0]);
         assertEquals(newMapping.getUid(), mapping.getUid(), "update ran after unsubscribing from UID");
         container.addMapping();
         assertEquals(2, ran[0], "update by UID ran for unrelated new mapping.");

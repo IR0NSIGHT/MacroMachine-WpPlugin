@@ -94,8 +94,8 @@ public class Macro implements SaveableAction {
      * @return new macro
      */
     public static Macro insertSaveableActionToList(Macro macro, SaveableAction item,
-                                                   Supplier<LayerMapping> createNewAction,
-                                                   Consumer<LayerMapping> updateAction, int[] targetRows,
+                                                   Supplier<MappingAction> createNewAction,
+                                                   Consumer<MappingAction> updateAction, int[] targetRows,
                                                    ArrayList<Integer> outNewSelection) {
         if (targetRows.length == 0) {
             targetRows = new int[]{macro.getExecutionUUIDs().length - 1};
@@ -107,9 +107,9 @@ public class Macro implements SaveableAction {
         int counter = 0;
         for (int row : targetRows) {
             int idx = row + counter + 1;
-            if (item instanceof  LayerMapping) {
-                LayerMapping actionClone = createNewAction.get();
-                updateAction.accept(actionClone.withValuesFrom((LayerMapping) item));
+            if (item instanceof MappingAction) {
+                MappingAction actionClone = createNewAction.get();
+                updateAction.accept(actionClone.withValuesFrom((MappingAction) item));
                 uids.add(idx, actionClone.getUid());
             } else {
                 assert item instanceof Macro;
@@ -154,7 +154,7 @@ public class Macro implements SaveableAction {
                 //macro adds its own steps
                 ((Macro) action).collectActions(actionList);
             } else {
-                action = LayerMappingContainer.getInstance().queryById(id);
+                action = MappingActionContainer.getInstance().queryById(id);
                 if (action != null) step.add(id);
             }
         }
@@ -174,9 +174,9 @@ public class Macro implements SaveableAction {
         return childLoop;
     }
 
-    public boolean containsNoUnknownActions(LayerMappingContainer container, MacroContainer macroContainer) {
+    public boolean containsNoUnknownActions(MappingActionContainer container, MacroContainer macroContainer) {
         for (UUID mappingUid : executionUUIDs) {
-            LayerMapping mapping = container.queryById(mappingUid);
+            MappingAction mapping = container.queryById(mappingUid);
             Macro nestedMacro = macroContainer.queryById(mappingUid);
             if (mapping == null && nestedMacro == null) return false;
             else if (nestedMacro != null && !nestedMacro.containsNoUnknownActions(container, macroContainer))

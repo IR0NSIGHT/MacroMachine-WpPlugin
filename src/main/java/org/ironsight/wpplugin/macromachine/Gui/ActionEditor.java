@@ -7,20 +7,18 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 public class ActionEditor extends LayerMappingPanel {
     private static JDialog dialog;
-    private final Consumer<LayerMapping> onSubmit;
+    private final Consumer<MappingAction> onSubmit;
     private MappingGridPanel mappingDisplay;
     private MappingTextTable table;
     private LayerMappingTopPanel topBar;
 
-    public ActionEditor(Consumer<LayerMapping> onSubmit) {
+    public ActionEditor(Consumer<MappingAction> onSubmit) {
         super();
         this.onSubmit = onSubmit;
     }

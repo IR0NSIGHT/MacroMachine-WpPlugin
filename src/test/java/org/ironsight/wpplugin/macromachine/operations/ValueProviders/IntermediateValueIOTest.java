@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
-import org.ironsight.wpplugin.macromachine.operations.LayerMappingContainer;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
+import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.TestData;
 import org.junit.jupiter.api.Test;
@@ -43,7 +43,7 @@ class IntermediateValueIOTest {
         assertEquals(UNEVEN_HEIGHT, dim.getHeightAt(-125, -125));
 
 
-        LayerMappingContainer container = LayerMappingContainer.getInstance();
+        MappingActionContainer container = MappingActionContainer.getInstance();
         IntermediateValueIO intermediateValueIO = new IntermediateValueIO();
 
         UUID set = container.addMapping().getUid();
@@ -67,7 +67,7 @@ class IntermediateValueIOTest {
         assertEquals(UNEVEN_OUTPUT, container.queryById(get).map(7));
 
 
-        for (LayerMapping lm : container.queryAll()) {
+        for (MappingAction lm : container.queryAll()) {
             lm.input.prepareForDimension(dim);
             lm.output.prepareForDimension(dim);
         }
