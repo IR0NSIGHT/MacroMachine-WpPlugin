@@ -10,8 +10,8 @@ class MappingMacroContainerTest {
 
     @Test
     public void saveLoad() {
-        MappingMacroContainer container = new MappingMacroContainer("./saveLoad_Test_Macros.json");
-        MappingMacroContainer.SetInstance(container);
+        MacroContainer container = new MacroContainer("./saveLoad_Test_Macros.json");
+        MacroContainer.SetInstance(container);
         MappingMacro saved = container.addMapping().withName("my first " + "macro").withDescription("this is a test " +
                 "description").withUUIDs(new UUID[]{UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID()});
@@ -22,7 +22,7 @@ class MappingMacroContainerTest {
         container.writeToFile();
         container.readFromFile();
 
-        MappingMacroContainer newContainer = new MappingMacroContainer("./saveLoad_Test_Macros_2.json");
+        MacroContainer newContainer = new MacroContainer("./saveLoad_Test_Macros_2.json");
         newContainer.setFilePath(container.getFilePath());
         newContainer.readFromFile();
         MappingMacro loaded = newContainer.queryById(saved.getUid());

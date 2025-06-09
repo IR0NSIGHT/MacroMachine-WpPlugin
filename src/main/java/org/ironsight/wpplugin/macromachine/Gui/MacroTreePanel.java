@@ -7,7 +7,6 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionVa
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
-import javax.swing.event.*;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -19,7 +18,7 @@ import java.util.concurrent.Executors;
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 public class MacroTreePanel extends JPanel {
-    private final MappingMacroContainer container;
+    private final MacroContainer container;
     private final LayerMappingContainer mappingContainer;
     private final MacroApplicator applyToMap;
     DefaultTreeModel treeModel;
@@ -31,7 +30,7 @@ public class MacroTreePanel extends JPanel {
     private boolean macroInAction;
     private boolean blockUpdates = false;
 
-    MacroTreePanel(MappingMacroContainer container, LayerMappingContainer mappingContainer,
+    MacroTreePanel(MacroContainer container, LayerMappingContainer mappingContainer,
                    MacroApplicator applyToMap, ISelectItemCallback onSelectAction) {
         this.applyToMap = applyToMap;
         this.container = container;
@@ -94,7 +93,7 @@ public class MacroTreePanel extends JPanel {
     private void update(Set<UUID> selectItems) {
         if (blockUpdates)
             return;
-        MappingMacroContainer macroContainer = MappingMacroContainer.getInstance();
+        MacroContainer macroContainer = MacroContainer.getInstance();
         MacroTreeNode newRoot = new MacroTreeNode(LayerMappingContainer.getInstance(), macroContainer);
 
         LinkedList<TreePath> newSelections = new LinkedList<>();
@@ -361,7 +360,7 @@ public class MacroTreePanel extends JPanel {
         private MacroTreeNode[] children;
         private MacroTreeNode parent;
 
-        public MacroTreeNode(LayerMappingContainer actions, MappingMacroContainer macros) {
+        public MacroTreeNode(LayerMappingContainer actions, MacroContainer macros) {
             //ROOT NODE
             children = new MacroTreeNode[macros.queryAll().size()];
             int i = 0;
@@ -388,7 +387,7 @@ public class MacroTreePanel extends JPanel {
             assert parent == null;
         }
 
-        public MacroTreeNode(MappingMacro macro, LayerMappingContainer actions, MappingMacroContainer macros) {
+        public MacroTreeNode(MappingMacro macro, LayerMappingContainer actions, MacroContainer macros) {
             payload = macro;
             LinkedList<MacroTreeNode> nodes = new LinkedList<>();
             for (UUID id : macro.getExecutionUUIDs()) {
