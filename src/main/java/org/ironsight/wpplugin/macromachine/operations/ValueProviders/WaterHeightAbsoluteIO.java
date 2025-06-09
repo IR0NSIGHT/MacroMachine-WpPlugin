@@ -5,7 +5,7 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
-public class WaterHeightAbsoluteIO extends HeightProvider {
+public class WaterHeightAbsoluteIO extends TerrainHeightIO {
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {

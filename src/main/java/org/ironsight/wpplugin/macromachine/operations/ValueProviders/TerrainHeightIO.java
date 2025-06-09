@@ -5,10 +5,10 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
-public class HeightProvider implements IPositionValueGetter, IPositionValueSetter {
-    private HeightProvider instance;
+public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSetter {
+    private TerrainHeightIO instance;
 
-    public HeightProvider() {
+    public TerrainHeightIO() {
     }
 
     @Override
@@ -36,8 +36,8 @@ public class HeightProvider implements IPositionValueGetter, IPositionValueSette
         return "get the height of a position in percent for 0 to 255.";
     }
 
-    private HeightProvider getInstance() {
-        if (instance == null) instance = new HeightProvider();
+    private TerrainHeightIO getInstance() {
+        if (instance == null) instance = new TerrainHeightIO();
         return instance;
     }
 

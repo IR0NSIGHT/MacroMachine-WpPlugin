@@ -28,7 +28,7 @@ public class MappingAction implements SaveableAction {
     private final int[] mappings;
 
     public static MappingAction getNewEmptyAction() {
-        return new MappingAction(new HeightProvider(),
+        return new MappingAction(new TerrainHeightIO(),
                 new AnnotationSetter(),
                 new MappingPoint[0], ActionType.SET, "create new action", "new description",null);
     }
