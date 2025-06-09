@@ -13,8 +13,8 @@ import java.util.function.Consumer;
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 public class MacroDesigner extends JPanel {
-    Consumer<MappingMacro> onSubmit;
-    private MappingMacro macro;
+    Consumer<Macro> onSubmit;
+    private Macro macro;
     private JTextField name;
     private JTextArea description;
     private JTable table;
@@ -23,7 +23,7 @@ public class MacroDesigner extends JPanel {
     private boolean isUpdating;
     private int[] selectedRows = new int[0];
 
-    MacroDesigner(Consumer<MappingMacro> onSubmit) {
+    MacroDesigner(Consumer<Macro> onSubmit) {
         this.onSubmit = onSubmit;
         init();
     }
@@ -139,10 +139,10 @@ public class MacroDesigner extends JPanel {
         macrosAndActions.addAll(LayerMappingContainer.getInstance().queryAll());
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
         JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
-            MappingMacro macro = this.macro;
+            Macro macro = this.macro;
 
             ArrayList<Integer> newSelection = new ArrayList<>();
-            MappingMacro newMacro = MappingMacro.insertSaveableActionToList(macro.clone(), selected,
+            Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), selected,
                     () -> LayerMappingContainer.getInstance().addMapping(),
                     a -> LayerMappingContainer.getInstance().updateMapping(a, MacroMachinePlugin::error),
                     table.getSelectedRows(), newSelection);
@@ -222,12 +222,12 @@ public class MacroDesigner extends JPanel {
         macrosAndActions.addAll(LayerMappingContainer.getInstance().queryAll());
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
         JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
-            if (selected instanceof MappingMacro) {
+            if (selected instanceof Macro) {
                 setMacro(macro.withReplacedUUIDs(this.table.getSelectedRows(), selected.getUid()), true);
             } else {
                 if (selected.getUid() == null)
                     selected = LayerMappingContainer.getInstance().addMapping();
-                MappingMacro temp = this.macro;
+                Macro temp = this.macro;
                 for (int targetIdx : this.table.getSelectedRows()) {
                     LayerMapping action = LayerMappingContainer.getInstance().addMapping();
                     LayerMappingContainer.getInstance().updateMapping(action.withValuesFrom((LayerMapping) selected),
@@ -290,7 +290,7 @@ public class MacroDesigner extends JPanel {
         repaint();
     }
 
-    public void setMacro(MappingMacro macro, boolean forceUpdate) {
+    public void setMacro(Macro macro, boolean forceUpdate) {
         assert macro != null;
         if (!forceUpdate && this.macro != null && this.macro.equals(macro)) return; //dont update if nothing changed
         isUpdating = true;

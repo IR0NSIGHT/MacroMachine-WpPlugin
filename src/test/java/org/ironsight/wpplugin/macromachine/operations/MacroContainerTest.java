@@ -6,13 +6,13 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class MappingMacroContainerTest {
+class MacroContainerTest {
 
     @Test
     public void saveLoad() {
         MacroContainer container = new MacroContainer("./saveLoad_Test_Macros.json");
         MacroContainer.SetInstance(container);
-        MappingMacro saved = container.addMapping().withName("my first " + "macro").withDescription("this is a test " +
+        Macro saved = container.addMapping().withName("my first " + "macro").withDescription("this is a test " +
                 "description").withUUIDs(new UUID[]{UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID()});
         container.updateMapping(saved, f -> {});
@@ -25,7 +25,7 @@ class MappingMacroContainerTest {
         MacroContainer newContainer = new MacroContainer("./saveLoad_Test_Macros_2.json");
         newContainer.setFilePath(container.getFilePath());
         newContainer.readFromFile();
-        MappingMacro loaded = newContainer.queryById(saved.getUid());
+        Macro loaded = newContainer.queryById(saved.getUid());
         assertEquals(saved, loaded);
     }
 }

@@ -6,7 +6,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class MappingMacro implements SaveableAction {
+public class Macro implements SaveableAction {
     //ordered list of layermappings
     public UUID[] executionUUIDs;
     private String name;
@@ -15,10 +15,10 @@ public class MappingMacro implements SaveableAction {
     @JsonIgnore
     private TileFilter tileFilter = new TileFilter();
 
-    MappingMacro() {
+    Macro() {
     }
 
-    public MappingMacro(String name, String description, UUID[] ids, UUID id) {
+    public Macro(String name, String description, UUID[] ids, UUID id) {
         this.name = name;
         this.description = description;
         this.uid = id;
@@ -43,12 +43,12 @@ public class MappingMacro implements SaveableAction {
         this.executionUUIDs = executionUUIDs;
     }
 
-    public MappingMacro withName(String name) {
-        return new MappingMacro(name, description, executionUUIDs, uid);
+    public Macro withName(String name) {
+        return new Macro(name, description, executionUUIDs, uid);
     }
 
-    public MappingMacro withDescription(String description) {
-        return new MappingMacro(name, description, executionUUIDs, uid);
+    public Macro withDescription(String description) {
+        return new Macro(name, description, executionUUIDs, uid);
     }
 
     @Override
@@ -60,21 +60,21 @@ public class MappingMacro implements SaveableAction {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        MappingMacro that = (MappingMacro) o;
+        Macro that = (Macro) o;
         return Arrays.equals(executionUUIDs, that.executionUUIDs) && Objects.equals(name, that.name) &&
                 Objects.equals(description, that.description) && Objects.equals(uid, that.uid);
     }
 
     @Override
-    public MappingMacro clone() {
-        return new MappingMacro(this.name, this.description, this.executionUUIDs.clone(), this.uid);
+    public Macro clone() {
+        return new Macro(this.name, this.description, this.executionUUIDs.clone(), this.uid);
     }
 
-    public MappingMacro withUUIDs(UUID[] uuid) {
-        return new MappingMacro(this.name, this.description, uuid, this.uid);
+    public Macro withUUIDs(UUID[] uuid) {
+        return new Macro(this.name, this.description, uuid, this.uid);
     }
 
-    public MappingMacro withReplacedUUIDs(int[] overwriteIdcs, UUID uid) {
+    public Macro withReplacedUUIDs(int[] overwriteIdcs, UUID uid) {
         UUID[] newIds = executionUUIDs.clone();
         for (int row : overwriteIdcs) {
             assert row >= 0 : "index ouf of bounds";
@@ -93,10 +93,10 @@ public class MappingMacro implements SaveableAction {
      * @param outNewSelection output array with indices of row selection. old rows stay selected.
      * @return new macro
      */
-    public static MappingMacro insertSaveableActionToList(MappingMacro macro, SaveableAction item,
-                                                          Supplier<LayerMapping> createNewAction,
-                                                          Consumer<LayerMapping> updateAction, int[] targetRows,
-                                                          ArrayList<Integer> outNewSelection) {
+    public static Macro insertSaveableActionToList(Macro macro, SaveableAction item,
+                                                   Supplier<LayerMapping> createNewAction,
+                                                   Consumer<LayerMapping> updateAction, int[] targetRows,
+                                                   ArrayList<Integer> outNewSelection) {
         if (targetRows.length == 0) {
             targetRows = new int[]{macro.getExecutionUUIDs().length - 1};
         }
@@ -112,7 +112,7 @@ public class MappingMacro implements SaveableAction {
                 updateAction.accept(actionClone.withValuesFrom((LayerMapping) item));
                 uids.add(idx, actionClone.getUid());
             } else {
-                assert item instanceof MappingMacro;
+                assert item instanceof Macro;
                 uids.add(idx, item.getUid());
             }
 
@@ -121,7 +121,7 @@ public class MappingMacro implements SaveableAction {
         }
 
         UUID[] ids = uids.toArray(new UUID[0]);
-        MappingMacro newMacro = macro.withUUIDs(ids);
+        Macro newMacro = macro.withUUIDs(ids);
         return newMacro;
     }
 
@@ -152,7 +152,7 @@ public class MappingMacro implements SaveableAction {
                 step = new ArrayList<>();   //init new list
 
                 //macro adds its own steps
-                ((MappingMacro) action).collectActions(actionList);
+                ((Macro) action).collectActions(actionList);
             } else {
                 action = LayerMappingContainer.getInstance().queryById(id);
                 if (action != null) step.add(id);
@@ -168,7 +168,7 @@ public class MappingMacro implements SaveableAction {
         seen.add(this.uid);
         boolean childLoop = false;
         for (UUID uuid : this.executionUUIDs) {
-            MappingMacro macro = MacroContainer.getInstance().queryById(uuid);
+            Macro macro = MacroContainer.getInstance().queryById(uuid);
             if (macro != null && macro.hasLoop((HashSet<UUID>) seen.clone())) return true;
         }
         return childLoop;
@@ -177,7 +177,7 @@ public class MappingMacro implements SaveableAction {
     public boolean containsNoUnknownActions(LayerMappingContainer container, MacroContainer macroContainer) {
         for (UUID mappingUid : executionUUIDs) {
             LayerMapping mapping = container.queryById(mappingUid);
-            MappingMacro nestedMacro = macroContainer.queryById(mappingUid);
+            Macro nestedMacro = macroContainer.queryById(mappingUid);
             if (mapping == null && nestedMacro == null) return false;
             else if (nestedMacro != null && !nestedMacro.containsNoUnknownActions(container, macroContainer))
                 return false;

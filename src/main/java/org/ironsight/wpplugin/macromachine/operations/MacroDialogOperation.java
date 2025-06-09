@@ -51,7 +51,7 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
     }
 
     @Override
-    public Collection<ExecutionStatistic> applyLayerAction(MappingMacro macro,
+    public Collection<ExecutionStatistic> applyLayerAction(Macro macro,
                                                            Consumer<ApplyAction.Progess> setProgress) {
         Collection<ExecutionStatistic> statistics = new ArrayList<>();
         try {

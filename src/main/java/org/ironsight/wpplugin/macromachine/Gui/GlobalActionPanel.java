@@ -128,7 +128,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         logMessage("step " + progress.step + "/" + progress.totalSteps + ": " + progress.progressInStep + "%");
     }
 
-    public void applyToMap(MappingMacro macro, ApplyAction.Progess progess) {
+    public void applyToMap(Macro macro, ApplyAction.Progess progess) {
         Collection<ExecutionStatistic> statistic = applyMacro.applyLayerAction(macro, this::setProgress);
         logMessage("apply macro " + macro.getName() + " to map:\n" +
                 statistic.stream().map(ExecutionStatistic::toString).collect(Collectors.joining("\n")));
@@ -136,7 +136,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
     private void onUpdate() {
         LayerMapping mapping = LayerMappingContainer.getInstance().queryById(currentSelectedLayer);
-        MappingMacro macro = MacroContainer.getInstance().queryById(currentSelectedMacro);
+        Macro macro = MacroContainer.getInstance().queryById(currentSelectedMacro);
         if (macro == null && selectionType == SELECTION_TPYE.MACRO) selectionType = SELECTION_TPYE.INVALID;
 
         if (mapping == null && selectionType != SELECTION_TPYE.MACRO) selectionType = SELECTION_TPYE.INVALID;
@@ -226,7 +226,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     @Override
     public void onSelect(SaveableAction action, SELECTION_TPYE type) {
         selectionType = type;
-        if (action instanceof MappingMacro) {
+        if (action instanceof Macro) {
             currentSelectedMacro = action.getUid();
         } else if (action instanceof LayerMapping) {
             currentSelectedLayer = action.getUid();
@@ -239,7 +239,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         });
     }
 
-    private void onSubmitMacro(MappingMacro macro) {
+    private void onSubmitMacro(Macro macro) {
         MacroContainer.getInstance().updateMapping(macro, e -> {
             ErrorPopUp("Unable to save macro: " + e);
         });
@@ -255,8 +255,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     public interface ApplyToMapCallback {
-        void applyToMap(MappingMacro macro, Consumer<ApplyAction.Progess> setProgress);
+        void applyToMap(Macro macro, Consumer<ApplyAction.Progess> setProgress);
 
-        void applyToMap(MappingMacro macro, ApplyAction.Progess progess);
+        void applyToMap(Macro macro, ApplyAction.Progess progess);
     }
 }

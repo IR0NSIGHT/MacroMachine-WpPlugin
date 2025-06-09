@@ -12,14 +12,14 @@ import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.operations.LayerMappingContainer.isDebugMode;
 
-public class MacroContainer extends AbstractOperationContainer<MappingMacro> {
+public class MacroContainer extends AbstractOperationContainer<Macro> {
     private static MacroContainer instance;
     public static void SetInstance(MacroContainer container) {
         assert instance == null;
         instance = container;
     }
     public MacroContainer(String filePath) {
-        super(MappingMacro.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultMacros.json");
+        super(Macro.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultMacros.json");
     }
 
     public static MacroContainer getInstance() {
@@ -34,8 +34,8 @@ public class MacroContainer extends AbstractOperationContainer<MappingMacro> {
     }
 
     @Override
-    protected MappingMacro getNewAction() {
-        return new MappingMacro("New Mapping Macro",
+    protected Macro getNewAction() {
+        return new Macro("New Mapping Macro",
                 "this macro is a collection of Mappings, each applied in order " + "to" + " the map to achieve " +
                         "complex, reusable, one-click operations.",
                 new UUID[0],
@@ -46,14 +46,14 @@ public class MacroContainer extends AbstractOperationContainer<MappingMacro> {
     protected void fromSaveObject(String jsonString) throws JsonProcessingException {
         assert jsonString != null;
         ObjectMapper objectMapper = new ObjectMapper();
-        MappingMacro[] obj = objectMapper.readValue(jsonString, MappingMacro[].class);
-        for (MappingMacro instance : obj) {
+        Macro[] obj = objectMapper.readValue(jsonString, Macro[].class);
+        for (Macro instance : obj) {
             this.putMapping(instance);
         }
     }
 
     @Override
-    public void updateMapping(MappingMacro macro, Consumer<String> onError) {
+    public void updateMapping(Macro macro, Consumer<String> onError) {
         boolean loop = macro.hasLoop(new HashSet<>());
         if (loop) {
             onError.accept("Macro has an infinite loop, caused by a nested macro. Can not save.");
@@ -64,6 +64,6 @@ public class MacroContainer extends AbstractOperationContainer<MappingMacro> {
 
     @Override
     protected <T extends Serializable> T toSaveObject() {
-        return (T) queryAll().toArray(new MappingMacro[0]);
+        return (T) queryAll().toArray(new Macro[0]);
     }
 }

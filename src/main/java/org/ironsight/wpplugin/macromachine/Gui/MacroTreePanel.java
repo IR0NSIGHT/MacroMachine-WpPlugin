@@ -233,7 +233,7 @@ public class MacroTreePanel extends JPanel {
         JButton addButton = new JButton("Create macro");
         addButton.setToolTipText("Create a new, empty macro.");
         addButton.addActionListener(e -> {
-            MappingMacro macro = container.addMapping();
+            Macro macro = container.addMapping();
             HashSet<UUID> set = new HashSet<>();
             set.add(macro.getUid());
             update(set);
@@ -247,8 +247,8 @@ public class MacroTreePanel extends JPanel {
             blockUpdates = true;
             Set<UUID> deletedUUIDS = getSelectedUUIDs(true, true);
             //remove Mapping Actions from all macros
-            for (MappingMacro m : container.queryAll()) {
-                MappingMacro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs)
+            for (Macro m : container.queryAll()) {
+                Macro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs)
                         .filter(a -> !deletedUUIDS.contains(a))
                         .toArray(UUID[]::new));
                 container.updateMapping(updated, f -> {
@@ -321,7 +321,7 @@ public class MacroTreePanel extends JPanel {
             long startTime = System.currentTimeMillis();
             //get macros
             for (UUID id : getSelectedUUIDs(true, false)) {
-                MappingMacro macro = container.queryById(id);
+                Macro macro = container.queryById(id);
                 if (macro != null) {
                     applyToMap.applyLayerAction(macro, panel::onSetProgress);
                 }
@@ -364,10 +364,10 @@ public class MacroTreePanel extends JPanel {
             //ROOT NODE
             children = new MacroTreeNode[macros.queryAll().size()];
             int i = 0;
-            for (MappingMacro macro : macros.queryAll()
+            for (Macro macro : macros.queryAll()
                     .stream()
-                    .sorted(Comparator.comparing(MappingMacro::getName))
-                    .toArray(MappingMacro[]::new)) {
+                    .sorted(Comparator.comparing(Macro::getName))
+                    .toArray(Macro[]::new)) {
                 children[i++] = new MacroTreeNode(macro, actions, macros);
             }
             for (MacroTreeNode child : children)
@@ -387,7 +387,7 @@ public class MacroTreePanel extends JPanel {
             assert parent == null;
         }
 
-        public MacroTreeNode(MappingMacro macro, LayerMappingContainer actions, MacroContainer macros) {
+        public MacroTreeNode(Macro macro, LayerMappingContainer actions, MacroContainer macros) {
             payload = macro;
             LinkedList<MacroTreeNode> nodes = new LinkedList<>();
             for (UUID id : macro.getExecutionUUIDs()) {
@@ -513,8 +513,8 @@ public class MacroTreePanel extends JPanel {
             return (LayerMapping) payload;
         }
 
-        public MappingMacro getMacro() {
-            return (MappingMacro) payload;
+        public Macro getMacro() {
+            return (Macro) payload;
         }
 
         public IPositionValueGetter getInput() {

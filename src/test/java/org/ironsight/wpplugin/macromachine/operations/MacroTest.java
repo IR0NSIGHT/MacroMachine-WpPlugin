@@ -6,16 +6,16 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MappingMacroTest {
+class MacroTest {
 
     @Test
     void withReplacedUUIDs() {
-        MappingMacro initial = new MappingMacro("Test","descr", new UUID[]{ UUID.randomUUID(), UUID.randomUUID(),
+        Macro initial = new Macro("Test","descr", new UUID[]{ UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID(),UUID.randomUUID()},
                 UUID.randomUUID());
         UUID replacer = UUID.randomUUID();
 
-        MappingMacro result = initial.withReplacedUUIDs(new int[]{1,3}, replacer);
+        Macro result = initial.withReplacedUUIDs(new int[]{1,3}, replacer);
 
         assertEquals(4,result.getExecutionUUIDs().length);
         assertEquals(initial.getExecutionUUIDs()[0],result.getExecutionUUIDs()[0]);
