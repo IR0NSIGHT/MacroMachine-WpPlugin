@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Configuration;
 import org.pepsoft.worldpainter.layers.Frost;
@@ -111,6 +112,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
         for (LayerMapping m : queryAll()) { //force through constructor to enforce assertions
             LayerMapping ignored = m.withName(m.getName());
         }
+        assert !queryAll().isEmpty() : "not supposed to happen";
     }
 
     @Override
@@ -144,6 +146,7 @@ public class LayerMappingContainer extends AbstractOperationContainer<LayerMappi
 
     @Override
     public void writeToFile() {
+        MacroMachinePlugin.error("Action Container write to file" + this);
         super.writeToFile();
         /* // FIXME DISABLED UNTIL LAYER SAVING/LOADING IS FIGURED OUT
         //FIXME also save layers that are used as input?
