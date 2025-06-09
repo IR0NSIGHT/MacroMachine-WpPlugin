@@ -4,5 +4,5 @@ import java.util.Collection;
 import java.util.function.Consumer;
 
 public interface MacroApplicator {
-    Collection<ExecutionStatistic> applyLayerAction(MappingMacro macro, Consumer<ApplyAction.Progess> setProgress);
+    Collection<ExecutionStatistic> applyLayerAction(Macro macro, Consumer<ApplyAction.Progess> setProgress);
 }

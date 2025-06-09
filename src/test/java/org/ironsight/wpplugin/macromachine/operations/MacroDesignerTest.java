@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -15,13 +14,13 @@ public class MacroDesignerTest {
     void insertSingleActionIntoEmptyMacro() {
         LayerMappingContainer container = new LayerMappingContainer("./TestMappings.json");
 
-        MappingMacro macro = new MappingMacro("test", "descr", new UUID[0], UUID.randomUUID());
+        Macro macro = new Macro("test", "descr", new UUID[0], UUID.randomUUID());
 
         LayerMapping inputItem = LayerMapping.getNewEmptyAction().withName("hello world");
         assertEquals(0, container.queryAll().size());
 
         ArrayList<Integer> newSelection = new ArrayList<>();
-        MappingMacro inserted = MappingMacro.insertSaveableActionToList(
+        Macro inserted = Macro.insertSaveableActionToList(
                 macro.clone(),
                 inputItem,
                 container::addMapping,
@@ -49,14 +48,14 @@ public class MacroDesignerTest {
             actionIds[i] = UUID.randomUUID();
         }
 
-        MappingMacro macro = new MappingMacro("test", "descr", actionIds, UUID.randomUUID());
+        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID());
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
         LayerMapping inputItem = LayerMapping.getNewEmptyAction().withName("my new item");
 
         ArrayList<Integer> newSelection = new ArrayList<>();
-        MappingMacro inserted = MappingMacro.insertSaveableActionToList(
+        Macro inserted = Macro.insertSaveableActionToList(
                 macro.clone(),
                 inputItem,
                 container::addMapping,
@@ -82,14 +81,14 @@ public class MacroDesignerTest {
             actionIds[i] = UUID.randomUUID();
         }
 
-        MappingMacro macro = new MappingMacro("test", "descr", actionIds, UUID.randomUUID());
+        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID());
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
         LayerMapping inputItem = LayerMapping.getNewEmptyAction().withName("my new item");
 
         ArrayList<Integer> newSelection = new ArrayList<>();
-        MappingMacro inserted = MappingMacro.insertSaveableActionToList(
+        Macro inserted = Macro.insertSaveableActionToList(
                 macro.clone(),
                 inputItem,
                 container::addMapping,
@@ -113,7 +112,7 @@ public class MacroDesignerTest {
             actionIds[i] = UUID.randomUUID();
         }
 
-        MappingMacro macro = new MappingMacro("test", "descr", actionIds, UUID.randomUUID());
+        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID());
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
@@ -121,7 +120,7 @@ public class MacroDesignerTest {
 
         ArrayList<Integer> newSelection = new ArrayList<>();
         ArrayList<UUID> addedIdsInOrder = new ArrayList<>();
-        MappingMacro inserted = MappingMacro.insertSaveableActionToList(
+        Macro inserted = Macro.insertSaveableActionToList(
                 macro.clone(),
                 inputItem,
                 () -> { LayerMapping lm = container.addMapping(); addedIdsInOrder.add(lm.getUid()); return lm; },
@@ -152,14 +151,14 @@ public class MacroDesignerTest {
             actionIds[i] = UUID.randomUUID();
         }
 
-        MappingMacro macro = new MappingMacro("test", "descr", actionIds, UUID.randomUUID());
+        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID());
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
-        MappingMacro inputItem = new MappingMacro("myNewMacro", "descr", new UUID[0], UUID.randomUUID());
+        Macro inputItem = new Macro("myNewMacro", "descr", new UUID[0], UUID.randomUUID());
 
         ArrayList<Integer> newSelection = new ArrayList<>();
-        MappingMacro inserted = MappingMacro.insertSaveableActionToList(
+        Macro inserted = Macro.insertSaveableActionToList(
                 macro.clone(),
                 inputItem,
                 () -> { Assertions.fail("not supposed to be called"); return null; },

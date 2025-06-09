@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
-import org.ironsight.wpplugin.macromachine.operations.MappingMacro;
+import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
 
 import javax.swing.*;
@@ -46,8 +46,8 @@ class MappingTableCellRenderer implements TableCellRenderer, ListCellRenderer<Sa
             actionType.setText(lm.actionType.getDisplayName());
             nameLabel.setText(lm.getName());
             panel.setToolTipText(lm.getDescription());
-        }  else if (mapping instanceof MappingMacro) {
-            MappingMacro lm = (MappingMacro) mapping;
+        }  else if (mapping instanceof Macro) {
+            Macro lm = (Macro) mapping;
             input.setText("");
             output.setText("");
             actionType.setText("Macro");
