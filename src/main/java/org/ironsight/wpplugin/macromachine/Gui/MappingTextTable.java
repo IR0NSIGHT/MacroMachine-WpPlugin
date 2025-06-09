@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 
 import javax.swing.*;
@@ -43,7 +43,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             columnNames = new String[]{"from " + mapping.input.getName(),
                     " to " + mapping.input.getName(),
                     mapping.output.getName()};
-            List<Point2d> ranges = LayerMapping.calculateRanges(mapping);
+            List<Point2d> ranges = MappingAction.calculateRanges(mapping);
             data = new MappingPointValue[ranges.size()][];
         }
 
@@ -65,7 +65,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         groupValues = groupValuesCheckBox.isSelected();
         blockTableChanged = true;
         if (groupValues) {
-            List<Point2d> ranges = LayerMapping.calculateRanges(mapping);
+            List<Point2d> ranges = MappingAction.calculateRanges(mapping);
             if (numberTable.getModel().getRowCount() != ranges.size() || numberTable.getColumnCount() != 3) {
                 initTableModel();   //rebuild
             }

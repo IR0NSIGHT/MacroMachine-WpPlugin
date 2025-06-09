@@ -51,12 +51,12 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     public static void main(String[] args) {
         MacroContainer.SetInstance(new MacroContainer("./src/main/resources/DefaultMacros.json"));
         MacroContainer macros = MacroContainer.getInstance();
-        LayerMappingContainer.SetInstance( new LayerMappingContainer("./src/main/resources/DefaultActions.json"));
-        LayerMappingContainer layers = LayerMappingContainer.getInstance();
+        MappingActionContainer.SetInstance( new MappingActionContainer("./src/main/resources/DefaultActions.json"));
+        MappingActionContainer layers = MappingActionContainer.getInstance();
 
         macros.readFromFile();
         layers.readFromFile();
-        LayerMappingContainer.getInstance().subscribe(() -> LayerMappingContainer.getInstance().writeToFile());
+        MappingActionContainer.getInstance().subscribe(() -> MappingActionContainer.getInstance().writeToFile());
         MacroContainer.getInstance().subscribe(() -> MacroContainer.getInstance().writeToFile());
         JDialog diag = createDialog(null, (macro, setProgress) -> {
             for (int i = 0; i < 30; i++) {
@@ -135,7 +135,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     private void onUpdate() {
-        LayerMapping mapping = LayerMappingContainer.getInstance().queryById(currentSelectedLayer);
+        MappingAction mapping = MappingActionContainer.getInstance().queryById(currentSelectedLayer);
         Macro macro = MacroContainer.getInstance().queryById(currentSelectedMacro);
         if (macro == null && selectionType == SELECTION_TPYE.MACRO) selectionType = SELECTION_TPYE.INVALID;
 
@@ -169,18 +169,18 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
     private void init() {
         MacroContainer.getInstance().subscribe(this::onUpdate);
-        LayerMappingContainer.getInstance().subscribe(this::onUpdate);
+        MappingActionContainer.getInstance().subscribe(this::onUpdate);
 
         this.setLayout(new BorderLayout());
         macroTreePanel = new MacroTreePanel(MacroContainer.getInstance(),
-                LayerMappingContainer.getInstance(),
+                MappingActionContainer.getInstance(),
                 applyMacro,
                 this::onSelect);
         macroTreePanel.setMaximumSize(new Dimension(200, 0));
 
         macroDesigner = new MacroDesigner(this::onSubmitMacro);
         mappingEditor = new ActionEditor(this::onSubmitMapping);
-        ioEditor = new InputOutputEditor(action -> LayerMappingContainer.getInstance().updateMapping(action,
+        ioEditor = new InputOutputEditor(action -> MappingActionContainer.getInstance().updateMapping(action,
                 MacroMachinePlugin::error));
         editorPanel = new JPanel(new CardLayout());
         editorPanel.add(mappingEditor, MAPPING_EDITOR);
@@ -228,14 +228,14 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         selectionType = type;
         if (action instanceof Macro) {
             currentSelectedMacro = action.getUid();
-        } else if (action instanceof LayerMapping) {
+        } else if (action instanceof MappingAction) {
             currentSelectedLayer = action.getUid();
         }
         onUpdate();
     }
 
-    private void onSubmitMapping(LayerMapping mapping) {
-        LayerMappingContainer.getInstance().updateMapping(mapping, f -> {
+    private void onSubmitMapping(MappingAction mapping) {
+        MappingActionContainer.getInstance().updateMapping(mapping, f -> {
         });
     }
 

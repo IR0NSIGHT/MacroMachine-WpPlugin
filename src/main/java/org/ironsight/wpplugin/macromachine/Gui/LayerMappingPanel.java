@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 
 import javax.swing.*;
@@ -8,9 +8,9 @@ import java.util.HashMap;
 import java.util.function.Consumer;
 
 public abstract class LayerMappingPanel extends JPanel {
-    protected LayerMapping mapping;
+    protected MappingAction mapping;
     private boolean allowEvents = true;
-    private Consumer<LayerMapping> onUpdate = f -> {
+    private Consumer<MappingAction> onUpdate = f -> {
     };
 
     public LayerMappingPanel() {
@@ -33,7 +33,7 @@ public abstract class LayerMappingPanel extends JPanel {
      *
      * @param mapping
      */
-    protected final void updateMapping(LayerMapping mapping) {
+    protected final void updateMapping(MappingAction mapping) {
         if (mapping == null || this.mapping == null || this.mapping.equals(mapping) || !allowEvents) {
             return;
         }
@@ -65,7 +65,7 @@ public abstract class LayerMappingPanel extends JPanel {
         if (onUpdate != null) onUpdate.accept(mapping);
     }
 
-    public final void setMapping(LayerMapping mapping) {
+    public final void setMapping(MappingAction mapping) {
         assert mapping != null;
         assert mapping.getMappingPoints() != null;
         assert mapping.input != null;
@@ -81,7 +81,7 @@ public abstract class LayerMappingPanel extends JPanel {
         allowEvents = true;
     }
 
-    public final void setOnUpdate(Consumer<LayerMapping> onUpdate) {
+    public final void setOnUpdate(Consumer<MappingAction> onUpdate) {
         this.onUpdate = onUpdate;
     }
 }

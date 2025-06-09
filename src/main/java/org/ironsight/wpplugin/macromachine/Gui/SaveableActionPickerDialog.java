@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
-import org.ironsight.wpplugin.macromachine.operations.LayerMappingContainer;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
+import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 
@@ -26,9 +26,9 @@ public class SaveableActionPickerDialog extends JDialog {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setTitle("Select Layer Mapping");
         for (int i = 0; i < 20; i++)
-            LayerMappingContainer.addDefaultMappings(LayerMappingContainer.getInstance());
-        ArrayList<SaveableAction> layerMappings = new ArrayList<>(LayerMappingContainer.getInstance().queryAll());
-        Dialog dlg = new SaveableActionPickerDialog(layerMappings , System.out::println, LayerMapping.getNewEmptyAction());
+            MappingActionContainer.addDefaultMappings(MappingActionContainer.getInstance());
+        ArrayList<SaveableAction> layerMappings = new ArrayList<>(MappingActionContainer.getInstance().queryAll());
+        Dialog dlg = new SaveableActionPickerDialog(layerMappings , System.out::println, MappingAction.getNewEmptyAction());
         dlg.setVisible(true);
     }
 

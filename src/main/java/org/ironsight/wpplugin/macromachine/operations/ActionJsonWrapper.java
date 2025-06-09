@@ -17,7 +17,7 @@ public class ActionJsonWrapper {
     public ActionJsonWrapper() {
     }
 
-    public ActionJsonWrapper(LayerMapping mapping) {
+    public ActionJsonWrapper(MappingAction mapping) {
         setInputId(mapping.input.getProviderType());
         setInputData(mapping.input.getSaveData());
 

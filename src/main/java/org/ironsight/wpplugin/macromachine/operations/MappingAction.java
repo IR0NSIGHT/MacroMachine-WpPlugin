@@ -9,7 +9,7 @@ import java.util.*;
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.INTERMEDIATE_SELECTION;
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.fromType;
 
-public class LayerMapping implements SaveableAction {
+public class MappingAction implements SaveableAction {
     public final IPositionValueGetter input;
     public final IPositionValueSetter output;
     public final ActionType actionType;
@@ -19,13 +19,13 @@ public class LayerMapping implements SaveableAction {
     private final UUID uid;    //TODO make final and private
     private final int[] mappings;
 
-    public static LayerMapping getNewEmptyAction() {
-        return new LayerMapping(new HeightProvider(),
+    public static MappingAction getNewEmptyAction() {
+        return new MappingAction(new HeightProvider(),
                 new AnnotationSetter(),
                 new MappingPoint[0], ActionType.SET, "create new action", "new description",null);
     }
-    public LayerMapping(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
-                        ActionType type, String name, String description, UUID uid) {
+    public MappingAction(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
+                         ActionType type, String name, String description, UUID uid) {
         assert name != null;
         assert description != null;
         assert input != null;
@@ -107,7 +107,7 @@ public class LayerMapping implements SaveableAction {
 
     }
 
-    public static LayerMapping fromJsonWrapper(ActionJsonWrapper wrapper) {
+    public static MappingAction fromJsonWrapper(ActionJsonWrapper wrapper) {
         IPositionValueGetter input = (IPositionValueGetter) fromType(wrapper.getInputData(), wrapper.getInputId());
         IPositionValueSetter output = (IPositionValueSetter) fromType(wrapper.getOutputData(), wrapper.getOutputId());
 
@@ -117,7 +117,7 @@ public class LayerMapping implements SaveableAction {
         for (int i = 0; i < points.length; i++) {
             points[i] = new MappingPoint(wrapper.getInputPoints()[i], wrapper.getOutputPoints()[i]);
         }
-        LayerMapping mapping = new LayerMapping(input,
+        MappingAction mapping = new MappingAction(input,
                 output,
                 points,
                 wrapper.getActionType(),
@@ -127,7 +127,7 @@ public class LayerMapping implements SaveableAction {
         return mapping;
     }
 
-    public static List<Point2d> calculateRanges(LayerMapping mapping) {
+    public static List<Point2d> calculateRanges(MappingAction mapping) {
         LinkedList<Point2d> ranges = new LinkedList<>();
         int previousOutput = mapping.map(mapping.input.getMinValue());
         int previousInput = mapping.input.getMinValue();
@@ -148,29 +148,29 @@ public class LayerMapping implements SaveableAction {
         return input;
     }
 
-    public LayerMapping withInput(IPositionValueGetter input) {
-        return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
+    public MappingAction withInput(IPositionValueGetter input) {
+        return new MappingAction(input, output, mappingPoints, actionType, name, description, uid);
     }
 
-    public LayerMapping withValuesFrom(LayerMapping other) {
-        return new LayerMapping(other.input, other.output, other. mappingPoints,  other.actionType,  other.name,
+    public MappingAction withValuesFrom(MappingAction other) {
+        return new MappingAction(other.input, other.output, other. mappingPoints,  other.actionType,  other.name,
                 other.description, this.uid);
     }
 
-    public LayerMapping withOutput(IPositionValueSetter output) {
-        return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
+    public MappingAction withOutput(IPositionValueSetter output) {
+        return new MappingAction(input, output, mappingPoints, actionType, name, description, uid);
     }
 
-    public LayerMapping withType(ActionType actionType) {
-        return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
+    public MappingAction withType(ActionType actionType) {
+        return new MappingAction(input, output, mappingPoints, actionType, name, description, uid);
     }
 
-    public LayerMapping withName(String name) {
-        return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
+    public MappingAction withName(String name) {
+        return new MappingAction(input, output, mappingPoints, actionType, name, description, uid);
     }
 
-    public LayerMapping withDescription(String description) {
-        return new LayerMapping(input, output, mappingPoints, actionType, name, description, uid);
+    public MappingAction withDescription(String description) {
+        return new MappingAction(input, output, mappingPoints, actionType, name, description, uid);
     }
 
     @Override
@@ -184,7 +184,7 @@ public class LayerMapping implements SaveableAction {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        LayerMapping mapping = (LayerMapping) o;
+        MappingAction mapping = (MappingAction) o;
         return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) &&
                 actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) &&
                 Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description) &&
@@ -194,7 +194,7 @@ public class LayerMapping implements SaveableAction {
     public boolean equalIgnoreUUID(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        LayerMapping mapping = (LayerMapping) o;
+        MappingAction mapping = (MappingAction) o;
         return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) &&
                 actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) &&
                 Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
@@ -218,14 +218,14 @@ public class LayerMapping implements SaveableAction {
         return new MappingPoint(sanitizeInput(p.input), sanitizeOutput(p.output));
     }
 
-    public LayerMapping withNewPoints(MappingPoint[] mappingPoints) {
+    public MappingAction withNewPoints(MappingPoint[] mappingPoints) {
         mappingPoints = Arrays.stream(mappingPoints)
                 .map(this::sanitize)
                 .toArray(MappingPoint[]::new);
 
         TreeSet<MappingPoint> newPoints = new TreeSet<>(Comparator.comparingInt(o -> o.input));
         newPoints.addAll(Arrays.asList(mappingPoints));
-        return new LayerMapping(this.input,
+        return new MappingAction(this.input,
                 this.output,
                 newPoints.toArray(new MappingPoint[0]),
                 this.getActionType(),

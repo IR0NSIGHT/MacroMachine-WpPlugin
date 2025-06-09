@@ -7,7 +7,7 @@ public class ExecutionStatistic {
     long durationMillis;
     long touchedTiles;
     long touchedBlocks;
-    Collection<LayerMapping> actions;
+    Collection<MappingAction> actions;
 
     @Override
     public String toString() {

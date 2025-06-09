@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerMapping;
-import org.ironsight.wpplugin.macromachine.operations.LayerMappingContainer;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
+import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -18,9 +18,9 @@ public class MappingsListSelect extends LayerMappingPanel {
     JButton addButton;
     JButton removeButton;
 
-    public MappingsListSelect(Consumer<LayerMapping> onSelection) {
+    public MappingsListSelect(Consumer<MappingAction> onSelection) {
         super();
-        LayerMappingContainer.getInstance().subscribe(this::updateComponents);
+        MappingActionContainer.getInstance().subscribe(this::updateComponents);
         updateComponents();
         this.setOnUpdate(onSelection);
     }
@@ -28,7 +28,7 @@ public class MappingsListSelect extends LayerMappingPanel {
     @Override
     protected void updateComponents() {
         DefaultListModel<ListItem> model = new DefaultListModel<>();
-        for (LayerMapping m : LayerMappingContainer.getInstance().queryAll()) {
+        for (MappingAction m : MappingActionContainer.getInstance().queryAll()) {
             model.addElement(new ListItem(m));
         }
         list.setModel(model);
@@ -58,7 +58,7 @@ public class MappingsListSelect extends LayerMappingPanel {
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                LayerMapping ignored = LayerMappingContainer.getInstance().addMapping();
+                MappingAction ignored = MappingActionContainer.getInstance().addMapping();
             }
         });
         removeButton = new JButton("Remove");
@@ -66,7 +66,7 @@ public class MappingsListSelect extends LayerMappingPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 UUID uid = getSelectedProvider();
-                LayerMappingContainer.getInstance().deleteMapping(uid);
+                MappingActionContainer.getInstance().deleteMapping(uid);
             }
         });
 
@@ -82,9 +82,9 @@ public class MappingsListSelect extends LayerMappingPanel {
     }
 
     private static class ListItem {
-        final LayerMapping mappingItem;
+        final MappingAction mappingItem;
 
-        public ListItem(LayerMapping mappingItem) {
+        public ListItem(MappingAction mappingItem) {
             assert mappingItem != null;
             this.mappingItem = mappingItem;
         }

@@ -24,11 +24,11 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
         super(NAME, DESCRIPTION, "macrooperation");
 
         MacroContainer.SetInstance(new MacroContainer(null));
-        LayerMappingContainer.SetInstance( new LayerMappingContainer(null));
+        MappingActionContainer.SetInstance( new MappingActionContainer(null));
 
         MacroContainer.getInstance().readFromFile();
-        LayerMappingContainer.getInstance().readFromFile();
-        LayerMappingContainer.getInstance().subscribe(() -> LayerMappingContainer.getInstance().writeToFile());
+        MappingActionContainer.getInstance().readFromFile();
+        MappingActionContainer.getInstance().subscribe(() -> MappingActionContainer.getInstance().writeToFile());
         MacroContainer.getInstance().subscribe(() -> MacroContainer.getInstance().writeToFile());
     }
 
@@ -58,9 +58,9 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
             this.getDimension().setEventsInhibited(true);
             LinkedList<List<UUID>> actionIds = new LinkedList<>();
             List<List<UUID>> steps = macro.collectActions(actionIds);
-            List<List<LayerMapping>> executionSteps = steps.stream()
+            List<List<MappingAction>> executionSteps = steps.stream()
                     .map(stepIds -> stepIds.stream()
-                            .map(LayerMappingContainer.getInstance()::queryById)
+                            .map(MappingActionContainer.getInstance()::queryById)
                             .collect(Collectors.toList()))
                     .collect(Collectors.toList());
 
@@ -73,8 +73,8 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
             }
 
             // prepare actions for dimension
-            for (List<LayerMapping> step : executionSteps) {
-                for (LayerMapping action : step) {
+            for (List<MappingAction> step : executionSteps) {
+                for (MappingAction action : step) {
                     try {
                         action.output.prepareForDimension(getDimension());
                         action.input.prepareForDimension(getDimension());

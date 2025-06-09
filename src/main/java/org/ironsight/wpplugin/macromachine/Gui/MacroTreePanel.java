@@ -19,7 +19,7 @@ import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 public class MacroTreePanel extends JPanel {
     private final MacroContainer container;
-    private final LayerMappingContainer mappingContainer;
+    private final MappingActionContainer mappingContainer;
     private final MacroApplicator applyToMap;
     DefaultTreeModel treeModel;
     JTree tree;
@@ -30,7 +30,7 @@ public class MacroTreePanel extends JPanel {
     private boolean macroInAction;
     private boolean blockUpdates = false;
 
-    MacroTreePanel(MacroContainer container, LayerMappingContainer mappingContainer,
+    MacroTreePanel(MacroContainer container, MappingActionContainer mappingContainer,
                    MacroApplicator applyToMap, ISelectItemCallback onSelectAction) {
         this.applyToMap = applyToMap;
         this.container = container;
@@ -94,7 +94,7 @@ public class MacroTreePanel extends JPanel {
         if (blockUpdates)
             return;
         MacroContainer macroContainer = MacroContainer.getInstance();
-        MacroTreeNode newRoot = new MacroTreeNode(LayerMappingContainer.getInstance(), macroContainer);
+        MacroTreeNode newRoot = new MacroTreeNode(MappingActionContainer.getInstance(), macroContainer);
 
         LinkedList<TreePath> newSelections = new LinkedList<>();
         LinkedList<TreePath> newExpanded = new LinkedList<>();
@@ -360,7 +360,7 @@ public class MacroTreePanel extends JPanel {
         private MacroTreeNode[] children;
         private MacroTreeNode parent;
 
-        public MacroTreeNode(LayerMappingContainer actions, MacroContainer macros) {
+        public MacroTreeNode(MappingActionContainer actions, MacroContainer macros) {
             //ROOT NODE
             children = new MacroTreeNode[macros.queryAll().size()];
             int i = 0;
@@ -387,7 +387,7 @@ public class MacroTreePanel extends JPanel {
             assert parent == null;
         }
 
-        public MacroTreeNode(Macro macro, LayerMappingContainer actions, MacroContainer macros) {
+        public MacroTreeNode(Macro macro, MappingActionContainer actions, MacroContainer macros) {
             payload = macro;
             LinkedList<MacroTreeNode> nodes = new LinkedList<>();
             for (UUID id : macro.getExecutionUUIDs()) {
@@ -403,7 +403,7 @@ public class MacroTreePanel extends JPanel {
             payloadType = GlobalActionPanel.SELECTION_TPYE.MACRO;
         }
 
-        public MacroTreeNode(LayerMapping action) {
+        public MacroTreeNode(MappingAction action) {
             payload = action;
             children = new MacroTreeNode[2];
             children[0] = new MacroTreeNode(action.input, action);
@@ -413,13 +413,13 @@ public class MacroTreePanel extends JPanel {
             payloadType = GlobalActionPanel.SELECTION_TPYE.ACTION;
         }
 
-        public MacroTreeNode(IPositionValueSetter output, LayerMapping action) {
+        public MacroTreeNode(IPositionValueSetter output, MappingAction action) {
             payload = action;
             children = new MacroTreeNode[0];
             payloadType = GlobalActionPanel.SELECTION_TPYE.OUTPUT;
         }
 
-        public MacroTreeNode(IPositionValueGetter input, LayerMapping action) {
+        public MacroTreeNode(IPositionValueGetter input, MappingAction action) {
             payload = action;
             children = new MacroTreeNode[0];
             payloadType = GlobalActionPanel.SELECTION_TPYE.INPUT;
@@ -509,8 +509,8 @@ public class MacroTreePanel extends JPanel {
             return payloadType;
         }
 
-        public LayerMapping getAction() {
-            return (LayerMapping) payload;
+        public MappingAction getAction() {
+            return (MappingAction) payload;
         }
 
         public Macro getMacro() {
@@ -518,11 +518,11 @@ public class MacroTreePanel extends JPanel {
         }
 
         public IPositionValueGetter getInput() {
-            return ((LayerMapping) payload).input;
+            return ((MappingAction) payload).input;
         }
 
         public IPositionValueSetter getOutput() {
-            return ((LayerMapping) payload).output;
+            return ((MappingAction) payload).output;
         }
 
         public IDisplayUnit getPayload() {
