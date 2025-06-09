@@ -23,13 +23,13 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
     public MacroDialogOperation() {
         super(NAME, DESCRIPTION, "macrooperation");
 
-        MappingMacroContainer.SetInstance(new MappingMacroContainer(null));
+        MacroContainer.SetInstance(new MacroContainer(null));
         LayerMappingContainer.SetInstance( new LayerMappingContainer(null));
 
-        MappingMacroContainer.getInstance().readFromFile();
+        MacroContainer.getInstance().readFromFile();
         LayerMappingContainer.getInstance().readFromFile();
         LayerMappingContainer.getInstance().subscribe(() -> LayerMappingContainer.getInstance().writeToFile());
-        MappingMacroContainer.getInstance().subscribe(() -> MappingMacroContainer.getInstance().writeToFile());
+        MacroContainer.getInstance().subscribe(() -> MacroContainer.getInstance().writeToFile());
     }
 
     private Dimension getDimension() {

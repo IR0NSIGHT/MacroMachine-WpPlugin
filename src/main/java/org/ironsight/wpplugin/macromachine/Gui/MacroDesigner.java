@@ -137,7 +137,7 @@ public class MacroDesigner extends JPanel {
     private void onAddMapping() {
         ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
         macrosAndActions.addAll(LayerMappingContainer.getInstance().queryAll());
-        macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
+        macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
         JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
             MappingMacro macro = this.macro;
 
@@ -220,7 +220,7 @@ public class MacroDesigner extends JPanel {
     private void onChangeMapping() {
         ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
         macrosAndActions.addAll(LayerMappingContainer.getInstance().queryAll());
-        macrosAndActions.addAll(MappingMacroContainer.getInstance().queryAll());
+        macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
         JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
             if (selected instanceof MappingMacro) {
                 setMacro(macro.withReplacedUUIDs(this.table.getSelectedRows(), selected.getUid()), true);
@@ -267,7 +267,7 @@ public class MacroDesigner extends JPanel {
         for (UUID id : macro.executionUUIDs) {
             SaveableAction m = LayerMappingContainer.getInstance().queryById(id);
             if (m == null)
-                m = MappingMacroContainer.getInstance().queryById(id);
+                m = MacroContainer.getInstance().queryById(id);
             table.setValueAt(m, row++, 0);
         }
 

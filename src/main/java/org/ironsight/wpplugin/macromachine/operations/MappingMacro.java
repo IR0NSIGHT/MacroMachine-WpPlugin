@@ -146,7 +146,7 @@ public class MappingMacro implements SaveableAction {
     public List<List<UUID>> collectActions(List<List<UUID>> actionList) {
         List<UUID> step = new ArrayList<>();
         for (UUID id : this.executionUUIDs) {
-            SaveableAction action = MappingMacroContainer.getInstance().queryById(id);
+            SaveableAction action = MacroContainer.getInstance().queryById(id);
             if (action != null) {//macro
                 if (!step.isEmpty()) actionList.add(step);   //add collected stuff until here to actionList
                 step = new ArrayList<>();   //init new list
@@ -168,13 +168,13 @@ public class MappingMacro implements SaveableAction {
         seen.add(this.uid);
         boolean childLoop = false;
         for (UUID uuid : this.executionUUIDs) {
-            MappingMacro macro = MappingMacroContainer.getInstance().queryById(uuid);
+            MappingMacro macro = MacroContainer.getInstance().queryById(uuid);
             if (macro != null && macro.hasLoop((HashSet<UUID>) seen.clone())) return true;
         }
         return childLoop;
     }
 
-    public boolean containsNoUnknownActions(LayerMappingContainer container, MappingMacroContainer macroContainer) {
+    public boolean containsNoUnknownActions(LayerMappingContainer container, MacroContainer macroContainer) {
         for (UUID mappingUid : executionUUIDs) {
             LayerMapping mapping = container.queryById(mappingUid);
             MappingMacro nestedMacro = macroContainer.queryById(mappingUid);
