@@ -8,6 +8,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -145,8 +148,32 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
             }
         } else {
             error("Save file already exists at: " + saveFilePath);
+            createBackup(saveFile.getPath());
         }
     }
+
+    public static void createBackup(String filePath) {
+        // Convert the file path to a Path object
+        Path source = Paths.get(filePath);
+
+        // Create a human-readable timestamp
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm");
+        String timestamp = now.format(formatter);
+
+        // Create the backup file path by appending the timestamp
+        String backupFilePath = filePath + ".backup_" + timestamp;
+        Path target = Paths.get(backupFilePath);
+
+        try {
+            // Copy the file to the backup location
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("Backup created successfully: " + target);
+        } catch (IOException e) {
+            System.err.println("Failed to create backup: " + e.getMessage());
+        }
+    }
+
 
     public void readFromFile() {
         if (suppressFileWriting) return;
