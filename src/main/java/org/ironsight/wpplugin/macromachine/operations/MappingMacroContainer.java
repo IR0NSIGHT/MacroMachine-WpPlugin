@@ -15,6 +15,7 @@ import static org.ironsight.wpplugin.macromachine.operations.LayerMappingContain
 public class MappingMacroContainer extends AbstractOperationContainer<MappingMacro> {
     private static MappingMacroContainer instance;
     public static void SetInstance(MappingMacroContainer container) {
+        assert instance == null;
         instance = container;
     }
     public MappingMacroContainer(String filePath) {
