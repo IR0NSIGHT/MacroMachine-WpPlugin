@@ -40,7 +40,7 @@ class PerlinNoiseIOTest {
 
     @Test
     void serialize() {
-        PerlinNoiseIO io = new PerlinNoiseIO(1,2,3,4);
+        PerlinNoiseIO io = new PerlinNoiseIO(1, 2, 3, 4);
         Object[] data = io.getSaveData();
         IMappingValue instantiated = io.instantiateFrom(data);
         assertEquals(io, instantiated);
@@ -48,7 +48,7 @@ class PerlinNoiseIOTest {
 
     @Test
     void instantiateFromEditableValues() {
-        PerlinNoiseIO io = new PerlinNoiseIO(1,2,3,4);
+        PerlinNoiseIO io = new PerlinNoiseIO(1, 2, 3, 4);
         IMappingValue instantiated = io.instantiateWithValues(io.getEditableValues());
         assertEquals(io, instantiated);
     }
@@ -57,10 +57,10 @@ class PerlinNoiseIOTest {
     void getValueAt() {
         // unit test to ensure the perlin IO produces values across the whole intervall of [0, amplitude] and doesnt
         // just cluster around the median
-        float scale = 2000f;
-        int amplitude = 100;
+        float scale = 27f;
+        int amplitude = 12;
         int[] histogram = new int[amplitude + 1];
-        PerlinNoiseIO io = new PerlinNoiseIO(scale, amplitude, 123456, 1);
+        PerlinNoiseIO io = new PerlinNoiseIO(scale, amplitude, 12134586, 5);
 
         for (int x = -1000; x < 1000; x++) {
             for (int y = -1000; y <= 2000; y++) {
@@ -76,18 +76,15 @@ class PerlinNoiseIOTest {
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
+    @Test
+    void userSetOctaves() {
+        PerlinNoiseIO io = new PerlinNoiseIO(12, 13, 14, 3);
+        int[] values = io.getEditableValues();
+        assertArrayEquals(new int[]{12, 13, 3, 14}, values);
+        PerlinNoiseIO newIo = io.instantiateWithValues(new int[]{12, 13, 7, 14});
+        assertArrayEquals(new int[]{12, 13, 7, 14}, newIo.getEditableValues());
+        assertNotEquals(io,newIo);
+    }
 
 
 }

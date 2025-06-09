@@ -8,19 +8,37 @@ import org.pepsoft.worldpainter.Dimension;
 import java.awt.*;
 import java.util.Objects;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
 public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     private final float scale;
     private final float amplitude;
     private final long seed;
     private final int octaves;
     private transient ImprovedNoise generator;
-
+    private float shift = 0, multi = 1;
     public PerlinNoiseIO(float scale, float amplitude, long seed, int octaves) {
         this.scale = scale;
         this.amplitude = amplitude;
         this.seed = seed;
         this.octaves = octaves;
         generator = new ImprovedNoise(42069);
+
+        //brute force collect data to force generator output range into [0,1]
+        // dev note: improvedNoise does not reliable produce values across the whole histogram and there seems no way
+        // of predicting the histogram based on scale ampl seed or octaves. so we have to measure average histogram
+        // and adjust accordingly.
+        float min = Float.MAX_VALUE;
+        float max = Float.MIN_VALUE;
+        for (int x = -1000; x < 1000; x+=27) {
+            for (int y = -1000; y < 1000; y+=27) {
+                float point = getRawValueAt(x,y);
+                min = Math.min(point, min);
+                max = Math.max(point, max);
+            }
+        }
+        shift = min;
+        multi = (max-min);
     }
 
     @Override
@@ -108,8 +126,14 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
             1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f + 1/64f + 1/128f + 1/256f,
             1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f + 1/64f + 1/128f + 1/256f + 1/512f,
     };
-    @Override
-    public int getValueAt(Dimension dim, int x, int y) {
+
+    /**
+     * returns perlin noise value between [0,1]
+     * @param x
+     * @param y
+     * @return
+     */
+    private float getRawValueAt(int x, int y) {
         float value = 0;
         for (int i = 1; i < Math.pow(2, octaves); i *= 2) { // harmonic series (?)
             //improved noise wraps at 256 by default implementation and returns [-1,1]
@@ -118,8 +142,15 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
             rawValue *= 1.5375;
             value += (float) rawValue / i;
         }
-        assert octaves < octaveNormalizer.length;
+        assert octaves < octaveNormalizer.length -1;
         value = value / octaveNormalizer[octaves];
+        return value;
+    }
+    @Override
+    public int getValueAt(Dimension dim, int x, int y) {
+        float value = getRawValueAt(x,y);
+        value -= shift;
+        value /= multi;
         int finalValue = (int) Math.max(0, Math.min(amplitude, value * amplitude));
 
         assert finalValue >= 0;
@@ -162,7 +193,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
         assert values.length == 4;
         float scale = clamp(values[SCALE_IDX], 1, 30000);
         float amplitude = clamp(values[AMPLITUDE_IDX], 1, 1000);
-        int octaves = (int) clamp(values[OCTAVES_IDX], 1, octaveNormalizer.length);
+        int octaves = (int) clamp(values[OCTAVES_IDX], 1, octaveNormalizer.length-1);
         long seed = (long) clamp(values[SEED_IDX], 0, Integer.MAX_VALUE);
         return new PerlinNoiseIO(scale, amplitude, seed, octaves);
     }
@@ -174,7 +205,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
         if (o == null || getClass() != o.getClass()) return false;
         PerlinNoiseIO that = (PerlinNoiseIO) o;
         return Float.compare(scale, that.scale) == 0 && Float.compare(amplitude, that.amplitude) == 0 &&
-                seed == that.seed;
+                seed == that.seed && this.octaves == that.octaves;
     }
 
     @Override
