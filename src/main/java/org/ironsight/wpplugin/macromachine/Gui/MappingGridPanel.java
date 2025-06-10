@@ -46,6 +46,11 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 this.mapping.input.getMaxValue() - this.mapping.input.getMinValue() + 1 != selectedInputs.length) {
             resetSelection();
         }
+        System.out.println(" GRID PANEL UPDATE COMPONENTS");
+        SwingUtilities.invokeLater(()->{
+            revalidate();
+            repaint();
+        });
     }
 
     private void setInputSelection(MappingPoint point, boolean selected) {
@@ -72,7 +77,6 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 paintGrid(g);
             }
         };
-        setBorder(createLineBorder(Color.RED, 1));
         //    grid.setSize(new Dimension(pixelSizeX, pixelSizeY));
 
 
