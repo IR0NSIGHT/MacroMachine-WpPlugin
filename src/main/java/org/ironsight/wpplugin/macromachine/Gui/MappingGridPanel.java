@@ -1,18 +1,22 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.checkerframework.checker.units.qual.C;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static javax.swing.BorderFactory.createLineBorder;
 
 public class MappingGridPanel extends LayerMappingPanel implements IMappingPointSelector {
-    private final int pointHitBoxRadius = 5;
+    private final int pointHitBoxRadius = 20;
     int widthOutputStrings = 0;
     int fontheight;
     private int shiftX = 50;
@@ -44,9 +48,10 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         }
     }
 
-    private void setInputSelection(int input, boolean selected) {
-        this.selectedInputs[input - mapping.input.getMinValue()] = selected;
+    private void setInputSelection(MappingPoint point, boolean selected) {
+        this.selectedInputs[point.input - mapping.input.getMinValue()] = selected;
         onSelect.accept(selectedInputs);
+        lastClickedPoint = point;
     }
 
     private boolean isInputSelected(int input) {
@@ -75,6 +80,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         MappingGridPanel panel = this;
         grid.addMouseListener(new MouseAdapter() {
             int gridXDragStart, gridYDragStart;
+            int pixelXDragStart, pixelYDragStart;
 
             @Override
             public void mousePressed(MouseEvent e) {
@@ -82,8 +88,10 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                     Point grid = pixelToGrid(e.getX(), e.getY());
                     gridXDragStart = grid.x;
                     gridYDragStart = grid.y;
+                    pixelXDragStart = e.getX();
+                    pixelYDragStart = e.getY();
                     //update selected
-                    boolean hit = selectPointNear(gridXDragStart, gridYDragStart, pointHitBoxRadius);
+                    boolean hit = selectPointNear(e.getX(), e.getY(), pointHitBoxRadius);
                     drag = true;
                 }
             }
@@ -101,32 +109,40 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 int gridX = pressed.x;
                 int gridY = pressed.y;
 
-                int MINIMAL_DRAG_DISTANCE = 3;
-                boolean dragged = distanceBetween(gridX, gridY, gridXDragStart, gridYDragStart) > MINIMAL_DRAG_DISTANCE;
+                int MINIMAL_DRAG_DISTANCE = 30;
+                boolean dragged = distanceBetween(pixelX, pixelY, pixelXDragStart, pixelYDragStart) > MINIMAL_DRAG_DISTANCE;
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    if (dragged && selectedInputs != null) {  // REPOSITION POINT
-
-                    } else {    // INSERT POINT
+                    if (!dragged) {    // INSERT POINT
                         // Call the callback with the grid coordinates
-                        boolean hit = selectPointNear(gridX, gridY, pointHitBoxRadius);
+                        boolean hit = selectPointNear(pixelX, pixelY, pointHitBoxRadius);
                         if (!hit) {
                             // INSERT NEW POINT
                             MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
                                     panel.mapping.getMappingPoints().length + 1);
+                            MappingPoint p = new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
+                            newPoints[newPoints.length - 1] = p;
 
-                            newPoints[newPoints.length - 1] =
-                                    new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
                             updateMapping(mapping.withNewPoints(newPoints));
                             resetSelection();
-                            setInputSelection(gridX, true); //select the new point
+                            setInputSelection(p, true); //select the new point
                         } else {
                             //implicitly set selected point, but dont do anything with it
                         }
                     }
                 } else if (e.getButton() == MouseEvent.BUTTON3) {   // RIGHT CLICK
                     // DELETE SELECTED POINT
+                    if (lastClickedPoint == null)
+                        return;
+
+                    //test if rightclick occured far away from current selected point
+                    Point p = gridToPixel(lastClickedPoint.input,lastClickedPoint.output);
+                    p.x -= pixelX; p.y -= pixelY;
+                    double distPixel =Math.sqrt(p.x*p.x+p.y*p.y);
+                    if (distPixel > pointHitBoxRadius)
+                        return; //abort, click is to far away from selction
+
                     //update selected
-                    boolean hit = selectPointNear(gridX, gridY, pointHitBoxRadius);
+                    boolean hit = selectPointNear(pixelX, pixelY, pointHitBoxRadius);
 
                     if (panel.mapping.getMappingPoints().length <= 1) return;   //dont allow to delete the last
                     // control point
@@ -149,6 +165,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 mousePosX = e.getX();
                 mousePosY = e.getY();
                 mouseMoved = true;
+
                 if (drag) {
                     // move selected control points to current mouse position
                     MappingPoint[] points = mapping.getMappingPoints().clone();
@@ -161,9 +178,9 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                         mapping.getMappingPoints()[i] = points[i];
 
                         if (isInputSelected(points[i].input)) {
-                            setInputSelection(points[i].input, false);  //deselect old
+                            setInputSelection(points[i], false);  //deselect old
                             points[i] = new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
-                            setInputSelection(points[i].input, true);   //reselect updated value
+                            setInputSelection(points[i], true);   //reselect updated value
                             changed = true;
                         }
                     }
@@ -240,7 +257,6 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
 
         g.drawRect(pixelPos.x - radius / 2, pixelPos.y - radius / 2, radius, radius);
         resetSelection();
-        if (!isInputSelected(gridPos.x)) setInputSelection(gridPos.x, true);
     }
 
     protected void paintCurveLines(Graphics2D g) {
@@ -425,31 +441,38 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     }
 
     // Callback method to handle the click event (pass the grid coordinates)
-    private boolean selectPointNear(int x, int y, int maxDist) {
-        MappingPoint closest = null;
-        int selectedIdx = -1;
-        int i = 0;
-        int distTotalSq = Integer.MAX_VALUE;
-
-
+    private boolean selectPointNear(int pixelX, int pixelY, int maxDist) {
+        ArrayList<MappingPoint> points = new ArrayList<>();
         for (MappingPoint p : mapping.getMappingPoints()) {
-            int distX = Math.abs(p.input - x);
-            int distY = Math.abs(p.output - y);
-            int distSq = distX * distX + distY * distY;
-            if (closest == null || distSq < distTotalSq) {
-                closest = p;
-                distTotalSq = distSq;
-                selectedIdx = i;
-            }
-            i++;
+            points.add(p);
         }
-        if (distTotalSq > (maxDist * maxDist)) return false;
+        final Function<MappingPoint, Double> distance = p -> {
+            Point p1 = gridToPixel(p.input,p.output);
+
+            double dX = p1.x - pixelX;
+            double dY = p1.y - pixelY;
+            return Math.sqrt(dX * dX + dY * dY);
+        };
+        points.sort(new Comparator<MappingPoint>() {
+
+            @Override
+            public int compare(MappingPoint o1, MappingPoint o2) {
+                double dist1 = distance.apply(o1);
+                double dist2 = distance.apply(o2);
+                return Double.compare(dist1, dist2);
+            }
+        });
+        MappingPoint closest = points.get(0);
+
         resetSelection();
-        setInputSelection(closest.input, true);
+        if (distance.apply(closest) > maxDist) return false;
+
+        setInputSelection(closest, true);
         this.repaint();
         return true;
     }
 
+    private MappingPoint lastClickedPoint;
     private float distanceBetween(int x1, int y1, int x2, int y2) {
         float dX = x1 - x2;
         float dY = y1 - y2;
