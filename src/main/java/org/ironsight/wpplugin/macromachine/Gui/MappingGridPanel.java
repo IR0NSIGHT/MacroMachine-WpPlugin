@@ -69,7 +69,6 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
 
     @Override
     protected void initComponents() {
-        this.setLayout(new BorderLayout());
         JPanel grid = new JPanel() {
             @Override
             public void paint(Graphics g) {
@@ -77,8 +76,6 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 paintGrid(g);
             }
         };
-        //    grid.setSize(new Dimension(pixelSizeX, pixelSizeY));
-
 
         // Add a MouseListener to detect clicks inside the panel
         MappingGridPanel panel = this;
@@ -225,6 +222,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         });
         this.add(buttons, BorderLayout.SOUTH);
         this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
+        //keep this, otherwise the size is fucked up
+        setBorder(null); // Remove the border
     }
 
     private void paintLineInGrid(float x1, float x2, float y1, float y2, Graphics g) {
