@@ -91,7 +91,11 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                     pixelXDragStart = e.getX();
                     pixelYDragStart = e.getY();
                     //update selected
-                    boolean hit = selectPointNear(e.getX(), e.getY(), pointHitBoxRadius);
+
+                    MappingPoint last = lastClickedPoint;
+                    boolean hit = selectPointNear(pixelXDragStart, pixelYDragStart, pointHitBoxRadius);
+                    if (last != lastClickedPoint)
+                        return; // do not drag a point that was just selected.
                     drag = true;
                 }
             }
@@ -115,7 +119,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                     if (!dragged) {    // INSERT POINT
                         // Call the callback with the grid coordinates
                         boolean hit = selectPointNear(pixelX, pixelY, pointHitBoxRadius);
-                        if (!hit) {
+                        if (!hit) { //selected point didnt change,
                             // INSERT NEW POINT
                             MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
                                     panel.mapping.getMappingPoints().length + 1);
