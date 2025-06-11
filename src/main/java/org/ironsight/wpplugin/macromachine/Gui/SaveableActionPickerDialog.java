@@ -46,6 +46,8 @@ public class SaveableActionPickerDialog extends JDialog {
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setCellRenderer(new SaveableActionRenderer());
 
+
+
         items.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
         if (specialTopAction != null)
             listModel.addElement(specialTopAction);
@@ -58,11 +60,17 @@ public class SaveableActionPickerDialog extends JDialog {
             onSubmit.accept(selected);
             this.dispose();
         });
+        okButton.setEnabled(false);
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(e -> {
             this.dispose();
         });
+        list.addListSelectionListener(
+                e -> {
+                    okButton.setEnabled(list.getSelectedValue() != null);
 
+                }
+        );
         JPanel panel = new JPanel(new BorderLayout());
         JScrollPane pane = new JScrollPane(list);
         panel.add(pane, BorderLayout.CENTER);
