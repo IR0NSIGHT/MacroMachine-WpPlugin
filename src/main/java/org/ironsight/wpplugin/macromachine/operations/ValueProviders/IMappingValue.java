@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 
+import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 
 import java.awt.*;
@@ -8,6 +9,14 @@ import java.awt.*;
 public interface IMappingValue extends IDisplayUnit {
     static int sanitizeValue(int value, IMappingValue mappingValue) {
         return Math.max(Math.min(value, mappingValue.getMaxValue()), mappingValue.getMinValue());
+    }
+
+    static MappingPoint[] getAllPointsForDiscreteIO(IPositionValueSetter mappingValue, int outputValue) {
+        MappingPoint[] arr = new MappingPoint[range(mappingValue)];
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = new MappingPoint(i,outputValue);
+        }
+        return arr;
     }
 
     static int range(IMappingValue mappingValue) {

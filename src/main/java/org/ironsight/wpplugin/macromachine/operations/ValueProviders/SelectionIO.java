@@ -5,7 +5,19 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
 
+import java.awt.*;
+
 public class SelectionIO extends BinaryLayerIO {
+    @Override
+    public String getName() {
+        return "Selection";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Worldpainter Default Selection Layer (yellow)";
+    }
+
     public SelectionIO() {
         super(SelectionBlock.INSTANCE);
     }
@@ -46,5 +58,15 @@ public class SelectionIO extends BinaryLayerIO {
     @Override
     public ProviderType getProviderType() {
         return ProviderType.SELECTION;
+    }
+
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        super.paint(g, value, dim);
+        if (value == 0) // not selected
+            g.setColor(Color.LIGHT_GRAY);
+        if (value == 1)
+            g.setColor(Color.yellow);
+        g.fillRect(0,0,dim.width,dim.height);
     }
 }
