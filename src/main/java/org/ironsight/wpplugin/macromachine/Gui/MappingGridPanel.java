@@ -453,6 +453,10 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         for (MappingPoint p : mapping.getMappingPoints()) {
             points.add(p);
         }
+        if (points.size() == 0) {
+            assert false : "this shouldnt happen, not allowed";
+            return false;
+        }
         final Function<MappingPoint, Double> distance = p -> {
             Point p1 = gridToPixel(p.input,p.output);
 
@@ -469,6 +473,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
                 return Double.compare(dist1, dist2);
             }
         });
+
         MappingPoint closest = points.get(0);
 
         resetSelection();
