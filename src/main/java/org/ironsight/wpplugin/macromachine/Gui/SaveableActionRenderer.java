@@ -14,6 +14,7 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
 
 class SaveableActionRenderer extends DefaultTreeCellRenderer
@@ -106,8 +107,8 @@ class SaveableActionRenderer extends DefaultTreeCellRenderer
                                                    int row, int column) {
         updateTo(value);
         if (isSelected) {
-            panel.setBackground(table.getSelectionBackground());
-        } else panel.setBackground(table.getBackground());
+            panel.setBackground(SELECTED_BACKGROUND);
+        } else panel.setBackground(DEFAULT_BACKGROUND);
         return panel;
     }
 
@@ -116,8 +117,8 @@ class SaveableActionRenderer extends DefaultTreeCellRenderer
                                                   boolean isSelected, boolean cellHasFocus) {
         updateTo(value);
         if (isSelected) {
-            panel.setBackground(list.getSelectionBackground());
-        } else panel.setBackground(list.getBackground());
+            panel.setBackground(SELECTED_BACKGROUND);
+        } else panel.setBackground(DEFAULT_BACKGROUND);
         return panel;
     }
 
@@ -143,8 +144,8 @@ class SaveableActionRenderer extends DefaultTreeCellRenderer
         }
 
         if (selected) {
-            panel.setBackground(getBackgroundSelectionColor());
-        } else panel.setBackground(getBackground());
+            panel.setBackground(SELECTED_BACKGROUND);
+        } else panel.setBackground(DEFAULT_BACKGROUND);
         panel.invalidate();
         return panel;
 
