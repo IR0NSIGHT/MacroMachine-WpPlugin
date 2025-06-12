@@ -2,8 +2,7 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.WaterDepthProvider;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -13,6 +12,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.getAllPointsForDiscreteIO;
 
 public class MacroDesigner extends JPanel {
     Consumer<Macro> onSubmit;
@@ -141,14 +141,137 @@ public class MacroDesigner extends JPanel {
         items.add(new MappingAction(new WaterDepthProvider(),
                 ActionFilterIO.instance,
                 new MappingPoint[]{
-                        new MappingPoint(0, ActionFilterIO.BLOCK_VALUE)
+                        new MappingPoint(0, ActionFilterIO.BLOCK_VALUE),
+                        new MappingPoint(0, ActionFilterIO.PASS_VALUE)
                 },
                 ActionType.LIMIT_TO,
-                "Only On Water",
+                "Filter: Only On Water",
                 "Default filter: block all blocks that are not below waterlevel",
                 null
                 ));
+        items.add(new MappingAction(new WaterDepthProvider(),
+                ActionFilterIO.instance,
+                new MappingPoint[]{
+                        new MappingPoint(0, ActionFilterIO.PASS_VALUE),
+                        new MappingPoint(1, ActionFilterIO.BLOCK_VALUE)
+                },
+                ActionType.LIMIT_TO,
+                "Filter: Only On Land",
+                "Default filter: block all blocks that are not above waterlevel",
+                null
+        ));
+        items.add(new MappingAction(new TerrainHeightIO(-64,319),
+                ActionFilterIO.instance,
+                new MappingPoint[]{
+                        new MappingPoint(73, ActionFilterIO.PASS_VALUE),
+                        new MappingPoint(319, ActionFilterIO.BLOCK_VALUE)
+                },
+                ActionType.LIMIT_TO,
+                "Filter: Below height",
+                "Default filter: block all blocks that are above this level",
+                null
+        ));
+        items.add(new MappingAction(new TerrainHeightIO(-64,319),
+                ActionFilterIO.instance,
+                new MappingPoint[]{
+                        new MappingPoint(73, ActionFilterIO.BLOCK_VALUE),
+                        new MappingPoint(319, ActionFilterIO.PASS_VALUE)
+                },
+                ActionType.LIMIT_TO,
+                "Filter: Above height",
+                "Default filter: block all blocks that below this level",
+                null
+        ));
+        items.add(new MappingAction(new SlopeProvider(),
+                ActionFilterIO.instance,
+                new MappingPoint[]{
+                        new MappingPoint(45, ActionFilterIO.BLOCK_VALUE),
+                        new MappingPoint(90, ActionFilterIO.PASS_VALUE)
+                },
+                ActionType.LIMIT_TO,
+                "Filter: Above degrees",
+                "Default filter: block all blocks that are flatter than this angle",
+                null
+        ));
+        items.add(new MappingAction(new SlopeProvider(),
+                ActionFilterIO.instance,
+                new MappingPoint[]{
+                        new MappingPoint(45, ActionFilterIO.PASS_VALUE),
+                        new MappingPoint(90, ActionFilterIO.BLOCK_VALUE)
+                },
+                ActionType.LIMIT_TO,
+                "Filter: Below degrees",
+                "Default filter: block all blocks that are steeper than this angle",
+                null
+        ));
+        MappingPoint[] allBiomesBlocked = getAllPointsForDiscreteIO(new VanillaBiomeProvider(),
+                ActionFilterIO.BLOCK_VALUE);
+        allBiomesBlocked[1] = new MappingPoint(1 /*plains*/, ActionFilterIO.PASS_VALUE);
+        items.add(new MappingAction(new VanillaBiomeProvider(),
+                ActionFilterIO.instance,
+                allBiomesBlocked,
+                ActionType.LIMIT_TO,
+                "Filter: Only on biome",
+                "Default filter: block all blocks that are not this biome type",
+                null
+        ));
+        MappingPoint[] allBiomesPass = getAllPointsForDiscreteIO(new VanillaBiomeProvider(),
+                ActionFilterIO.PASS_VALUE);
+        allBiomesBlocked[1] = new MappingPoint(1 /*plains*/, ActionFilterIO.BLOCK_VALUE);
+        items.add(new MappingAction(new VanillaBiomeProvider(),
+                ActionFilterIO.instance,
+                allBiomesPass,
+                ActionType.LIMIT_TO,
+                "Filter: Except on biome",
+                "Default filter: block all blocks that are this biome type",
+                null
+        ));
 
+        items.add(new MappingAction(new SelectionIO(),
+                ActionFilterIO.instance,
+                new MappingPoint[]{
+                        new MappingPoint(0, ActionFilterIO.BLOCK_VALUE),
+                        new MappingPoint(1, ActionFilterIO.PASS_VALUE),
+                },
+                ActionType.LIMIT_TO,
+                "Filter: Inside Selection",
+                "Default filter: block all blocks that are not in selection.",
+                null
+        ));
+
+        items.add(new MappingAction(new SelectionIO(),
+                ActionFilterIO.instance,
+                new MappingPoint[]{
+                        new MappingPoint(0, ActionFilterIO.PASS_VALUE),
+                        new MappingPoint(1, ActionFilterIO.BLOCK_VALUE),
+                },
+                ActionType.LIMIT_TO,
+                "Filter: Outside Selection",
+                "Default filter: block all blocks that are  in selection.",
+                null
+        ));
+        items.add(new MappingAction(new AlwaysIO(),
+                ActionFilterIO.instance,
+                new MappingPoint[]{
+                        new MappingPoint(0, ActionFilterIO.PASS_VALUE),
+                },
+                ActionType.SET,
+                "Filter: Reset, allow all",
+                "Default filter: block nothing.",
+                null
+        ));
+
+        MappingPoint[] allAnnotationsBlock = getAllPointsForDiscreteIO(new AnnotationSetter(),
+                ActionFilterIO.BLOCK_VALUE);
+        allAnnotationsBlock[9] = new MappingPoint(9 /*cyan*/, ActionFilterIO.PASS_VALUE);
+        items.add(new MappingAction(new AnnotationSetter(),
+                ActionFilterIO.instance,
+                allAnnotationsBlock,
+                ActionType.LIMIT_TO,
+                "Filter: Only On Annotations Cyan",
+                "Default filter: block all blocks that are not cyan annotated.",
+                null
+        ));
         return items;
     }
 

@@ -41,7 +41,8 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        if (lastX != x || lastY != y) return 0;
+        if (lastX != x || lastY != y)
+            return PASS_VALUE; //this block wasnt yet setwith the filter, by default return PASS
         return value;
     }
 
