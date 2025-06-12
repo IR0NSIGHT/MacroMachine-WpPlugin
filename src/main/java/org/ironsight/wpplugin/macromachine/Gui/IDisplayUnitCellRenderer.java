@@ -11,47 +11,14 @@ import java.awt.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header2Font;
 
-class IDisplayUnitCellRenderer extends DefaultTreeCellRenderer {
-    JPanel panel = new JPanel();
-    JLabel name = new JLabel();
-    JTextArea description = new JTextArea();
+class IDisplayUnitCellRenderer{
 
-    public IDisplayUnitCellRenderer() {
-        panel.setLayout(new BorderLayout());
+    public static final Color SELECTED_BACKGROUND = new Color(205, 199, 255);
+    public static final Color SELECTED_FOREGROUND = Color.BLACK;
 
-        name.setVerticalAlignment(SwingConstants.CENTER);
-        name.setFont(header1Font);
-        description.setFont(header2Font);
-        description.setLineWrap(true);
-        description.setOpaque(false);
-        panel.add(name, BorderLayout.NORTH);
-        panel.add(description, BorderLayout.CENTER);
-    }
+    public static final Color DEFAULT_BACKGROUND = Color.WHITE;
+    public static final Color DEFAULT_FOREGROUND = Color.DARK_GRAY;
+    public static final Color INTERPOLATED_BACKGROUND = Color.LIGHT_GRAY;
+    public static final Color INTERPOLATED_FOREGROUND = Color.DARK_GRAY;
 
-    @Override
-    public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
-                                                  boolean leaf, int row, boolean hasFocus) {
-        String nameText = "";
-        String descriptionText = "";
-        assert value instanceof MacroTreeNode;
-        if (value instanceof MacroTreeNode) {
-            MacroTreeNode node = (MacroTreeNode) value;
-            IDisplayUnit obj = node.getPayload();
-             nameText = obj.getName();
-            descriptionText = obj.getDescription();
-        }
-        name.setText(nameText);
-        if (expanded || leaf) {
-            description.setText(descriptionText);
-            description.setVisible(true);
-        } else description.setVisible(false);
-        FontMetrics fm = description.getFontMetrics(description.getFont());
-        description.setPreferredSize(new Dimension(fm.charWidth('A') * 50, description.getPreferredSize().height));
-
-        if (selected) panel.setBackground(Color.LIGHT_GRAY);
-        else panel.setBackground(Color.WHITE);
-        panel.invalidate();
-        return panel;
-
-    }
 }
