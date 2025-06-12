@@ -27,7 +27,7 @@ public class MacroTreePanel extends JPanel {
     private String filterString = "";
     private JButton applyButton;
     private long lastProgressUpdate = 0;
-    private boolean macroInAction;
+    private boolean macroIsCurrentlyExecuting;
     private boolean blockUpdates = false;
 
     MacroTreePanel(MacroContainer container, MappingActionContainer mappingContainer,
@@ -210,15 +210,15 @@ public class MacroTreePanel extends JPanel {
                 MacroTreeNode selectedNode = (MacroTreeNode) selectedPath.getLastPathComponent();
                 switch (selectedNode.getPayloadType()) {
                     case MACRO:
-                        onSelectAction.onSelect(selectedNode.getMacro(), selectedNode.getPayloadType());
+                        onItemInTreeSelected(selectedNode.getMacro(), selectedNode.getPayloadType());
                         break;
                     case ACTION:
                     case INPUT:
                     case OUTPUT:
-                        onSelectAction.onSelect(selectedNode.getAction(), selectedNode.getPayloadType());
+                        onItemInTreeSelected(selectedNode.getAction(), selectedNode.getPayloadType());
                         break;
                     case INVALID:
-                        onSelectAction.onSelect(null, selectedNode.getPayloadType());
+                        onItemInTreeSelected(null, selectedNode.getPayloadType());
                         break;
                 }
             }
@@ -287,6 +287,11 @@ public class MacroTreePanel extends JPanel {
         this.invalidate();
     }
 
+    private void onItemInTreeSelected(SaveableAction item, GlobalActionPanel.SELECTION_TPYE type) {
+        applyButton.setEnabled(type == GlobalActionPanel.SELECTION_TPYE.MACRO);
+        onSelectAction.onSelect(item, type);
+    }
+
     private void onSetProgress(ApplyAction.Progess progess) {
         SwingUtilities.invokeLater(() -> {
             if (Math.abs(lastProgressUpdate - System.currentTimeMillis()) < 100)
@@ -306,9 +311,9 @@ public class MacroTreePanel extends JPanel {
     }
 
     private void onApply() {
-        if (macroInAction)
+        if (macroIsCurrentlyExecuting)
             return;
-        macroInAction = true;
+        macroIsCurrentlyExecuting = true;
         ExecutorService executorService = Executors.newFixedThreadPool(1);
         SwingUtilities.invokeLater(() -> {
             applyButton.setEnabled(false);
@@ -345,7 +350,7 @@ public class MacroTreePanel extends JPanel {
                 applyButton.setText("Apply macros");
                 applyButton.repaint();
             });
-            macroInAction = false;
+            macroIsCurrentlyExecuting = false;
             applyButton.setEnabled(true);
         });
 
