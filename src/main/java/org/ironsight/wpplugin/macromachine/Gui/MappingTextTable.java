@@ -164,45 +164,42 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         });
         buttons.add(groupValuesCheckBox);
         this.add(buttons, BorderLayout.SOUTH);
-        listener = new TableModelListener() {
-            @Override
-            public void tableChanged(TableModelEvent e) {
-                // Check if the event is due to a cell update
-                if (e.getType() == TableModelEvent.UPDATE && !blockTableChanged) {
-                    int row = e.getFirstRow(); // Get the row of the edited cell
-                    int column = e.getColumn(); // Get the column of the edited cell
-                    Object newValue = tableModel.getValueAt(row, column); // Get the new value
-                    assert eventColumn == column;
-                    assert eventRow == row;
-                    MappingPointValue previous = beforeChange == null ? null : (MappingPointValue) beforeChange;
-                    int[] selectedRows = numberTable.getSelectedRows();
-                    parseAndSetValue(newValue, previous, selectedRows, column);
-                    if (column == 0) {  //input changed, rows moved, update selection
-                        if (!groupValues) {
-                            // row index is 1:1 mapped to input
-                            int rowDiff = previous.numericValue - ((MappingPointValue) newValue).numericValue;
-                            numberTable.clearSelection();
-                            for (int rowIdx : selectedRows) {
-                                if (rowIdx - rowDiff >= 0 && rowIdx - rowDiff < numberTable.getRowCount())
-                                    numberTable.addRowSelectionInterval(rowIdx - rowDiff, rowIdx - rowDiff);
-                            }
-                        } else {
-                            // remove selection of old row
-                            for (int rowIt = 0; rowIt < tableModel.getRowCount(); rowIt++) {
-                                //add selection to new row
-                                if (((MappingPointValue) tableModel.getValueAt(rowIt,column)).numericValue == ((MappingPointValue)newValue).numericValue ) {
-                                    numberTable.addRowSelectionInterval(rowIt, rowIt);
-                                }
-                                // delete selection of old row
-                                if (((MappingPointValue) tableModel.getValueAt(rowIt,column)).numericValue == previous.numericValue ) {
-                                    numberTable.removeRowSelectionInterval(rowIt, rowIt);
-                                }
-                            }
+        listener = e -> {
+            // Check if the event is due to a cell update
+            if (e.getType() == TableModelEvent.UPDATE && !blockTableChanged) {
+                int row = e.getFirstRow(); // Get the row of the edited cell
+                int column = e.getColumn(); // Get the column of the edited cell
+                Object newValue = tableModel.getValueAt(row, column); // Get the new value
+                assert eventColumn == column;
+                assert eventRow == row;
+                MappingPointValue previous = beforeChange == null ? null : (MappingPointValue) beforeChange;
+                int[] selectedRows = numberTable.getSelectedRows();
+                parseAndSetValue(newValue, previous, selectedRows, column);
+                if (column == 0) {  //input changed, rows moved, update selection
+                    if (!groupValues) {
+                        // row index is 1:1 mapped to input
+                        int rowDiff = previous.numericValue - ((MappingPointValue) newValue).numericValue;
+                        numberTable.clearSelection();
+                        for (int rowIdx : selectedRows) {
+                            if (rowIdx - rowDiff >= 0 && rowIdx - rowDiff < numberTable.getRowCount())
+                                numberTable.addRowSelectionInterval(rowIdx - rowDiff, rowIdx - rowDiff);
                         }
                     } else {
-                        for (int rowIdx : selectedRows) {
-                            numberTable.addRowSelectionInterval(rowIdx, rowIdx);
+                        // remove selection of old row
+                        for (int rowIt = 0; rowIt < tableModel.getRowCount(); rowIt++) {
+                            //add selection to new row
+                            if (((MappingPointValue) tableModel.getValueAt(rowIt,column)).numericValue == ((MappingPointValue)newValue).numericValue ) {
+                                numberTable.addRowSelectionInterval(rowIt, rowIt);
+                            }
+                            // delete selection of old row
+                            if (((MappingPointValue) tableModel.getValueAt(rowIt,column)).numericValue == previous.numericValue ) {
+                                numberTable.removeRowSelectionInterval(rowIt, rowIt);
+                            }
                         }
+                    }
+                } else {
+                    for (int rowIdx : selectedRows) {
+                        numberTable.addRowSelectionInterval(rowIdx, rowIdx);
                     }
                 }
             }

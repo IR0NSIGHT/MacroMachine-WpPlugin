@@ -8,14 +8,16 @@ import javax.annotation.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.function.Consumer;
 
 public class SaveableActionPickerDialog extends JDialog {
     public SaveableActionPickerDialog(ArrayList<SaveableAction> layerMappings, Consumer<SaveableAction> onSubmit,
-                                      @Nullable SaveableAction newAction, Component parent) {
+                                      Collection<SaveableAction> topActions, Component parent) {
         super();
-        init(layerMappings, onSubmit, newAction);
+        init(layerMappings, onSubmit, topActions);
         this.setModal(true);
         this.toFront();
         this.setAlwaysOnTop(true);
@@ -35,11 +37,12 @@ public class SaveableActionPickerDialog extends JDialog {
             MappingActionContainer.addDefaultMappings(MappingActionContainer.getInstance());
         ArrayList<SaveableAction> layerMappings = new ArrayList<>(MappingActionContainer.getInstance().queryAll());
         Dialog dlg = new SaveableActionPickerDialog(layerMappings , System.out::println,
-                MappingAction.getNewEmptyAction(), frame);
+                Collections.singleton(MappingAction.getNewEmptyAction()), frame);
         dlg.setVisible(true);
     }
 
-    private void init(ArrayList<SaveableAction> items, Consumer<SaveableAction> onSubmit,  @Nullable SaveableAction specialTopAction) {
+    private void init(ArrayList<SaveableAction> items, Consumer<SaveableAction> onSubmit,
+                      Collection<SaveableAction> specialTopAction) {
         JList<SaveableAction> list = new JList<>();
         DefaultListModel<SaveableAction> listModel = new DefaultListModel<>();
         list.setModel(listModel);
@@ -49,8 +52,11 @@ public class SaveableActionPickerDialog extends JDialog {
 
 
         items.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
-        if (specialTopAction != null)
-            listModel.addElement(specialTopAction);
+        if (specialTopAction != null) {
+            for (SaveableAction a : specialTopAction) {
+                listModel.addElement(a);
+            }
+        }
         for (SaveableAction mapping : items) {
             listModel.addElement(mapping);
         }
