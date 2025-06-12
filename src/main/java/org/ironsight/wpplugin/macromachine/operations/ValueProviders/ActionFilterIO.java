@@ -10,6 +10,8 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     private static int value;
     private static int lastX;
     private static int lastY;
+    public static final int PASS_VALUE = 1;
+    public static final int BLOCK_VALUE = 0;
 
     private ActionFilterIO() {
     }
@@ -20,7 +22,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     }
 
     public boolean isSelected() {
-        return value != 0;
+        return value == PASS_VALUE;
     }
     @Override
     public boolean isVirtual() {
@@ -28,8 +30,8 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     }
     public void setSelected(boolean selected) {
         if (selected) {
-            value = 1;
-        } else value = 0;
+            value = PASS_VALUE;
+        } else value = BLOCK_VALUE;
     }
 
     @Override
@@ -62,7 +64,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public String getDescription() {
-        return "only blocks that are selected will be used in following actions.";
+        return "only blocks that pass this filter will be used in following actions.";
     }
 
     @Override
@@ -87,7 +89,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public String valueToString(int value) {
-        return value == 1 ? "SELECTED (1)" : "NOT SELECTED (0)";
+        return value == PASS_VALUE ? "PASS (1)" : "BLOCK (0)";
     }
 
     @Override
@@ -97,7 +99,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        g.setColor(value == 1 ? Color.RED : Color.BLACK);
+        g.setColor(value == PASS_VALUE ? Color.GREEN : Color.RED);
         g.fillRect(0, 0, dim.width, dim.height);
     }
     @Override

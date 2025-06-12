@@ -2,6 +2,8 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.WaterDepthProvider;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -133,6 +135,22 @@ public class MacroDesigner extends JPanel {
         prepareTableModel();
     }
 
+    private Collection<SaveableAction> getDefaultFiltersAndEmptyAction() {
+        LinkedList<SaveableAction> items = new LinkedList<>();
+        items.add(MappingAction.getNewEmptyAction());
+        items.add(new MappingAction(new WaterDepthProvider(),
+                ActionFilterIO.instance,
+                new MappingPoint[]{
+                        new MappingPoint(0, ActionFilterIO.BLOCK_VALUE)
+                },
+                ActionType.LIMIT_TO,
+                "Only On Water",
+                "Default filter: block all blocks that are not below waterlevel",
+                null
+                ));
+
+        return items;
+    }
 
     private void onAddMapping() {
         ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
@@ -153,7 +171,7 @@ public class MacroDesigner extends JPanel {
             for (int row : newSelection) {
                 table.addRowSelectionInterval(row, row);
             }
-        }, MappingAction.getNewEmptyAction(), this);
+        }, getDefaultFiltersAndEmptyAction(), this);
         dialog.setModal(true);
         dialog.setVisible(true);
     }
@@ -234,11 +252,11 @@ public class MacroDesigner extends JPanel {
                             MacroMachinePlugin::error);
                     temp = temp.withReplacedUUIDs(new int[]{targetIdx}, action.getUid());
                 }
-                setMacro(temp,true);
+                setMacro(temp, true);
             }
 
 
-        }, MappingAction.getNewEmptyAction(), this);
+        }, getDefaultFiltersAndEmptyAction(), this);
         dialog.setModal(true);
         dialog.setVisible(true);
     }
