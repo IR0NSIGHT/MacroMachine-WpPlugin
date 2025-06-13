@@ -7,8 +7,7 @@ import java.util.Objects;
 public class MappingPointValue {
     IMappingValue mappingValue;
     int numericValue;
-    public boolean isEditable = false;
-    public int mappingPointIndex = -1;
+
 
     public MappingPointValue(int numericValue, IMappingValue mappingValue) {
         assert (IMappingValue.sanitizeValue(numericValue,mappingValue) == numericValue) : "illegal value for this " +
@@ -17,19 +16,8 @@ public class MappingPointValue {
         this.mappingValue = mappingValue;
     }
 
-    public MappingPointValue(IMappingValue mappingValue, int numericValue, boolean isEditable, int mappingPointIndex) {
-        assert (IMappingValue.sanitizeValue(numericValue,mappingValue) == numericValue) : "illegal value for this " +
-                "mapping";
-        this.mappingValue = mappingValue;
-        this.numericValue = numericValue;
-        this.isEditable = isEditable;
-        this.mappingPointIndex = mappingPointIndex;
-    }
-
     public MappingPointValue withValue(int numericValue) {
         MappingPointValue mappingPointValue = new MappingPointValue(numericValue, mappingValue);
-        mappingPointValue.isEditable = this.isEditable;
-        mappingPointValue.mappingPointIndex = this.mappingPointIndex;
         return mappingPointValue;
     }
 
