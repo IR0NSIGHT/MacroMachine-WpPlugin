@@ -26,8 +26,14 @@ class MappingActionValueTableModel implements TableModel {
             return;
         if (action.equals(this.action))
             return;
+        boolean inputOutputChanged = this.action == null ||
+                !(this.action.input.equals(action.input) && this.action.output.equals(action.getOutput()));
         this.action = action;
         rebuildData();
+        if (inputOutputChanged)
+            for (TableModelListener l : listeners) {
+                l.tableChanged(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
+            }
     }
 
     public MappingAction getAction() {
@@ -62,9 +68,7 @@ class MappingActionValueTableModel implements TableModel {
             output[rowIndex] = new MappingPointValue(action.map(inputValue), action.output);
             rowIndex++;
         }
-        for (TableModelListener l : listeners) {
-            l.tableChanged(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
-        }
+
     }
 
     @Override
