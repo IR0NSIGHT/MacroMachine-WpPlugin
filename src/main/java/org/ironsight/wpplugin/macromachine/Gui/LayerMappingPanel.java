@@ -4,6 +4,7 @@ import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 
 import javax.swing.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.function.Consumer;
 
@@ -34,7 +35,13 @@ public abstract class LayerMappingPanel extends JPanel {
      * @param mapping
      */
     protected final void updateMapping(MappingAction mapping) {
-        if (mapping == null || this.mapping == null || this.mapping.equals(mapping) || !allowEvents) {
+        System.out.println("attempt update mapping to points: " + Arrays.toString(mapping.getMappingPoints()));
+        if (mapping == null || this.mapping == null || this.mapping.equals(mapping)) {
+            System.out.println("skip update: mapping didnt change");
+            return;
+        }
+        if (!allowEvents) {
+            System.out.println("block update");
             return;
         }
         if (mapping.input != this.mapping.input || mapping.output != this.mapping.output) {
