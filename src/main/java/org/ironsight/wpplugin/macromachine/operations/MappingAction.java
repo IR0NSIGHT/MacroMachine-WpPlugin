@@ -219,7 +219,7 @@ public class MappingAction implements SaveableAction {
     }
 
     public MappingPoint[] getMappingPoints() {
-        return mappingPoints;
+        return mappingPoints.clone();
     }
 
     private MappingPoint sanitize(MappingPoint p) {

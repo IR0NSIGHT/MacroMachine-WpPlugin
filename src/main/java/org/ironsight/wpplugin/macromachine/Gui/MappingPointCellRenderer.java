@@ -30,21 +30,23 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
         return panel.getPreferredSize().height;
     }
 
-    public void updateTo(MappingPointValue point) {
+    public void updateTo(MappingPointValue point, boolean isEditable, boolean isSelected) {
         textLabel.setText(point.mappingValue.valueToString(point.numericValue));
 
         valueRenderer.setMappingValue(point.mappingValue);
         valueRenderer.setValue(point.numericValue);
-        if (point.isEditable) {
+        textLabel.setFont(isEditable ? textLabel.getFont().deriveFont(Font.PLAIN) : textLabel.getFont().deriveFont(Font.ITALIC));
+
+        if (isSelected) {
+            textLabel.setBackground(SELECTED_BACKGROUND);
+            textLabel.setForeground(SELECTED_FOREGROUND);
+        } else if (isEditable) {
             textLabel.setForeground(DEFAULT_FOREGROUND);
             textLabel.setBackground(DEFAULT_BACKGROUND);
-            textLabel.setFont(textLabel.getFont().deriveFont(Font.PLAIN));
         } else {
             textLabel.setForeground(INTERPOLATED_FOREGROUND);
             textLabel.setBackground(INTERPOLATED_BACKGROUND);
-            textLabel.setFont(textLabel.getFont().deriveFont(Font.ITALIC));
         }
-
     }
 
 
@@ -53,18 +55,7 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
                                                    int row, int column) {
         assert value != null;
         assert value instanceof MappingPointValue;
-        updateTo((MappingPointValue) value);
-        if (isSelected) {
-            textLabel.setBackground(SELECTED_BACKGROUND);
-            textLabel.setForeground(SELECTED_FOREGROUND);
-        } else {
-            textLabel.setBackground(DEFAULT_BACKGROUND);
-            textLabel.setForeground(DEFAULT_FOREGROUND);
-        }
-
-
-
-
+        updateTo((MappingPointValue) value, table.isCellEditable(row,column), isSelected);
 
         return panel;
     }
@@ -73,16 +64,7 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
     public Component getListCellRendererComponent(JList<? extends MappingPointValue> list, MappingPointValue value,
                                                   int index, boolean isSelected, boolean cellHasFocus) {
         assert value != null;
-
-        updateTo(value);
-        if (isSelected) {
-            textLabel.setBackground(SELECTED_BACKGROUND);
-            textLabel.setForeground(SELECTED_FOREGROUND);
-        } else {
-            textLabel.setBackground(DEFAULT_BACKGROUND);
-            textLabel.setForeground(DEFAULT_FOREGROUND);
-        }
-
+        updateTo(value, false, isSelected);
 
         return panel;
     }
