@@ -19,6 +19,11 @@ import static org.ironsight.wpplugin.macromachine.operations.ProviderType.fromTy
  */
 public class MappingAction implements SaveableAction {
     public final IPositionValueGetter input;
+
+    public IPositionValueSetter getOutput() {
+        return output;
+    }
+
     public final IPositionValueSetter output;
     public final ActionType actionType;
     private final MappingPoint[] mappingPoints;
