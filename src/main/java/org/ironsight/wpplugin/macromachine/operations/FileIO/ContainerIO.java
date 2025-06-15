@@ -8,6 +8,7 @@ import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 
+import javax.crypto.Mac;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -41,6 +42,13 @@ public class ContainerIO {
     }
 
     public static void writeContainerToFile(ExportContainer container, File file) throws IOException {
+        System.out.println("WRITE FILE");
+        if (file.getParentFile() != null && !file.getParentFile().exists()) {
+            file.getParentFile().mkdirs(); // Create all necessary parent directories
+        }
+        assert file.getParentFile().exists();
+        assert file.getParentFile().isDirectory() : "regression: if its a file, saving will fail";
+        file.createNewFile();
         ObjectMapper objectMapper = new ObjectMapper();
 
         try {
@@ -94,34 +102,44 @@ public class ContainerIO {
             ExportContainer data = readFromFile(file);
 
             // collect everything that should be imported
-            HashSet<UUID> toBeImported = new HashSet<>();
+            HashSet<UUID> macrosSet = new HashSet<>();
+            HashSet<UUID> actionsSet = new HashSet<>();
             for (MacroJsonWrapper macroData : data.getMacros()) {
                 Macro macro = toMacro(macroData);
                 if (policy.allowImportExport(macro)) {
-                    toBeImported.add(macro.getUid());
-                    toBeImported.addAll(List.of(macro.getExecutionUUIDs()));
+                    macrosSet.add(macro.getUid());
                 }
             }
             for (ActionJsonWrapper actionData : data.getActions()) {
                 MappingAction action = toAction(actionData);
                 if (policy.allowImportExport(action)) {
-                    toBeImported.add(action.getUid());
+                    actionsSet.add(action.getUid());
                 }
             }
 
-            // do import
-            for (MacroJsonWrapper macroData : data.getMacros()) {
-                Macro macro = toMacro(macroData);
-                if (toBeImported.contains(macro.getUid())) {
-                    macroContainer.updateMapping(macro, onImportError);
+            {            // do import
+                Macro[] macros = new Macro[macrosSet.size()];
+                int idx = 0;
+                for (MacroJsonWrapper macroData : data.getMacros()) {
+                    Macro macro = toMacro(macroData);
+                    if (macrosSet.contains(macro.getUid())) {
+                        macros[idx++] = macro;
+                    }
                 }
+                macroContainer.updateMapping(onImportError, macros);
             }
-            for (ActionJsonWrapper actionData : data.getActions()) {
-                MappingAction action = toAction(actionData);
-                if (toBeImported.contains(action.getUid())) {
-                    assert action.getUid() != null;
-                    actionContainer.updateMapping(action, onImportError);
+
+            {
+                MappingAction[] actions = new MappingAction[actionsSet.size()];
+                int idx = 0;
+                for (ActionJsonWrapper actionData : data.getActions()) {
+                    MappingAction action = toAction(actionData);
+                    if (actionsSet.contains(action.getUid())) {
+                        assert action.getUid() != null;
+                        actions[idx++] = action;
+                    }
                 }
+                actionContainer.updateMapping(onImportError, actions);
             }
         } catch (NoSuchFileException e) {
             ; // not an error.

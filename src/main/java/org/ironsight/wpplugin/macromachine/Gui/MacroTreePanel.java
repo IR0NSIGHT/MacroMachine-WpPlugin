@@ -4,7 +4,6 @@ import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ConflictResolveImportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
-import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.MacroExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
@@ -20,8 +19,10 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+import static org.ironsight.wpplugin.macromachine.MacroMachinePlugin.error;
 import static org.ironsight.wpplugin.macromachine.operations.MacroContainer.getActionsFilePath;
 
 public class MacroTreePanel extends JPanel {
@@ -275,15 +276,18 @@ public class MacroTreePanel extends JPanel {
         removeButton.addActionListener(e -> {
             blockUpdates = true;
             Set<UUID> deletedUUIDS = getSelectedUUIDs(true, true);
+            ArrayList<Macro> updatedMacros = new ArrayList<>();
             //remove Mapping Actions from all macros
             for (Macro m : container.queryAll()) {
+                if (deletedUUIDS.contains(m.getUid()))
+                    continue;
                 Macro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs)
                         .filter(a -> !deletedUUIDS.contains(a))
                         .toArray(UUID[]::new));
-                container.updateMapping(updated, f -> {
-                    throw new RuntimeException(f);
-                });
+                updatedMacros.add(updated);
             }
+
+            container.updateMapping(MacroMachinePlugin::error, updatedMacros.toArray(new Macro[0]));
 
             // Delete action / Macro in containers
             container.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
@@ -332,8 +336,10 @@ public class MacroTreePanel extends JPanel {
 
         int result = fileChooser.showOpenDialog(null); // Use null or a valid parent component
         lastExportFilePath = fileChooser.getCurrentDirectory().getPath();
-        String outputDir = fileChooser.getSelectedFile().getPath();
+
         if (result == JFileChooser.APPROVE_OPTION) {
+            assert (fileChooser.getSelectedFile() != null) : "user confirmed without selection?";
+            String outputDir = fileChooser.getSelectedFile().getPath();
             for (UUID macroId : getSelectedUUIDs(true, false)) {
                 Macro lastItem = container.queryById(macroId);
                 MacroExportPolicy policy = new MacroExportPolicy(lastItem, MacroContainer.getInstance());
@@ -352,7 +358,7 @@ public class MacroTreePanel extends JPanel {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Select a file");
         fileChooser.setCurrentDirectory(new File(lastImportFilePath));
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Only MacroMachine files","macro"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Only MacroMachine files", "macro"));
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.setMultiSelectionEnabled(true);
         int result = fileChooser.showOpenDialog(this);
@@ -363,7 +369,7 @@ public class MacroTreePanel extends JPanel {
                         MacroContainer.getInstance(),
                         selected,
                         new ConflictResolveImportPolicy(MacroContainer.getInstance(),
-                                MappingActionContainer.getInstance(), SwingUtilities.getWindowAncestor(this) ),
+                                MappingActionContainer.getInstance(), SwingUtilities.getWindowAncestor(this)),
                         MacroMachinePlugin::error
                 );
             }
@@ -427,7 +433,7 @@ public class MacroTreePanel extends JPanel {
 
                 }
             } catch (InterruptedException ex) {
-                MacroMachinePlugin.error(ex.getMessage());
+                error(ex.getMessage());
             }
 
             SwingUtilities.invokeLater(() -> {
