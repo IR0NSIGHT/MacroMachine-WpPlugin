@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Dimension;
 
@@ -19,6 +20,11 @@ import static org.ironsight.wpplugin.macromachine.operations.ProviderType.fromTy
  */
 public class MappingAction implements SaveableAction {
     public final IPositionValueGetter input;
+
+    public IPositionValueSetter getOutput() {
+        return output;
+    }
+
     public final IPositionValueSetter output;
     public final ActionType actionType;
     private final MappingPoint[] mappingPoints;
@@ -26,11 +32,13 @@ public class MappingAction implements SaveableAction {
     private final String description;
     private final UUID uid;    //TODO make final and private
     private final int[] mappings;
-
-    public static MappingAction getNewEmptyAction() {
+    public static MappingAction getNewEmptyAction(UUID id) {
         return new MappingAction(new TerrainHeightIO(-64,319),
                 new AnnotationSetter(),
-                new MappingPoint[0], ActionType.SET, "create new action", "new description",null);
+                new MappingPoint[0], ActionType.SET, "create new action", "new description",id);
+    }
+    public static MappingAction getNewEmptyAction() {
+       return getNewEmptyAction(null);
     }
     public MappingAction(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
                          ActionType type, String name, String description, UUID uid) {
@@ -219,7 +227,7 @@ public class MappingAction implements SaveableAction {
     }
 
     public MappingPoint[] getMappingPoints() {
-        return mappingPoints;
+        return mappingPoints.clone();
     }
 
     private MappingPoint sanitize(MappingPoint p) {

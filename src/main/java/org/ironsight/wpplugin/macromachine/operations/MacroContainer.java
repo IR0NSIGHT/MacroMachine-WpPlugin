@@ -14,32 +14,37 @@ import static org.ironsight.wpplugin.macromachine.operations.MappingActionContai
 
 public class MacroContainer extends AbstractOperationContainer<Macro> {
     private static MacroContainer instance;
-    public static void SetInstance(MacroContainer container) {
-        assert instance == null;
-        instance = container;
-    }
+
     public MacroContainer(String filePath) {
         super(Macro.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultMacros.json");
     }
 
+    public static void SetInstance(MacroContainer container) {
+        assert instance == null;
+        instance = container;
+    }
+
     public static MacroContainer getInstance() {
-        assert instance != null: "we have to set a global isntance first";
+        assert instance != null : "we have to set a global isntance first";
         return instance;
     }
 
-    private static String getActionsFilePath() {
-        String currentWorkingDir = System.getProperty("user.dir");
-        if (isDebugMode()) return currentWorkingDir + "/macros.json";
-        else return new File(Configuration.getConfigDir(), "plugins").getPath() + "/macros.json";
+    public static String getActionsFilePath() {
+        return new File(Configuration.getConfigDir(), "plugins").getPath() + "/macroMachine";
     }
 
     @Override
     protected Macro getNewAction() {
+        return getNewAction(getUUID());
+    }
+
+    @Override
+    protected Macro getNewAction(UUID uuid) {
         return new Macro("New Mapping Macro",
                 "this macro is a collection of Mappings, each applied in order " + "to" + " the map to achieve " +
                         "complex, reusable, one-click operations.",
                 new UUID[0],
-                getUUID());
+                uuid);
     }
 
     @Override
@@ -54,7 +59,7 @@ public class MacroContainer extends AbstractOperationContainer<Macro> {
 
     @Override
     public void updateMapping(Macro macro, Consumer<String> onError) {
-        boolean loop = macro.hasLoop(new HashSet<>());
+        boolean loop = macro.hasLoop(new HashSet<>(), this);
         if (loop) {
             onError.accept("Macro has an infinite loop, caused by a nested macro. Can not save.");
             return;

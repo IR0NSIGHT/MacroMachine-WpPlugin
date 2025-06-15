@@ -29,7 +29,6 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         this.type = type;
         this.filePath = filePath;
         this.defaultFileResourcePath = defaultFileResourcePath;
-        System.out.println("container" + type + " path="+filePath + " default resource=" + defaultFileResourcePath);
     }
 
     public String getFilePath() {
@@ -87,6 +86,14 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         return UUID.randomUUID();
     }
 
+    public T addMapping(UUID uuid) {
+        T newMap = getNewAction(uuid);
+        mappings.put(newMap.getUid(), newMap);
+
+        notify(newMap.getUid());
+        return newMap;
+    }
+
     public T addMapping() {
         T newMap = getNewAction();
         mappings.put(newMap.getUid(), newMap);
@@ -96,6 +103,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     }
 
     protected abstract T getNewAction();
+    protected  abstract T getNewAction(UUID uuid);
 
     public void subscribe(Runnable runnable) {
         genericNotifies.add(runnable);
@@ -147,7 +155,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
                 error("Failed to copy the default resource file: " + e.getMessage());
             }
         } else {
-            error("Save file already exists at: " + saveFilePath);
+            //error("Save file already exists at: " + saveFilePath);
             createBackup(saveFile.getPath());
         }
     }
@@ -168,7 +176,6 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         try {
             // Copy the file to the backup location
             Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Backup created successfully: " + target);
         } catch (IOException e) {
             System.err.println("Failed to create backup: " + e.getMessage());
         }
@@ -177,7 +184,6 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
 
     public void readFromFile() {
         if (suppressFileWriting) return;
-
         try {
             ensureSaveFileExists(filePath, defaultFileResourcePath);
             mappings.clear();
