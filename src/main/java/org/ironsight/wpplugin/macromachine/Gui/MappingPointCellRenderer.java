@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
+
 public class MappingPointCellRenderer implements TableCellRenderer, ListCellRenderer<MappingPointValue> {
     private final JPanel panel;
     private final JLabel textLabel;
@@ -20,7 +22,6 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
         valueRenderer = new MappingValuePreviewPanel();
         valueRenderer.setPreferredSize(new Dimension(30, 30));
         valueRenderer.setOpaque(false);
-        valueRenderer.setBackground(Color.GREEN);
         panel.add(valueRenderer, BorderLayout.EAST);
         panel.invalidate();
     }
@@ -29,37 +30,32 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
         return panel.getPreferredSize().height;
     }
 
-    public void updateTo(MappingPointValue point) {
+    public void updateTo(MappingPointValue point, boolean isEditable, boolean isSelected) {
         textLabel.setText(point.mappingValue.valueToString(point.numericValue));
 
         valueRenderer.setMappingValue(point.mappingValue);
         valueRenderer.setValue(point.numericValue);
-        if (point.isEditable) {
-            textLabel.setForeground(Color.BLACK);
-            textLabel.setFont(textLabel.getFont().deriveFont(Font.PLAIN));
-        } else {
-            textLabel.setForeground(Color.GRAY);
-            textLabel.setFont(textLabel.getFont().deriveFont(Font.ITALIC));
-        }
+        textLabel.setFont(isEditable ? textLabel.getFont().deriveFont(Font.PLAIN) : textLabel.getFont().deriveFont(Font.ITALIC));
 
+        if (isSelected) {
+            textLabel.setBackground(SELECTED_BACKGROUND);
+            textLabel.setForeground(SELECTED_FOREGROUND);
+        } else if (isEditable) {
+            textLabel.setForeground(DEFAULT_FOREGROUND);
+            textLabel.setBackground(DEFAULT_BACKGROUND);
+        } else {
+            textLabel.setForeground(INTERPOLATED_FOREGROUND);
+            textLabel.setBackground(INTERPOLATED_BACKGROUND);
+        }
     }
 
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
-        if (isSelected) {
-            textLabel.setBackground(table.getSelectionBackground());
-            textLabel.setForeground(table.getSelectionForeground());
-        } else {
-            textLabel.setBackground(table.getBackground());
-            textLabel.setForeground(table.getForeground());
-        }
-
         assert value != null;
         assert value instanceof MappingPointValue;
-
-        updateTo((MappingPointValue) value);
+        updateTo((MappingPointValue) value, table.isCellEditable(row,column), isSelected);
 
         return panel;
     }
@@ -67,16 +63,8 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
     @Override
     public Component getListCellRendererComponent(JList<? extends MappingPointValue> list, MappingPointValue value,
                                                   int index, boolean isSelected, boolean cellHasFocus) {
-        if (isSelected) {
-            textLabel.setBackground(list.getSelectionBackground());
-            textLabel.setForeground(list.getSelectionForeground());
-        } else {
-            textLabel.setBackground(list.getBackground());
-            textLabel.setForeground(list.getForeground());
-        }
         assert value != null;
-
-        updateTo(value);
+        updateTo(value, false, isSelected);
 
         return panel;
     }
