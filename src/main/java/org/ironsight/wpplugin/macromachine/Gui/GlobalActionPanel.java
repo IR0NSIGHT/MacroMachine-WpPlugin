@@ -52,7 +52,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     public static void main(String[] args) {
-        File saveFile = new File("./mySavefile.macro");
+        File saveFile = new File("./plugins/macroMachine/mySavefile.macro");
 
         MacroContainer.SetInstance(new MacroContainer("./src/main/resources/DefaultMacros.json"));
         MacroContainer macros = MacroContainer.getInstance();

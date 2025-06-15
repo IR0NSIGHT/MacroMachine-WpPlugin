@@ -37,10 +37,9 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
 
         Runnable saveEverything = () -> ContainerIO.exportFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
                 new ImportExportPolicy(), System.err::println);
-        MappingActionContainer.getInstance().subscribe(saveEverything);
 
-        MappingActionContainer.getInstance().subscribe(() -> MappingActionContainer.getInstance().writeToFile());
-        MacroContainer.getInstance().subscribe(() -> MacroContainer.getInstance().writeToFile());
+        MappingActionContainer.getInstance().subscribe(saveEverything);
+        MacroContainer.getInstance().subscribe(saveEverything);
     }
 
     private Dimension getDimension() {
