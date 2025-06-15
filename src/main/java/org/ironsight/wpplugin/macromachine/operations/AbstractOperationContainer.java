@@ -40,17 +40,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     }
 
     public void updateMapping(T mapping, Consumer<String> onError) {
-        if (mapping.getUid() == null) {
-            onError.accept("mapping has null UID:" + mapping);
-            return;
-        }
-
-        //filter for identity
-        if (!mappings.containsKey(mapping.getUid()) || queryById(mapping.getUid()).equals(mapping)) {
-            mapping.getUid();
-        }
-        mappings.put(mapping.getUid(), mapping);
-        notify(mapping.getUid());
+        updateMapping(onError, mapping);
     }
 
     public T queryById(UUID uid) {
@@ -80,6 +70,24 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
             }
         }
         notify(list.toArray(new UUID[0]));
+    }
+
+    public void updateMapping(Consumer<String> onError, T... items) {
+        UUID[] uids = new UUID[items.length]; int idx = 0;
+        for (T mapping: items) {
+            if (mapping == null || mapping.getUid() == null) {
+                onError.accept("mapping has null UID:" + mapping);
+                continue;
+            }
+
+            //filter for identity
+            if (!mappings.containsKey(mapping.getUid()) || queryById(mapping.getUid()).equals(mapping)) {
+                mapping.getUid();
+            }
+            mappings.put(mapping.getUid(), mapping);
+            uids[idx++] = mapping.getUid();
+        }
+        notify(Arrays.copyOf(uids, idx));
     }
 
     protected UUID getUUID() {
