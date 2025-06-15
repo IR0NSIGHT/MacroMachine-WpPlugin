@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
@@ -62,8 +63,8 @@ public class ContainerIO {
     public static ExportContainer readFromFile(File file) throws IOException {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            ExportContainer obj = objectMapper.readValue(Files.readString(file.toPath(), StandardCharsets.UTF_8),
-                    ExportContainer.class);
+            String content = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
+            ExportContainer obj = objectMapper.readValue(content, ExportContainer.class);
 
             return obj;
         }catch (JsonMappingException ex) {
