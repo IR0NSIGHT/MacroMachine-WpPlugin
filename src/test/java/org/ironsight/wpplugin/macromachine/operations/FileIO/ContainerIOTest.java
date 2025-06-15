@@ -129,7 +129,7 @@ class ContainerIOTest {
         File tempFile = Files.createTempFile("test", ".tmp").toFile();
         ContainerIO.exportFile(actionContainer, macroContainer, tempFile, new ImportExportPolicy(), Assertions::fail);
 
-        String content = Files.readString(tempFile.toPath())
+        String content = new String(Files.readAllBytes(tempFile.toPath()))
                 .replace("\r\n", "\n")
                 .replace('\r', '\n')
                 .replaceAll("  \"exportDate\"\\s*:\\s*\".*?\"", "  \"exportDate\" : \"now\"");
