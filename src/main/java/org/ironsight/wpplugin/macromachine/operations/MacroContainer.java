@@ -35,11 +35,16 @@ public class MacroContainer extends AbstractOperationContainer<Macro> {
 
     @Override
     protected Macro getNewAction() {
+        return getNewAction(getUUID());
+    }
+
+    @Override
+    protected Macro getNewAction(UUID uuid) {
         return new Macro("New Mapping Macro",
                 "this macro is a collection of Mappings, each applied in order " + "to" + " the map to achieve " +
                         "complex, reusable, one-click operations.",
                 new UUID[0],
-                getUUID());
+                uuid);
     }
 
     @Override
@@ -54,7 +59,7 @@ public class MacroContainer extends AbstractOperationContainer<Macro> {
 
     @Override
     public void updateMapping(Macro macro, Consumer<String> onError) {
-        boolean loop = macro.hasLoop(new HashSet<>());
+        boolean loop = macro.hasLoop(new HashSet<>(), this);
         if (loop) {
             onError.accept("Macro has an infinite loop, caused by a nested macro. Can not save.");
             return;

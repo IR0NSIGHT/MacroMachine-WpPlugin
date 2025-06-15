@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Configuration;
 import org.pepsoft.worldpainter.layers.Frost;
@@ -10,19 +11,18 @@ import org.pepsoft.worldpainter.layers.PineForest;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
- * this class stores MappingActions by UUID
- * it can read and write to file
- * its the central authority on which actions exist. if its not in the container, its considered non-existent.
+ * this class stores MappingActions by UUID it can read and write to file its the central authority on which actions
+ * exist. if its not in the container, its considered non-existent.
  */
 public class MappingActionContainer extends AbstractOperationContainer<MappingAction> {
     private static MappingActionContainer INSTANCE;
 
     public MappingActionContainer(String filePath) {
         super(MappingAction.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultActions.json");
-        MacroMachinePlugin.error("INSTANTIATE NEW MAPPING CONTAINER:" + this);
     }
 
     public static MappingActionContainer getInstance() {
@@ -70,7 +70,7 @@ public class MappingActionContainer extends AbstractOperationContainer<MappingAc
         });
 
         m = container.addMapping();
-        m = new MappingAction(new TerrainHeightIO(-64,319),
+        m = new MappingAction(new TerrainHeightIO(-64, 319),
                 new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
                 new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)},
                 ActionType.AT_LEAST,
@@ -103,14 +103,19 @@ public class MappingActionContainer extends AbstractOperationContainer<MappingAc
 
     @Override
     protected MappingAction getNewAction() {
-        return new MappingAction(new TerrainHeightIO(-64,319),
+        return getNewAction(getUUID());
+
+    }
+
+    @Override
+    protected MappingAction getNewAction(UUID uuid) {
+        return new MappingAction(new TerrainHeightIO(-64, 319),
                 new AnnotationSetter(),
                 new MappingPoint[0],
                 ActionType.SET,
-                "New Action " + Math.round(Math.random() * 1000),
+                "New Action",
                 "description of the action",
-                getUUID());
-
+                uuid);
     }
 
     @Override
@@ -148,31 +153,6 @@ public class MappingActionContainer extends AbstractOperationContainer<MappingAc
     @Override
     public void updateMapping(MappingAction mapping, Consumer<String> onError) {
         super.updateMapping(mapping, onError);
-        System.out.println("updated mapping in container with input:" + mapping.getInput());
     }
-
-    @Override
-    public void writeToFile() {
-        MacroMachinePlugin.error("Action Container write to file" + this);
-        super.writeToFile();
-        /* // FIXME DISABLED UNTIL LAYER SAVING/LOADING IS FIGURED OUT
-        //FIXME also save layers that are used as input?
-        Predicate<LayerMapping> usesLayer = l -> l.output instanceof ILayerGetter;
-        //collect all layers used in all actions
-        HashSet<String> usedLayers = queryAll().stream()
-                .filter(usesLayer)
-                .map(l -> (ILayerGetter) l.output)
-                .map(ILayerGetter::getLayerId)
-                .collect(HashSet::new, HashSet::add, HashSet::addAll);
-        String layerFolder = "/home/klipper/Documents/worldpainter/layers/";
-        ArrayList<IOException> errors = new ArrayList<IOException>();
-        LayerObjectContainer.getInstance().writeToFolder(layerFolder, errors::add, usedLayers.toArray(new String[0]));
-        if (!errors.isEmpty())
-            GlobalActionPanel.logMessage(errors.stream().map(Throwable::getMessage).collect(Collectors.joining("\n")));
-
-         */
-    }
-
-
 }
 

@@ -62,7 +62,7 @@ class MappingActionValueTableModelTest {
     @Test
     void getColumnCount() {
         MappingActionValueTableModel model = new MappingActionValueTableModel();
-        assertEquals(2, model.getRowCount());
+        assertEquals(2, model.getColumnCount());
     }
 
     @Test
