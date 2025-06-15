@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;

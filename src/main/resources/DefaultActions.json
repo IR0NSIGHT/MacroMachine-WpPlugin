@@ -21,6 +21,17 @@
   "description" : "0-37: meadow, 38-40: meadow edge, 41-73: forest, 74-80: forest edge, 81: clear",
   "uid" : "3acc036b-d19e-434d-9ed2-110aad2a0a06"
 }, {
+  "inputId" : "WATER_DEPTH",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 100 ],
+  "outputPoints" : [ 1, 0 ],
+  "name" : "Filter: Only On Land",
+  "description" : "Default filter: block all blocks that are not above waterlevel",
+  "uid" : "e09537c8-43b4-4c74-b920-744823c0bb31"
+}, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "HEIGHT",
@@ -53,6 +64,17 @@
   "name" : "perlin color",
   "description" : "new description",
   "uid" : "92537724-f6c2-4152-896c-2d4abdc32385"
+}, {
+  "inputId" : "SLOPE",
+  "inputData" : [ ],
+  "outputId" : "SELECTION",
+  "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 45, 70, 71 ],
+  "outputPoints" : [ 0, 1, 0 ],
+  "name" : "45-70°",
+  "description" : "description of the action",
+  "uid" : "781c16f7-f905-4126-beac-c7432d4f946f"
 }, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ 0, 100, "" ],
@@ -131,6 +153,28 @@
   "description" : "description of the action",
   "uid" : "675eb20e-d25a-40ad-8b44-81dfd56265cc"
 }, {
+  "inputId" : "HEIGHT",
+  "inputData" : [ -64, 319 ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 73 ],
+  "outputPoints" : [ 1, 0 ],
+  "name" : "Filter: Below height",
+  "description" : "Default filter: block all blocks that are above this level",
+  "uid" : "9ca4d29e-7d2b-4384-858a-158d0938b2be"
+}, {
+  "inputId" : "SELECTION",
+  "inputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 1 ],
+  "outputPoints" : [ 1, 0 ],
+  "name" : "Filter: Outside Selection",
+  "description" : "Default filter: block all blocks that are  in selection.",
+  "uid" : "4c24d9c5-37cf-477d-bcc7-a1671a8d356b"
+}, {
   "inputId" : "BLOCK_DIRECTION",
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE",
@@ -141,6 +185,39 @@
   "name" : "subtract sunny side",
   "description" : "description of the action",
   "uid" : "a5838003-43b6-402d-85dd-269a0b019ecb"
+}, {
+  "inputId" : "VANILLA_BIOME",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256 ],
+  "outputPoints" : [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ],
+  "name" : "Filter: Except on biome",
+  "description" : "Default filter: block all blocks that are this biome type",
+  "uid" : "743e29cc-adac-4ed6-b35f-77991aef8b37"
+}, {
+  "inputId" : "ANNOTATION",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+  "name" : "Filter: Only On Annotations Cyan",
+  "description" : "Default filter: block all blocks that are not cyan annotated.",
+  "uid" : "3532c357-c74e-41b1-82ab-95a92c9f721e"
+}, {
+  "inputId" : "SELECTION",
+  "inputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 1 ],
+  "outputPoints" : [ 0, 1 ],
+  "name" : "Filter: Inside Selection",
+  "description" : "Default filter: block all blocks that are not in selection.",
+  "uid" : "fcd62c5d-a279-4296-9b7e-2d7a678ccf70"
 }, {
   "inputId" : "DISTANCE_TO_EDGE",
   "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
@@ -163,6 +240,17 @@
   "name" : "select black to macro",
   "description" : "description of the action",
   "uid" : "c1124b59-e2eb-460c-8690-f598152f662b"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "TERRAIN",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 21 ],
+  "name" : "apply beach",
+  "description" : "description of the action",
+  "uid" : "e07537e4-8bbf-49fd-864a-fd464dd22d2c"
 }, {
   "inputId" : "SELECTION",
   "inputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
@@ -224,7 +312,7 @@
   "outputId" : "STONE_PALETTE",
   "outputData" : [ 0, 10, 4, 12, 13, 72, 73, 74, 150, 75, 5 ],
   "actionType" : "SET",
-  "inputPoints" : [ 40, 61, 70 ],
+  "inputPoints" : [ 50, 63, 70 ],
   "outputPoints" : [ 0, 9, 8 ],
   "name" : "paint slopes",
   "description" : "description of the action",
@@ -241,6 +329,28 @@
   "description" : "description of the action",
   "uid" : "a05419d9-4507-4508-8f08-3f15320987ba"
 }, {
+  "inputId" : "SLOPE",
+  "inputData" : [ ],
+  "outputId" : "SELECTION",
+  "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 45, 70, 71 ],
+  "outputPoints" : [ 0, 1, 0 ],
+  "name" : "45-70°",
+  "description" : "description of the action",
+  "uid" : "3970dcdc-f5b5-4fac-ad84-cd65a7586aa0"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "TERRAIN",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 21 ],
+  "name" : "apply beach",
+  "description" : "description of the action",
+  "uid" : "a1cda136-8e7d-45cf-b68e-7d358373852d"
+}, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "TERRAIN",
@@ -251,6 +361,17 @@
   "name" : "cobblestone wall",
   "description" : "description of the action",
   "uid" : "b931c559-6e9b-479d-9ab4-a2cf304640fe"
+}, {
+  "inputId" : "VANILLA_BIOME",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+  "name" : "Filter: Only on biome",
+  "description" : "Default filter: block all blocks that are steeper than this angle",
+  "uid" : "7dae0dc7-ac22-414e-9ca5-70ee252223c1"
 }, {
   "inputId" : "ANNOTATION",
   "inputData" : [ ],
@@ -439,6 +560,17 @@
   "description" : "description of the action",
   "uid" : "4e271b87-71f9-4316-9154-ca98d37c90b9"
 }, {
+  "inputId" : "VANILLA_BIOME",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 45 ],
+  "outputPoints" : [ 1, 0 ],
+  "name" : "Filter: Only on biome",
+  "description" : "Default filter: block all blocks that are steeper than this angle",
+  "uid" : "22a798e1-1b31-4421-a051-4efb8fc60ffc"
+}, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE_SELECTION",
@@ -472,6 +604,17 @@
   "description" : "description of the action",
   "uid" : "a09da31d-82c2-47b2-863f-d1f584dbd5ad"
 }, {
+  "inputId" : "ANNOTATION",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 ],
+  "name" : "Filter: Only On Annotations Cyan",
+  "description" : "Default filter: block all blocks that are not cyan annotated.",
+  "uid" : "0e669f94-31c5-4d84-b69c-620953dd65b5"
+}, {
   "inputId" : "INTERMEDIATE",
   "inputData" : [ 0, 100, "" ],
   "outputId" : "TERRAIN",
@@ -493,6 +636,17 @@
   "name" : "filter outside",
   "description" : "description of the action",
   "uid" : "2a46066c-f159-42a2-8a8d-db93c3cc6856"
+}, {
+  "inputId" : "SELECTION",
+  "inputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 1 ],
+  "outputPoints" : [ 0, 1 ],
+  "name" : "Filter: Inside Selection",
+  "description" : "Default filter: block all blocks that are not in selection.",
+  "uid" : "60e87a5b-ceee-40b2-a25d-cab29a50d787"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
@@ -538,6 +692,17 @@
   "description" : "description of the action",
   "uid" : "95747dbc-49c4-4975-acab-14613211f1f9"
 }, {
+  "inputId" : "VANILLA_BIOME",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256 ],
+  "outputPoints" : [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+  "name" : "Filter: Only on biome",
+  "description" : "Default filter: block all blocks that are not this biome type",
+  "uid" : "3e2a922f-020f-4d65-ae31-2e1c4790820e"
+}, {
   "inputId" : "SLOPE",
   "inputData" : [ ],
   "outputId" : "INTERMEDIATE_SELECTION",
@@ -581,6 +746,17 @@
   "name" : "mark biomes",
   "description" : "description of the action",
   "uid" : "61f3ea91-5ba6-4769-8365-018ec9cd8eef"
+}, {
+  "inputId" : "SLOPE",
+  "inputData" : [ ],
+  "outputId" : "SELECTION",
+  "outputData" : [ "SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock" ],
+  "actionType" : "SET",
+  "inputPoints" : [ 45, 70, 71 ],
+  "outputPoints" : [ 0, 1, 0 ],
+  "name" : "45-70°",
+  "description" : "description of the action",
+  "uid" : "2d38ecfc-c797-46c5-b5f5-d3f1684b8c3f"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
@@ -725,6 +901,17 @@
   "description" : "description of the action",
   "uid" : "9444da9f-c5db-44af-ac9d-8d5406f032e5"
 }, {
+  "inputId" : "VANILLA_BIOME",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+  "name" : "Filter: Only on biome",
+  "description" : "Default filter: block all blocks that are not this biome type",
+  "uid" : "225a9f4c-5961-42ec-b0d0-397c03cbf088"
+}, {
   "inputId" : "HEIGHT",
   "inputData" : [ -64, 319 ],
   "outputId" : "INTERMEDIATE_SELECTION",
@@ -746,6 +933,17 @@
   "name" : "paint floor",
   "description" : "description of the action",
   "uid" : "928ae9df-60bf-4564-9abe-27ffe8f19446"
+}, {
+  "inputId" : "ANNOTATION",
+  "inputData" : [ ],
+  "outputId" : "INTERMEDIATE_SELECTION",
+  "outputData" : [ ],
+  "actionType" : "LIMIT_TO",
+  "inputPoints" : [ 0, 2, 3, 4, 5, 6, 7, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+  "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+  "name" : "Filter: Only On Annotations Cyan",
+  "description" : "Default filter: block all blocks that are not cyan annotated.",
+  "uid" : "20a66c10-98ac-46c7-891c-931ef78a842c"
 }, {
   "inputId" : "DISTANCE_TO_EDGE",
   "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer" ],
@@ -779,6 +977,17 @@
   "name" : "Select cyan",
   "description" : "description of the action",
   "uid" : "d945d70d-ccf7-4a2f-a3eb-6a4fde997050"
+}, {
+  "inputId" : "ALWAYS",
+  "inputData" : [ ],
+  "outputId" : "TERRAIN",
+  "outputData" : [ ],
+  "actionType" : "SET",
+  "inputPoints" : [ 0 ],
+  "outputPoints" : [ 21 ],
+  "name" : "apply beach",
+  "description" : "description of the action",
+  "uid" : "d6e5f520-9ceb-4ce2-9236-2a44a51472d7"
 }, {
   "inputId" : "ALWAYS",
   "inputData" : [ ],
