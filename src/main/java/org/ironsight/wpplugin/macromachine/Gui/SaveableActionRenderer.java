@@ -17,7 +17,7 @@ import java.awt.*;
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
 
-class SaveableActionRenderer extends DefaultTreeCellRenderer
+public class SaveableActionRenderer extends DefaultTreeCellRenderer
         implements TableCellRenderer, ListCellRenderer<SaveableAction> {
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -115,6 +115,14 @@ class SaveableActionRenderer extends DefaultTreeCellRenderer
     @Override
     public Component getListCellRendererComponent(JList<? extends SaveableAction> list, SaveableAction value, int index,
                                                   boolean isSelected, boolean cellHasFocus) {
+        updateTo(value);
+        if (isSelected) {
+            panel.setBackground(SELECTED_BACKGROUND);
+        } else panel.setBackground(DEFAULT_BACKGROUND);
+        return panel;
+    }
+
+    public Component renderFor(SaveableAction value, boolean isSelected) {
         updateTo(value);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);

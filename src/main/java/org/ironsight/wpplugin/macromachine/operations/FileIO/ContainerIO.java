@@ -12,6 +12,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -75,7 +78,7 @@ public class ContainerIO {
                 actionData.add(fromAction(action));
         }
 
-        ExportContainer container = new ExportContainer("now","no comment",
+        ExportContainer container = new ExportContainer(generateISO8601TimestampWithTimeZone(),"no comment",
                 macroData.toArray(new MacroJsonWrapper[0]), actionData.toArray(new ActionJsonWrapper[0]));
         try {
             writeContainerToFile(container, file);
@@ -120,9 +123,17 @@ public class ContainerIO {
                     actionContainer.updateMapping(action, onImportError);
                 }
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (NoSuchFileException e) {
+            ; // not an error.
+        }
+        catch (IOException e) {
+            onImportError.accept(e.getMessage());
         }
     }
 
+    public static String generateISO8601TimestampWithTimeZone() {
+        ZonedDateTime now = ZonedDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+        return now.format(formatter);
+    }
 }

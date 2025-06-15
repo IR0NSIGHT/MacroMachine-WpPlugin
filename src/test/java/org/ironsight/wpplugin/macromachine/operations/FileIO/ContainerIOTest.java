@@ -15,8 +15,14 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ContainerIOTest {
+    public static final UUID emptyMacroUID = UUID.fromString("f448bd00-3cc7-4451-8bac-5b3bf36634c0");
+    public static final UUID simpleMacroUID = UUID.fromString("fd69b6c6-1885-4d55-9c03-f73e9394cc7e");
+    public static final UUID complexMacroUID = UUID.fromString("e9462d29-bb6c-4eed-8d2f-23c3c9014b4b");
+    public static final UUID applyGrassAction01 = UUID.fromString("8378edd5-88ab-4b8e-b274-c05a7c7713c4");
+    public static final UUID applyGrassAction02 = UUID.fromString("77b21f11-d454-47f8-8085-cfd9bf9a9f4b");
+
     static MappingAction applyGrassEverywhere() {
-        MappingAction action = MappingAction.getNewEmptyAction(UUID.fromString ("ffaefa8c-08d2-4abb-ba81-4691eab57044"))
+        MappingAction action = MappingAction.getNewEmptyAction(UUID.fromString("ffaefa8c-08d2-4abb-ba81-4691eab57044"))
                 .withName("Apply: Grass")
                 .withInput(new AlwaysIO())
                 .withOutput(new TerrainProvider())
@@ -25,28 +31,26 @@ class ContainerIOTest {
         return action;
     }
 
-    void generateUUIDs() {
-        for (int i = 0;i < 10; i++) {
-            System.out.println(UUID.randomUUID());
-        }
-    }
-
-    static void fillWithData(MappingActionContainer actions, MacroContainer macros) {
+    public static void fillWithData(MappingActionContainer actions, MacroContainer macros) {
         // empty macro
-        Macro emptyMacro = macros.addMapping(UUID.fromString("f448bd00-3cc7-4451-8bac-5b3bf36634c0")).withName("My empty macro").withDescription("this macro is empty");
+        Macro emptyMacro =
+                macros.addMapping(emptyMacroUID).withName("My empty macro").withDescription("this macro is empty");
         macros.updateMapping(emptyMacro, Assertions::fail);
         // macro with 2 actions
         Macro simpleMacro =
-                macros.addMapping(UUID.fromString("fd69b6c6-1885-4d55-9c03-f73e9394cc7e")).withName("My simple macro").withDescription("this macro executes 2 " + "actions");
+                macros.addMapping(simpleMacroUID).withName("My simple macro").withDescription("this macro executes" +
+                        " 2 " + "actions");
         {
-            MappingAction action01 = actions.addMapping(UUID.fromString("8378edd5-88ab-4b8e-b274-c05a7c7713c4")).withValuesFrom(applyGrassEverywhere().withName("action 01"));
-            MappingAction action02 = actions.addMapping(UUID.fromString("77b21f11-d454-47f8-8085-cfd9bf9a9f4b")).withValuesFrom(applyGrassEverywhere().withName("action 02"));
+            MappingAction action01 =
+                    actions.addMapping(applyGrassAction01).withValuesFrom(applyGrassEverywhere().withName("action 01"));
+            MappingAction action02 =
+                    actions.addMapping(applyGrassAction02).withValuesFrom(applyGrassEverywhere().withName("action 02"));
             macros.updateMapping(simpleMacro.withUUIDs(new UUID[]{action01.getUid(), action02.getUid()}),
                     Assertions::fail);
         }
 
         // macro with nested macro
-        Macro complexMacroWithNesting = macros.addMapping(UUID.fromString("e9462d29-bb6c-4eed-8d2f-23c3c9014b4b"))
+        Macro complexMacroWithNesting = macros.addMapping(complexMacroUID)
                 .withName("My complex macro")
                 .withDescription("this macro " + "contains another macro")
                 .withUUIDs(new UUID[]{simpleMacro.getUid(), emptyMacro.getUid()});
@@ -67,6 +71,12 @@ class ContainerIOTest {
 
         ExportContainer container = new ExportContainer("2025-06-14-17-04", "no comment", macros, actions);
         return container;
+    }
+
+    void generateUUIDs() {
+        for (int i = 0; i < 10; i++) {
+            System.out.println(UUID.randomUUID());
+        }
     }
 
     @Test
@@ -119,19 +129,25 @@ class ContainerIOTest {
         File tempFile = Files.createTempFile("test", ".tmp").toFile();
         ContainerIO.exportFile(actionContainer, macroContainer, tempFile, new ImportExportPolicy(), Assertions::fail);
 
-        String content = Files.readString(tempFile.toPath()).replace("\r\n","\n").replace('\r', '\n');
+        String content = Files.readString(tempFile.toPath())
+                .replace("\r\n", "\n")
+                .replace('\r', '\n')
+                .replaceAll("  \"exportDate\"\\s*:\\s*\".*?\"", "  \"exportDate\" : \"now\"");
+
         assertEquals("{\n" +
                 "  \"exportDate\" : \"now\",\n" +
                 "  \"comment\" : \"no comment\",\n" +
                 "  \"macros\" : [ {\n" +
                 "    \"macroName\" : \"My simple macro\",\n" +
                 "    \"description\" : \"this macro executes 2 actions\",\n" +
-                "    \"stepIds\" : [ \"8378edd5-88ab-4b8e-b274-c05a7c7713c4\", \"77b21f11-d454-47f8-8085-cfd9bf9a9f4b\" ],\n" +
+                "    \"stepIds\" : [ \"8378edd5-88ab-4b8e-b274-c05a7c7713c4\", " +
+                "\"77b21f11-d454-47f8-8085-cfd9bf9a9f4b\" ],\n" +
                 "    \"selfId\" : \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\"\n" +
                 "  }, {\n" +
                 "    \"macroName\" : \"My complex macro\",\n" +
                 "    \"description\" : \"this macro contains another macro\",\n" +
-                "    \"stepIds\" : [ \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\", \"f448bd00-3cc7-4451-8bac-5b3bf36634c0\" ],\n" +
+                "    \"stepIds\" : [ \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\", " +
+                "\"f448bd00-3cc7-4451-8bac-5b3bf36634c0\" ],\n" +
                 "    \"selfId\" : \"e9462d29-bb6c-4eed-8d2f-23c3c9014b4b\"\n" +
                 "  }, {\n" +
                 "    \"macroName\" : \"My empty macro\",\n" +
