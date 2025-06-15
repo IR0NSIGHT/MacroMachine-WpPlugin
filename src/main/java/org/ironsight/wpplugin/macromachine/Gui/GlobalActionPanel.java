@@ -2,12 +2,15 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.EditableIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
@@ -51,18 +54,21 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     public static void main(String[] args) {
         MacroContainer.SetInstance(new MacroContainer("./src/main/resources/DefaultMacros.json"));
         MacroContainer macros = MacroContainer.getInstance();
-        MappingActionContainer.SetInstance( new MappingActionContainer("./src/main/resources/DefaultActions.json"));
+        MappingActionContainer.SetInstance(new MappingActionContainer("./src/main/resources/DefaultActions.json"));
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
         macros.readFromFile();
         layers.readFromFile();
-        MappingActionContainer.getInstance().subscribe(() -> MappingActionContainer.getInstance().writeToFile());
-        MacroContainer.getInstance().subscribe(() -> MacroContainer.getInstance().writeToFile());
+        File saveFile = new File("./mySavefile.macro");
+        Runnable saveEverything = () -> ContainerIO.exportFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
+                new ImportExportPolicy(), System.err::println);
+        MappingActionContainer.getInstance().subscribe(saveEverything);
+        MacroContainer.getInstance().subscribe(saveEverything);
         JDialog diag = createDialog(null, (macro, setProgress) -> {
             for (int i = 0; i < 30; i++) {
                 try {
                     Thread.sleep(100);
-                    setProgress.accept(new ApplyAction.Progess(0, 1, 100f*i / 30f));
+                    setProgress.accept(new ApplyAction.Progess(0, 1, 100f * i / 30f));
                 } catch (InterruptedException ex) {
                     ;
                 }
@@ -185,7 +191,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         editorPanel = new JPanel(new CardLayout());
         editorPanel.add(mappingEditor, MAPPING_EDITOR);
         editorPanel.add(macroDesigner, MACRO_DESIGNER);
-        editorPanel.add(ioEditor, INPUT_OUTPUT_DESIGNER );
+        editorPanel.add(ioEditor, INPUT_OUTPUT_DESIGNER);
         editorPanel.add(new JPanel(), INVALID_SELECTION);
         layout = (CardLayout) editorPanel.getLayout();
         layout.show(editorPanel, MACRO_DESIGNER);
