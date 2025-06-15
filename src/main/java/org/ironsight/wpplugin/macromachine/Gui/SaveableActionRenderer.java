@@ -14,9 +14,10 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
 
-class SaveableActionRenderer extends DefaultTreeCellRenderer
+public class SaveableActionRenderer extends DefaultTreeCellRenderer
         implements TableCellRenderer, ListCellRenderer<SaveableAction> {
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -106,8 +107,8 @@ class SaveableActionRenderer extends DefaultTreeCellRenderer
                                                    int row, int column) {
         updateTo(value);
         if (isSelected) {
-            panel.setBackground(table.getSelectionBackground());
-        } else panel.setBackground(table.getBackground());
+            panel.setBackground(SELECTED_BACKGROUND);
+        } else panel.setBackground(DEFAULT_BACKGROUND);
         return panel;
     }
 
@@ -116,8 +117,16 @@ class SaveableActionRenderer extends DefaultTreeCellRenderer
                                                   boolean isSelected, boolean cellHasFocus) {
         updateTo(value);
         if (isSelected) {
-            panel.setBackground(list.getSelectionBackground());
-        } else panel.setBackground(list.getBackground());
+            panel.setBackground(SELECTED_BACKGROUND);
+        } else panel.setBackground(DEFAULT_BACKGROUND);
+        return panel;
+    }
+
+    public Component renderFor(SaveableAction value, boolean isSelected) {
+        updateTo(value);
+        if (isSelected) {
+            panel.setBackground(SELECTED_BACKGROUND);
+        } else panel.setBackground(DEFAULT_BACKGROUND);
         return panel;
     }
 
@@ -143,8 +152,8 @@ class SaveableActionRenderer extends DefaultTreeCellRenderer
         }
 
         if (selected) {
-            panel.setBackground(getBackgroundSelectionColor());
-        } else panel.setBackground(getBackground());
+            panel.setBackground(SELECTED_BACKGROUND);
+        } else panel.setBackground(DEFAULT_BACKGROUND);
         panel.invalidate();
         return panel;
 

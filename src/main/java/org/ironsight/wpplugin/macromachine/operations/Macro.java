@@ -175,13 +175,13 @@ public class Macro implements SaveableAction {
         return actionList;
     }
 
-    public boolean hasLoop(HashSet<UUID> seen) {
+    public boolean hasLoop(HashSet<UUID> seen, MacroContainer container) {
         if (seen.contains(this.uid)) return true;
         seen.add(this.uid);
         boolean childLoop = false;
         for (UUID uuid : this.executionUUIDs) {
-            Macro macro = MacroContainer.getInstance().queryById(uuid);
-            if (macro != null && macro.hasLoop((HashSet<UUID>) seen.clone())) return true;
+            Macro macro = container.queryById(uuid);
+            if (macro != null && macro.hasLoop((HashSet<UUID>) seen.clone(), container)) return true;
         }
         return childLoop;
     }

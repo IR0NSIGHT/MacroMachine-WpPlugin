@@ -1,6 +1,8 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.WorldPainterView;
@@ -8,6 +10,7 @@ import org.pepsoft.worldpainter.layers.LayerManager;
 import org.pepsoft.worldpainter.operations.AbstractOperation;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -23,13 +26,20 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
     public MacroDialogOperation() {
         super(NAME, DESCRIPTION, "macrooperation");
 
-        MacroContainer.SetInstance(new MacroContainer(null));
-        MappingActionContainer.SetInstance( new MappingActionContainer(null));
+        File saveFile = new File(MacroContainer.getActionsFilePath()+"/savefile.macro");
 
-        MacroContainer.getInstance().readFromFile();
-        MappingActionContainer.getInstance().readFromFile();
-        MappingActionContainer.getInstance().subscribe(() -> MappingActionContainer.getInstance().writeToFile());
-        MacroContainer.getInstance().subscribe(() -> MacroContainer.getInstance().writeToFile());
+        MacroContainer.SetInstance(new MacroContainer(null));
+        MacroContainer macros = MacroContainer.getInstance();
+        MappingActionContainer.SetInstance(new MappingActionContainer(null));
+        MappingActionContainer layers = MappingActionContainer.getInstance();
+
+        ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(), System.err::println);
+
+        Runnable saveEverything = () -> ContainerIO.exportFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
+                new ImportExportPolicy(), System.err::println);
+
+        MappingActionContainer.getInstance().subscribe(saveEverything);
+        MacroContainer.getInstance().subscribe(saveEverything);
     }
 
     private Dimension getDimension() {

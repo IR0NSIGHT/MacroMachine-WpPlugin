@@ -2,20 +2,28 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ConflictResolveImportPolicy;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.MacroExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+import static org.ironsight.wpplugin.macromachine.MacroMachinePlugin.error;
+import static org.ironsight.wpplugin.macromachine.operations.MacroContainer.getActionsFilePath;
 
 public class MacroTreePanel extends JPanel {
     private final MacroContainer container;
@@ -29,6 +37,10 @@ public class MacroTreePanel extends JPanel {
     private long lastProgressUpdate = 0;
     private boolean macroIsCurrentlyExecuting;
     private boolean blockUpdates = false;
+    private String lastImportFilePath = System.getProperty("user.home");
+    private String lastExportFilePath = System.getProperty("user.home");
+
+    private SaveableAction lastSelectedItem = null;
 
     MacroTreePanel(MacroContainer container, MappingActionContainer mappingContainer,
                    MacroApplicator applyToMap, ISelectItemCallback onSelectAction) {
@@ -38,6 +50,24 @@ public class MacroTreePanel extends JPanel {
         this.onSelectAction = onSelectAction;
         init();
         update();
+    }
+
+    public static String sanitizeFileName(String input) {
+        // Define the set of illegal characters for common file systems
+        String illegalChars = "[\\\\/:*?\"<>|]";
+
+        // Replace illegal characters with an underscore
+        String sanitized = input.replaceAll(illegalChars, "");
+
+        // Optionally, you can also replace or remove other unwanted characters
+        // For example, replace whitespace with a single underscore
+        sanitized = sanitized.replaceAll("\\s+", "-");
+
+        // Remove leading or trailing periods or spaces that could cause issues
+        sanitized = sanitized.trim();
+        sanitized = sanitized.replaceAll("^\\.+|\\.+$", "");
+
+        return sanitized;
     }
 
     private boolean verifyTreePathExists(MacroTreeNode node, Object[] path, int index, Object[] newPath) {
@@ -246,15 +276,18 @@ public class MacroTreePanel extends JPanel {
         removeButton.addActionListener(e -> {
             blockUpdates = true;
             Set<UUID> deletedUUIDS = getSelectedUUIDs(true, true);
+            ArrayList<Macro> updatedMacros = new ArrayList<>();
             //remove Mapping Actions from all macros
             for (Macro m : container.queryAll()) {
+                if (deletedUUIDS.contains(m.getUid()))
+                    continue;
                 Macro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs)
                         .filter(a -> !deletedUUIDS.contains(a))
                         .toArray(UUID[]::new));
-                container.updateMapping(updated, f -> {
-                    throw new RuntimeException(f);
-                });
+                updatedMacros.add(updated);
             }
+
+            container.updateMapping(MacroMachinePlugin::error, updatedMacros.toArray(new Macro[0]));
 
             // Delete action / Macro in containers
             container.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
@@ -282,14 +315,71 @@ public class MacroTreePanel extends JPanel {
 
         scrollPane.setPreferredSize(new Dimension(500, 600));
 
+        JButton exportMacroButton = new JButton("Export");
+        exportMacroButton.addActionListener(f -> onExportMacroPressed());
+        buttons.add(exportMacroButton);
+
+        JButton importMacroButton = new JButton("Import");
+        importMacroButton.addActionListener(f -> onImportMacroPressed());
+        buttons.add(importMacroButton);
 
         this.add(buttons, BorderLayout.SOUTH);
         this.invalidate();
     }
 
+    private void onExportMacroPressed() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select a directory");
+        fileChooser.setCurrentDirectory(new File(lastExportFilePath));
+        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY); // Only allow directory selection
+        fileChooser.setAcceptAllFileFilterUsed(false); // Optional: Disable the "All Files" filter
+
+        int result = fileChooser.showOpenDialog(null); // Use null or a valid parent component
+        lastExportFilePath = fileChooser.getCurrentDirectory().getPath();
+
+        if (result == JFileChooser.APPROVE_OPTION) {
+            assert (fileChooser.getSelectedFile() != null) : "user confirmed without selection?";
+            String outputDir = fileChooser.getSelectedFile().getPath();
+            for (UUID macroId : getSelectedUUIDs(true, false)) {
+                Macro lastItem = container.queryById(macroId);
+                MacroExportPolicy policy = new MacroExportPolicy(lastItem, MacroContainer.getInstance());
+                String fileName = sanitizeFileName(lastItem.getName()) + ".macro";
+                File macroFile = new File(outputDir + "/" + fileName);
+                ContainerIO.exportFile(MappingActionContainer.getInstance(),
+                        MacroContainer.getInstance(),
+                        macroFile,
+                        policy,
+                        MacroMachinePlugin::error);
+            }
+        }
+    }
+
+    private void onImportMacroPressed() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select a file");
+        fileChooser.setCurrentDirectory(new File(lastImportFilePath));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Only MacroMachine files", "macro"));
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.setMultiSelectionEnabled(true);
+        int result = fileChooser.showOpenDialog(this);
+        lastImportFilePath = fileChooser.getCurrentDirectory().getPath();
+        if (result == JFileChooser.APPROVE_OPTION) {
+            for (File selected : fileChooser.getSelectedFiles()) {
+                ContainerIO.importFile(MappingActionContainer.getInstance(),
+                        MacroContainer.getInstance(),
+                        selected,
+                        new ConflictResolveImportPolicy(MacroContainer.getInstance(),
+                                MappingActionContainer.getInstance(), SwingUtilities.getWindowAncestor(this)),
+                        MacroMachinePlugin::error
+                );
+            }
+        }
+    }
+
     private void onItemInTreeSelected(SaveableAction item, GlobalActionPanel.SELECTION_TPYE type) {
         applyButton.setEnabled(type == GlobalActionPanel.SELECTION_TPYE.MACRO);
         onSelectAction.onSelect(item, type);
+        lastSelectedItem = item;
     }
 
     private void onSetProgress(ApplyAction.Progess progess) {
@@ -343,7 +433,7 @@ public class MacroTreePanel extends JPanel {
 
                 }
             } catch (InterruptedException ex) {
-                MacroMachinePlugin.error(ex.getMessage());
+                error(ex.getMessage());
             }
 
             SwingUtilities.invokeLater(() -> {
