@@ -52,14 +52,15 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     public static void main(String[] args) {
+        File saveFile = new File("./mySavefile.macro");
+
         MacroContainer.SetInstance(new MacroContainer("./src/main/resources/DefaultMacros.json"));
         MacroContainer macros = MacroContainer.getInstance();
         MappingActionContainer.SetInstance(new MappingActionContainer("./src/main/resources/DefaultActions.json"));
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
-        macros.readFromFile();
-        layers.readFromFile();
-        File saveFile = new File("./mySavefile.macro");
+        ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(), System.err::println);
+
         Runnable saveEverything = () -> ContainerIO.exportFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
                 new ImportExportPolicy(), System.err::println);
         MappingActionContainer.getInstance().subscribe(saveEverything);

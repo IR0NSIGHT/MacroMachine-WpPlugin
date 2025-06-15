@@ -14,23 +14,23 @@ import static org.ironsight.wpplugin.macromachine.operations.MappingActionContai
 
 public class MacroContainer extends AbstractOperationContainer<Macro> {
     private static MacroContainer instance;
-    public static void SetInstance(MacroContainer container) {
-        assert instance == null;
-        instance = container;
-    }
+
     public MacroContainer(String filePath) {
         super(Macro.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultMacros.json");
     }
 
+    public static void SetInstance(MacroContainer container) {
+        assert instance == null;
+        instance = container;
+    }
+
     public static MacroContainer getInstance() {
-        assert instance != null: "we have to set a global isntance first";
+        assert instance != null : "we have to set a global isntance first";
         return instance;
     }
 
-    private static String getActionsFilePath() {
-        String currentWorkingDir = System.getProperty("user.dir");
-        if (isDebugMode()) return currentWorkingDir + "/macros.json";
-        else return new File(Configuration.getConfigDir(), "plugins").getPath() + "/macros.json";
+    public static String getActionsFilePath() {
+        return new File(Configuration.getConfigDir(), "plugins").getPath() + "/macroMachine";
     }
 
     @Override
