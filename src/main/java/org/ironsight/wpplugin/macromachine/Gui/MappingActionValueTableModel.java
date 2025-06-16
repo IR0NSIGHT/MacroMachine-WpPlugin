@@ -15,6 +15,11 @@ class MappingActionValueTableModel implements TableModel {
     private static final int OUTPUT_COLUMN_IDX = 1;
     LinkedList<TableModelListener> listeners = new LinkedList<>();
     private MappingAction action;
+
+    public boolean isOnlyControlPoints() {
+        return onlyControlPoints;
+    }
+
     private boolean onlyControlPoints;
     private MappingPointValue[] inputs, output;
     private boolean[] isMappingPoint;
@@ -125,6 +130,7 @@ class MappingActionValueTableModel implements TableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (!isCellEditable(rowIndex, columnIndex))
             return;
+        assert !(onlyControlPoints && rowIndex >= mappingPointToRowIdx.length);
         int numericInput = onlyControlPoints ? mappingPointToRowIdx[rowIndex] : rowIndex;
         int mappingPointIdx = onlyControlPoints ? rowIndex : rowToMappingPointIdx[rowIndex];
         MappingPoint p = action.getMappingPoints()[mappingPointIdx];
