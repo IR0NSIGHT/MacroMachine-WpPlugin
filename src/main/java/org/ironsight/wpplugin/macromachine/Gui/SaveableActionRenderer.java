@@ -4,21 +4,20 @@ import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.util.function.Function;
 
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
 
 public class SaveableActionRenderer extends DefaultTreeCellRenderer
-        implements TableCellRenderer, ListCellRenderer<SaveableAction> {
+        implements TableCellRenderer, ListCellRenderer<Object> {
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     JLabel input = new JLabel();
@@ -26,8 +25,13 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     JPanel panel = new JPanel(new BorderLayout());
     JLabel actionType = new JLabel();
     JLabel iconLabel = new JLabel();
+    private final Function<IDisplayUnit, Boolean> isItemValid;
+    public SaveableActionRenderer(Function<IDisplayUnit, Boolean> isItemValid) {
+        this.isItemValid = isItemValid;
+        init();
+    }
 
-    public SaveableActionRenderer() {
+    private void init(){
         JPanel iconAndName = new JPanel(new FlowLayout(FlowLayout.LEFT));
         iconAndName.setOpaque(false);
         iconLabel.setPreferredSize(new Dimension(20, 20));
@@ -99,22 +103,15 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
             actionType.setText("");
             panel.setToolTipText("this action does not exist. It will be ignored.");
         }
+        if (mapping instanceof IDisplayUnit && !isItemValid.apply((IDisplayUnit) mapping)) {
+            iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.INVALID));
+        }
     }
 
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
-        updateTo(value);
-        if (isSelected) {
-            panel.setBackground(SELECTED_BACKGROUND);
-        } else panel.setBackground(DEFAULT_BACKGROUND);
-        return panel;
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList<? extends SaveableAction> list, SaveableAction value, int index,
-                                                  boolean isSelected, boolean cellHasFocus) {
         updateTo(value);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
@@ -157,5 +154,15 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
         panel.invalidate();
         return panel;
 
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+                                                  boolean cellHasFocus) {
+        updateTo(value);
+        if (isSelected) {
+            panel.setBackground(SELECTED_BACKGROUND);
+        } else panel.setBackground(DEFAULT_BACKGROUND);
+        return panel;
     }
 }

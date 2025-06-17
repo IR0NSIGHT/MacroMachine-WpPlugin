@@ -77,6 +77,7 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
         return getDescription();
     }
 
+
     @Override
     public int getMaxValue() {
         return 359;

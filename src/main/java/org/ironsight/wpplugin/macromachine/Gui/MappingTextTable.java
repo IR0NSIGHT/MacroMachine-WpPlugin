@@ -20,7 +20,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     private Consumer<boolean[]> onSelect = f -> {
     };
     private JTable numberTable;
-    private boolean groupValues = false;
+    private boolean groupValues = true;
     private JCheckBox groupValuesCheckBox;
     private boolean blockTableChanged;
     private Object beforeChange;
@@ -32,6 +32,18 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         groupValues = groupValuesCheckBox.isSelected();
         blockTableChanged = true;
         tableModel.rebuildDataWithAction(this.mapping);
+
+
+        if (tableModel.isOnlyControlPoints() != groupValues) {
+            // force stop current edit, because the amount of rows changes, and otherwise will cause array index out
+            // of bounds
+            if (numberTable.isEditing()) {
+                TableCellEditor editor = numberTable.getCellEditor();
+                if (editor != null) {
+                    editor.stopCellEditing(); // or editor.cancelCellEditing();
+                }
+            }
+        }
         tableModel.setOnlyControlPointMode(groupValues);
         blockTableChanged = false;
         numberTable.revalidate();
@@ -40,6 +52,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
 
     @Override
     protected void initComponents() {
+        groupValues = true;
+
         this.setLayout(new BorderLayout());
         Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
         Border whiteBorder = new EmptyBorder(5, 5, 5, 5); // 5px white border
@@ -74,6 +88,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         this.add(scrollPane, BorderLayout.CENTER);
         JPanel buttons = new JPanel();
         groupValuesCheckBox = new JCheckBox("Only Control Points");
+        groupValuesCheckBox.setSelected(groupValues);
         groupValuesCheckBox.addActionListener(f -> {
             if (groupValues != groupValuesCheckBox.isSelected()) {
                 groupValues = groupValuesCheckBox.isSelected();

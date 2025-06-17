@@ -6,27 +6,62 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-public class InputOutputProvider {
+public class InputOutputProvider implements IMappingValueProvider {
     public static InputOutputProvider INSTANCE = new InputOutputProvider();
-    public final ArrayList<IPositionValueSetter> setters = new ArrayList<>();
+    public final ArrayList<IMappingValue> setters = new ArrayList<>();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
-    public ArrayList<IPositionValueGetter> getters = new ArrayList<>();
-    private AllowedLayerSettings inputSettings = new AllowedLayerSettings(false, true, true, true);
-    private AllowedLayerSettings outputSettings = new AllowedLayerSettings(false, true, true, true);
+    public ArrayList<IMappingValue> getters = new ArrayList<>();
+    private AllowedLayerSettings inputSettings = new AllowedLayerSettings(true, true, true, true);
+    private AllowedLayerSettings outputSettings = new AllowedLayerSettings(true, true, true, true);
 
     private InputOutputProvider() {
         updateFrom(null);
     }
 
-    public void subscribe(Runnable runnable) {
+    void subscribe(Runnable runnable) {
         genericNotifies.add(runnable);
     }
 
-    public void unsubscribe(Runnable runnable) {
-        genericNotifies.remove(runnable);
+    public IMappingValueProvider asInputProvider() {
+        return new IMappingValueProvider() {
+            @Override
+            public Collection<IMappingValue> getItems() {
+                return getters;
+            }
+
+            @Override
+            public void subscribeToUpdates(Runnable r) {
+                subscribe(r);
+            }
+
+            @Override
+            public boolean existsItem(Object item) {
+                return getters.contains(item);
+            }
+        };
+    }
+
+    public IMappingValueProvider asOutputProvider() {
+        return new IMappingValueProvider() {
+            @Override
+            public Collection<IMappingValue> getItems() {
+                return setters;
+            }
+
+            @Override
+            public void subscribeToUpdates(Runnable r) {
+                subscribe(r);
+            }
+
+            @Override
+            public boolean existsItem(Object item) {
+                return setters.contains(item);
+            }
+        };
     }
 
     public void updateFrom(Dimension dimension) {
@@ -60,9 +95,15 @@ public class InputOutputProvider {
                     if (outputSettings.allowCustomLayers)
                         getters.add(new NibbleLayerSetter(l));
                 }
-                if (l.dataSize.equals(Layer.DataSize.BIT))
-                    if (outputSettings.allowCustomLayers)
+                if (l.dataSize.equals(Layer.DataSize.BIT)) {
+                    if (outputSettings.allowCustomLayers) {
                         setters.add(new BitLayerBinarySpraypaintApplicator(l));
+                        setters.add(new BinaryLayerIO(l));
+                    }
+                    if (inputSettings.allowCustomLayers)
+                        getters.add(new BinaryLayerIO(l));
+                }
+
             }
         }
     //    getters.add(new DistanceToLayerEdgeGetter(SelectionBlock.INSTANCE));
@@ -112,6 +153,24 @@ public class InputOutputProvider {
     private void notifyListeners() {
         for (Runnable r : genericNotifies)
             r.run();
+    }
+
+    @Override
+    public Collection<IMappingValue> getItems() {
+        ArrayList out = new ArrayList<>();
+        out.addAll(getters);
+        out.addAll(setters);
+        return out;
+    }
+
+    @Override
+    public void subscribeToUpdates(Runnable r) {
+        subscribe(r);
+    }
+
+    @Override
+    public boolean existsItem(Object item) {
+        return getItems().contains(item);
     }
 
 
