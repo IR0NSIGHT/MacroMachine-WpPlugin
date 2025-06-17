@@ -15,8 +15,8 @@ public class InputOutputProvider implements IMappingValueProvider {
     public final ArrayList<IMappingValue> setters = new ArrayList<>();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
     public ArrayList<IMappingValue> getters = new ArrayList<>();
-    private AllowedLayerSettings inputSettings = new AllowedLayerSettings(false, true, true, true);
-    private AllowedLayerSettings outputSettings = new AllowedLayerSettings(false, true, true, true);
+    private AllowedLayerSettings inputSettings = new AllowedLayerSettings(true, true, true, true);
+    private AllowedLayerSettings outputSettings = new AllowedLayerSettings(true, true, true, true);
 
     private InputOutputProvider() {
         updateFrom(null);
