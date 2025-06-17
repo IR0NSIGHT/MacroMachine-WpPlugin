@@ -5,9 +5,7 @@ import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ConflictResolveImportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.MacroExportPolicy;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -19,11 +17,9 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 import static org.ironsight.wpplugin.macromachine.MacroMachinePlugin.error;
-import static org.ironsight.wpplugin.macromachine.operations.MacroContainer.getActionsFilePath;
 
 public class MacroTreePanel extends JPanel {
     private final MacroContainer container;
@@ -68,6 +64,29 @@ public class MacroTreePanel extends JPanel {
         sanitized = sanitized.replaceAll("^\\.+|\\.+$", "");
 
         return sanitized;
+    }
+
+    public static boolean isValidItem(IDisplayUnit item) {
+        if (item instanceof Macro) {
+            boolean valid = true;
+            for (UUID childId : ((Macro) item).getExecutionUUIDs()) {
+                if (MacroContainer.getInstance().queryContains(childId))
+                    valid = valid && isValidItem(MacroContainer.getInstance().queryById(childId));
+                else if (MappingActionContainer.getInstance().queryContains(childId))
+                    valid = valid && isValidItem(MappingActionContainer.getInstance().queryById(childId));
+                else
+                    valid = false;
+            }
+            return valid;
+        } else if (item instanceof MappingAction) {
+            return isValidItem(((MappingAction) item).getInput()) && isValidItem(((MappingAction) item).getOutput());
+        } else if (item instanceof IPositionValueSetter && item instanceof ILayerGetter) {
+            return InputOutputProvider.INSTANCE.asOutputProvider().existsItem(item);
+        } else if (item instanceof IPositionValueGetter && item instanceof ILayerGetter) {
+            return InputOutputProvider.INSTANCE.asInputProvider().existsItem(item);
+        } else {
+            return true;
+        }
     }
 
     private boolean verifyTreePathExists(MacroTreeNode node, Object[] path, int index, Object[] newPath) {
@@ -231,7 +250,7 @@ public class MacroTreePanel extends JPanel {
         treeModel = new DefaultTreeModel(new MacroTreeNode(mappingContainer, container));
         tree = new JTree(treeModel);
         tree.setRootVisible(false);
-        tree.setCellRenderer(new SaveableActionRenderer());
+        tree.setCellRenderer(new SaveableActionRenderer(MacroTreePanel::isValidItem));
         tree.setRowHeight(-1); //auto set cell height
         tree.addTreeSelectionListener(e -> {
             JTree tree = (JTree) e.getSource();
