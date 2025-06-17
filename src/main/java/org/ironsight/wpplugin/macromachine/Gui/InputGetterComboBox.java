@@ -1,37 +1,87 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
+import javax.swing.event.ListDataListener;
+import java.util.*;
+import java.util.function.Consumer;
 
-public class InputGetterComboBox extends JComboBox<String> {
-    Map<String, IPositionValueGetter> stringToGetter = new HashMap<>();
-
-    public InputGetterComboBox() {
-        InputOutputProvider.INSTANCE.subscribe(this::updateSelf);
+public class InputGetterComboBox extends JComboBox<IMappingValue> {
+    private IOComboBoxModel model;
+    IMappingValueProvider provider;
+    public InputGetterComboBox(Consumer<IMappingValue> onChangeCallback, IMappingValueProvider provider) {
+        this.provider = provider;
+        this.model = new IOComboBoxModel(onChangeCallback);
+        this.setModel(model);
+        this.setRenderer(new SaveableActionRenderer());
+        provider.subscribeToUpdates(this::updateSelf);
         updateSelf();
     }
 
     public void updateSelf() {
-        this.removeAllItems();
-        for (IPositionValueGetter getter : InputOutputProvider.INSTANCE.getters) {
-            addGetter(getter);
+        model.setAllowedIOs(provider.getItems());
+        this.invalidate();
+        this.repaint();
+    }
+
+    public IMappingValue getSelectedProvider() {
+        return ((IOComboBoxModel)this.getModel()).selected;
+    }
+
+    public void SetSelected(IMappingValue getter) {
+        model.setSelectedNoUpdate(getter);
+        this.invalidate();
+        this.repaint();
+    }
+
+    public class IOComboBoxModel implements ComboBoxModel<IMappingValue> {
+        private Consumer<IMappingValue> onUserSelectsItem = null;
+        public IOComboBoxModel(Consumer<IMappingValue> onUserSelectsItem ) {
+            this.onUserSelectsItem = onUserSelectsItem;
         }
-    }
+        private IMappingValue[] values;
+        private IMappingValue selected = null;
+        public void setAllowedIOs(Collection<IMappingValue> values) {
+            this.values = values.toArray(new IMappingValue[0]);
+            Arrays.sort(this.values, Comparator.comparing(f -> f.getName().toLowerCase()));
+        }
 
-    private void addGetter(IPositionValueGetter getter) {
-        this.stringToGetter.put(getter.getName(), getter);
-        this.addItem(getter.getName());
-    }
-    public IPositionValueGetter getSelectedProvider() {
-        return stringToGetter.get((String) getSelectedItem());
-    }
+        @Override
+        public Object getSelectedItem() {
+            return selected;
+        }
 
-    public void SetSelected(IPositionValueGetter getter) {
-        this.setSelectedItem(getter.getName());
+        public void setSelectedNoUpdate(IMappingValue item) {
+            this.selected = item;
+        }
+
+        @Override
+        public void setSelectedItem(Object anItem) {
+            assert anItem instanceof IMappingValue;
+            selected = (IMappingValue) anItem;
+            onUserSelectsItem.accept(selected);
+        }
+
+        @Override
+        public int getSize() {
+            return values.length;
+        }
+
+        @Override
+        public IMappingValue getElementAt(int index) {
+            return values[index];
+        }
+
+        @Override
+        public void addListDataListener(ListDataListener l) {
+
+        }
+
+        @Override
+        public void removeListDataListener(ListDataListener l) {
+
+        }
     }
 }
 
