@@ -59,11 +59,11 @@ public enum ProviderType {
             case WATER_HEIGHT:
                 return new WaterHeightAbsoluteIO(-64,319);
             case BINARY_SPRAYPAINT:
-                return new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE);
+                return new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE, false);
             case BINARY_LAYER:
-                return new BinaryLayerIO(Frost.INSTANCE);
+                return new BinaryLayerIO(Frost.INSTANCE,false);
             case NIBBLE_LAYER:
-                return new NibbleLayerSetter(PineForest.INSTANCE);
+                return new NibbleLayerSetter(PineForest.INSTANCE, false);
             case INTERMEDIATE_SELECTION:
                 return ActionFilterIO.instance;
             case ALWAYS:

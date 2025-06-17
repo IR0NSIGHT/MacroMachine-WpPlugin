@@ -13,6 +13,11 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;
     }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
     @Override
     public String getToolTipText() {
         return getDescription();

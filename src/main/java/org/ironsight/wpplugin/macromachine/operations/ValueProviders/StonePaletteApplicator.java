@@ -53,6 +53,11 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     }
 
     @Override
+    public String toString() {
+        return getName();
+    }
+
+    @Override
     public String getName() {
         return "Stone Palette";
     }
@@ -86,10 +91,12 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     public int getMinValue() {
         return 0;
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
     }
+
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
         return new StonePaletteApplicator(Arrays.stream(data)

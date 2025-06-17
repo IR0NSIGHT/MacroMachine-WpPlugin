@@ -10,7 +10,10 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
     private static int value;
     private static int lastX;
     private static int lastY;
-
+    @Override
+    public String toString() {
+        return getName();
+    }
     private final int min, max;
     private final String customName;    //user names this intermediat value to represetn "snow chance" f.e.
 

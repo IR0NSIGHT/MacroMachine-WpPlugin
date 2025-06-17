@@ -134,7 +134,10 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
         //g.fillRect(0, 0, (int) (dim.width * 0.1f), dim.height);
         g.drawLine(0, -dim.height, 0, 0);  //pointing north in local space always
     }
-
+    @Override
+    public String toString() {
+        return getName();
+    }
     @Override
     public ProviderType getProviderType() {
         return ProviderType.BLOCK_DIRECTION;

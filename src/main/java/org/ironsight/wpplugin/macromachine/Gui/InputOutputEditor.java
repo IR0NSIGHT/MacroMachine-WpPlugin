@@ -26,6 +26,7 @@ public class InputOutputEditor extends LayerMappingPanel {
         frame.pack();
         frame.setVisible(true);
     }
+
     private EditableIO io;
     private Consumer<MappingAction> onChanged;
 

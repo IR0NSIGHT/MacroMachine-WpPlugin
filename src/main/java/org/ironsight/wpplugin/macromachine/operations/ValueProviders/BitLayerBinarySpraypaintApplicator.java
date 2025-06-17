@@ -14,20 +14,23 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     private String layerName;
     private String layerId;
     private Layer layer;
+    private boolean isCustom = false;
 
     public BitLayerBinarySpraypaintApplicator() {
         super();
     }
 
-    public BitLayerBinarySpraypaintApplicator(Layer layer) {
+    public BitLayerBinarySpraypaintApplicator(Layer layer, boolean isCustom) {
         this.layer = layer;
         this.layerId = layer.getId();
         this.layerName = layer.getName();
+        this.isCustom = isCustom;
     }
 
-    BitLayerBinarySpraypaintApplicator(String layerId, String layerName) {
+    BitLayerBinarySpraypaintApplicator(String layerId, String layerName, boolean isCustom) {
         this.layerId = layerId;
         this.layerName = layerName;
+        this.isCustom = isCustom;
     }
 
     @Override
@@ -68,12 +71,19 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return new BitLayerBinarySpraypaintApplicator((String) data[0], (String) data[1]);
+        Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer"
+                , false};
+        for (int i = 0; i < data.length; i++) {
+            saveData[i] = data[i];
+        }
+        return new BitLayerBinarySpraypaintApplicator((String) saveData[0],
+                (String) saveData[1],
+                (Boolean) saveData[2]);
     }
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{layerId, layerName};
+        return new Object[]{layerName, layerId, isCustom};
     }
 
     @Override
@@ -108,7 +118,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public String getName() {
-        return layerName + " (spraypaint)";
+        return layerName  + (isCustom ? " (Custom) layer" : " layer")+ " spraypaint";
     }
 
     @Override
@@ -132,8 +142,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public String toString() {
-        return "BitLayerBinarySpraypaintApplicator{" + ", layerName='" + layerName + '\'' + ", layerId='" + layerId +
-                '\'' + '}';
+        return layerName;
     }
 
     @Override
@@ -148,12 +157,21 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     public String getLayerName() {
         return layerName;
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
     }
+
     @Override
     public String getLayerId() {
         return layerId;
     }
+
+    @Override
+    public boolean isCustomLayer() {
+        return isCustom;
+    }
+
+
 }

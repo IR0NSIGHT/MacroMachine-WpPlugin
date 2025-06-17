@@ -15,7 +15,10 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());
     }
-
+    @Override
+    public String toString() {
+        return getName();
+    }
     @Override
     public void prepareForDimension(Dimension dim) {
 
