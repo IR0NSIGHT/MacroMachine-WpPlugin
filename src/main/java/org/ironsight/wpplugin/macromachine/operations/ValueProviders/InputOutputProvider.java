@@ -95,9 +95,15 @@ public class InputOutputProvider implements IMappingValueProvider {
                     if (outputSettings.allowCustomLayers)
                         getters.add(new NibbleLayerSetter(l));
                 }
-                if (l.dataSize.equals(Layer.DataSize.BIT))
-                    if (outputSettings.allowCustomLayers)
+                if (l.dataSize.equals(Layer.DataSize.BIT)) {
+                    if (outputSettings.allowCustomLayers) {
                         setters.add(new BitLayerBinarySpraypaintApplicator(l));
+                        setters.add(new BinaryLayerIO(l));
+                    }
+                    if (inputSettings.allowCustomLayers)
+                        getters.add(new BinaryLayerIO(l));
+                }
+
             }
         }
     //    getters.add(new DistanceToLayerEdgeGetter(SelectionBlock.INSTANCE));
