@@ -27,6 +27,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
             new Color(0, 224, 0),     // Neon green
             new Color(0, 255, 0)      // Pure green
     };
+
     protected String layerId;
     protected String layerName;
     protected Layer layer = null;
@@ -141,7 +142,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public String toString() {
-        return "NibbleLayerSetter{" + "layer=" + layerName + ", layerId=" + layerId + '}';
+        return layerName;
     }
 
     @Override

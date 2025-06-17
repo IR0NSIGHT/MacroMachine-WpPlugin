@@ -77,7 +77,10 @@ public class AlwaysIO implements IPositionValueGetter {
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
 
     }
-
+    @Override
+    public String toString() {
+        return getName();
+    }
     @Override
     public ProviderType getProviderType() {
         return ProviderType.ALWAYS;

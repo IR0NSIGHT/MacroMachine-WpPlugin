@@ -25,6 +25,23 @@ public class InputGetterComboBox extends JComboBox<IMappingValue> {
         this.repaint();
     }
 
+    private boolean keyCharSelection; //prevents dropdown from submitting on any keypress (allows multi key inputs)
+    @Override
+    public boolean selectWithKeyChar(char keyChar) {
+        keyCharSelection = true;
+        boolean event = super.selectWithKeyChar(keyChar);
+        keyCharSelection = false;
+        return event;
+    }
+
+    @Override
+    protected void fireActionEvent() {
+        if (keyCharSelection) {
+            return;
+        }
+        super.fireActionEvent();
+    }
+
     public IMappingValue getSelectedProvider() {
         return ((IOComboBoxModel)this.getModel()).selected;
     }

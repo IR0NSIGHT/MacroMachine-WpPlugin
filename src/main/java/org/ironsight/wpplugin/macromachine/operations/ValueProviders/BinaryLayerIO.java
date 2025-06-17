@@ -83,11 +83,6 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         return ProviderType.BINARY_LAYER;
     }
 
-    @Override
-    public String toString() {
-        return "BinaryLayerIO{" + "layerId='" + layerId + '\'' + ", layerName='" + layerName + '\'' + '}';
-    }
-
     public int getValueAt(Dimension dim, int x, int y) {
         return dim.getBitLayerValueAt(layer, x, y) ? 1 : 0;
     }
@@ -131,5 +126,10 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     @Override
     public String getLayerId() {
         return layerId;
+    }
+
+    @Override
+    public String toString() {
+        return layerName;
     }
 }
