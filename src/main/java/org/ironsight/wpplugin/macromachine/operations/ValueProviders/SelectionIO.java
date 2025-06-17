@@ -19,7 +19,7 @@ public class SelectionIO extends BinaryLayerIO {
     }
 
     public SelectionIO() {
-        super(SelectionBlock.INSTANCE);
+        super(SelectionBlock.INSTANCE, false);
     }
 
     @Override

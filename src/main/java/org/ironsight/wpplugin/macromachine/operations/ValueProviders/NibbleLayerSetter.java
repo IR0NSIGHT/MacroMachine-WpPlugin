@@ -32,18 +32,25 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     protected String layerName;
     protected Layer layer = null;
 
+    protected NibbleLayerSetter(String name, String id, boolean isCustom) {
+        this.layerId = id;
+        this.layerName = name;
+        this.isCustom = isCustom;
+    }
     protected NibbleLayerSetter(String name, String id) {
         this.layerId = id;
         this.layerName = name;
+        isCustom = false;
     }
 
     public NibbleLayerSetter() {
     }
 
-    public NibbleLayerSetter(Layer layer) {
+    public NibbleLayerSetter(Layer layer, boolean isCustom) {
         this.layer = layer;
         this.layerName = layer.getName();
         this.layerId = layer.getId();
+        this.isCustom = isCustom;
     }
 
     @Override
@@ -73,12 +80,19 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return new NibbleLayerSetter((String) data[0], (String) data[1]);
+        Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer"
+                , false };
+        for (int i = 0; i < data.length; i++) {
+            saveData[i] = data[i];
+        }
+        return new NibbleLayerSetter((String) saveData[0], (String) saveData[1], (Boolean) saveData[2]);
     }
+
+    private boolean isCustom = false;
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{layerName, layerId};
+        return new Object[]{layerName, layerId, isCustom};
     }
 
     @Override
@@ -109,7 +123,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public String getName() {
-        return layerName;
+        return layerName + (isCustom ? " (Custom) layer" : " layer");
     }
 
     @Override
@@ -153,5 +167,10 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     @Override
     public String getLayerId() {
         return layerId;
+    }
+
+    @Override
+    public boolean isCustomLayer() {
+        return isCustom;
     }
 }

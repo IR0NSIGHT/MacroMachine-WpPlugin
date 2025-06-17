@@ -71,7 +71,7 @@ public class MappingActionContainer extends AbstractOperationContainer<MappingAc
 
         m = container.addMapping();
         m = new MappingAction(new TerrainHeightIO(-64, 319),
-                new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE),
+                new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE, false),
                 new MappingPoint[]{new MappingPoint(150, 0), new MappingPoint(230, 100)},
                 ActionType.AT_LEAST,
                 "frosted " + "peaks",
@@ -81,7 +81,7 @@ public class MappingActionContainer extends AbstractOperationContainer<MappingAc
         });
         m = container.addMapping();
         m = new MappingAction(new SlopeProvider(),
-                new NibbleLayerSetter(PineForest.INSTANCE),
+                new NibbleLayerSetter(PineForest.INSTANCE, false),
                 new MappingPoint[]{new MappingPoint(0, 15), new MappingPoint(70, 15), new MappingPoint(80, 0)},
                 ActionType.LIMIT_TO,
                 "no steep pines",

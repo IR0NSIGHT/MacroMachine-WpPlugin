@@ -47,7 +47,7 @@ public class FileConflictResolverDialog extends JDialog {
                     .withName("Paint trees on cyan v1")
                     .withInput(new AnnotationSetter())
                     .withOutput(new NibbleLayerSetter(
-                            PineForest.INSTANCE));
+                            PineForest.INSTANCE, false));
             FileConflictResolverDialog dialog = new FileConflictResolverDialog(frame,
                     a,a.withName("Paint trees on cyan v2"));
             dialog.setVisible(true);
