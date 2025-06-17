@@ -3,22 +3,19 @@ package org.ironsight.wpplugin.macromachine.Gui;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultTreeCellRenderer;
-import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
 
 public class SaveableActionRenderer extends DefaultTreeCellRenderer
-        implements TableCellRenderer, ListCellRenderer<SaveableAction> {
+        implements TableCellRenderer, ListCellRenderer<Object> {
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     JLabel input = new JLabel();
@@ -112,16 +109,6 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
         return panel;
     }
 
-    @Override
-    public Component getListCellRendererComponent(JList<? extends SaveableAction> list, SaveableAction value, int index,
-                                                  boolean isSelected, boolean cellHasFocus) {
-        updateTo(value);
-        if (isSelected) {
-            panel.setBackground(SELECTED_BACKGROUND);
-        } else panel.setBackground(DEFAULT_BACKGROUND);
-        return panel;
-    }
-
     public Component renderFor(SaveableAction value, boolean isSelected) {
         updateTo(value);
         if (isSelected) {
@@ -157,5 +144,15 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
         panel.invalidate();
         return panel;
 
+    }
+
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+                                                  boolean cellHasFocus) {
+        updateTo(value);
+        if (isSelected) {
+            panel.setBackground(SELECTED_BACKGROUND);
+        } else panel.setBackground(DEFAULT_BACKGROUND);
+        return panel;
     }
 }

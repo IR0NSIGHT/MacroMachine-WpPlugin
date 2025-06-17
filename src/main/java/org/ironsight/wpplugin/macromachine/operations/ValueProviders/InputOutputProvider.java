@@ -6,14 +6,15 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
 public class InputOutputProvider {
     public static InputOutputProvider INSTANCE = new InputOutputProvider();
-    public final ArrayList<IPositionValueSetter> setters = new ArrayList<>();
+    public final ArrayList<IMappingValue> setters = new ArrayList<>();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
-    public ArrayList<IPositionValueGetter> getters = new ArrayList<>();
+    public ArrayList<IMappingValue> getters = new ArrayList<>();
     private AllowedLayerSettings inputSettings = new AllowedLayerSettings(false, true, true, true);
     private AllowedLayerSettings outputSettings = new AllowedLayerSettings(false, true, true, true);
 
@@ -21,12 +22,36 @@ public class InputOutputProvider {
         updateFrom(null);
     }
 
-    public void subscribe(Runnable runnable) {
+    void subscribe(Runnable runnable) {
         genericNotifies.add(runnable);
     }
 
-    public void unsubscribe(Runnable runnable) {
-        genericNotifies.remove(runnable);
+    public IMappingValueProvider asInputProvider() {
+        return new IMappingValueProvider() {
+            @Override
+            public Collection<IMappingValue> getItems() {
+                return getters;
+            }
+
+            @Override
+            public void subscribeToUpdates(Runnable r) {
+                subscribe(r);
+            }
+        };
+    }
+
+    public IMappingValueProvider asOutputProvider() {
+        return new IMappingValueProvider() {
+            @Override
+            public Collection<IMappingValue> getItems() {
+                return setters;
+            }
+
+            @Override
+            public void subscribeToUpdates(Runnable r) {
+                subscribe(r);
+            }
+        };
     }
 
     public void updateFrom(Dimension dimension) {
