@@ -10,8 +10,8 @@ public class IconManager {
         ACTION("/icons/action.png"),
         INPUT("/icons/input.png"),
         OUTPUT("/icons/output.png"),
-        PARAM("/icons/param.png");
-
+        PARAM("/icons/param.png"),
+        INVALID("/icons/invalid.png");
         private Icon(String resourcePath) {
             this.resourcePath = resourcePath;
         }

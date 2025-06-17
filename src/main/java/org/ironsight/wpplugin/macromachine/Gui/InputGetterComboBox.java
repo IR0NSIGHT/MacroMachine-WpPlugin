@@ -8,13 +8,13 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public class InputGetterComboBox extends JComboBox<IMappingValue> {
-    private IOComboBoxModel model;
-    IMappingValueProvider provider;
+    private final IOComboBoxModel model;
+    private final IMappingValueProvider provider;
     public InputGetterComboBox(Consumer<IMappingValue> onChangeCallback, IMappingValueProvider provider) {
         this.provider = provider;
         this.model = new IOComboBoxModel(onChangeCallback);
         this.setModel(model);
-        this.setRenderer(new SaveableActionRenderer());
+        this.setRenderer(new SaveableActionRenderer(MacroTreePanel::isValidItem));
         provider.subscribeToUpdates(this::updateSelf);
         updateSelf();
     }
@@ -36,7 +36,7 @@ public class InputGetterComboBox extends JComboBox<IMappingValue> {
     }
 
     public class IOComboBoxModel implements ComboBoxModel<IMappingValue> {
-        private Consumer<IMappingValue> onUserSelectsItem = null;
+        private final Consumer<IMappingValue> onUserSelectsItem;
         public IOComboBoxModel(Consumer<IMappingValue> onUserSelectsItem ) {
             this.onUserSelectsItem = onUserSelectsItem;
         }

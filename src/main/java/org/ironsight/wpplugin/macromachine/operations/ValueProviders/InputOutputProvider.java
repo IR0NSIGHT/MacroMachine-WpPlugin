@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.stream.Collectors;
 
-public class InputOutputProvider {
+public class InputOutputProvider implements IMappingValueProvider {
     public static InputOutputProvider INSTANCE = new InputOutputProvider();
     public final ArrayList<IMappingValue> setters = new ArrayList<>();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
@@ -37,6 +37,11 @@ public class InputOutputProvider {
             public void subscribeToUpdates(Runnable r) {
                 subscribe(r);
             }
+
+            @Override
+            public boolean existsItem(Object item) {
+                return getters.contains(item);
+            }
         };
     }
 
@@ -50,6 +55,11 @@ public class InputOutputProvider {
             @Override
             public void subscribeToUpdates(Runnable r) {
                 subscribe(r);
+            }
+
+            @Override
+            public boolean existsItem(Object item) {
+                return setters.contains(item);
             }
         };
     }
@@ -137,6 +147,24 @@ public class InputOutputProvider {
     private void notifyListeners() {
         for (Runnable r : genericNotifies)
             r.run();
+    }
+
+    @Override
+    public Collection<IMappingValue> getItems() {
+        ArrayList out = new ArrayList<>();
+        out.addAll(getters);
+        out.addAll(setters);
+        return out;
+    }
+
+    @Override
+    public void subscribeToUpdates(Runnable r) {
+        subscribe(r);
+    }
+
+    @Override
+    public boolean existsItem(Object item) {
+        return getItems().contains(item);
     }
 
 

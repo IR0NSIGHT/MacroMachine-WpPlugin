@@ -69,7 +69,10 @@ public class MacroDesigner extends JPanel {
                 return false; // Disable editing
             }
         };
-        table.setDefaultRenderer(Object.class, new SaveableActionRenderer());
+        table.setDefaultRenderer(Object.class, new SaveableActionRenderer(MacroTreePanel::isValidItem));
+        //FIXME add actual
+        // check if
+        // action is usable
         scrollPane = new JScrollPane(table);
         editorPanel.add(scrollPane, BorderLayout.CENTER);
 

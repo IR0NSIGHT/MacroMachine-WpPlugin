@@ -13,4 +13,5 @@ public interface IDisplayUnit {
                 lowerCaseString.contains(item.getName().toLowerCase()) ||
                 lowerCaseString.contains(item.getDescription().toLowerCase());
     };
+
 }

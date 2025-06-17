@@ -34,11 +34,11 @@ public class ConflictResolveImportPolicy extends ImportExportPolicy {
                 return false; // nothing to do, just skip
             FileConflictResolverDialog diag;
             if (parent instanceof JDialog)
-                diag = new FileConflictResolverDialog((JDialog) parent, action, original);
+                diag = new FileConflictResolverDialog((JDialog) parent,original, action );
             else if (parent instanceof JFrame)
-                diag = new FileConflictResolverDialog((JFrame) parent, action, original);
+                diag = new FileConflictResolverDialog((JFrame) parent,original, action);
             else
-                diag = new FileConflictResolverDialog((JFrame) null, action, original);
+                diag = new FileConflictResolverDialog((JFrame) null, original,action);
             diag.setVisible(true);
             if (diag.isRemember() && diag.isOverwrite())
                 allowAll = true;

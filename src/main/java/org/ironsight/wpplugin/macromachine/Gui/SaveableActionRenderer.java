@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.Gui;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
@@ -10,6 +11,7 @@ import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import java.awt.*;
+import java.util.function.Function;
 
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
@@ -23,8 +25,13 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     JPanel panel = new JPanel(new BorderLayout());
     JLabel actionType = new JLabel();
     JLabel iconLabel = new JLabel();
+    private final Function<IDisplayUnit, Boolean> isItemValid;
+    public SaveableActionRenderer(Function<IDisplayUnit, Boolean> isItemValid) {
+        this.isItemValid = isItemValid;
+        init();
+    }
 
-    public SaveableActionRenderer() {
+    private void init(){
         JPanel iconAndName = new JPanel(new FlowLayout(FlowLayout.LEFT));
         iconAndName.setOpaque(false);
         iconLabel.setPreferredSize(new Dimension(20, 20));
@@ -95,6 +102,9 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
             output.setText("");
             actionType.setText("");
             panel.setToolTipText("this action does not exist. It will be ignored.");
+        }
+        if (mapping instanceof IDisplayUnit && !isItemValid.apply((IDisplayUnit) mapping)) {
+            iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.INVALID));
         }
     }
 
