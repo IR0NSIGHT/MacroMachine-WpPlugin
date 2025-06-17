@@ -52,9 +52,8 @@ public class SelectionIO extends BinaryLayerIO {
 
     @Override
     public String toString() {
-        return "SelectionIO{}";
+        return getName();
     }
-
     @Override
     public ProviderType getProviderType() {
         return ProviderType.SELECTION;

@@ -85,7 +85,10 @@ public class SlopeProvider implements IPositionValueGetter {
     public ProviderType getProviderType() {
         return ProviderType.SLOPE;
     }
-
+    @Override
+    public String toString() {
+        return getName();
+    }
     @Override
     public String getName() {
         return "Slope";

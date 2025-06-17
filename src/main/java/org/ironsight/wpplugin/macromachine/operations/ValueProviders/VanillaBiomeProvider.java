@@ -22,7 +22,10 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());
     }
-
+    @Override
+    public String toString() {
+        return getName();
+    }
     @Override
     public String getName() {
         return "Biome";
