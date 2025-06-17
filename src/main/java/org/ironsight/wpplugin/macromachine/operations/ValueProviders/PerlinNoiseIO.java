@@ -18,7 +18,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
         this.scale = scale;
         this.amplitude = amplitude;
         this.seed = seed;
-        this.octaves = octaves;
+        this.octaves = Math.max(Math.min(octaves, octaveNormalizer.length-1),1);
         generator = new ImprovedNoise(42069);
 
         //brute force collect data to force generator output range into [0,1]
@@ -139,7 +139,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
             rawValue *= 1.5375;
             value += (float) rawValue / i;
         }
-        assert octaves < octaveNormalizer.length -1;
+        assert octaves <= octaveNormalizer.length -1;
         value = value / octaveNormalizer[octaves];
         return value;
     }
