@@ -43,8 +43,8 @@ public class MappingPointCellEditor extends DefaultCellEditor implements TableCe
             dropdown.addItem(mappingPointValue);
         }
         SwingUtilities.invokeLater(() -> {
-            dropdown.requestFocusInWindow();
-            dropdown.showPopup();
+            if (dropdown.requestFocusInWindow())
+                dropdown.showPopup();
         });
         dropdown.setSelectedItem(value);
         assert value.equals(dropdown.getSelectedItem());
@@ -56,6 +56,7 @@ public class MappingPointCellEditor extends DefaultCellEditor implements TableCe
         // default dropdowns will submit the selection on the first key press, making proper search-by-typing impossible
         // this class suppresses submit events when the event was caused by character searching.
         private boolean keyCharSelection;
+
         @Override
         public boolean selectWithKeyChar(char keyChar) {
             keyCharSelection = true;

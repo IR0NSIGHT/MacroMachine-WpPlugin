@@ -47,7 +47,7 @@ public class SaveableActionPickerDialog extends JDialog {
         DefaultListModel<SaveableAction> listModel = new DefaultListModel<>();
         list.setModel(listModel);
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        list.setCellRenderer(new SaveableActionRenderer());
+        list.setCellRenderer(new SaveableActionRenderer(MacroTreePanel::isValidItem));
 
 
 

@@ -1,6 +1,9 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +23,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
     private JTextField description;
     private JTextField nameField;
     private ActionTypeComboBox actionTypeComboBox;
-    private OutputComboBox outputSelect;
+    private InputGetterComboBox outputSelect;
     private InputGetterComboBox inputSelect;
 
     public LayerMappingTopPanel() {
@@ -43,10 +46,10 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
             MappingAction newMap = mapping.withName(nameField.getText())
                     .withDescription(description.getText()).withType(actionTypeComboBox.getSelectedProvider());
             if (!inputSelect.getSelectedProvider().getName().equals(mapping.input.getName()))  // rebuild map
-                newMap = newMap.withInput(inputSelect.getSelectedProvider())
+                newMap = newMap.withInput((IPositionValueGetter) inputSelect.getSelectedProvider())
                         .withNewPoints(mapping.getMappingPoints());
             if (!outputSelect.getSelectedProvider().getName().equals(mapping.output.getName()))  // rebuild map
-                newMap = newMap.withOutput(outputSelect.getSelectedProvider())
+                newMap = newMap.withOutput((IPositionValueSetter) outputSelect.getSelectedProvider())
                         .withNewPoints(mapping.getMappingPoints());
 
             updateMapping(newMap);
@@ -92,15 +95,10 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
 
         JPanel comboboxes = new JPanel(new GridLayout(0, 3));
         this.add(comboboxes, BorderLayout.CENTER);
-        inputSelect = new InputGetterComboBox();
+        inputSelect = new InputGetterComboBox(selected -> {
+            if (isAllowEvents()) this.updateFromInputs();
+        }, InputOutputProvider.INSTANCE.asInputProvider());
         inputSelect.setBorder(BorderFactory.createTitledBorder("Input value"));
-        inputSelect.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
-            }
-        });
         inputSelect.setFont(header2Font);
         comboboxes.add(inputSelect);
 
@@ -109,22 +107,18 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         actionTypeComboBox.setBorder(BorderFactory.createTitledBorder("Action Type"));
         actionTypeComboBox.setFont(header2Font);
         comboboxes.add(actionTypeComboBox);
-        actionTypeComboBox.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
-            }
+        actionTypeComboBox.addActionListener(e -> {
+            if (isAllowEvents()) SwingUtilities.invokeLater(this::updateFromInputs);
         });
 
-        outputSelect = new OutputComboBox();
+        outputSelect = new InputGetterComboBox(selected -> {
+            if (isAllowEvents()) this.updateFromInputs();
+        }, InputOutputProvider.INSTANCE.asOutputProvider());
         outputSelect.setBorder(BorderFactory.createTitledBorder("Output value"));
         comboboxes.add(outputSelect);
         outputSelect.setFont(header2Font);
-        outputSelect.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
-            }
+        outputSelect.addActionListener(e -> {
+            if (isAllowEvents()) SwingUtilities.invokeLater(this::updateFromInputs);
         });
 
         isInit = false;
