@@ -22,7 +22,10 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
         if (instance == null) instance = new AnnotationSetter();
         return instance;
     }
-
+    @Override
+    public String toString() {
+        return getName();
+    }
     @Override
     public int getMaxValue() {
         return COLORS.length - 1;
@@ -120,5 +123,10 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public String getLayerId() {
         return Annotations.INSTANCE.getId();
+    }
+
+    @Override
+    public boolean isCustomLayer() {
+        return false;
     }
 }

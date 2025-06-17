@@ -22,7 +22,7 @@ class LayerMappingTest {
         try {
             // Create an instance of the object
             MappingAction originalObject = new MappingAction(new TerrainHeightIO(-64,319),
-                    new NibbleLayerSetter(Annotations.INSTANCE),
+                    new NibbleLayerSetter(Annotations.INSTANCE, false),
                     new MappingPoint[]{new MappingPoint(7, 12)},
                     ActionType.DIVIDE,
                     "hello",
@@ -75,7 +75,7 @@ class LayerMappingTest {
             assertNotNull(original);
             ActionJsonWrapper wrapper = new ActionJsonWrapper(original);
             MappingAction restored = MappingAction.fromJsonWrapper(wrapper);
-            assertEquals(original, restored);
+            assertEquals(original, restored, "wrapper changed " + original);
         }
     }
 
@@ -154,7 +154,7 @@ class LayerMappingTest {
 
         {   // 2 POINT LINEAR AT FIRST THAN PLATEAU
             MappingAction mapper = new MappingAction(new TerrainHeightIO(-64,319),
-                    new NibbleLayerSetter(Annotations.INSTANCE),
+                    new NibbleLayerSetter(Annotations.INSTANCE, false),
                     new MappingPoint[]{new MappingPoint(50, 0), new MappingPoint(150, 10),},
                     ActionType.SET,
                     "",

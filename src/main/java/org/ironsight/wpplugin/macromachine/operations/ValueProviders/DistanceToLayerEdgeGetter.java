@@ -124,7 +124,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
 
     @Override
     public String toString() {
-        return "DistanceToEdge{" + "layer=" + layerName + '}';
+        return getName();
     }
 
     @Override
@@ -138,5 +138,10 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
     @Override
     public String getLayerId() {
         return layerId;
+    }
+
+    @Override
+    public boolean isCustomLayer() {
+        return false;
     }
 }

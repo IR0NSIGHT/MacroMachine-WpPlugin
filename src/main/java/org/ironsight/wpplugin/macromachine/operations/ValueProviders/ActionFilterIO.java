@@ -111,4 +111,9 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     public ProviderType getProviderType() {
         return ProviderType.INTERMEDIATE_SELECTION;
     }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

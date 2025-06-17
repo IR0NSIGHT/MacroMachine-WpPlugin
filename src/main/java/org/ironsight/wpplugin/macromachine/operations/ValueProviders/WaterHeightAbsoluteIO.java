@@ -16,7 +16,10 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
     public int getValueAt(Dimension dim, int x, int y) {
         return dim.getWaterLevelAt(x, y);
     }
-
+    @Override
+    public String toString() {
+        return getName();
+    }
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
         dim.setWaterLevelAt(x, y, value);

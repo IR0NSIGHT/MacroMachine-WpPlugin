@@ -13,7 +13,10 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     public TerrainProvider() {
     }
-
+    @Override
+    public String toString() {
+        return getName();
+    }
     @Override
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());

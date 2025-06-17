@@ -12,18 +12,26 @@ import java.util.Objects;
 public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter, ILayerGetter {
     private final String layerName;
     private final String layerId;
+    boolean isCustom = false;
     private Layer layer;
 
-    public BinaryLayerIO(Layer layer) {
+    public BinaryLayerIO(Layer layer, boolean isCustom) {
         this.layerId = layer.getId();
         this.layerName = layer.getName();
         this.layer = layer;
+        this.isCustom = isCustom;
         assert layer.dataSize.equals(Layer.DataSize.BIT);
     }
 
-    BinaryLayerIO(String name, String id) {
+    BinaryLayerIO(String name, String id, boolean isCustom) {
         this.layerId = id;
         this.layerName = name;
+        this.isCustom = isCustom;
+    }
+
+    @Override
+    public String getName() {
+        return layerName + (isCustom ? " (Custom) layer" : " layer");
     }
 
     public void setValueAt(Dimension dim, int x, int y, int value) {
@@ -70,12 +78,17 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return new BinaryLayerIO((String) data[0], (String) data[1]);
+        Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer"
+                , false};
+        for (int i = 0; i < data.length; i++) {
+            saveData[i] = data[i];
+        }
+        return new BinaryLayerIO((String) saveData[0], (String) saveData[1], (Boolean) saveData[2]);
     }
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{layerName, layerId};
+        return new Object[]{layerName, layerId, isCustom};
     }
 
     @Override
@@ -83,18 +96,8 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         return ProviderType.BINARY_LAYER;
     }
 
-    @Override
-    public String toString() {
-        return "BinaryLayerIO{" + "layerId='" + layerId + '\'' + ", layerName='" + layerName + '\'' + '}';
-    }
-
     public int getValueAt(Dimension dim, int x, int y) {
         return dim.getBitLayerValueAt(layer, x, y) ? 1 : 0;
-    }
-
-    @Override
-    public String getName() {
-        return layerName;
     }
 
     @Override
@@ -124,12 +127,24 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     public String getLayerName() {
         return layerName;
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
     }
+
     @Override
     public String getLayerId() {
         return layerId;
+    }
+
+    @Override
+    public boolean isCustomLayer() {
+        return isCustom;
+    }
+
+    @Override
+    public String toString() {
+        return layerName;
     }
 }
