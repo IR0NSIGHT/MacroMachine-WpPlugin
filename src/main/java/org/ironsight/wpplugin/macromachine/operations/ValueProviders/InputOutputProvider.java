@@ -78,32 +78,31 @@ public class InputOutputProvider implements IMappingValueProvider {
         for (Layer l : layers) {
             if (l instanceof Annotations || l instanceof Biome) continue;
             if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
-                setters.add(new NibbleLayerSetter(l));
-                getters.add(new NibbleLayerSetter(l));
+                setters.add(new NibbleLayerSetter(l, false));
+                getters.add(new NibbleLayerSetter(l, false));
             }
             if (l.dataSize.equals(Layer.DataSize.BIT)) {
-                setters.add(new BitLayerBinarySpraypaintApplicator(l));
-                setters.add(new BinaryLayerIO(l));
-                getters.add(new BinaryLayerIO(l));
+                setters.add(new BitLayerBinarySpraypaintApplicator(l, false));
+                setters.add(new BinaryLayerIO(l,false));
+                getters.add(new BinaryLayerIO(l,false));
             }
         }
         if (dimension != null) {
             for (Layer l : dimension.getCustomLayers()) {
                 if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
                     if (inputSettings.allowCustomLayers)
-                        setters.add(new NibbleLayerSetter(l));
+                        setters.add(new NibbleLayerSetter(l, true));
                     if (outputSettings.allowCustomLayers)
-                        getters.add(new NibbleLayerSetter(l));
+                        getters.add(new NibbleLayerSetter(l, true));
                 }
                 if (l.dataSize.equals(Layer.DataSize.BIT)) {
                     if (outputSettings.allowCustomLayers) {
-                        setters.add(new BitLayerBinarySpraypaintApplicator(l));
-                        setters.add(new BinaryLayerIO(l));
+                        setters.add(new BitLayerBinarySpraypaintApplicator(l, true));
+                        setters.add(new BinaryLayerIO(l, true));
                     }
                     if (inputSettings.allowCustomLayers)
-                        getters.add(new BinaryLayerIO(l));
+                        getters.add(new BinaryLayerIO(l, true));
                 }
-
             }
         }
     //    getters.add(new DistanceToLayerEdgeGetter(SelectionBlock.INSTANCE));
@@ -129,7 +128,7 @@ public class InputOutputProvider implements IMappingValueProvider {
 
         getters.add(new SelectionIO());
         setters.add(new SelectionIO());
-        setters.add(new BitLayerBinarySpraypaintApplicator(SelectionBlock.INSTANCE));
+        setters.add(new BitLayerBinarySpraypaintApplicator(SelectionBlock.INSTANCE, false));
 
         getters.add(new VanillaBiomeProvider());
         setters.add(new VanillaBiomeProvider());

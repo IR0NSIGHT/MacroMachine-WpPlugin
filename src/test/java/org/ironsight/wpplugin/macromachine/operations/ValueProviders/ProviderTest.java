@@ -147,7 +147,7 @@ public class ProviderTest {
 
     @Test
     void BinaryLayerProviderGetSetValue() {
-        BinaryLayerIO h = new BinaryLayerIO(Frost.INSTANCE);
+        BinaryLayerIO h = new BinaryLayerIO(Frost.INSTANCE, false);
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
@@ -167,7 +167,7 @@ public class ProviderTest {
 
     @Test
     void BitLayerSpraypaintProviderGetSetValue() {
-        IPositionValueSetter h = new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE);
+        IPositionValueSetter h = new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE, false);
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
@@ -289,7 +289,7 @@ public class ProviderTest {
 
     @Test
     void NibbleLayerTest() {
-        NibbleLayerSetter io = new NibbleLayerSetter(PineForest.INSTANCE);
+        NibbleLayerSetter io = new NibbleLayerSetter(PineForest.INSTANCE, false);
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         io.prepareForDimension(dim);
 

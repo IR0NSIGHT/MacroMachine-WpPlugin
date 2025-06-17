@@ -124,4 +124,9 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     public String getLayerId() {
         return Annotations.INSTANCE.getId();
     }
+
+    @Override
+    public boolean isCustomLayer() {
+        return false;
+    }
 }
