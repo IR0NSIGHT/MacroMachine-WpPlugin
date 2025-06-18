@@ -16,11 +16,6 @@ class MappingActionValueTableModel implements TableModel {
     LinkedList<TableModelListener> listeners = new LinkedList<>();
     private MappingAction action;
 
-    public boolean isOnlyControlPoints() {
-        return onlyControlPoints;
-    }
-
-    private boolean onlyControlPoints;
     private MappingPointValue[] inputs, output;
     private boolean[] isMappingPoint;
     private int[] rowToMappingPointIdx;
@@ -43,10 +38,6 @@ class MappingActionValueTableModel implements TableModel {
 
     public MappingAction getAction() {
         return this.action;
-    }
-
-    public void setOnlyControlPointMode(boolean flag) {
-        this.onlyControlPoints = flag;
     }
 
     private void rebuildData() {
@@ -80,7 +71,7 @@ class MappingActionValueTableModel implements TableModel {
     public int getRowCount() {
         if (action == null)
             return 0;
-        return onlyControlPoints ? action.getMappingPoints().length : inputs.length;
+        return inputs.length;
     }
 
     @Override
@@ -106,7 +97,7 @@ class MappingActionValueTableModel implements TableModel {
     }
 
     private boolean isControlPoint(int rowIndex) {
-        return onlyControlPoints || this.isMappingPoint[rowIndex];
+        return this.isMappingPoint[rowIndex];
     }
 
     @Override
@@ -116,12 +107,10 @@ class MappingActionValueTableModel implements TableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
-        int numericInput = onlyControlPoints ? mappingPointToRowIdx[rowIndex] : rowIndex;
-        assert numericInput != -1;
         if (columnIndex == INPUT_COLUMN_IDX)
-            return inputs[numericInput];
+            return inputs[rowIndex];
         if (columnIndex == OUTPUT_COLUMN_IDX)
-            return output[numericInput];
+            return output[rowIndex];
         assert false;
         return null;
     }
@@ -130,12 +119,11 @@ class MappingActionValueTableModel implements TableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (!isCellEditable(rowIndex, columnIndex))
             return;
-        assert !(onlyControlPoints && rowIndex >= mappingPointToRowIdx.length);
-        int numericInput = onlyControlPoints ? mappingPointToRowIdx[rowIndex] : rowIndex;
-        int mappingPointIdx = onlyControlPoints ? rowIndex : rowToMappingPointIdx[rowIndex];
+        assert !(rowIndex >= mappingPointToRowIdx.length);
+        int mappingPointIdx = rowToMappingPointIdx[rowIndex];
         MappingPoint p = action.getMappingPoints()[mappingPointIdx];
         MappingPoint[] newPoints = action.getMappingPoints();
-        assert numericInput == p.input;
+        assert rowIndex == p.input;
         if (columnIndex == OUTPUT_COLUMN_IDX) {
             newPoints[mappingPointIdx] = new MappingPoint(p.input, ((MappingPointValue) aValue).numericValue);
         } else if (columnIndex == INPUT_COLUMN_IDX) {

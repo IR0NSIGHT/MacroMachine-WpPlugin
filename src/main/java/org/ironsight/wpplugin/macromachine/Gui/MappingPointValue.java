@@ -2,9 +2,10 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
 
+import java.util.Comparator;
 import java.util.Objects;
 
-public class MappingPointValue {
+public class MappingPointValue implements Comparable<MappingPointValue> {
     IMappingValue mappingValue;
     int numericValue;
 
@@ -38,5 +39,12 @@ public class MappingPointValue {
     @Override
     public String toString() {
         return mappingValue.valueToString(numericValue);
+    }
+
+    @Override
+    public int compareTo(MappingPointValue o) {
+        if (mappingValue.isDiscrete())
+            return mappingValue.valueToString(numericValue).compareToIgnoreCase(o.mappingValue.valueToString(o.numericValue));
+        return Integer.compare(numericValue,o.numericValue);
     }
 }
