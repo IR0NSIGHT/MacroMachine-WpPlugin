@@ -29,6 +29,7 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     private Object beforeChange;
     private int eventRow;
     private int eventColumn;
+    private TableRowSorter<MappingActionValueTableModel> sorter;
 
     @Override
     protected void updateComponents() {
@@ -47,6 +48,19 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         blockTableChanged = false;
         numberTable.revalidate();
         numberTable.repaint();
+    }
+
+    private void setRowFilter(boolean groupValues) {
+        if (!groupValues) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(new RowFilter<MappingActionValueTableModel, Integer>() {
+                @Override
+                public boolean include(Entry<? extends MappingActionValueTableModel, ? extends Integer> entry) {
+                    return tableModel.isMappingPoint(entry.getIdentifier());
+                }
+            });
+        }
     }
 
     @Override
@@ -72,10 +86,10 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         this.tableModel = new MappingActionValueTableModel();
         tableModel.rebuildDataWithAction(mapping);
         numberTable.setModel(tableModel);
-        TableRowSorter<MappingActionValueTableModel> sorter =
-                new TableRowSorter<>(tableModel);
+        sorter = new TableRowSorter<>(tableModel);
         sorter.setSortsOnUpdates(true);
         numberTable.setRowSorter(sorter);
+        setRowFilter(groupValues);
 
         Font font = new Font("Arial", Font.PLAIN, 24);
         numberTable.setFont(font);
@@ -90,10 +104,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         groupValuesCheckBox = new JCheckBox("Only Control Points");
         groupValuesCheckBox.setSelected(groupValues);
         groupValuesCheckBox.addActionListener(f -> {
-            if (groupValues != groupValuesCheckBox.isSelected()) {
-                groupValues = groupValuesCheckBox.isSelected();
-                updateComponents();
-            }
+            this.groupValues = groupValuesCheckBox.isSelected();
+            setRowFilter(groupValues);
         });
         buttons.add(groupValuesCheckBox);
         this.add(buttons, BorderLayout.SOUTH);
@@ -127,7 +139,6 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 onSelect.accept(selection);
         });
     }
-
 
 
     @Override

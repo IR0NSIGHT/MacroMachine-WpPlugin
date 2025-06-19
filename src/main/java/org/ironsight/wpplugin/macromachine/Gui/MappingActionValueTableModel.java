@@ -20,7 +20,9 @@ class MappingActionValueTableModel implements TableModel {
     private boolean[] isMappingPoint;
     private int[] rowToMappingPointIdx;
     private int[] mappingPointToRowIdx;
-
+    public boolean isMappingPoint(int rowIdx) {
+        return isMappingPoint[rowIdx];
+    }
     public void rebuildDataWithAction(MappingAction action) {
         if (action == null)
             return;
@@ -102,6 +104,8 @@ class MappingActionValueTableModel implements TableModel {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
+        if (columnIndex == INPUT_COLUMN_IDX && action.getInput().isDiscrete())
+            return false; // discrete inputs already have 1 mapping point per value, there is no point in changing it.
         return isControlPoint(rowIndex);
     }
 
