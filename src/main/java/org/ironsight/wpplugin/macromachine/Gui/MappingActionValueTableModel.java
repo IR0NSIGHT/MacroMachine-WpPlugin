@@ -33,9 +33,14 @@ class MappingActionValueTableModel implements TableModel {
         this.action = action;
         rebuildData();
         if (inputOutputChanged)
-            for (TableModelListener l : listeners) {
-                l.tableChanged(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
-            }
+            fireEvent(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
+    }
+
+    private void fireEvent(TableModelEvent event) {
+        System.out.println("fire table model event " + event);
+        for (TableModelListener l : listeners) {
+            l.tableChanged(event);
+        }
     }
 
     public MappingAction getAction() {

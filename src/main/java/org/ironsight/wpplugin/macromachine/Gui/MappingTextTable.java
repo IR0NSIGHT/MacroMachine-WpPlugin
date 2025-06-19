@@ -13,6 +13,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class MappingTextTable extends LayerMappingPanel implements IMappingPointSelector {
@@ -26,13 +27,13 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
     private boolean groupValues = true;
     private JCheckBox groupValuesCheckBox;
     private boolean blockTableChanged;
-    private Object beforeChange;
-    private int eventRow;
-    private int eventColumn;
     private TableRowSorter<MappingActionValueTableModel> sorter;
 
     @Override
     protected void updateComponents() {
+        TableRowSorter<?> sorter = (TableRowSorter<?>) numberTable.getRowSorter();
+        List<? extends RowSorter.SortKey> sortKeys = sorter.getSortKeys();
+
         groupValues = groupValuesCheckBox.isSelected();
         blockTableChanged = true;
         tableModel.rebuildDataWithAction(this.mapping);
@@ -46,8 +47,8 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             }
         }
         blockTableChanged = false;
-        numberTable.revalidate();
-        numberTable.repaint();
+
+        sorter.setSortKeys(sortKeys);
     }
 
     private void setRowFilter(boolean groupValues) {
