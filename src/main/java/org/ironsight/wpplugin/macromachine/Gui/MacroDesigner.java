@@ -141,6 +141,16 @@ public class MacroDesigner extends JPanel {
     private Collection<SaveableAction> getDefaultFiltersAndEmptyAction() {
         LinkedList<SaveableAction> items = new LinkedList<>();
         items.add(MappingAction.getNewEmptyAction());
+        items.add(new MappingAction(new AlwaysIO(),
+                ActionFilterIO.instance,
+                new MappingPoint[]{
+                        new MappingPoint(0, ActionFilterIO.PASS_VALUE)
+                },
+                ActionType.SET,
+                "Filter: Reset",
+                "Default filter: allow all blocks",
+                null
+        ));
         items.add(new MappingAction(new WaterDepthProvider(),
                 ActionFilterIO.instance,
                 new MappingPoint[]{
@@ -273,6 +283,16 @@ public class MacroDesigner extends JPanel {
                 ActionType.LIMIT_TO,
                 "Filter: Only On Annotations Cyan",
                 "Default filter: block all blocks that are not cyan annotated.",
+                null
+        ));
+        items.add(new MappingAction(new AlwaysIO(),
+                new TerrainProvider(),
+                new MappingPoint[]{
+                        new MappingPoint(0, 0)
+                },
+                ActionType.SET,
+                "Apply: Grass",
+                "Default action: apply grass to all blocks that have passed the filter",
                 null
         ));
         return items;

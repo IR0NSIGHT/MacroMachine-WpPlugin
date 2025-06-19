@@ -7,6 +7,7 @@ import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.colourschemes.HardcodedColourScheme;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter {
     private static final ColourScheme colorScheme = new HardcodedColourScheme();
@@ -95,7 +96,9 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        g.drawImage(Terrain.values()[value].getScaledIcon(Math.min(dim.height, dim.width), colorScheme), 0, 0, null);
+        Terrain terrain = Terrain.values()[value];
+        BufferedImage terrainImg = terrain.getScaledIcon(Math.min(dim.height, dim.width), colorScheme);
+        g.drawImage(terrainImg, 0, 0, null);
     }
     @Override
     public String getToolTipText() {

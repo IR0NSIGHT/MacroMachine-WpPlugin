@@ -12,6 +12,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -28,6 +30,7 @@ public class MacroTreePanel extends JPanel {
     DefaultTreeModel treeModel;
     JTree tree;
     ISelectItemCallback onSelectAction;
+    JPopupMenu popupMenu = new JPopupMenu();
     private String filterString = "";
     private JButton applyButton;
     private long lastProgressUpdate = 0;
@@ -35,8 +38,6 @@ public class MacroTreePanel extends JPanel {
     private boolean blockUpdates = false;
     private String lastImportFilePath = System.getProperty("user.home");
     private String lastExportFilePath = System.getProperty("user.home");
-
-    private SaveableAction lastSelectedItem = null;
 
     MacroTreePanel(MacroContainer container, MappingActionContainer mappingContainer,
                    MacroApplicator applyToMap, ISelectItemCallback onSelectAction) {
@@ -229,6 +230,12 @@ public class MacroTreePanel extends JPanel {
         return selectedUUIDs;
     }
 
+    private void onTreeItemRightClick(MacroTreeNode node, MouseEvent e) {
+
+        System.out.println("source right clicked");
+        popupMenu.show(e.getComponent(), e.getX(), e.getY());
+    }
+
     private void init() {
         container.subscribe(this::update);
         mappingContainer.subscribe(this::update);
@@ -273,22 +280,62 @@ public class MacroTreePanel extends JPanel {
             }
         });
 
+        tree.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON3) {
+                    TreePath selectedPath = tree.getPathForLocation(e.getX(), e.getY());
+                    if (selectedPath == null || !tree.isPathSelected(selectedPath)) {
+                        return; // No node at the click location OR not selected
+                    }
+                    MacroTreeNode node = (MacroTreeNode) selectedPath.getLastPathComponent();
+                    if (node == null)
+                        return;
+                    onTreeItemRightClick(node, e);
+                }
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+
+            }
+        });
         JScrollPane scrollPane = new JScrollPane(tree,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         this.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel buttons = new JPanel(new FlowLayout());
+        JPanel buttons = new JPanel();
+        buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
+        buttons.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         JButton addButton = new JButton("Create macro");
         addButton.setToolTipText("Create a new, empty macro.");
         addButton.addActionListener(e -> {
-            Macro macro = container.addMapping();
+            Set<UUID> uids = getSelectedUUIDs(true, true);
+            UUID[] uidArr = uids.toArray(new UUID[0]);
+            Macro macro = container.addMapping().withUUIDs(uidArr);
+            container.updateMapping(macro, MacroMachinePlugin::error);
             HashSet<UUID> set = new HashSet<>();
             set.add(macro.getUid());
             update(set);
-
         });
-        buttons.add(addButton);
+
 
         JButton removeButton = new JButton("Delete");
         removeButton.setToolTipText("Delete all selected macros permanently");
@@ -314,15 +361,14 @@ public class MacroTreePanel extends JPanel {
             blockUpdates = false;
             update();
         });
-        buttons.add(removeButton);
 
         applyButton = new JButton("Apply macros");
         applyButton.setToolTipText(
                 "Apply all selected macros to the map. The order in which macros are applied is " + "random.");
         applyButton.addActionListener(f -> onApply());
-        buttons.add(applyButton);
 
-        buttons.add(getHelpButton("Global Tree View",
+
+        JButton helpButton = getHelpButton("Global Tree View",
                 "This view shows your global list of macros and actions. You can" + " " +
                         "expand the macros, actions and their values.\n" +
                         "Select a macro to open the macro-editor.\n" +
@@ -330,19 +376,31 @@ public class MacroTreePanel extends JPanel {
                         "You can create and " +
                         "delete actions and macros in this view. All changes in the global list are directly saved to" +
                         " your " + "save-files. These are global and the same for all projects.\n" + " Press 'Apply'" +
-                        " to " + "apply a macro as a global operation to " + "your map."));
+                        " to " + "apply a macro as a global operation to " + "your map.");
 
         scrollPane.setPreferredSize(new Dimension(500, 600));
 
         JButton exportMacroButton = new JButton("Export");
         exportMacroButton.addActionListener(f -> onExportMacroPressed());
-        buttons.add(exportMacroButton);
+
 
         JButton importMacroButton = new JButton("Import");
         importMacroButton.addActionListener(f -> onImportMacroPressed());
-        buttons.add(importMacroButton);
 
-        this.add(buttons, BorderLayout.SOUTH);
+        JButton[] buttonArr = new JButton[] {
+                addButton,
+                removeButton,
+                exportMacroButton,
+                importMacroButton,
+                helpButton
+        };
+        for (JButton b: buttonArr) {
+            b.setMaximumSize(new Dimension(Integer.MAX_VALUE,b.getPreferredSize().height));
+            buttons.add(b);
+        }
+
+        popupMenu.add(buttons);
+        this.add(applyButton, BorderLayout.SOUTH);
         this.invalidate();
     }
 
@@ -398,7 +456,6 @@ public class MacroTreePanel extends JPanel {
     private void onItemInTreeSelected(SaveableAction item, GlobalActionPanel.SELECTION_TPYE type) {
         applyButton.setEnabled(type == GlobalActionPanel.SELECTION_TPYE.MACRO);
         onSelectAction.onSelect(item, type);
-        lastSelectedItem = item;
     }
 
     private void onSetProgress(ApplyAction.Progess progess) {
