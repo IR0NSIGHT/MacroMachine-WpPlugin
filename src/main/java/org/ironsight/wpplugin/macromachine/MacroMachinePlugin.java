@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine;
 
+import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
 import org.ironsight.wpplugin.macromachine.operations.MacroDialogOperation;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;
@@ -69,7 +70,9 @@ public class MacroMachinePlugin extends AbstractPlugin implements
     @Override
     public List<Layer> getLayers() {
         if (LAYERS == null) {
-            LAYERS = new ArrayList<>(Collections.singleton(MacroSelectionLayer.INSTANCE));
+            LAYERS = new ArrayList<>();
+            LAYERS.add(MacroSelectionLayer.INSTANCE);
+            LAYERS.add(HeatMapLayer.INSTANCE);
         }
         return LAYERS;
     }

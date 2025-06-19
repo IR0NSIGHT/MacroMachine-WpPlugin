@@ -1,65 +1,28 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.MappingAction;
-
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
-public class MappingTextTable extends LayerMappingPanel implements IMappingPointSelector {
-    MappingActionValueTableModel tableModel;
-    TableModelListener listener;
-    boolean[] inputSelection = new boolean[0];
-    boolean blockSendingSelection = false;
-    private Consumer<boolean[]> onSelect = f -> {
-    };
-    private JTable numberTable;
-    private boolean groupValues = true;
+public class MappingTextTable extends JPanel {
+    private final MappingActionValueTableModel tableModel;
+    private final JTable numberTable;
+    private boolean isFilterForMappingPoints = true;
     private JCheckBox groupValuesCheckBox;
-    private boolean blockTableChanged;
-    private Object beforeChange;
-    private int eventRow;
-    private int eventColumn;
+    private TableRowSorter<MappingActionValueTableModel> sorter;
+    private int selectedRow = -1;
 
-    @Override
-    protected void updateComponents() {
-        groupValues = groupValuesCheckBox.isSelected();
-        blockTableChanged = true;
-        tableModel.rebuildDataWithAction(this.mapping);
-
-
-        if (tableModel.isOnlyControlPoints() != groupValues) {
-            // force stop current edit, because the amount of rows changes, and otherwise will cause array index out
-            // of bounds
-            if (numberTable.isEditing()) {
-                TableCellEditor editor = numberTable.getCellEditor();
-                if (editor != null) {
-                    editor.stopCellEditing(); // or editor.cancelCellEditing();
-                }
-            }
-        }
-        tableModel.setOnlyControlPointMode(groupValues);
-        blockTableChanged = false;
-        numberTable.revalidate();
-        numberTable.repaint();
-    }
-
-    @Override
-    protected void initComponents() {
-        groupValues = true;
-
-        this.setLayout(new BorderLayout());
-        Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
-        Border whiteBorder = new EmptyBorder(5, 5, 5, 5); // 5px white border
-        setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
-
-        // Add a TableModelListener to get a callback when a cell is edited
+    public MappingTextTable(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
         numberTable = new JTable() {
             @Override
             public TableCellEditor getCellEditor(int row, int column) {
@@ -71,43 +34,46 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             }
         };
 
-        this.tableModel = new MappingActionValueTableModel();
-        tableModel.rebuildDataWithAction(mapping);
-        tableModel.setOnlyControlPointMode(groupValues);
-        numberTable.setModel(tableModel);
+        numberTable.setModel(model);
+        numberTable.setSelectionModel(selectionModel);
+        this.tableModel = model;
+        initComponents();
+        addListeners(model, selectionModel);
+    }
 
-
-        Font font = new Font("Arial", Font.PLAIN, 24);
-        numberTable.setFont(font);
-        MappingPointCellRenderer cellRenderer = new MappingPointCellRenderer();
-        numberTable.setDefaultRenderer(MappingPointValue.class, cellRenderer);
-        numberTable.setRowHeight(cellRenderer.getPreferredHeight());
-        numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
-        numberTable.setSelectionModel(new CustomListSelectionModel());
-        JScrollPane scrollPane = new JScrollPane(numberTable);
-        this.add(scrollPane, BorderLayout.CENTER);
-        JPanel buttons = new JPanel();
-        groupValuesCheckBox = new JCheckBox("Only Control Points");
-        groupValuesCheckBox.setSelected(groupValues);
-        groupValuesCheckBox.addActionListener(f -> {
-            if (groupValues != groupValuesCheckBox.isSelected()) {
-                groupValues = groupValuesCheckBox.isSelected();
-                updateComponents();
+    protected void updateComponents() {
+        TableRowSorter<?> sorter = (TableRowSorter<?>) numberTable.getRowSorter();
+        List<? extends RowSorter.SortKey> sortKeys = sorter.getSortKeys();
+// force stop current edit, because the amount of rows changes, and otherwise will cause array index out
+        // of bounds
+        if (numberTable.isEditing()) {
+            TableCellEditor editor = numberTable.getCellEditor();
+            if (editor != null) {
+                editor.stopCellEditing(); // or editor.cancelCellEditing();
             }
-        });
-        buttons.add(groupValuesCheckBox);
-        this.add(buttons, BorderLayout.SOUTH);
-        listener = e -> {
-            // Check if the event is due to a cell update
-            if (e.getType() == TableModelEvent.UPDATE && !blockTableChanged) {
-                updateMapping(tableModel.getAction());
-            }
-        };
-        tableModel.addTableModelListener(listener);
+        }
 
-        numberTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        sorter.setSortKeys(sortKeys);
+        sorter.sort();
+
+    }
+
+    private void setRowFilter(boolean groupValues) {
+        if (!groupValues) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(new RowFilter<MappingActionValueTableModel, Integer>() {
+                @Override
+                public boolean include(Entry<? extends MappingActionValueTableModel, ? extends Integer> entry) {
+                    return tableModel.isMappingPoint(entry.getIdentifier());
+                }
+            });
+        }
+    }
+
+    private void addListeners(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
         // Add listener to scroll to the selected row
-        numberTable.getSelectionModel().addListSelectionListener(e -> {
+        selectionModel.addListSelectionListener(e -> {
             if (e.getValueIsAdjusting()) {
                 return;
             }
@@ -115,57 +81,93 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
             if (selectedRow != -1) {
                 numberTable.scrollRectToVisible(numberTable.getCellRect(selectedRow, 0, true));
             }
-
-            boolean[] selection = new boolean[mapping.input.getMaxValue() - mapping.input.getMinValue() + 1];
-            for (Integer row : numberTable.getSelectedRows()) {
-                MappingPointValue mpv = (MappingPointValue) numberTable.getModel().getValueAt(row, 0);
-                // hightlight single selected input
-                selection[mpv.numericValue - mapping.input.getMinValue()] = true;
-            }
-            this.inputSelection = selection;
-            if (!blockSendingSelection)
-                onSelect.accept(selection);
         });
-    }
 
-
-
-    @Override
-    public void setOnSelect(Consumer<boolean[]> onSelect) {
-        this.onSelect = onSelect;
-    }
-
-    @Override
-    public void setSelectedInputs(boolean[] selectedPointIdx) {
-        if (Arrays.equals(this.inputSelection, selectedPointIdx)) {
-            return; //nothing to update here
-        }
-        blockSendingSelection = true;
-        this.inputSelection = selectedPointIdx;
-
-        numberTable.clearSelection();
-
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            MappingPointValue value = (MappingPointValue) tableModel.getValueAt(i, 0);
-            if (selectedPointIdx[value.numericValue - mapping.input.getMinValue()]) {
-                numberTable.addRowSelectionInterval(i, i);
+        model.addTableModelListener(e -> {
+            if (e.getType() == TableModelEvent.UPDATE) {
+                updateComponents();
             }
-        }
+        });
 
 
-        repaint();
-        blockSendingSelection = false;
+// Save selected row table
+        numberTable.getSelectionModel().addListSelectionListener(e -> selectedRow = e.getFirstIndex());
+
+// Restore selected raw table
+        model.addTableModelListener(e -> SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (selectedRow >= 0) {
+                        numberTable.addRowSelectionInterval(selectedRow, selectedRow);
+                    }
+                } catch (IllegalArgumentException ignored) {
+                    // view row amount might be MUCH lower than expected. just ignore it
+                }
+
+            }
+        }));
     }
 
-    // Custom selection model
-    class CustomListSelectionModel extends DefaultListSelectionModel {
-        @Override
-        public void setSelectionInterval(int index0, int index1) {
-            if (numberTable.isEditing()) return;
-            super.setSelectionInterval(index0, index1);
-        }
-    }
+    protected void initComponents() {
+        isFilterForMappingPoints = true;
 
+        this.setLayout(new BorderLayout());
+        Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
+        Border whiteBorder = new EmptyBorder(5, 5, 5, 5); // 5px white border
+        setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
+
+        // Add a TableModelListener to get a callback when a cell is edited
+        numberTable.setModel(tableModel);
+        sorter = new TableRowSorter<>(tableModel);
+        sorter.setSortsOnUpdates(true);
+        numberTable.setRowSorter(sorter);
+        setRowFilter(isFilterForMappingPoints);
+
+        Font font = new Font("Arial", Font.PLAIN, 24);
+        numberTable.setFont(font);
+        MappingPointCellRenderer cellRenderer = new MappingPointCellRenderer();
+        numberTable.setDefaultRenderer(MappingPointValue.class, cellRenderer);
+        numberTable.setRowHeight(cellRenderer.getPreferredHeight());
+        numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
+        JScrollPane scrollPane = new JScrollPane(numberTable);
+        this.add(scrollPane, BorderLayout.CENTER);
+        JPanel buttons = new JPanel();
+        groupValuesCheckBox = new JCheckBox("Only Control Points");
+        groupValuesCheckBox.setSelected(isFilterForMappingPoints);
+        groupValuesCheckBox.addActionListener(f -> {
+            this.isFilterForMappingPoints = groupValuesCheckBox.isSelected();
+            setRowFilter(isFilterForMappingPoints);
+        });
+        buttons.add(groupValuesCheckBox);
+
+        {
+            JButton addMappingPointButton = new JButton("add control point");
+            addMappingPointButton.addActionListener(l -> {
+                if (numberTable.getSelectedRow() != -1)
+                    tableModel.insertMappingPointNear(numberTable.convertRowIndexToModel(numberTable.getSelectedRow()));
+            });
+            buttons.add(addMappingPointButton);
+        }
+        {
+            JButton button = new JButton("remove control point");
+            button.addActionListener(l -> {
+                if (numberTable.getSelectedRow() != -1) {
+                    int[] selectedRows = numberTable.getSelectedRows();
+                    for (int i = 0; i < selectedRows.length; i++) {
+                        selectedRows[i] = numberTable.convertRowIndexToModel(selectedRows[i]);
+                    }
+                    tableModel.deleteMappingPointAt(selectedRows);
+                }
+
+            });
+            buttons.add(button);
+        }
+
+        this.add(buttons, BorderLayout.SOUTH);
+
+
+    }
 }
 
 
