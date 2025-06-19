@@ -172,7 +172,7 @@ class MappingActionValueTableModel implements TableModel {
         int mappingPointIdx = rowToMappingPointIdx[rowIndex];
         MappingPoint p = action.getMappingPoints()[mappingPointIdx];
         MappingPoint[] newPoints = action.getMappingPoints();
-        assert rowIndex == p.input;
+
         if (columnIndex == OUTPUT_COLUMN_IDX) {
             newPoints[mappingPointIdx] = new MappingPoint(p.input, ((MappingPointValue) aValue).numericValue);
         } else if (columnIndex == INPUT_COLUMN_IDX) {
