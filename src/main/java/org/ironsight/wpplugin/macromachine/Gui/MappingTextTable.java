@@ -8,7 +8,10 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -33,18 +36,14 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
         blockTableChanged = true;
         tableModel.rebuildDataWithAction(this.mapping);
 
-
-        if (tableModel.isOnlyControlPoints() != groupValues) {
-            // force stop current edit, because the amount of rows changes, and otherwise will cause array index out
-            // of bounds
-            if (numberTable.isEditing()) {
-                TableCellEditor editor = numberTable.getCellEditor();
-                if (editor != null) {
-                    editor.stopCellEditing(); // or editor.cancelCellEditing();
-                }
+        // force stop current edit, because the amount of rows changes, and otherwise will cause array index out
+        // of bounds
+        if (numberTable.isEditing()) {
+            TableCellEditor editor = numberTable.getCellEditor();
+            if (editor != null) {
+                editor.stopCellEditing(); // or editor.cancelCellEditing();
             }
         }
-        tableModel.setOnlyControlPointMode(groupValues);
         blockTableChanged = false;
         numberTable.revalidate();
         numberTable.repaint();
@@ -70,12 +69,13 @@ public class MappingTextTable extends LayerMappingPanel implements IMappingPoint
                 return super.getCellEditor(row, column);
             }
         };
-
         this.tableModel = new MappingActionValueTableModel();
         tableModel.rebuildDataWithAction(mapping);
-        tableModel.setOnlyControlPointMode(groupValues);
         numberTable.setModel(tableModel);
-
+        TableRowSorter<MappingActionValueTableModel> sorter =
+                new TableRowSorter<>(tableModel);
+        sorter.setSortsOnUpdates(true);
+        numberTable.setRowSorter(sorter);
 
         Font font = new Font("Arial", Font.PLAIN, 24);
         numberTable.setFont(font);
