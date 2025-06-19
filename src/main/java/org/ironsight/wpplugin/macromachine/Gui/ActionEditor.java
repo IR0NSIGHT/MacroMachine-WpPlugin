@@ -4,6 +4,7 @@ import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 
 import javax.swing.*;
+import javax.swing.event.TableModelEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -68,7 +69,11 @@ public class ActionEditor extends LayerMappingPanel {
         assert model != null;
         assert selectionModel != null;
         table = new MappingTextTable(model, selectionModel);
-
+        model.addTableModelListener(l -> {
+            if (l.getType() == TableModelEvent.DELETE)
+                return; //dont update, bc the data is not there yet.
+            this.updateMapping(model.getAction());
+        });
         //set up sync between both components
 
         mappingDisplay.setOnUpdate(this::updateMapping);
