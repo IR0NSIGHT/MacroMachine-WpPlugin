@@ -23,8 +23,6 @@ class IntermediateValueIOTest {
 
     @Test
     void getValueAt() {
-        ActionFilterIO.instance.setSelected(true);
-
         int EVEN_OUTPUT = 2, UNEVEN_OUTPUT = 3;
         int EVEN_HEIGHT = 20, UNEVEN_HEIGHT = 21;
 
@@ -67,7 +65,7 @@ class IntermediateValueIOTest {
         assertEquals(EVEN_OUTPUT, container.queryById(get).map(4));
         assertEquals(UNEVEN_OUTPUT, container.queryById(get).map(7));
 
-
+        ActionFilterIO.instance.prepareForDimension(dim);
         for (MappingAction lm : container.queryAll()) {
             lm.input.prepareForDimension(dim);
             lm.output.prepareForDimension(dim);
