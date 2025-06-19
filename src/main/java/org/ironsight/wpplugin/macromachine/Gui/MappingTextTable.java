@@ -3,11 +3,14 @@ package org.ironsight.wpplugin.macromachine.Gui;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -17,6 +20,7 @@ public class MappingTextTable extends JPanel {
     private boolean isFilterForMappingPoints = true;
     private JCheckBox groupValuesCheckBox;
     private TableRowSorter<MappingActionValueTableModel> sorter;
+
     public MappingTextTable(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
         numberTable = new JTable() {
             @Override
@@ -51,6 +55,7 @@ public class MappingTextTable extends JPanel {
 
         sorter.setSortKeys(sortKeys);
         sorter.sort();
+
     }
 
     private void setRowFilter(boolean groupValues) {
@@ -65,7 +70,7 @@ public class MappingTextTable extends JPanel {
             });
         }
     }
-
+    private int selectedRow = -1;
     private void addListeners(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
         // Add listener to scroll to the selected row
         selectionModel.addListSelectionListener(e -> {
@@ -83,6 +88,20 @@ public class MappingTextTable extends JPanel {
                 updateComponents();
             }
         });
+
+
+// Save selected row table
+        numberTable.getSelectionModel().addListSelectionListener(e -> selectedRow = e.getFirstIndex());
+
+// Restore selected raw table
+        model.addTableModelListener(e -> SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (selectedRow >= 0) {
+                    numberTable.addRowSelectionInterval(selectedRow, selectedRow);
+                }
+            }
+        }));
     }
 
     protected void initComponents() {
