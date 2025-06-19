@@ -32,13 +32,6 @@ public class TileFilter implements Serializable {
     public TileFilter() {
     }
 
-    public static TileFilter onlyAnnotations() {
-        TileFilter filter = new TileFilter();
-        filter.filterByLayer = FilterType.ONLY_ON;
-        filter.layerIds.add(Annotations.INSTANCE.getId());
-        return filter;
-    }
-
     private static passType testHeight(Tile tile, int minHeight, int maxHeight, FilterType filterByHeight) {
         if (filterByHeight == FilterType.IGNORE) return passType.SOME_BLOCKS;
         else if (filterByHeight == FilterType.EXCEPT_ON && tile.getMinHeight() > maxHeight ||

@@ -1,37 +1,28 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Constants;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
 public class ActionFilterIO implements IPositionValueSetter, IPositionValueGetter {
     public static ActionFilterIO instance = new ActionFilterIO();
-    private static int value;
-    private static int lastX;
-    private static int lastY;
     public static final int PASS_VALUE = 1;
     public static final int BLOCK_VALUE = 0;
-
-    private ActionFilterIO() {
+    private transient TileContainer tileContainer;
+    protected ActionFilterIO() {
     }
+
 
     @Override
     public int hashCode() {
         return getProviderType().hashCode();
     }
 
-    public boolean isSelected() {
-        return value == PASS_VALUE;
-    }
     @Override
     public boolean isVirtual() {
         return true;
-    }
-    public void setSelected(boolean selected) {
-        if (selected) {
-            value = PASS_VALUE;
-        } else value = BLOCK_VALUE;
     }
 
     @Override
@@ -41,21 +32,25 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        if (lastX != x || lastY != y)
-            return PASS_VALUE; //this block wasnt yet setwith the filter, by default return PASS
-        return value;
+        return tileContainer.getValueAt(x,y);
     }
 
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
-        ActionFilterIO.value = value;
-        lastX = x;
-        lastY = y;
+        tileContainer.setValueAt(x,y, value);
     }
 
     @Override
     public void prepareForDimension(Dimension dim) {
+        if (tileContainer != null)
+            return;
+        Rectangle rect = dim.getExtent();
+        tileContainer = new TileContainer(rect.width, rect.height, rect.x * Constants.TILE_SIZE,
+                rect.y * Constants.TILE_SIZE, PASS_VALUE);
+    }
 
+    public void releaseAfterApplication() {
+        tileContainer = null;
     }
 
     @Override

@@ -327,8 +327,18 @@ public class MacroTreePanel extends JPanel {
         JButton addButton = new JButton("Create macro");
         addButton.setToolTipText("Create a new, empty macro.");
         addButton.addActionListener(e -> {
-            Set<UUID> uids = getSelectedUUIDs(true, true);
-            UUID[] uidArr = uids.toArray(new UUID[0]);
+            Set<UUID> actionUids = getSelectedUUIDs(false, true);
+            Set<UUID> macroUids = getSelectedUUIDs(true, false);
+            UUID[] uidArr = new UUID[actionUids.size() + macroUids.size()];
+            int idx = 0;
+            for (UUID uuid: actionUids) {
+                MappingAction clone = mappingContainer.addMapping().withValuesFrom(mappingContainer.queryById(uuid));
+                mappingContainer.updateMapping(clone, MacroMachinePlugin::error);
+                uidArr[idx++] = clone.getUid();
+            }
+            for (UUID macroId : macroUids) {
+                uidArr[idx++] = macroId;
+            }
             Macro macro = container.addMapping().withUUIDs(uidArr);
             container.updateMapping(macro, MacroMachinePlugin::error);
             HashSet<UUID> set = new HashSet<>();
@@ -388,11 +398,8 @@ public class MacroTreePanel extends JPanel {
         importMacroButton.addActionListener(f -> onImportMacroPressed());
 
         JButton[] buttonArr = new JButton[] {
-                addButton,
                 removeButton,
-                exportMacroButton,
-                importMacroButton,
-                helpButton
+                exportMacroButton
         };
         for (JButton b: buttonArr) {
             b.setMaximumSize(new Dimension(Integer.MAX_VALUE,b.getPreferredSize().height));
@@ -400,7 +407,12 @@ public class MacroTreePanel extends JPanel {
         }
 
         popupMenu.add(buttons);
-        this.add(applyButton, BorderLayout.SOUTH);
+        JPanel bottomButtons = new JPanel(new FlowLayout());
+        bottomButtons.add(applyButton);
+        bottomButtons.add(importMacroButton);
+        bottomButtons.add(helpButton);
+        bottomButtons.add(addButton);
+        this.add(bottomButtons, BorderLayout.SOUTH);
         this.invalidate();
     }
 
