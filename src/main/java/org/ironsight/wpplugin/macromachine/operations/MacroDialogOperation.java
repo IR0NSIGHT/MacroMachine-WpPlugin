@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.WorldPainterView;
@@ -66,15 +67,12 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
         Collection<ExecutionStatistic> statistics = new ArrayList<>();
         try {
             this.getDimension().setEventsInhibited(true);
-            LinkedList<List<UUID>> actionIds = new LinkedList<>();
-            List<List<UUID>> steps = macro.collectActions(actionIds);
-            List<List<MappingAction>> executionSteps = steps.stream()
-                    .map(stepIds -> stepIds.stream()
+            List<UUID> steps = macro.collectActions(new LinkedList<>());
+            List<MappingAction> executionSteps = steps.stream()
                             .map(MappingActionContainer.getInstance()::queryById)
-                            .collect(Collectors.toList()))
-                    .collect(Collectors.toList());
+                            .collect(Collectors.toList());
 
-            boolean hasNullActions = executionSteps.stream().anyMatch(step -> step.stream().anyMatch(Objects::isNull));
+            boolean hasNullActions = executionSteps.stream().anyMatch(Objects::isNull);
             if (hasNullActions) {
                 GlobalActionPanel.ErrorPopUp(
                         "Some actions in the execution list are null. This means they were deleted, but are still " +
@@ -83,21 +81,22 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
             }
 
             // prepare actions for dimension
-            for (List<MappingAction> step : executionSteps) {
-                for (MappingAction action : step) {
-                    try {
-                        action.output.prepareForDimension(getDimension());
-                        action.input.prepareForDimension(getDimension());
-                    } catch (IllegalAccessError e) {
-                        GlobalActionPanel.ErrorPopUp(
-                                "Action " + action.getName() + " can not be applied to the map." + e.getMessage());
-                        return statistics;
-                    }
+            for (MappingAction action : executionSteps) {
+                try {
+                    action.output.prepareForDimension(getDimension());
+                    action.input.prepareForDimension(getDimension());
+                } catch (IllegalAccessError e) {
+                    GlobalActionPanel.ErrorPopUp(
+                            "Action " + action.getName() + " can not be applied to the map." + e.getMessage());
+                    return statistics;
                 }
             }
+            ActionFilterIO.instance.prepareForDimension(getDimension());
 
             // ----------------------- macro is ready and can be applied to map
-            statistics = ApplyAction.applyExecutionSteps(getDimension(), new TileFilter(), executionSteps, setProgress);
+            statistics = ApplyAction.applyExecutionSteps(getDimension(), executionSteps, setProgress);
+
+            ActionFilterIO.instance.releaseAfterApplication();
             statistics.forEach(System.out::println);
 
         } catch (Exception ex) {

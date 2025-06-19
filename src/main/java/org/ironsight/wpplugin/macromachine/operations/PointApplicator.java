@@ -18,8 +18,6 @@ public class PointApplicator {
     }
 
     public void apply(int x, int y) {
-        ActionFilterIO.instance.setSelected(true); //by default, each block is selected.
-
         for (MappingAction action : actions)
             action.applyToPoint(dimension, x, y);
     }
@@ -34,8 +32,8 @@ public class PointApplicator {
         TileFilter earlyAbortFilter = new TileFilter();
 
         // special case: get-distance-to-edge, then intermediate values, then write to map
-        boolean isDistanceOperation = actions.stream().anyMatch(a -> a.input instanceof  DistanceToLayerEdgeGetter);
-        boolean canFilterByDistance =  actions.stream()
+        boolean isDistanceOperation = actions.stream().anyMatch(a -> a.input instanceof DistanceToLayerEdgeGetter);
+        boolean canFilterByDistance = actions.stream()
                 .allMatch(a -> (a.input instanceof DistanceToLayerEdgeGetter && a.map(0) == 0) || a.input.isVirtual());
         if (isDistanceOperation && canFilterByDistance) {
             String[] layerIds = actions.stream()
@@ -52,7 +50,7 @@ public class PointApplicator {
         Predicate<MappingAction> absentLayerIsFilteredOut = a -> a.input instanceof ILayerGetter && a.map(0) == 0;
         boolean filterByLayer =
                 actions.stream().allMatch(a -> absentLayerIsFilteredOut.test(a) || a.input.isVirtual()) &&
-        actions.stream().anyMatch(absentLayerIsFilteredOut);
+                        actions.stream().anyMatch(absentLayerIsFilteredOut);
         if (filterByLayer) {
             String[] layerIds = actions.stream()
                     .filter(f -> f.input instanceof ILayerGetter)

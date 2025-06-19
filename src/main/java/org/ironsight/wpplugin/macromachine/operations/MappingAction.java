@@ -270,7 +270,7 @@ public class MappingAction implements SaveableAction {
     }
 
     public void applyToPoint(Dimension dim, int x, int y) {
-        if (!output.getProviderType().equals(INTERMEDIATE_SELECTION) && !ActionFilterIO.instance.isSelected())
+        if (!output.getProviderType().equals(INTERMEDIATE_SELECTION) && ActionFilterIO.instance.getValueAt(dim,x,y) != ActionFilterIO.PASS_VALUE)
             return;
 
         if (mappingPoints.length == 0) {

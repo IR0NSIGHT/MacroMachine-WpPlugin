@@ -14,10 +14,10 @@ public class MacroSelectionLayer extends Layer {
     }
     //fixed UID from class on first release. do not change or all world files will be broken/unloadable
     private static final long serialVersionUID = -6448177550160813133L;
-    private final BufferedImage icon;
+    private transient final BufferedImage icon;
     @Override
     public BufferedImage getIcon() {
-        return super.getIcon();
+        return icon;
     }
 
     /**
