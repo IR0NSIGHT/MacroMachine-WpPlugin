@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.checkerframework.checker.units.qual.A;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
@@ -7,8 +8,10 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingVal
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Map;
 
 class MappingActionValueTableModel implements TableModel {
     private static final int INPUT_COLUMN_IDX = 0;
@@ -35,24 +38,48 @@ class MappingActionValueTableModel implements TableModel {
         int oldLength = inputs.length;
         int newLength = IMappingValue.range(action.getInput());
         if (newLength < oldLength)
-            fireEvent(new TableModelEvent(this, newLength, oldLength-1, TableModelEvent.DELETE));
+            fireEvent(new TableModelEvent(this, newLength, oldLength - 1, TableModelEvent.DELETE));
 
         rebuildData();
 
         if (inputOutputChanged)
             fireEvent(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
 
-        if (oldLength != 0)
-            fireEvent(new TableModelEvent(this, 0, Math.min(oldLength-1, newLength-1), TableModelEvent.UPDATE));
+        if (oldLength != 0 && newLength != 0)
+            fireEvent(new TableModelEvent(this, 0, Math.min(oldLength - 1, newLength - 1), TableModelEvent.UPDATE));
         if (oldLength < newLength)
-            fireEvent(new TableModelEvent(this, oldLength, newLength-1, TableModelEvent.INSERT));
+            fireEvent(new TableModelEvent(this, oldLength, newLength - 1, TableModelEvent.INSERT));
+    }
 
 
 
+    public void insertMappingPointNear(int rowIndex) {
+        for (int i = rowIndex; rowIndex < inputs.length; i++) {
+            int mappingPointIndex = rowToMappingPointIdx[i];
+            if (mappingPointIndex != -1)
+                continue; // already a mapping point, attempt next one
+            MappingPoint[] mps = Arrays.copyOf(action.getMappingPoints(),action.getMappingPoints().length+1);
+            //insert in back
+            mps[mps.length-1] = new MappingPoint(inputs[i].numericValue, action.map(inputs[i].numericValue));
+            rebuildDataWithAction(this.getAction().withNewPoints(mps));
+            break;
+        }
+    }
+
+    public void deleteMappingPointAt(int[] rowIndex) {
+        ArrayList<MappingPoint> mps = new ArrayList<>(Arrays.asList(action.getMappingPoints()));
+        for (int i = rowIndex.length -1 ; i >= 0 ; i--) {
+            int row = rowIndex[i];
+            int mappingPointIndex = rowToMappingPointIdx[row];
+            if (mappingPointIndex == -1)
+                continue; // already a mapping point, attempt next one
+            mps.remove(mappingPointIndex);
+        }
+        rebuildDataWithAction(this.getAction().withNewPoints(mps.toArray(new MappingPoint[0])));
     }
 
     private void fireEvent(TableModelEvent event) {
-        System.out.println("fire table model event " + event);
+        System.out.println("fire table model event " + event.getType() + " - " + event.getFirstRow() + ".."+ event.getLastRow());
         for (TableModelListener l : listeners) {
             l.tableChanged(event);
         }

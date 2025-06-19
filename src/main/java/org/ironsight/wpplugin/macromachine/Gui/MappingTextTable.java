@@ -12,6 +12,11 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class MappingTextTable extends JPanel {
+    private final MappingActionValueTableModel tableModel;
+    private final JTable numberTable;
+    private boolean isFilterForMappingPoints = true;
+    private JCheckBox groupValuesCheckBox;
+    private TableRowSorter<MappingActionValueTableModel> sorter;
     public MappingTextTable(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
         numberTable = new JTable() {
             @Override
@@ -28,14 +33,8 @@ public class MappingTextTable extends JPanel {
         numberTable.setSelectionModel(selectionModel);
         this.tableModel = model;
         initComponents();
-        addListeners(model,selectionModel);
+        addListeners(model, selectionModel);
     }
-
-    private final MappingActionValueTableModel tableModel;
-    private final JTable numberTable;
-    private boolean isFilterForMappingPoints = true;
-    private JCheckBox groupValuesCheckBox;
-    private TableRowSorter<MappingActionValueTableModel> sorter;
 
     protected void updateComponents() {
         TableRowSorter<?> sorter = (TableRowSorter<?>) numberTable.getRowSorter();
@@ -51,6 +50,7 @@ public class MappingTextTable extends JPanel {
         }
 
         sorter.setSortKeys(sortKeys);
+        sorter.sort();
     }
 
     private void setRowFilter(boolean groupValues) {
@@ -65,6 +65,7 @@ public class MappingTextTable extends JPanel {
             });
         }
     }
+
     private void addListeners(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
         // Add listener to scroll to the selected row
         selectionModel.addListSelectionListener(e -> {
@@ -83,6 +84,7 @@ public class MappingTextTable extends JPanel {
             }
         });
     }
+
     protected void initComponents() {
         isFilterForMappingPoints = true;
 
@@ -114,6 +116,30 @@ public class MappingTextTable extends JPanel {
             setRowFilter(isFilterForMappingPoints);
         });
         buttons.add(groupValuesCheckBox);
+
+        {
+            JButton addMappingPointButton = new JButton("add control point");
+            addMappingPointButton.addActionListener(l -> {
+                if (numberTable.getSelectedRow() != -1)
+                    tableModel.insertMappingPointNear(numberTable.convertRowIndexToModel(numberTable.getSelectedRow()));
+            });
+            buttons.add(addMappingPointButton);
+        }
+        {
+            JButton button = new JButton("remove control point");
+            button.addActionListener(l -> {
+                if (numberTable.getSelectedRow() != -1) {
+                    int[] selectedRows = numberTable.getSelectedRows();
+                    for (int i = 0; i < selectedRows.length; i++) {
+                        selectedRows[i] = numberTable.convertRowIndexToModel(selectedRows[i]);
+                    }
+                    tableModel.deleteMappingPointAt(selectedRows);
+                }
+
+            });
+            buttons.add(button);
+        }
+
         this.add(buttons, BorderLayout.SOUTH);
 
 
