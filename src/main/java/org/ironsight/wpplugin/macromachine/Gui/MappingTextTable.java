@@ -97,9 +97,14 @@ public class MappingTextTable extends JPanel {
         model.addTableModelListener(e -> SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                if (selectedRow >= 0) {
-                    numberTable.addRowSelectionInterval(selectedRow, selectedRow);
+                try {
+                    if (selectedRow >= 0) {
+                        numberTable.addRowSelectionInterval(selectedRow, selectedRow);
+                    }
+                } catch (IllegalArgumentException ignored) {
+                    // view row amount might be MUCH lower than expected. just ignore it
                 }
+
             }
         }));
     }
