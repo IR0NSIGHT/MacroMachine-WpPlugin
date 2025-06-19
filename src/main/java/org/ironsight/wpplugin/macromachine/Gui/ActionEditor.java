@@ -2,7 +2,6 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
