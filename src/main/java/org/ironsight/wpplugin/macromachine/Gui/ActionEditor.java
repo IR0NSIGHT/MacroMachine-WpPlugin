@@ -13,6 +13,8 @@ import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 public class ActionEditor extends LayerMappingPanel {
     private static JDialog dialog;
+    private MappingActionValueTableModel model ;
+    private ListSelectionModel selectionModel;
     private final Consumer<MappingAction> onSubmit;
     private MappingGridPanel mappingDisplay;
     private MappingTextTable table;
@@ -38,7 +40,8 @@ public class ActionEditor extends LayerMappingPanel {
 
 
         dialog.add(new GlobalActionPanel(applyToMap, dialog));
-        dialog.setTitle(MacroMachinePlugin.getInstance().getName() + " v" + MacroMachinePlugin.getInstance().getVersion());
+        dialog.setTitle(
+                MacroMachinePlugin.getInstance().getName() + " v" + MacroMachinePlugin.getInstance().getVersion());
         dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
         dialog.pack();
         dialog.setAlwaysOnTop(false);
@@ -48,25 +51,27 @@ public class ActionEditor extends LayerMappingPanel {
     @Override
     protected void updateComponents() {
         mappingDisplay.setVisible(!mapping.input.isDiscrete());
-        table.setMapping(mapping);
         mappingDisplay.setMapping(mapping);
+        model.rebuildDataWithAction(mapping);
         topBar.setMapping(mapping);
         this.repaint();
     }
 
     @Override
     protected void initComponents() {
+        model = new MappingActionValueTableModel();
+        selectionModel = new DefaultListSelectionModel();
+
         this.setLayout(new BorderLayout());
 
         mappingDisplay = new MappingGridPanel();
-        table = new MappingTextTable();
+        assert model != null;
+        assert selectionModel != null;
+        table = new MappingTextTable(model, selectionModel);
 
         //set up sync between both components
-        table.setOnUpdate(this::updateMapping);
-        table.setOnSelect(mappingDisplay::setSelectedInputs);
 
         mappingDisplay.setOnUpdate(this::updateMapping);
-        mappingDisplay.setOnSelect(table::setSelectedInputs);
 
         topBar = new LayerMappingTopPanel();
         topBar.setOnUpdate(this::updateMapping);
