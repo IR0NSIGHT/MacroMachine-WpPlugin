@@ -13,16 +13,18 @@ import java.util.LinkedList;
 class MappingActionValueTableModel implements TableModel {
     private static final int INPUT_COLUMN_IDX = 0;
     private static final int OUTPUT_COLUMN_IDX = 1;
-    LinkedList<TableModelListener> listeners = new LinkedList<>();
+    private final LinkedList<TableModelListener> listeners = new LinkedList<>();
     private MappingAction action;
 
-    private MappingPointValue[] inputs, output;
-    private boolean[] isMappingPoint;
-    private int[] rowToMappingPointIdx;
-    private int[] mappingPointToRowIdx;
+    private MappingPointValue[] inputs = new MappingPointValue[0], output = new MappingPointValue[0];
+    private boolean[] isMappingPoint = new boolean[0];
+    private int[] rowToMappingPointIdx = new int[0];
+    private int[] mappingPointToRowIdx = new int[0];
+
     public boolean isMappingPoint(int rowIdx) {
         return isMappingPoint[rowIdx];
     }
+
     public void rebuildDataWithAction(MappingAction action) {
         if (action == null)
             return;
@@ -31,9 +33,23 @@ class MappingActionValueTableModel implements TableModel {
         boolean inputOutputChanged = this.action == null ||
                 !(this.action.input.equals(action.input) && this.action.output.equals(action.getOutput()));
         this.action = action;
+        int oldLength = inputs.length;
+        int newLength = IMappingValue.range(action.getInput());
+        if (newLength < oldLength)
+            fireEvent(new TableModelEvent(this, newLength, oldLength-1, TableModelEvent.DELETE));
+
         rebuildData();
+
         if (inputOutputChanged)
             fireEvent(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
+
+        if (oldLength != 0)
+            fireEvent(new TableModelEvent(this, 0, Math.min(oldLength-1, newLength-1), TableModelEvent.UPDATE));
+        if (oldLength < newLength)
+            fireEvent(new TableModelEvent(this, oldLength, newLength-1, TableModelEvent.INSERT));
+
+
+
     }
 
     private void fireEvent(TableModelEvent event) {
