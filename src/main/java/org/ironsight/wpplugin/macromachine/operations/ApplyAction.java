@@ -3,10 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
@@ -40,35 +37,35 @@ public class ApplyAction {
                 }
             }
             tilesVisitedCount++;
-            setProgress.accept(100f*tilesVisitedCount/(totalTiles));
+            setProgress.accept(100f * tilesVisitedCount / (totalTiles));
         }
         statistic.durationMillis = System.currentTimeMillis() - startTime;
         return statistic;
     }
 
+    public static ArrayList<ExecutionStatistic> applyExecutionSteps(Dimension dim,
+                                                                    List<MappingAction> actions,
+                                                                    Consumer<Progess> setProgress) {
+        ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
+        int i = 0;
+        PointApplicator stepApplicator = new PointApplicator(actions, dim);
+        TileFilter earlyAbortFilter = stepApplicator.earlyAbortFilter();
+        statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, stepApplicator,
+                percent -> {
+                    setProgress.accept(new Progess(i, actions.size(), percent));
+                }));
+        return statistics;
+    }
+
     public static class Progess {
+        public final int step;
+        public final int totalSteps;
+        public final float progressInStep; //0..1
         public Progess(int step, int totalSteps, float progressInStep) {
             this.step = step;
             this.totalSteps = totalSteps;
             this.progressInStep = progressInStep;
         }
-
-        public final int step;
-        public final int totalSteps;
-        public final float progressInStep; //0..1
-    }
-    public static ArrayList<ExecutionStatistic> applyExecutionSteps(Dimension dim, TileFilter filter,
-                                                                    List<List<MappingAction>> actions,
-                                                                    Consumer<Progess> setProgress) {
-        ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
-        int i = 0;
-        for (Collection<MappingAction> step : actions) {
-            PointApplicator stepApplicator = new PointApplicator(step, dim);
-            TileFilter earlyAbortFilter = stepApplicator.earlyAbortFilter();
-            statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, stepApplicator,
-                    percent -> { setProgress.accept(new Progess(i, actions.size(),percent));}));
-        }
-        return statistics;
     }
 
 }
