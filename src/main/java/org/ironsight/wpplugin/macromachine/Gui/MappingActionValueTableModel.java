@@ -19,7 +19,6 @@ class MappingActionValueTableModel implements TableModel {
     private MappingPointValue[] inputs = new MappingPointValue[0], output = new MappingPointValue[0];
     private boolean[] isMappingPoint = new boolean[0];
     private int[] rowToMappingPointIdx = new int[0];
-    private int[] mappingPointToRowIdx = new int[0];
 
     public boolean isMappingPoint(int rowIdx) {
         return isMappingPoint[rowIdx];
@@ -71,13 +70,11 @@ class MappingActionValueTableModel implements TableModel {
         rowToMappingPointIdx = new int[rowAmount];
 
         // construct map inputValue -> mappingPointIndex
-        mappingPointToRowIdx = new int[action.getMappingPoints().length];
         Arrays.fill(rowToMappingPointIdx, -1);
         for (int mpIndex = 0; mpIndex < action.getMappingPoints().length; mpIndex++) {
             MappingPoint mp = action.getMappingPoints()[mpIndex];
             rowToMappingPointIdx[mp.input - action.getInput().getMinValue()] = mpIndex;
             isMappingPoint[mp.input - action.getInput().getMinValue()] = true;
-            mappingPointToRowIdx[mpIndex] = mp.input - action.getInput().getMinValue();
         }
 
         int rowIndex = 0;
@@ -144,7 +141,7 @@ class MappingActionValueTableModel implements TableModel {
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
         if (!isCellEditable(rowIndex, columnIndex))
             return;
-        assert !(rowIndex >= mappingPointToRowIdx.length);
+
         int mappingPointIdx = rowToMappingPointIdx[rowIndex];
         MappingPoint p = action.getMappingPoints()[mappingPointIdx];
         MappingPoint[] newPoints = action.getMappingPoints();
@@ -161,7 +158,6 @@ class MappingActionValueTableModel implements TableModel {
         if (newAction.equals(this.action))
             return;
         rebuildDataWithAction(action.withNewPoints(newPoints));
-        fireOnTableChanged(rowIndex, columnIndex);
     }
 
     @Override

@@ -51,12 +51,8 @@ class MappingActionValueTableModelTest {
                 .withInput(new TerrainHeightIO(0, 255))
                 .withOutput(new AnnotationSetter());
         model.rebuildDataWithAction(action);
-        model.setOnlyControlPointMode(false);
 
         assertEquals(IMappingValue.range(action.input), model.getRowCount());
-
-        model.setOnlyControlPointMode(true);
-        assertEquals(action.getMappingPoints().length, model.getRowCount());
     }
 
     @Test
@@ -77,7 +73,6 @@ class MappingActionValueTableModelTest {
                 .withInput(new TerrainHeightIO(0, 255))
                 .withOutput(new AnnotationSetter());
         model.rebuildDataWithAction(action);
-        model.setOnlyControlPointMode(false);
 
         assertEquals(action.getInput().getName(), model.getColumnName(0));
         assertEquals(action.getOutput().getName(), model.getColumnName(1));
@@ -101,7 +96,6 @@ class MappingActionValueTableModelTest {
                 .withOutput(new AnnotationSetter());
 
         model.rebuildDataWithAction(action.withNewPoints(new MappingPoint[]{new MappingPoint(17, 18)}));
-        model.setOnlyControlPointMode(false);
 
         assertEquals(IMappingValue.range(action.input), model.getRowCount());
         for (int row = 0; row < model.getRowCount(); row++) {
@@ -112,11 +106,6 @@ class MappingActionValueTableModelTest {
                 assertFalse(model.isCellEditable(row, 0));
                 assertFalse(model.isCellEditable(row, 1));
             }
-        }
-        model.setOnlyControlPointMode(true);
-        for (int row = 0; row < model.getRowCount(); row++) {
-            assertTrue(model.isCellEditable(row, 0));
-            assertTrue(model.isCellEditable(row, 1));
         }
     }
 
@@ -131,18 +120,9 @@ class MappingActionValueTableModelTest {
                 .withNewPoints(new MappingPoint[]{new MappingPoint(17, 18)});
 
         model.rebuildDataWithAction(action);
-        model.setOnlyControlPointMode(false);
         for (int row = 0; row < model.getRowCount(); row++) {
             assertEquals(row, ((MappingPointValue) model.getValueAt(row, 0)).numericValue);
             assertEquals(action.map(row), ((MappingPointValue) model.getValueAt(row, 1)).numericValue);
-        }
-
-        model.setOnlyControlPointMode(true);
-        int rowIndex = 0;
-        for (MappingPoint mp : action.getMappingPoints()) {
-            assertEquals(mp.input, ((MappingPointValue) model.getValueAt(rowIndex, 0)).numericValue);
-            assertEquals(mp.output, ((MappingPointValue) model.getValueAt(rowIndex, 1)).numericValue);
-            rowIndex++;
         }
     }
 
@@ -175,22 +155,30 @@ class MappingActionValueTableModelTest {
 
         model.rebuildDataWithAction(action);
         assertEquals(1,headerChangedCalls[0], "model must notify listener that header changed.");
-        assertEquals(1,updateCalls[0]);
+        assertEquals(2,updateCalls[0],"data has changed");
+    //FIXME test if INSERT and DELETE calls are also correctly fired
 
-        model.setOnlyControlPointMode(true);
+        assertEquals(256, model.getRowCount());
+        assertEquals(new MappingPointValue(17,action.getInput()), model.getValueAt(17,0),"mapping point at input=17");
 
-        //edit mapping point in input column
-        model.setValueAt(new MappingPointValue(3,action.getInput()),0,0);
-        assertEquals(2,updateCalls[0]);
-        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.getAction());
+
+        //change mapping point, edit input
+        model.setValueAt(new MappingPointValue(3,action.getInput()),17,0);
+        assertEquals(3,updateCalls[0],"another update was called");
+        assertEquals(new MappingPointValue(3,action.getInput()), model.getValueAt(3,0),"value was inserted but it " +
+                "lives at a different index now");
+        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.getAction(),"the model " +
+                        "constructed the correct action with the new point.");
         //set same value again
         model.setValueAt(new MappingPointValue(3,action.getInput()),0,0);
-        assertEquals(2,updateCalls[0], "no update should occur when same value is set again");
+        assertEquals(3,updateCalls[0], "no update should occur when same value is set again");
         assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.getAction());
 
-        //edit mapping point in output column
-        model.setValueAt(new MappingPointValue(9,action.getOutput()),0,1);
-        assertEquals(3,updateCalls[0]);
+        //edit mapping point in output column from (3,18) to (3,9)
+        assertTrue(model.isCellEditable(3,1));
+        model.setValueAt(new MappingPointValue(9,action.getOutput()),3,1);
+        assertEquals(new MappingPointValue(9,action.getOutput()), model.getValueAt(3,1),"value was inserted at index");
+        assertEquals(4,updateCalls[0]," one more update");
         assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,9)}),model.getAction());
     }
 
