@@ -388,11 +388,8 @@ public class MacroTreePanel extends JPanel {
         importMacroButton.addActionListener(f -> onImportMacroPressed());
 
         JButton[] buttonArr = new JButton[] {
-                addButton,
                 removeButton,
-                exportMacroButton,
-                importMacroButton,
-                helpButton
+                exportMacroButton
         };
         for (JButton b: buttonArr) {
             b.setMaximumSize(new Dimension(Integer.MAX_VALUE,b.getPreferredSize().height));
@@ -400,7 +397,12 @@ public class MacroTreePanel extends JPanel {
         }
 
         popupMenu.add(buttons);
-        this.add(applyButton, BorderLayout.SOUTH);
+        JPanel bottomButtons = new JPanel(new FlowLayout());
+        bottomButtons.add(applyButton);
+        bottomButtons.add(importMacroButton);
+        bottomButtons.add(helpButton);
+        bottomButtons.add(addButton);
+        this.add(bottomButtons, BorderLayout.SOUTH);
         this.invalidate();
     }
 
