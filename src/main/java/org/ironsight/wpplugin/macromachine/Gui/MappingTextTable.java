@@ -20,6 +20,7 @@ public class MappingTextTable extends JPanel {
     private boolean isFilterForMappingPoints = true;
     private JCheckBox groupValuesCheckBox;
     private TableRowSorter<MappingActionValueTableModel> sorter;
+    private int selectedRow = -1;
 
     public MappingTextTable(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
         numberTable = new JTable() {
@@ -43,8 +44,7 @@ public class MappingTextTable extends JPanel {
     protected void updateComponents() {
         TableRowSorter<?> sorter = (TableRowSorter<?>) numberTable.getRowSorter();
         List<? extends RowSorter.SortKey> sortKeys = sorter.getSortKeys();
-
-        // force stop current edit, because the amount of rows changes, and otherwise will cause array index out
+// force stop current edit, because the amount of rows changes, and otherwise will cause array index out
         // of bounds
         if (numberTable.isEditing()) {
             TableCellEditor editor = numberTable.getCellEditor();
@@ -70,7 +70,7 @@ public class MappingTextTable extends JPanel {
             });
         }
     }
-    private int selectedRow = -1;
+
     private void addListeners(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
         // Add listener to scroll to the selected row
         selectionModel.addListSelectionListener(e -> {
