@@ -18,7 +18,7 @@ public class HeatMapLayer extends Layer {
     private transient final BufferedImage icon;
     @Override
     public BufferedImage getIcon() {
-        return super.getIcon();
+        return icon;
     }
 
     /**
