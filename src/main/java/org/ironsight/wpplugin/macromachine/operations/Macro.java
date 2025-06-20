@@ -113,7 +113,7 @@ public class Macro implements SaveableAction {
         if (o == null || getClass() != o.getClass()) return false;
         Macro that = (Macro) o;
         return Arrays.equals(executionUUIDs, that.executionUUIDs) && Objects.equals(name, that.name) &&
-                Objects.equals(description, that.description) && Objects.equals(uid, that.uid);
+                Objects.equals(description, that.description) && Objects.equals(uid, that.uid) && Arrays.equals(activeActions, that.activeActions);
     }
 
     @Override
@@ -174,8 +174,11 @@ public class Macro implements SaveableAction {
 
 
     public List<UUID> collectActions(List<UUID> actionList) {
+        int idx = 0;
         for (UUID id : this.executionUUIDs) {
             SaveableAction action = MacroContainer.getInstance().queryById(id);
+            if (!this.activeActions[idx])
+                continue;
             if (action != null) {//macro
                 //macro adds its own steps recursively
                 ((Macro) action).collectActions(actionList);

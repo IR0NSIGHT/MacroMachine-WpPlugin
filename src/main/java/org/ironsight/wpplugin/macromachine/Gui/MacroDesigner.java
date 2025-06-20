@@ -7,7 +7,11 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -28,6 +32,21 @@ public class MacroDesigner extends JPanel {
     MacroDesigner(Consumer<Macro> onSubmit) {
         this.onSubmit = onSubmit;
         init();
+    }
+
+    private JPopupMenu createPopupMenu(int row, int column) {
+        //row is index of action
+        UUID id = macro.getExecutionUUIDs()[row];
+        boolean active = macro.getActiveActions()[row];
+
+        JPopupMenu menu = new JPopupMenu();
+        JButton b = new JButton(active ? "disable" : "enable");
+        b.addActionListener(l -> {
+            Macro m = macro.withReplacedUUIDs(new int[]{row}, id, new boolean[]{!active});
+            setMacro(m, true);
+        });
+        menu.add(b);
+        return menu;
     }
 
     private void init() {
@@ -76,6 +95,26 @@ public class MacroDesigner extends JPanel {
         scrollPane = new JScrollPane(table);
         editorPanel.add(scrollPane, BorderLayout.CENTER);
 
+
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e)) {
+                    int row = table.rowAtPoint(e.getPoint());
+                    int column = table.columnAtPoint(e.getPoint());
+
+                    // Check if a valid cell is clicked
+                    if (row >= 0 && column >= 0) {
+                        table.setRowSelectionInterval(row, row); // Select the clicked row
+                        table.setColumnSelectionInterval(column, column);
+
+                        // Show the popup menu
+                        JPopupMenu popupMenu = createPopupMenu(row, column);
+                        popupMenu.show(table, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
 
         JPanel nameAndDescriptionPanel = new JPanel();
         nameAndDescriptionPanel.setLayout(new BoxLayout(nameAndDescriptionPanel, BoxLayout.Y_AXIS));
