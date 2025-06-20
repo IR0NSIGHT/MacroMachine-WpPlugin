@@ -250,6 +250,19 @@ public class MappingAction implements SaveableAction {
                 this.uid);
     }
 
+    @Override
+    public boolean isActive() {
+        return isActive;
+    }
+
+    @Override
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+
+    //only for gui purposes, not part of the actual data. only use this flag if you set it yourself
+    private boolean isActive;
+
     public ActionType getActionType() {
         return actionType;
     }

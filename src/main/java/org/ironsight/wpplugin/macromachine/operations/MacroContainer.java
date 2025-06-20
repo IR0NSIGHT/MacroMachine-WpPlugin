@@ -44,7 +44,7 @@ public class MacroContainer extends AbstractOperationContainer<Macro> {
                 "this macro is a collection of Mappings, each applied in order " + "to" + " the map to achieve " +
                         "complex, reusable, one-click operations.",
                 new UUID[0],
-                uuid);
+                uuid, new boolean[0]);
     }
 
     @Override

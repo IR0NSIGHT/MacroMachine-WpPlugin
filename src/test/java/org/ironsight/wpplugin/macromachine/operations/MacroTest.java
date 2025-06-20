@@ -12,7 +12,7 @@ class MacroTest {
     void withReplacedUUIDs() {
         Macro initial = new Macro("Test","descr", new UUID[]{ UUID.randomUUID(), UUID.randomUUID(),
                 UUID.randomUUID(),UUID.randomUUID()},
-                UUID.randomUUID());
+                UUID.randomUUID(), new boolean[]{true, true, true, true});
         UUID replacer = UUID.randomUUID();
 
         Macro result = initial.withReplacedUUIDs(new int[]{1,3}, replacer);

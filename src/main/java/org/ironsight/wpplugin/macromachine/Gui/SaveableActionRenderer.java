@@ -59,7 +59,7 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
         panel.add(inputoutput, BorderLayout.CENTER);
     }
 
-    public void updateTo(Object mapping) {
+    public void updateTo(Object mapping, boolean isActive) {
         if (mapping instanceof MappingAction) {
             MappingAction lm = (MappingAction) mapping;
             input.setText(lm.input.getName());
@@ -106,13 +106,14 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
         if (mapping instanceof IDisplayUnit && !isItemValid.apply((IDisplayUnit) mapping)) {
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.INVALID));
         }
+        nameLabel.setForeground(isActive ? DEFAULT_FOREGROUND : INTERPOLATED_FOREGROUND);
     }
 
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
-        updateTo(value);
+        updateTo(value, ((SaveableAction)value).isActive());
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
         } else panel.setBackground(DEFAULT_BACKGROUND);
@@ -120,7 +121,7 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     }
 
     public Component renderFor(SaveableAction value, boolean isSelected) {
-        updateTo(value);
+        updateTo(value, true);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
         } else panel.setBackground(DEFAULT_BACKGROUND);
@@ -131,18 +132,19 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
                                                   boolean leaf, int row, boolean hasFocus) {
         assert value instanceof MacroTreePanel.MacroTreeNode;
+        MacroTreePanel.MacroTreeNode node = (MacroTreePanel.MacroTreeNode) value;
         if (value instanceof MacroTreePanel.MacroTreeNode) {
             switch (((MacroTreePanel.MacroTreeNode) value).payloadType) {
                 case MACRO:
                 case ACTION:
-                    updateTo(((MacroTreePanel.MacroTreeNode) value).payload);
+                    updateTo(((MacroTreePanel.MacroTreeNode) value).payload, node.isActive());
                     break;
                 case OUTPUT:
-                    updateTo(((MacroTreePanel.MacroTreeNode) value).getOutput());
+                    updateTo(((MacroTreePanel.MacroTreeNode) value).getOutput(), node.isActive());
 
                     break;
                 case INPUT:
-                    updateTo(((MacroTreePanel.MacroTreeNode) value).getInput());
+                    updateTo(((MacroTreePanel.MacroTreeNode) value).getInput(),  node.isActive());
                     break;
                 case INVALID:
             }
@@ -150,7 +152,7 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
 
         if (selected) {
             panel.setBackground(SELECTED_BACKGROUND);
-        } else panel.setBackground(DEFAULT_BACKGROUND);
+        } else panel.setBackground( DEFAULT_BACKGROUND );
         panel.invalidate();
         return panel;
 
@@ -159,7 +161,7 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
                                                   boolean cellHasFocus) {
-        updateTo(value);
+        updateTo(value, true);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
         } else panel.setBackground(DEFAULT_BACKGROUND);
