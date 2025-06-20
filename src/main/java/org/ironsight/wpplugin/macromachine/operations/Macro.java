@@ -177,7 +177,7 @@ public class Macro implements SaveableAction {
         int idx = 0;
         for (UUID id : this.executionUUIDs) {
             SaveableAction action = MacroContainer.getInstance().queryById(id);
-            if (!this.activeActions[idx])
+            if (!this.activeActions[idx++])
                 continue;
             if (action != null) {//macro
                 //macro adds its own steps recursively
