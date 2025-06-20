@@ -16,11 +16,17 @@ class MacroJsonWrapper {
             @JsonProperty("macroName") String macroName,
             @JsonProperty("description") String description,
             @JsonProperty("stepIds") UUID[] stepIds,
-            @JsonProperty("selfId") UUID selfId) {
+            @JsonProperty("selfId") UUID selfId,
+            @JsonProperty("activeIds") boolean[] activeIds) {
         this.macroName = macroName;
         this.description = description;
         this.stepIds = stepIds;
         this.selfId = selfId;
+        if (activeIds == null) {
+            activeIds = new boolean[stepIds.length];
+            Arrays.fill(activeIds, true);
+        }
+        this.activeIds = activeIds;
     }
 
     public UUID getSelfId() {
@@ -31,6 +37,12 @@ class MacroJsonWrapper {
     private final String macroName;
     private final String description;
     private final UUID[] stepIds;
+
+    public boolean[] getActiveIds() {
+        return activeIds;
+    }
+
+    private boolean[] activeIds;
 
     public String getMacroName() {
         return macroName;

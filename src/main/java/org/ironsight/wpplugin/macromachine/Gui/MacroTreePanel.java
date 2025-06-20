@@ -543,6 +543,17 @@ public class MacroTreePanel extends JPanel {
         private MacroTreeNode[] children;
         private MacroTreeNode parent;
 
+        public boolean isActive() {
+            return isActive;
+        }
+
+        private boolean isActive;
+
+        /**
+         * constructor from root
+         * @param actions
+         * @param macros
+         */
         public MacroTreeNode(MappingActionContainer actions, MacroContainer macros) {
             //ROOT NODE
             children = new MacroTreeNode[macros.queryAll().size()];
@@ -551,7 +562,7 @@ public class MacroTreePanel extends JPanel {
                     .stream()
                     .sorted(Comparator.comparing(Macro::getName))
                     .toArray(Macro[]::new)) {
-                children[i++] = new MacroTreeNode(macro, actions, macros);
+                children[i++] = new MacroTreeNode(macro, true, actions, macros);
             }
             for (MacroTreeNode child : children)
                 child.setParent(this);
@@ -575,23 +586,36 @@ public class MacroTreePanel extends JPanel {
             assert parent == null;
         }
 
-        public MacroTreeNode(Macro macro, MappingActionContainer actions, MacroContainer macros) {
+        /**
+         * constructor for a macro (and recursively all nested macros and actions)
+         * @param macro
+         * @param actions
+         * @param macros
+         */
+        public MacroTreeNode(Macro macro, boolean isActive, MappingActionContainer actions, MacroContainer macros) {
             payload = macro;
             LinkedList<MacroTreeNode> nodes = new LinkedList<>();
+            int idx = 0;
             for (UUID id : macro.getExecutionUUIDs()) {
                 if (macros.queryContains(id))
-                    nodes.add(new MacroTreeNode(macros.queryById(id), actions, macros));
+                    nodes.add(new MacroTreeNode(macros.queryById(id), macro.getActiveActions()[idx], actions, macros));
                 else if (actions.queryContains(id))
-                    nodes.add(new MacroTreeNode(actions.queryById(id)));
+                    nodes.add(new MacroTreeNode(actions.queryById(id), macro.getActiveActions()[idx]));
+                idx++;
             }
             children = nodes.toArray(new MacroTreeNode[0]);
 
             for (MacroTreeNode child : children)
                 child.setParent(this);
             payloadType = GlobalActionPanel.SELECTION_TPYE.MACRO;
+            this.isActive = isActive;
         }
 
-        public MacroTreeNode(MappingAction action) {
+        /**
+         * constructor for action
+         * @param action
+         */
+        public MacroTreeNode(MappingAction action, boolean isActive) {
             payload = action;
             children = new MacroTreeNode[2];
             children[0] = new MacroTreeNode(action.input, action);
@@ -599,18 +623,21 @@ public class MacroTreePanel extends JPanel {
             for (MacroTreeNode child : children)
                 child.setParent(this);
             payloadType = GlobalActionPanel.SELECTION_TPYE.ACTION;
+            this.isActive = isActive;
         }
 
         public MacroTreeNode(IPositionValueSetter output, MappingAction action) {
             payload = action;
             children = new MacroTreeNode[0];
             payloadType = GlobalActionPanel.SELECTION_TPYE.OUTPUT;
+            this.isActive = true;
         }
 
         public MacroTreeNode(IPositionValueGetter input, MappingAction action) {
             payload = action;
             children = new MacroTreeNode[0];
             payloadType = GlobalActionPanel.SELECTION_TPYE.INPUT;
+            this.isActive = true;
         }
 
         public TreePath getPath() {

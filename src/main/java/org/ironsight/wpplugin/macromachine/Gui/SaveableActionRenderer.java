@@ -131,6 +131,7 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
                                                   boolean leaf, int row, boolean hasFocus) {
         assert value instanceof MacroTreePanel.MacroTreeNode;
+        MacroTreePanel.MacroTreeNode node = (MacroTreePanel.MacroTreeNode) value;
         if (value instanceof MacroTreePanel.MacroTreeNode) {
             switch (((MacroTreePanel.MacroTreeNode) value).payloadType) {
                 case MACRO:
@@ -150,7 +151,8 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
 
         if (selected) {
             panel.setBackground(SELECTED_BACKGROUND);
-        } else panel.setBackground(DEFAULT_BACKGROUND);
+        } else panel.setBackground(node.isActive() ? DEFAULT_BACKGROUND : INTERPOLATED_BACKGROUND);
+        nameLabel.setText(node.isActive() ? " ACTIVE" : "DISABLED");
         panel.invalidate();
         return panel;
 

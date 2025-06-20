@@ -135,12 +135,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         logMessage("step " + progress.step + "/" + progress.totalSteps + ": " + progress.progressInStep + "%");
     }
 
-    public void applyToMap(Macro macro, ApplyAction.Progess progess) {
-        Collection<ExecutionStatistic> statistic = applyMacro.applyLayerAction(macro, this::setProgress);
-        logMessage("apply macro " + macro.getName() + " to map:\n" +
-                statistic.stream().map(ExecutionStatistic::toString).collect(Collectors.joining("\n")));
-    }
-
     private void onUpdate() {
         MappingAction mapping = MappingActionContainer.getInstance().queryById(currentSelectedLayer);
         Macro macro = MacroContainer.getInstance().queryById(currentSelectedMacro);
