@@ -14,7 +14,7 @@ public class MacroDesignerTest {
     void insertSingleActionIntoEmptyMacro() {
         MappingActionContainer container = new MappingActionContainer("./TestMappings.json");
 
-        Macro macro = new Macro("test", "descr", new UUID[0], UUID.randomUUID());
+        Macro macro = new Macro("test", "descr", new UUID[0], UUID.randomUUID(), new boolean[0]);
 
         MappingAction inputItem = MappingAction.getNewEmptyAction().withName("hello world");
         assertEquals(0, container.queryAll().size());
@@ -47,8 +47,9 @@ public class MacroDesignerTest {
         for (int i = 0; i < 4; i++) {
             actionIds[i] = UUID.randomUUID();
         }
-
-        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID());
+        boolean[] activeIds = new boolean[actionIds.length];
+        Arrays.fill(activeIds,true);
+        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID(), activeIds);
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
@@ -81,7 +82,10 @@ public class MacroDesignerTest {
             actionIds[i] = UUID.randomUUID();
         }
 
-        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID());
+        boolean[] activeIds = new boolean[actionIds.length];
+        Arrays.fill(activeIds,true);
+
+        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID(), activeIds);
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
@@ -111,8 +115,9 @@ public class MacroDesignerTest {
         for (int i = 0; i < 4; i++) {
             actionIds[i] = UUID.randomUUID();
         }
-
-        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID());
+        boolean[] activeIds = new boolean[actionIds.length];
+        Arrays.fill(activeIds,true);
+        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID(), activeIds);
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
@@ -150,12 +155,13 @@ public class MacroDesignerTest {
         for (int i = 0; i < 4; i++) {
             actionIds[i] = UUID.randomUUID();
         }
-
-        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID());
+        boolean[] activeIds = new boolean[actionIds.length];
+        Arrays.fill(activeIds,true);
+        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID(),activeIds);
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
-        Macro inputItem = new Macro("myNewMacro", "descr", new UUID[0], UUID.randomUUID());
+        Macro inputItem = new Macro("myNewMacro", "descr", new UUID[0], UUID.randomUUID(), new boolean[0]);
 
         ArrayList<Integer> newSelection = new ArrayList<>();
         Macro inserted = Macro.insertSaveableActionToList(

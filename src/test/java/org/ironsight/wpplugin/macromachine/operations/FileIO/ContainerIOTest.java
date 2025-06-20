@@ -61,7 +61,8 @@ class ContainerIOTest {
         MacroJsonWrapper[] macros = new MacroJsonWrapper[3];
         ActionJsonWrapper[] actions = new ActionJsonWrapper[5];
         for (int i = 0; i < macros.length; i++) {
-            macros[i] = new MacroJsonWrapper("alpine-" + i, "uwu owo doing doing", new UUID[0], UUID.randomUUID());
+            macros[i] = new MacroJsonWrapper("alpine-" + i, "uwu owo doing doing", new UUID[0], UUID.randomUUID(),
+                    new boolean[0]);
         }
         for (int i = 0; i < actions.length; i++) {
             actions[i] = new ActionJsonWrapper(MappingAction.getNewEmptyAction(UUID.randomUUID())
@@ -140,20 +141,21 @@ class ContainerIOTest {
                 "  \"macros\" : [ {\n" +
                 "    \"macroName\" : \"My simple macro\",\n" +
                 "    \"description\" : \"this macro executes 2 actions\",\n" +
-                "    \"stepIds\" : [ \"8378edd5-88ab-4b8e-b274-c05a7c7713c4\", " +
-                "\"77b21f11-d454-47f8-8085-cfd9bf9a9f4b\" ],\n" +
-                "    \"selfId\" : \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\"\n" +
+                "    \"stepIds\" : [ \"8378edd5-88ab-4b8e-b274-c05a7c7713c4\", \"77b21f11-d454-47f8-8085-cfd9bf9a9f4b\" ],\n" +
+                "    \"selfId\" : \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\",\n" +
+                "    \"activeIds\" : [ true, true ]\n" +
                 "  }, {\n" +
                 "    \"macroName\" : \"My complex macro\",\n" +
                 "    \"description\" : \"this macro contains another macro\",\n" +
-                "    \"stepIds\" : [ \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\", " +
-                "\"f448bd00-3cc7-4451-8bac-5b3bf36634c0\" ],\n" +
-                "    \"selfId\" : \"e9462d29-bb6c-4eed-8d2f-23c3c9014b4b\"\n" +
+                "    \"stepIds\" : [ \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\", \"f448bd00-3cc7-4451-8bac-5b3bf36634c0\" ],\n" +
+                "    \"selfId\" : \"e9462d29-bb6c-4eed-8d2f-23c3c9014b4b\",\n" +
+                "    \"activeIds\" : [ true, true ]\n" +
                 "  }, {\n" +
                 "    \"macroName\" : \"My empty macro\",\n" +
                 "    \"description\" : \"this macro is empty\",\n" +
                 "    \"stepIds\" : [ ],\n" +
-                "    \"selfId\" : \"f448bd00-3cc7-4451-8bac-5b3bf36634c0\"\n" +
+                "    \"selfId\" : \"f448bd00-3cc7-4451-8bac-5b3bf36634c0\",\n" +
+                "    \"activeIds\" : [ ]\n" +
                 "  } ],\n" +
                 "  \"actions\" : [ {\n" +
                 "    \"inputId\" : \"HEIGHT\",\n" +

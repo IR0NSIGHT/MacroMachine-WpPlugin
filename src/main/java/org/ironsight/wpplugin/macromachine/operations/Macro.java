@@ -8,100 +8,31 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * this class is a collection of MappingActions
- * the actions are ordered and executed in this order
- * a macro can be executed and will apply each of its nested actions to the map
- * macros can container Actions or other Macros (nesting)
+ * this class is a collection of MappingActions the actions are ordered and executed in this order a macro can be
+ * executed and will apply each of its nested actions to the map macros can container Actions or other Macros (nesting)
  * recursion is technically possible but not allowed because there is no way to detect infinite recursion.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Macro implements SaveableAction {
     //ordered list of layermappings
-    public UUID[] executionUUIDs;
-    private String name;
-    private String description;
-    private UUID uid;
-    @JsonIgnore
-    private TileFilter tileFilter = new TileFilter();
-
-    Macro() {
-    }
-    @Override
-    public String getToolTipText() {
-        return "" + executionUUIDs.length + " steps\n"+getDescription();
-    }
-    public Macro(String name, String description, UUID[] ids, UUID id) {
+    public final UUID[] executionUUIDs;
+    private final boolean[] activeActions;
+    private final String name;
+    private final String description;
+    private final UUID uid;
+    public Macro(String name, String description, UUID[] ids, UUID id, boolean[] activeActions) {
         this.name = name;
         this.description = description;
         this.uid = id;
         executionUUIDs = ids;
-    }
-
-    public TileFilter getTileFilter() {
-        return tileFilter;
-    }
-
-    //for json deserialization
-
-    public void setTileFilter(TileFilter filter) {
-        this.tileFilter = filter;
-    }
-
-    public UUID[] getExecutionUUIDs() {
-        return executionUUIDs;
-    }
-
-    public void setExecutionUUIDs(UUID[] executionUUIDs) {
-        this.executionUUIDs = executionUUIDs;
-    }
-
-    public Macro withName(String name) {
-        return new Macro(name, description, executionUUIDs, uid);
-    }
-
-    public Macro withDescription(String description) {
-        return new Macro(name, description, executionUUIDs, uid);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(Arrays.hashCode(executionUUIDs), name, description, uid);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Macro that = (Macro) o;
-        return Arrays.equals(executionUUIDs, that.executionUUIDs) && Objects.equals(name, that.name) &&
-                Objects.equals(description, that.description) && Objects.equals(uid, that.uid);
-    }
-
-    @Override
-    public Macro clone() {
-        return new Macro(this.name, this.description, this.executionUUIDs.clone(), this.uid);
-    }
-
-    public Macro withUUIDs(UUID[] uuid) {
-        return new Macro(this.name, this.description, uuid, this.uid);
-    }
-
-    public Macro withReplacedUUIDs(int[] overwriteIdcs, UUID uid) {
-        UUID[] newIds = executionUUIDs.clone();
-        for (int row : overwriteIdcs) {
-            assert row >= 0 : "index ouf of bounds";
-            assert row < newIds.length : "index out of bounds";
-            newIds[row] = uid;
-        }
-        return this.withUUIDs(newIds);
+        this.activeActions = activeActions;
     }
 
     /**
-     *
      * @param macro
-     * @param item action or macro to insert
+     * @param item            action or macro to insert
      * @param createNewAction getter to clone actions if necessary
-     * @param targetRows    insert item at each of those rows
+     * @param targetRows      insert item at each of those rows
      * @param outNewSelection output array with indices of row selection. old rows stay selected.
      * @return new macro
      */
@@ -137,13 +68,103 @@ public class Macro implements SaveableAction {
         return newMacro;
     }
 
+    public boolean[] getActiveActions() {
+        return activeActions.clone();
+    }
+
+    @Override
+    public boolean isActive() {
+        return isActive;
+    }
+
+    @Override
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+
+    //only for gui purposes, not part of the actual data. only use this flag if you set it yourself
+    private boolean isActive;
+
+    @Override
+    public String getToolTipText() {
+        return "" + executionUUIDs.length + " steps\n" + getDescription();
+    }
+
+    public UUID[] getExecutionUUIDs() {
+        return executionUUIDs;
+    }
+
+    public Macro withName(String name) {
+        return new Macro(name, description, executionUUIDs, uid, activeActions);
+    }
+
+    public Macro withDescription(String description) {
+        return new Macro(name, description, executionUUIDs, uid, activeActions);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(Arrays.hashCode(executionUUIDs), name, description, uid);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Macro that = (Macro) o;
+        return Arrays.equals(executionUUIDs, that.executionUUIDs) && Objects.equals(name, that.name) &&
+                Objects.equals(description, that.description) && Objects.equals(uid, that.uid) && Arrays.equals(activeActions, that.activeActions);
+    }
+
+    @Override
+    public Macro clone() {
+        return new Macro(this.name,
+                this.description,
+                this.executionUUIDs.clone(),
+                this.uid,
+                this.activeActions.clone());
+    }
+
+    public Macro withUUIDs(UUID[] uuid, boolean[] activeActions) {
+        return new Macro(this.name, this.description, uuid, this.uid, activeActions);
+    }
+
+    /**
+     * with new UUIDS. all are active by default.
+     *
+     * @param uuid
+     * @return
+     */
+    public Macro withUUIDs(UUID[] uuid) {
+        boolean[] activeActions = new boolean[uuid.length];
+        Arrays.fill(activeActions, true);
+        return new Macro(this.name, this.description, uuid, this.uid, activeActions);
+    }
+
+    public Macro withReplacedUUIDs(int[] overwriteIdcs, UUID uid) {
+        boolean[] overwrittenActiveState = new boolean[overwriteIdcs.length];
+        Arrays.fill(overwrittenActiveState, true);
+        return withReplacedUUIDs(overwriteIdcs, uid, overwrittenActiveState);
+    }
+
+    public Macro withReplacedUUIDs(int[] overwriteIdcs, UUID uid, boolean[] overwrittenActiveState) {
+        UUID[] newIds = executionUUIDs.clone();
+        boolean[] newActiveActions = activeActions.clone();
+
+        assert newIds.length == newActiveActions.length;
+        int overwriteIdx = 0;
+        for (int row : overwriteIdcs) {
+            assert row >= 0 : "index ouf of bounds";
+            assert row < newIds.length : "index out of bounds";
+            newIds[row] = uid;
+            newActiveActions[row] = overwrittenActiveState[overwriteIdx++];
+        }
+        return this.withUUIDs(newIds, newActiveActions);
+    }
+
     @Override
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     @Override
@@ -151,13 +172,13 @@ public class Macro implements SaveableAction {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
     public List<UUID> collectActions(List<UUID> actionList) {
+        int idx = 0;
         for (UUID id : this.executionUUIDs) {
             SaveableAction action = MacroContainer.getInstance().queryById(id);
+            if (!this.activeActions[idx++])
+                continue;
             if (action != null) {//macro
                 //macro adds its own steps recursively
                 ((Macro) action).collectActions(actionList);
@@ -196,9 +217,5 @@ public class Macro implements SaveableAction {
     @Override
     public UUID getUid() {
         return uid;
-    }
-
-    public void setUid(UUID uid) {
-        this.uid = uid;
     }
 }
