@@ -64,7 +64,7 @@ class MacroJsonWrapper {
         return Objects.equals(getSelfId(), that.getSelfId()) &&
                 Objects.equals(getMacroName(), that.getMacroName()) &&
                 Objects.equals(getDescription(), that.getDescription()) &&
-                Arrays.equals(getStepIds(), that.getStepIds());
+                Arrays.equals(getStepIds(), that.getStepIds()) && Arrays.equals(getActiveIds(), that.getActiveIds());
     }
 
     @Override
