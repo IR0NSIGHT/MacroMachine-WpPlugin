@@ -8,30 +8,27 @@ import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 
-import javax.crypto.Mac;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static org.ironsight.wpplugin.macromachine.MacroMachinePlugin.error;
-
 public class ContainerIO {
     public static MacroJsonWrapper fromMacro(Macro macro) {
-        return new MacroJsonWrapper(macro.getName(), macro.getDescription(), macro.getExecutionUUIDs(), macro.getUid());
+        return new MacroJsonWrapper(macro.getName(), macro.getDescription(), macro.getExecutionUUIDs(), macro.getUid(),
+                macro.getActiveActions());
     }
 
     public static Macro toMacro(MacroJsonWrapper json){
-        return new Macro(json.getMacroName(), json.getDescription(), json.getStepIds(), json.getSelfId());
+        return new Macro(json.getMacroName(), json.getDescription(), json.getStepIds(), json.getSelfId(),
+                json.getActiveIds());
     }
 
     public static MappingAction toAction(ActionJsonWrapper json) {

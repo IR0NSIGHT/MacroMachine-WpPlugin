@@ -17,50 +17,41 @@ import java.util.function.Supplier;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Macro implements SaveableAction {
     //ordered list of layermappings
-    public UUID[] executionUUIDs;
-    private String name;
-    private String description;
-    private UUID uid;
-    @JsonIgnore
-    private TileFilter tileFilter = new TileFilter();
+    public final UUID[] executionUUIDs;
 
-    Macro() {
+    public boolean[] getActiveActions() {
+        return activeActions.clone();
     }
+
+    private final boolean[] activeActions;
+    private final String name;
+    private final String description;
+    private final UUID uid;
+
     @Override
     public String getToolTipText() {
         return "" + executionUUIDs.length + " steps\n"+getDescription();
     }
-    public Macro(String name, String description, UUID[] ids, UUID id) {
+    public Macro(String name, String description, UUID[] ids, UUID id, boolean[] activeActions) {
         this.name = name;
         this.description = description;
         this.uid = id;
         executionUUIDs = ids;
-    }
-
-    public TileFilter getTileFilter() {
-        return tileFilter;
+        this.activeActions = activeActions;
     }
 
     //for json deserialization
-
-    public void setTileFilter(TileFilter filter) {
-        this.tileFilter = filter;
-    }
 
     public UUID[] getExecutionUUIDs() {
         return executionUUIDs;
     }
 
-    public void setExecutionUUIDs(UUID[] executionUUIDs) {
-        this.executionUUIDs = executionUUIDs;
-    }
-
     public Macro withName(String name) {
-        return new Macro(name, description, executionUUIDs, uid);
+        return new Macro(name, description, executionUUIDs, uid, activeActions);
     }
 
     public Macro withDescription(String description) {
-        return new Macro(name, description, executionUUIDs, uid);
+        return new Macro(name, description, executionUUIDs, uid, activeActions);
     }
 
     @Override
@@ -79,21 +70,42 @@ public class Macro implements SaveableAction {
 
     @Override
     public Macro clone() {
-        return new Macro(this.name, this.description, this.executionUUIDs.clone(), this.uid);
+        return new Macro(this.name, this.description, this.executionUUIDs.clone(), this.uid, this.activeActions.clone());
     }
 
+    public Macro withUUIDs(UUID[] uuid, boolean[] activeActions) {
+        return new Macro(this.name, this.description, uuid, this.uid, activeActions);
+    }
+
+    /**
+     * with new UUIDS. all are active by default.
+     * @param uuid
+     * @return
+     */
     public Macro withUUIDs(UUID[] uuid) {
-        return new Macro(this.name, this.description, uuid, this.uid);
+        boolean[] activeActions = new boolean[uuid.length];
+        Arrays.fill(activeActions, true);
+        return new Macro(this.name, this.description, uuid, this.uid, activeActions);
     }
 
     public Macro withReplacedUUIDs(int[] overwriteIdcs, UUID uid) {
+        boolean[] overwrittenActiveState = new boolean[overwriteIdcs.length];
+        Arrays.fill(overwrittenActiveState, true);
+        return withReplacedUUIDs(overwriteIdcs, uid, overwrittenActiveState);
+    }
+        public Macro withReplacedUUIDs(int[] overwriteIdcs, UUID uid, boolean[] overwrittenActiveState) {
         UUID[] newIds = executionUUIDs.clone();
+        boolean[] newActiveActions = activeActions.clone();
+
+        assert newIds.length == newActiveActions.length;
+        int overwriteIdx = 0;
         for (int row : overwriteIdcs) {
             assert row >= 0 : "index ouf of bounds";
             assert row < newIds.length : "index out of bounds";
             newIds[row] = uid;
+            newActiveActions[row] = overwrittenActiveState[overwriteIdx++];
         }
-        return this.withUUIDs(newIds);
+        return this.withUUIDs(newIds, newActiveActions);
     }
 
     /**
@@ -142,18 +154,11 @@ public class Macro implements SaveableAction {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     @Override
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
 
     public List<UUID> collectActions(List<UUID> actionList) {
         for (UUID id : this.executionUUIDs) {
@@ -196,9 +201,5 @@ public class Macro implements SaveableAction {
     @Override
     public UUID getUid() {
         return uid;
-    }
-
-    public void setUid(UUID uid) {
-        this.uid = uid;
     }
 }
