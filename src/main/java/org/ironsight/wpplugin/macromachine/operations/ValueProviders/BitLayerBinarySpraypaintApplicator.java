@@ -83,7 +83,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{layerName, layerId, isCustom};
+        return new Object[]{layerId, layerName, isCustom};
     }
 
     @Override
