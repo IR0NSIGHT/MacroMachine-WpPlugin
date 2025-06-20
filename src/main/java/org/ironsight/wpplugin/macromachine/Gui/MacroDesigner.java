@@ -432,6 +432,7 @@ public class MacroDesigner extends JPanel {
             SaveableAction m = MappingActionContainer.getInstance().queryById(id);
             if (m == null)
                 m = MacroContainer.getInstance().queryById(id);
+            m.setActive(macro.getActiveActions()[row]);
             table.setValueAt(m, row++, 0);
         }
 

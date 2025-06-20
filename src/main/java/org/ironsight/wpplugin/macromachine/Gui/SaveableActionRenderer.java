@@ -113,7 +113,7 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
-        updateTo(value, true);
+        updateTo(value, ((SaveableAction)value).isActive());
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
         } else panel.setBackground(DEFAULT_BACKGROUND);

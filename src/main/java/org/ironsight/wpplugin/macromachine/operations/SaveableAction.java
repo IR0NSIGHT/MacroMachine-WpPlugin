@@ -7,4 +7,10 @@ import java.util.UUID;
 
 public interface SaveableAction extends Serializable, IDisplayUnit {
     UUID getUid();
+
+    boolean isActive();
+
+
+    void setActive(boolean active);
+
 }
