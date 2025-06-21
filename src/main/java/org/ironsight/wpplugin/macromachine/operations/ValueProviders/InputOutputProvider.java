@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.*;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -105,8 +106,7 @@ public class InputOutputProvider implements IMappingValueProvider {
                 }
             }
         }
-    //    getters.add(new DistanceToLayerEdgeGetter(SelectionBlock.INSTANCE));
-    //    getters.add(new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE));
+        getters.add(new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE));
         getters.add(new TerrainProvider());
         setters.add(new TerrainProvider());
         setters.add(new StonePaletteApplicator());

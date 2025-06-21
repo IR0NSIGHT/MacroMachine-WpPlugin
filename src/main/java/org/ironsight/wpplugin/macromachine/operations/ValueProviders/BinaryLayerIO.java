@@ -10,7 +10,7 @@ import java.awt.*;
 import java.util.Objects;
 
 public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter, ILayerGetter {
-    private final String layerName;
+    private String layerName;
     private final String layerId;
     boolean isCustom = false;
     private Layer layer;
@@ -56,6 +56,8 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         }
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
+        if (layer != null)
+            layerName = layer.getName(); //maybe name was updated
     }
 
     public String valueToString(int value) {

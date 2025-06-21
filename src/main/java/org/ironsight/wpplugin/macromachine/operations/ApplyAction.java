@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
@@ -20,8 +21,15 @@ public class ApplyAction {
         long startTime = System.currentTimeMillis();
         int totalTiles = dim.getTiles().size();
         int tilesVisitedCount = 0;
+
+        applyToPoint.prepareRightBeforeRun(dim);
         while (t.hasNext()) {
             Tile tile = t.next();
+            boolean actionFilterWouldSkipTile = ActionFilterIO.instance.getTileContainer().getTileAt(tile.getX() * TILE_SIZE,
+                    tile.getY() * TILE_SIZE).getMax() == ActionFilterIO.BLOCK_VALUE;
+            if (actionFilterWouldSkipTile && !applyToPoint.doesIncreaseActionFilter()) {
+                continue;
+            }
             TileFilter.passType pass = filter.testTile(tile);
             if (pass == TileFilter.passType.NO_BLOCKS) continue;
 
@@ -36,9 +44,13 @@ public class ApplyAction {
                     }
                 }
             }
+            //this pass is done, for this tile calculate new minMax
+            ActionFilterIO.instance.getTileContainer().calculateMinMax(tile.getX() * TILE_SIZE,
+                    tile.getY() * TILE_SIZE);
             tilesVisitedCount++;
             setProgress.accept(100f * tilesVisitedCount / (totalTiles));
         }
+        applyToPoint.releaseAfterRun();
         statistic.durationMillis = System.currentTimeMillis() - startTime;
         return statistic;
     }
@@ -48,12 +60,17 @@ public class ApplyAction {
                                                                     Consumer<Progess> setProgress) {
         ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
         int i = 0;
-        PointApplicator stepApplicator = new PointApplicator(actions, dim);
-        TileFilter earlyAbortFilter = stepApplicator.earlyAbortFilter();
-        statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, stepApplicator,
-                percent -> {
-                    setProgress.accept(new Progess(i, actions.size(), percent));
-                }));
+        for (MappingAction a : actions) {
+            PointApplicator stepApplicator = new PointApplicator(a, dim);
+            TileFilter earlyAbortFilter = stepApplicator.earlyAbortFilter();
+            final int stepIndex = i;
+            statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, stepApplicator,
+                    percent -> {
+                        setProgress.accept(new Progess(stepIndex, actions.size(), percent));
+                    }));
+            i++;
+        }
+
         return statistics;
     }
 

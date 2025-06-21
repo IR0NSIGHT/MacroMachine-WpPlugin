@@ -67,6 +67,8 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         }
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
+        if (layer != null)
+            layerName = layer.getName(); //maybe name was updated
     }
 
     @Override
