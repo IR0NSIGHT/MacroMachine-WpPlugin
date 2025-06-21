@@ -4,12 +4,29 @@ import org.pepsoft.worldpainter.Constants;
 
 import java.awt.*;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
 public class TileContainer {
 
     private final IntegerTile[][] tiles;
     private final int offsetX;
     private final int offsetY;
     private final int width, height;
+
+    public int getMinXPos() {
+        return -offsetX;
+    }
+
+    public int getMaxXPos() {
+        return -offsetX + width * TILE_SIZE;
+    }
+
+    public int getMaxYPos() {
+        return -offsetY + height * TILE_SIZE;
+    }
+    public int getMinYPos() {
+        return -offsetY;
+    }
 
     public IntegerTile getTileAt(int x, int y) {
         x += offsetX;
@@ -42,7 +59,7 @@ public class TileContainer {
     }
 
     public Rectangle getExtent() {
-        return new Rectangle(-offsetX / Constants.TILE_SIZE, -offsetY / Constants.TILE_SIZE, width, height);
+        return new Rectangle(-offsetX / TILE_SIZE, -offsetY / TILE_SIZE, width, height);
     }
 
     int getMaxAt(int x, int y) {
@@ -59,7 +76,7 @@ public class TileContainer {
      * @param y
      * @param value
      */
-    void setValueAt(int x, int y, int value) {
+    public  void setValueAt(int x, int y, int value) {
         getTileAt(x,y).setValueAt(x + offsetX, y + offsetY, value);
     }
 
@@ -68,7 +85,7 @@ public class TileContainer {
      * @param y
      * @return
      */
-    int getValueAt(int x, int y) {
+    public int getValueAt(int x, int y) {
         return getTileAt(x,y).getValueAt(x + offsetX, y + offsetY);
     }
 }
