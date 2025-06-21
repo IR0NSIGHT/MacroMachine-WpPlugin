@@ -81,7 +81,12 @@ class MappingActionValueTableModel implements TableModel {
     private void fireEvent(TableModelEvent event) {
         System.out.println("fire table model event " + event.getType() + " - " + event.getFirstRow() + ".."+ event.getLastRow());
         for (TableModelListener l : listeners) {
-            l.tableChanged(event);
+            try {
+                l.tableChanged(event);
+
+            } catch (ArrayIndexOutOfBoundsException ignored) {
+                ; //idk java swing sometimes doesnt like row converstion index to view. dont care
+            }
         }
     }
 

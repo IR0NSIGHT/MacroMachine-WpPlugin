@@ -1,6 +1,8 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.DistanceToLayerEdgeGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ShadowMapIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainHeightIO;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.util.Collections;
@@ -10,9 +12,13 @@ public class PointApplicator {
     private final Dimension dimension;
 
     public void prepareRightBeforeRun(Dimension dimension) {
+        if (action.getInput() instanceof ShadowMapIO)
+            ((ShadowMapIO) action.getInput()).calculateShadowMap(dimension, new TerrainHeightIO(-5000,5000));
     }
 
     public void releaseAfterRun() {
+        if (action.getInput() instanceof ShadowMapIO)
+            ((ShadowMapIO) action.getInput()).releaseShadowMap();
     }
 
     public PointApplicator(MappingAction actions, Dimension dimension) {

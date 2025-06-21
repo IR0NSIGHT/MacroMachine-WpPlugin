@@ -106,6 +106,7 @@ public class InputOutputProvider implements IMappingValueProvider {
                 }
             }
         }
+        getters.add(new ShadowMapIO());
         getters.add(new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE));
         getters.add(new TerrainProvider());
         setters.add(new TerrainProvider());
