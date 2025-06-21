@@ -49,6 +49,10 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
                 rect.y * Constants.TILE_SIZE, PASS_VALUE);
     }
 
+    public TileContainer getTileContainer() {
+        return tileContainer;
+    }
+
     public void releaseAfterApplication() {
         tileContainer = null;
     }

@@ -11,6 +11,23 @@ public class TileContainer {
     private final int offsetY;
     private final int width, height;
 
+    public IntegerTile getTileAt(int x, int y) {
+        x += offsetX;
+        y += offsetY;
+
+        assert x >= 0;
+        assert y >= 0;
+
+        int indexX = x >> Constants.TILE_SIZE_BITS;
+        int indexY = y >> Constants.TILE_SIZE_BITS;
+
+        return tiles[indexX][indexY];
+    }
+
+    public void calculateMinMax(int x, int y) {
+        getTileAt(x,y).calculateMinMax();
+    }
+
     public TileContainer(int width, int height, int minX, int minY, int defaultValue) {
         tiles = new IntegerTile[width][];
         for (int j = 0; j < width; j++) {
@@ -28,23 +45,22 @@ public class TileContainer {
         return new Rectangle(-offsetX / Constants.TILE_SIZE, -offsetY / Constants.TILE_SIZE, width, height);
     }
 
+    int getMaxAt(int x, int y) {
+        return getTileAt(x,y).getMax();
+    }
+
+    int getMinAt(int x, int y) {
+        return getTileAt(x,y).getMin();
+    }
+
+
     /**
      * @param x     global pos
      * @param y
      * @param value
      */
     void setValueAt(int x, int y, int value) {
-        x += offsetX;
-        y += offsetY;
-
-        assert x >= 0;
-        assert y >= 0;
-
-        int indexX = x >> Constants.TILE_SIZE_BITS;
-        int indexY = y >> Constants.TILE_SIZE_BITS;
-
-        IntegerTile tile = this.tiles[indexX][indexY];
-        tile.setValueAt(x, y, value);
+        getTileAt(x,y).setValueAt(x + offsetX, y + offsetY, value);
     }
 
     /**
@@ -53,13 +69,6 @@ public class TileContainer {
      * @return
      */
     int getValueAt(int x, int y) {
-        x += offsetX;
-        y += offsetY;
-
-        int indexX = x >> Constants.TILE_SIZE_BITS;
-        int indexY = y >> Constants.TILE_SIZE_BITS;
-
-        IntegerTile tile = this.tiles[indexX][indexY];
-        return tile.getValueAt(x, y);
+        return getTileAt(x,y).getValueAt(x + offsetX, y + offsetY);
     }
 }

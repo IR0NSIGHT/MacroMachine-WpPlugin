@@ -12,6 +12,7 @@ public enum ProviderType {
     BINARY_SPRAYPAINT,
     BLOCK_DIRECTION,
     INTERMEDIATE,
+    //action filter
     INTERMEDIATE_SELECTION,
     NIBBLE_LAYER,
     SELECTION,

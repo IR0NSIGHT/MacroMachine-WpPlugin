@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 import org.ironsight.wpplugin.macromachine.operations.LayerObjectContainer;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.HeightMap;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
@@ -32,6 +33,8 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
         layer = LayerObjectContainer.getInstance().queryLayer(layerId);
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
+        if (layer != null)
+            layerName = layer.getName(); //maybe name was updated
     }
 
     @Override
@@ -80,7 +83,6 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
     }
 
     /**
-     *
      * @param dim
      * @param x
      * @param y
@@ -88,8 +90,9 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
      */
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        float dist = dim.getDistanceToEdge(layer, x, y, getMaxValue());
-        return Math.round(dist);
+        double dist = dim.getDistanceToEdge(layer,x,y,getMaxValue());
+        assert dim.getBitLayerValueAt(layer, x, y) || dist == 0 : "if the layer is not set, expect value be zero";
+        return (int)Math.round(dist);
     }
 
     @Override
@@ -131,10 +134,12 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
     public String getLayerName() {
         return layerName;
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
     }
+
     @Override
     public String getLayerId() {
         return layerId;

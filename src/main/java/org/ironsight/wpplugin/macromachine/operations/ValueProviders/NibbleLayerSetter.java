@@ -66,6 +66,8 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         }
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
+        if (layer != null)
+            layerName = layer.getName(); //maybe name was updated
     }
 
     @Override
