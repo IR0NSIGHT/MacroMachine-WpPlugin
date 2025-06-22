@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import org.ironsight.wpplugin.macromachine.ArrayUtils;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.ironsight.wpplugin.macromachine.operations.specialOperations.ShadowMap;
 import org.pepsoft.worldpainter.Dimension;
@@ -85,8 +86,12 @@ public class ShadowMapIO implements IPositionValueGetter{
         return shadowMap.getValueAt(x,y);
     }
 
-    public void calculateShadowMap(Dimension dim, TerrainHeightIO heightIO) {
-        this.shadowMap = ShadowMap.calculateShadowMap(dim.getExtent(), heightIO, dim);
+    public void calculateShadowMap(Dimension dim, TerrainHeightIO heightIO, int[] tileX, int[] tileY) {
+
+        int startX = ArrayUtils.findMin(tileX), endX = ArrayUtils.findMax(tileX);
+        int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
+        Rectangle extent = new Rectangle(startX,startY,endX-startX + 1, endY-startY + 1);
+        this.shadowMap = ShadowMap.calculateShadowMap(extent, heightIO, dim);
     }
 
     public void releaseShadowMap(){

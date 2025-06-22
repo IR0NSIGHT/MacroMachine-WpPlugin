@@ -11,9 +11,9 @@ public class PointApplicator {
     private final MappingAction action;
     private final Dimension dimension;
 
-    public void prepareRightBeforeRun(Dimension dimension) {
+    public void prepareRightBeforeRun(Dimension dimension, int[] tileX, int[] tileY) {
         if (action.getInput() instanceof ShadowMapIO)
-            ((ShadowMapIO) action.getInput()).calculateShadowMap(dimension, new TerrainHeightIO(-5000,5000));
+            ((ShadowMapIO) action.getInput()).calculateShadowMap(dimension, new TerrainHeightIO(-5000,5000), tileX, tileY);
     }
 
     public void releaseAfterRun() {

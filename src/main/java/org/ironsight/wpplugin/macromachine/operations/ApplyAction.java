@@ -22,16 +22,36 @@ public class ApplyAction {
         int totalTiles = dim.getTiles().size();
         int tilesVisitedCount = 0;
 
-        applyToPoint.prepareRightBeforeRun(dim);
+
+
+        // find area of operations: all chunks that will be visited:
+        int[] tileX = new int[dim.getTiles().size()], tileY = new int[dim.getTiles().size()];
+        int tileArrIdx = 0;
+
         while (t.hasNext()) {
             Tile tile = t.next();
-            boolean actionFilterWouldSkipTile = ActionFilterIO.instance.getTileContainer().getTileAt(tile.getX() * TILE_SIZE,
-                    tile.getY() * TILE_SIZE).getMax() == ActionFilterIO.BLOCK_VALUE;
-            if (actionFilterWouldSkipTile && !applyToPoint.doesIncreaseActionFilter()) {
+            if (ActionFilterIO.instance.skipTile(tile.getX(), tile.getY()) && !applyToPoint.doesIncreaseActionFilter()) {
                 continue;
             }
             TileFilter.passType pass = filter.testTile(tile);
-            if (pass == TileFilter.passType.NO_BLOCKS) continue;
+            if (pass == TileFilter.passType.NO_BLOCKS)
+                continue;
+            tileX[tileArrIdx] = tile.getX();
+            tileY[tileArrIdx] = tile.getY();
+            tileArrIdx++;
+        }
+        tileX = Arrays.copyOf(tileX, tileArrIdx);
+        tileY = Arrays.copyOf(tileY, tileArrIdx);
+
+        if (tileX.length == 0 || tileY.length == 0)
+            return statistic;
+
+        applyToPoint.prepareRightBeforeRun(dim, tileX,tileY);
+
+        for (int i = 0; i < tileX.length; i++) {
+            Tile tile = dim.getTile(tileX[i], tileY[i]);
+
+            TileFilter.passType pass = filter.testTile(tile);
 
             statistic.touchedTiles++;
             for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {

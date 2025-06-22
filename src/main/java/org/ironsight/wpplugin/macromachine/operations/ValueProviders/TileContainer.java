@@ -13,6 +13,38 @@ public class TileContainer {
     private final int offsetY;
     private final int width, height;
 
+    public TileContainer(int width, int height, int minX, int minY, int defaultValue) {
+        tiles = new IntegerTile[width][];
+        for (int j = 0; j < width; j++) {
+            tiles[j] = new IntegerTile[height];
+            for (int i = 0; i < height; i++)
+                tiles[j][i] = new IntegerTile(defaultValue);
+        }
+        offsetX = -minX;
+        offsetY = -minY;
+        this.width = width;
+        this.height = height;
+    }
+
+    public boolean existsTile(int tileX, int tileY) {
+        int x = tileX * TILE_SIZE;
+        int y = tileY * TILE_SIZE;
+        x += offsetX;
+        y += offsetY;
+
+        int indexX = x >> Constants.TILE_SIZE_BITS;
+        int indexY = y >> Constants.TILE_SIZE_BITS;
+        if (indexX < 0 || indexY < 0)
+            return false;
+        if (indexX >= tiles.length)
+            return false;
+        if (indexY >= tiles[indexX].length)
+            return false;
+        if (tiles[indexX][indexY] == null)
+            return false;
+        return true;
+    }
+
     public int getMinXPos() {
         return -offsetX;
     }
@@ -24,6 +56,7 @@ public class TileContainer {
     public int getMaxYPos() {
         return -offsetY + height * TILE_SIZE;
     }
+
     public int getMinYPos() {
         return -offsetY;
     }
@@ -42,20 +75,7 @@ public class TileContainer {
     }
 
     public void calculateMinMax(int x, int y) {
-        getTileAt(x,y).calculateMinMax();
-    }
-
-    public TileContainer(int width, int height, int minX, int minY, int defaultValue) {
-        tiles = new IntegerTile[width][];
-        for (int j = 0; j < width; j++) {
-            tiles[j] = new IntegerTile[height];
-            for (int i = 0; i < height; i++)
-                tiles[j][i] = new IntegerTile(defaultValue);
-        }
-        offsetX = -minX;
-        offsetY = -minY;
-        this.width = width;
-        this.height= height;
+        getTileAt(x, y).calculateMinMax();
     }
 
     public Rectangle getExtent() {
@@ -63,11 +83,11 @@ public class TileContainer {
     }
 
     int getMaxAt(int x, int y) {
-        return getTileAt(x,y).getMax();
+        return getTileAt(x, y).getMax();
     }
 
     int getMinAt(int x, int y) {
-        return getTileAt(x,y).getMin();
+        return getTileAt(x, y).getMin();
     }
 
 
@@ -76,8 +96,8 @@ public class TileContainer {
      * @param y
      * @param value
      */
-    public  void setValueAt(int x, int y, int value) {
-        getTileAt(x,y).setValueAt(x + offsetX, y + offsetY, value);
+    public void setValueAt(int x, int y, int value) {
+        getTileAt(x, y).setValueAt(x + offsetX, y + offsetY, value);
     }
 
     /**
@@ -86,6 +106,6 @@ public class TileContainer {
      * @return
      */
     public int getValueAt(int x, int y) {
-        return getTileAt(x,y).getValueAt(x + offsetX, y + offsetY);
+        return getTileAt(x, y).getValueAt(x + offsetX, y + offsetY);
     }
 }
