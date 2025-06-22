@@ -9,22 +9,6 @@ import java.awt.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 public class ShadowMap {
-    private TileContainer tileContainer;
-
-    public ShadowMap(Point[] tilePositions) {
-        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE;
-        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE;
-
-        for (Point tilePos : tilePositions) {
-            minX = Math.min(tilePos.x, minX);
-            minY = Math.min(tilePos.y, minY);
-            maxX = Math.max(tilePos.x, maxX);
-            maxY = Math.max(tilePos.y, maxY);
-        }
-        tileContainer = new TileContainer((maxX - minX), (maxY - minY), TILE_SIZE * (minX),
-                TILE_SIZE * (minY), 0);
-    }
-
     public static TileContainer calculateShadowMap(Rectangle extent, TerrainHeightIO heightIO, Dimension dim) {
         int minX = TILE_SIZE * extent.x, minY = TILE_SIZE * extent.y;
         TileContainer shadowmap = new TileContainer(extent.width , extent.height, minX, minY,0);
