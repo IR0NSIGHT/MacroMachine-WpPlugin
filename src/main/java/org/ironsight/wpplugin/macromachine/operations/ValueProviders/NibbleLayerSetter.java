@@ -4,12 +4,15 @@ import org.ironsight.wpplugin.macromachine.operations.LayerObjectContainer;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.layers.renderers.NibbleLayerRenderer;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Objects;
 
 public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter, ILayerGetter {
-    private final static Color[] COLORS = new Color[]{new Color(0, 0, 0),       // Black
+    private final Color[] COLORS = new Color[]{new Color(0, 0, 0),       // Black
             new Color(0, 0, 0),       // Black
             new Color(0, 16, 0),      // Very dark green
             new Color(0, 32, 0),      // Dark green
@@ -28,29 +31,42 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
             new Color(0, 255, 0)      // Pure green
     };
 
+    private final static int[] defaultColorHex = new int[16];
+
+    private int[] colorHex;
     protected String layerId;
     protected String layerName;
     protected Layer layer = null;
+    private boolean isCustom;
 
-    protected NibbleLayerSetter(String name, String id, boolean isCustom) {
+    protected NibbleLayerSetter(String name, String id, boolean isCustom, int[] colorHex) {
         this.layerId = id;
         this.layerName = name;
         this.isCustom = isCustom;
-    }
-    protected NibbleLayerSetter(String name, String id) {
-        this.layerId = id;
-        this.layerName = name;
-        isCustom = false;
-    }
-
-    public NibbleLayerSetter() {
+        this.colorHex = colorHex;
+        setColorsFromData(colorHex);
     }
 
     public NibbleLayerSetter(Layer layer, boolean isCustom) {
+        this(layer.getName(), layer.getId(), isCustom, defaultColorHex.clone());
         this.layer = layer;
-        this.layerName = layer.getName();
-        this.layerId = layer.getId();
-        this.isCustom = isCustom;
+        pullColorsFromLayer();
+    }
+
+    private void pullColorsFromLayer() {
+        if (layer.getRenderer() == null || !(layer.getRenderer() instanceof NibbleLayerRenderer))
+            return;
+        NibbleLayerRenderer renderer = (NibbleLayerRenderer) layer.getRenderer();
+        for (int value = getMinValue(); value <= getMaxValue(); value++) {
+            colorHex[value] = renderer.getPixelColour(0,0,0,value);
+        }
+        setColorsFromData(colorHex);
+    }
+
+    private void setColorsFromData(int[] colorHex) {
+        for (int value = getMinValue(); value <= getMaxValue(); value++) {
+            COLORS[value] = new Color(colorHex[value]);
+        }
     }
 
     @Override
@@ -66,6 +82,10 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         }
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
+        if (layer != null) {
+            layerName = layer.getName(); //maybe name was updated
+            pullColorsFromLayer();
+        }
     }
 
     @Override
@@ -81,18 +101,25 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
         Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer"
-                , false };
+                , false, defaultColorHex};
         for (int i = 0; i < data.length; i++) {
             saveData[i] = data[i];
         }
-        return new NibbleLayerSetter((String) saveData[0], (String) saveData[1], (Boolean) saveData[2]);
+        try {
+            int[] colorHex = new int[16]; int i = 0;
+            for (Integer hex: ((ArrayList<Integer>) saveData[3]))
+                colorHex[i++] = hex;
+            return new NibbleLayerSetter((String) saveData[0], (String) saveData[1], (Boolean) saveData[2],
+                    colorHex);
+        } catch (ClassCastException ex) {
+            return new NibbleLayerSetter((String) saveData[0], (String) saveData[1], (Boolean) saveData[2],
+                    defaultColorHex);
+        }
     }
-
-    private boolean isCustom = false;
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{layerName, layerId, isCustom};
+        return new Object[]{layerName, layerId, isCustom, colorHex};
     }
 
     @Override

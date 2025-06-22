@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
@@ -20,10 +21,37 @@ public class ApplyAction {
         long startTime = System.currentTimeMillis();
         int totalTiles = dim.getTiles().size();
         int tilesVisitedCount = 0;
+
+
+
+        // find area of operations: all chunks that will be visited:
+        int[] tileX = new int[dim.getTiles().size()], tileY = new int[dim.getTiles().size()];
+        int tileArrIdx = 0;
+
         while (t.hasNext()) {
             Tile tile = t.next();
+            if (ActionFilterIO.instance.skipTile(tile.getX(), tile.getY()) && !applyToPoint.doesIncreaseActionFilter()) {
+                continue;
+            }
             TileFilter.passType pass = filter.testTile(tile);
-            if (pass == TileFilter.passType.NO_BLOCKS) continue;
+            if (pass == TileFilter.passType.NO_BLOCKS)
+                continue;
+            tileX[tileArrIdx] = tile.getX();
+            tileY[tileArrIdx] = tile.getY();
+            tileArrIdx++;
+        }
+        tileX = Arrays.copyOf(tileX, tileArrIdx);
+        tileY = Arrays.copyOf(tileY, tileArrIdx);
+
+        if (tileX.length == 0 || tileY.length == 0)
+            return statistic;
+
+        applyToPoint.prepareRightBeforeRun(dim, tileX,tileY);
+
+        for (int i = 0; i < tileX.length; i++) {
+            Tile tile = dim.getTile(tileX[i], tileY[i]);
+
+            TileFilter.passType pass = filter.testTile(tile);
 
             statistic.touchedTiles++;
             for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {
@@ -36,9 +64,13 @@ public class ApplyAction {
                     }
                 }
             }
+            //this pass is done, for this tile calculate new minMax
+            ActionFilterIO.instance.getTileContainer().calculateMinMax(tile.getX() * TILE_SIZE,
+                    tile.getY() * TILE_SIZE);
             tilesVisitedCount++;
             setProgress.accept(100f * tilesVisitedCount / (totalTiles));
         }
+        applyToPoint.releaseAfterRun();
         statistic.durationMillis = System.currentTimeMillis() - startTime;
         return statistic;
     }
@@ -48,12 +80,17 @@ public class ApplyAction {
                                                                     Consumer<Progess> setProgress) {
         ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
         int i = 0;
-        PointApplicator stepApplicator = new PointApplicator(actions, dim);
-        TileFilter earlyAbortFilter = stepApplicator.earlyAbortFilter();
-        statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, stepApplicator,
-                percent -> {
-                    setProgress.accept(new Progess(i, actions.size(), percent));
-                }));
+        for (MappingAction a : actions) {
+            PointApplicator stepApplicator = new PointApplicator(a, dim);
+            TileFilter earlyAbortFilter = stepApplicator.earlyAbortFilter();
+            final int stepIndex = i;
+            statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, stepApplicator,
+                    percent -> {
+                        setProgress.accept(new Progess(stepIndex, actions.size(), percent));
+                    }));
+            i++;
+        }
+
         return statistics;
     }
 

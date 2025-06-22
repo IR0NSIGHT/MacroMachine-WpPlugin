@@ -4,6 +4,8 @@ import org.pepsoft.worldpainter.Constants;
 
 import java.awt.*;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
 public class TileContainer {
 
     private final IntegerTile[][] tiles;
@@ -21,19 +23,45 @@ public class TileContainer {
         offsetX = -minX;
         offsetY = -minY;
         this.width = width;
-        this.height= height;
+        this.height = height;
     }
 
-    public Rectangle getExtent() {
-        return new Rectangle(-offsetX / Constants.TILE_SIZE, -offsetY / Constants.TILE_SIZE, width, height);
+    public boolean existsTile(int tileX, int tileY) {
+        int x = tileX * TILE_SIZE;
+        int y = tileY * TILE_SIZE;
+        x += offsetX;
+        y += offsetY;
+
+        int indexX = x >> Constants.TILE_SIZE_BITS;
+        int indexY = y >> Constants.TILE_SIZE_BITS;
+        if (indexX < 0 || indexY < 0)
+            return false;
+        if (indexX >= tiles.length)
+            return false;
+        if (indexY >= tiles[indexX].length)
+            return false;
+        if (tiles[indexX][indexY] == null)
+            return false;
+        return true;
     }
 
-    /**
-     * @param x     global pos
-     * @param y
-     * @param value
-     */
-    void setValueAt(int x, int y, int value) {
+    public int getMinXPos() {
+        return -offsetX;
+    }
+
+    public int getMaxXPos() {
+        return -offsetX + width * TILE_SIZE;
+    }
+
+    public int getMaxYPos() {
+        return -offsetY + height * TILE_SIZE;
+    }
+
+    public int getMinYPos() {
+        return -offsetY;
+    }
+
+    public IntegerTile getTileAt(int x, int y) {
         x += offsetX;
         y += offsetY;
 
@@ -43,8 +71,33 @@ public class TileContainer {
         int indexX = x >> Constants.TILE_SIZE_BITS;
         int indexY = y >> Constants.TILE_SIZE_BITS;
 
-        IntegerTile tile = this.tiles[indexX][indexY];
-        tile.setValueAt(x, y, value);
+        return tiles[indexX][indexY];
+    }
+
+    public void calculateMinMax(int x, int y) {
+        getTileAt(x, y).calculateMinMax();
+    }
+
+    public Rectangle getExtent() {
+        return new Rectangle(-offsetX / TILE_SIZE, -offsetY / TILE_SIZE, width, height);
+    }
+
+    int getMaxAt(int x, int y) {
+        return getTileAt(x, y).getMax();
+    }
+
+    int getMinAt(int x, int y) {
+        return getTileAt(x, y).getMin();
+    }
+
+
+    /**
+     * @param x     global pos
+     * @param y
+     * @param value
+     */
+    public void setValueAt(int x, int y, int value) {
+        getTileAt(x, y).setValueAt(x + offsetX, y + offsetY, value);
     }
 
     /**
@@ -52,14 +105,7 @@ public class TileContainer {
      * @param y
      * @return
      */
-    int getValueAt(int x, int y) {
-        x += offsetX;
-        y += offsetY;
-
-        int indexX = x >> Constants.TILE_SIZE_BITS;
-        int indexY = y >> Constants.TILE_SIZE_BITS;
-
-        IntegerTile tile = this.tiles[indexX][indexY];
-        return tile.getValueAt(x, y);
+    public int getValueAt(int x, int y) {
+        return getTileAt(x, y).getValueAt(x + offsetX, y + offsetY);
     }
 }
