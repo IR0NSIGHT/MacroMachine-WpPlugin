@@ -89,9 +89,23 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
                     GlobalActionPanel.ErrorPopUp(
                             "Action " + action.getName() + " can not be applied to the map." + e.getMessage());
                     return statistics;
+                } catch (OutOfMemoryError e) {
+                    GlobalActionPanel.ErrorPopUp(
+                            "Action " + action.getName() + " consumed more memory than available:" + e.getMessage());
+                    return statistics;
+                } catch (Exception e) {
+                    GlobalActionPanel.ErrorPopUp(
+                            "Action " + action.getName() + " caused an excpetion:" + e.getMessage());
+                    return statistics;
                 }
             }
-            ActionFilterIO.instance.prepareForDimension(getDimension());
+            try {
+                ActionFilterIO.instance.prepareForDimension(getDimension());
+            } catch (Exception e) {
+                GlobalActionPanel.ErrorPopUp(
+                        "ActionFilter Preparation caused an excpetion:" + e.getMessage());
+                return statistics;
+            }
 
             // ----------------------- macro is ready and can be applied to map
             statistics = ApplyAction.applyExecutionSteps(getDimension(), executionSteps, setProgress);

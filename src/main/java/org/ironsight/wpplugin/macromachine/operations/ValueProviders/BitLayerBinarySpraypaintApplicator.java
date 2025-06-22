@@ -175,5 +175,10 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         return isCustom;
     }
 
+    @Override
+    public Layer getLayer() {
+        return layer;
+    }
+
 
 }
