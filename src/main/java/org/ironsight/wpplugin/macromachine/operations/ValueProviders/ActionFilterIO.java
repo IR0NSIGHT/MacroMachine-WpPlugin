@@ -6,6 +6,8 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
 public class ActionFilterIO implements IPositionValueSetter, IPositionValueGetter {
     public static ActionFilterIO instance = new ActionFilterIO();
     public static final int PASS_VALUE = 1;
@@ -14,6 +16,10 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     protected ActionFilterIO() {
     }
 
+    public boolean skipTile(int tileX, int tileY) {
+        assert tileContainer != null;
+        return tileContainer.getTileAt(tileX * TILE_SIZE,tileY * TILE_SIZE).getMax() == BLOCK_VALUE;
+    }
 
     @Override
     public int hashCode() {
