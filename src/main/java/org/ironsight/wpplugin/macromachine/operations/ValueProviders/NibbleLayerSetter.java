@@ -200,4 +200,9 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     public boolean isCustomLayer() {
         return isCustom;
     }
+
+    @Override
+    public Layer getLayer() {
+        return layer;
+    }
 }

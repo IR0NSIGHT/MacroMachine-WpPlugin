@@ -1,8 +1,11 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import org.ironsight.wpplugin.macromachine.operations.ActionType;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Constants;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Tile;
 
 import java.awt.*;
 
@@ -53,6 +56,65 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
         Rectangle rect = dim.getExtent();
         tileContainer = new TileContainer(rect.width, rect.height, rect.x * Constants.TILE_SIZE,
                 rect.y * Constants.TILE_SIZE, PASS_VALUE);
+    }
+
+    /**
+     * special case for action filter: check if the tile can be completly set to BLOCK early on, and then be skipped
+     * fo rthe whole action. better performance than having to test all blocks in tile
+     * @param tile
+     * @param filterAction
+     * @return
+     */
+    public boolean testTileEarlyAbort(Tile tile, MappingAction filterAction) {
+        // ALWAYS SETS FILTER to value x
+        if (filterAction.actionType.equals(ActionType.SET) && filterAction.getInput().getProviderType().equals(ProviderType.ALWAYS)) {
+            tileContainer.fillWithValue(filterAction.map(0));
+            return true;
+        }
+
+        // filter blocks all points that are missing the layer => early flag whole tile
+        if ((filterAction.actionType == ActionType.LIMIT_TO ||
+                filterAction.actionType == ActionType.SET)) {
+
+            // LAYER LIMITS/SETS FILTER to BLOCK
+            if (filterAction.getInput() instanceof ILayerGetter &&
+                    filterAction.map(0 /*absent*/) == BLOCK_VALUE) {
+                ILayerGetter input = (ILayerGetter) filterAction.getInput();
+                if (!tile.hasLayer(input.getLayer())) {
+                    tileContainer.getTileAt(tile.getX() * TILE_SIZE, tile.getY() * TILE_SIZE).fillWith(BLOCK_VALUE);
+                    return true;
+                }
+            }
+
+            // HEIGHT LIMITS FILTER TO BLOCK
+            if (filterAction.getInput().getProviderType().equals(ProviderType.HEIGHT)) {
+                TerrainHeightIO io = (TerrainHeightIO) filterAction.getInput();
+                int lowestPassingHeight = io.getMaxValue();
+                for (int h = io.getMinValue(); h <= io.getMaxValue(); h++) {
+                    if (filterAction.map(h) == PASS_VALUE) {
+                        lowestPassingHeight = h;
+                        break;
+                    }
+                }
+                int highestPassingHeight = io.getMinValue();
+                for (int h = io.getMaxValue(); h >= io.getMinValue(); h--) {
+                    if (filterAction.map(h) == PASS_VALUE) {
+                        highestPassingHeight = h;
+                        break;
+                    }
+                }
+                // lowestPassingHeight and highestPassingHeight define the range where the filter would let a tile PASS
+                if (tile.getHighestIntHeight() < lowestPassingHeight) {
+                    tileContainer.getTileAt(tile.getX() * TILE_SIZE, tile.getY() * TILE_SIZE).fillWith(BLOCK_VALUE);
+                    return true;
+                }
+                if (tile.getLowestIntHeight() > highestPassingHeight) {
+                    tileContainer.getTileAt(tile.getX() * TILE_SIZE, tile.getY() * TILE_SIZE).fillWith(BLOCK_VALUE);
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public TileContainer getTileContainer() {
