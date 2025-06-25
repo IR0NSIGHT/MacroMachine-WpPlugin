@@ -138,9 +138,11 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     private void onUpdate() {
         MappingAction mapping = MappingActionContainer.getInstance().queryById(currentSelectedLayer);
         Macro macro = MacroContainer.getInstance().queryById(currentSelectedMacro);
-        if (macro == null && selectionType == SELECTION_TPYE.MACRO) selectionType = SELECTION_TPYE.INVALID;
+        if (macro == null && selectionType == SELECTION_TPYE.MACRO)
+            selectionType = SELECTION_TPYE.INVALID;
 
-        if (mapping == null && selectionType != SELECTION_TPYE.MACRO) selectionType = SELECTION_TPYE.INVALID;
+        if (mapping == null && selectionType == SELECTION_TPYE.ACTION)
+            selectionType = SELECTION_TPYE.INVALID;
 
         switch (selectionType) {
             case MACRO:
@@ -211,8 +213,21 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         JButton toggleTabbedPane = new JButton("expand/shrink");
         toggleTabbedPane.addActionListener(e -> {
             showLargeVersion(!showTabbedPane);
+            toggleTabbedPane.setText(!showTabbedPane ? "expand" : "shrink");
         });
-        this.add(toggleTabbedPane, BorderLayout.NORTH);
+
+        JButton alwaysOnTopButton = new JButton("on top");
+        alwaysOnTopButton.addActionListener(e -> {
+            Window c = SwingUtilities.getWindowAncestor(this);
+            boolean target = !c.isAlwaysOnTop();
+            alwaysOnTopButton.setText(!target ? "set: on top" : "set: not on top");
+            c.setAlwaysOnTop(target);
+        });
+
+        JPanel topButtons = new JPanel(new FlowLayout());
+        topButtons.add(alwaysOnTopButton);
+        topButtons.add(toggleTabbedPane);
+        this.add(topButtons, BorderLayout.NORTH);
         onUpdate();
     }
 
@@ -227,10 +242,11 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     @Override
     public void onSelect(SaveableAction action, SELECTION_TPYE type) {
         selectionType = type;
-        if (action instanceof Macro) {
-            currentSelectedMacro = action.getUid();
-        } else if (action instanceof MappingAction) {
-            currentSelectedLayer = action.getUid();
+        switch (selectionType) {
+            case MACRO:
+                currentSelectedMacro = action.getUid();
+            case ACTION:
+                currentSelectedLayer = action.getUid();
         }
         onUpdate();
     }
@@ -252,7 +268,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     enum SELECTION_TPYE {
-        MACRO, ACTION, INPUT, OUTPUT, INVALID
+        MACRO, ACTION, INPUT, OUTPUT, INVALID, NONE
     }
 
     public interface ApplyToMapCallback {

@@ -23,14 +23,14 @@ public class ApplyAction {
         int tilesVisitedCount = 0;
 
 
-
         // find area of operations: all chunks that will be visited:
         int[] tileX = new int[dim.getTiles().size()], tileY = new int[dim.getTiles().size()];
         int tileArrIdx = 0;
 
         while (t.hasNext()) {
             Tile tile = t.next();
-            if (ActionFilterIO.instance.skipTile(tile.getX(), tile.getY()) && !applyToPoint.doesIncreaseActionFilter()) {
+            if (ActionFilterIO.instance.skipTile(tile.getX(), tile.getY()) &&
+                    !applyToPoint.doesIncreaseActionFilter()) {
                 continue;
             }
             TileFilter.passType pass = filter.testTile(tile);
@@ -46,14 +46,22 @@ public class ApplyAction {
         if (tileX.length == 0 || tileY.length == 0)
             return statistic;
 
-        applyToPoint.prepareRightBeforeRun(dim, tileX,tileY);
+        applyToPoint.prepareRightBeforeRun(dim, tileX, tileY);
 
         for (int i = 0; i < tileX.length; i++) {
             Tile tile = dim.getTile(tileX[i], tileY[i]);
 
             TileFilter.passType pass = filter.testTile(tile);
-
             statistic.touchedTiles++;
+
+            //special case for actionfilter
+            if (applyToPoint.getAction().getOutput() instanceof ActionFilterIO) {
+                boolean skipTile = ActionFilterIO.instance.testTileEarlyAbort(tile, applyToPoint.getAction());
+                if (skipTile)
+                    continue;
+            }
+
+
             for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {
                 for (int xInTile = 0; xInTile < TILE_SIZE; xInTile++) {
                     final int x = xInTile + (tile.getX() << TILE_SIZE_BITS);
@@ -98,6 +106,7 @@ public class ApplyAction {
         public final int step;
         public final int totalSteps;
         public final float progressInStep; //0..1
+
         public Progess(int step, int totalSteps, float progressInStep) {
             this.step = step;
             this.totalSteps = totalSteps;

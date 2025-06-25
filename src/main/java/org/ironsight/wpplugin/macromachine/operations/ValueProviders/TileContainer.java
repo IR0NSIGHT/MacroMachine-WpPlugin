@@ -26,6 +26,14 @@ public class TileContainer {
         this.height = height;
     }
 
+    public void fillWithValue(int value) {
+        for (int j = 0; j < width; j++) {
+            tiles[j] = new IntegerTile[height];
+            for (int i = 0; i < height; i++)
+                tiles[j][i].fillWith(value);
+        }
+    }
+
     public boolean existsTile(int tileX, int tileY) {
         int x = tileX * TILE_SIZE;
         int y = tileY * TILE_SIZE;
