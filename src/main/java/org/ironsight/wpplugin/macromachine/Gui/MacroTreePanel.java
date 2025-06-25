@@ -8,10 +8,13 @@ import org.ironsight.wpplugin.macromachine.operations.FileIO.MacroExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
@@ -258,26 +261,34 @@ public class MacroTreePanel extends JPanel {
 
         treeModel = new DefaultTreeModel(new MacroTreeNode(mappingContainer, container));
         tree = new JTree(treeModel);
+        tree.setSelectionModel(new ToggleSelectionModel());
         tree.setRootVisible(false);
         tree.setCellRenderer(new SaveableActionRenderer(MacroTreePanel::isValidItem));
         tree.setRowHeight(-1); //auto set cell height
-        tree.addTreeSelectionListener(e -> {
-            JTree tree = (JTree) e.getSource();
-            TreePath selectedPath = tree.getSelectionPath();
-            if (selectedPath != null) {
-                MacroTreeNode selectedNode = (MacroTreeNode) selectedPath.getLastPathComponent();
-                switch (selectedNode.getPayloadType()) {
-                    case MACRO:
-                        onItemInTreeSelected(selectedNode.getMacro(), selectedNode.getPayloadType());
-                        break;
-                    case ACTION:
-                    case INPUT:
-                    case OUTPUT:
-                        onItemInTreeSelected(selectedNode.getAction(), selectedNode.getPayloadType());
-                        break;
-                    case INVALID:
-                        onItemInTreeSelected(null, selectedNode.getPayloadType());
-                        break;
+        tree.addTreeSelectionListener(new TreeSelectionListener() {
+            @Override
+            public void valueChanged(TreeSelectionEvent e) {
+                System.out.println("tree selection event " + e);
+                JTree tree = (JTree) e.getSource();
+                TreePath selectedPath = tree.getSelectionPath();
+                System.out.println("path is added:" + e.isAddedPath());
+                if (selectedPath != null) {
+                    MacroTreeNode selectedNode = (MacroTreeNode) selectedPath.getLastPathComponent();
+                    switch (selectedNode.getPayloadType()) {
+                        case MACRO:
+                            onItemInTreeSelected(selectedNode.getMacro(), selectedNode.getPayloadType());
+                            break;
+                        case ACTION:
+                        case INPUT:
+                        case OUTPUT:
+                            onItemInTreeSelected(selectedNode.getAction(), selectedNode.getPayloadType());
+                            break;
+                        case INVALID:
+                            onItemInTreeSelected(null, selectedNode.getPayloadType());
+                            break;
+                    }
+                } else {
+                    onItemInTreeSelected(null, GlobalActionPanel.SELECTION_TPYE.NONE);
                 }
             }
         });
@@ -763,6 +774,16 @@ public class MacroTreePanel extends JPanel {
                     "payload=" + ((IDisplayUnit) payload).getName() +
                     ", payloadType=" + payloadType +
                     '}';
+        }
+    }
+    static class ToggleSelectionModel extends DefaultTreeSelectionModel {
+        @Override
+        public void setSelectionPath(TreePath path) {
+            if (isPathSelected(path)) {
+                removeSelectionPath(path); // Deselect if already selected
+            } else {
+                super.setSelectionPath(path); // Select otherwise
+            }
         }
     }
 }
