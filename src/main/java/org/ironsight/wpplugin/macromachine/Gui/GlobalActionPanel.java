@@ -213,8 +213,21 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         JButton toggleTabbedPane = new JButton("expand/shrink");
         toggleTabbedPane.addActionListener(e -> {
             showLargeVersion(!showTabbedPane);
+            toggleTabbedPane.setText(!showTabbedPane ? "expand" : "shrink");
         });
-        this.add(toggleTabbedPane, BorderLayout.NORTH);
+
+        JButton alwaysOnTopButton = new JButton("on top");
+        alwaysOnTopButton.addActionListener(e -> {
+            Window c = SwingUtilities.getWindowAncestor(this);
+            boolean target = !c.isAlwaysOnTop();
+            alwaysOnTopButton.setText(!target ? "set: on top" : "set: not on top");
+            c.setAlwaysOnTop(target);
+        });
+
+        JPanel topButtons = new JPanel(new FlowLayout());
+        topButtons.add(alwaysOnTopButton);
+        topButtons.add(toggleTabbedPane);
+        this.add(topButtons, BorderLayout.NORTH);
         onUpdate();
     }
 
