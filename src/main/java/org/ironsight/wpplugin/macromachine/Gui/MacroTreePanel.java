@@ -276,29 +276,26 @@ public class MacroTreePanel extends JPanel {
         tree.setRootVisible(false);
         tree.setCellRenderer(new SaveableActionRenderer(MacroTreePanel::isValidItem));
         tree.setRowHeight(-1); //auto set cell height
-        tree.addTreeSelectionListener(new TreeSelectionListener() {
-            @Override
-            public void valueChanged(TreeSelectionEvent e) {
-                JTree tree = (JTree) e.getSource();
-                TreePath selectedPath = tree.getSelectionPath();
-                if (selectedPath != null) {
-                    MacroTreeNode selectedNode = (MacroTreeNode) selectedPath.getLastPathComponent();
-                    switch (selectedNode.getPayloadType()) {
-                        case MACRO:
-                            onItemInTreeSelected(selectedNode.getMacro(), selectedNode.getPayloadType());
-                            break;
-                        case ACTION:
-                        case INPUT:
-                        case OUTPUT:
-                            onItemInTreeSelected(selectedNode.getAction(), selectedNode.getPayloadType());
-                            break;
-                        case INVALID:
-                            onItemInTreeSelected(null, selectedNode.getPayloadType());
-                            break;
-                    }
-                } else {
-                    onItemInTreeSelected(null, GlobalActionPanel.SELECTION_TPYE.NONE);
+        tree.addTreeSelectionListener(e -> {
+            JTree tree = (JTree) e.getSource();
+            TreePath selectedPath = tree.getSelectionPath();
+            if (selectedPath != null) {
+                MacroTreeNode selectedNode = (MacroTreeNode) selectedPath.getLastPathComponent();
+                switch (selectedNode.getPayloadType()) {
+                    case MACRO:
+                        onItemInTreeSelected(selectedNode.getMacro(), selectedNode.getPayloadType());
+                        break;
+                    case ACTION:
+                    case INPUT:
+                    case OUTPUT:
+                        onItemInTreeSelected(selectedNode.getAction(), selectedNode.getPayloadType());
+                        break;
+                    case INVALID:
+                        onItemInTreeSelected(null, selectedNode.getPayloadType());
+                        break;
                 }
+            } else {
+                onItemInTreeSelected(null, GlobalActionPanel.SELECTION_TPYE.NONE);
             }
         });
 
