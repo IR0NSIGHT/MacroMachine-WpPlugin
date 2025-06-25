@@ -213,20 +213,31 @@ public class MacroTreePanel extends JPanel {
         repaint();
     }
 
-    Set<UUID> getSelectedUUIDs(boolean macros, boolean actions) {
-        HashSet<UUID> selectedUUIDs = new HashSet<>();
+    ArrayList<UUID> getSelectedUUIDs(boolean macros, boolean actions) {
+        HashSet<UUID> seen = new HashSet<>();
+        ArrayList<UUID> selectedUUIDs = new ArrayList<>();
         if (tree.getSelectionPaths() == null)
             return selectedUUIDs;
-        for (TreePath selected : tree.getSelectionPaths()) {
+
+        TreePath[] selectedPaths = tree.getSelectionPaths();
+        // Convert to list and sort based on tree order
+        Arrays.sort(selectedPaths, Comparator.comparingInt(path -> Arrays.asList(tree.getPathForRow(0).getPath()).indexOf(path.getLastPathComponent())));
+
+        for (TreePath selected : selectedPaths) {
+            System.out.println("selected path in tree:" + selected.getLastPathComponent());
             MacroTreeNode node = (MacroTreeNode) selected.getLastPathComponent();
             switch (node.payloadType) {
                 case MACRO:
-                    if (macros)
+                    if (macros) {
                         selectedUUIDs.add(node.getMacro().getUid());
+                        seen.add(node.getMacro().getUid());
+                    }
                     break;
                 case ACTION:
-                    if (actions)
+                    if (actions) {
                         selectedUUIDs.add(node.getAction().getUid());
+                        seen.add(node.getAction().getUid());
+                    }
                     break;
                 default:
                     ; //nothing
@@ -268,10 +279,8 @@ public class MacroTreePanel extends JPanel {
         tree.addTreeSelectionListener(new TreeSelectionListener() {
             @Override
             public void valueChanged(TreeSelectionEvent e) {
-                System.out.println("tree selection event " + e);
                 JTree tree = (JTree) e.getSource();
                 TreePath selectedPath = tree.getSelectionPath();
-                System.out.println("path is added:" + e.isAddedPath());
                 if (selectedPath != null) {
                     MacroTreeNode selectedNode = (MacroTreeNode) selectedPath.getLastPathComponent();
                     switch (selectedNode.getPayloadType()) {
@@ -340,8 +349,8 @@ public class MacroTreePanel extends JPanel {
         JButton addButton = new JButton("Create macro");
         addButton.setToolTipText("Create a new, empty macro.");
         addButton.addActionListener(e -> {
-            Set<UUID> actionUids = getSelectedUUIDs(false, true);
-            Set<UUID> macroUids = getSelectedUUIDs(true, false);
+            Collection<UUID> actionUids = getSelectedUUIDs(false, true);
+            Collection<UUID> macroUids = getSelectedUUIDs(true, false);
             UUID[] uidArr = new UUID[actionUids.size() + macroUids.size()];
             int idx = 0;
             for (UUID uuid: actionUids) {
@@ -364,7 +373,7 @@ public class MacroTreePanel extends JPanel {
         removeButton.setToolTipText("Delete all selected macros permanently");
         removeButton.addActionListener(e -> {
             blockUpdates = true;
-            Set<UUID> deletedUUIDS = getSelectedUUIDs(true, true);
+            HashSet<UUID> deletedUUIDS = new HashSet<>( getSelectedUUIDs(true, true));
             ArrayList<Macro> updatedMacros = new ArrayList<>();
             //remove Mapping Actions from all macros
             for (Macro m : container.queryAll()) {
