@@ -212,6 +212,8 @@ public class MacroTreePanel extends JPanel {
 
     Set<UUID> getSelectedUUIDs(boolean macros, boolean actions) {
         HashSet<UUID> selectedUUIDs = new HashSet<>();
+        if (tree.getSelectionPaths() == null)
+            return selectedUUIDs;
         for (TreePath selected : tree.getSelectionPaths()) {
             MacroTreeNode node = (MacroTreeNode) selected.getLastPathComponent();
             switch (node.payloadType) {
