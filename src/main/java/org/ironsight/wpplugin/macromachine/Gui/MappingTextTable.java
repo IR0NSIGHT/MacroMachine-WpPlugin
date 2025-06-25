@@ -20,7 +20,7 @@ public class MappingTextTable extends JPanel {
     private boolean isFilterForMappingPoints = true;
     private JCheckBox groupValuesCheckBox;
     private TableRowSorter<MappingActionValueTableModel> sorter;
-    private int selectedRow = -1;
+    private int[] selectedRow = new int[0];
 
     public MappingTextTable(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
         numberTable = new JTable() {
@@ -91,20 +91,21 @@ public class MappingTextTable extends JPanel {
 
 
 // Save selected row table
-        numberTable.getSelectionModel().addListSelectionListener(e -> selectedRow = e.getFirstIndex());
+        numberTable.getSelectionModel().addListSelectionListener(e -> {
+            selectedRow = numberTable.getSelectedRows();
+        });
 
-// Restore selected raw table
+// Restore selected raw table after a value was changed in the table
         model.addTableModelListener(e -> SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 try {
-                    if (selectedRow >= 0) {
+                    for (int selectedRow: selectedRow) {
                         numberTable.addRowSelectionInterval(selectedRow, selectedRow);
                     }
                 } catch (IllegalArgumentException ignored) {
                     // view row amount might be MUCH lower than expected. just ignore it
                 }
-
             }
         }));
     }

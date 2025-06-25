@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.layers.Annotations;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
 
@@ -128,5 +129,10 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public boolean isCustomLayer() {
         return false;
+    }
+
+    @Override
+    public Layer getLayer() {
+        return Annotations.INSTANCE;
     }
 }
