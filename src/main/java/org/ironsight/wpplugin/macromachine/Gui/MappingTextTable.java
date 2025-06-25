@@ -106,7 +106,6 @@ public class MappingTextTable extends JPanel {
                 } catch (IllegalArgumentException ignored) {
                     // view row amount might be MUCH lower than expected. just ignore it
                 }
-
             }
         }));
     }
