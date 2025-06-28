@@ -365,14 +365,18 @@ public class MacroDesigner extends JPanel {
         if (table.getSelectedRows().length == 0) return;
         int anchorRow = table.getSelectedRows()[0];
         if (anchorRow > 0 && anchorRow < table.getRowCount()) {
+            Macro macro = this.macro;
             UUID[] ids = macro.executionUUIDs.clone();
+            boolean[] active = macro.getActiveActions();
             for (int selectedRow : table.getSelectedRows()) {
                 ids[selectedRow - 1] = macro.executionUUIDs[selectedRow];
+                active[selectedRow - 1] = macro.getActiveActions()[selectedRow];
                 ids[selectedRow] = macro.executionUUIDs[selectedRow - 1];
+                active[selectedRow] = macro.getActiveActions()[selectedRow - 1];
             }
 
             shiftRowSelection(table.getSelectedRows(), -1);
-            setMacro(macro.withUUIDs(ids), true);
+            setMacro(macro.withUUIDs(ids, active), true);
             scrollPane.scrollRectToVisible(table.getCellRect(table.getSelectedRows()[0], 0, true));
         }
     }
@@ -392,13 +396,16 @@ public class MacroDesigner extends JPanel {
         int anchorRow = table.getSelectedRows()[table.getSelectedRows().length - 1];
         if (anchorRow >= 0 && anchorRow < table.getRowCount() - 1) {
             UUID[] ids = macro.executionUUIDs.clone();
+            boolean[] active = macro.getActiveActions().clone();
             for (int selectedRow : table.getSelectedRows()) {
                 ids[selectedRow + 1] = macro.executionUUIDs[selectedRow];
                 ids[selectedRow] = macro.executionUUIDs[selectedRow + 1];
+                active[selectedRow + 1] = macro.getActiveActions()[selectedRow];
+                active[selectedRow] = macro.getActiveActions()[selectedRow + 1];
             }
 
             shiftRowSelection(table.getSelectedRows(), +1);
-            setMacro(macro.withUUIDs(ids), true);
+            setMacro(macro.withUUIDs(ids, active), true);
             //scroll to bottom selected row
             scrollPane.scrollRectToVisible(table.getCellRect(table.getSelectedRows()[table.getSelectedRows().length -
                     1], 0, true));
@@ -410,14 +417,12 @@ public class MacroDesigner extends JPanel {
         for (int row : this.table.getSelectedRows()) {
             toBeRemoved.add(row);
         }
-
-        ArrayList<UUID> newUids = new ArrayList<>();
-        for (int i = 0; i < macro.executionUUIDs.length; i++) {
-            if (toBeRemoved.contains(i)) continue;
-            newUids.add(macro.executionUUIDs[i]);
+        Macro macro = this.macro;
+        for (int i = macro.executionUUIDs.length - 1; i >= 0; i--) {
+            if (!toBeRemoved.contains(i)) continue;
+            macro = macro.withRemovedItem(i);
         }
-
-        setMacro(macro.withUUIDs(newUids.toArray(new UUID[0])), true);
+        setMacro(macro, true);
     }
 
     private void onChangeMapping() {

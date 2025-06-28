@@ -16,7 +16,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.ironsight.wpplugin.macromachine.Gui.ActionEditor.createDialog;
+import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 
 public class MacroDialogOperation extends AbstractOperation implements MacroApplicator {
     private static final String NAME = "Macro Operation";
