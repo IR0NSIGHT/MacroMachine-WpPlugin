@@ -10,16 +10,16 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionVa
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
-import static org.ironsight.wpplugin.macromachine.Gui.ActionEditor.createDialog;
+import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 
 // top level panel that contains a selection list of macros/layers/input/output on the left, like a file browser
 // and an editor for the currently selected action on the right
@@ -65,7 +65,14 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
                 new ImportExportPolicy(), System.err::println);
         MappingActionContainer.getInstance().subscribe(saveEverything);
         MacroContainer.getInstance().subscribe(saveEverything);
-        JDialog diag = createDialog(null, (macro, setProgress) -> {
+
+        // Create and show a JFrame
+        JFrame frame = new JFrame("Main Window");
+        frame.setSize(500, 500);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+
+        JDialog diag = createDialog(frame, (macro, setProgress) -> {
             for (int i = 0; i < 30; i++) {
                 try {
                     Thread.sleep(100);
@@ -218,19 +225,32 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
         JButton alwaysOnTopButton = new JButton("on top");
         alwaysOnTopButton.addActionListener(e -> {
-            Window c = SwingUtilities.getWindowAncestor(this);
-            boolean target = !c.isAlwaysOnTop();
+            MacroMachineWindow window = MacroMachineWindow.getDialog();
+            boolean target = !window.isStayOnTop();
             alwaysOnTopButton.setText(!target ? "set: on top" : "set: not on top");
-            c.setAlwaysOnTop(target);
+            window.setStayOnTop(target);
         });
 
         JPanel topButtons = new JPanel(new FlowLayout());
         topButtons.add(alwaysOnTopButton);
         topButtons.add(toggleTabbedPane);
         this.add(topButtons, BorderLayout.NORTH);
+
         onUpdate();
     }
-
+    static class GlobalWindowListener extends WindowAdapter {
+        @Override
+        public void windowOpened(WindowEvent e) {
+            Window window = e.getWindow();
+            if (window instanceof JDialog) {
+                JDialog dialog = (JDialog) window;
+                if (dialog.isModal()) {
+                    System.out.println("Modal window opened: " + dialog.getTitle());
+                    // Fire a runnable
+                }
+            }
+        }
+    }
     private void showLargeVersion(boolean show) {
         tabbedPane.setVisible(show);
         showTabbedPane = show;
