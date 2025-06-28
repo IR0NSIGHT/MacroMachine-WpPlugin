@@ -8,12 +8,12 @@ import javax.swing.event.TableModelEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 public class ActionEditor extends LayerMappingPanel {
-    private static JDialog dialog;
     private MappingActionValueTableModel model ;
     private ListSelectionModel selectionModel;
     private final Consumer<MappingAction> onSubmit;
@@ -24,29 +24,6 @@ public class ActionEditor extends LayerMappingPanel {
     public ActionEditor(Consumer<MappingAction> onSubmit) {
         super();
         this.onSubmit = onSubmit;
-    }
-
-    public static JDialog createDialog(JFrame parent,
-                                       MacroApplicator applyToMap) {
-        if (dialog != null) {
-            dialog.setVisible(true);
-            dialog.toFront();        // Bring it to the front
-            dialog.requestFocus();   // Request focus (optional)
-            return dialog;
-        }
-
-        // Create a JDialog with the parent frame
-        dialog = new JDialog(parent, "My Dialog", false); // Modal dialog
-        dialog.setLocationRelativeTo(null); // Centers the dialog
-
-
-        dialog.add(new GlobalActionPanel(applyToMap, dialog));
-        dialog.setTitle(
-                MacroMachinePlugin.getInstance().getName() + " v" + MacroMachinePlugin.getInstance().getVersion());
-        dialog.setLocationRelativeTo(parent); // Center the dialog relative to the parent frame
-        dialog.pack();
-        dialog.setAlwaysOnTop(false);
-        return dialog;
     }
 
     @Override
