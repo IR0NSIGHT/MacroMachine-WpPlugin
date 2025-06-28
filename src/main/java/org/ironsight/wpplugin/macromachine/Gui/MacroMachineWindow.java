@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.event.WindowEvent;
 
 public class MacroMachineWindow extends JDialog {
+    String lastDirectoryPicked = System.getProperty("user.home");
     public static MacroMachineWindow getDialog() {
         return dialog;
     }

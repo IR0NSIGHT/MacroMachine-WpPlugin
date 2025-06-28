@@ -46,6 +46,9 @@ public class Macro implements SaveableAction {
         //insert any mapping from container at tail of list
         ArrayList<UUID> uids = new ArrayList<>();
         Collections.addAll(uids, macro.executionUUIDs);
+        ArrayList<Boolean> activeUids = new ArrayList<>();
+        for (boolean b: macro.activeActions)
+            activeUids.add(b);
 
         int counter = 0;
         for (int row : targetRows) {
@@ -54,9 +57,11 @@ public class Macro implements SaveableAction {
                 MappingAction actionClone = createNewAction.get();
                 updateAction.accept(actionClone.withValuesFrom((MappingAction) item));
                 uids.add(idx, actionClone.getUid());
+                activeUids.add(idx, true);
             } else {
                 assert item instanceof Macro;
                 uids.add(idx, item.getUid());
+                activeUids.add(idx, true);
             }
 
             outNewSelection.add(idx);
@@ -64,7 +69,10 @@ public class Macro implements SaveableAction {
         }
 
         UUID[] ids = uids.toArray(new UUID[0]);
-        Macro newMacro = macro.withUUIDs(ids);
+        boolean[] active = new boolean[activeUids.size()];
+        for (int i = 0; i < activeUids.size(); i++)
+            active[i] = activeUids.get(i);
+        Macro newMacro = macro.withUUIDs(ids, active);
         return newMacro;
     }
 
@@ -127,6 +135,46 @@ public class Macro implements SaveableAction {
 
     public Macro withUUIDs(UUID[] uuid, boolean[] activeActions) {
         return new Macro(this.name, this.description, uuid, this.uid, activeActions);
+    }
+
+    public static boolean[] deleteAt(boolean[] arr, int idx) {
+        if (arr == null || idx < 0 || idx >= arr.length) {
+            throw new IllegalArgumentException("Invalid index or array is null");
+        }
+
+        boolean[] newArray = new boolean[arr.length - 1];
+        System.arraycopy(arr, 0, newArray, 0, idx);
+        System.arraycopy(arr, idx + 1, newArray, idx, arr.length - idx - 1);
+
+        return newArray;
+    }
+
+    public static UUID[] deleteAt(UUID[] arr, int idx) {
+        if (arr == null || idx < 0 || idx >= arr.length) {
+            throw new IllegalArgumentException("Invalid index or array is null");
+        }
+
+        UUID[] newArray = new UUID[arr.length - 1];
+        System.arraycopy(arr, 0, newArray, 0, idx);
+        System.arraycopy(arr, idx + 1, newArray, idx, arr.length - idx - 1);
+
+        return newArray;
+    }
+
+    public Macro withRemovedItem(int itemIdx) {
+        return new Macro(this.name, this.description, deleteAt(getExecutionUUIDs(), itemIdx), this.uid,
+                deleteAt(getActiveActions(), itemIdx));
+    }
+
+    public Macro withShiftedItem(int oldIdx, int newIdx) {
+        UUID[] newIds = getExecutionUUIDs().clone();
+        boolean[] active = getActiveActions().clone();
+        newIds[newIdx] = getExecutionUUIDs()[oldIdx];
+        newIds[oldIdx] = getExecutionUUIDs()[newIdx];
+        active[newIdx] = getActiveActions()[oldIdx];
+        active[oldIdx] = getActiveActions()[newIdx];
+        return new Macro(this.name, this.description,newIds, this.uid,
+                active);
     }
 
     /**

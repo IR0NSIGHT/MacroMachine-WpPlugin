@@ -39,8 +39,6 @@ public class MacroTreePanel extends JPanel {
     private long lastProgressUpdate = 0;
     private boolean macroIsCurrentlyExecuting;
     private boolean blockUpdates = false;
-    private String lastImportFilePath = System.getProperty("user.home");
-    private String lastExportFilePath = System.getProperty("user.home");
 
     MacroTreePanel(MacroContainer container, MappingActionContainer mappingContainer,
                    MacroApplicator applyToMap, ISelectItemCallback onSelectAction) {
@@ -438,12 +436,12 @@ public class MacroTreePanel extends JPanel {
     private void onExportMacroPressed() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Select a directory");
-        fileChooser.setCurrentDirectory(new File(lastExportFilePath));
+        fileChooser.setCurrentDirectory(new File(MacroMachineWindow.getDialog().lastDirectoryPicked));
         fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY); // Only allow directory selection
         fileChooser.setAcceptAllFileFilterUsed(false); // Optional: Disable the "All Files" filter
 
         int result = fileChooser.showOpenDialog(null); // Use null or a valid parent component
-        lastExportFilePath = fileChooser.getCurrentDirectory().getPath();
+        MacroMachineWindow.getDialog().lastDirectoryPicked = fileChooser.getCurrentDirectory().getPath();
 
         if (result == JFileChooser.APPROVE_OPTION) {
             assert (fileChooser.getSelectedFile() != null) : "user confirmed without selection?";
@@ -465,12 +463,12 @@ public class MacroTreePanel extends JPanel {
     private void onImportMacroPressed() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Select a file");
-        fileChooser.setCurrentDirectory(new File(lastImportFilePath));
+        fileChooser.setCurrentDirectory(new File(MacroMachineWindow.getDialog().lastDirectoryPicked));
         fileChooser.setFileFilter(new FileNameExtensionFilter("Only MacroMachine files", "macro"));
         fileChooser.setAcceptAllFileFilterUsed(false);
         fileChooser.setMultiSelectionEnabled(true);
         int result = fileChooser.showOpenDialog(this);
-        lastImportFilePath = fileChooser.getCurrentDirectory().getPath();
+        MacroMachineWindow.getDialog().lastDirectoryPicked = fileChooser.getCurrentDirectory().getPath();
         if (result == JFileChooser.APPROVE_OPTION) {
             for (File selected : fileChooser.getSelectedFiles()) {
                 ContainerIO.importFile(MappingActionContainer.getInstance(),
