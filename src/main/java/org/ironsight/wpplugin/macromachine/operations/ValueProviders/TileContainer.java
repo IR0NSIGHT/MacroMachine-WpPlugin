@@ -24,14 +24,25 @@ public class TileContainer {
         offsetY = -minY;
         this.width = width;
         this.height = height;
+        assert invariant();
+    }
+
+    private boolean invariant() {
+        for (int j = 0; j < width; j++) {
+            for (int i = 0; i < height; i++)
+                if (tiles[j][i] == null)
+                    return false;
+        }
+        return true;
     }
 
     public void fillWithValue(int value) {
+        assert invariant();
         for (int j = 0; j < width; j++) {
-            tiles[j] = new IntegerTile[height];
             for (int i = 0; i < height; i++)
                 tiles[j][i].fillWith(value);
         }
+        assert invariant();
     }
 
     public boolean existsTile(int tileX, int tileY) {
