@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.UUID;
@@ -101,16 +102,18 @@ public class ContainerIO {
 
             // collect everything that should be imported
             HashSet<UUID> macrosSet = new HashSet<>();
+            HashSet<UUID> actionsInMacros = new HashSet<>();
             HashSet<UUID> actionsSet = new HashSet<>();
             for (MacroJsonWrapper macroData : data.getMacros()) {
                 Macro macro = toMacro(macroData);
                 if (policy.allowImportExport(macro)) {
                     macrosSet.add(macro.getUid());
+                    actionsInMacros.addAll(Arrays.asList(macro.getExecutionUUIDs()));
                 }
             }
             for (ActionJsonWrapper actionData : data.getActions()) {
                 MappingAction action = toAction(actionData);
-                if (policy.allowImportExport(action)) {
+                if (actionsInMacros.contains(action.getUid()) && policy.allowImportExport(action)) {
                     actionsSet.add(action.getUid());
                 }
             }
