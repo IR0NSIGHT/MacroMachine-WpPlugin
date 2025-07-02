@@ -95,6 +95,32 @@ public class ContainerIO {
         }
     }
 
+    private static boolean containsUnknownActions(ExportContainer data,
+                                                  HashSet<UUID> knownActions,
+                                                  HashSet<UUID> knownMacros, Consumer<String> onImportError) {
+        //test all child actions
+        for (MacroJsonWrapper macroData : data.getMacros()) {
+            for (UUID child: macroData.getStepIds()) {
+                if (knownMacros.contains(child))
+                    continue; //we dont care about nested macros
+                if (!knownActions.contains(child)) {
+                    onImportError.accept("Macro " + macroData.getMacroName() + " is using an action that can not be " +
+                            "found: " + child);
+                    return true;
+                }
+            }
+
+        }
+        return false;
+    }
+
+    /**
+     * check if one action is used by two or more macros. illegal behaviour, only macros can be shared between other
+     * macros.
+     * @param data
+     * @param onImportError
+     * @return
+     */
     private static boolean containsSharedActions(ExportContainer data, Consumer<String> onImportError) {
         HashSet<UUID> macrosSet = new HashSet<>();
         HashSet<UUID> seenActions = new HashSet<>();
@@ -130,29 +156,34 @@ public class ContainerIO {
                 return;
             }
             // collect everything that should be imported
-            HashSet<UUID> macrosSet = new HashSet<>();
+            HashSet<UUID> macrosToImport = new HashSet<>();
             HashSet<UUID> actionsInMacros = new HashSet<>();
-            HashSet<UUID> actionsSet = new HashSet<>();
+            HashSet<UUID> actionsToImport = new HashSet<>();
             for (MacroJsonWrapper macroData : data.getMacros()) {
                 Macro macro = toMacro(macroData);
                 if (policy.allowImportExport(macro)) {
-                    macrosSet.add(macro.getUid());
+                    macrosToImport.add(macro.getUid());
                     actionsInMacros.addAll(Arrays.asList(macro.getExecutionUUIDs()));
                 }
             }
             for (ActionJsonWrapper actionData : data.getActions()) {
                 MappingAction action = toAction(actionData);
                 if (actionsInMacros.contains(action.getUid()) && policy.allowImportExport(action)) {
-                    actionsSet.add(action.getUid());
+                    actionsToImport.add(action.getUid());
                 }
             }
 
+            if (containsUnknownActions(data,actionsToImport,macrosToImport, onImportError)) {
+                assert false;
+                return;
+            }
+
             {            // do import
-                Macro[] macros = new Macro[macrosSet.size()];
+                Macro[] macros = new Macro[macrosToImport.size()];
                 int idx = 0;
                 for (MacroJsonWrapper macroData : data.getMacros()) {
                     Macro macro = toMacro(macroData);
-                    if (macrosSet.contains(macro.getUid())) {
+                    if (macrosToImport.contains(macro.getUid())) {
                         macros[idx++] = macro;
                     }
                 }
@@ -160,11 +191,11 @@ public class ContainerIO {
             }
 
             {
-                MappingAction[] actions = new MappingAction[actionsSet.size()];
+                MappingAction[] actions = new MappingAction[actionsToImport.size()];
                 int idx = 0;
                 for (ActionJsonWrapper actionData : data.getActions()) {
                     MappingAction action = toAction(actionData);
-                    if (actionsSet.contains(action.getUid())) {
+                    if (actionsToImport.contains(action.getUid())) {
                         assert action.getUid() != null;
                         actions[idx++] = action;
                     }
