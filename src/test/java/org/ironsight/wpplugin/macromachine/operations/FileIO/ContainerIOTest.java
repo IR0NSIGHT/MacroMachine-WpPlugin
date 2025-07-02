@@ -10,7 +10,9 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -60,14 +62,22 @@ class ContainerIOTest {
     static ExportContainer getContainerWithData() {
         MacroJsonWrapper[] macros = new MacroJsonWrapper[3];
         ActionJsonWrapper[] actions = new ActionJsonWrapper[5];
-        for (int i = 0; i < macros.length; i++) {
-            macros[i] = new MacroJsonWrapper("alpine-" + i, "uwu owo doing doing", new UUID[0], UUID.randomUUID(),
-                    new boolean[0]);
-        }
         for (int i = 0; i < actions.length; i++) {
             actions[i] = new ActionJsonWrapper(MappingAction.getNewEmptyAction(UUID.randomUUID())
                     .withName("test-action-" + i));
         }
+        UUID[][] actionsInMacro = new UUID[3][];
+        actionsInMacro[0] = new UUID[]{actions[0].getUid()};
+        actionsInMacro[1] = new UUID[]{actions[1].getUid()};
+        actionsInMacro[2] = new UUID[]{actions[2].getUid(),actions[3].getUid(),actions[4].getUid()};
+
+        for (int i = 0; i < macros.length; i++) {
+            macros[i] = new MacroJsonWrapper("alpine-" + i, "uwu owo doing doing",
+                    actionsInMacro[i],
+                    UUID.randomUUID(),
+                    new boolean[0]);
+        }
+
 
 
         ExportContainer container = new ExportContainer("2025-06-14-17-04", "no comment", macros, actions);

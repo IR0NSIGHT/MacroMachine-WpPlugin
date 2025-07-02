@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
+import static org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel.ErrorPopUp;
 import static org.ironsight.wpplugin.macromachine.Version.VERSION;
 
 /**
