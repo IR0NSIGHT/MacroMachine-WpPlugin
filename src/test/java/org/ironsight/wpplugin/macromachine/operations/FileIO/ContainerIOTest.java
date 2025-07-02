@@ -66,9 +66,14 @@ class ContainerIOTest {
             actions[i] = new ActionJsonWrapper(MappingAction.getNewEmptyAction(UUID.randomUUID())
                     .withName("test-action-" + i));
         }
+        UUID[][] actionsInMacro = new UUID[3][];
+        actionsInMacro[0] = new UUID[]{actions[0].getUid()};
+        actionsInMacro[1] = new UUID[]{actions[1].getUid()};
+        actionsInMacro[2] = new UUID[]{actions[2].getUid(),actions[3].getUid(),actions[4].getUid()};
+
         for (int i = 0; i < macros.length; i++) {
             macros[i] = new MacroJsonWrapper("alpine-" + i, "uwu owo doing doing",
-                    Arrays.stream(actions).map(ActionJsonWrapper::getUid).toArray(UUID[]::new),
+                    actionsInMacro[i],
                     UUID.randomUUID(),
                     new boolean[0]);
         }

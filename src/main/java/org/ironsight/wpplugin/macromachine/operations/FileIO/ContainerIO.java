@@ -95,11 +95,40 @@ public class ContainerIO {
         }
     }
 
+    private static boolean containsSharedActions(ExportContainer data, Consumer<String> onImportError) {
+        HashSet<UUID> macrosSet = new HashSet<>();
+        HashSet<UUID> seenActions = new HashSet<>();
+        //collect all macro uids
+        for (MacroJsonWrapper macroData : data.getMacros()) {
+            Macro macro = toMacro(macroData);
+            macrosSet.add(macro.getUid());
+        }
+        //test all child actions
+        for (MacroJsonWrapper macroData : data.getMacros()) {
+            for (UUID child: macroData.getStepIds()) {
+                if (macrosSet.contains(child))
+                    continue; //we dont care about nested macros
+                if (seenActions.contains(child)) {
+                    onImportError.accept("Illegal: action " + child + " is used by multiple macros.");
+                    return false;
+                }
+                seenActions.add(child);
+            }
+
+        }
+        return false;
+    }
+
     public static void importFile(MappingActionContainer actionContainer, MacroContainer macroContainer, File file,
                                   ImportExportPolicy policy, Consumer<String> onImportError) {
         try {
             ExportContainer data = readFromFile(file);
-
+            if (containsSharedActions(data, onImportError)) {
+                assert false:"actions were used by multiple macros which goes against policy " +
+                        "and" +
+                        " will lead to undefined behaviour.";
+                return;
+            }
             // collect everything that should be imported
             HashSet<UUID> macrosSet = new HashSet<>();
             HashSet<UUID> actionsInMacros = new HashSet<>();
