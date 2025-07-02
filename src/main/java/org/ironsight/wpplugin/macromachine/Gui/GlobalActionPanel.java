@@ -59,7 +59,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         MappingActionContainer.SetInstance(new MappingActionContainer("./src/main/resources/DefaultActions.json"));
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
-        ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(), System.err::println);
+        ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(),
+                s -> ErrorPopUp("Can not load from savefile:\n"+saveFile.getPath()+"\n"+s));
 
         Runnable saveEverything = () -> ContainerIO.exportFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
                 new ImportExportPolicy(), System.err::println);
