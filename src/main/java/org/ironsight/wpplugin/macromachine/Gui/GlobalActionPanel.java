@@ -255,25 +255,21 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
         onUpdate();
     }
-    static class GlobalWindowListener extends WindowAdapter {
-        @Override
-        public void windowOpened(WindowEvent e) {
-            Window window = e.getWindow();
-            if (window instanceof JDialog) {
-                JDialog dialog = (JDialog) window;
-                if (dialog.isModal()) {
-                    System.out.println("Modal window opened: " + dialog.getTitle());
-                    // Fire a runnable
-                }
-            }
-        }
-    }
-    private void showLargeVersion(boolean show) {
-        tabbedPane.setVisible(show);
-        showTabbedPane = show;
+
+    private Dimension[] expandedStateSizes = new Dimension[2];
+    private void showLargeVersion(boolean expanded) {
+        //save current state
+
+        expandedStateSizes[expanded ? 0 : 1] = this.dialog.getSize();
+        tabbedPane.setVisible(expanded);
+        showTabbedPane = expanded;
 
         assert tabbedPane.getPreferredSize().height < 1000 : "debug: sometimes the preferred height is 2000 px";
-        this.dialog.pack();
+        Dimension desired = expandedStateSizes[expanded ? 1 : 0];
+        if (desired == null)
+            this.dialog.pack();
+        else
+            this.dialog.setSize(desired);
     }
 
     @Override
