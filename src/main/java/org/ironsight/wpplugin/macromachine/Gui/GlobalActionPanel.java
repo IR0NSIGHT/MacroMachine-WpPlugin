@@ -7,6 +7,9 @@ import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.EditableIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
+import org.ironsight.wpplugin.macromachine.threeDRendering.SurfaceObject;
+import org.pepsoft.worldpainter.Terrain;
+import org.pepsoft.worldpainter.dynmap.DynmapPreviewer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,6 +23,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
+import static org.pepsoft.worldpainter.layers.plants.Plants.PUMPKIN;
 
 // top level panel that contains a selection list of macros/layers/input/output on the left, like a file browser
 // and an editor for the currently selected action on the right
@@ -177,6 +181,14 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         }
 
     }
+    private static DynmapPreviewer previewer = new DynmapPreviewer();
+    public static DynmapPreviewer getPreviewer() {
+        return previewer;
+    }
+    private static SurfaceObject surfaceObject = new SurfaceObject();
+    public static SurfaceObject getSurfaceObject() {
+        return  surfaceObject;
+    }
 
     private void init() {
         MacroContainer.getInstance().subscribe(this::onUpdate);
@@ -205,16 +217,20 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         tabbedPane.addTab("Designer", editorPanel);
         this.add(tabbedPane, BorderLayout.CENTER);
 
-        JPanel executionPanel = new JPanel(new BorderLayout());
-        logPanel = new JTextArea();
-        logPanel.setEditable(false); // Make it read-only
-        logPanel.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JPanel logPanel = new JPanel(new BorderLayout());
+        GlobalActionPanel.logPanel = new JTextArea();
+        GlobalActionPanel.logPanel.setEditable(false); // Make it read-only
+        GlobalActionPanel.logPanel.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
-        JScrollPane writeWindowScroll = new JScrollPane(logPanel);
-        executionPanel.add(writeWindowScroll, BorderLayout.CENTER);
+        JScrollPane writeWindowScroll = new JScrollPane(GlobalActionPanel.logPanel);
+        logPanel.add(writeWindowScroll, BorderLayout.CENTER);
         writeWindowScroll.setPreferredSize(new Dimension(500, 600));
 
-        tabbedPane.add("Log", executionPanel);
+        tabbedPane.add("log",logPanel);
+
+        previewer.setInclination(30);
+        previewer.setObject(surfaceObject, null);
+        tabbedPane.add("3d", previewer);
 
         this.add(macroTreePanel, BorderLayout.WEST);
 
