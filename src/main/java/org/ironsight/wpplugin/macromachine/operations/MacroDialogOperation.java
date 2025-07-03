@@ -7,9 +7,10 @@ import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.WorldPainterView;
 import org.pepsoft.worldpainter.layers.LayerManager;
-import org.pepsoft.worldpainter.operations.AbstractOperation;
+import org.pepsoft.worldpainter.operations.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -20,15 +21,14 @@ import java.util.stream.Collectors;
 import static org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel.ErrorPopUp;
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 
-public class MacroDialogOperation extends AbstractOperation implements MacroApplicator {
+public class MacroDialogOperation extends AbstractBrushOperation implements MacroApplicator {
     private static final String NAME = "Macro Operation";
     private static final String DESCRIPTION = "Create complex reusable global operations to automate your workflow.";
     private static final String ID = "macro_dialog_operation";
     private WorldPainterView mWorldPainterView;
 
     public MacroDialogOperation() {
-        super(NAME, DESCRIPTION, "macrooperation");
-
+        super(NAME, DESCRIPTION, null, ID,"macrooperation"); //one shot op
         File saveFile = new File(MacroContainer.getActionsFilePath()+"/savefile.macro");
 
         MacroContainer.SetInstance(new MacroContainer(null));
@@ -46,8 +46,8 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
         MacroContainer.getInstance().subscribe(saveEverything);
     }
 
-    private Dimension getDimension() {
-        return mWorldPainterView.getDimension();
+    public Dimension getDimension() {
+        return getView().getDimension();
     }
 
     public void openDialog() {
@@ -135,12 +135,17 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
 
     }
 
-
     @Override
+    protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel){
+
+    }
+
+
+   /* @Override
     public void setView(WorldPainterView view) {
         this.mWorldPainterView = view;
     }
-
+*/
     @Override
     public void interrupt() {
 
