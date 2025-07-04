@@ -53,6 +53,10 @@ public class SurfaceObject implements WPObject {
                 max = Math.max(max,p);
                 min = Math.min(min,p);
             }
+        for (float[] row: waterheight)
+            for (float p : row) {
+                max = Math.max(max,p);
+            }
         int bottomPadding = 5;
         for (float[] row: height)
             for (int i = 0; i < row.length; i++) {
@@ -74,10 +78,11 @@ public class SurfaceObject implements WPObject {
         name = s;
     }
 
+
     @Override
     public Point3i getDimensions() {
         try {
-            return new Point3i(terrain.length,terrain[0].length, (int) Math.ceil(max));
+            return new Point3i(terrain.length, terrain[0].length, (int) Math.ceil(max));
         } catch (Exception ex) {
             return new Point3i(0,0,0);
         }

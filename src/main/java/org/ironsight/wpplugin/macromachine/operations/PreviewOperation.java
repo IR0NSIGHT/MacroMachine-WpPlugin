@@ -11,6 +11,7 @@ import javax.swing.*;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.Field;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.brushes.SymmetricBrush.CONSTANT_SQUARE;
 
 public class PreviewOperation extends AbstractPaintOperation {
@@ -72,25 +73,32 @@ public class PreviewOperation extends AbstractPaintOperation {
         // * paint - the currently selected paint
 
 
-        int size = this.getBrush().getEffectiveRadius() * 2;
-        float[][] height = new float[size][];
-        float[][] waterHeight = new float[size][];
-        Material[][] terrain = new Material[size][];
+        int startX = Math.max(getDimension().getLowestX() * TILE_SIZE, centreX - this.getBrush().getEffectiveRadius());
+        int startY = Math.max(getDimension().getLowestY() * TILE_SIZE, centreY - this.getBrush().getEffectiveRadius());
+        int endX = Math.min((getDimension().getHighestX() +1) * TILE_SIZE -1,
+                centreX + this.getBrush().getEffectiveRadius());
+        int endY = Math.min((getDimension().getHighestY() + 1) * TILE_SIZE -1,
+                centreY + this.getBrush().getEffectiveRadius());
+        int sizeX = Math.max(0,endX - startX);
+        int sizeY = Math.max(0,endY - startY);
+
+        float[][] height = new float[sizeX][];
+        float[][] waterHeight = new float[sizeX][];
+        Material[][] terrain = new Material[sizeX][];
         Dimension dim = getDimension();
-        int offset = size / 2;
-        int startX = centreX - offset;
-        int startY = centreY - offset;
-        Platform p =getView().getDimension().getWorld().getPlatform();
-        for (int x = 0; x < size; x++) {
-            height[x] = new float[size];
-            waterHeight[x] = new float[size];
-            terrain[x] = new Material[size];
-            for (int y = 0; y < size; y++) {
+
+        Platform p = getView().getDimension().getWorld().getPlatform();
+        for (int x = 0; x < sizeX; x++) {
+            height[x] = new float[sizeY];
+            waterHeight[x] = new float[sizeY];
+            terrain[x] = new Material[sizeY];
+            for (int y = 0; y < sizeY; y++) {
                 height[x][y] = dim.getIntHeightAt(x + startX, y + startY);
                 waterHeight[x][y] = dim.getWaterLevelAt(x + startX, y + startY);
                 terrain[x][y] =
-                        dim.getTerrainAt(x + startX, y + startY).getMaterial(p,123456L,x + startX, y + startY,height[x][y],
-                                Math.round(height[x][y]));
+                        dim.getTerrainAt(x + startX, y + startY)
+                                .getMaterial(p, 123456L, x + startX, y + startY, height[x][y],
+                                        Math.round(height[x][y]));
             }
         }
         GlobalActionPanel.getSurfaceObject().setTerrainData(height, terrain, waterHeight);
