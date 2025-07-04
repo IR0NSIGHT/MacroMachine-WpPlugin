@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.AbstractPaintOperation;
@@ -71,22 +72,25 @@ public class PreviewOperation extends AbstractPaintOperation {
         // * paint - the currently selected paint
 
 
-        int size = this.getBrush().getEffectiveRadius();
+        int size = this.getBrush().getEffectiveRadius() * 2;
         float[][] height = new float[size][];
         float[][] waterHeight = new float[size][];
-        Terrain[][] terrain = new Terrain[size][];
+        Material[][] terrain = new Material[size][];
         Dimension dim = getDimension();
         int offset = size / 2;
         int startX = centreX - offset;
         int startY = centreY - offset;
+        Platform p =getView().getDimension().getWorld().getPlatform();
         for (int x = 0; x < size; x++) {
             height[x] = new float[size];
             waterHeight[x] = new float[size];
-            terrain[x] = new Terrain[size];
+            terrain[x] = new Material[size];
             for (int y = 0; y < size; y++) {
-                height[x][y] = dim.getHeightAt(x + startX, y + startY);
+                height[x][y] = dim.getIntHeightAt(x + startX, y + startY);
                 waterHeight[x][y] = dim.getWaterLevelAt(x + startX, y + startY);
-                terrain[x][y] = dim.getTerrainAt(x + startX, y + startY);
+                terrain[x][y] =
+                        dim.getTerrainAt(x + startX, y + startY).getMaterial(p,123456L,x + startX, y + startY,height[x][y],
+                                Math.round(height[x][y]));
             }
         }
         GlobalActionPanel.getSurfaceObject().setTerrainData(height, terrain, waterHeight);

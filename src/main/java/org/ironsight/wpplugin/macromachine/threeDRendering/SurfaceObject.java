@@ -35,14 +35,16 @@ public class SurfaceObject implements WPObject {
             new float[]{64,64,64,64,64},
             new float[]{64,64,64,64,64},
     };
-    Terrain[][] terrain = new Terrain[][]{
-            new Terrain[]{Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,},
-            new Terrain[]{Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,},
-            new Terrain[]{Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,},
-            new Terrain[]{Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,Terrain.GRASS,},
+    Material[][] terrain = new Material[][]{
+            new Material[]{Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK},
+            new Material[]{Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK},
+            new Material[]{Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK},
+            new Material[]{Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK,Material.GRASS_BLOCK},
     };
 
-    public void setTerrainData(float[][] height, Terrain[][] terrain, float[][] waterheight) {
+    public void setTerrainData(float[][] height, Material[][] terrain, float[][] waterheight) {
+        min = 10000;
+        max = 0;
         this.height = height;
         this.terrain = terrain;
         this.waterheight = waterheight;
@@ -51,9 +53,21 @@ public class SurfaceObject implements WPObject {
                 max = Math.max(max,p);
                 min = Math.min(min,p);
             }
+        int bottomPadding = 5;
+        for (float[] row: height)
+            for (int i = 0; i < row.length; i++) {
+                row[i] = row[i] - min + bottomPadding;
+            }
+        for (float[] row: waterheight)
+            for (int i = 0; i < row.length; i++) {
+                row[i] = row[i] - min+ bottomPadding;
+            }
+
+        max = max - min + bottomPadding * 2;
+        min = bottomPadding;
     }
 
-    private float min = 100, max = 100;
+    private float min = 1000, max = 0;
 
     @Override
     public void setName(String s) {
@@ -71,7 +85,7 @@ public class SurfaceObject implements WPObject {
 
     @Override
     public Point3i getOffset() {
-        return new Point3i(-getDimensions().x/2,-getDimensions().y/2,60);
+        return new Point3i(-getDimensions().x/2,-getDimensions().y/2,-getDimensions().z/2);
     }
 
     @Override
@@ -80,12 +94,12 @@ public class SurfaceObject implements WPObject {
         float waterHeigt = waterheight[x][y];
         if (terrainH < z && z <= waterHeigt)
             return Material.WATER;
-        return terrain[x][y].getMaterial(DefaultPlugin.JAVA_ANVIL_1_19, 1234L,x,y,z,z);
+        return terrain[x][y];
     }
 
     @Override
     public boolean getMask(int x, int y, int z) {
-        return height[x][y] >= z || (height[x][y] < waterheight[x][y] && waterheight[x][y] >= z);
+        return height[x][y] >= z || waterheight[x][y] >= z;
     }
 
     @Override
