@@ -1,24 +1,39 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
-import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.Terrain;
+import org.pepsoft.minecraft.Material;
+import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.brushes.Brush;
-import org.pepsoft.worldpainter.operations.BrushOperation;
-import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
-import org.pepsoft.worldpainter.operations.PaintOperation;
-import org.pepsoft.worldpainter.painting.Paint;
+import org.pepsoft.worldpainter.operations.AbstractPaintOperation;
+import org.pepsoft.worldpainter.operations.RadiusOperation;
 
 import javax.swing.*;
+import java.beans.PropertyVetoException;
+import java.lang.reflect.Field;
 
-public class PreviewOperation extends MouseOrTabletOperation implements
-        PaintOperation, // Implement this if you need access to the currently selected paint; note that some base classes already provide this
-        BrushOperation // Implement this if you need access to the currently selected brush; note that some base classes already provide this
-{
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.brushes.SymmetricBrush.CONSTANT_SQUARE;
+
+public class PreviewOperation extends AbstractPaintOperation {
+    /**
+     * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
+     * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
+     */
+    static final String ID = "org.demo.wpplugin.3D_preview_Operation";
+    /**
+     * Human-readable short name of the operation.
+     */
+    static final String NAME = "3D Preview";
+    /**
+     * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
+     */
+    static final String DESCRIPTION = "Show terrain, height and waterheight in a 3d preview";
+
+
     public PreviewOperation() {
         // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
         // once for every time the user clicks the mouse or presses on the tablet:
-        super(NAME, DESCRIPTION, ID);
+        super(NAME, DESCRIPTION, null, new MyRadiusControl(), new MyRadiusControl(), -1, ID);
         // Using this constructor instead will create a continues operation. The tick() method will be invoked once
         // every "delay" ms while the user has the mouse button down or continues pressing on the tablet. The "first"
         // parameter will be true for the first invocation per mouse button press and false for every subsequent
@@ -31,12 +46,12 @@ public class PreviewOperation extends MouseOrTabletOperation implements
      * this is invoked once per {@code delay} ms while the mouse button is down, with the first invocation having
      * {@code first} be {@code true} and subsequent invocations having it be {@code false}.
      *
-     * @param centreX The x coordinate where the operation should be applied, in world coordinates.
-     * @param centreY The y coordinate where the operation should be applied, in world coordinates.
-     * @param inverse Whether to perform the "inverse" operation instead of the regular operation, if applicable. If the
-     *                operation has no inverse it should just apply the normal operation.
-     * @param first Whether this is the first tick of a continuous operation. For a one shot operation this will always
-     *              be {@code true}.
+     * @param centreX      The x coordinate where the operation should be applied, in world coordinates.
+     * @param centreY      The y coordinate where the operation should be applied, in world coordinates.
+     * @param inverse      Whether to perform the "inverse" operation instead of the regular operation, if applicable.
+     *                     If the operation has no inverse it should just apply the normal operation.
+     * @param first        Whether this is the first tick of a continuous operation. For a one shot operation this will
+     *                     always be {@code true}.
      * @param dynamicLevel The dynamic level (from 0.0f to 1.0f inclusive) to apply in addition to the {@code level}
      *                     property, for instance due to a pressure sensitive stylus being used. In other words,
      *                     <strong>not</strong> the total level at which to apply the operation! Operations are free to
@@ -56,64 +71,74 @@ public class PreviewOperation extends MouseOrTabletOperation implements
         // In addition you have the following fields in this class:
         // * brush - the currently selected brush
         // * paint - the currently selected paint
-        int size = 128;
-        float[][] height = new float[size][];
-        float[][] waterHeight = new float[size][];
-        Terrain[][] terrain = new Terrain[size][];
+
+
+        int startX = Math.max(getDimension().getLowestX() * TILE_SIZE, centreX - this.getBrush().getEffectiveRadius());
+        int startY = Math.max(getDimension().getLowestY() * TILE_SIZE, centreY - this.getBrush().getEffectiveRadius());
+        int endX = Math.min((getDimension().getHighestX() +1) * TILE_SIZE -1,
+                centreX + this.getBrush().getEffectiveRadius());
+        int endY = Math.min((getDimension().getHighestY() + 1) * TILE_SIZE -1,
+                centreY + this.getBrush().getEffectiveRadius());
+        int sizeX = Math.max(0,endX - startX);
+        int sizeY = Math.max(0,endY - startY);
+
+        float[][] height = new float[sizeX][];
+        float[][] waterHeight = new float[sizeX][];
+        Material[][] terrain = new Material[sizeX][];
         Dimension dim = getDimension();
-        int offset = size/2;
-        int startX = centreX - offset;
-        int startY = centreY - offset;
-        for (int x = 0; x < size; x++) {
-            height[x] = new float[size];
-            waterHeight[x] = new float[size];
-            terrain[x] = new Terrain[size];
-            for (int y = 0; y < size; y++) {
-                height[x][y] = dim.getHeightAt(x + startX,y+startY);
-                waterHeight[x][y] = dim.getWaterLevelAt(x+ startX,y+startY);
-                terrain[x][y] = dim.getTerrainAt(x+ startX,y+startY);
+
+        Platform p = getView().getDimension().getWorld().getPlatform();
+        for (int x = 0; x < sizeX; x++) {
+            height[x] = new float[sizeY];
+            waterHeight[x] = new float[sizeY];
+            terrain[x] = new Material[sizeY];
+            for (int y = 0; y < sizeY; y++) {
+                height[x][y] = dim.getIntHeightAt(x + startX, y + startY);
+                waterHeight[x][y] = dim.getWaterLevelAt(x + startX, y + startY);
+                terrain[x][y] =
+                        dim.getTerrainAt(x + startX, y + startY)
+                                .getMaterial(p, 123456L, x + startX, y + startY, height[x][y],
+                                        Math.round(height[x][y]));
             }
         }
-        GlobalActionPanel.getSurfaceObject().setTerrainData(height,terrain,waterHeight);
-        SwingUtilities.invokeLater(() -> GlobalActionPanel.getPreviewer().setObject(GlobalActionPanel.getSurfaceObject(), getDimension()));
+        GlobalActionPanel.getSurfaceObject().setTerrainData(height, terrain, waterHeight);
+        SwingUtilities.invokeLater(() -> GlobalActionPanel.getPreviewer()
+                .setObject(GlobalActionPanel.getSurfaceObject(), getDimension()));
     }
 
-    @Override
-    public Brush getBrush() {
-        return brush;
+    static class MyRadiusControl implements RadiusControl, MapDragControl {
+        //dummy class, doesnt do anything. just so no nullpointer is thrown by the operation.q
+        int radius = 250;
+        boolean mapDrag = false;
+
+        @Override
+        public void increaseRadius(int i) {
+            radius += i;
+        }
+
+        @Override
+        public void increaseRadiusByOne() {
+            radius++;
+        }
+
+        @Override
+        public void decreaseRadius(int i) {
+            radius -= i;
+        }
+
+        @Override
+        public void decreaseRadiusByOne() {
+            radius--;
+        }
+
+        @Override
+        public boolean isMapDraggingInhibited() {
+            return mapDrag;
+        }
+
+        @Override
+        public void setMapDraggingInhibited(boolean b) {
+            mapDrag = b;
+        }
     }
-
-    @Override
-    public void setBrush(Brush brush) {
-        this.brush = brush;
-    }
-
-    @Override
-    public Paint getPaint() {
-        return paint;
-    }
-
-    @Override
-    public void setPaint(Paint paint) {
-        this.paint = paint;
-    }
-
-    private Brush brush;
-    private Paint paint;
-
-    /**
-     * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
-     * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
-     */
-    static final String ID = "org.demo.wpplugin.3D_preview_Operation";
-
-    /**
-     * Human-readable short name of the operation.
-     */
-    static final String NAME = "3D Preview";
-
-    /**
-     * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
-     */
-    static final String DESCRIPTION = "Show terrain, height and waterheight in a 3d preview";
 }
