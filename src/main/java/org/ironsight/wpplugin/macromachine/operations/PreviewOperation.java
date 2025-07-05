@@ -4,18 +4,25 @@ import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.AbstractPaintOperation;
+import org.pepsoft.worldpainter.operations.BrushOperation;
+import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
+import org.pepsoft.worldpainter.operations.RadiusOperation;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class PreviewOperation extends AbstractPaintOperation {
+public class PreviewOperation extends MouseOrTabletOperation implements BrushOperation {
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
@@ -40,7 +47,7 @@ public class PreviewOperation extends AbstractPaintOperation {
     public PreviewOperation() {
         // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
         // once for every time the user clicks the mouse or presses on the tablet:
-        super(NAME, DESCRIPTION, null, new MyRadiusControl(), new MyRadiusControl(), -1, ID);
+        super(NAME, DESCRIPTION, null, -1,  ID);
         // Using this constructor instead will create a continues operation. The tick() method will be invoked once
         // every "delay" ms while the user has the mouse button down or continues pressing on the tablet. The "first"
         // parameter will be true for the first invocation per mouse button press and false for every subsequent
@@ -48,18 +55,16 @@ public class PreviewOperation extends AbstractPaintOperation {
         // super(NAME, DESCRIPTION, delay, ID);
     }
 
-    void submitArraysToViewer() {
-        GlobalActionPanel.getSurfaceObject().setTerrainData(height, terrain, waterHeight);
-        SwingUtilities.invokeLater(() -> GlobalActionPanel.getPreviewer()
-                .setObject(GlobalActionPanel.getSurfaceObject(), getDimension()));
-    }
-    private static void updateArraysFromTile(float[][] height, float[][] waterHeight, Material[][] terrain,
-                                             Rectangle arrayExtents, Tile t, Platform p) {
+    private static boolean updateArraysFromTile(float[][] height, float[][] waterHeight, Material[][] terrain,
+                                                Rectangle arrayExtents, Tile t, Platform p) {
+        boolean changed = false;
         int tileStartX = t.getX() * TILE_SIZE;
         int tileStartY = t.getY() * TILE_SIZE;
-
-        for (int x = 0; x < TILE_SIZE; x++) {
-            for (int y = 0; y < TILE_SIZE; y++) {
+        int startX = Math.max(0, arrayExtents.x - tileStartX);
+        int startY = Math.max(0, arrayExtents.y - tileStartY);
+        for (int x = startX; x < TILE_SIZE; x++) {
+            for (int y = startY; y < TILE_SIZE; y++) {
+                changed = true;
                 int absMapPosX = x + tileStartX;
                 int absMapPosY = y + tileStartY;
                 if (!arrayExtents.contains(absMapPosX, absMapPosY))
@@ -73,8 +78,13 @@ public class PreviewOperation extends AbstractPaintOperation {
                         .getMaterial(p, 123456L, absMapPosX, absMapPosY, heightValue, heightValue);
             }
         }
+        return changed;
     }
 
+    void submitArraysToViewer() {
+        GlobalActionPanel.getSurfaceObject().setTerrainData(height, terrain, waterHeight);
+        GlobalActionPanel.flagForChangedSurfaceObject();
+    }
 
     /**
      * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
@@ -153,28 +163,55 @@ public class PreviewOperation extends AbstractPaintOperation {
         }
         submitArraysToViewer();
     }
+    private Brush brush;
+    @Override
+    public Brush getBrush() {
+        return brush;
+    }
+
+    @Override
+    public void setBrush(Brush brush) {
+        this.brush = brush;
+    }
 
     static class TileChangedListener implements Tile.Listener {
         private PreviewOperation op;
+        private HashSet<Tile> dirtyTiles = new HashSet<>();
+        private boolean changed = false;
 
         TileChangedListener(PreviewOperation op) {
             this.op = op;
+            Timer timer = new Timer(750, e -> triggerTileUpdate());
+            timer.setRepeats(true);
+            timer.start();
         }
 
         @Override
         public void heightMapChanged(Tile tile) {
-            updateArraysFromTile(op.height, op.waterHeight, op.terrain, op.lastExtent, tile, op.platform);
-            op.submitArraysToViewer();
+            dirtyTiles.add(tile);
+        }
+
+        private void triggerTileUpdate() {
+            if (dirtyTiles.isEmpty())
+                return;
+            for (Tile t : dirtyTiles) {
+                changed = changed || updateArraysFromTile(op.height, op.waterHeight, op.terrain, op.lastExtent, t,
+                        op.platform);
+            }
+            if (changed)
+                op.submitArraysToViewer();
+            dirtyTiles.clear();
+            changed = false;
         }
 
         @Override
         public void terrainChanged(Tile tile) {
-
+            dirtyTiles.add(tile);
         }
 
         @Override
         public void waterLevelChanged(Tile tile) {
-
+            dirtyTiles.add(tile);
         }
 
         @Override
