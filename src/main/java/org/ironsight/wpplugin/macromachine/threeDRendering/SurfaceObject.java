@@ -57,18 +57,6 @@ public class SurfaceObject implements WPObject {
             for (float p : row) {
                 max = Math.max(max,p);
             }
-        int bottomPadding = 5;
-        for (float[] row: height)
-            for (int i = 0; i < row.length; i++) {
-                row[i] = row[i] - min + bottomPadding;
-            }
-        for (float[] row: waterheight)
-            for (int i = 0; i < row.length; i++) {
-                row[i] = row[i] - min+ bottomPadding;
-            }
-
-        max = max - min + bottomPadding * 2;
-        min = bottomPadding;
     }
 
     private float min = 1000, max = 0;
@@ -82,7 +70,7 @@ public class SurfaceObject implements WPObject {
     @Override
     public Point3i getDimensions() {
         try {
-            return new Point3i(terrain.length, terrain[0].length, (int) Math.ceil(max));
+            return new Point3i(terrain.length, terrain[0].length, (int) Math.ceil(max-min));
         } catch (Exception ex) {
             return new Point3i(0,0,0);
         }
@@ -97,14 +85,14 @@ public class SurfaceObject implements WPObject {
     public Material getMaterial(int x, int y, int z) {
         float terrainH = height[x][y];
         float waterHeigt = waterheight[x][y];
-        if (terrainH < z && z <= waterHeigt)
+        if (terrainH < (z+min) && (z+min) <= waterHeigt)
             return Material.WATER;
         return terrain[x][y];
     }
 
     @Override
     public boolean getMask(int x, int y, int z) {
-        return height[x][y] >= z || waterheight[x][y] >= z;
+        return height[x][y] >= (z+min) || waterheight[x][y] >= (z+min);
     }
 
     @Override

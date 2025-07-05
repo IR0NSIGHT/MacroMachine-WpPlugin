@@ -3,16 +3,17 @@ package org.ironsight.wpplugin.macromachine.operations;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.*;
-import org.pepsoft.worldpainter.brushes.Brush;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.AbstractPaintOperation;
-import org.pepsoft.worldpainter.operations.RadiusOperation;
 
 import javax.swing.*;
-import java.beans.PropertyVetoException;
-import java.lang.reflect.Field;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Set;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.brushes.SymmetricBrush.CONSTANT_SQUARE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class PreviewOperation extends AbstractPaintOperation {
     /**
@@ -28,7 +29,13 @@ public class PreviewOperation extends AbstractPaintOperation {
      * Human-readable description of the operation. This is used e.g. in the tooltip of the operation selection button.
      */
     static final String DESCRIPTION = "Show terrain, height and waterheight in a 3d preview";
-
+    float[][] height = new float[0][];
+    float[][] waterHeight = new float[0][];
+    Material[][] terrain = new Material[0][];
+    private Rectangle lastExtent = new Rectangle(0, 0, 0, 0);
+    private TileChangedListener listener = new TileChangedListener(this);
+    private ArrayList<Tile> tilesInExtent = new ArrayList<>();
+    private Platform platform;
 
     public PreviewOperation() {
         // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
@@ -40,6 +47,34 @@ public class PreviewOperation extends AbstractPaintOperation {
         // invocation:
         // super(NAME, DESCRIPTION, delay, ID);
     }
+
+    void submitArraysToViewer() {
+        GlobalActionPanel.getSurfaceObject().setTerrainData(height, terrain, waterHeight);
+        SwingUtilities.invokeLater(() -> GlobalActionPanel.getPreviewer()
+                .setObject(GlobalActionPanel.getSurfaceObject(), getDimension()));
+    }
+    private static void updateArraysFromTile(float[][] height, float[][] waterHeight, Material[][] terrain,
+                                             Rectangle arrayExtents, Tile t, Platform p) {
+        int tileStartX = t.getX() * TILE_SIZE;
+        int tileStartY = t.getY() * TILE_SIZE;
+
+        for (int x = 0; x < TILE_SIZE; x++) {
+            for (int y = 0; y < TILE_SIZE; y++) {
+                int absMapPosX = x + tileStartX;
+                int absMapPosY = y + tileStartY;
+                if (!arrayExtents.contains(absMapPosX, absMapPosY))
+                    continue;
+                int idxX = absMapPosX - arrayExtents.x;
+                int idxY = absMapPosY - arrayExtents.y;
+                int heightValue = t.getIntHeight(x, y);
+                height[idxX][idxY] = t.getIntHeight(x, y);
+                waterHeight[idxX][idxY] = t.getWaterLevel(x, y);
+                terrain[idxX][idxY] = t.getTerrain(x, y)
+                        .getMaterial(p, 123456L, absMapPosX, absMapPosY, heightValue, heightValue);
+            }
+        }
+    }
+
 
     /**
      * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
@@ -75,19 +110,34 @@ public class PreviewOperation extends AbstractPaintOperation {
 
         int startX = Math.max(getDimension().getLowestX() * TILE_SIZE, centreX - this.getBrush().getEffectiveRadius());
         int startY = Math.max(getDimension().getLowestY() * TILE_SIZE, centreY - this.getBrush().getEffectiveRadius());
-        int endX = Math.min((getDimension().getHighestX() +1) * TILE_SIZE -1,
+        int endX = Math.min((getDimension().getHighestX() + 1) * TILE_SIZE - 1,
                 centreX + this.getBrush().getEffectiveRadius());
-        int endY = Math.min((getDimension().getHighestY() + 1) * TILE_SIZE -1,
+        int endY = Math.min((getDimension().getHighestY() + 1) * TILE_SIZE - 1,
                 centreY + this.getBrush().getEffectiveRadius());
-        int sizeX = Math.max(0,endX - startX);
-        int sizeY = Math.max(0,endY - startY);
+        int sizeX = Math.max(0, endX - startX);
+        int sizeY = Math.max(0, endY - startY);
 
-        float[][] height = new float[sizeX][];
-        float[][] waterHeight = new float[sizeX][];
-        Material[][] terrain = new Material[sizeX][];
+        lastExtent = new Rectangle(startX, startY, sizeX, sizeY);
+        for (Tile t : tilesInExtent)
+            t.removeListener(this.listener);
+        tilesInExtent.clear();
+
+        for (int x = startX >> TILE_SIZE_BITS; x <= endX >> TILE_SIZE_BITS; x++) {
+            for (int y = startY >> TILE_SIZE_BITS; y <= endY >> TILE_SIZE_BITS; y++) {
+                Tile t = getDimension().getTile(x, y);
+                t.addListener(this.listener);
+                tilesInExtent.add(getDimension().getTile(x, y));
+
+            }
+        }
+
+
+        height = new float[sizeX][];
+        waterHeight = new float[sizeX][];
+        terrain = new Material[sizeX][];
         Dimension dim = getDimension();
 
-        Platform p = getView().getDimension().getWorld().getPlatform();
+        platform = getView().getDimension().getWorld().getPlatform();
         for (int x = 0; x < sizeX; x++) {
             height[x] = new float[sizeY];
             waterHeight[x] = new float[sizeY];
@@ -97,13 +147,55 @@ public class PreviewOperation extends AbstractPaintOperation {
                 waterHeight[x][y] = dim.getWaterLevelAt(x + startX, y + startY);
                 terrain[x][y] =
                         dim.getTerrainAt(x + startX, y + startY)
-                                .getMaterial(p, 123456L, x + startX, y + startY, height[x][y],
+                                .getMaterial(platform, 123456L, x + startX, y + startY, height[x][y],
                                         Math.round(height[x][y]));
             }
         }
-        GlobalActionPanel.getSurfaceObject().setTerrainData(height, terrain, waterHeight);
-        SwingUtilities.invokeLater(() -> GlobalActionPanel.getPreviewer()
-                .setObject(GlobalActionPanel.getSurfaceObject(), getDimension()));
+        submitArraysToViewer();
+    }
+
+    static class TileChangedListener implements Tile.Listener {
+        private PreviewOperation op;
+
+        TileChangedListener(PreviewOperation op) {
+            this.op = op;
+        }
+
+        @Override
+        public void heightMapChanged(Tile tile) {
+            updateArraysFromTile(op.height, op.waterHeight, op.terrain, op.lastExtent, tile, op.platform);
+            op.submitArraysToViewer();
+        }
+
+        @Override
+        public void terrainChanged(Tile tile) {
+
+        }
+
+        @Override
+        public void waterLevelChanged(Tile tile) {
+
+        }
+
+        @Override
+        public void layerDataChanged(Tile tile, Set<Layer> set) {
+
+        }
+
+        @Override
+        public void allBitLayerDataChanged(Tile tile) {
+
+        }
+
+        @Override
+        public void allNonBitlayerDataChanged(Tile tile) {
+
+        }
+
+        @Override
+        public void seedsChanged(Tile tile) {
+
+        }
     }
 
     static class MyRadiusControl implements RadiusControl, MapDragControl {
