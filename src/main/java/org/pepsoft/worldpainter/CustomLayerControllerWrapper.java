@@ -3,6 +3,8 @@ package org.pepsoft.worldpainter;
 import org.pepsoft.worldpainter.layers.CustomLayer;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 
 public class CustomLayerControllerWrapper {
@@ -17,7 +19,14 @@ public class CustomLayerControllerWrapper {
     }
 
     public List<CustomLayer> getCustomLayers() {
-        return controller.getCustomLayers();
+        try {
+            Method m = CustomLayerController.class.getDeclaredMethod("getCustomLayers");
+            m.setAccessible(true);
+            List<CustomLayer> layers = (List<CustomLayer>) m.invoke(controller);
+            return layers;
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private CustomLayerController getCustomLayerController() {
