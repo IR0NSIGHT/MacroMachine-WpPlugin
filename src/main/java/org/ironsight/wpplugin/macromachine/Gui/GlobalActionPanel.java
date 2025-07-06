@@ -191,9 +191,12 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     private boolean rerender3d = false;
     private static GlobalActionPanel INSTANCE;
     public static void flagForChangedSurfaceObject() {
+        if (INSTANCE == null)
+            return; // gui wasnt opened before.
         INSTANCE.rerender3d = true;
         if (getPreviewer().isShowing())
-            INSTANCE.doRender3d();
+            SwingUtilities.invokeLater(() -> { INSTANCE.doRender3d();});
+
     }
     private void doRender3d() {
         getPreviewer().setObject(getSurfaceObject(), null); // immediate redraw
@@ -245,12 +248,12 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         tabbedPane.add("log",logPanel);
 
         previewer.setInclination(30);
-        previewer.setObject(surfaceObject, null);
+        previewer.setObject(new SurfaceObject()/*empty dummy*/, null);
         tabbedPane.add("3d", previewer);
 
         previewer.addHierarchyListener(e -> {
             if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing() && rerender3d) {
-                doRender3d();
+                SwingUtilities.invokeLater(() -> doRender3d());
             }
         });
 

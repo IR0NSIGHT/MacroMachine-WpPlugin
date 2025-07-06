@@ -6,15 +6,11 @@ import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.operations.AbstractPaintOperation;
 import org.pepsoft.worldpainter.operations.BrushOperation;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
-import org.pepsoft.worldpainter.operations.RadiusOperation;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -117,13 +113,13 @@ public class PreviewOperation extends MouseOrTabletOperation implements BrushOpe
         // * brush - the currently selected brush
         // * paint - the currently selected paint
 
-
-        int startX = Math.max(getDimension().getLowestX() * TILE_SIZE, centreX - this.getBrush().getEffectiveRadius());
-        int startY = Math.max(getDimension().getLowestY() * TILE_SIZE, centreY - this.getBrush().getEffectiveRadius());
+        int radius = this.getBrush().getEffectiveRadius();
+        int startX = Math.max(getDimension().getLowestX() * TILE_SIZE, centreX - radius);
+        int startY = Math.max(getDimension().getLowestY() * TILE_SIZE, centreY - radius);
         int endX = Math.min((getDimension().getHighestX() + 1) * TILE_SIZE - 1,
-                centreX + this.getBrush().getEffectiveRadius());
+                centreX + radius);
         int endY = Math.min((getDimension().getHighestY() + 1) * TILE_SIZE - 1,
-                centreY + this.getBrush().getEffectiveRadius());
+                centreY + radius);
         int sizeX = Math.max(0, endX - startX);
         int sizeY = Math.max(0, endY - startY);
 
