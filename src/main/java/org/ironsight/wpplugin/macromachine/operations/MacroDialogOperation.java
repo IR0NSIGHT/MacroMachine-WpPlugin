@@ -40,7 +40,7 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
                 s -> ErrorPopUp("Can not load from savefile:\n"+saveFile.getPath()+"\n"+s));
 
         Runnable saveEverything = () -> ContainerIO.exportFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
-                new ImportExportPolicy(), System.err::println);
+                new ImportExportPolicy(), System.err::println, InputOutputProvider.INSTANCE);
 
         MappingActionContainer.getInstance().subscribe(saveEverything);
         MacroContainer.getInstance().subscribe(saveEverything);
