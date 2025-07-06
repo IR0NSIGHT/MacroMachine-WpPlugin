@@ -41,14 +41,7 @@ public class PreviewOperation extends MouseOrTabletOperation implements BrushOpe
     private Platform platform;
 
     public PreviewOperation() {
-        // Using this constructor will create a "single shot" operation. The tick() method below will only be invoked
-        // once for every time the user clicks the mouse or presses on the tablet:
-        super(NAME, DESCRIPTION, null, -1,  ID);
-        // Using this constructor instead will create a continues operation. The tick() method will be invoked once
-        // every "delay" ms while the user has the mouse button down or continues pressing on the tablet. The "first"
-        // parameter will be true for the first invocation per mouse button press and false for every subsequent
-        // invocation:
-        // super(NAME, DESCRIPTION, delay, ID);
+        super(NAME, DESCRIPTION, null, ID); // ONE SHOT OP
     }
 
     private static boolean updateArraysFromTile(float[][] height, float[][] waterHeight, Material[][] terrain,
@@ -191,8 +184,10 @@ public class PreviewOperation extends MouseOrTabletOperation implements BrushOpe
             if (dirtyTiles.isEmpty())
                 return;
             for (Tile t : dirtyTiles) {
-                changed = changed || updateArraysFromTile(op.height, op.waterHeight, op.terrain, op.lastExtent, t,
+                boolean tileChanged = updateArraysFromTile(op.height, op.waterHeight, op.terrain, op.lastExtent, t,
                         op.platform);
+                if (tileChanged)
+                    changed = true;
             }
             if (changed)
                 op.submitArraysToViewer();
