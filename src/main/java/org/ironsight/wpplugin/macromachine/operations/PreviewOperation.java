@@ -6,11 +6,14 @@ import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.operations.AbstractPaintOperation;
 import org.pepsoft.worldpainter.operations.BrushOperation;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
+import org.pepsoft.worldpainter.operations.RadiusOperation;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +21,8 @@ import java.util.Set;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class PreviewOperation extends MouseOrTabletOperation implements BrushOperation {
+public class PreviewOperation extends RadiusOperation {
+
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
      * be a FQDN or package and class name, like here, or you could use a UUID. As long as it is globally unique.
@@ -39,9 +43,21 @@ public class PreviewOperation extends MouseOrTabletOperation implements BrushOpe
     private TileChangedListener listener = new TileChangedListener(this);
     private ArrayList<Tile> tilesInExtent = new ArrayList<>();
     private Platform platform;
-
     public PreviewOperation() {
-        super(NAME, DESCRIPTION, null, ID); // ONE SHOT OP
+        super(NAME, DESCRIPTION, new MyShittyView(), ID); // ONE SHOT OP
+    }
+
+    private static WorldPainterView getWpView() {
+        App app = App.getInstanceIfExists();
+        if (app == null) return null;
+        try {
+            Field field = App.class.getDeclaredField("view");
+            field.setAccessible(true);
+            return (WorldPainterView) field.get(app);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private static boolean updateArraysFromTile(float[][] height, float[][] waterHeight, Material[][] terrain,
@@ -152,15 +168,46 @@ public class PreviewOperation extends MouseOrTabletOperation implements BrushOpe
         }
         submitArraysToViewer();
     }
-    private Brush brush;
-    @Override
-    public Brush getBrush() {
-        return brush;
-    }
 
-    @Override
-    public void setBrush(Brush brush) {
-        this.brush = brush;
+    static class MyShittyView extends WorldPainterView {
+
+        Dimension dim;
+        private boolean drawBrush = false;
+
+        @Override
+        public Dimension getDimension() {
+            return dim;
+        }
+
+        @Override
+        public void setDimension(Dimension dimension) {
+            this.dim = dimension;
+        }
+
+        @Override
+        public void updateStatusBar(int x, int y) {
+
+        }
+
+        @Override
+        public boolean isDrawBrush() {
+            return drawBrush;
+        }
+
+        @Override
+        public void setDrawBrush(boolean drawBrush) {
+            this.drawBrush = drawBrush;
+        }
+
+        @Override
+        public MapDragControl getMapDragControl() {
+            return new MyRadiusControl();
+        }
+
+        @Override
+        public RadiusControl getRadiusControl() {
+            return new MyRadiusControl();
+        }
     }
 
     static class TileChangedListener implements Tile.Listener {
