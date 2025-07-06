@@ -7,6 +7,7 @@ import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +21,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.UUID;
 import java.util.function.Consumer;
+
+import static org.ironsight.wpplugin.macromachine.operations.AbstractOperationContainer.createBackup;
 
 public class ContainerIO {
     public static MacroJsonWrapper fromMacro(Macro macro) {
@@ -73,7 +76,7 @@ public class ContainerIO {
     }
 
     public static void exportFile(MappingActionContainer actionContainer, MacroContainer macroContainer, File file,
-                                  ImportExportPolicy policy, Consumer<String> onImportError) {
+                                  ImportExportPolicy policy, Consumer<String> onImportError, InputOutputProvider layerProvider) {
         LinkedList<MacroJsonWrapper> macroData = new LinkedList<>();
         for (Macro macro: macroContainer.queryAll()) {
             if (policy.allowImportExport(macro))
@@ -136,7 +139,7 @@ public class ContainerIO {
                     continue; //we dont care about nested macros
                 if (seenActions.contains(child)) {
                     onImportError.accept("Illegal: action " + child + " is used by multiple macros.");
-                    return false;
+                    return true;
                 }
                 seenActions.add(child);
             }
@@ -144,6 +147,8 @@ public class ContainerIO {
         }
         return false;
     }
+
+
 
     public static void importFile(MappingActionContainer actionContainer, MacroContainer macroContainer, File file,
                                   ImportExportPolicy policy, Consumer<String> onImportError) {
@@ -153,6 +158,7 @@ public class ContainerIO {
                 assert false:"actions were used by multiple macros which goes against policy " +
                         "and" +
                         " will lead to undefined behaviour.";
+                createBackup(file.getPath());
                 return;
             }
             // collect everything that should be imported
@@ -175,6 +181,7 @@ public class ContainerIO {
 
             if (containsUnknownActions(data,actionsToImport,macrosToImport, onImportError)) {
                 assert false;
+                createBackup(file.getPath());
                 return;
             }
 

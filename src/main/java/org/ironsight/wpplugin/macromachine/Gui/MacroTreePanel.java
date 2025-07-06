@@ -455,7 +455,7 @@ public class MacroTreePanel extends JPanel {
                         MacroContainer.getInstance(),
                         macroFile,
                         policy,
-                        MacroMachinePlugin::error);
+                        MacroMachinePlugin::error, InputOutputProvider.INSTANCE);
             }
         }
     }
