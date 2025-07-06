@@ -59,7 +59,7 @@ public class SurfaceObject implements WPObject {
             }
     }
 
-    private float min = 1000, max = 0;
+    private float min = 0, max = 0;
 
     @Override
     public void setName(String s) {
