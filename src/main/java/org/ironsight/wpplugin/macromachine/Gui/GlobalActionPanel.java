@@ -7,6 +7,7 @@ import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.EditableIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.ironsight.wpplugin.macromachine.threeDRendering.SurfaceObject;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.dynmap.DynmapPreviewer;
@@ -69,7 +70,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
                 s -> ErrorPopUp("Can not load from savefile:\n"+saveFile.getPath()+"\n"+s));
 
         Runnable saveEverything = () -> ContainerIO.exportFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
-                new ImportExportPolicy(), System.err::println);
+                new ImportExportPolicy(), System.err::println, InputOutputProvider.INSTANCE);
         MappingActionContainer.getInstance().subscribe(saveEverything);
         MacroContainer.getInstance().subscribe(saveEverything);
 
@@ -143,10 +144,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
             System.err.println(message);
         }
         MacroMachinePlugin.error(message);
-    }
-
-    private void setProgress(ApplyAction.Progess progress) {
-        logMessage("step " + progress.step + "/" + progress.totalSteps + ": " + progress.progressInStep + "%");
     }
 
     private void onUpdate() {

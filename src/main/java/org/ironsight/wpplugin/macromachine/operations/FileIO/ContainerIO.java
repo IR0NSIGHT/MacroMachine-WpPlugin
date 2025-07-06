@@ -7,6 +7,7 @@ import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,7 +76,7 @@ public class ContainerIO {
     }
 
     public static void exportFile(MappingActionContainer actionContainer, MacroContainer macroContainer, File file,
-                                  ImportExportPolicy policy, Consumer<String> onImportError) {
+                                  ImportExportPolicy policy, Consumer<String> onImportError, InputOutputProvider layerProvider) {
         LinkedList<MacroJsonWrapper> macroData = new LinkedList<>();
         for (Macro macro: macroContainer.queryAll()) {
             if (policy.allowImportExport(macro))

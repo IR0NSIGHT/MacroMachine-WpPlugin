@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations.FileIO;
 import org.checkerframework.checker.units.qual.A;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AlwaysIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainProvider;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -138,7 +139,8 @@ class ContainerIOTest {
         assertEquals(2, actionContainer.queryAll().size());
 
         File tempFile = Files.createTempFile("test", ".tmp").toFile();
-        ContainerIO.exportFile(actionContainer, macroContainer, tempFile, new ImportExportPolicy(), Assertions::fail);
+        ContainerIO.exportFile(actionContainer, macroContainer, tempFile, new ImportExportPolicy(), Assertions::fail,
+                InputOutputProvider.INSTANCE);
 
         String content = new String(Files.readAllBytes(tempFile.toPath()))
                 .replace("\r\n", "\n")
