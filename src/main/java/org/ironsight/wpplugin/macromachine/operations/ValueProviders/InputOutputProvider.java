@@ -1,14 +1,15 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
+import org.pepsoft.worldpainter.CustomLayerController;
+import org.pepsoft.worldpainter.CustomLayerControllerWrapper;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.*;
+import org.pepsoft.worldpainter.plugins.LayerProvider;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Comparator;
+import java.lang.reflect.Field;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class InputOutputProvider implements IMappingValueProvider {
@@ -66,16 +67,11 @@ public class InputOutputProvider implements IMappingValueProvider {
     }
 
     public void updateFrom(Dimension dimension) {
+        this.dimension = dimension;
         setters.clear();
         getters.clear();
 
-        Iterable<Layer> layers;
-        if (dimension != null) {
-            layers = LayerManager.getInstance().getLayers();
-        } else {
-            layers = Arrays.stream(new Layer[]{PineForest.INSTANCE, DeciduousForest.INSTANCE, Frost.INSTANCE,})
-                    .collect(Collectors.toCollection(ArrayList::new));
-        }
+        Iterable<Layer> layers = getLayers();
         for (Layer l : layers) {
             if (l instanceof Annotations || l instanceof Biome) continue;
             if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
@@ -150,6 +146,8 @@ public class InputOutputProvider implements IMappingValueProvider {
         notifyListeners();
     }
 
+
+
     private void notifyListeners() {
         for (Runnable r : genericNotifies)
             r.run();
@@ -171,6 +169,24 @@ public class InputOutputProvider implements IMappingValueProvider {
     @Override
     public boolean existsItem(Object item) {
         return getItems().contains(item);
+    }
+
+    private Dimension dimension= null;
+    private Dimension getDimension() {
+        return dimension;
+    }
+
+    public List<Layer> getLayers() {
+        LinkedList<Layer> layers = new LinkedList<>();
+        if (getDimension() != null) {
+            layers.addAll(LayerManager.getInstance().getLayers()); //vanilla layers
+
+            layers.addAll(new CustomLayerControllerWrapper().getCustomLayers());
+        } else {
+            layers.addAll(Arrays.stream(new Layer[]{PineForest.INSTANCE, DeciduousForest.INSTANCE, Frost.INSTANCE,})
+                    .collect(Collectors.toCollection(ArrayList::new)));
+        }
+        return layers;
     }
 
 
