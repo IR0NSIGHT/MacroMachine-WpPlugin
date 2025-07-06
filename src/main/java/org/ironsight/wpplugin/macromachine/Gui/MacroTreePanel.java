@@ -8,13 +8,10 @@ import org.ironsight.wpplugin.macromachine.operations.FileIO.MacroExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
@@ -451,7 +448,7 @@ public class MacroTreePanel extends JPanel {
                 MacroExportPolicy policy = new MacroExportPolicy(lastItem, MacroContainer.getInstance());
                 String fileName = sanitizeFileName(lastItem.getName()) + ".macro";
                 File macroFile = new File(outputDir + "/" + fileName);
-                ContainerIO.exportFile(MappingActionContainer.getInstance(),
+                ContainerIO.exportToFile(MappingActionContainer.getInstance(),
                         MacroContainer.getInstance(),
                         macroFile,
                         policy,

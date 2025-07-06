@@ -1,13 +1,10 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
-import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.WorldPainterView;
 import org.pepsoft.worldpainter.layers.LayerManager;
 import org.pepsoft.worldpainter.operations.*;
@@ -39,7 +36,7 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
         ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(),
                 s -> ErrorPopUp("Can not load from savefile:\n"+saveFile.getPath()+"\n"+s));
 
-        Runnable saveEverything = () -> ContainerIO.exportFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
+        Runnable saveEverything = () -> ContainerIO.exportToFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
                 new ImportExportPolicy(), System.err::println, InputOutputProvider.INSTANCE);
 
         MappingActionContainer.getInstance().subscribe(saveEverything);
