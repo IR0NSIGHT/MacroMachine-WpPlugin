@@ -1,9 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerObjectContainer;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.HeightMap;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
@@ -29,8 +27,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        LayerObjectContainer.getInstance().setDimension(dim);
-        layer = LayerObjectContainer.getInstance().queryLayer(layerId);
+        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null)

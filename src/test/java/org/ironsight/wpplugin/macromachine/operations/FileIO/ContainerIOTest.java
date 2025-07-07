@@ -12,10 +12,10 @@ import org.pepsoft.worldpainter.layers.plants.PlantLayer;
 import java.awt.*;
 import java.io.*;
 import java.nio.file.Files;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -105,6 +105,24 @@ class ContainerIOTest {
 
     @Test
     public void importFileToContainers() throws IOException {
+        LayerProvider layerProvider = new LayerProvider() {
+            HashSet<Layer> layers = new HashSet<>();
+            @Override
+            public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
+                return null;
+            }
+
+            @Override
+            public List<Layer> getLayers() {
+                return new ArrayList<>(layers);
+            }
+
+            @Override
+            public void addLayer(Layer layer) {
+                layers.add(layer);
+            }
+        };
+
         MappingActionContainer actionContainer = new MappingActionContainer("./ioTestAction.json");
         MacroContainer macroContainer = new MacroContainer("./ioTestMacro.json");
 
@@ -116,7 +134,7 @@ class ContainerIOTest {
         File tempFile = Files.createTempFile("test", ".tmp").toFile();
         ContainerIO.writeContainerToFile(dataContainer, tempFile);
 
-        ContainerIO.importFile(actionContainer, macroContainer, tempFile, new ImportExportPolicy(), Assertions::fail);
+        ContainerIO.importFile(actionContainer, macroContainer, tempFile, new ImportExportPolicy(), Assertions::fail, layerProvider);
 
         assertEquals(dataContainer.getMacros().length, macroContainer.queryAll().size());
         assertEquals(dataContainer.getActions().length, actionContainer.queryAll().size());
@@ -154,6 +172,11 @@ class ContainerIOTest {
             @Override
             public List<Layer> getLayers() {
                 return Collections.singletonList(plantsLayer);
+            }
+
+            @Override
+            public void addLayer(Layer layer) {
+                Assertions.fail();
             }
         };
 
