@@ -7,7 +7,9 @@ import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ILayerGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,10 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.UUID;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.operations.AbstractOperationContainer.createBackup;
@@ -30,7 +29,7 @@ public class ContainerIO {
                 macro.getActiveActions());
     }
 
-    public static Macro toMacro(MacroJsonWrapper json){
+    public static Macro toMacro(MacroJsonWrapper json) {
         return new Macro(json.getMacroName(), json.getDescription(), json.getStepIds(), json.getSelfId(),
                 json.getActiveIds());
     }
@@ -68,28 +67,50 @@ public class ContainerIO {
             ExportContainer obj = objectMapper.readValue(content, ExportContainer.class);
 
             return obj;
-        }catch (JsonMappingException ex) {
-            throw  ex;
+        } catch (JsonMappingException ex) {
+            throw ex;
         } catch (JsonProcessingException ex) {
-            throw  ex;
+            throw ex;
         }
     }
 
-    public static void exportFile(MappingActionContainer actionContainer, MacroContainer macroContainer, File file,
-                                  ImportExportPolicy policy, Consumer<String> onImportError, InputOutputProvider layerProvider) {
+    public static ExportContainer toExportContainer(MappingActionContainer actionContainer,
+                                                    MacroContainer macroContainer,
+                                                    ImportExportPolicy policy, Consumer<String> onImportError,
+                                                    LayerProvider layerProvider) {
         LinkedList<MacroJsonWrapper> macroData = new LinkedList<>();
-        for (Macro macro: macroContainer.queryAll()) {
+        for (Macro macro : macroContainer.queryAll()) {
             if (policy.allowImportExport(macro))
                 macroData.add(fromMacro(macro));
         }
         LinkedList<ActionJsonWrapper> actionData = new LinkedList<>();
-        for (MappingAction action: actionContainer.queryAll()) {
-            if (policy.allowImportExport(action))
+        Collection<MappingAction> actionDataMappings = new LinkedList<>();
+        for (MappingAction action : actionContainer.queryAll()) {
+            if (policy.allowImportExport(action)) {
                 actionData.add(fromAction(action));
+                actionDataMappings.add(action);
+            }
         }
 
-        ExportContainer container = new ExportContainer(generateISO8601TimestampWithTimeZone(),"no comment",
-                macroData.toArray(new MacroJsonWrapper[0]), actionData.toArray(new ActionJsonWrapper[0]));
+        LinkedList<Layer> layerData =
+                new LinkedList<>();
+        for (Layer l : getUsedLayers(actionDataMappings, layerProvider, onImportError)) {
+            if (policy.allowImportExport(l))
+                layerData.add(l);
+        }
+
+
+        ExportContainer container = new ExportContainer(generateISO8601TimestampWithTimeZone(), "no comment",
+                macroData.toArray(new MacroJsonWrapper[0]), actionData.toArray(new ActionJsonWrapper[0]
+        ), layerData.toArray(new Layer[0]));
+        return container;
+    }
+
+    public static void exportToFile(MappingActionContainer actionContainer, MacroContainer macroContainer, File file,
+                                    ImportExportPolicy policy, Consumer<String> onImportError,
+                                    LayerProvider layerProvider) {
+        ExportContainer container =
+                toExportContainer(actionContainer, macroContainer, policy, onImportError, layerProvider);
         try {
             writeContainerToFile(container, file);
 
@@ -98,12 +119,33 @@ public class ContainerIO {
         }
     }
 
+    public static HashSet<Layer> getUsedLayers(Collection<MappingAction> actions, LayerProvider layerProvider,
+                                                Consumer<String> onMissingLayerError) {
+        HashSet<Layer> layers = new HashSet<>();
+        for (MappingAction a : actions) {
+            String inputLayer = getLayerIdFromInputOutput(a.getInput());
+            String outputLayer = getLayerIdFromInputOutput(a.getOutput());
+            if (inputLayer != null)
+                layers.add(layerProvider.getLayerById(inputLayer, onMissingLayerError));
+            if (outputLayer != null)
+                layers.add(layerProvider.getLayerById(outputLayer, onMissingLayerError));
+        }
+        return layers;
+    }
+
+    private static String getLayerIdFromInputOutput(Object io) {
+        if (io instanceof ILayerGetter) {
+            return ((ILayerGetter) io).getLayerId();
+        }
+        return null;
+    }
+
     private static boolean containsUnknownActions(ExportContainer data,
                                                   HashSet<UUID> knownActions,
                                                   HashSet<UUID> knownMacros, Consumer<String> onImportError) {
         //test all child actions
         for (MacroJsonWrapper macroData : data.getMacros()) {
-            for (UUID child: macroData.getStepIds()) {
+            for (UUID child : macroData.getStepIds()) {
                 if (knownMacros.contains(child))
                     continue; //we dont care about nested macros
                 if (!knownActions.contains(child)) {
@@ -120,6 +162,7 @@ public class ContainerIO {
     /**
      * check if one action is used by two or more macros. illegal behaviour, only macros can be shared between other
      * macros.
+     *
      * @param data
      * @param onImportError
      * @return
@@ -134,7 +177,7 @@ public class ContainerIO {
         }
         //test all child actions
         for (MacroJsonWrapper macroData : data.getMacros()) {
-            for (UUID child: macroData.getStepIds()) {
+            for (UUID child : macroData.getStepIds()) {
                 if (macrosSet.contains(child))
                     continue; //we dont care about nested macros
                 if (seenActions.contains(child)) {
@@ -149,13 +192,12 @@ public class ContainerIO {
     }
 
 
-
     public static void importFile(MappingActionContainer actionContainer, MacroContainer macroContainer, File file,
-                                  ImportExportPolicy policy, Consumer<String> onImportError) {
+                                  ImportExportPolicy policy, Consumer<String> onImportError, LayerProvider layerProvider) {
         try {
             ExportContainer data = readFromFile(file);
             if (containsSharedActions(data, onImportError)) {
-                assert false:"actions were used by multiple macros which goes against policy " +
+                assert false : "actions were used by multiple macros which goes against policy " +
                         "and" +
                         " will lead to undefined behaviour.";
                 createBackup(file.getPath());
@@ -179,7 +221,13 @@ public class ContainerIO {
                 }
             }
 
-            if (containsUnknownActions(data,actionsToImport,macrosToImport, onImportError)) {
+            for (Layer l: data.getLayers()) {
+                if (policy.allowImportExport(l)) {
+                    layerProvider.addLayer(l);
+                }
+            }
+
+            if (containsUnknownActions(data, actionsToImport, macrosToImport, onImportError)) {
                 assert false;
                 createBackup(file.getPath());
                 return;
@@ -211,8 +259,7 @@ public class ContainerIO {
             }
         } catch (NoSuchFileException e) {
             ; // not an error.
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             onImportError.accept(e.getMessage());
         }
     }

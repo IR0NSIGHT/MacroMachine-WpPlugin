@@ -9,14 +9,11 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionVa
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.ironsight.wpplugin.macromachine.threeDRendering.SurfaceObject;
-import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.dynmap.DynmapPreviewer;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,7 +22,6 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
-import static org.pepsoft.worldpainter.layers.plants.Plants.PUMPKIN;
 
 // top level panel that contains a selection list of macros/layers/input/output on the left, like a file browser
 // and an editor for the currently selected action on the right
@@ -36,6 +32,9 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     public static final String INPUT_OUTPUT_DESIGNER = "inputoutputdesigner";
     static final int MAX_LOG_LINES = 2000;
     static JTextArea logPanel;
+    private static DynmapPreviewer previewer = new DynmapPreviewer();
+    private static GlobalActionPanel INSTANCE;
+    private static SurfaceObject surfaceObject = new SurfaceObject();
     MacroTreePanel macroTreePanel;
     MacroDesigner macroDesigner;
     ActionEditor mappingEditor;
@@ -50,6 +49,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     private Window dialog;
     private JTabbedPane tabbedPane;
     private boolean showTabbedPane = true;
+    private boolean rerender3d = false;
+    private Dimension[] expandedStateSizes = new Dimension[2];
 
     public GlobalActionPanel(MacroApplicator applyToMap, Window dialog) {
         INSTANCE = this;
@@ -66,11 +67,19 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         MappingActionContainer.SetInstance(new MappingActionContainer("./src/main/resources/DefaultActions.json"));
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
-        ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(),
-                s -> ErrorPopUp("Can not load from savefile:\n"+saveFile.getPath()+"\n"+s));
+        ContainerIO.importFile(layers,
+                macros,
+                saveFile,
+                new ImportExportPolicy(),
+                s -> ErrorPopUp("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s),
+                InputOutputProvider.INSTANCE);
 
-        Runnable saveEverything = () -> ContainerIO.exportFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
-                new ImportExportPolicy(), System.err::println, InputOutputProvider.INSTANCE);
+        Runnable saveEverything = () -> ContainerIO.exportToFile(MappingActionContainer.getInstance(),
+                MacroContainer.getInstance(),
+                saveFile,
+                new ImportExportPolicy(),
+                System.err::println,
+                InputOutputProvider.INSTANCE);
         MappingActionContainer.getInstance().subscribe(saveEverything);
         MacroContainer.getInstance().subscribe(saveEverything);
 
@@ -146,6 +155,25 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         MacroMachinePlugin.error(message);
     }
 
+    private static DynmapPreviewer getPreviewer() {
+        return previewer;
+    }
+
+    public static void flagForChangedSurfaceObject() {
+        if (INSTANCE == null)
+            return; // gui wasnt opened before.
+        INSTANCE.rerender3d = true;
+        if (getPreviewer().isShowing())
+            SwingUtilities.invokeLater(() -> {
+                INSTANCE.doRender3d();
+            });
+
+    }
+
+    public static SurfaceObject getSurfaceObject() {
+        return surfaceObject;
+    }
+
     private void onUpdate() {
         MappingAction mapping = MappingActionContainer.getInstance().queryById(currentSelectedLayer);
         Macro macro = MacroContainer.getInstance().queryById(currentSelectedMacro);
@@ -180,30 +208,10 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         }
 
     }
-    private static DynmapPreviewer previewer = new DynmapPreviewer();
-    private static DynmapPreviewer getPreviewer() {
-        return previewer;
-    }
 
-    private boolean rerender3d = false;
-    private static GlobalActionPanel INSTANCE;
-    public static void flagForChangedSurfaceObject() {
-        if (INSTANCE == null)
-            return; // gui wasnt opened before.
-        INSTANCE.rerender3d = true;
-        if (getPreviewer().isShowing())
-            SwingUtilities.invokeLater(() -> { INSTANCE.doRender3d();});
-
-    }
     private void doRender3d() {
         getPreviewer().setObject(getSurfaceObject(), null); // immediate redraw
         rerender3d = false;
-    }
-
-
-    private static SurfaceObject surfaceObject = new SurfaceObject();
-    public static SurfaceObject getSurfaceObject() {
-        return  surfaceObject;
     }
 
     private void init() {
@@ -242,7 +250,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         logPanel.add(writeWindowScroll, BorderLayout.CENTER);
         writeWindowScroll.setPreferredSize(new Dimension(500, 600));
 
-        tabbedPane.add("log",logPanel);
+        tabbedPane.add("log", logPanel);
 
         previewer.setInclination(30);
         previewer.setObject(new SurfaceObject()/*empty dummy*/, null);
@@ -278,7 +286,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         onUpdate();
     }
 
-    private Dimension[] expandedStateSizes = new Dimension[2];
     private void showLargeVersion(boolean expanded) {
         //save current state
 

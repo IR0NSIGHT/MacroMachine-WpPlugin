@@ -1,10 +1,8 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.LayerObjectContainer;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.awt.*;
 import java.util.Objects;
@@ -51,8 +49,8 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     @Override
     public void prepareForDimension(Dimension dim) {
         if (layer == null) {
-            LayerObjectContainer.getInstance().setDimension(dim);
-            layer = LayerObjectContainer.getInstance().queryLayer(layerId);
+            layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
+            
         }
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
