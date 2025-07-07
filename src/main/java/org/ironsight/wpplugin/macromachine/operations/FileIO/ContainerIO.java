@@ -119,7 +119,7 @@ public class ContainerIO {
         }
     }
 
-    private static HashSet<Layer> getUsedLayers(Collection<MappingAction> actions, LayerProvider layerProvider,
+    public static HashSet<Layer> getUsedLayers(Collection<MappingAction> actions, LayerProvider layerProvider,
                                                 Consumer<String> onMissingLayerError) {
         HashSet<Layer> layers = new HashSet<>();
         for (MappingAction a : actions) {
@@ -193,7 +193,7 @@ public class ContainerIO {
 
 
     public static void importFile(MappingActionContainer actionContainer, MacroContainer macroContainer, File file,
-                                  ImportExportPolicy policy, Consumer<String> onImportError) {
+                                  ImportExportPolicy policy, Consumer<String> onImportError, LayerProvider layerProvider) {
         try {
             ExportContainer data = readFromFile(file);
             if (containsSharedActions(data, onImportError)) {
@@ -218,6 +218,12 @@ public class ContainerIO {
                 MappingAction action = toAction(actionData);
                 if (actionsInMacros.contains(action.getUid()) && policy.allowImportExport(action)) {
                     actionsToImport.add(action.getUid());
+                }
+            }
+
+            for (Layer l: data.getLayers()) {
+                if (policy.allowImportExport(l)) {
+                    layerProvider.addLayer(l);
                 }
             }
 

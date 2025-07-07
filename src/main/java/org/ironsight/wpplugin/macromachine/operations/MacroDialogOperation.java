@@ -4,8 +4,11 @@ import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
+import org.pepsoft.worldpainter.CustomLayerControllerWrapper;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.WorldPainterView;
+import org.pepsoft.worldpainter.layers.CustomLayer;
+import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.LayerManager;
 import org.pepsoft.worldpainter.operations.*;
 
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel.ErrorPopUp;
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
+import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO.getUsedLayers;
 
 public class MacroDialogOperation extends AbstractBrushOperation implements MacroApplicator {
     private static final String NAME = "Macro Operation";
@@ -34,7 +38,7 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
         ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(),
-                s -> ErrorPopUp("Can not load from savefile:\n"+saveFile.getPath()+"\n"+s));
+                s -> ErrorPopUp("Can not load from savefile:\n"+saveFile.getPath()+"\n"+s), InputOutputProvider.INSTANCE);
 
         Runnable saveEverything = () -> ContainerIO.exportToFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
                 new ImportExportPolicy(), System.err::println, InputOutputProvider.INSTANCE);
@@ -49,8 +53,6 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
 
     public void openDialog() {
         try {
-            LayerObjectContainer.getInstance().setWpLayerManager(LayerManager.getInstance());
-            LayerObjectContainer.getInstance().setDimension(this.getDimension());
             InputOutputProvider.INSTANCE.updateFrom(getDimension());
             JDialog dialog = createDialog(null, this);
             dialog.toFront();              // Bring it to the front
@@ -81,6 +83,7 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
                 return statistics;
             }
 
+
             // prepare actions for dimension
             for (MappingAction action : executionSteps) {
                 try {
@@ -100,6 +103,15 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
                     return statistics;
                 }
             }
+            CustomLayerControllerWrapper controller = new CustomLayerControllerWrapper();
+            for (Layer l : getUsedLayers(executionSteps, InputOutputProvider.INSTANCE, System.err::println) ) {
+                // add new layer to this .world
+                if (l instanceof CustomLayer && !controller.containsLayer(l)) {
+                    ((CustomLayer) l).setPalette("MacroMachine");
+                    controller.registerCustomLayer((CustomLayer) l, true);
+                }
+            }
+
             try {
                 ActionFilterIO.instance.prepareForDimension(getDimension());
             } catch (Exception e) {

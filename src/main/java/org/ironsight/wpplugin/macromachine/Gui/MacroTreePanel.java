@@ -473,7 +473,7 @@ public class MacroTreePanel extends JPanel {
                         selected,
                         new ConflictResolveImportPolicy(MacroContainer.getInstance(),
                                 MappingActionContainer.getInstance(), SwingUtilities.getWindowAncestor(this)),
-                        MacroMachinePlugin::error
+                        MacroMachinePlugin::error, InputOutputProvider.INSTANCE
                 );
             }
         }

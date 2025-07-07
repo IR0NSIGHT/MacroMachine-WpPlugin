@@ -1,11 +1,14 @@
 package org.pepsoft.worldpainter;
 
 import org.pepsoft.worldpainter.layers.CustomLayer;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CustomLayerControllerWrapper {
     private CustomLayerController controller;
@@ -16,6 +19,20 @@ public class CustomLayerControllerWrapper {
     public CustomLayerControllerWrapper() {
         this.controller = getCustomLayerController();
         assert controller != null;
+    }
+
+    public void registerCustomLayer(final CustomLayer layer, boolean activate) {
+        try {
+            Method method = controller.getClass().getDeclaredMethod("registerCustomLayer", CustomLayer.class, boolean.class);
+            method.setAccessible(true);
+            method.invoke(controller, layer, activate);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to call registerCustomLayer via reflection", e);
+        }
+    }
+
+    public boolean containsLayer(Layer layer) {
+        return new HashSet<>(getCustomLayers().stream().map(Layer::getId).collect(Collectors.toList())).contains(layer.getId());
     }
 
     public List<CustomLayer> getCustomLayers() {
