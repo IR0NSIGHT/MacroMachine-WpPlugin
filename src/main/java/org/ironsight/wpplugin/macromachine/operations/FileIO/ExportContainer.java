@@ -69,13 +69,12 @@ public class ExportContainer implements Serializable {
             @JsonProperty("actions") ActionJsonWrapper[] actions,
             @JsonSerialize(using = LayerArrayJavaSerializer.class)
             @JsonDeserialize(using =  LayerArrayJavaDeserializer.class)
-            @JsonProperty("layers") Layer[] layers
-            ) {
+            @JsonProperty("layers") Layer[] layers ) {
         this.exportDate = exportDate;
         this.comment = comment;
         this.macros = macros;
         this.actions = actions;
-        this.layers = layers;
+        this.layers = layers == null ? new Layer[0] : layers;
     }
 
     public String getExportDate() {
