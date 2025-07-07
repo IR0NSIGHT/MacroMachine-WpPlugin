@@ -10,18 +10,31 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class InputOutputProvider implements IMappingValueProvider {
+public class InputOutputProvider implements IMappingValueProvider,
+        org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider {
     public static InputOutputProvider INSTANCE = new InputOutputProvider();
     public final ArrayList<IMappingValue> setters = new ArrayList<>();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
     public ArrayList<IMappingValue> getters = new ArrayList<>();
+    HashSet<Layer> layers = new HashSet<>();
     private AllowedLayerSettings inputSettings = new AllowedLayerSettings(true, true, true, true);
     private AllowedLayerSettings outputSettings = new AllowedLayerSettings(true, true, true, true);
+    private Dimension dimension = null;
 
     private InputOutputProvider() {
         updateFrom(null);
+    }
+
+    @Override
+    public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
+        for (Layer l : getLayers())
+            if (l.getId().equals(layerId))
+                return l;
+        layerNotFoundError.accept("could not find layer with id=" + layerId);
+        return null;
     }
 
     void subscribe(Runnable runnable) {
@@ -73,6 +86,7 @@ public class InputOutputProvider implements IMappingValueProvider {
 
         Iterable<Layer> layers = getLayers();
         for (Layer l : layers) {
+            if (l instanceof CustomLayer) continue;
             if (l instanceof Annotations || l instanceof Biome) continue;
             if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
                 setters.add(new NibbleLayerSetter(l, false));
@@ -80,12 +94,13 @@ public class InputOutputProvider implements IMappingValueProvider {
             }
             if (l.dataSize.equals(Layer.DataSize.BIT)) {
                 setters.add(new BitLayerBinarySpraypaintApplicator(l, false));
-                setters.add(new BinaryLayerIO(l,false));
-                getters.add(new BinaryLayerIO(l,false));
+                setters.add(new BinaryLayerIO(l, false));
+                getters.add(new BinaryLayerIO(l, false));
             }
         }
         if (dimension != null) {
-            for (Layer l : dimension.getCustomLayers()) {
+            for (Layer l : layers) {
+                if (!(l instanceof CustomLayer)) continue;
                 if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
                     if (inputSettings.allowCustomLayers)
                         setters.add(new NibbleLayerSetter(l, true));
@@ -111,11 +126,11 @@ public class InputOutputProvider implements IMappingValueProvider {
         setters.add(new AnnotationSetter());
         getters.add(new AnnotationSetter());
 
-        getters.add(new TerrainHeightIO(-64,319));
-        setters.add(new TerrainHeightIO(-64,319));
+        getters.add(new TerrainHeightIO(-64, 319));
+        setters.add(new TerrainHeightIO(-64, 319));
 
-        getters.add(new WaterHeightAbsoluteIO(-64,319));
-        setters.add(new WaterHeightAbsoluteIO(-64,319));
+        getters.add(new WaterHeightAbsoluteIO(-64, 319));
+        setters.add(new WaterHeightAbsoluteIO(-64, 319));
 
         getters.add(new WaterDepthProvider());
         setters.add(new WaterDepthProvider());
@@ -130,8 +145,8 @@ public class InputOutputProvider implements IMappingValueProvider {
         getters.add(new VanillaBiomeProvider());
         setters.add(new VanillaBiomeProvider());
 
-        setters.add(new IntermediateValueIO(0,100,""));
-        getters.add(new IntermediateValueIO(0,100,""));
+        setters.add(new IntermediateValueIO(0, 100, ""));
+        getters.add(new IntermediateValueIO(0, 100, ""));
 
         getters.add(ActionFilterIO.instance);
         setters.add(ActionFilterIO.instance);
@@ -141,12 +156,10 @@ public class InputOutputProvider implements IMappingValueProvider {
         setters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
         getters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
 
-        getters.add(new PerlinNoiseIO(100, 100, 42069,5));
+        getters.add(new PerlinNoiseIO(100, 100, 42069, 5));
 
         notifyListeners();
     }
-
-
 
     private void notifyListeners() {
         for (Runnable r : genericNotifies)
@@ -171,11 +184,11 @@ public class InputOutputProvider implements IMappingValueProvider {
         return getItems().contains(item);
     }
 
-    private Dimension dimension= null;
     private Dimension getDimension() {
         return dimension;
     }
 
+    @Override
     public List<Layer> getLayers() {
         LinkedList<Layer> layers = new LinkedList<>();
         if (getDimension() != null) {
@@ -186,7 +199,14 @@ public class InputOutputProvider implements IMappingValueProvider {
             layers.addAll(Arrays.stream(new Layer[]{PineForest.INSTANCE, DeciduousForest.INSTANCE, Frost.INSTANCE,})
                     .collect(Collectors.toCollection(ArrayList::new)));
         }
-        return layers;
+        layers.add(Annotations.INSTANCE); // hardcoded bc not part by default
+        this.layers.addAll(layers);
+        return new ArrayList<>(this.layers);
+    }
+
+    @Override
+    public void addLayer(Layer layer) {
+        this.layers.add(layer);
     }
 
 
@@ -195,6 +215,7 @@ public class InputOutputProvider implements IMappingValueProvider {
         boolean allowDefaultLayers;
         boolean allowSelection;
         boolean allowAnnotations;
+
         public AllowedLayerSettings(boolean allowCustomLayers, boolean allowDefaultLayers, boolean allowSelection,
                                     boolean allowAnnotations) {
             this.allowCustomLayers = allowCustomLayers;
