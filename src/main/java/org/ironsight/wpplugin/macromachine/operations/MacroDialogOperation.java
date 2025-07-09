@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
@@ -124,7 +125,7 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
             statistics = ApplyAction.applyExecutionSteps(getDimension(), executionSteps, setProgress);
 
             ActionFilterIO.instance.releaseAfterApplication();
-            statistics.forEach(System.out::println);
+            statistics.forEach(f -> GlobalActionPanel.logMessage(f.toString()));
 
         } catch (Exception ex) {
             return statistics;

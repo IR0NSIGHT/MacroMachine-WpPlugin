@@ -98,23 +98,21 @@ public class InputOutputProvider implements IMappingValueProvider,
                 getters.add(new BinaryLayerIO(l, false));
             }
         }
-        if (dimension != null) {
-            for (Layer l : layers) {
-                if (!(l instanceof CustomLayer)) continue;
-                if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
-                    if (inputSettings.allowCustomLayers)
-                        setters.add(new NibbleLayerSetter(l, true));
-                    if (outputSettings.allowCustomLayers)
-                        getters.add(new NibbleLayerSetter(l, true));
+        for (Layer l : layers) {
+            if (!(l instanceof CustomLayer)) continue;
+            if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
+                if (inputSettings.allowCustomLayers)
+                    setters.add(new NibbleLayerSetter(l, true));
+                if (outputSettings.allowCustomLayers)
+                    getters.add(new NibbleLayerSetter(l, true));
+            }
+            if (l.dataSize.equals(Layer.DataSize.BIT)) {
+                if (outputSettings.allowCustomLayers) {
+                    setters.add(new BitLayerBinarySpraypaintApplicator(l, true));
+                    setters.add(new BinaryLayerIO(l, true));
                 }
-                if (l.dataSize.equals(Layer.DataSize.BIT)) {
-                    if (outputSettings.allowCustomLayers) {
-                        setters.add(new BitLayerBinarySpraypaintApplicator(l, true));
-                        setters.add(new BinaryLayerIO(l, true));
-                    }
-                    if (inputSettings.allowCustomLayers)
-                        getters.add(new BinaryLayerIO(l, true));
-                }
+                if (inputSettings.allowCustomLayers)
+                    getters.add(new BinaryLayerIO(l, true));
             }
         }
         getters.add(new ShadowMapIO());
@@ -207,6 +205,7 @@ public class InputOutputProvider implements IMappingValueProvider,
     @Override
     public void addLayer(Layer layer) {
         this.layers.add(layer);
+        notifyListeners();
     }
 
 
