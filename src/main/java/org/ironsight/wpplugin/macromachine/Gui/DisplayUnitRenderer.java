@@ -16,7 +16,7 @@ import java.util.function.Function;
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
 
-public class SaveableActionRenderer extends DefaultTreeCellRenderer
+public class DisplayUnitRenderer extends DefaultTreeCellRenderer
         implements TableCellRenderer, ListCellRenderer<Object> {
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -26,7 +26,7 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     JLabel actionType = new JLabel();
     JLabel iconLabel = new JLabel();
     private final Function<IDisplayUnit, Boolean> isItemValid;
-    public SaveableActionRenderer(Function<IDisplayUnit, Boolean> isItemValid) {
+    public DisplayUnitRenderer(Function<IDisplayUnit, Boolean> isItemValid) {
         this.isItemValid = isItemValid;
         init();
     }

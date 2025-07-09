@@ -108,7 +108,7 @@ public class SaveableActionPickerDialog extends JDialog {
     private JTable createTable(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setDefaultRenderer(Object.class, new SaveableActionRenderer(f -> false));
+        table.setDefaultRenderer(Object.class, new DisplayUnitRenderer(f -> false));
         return table;
     }
 
