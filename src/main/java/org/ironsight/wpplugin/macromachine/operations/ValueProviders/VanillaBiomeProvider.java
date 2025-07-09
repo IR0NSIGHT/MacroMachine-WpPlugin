@@ -1,9 +1,8 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
+import org.pepsoft.worldpainter.biomeschemes.Minecraft1_21Biomes;
 import org.pepsoft.worldpainter.layers.Biome;
 
 import java.awt.*;
@@ -12,7 +11,7 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     String[] biomes;
 
     public VanillaBiomeProvider() {
-        biomes = Minecraft1_20Biomes.BIOME_NAMES.clone();
+        biomes = Minecraft1_21Biomes.BIOME_NAMES.clone();
     }
     @Override
     public String getToolTipText() {
