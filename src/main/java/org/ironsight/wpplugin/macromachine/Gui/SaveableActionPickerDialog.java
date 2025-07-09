@@ -1,11 +1,14 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
 
 import javax.annotation.Nullable;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,42 +50,57 @@ public class SaveableActionPickerDialog extends JDialog {
 
     private void init(ArrayList<SaveableAction> items, Consumer<SaveableAction> onSubmit,
                       Collection<SaveableAction> specialTopAction) {
-        JList<SaveableAction> list = new JList<>();
-        DefaultListModel<SaveableAction> listModel = new DefaultListModel<>();
-        list.setModel(listModel);
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        list.setCellRenderer(new SaveableActionRenderer(MacroTreePanel::isValidItem));
+        if (specialTopAction == null) {
+            specialTopAction = new ArrayList<>();
+        }
 
+        int rowCount = items.size() + specialTopAction.size();
+        DefaultTableModel listModel = new DefaultTableModel(new Object[rowCount][1], new String[]{"Items"}){
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        JTable table = new JTable(listModel);
 
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setDefaultRenderer(Object.class, new SaveableActionRenderer(f -> false));
 
-        items.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
+        int i;
+        for (i = 0; i < items.size(); i++) {
+            listModel.setValueAt(items.get(i), i, 0);
+        }
+
         if (specialTopAction != null) {
-            for (SaveableAction a : specialTopAction) {
-                listModel.addElement(a);
+            for (Object action : specialTopAction) {
+                listModel.setValueAt(action, i++, 0);
             }
         }
-        for (SaveableAction mapping : items) {
-            listModel.addElement(mapping);
-        }
+
+        System.out.println("item at (7,0) =" + listModel.getValueAt(7,0));
+
         JButton okButton = new JButton("OK");
         okButton.addActionListener(e -> {
-            SaveableAction selected = list.getSelectedValue();
+            if (table.getSelectedRows() == null || table.getSelectedRows().length == 0)
+                return;
+            SaveableAction selected = (SaveableAction)table.getValueAt(table.getSelectedRow(),0);
             onSubmit.accept(selected);
             this.dispose();
         });
-        okButton.setEnabled(false);
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(e -> {
             this.dispose();
         });
-        list.addListSelectionListener(
-                e -> {
-                    okButton.setEnabled(list.getSelectedValue() != null);
 
-                }
-        );
+        for (int ix = 0; ix < rowCount; ix++) {
+            int maxHeight = 0;
+            final TableCellRenderer renderer = table.getCellRenderer(ix, 0);
+            maxHeight = Math.max(maxHeight, table.prepareRenderer(renderer, ix, 0).getPreferredSize().height);
+            table.setRowHeight(ix, maxHeight);
+        }
+
         JPanel panel = new JPanel(new BorderLayout());
-        JScrollPane pane = new JScrollPane(list);
+        JScrollPane pane = new JScrollPane(table);
         panel.add(pane, BorderLayout.CENTER);
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(okButton);
