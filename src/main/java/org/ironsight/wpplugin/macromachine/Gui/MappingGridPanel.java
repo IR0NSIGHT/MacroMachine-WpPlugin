@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.checkerframework.checker.units.qual.C;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 
 import javax.swing.*;

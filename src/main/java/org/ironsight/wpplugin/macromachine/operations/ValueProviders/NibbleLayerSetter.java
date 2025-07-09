@@ -180,7 +180,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public String toString() {
-        return layerName;
+        return getName();
     }
 
     @Override

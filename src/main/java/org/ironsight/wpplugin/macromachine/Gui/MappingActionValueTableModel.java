@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.checkerframework.checker.units.qual.A;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
@@ -11,7 +10,6 @@ import javax.swing.table.TableModel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.Map;
 
 class MappingActionValueTableModel implements TableModel {
     private static final int INPUT_COLUMN_IDX = 0;
