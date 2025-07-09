@@ -150,6 +150,6 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
 
     @Override
     public String toString() {
-        return layerName;
+        return getName();
     }
 }

@@ -7,24 +7,23 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutput
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 
 public class LayerMappingTopPanel extends LayerMappingPanel {
-    public static final Font header1Font = new Font("SansSerif", Font.PLAIN, 18);
-    public static final Font header2Font = new Font("SansSerif", Font.PLAIN, 12);
-    public static final Font macroFont = new Font("SansSerif", Font.PLAIN, 18);
-    public static final Font actionFont = new Font("SansSerif", Font.PLAIN, 18);
-    public static final Font ioFont = new Font("SansSerif", Font.ITALIC, 18);
+    private static final String defaultFont = "SansSerif";
+    public static final Font header1Font = new Font(defaultFont, Font.PLAIN, 14);
+    public static final Font header2Font = new Font(defaultFont, Font.PLAIN, 14);
+    public static final Font macroFont = new Font(defaultFont, Font.PLAIN, 14);
+    public static final Font actionFont = new Font(defaultFont, Font.PLAIN, 14);
+    public static final Font ioFont = new Font(defaultFont, Font.PLAIN, 14);
 
     boolean isInit;
     private JTextField description;
     private JTextField nameField;
     private ActionTypeComboBox actionTypeComboBox;
-    private InputGetterComboBox outputSelect;
-    private InputGetterComboBox inputSelect;
+    private IoSelectLabel outputSelect;
+    private IoSelectLabel inputSelect;
 
     public LayerMappingTopPanel() {
         super();
@@ -95,7 +94,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
 
         JPanel comboboxes = new JPanel(new GridLayout(0, 3));
         this.add(comboboxes, BorderLayout.CENTER);
-        inputSelect = new InputGetterComboBox(selected -> {
+        inputSelect = new IoSelectLabel(selected -> {
             if (isAllowEvents()) this.updateFromInputs();
         }, InputOutputProvider.INSTANCE.asInputProvider());
         inputSelect.setBorder(BorderFactory.createTitledBorder("Input value"));
@@ -111,16 +110,12 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
             if (isAllowEvents()) SwingUtilities.invokeLater(this::updateFromInputs);
         });
 
-        outputSelect = new InputGetterComboBox(selected -> {
+        outputSelect = new IoSelectLabel(selected -> {
             if (isAllowEvents()) this.updateFromInputs();
         }, InputOutputProvider.INSTANCE.asOutputProvider());
         outputSelect.setBorder(BorderFactory.createTitledBorder("Output value"));
         comboboxes.add(outputSelect);
         outputSelect.setFont(header2Font);
-        outputSelect.addActionListener(e -> {
-            if (isAllowEvents()) SwingUtilities.invokeLater(this::updateFromInputs);
-        });
-
         isInit = false;
     }
 

@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.prefs.Preferences;
 
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 
@@ -52,6 +53,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     private boolean rerender3d = false;
     private Dimension[] expandedStateSizes = new Dimension[2];
 
+
     public GlobalActionPanel(MacroApplicator applyToMap, Window dialog) {
         INSTANCE = this;
         this.applyMacro = applyToMap;
@@ -82,7 +84,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
                 InputOutputProvider.INSTANCE);
         MappingActionContainer.getInstance().subscribe(saveEverything);
         MacroContainer.getInstance().subscribe(saveEverything);
-
+        InputOutputProvider.INSTANCE.updateFrom(null);
         // Create and show a JFrame
         JFrame frame = new JFrame("Main Window");
         frame.setSize(500, 500);
@@ -242,7 +244,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         this.add(tabbedPane, BorderLayout.CENTER);
 
         JPanel logPanel = new JPanel(new BorderLayout());
-        GlobalActionPanel.logPanel = new JTextArea();
+        GlobalActionPanel.logPanel = new JTextArea("");
         GlobalActionPanel.logPanel.setEditable(false); // Make it read-only
         GlobalActionPanel.logPanel.setFont(new Font("Monospaced", Font.PLAIN, 12));
 

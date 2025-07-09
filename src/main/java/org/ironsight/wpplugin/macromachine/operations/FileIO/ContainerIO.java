@@ -145,6 +145,8 @@ public class ContainerIO {
                                                   HashSet<UUID> knownMacros, Consumer<String> onImportError) {
         //test all child actions
         for (MacroJsonWrapper macroData : data.getMacros()) {
+            if (!knownMacros.contains(macroData.getSelfId()))
+                continue;
             for (UUID child : macroData.getStepIds()) {
                 if (knownMacros.contains(child))
                     continue; //we dont care about nested macros

@@ -16,7 +16,7 @@ import java.util.function.Function;
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
 
-public class SaveableActionRenderer extends DefaultTreeCellRenderer
+public class DisplayUnitRenderer extends DefaultTreeCellRenderer
         implements TableCellRenderer, ListCellRenderer<Object> {
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -26,7 +26,7 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     JLabel actionType = new JLabel();
     JLabel iconLabel = new JLabel();
     private final Function<IDisplayUnit, Boolean> isItemValid;
-    public SaveableActionRenderer(Function<IDisplayUnit, Boolean> isItemValid) {
+    public DisplayUnitRenderer(Function<IDisplayUnit, Boolean> isItemValid) {
         this.isItemValid = isItemValid;
         init();
     }
@@ -34,12 +34,13 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     private void init(){
         JPanel iconAndName = new JPanel(new FlowLayout(FlowLayout.LEFT));
         iconAndName.setOpaque(false);
-        iconLabel.setPreferredSize(new Dimension(20, 20));
+        iconLabel.setPreferredSize(new Dimension(15, 15));
         iconAndName.add(iconLabel);
         iconAndName.add(nameLabel);
 
         panel.add(iconAndName, BorderLayout.WEST);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
+        int border = 3;
+        panel.setBorder(BorderFactory.createEmptyBorder(border,border,border,border));
         nameLabel.setFont(LayerMappingTopPanel.header1Font);
         nameLabel.setVerticalAlignment(JLabel.CENTER);
 
@@ -69,6 +70,7 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
             panel.setToolTipText(lm.getToolTipText());
             nameLabel.setFont(actionFont);
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.ACTION));
+            System.out.println("rendering " + lm.toString());
         } else if (mapping instanceof Macro) {
             Macro lm = (Macro) mapping;
             input.setText("");
@@ -113,14 +115,15 @@ public class SaveableActionRenderer extends DefaultTreeCellRenderer
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
-        updateTo(value, ((SaveableAction)value).isActive());
+        boolean active = value instanceof SaveableAction ?((SaveableAction) value).isActive() : true;
+        updateTo(value, active);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
         } else panel.setBackground(DEFAULT_BACKGROUND);
         return panel;
     }
 
-    public Component renderFor(SaveableAction value, boolean isSelected) {
+    public Component renderFor(IDisplayUnit value, boolean isSelected) {
         updateTo(value, true);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);

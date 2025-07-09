@@ -3,7 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
-import org.pepsoft.worldpainter.biomeschemes.Minecraft1_20Biomes;
+import org.pepsoft.worldpainter.biomeschemes.Minecraft1_21Biomes;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Biome;
 import org.pepsoft.worldpainter.layers.Frost;
@@ -411,14 +411,14 @@ public class ProviderTest {
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         io.prepareForDimension(dim);
 
-        dim.setLayerValueAt(Biome.INSTANCE, 17,18, Minecraft1_20Biomes.BIOME_DESERT);
-        assertEquals(Minecraft1_20Biomes.BIOME_DESERT, io.getValueAt(dim,17,18));
-        dim.setLayerValueAt(Biome.INSTANCE, 17,18, Minecraft1_20Biomes.BIOME_BADLANDS);
-        assertEquals(Minecraft1_20Biomes.BIOME_BADLANDS, io.getValueAt(dim,17,18));
+        dim.setLayerValueAt(Biome.INSTANCE, 17,18, Minecraft1_21Biomes.BIOME_DESERT);
+        assertEquals(Minecraft1_21Biomes.BIOME_DESERT, io.getValueAt(dim,17,18));
+        dim.setLayerValueAt(Biome.INSTANCE, 17,18, Minecraft1_21Biomes.BIOME_BADLANDS);
+        assertEquals(Minecraft1_21Biomes.BIOME_BADLANDS, io.getValueAt(dim,17,18));
 
-        io.setValueAt(dim, 19,20, Minecraft1_20Biomes.BIOME_BADLANDS);
-        assertEquals(Minecraft1_20Biomes.BIOME_BADLANDS, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
-        io.setValueAt(dim, 19,20, Minecraft1_20Biomes.BIOME_BIRCH_FOREST);
-        assertEquals(Minecraft1_20Biomes.BIOME_BIRCH_FOREST, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
+        io.setValueAt(dim, 19,20, Minecraft1_21Biomes.BIOME_BADLANDS);
+        assertEquals(Minecraft1_21Biomes.BIOME_BADLANDS, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
+        io.setValueAt(dim, 19,20, Minecraft1_21Biomes.BIOME_BIRCH_FOREST);
+        assertEquals(Minecraft1_21Biomes.BIOME_BIRCH_FOREST, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
     }
 }

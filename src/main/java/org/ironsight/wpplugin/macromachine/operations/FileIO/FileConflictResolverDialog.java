@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.FileIO;
 
 import org.ironsight.wpplugin.macromachine.Gui.MacroTreePanel;
-import org.ironsight.wpplugin.macromachine.Gui.SaveableActionRenderer;
+import org.ironsight.wpplugin.macromachine.Gui.DisplayUnitRenderer;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
@@ -65,9 +65,9 @@ public class FileConflictResolverDialog extends JDialog {
         this.add(panel);
 
         JPanel center = new JPanel(new GridLayout(3, 1));
-        JPanel originalPanel = (JPanel) new SaveableActionRenderer(MacroTreePanel::isValidItem).renderFor(original, false);
+        JPanel originalPanel = (JPanel) new DisplayUnitRenderer(MacroTreePanel::isValidItem).renderFor(original, false);
         originalPanel.setBorder(BorderFactory.createTitledBorder("Existing:"));
-        JPanel importedPanel = (JPanel) new SaveableActionRenderer(MacroTreePanel::isValidItem).renderFor(imported, false);
+        JPanel importedPanel = (JPanel) new DisplayUnitRenderer(MacroTreePanel::isValidItem).renderFor(imported, false);
         importedPanel.setBorder(BorderFactory.createTitledBorder("Imported:"));
 
         JLabel conflictLabel =
