@@ -4,8 +4,6 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 import javax.swing.*;
 import javax.swing.event.ListDataListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.*;
@@ -20,7 +18,7 @@ public class InputGetterComboBox extends JComboBox<IMappingValue> {
         this.provider = provider;
         this.model = new IOComboBoxModel();
         this.setModel(model);
-        this.setRenderer(new SaveableActionRenderer(MacroTreePanel::isValidItem));
+        this.setRenderer(new DisplayUnitRenderer(MacroTreePanel::isValidItem));
         provider.subscribeToUpdates(this::updateSelf);
         updateSelf();
         this.addFocusListener(new FocusListener() {

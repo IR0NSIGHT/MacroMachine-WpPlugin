@@ -7,11 +7,9 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -88,7 +86,7 @@ public class MacroDesigner extends JPanel {
                 return false; // Disable editing
             }
         };
-        table.setDefaultRenderer(Object.class, new SaveableActionRenderer(MacroTreePanel::isValidItem));
+        table.setDefaultRenderer(Object.class, new DisplayUnitRenderer(MacroTreePanel::isValidItem));
         //FIXME add actual
         // check if
         // action is usable
