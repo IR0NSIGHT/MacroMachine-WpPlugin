@@ -6,9 +6,23 @@ import org.ironsight.wpplugin.macromachine.operations.MacroApplicator;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowEvent;
+import java.util.prefs.Preferences;
 
 public class MacroMachineWindow extends JDialog {
-    String lastDirectoryPicked = System.getProperty("user.home");
+    private static final Preferences prefs = Preferences.userRoot().node("irn_MacroMachine");
+
+    public String getLastDirectoryPicked() {
+        return prefs.get("lastDirectoryPicked",System.getProperty("user.home"));
+    }
+
+    public void setLastDirectoryPicked(String lastDirectoryPicked) {
+        prefs.put("lastDirectoryPicked",lastDirectoryPicked);
+    }
+
+    public static void setDialog(MacroMachineWindow dialog) {
+        MacroMachineWindow.dialog = dialog;
+    }
+
     public static MacroMachineWindow getDialog() {
         return dialog;
     }
