@@ -244,7 +244,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         this.add(tabbedPane, BorderLayout.CENTER);
 
         JPanel logPanel = new JPanel(new BorderLayout());
-        GlobalActionPanel.logPanel = new JTextArea();
+        GlobalActionPanel.logPanel = new JTextArea("this is a log panel\nwith\nmany\nlines");
         GlobalActionPanel.logPanel.setEditable(false); // Make it read-only
         GlobalActionPanel.logPanel.setFont(new Font("Monospaced", Font.PLAIN, 12));
 
