@@ -114,14 +114,15 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
                                                    int row, int column) {
-        updateTo(value, ((SaveableAction)value).isActive());
+        boolean active = value instanceof SaveableAction ?((SaveableAction) value).isActive() : true;
+        updateTo(value, active);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
         } else panel.setBackground(DEFAULT_BACKGROUND);
         return panel;
     }
 
-    public Component renderFor(SaveableAction value, boolean isSelected) {
+    public Component renderFor(IDisplayUnit value, boolean isSelected) {
         updateTo(value, true);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
