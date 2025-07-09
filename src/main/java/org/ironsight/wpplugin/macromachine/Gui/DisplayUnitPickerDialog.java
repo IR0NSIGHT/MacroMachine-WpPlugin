@@ -115,11 +115,13 @@ public class DisplayUnitPickerDialog extends JDialog {
     }
 
     private void resizeRowHeights(JTable table) {
-        for (int row = 0; row < table.getRowCount(); row++) {
-            TableCellRenderer renderer = table.getCellRenderer(row, 0);
-            Component comp = table.prepareRenderer(renderer, row, 0);
-            table.setRowHeight(row, comp.getPreferredSize().height);
-        }
+        if (table.getRowCount() < 1)
+            return;
+        TableCellRenderer renderer = table.getCellRenderer(0, 0);
+        Component comp = table.prepareRenderer(renderer, 0, 0);
+        int height = comp.getPreferredSize().height;
+        for (int i = 0;i < table.getRowCount(); i++)
+            table.setRowHeight(i, height);
     }
 
     private JButton createOkButton(JTable table, Consumer<IDisplayUnit> onSubmit) {
