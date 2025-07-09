@@ -2,7 +2,6 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
-import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 
 import javax.swing.*;
@@ -18,6 +17,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+
+import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
 
 public class DisplayUnitPickerDialog extends JDialog {
 
@@ -109,7 +110,7 @@ public class DisplayUnitPickerDialog extends JDialog {
     private JTable createTable(DefaultTableModel model) {
         JTable table = new JTable(model);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setDefaultRenderer(Object.class, new DisplayUnitRenderer(f -> false));
+        table.setDefaultRenderer(Object.class, new DisplayUnitRenderer(f -> true));
         return table;
     }
 
@@ -126,7 +127,7 @@ public class DisplayUnitPickerDialog extends JDialog {
         okButton.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
             if (selectedRow >= 0) {
-                SaveableAction selected = (SaveableAction) table.getValueAt(selectedRow, 0);
+                IDisplayUnit selected = (IDisplayUnit) table.getValueAt(selectedRow, 0);
                 onSubmit.accept(selected);
                 dispose();
             }
@@ -157,7 +158,7 @@ public class DisplayUnitPickerDialog extends JDialog {
 
     private JPanel createSearchPanel(JTextField searchField) {
         JLabel searchIcon = new JLabel("\uD83D\uDD0D"); // "🔍"
-        searchIcon.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        searchIcon.setFont(header1Font);
 
         JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
         searchPanel.add(searchIcon, BorderLayout.WEST);
