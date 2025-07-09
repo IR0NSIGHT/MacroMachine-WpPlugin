@@ -23,14 +23,12 @@ import static org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel.ErrorPop
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO.getUsedLayers;
 
-public class MacroDialogOperation extends AbstractBrushOperation implements MacroApplicator {
+public class MacroDialogOperation extends AbstractOperation implements MacroApplicator {
     private static final String NAME = "Macro Operation";
     private static final String DESCRIPTION = "Create complex reusable global operations to automate your workflow.";
-    private static final String ID = "macro_dialog_operation";
-    private WorldPainterView mWorldPainterView;
 
     public MacroDialogOperation() {
-        super(NAME, DESCRIPTION, null, ID,"macrooperation"); //one shot op
+        super(NAME, DESCRIPTION, "macrooperation"); //one shot op
         File saveFile = new File(MacroContainer.getActionsFilePath()+"/savefile.macro");
 
         MacroContainer.SetInstance(new MacroContainer(null));
@@ -46,10 +44,6 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
 
         MappingActionContainer.getInstance().subscribe(saveEverything);
         MacroContainer.getInstance().subscribe(saveEverything);
-    }
-
-    public Dimension getDimension() {
-        return getView().getDimension();
     }
 
     public void openDialog() {
@@ -144,12 +138,6 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
     protected void deactivate() {
 
     }
-
-    @Override
-    protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel){
-
-    }
-
 
    /* @Override
     public void setView(WorldPainterView view) {
