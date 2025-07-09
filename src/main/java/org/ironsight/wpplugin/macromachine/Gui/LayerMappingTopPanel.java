@@ -13,11 +13,12 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 
 public class LayerMappingTopPanel extends LayerMappingPanel {
-    public static final Font header1Font = new Font("SansSerif", Font.PLAIN, 18);
-    public static final Font header2Font = new Font("SansSerif", Font.PLAIN, 12);
-    public static final Font macroFont = new Font("SansSerif", Font.PLAIN, 18);
-    public static final Font actionFont = new Font("SansSerif", Font.PLAIN, 18);
-    public static final Font ioFont = new Font("SansSerif", Font.ITALIC, 18);
+    private static final String defaultFont = "Verdana";
+    public static final Font header1Font = new Font(defaultFont, Font.PLAIN, 13);
+    public static final Font header2Font = new Font(defaultFont, Font.PLAIN, 13);
+    public static final Font macroFont = new Font(defaultFont, Font.PLAIN, 13);
+    public static final Font actionFont = new Font(defaultFont, Font.PLAIN, 13);
+    public static final Font ioFont = new Font(defaultFont, Font.ITALIC, 13);
 
     boolean isInit;
     private JTextField description;
