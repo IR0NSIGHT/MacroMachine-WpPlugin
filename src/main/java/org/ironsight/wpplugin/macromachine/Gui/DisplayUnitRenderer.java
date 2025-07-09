@@ -34,12 +34,13 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
     private void init(){
         JPanel iconAndName = new JPanel(new FlowLayout(FlowLayout.LEFT));
         iconAndName.setOpaque(false);
-        iconLabel.setPreferredSize(new Dimension(20, 20));
+        iconLabel.setPreferredSize(new Dimension(15, 15));
         iconAndName.add(iconLabel);
         iconAndName.add(nameLabel);
 
         panel.add(iconAndName, BorderLayout.WEST);
-        panel.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
+        int border = 3;
+        panel.setBorder(BorderFactory.createEmptyBorder(border,border,border,border));
         nameLabel.setFont(LayerMappingTopPanel.header1Font);
         nameLabel.setVerticalAlignment(JLabel.CENTER);
 
