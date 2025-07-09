@@ -11,7 +11,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 
 public class LayerMappingTopPanel extends LayerMappingPanel {
-    private static final String defaultFont = "Verdana";
+    private static final String defaultFont = "SansSerif";
     public static final Font header1Font = new Font(defaultFont, Font.PLAIN, 13);
     public static final Font header2Font = new Font(defaultFont, Font.PLAIN, 13);
     public static final Font macroFont = new Font(defaultFont, Font.PLAIN, 13);
