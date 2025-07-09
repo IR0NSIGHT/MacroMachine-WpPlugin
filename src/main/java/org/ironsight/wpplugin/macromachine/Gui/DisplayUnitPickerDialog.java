@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.Gui;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -18,12 +19,12 @@ import java.util.Collections;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-public class SaveableActionPickerDialog extends JDialog {
+public class DisplayUnitPickerDialog extends JDialog {
 
-    public SaveableActionPickerDialog(ArrayList<SaveableAction> layerMappings,
-                                      Consumer<SaveableAction> onSubmit,
-                                      Collection<SaveableAction> topActions,
-                                      Component parent) {
+    public DisplayUnitPickerDialog(ArrayList<IDisplayUnit> layerMappings,
+                                   Consumer<IDisplayUnit> onSubmit,
+                                   Collection<IDisplayUnit> topActions,
+                                   Component parent) {
         super();
         init(layerMappings, onSubmit, topActions);
         setModal(true);
@@ -38,22 +39,22 @@ public class SaveableActionPickerDialog extends JDialog {
         MappingActionContainer container = new MappingActionContainer(null);
         for (int i = 0; i < 20; i++) MappingActionContainer.addDefaultMappings(container);
 
-        ArrayList<SaveableAction> layerMappings = new ArrayList<>(container.queryAll());
+        ArrayList<IDisplayUnit> layerMappings = new ArrayList<>(container.queryAll());
 
         JFrame frame = new JFrame("Select Layer Mapping");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
 
-        Dialog dlg = new SaveableActionPickerDialog(layerMappings,
+        Dialog dlg = new DisplayUnitPickerDialog(layerMappings,
                 System.out::println,
                 Collections.singleton(MappingAction.getNewEmptyAction()),
                 frame);
         dlg.setVisible(true);
     }
 
-    private void init(ArrayList<SaveableAction> items,
-                      Consumer<SaveableAction> onSubmit,
-                      Collection<SaveableAction> specialTopAction) {
+    private void init(ArrayList<IDisplayUnit> items,
+                      Consumer<IDisplayUnit> onSubmit,
+                      Collection<IDisplayUnit> specialTopAction) {
 
         DefaultTableModel tableModel = createTableModel(items, specialTopAction);
         JTable table = createTable(tableModel);
@@ -83,8 +84,8 @@ public class SaveableActionPickerDialog extends JDialog {
         SwingUtilities.invokeLater(searchField::requestFocus);
     }
 
-    private DefaultTableModel createTableModel(ArrayList<SaveableAction> items,
-                                               Collection<SaveableAction> topActions) {
+    private DefaultTableModel createTableModel(ArrayList<IDisplayUnit> items,
+                                               Collection<IDisplayUnit> topActions) {
         int rowCount = items.size() + (topActions != null ? topActions.size() : 0);
         DefaultTableModel model = new DefaultTableModel(new Object[rowCount][1], new String[]{"Items"}) {
             @Override
@@ -94,11 +95,11 @@ public class SaveableActionPickerDialog extends JDialog {
         };
 
         int i = 0;
-        for (SaveableAction item : items) {
+        for (IDisplayUnit item : items) {
             model.setValueAt(item, i++, 0);
         }
         if (topActions != null) {
-            for (SaveableAction action : topActions) {
+            for (IDisplayUnit action : topActions) {
                 model.setValueAt(action, i++, 0);
             }
         }
@@ -120,7 +121,7 @@ public class SaveableActionPickerDialog extends JDialog {
         }
     }
 
-    private JButton createOkButton(JTable table, Consumer<SaveableAction> onSubmit) {
+    private JButton createOkButton(JTable table, Consumer<IDisplayUnit> onSubmit) {
         JButton okButton = new JButton("OK");
         okButton.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();

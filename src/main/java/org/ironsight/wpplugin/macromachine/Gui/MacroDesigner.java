@@ -175,8 +175,8 @@ public class MacroDesigner extends JPanel {
         prepareTableModel();
     }
 
-    private Collection<SaveableAction> getDefaultFiltersAndEmptyAction() {
-        LinkedList<SaveableAction> items = new LinkedList<>();
+    private Collection<IDisplayUnit> getDefaultFiltersAndEmptyAction() {
+        LinkedList<IDisplayUnit> items = new LinkedList<>();
         items.add(MappingAction.getNewEmptyAction());
         items.add(new MappingAction(new AlwaysIO(),
                 ActionFilterIO.instance,
@@ -336,14 +336,14 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onAddMapping() {
-        ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
+        ArrayList<IDisplayUnit> macrosAndActions = new ArrayList<>();
         macrosAndActions.addAll(MappingActionContainer.getInstance().queryAll());
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
-        JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
+        JDialog dialog = new DisplayUnitPickerDialog(macrosAndActions, selected -> {
             Macro macro = this.macro;
 
             ArrayList<Integer> newSelection = new ArrayList<>();
-            Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), selected,
+            Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), (SaveableAction) selected,
                     () -> MappingActionContainer.getInstance().addMapping(),
                     a -> MappingActionContainer.getInstance().updateMapping(a, MacroMachinePlugin::error),
                     table.getSelectedRows(), newSelection);
@@ -424,14 +424,14 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onChangeMapping() {
-        ArrayList<SaveableAction> macrosAndActions = new ArrayList<>();
+        ArrayList<IDisplayUnit> macrosAndActions = new ArrayList<>();
         macrosAndActions.addAll(MappingActionContainer.getInstance().queryAll());
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
-        JDialog dialog = new SaveableActionPickerDialog(macrosAndActions, selected -> {
+        JDialog dialog = new DisplayUnitPickerDialog(macrosAndActions, selected -> {
             if (selected instanceof Macro) {
-                setMacro(macro.withReplacedUUIDs(this.table.getSelectedRows(), selected.getUid()), true);
-            } else {
-                if (selected.getUid() == null)
+                setMacro(macro.withReplacedUUIDs(this.table.getSelectedRows(), ((Macro)selected).getUid()), true);
+            } else if (selected instanceof MappingAction){
+                if (((MappingAction)selected).getUid() == null)
                     selected = MappingActionContainer.getInstance().addMapping();
                 Macro temp = this.macro;
                 for (int targetIdx : this.table.getSelectedRows()) {
