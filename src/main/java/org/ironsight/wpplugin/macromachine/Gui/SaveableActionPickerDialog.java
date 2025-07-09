@@ -1,113 +1,168 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
 
-import javax.annotation.Nullable;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 public class SaveableActionPickerDialog extends JDialog {
-    public SaveableActionPickerDialog(ArrayList<SaveableAction> layerMappings, Consumer<SaveableAction> onSubmit,
-                                      Collection<SaveableAction> topActions, Component parent) {
+
+    public SaveableActionPickerDialog(ArrayList<SaveableAction> layerMappings,
+                                      Consumer<SaveableAction> onSubmit,
+                                      Collection<SaveableAction> topActions,
+                                      Component parent) {
         super();
         init(layerMappings, onSubmit, topActions);
-        this.setModal(true);
-        this.toFront();
-        this.setAlwaysOnTop(true);
-        this.pack();
+        setModal(true);
+        setAlwaysOnTop(true);
+        pack();
         if (parent != null) {
-            Point parentLocation = parent.getLocationOnScreen();
-            this.setLocation(parentLocation);
+            setLocation(parent.getLocationOnScreen());
         }
-
     }
 
     public static void main(String[] args) {
         MappingActionContainer container = new MappingActionContainer(null);
+        for (int i = 0; i < 20; i++) MappingActionContainer.addDefaultMappings(container);
 
-        JFrame frame = new JFrame();
+        ArrayList<SaveableAction> layerMappings = new ArrayList<>(container.queryAll());
+
+        JFrame frame = new JFrame("Select Layer Mapping");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setTitle("Select Layer Mapping");
         frame.setVisible(true);
 
-        for (int i = 0; i < 20; i++)
-            MappingActionContainer.addDefaultMappings(container);
-        ArrayList<SaveableAction> layerMappings = new ArrayList<>(container.queryAll());
-        Dialog dlg = new SaveableActionPickerDialog(layerMappings , System.out::println,
-                Collections.singleton(MappingAction.getNewEmptyAction()), frame);
+        Dialog dlg = new SaveableActionPickerDialog(layerMappings,
+                System.out::println,
+                Collections.singleton(MappingAction.getNewEmptyAction()),
+                frame);
         dlg.setVisible(true);
     }
 
-    private void init(ArrayList<SaveableAction> items, Consumer<SaveableAction> onSubmit,
+    private void init(ArrayList<SaveableAction> items,
+                      Consumer<SaveableAction> onSubmit,
                       Collection<SaveableAction> specialTopAction) {
-        if (specialTopAction == null) {
-            specialTopAction = new ArrayList<>();
-        }
 
-        int rowCount = items.size() + specialTopAction.size();
-        DefaultTableModel listModel = new DefaultTableModel(new Object[rowCount][1], new String[]{"Items"}){
+        DefaultTableModel tableModel = createTableModel(items, specialTopAction);
+        JTable table = createTable(tableModel);
+        TableRowSorter<TableModel> rowSorter = new TableRowSorter<>(table.getModel());
+        table.setRowSorter(rowSorter);
+
+        JButton okButton = createOkButton(table, onSubmit);
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> dispose());
+
+        resizeRowHeights(table);
+        table.setTableHeader(null);
+
+        JTextField searchField = createSearchField(rowSorter);
+        JPanel searchPanel = createSearchPanel(searchField);
+
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.add(searchPanel, BorderLayout.NORTH);
+        contentPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
+        contentPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        getContentPane().add(contentPanel, BorderLayout.CENTER);
+        SwingUtilities.invokeLater(searchField::requestFocus);
+    }
+
+    private DefaultTableModel createTableModel(ArrayList<SaveableAction> items,
+                                               Collection<SaveableAction> topActions) {
+        int rowCount = items.size() + (topActions != null ? topActions.size() : 0);
+        DefaultTableModel model = new DefaultTableModel(new Object[rowCount][1], new String[]{"Items"}) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
-        JTable table = new JTable(listModel);
 
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setDefaultRenderer(Object.class, new SaveableActionRenderer(f -> false));
-
-        int i;
-        for (i = 0; i < items.size(); i++) {
-            listModel.setValueAt(items.get(i), i, 0);
+        int i = 0;
+        for (SaveableAction item : items) {
+            model.setValueAt(item, i++, 0);
         }
-
-        if (specialTopAction != null) {
-            for (Object action : specialTopAction) {
-                listModel.setValueAt(action, i++, 0);
+        if (topActions != null) {
+            for (SaveableAction action : topActions) {
+                model.setValueAt(action, i++, 0);
             }
         }
-
-        System.out.println("item at (7,0) =" + listModel.getValueAt(7,0));
-
-        JButton okButton = new JButton("OK");
-        okButton.addActionListener(e -> {
-            if (table.getSelectedRows() == null || table.getSelectedRows().length == 0)
-                return;
-            SaveableAction selected = (SaveableAction)table.getValueAt(table.getSelectedRow(),0);
-            onSubmit.accept(selected);
-            this.dispose();
-        });
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.addActionListener(e -> {
-            this.dispose();
-        });
-
-        for (int ix = 0; ix < rowCount; ix++) {
-            int maxHeight = 0;
-            final TableCellRenderer renderer = table.getCellRenderer(ix, 0);
-            maxHeight = Math.max(maxHeight, table.prepareRenderer(renderer, ix, 0).getPreferredSize().height);
-            table.setRowHeight(ix, maxHeight);
-        }
-
-        JPanel panel = new JPanel(new BorderLayout());
-        JScrollPane pane = new JScrollPane(table);
-        panel.add(pane, BorderLayout.CENTER);
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.add(okButton);
-        buttonPanel.add(cancelButton);
-        panel.add(buttonPanel, BorderLayout.SOUTH);
-        getContentPane().add(panel, BorderLayout.CENTER);
+        return model;
     }
 
+    private JTable createTable(DefaultTableModel model) {
+        JTable table = new JTable(model);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setDefaultRenderer(Object.class, new SaveableActionRenderer(f -> false));
+        return table;
+    }
 
+    private void resizeRowHeights(JTable table) {
+        for (int row = 0; row < table.getRowCount(); row++) {
+            TableCellRenderer renderer = table.getCellRenderer(row, 0);
+            Component comp = table.prepareRenderer(renderer, row, 0);
+            table.setRowHeight(row, comp.getPreferredSize().height);
+        }
+    }
+
+    private JButton createOkButton(JTable table, Consumer<SaveableAction> onSubmit) {
+        JButton okButton = new JButton("OK");
+        okButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow >= 0) {
+                SaveableAction selected = (SaveableAction) table.getValueAt(selectedRow, 0);
+                onSubmit.accept(selected);
+                dispose();
+            }
+        });
+        return okButton;
+    }
+
+    private JTextField createSearchField(TableRowSorter<TableModel> rowSorter) {
+        JTextField searchField = new JTextField(15);
+        searchField.setToolTipText("Search...");
+
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { filter(); }
+            public void removeUpdate(DocumentEvent e) { filter(); }
+            public void changedUpdate(DocumentEvent e) { filter(); }
+
+            private void filter() {
+                String text = searchField.getText();
+                if (text.trim().isEmpty()) {
+                    rowSorter.setRowFilter(null);
+                } else {
+                    rowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + Pattern.quote(text)));
+                }
+            }
+        });
+        return searchField;
+    }
+
+    private JPanel createSearchPanel(JTextField searchField) {
+        JLabel searchIcon = new JLabel("\uD83D\uDD0D"); // "🔍"
+        searchIcon.setFont(new Font("SansSerif", Font.PLAIN, 16));
+
+        JPanel searchPanel = new JPanel(new BorderLayout(5, 0));
+        searchPanel.add(searchIcon, BorderLayout.WEST);
+        searchPanel.add(searchField, BorderLayout.CENTER);
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
+        return searchPanel;
+    }
 }
