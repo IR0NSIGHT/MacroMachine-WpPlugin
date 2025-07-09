@@ -30,12 +30,16 @@ public class SaveableActionPickerDialog extends JDialog {
     }
 
     public static void main(String[] args) {
+        MappingActionContainer container = new MappingActionContainer(null);
+
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setTitle("Select Layer Mapping");
+        frame.setVisible(true);
+
         for (int i = 0; i < 20; i++)
-            MappingActionContainer.addDefaultMappings(MappingActionContainer.getInstance());
-        ArrayList<SaveableAction> layerMappings = new ArrayList<>(MappingActionContainer.getInstance().queryAll());
+            MappingActionContainer.addDefaultMappings(container);
+        ArrayList<SaveableAction> layerMappings = new ArrayList<>(container.queryAll());
         Dialog dlg = new SaveableActionPickerDialog(layerMappings , System.out::println,
                 Collections.singleton(MappingAction.getNewEmptyAction()), frame);
         dlg.setVisible(true);
