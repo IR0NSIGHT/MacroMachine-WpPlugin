@@ -222,8 +222,12 @@ public class MappingAction implements SaveableAction {
 
     @Override
     public String toString() {
-        return "LayerMapping{" + "name='" + name + '\'' + ", uid=" + uid + ", input=" + input + ", output=" + output +
-                ", actionType=" + actionType + '}';
+        return "MappingAction{" +
+                "name='" + name + '\'' +
+                ", input=" + input +
+                ", output=" + output +
+                ", actionType=" + actionType +
+                '}';
     }
 
     public MappingPoint[] getMappingPoints() {
