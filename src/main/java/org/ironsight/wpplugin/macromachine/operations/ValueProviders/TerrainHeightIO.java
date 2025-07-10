@@ -2,8 +2,11 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Tile;
 
 import java.awt.*;
+
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSetter, EditableIO {
     private final int minHeight;
@@ -22,9 +25,18 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     public String getToolTipText() {
         return getDescription();
     }
+
+    private Tile tile;
+    private int tileX = Integer.MAX_VALUE, tileY = Integer.MAX_VALUE;
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        return (int)EditableIO.clamp(Math.round(dim.getHeightAt(x, y)),getMinValue(),getMaxValue());
+        if (x >> TILE_SIZE_BITS != tileX || y >> TILE_SIZE_BITS != tileY) {
+            tileX = x >> TILE_SIZE_BITS;
+            tileY = y >> TILE_SIZE_BITS;
+            tile = dim.getTile(tileX, tileY);
+        }
+        assert tile != null;
+        return (int)EditableIO.clamp(Math.round( tile.getHeight(x & 127, y & 127)),getMinValue(),getMaxValue());
     }
 
     @Override

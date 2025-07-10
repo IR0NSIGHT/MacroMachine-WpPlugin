@@ -25,11 +25,7 @@ public final class TestData {
     public static final Theme THEME = SimpleTheme.createSingleTerrain(GRASS, MIN_HEIGHT, MAX_HEIGHT, 62);
     public static final long SEED = 0L;
 
-    private TestData() {
-        // Prevent instantiation
-    }
-
-    public static TileFactory createTileFactory(int terrainHeight) {
+    private static TileFactory createTileFactory(int terrainHeight) {
         return new HeightMapTileFactory(SEED,
                 new ConstantHeightMap(terrainHeight),
                 MIN_HEIGHT,
@@ -38,6 +34,12 @@ public final class TestData {
                 THEME);
     }
 
+    /**
+     *
+     * @param area area in blocks, must be aligned to TILE_SIZE modulo
+     * @param terrainHeight
+     * @return
+     */
     public static Dimension createDimension(Rectangle area, int terrainHeight) {
         final TileFactory tileFactory = createTileFactory(terrainHeight);
         final Dimension dimension = new Dimension(WORLD, "Surface", SEED, tileFactory, NORMAL_DETAIL);
