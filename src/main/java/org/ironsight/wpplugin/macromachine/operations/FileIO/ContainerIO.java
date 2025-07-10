@@ -228,10 +228,21 @@ public class ContainerIO {
                 }
             }
 
-            if (containsUnknownActions(data, actionsToImport, macrosToImport, onImportError)) {
-                assert false;
-                createBackup(file.getPath());
-                return;
+            {
+                HashSet<UUID> allActions = new HashSet<>();
+                for (MappingAction a : actionContainer.queryAll())
+                    allActions.add(a.getUid());
+                allActions.addAll(actionsToImport);
+
+                HashSet<UUID> allMacros = new HashSet<>();
+                for (Macro a : macroContainer.queryAll())
+                    allActions.add(a.getUid());
+                allActions.addAll(macrosToImport);
+                if (containsUnknownActions(data, allActions, allMacros, onImportError)) {
+                    assert false;
+                    createBackup(file.getPath());
+                    return;
+                }
             }
 
             {            // do import
