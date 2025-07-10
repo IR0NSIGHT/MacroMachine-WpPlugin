@@ -13,6 +13,10 @@ public class TileContainer {
     private final int offsetY;
     private final int width, height;
 
+    public TileContainer(Rectangle extent, int defaultValue) {
+        this(extent.width , extent.height, TILE_SIZE * extent.x, TILE_SIZE * extent.y,defaultValue);
+    }
+
     public TileContainer(int width, int height, int minX, int minY, int defaultValue) {
         tiles = new IntegerTile[width][];
         for (int j = 0; j < width; j++) {
