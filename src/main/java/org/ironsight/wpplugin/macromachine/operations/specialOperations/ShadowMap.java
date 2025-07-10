@@ -10,8 +10,7 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 public class ShadowMap {
     public static TileContainer calculateShadowMap(Rectangle extent, TerrainHeightIO heightIO, Dimension dim) {
-        int minX = TILE_SIZE * extent.x, minY = TILE_SIZE * extent.y;
-        TileContainer shadowmap = new TileContainer(extent.width , extent.height, minX, minY,0);
+        TileContainer shadowmap = new TileContainer(extent,0);
         for (int x = shadowmap.getMinXPos(); x < shadowmap.getMaxXPos(); x++) {
             // iterate column from south (-y) to north (+y)
             int[] column = new int[shadowmap.getMaxYPos() - shadowmap.getMinYPos()];
