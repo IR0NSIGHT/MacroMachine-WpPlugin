@@ -147,6 +147,9 @@ public class MappingTextTable extends JPanel {
             addMappingPointButton.addActionListener(l -> {
                 if (numberTable.getSelectedRow() != -1)
                     tableModel.insertMappingPointNear(numberTable.convertRowIndexToModel(numberTable.getSelectedRow()));
+                else if (numberTable.getRowCount() != 0) {
+                    tableModel.insertMappingPointNear(0);
+                }
             });
             buttons.add(addMappingPointButton);
         }
