@@ -27,7 +27,6 @@ public class ShadowMap {
                     shadowmap.setValueAt(x,y,shadowColumn[i++]);
                 }
             }
-            System.out.println((float)(x - shadowmap.getMinXPos())/ (shadowmap.getMaxXPos() - shadowmap.getMinXPos()));
         }
         return shadowmap;
     }

@@ -43,7 +43,6 @@ public class ContainerIO {
     }
 
     public static void writeContainerToFile(ExportContainer container, File file) throws IOException {
-        System.out.println("WRITE FILE");
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs(); // Create all necessary parent directories
         }
