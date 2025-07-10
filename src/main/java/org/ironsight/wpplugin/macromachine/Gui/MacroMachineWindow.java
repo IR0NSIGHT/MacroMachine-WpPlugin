@@ -8,7 +8,7 @@ import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
 
-public class MacroMachineWindow extends JDialog {
+public class MacroMachineWindow extends JFrame {
     private static final Preferences prefs = Preferences.userRoot().node("irn_MacroMachine");
 
     public String getLastDirectoryPicked() {
@@ -40,11 +40,11 @@ public class MacroMachineWindow extends JDialog {
 
     private boolean stayOnTop;
     public MacroMachineWindow(JFrame parent, String title) {
-        super(parent,title, false);
+        super(title);
         dialog = this;
     }
 
-    public static JDialog createDialog(JFrame parent,
+    public static JFrame createDialog(JFrame parent,
                                        MacroApplicator applyToMap) {
         if (dialog != null) {
             dialog.setVisible(true);

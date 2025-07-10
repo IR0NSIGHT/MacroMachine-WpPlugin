@@ -14,8 +14,10 @@ import org.pepsoft.worldpainter.layers.LayerManager;
 import org.pepsoft.worldpainter.operations.*;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.File;
 import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -49,7 +51,7 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
     public void openDialog() {
         try {
             InputOutputProvider.INSTANCE.updateFrom(getDimension());
-            JDialog dialog = createDialog(null, this);
+            JFrame dialog = createDialog( null, this);
             dialog.toFront();              // Bring it to the front
             dialog.requestFocusInWindow();
             dialog.setVisible(true);
