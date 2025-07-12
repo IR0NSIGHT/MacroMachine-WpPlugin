@@ -1,16 +1,21 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import org.ironsight.wpplugin.macromachine.ArrayUtils;
+import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
+import org.ironsight.wpplugin.macromachine.operations.ILimitedMapOperation;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.ironsight.wpplugin.macromachine.operations.specialOperations.ShadowMap;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
 import java.util.Objects;
 
-public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGetter {
+public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGetter, ILimitedMapOperation {
     protected String layerId;
     protected String layerName;
     protected Layer layer = null;
+    private TileContainer distanceMap;
 
     protected DistanceToLayerEdgeGetter(String name, String id) {
         this.layerId = id;
@@ -21,22 +26,25 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
     }
 
     public DistanceToLayerEdgeGetter(Layer layer) {
+        assert layer.dataSize == Layer.DataSize.BIT;
         this.layerName = layer.getName();
         this.layerId = layer.getId();
     }
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
+        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {
+        });
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null)
             layerName = layer.getName(); //maybe name was updated
+
     }
 
     @Override
     public int getMaxValue() {
-        return 15;
+        return 1000;
     }
 
     @Override
@@ -56,8 +64,8 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
 
     @Override
     public String valueToString(int value) {
-        if (value == 0) return "outside";
-        if (value == getMaxValue()) return "inside";
+        if (value == 0) return "inside";
+        if (value == getMaxValue()) return "outside";
         return value + "m from edge";
     }
 
@@ -87,9 +95,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
      */
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        double dist = dim.getDistanceToEdge(layer,x,y,getMaxValue());
-        assert dim.getBitLayerValueAt(layer, x, y) || dist == 0 : "if the layer is not set, expect value be zero";
-        return (int)Math.round(dist);
+        return Math.min(getMaxValue(), distanceMap.getValueAt(x,y));
     }
 
     @Override
@@ -150,5 +156,14 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
     @Override
     public Layer getLayer() {
         return layer;
+    }
+
+    @Override
+    public void prepareRightBeforeRun(Dimension dimension, int[] tileX, int[] tileY) {
+        int startX = ArrayUtils.findMin(tileX), endX = ArrayUtils.findMax(tileX);
+        int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
+        Rectangle extent = new Rectangle(startX, startY, endX - startX + 1, endY - startY + 1);
+        this.distanceMap = ShadowMap.expandBinaryMask(new BinaryLayerIO(layer, false),
+                dimension, extent);
     }
 }

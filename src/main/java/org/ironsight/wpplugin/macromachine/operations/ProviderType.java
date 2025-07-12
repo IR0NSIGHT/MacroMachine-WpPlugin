@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
@@ -71,7 +72,7 @@ public enum ProviderType {
             case ALWAYS:
                 return AlwaysIO.instance;
             case DISTANCE_TO_EDGE:
-                return new DistanceToLayerEdgeGetter(PineForest.INSTANCE);
+                return new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE);
             case PERLIN_NOISE:
                 return new PerlinNoiseIO(1,1, 42069,5);
             case SHADOW:

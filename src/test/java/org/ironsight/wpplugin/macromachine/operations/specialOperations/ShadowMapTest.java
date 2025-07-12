@@ -105,11 +105,10 @@ class ShadowMapTest {
     @Test
     void expandBinaryMask() {
         TileContainer container = new TileContainer(new Rectangle(0, 0, 1, 1), 0);
-        container.setValueAt(50, 60, 10);
-        ShadowMap.expandBinaryMask(container, 10);
-        container.getTileAt(0, 0).printToStd();
-        assertEquals(10, container.getValueAt(50, 60));
-        assertEquals(9, container.getValueAt(51, 60));
+        container.setValueAt(50, 60, 1); //binary
+        ShadowMap.expandBinaryMask(container, 1);
+        assertEquals(0, container.getValueAt(50, 60));
+        assertEquals(1, container.getValueAt(51, 60));
 
     }
 
@@ -146,5 +145,14 @@ class ShadowMapTest {
             assertArrayEquals(expVert, vertiDist);
         }
 
+    }
+
+    @Test
+    void distanceFrom2Arrays() {
+        int[] expHorz   = new int[]{7,7,3,3,3,3,3,3,3,3,3,3};
+        int[] expVert   = new int[]{0,0,6,5,4,3,2,1,0,1,2,3};
+        int[] dist      = new int[]{7,7,7,6,5,4,4,3,3,3,4,4};
+        int[] dist2 =ShadowMap.distanceFrom2Arrays(expHorz,expVert);
+        assertArrayEquals(dist,dist2);
     }
 }
