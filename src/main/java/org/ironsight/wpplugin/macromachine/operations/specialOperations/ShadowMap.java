@@ -6,6 +6,7 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TileContain
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.util.Arrays;
 
 public class ShadowMap {
     public static TileContainer calculateShadowMap(Rectangle extent, TerrainHeightIO heightIO, Dimension dim) {
@@ -42,6 +43,15 @@ public class ShadowMap {
             //row by row
             int[] columnXDist = container.getValueColumn(x); // consists of set values 0 .. x and unset values 0xFFFF
             int[] columnYDist = replaceValues(columnXDist.clone(), 0, 0xFFFF, true); // everything not 0xFFFF set zero
+
+            //add first and last ref points to ends of arrays
+            int[] firstLast = findEdgesOfValues(columnXDist,0xFFFF);
+            int firstIdx = firstLast[0];
+            int lastIdx = firstLast[1];
+
+            expandBinaryLinearColumn(columnXDist, columnYDist, incrementPerStep, firstIdx, -1);
+            expandBinaryLinearColumn(columnXDist, columnYDist, incrementPerStep, lastIdx, 1);
+
             expandBinaryLinearColumn(columnXDist, columnYDist, incrementPerStep, 0, 1);
             expandBinaryLinearColumn(columnXDist, columnYDist, incrementPerStep, columnXDist.length - 1, -1);
             int[] distances = distanceFrom2Arrays(columnXDist, columnYDist);
@@ -113,6 +123,29 @@ public class ShadowMap {
             }
         }
         return horizontalDist;
+    }
+
+    /**
+     * find the first and last index to NOT be marker
+     * @param arr
+     * @return
+     */
+    public static int[] findEdgesOfValues(int[] arr, int marker) {
+        int first = -1;
+        int last = -1;
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i] != marker && first == -1) {
+                first = i;
+                break;
+            }
+        }
+        for (int i = arr.length -1; i >= 0; i--) {
+            if (arr[i] != marker && last == -1) {
+                last = i;
+                break;
+            }
+        }
+        return new int[]{first,last};
     }
 
     public static int[] expandBinaryMapped(int[] row, int[] map, int start, int dir) {
