@@ -42,11 +42,13 @@ public class ShadowMap {
 
         for (int x = container.getMinXPos(); x < container.getMaxXPos(); x++) {
             //row by row
-            int[] column = container.getValueColumn(x); // consists of set values 0 .. x and unset values 0xFFFF
-            column = replaceValues(column, 0xFFFF0000, 0,true);
+            int[] columnXDist = container.getValueColumn(x); // consists of set values 0 .. x and unset values 0xFFFF
+            int[] columnYDist = replaceValues(columnXDist.clone(), 0xFFFF, 0, true); // everything not 0xFFFF set zero
+            expandBinaryLinearColumn(columnXDist, columnYDist, 10, 0, 1);
+            expandBinaryLinearColumn(columnXDist, columnYDist, 10, columnXDist.length - 1, -1);
             //    column = expandBinaryLinearColumn(column, incrementPerStep, 0, 1);
             //    column = expandBinaryLinearColumn(column, incrementPerStep, column.length - 1, -1);
-            container.setValueColumn(column, x);
+            container.setValueColumn(columnXDist, x);
         }
         container.getTileAt(0, 0).printToStd();
         return container;
@@ -57,7 +59,7 @@ public class ShadowMap {
      *
      * @param row
      * @param replacement
-     * @param invert set if value[i] != orginal
+     * @param invert      set if value[i] != orginal
      * @return
      */
     public static int[] replaceValues(int[] row, int replacement, int original, boolean invert) {
@@ -88,19 +90,23 @@ public class ShadowMap {
         int refPointY = verticalDistance[start];
         int distToRef = 0;
         for (int i = start; i < horizontalDist.length && i >= 0; i += dir) {
-            int distNewSq = refPointX * refPointX + (refPointY + distToRef) * (refPointY + distToRef);
-            int distOldSq =
-                    (horizontalDist[i] >= 0xFFFF || verticalDistance[i] >= 0xFFFF) ? Integer.MAX_VALUE :
-                            horizontalDist[i] * horizontalDist[i] + verticalDistance[i] * verticalDistance[i];
-            if (distOldSq < distNewSq) { // found a point that
+            int distNewSq =
+                    refPointX < 0xFFFF && refPointY < 0xFFFF ?
+                            refPointX * refPointX + (refPointY + distToRef) * (refPointY + distToRef) : Integer.MAX_VALUE;
+            int distOldSq = (horizontalDist[i] < 0xFFFF && verticalDistance[i] < 0xFFFF) ?
+                    horizontalDist[i] * horizontalDist[i] + verticalDistance[i] * verticalDistance[i] : Integer.MAX_VALUE;
+            if (distOldSq < distNewSq) { // found a
+                // point that
                 // is closer than the current one we are referencing
                 refPointX = horizontalDist[i];
                 refPointY = verticalDistance[i];
                 distToRef = 0;
             }
-            horizontalDist[i] = refPointX;
-            verticalDistance[i] = refPointY + distToRef; //we only work on y axis
-            distToRef += step;
+            if (refPointX < 0xFFFF && refPointY < 0xFFFF) {
+                horizontalDist[i] = refPointX;
+                verticalDistance[i] = refPointY + distToRef; //we only work on y axis
+                distToRef += step;
+            }
         }
         return horizontalDist;
     }
