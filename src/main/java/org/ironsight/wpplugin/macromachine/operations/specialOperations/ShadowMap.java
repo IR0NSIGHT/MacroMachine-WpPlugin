@@ -28,7 +28,6 @@ public class ShadowMap {
 
     public static TileContainer expandBinaryMask(TileContainer container,
                                                  int incrementPerStep) {
-        container.getTileAt(0, 0).printToStd();
         for (int y = container.getMinYPos(); y < container.getMaxYPos(); y++) {
             //row by row
             int[] row = container.getValueRow(y);
@@ -38,19 +37,16 @@ public class ShadowMap {
             row = expandBinaryLinear(row, incrementPerStep, row.length - 1, -1);
             container.setValueRow(y, row);
         }
-        container.getTileAt(0, 0).printToStd();
 
         for (int x = container.getMinXPos(); x < container.getMaxXPos(); x++) {
             //row by row
             int[] columnXDist = container.getValueColumn(x); // consists of set values 0 .. x and unset values 0xFFFF
-            int[] columnYDist = replaceValues(columnXDist.clone(), 0xFFFF, 0, true); // everything not 0xFFFF set zero
-            expandBinaryLinearColumn(columnXDist, columnYDist, 10, 0, 1);
-            expandBinaryLinearColumn(columnXDist, columnYDist, 10, columnXDist.length - 1, -1);
-            //    column = expandBinaryLinearColumn(column, incrementPerStep, 0, 1);
-            //    column = expandBinaryLinearColumn(column, incrementPerStep, column.length - 1, -1);
-            container.setValueColumn(columnXDist, x);
+            int[] columnYDist = replaceValues(columnXDist.clone(), 0, 0xFFFF, true); // everything not 0xFFFF set zero
+            expandBinaryLinearColumn(columnXDist, columnYDist, incrementPerStep, 0, 1);
+            expandBinaryLinearColumn(columnXDist, columnYDist, incrementPerStep, columnXDist.length - 1, -1);
+            int[] distances = distanceFrom2Arrays(columnXDist, columnYDist);
+            container.setValueColumn(distances, x);
         }
-        container.getTileAt(0, 0).printToStd();
         return container;
     }
 
@@ -68,6 +64,14 @@ public class ShadowMap {
                 row[i] = replacement;
         }
         return row;
+    }
+
+    public static int[] distanceFrom2Arrays(int[] xDistance, int[] yDistance) {
+        int[] dist = new int[xDistance.length];
+        for (int i = 0; i < dist.length; i++) {
+            dist[i] = (int)Math.round(Math.sqrt(xDistance[i]*xDistance[i]+yDistance[i]*yDistance[i]));
+        }
+        return dist;
     }
 
     public static int[] expandBinaryLinear(int[] row, int decrement, int start, int dir) {
