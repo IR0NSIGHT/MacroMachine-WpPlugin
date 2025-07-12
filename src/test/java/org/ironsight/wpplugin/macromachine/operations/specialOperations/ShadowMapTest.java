@@ -41,10 +41,18 @@ class ShadowMapTest {
 
     @Test
     void binaryMaskToValue() {
-        int[] row = new int[]{0, 7, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0};
-        int[] res = ShadowMap.binaryMaskToValue(row.clone(), 17);
-        int[] expected = new int[]{0, 17, 0, 0, 0, 17, 0, 17, 0, 0, 0, 0};
-        assertArrayEquals(expected, res);
+        {
+            int[] row = new int[]{0, 7, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0};
+            int[] res = ShadowMap.replaceValues(row.clone(), 17, 0, false);
+            int[] expected = new int[]{17, 7, 17,17,17,1,17,2,17,17,17,17};
+            assertArrayEquals(expected, res);
+        }
+        {
+            int[] row = new int[]{0, 7, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0};
+            int[] res = ShadowMap.replaceValues(row.clone(), 17, 0, true);
+            int[] expected = new int[]{0,17,0,0,0,17,0,17,0,0,0,0};
+            assertArrayEquals(expected, res);
+        }
     }
 
     @Test
