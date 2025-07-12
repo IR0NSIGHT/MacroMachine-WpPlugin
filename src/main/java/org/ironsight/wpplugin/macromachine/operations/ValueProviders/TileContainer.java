@@ -41,6 +41,14 @@ public class TileContainer {
         return row;
     }
 
+    public void setValueRow(int yPos, int[] row) {
+        int start = getMinXPos();
+        for (int x = start; x < getMaxXPos(); x++) {
+            setValueAt(x,yPos,row[x-start]);
+        }
+    }
+
+
     /**
      * get column at position x as array
      * @param xPos
