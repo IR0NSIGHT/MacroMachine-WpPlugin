@@ -1,16 +1,15 @@
 package org.ironsight.wpplugin.macromachine.operations.specialOperations;
 
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.BinaryLayerIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainHeightIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TileContainer;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-
 public class ShadowMap {
     public static TileContainer calculateShadowMap(Rectangle extent, TerrainHeightIO heightIO, Dimension dim) {
-        TileContainer shadowmap = new TileContainer(extent,0);
+        TileContainer shadowmap = new TileContainer(extent, 0);
         shadowmap.addAsValues(heightIO, dim);
         for (int x = shadowmap.getMinXPos(); x < shadowmap.getMaxXPos(); x++) {
             // iterate column from south (-y) to north (+y)
@@ -21,14 +20,110 @@ public class ShadowMap {
         return shadowmap;
     }
 
-    public static TileContainer expandMask(TileContainer container) {
-        for (int y = container.getMaxYPos() - 1; y >= container.getMinYPos(); y--) {
-            //left to right, row by row
+    public static TileContainer expandBinaryMask(BinaryLayerIO input, Dimension dimension, Rectangle extent) {
+        TileContainer container = new TileContainer(extent, 0);
+        container.addAsValues(input, dimension);
+        return expandBinaryMask(container, 1);
+    }
+
+    public static TileContainer expandBinaryMask(TileContainer container,
+                                                 int incrementPerStep) {
+        container.getTileAt(0, 0).printToStd();
+        for (int y = container.getMinYPos(); y < container.getMaxYPos(); y++) {
+            //row by row
             int[] row = container.getValueRow(y);
-
+            row = binaryMaskToValue(row, 0xFFFF);
+            row = expandBinaryLinear(row, incrementPerStep, 0, 1);
+            row = expandBinaryLinear(row, incrementPerStep, row.length - 1, -1);
+            container.setValueRow(y, row);
         }
+        container.getTileAt(0, 0).printToStd();
 
+        for (int x = container.getMinXPos(); x < container.getMaxXPos(); x++) {
+            //row by row
+            int[] column = container.getValueColumn(x);
+            column = binaryMaskToValue(column, 0xFFFF0000);
+            //    column = expandBinaryLinearColumn(column, incrementPerStep, 0, 1);
+            //    column = expandBinaryLinearColumn(column, incrementPerStep, column.length - 1, -1);
+            container.setValueColumn(column, x);
+        }
+        container.getTileAt(0, 0).printToStd();
         return container;
+    }
+
+    /**
+     * mutates if 0 put 0, else put value
+     *
+     * @param row
+     * @param value
+     * @return
+     */
+    public static int[] binaryMaskToValue(int[] row, int value) {
+        for (int i = 0; i < row.length; i++) {
+            if (row[i] == 0)
+                row[i] = value;
+        }
+        return row;
+    }
+
+    public static int[] expandBinaryLinear(int[] row, int decrement, int start, int dir) {
+        int current = Integer.MAX_VALUE - decrement;
+        for (int i = start; i < row.length && i >= 0; i += dir) {
+            current = Math.min(row[i], current + decrement);
+            if (row[i] != 0 || current != 0) {
+                row[i] = Math.max(0, current);
+            } else {
+                current = 0;
+            }
+        }
+        return row;
+    }
+
+    public static int[] expandBinaryLinearColumn(int[] horizontalDist, int[] verticalDistance, int step, int start,
+                                                 int dir) {
+        assert horizontalDist.length == verticalDistance.length;
+        int refPointX = horizontalDist[start];
+        int refPointY = verticalDistance[start];
+        int distToRef = 0;
+        for (int i = start; i < horizontalDist.length && i >= 0; i += dir) {
+            int distNewSq = refPointX * refPointX + (refPointY + distToRef) * (refPointY + distToRef);
+            int distOldSq =
+                    (horizontalDist[i] >= 0xFFFF || verticalDistance[i] >= 0xFFFF) ? Integer.MAX_VALUE :
+                            horizontalDist[i] * horizontalDist[i] + verticalDistance[i] * verticalDistance[i];
+            if (distOldSq < distNewSq) { // found a point that
+                // is closer than the current one we are referencing
+                refPointX = horizontalDist[i];
+                refPointY = verticalDistance[i];
+                distToRef = 0;
+            }
+            horizontalDist[i] = refPointX;
+            verticalDistance[i] = refPointY + distToRef; //we only work on y axis
+            distToRef += step;
+        }
+        return horizontalDist;
+    }
+
+    public static int[] expandBinaryMapped(int[] row, int[] map, int start, int dir) {
+        int current = 0;
+        for (int i = start; i < row.length && i >= 0; i += dir) {
+            current = Math.max(row[i], current - 1);
+            if (row[i] != 0 || current != 0) {
+                row[i] = Math.max(0, map[current]);
+            } else {
+                current = 0;
+            }
+        }
+        return row;
+    }
+
+    public static int[] dualValueToDistance(int[] row) {
+        for (int i = 0; i < row.length; i++) {
+            int x = row[i] & 0xFFFF;
+            int y = row[i] >> 16;
+            int dist = x * x + y * y;
+            row[i] = dist;
+        }
+        return row;
     }
 
     public static int[] calculateShadowFor(int[] heightmapColumn) {
@@ -36,7 +131,7 @@ public class ShadowMap {
         int shadowHeight = 0;
         for (int i = heightmapColumn.length - 1; i >= 0; i--) {
             int terrainHeight = heightmapColumn[i];
-            shadowHeight = Math.max(shadowHeight -1, terrainHeight);
+            shadowHeight = Math.max(shadowHeight - 1, terrainHeight);
             if (shadowHeight > terrainHeight)
                 shadowMap[i] = shadowHeight - terrainHeight;
         }
