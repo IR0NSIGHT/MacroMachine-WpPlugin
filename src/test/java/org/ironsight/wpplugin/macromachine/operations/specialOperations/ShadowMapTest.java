@@ -116,6 +116,16 @@ class ShadowMapTest {
     @Test
     void expandBinaryLinearColumn() {
         {   //takes existing value, keeps it and writes distance map into the first16bits
+            int[] horizDist = new int[]{0xFFFF,0xFFFF,7,0xFFFF,0xFFFF,0xFFFF,3,0xFFFF,0xFFFF,0xFFFF};
+            int[] vertiDist = new int[]{0xFFFF,0xFFFF,0,0xFFFF,0xFFFF,0xFFFF,0,0xFFFF,0xFFFF,0xFFFF};
+
+            int[] expHorz = new int[]{0xFFFF,0xFFFF,7,7,7,7,3,3,3,3};
+            int[] expVert = new int[]{0xFFFF,0xFFFF,0,1,2,3,0,1,2,3};
+            ShadowMap.expandBinaryLinearColumn(horizDist, vertiDist,1, 0, 1);
+            assertArrayEquals(expHorz, horizDist);
+            assertArrayEquals(expVert, vertiDist);
+        }
+        {   //takes existing value, keeps it and writes distance map into the first16bits
             int[] horizDist = new int[]{7,0xFFFF,0xFFFF,0xFFFF,3,0xFFFF,0xFFFF,0xFFFF};
             int[] vertiDist = new int[]{0,0xFFFF,0xFFFF,0xFFFF,0,0xFFFF,0xFFFF,0xFFFF};
 
@@ -135,5 +145,6 @@ class ShadowMapTest {
             assertArrayEquals(expHorz, horizDist);
             assertArrayEquals(expVert, vertiDist);
         }
+
     }
 }
