@@ -32,7 +32,8 @@ public class ShadowMap {
         for (int y = container.getMinYPos(); y < container.getMaxYPos(); y++) {
             //row by row
             int[] row = container.getValueRow(y);
-            row = binaryMaskToValue(row, 0xFFFF);
+            row = replaceValues(row, 0xFFFF, 0, false); // 1 -> 1, 0 -> 0xFFFF
+            row = replaceValues(row, 0, 0xFFFF, true); // 0xFFFF -> 0xFFFF, else -> 0
             row = expandBinaryLinear(row, incrementPerStep, 0, 1);
             row = expandBinaryLinear(row, incrementPerStep, row.length - 1, -1);
             container.setValueRow(y, row);
@@ -41,8 +42,8 @@ public class ShadowMap {
 
         for (int x = container.getMinXPos(); x < container.getMaxXPos(); x++) {
             //row by row
-            int[] column = container.getValueColumn(x);
-            column = binaryMaskToValue(column, 0xFFFF0000);
+            int[] column = container.getValueColumn(x); // consists of set values 0 .. x and unset values 0xFFFF
+            column = replaceValues(column, 0xFFFF0000, 0,true);
             //    column = expandBinaryLinearColumn(column, incrementPerStep, 0, 1);
             //    column = expandBinaryLinearColumn(column, incrementPerStep, column.length - 1, -1);
             container.setValueColumn(column, x);
@@ -52,16 +53,17 @@ public class ShadowMap {
     }
 
     /**
-     * mutates if 0 put 0, else put value
+     * replaces all originals with replacement
      *
      * @param row
-     * @param value
+     * @param replacement
+     * @param invert set if value[i] != orginal
      * @return
      */
-    public static int[] binaryMaskToValue(int[] row, int value) {
+    public static int[] replaceValues(int[] row, int replacement, int original, boolean invert) {
         for (int i = 0; i < row.length; i++) {
-            if (row[i] == 0)
-                row[i] = value;
+            if (!invert && row[i] == original || invert && row[i] != original)
+                row[i] = replacement;
         }
         return row;
     }
