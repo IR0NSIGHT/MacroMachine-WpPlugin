@@ -164,6 +164,6 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
         int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
         Rectangle extent = new Rectangle(startX, startY, endX - startX + 1, endY - startY + 1);
         this.distanceMap = ShadowMap.expandBinaryMask(new BinaryLayerIO(layer, false),
-                dimension, extent);
+                dimension, dimension.getExtent());
     }
 }
