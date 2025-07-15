@@ -9,7 +9,7 @@ Its comparable to chaining many global operations, and be able to save that work
 ![grafik](./Macro%20Machine%20v0.0.1%2030.05.2025%2010_43_10.png)
 
 ## Download
-1. go to the [release page](https://github.com/IR0NSIGHT/ExpandLayerPlugin/releases)
+1. go to the [release page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/latest)
 2. select the top most Macro-Machine release
 3. download the Macro-Machine-Plugin-x.x.x.jar file
 4. open worldpainter
