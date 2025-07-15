@@ -80,9 +80,9 @@ public class MacroTreePanel extends JPanel {
         } else if (item instanceof MappingAction) {
             return isValidItem(((MappingAction) item).getInput()) && isValidItem(((MappingAction) item).getOutput());
         } else if (item instanceof IPositionValueSetter && item instanceof ILayerGetter) {
-            return InputOutputProvider.INSTANCE.asOutputProvider().existsItem(item);
+            return InputOutputProvider.INSTANCE.existsLayerWithId(((ILayerGetter) item).getLayerId());
         } else if (item instanceof IPositionValueGetter && item instanceof ILayerGetter) {
-            return InputOutputProvider.INSTANCE.asInputProvider().existsItem(item);
+            return InputOutputProvider.INSTANCE.existsLayerWithId(((ILayerGetter) item).getLayerId());
         } else {
             return true;
         }

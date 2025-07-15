@@ -17,7 +17,7 @@ import java.util.Objects;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
-public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGetter, ILimitedMapOperation, EditableIO {
+public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimitedMapOperation, EditableIO {
     private final int maxDistance;
     protected String layerId;
     protected String layerName;
@@ -145,28 +145,8 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
     }
 
     @Override
-    public String getLayerName() {
-        return layerName;
-    }
-
-    @Override
     public String getToolTipText() {
         return getDescription();
-    }
-
-    @Override
-    public String getLayerId() {
-        return layerId;
-    }
-
-    @Override
-    public boolean isCustomLayer() {
-        return false;
-    }
-
-    @Override
-    public Layer getLayer() {
-        return layer;
     }
 
     @Override
