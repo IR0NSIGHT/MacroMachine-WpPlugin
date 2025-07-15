@@ -135,103 +135,25 @@ class ShadowMapTest {
 
     }
 
-    @Test
-    public void regTestWrongDistancesUsed() {
-        int[] rowY0 = new int[50];
-
-        {   // set point 0,0    calculate the row for it
-            Arrays.fill(rowY0, 0xFFFF);
-            rowY0[0] = 0;
-            int[] rowStep1 = ShadowMap.expandBinaryLinear(rowY0.clone(), 1, 0, 1);
-            int[] rowStep2 = ShadowMap.expandBinaryLinear(rowStep1.clone(), 1, rowY0.length - 1, -1);
-            assertArrayEquals(new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
-                            24,
-                            25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49},
-                    rowStep2);
-            rowY0 = rowStep2;
-        }
-
-        int[] rowY23 = new int[50];
-        {   // set point 37,23  calculate the row for it
-            Arrays.fill(rowY23, 0xFFFF);
-            rowY23[37] = 0;
-            int[] rowStep1 = ShadowMap.expandBinaryLinear(rowY23.clone(), 1, 0, 1);
-            int[] rowStep2 = ShadowMap.expandBinaryLinear(rowStep1.clone(), 1, rowY23.length - 1, -1);
-            assertArrayEquals(new int[]{37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-                    rowStep2);
-            rowY23 = rowStep2;
-        }
-
-        {  // given row at y=0 and y=23, calculate the column at x= 9 where the point 9,37 lies
-            int[] columnX9horidD = new int[40];
-            Arrays.fill(columnX9horidD, 0xFFFF);
-            columnX9horidD[0] = rowY0[9]; //from point 1  at  0 0
-            columnX9horidD[23] = rowY23[9]; // from point 2  at 37,23
-            int[] columnX9vertD = ShadowMap.replaceValues(columnX9horidD.clone(),0,0xFFFF,true);
-
-            columnX9horidD[39] = rowY23[9];
-            columnX9vertD[39] = 16;
-
-         /*           assertArrayEquals(new int[]{9, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535,
-                    28, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535},
-                    columnX9horidD);
-            assertArrayEquals(new int[]{0, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535,
-                    0, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535}, columnX9vertD);
-
-
-            //verify distances are still correct:
-            assertEquals(9*9+0*0,columnX9horidD[0]*columnX9horidD[0]+columnX9vertD[0]*columnX9vertD[0], "this entry in the array represents the distance to p1 at x=9,y=0");
-            assertEquals((37-9)*(37-9)+0*0,columnX9horidD[23]*columnX9horidD[23]+columnX9vertD[23]*columnX9vertD[23], "this entry in the array represents the distance to p2 at x=9,y=0");
-*/
-            //dist(0,0,columnX9horidD[0],columnX9vertD[0])
-            ShadowMap.expandBinaryLinearColumn(columnX9horidD,columnX9vertD,1,0,1);
-            ShadowMap.expandBinaryLinearColumn(columnX9horidD,columnX9vertD,1,columnX9horidD.length-1,-1);
-            int[] distances = ShadowMap.distanceFrom2Arrays(columnX9horidD,columnX9vertD);
-            System.out.println(Arrays.toString(columnX9horidD));
-            System.out.println(Arrays.toString(columnX9vertD));
-
-        }
-    }
-
     private int dist(int p1x, int p1y, int p2x, int p2y) {
         int dx = p1x - p2x;
         int dy = p1y - p2y;
         return (int) Math.round(Math.sqrt(dx * dx + dy * dy));
     }
 
+    private int distInt(int x, int y) {
+        return (int)Math.round(Math.sqrt(x*x+y*y));
+    }
+
     @Test
     void expandBinaryLinearColumn() {
         {   //takes existing value, keeps it and writes distance map into the first16bits
             int[] horizDist = new int[]{0xFFFF, 0xFFFF, 7, 0xFFFF, 0xFFFF, 0xFFFF, 3, 0xFFFF, 0xFFFF, 0xFFFF};
-            int[] vertiDist = new int[]{0xFFFF, 0xFFFF, 0, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0xFFFF, 0xFFFF, 0xFFFF};
 
-            int[] expHorz = new int[]{0xFFFF, 0xFFFF, 7, 7, 7, 7, 3, 3, 3, 3};
-            int[] expVert = new int[]{0xFFFF, 0xFFFF, 0, 1, 2, 3, 0, 1, 2, 3};
-            ShadowMap.expandBinaryLinearColumn(horizDist, vertiDist, 1, 0, 1);
-            assertArrayEquals(expHorz, horizDist);
-            assertArrayEquals(expVert, vertiDist);
+            int[] expHorz = new int[]{distInt(2,7), distInt(5,3), distInt(4,3),  distInt(3,3),  distInt(2,3),  distInt(1,3), 3,  distInt(1,3),  distInt(2,3), distInt(3,3)};
+            int[] distances = ShadowMap.expandBinaryLinearColumn(horizDist);
+            assertArrayEquals(expHorz, distances);
         }
-        {   //takes existing value, keeps it and writes distance map into the first16bits
-            int[] horizDist = new int[]{7, 0xFFFF, 0xFFFF, 0xFFFF, 3, 0xFFFF, 0xFFFF, 0xFFFF};
-            int[] vertiDist = new int[]{0, 0xFFFF, 0xFFFF, 0xFFFF, 0, 0xFFFF, 0xFFFF, 0xFFFF};
-
-            int[] expHorz = new int[]{7, 7, 7, 7, 3, 3, 3, 3};
-            int[] expVert = new int[]{0, 1, 2, 3, 0, 1, 2, 3};
-            ShadowMap.expandBinaryLinearColumn(horizDist, vertiDist, 1, 0, 1);
-            assertArrayEquals(expHorz, horizDist);
-            assertArrayEquals(expVert, vertiDist);
-        }
-        {   //walk backwards on data after a first pass
-            int[] horizDist = new int[]{7, 7, 7, 7, 7, 7, 7, 7, 3, 3, 3, 3}; // walks right to left <---|
-            int[] vertiDist = new int[]{0, 0, 0, 0, 0, 1, 2, 3, 0, 1, 2, 3};
-
-            int[] expHorz = new int[]{7, 7, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
-            int[] expVert = new int[]{0, 0, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3};
-            ShadowMap.expandBinaryLinearColumn(horizDist, vertiDist, 1, horizDist.length - 1, -1);
-            assertArrayEquals(expHorz, horizDist);
-            assertArrayEquals(expVert, vertiDist);
-        }
-
     }
 
     @Test

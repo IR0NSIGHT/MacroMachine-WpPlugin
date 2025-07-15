@@ -42,19 +42,7 @@ public class ShadowMap {
         for (int x = container.getMinXPos(); x < container.getMaxXPos(); x++) {
             //row by row
             int[] columnXDist = container.getValueColumn(x); // consists of set values 0 .. x and unset values 0xFFFF
-            int[] columnYDist = replaceValues(columnXDist.clone(), 0, 0xFFFF, true); // everything not 0xFFFF set zero
-
-            //add first and last ref points to ends of arrays
-            int[] firstLast = findEdgesOfValues(columnXDist,0xFFFF);
-            int firstIdx = firstLast[0];
-            int lastIdx = firstLast[1];
-
-            expandBinaryLinearColumn(columnXDist, columnYDist, incrementPerStep, firstIdx, -1);
-            expandBinaryLinearColumn(columnXDist, columnYDist, incrementPerStep, lastIdx, 1);
-
-            expandBinaryLinearColumn(columnXDist, columnYDist, incrementPerStep, 0, 1);
-            expandBinaryLinearColumn(columnXDist, columnYDist, incrementPerStep, columnXDist.length - 1, -1);
-            int[] distances = distanceFrom2Arrays(columnXDist, columnYDist);
+            int[] distances = expandBinaryLinearColumn(columnXDist);
             container.setValueColumn(distances, x);
         }
         return container;
@@ -97,32 +85,34 @@ public class ShadowMap {
         return row;
     }
 
-    public static int[] expandBinaryLinearColumn(int[] horizontalDist, int[] verticalDistance, int step, int start,
-                                                 int dir) {
-        assert horizontalDist.length == verticalDistance.length;
-        int refPointX = horizontalDist[start];
-        int refPointY = verticalDistance[start];
-        int distToRef = 0;
-        for (int i = start; i < horizontalDist.length && i >= 0; i += dir) {
-            int distNewSq =
-                    refPointX < 0xFFFF && refPointY < 0xFFFF ?
-                            refPointX * refPointX + (refPointY + distToRef) * (refPointY + distToRef) : Integer.MAX_VALUE;
-            int distOldSq = (horizontalDist[i] < 0xFFFF && verticalDistance[i] < 0xFFFF) ?
-                    horizontalDist[i] * horizontalDist[i] + verticalDistance[i] * verticalDistance[i] : Integer.MAX_VALUE;
-            if (distOldSq < distNewSq) { // found a
-                // point that
-                // is closer than the current one we are referencing
-                refPointX = horizontalDist[i];
-                refPointY = verticalDistance[i];
-                distToRef = 0;
+    public static int[] expandBinaryLinearColumn(int[] horizontalDist) {
+        // a list of all reference points, arr[i] = index in horizontalDist
+        int[] refPointIndices = new int[horizontalDist.length];
+        {
+            int refPointIdx = 0;
+            for (int i = 0; i < horizontalDist.length && i >= 0; i ++) {
+                if (horizontalDist[i] != 0xFFFF) {
+                    //point is set
+                    refPointIndices[refPointIdx++] = i;
+                }
             }
-            if (refPointX < 0xFFFF && refPointY < 0xFFFF) {
-                horizontalDist[i] = refPointX;
-                verticalDistance[i] = refPointY + distToRef; //we only work on y axis
-                distToRef += step;
-            }
+            refPointIndices = Arrays.copyOf(refPointIndices,refPointIdx);
         }
-        return horizontalDist;
+
+        // iterate all positions in array, find closest point using refPointIndices and set distance to this point
+        int[] dist = new int[horizontalDist.length];
+        for (int i = 0; i < dist.length; i ++) {
+            int distSq = Integer.MAX_VALUE;
+            for (int j = 0; j < refPointIndices.length; j++) {
+                int distVert = i-refPointIndices[j];
+                int distHoriz = horizontalDist[refPointIndices[j]];
+                int distSqRefPoint = distVert*distVert + distHoriz*distHoriz;
+                if (distSq > distSqRefPoint)
+                    distSq = distSqRefPoint;
+            }
+            dist[i] = (int)Math.round(Math.sqrt(distSq));
+        }
+        return dist;
     }
 
     /**
