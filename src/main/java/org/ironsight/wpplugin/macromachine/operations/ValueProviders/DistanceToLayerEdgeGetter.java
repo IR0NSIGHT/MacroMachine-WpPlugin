@@ -4,12 +4,18 @@ import org.ironsight.wpplugin.macromachine.ArrayUtils;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.ILimitedMapOperation;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.ironsight.wpplugin.macromachine.operations.TileFilter;
 import org.ironsight.wpplugin.macromachine.operations.specialOperations.ShadowMap;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Objects;
+
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGetter, ILimitedMapOperation {
     protected String layerId;
@@ -95,7 +101,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
      */
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        return Math.min(getMaxValue(), distanceMap.getValueAt(x,y));
+        return Math.min(getMaxValue(), distanceMap.getValueAt(x, y));
     }
 
     @Override
@@ -160,10 +166,29 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
 
     @Override
     public void prepareRightBeforeRun(Dimension dimension, int[] tileX, int[] tileY) {
+        int[] tileXFiltered = new int[tileX.length], tileYFiltered = new int[tileY.length];
+        Iterator<? extends Tile> t = dimension.getTiles().iterator();
+        int tileArrIdx = 0;
+        for (int i = 0; i < tileX.length; i++) {
+            Tile tile = dimension.getTile(tileX[i], tileY[i]);
+            if (!tile.hasLayer(layer))
+                continue;
+            tileXFiltered[tileArrIdx] = tile.getX();
+            tileYFiltered[tileArrIdx] = tile.getY();
+            tileArrIdx++;
+        }
+        tileX = Arrays.copyOf(tileXFiltered, tileArrIdx);
+        tileY = Arrays.copyOf(tileYFiltered, tileArrIdx);
+
         int startX = ArrayUtils.findMin(tileX), endX = ArrayUtils.findMax(tileX);
         int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
-        Rectangle extent = new Rectangle(startX, startY, endX - startX + 1, endY - startY + 1);
+        Rectangle dimExtent = dimension.getExtent();
+        int expand = (int) Math.ceil(1f * getMaxValue() / TILE_SIZE);
+        Rectangle extent = new Rectangle(Math.max(dimExtent.x, startX - expand),
+                Math.max(dimExtent.y, startY - expand),
+                Math.min(dimExtent.width, endX - startX + 1 + 2 * expand),
+                Math.min(dimExtent.height, endY - startY + 1 + 2 * expand));
         this.distanceMap = ShadowMap.expandBinaryMask(new BinaryLayerIO(layer, false),
-                dimension, dimension.getExtent());
+                dimension, extent);
     }
 }
