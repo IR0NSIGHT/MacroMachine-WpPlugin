@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.pepsoft.worldpainter.CustomLayerController;
 import org.pepsoft.worldpainter.CustomLayerControllerWrapper;
@@ -20,6 +21,7 @@ public class InputOutputProvider implements IMappingValueProvider,
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
     public ArrayList<IMappingValue> getters = new ArrayList<>();
     HashSet<Layer> layers = new HashSet<>();
+    HashSet<String> layerIds = new HashSet<>();
     private AllowedLayerSettings inputSettings = new AllowedLayerSettings(true, true, true, true);
     private AllowedLayerSettings outputSettings = new AllowedLayerSettings(true, true, true, true);
     private Dimension dimension = null;
@@ -194,18 +196,27 @@ public class InputOutputProvider implements IMappingValueProvider,
 
             layers.addAll(new CustomLayerControllerWrapper().getCustomLayers());
         } else {
-            layers.addAll(Arrays.stream(new Layer[]{PineForest.INSTANCE, DeciduousForest.INSTANCE, Frost.INSTANCE,})
+            layers.addAll(Arrays.stream(new Layer[]{PineForest.INSTANCE, DeciduousForest.INSTANCE, Frost.INSTANCE, MacroSelectionLayer.INSTANCE, HeatMapLayer.INSTANCE})
                     .collect(Collectors.toCollection(ArrayList::new)));
         }
         layers.add(Annotations.INSTANCE); // hardcoded bc not part by default
         this.layers.addAll(layers);
+        for (Layer l: layers) {
+            layerIds.add(l.getId());
+        }
         return new ArrayList<>(this.layers);
     }
 
     @Override
     public void addLayer(Layer layer) {
         this.layers.add(layer);
+        this.layerIds.add(layer.getId());
         notifyListeners();
+    }
+
+    @Override
+    public boolean existsLayerWithId(String layerId) {
+        return this.layerIds.contains(layerId);
     }
 
 
