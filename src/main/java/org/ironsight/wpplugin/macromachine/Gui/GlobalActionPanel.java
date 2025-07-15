@@ -91,7 +91,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
 
-        JDialog diag = createDialog(frame, (macro, setProgress) -> {
+        JFrame diag = createDialog(frame, (macro, setProgress) -> {
             for (int i = 0; i < 30; i++) {
                 try {
                     Thread.sleep(100);

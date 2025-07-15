@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.ironsight.wpplugin.macromachine.ArrayUtils;
+import org.ironsight.wpplugin.macromachine.operations.ILimitedMapOperation;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.ironsight.wpplugin.macromachine.operations.specialOperations.ShadowMap;
 import org.pepsoft.worldpainter.Dimension;
@@ -8,7 +9,7 @@ import org.pepsoft.worldpainter.Dimension;
 import java.awt.*;
 import java.util.Objects;
 
-public class ShadowMapIO implements IPositionValueGetter{
+public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     @Override
     public String getName() {
         return "Shadow";
@@ -87,7 +88,6 @@ public class ShadowMapIO implements IPositionValueGetter{
     }
 
     public void calculateShadowMap(Dimension dim, TerrainHeightIO heightIO, int[] tileX, int[] tileY) {
-
         int startX = ArrayUtils.findMin(tileX), endX = ArrayUtils.findMax(tileX);
         int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
         Rectangle extent = new Rectangle(startX,startY,endX-startX + 1, endY-startY + 1);
@@ -102,5 +102,10 @@ public class ShadowMapIO implements IPositionValueGetter{
     public boolean equals(Object o) {
         if (this == o) return true;
         return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public void prepareRightBeforeRun(Dimension dimension, int[] tileX, int[] tileY) {
+        this.calculateShadowMap(dimension, new TerrainHeightIO(-5000,5000), tileX, tileY);
     }
 }

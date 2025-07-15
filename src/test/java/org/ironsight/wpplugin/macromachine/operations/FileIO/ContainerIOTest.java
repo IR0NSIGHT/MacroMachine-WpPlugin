@@ -121,6 +121,11 @@ class ContainerIOTest {
             public void addLayer(Layer layer) {
                 layers.add(layer);
             }
+
+            @Override
+            public boolean existsLayerWithId(String layerId) {
+                return false;
+            }
         };
 
         MappingActionContainer actionContainer = new MappingActionContainer("./ioTestAction.json");
@@ -177,6 +182,11 @@ class ContainerIOTest {
             @Override
             public void addLayer(Layer layer) {
                 Assertions.fail();
+            }
+
+            @Override
+            public boolean existsLayerWithId(String layerId) {
+                return false;
             }
         };
 

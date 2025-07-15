@@ -4,12 +4,14 @@ import org.pepsoft.worldpainter.Constants;
 
 import java.util.Arrays;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
 public class IntegerTile {
     private int min, max;
     public IntegerTile(int defaultValue) {
         fillWith(defaultValue);
     }
-    int[] values = new int[Constants.TILE_SIZE * Constants.TILE_SIZE];
+    int[] values = new int[TILE_SIZE * TILE_SIZE];
 
     public void fillWith(int value) {
         Arrays.fill(values, value);
@@ -57,7 +59,7 @@ public class IntegerTile {
      * @param value
      */
     void setValueAt(int x, int y, int value) {
-        int index = (y % Constants.TILE_SIZE) * Constants.TILE_SIZE + (x % Constants.TILE_SIZE);
+        int index = (y % TILE_SIZE) * TILE_SIZE + (x % TILE_SIZE);
         values[index] = value;
     }
 
@@ -68,7 +70,18 @@ public class IntegerTile {
      * @return
      */
     int getValueAt(int x, int y) {
-        int index = (y % Constants.TILE_SIZE) * Constants.TILE_SIZE + (x % Constants.TILE_SIZE);
+        int index = (y % TILE_SIZE) * TILE_SIZE + (x % TILE_SIZE);
         return values[index];
+    }
+
+    public void printToStd() {
+        System.out.println("---------------------");
+        for (int y = 0; y < TILE_SIZE; y++) {
+            for (int x = 0; x < TILE_SIZE; x++) {
+                System.out.print(getValueAt(x,y)+" ");
+            }
+            System.out.println("");
+        }
+        System.out.println("---------------------");
     }
 }

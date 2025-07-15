@@ -1,6 +1,8 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.pepsoft.worldpainter.Constants;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Tile;
 
 import java.awt.*;
 
@@ -15,6 +17,57 @@ public class TileContainer {
 
     public TileContainer(Rectangle extent, int defaultValue) {
         this(extent.width , extent.height, TILE_SIZE * extent.x, TILE_SIZE * extent.y,defaultValue);
+    }
+
+    public void addAsValues(IPositionValueGetter getter, Dimension dim) {
+        for (int yPos = getMinYPos(); yPos < getMaxYPos(); yPos ++) {
+            for (int xPos = getMinXPos(); xPos < getMaxXPos(); xPos ++) {
+                setValueAt(xPos,yPos, getter.getValueAt(dim, xPos, yPos));
+            }
+        }
+    }
+
+    /**
+     * get row at position y as array
+     * @param yPos
+     * @return
+     */
+    public int[] getValueRow(int yPos) {
+        int[] row = new int[getMaxXPos()-getMinXPos()];
+        int start = getMinXPos();
+        for (int x = start; x < getMaxXPos(); x++) {
+            row[x - start] = getValueAt(x,yPos);
+        }
+        return row;
+    }
+
+    public void setValueRow(int yPos, int[] row) {
+        int start = getMinXPos();
+        for (int x = start; x < getMaxXPos(); x++) {
+            setValueAt(x,yPos,row[x-start]);
+        }
+    }
+
+
+    /**
+     * get column at position x as array
+     * @param xPos
+     * @return
+     */
+    public int[] getValueColumn(int xPos){
+        int[] row = new int[getMaxYPos()-getMinYPos()];
+        int start = getMinYPos();
+        for (int y = start; y < getMaxYPos(); y++) {
+            row[y - start] = getValueAt(xPos,y);
+        }
+        return row;
+    }
+
+    public void setValueColumn(int[] column, int xPos) {
+        int start = getMinYPos();
+        for (int y = start; y < getMaxYPos(); y++) {
+            setValueAt(xPos,y,column[y - start]);
+        }
     }
 
     public TileContainer(int width, int height, int minX, int minY, int defaultValue) {
