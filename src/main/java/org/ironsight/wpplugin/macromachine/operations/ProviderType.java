@@ -72,7 +72,7 @@ public enum ProviderType {
             case ALWAYS:
                 return AlwaysIO.instance;
             case DISTANCE_TO_EDGE:
-                return new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE);
+                return new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE,100);
             case PERLIN_NOISE:
                 return new PerlinNoiseIO(1,1, 42069,5);
             case SHADOW:
