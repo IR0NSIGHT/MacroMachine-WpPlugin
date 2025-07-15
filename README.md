@@ -1,5 +1,5 @@
 # WorldPainter MacroMachine Plugin
-[plugin github page](https://github.com/IR0NSIGHT/ExpandLayerPlugin/tree/tool/MacroMachine/main) <br><br>
+[plugin github page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin) <br><br>
 The _MacroMachine_ Plugin automates global operation workflows.
 Define simple actions, like applying terrain to certain slopes, and combine many actions into a Macro, that is executed with a single click across the whole map.
 Actions and Macros are saved into the plugins folder and available in all worldpainter projects.
