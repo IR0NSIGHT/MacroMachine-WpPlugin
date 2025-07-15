@@ -11,4 +11,6 @@ public interface LayerProvider {
     List<Layer> getLayers();
 
     void addLayer(Layer layer);
+
+    boolean existsLayerWithId(String layerId);
 }

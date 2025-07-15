@@ -1,42 +1,56 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import org.ironsight.wpplugin.macromachine.ArrayUtils;
+import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
+import org.ironsight.wpplugin.macromachine.operations.ILimitedMapOperation;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.ironsight.wpplugin.macromachine.operations.TileFilter;
+import org.ironsight.wpplugin.macromachine.operations.specialOperations.ShadowMap;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Objects;
 
-public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGetter {
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
+public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimitedMapOperation, EditableIO {
+    private final int maxDistance;
     protected String layerId;
     protected String layerName;
     protected Layer layer = null;
+    private TileContainer distanceMap;
 
-    protected DistanceToLayerEdgeGetter(String name, String id) {
+    protected DistanceToLayerEdgeGetter(String name, String id, int maxDistance) {
         this.layerId = id;
         this.layerName = name;
+        this.maxDistance = maxDistance;
     }
 
-    public DistanceToLayerEdgeGetter() {
-    }
-
-    public DistanceToLayerEdgeGetter(Layer layer) {
+    public DistanceToLayerEdgeGetter(Layer layer, int maxDistance) {
+        assert layer.dataSize == Layer.DataSize.BIT;
         this.layerName = layer.getName();
         this.layerId = layer.getId();
+        this.maxDistance = maxDistance;
     }
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
+        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {
+        });
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null)
             layerName = layer.getName(); //maybe name was updated
+
     }
 
     @Override
     public int getMaxValue() {
-        return 15;
+        return maxDistance;
     }
 
     @Override
@@ -46,18 +60,23 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return new DistanceToLayerEdgeGetter((String) data[0], (String) data[1]);
+        try {
+            return new DistanceToLayerEdgeGetter((String) data[0], (String) data[1], (Integer)data[2]);
+        } catch (Exception ex) {
+            return new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE, 100);
+
+        }
     }
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{layerName, layerId};
+        return new Object[]{layerName, layerId, (Integer)maxDistance};
     }
 
     @Override
     public String valueToString(int value) {
-        if (value == 0) return "outside";
-        if (value == getMaxValue()) return "inside";
+        if (value == 0) return "inside";
+        if (value == getMaxValue()) return "outside";
         return value + "m from edge";
     }
 
@@ -87,9 +106,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
      */
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        double dist = dim.getDistanceToEdge(layer,x,y,getMaxValue());
-        assert dim.getBitLayerValueAt(layer, x, y) || dist == 0 : "if the layer is not set, expect value be zero";
-        return (int)Math.round(dist);
+        return Math.min(getMaxValue(), distanceMap.getValueAt(x, y));
     }
 
     @Override
@@ -106,7 +123,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
 
     @Override
     public int hashCode() {
-        return Objects.hash(getProviderType(), layerId);
+        return Objects.hash(getProviderType(), layerId, maxDistance);
     }
 
     @Override
@@ -114,7 +131,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DistanceToLayerEdgeGetter that = (DistanceToLayerEdgeGetter) o;
-        return Objects.equals(layerId, that.layerId);
+        return Objects.equals(layerId, that.layerId) && this.maxDistance == that.maxDistance;
     }
 
     @Override
@@ -128,27 +145,55 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILayerGe
     }
 
     @Override
-    public String getLayerName() {
-        return layerName;
-    }
-
-    @Override
     public String getToolTipText() {
         return getDescription();
     }
 
     @Override
-    public String getLayerId() {
-        return layerId;
+    public void prepareRightBeforeRun(Dimension dimension, int[] tileX, int[] tileY) {
+        int[] tileXFiltered = new int[tileX.length], tileYFiltered = new int[tileY.length];
+        Iterator<? extends Tile> t = dimension.getTiles().iterator();
+        int tileArrIdx = 0;
+        for (int i = 0; i < tileX.length; i++) {
+            Tile tile = dimension.getTile(tileX[i], tileY[i]);
+            if (!tile.hasLayer(layer))
+                continue;
+            tileXFiltered[tileArrIdx] = tile.getX();
+            tileYFiltered[tileArrIdx] = tile.getY();
+            tileArrIdx++;
+        }
+        tileX = Arrays.copyOf(tileXFiltered, tileArrIdx);
+        tileY = Arrays.copyOf(tileYFiltered, tileArrIdx);
+
+        int startX = ArrayUtils.findMin(tileX), endX = ArrayUtils.findMax(tileX);
+        int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
+        Rectangle dimExtent = dimension.getExtent();
+        int expand = (int) Math.ceil(1f * getMaxValue() / TILE_SIZE);
+        Rectangle extent = new Rectangle(Math.max(dimExtent.x, startX - expand),
+                Math.max(dimExtent.y, startY - expand),
+                Math.min(dimExtent.width, endX - startX + 1 + 2 * expand),
+                Math.min(dimExtent.height, endY - startY + 1 + 2 * expand));
+        this.distanceMap = ShadowMap.expandBinaryMask(new BinaryLayerIO(layer, false),
+                dimension, extent);
     }
 
     @Override
-    public boolean isCustomLayer() {
-        return false;
+    public int[] getEditableValues() {
+        return new int[]{maxDistance};
     }
 
     @Override
-    public Layer getLayer() {
-        return layer;
+    public String[] getValueNames() {
+        return new String[]{"max distance"};
+    }
+
+    @Override
+    public String[] getValueTooltips() {
+        return new String[]{"max distance to calculate. smaller values improve performance"};
+    }
+
+    @Override
+    public EditableIO instantiateWithValues(int[] values) {
+        return new DistanceToLayerEdgeGetter(layerName, layerId, values[0]);
     }
 }

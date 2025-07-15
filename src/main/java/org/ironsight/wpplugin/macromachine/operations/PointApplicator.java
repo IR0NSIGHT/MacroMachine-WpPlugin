@@ -7,7 +7,7 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.util.Collections;
 
-public class PointApplicator {
+public class PointApplicator implements ILimitedMapOperation {
     private final MappingAction action;
     private final Dimension dimension;
 
@@ -15,9 +15,11 @@ public class PointApplicator {
         return action;
     }
 
+    @Override
     public void prepareRightBeforeRun(Dimension dimension, int[] tileX, int[] tileY) {
-        if (action.getInput() instanceof ShadowMapIO)
-            ((ShadowMapIO) action.getInput()).calculateShadowMap(dimension, new TerrainHeightIO(-5000,5000), tileX, tileY);
+        if (action.getInput() instanceof ILimitedMapOperation)
+            ((ILimitedMapOperation)action.getInput()).prepareRightBeforeRun(dimension,tileX,tileY);
+
     }
 
     public void releaseAfterRun() {
