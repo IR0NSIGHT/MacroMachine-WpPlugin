@@ -340,25 +340,7 @@ public class MacroTreePanel extends JPanel {
 
         JButton addButton = new JButton("Create macro");
         addButton.setToolTipText("Create a new, empty macro.");
-        addButton.addActionListener(e -> {
-            Collection<UUID> actionUids = getSelectedUUIDs(false, true);
-            Collection<UUID> macroUids = getSelectedUUIDs(true, false);
-            UUID[] uidArr = new UUID[actionUids.size() + macroUids.size()];
-            int idx = 0;
-            for (UUID uuid: actionUids) {
-                MappingAction clone = mappingContainer.addMapping().withValuesFrom(mappingContainer.queryById(uuid));
-                mappingContainer.updateMapping(clone, MacroMachinePlugin::error);
-                uidArr[idx++] = clone.getUid();
-            }
-            for (UUID macroId : macroUids) {
-                uidArr[idx++] = macroId;
-            }
-            Macro macro = container.addMapping().withUUIDs(uidArr);
-            container.updateMapping(macro, MacroMachinePlugin::error);
-            HashSet<UUID> set = new HashSet<>();
-            set.add(macro.getUid());
-            update(set);
-        });
+        addButton.addActionListener(e -> this.onAddMacroPressed(false));
 
 
         JButton removeButton = new JButton("Delete");
@@ -407,13 +389,16 @@ public class MacroTreePanel extends JPanel {
         JButton exportMacroButton = new JButton("Export");
         exportMacroButton.addActionListener(f -> onExportMacroPressed());
 
-
         JButton importMacroButton = new JButton("Import");
         importMacroButton.addActionListener(f -> onImportMacroPressed());
 
+        JButton createNewFromButton = new JButton("Add to new macro");
+        createNewFromButton.addActionListener(e -> onAddMacroPressed(true));
+
         JButton[] buttonArr = new JButton[] {
                 removeButton,
-                exportMacroButton
+                exportMacroButton,
+                createNewFromButton
         };
         for (JButton b: buttonArr) {
             b.setMaximumSize(new Dimension(Integer.MAX_VALUE,b.getPreferredSize().height));
@@ -428,6 +413,30 @@ public class MacroTreePanel extends JPanel {
         bottomButtons.add(addButton);
         this.add(bottomButtons, BorderLayout.SOUTH);
         this.invalidate();
+    }
+
+    private void onAddMacroPressed(boolean useSelectedAsChildren) {
+        UUID[] uidArr = new UUID[0];
+        if (useSelectedAsChildren) {
+            Collection<UUID> actionUids = getSelectedUUIDs(false, true);
+            Collection<UUID> macroUids = getSelectedUUIDs(true, false);
+            uidArr = new UUID[actionUids.size() + macroUids.size()];
+            int idx = 0;
+            for (UUID uuid: actionUids) {
+                MappingAction clone = mappingContainer.addMapping().withValuesFrom(mappingContainer.queryById(uuid));
+                mappingContainer.updateMapping(clone, MacroMachinePlugin::error);
+                uidArr[idx++] = clone.getUid();
+            }
+            for (UUID macroId : macroUids) {
+                uidArr[idx++] = macroId;
+            }
+        }
+
+        Macro macro = container.addMapping().withUUIDs(uidArr);
+        container.updateMapping(macro, MacroMachinePlugin::error);
+        HashSet<UUID> set = new HashSet<>();
+        set.add(macro.getUid());
+        update(set);
     }
 
     private void onExportMacroPressed() {
