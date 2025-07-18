@@ -32,16 +32,23 @@ public class MacroDesigner extends JPanel {
         init();
     }
 
-    private JPopupMenu createPopupMenu(int row, int column) {
+    private JPopupMenu createPopupMenu(int row, int column, int[] selectedRows) {
         //row is index of action
         UUID id = macro.getExecutionUUIDs()[row];
         boolean active = macro.getActiveActions()[row];
 
         JPopupMenu menu = new JPopupMenu();
-        JButton b = new JButton(active ? "disable" : "enable");
+        JButton b = new JButton("enable/disable");
+        b.setText(macro.getActiveActions()[row]? "disable" : "enable");
         b.addActionListener(l -> {
-            Macro m = macro.withReplacedUUIDs(new int[]{row}, id, new boolean[]{!active});
+            boolean isTargetRowActive = macro.getActiveActions()[row];
+            boolean[] activeState = macro.getActiveActions();
+            for (int idx: selectedRows) {
+                activeState[idx] = !isTargetRowActive;
+            }
+            Macro m = macro.withUUIDs(macro.getExecutionUUIDs(), activeState);
             setMacro(m, true);
+            b.setText(!isTargetRowActive ? "disable" : "enable");
         });
         menu.add(b);
         return menu;
@@ -103,11 +110,11 @@ public class MacroDesigner extends JPanel {
 
                     // Check if a valid cell is clicked
                     if (row >= 0 && column >= 0) {
-                        table.setRowSelectionInterval(row, row); // Select the clicked row
-                        table.setColumnSelectionInterval(column, column);
+                        table.addRowSelectionInterval(row, row); // Select the clicked row
+                        table.addColumnSelectionInterval(column, column);
 
                         // Show the popup menu
-                        JPopupMenu popupMenu = createPopupMenu(row, column);
+                        JPopupMenu popupMenu = createPopupMenu(row, column, table.getSelectedRows());
                         popupMenu.show(table, e.getX(), e.getY());
                     }
                 }
