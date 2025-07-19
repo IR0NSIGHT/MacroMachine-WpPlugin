@@ -61,7 +61,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
         try {
-            return new DistanceToLayerEdgeGetter((String) data[0], (String) data[1], (Integer)data[2]);
+            return new DistanceToLayerEdgeGetter((String) data[0], (String) data[1], (Integer) data[2]);
         } catch (Exception ex) {
             return new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE, 100);
 
@@ -70,7 +70,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{layerName, layerId, (Integer)maxDistance};
+        return new Object[]{layerName, layerId, (Integer) maxDistance};
     }
 
     @Override
@@ -175,6 +175,11 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
                 Math.min(dimExtent.height, endY - startY + 1 + 2 * expand));
         this.distanceMap = ShadowMap.expandBinaryMask(new BinaryLayerIO(layer, false),
                 dimension, extent);
+    }
+
+    @Override
+    public void releaseRightAfterRun() {
+        this.distanceMap = null;
     }
 
     @Override

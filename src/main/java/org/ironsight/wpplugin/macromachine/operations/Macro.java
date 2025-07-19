@@ -8,8 +8,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * this class is a collection of MappingActions the actions are ordered and executed in this order a macro can be
- * executed and will apply each of its nested actions to the map macros can container Actions or other Macros (nesting)
+ * this class is a collection of MappingActions the action are ordered and executed in this order a macro can be
+ * executed and will apply each of its nested action to the map macros can container Actions or other Macros (nesting)
  * recursion is technically possible but not allowed because there is no way to detect infinite recursion.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -31,7 +31,7 @@ public class Macro implements SaveableAction {
     /**
      * @param macro
      * @param item            action or macro to insert
-     * @param createNewAction getter to clone actions if necessary
+     * @param createNewAction getter to clone action if necessary
      * @param targetRows      insert item at each of those rows
      * @param outNewSelection output array with indices of row selection. old rows stay selected.
      * @return new macro
