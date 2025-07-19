@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
 import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.getAllPointsForDiscreteIO;
 
 public class MacroDesigner extends JPanel {
@@ -161,7 +162,10 @@ public class MacroDesigner extends JPanel {
 
         debugButton = new JButton("Debug");
         debugButton.setToolTipText("Enable debugging: action filter is painted onto the map using " +
-                "Worldpainter Selection whenever a macro is run");
+                "Annotations green (PASS) and red (BLOCK) whenever a macro is run. Taxing for processor and RAM, only" +
+                " use when debugging a macro.");
+        debugButton.setBackground(ActionFilterIO.instance.isDebugMode() ? Color.RED : DEFAULT_BACKGROUND);
+        debugButton.setText(ActionFilterIO.instance.isDebugMode() ? "disable debug" : "enable debug");
         debugButton.addActionListener(l -> onDebugButton());
         buttons.add(debugButton);
 
@@ -191,6 +195,7 @@ public class MacroDesigner extends JPanel {
     private void onDebugButton() {
         ActionFilterIO.instance.setDebugMode(!ActionFilterIO.instance.isDebugMode());
         debugButton.setText(ActionFilterIO.instance.isDebugMode() ? "disable debug" : "enable debug");
+        debugButton.setBackground(ActionFilterIO.instance.isDebugMode() ? Color.RED : DEFAULT_BACKGROUND);
     }
 
     private Collection<IDisplayUnit> getDefaultFiltersAndEmptyAction() {
