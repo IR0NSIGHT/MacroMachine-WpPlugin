@@ -108,4 +108,9 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     public void prepareRightBeforeRun(Dimension dimension, int[] tileX, int[] tileY) {
         this.calculateShadowMap(dimension, new TerrainHeightIO(-5000,5000), tileX, tileY);
     }
+
+    @Override
+    public void releaseRightAfterRun() {
+        this.releaseShadowMap();
+    }
 }

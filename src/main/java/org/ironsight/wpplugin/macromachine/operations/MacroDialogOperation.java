@@ -75,13 +75,13 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
             boolean hasNullActions = executionSteps.stream().anyMatch(Objects::isNull);
             if (hasNullActions) {
                 ErrorPopUp(
-                        "Some actions in the execution list are null. This means they were deleted, but are still " +
+                        "Some action in the execution list are null. This means they were deleted, but are still " +
                                 "linked into a macro." + " The macro can" + " " + "not be applied to the " + "map.");
                 return statistics;
             }
 
 
-            // prepare actions for dimension
+            // prepare action for dimension
             for (MappingAction action : executionSteps) {
                 try {
                     action.output.prepareForDimension(getDimension());
