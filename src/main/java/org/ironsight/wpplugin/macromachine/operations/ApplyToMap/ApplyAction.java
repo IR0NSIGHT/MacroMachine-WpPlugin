@@ -125,7 +125,7 @@ public class ApplyAction {
             ExecutionStatistic statistic = applyToDimensionWithFilter(dim,earlyAbortFilter,action,ui);
             statistics.add(statistic);
             ui.afterEachAction(statistic);
-            if (ui.updateMapAfterEachAction() && dim.isEventsInhibited()) {
+            if (ui.isUpdateMapAfterEachAction() && dim.isEventsInhibited()) {
                 dim.setEventsInhibited(false);
             }
         }

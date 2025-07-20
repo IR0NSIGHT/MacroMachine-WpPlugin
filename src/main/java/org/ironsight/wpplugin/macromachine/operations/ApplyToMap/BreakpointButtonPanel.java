@@ -123,17 +123,21 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
 
     @Override
     public void OnReachedBreakpoint(int idx) {
-        stepperButton.setToolTipText("continue with " + breakpoints.get(idx));
-        stepperButton.setEnabled(true);
-        progressBar.setValue(idx);
+        SwingUtilities.invokeLater(()->{
+            stepperButton.setToolTipText("continue with " + breakpoints.get(idx));
+            stepperButton.setEnabled(true);
+            progressBar.setValue(idx);
+        });
         stepperVisulaizer.OnReachedBreakpoint(idx);
     }
 
     @Override
     public void PostReachedBreakpoint(int idx) {
         doContinue = false;
-        stepperButton.setToolTipText("continue");
-        stepperButton.setEnabled(false);
+        SwingUtilities.invokeLater(()->{
+            stepperButton.setToolTipText("continue");
+            stepperButton.setEnabled(false);
+        });
     }
 
     private void resetState() {
@@ -144,11 +148,14 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
     public void SetBreakpoints(ArrayList<MappingAction> breakpoints) {
         this.breakpoints = breakpoints;
         doAbort = false;
-        this.progressBar.setMinimum(0);
-        this.progressBar.setMaximum(breakpoints.size());
-        setButtonsActive(true);
         this.stepperVisulaizer = getStepperVisualizer.get();
         stepperVisulaizer.SetBreakpoints(breakpoints);
+
+        SwingUtilities.invokeLater(() ->{
+            this.progressBar.setMinimum(0);
+            this.progressBar.setMaximum(breakpoints.size());
+            setButtonsActive(true);
+        });
     }
 
     @Override
