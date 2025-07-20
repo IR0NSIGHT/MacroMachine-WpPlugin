@@ -38,7 +38,7 @@ public class IoSelectLabel extends JPanel {
     }
     private void onPickerSubmit(IDisplayUnit selected) {
         SetSelected((IMappingValue)selected);
-        onChangeCallback.accept((IMappingValue) selected);
+        onChangeCallback.accept(((IMappingValue) selected).instantiateFrom(((IMappingValue) selected).getSaveData()));  //return clone
     }
     private void addClickListener(JPanel panel) {
         panel.addMouseListener(new MouseAdapter() {

@@ -8,8 +8,8 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * this class is a collection of MappingActions the actions are ordered and executed in this order a macro can be
- * executed and will apply each of its nested actions to the map macros can container Actions or other Macros (nesting)
+ * this class is a collection of MappingActions the action are ordered and executed in this order a macro can be
+ * executed and will apply each of its nested action to the map macros can container Actions or other Macros (nesting)
  * recursion is technically possible but not allowed because there is no way to detect infinite recursion.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -31,7 +31,7 @@ public class Macro implements SaveableAction {
     /**
      * @param macro
      * @param item            action or macro to insert
-     * @param createNewAction getter to clone actions if necessary
+     * @param createNewAction getter to clone action if necessary
      * @param targetRows      insert item at each of those rows
      * @param outNewSelection output array with indices of row selection. old rows stay selected.
      * @return new macro
@@ -221,17 +221,17 @@ public class Macro implements SaveableAction {
     }
 
 
-    public List<UUID> collectActions(List<UUID> actionList) {
+    public List<UUID> collectActions(List<UUID> actionList, MacroContainer macroContainer, MappingActionContainer actionContainer) {
         int idx = 0;
         for (UUID id : this.executionUUIDs) {
-            SaveableAction action = MacroContainer.getInstance().queryById(id);
+            SaveableAction action =macroContainer.queryById(id);
             if (!this.activeActions[idx++])
                 continue;
             if (action != null) {//macro
                 //macro adds its own steps recursively
-                ((Macro) action).collectActions(actionList);
+                ((Macro) action).collectActions(actionList,macroContainer,actionContainer);
             } else {
-                action = MappingActionContainer.getInstance().queryById(id);
+                action = actionContainer.queryById(id);
                 if (action != null)
                     actionList.add(action.getUid());
             }

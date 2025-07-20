@@ -1,27 +1,40 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ActionType;
-import org.ironsight.wpplugin.macromachine.operations.MappingAction;
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
+import org.ironsight.wpplugin.macromachine.operations.*;
 import org.pepsoft.worldpainter.Constants;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
+import org.pepsoft.worldpainter.layers.Annotations;
+import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.awt.*;
+import java.util.Iterator;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ActionFilterIO implements IPositionValueSetter, IPositionValueGetter {
-    public static ActionFilterIO instance = new ActionFilterIO();
     public static final int PASS_VALUE = 1;
     public static final int BLOCK_VALUE = 0;
+    public static ActionFilterIO instance = new ActionFilterIO();
     private transient TileContainer tileContainer;
+    private boolean debugMode = false;
+
     protected ActionFilterIO() {
+    }
+
+    public boolean isDebugMode() {
+        return debugMode;
+    }
+
+    public void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
     }
 
     public boolean skipTile(int tileX, int tileY) {
         assert tileContainer != null;
-        return tileContainer.getTileAt(tileX * TILE_SIZE,tileY * TILE_SIZE).getMax() == BLOCK_VALUE;
+        return tileContainer.getMaxValueAtTile(tileX, tileY) == BLOCK_VALUE;
     }
 
     @Override
@@ -41,34 +54,44 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        return tileContainer.getValueAt(x,y);
+        return tileContainer.getValueAt(x, y);
     }
 
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
-        tileContainer.setValueAt(x,y, value);
+        tileContainer.setValueAt(x, y, value);
     }
 
     @Override
     public void prepareForDimension(Dimension dim) {
         if (tileContainer != null)
             return;
+        if (debugMode)
+            tileContainer = null;
         Rectangle rect = dim.getExtent();
-        tileContainer = new TileContainer(rect.width, rect.height, rect.x * Constants.TILE_SIZE,
-                rect.y * Constants.TILE_SIZE, PASS_VALUE);
+        tileContainer =
+                debugMode ?
+                        new DebugTileContainer(dim, Annotations.INSTANCE, new int[]{14/*red*/,6/*green*/}, rect.width,
+                                rect.height,
+                                rect.x * Constants.TILE_SIZE,
+                                rect.y * Constants.TILE_SIZE, PASS_VALUE) :
+                        new TileContainer(rect.width, rect.height, rect.x * Constants.TILE_SIZE,
+                                rect.y * Constants.TILE_SIZE, PASS_VALUE);
     }
 
     /**
-     * special case for action filter: check if the tile can be completly set to BLOCK early on, and then be skipped
-     * fo rthe whole action. better performance than having to test all blocks in tile
+     * special case for action filter: check if the tile can be completly set to BLOCK early on, and then be skipped fo
+     * rthe whole action. better performance than having to test all blocks in tile
+     *
      * @param tile
      * @param filterAction
-     * @return
+     * @return true: tile can be skipped, all actions already happened. false: gotta iterate all blocks in tile
      */
     public boolean testTileEarlyAbort(Tile tile, MappingAction filterAction) {
         // ALWAYS SETS FILTER to value x
-        if (filterAction.actionType.equals(ActionType.SET) && filterAction.getInput().getProviderType().equals(ProviderType.ALWAYS)) {
-            tileContainer.fillWithValue(filterAction.map(0));
+        if (filterAction.actionType.equals(ActionType.SET) &&
+                filterAction.getInput().getProviderType().equals(ProviderType.ALWAYS)) {
+            tileContainer.fillTile(tile.getX(),tile.getY(), filterAction.map(BLOCK_VALUE));
             return true;
         }
 
@@ -81,7 +104,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
                     filterAction.map(0 /*absent*/) == BLOCK_VALUE) {
                 ILayerGetter input = (ILayerGetter) filterAction.getInput();
                 if (!tile.hasLayer(input.getLayer())) {
-                    tileContainer.getTileAt(tile.getX() * TILE_SIZE, tile.getY() * TILE_SIZE).fillWith(BLOCK_VALUE);
+                    tileContainer.fillTile(tile.getX(), tile.getY(), BLOCK_VALUE);
                     return true;
                 }
             }
@@ -105,11 +128,11 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
                 }
                 // lowestPassingHeight and highestPassingHeight define the range where the filter would let a tile PASS
                 if (tile.getHighestIntHeight() < lowestPassingHeight) {
-                    tileContainer.getTileAt(tile.getX() * TILE_SIZE, tile.getY() * TILE_SIZE).fillWith(BLOCK_VALUE);
+                    tileContainer.fillTile(tile.getX(), tile.getY(), BLOCK_VALUE);
                     return true;
                 }
                 if (tile.getLowestIntHeight() > highestPassingHeight) {
-                    tileContainer.getTileAt(tile.getX() * TILE_SIZE, tile.getY() * TILE_SIZE).fillWith(BLOCK_VALUE);
+                    tileContainer.fillTile(tile.getX(), tile.getY(), BLOCK_VALUE);
                     return true;
                 }
             }
@@ -170,10 +193,12 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
         g.setColor(value == PASS_VALUE ? Color.GREEN : Color.RED);
         g.fillRect(0, 0, dim.width, dim.height);
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
     }
+
     @Override
     public ProviderType getProviderType() {
         return ProviderType.INTERMEDIATE_SELECTION;

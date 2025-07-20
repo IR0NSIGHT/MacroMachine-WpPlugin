@@ -1,20 +1,18 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.CustomLayerControllerWrapper;
-import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.WorldPainterView;
 import org.pepsoft.worldpainter.layers.CustomLayer;
 import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.layers.LayerManager;
 import org.pepsoft.worldpainter.operations.*;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -60,28 +58,37 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
         }
     }
 
+    public static List<MappingAction> macroToFlatActions(Macro macro, MacroContainer macroContainer,
+                                                  MappingActionContainer actionContainer) {
+        List<UUID> steps = macro.collectActions(new LinkedList<>(), macroContainer, actionContainer);
+        List<MappingAction> executionSteps = steps.stream()
+                .map(MappingActionContainer.getInstance()::queryById)
+                .collect(Collectors.toList());
+        return executionSteps;
+    }
+
     @Override
     public Collection<ExecutionStatistic> applyLayerAction(Macro macro,
-                                                           Consumer<ApplyAction.Progess> setProgress) {
+                                                           ApplyActionCallback callback) {
         Collection<ExecutionStatistic> statistics = new ArrayList<>();
         try {
-            this.getDimension().setEventsInhibited(true);
+            if (!getDimension().isEventsInhibited()) {
+                this.getDimension().setEventsInhibited(true);
+            }
             this.getDimension().rememberChanges();
-            List<UUID> steps = macro.collectActions(new LinkedList<>());
-            List<MappingAction> executionSteps = steps.stream()
-                            .map(MappingActionContainer.getInstance()::queryById)
-                            .collect(Collectors.toList());
 
+            List<MappingAction> executionSteps = macroToFlatActions(macro, MacroContainer.getInstance(),
+                    MappingActionContainer.getInstance());
             boolean hasNullActions = executionSteps.stream().anyMatch(Objects::isNull);
             if (hasNullActions) {
                 ErrorPopUp(
-                        "Some actions in the execution list are null. This means they were deleted, but are still " +
+                        "Some action in the execution list are null. This means they were deleted, but are still " +
                                 "linked into a macro." + " The macro can" + " " + "not be applied to the " + "map.");
                 return statistics;
             }
 
 
-            // prepare actions for dimension
+            // prepare action for dimension
             for (MappingAction action : executionSteps) {
                 try {
                     action.output.prepareForDimension(getDimension());
@@ -118,15 +125,14 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
             }
 
             // ----------------------- macro is ready and can be applied to map
-            statistics = ApplyAction.applyExecutionSteps(getDimension(), executionSteps, setProgress);
-
+            statistics = ApplyAction.applyExecutionSteps(getDimension(), executionSteps, callback );
             ActionFilterIO.instance.releaseAfterApplication();
-            statistics.forEach(f -> GlobalActionPanel.logMessage(f.toString()));
-
         } catch (Exception ex) {
             return statistics;
         } finally {
-            this.getDimension().setEventsInhibited(false);
+            if (getDimension().isEventsInhibited()) {
+                getDimension().setEventsInhibited(false);
+            }
         }
         return statistics;
     }

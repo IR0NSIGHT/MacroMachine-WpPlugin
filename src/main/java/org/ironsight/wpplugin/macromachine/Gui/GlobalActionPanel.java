@@ -4,6 +4,7 @@ import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.EditableIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
@@ -17,12 +18,13 @@ import java.awt.event.HierarchyEvent;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.prefs.Preferences;
 
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
+import static org.ironsight.wpplugin.macromachine.operations.MacroDialogOperation.macroToFlatActions;
 
 // top level panel that contains a selection list of macros/layers/input/output on the left, like a file browser
 // and an editor for the currently selected action on the right
@@ -91,15 +93,26 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
 
-        JFrame diag = createDialog(frame, (macro, setProgress) -> {
-            for (int i = 0; i < 30; i++) {
+        JFrame diag = createDialog(frame, (macro, uiCallback) -> {
+            ArrayList<MappingAction> steps =
+                    new ArrayList<>(macroToFlatActions(macro, MacroContainer.getInstance(),
+                    MappingActionContainer.getInstance()));
+            int i = 0;
+            uiCallback.setAllActionsBeforeRun(steps);
+            for (MappingAction a : steps) {
+                if (uiCallback.isActionAbort())
+                    break;
                 try {
+                    uiCallback.beforeEachAction(a,null);
                     Thread.sleep(100);
-                    setProgress.accept(new ApplyAction.Progess(0, 1, 100f * i / 30f));
+                    uiCallback.setProgressOfAction(Math.round( 100f * i++ / 30f));
+                    uiCallback.afterEachAction(new ExecutionStatistic(a));
+
                 } catch (InterruptedException ex) {
                     ;
                 }
             }
+            uiCallback.afterEverything();
             return Collections.emptyList();
         });
         diag.setVisible(true);

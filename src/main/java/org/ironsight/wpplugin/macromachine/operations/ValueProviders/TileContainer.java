@@ -7,6 +7,7 @@ import org.pepsoft.worldpainter.Tile;
 import java.awt.*;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class TileContainer {
 
@@ -48,6 +49,9 @@ public class TileContainer {
         }
     }
 
+    public void fillTile(int tileX, int tileY, int value) {
+        getTileAt(tileX << TILE_SIZE_BITS, tileY << TILE_SIZE_BITS).fillWith(value);
+    }
 
     /**
      * get column at position x as array
@@ -137,17 +141,27 @@ public class TileContainer {
         return -offsetY;
     }
 
-    public IntegerTile getTileAt(int x, int y) {
-        x += offsetX;
-        y += offsetY;
 
-        assert x >= 0;
-        assert y >= 0;
+    private IntegerTile getTileAt(int pointX, int pointY) {
+        pointX += offsetX;
+        pointY += offsetY;
 
-        int indexX = x >> Constants.TILE_SIZE_BITS;
-        int indexY = y >> Constants.TILE_SIZE_BITS;
+        assert pointX >= 0;
+        assert pointY >= 0;
+
+        int indexX = pointX >> Constants.TILE_SIZE_BITS;
+        int indexY = pointY >> Constants.TILE_SIZE_BITS;
 
         return tiles[indexX][indexY];
+    }
+
+    public int getMinValueAtTile(int tileX, int tileY) {
+        return getTileAt(tileX << TILE_SIZE_BITS, tileY << TILE_SIZE_BITS).getMin();
+    }
+
+    public int getMaxValueAtTile(int tileX, int tileY) {
+        IntegerTile tile = getTileAt(tileX << TILE_SIZE_BITS, tileY << TILE_SIZE_BITS);
+        return tile.getMax();
     }
 
     public void calculateMinMax(int x, int y) {
