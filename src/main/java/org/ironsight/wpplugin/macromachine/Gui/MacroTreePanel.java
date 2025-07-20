@@ -514,6 +514,8 @@ public class MacroTreePanel extends JPanel {
         if (macroIsCurrentlyExecuting)
             return;
         macroIsCurrentlyExecuting = true;
+        GlobalActionPanel.logMessage("Start execution");
+
         ExecutorService executorService = Executors.newFixedThreadPool(1);
 
         // Submit a task to the ExecutorService
@@ -522,13 +524,16 @@ public class MacroTreePanel extends JPanel {
         if (selected == null || selected.getLastPathComponent() == null ||
                 ((MacroTreeNode) selected.getLastPathComponent()).getPayloadType() !=
                         GlobalActionPanel.SELECTION_TPYE.MACRO) {
+            macroIsCurrentlyExecuting = false;
             return;
         }
 
         final Macro executingMacro = container.queryById(((MacroTreeNode) selected.getLastPathComponent()).getMacro()
                 .getUid());
-        if (executingMacro == null)
+        if (executingMacro == null) {
+            macroIsCurrentlyExecuting = false;
             return;
+        }
         //get macros
         //FIXME move getTreeStepper into constructor of callback? instead of wierd pingpong spgehtti
         macroExecutionCallback = panel.getUserCallback();
@@ -539,7 +544,10 @@ public class MacroTreePanel extends JPanel {
                 this::setStepperToPath);
         executorService.submit(() -> {
             applyToMap.applyLayerAction(executingMacro, macroExecutionCallback);
-            macroIsCurrentlyExecuting = false;
+            SwingUtilities.invokeLater(()->{
+                macroIsCurrentlyExecuting = false;
+                GlobalActionPanel.logMessage("Finished execution");
+            });
         });
 
         // Shutdown the ExecutorService

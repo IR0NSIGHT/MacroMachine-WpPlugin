@@ -16,7 +16,7 @@ public interface ApplyActionCallback {
     void afterEachTile(int tileX, int tileY);
 
     void afterEachAction(ExecutionStatistic statistic);
-    boolean updateMapAfterEachAction();
+    boolean isUpdateMapAfterEachAction();
 
     void setAllActionsBeforeRun(List<MappingAction> steps);
 
