@@ -84,6 +84,7 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     private TileContainer shadowMap;
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
+        assert shadowMap != null;
         return shadowMap.getValueAt(x,y);
     }
 
@@ -107,10 +108,12 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     @Override
     public void prepareRightBeforeRun(Dimension dimension, int[] tileX, int[] tileY) {
         this.calculateShadowMap(dimension, new TerrainHeightIO(-5000,5000), tileX, tileY);
+        assert shadowMap != null;
     }
 
     @Override
     public void releaseRightAfterRun() {
         this.releaseShadowMap();
+        assert shadowMap == null;
     }
 }

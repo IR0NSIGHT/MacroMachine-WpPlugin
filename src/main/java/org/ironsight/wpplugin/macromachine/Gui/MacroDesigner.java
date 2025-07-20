@@ -160,15 +160,6 @@ public class MacroDesigner extends JPanel {
         submitButton.addActionListener(e -> onSubmit.accept(this.macro));
         buttons.add(submitButton);
 
-        debugButton = new JButton("Debug");
-        debugButton.setToolTipText("Enable debugging: action filter is painted onto the map using " +
-                "Annotations green (PASS) and red (BLOCK) whenever a macro is run. Taxing for processor and RAM, only" +
-                " use when debugging a macro.");
-        debugButton.setBackground(ActionFilterIO.instance.isDebugMode() ? Color.RED : DEFAULT_BACKGROUND);
-        debugButton.setText(ActionFilterIO.instance.isDebugMode() ? "disable debug" : "enable debug");
-        debugButton.addActionListener(l -> onDebugButton());
-        buttons.add(debugButton);
-
         buttons.add(getHelpButton("Macro Editor",
                 "In the macro editor, you define which actions are executed and in " +
                         "which order. The top-most action is run first, then the next one and so on. All actions in a" +

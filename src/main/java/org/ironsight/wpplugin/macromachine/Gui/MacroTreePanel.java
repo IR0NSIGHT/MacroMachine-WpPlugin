@@ -2,9 +2,13 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointButtonPanel;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.UserApplyActionCallback;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ConflictResolveImportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.MacroExportPolicy;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 import javax.swing.*;
@@ -24,6 +28,11 @@ import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 import static org.ironsight.wpplugin.macromachine.MacroMachinePlugin.error;
 
 public class MacroTreePanel extends JPanel {
+    private BreakpointButtonPanel debuggerUI = new BreakpointButtonPanel(this::onApply);
+    private UserApplyActionCallback macroExecutionCallback;
+    public UserApplyActionCallback getUserCallback(){
+        return new UserApplyActionCallback(debuggerUI, ActionFilterIO.instance.isDebugMode());
+    }
     private final MacroContainer container;
     private final MappingActionContainer mappingContainer;
     private final MacroApplicator applyToMap;
@@ -32,7 +41,6 @@ public class MacroTreePanel extends JPanel {
     ISelectItemCallback onSelectAction;
     JPopupMenu popupMenu = new JPopupMenu();
     private String filterString = "";
-    private JButton applyButton;
     private long lastProgressUpdate = 0;
     private boolean macroIsCurrentlyExecuting;
     private boolean blockUpdates = false;
@@ -368,12 +376,6 @@ public class MacroTreePanel extends JPanel {
             update();
         });
 
-        applyButton = new JButton("Apply macros");
-        applyButton.setToolTipText(
-                "Apply all selected macros to the map. The order in which macros are applied is " + "random.");
-        applyButton.addActionListener(f -> onApply());
-
-
         JButton helpButton = getHelpButton("Global Tree View",
                 "This view shows your global list of macros and actions. You can" + " " +
                         "expand the macros, actions and their values.\n" +
@@ -406,11 +408,12 @@ public class MacroTreePanel extends JPanel {
         }
 
         popupMenu.add(buttons);
+
         JPanel bottomButtons = new JPanel(new FlowLayout());
-        bottomButtons.add(applyButton);
         bottomButtons.add(importMacroButton);
         bottomButtons.add(helpButton);
         bottomButtons.add(addButton);
+        bottomButtons.add(debuggerUI);
         this.add(bottomButtons, BorderLayout.SOUTH);
         this.invalidate();
     }
@@ -489,70 +492,30 @@ public class MacroTreePanel extends JPanel {
     }
 
     private void onItemInTreeSelected(SaveableAction item, GlobalActionPanel.SELECTION_TPYE type) {
-        applyButton.setEnabled(type == GlobalActionPanel.SELECTION_TPYE.MACRO);
         onSelectAction.onSelect(item, type);
     }
 
-    private void onSetProgress(ApplyAction.Progess progess) {
-        SwingUtilities.invokeLater(() -> {
-            if (Math.abs(lastProgressUpdate - System.currentTimeMillis()) < 100)
-                return;
-            lastProgressUpdate = System.currentTimeMillis();
-            if (progess.totalSteps != 1) {
-                applyButton.setText(String.format("%d/%d: %d%%",
-                        progess.step + 1,
-                        progess.totalSteps,
-                        Math.round(progess.progressInStep)));
-            } else {
-                applyButton.setText(String.format("%d%%", Math.round(progess.progressInStep)));
-            }
-
-            applyButton.repaint();
-        });
-    }
-
-    private void onApply() {
+    private void onApply(boolean isDebug) {
+        ActionFilterIO.instance.setDebugMode(isDebug);
         if (macroIsCurrentlyExecuting)
             return;
         macroIsCurrentlyExecuting = true;
         ExecutorService executorService = Executors.newFixedThreadPool(1);
-        SwingUtilities.invokeLater(() -> {
-            applyButton.setEnabled(false);
-            applyButton.setText("Starting...");
-            applyButton.repaint();
-        });
+
         // Submit a task to the ExecutorService
         final MacroTreePanel panel = this;
+        final ArrayList<UUID> selectedMacros = getSelectedUUIDs(true, false);
         executorService.submit(() -> {
-            long startTime = System.currentTimeMillis();
+
             //get macros
-            for (UUID id : getSelectedUUIDs(true, false)) {
+            for (UUID id : selectedMacros) {
                 Macro macro = container.queryById(id);
                 if (macro != null) {
-                    applyToMap.applyLayerAction(macro, panel::onSetProgress);
+                    macroExecutionCallback = panel.getUserCallback();
+                    applyToMap.applyLayerAction(macro, macroExecutionCallback);
                 }
             }
-
-            long diff = System.currentTimeMillis() - startTime;
-            try {   //always take at least 1/2 a second for a macro execution to give visual feedback that it ran.
-                long minimumWait = 350;
-                if (diff < minimumWait) {
-                    for (long i = diff; i < minimumWait; i += 10) {
-                        onSetProgress(new ApplyAction.Progess(0, 1, (100f * i) / minimumWait));
-                        Thread.sleep(10);
-                    }
-
-                }
-            } catch (InterruptedException ex) {
-                error(ex.getMessage());
-            }
-
-            SwingUtilities.invokeLater(() -> {
-                applyButton.setText("Apply macros");
-                applyButton.repaint();
-            });
             macroIsCurrentlyExecuting = false;
-            applyButton.setEnabled(true);
         });
 
         // Shutdown the ExecutorService
