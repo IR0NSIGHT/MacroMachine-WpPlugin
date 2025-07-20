@@ -1,11 +1,11 @@
-package org.ironsight.wpplugin.macromachine.operations;
+package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
+import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
@@ -14,7 +14,7 @@ public class ApplyAction {
 
     public static ExecutionStatistic applyToDimensionWithFilter(Dimension dim, TileFilter filter,
                                                                 MappingAction action,
-                                                                Consumer<Float> setProgress) {
+                                                                ApplyActionCallback callback) {
         filter.setDimension(dim);
         Iterator<? extends Tile> t = dim.getTiles().iterator();
         ExecutionStatistic statistic = new ExecutionStatistic(action);
@@ -46,15 +46,19 @@ public class ApplyAction {
         if (tileX.length == 0 || tileY.length == 0)
             return statistic;
 
-        if (action instanceof ILimitedMapOperation)
-            ((ILimitedMapOperation) action).prepareRightBeforeRun(dim, tileX, tileY);
+        if (action.getInput() instanceof ILimitedMapOperation)
+            ((ILimitedMapOperation) action.getInput()).prepareRightBeforeRun(dim, tileX, tileY);
+        if (action.getOutput() instanceof ILimitedMapOperation)
+            ((ILimitedMapOperation) action.getOutput()).prepareRightBeforeRun(dim, tileX, tileY);
 
+        callback.setProgressOfAction(0);
         for (int i = 0; i < tileX.length; i++) {
             Tile tile = dim.getTile(tileX[i], tileY[i]);
 
             TileFilter.passType pass = filter.testTile(tile);
             statistic.touchedTiles++;
-
+            if (callback.isActionAbort())
+                break;
             //special case for actionfilter
             if (action.getOutput() instanceof ActionFilterIO) {
                 boolean skipTile = ActionFilterIO.instance.testTileEarlyAbort(tile, action);
@@ -71,15 +75,23 @@ public class ApplyAction {
                         statistic.touchedBlocks++;
                     }
                 }
+                if (callback.isActionAbort())
+                    break;
             }
             //this pass is done, for this tile calculate new minMax
             ActionFilterIO.instance.getTileContainer().calculateMinMax(tile.getX() * TILE_SIZE,
                     tile.getY() * TILE_SIZE);
             tilesVisitedCount++;
-            setProgress.accept(100f * tilesVisitedCount / (totalTiles));
+            callback.setProgressOfAction(Math.round(100f * tilesVisitedCount / (totalTiles)));
+            callback.afterEachTile(tile.getX(),tile.getY());
         }
-        if (action instanceof ILimitedMapOperation)
-            ((ILimitedMapOperation) action).releaseRightAfterRun();
+        callback.setProgressOfAction(100);
+
+        if (action.getInput() instanceof ILimitedMapOperation)
+            ((ILimitedMapOperation) action.getInput()).releaseRightAfterRun();
+        if (action.getOutput() instanceof ILimitedMapOperation)
+            ((ILimitedMapOperation) action.getOutput()).releaseRightAfterRun();
+
         statistic.durationMillis = System.currentTimeMillis() - startTime;
         return statistic;
     }
@@ -99,18 +111,24 @@ public class ApplyAction {
 
     public static ArrayList<ExecutionStatistic> applyExecutionSteps(Dimension dim,
                                                                     List<MappingAction> actions,
-                                                                    Consumer<Progess> setProgress) {
+                                                                    ApplyActionCallback ui) {
         ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
-        int i = 0;
+        ui.setAllActionsBeforeRun(actions);
         for (MappingAction a : actions) {
+            if (!dim.isEventsInhibited()) {
+                dim.setEventsInhibited(true);
+            }
+            ui.beforeEachAction(a, dim);
+            if (ui.isActionAbort())
+                break;
             TileFilter earlyAbortFilter = new TileFilter();
-            final int stepIndex = i;
-            statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, a,
-                    percent -> {
-                        setProgress.accept(new Progess(stepIndex, actions.size(), percent));
-                    }));
-            i++;
+            statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, a, ui));
+            ui.afterEachAction();
+            if (ui.updateMapAfterEachAction() && dim.isEventsInhibited()) {
+                dim.setEventsInhibited(false);
+            }
         }
+        ui.afterEverything();
 
         return statistics;
     }

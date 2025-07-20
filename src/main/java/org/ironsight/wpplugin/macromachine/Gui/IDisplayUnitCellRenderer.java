@@ -11,7 +11,7 @@ import java.awt.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header2Font;
 
-class IDisplayUnitCellRenderer{
+public class IDisplayUnitCellRenderer{
 
     public static final Color SELECTED_BACKGROUND = new Color(205, 199, 255);
     public static final Color SELECTED_FOREGROUND = Color.BLACK;

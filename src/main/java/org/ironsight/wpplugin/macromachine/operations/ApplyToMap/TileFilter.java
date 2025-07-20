@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.macromachine.operations;
+package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;

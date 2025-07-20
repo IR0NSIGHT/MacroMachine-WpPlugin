@@ -4,7 +4,6 @@ import org.ironsight.wpplugin.macromachine.ArrayUtils;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.ILimitedMapOperation;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.ironsight.wpplugin.macromachine.operations.TileFilter;
 import org.ironsight.wpplugin.macromachine.operations.specialOperations.ShadowMap;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;

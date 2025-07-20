@@ -4,10 +4,10 @@ public class ExecutionStatistic {
     public ExecutionStatistic(MappingAction action) {
         this.action = action;
     }
-    long durationMillis;
-    long touchedTiles;
-    long touchedBlocks;
-    MappingAction action;
+    public long durationMillis;
+    public long touchedTiles;
+    public long touchedBlocks;
+    public MappingAction action;
 
     @Override
     public String toString() {

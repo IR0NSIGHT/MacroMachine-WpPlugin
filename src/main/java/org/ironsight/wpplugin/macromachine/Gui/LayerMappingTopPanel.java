@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class LayerMappingTopPanel extends LayerMappingPanel {
-    private static final String defaultFont = "SansSerif";
+    private static final String defaultFont = "Segoe UI Emoji";
     public static final Font header1Font = new Font(defaultFont, Font.PLAIN, 14);
     public static final Font header2Font = new Font(defaultFont, Font.PLAIN, 14);
     public static final Font macroFont = new Font(defaultFont, Font.PLAIN, 14);
