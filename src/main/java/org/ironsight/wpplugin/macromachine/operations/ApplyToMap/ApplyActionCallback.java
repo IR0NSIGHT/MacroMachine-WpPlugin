@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
+import org.ironsight.wpplugin.macromachine.operations.ExecutionStatistic;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.pepsoft.worldpainter.Dimension;
 
@@ -14,7 +15,7 @@ public interface ApplyActionCallback {
 
     void afterEachTile(int tileX, int tileY);
 
-    void afterEachAction();
+    void afterEachAction(ExecutionStatistic statistic);
     boolean updateMapAfterEachAction();
 
     void setAllActionsBeforeRun(List<MappingAction> steps);

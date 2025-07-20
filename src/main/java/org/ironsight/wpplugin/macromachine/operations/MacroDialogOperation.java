@@ -58,6 +58,15 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
         }
     }
 
+    public static List<MappingAction> macroToFlatActions(Macro macro, MacroContainer macroContainer,
+                                                  MappingActionContainer actionContainer) {
+        List<UUID> steps = macro.collectActions(new LinkedList<>(), macroContainer, actionContainer);
+        List<MappingAction> executionSteps = steps.stream()
+                .map(MappingActionContainer.getInstance()::queryById)
+                .collect(Collectors.toList());
+        return executionSteps;
+    }
+
     @Override
     public Collection<ExecutionStatistic> applyLayerAction(Macro macro,
                                                            ApplyActionCallback callback) {
@@ -67,11 +76,9 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
                 this.getDimension().setEventsInhibited(true);
             }
             this.getDimension().rememberChanges();
-            List<UUID> steps = macro.collectActions(new LinkedList<>());
-            List<MappingAction> executionSteps = steps.stream()
-                            .map(MappingActionContainer.getInstance()::queryById)
-                            .collect(Collectors.toList());
 
+            List<MappingAction> executionSteps = macroToFlatActions(macro, MacroContainer.getInstance(),
+                    MappingActionContainer.getInstance());
             boolean hasNullActions = executionSteps.stream().anyMatch(Objects::isNull);
             if (hasNullActions) {
                 ErrorPopUp(
@@ -119,10 +126,7 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
 
             // ----------------------- macro is ready and can be applied to map
             statistics = ApplyAction.applyExecutionSteps(getDimension(), executionSteps, callback );
-
             ActionFilterIO.instance.releaseAfterApplication();
-            statistics.forEach(f -> GlobalActionPanel.logMessage(f.toString()));
-
         } catch (Exception ex) {
             return statistics;
         } finally {

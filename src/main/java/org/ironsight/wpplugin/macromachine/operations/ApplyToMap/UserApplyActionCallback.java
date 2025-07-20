@@ -1,5 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
+import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.ironsight.wpplugin.macromachine.operations.ExecutionStatistic;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.pepsoft.worldpainter.Dimension;
 
@@ -54,7 +56,8 @@ public class UserApplyActionCallback implements ApplyActionCallback {
     }
 
     @Override
-    public void afterEachAction() {
+    public void afterEachAction(ExecutionStatistic statistic) {
+        GlobalActionPanel.logMessage(statistic.toString());
         this.actionIdx++;
     }
 
@@ -67,9 +70,7 @@ public class UserApplyActionCallback implements ApplyActionCallback {
     public void setAllActionsBeforeRun(List<MappingAction> steps) {
         this.steps = steps;
         this.actionIdx = 0;
-        debugUI.SetBreakpoints(steps.stream()
-                .map(MappingAction::getName)
-                .collect(Collectors.toCollection(ArrayList::new)));
+        debugUI.SetBreakpoints(new ArrayList<>(steps));
     }
 
     @Override

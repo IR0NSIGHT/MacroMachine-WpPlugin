@@ -114,16 +114,17 @@ public class ApplyAction {
                                                                     ApplyActionCallback ui) {
         ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
         ui.setAllActionsBeforeRun(actions);
-        for (MappingAction a : actions) {
+        for (MappingAction action : actions) {
             if (!dim.isEventsInhibited()) {
                 dim.setEventsInhibited(true);
             }
-            ui.beforeEachAction(a, dim);
+            ui.beforeEachAction(action, dim);
             if (ui.isActionAbort())
                 break;
             TileFilter earlyAbortFilter = new TileFilter();
-            statistics.add(applyToDimensionWithFilter(dim, earlyAbortFilter, a, ui));
-            ui.afterEachAction();
+            ExecutionStatistic statistic = applyToDimensionWithFilter(dim,earlyAbortFilter,action,ui);
+            statistics.add(statistic);
+            ui.afterEachAction(statistic);
             if (ui.updateMapAfterEachAction() && dim.isEventsInhibited()) {
                 dim.setEventsInhibited(false);
             }

@@ -221,17 +221,17 @@ public class Macro implements SaveableAction {
     }
 
 
-    public List<UUID> collectActions(List<UUID> actionList) {
+    public List<UUID> collectActions(List<UUID> actionList, MacroContainer macroContainer, MappingActionContainer actionContainer) {
         int idx = 0;
         for (UUID id : this.executionUUIDs) {
-            SaveableAction action = MacroContainer.getInstance().queryById(id);
+            SaveableAction action =macroContainer.queryById(id);
             if (!this.activeActions[idx++])
                 continue;
             if (action != null) {//macro
                 //macro adds its own steps recursively
-                ((Macro) action).collectActions(actionList);
+                ((Macro) action).collectActions(actionList,macroContainer,actionContainer);
             } else {
-                action = MappingActionContainer.getInstance().queryById(id);
+                action = actionContainer.queryById(id);
                 if (action != null)
                     actionList.add(action.getUid());
             }
