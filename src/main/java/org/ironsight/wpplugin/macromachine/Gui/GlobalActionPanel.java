@@ -24,6 +24,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
+import static org.ironsight.wpplugin.macromachine.operations.MacroDialogOperation.macroToFlatActions;
 
 // top level panel that contains a selection list of macros/layers/input/output on the left, like a file browser
 // and an editor for the currently selected action on the right
@@ -93,10 +94,9 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         frame.setVisible(true);
 
         JFrame diag = createDialog(frame, (macro, uiCallback) -> {
-            ArrayList<MappingAction> steps = new ArrayList<>();
-            for (int i = 0; i < 30; i++) {
-                steps.add(MappingAction.getNewEmptyAction().withName("action " + i));
-            };
+            ArrayList<MappingAction> steps =
+                    new ArrayList<>(macroToFlatActions(macro, MacroContainer.getInstance(),
+                    MappingActionContainer.getInstance()));
             int i = 0;
             uiCallback.setAllActionsBeforeRun(steps);
             for (MappingAction a : steps) {
@@ -106,7 +106,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
                     uiCallback.beforeEachAction(a,null);
                     Thread.sleep(100);
                     uiCallback.setProgressOfAction(Math.round( 100f * i++ / 30f));
-                    uiCallback.afterEachAction();
+                    uiCallback.afterEachAction(new ExecutionStatistic(a));
 
                 } catch (InterruptedException ex) {
                     ;

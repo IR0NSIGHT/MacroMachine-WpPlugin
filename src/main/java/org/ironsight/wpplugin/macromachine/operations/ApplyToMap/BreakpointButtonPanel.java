@@ -6,13 +6,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_FOREGROUND;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
 
 public class BreakpointButtonPanel extends JPanel implements DebugUserInterface {
-    private ArrayList<String> breakpoints;
+    private ArrayList<MappingAction> breakpoints;
     private JButton stepperButton;
     private JButton startDebugButton;
     private JButton abortButton;
@@ -21,7 +22,12 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
     private boolean doContinue;
     private boolean doAbort = false;
     private boolean isRunning = false;
-    public BreakpointButtonPanel(Consumer<Boolean> onUserStartsMacro ) {
+    private BreakpointListener stepperVisulaizer;
+    private Supplier<BreakpointListener> getStepperVisualizer;
+
+    public BreakpointButtonPanel(Consumer<Boolean> onUserStartsMacro,
+                                 Supplier<BreakpointListener> getStepperVisualizer) {
+        this.getStepperVisualizer = getStepperVisualizer;
         this.startButton = new MacroMachineButton("▶");
         startButton.setToolTipText("Start macro");
         startButton.addActionListener(l -> onUserStartsMacro.accept(false));
@@ -62,7 +68,30 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
         frame.setLayout(new java.awt.FlowLayout());
         frame.setSize(300, 200);
 
-        DebugUserInterface panel = new BreakpointButtonPanel(f -> {});
+        DebugUserInterface panel = new BreakpointButtonPanel(f -> {
+        }, () ->
+                new BreakpointListener() {
+                    @Override
+                    public void OnReachedBreakpoint(int idx) {
+
+                    }
+
+                    @Override
+                    public void PostReachedBreakpoint(int idx) {
+
+                    }
+
+                    @Override
+                    public void SetBreakpoints(ArrayList<MappingAction> breakpoints) {
+
+                    }
+
+                    @Override
+                    public void afterEverything() {
+
+                    }
+                }
+        );
         // Add the button to the frame
         frame.add((JPanel) panel);
 
@@ -97,6 +126,7 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
         stepperButton.setToolTipText("continue with " + breakpoints.get(idx));
         stepperButton.setEnabled(true);
         progressBar.setValue(idx);
+        stepperVisulaizer.OnReachedBreakpoint(idx);
     }
 
     @Override
@@ -111,27 +141,19 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
     }
 
     @Override
-    public void SetBreakpoints(ArrayList<String> breakpoints) {
+    public void SetBreakpoints(ArrayList<MappingAction> breakpoints) {
         this.breakpoints = breakpoints;
         doAbort = false;
         this.progressBar.setMinimum(0);
         this.progressBar.setMaximum(breakpoints.size());
         setButtonsActive(true);
-
+        this.stepperVisulaizer = getStepperVisualizer.get();
+        stepperVisulaizer.SetBreakpoints(breakpoints);
     }
 
     @Override
     public boolean isAbort() {
         return doAbort;
-    }
-
-    class MacroMachineButton extends JButton {
-        public MacroMachineButton(String text) {
-            this.setBackground(DEFAULT_BACKGROUND);
-            this.setForeground(DEFAULT_FOREGROUND);
-            this.setFont(header1Font);
-            this.setText(text);
-        }
     }
 
     private void setButtonsActive(boolean isRunning) {
@@ -146,5 +168,16 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
     public void afterEverything() {
         progressBar.setEnabled(false);
         setButtonsActive(false);
-    };
+    }
+
+    class MacroMachineButton extends JButton {
+        public MacroMachineButton(String text) {
+            this.setBackground(DEFAULT_BACKGROUND);
+            this.setForeground(DEFAULT_FOREGROUND);
+            this.setFont(header1Font);
+            this.setText(text);
+        }
+    }
+
+    ;
 }

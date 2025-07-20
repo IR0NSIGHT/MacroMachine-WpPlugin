@@ -134,20 +134,20 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
                                                   boolean leaf, int row, boolean hasFocus) {
-        assert value instanceof MacroTreePanel.MacroTreeNode;
-        MacroTreePanel.MacroTreeNode node = (MacroTreePanel.MacroTreeNode) value;
-        if (value instanceof MacroTreePanel.MacroTreeNode) {
-            switch (((MacroTreePanel.MacroTreeNode) value).payloadType) {
+        assert value instanceof MacroTreeNode;
+        MacroTreeNode node = (MacroTreeNode) value;
+        if (value instanceof MacroTreeNode) {
+            switch (((MacroTreeNode) value).payloadType) {
                 case MACRO:
                 case ACTION:
-                    updateTo(((MacroTreePanel.MacroTreeNode) value).payload, node.isActive());
+                    updateTo(((MacroTreeNode) value).payload, node.isActive());
                     break;
                 case OUTPUT:
-                    updateTo(((MacroTreePanel.MacroTreeNode) value).getOutput(), node.isActive());
+                    updateTo(((MacroTreeNode) value).getOutput(), node.isActive());
 
                     break;
                 case INPUT:
-                    updateTo(((MacroTreePanel.MacroTreeNode) value).getInput(),  node.isActive());
+                    updateTo(((MacroTreeNode) value).getInput(),  node.isActive());
                     break;
                 case INVALID:
             }
