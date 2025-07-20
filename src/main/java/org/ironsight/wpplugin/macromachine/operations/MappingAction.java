@@ -9,22 +9,15 @@ import java.util.*;
 
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.INTERMEDIATE_SELECTION;
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.fromType;
+
 /**
- * this class represents a single global-operation.
- * it can be applied to the map
- * each Actions has an input (f.e. terrain height) and an output (f.e. annotation)
- * the MappingPoints define which input value is mapped to which output value
- * f.e. ranges 62H to 85H -> Annotation.WHITE
- * Actions modifiy the output value, they can either Set the value (easiest) or do math. this is decided by the
- * action Type
+ * this class represents a single global-operation. it can be applied to the map each Actions has an input (f.e. terrain
+ * height) and an output (f.e. annotation) the MappingPoints define which input value is mapped to which output value
+ * f.e. ranges 62H to 85H -> Annotation.WHITE Actions modifiy the output value, they can either Set the value (easiest)
+ * or do math. this is decided by the action Type
  */
 public class MappingAction implements SaveableAction {
     public final IPositionValueGetter input;
-
-    public IPositionValueSetter getOutput() {
-        return output;
-    }
-
     public final IPositionValueSetter output;
     public final ActionType actionType;
     private final MappingPoint[] mappingPoints;
@@ -32,14 +25,9 @@ public class MappingAction implements SaveableAction {
     private final String description;
     private final UUID uid;    //TODO make final and private
     private final int[] mappings;
-    public static MappingAction getNewEmptyAction(UUID id) {
-        return new MappingAction(new TerrainHeightIO(-64,319),
-                new AnnotationSetter(),
-                new MappingPoint[0], ActionType.SET, "create new action", "new description",id);
-    }
-    public static MappingAction getNewEmptyAction() {
-       return getNewEmptyAction(null);
-    }
+    //only for gui purposes, not part of the actual data. only use this flag if you set it yourself
+    private boolean isActive;
+
     public MappingAction(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
                          ActionType type, String name, String description, UUID uid) {
         assert name != null;
@@ -62,7 +50,7 @@ public class MappingAction implements SaveableAction {
         mappingPoints =
                 Arrays.stream(mappingPoints)
                         .filter(p -> sanitizeInput(p.input) == p.input) //input points
-                        .map(p -> new MappingPoint(p.input,sanitizeOutput(p.output)))
+                        .map(p -> new MappingPoint(p.input, sanitizeOutput(p.output)))
                         .toArray(MappingPoint[]::new);
 
         assert Arrays.stream(mappingPoints).noneMatch(p -> sanitizeInput(p.input) != p.input) : "mapping points " +
@@ -123,6 +111,16 @@ public class MappingAction implements SaveableAction {
 
     }
 
+    public static MappingAction getNewEmptyAction(UUID id) {
+        return new MappingAction(new TerrainHeightIO(-64, 319),
+                new AnnotationSetter(),
+                new MappingPoint[0], ActionType.SET, "create new action", "new description", id);
+    }
+
+    public static MappingAction getNewEmptyAction() {
+        return getNewEmptyAction(null);
+    }
+
     public static MappingAction fromJsonWrapper(ActionJsonWrapper wrapper) {
         IPositionValueGetter input = (IPositionValueGetter) fromType(wrapper.getInputData(), wrapper.getInputId());
         IPositionValueSetter output = (IPositionValueSetter) fromType(wrapper.getOutputData(), wrapper.getOutputId());
@@ -160,6 +158,10 @@ public class MappingAction implements SaveableAction {
         return ranges;
     }
 
+    public IPositionValueSetter getOutput() {
+        return output;
+    }
+
     public IPositionValueGetter getInput() {
         return input;
     }
@@ -169,7 +171,7 @@ public class MappingAction implements SaveableAction {
     }
 
     public MappingAction withValuesFrom(MappingAction other) {
-        return new MappingAction(other.input, other.output, other. mappingPoints,  other.actionType,  other.name,
+        return new MappingAction(other.input, other.output, other.mappingPoints, other.actionType, other.name,
                 other.description, this.uid);
     }
 
@@ -238,6 +240,17 @@ public class MappingAction implements SaveableAction {
         return new MappingPoint(sanitizeInput(p.input), sanitizeOutput(p.output));
     }
 
+    public MappingAction deepCopy() {
+        return new MappingAction((IPositionValueGetter) this.input.instantiateFrom(this.input.getSaveData()),
+                (IPositionValueSetter) this.output.instantiateFrom(this.output.getSaveData()),
+                this.mappingPoints.clone(),
+                this.actionType,
+                this.name,
+                this.description,
+                this.uid
+        );
+    }
+
     public MappingAction withNewPoints(MappingPoint[] mappingPoints) {
         mappingPoints = Arrays.stream(mappingPoints)
                 .map(this::sanitize)
@@ -264,9 +277,6 @@ public class MappingAction implements SaveableAction {
         isActive = active;
     }
 
-    //only for gui purposes, not part of the actual data. only use this flag if you set it yourself
-    private boolean isActive;
-
     public ActionType getActionType() {
         return actionType;
     }
@@ -283,17 +293,18 @@ public class MappingAction implements SaveableAction {
 
     @Override
     public String getToolTipText() {
-        return input.getName() +" " + actionType.displayName + " " + output.getName();
+        return input.getName() + " " + actionType.displayName + " " + output.getName();
     }
 
     public void applyToPoint(Dimension dim, int x, int y) {
-        if (!output.getProviderType().equals(INTERMEDIATE_SELECTION) && ActionFilterIO.instance.getValueAt(dim,x,y) != ActionFilterIO.PASS_VALUE)
+        if (!output.getProviderType().equals(INTERMEDIATE_SELECTION) &&
+                ActionFilterIO.instance.getValueAt(dim, x, y) != ActionFilterIO.PASS_VALUE)
             return;
 
         if (mappingPoints.length == 0) {
             return;
         }
-        int value = (int)EditableIO.clamp( input.getValueAt(dim, x, y), input.getMinValue(), input.getMaxValue());
+        int value = (int) EditableIO.clamp(input.getValueAt(dim, x, y), input.getMinValue(), input.getMaxValue());
 
         int modifier = map(value);
 

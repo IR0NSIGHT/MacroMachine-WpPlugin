@@ -355,7 +355,8 @@ public class MacroDesigner extends JPanel {
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
         JDialog dialog = new DisplayUnitPickerDialog(macrosAndActions, selected -> {
             Macro macro = this.macro;
-
+            if (selected instanceof MappingAction)
+                selected = ((MappingAction) selected).deepCopy();
             ArrayList<Integer> newSelection = new ArrayList<>();
             Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), (SaveableAction) selected,
                     () -> MappingActionContainer.getInstance().addMapping(),
@@ -445,6 +446,7 @@ public class MacroDesigner extends JPanel {
             if (selected instanceof Macro) {
                 setMacro(macro.withReplacedUUIDs(this.table.getSelectedRows(), ((Macro) selected).getUid()), true);
             } else if (selected instanceof MappingAction) {
+                selected = ((MappingAction) selected).deepCopy();
                 if (((MappingAction) selected).getUid() == null)
                     selected = MappingActionContainer.getInstance().addMapping();
                 Macro temp = this.macro;
