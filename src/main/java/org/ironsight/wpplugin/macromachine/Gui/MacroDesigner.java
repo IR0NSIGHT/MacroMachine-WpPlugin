@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
 import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.getAllPointsForDiscreteIO;
 
 public class MacroDesigner extends JPanel {
@@ -22,7 +23,7 @@ public class MacroDesigner extends JPanel {
     private JTextField name;
     private JTextArea description;
     private JTable table;
-    private JButton addButton, removeButton, moveUpButton, moveDownButton, changeMappingButton;
+    private JButton addButton, removeButton, moveUpButton, moveDownButton, changeMappingButton, debugButton;
     private JScrollPane scrollPane;
     private boolean isUpdating;
     private int[] selectedRows = new int[0];
@@ -32,16 +33,23 @@ public class MacroDesigner extends JPanel {
         init();
     }
 
-    private JPopupMenu createPopupMenu(int row, int column) {
+    private JPopupMenu createPopupMenu(int row, int column, int[] selectedRows) {
         //row is index of action
         UUID id = macro.getExecutionUUIDs()[row];
         boolean active = macro.getActiveActions()[row];
 
         JPopupMenu menu = new JPopupMenu();
-        JButton b = new JButton(active ? "disable" : "enable");
+        JButton b = new JButton("enable/disable");
+        b.setText(macro.getActiveActions()[row] ? "disable" : "enable");
         b.addActionListener(l -> {
-            Macro m = macro.withReplacedUUIDs(new int[]{row}, id, new boolean[]{!active});
+            boolean isTargetRowActive = macro.getActiveActions()[row];
+            boolean[] activeState = macro.getActiveActions();
+            for (int idx : selectedRows) {
+                activeState[idx] = !isTargetRowActive;
+            }
+            Macro m = macro.withUUIDs(macro.getExecutionUUIDs(), activeState);
             setMacro(m, true);
+            b.setText(!isTargetRowActive ? "disable" : "enable");
         });
         menu.add(b);
         return menu;
@@ -103,11 +111,11 @@ public class MacroDesigner extends JPanel {
 
                     // Check if a valid cell is clicked
                     if (row >= 0 && column >= 0) {
-                        table.setRowSelectionInterval(row, row); // Select the clicked row
-                        table.setColumnSelectionInterval(column, column);
+                        table.addRowSelectionInterval(row, row); // Select the clicked row
+                        table.addColumnSelectionInterval(column, column);
 
                         // Show the popup menu
-                        JPopupMenu popupMenu = createPopupMenu(row, column);
+                        JPopupMenu popupMenu = createPopupMenu(row, column, table.getSelectedRows());
                         popupMenu.show(table, e.getX(), e.getY());
                     }
                 }
@@ -175,6 +183,12 @@ public class MacroDesigner extends JPanel {
         prepareTableModel();
     }
 
+    private void onDebugButton() {
+        ActionFilterIO.instance.setDebugMode(!ActionFilterIO.instance.isDebugMode());
+        debugButton.setText(ActionFilterIO.instance.isDebugMode() ? "disable debug" : "enable debug");
+        debugButton.setBackground(ActionFilterIO.instance.isDebugMode() ? Color.RED : DEFAULT_BACKGROUND);
+    }
+
     private Collection<IDisplayUnit> getDefaultFiltersAndEmptyAction() {
         LinkedList<IDisplayUnit> items = new LinkedList<>();
         items.add(MappingAction.getNewEmptyAction());
@@ -198,7 +212,7 @@ public class MacroDesigner extends JPanel {
                 "Filter: Only On Water",
                 "Default filter: block all blocks that are not below waterlevel",
                 null
-                ));
+        ));
         items.add(new MappingAction(new WaterDepthProvider(),
                 ActionFilterIO.instance,
                 new MappingPoint[]{
@@ -210,7 +224,7 @@ public class MacroDesigner extends JPanel {
                 "Default filter: block all blocks that are not above waterlevel",
                 null
         ));
-        items.add(new MappingAction(new TerrainHeightIO(-64,319),
+        items.add(new MappingAction(new TerrainHeightIO(-64, 319),
                 ActionFilterIO.instance,
                 new MappingPoint[]{
                         new MappingPoint(73, ActionFilterIO.PASS_VALUE),
@@ -221,7 +235,7 @@ public class MacroDesigner extends JPanel {
                 "Default filter: block all blocks that are above this level",
                 null
         ));
-        items.add(new MappingAction(new TerrainHeightIO(-64,319),
+        items.add(new MappingAction(new TerrainHeightIO(-64, 319),
                 ActionFilterIO.instance,
                 new MappingPoint[]{
                         new MappingPoint(73, ActionFilterIO.BLOCK_VALUE),
@@ -341,7 +355,8 @@ public class MacroDesigner extends JPanel {
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
         JDialog dialog = new DisplayUnitPickerDialog(macrosAndActions, selected -> {
             Macro macro = this.macro;
-
+            if (selected instanceof MappingAction)
+                selected = ((MappingAction) selected).deepCopy();
             ArrayList<Integer> newSelection = new ArrayList<>();
             Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), (SaveableAction) selected,
                     () -> MappingActionContainer.getInstance().addMapping(),
@@ -429,9 +444,10 @@ public class MacroDesigner extends JPanel {
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
         JDialog dialog = new DisplayUnitPickerDialog(macrosAndActions, selected -> {
             if (selected instanceof Macro) {
-                setMacro(macro.withReplacedUUIDs(this.table.getSelectedRows(), ((Macro)selected).getUid()), true);
-            } else if (selected instanceof MappingAction){
-                if (((MappingAction)selected).getUid() == null)
+                setMacro(macro.withReplacedUUIDs(this.table.getSelectedRows(), ((Macro) selected).getUid()), true);
+            } else if (selected instanceof MappingAction) {
+                selected = ((MappingAction) selected).deepCopy();
+                if (((MappingAction) selected).getUid() == null)
                     selected = MappingActionContainer.getInstance().addMapping();
                 Macro temp = this.macro;
                 for (int targetIdx : this.table.getSelectedRows()) {

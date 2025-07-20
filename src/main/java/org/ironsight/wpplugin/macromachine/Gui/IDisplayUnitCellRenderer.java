@@ -1,17 +1,8 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.Gui.MacroTreePanel.MacroTreeNode;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
-
-import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import java.awt.*;
 
-import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
-import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header2Font;
-
-class IDisplayUnitCellRenderer{
+public class IDisplayUnitCellRenderer{
 
     public static final Color SELECTED_BACKGROUND = new Color(205, 199, 255);
     public static final Color SELECTED_FOREGROUND = Color.BLACK;

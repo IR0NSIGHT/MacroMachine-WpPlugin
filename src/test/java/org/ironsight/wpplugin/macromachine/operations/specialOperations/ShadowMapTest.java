@@ -111,7 +111,6 @@ class ShadowMapTest {
         container.setValueAt(p2x, p2y, 1); //binary
 
         ShadowMap.expandBinaryMask(container, 1);
-        container.getTileAt(0,0).printToStd();
         assertEquals(0, container.getValueAt(p1x, p1y), "distance to mask must be zero for set points");
         assertEquals(0, container.getValueAt(p2x, p2y), "distance to mask must be zero for set points");
         //test points moving away from the common center

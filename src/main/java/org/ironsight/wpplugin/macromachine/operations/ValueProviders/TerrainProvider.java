@@ -80,7 +80,7 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public String valueToString(int value) {
-        return Terrain.values()[value].name();
+        return Terrain.values()[value].getName();
     }
 
     @Override
