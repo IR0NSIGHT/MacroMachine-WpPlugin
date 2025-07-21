@@ -99,11 +99,13 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
             nameLabel.setFont(ioFont);
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.OUTPUT));
         } else {
-            nameLabel.setText("UNKNOWN ACTION: " + mapping);
             input.setText("");
             output.setText("");
             actionType.setText("");
-            panel.setToolTipText("this action does not exist. It will be ignored.");
+            nameLabel.setText("All macros");
+            panel.setToolTipText("");
+            nameLabel.setFont(ioFont);
+            iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.MACRO));
         }
         if (mapping instanceof IDisplayUnit && !isItemValid.apply((IDisplayUnit) mapping)) {
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.INVALID));
@@ -150,6 +152,8 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
                     updateTo(((MacroTreeNode) value).getInput(),  node.isActive());
                     break;
                 case INVALID:
+                    updateTo(((MacroTreeNode) value).payload,  node.isActive());
+                    break;
             }
         }
 
