@@ -103,7 +103,7 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
                     return statistics;
                 } catch (Exception e) {
                     ErrorPopUp(
-                            "Action " + action.getName() + " caused an excpetion:" + e.getMessage());
+                            "Action " + action.getName() + " caused an exception:" + e.getMessage());
                     return statistics;
                 }
             }
@@ -113,6 +113,7 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
                 if (l instanceof CustomLayer && !controller.containsLayer(l)) {
                     ((CustomLayer) l).setPalette("MacroMachine");
                     controller.registerCustomLayer((CustomLayer) l, true);
+                    System.out.println("REGISTERED NEW LAYER " + l);
                 }
             }
 
@@ -120,7 +121,7 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
                 ActionFilterIO.instance.prepareForDimension(getDimension());
             } catch (Exception e) {
                 ErrorPopUp(
-                        "ActionFilter Preparation caused an excpetion:" + e.getMessage());
+                        "ActionFilter Preparation caused an exception:" + e.getMessage());
                 return statistics;
             }
 

@@ -464,11 +464,12 @@ public class MacroTreePanel extends JPanel {
         fileChooser.setAcceptAllFileFilterUsed(false); // Optional: Disable the "All Files" filter
 
         int result = fileChooser.showOpenDialog(null); // Use null or a valid parent component
-        MacroMachineWindow.getDialog().setLastDirectoryPicked(fileChooser.getCurrentDirectory().getPath());
+
 
         if (result == JFileChooser.APPROVE_OPTION) {
             assert (fileChooser.getSelectedFile() != null) : "user confirmed without selection?";
             String outputDir = fileChooser.getSelectedFile().getPath();
+            MacroMachineWindow.getDialog().setLastDirectoryPicked(outputDir);
             for (UUID macroId : getSelectedUUIDs(true, false)) {
                 Macro lastItem = container.queryById(macroId);
                 MacroExportPolicy policy = new MacroExportPolicy(lastItem, MacroContainer.getInstance());

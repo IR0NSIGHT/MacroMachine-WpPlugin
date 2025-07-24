@@ -41,7 +41,7 @@ class MacroTreeNode implements TreeNode {
         int i = 0;
         for (Macro macro : macros.queryAll()
                 .stream()
-                .sorted(Comparator.comparing(Macro::getName))
+                .sorted(Comparator.comparing(m -> m.getName().toLowerCase()))
                 .toArray(Macro[]::new)) {
             children[i++] = new MacroTreeNode(macro, true, actions, macros);
         }
