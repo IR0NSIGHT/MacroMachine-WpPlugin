@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
@@ -151,7 +152,7 @@ public class DisplayUnitPickerDialog extends JDialog {
                 if (text.trim().isEmpty()) {
                     rowSorter.setRowFilter(null);
                 } else {
-                    rowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + Pattern.quote(text)));
+                    rowSorter.setRowFilter(new DisplayValueRowFilter(text));
                 }
             }
         });
@@ -168,5 +169,35 @@ public class DisplayUnitPickerDialog extends JDialog {
         searchPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
         return searchPanel;
+    }
+
+    public class DisplayValueRowFilter extends RowFilter<TableModel, Integer> {
+
+        private Pattern pattern;
+
+        public DisplayValueRowFilter(String regex) {
+            this.pattern = Pattern.compile("(?i)" + Pattern.quote(regex));
+        }
+
+        @Override
+        public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
+            TableModel model = entry.getModel();
+            for (int i = 0; i < model.getColumnCount(); i++) {
+                Object value = model.getValueAt(entry.getIdentifier(), i);
+                String text = "";
+
+                if (value instanceof IDisplayUnit) {
+                    text = ((IDisplayUnit) value).getName();
+                } else {
+                    text = value.toString();
+                }
+
+                Matcher matcher = pattern.matcher(text);
+                if (matcher.find()) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 }
