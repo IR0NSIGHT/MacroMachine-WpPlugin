@@ -169,11 +169,11 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
         abortButton.setEnabled(isRunning);
         stepperButton.setEnabled(isRunning);
         progressBar.setValue(isRunning ? 0 : progressBar.getMaximum());
+        progressBar.setVisible(isRunning);
     }
 
     @Override
     public void afterEverything() {
-        progressBar.setEnabled(false);
         setButtonsActive(false);
     }
 
