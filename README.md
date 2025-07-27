@@ -14,7 +14,7 @@ This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK
 
 
 ## Download
-[Youtube Tutorial](https://youtu.be/FtfwxDTzWgk?si=2JaUsOgvU1c2SFsF)
+[Youtube Tutorial](https://youtu.be/FtfwxDTzWgk?si=2JaUsOgvU1c2SFsF)  
 1. go to the [release page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/latest)
 2. select the top most Macro-Machine release
 3. download the Macro-Machine-Plugin-x.x.x.jar file
@@ -26,7 +26,7 @@ This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK
 
 
 ## Use Macros
-[Youtube Tutorial](https://youtu.be/to27vExZfoM?si=CPMGnqGgRdljYbB3)
+[Youtube Tutorial](https://youtu.be/to27vExZfoM?si=CPMGnqGgRdljYbB3)  
 1. Find the Macro tool and left click it. The macro panel will open.  
 ![tool](macromachine_tool.PNG)
 2. Select the macro you want to execute by left clicking it in the tree view.  
@@ -37,7 +37,7 @@ This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK
 5. Deselect macro tool, reselect macro tool to open the panel again.
 
 ## Edit Macros
-[Youtube Tutorial](https://youtu.be/jog4qHFP4WI?si=gqlX9unvOYhtRQ4x)
+[Youtube Tutorial](https://youtu.be/jog4qHFP4WI?si=gqlX9unvOYhtRQ4x)  
 Let's create a simple macro that creates a mask for us:  add all Swamp and Desert biome to selection. 
 1. Create a new macro by clicking "Create Macro". A new macro with the name "New mapping macro" appears in the tree panel.
 2. Left click "New Mapping Macro". It is now shown in the macro designer on the right.  
