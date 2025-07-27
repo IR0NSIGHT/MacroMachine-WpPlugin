@@ -8,6 +8,11 @@ Its comparable to chaining many global operations, and be able to save that work
 
 ![grafik](./Macro%20Machine%20v0.0.1%2030.05.2025%2010_43_10.png)
 
+## Tutorials
+This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK3xeIs6RQjUkl&si=5lPTMk5lmbzcvMZM) contains tutorial videos that cover the most important steps.
+
+
+
 ## Download
 1. go to the [release page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/latest)
 2. select the top most Macro-Machine release
@@ -16,6 +21,8 @@ Its comparable to chaining many global operations, and be able to save that work
 5. go to top bar -> tools -> open plugins folder
 6. place the downloaded jar file in the folder
 7. restart worldpainter
+
+
 
 ## Use Macros
 1. Find the Macro tool and left click it. The macro panel will open.  
