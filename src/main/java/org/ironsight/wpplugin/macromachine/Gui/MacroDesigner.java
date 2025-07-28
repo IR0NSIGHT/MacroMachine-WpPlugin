@@ -290,7 +290,32 @@ public class MacroDesigner extends JPanel {
                 "Default filter: block all blocks that are this biome type",
                 null
         ));
-
+        {
+            MappingPoint[] allTerrainsPass = getAllPointsForDiscreteIO(new TerrainProvider(),
+                    ActionFilterIO.BLOCK_VALUE);
+            allTerrainsPass[0] = new MappingPoint(0 /*grass*/, ActionFilterIO.PASS_VALUE);
+            items.add(new MappingAction(new TerrainProvider(),
+                    ActionFilterIO.instance,
+                    allTerrainsPass,
+                    ActionType.LIMIT_TO,
+                    "Filter: Only on terrain",
+                    "Default filter: block all blocks that are this terrain type",
+                    null
+            ));
+        }
+        {
+            MappingPoint[] allTerrains = getAllPointsForDiscreteIO(new TerrainProvider(),
+                    ActionFilterIO.PASS_VALUE);
+            allTerrains[0] = new MappingPoint(0 /*grass*/, ActionFilterIO.BLOCK_VALUE);
+            items.add(new MappingAction(new TerrainProvider(),
+                    ActionFilterIO.instance,
+                    allTerrains,
+                    ActionType.LIMIT_TO,
+                    "Filter: Except on terrain",
+                    "Default filter: block all blocks that are not this terrain type",
+                    null
+            ));
+        }
         items.add(new MappingAction(new SelectionIO(),
                 ActionFilterIO.instance,
                 new MappingPoint[]{
@@ -351,7 +376,7 @@ public class MacroDesigner extends JPanel {
 
     private void onAddMapping() {
         ArrayList<IDisplayUnit> macrosAndActions = new ArrayList<>();
-        macrosAndActions.addAll(MappingActionContainer.getInstance().queryAll());
+       // macrosAndActions.addAll(MappingActionContainer.getInstance().queryAll());
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
         JDialog dialog = new DisplayUnitPickerDialog(macrosAndActions, selected -> {
             Macro macro = this.macro;
