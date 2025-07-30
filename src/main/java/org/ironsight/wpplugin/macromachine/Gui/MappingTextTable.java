@@ -10,9 +10,16 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+
+import static java.awt.Image.SCALE_FAST;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
 public class MappingTextTable extends JPanel {
     private final MappingActionValueTableModel tableModel;
@@ -108,6 +115,55 @@ public class MappingTextTable extends JPanel {
                 }
             }
         }));
+
+
+        JWindow previewWindow = new JWindow();
+        JLabel previewLabel = new JLabel();
+        previewLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        previewWindow.add(previewLabel);
+        previewWindow.setSize(300,300); // Size of enlarged image
+
+        numberTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseExited(MouseEvent e) {
+                super.mouseExited(e);
+                previewWindow.setVisible(false);
+            }
+        });
+        numberTable.addMouseMotionListener(new MouseMotionAdapter() {
+            private int row, col;
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                int row = numberTable.rowAtPoint(e.getPoint());
+                int col = numberTable.columnAtPoint(e.getPoint());
+                if (this.row == row && this.col == col)
+                    return;
+                previewLabel.setVisible(true);
+                this.row = row;
+                this.col = col;
+                if (row >= 0 && (col == 1 ||col == 0)) {
+                    // Simulate hover over panel
+                    System.out.println("Mouse entered " + row + "," + col);
+                    Object cell = numberTable.getValueAt(row,col);
+                    if (!(cell instanceof  MappingPointValue))
+                        return;
+
+                    // Scale the image (larger)
+                    BufferedImage scaledImage = new BufferedImage(100,100,TYPE_INT_RGB);
+                    MappingPointValue mpv = (MappingPointValue)cell;
+                    mpv.mappingValue.paint(scaledImage.getGraphics(), mpv.numericValue, new Dimension(scaledImage.getWidth(),
+                            scaledImage.getHeight()));
+
+                    previewLabel.setIcon(new ImageIcon(scaledImage.getScaledInstance(300,300, SCALE_FAST)));
+
+                    // Position the window near the mouse
+                    Point locationOnScreen = numberTable.getLocationOnScreen();
+                    previewWindow.setLocation(locationOnScreen.x + e.getX() + 15,
+                            locationOnScreen.y + e.getY() + 15);
+                    previewWindow.setVisible(true);
+                }
+            }
+        });
     }
 
     protected void initComponents() {

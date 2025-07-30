@@ -5,6 +5,8 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingVal
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 
