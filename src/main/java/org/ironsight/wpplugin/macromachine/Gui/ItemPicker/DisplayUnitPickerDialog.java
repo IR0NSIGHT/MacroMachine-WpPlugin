@@ -1,5 +1,7 @@
-package org.ironsight.wpplugin.macromachine.Gui;
+package org.ironsight.wpplugin.macromachine.Gui.ItemPicker;
 
+import org.ironsight.wpplugin.macromachine.Gui.DisplayUnitRenderer;
+import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
@@ -12,23 +14,29 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.awt.event.ActionListener;
+import java.util.*;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
+import static org.ironsight.wpplugin.macromachine.Gui.MacroDesigner.getDefaultFiltersAndEmptyAction;
 
 public class DisplayUnitPickerDialog extends JDialog {
+
+    private final DisplayValueRowFilter rowFilter = new DisplayValueRowFilter();
+    private HashSet<PickerFilterOption> activeFilters = new HashSet<>();
+    private TableRowSorter<TableModel> rowSorter;
 
     public DisplayUnitPickerDialog(ArrayList<IDisplayUnit> layerMappings,
                                    Consumer<IDisplayUnit> onSubmit,
                                    Collection<IDisplayUnit> topActions,
-                                   Component parent) {
+                                   Component parent, PickerFilterOption... filters) {
         super();
+        this.setLayout(new BorderLayout());
+
         init(layerMappings, onSubmit, topActions);
+        initFilters(filters);
         setModal(true);
         setAlwaysOnTop(true);
         pack();
@@ -38,20 +46,98 @@ public class DisplayUnitPickerDialog extends JDialog {
     }
 
     public static void main(String[] args) {
+        // CUSTOM ACTIONS
         MappingActionContainer container = new MappingActionContainer(null);
         for (int i = 0; i < 20; i++) MappingActionContainer.addDefaultMappings(container);
 
-        ArrayList<IDisplayUnit> layerMappings = new ArrayList<>(container.queryAll());
+        // MACROS
+        ArrayList<Macro> macros = new ArrayList<>(5);
+        for (int i = 0; i < 5; i++) {
+            macros.add(new Macro("Macro_" + i, "", new UUID[0], UUID.randomUUID(), new boolean[0]));
+        }
+
+        // DEFAULT ACTIONS
+        Collection<MappingAction> defaultMappings = getDefaultFiltersAndEmptyAction();
+        Collection<UUID> defaultUUIDs = new ArrayList<>();
+        defaultMappings.stream().forEach(m -> defaultUUIDs.add(((MappingAction) m).getUid()));
+
+        // SELECT ALL
+        ArrayList<IDisplayUnit> allItems = new ArrayList<>();
+        allItems.addAll(container.queryAll());
+        allItems.addAll(macros);
+        allItems.addAll(defaultMappings);
+
 
         JFrame frame = new JFrame("Select Layer Mapping");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
 
-        Dialog dlg = new DisplayUnitPickerDialog(layerMappings,
+        PickerFilterOption noMacroFilter = new PickerFilterOption("macros", "show macros") {
+            @Override
+            public boolean block(Object item) {
+                return item instanceof Macro;
+            }
+        };
+
+        PickerFilterOption noDefaultFilter = new PickerFilterOption("defaults", "show default actions") {
+            Set<UUID> matchingIds = defaultMappings.stream()
+                    .map(MappingAction::getUid)
+                    .collect(Collectors.toCollection(HashSet::new));
+
+            @Override
+            public boolean block(Object item) {
+                return item instanceof MappingAction && matchingIds.contains(((MappingAction) item).getUid());
+            }
+        };
+
+        PickerFilterOption noCustomActionsFilter = new PickerFilterOption("custom","show user created actions") {
+            Set<UUID> matchingIds = container.queryAll().stream()
+                    .map(MappingAction::getUid)
+                    .collect(Collectors.toCollection(HashSet::new));
+            @Override
+            public boolean block(Object item) {
+                return item instanceof MappingAction && matchingIds.contains(((MappingAction) item).getUid());
+            }
+        };
+
+        Dialog dlg = new DisplayUnitPickerDialog(allItems,
                 System.out::println,
                 Collections.singleton(MappingAction.getNewEmptyAction()),
-                frame);
+                frame, noMacroFilter, noDefaultFilter, noCustomActionsFilter);
         dlg.setVisible(true);
+    }
+
+    private void addFilter(PickerFilterOption filter) {
+        activeFilters.add(filter);
+        rowFilter.setFilters(activeFilters.toArray(PickerFilterOption[]::new));
+        rowSorter.setRowFilter(rowFilter);
+    }
+
+    private void removeFilter(PickerFilterOption filter) {
+        activeFilters.remove(filter);
+        rowFilter.setFilters(activeFilters.toArray(PickerFilterOption[]::new));
+        rowSorter.setRowFilter(rowFilter);
+    }
+
+    private void initFilters(PickerFilterOption... filters) {
+        JPanel filterCheckboxes = new JPanel(new FlowLayout());
+        for (PickerFilterOption f : filters) {
+            JCheckBox filterCheckbox = new JCheckBox(f.getDisplayName());
+            filterCheckbox.setToolTipText(f.getTooltip());
+            filterCheckboxes.add(filterCheckbox);
+            ActionListener updateFilter = l -> {
+                if (filterCheckbox.isSelected()) {
+                    removeFilter(f); //no need to filter out
+                } else {
+                    addFilter(f); //"macros" is unchecked, add macro filter
+                }
+            };
+            filterCheckbox.addActionListener(updateFilter);
+            filterCheckbox.setSelected(true);
+            updateFilter.actionPerformed(null);
+
+        }
+        this.add(filterCheckboxes, BorderLayout.NORTH);
     }
 
     private void init(ArrayList<IDisplayUnit> items,
@@ -60,8 +146,9 @@ public class DisplayUnitPickerDialog extends JDialog {
 
         DefaultTableModel tableModel = createTableModel(items, specialTopAction);
         JTable table = createTable(tableModel);
-        TableRowSorter<TableModel> rowSorter = new TableRowSorter<>(table.getModel());
+        rowSorter = new TableRowSorter<>(table.getModel());
         table.setRowSorter(rowSorter);
+        rowSorter.setRowFilter(rowFilter);
 
         JButton okButton = createOkButton(table, onSubmit);
         JButton cancelButton = new JButton("Cancel");
@@ -121,7 +208,7 @@ public class DisplayUnitPickerDialog extends JDialog {
         TableCellRenderer renderer = table.getCellRenderer(0, 0);
         Component comp = table.prepareRenderer(renderer, 0, 0);
         int height = comp.getPreferredSize().height;
-        for (int i = 0;i < table.getRowCount(); i++)
+        for (int i = 0; i < table.getRowCount(); i++)
             table.setRowHeight(i, height);
     }
 
@@ -143,17 +230,22 @@ public class DisplayUnitPickerDialog extends JDialog {
         searchField.setToolTipText("Search...");
 
         searchField.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { filter(); }
-            public void removeUpdate(DocumentEvent e) { filter(); }
-            public void changedUpdate(DocumentEvent e) { filter(); }
+            public void insertUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                filter();
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                filter();
+            }
 
             private void filter() {
                 String text = searchField.getText();
-                if (text.trim().isEmpty()) {
-                    rowSorter.setRowFilter(null);
-                } else {
-                    rowSorter.setRowFilter(new DisplayValueRowFilter(text));
-                }
+                rowFilter.setString(text);
+                rowSorter.setRowFilter(rowFilter);
             }
         });
         return searchField;
@@ -171,33 +263,4 @@ public class DisplayUnitPickerDialog extends JDialog {
         return searchPanel;
     }
 
-    public class DisplayValueRowFilter extends RowFilter<TableModel, Integer> {
-
-        private Pattern pattern;
-
-        public DisplayValueRowFilter(String regex) {
-            this.pattern = Pattern.compile("(?i)" + Pattern.quote(regex));
-        }
-
-        @Override
-        public boolean include(Entry<? extends TableModel, ? extends Integer> entry) {
-            TableModel model = entry.getModel();
-            for (int i = 0; i < model.getColumnCount(); i++) {
-                Object value = model.getValueAt(entry.getIdentifier(), i);
-                String text = "";
-
-                if (value instanceof IDisplayUnit) {
-                    text = ((IDisplayUnit) value).getName();
-                } else {
-                    text = value.toString();
-                }
-
-                Matcher matcher = pattern.matcher(text);
-                if (matcher.find()) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
 }
