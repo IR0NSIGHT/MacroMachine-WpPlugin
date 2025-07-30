@@ -5,7 +5,10 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.Objects;
+
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
 public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     private final float scale;
@@ -36,6 +39,11 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
         }
         shift = min;
         multi = (max-min);
+
+        if (imagesByValue == null) {
+            imagesByValue = new BufferedImage[0];
+            imagesByValue = getImagesForValues();
+        }
     }
 
     @Override
@@ -99,11 +107,34 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
         return false;
     }
 
+    private static BufferedImage[] getImagesForValues() {
+        PerlinNoiseIO io = new PerlinNoiseIO(100,100,123456789,8);
+        BufferedImage[] images = new BufferedImage[101];
+        for (int value = 0; value <= 100; value++) {
+            BufferedImage img = new BufferedImage(200,200,TYPE_INT_RGB);
+            images[value] = img;
+            int perlinSIze = 256;
+            for (int x = 0; x < img.getWidth(); x++) {
+                for (int y = 0; y < img.getHeight(); y++) {
+                    int posValue = io.getValueAt(null,x*perlinSIze/img.getWidth(),y*perlinSIze/img.getHeight());
+                    float point = (float) posValue / 100;
+                    Color color;
+                    if (value == posValue)
+                        color = Color.RED;
+                    else
+                       color = new Color(point, point, point);
+                    img.setRGB(x,y, color.getRGB());
+                }
+            }
+        }
+        return images;
+    }
+    private static BufferedImage[] imagesByValue;
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        float point = (float) value / getMaxValue();
-        g.setColor(new Color(point, point, point));
-        g.fillRect(0, 0, dim.width, dim.height);
+        int point = (int) Math.round(100f * (value - getMinValue()) / getMaxValue());
+        BufferedImage img = imagesByValue[point];
+        g.drawImage(img,0,0, dim.width,dim.height, null);
     }
 
     @Override

@@ -155,7 +155,6 @@ public class InputOutputProvider implements IMappingValueProvider,
 
         setters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
         getters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
-
         getters.add(new PerlinNoiseIO(100, 100, 42069, 5));
 
         notifyListeners();
