@@ -114,12 +114,15 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
             BufferedImage img = new BufferedImage(200,200,TYPE_INT_RGB);
             images[value] = img;
             int perlinSIze = 256;
+            int range = 2;
+            int upper = value + range;
+            int lower = value - range;
             for (int x = 0; x < img.getWidth(); x++) {
                 for (int y = 0; y < img.getHeight(); y++) {
                     int posValue = io.getValueAt(null,x*perlinSIze/img.getWidth(),y*perlinSIze/img.getHeight());
                     float point = (float) posValue / 100;
                     Color color;
-                    if (value == posValue)
+                    if (lower <= posValue && posValue <= upper)
                         color = Color.RED;
                     else
                        color = new Color(point, point, point);
