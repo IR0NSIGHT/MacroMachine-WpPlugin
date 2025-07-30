@@ -1,5 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.DisplayUnitPickerDialog;
+import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.PickerFilterOption;
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
@@ -12,6 +14,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
@@ -23,7 +26,7 @@ public class MacroDesigner extends JPanel {
     private JTextField name;
     private JTextArea description;
     private JTable table;
-    private JButton addButton, removeButton, moveUpButton, moveDownButton, changeMappingButton, debugButton;
+    private JButton addButton, removeButton, moveUpButton, moveDownButton;
     private JScrollPane scrollPane;
     private boolean isUpdating;
     private int[] selectedRows = new int[0];
@@ -33,164 +36,8 @@ public class MacroDesigner extends JPanel {
         init();
     }
 
-    private JPopupMenu createPopupMenu(int row, int column, int[] selectedRows) {
-        //row is index of action
-        UUID id = macro.getExecutionUUIDs()[row];
-        boolean active = macro.getActiveActions()[row];
-
-        JPopupMenu menu = new JPopupMenu();
-        JButton b = new JButton("enable/disable");
-        b.setText(macro.getActiveActions()[row] ? "disable" : "enable");
-        b.addActionListener(l -> {
-            boolean isTargetRowActive = macro.getActiveActions()[row];
-            boolean[] activeState = macro.getActiveActions();
-            for (int idx : selectedRows) {
-                activeState[idx] = !isTargetRowActive;
-            }
-            Macro m = macro.withUUIDs(macro.getExecutionUUIDs(), activeState);
-            setMacro(m, true);
-            b.setText(!isTargetRowActive ? "disable" : "enable");
-        });
-        menu.add(b);
-        return menu;
-    }
-
-    private void init() {
-        this.setLayout(new BorderLayout());
-
-        name = new JTextField("Name goes here");
-        name.setEditable(true);
-        name.setFont(LayerMappingTopPanel.header1Font);
-        name.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusLost(java.awt.event.FocusEvent e) {
-                setMacro(macro.withName(name.getText()), false);
-            }
-        });
-
-        description = new JTextArea("Description goes here");
-        description.setEditable(true);
-        description.setFont(LayerMappingTopPanel.header2Font);
-        description.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusLost(java.awt.event.FocusEvent e) {
-                setMacro(macro.withDescription(description.getText()), false);
-            }
-        });
-
-        // Set preferred size to limit to 10 lines
-        int lineCount = 6; // Number of lines
-        FontMetrics metrics = description.getFontMetrics(description.getFont());
-        int lineHeight = metrics.getHeight();
-        description.setLineWrap(true);
-        description.setWrapStyleWord(true);
-        JScrollPane descPane = new JScrollPane(description);
-        descPane.setPreferredSize(new Dimension(0, lineHeight * lineCount));
-
-        JPanel editorPanel = new JPanel(new BorderLayout());
-        table = new JTable() {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Disable editing
-            }
-        };
-        table.setDefaultRenderer(Object.class, new DisplayUnitRenderer(MacroTreePanel::isValidItem));
-        //FIXME add actual
-        // check if
-        // action is usable
-        scrollPane = new JScrollPane(table);
-        editorPanel.add(scrollPane, BorderLayout.CENTER);
-
-
-        table.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                if (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e)) {
-                    int row = table.rowAtPoint(e.getPoint());
-                    int column = table.columnAtPoint(e.getPoint());
-
-                    // Check if a valid cell is clicked
-                    if (row >= 0 && column >= 0) {
-                        table.addRowSelectionInterval(row, row); // Select the clicked row
-                        table.addColumnSelectionInterval(column, column);
-
-                        // Show the popup menu
-                        JPopupMenu popupMenu = createPopupMenu(row, column, table.getSelectedRows());
-                        popupMenu.show(table, e.getX(), e.getY());
-                    }
-                }
-            }
-        });
-
-        JPanel nameAndDescriptionPanel = new JPanel();
-        nameAndDescriptionPanel.setLayout(new BoxLayout(nameAndDescriptionPanel, BoxLayout.Y_AXIS));
-        nameAndDescriptionPanel.add(name);
-        nameAndDescriptionPanel.add(descPane);
-        this.add(nameAndDescriptionPanel, BorderLayout.NORTH);
-
-        JPanel buttons = new JPanel(new FlowLayout());
-        addButton = new JButton("Add");
-        addButton.setToolTipText("Add an existing action to this macro below the last selected one.");
-        addButton.addActionListener(e -> onAddMapping());
-        buttons.add(addButton);
-
-        removeButton = new JButton("Remove");
-        removeButton.setToolTipText("Remove an existing action from this macro. Action is not permanently deleted and" +
-                " still exists in global list.");
-        removeButton.addActionListener(e -> onDeleteMapping());
-        buttons.add(removeButton);
-
-        moveUpButton = new JButton("Move Up");
-        moveUpButton.setToolTipText("Move up the selected action in the order of execution.");
-        moveUpButton.addActionListener(e -> onMoveUpMapping());
-        buttons.add(moveUpButton);
-
-        moveDownButton = new JButton("Move Down");
-        moveDownButton.setToolTipText("Move down the selected action in the order of execution.");
-        moveDownButton.addActionListener(e -> onMoveDownMapping());
-        buttons.add(moveDownButton);
-
-        changeMappingButton = new JButton("Change Mapping");
-        changeMappingButton.setToolTipText("Change action to another one from the global list.");
-        changeMappingButton.addActionListener(e -> onChangeMapping());
-        buttons.add(changeMappingButton);
-
-        JButton submitButton = new JButton("Save");
-        submitButton.setToolTipText("submit macro and save changes to global list.");
-        submitButton.addActionListener(e -> onSubmit.accept(this.macro));
-        buttons.add(submitButton);
-
-        buttons.add(getHelpButton("Macro Editor",
-                "In the macro editor, you define which actions are executed and in " +
-                        "which order. The top-most action is run first, then the next one and so on. All actions in a" +
-                        " macro " + "are always executed when the macro is executed.\n" +
-                        "A macro is a collection of actions, similar to a group of global operations. It has a name " +
-                        "and " + "description and can be reused in any project.\n" +
-                        "Use the save button to save your changes to the global list."));
-        editorPanel.add(buttons, BorderLayout.SOUTH);
-
-        // Create a JTabbedPane
-        JTabbedPane tabbedPane = new JTabbedPane();
-
-        JPanel panel3 = new JPanel();
-        panel3.add(new JLabel("This is the content of Tab 3"));
-
-        // Add tabs to the JTabbedPane
-        tabbedPane.addTab("Actions", editorPanel);
-
-        this.add(tabbedPane, BorderLayout.CENTER);
-
-        prepareTableModel();
-    }
-
-    private void onDebugButton() {
-        ActionFilterIO.instance.setDebugMode(!ActionFilterIO.instance.isDebugMode());
-        debugButton.setText(ActionFilterIO.instance.isDebugMode() ? "disable debug" : "enable debug");
-        debugButton.setBackground(ActionFilterIO.instance.isDebugMode() ? Color.RED : DEFAULT_BACKGROUND);
-    }
-
-    private Collection<IDisplayUnit> getDefaultFiltersAndEmptyAction() {
-        LinkedList<IDisplayUnit> items = new LinkedList<>();
+    public static Collection<MappingAction> getDefaultFiltersAndEmptyAction() {
+        LinkedList<MappingAction> items = new LinkedList<>();
         items.add(MappingAction.getNewEmptyAction());
         items.add(new MappingAction(new AlwaysIO(),
                 ActionFilterIO.instance,
@@ -374,29 +221,208 @@ public class MacroDesigner extends JPanel {
         return items;
     }
 
+    private JPopupMenu createPopupMenu(int row, int column, int[] selectedRows) {
+        //row is index of action
+        UUID id = macro.getExecutionUUIDs()[row];
+        boolean active = macro.getActiveActions()[row];
+
+        JPopupMenu menu = new JPopupMenu();
+        JButton b = new JButton("enable/disable");
+        b.setText(macro.getActiveActions()[row] ? "disable" : "enable");
+        b.addActionListener(l -> {
+            boolean isTargetRowActive = macro.getActiveActions()[row];
+            boolean[] activeState = macro.getActiveActions();
+            for (int idx : selectedRows) {
+                activeState[idx] = !isTargetRowActive;
+            }
+            Macro m = macro.withUUIDs(macro.getExecutionUUIDs(), activeState);
+            setMacro(m, true);
+            b.setText(!isTargetRowActive ? "disable" : "enable");
+        });
+        menu.add(b);
+        return menu;
+    }
+
+    private void init() {
+        this.setLayout(new BorderLayout());
+
+        name = new JTextField("Name goes here");
+        name.setEditable(true);
+        name.setFont(LayerMappingTopPanel.header1Font);
+        name.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                setMacro(macro.withName(name.getText()), false);
+            }
+        });
+
+        description = new JTextArea("Description goes here");
+        description.setEditable(true);
+        description.setFont(LayerMappingTopPanel.header2Font);
+        description.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                setMacro(macro.withDescription(description.getText()), false);
+            }
+        });
+
+        // Set preferred size to limit to 10 lines
+        int lineCount = 6; // Number of lines
+        FontMetrics metrics = description.getFontMetrics(description.getFont());
+        int lineHeight = metrics.getHeight();
+        description.setLineWrap(true);
+        description.setWrapStyleWord(true);
+        JScrollPane descPane = new JScrollPane(description);
+        descPane.setPreferredSize(new Dimension(0, lineHeight * lineCount));
+
+        JPanel editorPanel = new JPanel(new BorderLayout());
+        table = new JTable() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Disable editing
+            }
+        };
+        table.setDefaultRenderer(Object.class, new DisplayUnitRenderer(MacroTreePanel::isValidItem));
+        //FIXME add actual
+        // check if
+        // action is usable
+        scrollPane = new JScrollPane(table);
+        editorPanel.add(scrollPane, BorderLayout.CENTER);
+
+
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e)) {
+                    int row = table.rowAtPoint(e.getPoint());
+                    int column = table.columnAtPoint(e.getPoint());
+
+                    // Check if a valid cell is clicked
+                    if (row >= 0 && column >= 0) {
+                        table.addRowSelectionInterval(row, row); // Select the clicked row
+                        table.addColumnSelectionInterval(column, column);
+
+                        // Show the popup menu
+                        JPopupMenu popupMenu = createPopupMenu(row, column, table.getSelectedRows());
+                        popupMenu.show(table, e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+
+        JPanel nameAndDescriptionPanel = new JPanel();
+        nameAndDescriptionPanel.setLayout(new BoxLayout(nameAndDescriptionPanel, BoxLayout.Y_AXIS));
+        nameAndDescriptionPanel.add(name);
+        nameAndDescriptionPanel.add(descPane);
+        this.add(nameAndDescriptionPanel, BorderLayout.NORTH);
+
+        JPanel buttons = new JPanel(new FlowLayout());
+        addButton = new JButton("Add");
+        addButton.setToolTipText("Add an existing action to this macro below the last selected one.");
+        addButton.addActionListener(e -> onAddMapping());
+        buttons.add(addButton);
+
+        removeButton = new JButton("Remove");
+        removeButton.setToolTipText("Remove an existing action from this macro. Action is not permanently deleted and" +
+                " still exists in global list.");
+        removeButton.addActionListener(e -> onDeleteMapping());
+        buttons.add(removeButton);
+
+        moveUpButton = new JButton("Move Up");
+        moveUpButton.setToolTipText("Move up the selected action in the order of execution.");
+        moveUpButton.addActionListener(e -> onMoveUpMapping());
+        buttons.add(moveUpButton);
+
+        moveDownButton = new JButton("Move Down");
+        moveDownButton.setToolTipText("Move down the selected action in the order of execution.");
+        moveDownButton.addActionListener(e -> onMoveDownMapping());
+        buttons.add(moveDownButton);
+
+        JButton submitButton = new JButton("Save");
+        submitButton.setToolTipText("submit macro and save changes to global list.");
+        submitButton.addActionListener(e -> onSubmit.accept(this.macro));
+        buttons.add(submitButton);
+
+        buttons.add(getHelpButton("Macro Editor",
+                "In the macro editor, you define which actions are executed and in " +
+                        "which order. The top-most action is run first, then the next one and so on. All actions in a" +
+                        " macro " + "are always executed when the macro is executed.\n" +
+                        "A macro is a collection of actions, similar to a group of global operations. It has a name " +
+                        "and " + "description and can be reused in any project.\n" +
+                        "Use the save button to save your changes to the global list."));
+        editorPanel.add(buttons, BorderLayout.SOUTH);
+
+        // Create a JTabbedPane
+        JTabbedPane tabbedPane = new JTabbedPane();
+
+        JPanel panel3 = new JPanel();
+        panel3.add(new JLabel("This is the content of Tab 3"));
+
+        // Add tabs to the JTabbedPane
+        tabbedPane.addTab("Actions", editorPanel);
+
+        this.add(tabbedPane, BorderLayout.CENTER);
+
+        prepareTableModel();
+    }
+
     private void onAddMapping() {
         ArrayList<IDisplayUnit> macrosAndActions = new ArrayList<>();
-       // macrosAndActions.addAll(MappingActionContainer.getInstance().queryAll());
+        macrosAndActions.addAll(MappingActionContainer.getInstance().queryAll());
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
-        JDialog dialog = new DisplayUnitPickerDialog(macrosAndActions, selected -> {
-            Macro macro = this.macro;
-            if (selected instanceof MappingAction)
-                selected = ((MappingAction) selected).deepCopy();
-            ArrayList<Integer> newSelection = new ArrayList<>();
-            Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), (SaveableAction) selected,
-                    () -> MappingActionContainer.getInstance().addMapping(),
-                    a -> MappingActionContainer.getInstance().updateMapping(a, MacroMachinePlugin::error),
-                    table.getSelectedRows(), newSelection);
-            setMacro(newMacro, true);
-            assert this.macro.equals(newMacro) : "macro was added an action, but action is not " +
-                    "present after gui update";
-            table.clearSelection();
-            for (int row : newSelection) {
-                table.addRowSelectionInterval(row, row);
+        Collection<MappingAction> defaultActions = getDefaultFiltersAndEmptyAction();
+        PickerFilterOption noMacroFilter = new PickerFilterOption("macros", "show macros") {
+            @Override
+            public boolean block(Object item) {
+                return item instanceof Macro;
             }
-        }, getDefaultFiltersAndEmptyAction(), this);
+        };
+
+        PickerFilterOption noDefaultFilter = new PickerFilterOption("defaults", "show default actions") {
+            Set<UUID> matchingIds = defaultActions.stream()
+                    .map(MappingAction::getUid)
+                    .collect(Collectors.toCollection(HashSet::new));
+
+            @Override
+            public boolean block(Object item) {
+                return item instanceof MappingAction && matchingIds.contains(((MappingAction) item).getUid());
+            }
+        };
+
+        PickerFilterOption noCustomActionsFilter = new PickerFilterOption("custom", "show user created actions") {
+            Set<UUID> matchingIds = MappingActionContainer.getInstance().queryAll().stream()
+                    .map(MappingAction::getUid)
+                    .collect(Collectors.toCollection(HashSet::new));
+
+            @Override
+            public boolean block(Object item) {
+                return item instanceof MappingAction && matchingIds.contains(((MappingAction) item).getUid());
+            }
+        };
+
+        JDialog dialog =
+                new DisplayUnitPickerDialog(macrosAndActions, this::onPickerSelection, new ArrayList<>(defaultActions),
+                        this, noMacroFilter, noDefaultFilter, noCustomActionsFilter);
         dialog.setModal(true);
         dialog.setVisible(true);
+    }
+
+    private void onPickerSelection(IDisplayUnit selected) {
+        Macro macro = this.macro;
+        if (selected instanceof MappingAction)
+            selected = ((MappingAction) selected).deepCopy();
+        ArrayList<Integer> newSelection = new ArrayList<>();
+        Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), (SaveableAction) selected,
+                () -> MappingActionContainer.getInstance().addMapping(),
+                a -> MappingActionContainer.getInstance().updateMapping(a, MacroMachinePlugin::error),
+                table.getSelectedRows(), newSelection);
+        setMacro(newMacro, true);
+        assert this.macro.equals(newMacro) : "macro was added an action, but action is not " +
+                "present after gui update";
+        table.clearSelection();
+        for (int row : newSelection) {
+            table.addRowSelectionInterval(row, row);
+        }
     }
 
     private void onMoveUpMapping() {
@@ -463,33 +489,6 @@ public class MacroDesigner extends JPanel {
         setMacro(macro, true);
     }
 
-    private void onChangeMapping() {
-        ArrayList<IDisplayUnit> macrosAndActions = new ArrayList<>();
-        macrosAndActions.addAll(MappingActionContainer.getInstance().queryAll());
-        macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
-        JDialog dialog = new DisplayUnitPickerDialog(macrosAndActions, selected -> {
-            if (selected instanceof Macro) {
-                setMacro(macro.withReplacedUUIDs(this.table.getSelectedRows(), ((Macro) selected).getUid()), true);
-            } else if (selected instanceof MappingAction) {
-                selected = ((MappingAction) selected).deepCopy();
-                if (((MappingAction) selected).getUid() == null)
-                    selected = MappingActionContainer.getInstance().addMapping();
-                Macro temp = this.macro;
-                for (int targetIdx : this.table.getSelectedRows()) {
-                    MappingAction action = MappingActionContainer.getInstance().addMapping();
-                    MappingActionContainer.getInstance().updateMapping(action.withValuesFrom((MappingAction) selected),
-                            MacroMachinePlugin::error);
-                    temp = temp.withReplacedUUIDs(new int[]{targetIdx}, action.getUid());
-                }
-                setMacro(temp, true);
-            }
-
-
-        }, getDefaultFiltersAndEmptyAction(), this);
-        dialog.setModal(true);
-        dialog.setVisible(true);
-    }
-
     private void prepareTableModel() {
         DefaultTableModel model = new DefaultTableModel();
         Object[] columns = new Object[]{"Action"};
@@ -499,7 +498,6 @@ public class MacroDesigner extends JPanel {
     }
 
     private void updateComponents() {
-
         name.setText(macro.getName());
         description.setText(macro.getDescription());
 
