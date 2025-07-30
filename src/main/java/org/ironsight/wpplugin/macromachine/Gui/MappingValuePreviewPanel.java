@@ -14,23 +14,6 @@ public class MappingValuePreviewPanel extends JPanel {
 
     public MappingValuePreviewPanel() {
         this.setOpaque(true);
-        this.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                System.out.println("ICON WAS CLICKED");
-                super.mouseClicked(e);
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                System.out.println("Mouse entered the panel");
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                System.out.println("Mouse exited the panel");
-            }
-        });
     }
 
     public static void main(String[] args) {

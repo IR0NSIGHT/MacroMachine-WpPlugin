@@ -15,6 +15,9 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -224,6 +227,7 @@ public class DisplayUnitPickerDialog extends JDialog {
         });
         return okButton;
     }
+
 
     private JTextField createSearchField(TableRowSorter<TableModel> rowSorter) {
         JTextField searchField = new JTextField(15);
