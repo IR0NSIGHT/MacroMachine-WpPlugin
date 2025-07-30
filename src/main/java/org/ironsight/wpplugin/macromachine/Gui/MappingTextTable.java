@@ -10,9 +10,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.List;
@@ -116,56 +114,79 @@ public class MappingTextTable extends JPanel {
             }
         }));
 
-
-        JWindow previewWindow = new JWindow();
-        JLabel previewLabel = new JLabel();
-        previewLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-        previewWindow.add(previewLabel);
-        previewWindow.setSize(300,300); // Size of enlarged image
-
-        numberTable.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseExited(MouseEvent e) {
-                super.mouseExited(e);
-                previewWindow.setVisible(false);
-            }
-        });
-        numberTable.addMouseMotionListener(new MouseMotionAdapter() {
-            private int row, col;
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                int row = numberTable.rowAtPoint(e.getPoint());
-                int col = numberTable.columnAtPoint(e.getPoint());
-                if (this.row == row && this.col == col)
-                    return;
-                previewLabel.setVisible(true);
-                this.row = row;
-                this.col = col;
-                if (row >= 0 && (col == 1 ||col == 0)) {
-                    // Simulate hover over panel
-                    System.out.println("Mouse entered " + row + "," + col);
-                    Object cell = numberTable.getValueAt(row,col);
-                    if (!(cell instanceof  MappingPointValue))
-                        return;
-
-                    // Scale the image (larger)
-                    BufferedImage scaledImage = new BufferedImage(100,100,TYPE_INT_RGB);
-                    MappingPointValue mpv = (MappingPointValue)cell;
-                    mpv.mappingValue.paint(scaledImage.getGraphics(), mpv.numericValue, new Dimension(scaledImage.getWidth(),
-                            scaledImage.getHeight()));
-
-                    previewLabel.setIcon(new ImageIcon(scaledImage.getScaledInstance(300,300, SCALE_FAST)));
-
-                    // Position the window near the mouse
-                    Point locationOnScreen = numberTable.getLocationOnScreen();
-                    previewWindow.setLocation(locationOnScreen.x + e.getX() + 15,
-                            locationOnScreen.y + e.getY() + 15);
-                    previewWindow.setVisible(true);
-                }
-            }
-        });
+        ValuePreviewWindow windowHanlde = new ValuePreviewWindow();
+        numberTable.addMouseListener(windowHanlde);
+        numberTable.addMouseMotionListener(windowHanlde);
+        scrollPane.addMouseWheelListener(windowHanlde);
     }
+    private class ValuePreviewWindow extends MouseAdapter {
+        JWindow previewWindow;
+        JLabel previewLabel;
+        public ValuePreviewWindow() {
+            previewWindow = new JWindow();
+            previewLabel = new JLabel();
+            previewLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+            previewWindow.add(previewLabel);
+            previewWindow.setSize(200,200); // Size of enlarged image
+        }
 
+        void setMouseOver(Point p) {
+            int row = numberTable.rowAtPoint(p);
+            int col = numberTable.columnAtPoint(p);
+            if (this.row == row && this.col == col)
+                return;
+
+            this.row = row;
+            this.col = col;
+            if (row >= 0 && (col == 1 ||col == 0)) {
+                Object cell = numberTable.getValueAt(row,col);
+                if (!(cell instanceof  MappingPointValue))
+                    return;
+
+                // Scale the image (larger)
+                BufferedImage scaledImage = new BufferedImage(100,100,TYPE_INT_RGB);
+                MappingPointValue mpv = (MappingPointValue)cell;
+                mpv.mappingValue.paint(scaledImage.getGraphics(), mpv.numericValue, new Dimension(scaledImage.getWidth(),
+                        scaledImage.getHeight()));
+
+                previewLabel.setIcon(new ImageIcon(scaledImage.getScaledInstance(previewWindow.getWidth(),
+                        previewWindow.getHeight(),
+                        SCALE_FAST)));
+
+                // Position the window near the mouse
+                Point locationOnScreen = numberTable.getLocationOnScreen();
+                previewWindow.setLocation(locationOnScreen.x + (int)p.getX() + 15,
+                        locationOnScreen.y + (int)p.getY() + 15);
+                previewWindow.setVisible(true);
+            }
+        }
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e) {
+            Point tablePoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), numberTable);
+            setMouseOver(tablePoint);
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            row = -1; col = -1;
+            previewWindow.setVisible(true);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            row = -1; col = -1;
+            previewWindow.setVisible(false);
+        }
+
+        private int row, col;
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            setMouseOver(e.getPoint());
+        }
+    }
+    JScrollPane scrollPane;
     protected void initComponents() {
         isFilterForMappingPoints = true;
 
@@ -187,7 +208,7 @@ public class MappingTextTable extends JPanel {
         numberTable.setDefaultRenderer(MappingPointValue.class, cellRenderer);
         numberTable.setRowHeight(cellRenderer.getPreferredHeight());
         numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
-        JScrollPane scrollPane = new JScrollPane(numberTable);
+        scrollPane = new JScrollPane(numberTable);
         this.add(scrollPane, BorderLayout.CENTER);
         JPanel buttons = new JPanel();
         groupValuesCheckBox = new JCheckBox("Only Control Points");
