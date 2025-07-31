@@ -70,7 +70,6 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
             panel.setToolTipText(lm.getToolTipText());
             nameLabel.setFont(actionFont);
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.ACTION));
-            System.out.println("rendering " + lm.toString());
         } else if (mapping instanceof Macro) {
             Macro lm = (Macro) mapping;
             input.setText("");
