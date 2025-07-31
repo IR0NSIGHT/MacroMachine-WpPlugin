@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import com.sun.source.tree.Tree;
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointButtonPanel;
@@ -22,6 +23,7 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
@@ -155,6 +157,7 @@ public class MacroTreePanel extends JPanel {
         LinkedList<TreePath> newSelections = new LinkedList<>();
         LinkedList<TreePath> newExpanded = new LinkedList<>();
         if (!selectItems.isEmpty()) {
+            System.out.println("UPDATE WITH SELECT ITEMS");
             List<TreePath> allPaths = findAllPaths(tree, newRoot, new LinkedList<>());
             for (TreePath path : allPaths) {
                 MacroTreeNode node = ((MacroTreeNode) path.getLastPathComponent());
@@ -175,7 +178,9 @@ public class MacroTreePanel extends JPanel {
                         ; //nothing
                 }
             }
-        } else if (filterString.isEmpty()) { //carry over old state
+        } else {
+            System.out.println("UPDATE WITH NO FILTER");
+
             // create treepaths to keep previous selection and carry it over to newRoot.
             TreePath[] selectionPaths = tree.getSelectionPaths();
             if (selectionPaths != null) {
@@ -195,14 +200,6 @@ public class MacroTreePanel extends JPanel {
                         new Object[oldPath.getPath().length]);
                 if (newPath != null)
                     newExpanded.add(newPath);
-            }
-        } else {
-            // find all paths that end in an item that matches the filterstring.
-            List<TreePath> allPaths = findAllPaths(tree, newRoot, new LinkedList<>());
-            for (TreePath path : allPaths) {
-                IDisplayUnit payload = ((MacroTreeNode) path.getLastPathComponent()).getPayload();
-                if (IDisplayUnit.matchesFilterString(filterString, payload))
-                    newSelections.add(path);
             }
         }
 
@@ -257,6 +254,28 @@ public class MacroTreePanel extends JPanel {
         popupMenu.show(e.getComponent(), e.getX(), e.getY());
     }
 
+    private void onSearchEnter(String searchString) {
+        System.out.println("UPDATE WITH SEARCH FILTER");
+
+        // find all paths that end in an item that matches the filterstring.
+        List<TreePath> allPaths = findAllPaths(tree, (MacroTreeNode) tree.getModel().getRoot(), new LinkedList<>());
+        List<TreePath> matchingPaths = allPaths.stream()
+                .filter(path -> {
+                    IDisplayUnit payload = ((MacroTreeNode) path.getLastPathComponent()).getPayload();
+                    return (IDisplayUnit.matchesFilterString(searchString, payload));
+                })
+                .collect(Collectors.toUnmodifiableList());
+
+        TreePath lastSelected = tree.getSelectionPath();
+
+        int idx = lastSelected == null ? -1 : matchingPaths.indexOf(lastSelected);
+        int nextIdx = (idx + 1) % matchingPaths.size();
+        TreePath nextSelected = matchingPaths.get(nextIdx);
+        tree.setSelectionPath(nextSelected);
+        tree.scrollPathToVisible(nextSelected);
+        tree.expandPath(nextSelected);
+    }
+
     private void init() {
         container.subscribe(this::update);
         mappingContainer.subscribe(this::update);
@@ -268,7 +287,7 @@ public class MacroTreePanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 filterString = searchField.getText().toLowerCase();
-                update();
+                onSearchEnter(filterString);
             }
         });
         searchField.setBorder(BorderFactory.createTitledBorder("Search macro"));
@@ -545,7 +564,7 @@ public class MacroTreePanel extends JPanel {
                 this::setStepperToPath);
         executorService.submit(() -> {
             applyToMap.applyLayerAction(executingMacro, macroExecutionCallback);
-            SwingUtilities.invokeLater(()->{
+            SwingUtilities.invokeLater(() -> {
                 macroIsCurrentlyExecuting = false;
                 GlobalActionPanel.logMessage("Finished execution");
             });
