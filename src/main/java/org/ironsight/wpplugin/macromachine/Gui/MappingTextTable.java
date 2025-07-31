@@ -249,9 +249,12 @@ public class MappingTextTable extends JPanel {
         {
             JButton addMappingPointButton = new JButton("add control point");
             addMappingPointButton.addActionListener(l -> {
-                if (numberTable.getSelectedRow() != -1)
-                    tableModel.insertMappingPointNear(numberTable.convertRowIndexToModel(numberTable.getSelectedRow()));
-                else if (numberTable.getRowCount() != 0) {
+
+                if (numberTable.getSelectedRows() != null && numberTable.getSelectedRows().length != 0)
+                    for (int row : numberTable.getSelectedRows()) {
+                        tableModel.insertMappingPointNear(numberTable.convertRowIndexToModel(row));
+                    }
+                else {
                     tableModel.insertMappingPointNear(0);
                 }
             });
