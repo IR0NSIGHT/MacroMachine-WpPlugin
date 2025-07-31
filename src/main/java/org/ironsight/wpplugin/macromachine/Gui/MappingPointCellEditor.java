@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
+import org.pepsoft.minecraft.Block;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -10,17 +11,36 @@ import java.util.Comparator;
 
 public class MappingPointCellEditor extends DefaultCellEditor implements TableCellEditor {
     static JComboBox<MappingPointValue> dropdown = new FixedComboBox();
-
-    public MappingPointCellEditor() {
+    private final BlockingSelectionModel selectionModel;
+    private boolean blockActionEvents = false;
+    public MappingPointCellEditor(BlockingSelectionModel selectionModel) {
         super(dropdown);
+        this.selectionModel = selectionModel;
         dropdown.setRenderer(new MappingPointCellRenderer());
+    }
+
+    @Override
+    public boolean stopCellEditing() {
+        if (blockActionEvents)
+            return false;
+        boolean result = super.stopCellEditing();
+        selectionModel.setSelectionBlocked(false); // Restore selection
+        return result;
+    }
+
+    @Override
+    public void cancelCellEditing() {
+        if (blockActionEvents)
+            return;
+        super.cancelCellEditing();
+        selectionModel.setSelectionBlocked(false); // Restore selection
     }
 
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         assert value != null;
         assert value instanceof MappingPointValue;
-
+        blockActionEvents = true;
         dropdown.removeAllItems();
 
         IMappingValue mappingValue = ((MappingPointValue) value).mappingValue;
@@ -42,12 +62,14 @@ public class MappingPointCellEditor extends DefaultCellEditor implements TableCe
         for (MappingPointValue mappingPointValue : arr) {
             dropdown.addItem(mappingPointValue);
         }
+
+        dropdown.setSelectedItem(value);
+        assert value.equals(dropdown.getSelectedItem());
+        blockActionEvents = false;
         SwingUtilities.invokeLater(() -> {
             if (dropdown.requestFocusInWindow())
                 dropdown.showPopup();
         });
-        dropdown.setSelectedItem(value);
-        assert value.equals(dropdown.getSelectedItem());
         return this.getComponent();
     }
 

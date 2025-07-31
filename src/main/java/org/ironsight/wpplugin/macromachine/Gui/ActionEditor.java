@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
+import org.pepsoft.minecraft.Block;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -15,7 +16,7 @@ import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 public class ActionEditor extends LayerMappingPanel {
     private MappingActionValueTableModel model ;
-    private ListSelectionModel selectionModel;
+    private BlockingSelectionModel selectionModel;
     private final Consumer<MappingAction> onSubmit;
     private MappingGridPanel mappingDisplay;
     private MappingTextTable table;
@@ -38,7 +39,19 @@ public class ActionEditor extends LayerMappingPanel {
     @Override
     protected void initComponents() {
         model = new MappingActionValueTableModel();
-        selectionModel = new DefaultListSelectionModel();
+        selectionModel = new BlockingSelectionModel(){
+            @Override
+            public void setSelectionInterval(int index0, int index1) {
+                super.setSelectionInterval(index0, index1);
+                System.out.println("SET SELECTION INTERVAL " + index0 + ".."+ index1);
+            }
+
+            @Override
+            public void clearSelection() {
+                super.clearSelection();
+                System.out.println("CLEAR SELECTION");
+            }
+        };
 
         this.setLayout(new BorderLayout());
 

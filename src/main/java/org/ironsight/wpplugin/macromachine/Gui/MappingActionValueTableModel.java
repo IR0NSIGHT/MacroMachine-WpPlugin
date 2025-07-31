@@ -76,7 +76,7 @@ class MappingActionValueTableModel implements TableModel {
         rebuildDataWithAction(this.getAction().withNewPoints(mps.toArray(new MappingPoint[0])));
     }
 
-    private void fireEvent(TableModelEvent event) {
+    public void fireEvent(TableModelEvent event) {
         System.out.println("fire table model event " + event.getType() + " - " + event.getFirstRow() + ".."+ event.getLastRow());
         for (TableModelListener l : listeners) {
             try {
@@ -169,25 +169,35 @@ class MappingActionValueTableModel implements TableModel {
 
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+        System.out.println("TRY SET VALUE AT " + rowIndex + " TO " + aValue);
         if (!isCellEditable(rowIndex, columnIndex))
             return;
+        assert aValue instanceof MappingPointValue;
+        if (columnIndex == INPUT_COLUMN_IDX)
+            inputs[rowIndex] = (MappingPointValue)aValue;
+        else
+            output[rowIndex] = (MappingPointValue)aValue;
+        fireEvent(new TableModelEvent(this, rowIndex, rowIndex, TableModelEvent.UPDATE));
 
-        int mappingPointIdx = rowToMappingPointIdx[rowIndex];
-        MappingPoint p = action.getMappingPoints()[mappingPointIdx];
-        MappingPoint[] newPoints = action.getMappingPoints();
+        /*
+        if (!blockUpdates) {
 
-        if (columnIndex == OUTPUT_COLUMN_IDX) {
-            newPoints[mappingPointIdx] = new MappingPoint(p.input, ((MappingPointValue) aValue).numericValue);
-        } else if (columnIndex == INPUT_COLUMN_IDX) {
-            newPoints[mappingPointIdx] = new MappingPoint(((MappingPointValue) aValue).numericValue, p.output);
-        } else {
-            throw new RuntimeException("invalid column index");
-        }
+            int mappingPointIdx = rowToMappingPointIdx[rowIndex];
+            MappingPoint p = action.getMappingPoints()[mappingPointIdx];
+            MappingPoint[] newPoints = action.getMappingPoints();
 
-        MappingAction newAction = action.withNewPoints(newPoints);
-        if (newAction.equals(this.action))
-            return;
-        rebuildDataWithAction(action.withNewPoints(newPoints));
+            if (columnIndex == OUTPUT_COLUMN_IDX) {
+                newPoints[mappingPointIdx] = new MappingPoint(p.input, ((MappingPointValue) aValue).numericValue);
+            } else if (columnIndex == INPUT_COLUMN_IDX) {
+                newPoints[mappingPointIdx] = new MappingPoint(((MappingPointValue) aValue).numericValue, p.output);
+            } else {
+                throw new RuntimeException("invalid column index");
+            }
+            MappingAction newAction = action.withNewPoints(newPoints);
+            if (newAction.equals(this.action))
+                return;
+            rebuildDataWithAction(action.withNewPoints(newPoints));
+        } */
     }
 
     @Override

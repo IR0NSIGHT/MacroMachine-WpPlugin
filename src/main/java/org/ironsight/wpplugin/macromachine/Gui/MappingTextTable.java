@@ -3,18 +3,15 @@ package org.ironsight.wpplugin.macromachine.Gui;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.util.Arrays;
+import java.util.EventObject;
 import java.util.List;
-import java.util.function.Consumer;
 
 import static java.awt.Image.SCALE_FAST;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
@@ -26,16 +23,43 @@ public class MappingTextTable extends JPanel {
     private JCheckBox groupValuesCheckBox;
     private TableRowSorter<MappingActionValueTableModel> sorter;
     private int[] selectedRow = new int[0];
-
-    public MappingTextTable(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
+    private BlockingSelectionModel blockingSelectionModel;
+    public MappingTextTable(MappingActionValueTableModel model, BlockingSelectionModel selectionModel) {
+        this.blockingSelectionModel = selectionModel;
         numberTable = new JTable() {
             @Override
+            public boolean editCellAt(int row, int column, EventObject e) {
+                // first click -> select
+                if (!numberTable.isCellSelected(row, column)) {
+                    SwingUtilities.invokeLater(()->numberTable.addRowSelectionInterval(row, row));
+                    return false;
+                }
+                return super.editCellAt(row, column, e);
+            }
+
+            @Override
             public TableCellEditor getCellEditor(int row, int column) {
-                if (!numberTable.isRowSelected(row))    //user clicks into unselected column: clear selection and
-                    // only selected the clicked one
-                    numberTable.clearSelection();
-                numberTable.addRowSelectionInterval(row, row);  //otherwise, just
+                System.out.println("GET CELL EDITOR");
+
+                // second click -> edit
+
+                blockingSelectionModel.setSelectionBlocked(true);
                 return super.getCellEditor(row, column);
+            }
+
+            @Override
+            public void editingStopped(ChangeEvent e) {
+                System.out.println("EDITING STOPPED:" + e);
+                // Take in the new value
+                TableCellEditor editor = getCellEditor();
+                if (editor != null) {
+                    Object value = editor.getCellEditorValue();
+                    for (int row : numberTable.getSelectedRows())
+                        setValueAt(value, row, editingColumn);
+
+                    removeEditor();
+
+                }
             }
         };
 
@@ -79,6 +103,7 @@ public class MappingTextTable extends JPanel {
     private void addListeners(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
         // Add listener to scroll to the selected row
         selectionModel.addListSelectionListener(e -> {
+            System.out.println("SELECTION UPDATE " + e);
             if (e.getValueIsAdjusting()) {
                 return;
             }
@@ -90,7 +115,8 @@ public class MappingTextTable extends JPanel {
 
         model.addTableModelListener(e -> {
             if (e.getType() == TableModelEvent.UPDATE) {
-                updateComponents();
+                SwingUtilities.invokeLater(this::updateComponents);
+
             }
         });
 
@@ -104,6 +130,7 @@ public class MappingTextTable extends JPanel {
         model.addTableModelListener(e -> SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+                System.out.println("RESTORE TABLE SELECTION OF MODEL CHANGED");
                 try {
                     for (int selectedRow: selectedRow) {
                         numberTable.addRowSelectionInterval(selectedRow, selectedRow);
@@ -207,7 +234,7 @@ public class MappingTextTable extends JPanel {
         MappingPointCellRenderer cellRenderer = new MappingPointCellRenderer();
         numberTable.setDefaultRenderer(MappingPointValue.class, cellRenderer);
         numberTable.setRowHeight(cellRenderer.getPreferredHeight());
-        numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
+        numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor(blockingSelectionModel));
         scrollPane = new JScrollPane(numberTable);
         this.add(scrollPane, BorderLayout.CENTER);
         JPanel buttons = new JPanel();
