@@ -5,3 +5,5 @@
 **.log
 src/main/resources/**backup**
 **backup**
+mySavefile.macro
+plugins/
