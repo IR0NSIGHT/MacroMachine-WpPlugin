@@ -96,16 +96,16 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         JFrame diag = createDialog(frame, (macro, uiCallback) -> {
             ArrayList<MappingAction> steps =
                     new ArrayList<>(macroToFlatActions(macro, MacroContainer.getInstance(),
-                    MappingActionContainer.getInstance()));
+                            MappingActionContainer.getInstance()));
             int i = 0;
             uiCallback.setAllActionsBeforeRun(steps);
             for (MappingAction a : steps) {
                 if (uiCallback.isActionAbort())
                     break;
                 try {
-                    uiCallback.beforeEachAction(a,null);
+                    uiCallback.beforeEachAction(a, null);
                     Thread.sleep(100);
-                    uiCallback.setProgressOfAction(Math.round( 100f * i++ / 30f));
+                    uiCallback.setProgressOfAction(Math.round(100f * i++ / 30f));
                     uiCallback.afterEachAction(new ExecutionStatistic(a));
 
                 } catch (InterruptedException ex) {
@@ -195,7 +195,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         if (macro == null && selectionType == SELECTION_TPYE.MACRO)
             selectionType = SELECTION_TPYE.INVALID;
 
-        if (mapping == null && selectionType == SELECTION_TPYE.ACTION)
+        if (mapping == null && (selectionType == SELECTION_TPYE.ACTION || selectionType == SELECTION_TPYE.INPUT ||
+                selectionType == SELECTION_TPYE.OUTPUT))
             selectionType = SELECTION_TPYE.INVALID;
 
         switch (selectionType) {
