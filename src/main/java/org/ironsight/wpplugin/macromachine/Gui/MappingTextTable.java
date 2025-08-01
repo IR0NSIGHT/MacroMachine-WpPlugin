@@ -119,7 +119,13 @@ public class MappingTextTable extends JPanel {
 
             }
         });
-
+        numberTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON3)
+                    selectionModel.clearSelection(); // right click
+            }
+        });
 
 // Save selected row table
         numberTable.getSelectionModel().addListSelectionListener(e -> {
@@ -127,17 +133,14 @@ public class MappingTextTable extends JPanel {
         });
 
 // Restore selected raw table after a value was changed in the table
-        model.addTableModelListener(e -> SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                System.out.println("RESTORE TABLE SELECTION OF MODEL CHANGED");
-                try {
-                    for (int selectedRow: selectedRow) {
-                        numberTable.addRowSelectionInterval(selectedRow, selectedRow);
-                    }
-                } catch (IllegalArgumentException ignored) {
-                    // view row amount might be MUCH lower than expected. just ignore it
+        model.addTableModelListener(e -> SwingUtilities.invokeLater(() -> {
+            System.out.println("RESTORE TABLE SELECTION OF MODEL CHANGED");
+            try {
+                for (int selectedRow: selectedRow) {
+                    numberTable.addRowSelectionInterval(selectedRow, selectedRow);
                 }
+            } catch (IllegalArgumentException ignored) {
+                // view row amount might be MUCH lower than expected. just ignore it
             }
         }));
 
