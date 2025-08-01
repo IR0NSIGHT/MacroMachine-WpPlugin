@@ -73,12 +73,7 @@ public class ActionEditor extends LayerMappingPanel {
 
         JButton submitButtom = new JButton("save");
         submitButtom.setToolTipText("Submit action and save to global list.");
-        submitButtom.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                onSubmit.accept(mapping);
-            }
-        });
+        submitButtom.addActionListener(e -> onSubmit.accept(model.constructMapping()));
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(submitButtom);
