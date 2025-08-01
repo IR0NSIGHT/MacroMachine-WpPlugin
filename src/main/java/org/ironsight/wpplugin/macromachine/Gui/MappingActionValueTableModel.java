@@ -24,7 +24,16 @@ class MappingActionValueTableModel implements TableModel {
     public boolean isMappingPoint(int rowIdx) {
         return isMappingPoint[rowIdx];
     }
+    public MappingAction constructMapping() {
+        ArrayList<MappingPoint> mappingPoints = new ArrayList<>();
+          for (int rowIdx = 0; rowIdx < inputs.length; rowIdx++) {
+              if (isMappingPoint(rowIdx))
+                  mappingPoints.add(new MappingPoint(inputs[rowIdx].numericValue,output[rowIdx].numericValue));
+          }
 
+        MappingAction newAction = action.withNewPoints(mappingPoints.toArray(new MappingPoint[0]));
+        return newAction;
+    }
     public void rebuildDataWithAction(MappingAction action) {
         if (action == null)
             return;
@@ -179,25 +188,7 @@ class MappingActionValueTableModel implements TableModel {
             output[rowIndex] = (MappingPointValue)aValue;
         fireEvent(new TableModelEvent(this, rowIndex, rowIndex, TableModelEvent.UPDATE));
 
-        /*
-        if (!blockUpdates) {
 
-            int mappingPointIdx = rowToMappingPointIdx[rowIndex];
-            MappingPoint p = action.getMappingPoints()[mappingPointIdx];
-            MappingPoint[] newPoints = action.getMappingPoints();
-
-            if (columnIndex == OUTPUT_COLUMN_IDX) {
-                newPoints[mappingPointIdx] = new MappingPoint(p.input, ((MappingPointValue) aValue).numericValue);
-            } else if (columnIndex == INPUT_COLUMN_IDX) {
-                newPoints[mappingPointIdx] = new MappingPoint(((MappingPointValue) aValue).numericValue, p.output);
-            } else {
-                throw new RuntimeException("invalid column index");
-            }
-            MappingAction newAction = action.withNewPoints(newPoints);
-            if (newAction.equals(this.action))
-                return;
-            rebuildDataWithAction(action.withNewPoints(newPoints));
-        } */
     }
 
     @Override
