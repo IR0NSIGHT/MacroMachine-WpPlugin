@@ -4,43 +4,88 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingVal
 import org.pepsoft.minecraft.Block;
 
 import javax.swing.*;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
+import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EventObject;
 
-public class MappingPointCellEditor extends DefaultCellEditor implements TableCellEditor {
-    static JComboBox<MappingPointValue> dropdown = new FixedComboBox();
-    private final BlockingSelectionModel selectionModel;
-    private boolean blockActionEvents = false;
+public class MappingPointCellEditor implements TableCellEditor {
+    private final JComboBox<MappingPointValue> dropdown = new FixedComboBox();
+    private final ArrayList<CellEditorListener> listeners = new ArrayList<>();
+    private final FocusListener onDropdownFocusLost = new FocusListener() {
+        @Override
+        public void focusGained(FocusEvent e) {
+
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+            cancelCellEditing();
+        }
+    };
     public MappingPointCellEditor(BlockingSelectionModel selectionModel) {
-        super(dropdown);
-        this.selectionModel = selectionModel;
         dropdown.setRenderer(new MappingPointCellRenderer());
+    }    private ActionListener onComboboxSelected = e -> {
+        stopCellEditing();
+    };
+
+    @Override
+    public Object getCellEditorValue() {
+        return dropdown.getSelectedItem();
+    }
+
+    @Override
+    public boolean isCellEditable(EventObject anEvent) {
+        return true;
+    }
+
+    @Override
+    public boolean shouldSelectCell(EventObject anEvent) {
+        return true;
     }
 
     @Override
     public boolean stopCellEditing() {
-        if (blockActionEvents)
-            return false;
-        boolean result = super.stopCellEditing();
-        selectionModel.setSelectionBlocked(false); // Restore selection
-        return result;
+        System.out.println("CELLEDITOR - STOP EDIT");
+        dropdown.removeActionListener(onComboboxSelected);
+        dropdown.removeFocusListener(onDropdownFocusLost);
+
+        for (CellEditorListener l : new ArrayList<>(listeners)) {
+            l.editingStopped(new ChangeEvent(this));
+        }
+        return true;
     }
 
     @Override
     public void cancelCellEditing() {
-        if (blockActionEvents)
-            return;
-        super.cancelCellEditing();
-        selectionModel.setSelectionBlocked(false); // Restore selection
+        System.out.println("CELLEDITOR - CANCEL EDIT");
+        dropdown.removeActionListener(onComboboxSelected);
+        dropdown.removeFocusListener(onDropdownFocusLost);
+        for (CellEditorListener l : new ArrayList<>(listeners)) {
+            l.editingCanceled(new ChangeEvent(this));
+        }
+    }
+
+    @Override
+    public void addCellEditorListener(CellEditorListener l) {
+        System.out.println("ADD CELL EDITOR LISTENER");
+        listeners.add(l);
+    }
+
+    @Override
+    public void removeCellEditorListener(CellEditorListener l) {
+        System.out.println("REMOVE CELL EDITOR LISTENER");
+        listeners.remove(l);
     }
 
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         assert value != null;
         assert value instanceof MappingPointValue;
-        blockActionEvents = true;
         dropdown.removeAllItems();
 
         IMappingValue mappingValue = ((MappingPointValue) value).mappingValue;
@@ -65,12 +110,13 @@ public class MappingPointCellEditor extends DefaultCellEditor implements TableCe
 
         dropdown.setSelectedItem(value);
         assert value.equals(dropdown.getSelectedItem());
-        blockActionEvents = false;
         SwingUtilities.invokeLater(() -> {
             if (dropdown.requestFocusInWindow())
                 dropdown.showPopup();
         });
-        return this.getComponent();
+        dropdown.addActionListener(onComboboxSelected);
+        dropdown.addFocusListener(onDropdownFocusLost);
+        return dropdown;
     }
 
     static class FixedComboBox extends JComboBox<MappingPointValue> {
@@ -95,4 +141,8 @@ public class MappingPointCellEditor extends DefaultCellEditor implements TableCe
             super.fireActionEvent();
         }
     }
+
+
+
+
 }

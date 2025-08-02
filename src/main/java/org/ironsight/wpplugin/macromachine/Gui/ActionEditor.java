@@ -43,13 +43,13 @@ public class ActionEditor extends LayerMappingPanel {
             @Override
             public void setSelectionInterval(int index0, int index1) {
                 super.setSelectionInterval(index0, index1);
-                System.out.println("SET SELECTION INTERVAL " + index0 + ".."+ index1);
+                //System.out.println("SET SELECTION INTERVAL " + index0 + ".."+ index1);
             }
 
             @Override
             public void clearSelection() {
                 super.clearSelection();
-                System.out.println("CLEAR SELECTION");
+               // System.out.println("CLEAR SELECTION");
             }
         };
 
