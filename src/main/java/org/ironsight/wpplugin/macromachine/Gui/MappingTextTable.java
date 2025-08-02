@@ -50,7 +50,6 @@ public class MappingTextTable extends JPanel {
             @Override
             public void editingStopped(ChangeEvent e) {
                 System.out.println("EDITING STOPPED:" + e);
-                // Take in the new value
                 TableCellEditor editor = getCellEditor();
                 if (editor != null) {
                     Object value = editor.getCellEditorValue();
@@ -58,8 +57,13 @@ public class MappingTextTable extends JPanel {
                         setValueAt(value, row, editingColumn);
 
                     removeEditor();
-
                 }
+            }
+
+            @Override
+            public void removeEditor() {
+                super.removeEditor();
+                blockingSelectionModel.setSelectionBlocked(false);
             }
         };
 
@@ -122,8 +126,8 @@ public class MappingTextTable extends JPanel {
         numberTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON3)
-                    selectionModel.clearSelection(); // right click
+                if (!numberTable.isEditing() && e.getButton() == MouseEvent.BUTTON3)
+                    selectionModel.clearSelection(); // right click}
             }
         });
 
