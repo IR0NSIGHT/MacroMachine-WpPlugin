@@ -6,6 +6,8 @@ import org.pepsoft.minecraft.Block;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
@@ -14,24 +16,12 @@ import java.util.Comparator;
 import java.util.EventObject;
 
 public class MappingPointCellEditor implements TableCellEditor {
-    private final JComboBox<MappingPointValue> dropdown = new FixedComboBox();
+    private final JComboBox<MappingPointValue> dropdown = new JComboBox<>();
     private final ArrayList<CellEditorListener> listeners = new ArrayList<>();
-    private final FocusListener onDropdownFocusLost = new FocusListener() {
-        @Override
-        public void focusGained(FocusEvent e) {
 
-        }
-
-        @Override
-        public void focusLost(FocusEvent e) {
-            cancelCellEditing();
-        }
-    };
-    public MappingPointCellEditor(BlockingSelectionModel selectionModel) {
+    public MappingPointCellEditor() {
         dropdown.setRenderer(new MappingPointCellRenderer());
-    }    private ActionListener onComboboxSelected = e -> {
-        stopCellEditing();
-    };
+    }
 
     @Override
     public Object getCellEditorValue() {
@@ -51,7 +41,7 @@ public class MappingPointCellEditor implements TableCellEditor {
     @Override
     public boolean stopCellEditing() {
         System.out.println("CELLEDITOR - STOP EDIT");
-        dropdown.removeActionListener(onComboboxSelected);
+        dropdown.removePopupMenuListener(onComboboxSelected);
         dropdown.removeFocusListener(onDropdownFocusLost);
 
         for (CellEditorListener l : new ArrayList<>(listeners)) {
@@ -63,12 +53,22 @@ public class MappingPointCellEditor implements TableCellEditor {
     @Override
     public void cancelCellEditing() {
         System.out.println("CELLEDITOR - CANCEL EDIT");
-        dropdown.removeActionListener(onComboboxSelected);
+        dropdown.removePopupMenuListener(onComboboxSelected);
         dropdown.removeFocusListener(onDropdownFocusLost);
         for (CellEditorListener l : new ArrayList<>(listeners)) {
             l.editingCanceled(new ChangeEvent(this));
         }
-    }
+    }    private final FocusListener onDropdownFocusLost = new FocusListener() {
+        @Override
+        public void focusGained(FocusEvent e) {
+
+        }
+
+        @Override
+        public void focusLost(FocusEvent e) {
+            cancelCellEditing();
+        }
+    };
 
     @Override
     public void addCellEditorListener(CellEditorListener l) {
@@ -96,13 +96,7 @@ public class MappingPointCellEditor implements TableCellEditor {
         }
 
         if (mappingValue.isDiscrete()) {
-            arr.sort(new Comparator<MappingPointValue>() {
-                @Override
-                public int compare(MappingPointValue o1, MappingPointValue o2) {
-                    return o1.mappingValue.valueToString(o1.numericValue)
-                            .compareTo(o2.mappingValue.valueToString(o2.numericValue));
-                }
-            });
+            arr.sort(Comparator.comparing(o -> o.mappingValue.valueToString(o.numericValue)));
         }
         for (MappingPointValue mappingPointValue : arr) {
             dropdown.addItem(mappingPointValue);
@@ -114,35 +108,29 @@ public class MappingPointCellEditor implements TableCellEditor {
             if (dropdown.requestFocusInWindow())
                 dropdown.showPopup();
         });
-        dropdown.addActionListener(onComboboxSelected);
+        dropdown.addPopupMenuListener(onComboboxSelected);
         dropdown.addFocusListener(onDropdownFocusLost);
         return dropdown;
     }
 
-    static class FixedComboBox extends JComboBox<MappingPointValue> {
-        // this class is necessary to use dropdowns in tables as cell editors
-        // default dropdowns will submit the selection on the first key press, making proper search-by-typing impossible
-        // this class suppresses submit events when the event was caused by character searching.
-        private boolean keyCharSelection;
 
+
+    private PopupMenuListener onComboboxSelected = new PopupMenuListener() {
         @Override
-        public boolean selectWithKeyChar(char keyChar) {
-            keyCharSelection = true;
-            boolean event = super.selectWithKeyChar(keyChar);
-            keyCharSelection = false;
-            return event;
+        public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+
         }
 
         @Override
-        protected void fireActionEvent() {
-            if (keyCharSelection) {
-                return;
-            }
-            super.fireActionEvent();
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+            stopCellEditing();
         }
-    }
 
-
+        @Override
+        public void popupMenuCanceled(PopupMenuEvent e) {
+            cancelCellEditing();
+        }
+    };
 
 
 }
