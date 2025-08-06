@@ -1,0 +1,30 @@
+name: Zip and Upload on Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  zip-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up variables
+        id: vars
+        run: echo "RELEASE_TAG=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+
+      - name: Zip the folder
+        run: |
+          ls defaultActions
+          zip -r default-macros.zip ./defaultActions
+
+      - name: Upload zipped folder to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: default-macros.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
