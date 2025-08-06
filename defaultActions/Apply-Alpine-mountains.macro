@@ -1,0 +1,334 @@
+{
+  "exportDate" : "2025-08-06T10:16:40.4834699+02:00[Europe/Berlin]",
+  "comment" : "no comment",
+  "macros" : [ {
+    "macroName" : "Decorate: Snow tops",
+    "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+    "stepIds" : [ "e2388149-55d9-4fd0-894d-acf471042300", "8c8a2628-e1ac-40db-8b48-67ab78e82967", "7d607eb7-380e-45a0-83f2-fe2f5e25721e", "7d2fe0bd-ffbf-4865-943b-e633b858fde3", "9411198b-c7d2-42b1-984d-ffd9b3011bd6", "7225eab7-0947-4e00-b04b-b34ad98d8093", "56bf57ed-d389-4f02-ab67-b6e0e4563a1c", "f5e02009-97ae-4955-a521-92639642c71b", "e67021f3-e0e0-4a02-b75d-4e735248949b", "1539c577-7828-4450-a264-70fce4fb5da0" ],
+    "selfId" : "a9751c67-2e33-41be-8a72-1a70dae69ef3",
+    "activeIds" : [ true, true, true, true, true, true, true, true, true, true ]
+  }, {
+    "macroName" : "Apply: auto beach",
+    "description" : "simple beach near+under water\nbeach terrain in flat spots\nstone mix otherwise",
+    "stepIds" : [ "ccdb9830-a63a-4b35-a6fb-e55ed4baef15", "6ce5f861-35be-4dfe-8f92-f49ea4dfade6", "abf27900-f9de-477d-b41f-11d583c26aa6", "4d006c6d-93f6-4326-81fe-60446dad53eb" ],
+    "selfId" : "28558748-ff19-4ecf-9feb-7dec9173996f",
+    "activeIds" : [ true, true, true, true ]
+  }, {
+    "macroName" : "Apply: Alpine mountains",
+    "description" : "rocky slopes, frosted tips, northern slopes have more snow than southern (sun facing) slopes",
+    "stepIds" : [ "c6940057-2118-4f93-8409-2026e812e68c", "328f34b4-9994-422c-a85b-272c93e6263e", "a9751c67-2e33-41be-8a72-1a70dae69ef3", "28558748-ff19-4ecf-9feb-7dec9173996f", "058f0f40-d883-4aa7-bda0-12e8472feaf1", "042248e3-2760-434e-a31b-d6b44023231a" ],
+    "selfId" : "6fa2a28b-3bed-4dc6-9e58-6d753137ef85",
+    "activeIds" : [ false, true, false, false, false, false ]
+  }, {
+    "macroName" : "Flower Patches on plains+grass",
+    "description" : "flowers colonies",
+    "stepIds" : [ "9c780230-8973-406e-849f-ffc51b340ee9", "19cb9ca8-19bf-447c-9cce-6e1a67814f2f", "a555c3ff-ff46-4b9e-87de-839106b28eb8", "600f91f1-6bd5-40f0-8dbd-bf6e001906f9", "a336aeac-9901-44ec-ad01-964609b8f860" ],
+    "selfId" : "042248e3-2760-434e-a31b-d6b44023231a",
+    "activeIds" : [ true, true, true, true, true ]
+  }, {
+    "macroName" : "Find: water plant colonies",
+    "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+    "stepIds" : [ "5abff12c-ad6d-4106-b96f-528aad35ac93", "57b69050-7b95-4522-8d24-cd2c8eaf7a35", "13f123e4-729c-418b-b967-520c01898a04", "8865142f-ab9d-4d27-9afd-197fa5cb214e", "e7031bff-bf14-4ac3-ada7-e35131b1f3df", "e5b150ed-8a1c-4ed8-b213-fce72f4d8f08" ],
+    "selfId" : "058f0f40-d883-4aa7-bda0-12e8472feaf1",
+    "activeIds" : [ true, true, true, true, true, true ]
+  } ],
+  "actions" : [ {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "TERRAIN",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 9 ],
+    "name" : "apply snow",
+    "description" : "description of the action",
+    "uid" : "f5e02009-97ae-4955-a521-92639642c71b"
+  }, {
+    "inputId" : "NIBBLE_LAYER",
+    "inputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "outputId" : "BINARY_SPRAYPAINT",
+    "outputData" : [ "Frost", "Frost", false ],
+    "actionType" : "SET",
+    "inputPoints" : [ 7, 8 ],
+    "outputPoints" : [ 0, 100 ],
+    "name" : "apply frost",
+    "description" : "description of the action",
+    "uid" : "56bf57ed-d389-4f02-ab67-b6e0e4563a1c"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 0 ],
+    "name" : "Remove: Heatmap",
+    "description" : "Default action: apply grass to all blocks that have passed the filter",
+    "uid" : "e5b150ed-8a1c-4ed8-b213-fce72f4d8f08"
+  }, {
+    "inputId" : "SLOPE",
+    "inputData" : [ ],
+    "outputId" : "STONE_PALETTE",
+    "outputData" : [ 0, 10, 4, 12, 13, 72, 73, 74, 150, 75, 5 ],
+    "actionType" : "SET",
+    "inputPoints" : [ 50, 63, 72 ],
+    "outputPoints" : [ 0, 9, 8 ],
+    "name" : "paint slopes",
+    "description" : "description of the action",
+    "uid" : "328f34b4-9994-422c-a85b-272c93e6263e"
+  }, {
+    "inputId" : "TERRAIN",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160 ],
+    "outputPoints" : [ 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+    "name" : "Filter: Only on grass",
+    "description" : "new description",
+    "uid" : "a555c3ff-ff46-4b9e-87de-839106b28eb8"
+  }, {
+    "inputId" : "SLOPE",
+    "inputData" : [ ],
+    "outputId" : "TERRAIN",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 30, 90 ],
+    "outputPoints" : [ 21, 75 ],
+    "name" : "Paint by slope",
+    "description" : "Default filter: block all blocks that are steeper than this angle",
+    "uid" : "4d006c6d-93f6-4326-81fe-60446dad53eb"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 1 ],
+    "name" : "Reset filter",
+    "description" : "new description",
+    "uid" : "e67021f3-e0e0-4a02-b75d-4e735248949b"
+  }, {
+    "inputId" : "SHADOW",
+    "inputData" : [ ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "INCREMENT",
+    "inputPoints" : [ 0, 1, 100 ],
+    "outputPoints" : [ 0, 1, 10 ],
+    "name" : "Shadow adds snow",
+    "description" : "new description",
+    "uid" : "7d607eb7-380e-45a0-83f2-fe2f5e25721e"
+  }, {
+    "inputId" : "NIBBLE_LAYER",
+    "inputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "outputId" : "BINARY_SPRAYPAINT",
+    "outputData" : [ "Plants.5a395d0a77e053bd", "Waterlilly", true ],
+    "actionType" : "SET",
+    "inputPoints" : [ 10, 11, 13, 15 ],
+    "outputPoints" : [ 0, 41, 65, 80 ],
+    "name" : "Apply: Waterlilly",
+    "description" : "Default action: apply grass to all blocks that have passed the filter",
+    "uid" : "e7031bff-bf14-4ac3-ada7-e35131b1f3df"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 0 ],
+    "name" : "Remove: Heatmap",
+    "description" : "Default action: apply grass to all blocks that have passed the filter",
+    "uid" : "8c8a2628-e1ac-40db-8b48-67ab78e82967"
+  }, {
+    "inputId" : "PERLIN_NOISE",
+    "inputData" : [ 25, 15, 10, 123123 ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "INCREMENT",
+    "inputPoints" : [ 0, 15 ],
+    "outputPoints" : [ 0, 7 ],
+    "name" : "Perlin Mountains",
+    "description" : "description of the action",
+    "uid" : "9411198b-c7d2-42b1-984d-ffd9b3011bd6"
+  }, {
+    "inputId" : "WATER_DEPTH",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0, 1 ],
+    "outputPoints" : [ 0, 1 ],
+    "name" : "Filter: Only On Water",
+    "description" : "Default filter: block all blocks that are not below waterlevel",
+    "uid" : "5abff12c-ad6d-4106-b96f-528aad35ac93"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 0 ],
+    "name" : "Reset: Heatmap",
+    "description" : "Default action: apply grass to all blocks that have passed the filter",
+    "uid" : "57b69050-7b95-4522-8d24-cd2c8eaf7a35"
+  }, {
+    "inputId" : "SLOPE",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 55, 90 ],
+    "outputPoints" : [ 1, 0 ],
+    "name" : "Filter: Below degrees",
+    "description" : "Default filter: block all blocks that are steeper than this angle",
+    "uid" : "e2388149-55d9-4fd0-894d-acf471042300"
+  }, {
+    "inputId" : "NIBBLE_LAYER",
+    "inputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 7, 15 ],
+    "outputPoints" : [ 0, 1 ],
+    "name" : "Filter: Only Heatmap",
+    "description" : "Default filter: block all blocks that are not cyan annotated.",
+    "uid" : "7225eab7-0947-4e00-b04b-b34ad98d8093"
+  }, {
+    "inputId" : "WATER_DEPTH",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 0, 1 ],
+    "outputPoints" : [ 1, 0 ],
+    "name" : "Filter: Only On Land",
+    "description" : "Default filter: block all blocks that are not above waterlevel",
+    "uid" : "9c780230-8973-406e-849f-ffc51b340ee9"
+  }, {
+    "inputId" : "VANILLA_BIOME",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256 ],
+    "outputPoints" : [ 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+    "name" : "Filter: Only on biome Plains",
+    "description" : "Default filter: block all blocks that are not this biome type",
+    "uid" : "19cb9ca8-19bf-447c-9cce-6e1a67814f2f"
+  }, {
+    "inputId" : "PERLIN_NOISE",
+    "inputData" : [ 10, 100, 8, 42069 ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "INCREMENT",
+    "inputPoints" : [ 50, 60 ],
+    "outputPoints" : [ 0, 8 ],
+    "name" : "Set: Perlin patches",
+    "description" : "description of the action",
+    "uid" : "13f123e4-729c-418b-b967-520c01898a04"
+  }, {
+    "inputId" : "PERLIN_NOISE",
+    "inputData" : [ 20, 100, 5, 2467823 ],
+    "outputId" : "BINARY_SPRAYPAINT",
+    "outputData" : [ "Plants.b811e8c1f300f0b0", "Pink/White tulips", true ],
+    "actionType" : "SET",
+    "inputPoints" : [ 25, 30 ],
+    "outputPoints" : [ 25, 0 ],
+    "name" : "Set: Tulip Colonies",
+    "description" : "new description",
+    "uid" : "600f91f1-6bd5-40f0-8dbd-bf6e001906f9"
+  }, {
+    "inputId" : "PERLIN_NOISE",
+    "inputData" : [ 10, 100, 5, 673957 ],
+    "outputId" : "BINARY_SPRAYPAINT",
+    "outputData" : [ "Plants.523477c28a986e7e", "Dandelion", true ],
+    "actionType" : "SET",
+    "inputPoints" : [ 25, 30 ],
+    "outputPoints" : [ 50, 0 ],
+    "name" : "Set: Dandelion Colonies",
+    "description" : "new description",
+    "uid" : "a336aeac-9901-44ec-ad01-964609b8f860"
+  }, {
+    "inputId" : "WATER_DEPTH",
+    "inputData" : [ ],
+    "outputId" : "BINARY_LAYER",
+    "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0, 1 ],
+    "outputPoints" : [ 0, 1 ],
+    "name" : "mask water",
+    "description" : "description of the action",
+    "uid" : "ccdb9830-a63a-4b35-a6fb-e55ed4baef15"
+  }, {
+    "inputId" : "DISTANCE_TO_EDGE",
+    "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", 30 ],
+    "outputId" : "BINARY_LAYER",
+    "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false ],
+    "actionType" : "SET",
+    "inputPoints" : [ 20, 30 ],
+    "outputPoints" : [ 1, 0 ],
+    "name" : "expand mask",
+    "description" : "Default filter: block all blocks that are above this level",
+    "uid" : "6ce5f861-35be-4dfe-8f92-f49ea4dfade6"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 0 ],
+    "name" : "Remove: Heatmap",
+    "description" : "Default action: apply grass to all blocks that have passed the filter",
+    "uid" : "1539c577-7828-4450-a264-70fce4fb5da0"
+  }, {
+    "inputId" : "WATER_DEPTH",
+    "inputData" : [ ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "INCREMENT",
+    "inputPoints" : [ 0, 13 ],
+    "outputPoints" : [ 8, 0 ],
+    "name" : "Set: prefer shallow water",
+    "description" : "Default filter: block all blocks that are steeper than this angle",
+    "uid" : "8865142f-ab9d-4d27-9afd-197fa5cb214e"
+  }, {
+    "inputId" : "ANNOTATION",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+    "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 ],
+    "name" : "Filter: Only On Annotations Cyan",
+    "description" : "Default filter: block all blocks that are not cyan annotated.",
+    "uid" : "c6940057-2118-4f93-8409-2026e812e68c"
+  }, {
+    "inputId" : "HEIGHT",
+    "inputData" : [ -64, 1000 ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "INCREMENT",
+    "inputPoints" : [ 100, 500 ],
+    "outputPoints" : [ 0, 15 ],
+    "name" : "Elevation adds snow",
+    "description" : "description of the action",
+    "uid" : "7d2fe0bd-ffbf-4865-943b-e633b858fde3"
+  }, {
+    "inputId" : "BINARY_LAYER",
+    "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0, 1 ],
+    "outputPoints" : [ 0, 1 ],
+    "name" : "Filter: Only On Mask",
+    "description" : "Default filter: block all blocks that are not cyan annotated.",
+    "uid" : "abf27900-f9de-477d-b41f-11d583c26aa6"
+  } ],
+  "layers" : "rO0ABXVyAChbTG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXI7BDpGR8pvArcCAAB4cAAAAANzcgAxb3JnLnBlcHNvZnQud29ybGRwYWludGVyLmxheWVycy5wbGFudHMuUGxhbnRMYXllctm23Labsw+VAgAEWgASZ2VuZXJhdGVUaWxsZWREaXJ0WgARb25seU9uVmFsaWRCbG9ja3NJAAd2ZXJzaW9uWwAIc2V0dGluZ3N0AEJbTG9yZy9wZXBzb2Z0L3dvcmxkcGFpbnRlci9sYXllcnMvcGxhbnRzL1BsYW50TGF5ZXIkUGxhbnRTZXR0aW5nczt4cgArb3JnLnBlcHNvZnQud29ybGRwYWludGVyLmxheWVycy5DdXN0b21MYXllcgAAAAAAAAABAwALSQAFYmlvbWVJAAZjb2xvdXJaAAZleHBvcnRaAARoaWRlRgAHb3BhY2l0eUkAB3ZlcnNpb25MAAVpbmRleHQAE0xqYXZhL2xhbmcvSW50ZWdlcjtMAAdwYWxldHRldAASTGphdmEvbGFuZy9TdHJpbmc7TAAMcGFsZXR0ZUluZGV4cQB+AAVbAApzdG9yZWRJY29udAACW0JbAA1zdG9yZWRQYXR0ZXJucQB+AAd4cgAlb3JnLnBlcHNvZnQud29ybGRwYWludGVyLmxheWVycy5MYXllcgAAAAB33e1FAgAGWgAIZGlzY3JldGVJAAhwcmlvcml0eUwACGRhdGFTaXpldAAwTG9yZy9wZXBzb2Z0L3dvcmxkcGFpbnRlci9sYXllcnMvTGF5ZXIkRGF0YVNpemU7TAALZGVzY3JpcHRpb25xAH4ABkwAAmlkcQB+AAZMAARuYW1lcQB+AAZ4cAAAAAAjfnIALm9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXIkRGF0YVNpemUAAAAAAAAAABIAAHhyAA5qYXZhLmxhbmcuRW51bQAAAAAAAAAAEgAAeHB0AANCSVR0AB1BIGN1c3RvbSBjb2xsZWN0aW9uIG9mIHBsYW50c3QAF1BsYW50cy41MjM0NzdjMjhhOTg2ZTdldAAJRGFuZGVsaW9u/////////wABAD+AAAAAAAAEcHQADE1hY3JvTWFjaGluZXNyABFqYXZhLmxhbmcuSW50ZWdlchLioKT3gYc4AgABSQAFdmFsdWV4cgAQamF2YS5sYW5nLk51bWJlcoaslR0LlOCLAgAAeHAAAAAGdXIAAltCrPMX+AYIVOACAAB4cAAAALaJUE5HDQoaCgAAAA1JSERSAAAAEAAAABAIBgAAAB/z/2EAAAB9SURBVHhefY3BCQBBCAPtv5Rr0gNhRcfoY9GNk8TsM3c3r5P7+yvONpOE8eL2kpVB7ZUPjakSErcMpXg1U4vHNoaxfcwNfkCFWRBzM9C0hl+A2keAFGFUAalX4xbAsMbSVKFLy71CytDacI9dATSqW4YwlU3q3gKGcJgU9wNNrUSDol8vPQAAAABJRU5ErkJggnVxAH4AFgAAALaJUE5HDQoaCgAAAA1JSERSAAAAEAAAABAIBgAAAB/z/2EAAAB9SURBVHhefY3BCQBBCAPtv5Rr0gNhRcfoY9GNk8TsM3c3r5P7+yvONpOE8eL2kpVB7ZUPjakSErcMpXg1U4vHNoaxfcwNfkCFWRBzM9C0hl+A2keAFGFUAalX4xbAsMbSVKFLy71CytDacI9dATSqW4YwlU3q3gKGcJgU9wNNrUSDol8vPQAAAABJRU5ErkJggngBAQAAAAJ1cgBCW0xvcmcucGVwc29mdC53b3JsZHBhaW50ZXIubGF5ZXJzLnBsYW50cy5QbGFudExheWVyJFBsYW50U2V0dGluZ3M7avQKkYw4EGUCAAB4cAAAAFhzcgA/b3JnLnBlcHNvZnQud29ybGRwYWludGVyLmxheWVycy5wbGFudHMuUGxhbnRMYXllciRQbGFudFNldHRpbmdzAAAAAAAAAAECAAVCAA1kYXRhVmFsdWVGcm9tQgALZGF0YVZhbHVlVG9JAApncm93dGhGcm9tSQAIZ3Jvd3RoVG9TAApvY2N1cnJlbmNleHD//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAAFzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAAFzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAQAAAAIAABzcQB+ABv//wAAAAQAAAAIAABzcQB+ABv//wAAAAQAAAAIAABzcQB+ABv//wAAAAQAAAAIAABzcQB+ABv//wAAAAQAAAAIAABzcQB+ABv//wAAAAEAAAADAABzcQB+ABv//wAAAAEAAAADAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAIAAAAEAABzcQB+ABv//wAAAAIAAAAEAABzcQB+ABv//wAAAAIAAAAFAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAA0AAAAaAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAIAAAAEAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAIAAAAEAABzcQB+ABv//wAAAAgAAAAQAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAUAAAAKAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAUAAAAKAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAUAAAAKAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAUAAAAKAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAUAAAAKAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAIAAAAEAABzcQB+ABv//wAAAAIAAAAFAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAACAABzcQB+ABv//wAAAAEAAAABAABwcHBzcQB+AAIAAAAAI3EAfgANdAAdQSBjdXN0b20gY29sbGVjdGlvbiBvZiBwbGFudHN0ABdQbGFudHMuYjgxMWU4YzFmMzAwZjBiMHQAEVBpbmsvV2hpdGUgdHVsaXBz//////8A/wABAD+AAAAAAAAEcHEAfgASc3EAfgATAAAABXVxAH4AFgAAALeJUE5HDQoaCgAAAA1JSERSAAAAEAAAABAIBgAAAB/z/2EAAAB+SURBVHhelZILCsAgDEN3/xt4WrdOZfHRSPdAxH6SruzqrQ/WfSJq9Dxcks45GbQQgGKZ2TMEmHDQzAowFrB5xmoCcNX8WCILSCYavBMg8JdvguwmyWfsAg7mjztQ6MgJm+6AIqaBNbUJ9G0FJFhi1u0/Eh0cUpcLrJi+zbkBMtnXIMU5P40AAAAASUVORK5CYIJ1cQB+ABYAAAC3iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAfklEQVR4XpWSCwrAIAxDd/8beFq3TmXx0Uj3QMR+kq7s6q0P1n0iavQ8XJLOORm0EIBimdkzBJhw0MwKMBawecZqAnDV/FgiC0gmGrwTIPCXb4LsJsln7AIO5o87UOjICZvugCKmgTW1CfRtBSRYYtbtPxIdHFKXC6yYvs25ATLZ1yDFOT+NAAAAAElFTkSuQmCCeAEBAAAAAnVxAH4AGQAAAFhzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAAFzcQB+ABv//wAAAAEAAAABAAFzcQB+ABv//wAAAAEAAAABAGRzcQB+ABv//wAAAAEAAAABAGRzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAQAAAAIAABzcQB+ABv//wAAAAQAAAAIAABzcQB+ABv//wAAAAQAAAAIAABzcQB+ABv//wAAAAQAAAAIAABzcQB+ABv//wAAAAQAAAAIAABzcQB+ABv//wAAAAEAAAADAABzcQB+ABv//wAAAAEAAAADAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAIAAAAEAABzcQB+ABv//wAAAAIAAAAEAABzcQB+ABv//wAAAAIAAAAFAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAA0AAAAaAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAIAAAAEAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAIAAAAEAABzcQB+ABv//wAAAAgAAAAQAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAUAAAAKAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAUAAAAKAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAUAAAAKAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAUAAAAKAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAUAAAAKAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAIAAAAEAABzcQB+ABv//wAAAAIAAAAFAABzcQB+ABv//wAAAAEAAAABAABzcQB+ABv//wAAAAEAAAACAABzcQB+ABv//wAAAAEAAAABAABwcHBzcQB+AAIAAAAAI3EAfgANdAAdQSBjdXN0b20gY29sbGVjdGlvbiBvZiBwbGFudHN0ABdQbGFudHMuNWEzOTVkMGE3N2UwNTNiZHQACldhdGVybGlsbHn//////wCZAAEAP4AAAAAAAARwcQB+ABJzcQB+ABMAAAAEdXEAfgAWAAAAWYlQTkcNChoKAAAADUlIRFIAAAAQAAAAEAgGAAAAH/P/YQAAACBJREFUeF5jYKAS+E8mhoP/DDNJxKMGjBowXA0gD1MOAI4EGVwSzmB9AAAAAElFTkSuQmCCcHgBAQAAAAJ1cQB+ABkAAABYc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAAEAAAACAAAc3EAfgAb//8AAAAEAAAACAAAc3EAfgAb//8AAAAEAAAACAAAc3EAfgAb//8AAAAEAAAACAAAc3EAfgAb//8AAAAEAAAACAAAc3EAfgAb//8AAAABAAAAAwAAc3EAfgAb//8AAAABAAAAAwAAc3EAfgAb//8AAAABAAAAAQABc3EAfgAb//8AAAACAAAABAAAc3EAfgAb//8AAAACAAAABAAAc3EAfgAb//8AAAACAAAABQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAANAAAAGgAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAACAAAABAAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAACAAAABAAAc3EAfgAb//8AAAAIAAAAEAAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAAFAAAACgAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAAFAAAACgAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAAFAAAACgAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAAFAAAACgAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAAFAAAACgAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAACAAAABAAAc3EAfgAb//8AAAACAAAABQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAgAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAABAAAAAQAAc3EAfgAb//8AAAACAAAABQAAc3EAfgAb//8AAAABAAAAAQAA"
+}

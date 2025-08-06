@@ -1,0 +1,53 @@
+name: Zip and Upload on Release
+# will add default-actions zip folder
+# will rename release to MacroMachine vx.x.x
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  zip-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up variables
+        id: vars
+        run: |
+          echo "RELEASE_TAG=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+
+      - name: Install xmlstarlet
+        run: sudo apt-get update && sudo apt-get install -y xmlstarlet
+
+      - name: Read version from pom.xml
+        id: read_version
+        run: |
+          VERSION=$(xmlstarlet sel -N x="http://maven.apache.org/POM/4.0.0" -t -v "/x:project/x:version" pom.xml)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Parsed version: $VERSION"
+
+      - name: Zip the folder
+        run: |
+          ls defaultActions
+          zip -r default-macros.zip ./defaultActions
+
+      - name: Upload zipped folder to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          files: default-macros.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Rename the release with pom.xml version
+        run: |
+          curl -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/releases/${{ github.event.release.id }} \
+            -d "{\"name\": \"MacroMachine v${{ env.VERSION }}\"}"

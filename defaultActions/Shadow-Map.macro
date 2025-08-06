@@ -1,0 +1,24 @@
+{
+  "exportDate" : "2025-08-06T10:16:40.5024879+02:00[Europe/Berlin]",
+  "comment" : "no comment",
+  "macros" : [ {
+    "macroName" : "Shadow Map",
+    "description" : "show the shadow of the map as heatmap. no heatmap = total sun, red=total shade",
+    "stepIds" : [ "49aecd29-49b9-4f4f-960f-004c20792674" ],
+    "selfId" : "1e38bd5b-79a9-4d48-b605-af110a1c6022",
+    "activeIds" : [ true ]
+  } ],
+  "actions" : [ {
+    "inputId" : "SHADOW",
+    "inputData" : [ ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "INCREMENT",
+    "inputPoints" : [ 0, 1, 100 ],
+    "outputPoints" : [ 0, 1, 15 ],
+    "name" : "create new action",
+    "description" : "new description",
+    "uid" : "49aecd29-49b9-4f4f-960f-004c20792674"
+  } ],
+  "layers" : "rO0ABXVyAChbTG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXI7BDpGR8pvArcCAAB4cAAAAAA="
+}

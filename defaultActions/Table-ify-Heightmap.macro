@@ -1,0 +1,24 @@
+{
+  "exportDate" : "2025-08-06T10:16:40.50549+02:00[Europe/Berlin]",
+  "comment" : "no comment",
+  "macros" : [ {
+    "macroName" : "Table-ify Heightmap",
+    "description" : "turn a normal looking mountain into a table/terrasse mountain",
+    "stepIds" : [ "35bb7842-3a6d-4cd8-8844-a0abb322b82d" ],
+    "selfId" : "42cea0c9-3d0a-4a35-9cb9-ced41d3c96e7",
+    "activeIds" : [ true ]
+  } ],
+  "actions" : [ {
+    "inputId" : "HEIGHT",
+    "inputData" : [ -64, 319 ],
+    "outputId" : "HEIGHT",
+    "outputData" : [ -64, 319 ],
+    "actionType" : "SET",
+    "inputPoints" : [ -64, 62, 83, 90, 111, 116, 132, 138, 166, 171, 195, 200, 224, 231, 249, 253, 297, 319 ],
+    "outputPoints" : [ -64, 62, 74, 93, 97, 123, 140, 167, 177, 193, 193, 214, 225, 242, 243, 271, 295, 319 ],
+    "name" : "Table maker",
+    "description" : "new description",
+    "uid" : "35bb7842-3a6d-4cd8-8844-a0abb322b82d"
+  } ],
+  "layers" : "rO0ABXVyAChbTG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXI7BDpGR8pvArcCAAB4cAAAAAA="
+}
