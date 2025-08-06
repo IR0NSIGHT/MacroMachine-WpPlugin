@@ -1,0 +1,24 @@
+{
+  "exportDate" : "2025-08-06T10:16:40.4994849+02:00[Europe/Berlin]",
+  "comment" : "no comment",
+  "macros" : [ {
+    "macroName" : "desert dune",
+    "description" : "add large perlin based dunes to the landscape",
+    "stepIds" : [ "e14e3447-ebbd-4396-a7e3-efd3069be283" ],
+    "selfId" : "81ff67ad-43b5-470d-90af-facba38c3d0e",
+    "activeIds" : [ true ]
+  } ],
+  "actions" : [ {
+    "inputId" : "PERLIN_NOISE",
+    "inputData" : [ 200, 500, 3, 1234 ],
+    "outputId" : "HEIGHT",
+    "outputData" : [ -64, 319 ],
+    "actionType" : "INCREMENT",
+    "inputPoints" : [ 0, 100, 200, 250, 300, 400, 500 ],
+    "outputPoints" : [ 0, 3, 20, 35, 20, 3, 0 ],
+    "name" : "perlin dunes",
+    "description" : "new description",
+    "uid" : "e14e3447-ebbd-4396-a7e3-efd3069be283"
+  } ],
+  "layers" : "rO0ABXVyAChbTG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXI7BDpGR8pvArcCAAB4cAAAAAA="
+}

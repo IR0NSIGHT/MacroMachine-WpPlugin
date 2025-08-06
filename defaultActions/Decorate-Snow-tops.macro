@@ -1,0 +1,123 @@
+{
+  "exportDate" : "2025-08-06T10:16:40.4484379+02:00[Europe/Berlin]",
+  "comment" : "no comment",
+  "macros" : [ {
+    "macroName" : "Decorate: Snow tops",
+    "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+    "stepIds" : [ "e2388149-55d9-4fd0-894d-acf471042300", "8c8a2628-e1ac-40db-8b48-67ab78e82967", "7d607eb7-380e-45a0-83f2-fe2f5e25721e", "7d2fe0bd-ffbf-4865-943b-e633b858fde3", "9411198b-c7d2-42b1-984d-ffd9b3011bd6", "7225eab7-0947-4e00-b04b-b34ad98d8093", "56bf57ed-d389-4f02-ab67-b6e0e4563a1c", "f5e02009-97ae-4955-a521-92639642c71b", "e67021f3-e0e0-4a02-b75d-4e735248949b", "1539c577-7828-4450-a264-70fce4fb5da0" ],
+    "selfId" : "a9751c67-2e33-41be-8a72-1a70dae69ef3",
+    "activeIds" : [ true, true, true, true, true, true, true, true, true, true ]
+  } ],
+  "actions" : [ {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "TERRAIN",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 9 ],
+    "name" : "apply snow",
+    "description" : "description of the action",
+    "uid" : "f5e02009-97ae-4955-a521-92639642c71b"
+  }, {
+    "inputId" : "NIBBLE_LAYER",
+    "inputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "outputId" : "BINARY_SPRAYPAINT",
+    "outputData" : [ "Frost", "Frost", false ],
+    "actionType" : "SET",
+    "inputPoints" : [ 7, 8 ],
+    "outputPoints" : [ 0, 100 ],
+    "name" : "apply frost",
+    "description" : "description of the action",
+    "uid" : "56bf57ed-d389-4f02-ab67-b6e0e4563a1c"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 1 ],
+    "name" : "Reset filter",
+    "description" : "new description",
+    "uid" : "e67021f3-e0e0-4a02-b75d-4e735248949b"
+  }, {
+    "inputId" : "SHADOW",
+    "inputData" : [ ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "INCREMENT",
+    "inputPoints" : [ 0, 1, 100 ],
+    "outputPoints" : [ 0, 1, 10 ],
+    "name" : "Shadow adds snow",
+    "description" : "new description",
+    "uid" : "7d607eb7-380e-45a0-83f2-fe2f5e25721e"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 0 ],
+    "name" : "Remove: Heatmap",
+    "description" : "Default action: apply grass to all blocks that have passed the filter",
+    "uid" : "8c8a2628-e1ac-40db-8b48-67ab78e82967"
+  }, {
+    "inputId" : "PERLIN_NOISE",
+    "inputData" : [ 25, 15, 10, 123123 ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "INCREMENT",
+    "inputPoints" : [ 0, 15 ],
+    "outputPoints" : [ 0, 7 ],
+    "name" : "Perlin Mountains",
+    "description" : "description of the action",
+    "uid" : "9411198b-c7d2-42b1-984d-ffd9b3011bd6"
+  }, {
+    "inputId" : "SLOPE",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 55, 90 ],
+    "outputPoints" : [ 1, 0 ],
+    "name" : "Filter: Below degrees",
+    "description" : "Default filter: block all blocks that are steeper than this angle",
+    "uid" : "e2388149-55d9-4fd0-894d-acf471042300"
+  }, {
+    "inputId" : "NIBBLE_LAYER",
+    "inputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 7, 15 ],
+    "outputPoints" : [ 0, 1 ],
+    "name" : "Filter: Only Heatmap",
+    "description" : "Default filter: block all blocks that are not cyan annotated.",
+    "uid" : "7225eab7-0947-4e00-b04b-b34ad98d8093"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 0 ],
+    "name" : "Remove: Heatmap",
+    "description" : "Default action: apply grass to all blocks that have passed the filter",
+    "uid" : "1539c577-7828-4450-a264-70fce4fb5da0"
+  }, {
+    "inputId" : "HEIGHT",
+    "inputData" : [ -64, 1000 ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "INCREMENT",
+    "inputPoints" : [ 100, 500 ],
+    "outputPoints" : [ 0, 15 ],
+    "name" : "Elevation adds snow",
+    "description" : "description of the action",
+    "uid" : "7d2fe0bd-ffbf-4865-943b-e633b858fde3"
+  } ],
+  "layers" : "rO0ABXVyAChbTG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXI7BDpGR8pvArcCAAB4cAAAAAA="
+}

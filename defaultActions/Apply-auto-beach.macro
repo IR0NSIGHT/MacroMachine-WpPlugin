@@ -1,0 +1,57 @@
+{
+  "exportDate" : "2025-08-06T10:16:40.4954807+02:00[Europe/Berlin]",
+  "comment" : "no comment",
+  "macros" : [ {
+    "macroName" : "Apply: auto beach",
+    "description" : "simple beach near+under water\nbeach terrain in flat spots\nstone mix otherwise",
+    "stepIds" : [ "ccdb9830-a63a-4b35-a6fb-e55ed4baef15", "6ce5f861-35be-4dfe-8f92-f49ea4dfade6", "abf27900-f9de-477d-b41f-11d583c26aa6", "4d006c6d-93f6-4326-81fe-60446dad53eb" ],
+    "selfId" : "28558748-ff19-4ecf-9feb-7dec9173996f",
+    "activeIds" : [ true, true, true, true ]
+  } ],
+  "actions" : [ {
+    "inputId" : "SLOPE",
+    "inputData" : [ ],
+    "outputId" : "TERRAIN",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 30, 90 ],
+    "outputPoints" : [ 21, 75 ],
+    "name" : "Paint by slope",
+    "description" : "Default filter: block all blocks that are steeper than this angle",
+    "uid" : "4d006c6d-93f6-4326-81fe-60446dad53eb"
+  }, {
+    "inputId" : "WATER_DEPTH",
+    "inputData" : [ ],
+    "outputId" : "BINARY_LAYER",
+    "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0, 1 ],
+    "outputPoints" : [ 0, 1 ],
+    "name" : "mask water",
+    "description" : "description of the action",
+    "uid" : "ccdb9830-a63a-4b35-a6fb-e55ed4baef15"
+  }, {
+    "inputId" : "DISTANCE_TO_EDGE",
+    "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", 30 ],
+    "outputId" : "BINARY_LAYER",
+    "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false ],
+    "actionType" : "SET",
+    "inputPoints" : [ 20, 30 ],
+    "outputPoints" : [ 1, 0 ],
+    "name" : "expand mask",
+    "description" : "Default filter: block all blocks that are above this level",
+    "uid" : "6ce5f861-35be-4dfe-8f92-f49ea4dfade6"
+  }, {
+    "inputId" : "BINARY_LAYER",
+    "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0, 1 ],
+    "outputPoints" : [ 0, 1 ],
+    "name" : "Filter: Only On Mask",
+    "description" : "Default filter: block all blocks that are not cyan annotated.",
+    "uid" : "abf27900-f9de-477d-b41f-11d583c26aa6"
+  } ],
+  "layers" : "rO0ABXVyAChbTG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXI7BDpGR8pvArcCAAB4cAAAAAA="
+}
