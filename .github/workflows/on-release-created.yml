@@ -3,7 +3,7 @@ name: Zip and Upload on Release
 # will rename release to MacroMachine vx.x.x
 on:
   release:
-    types: [created]
+    types: [published]
 
 permissions:
   contents: write
