@@ -3,8 +3,10 @@ name: Zip and Upload on Release
 # will rename release to MacroMachine vx.x.x
 on:
   release:
-    types: [created]
-
+    types: [created, published]
+  push:
+    tags:
+      - 'wp-build-*'
 permissions:
   contents: write
 
