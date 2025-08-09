@@ -1,5 +1,9 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.DistanceToLayerEdgeGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ILayerGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.Tile;
@@ -9,8 +13,10 @@ import org.pepsoft.worldpainter.layers.LayerManager;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
 
+import java.awt.*;
 import java.io.Serializable;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -18,6 +24,7 @@ import java.util.stream.Collectors;
  */
 public class TileFilter implements Serializable {
     private FilterType filterBySelection = FilterType.IGNORE;
+    private FilterType filterByExtent = FilterType.IGNORE;
     private Set<String> layerIds = new HashSet<>();
     private FilterType filterByTerrain = FilterType.IGNORE;
     private Set<Terrain> terrainIds = new HashSet<>();
@@ -28,8 +35,9 @@ public class TileFilter implements Serializable {
     private transient List<Layer> layers;
     // layer Only-On is "one of these must be present". except-on is "none of these must be present"
     private FilterType filterByLayer = FilterType.IGNORE;
+    private Rectangle filterExtent;
 
-    public TileFilter() {
+    public TileFilter(MappingAction action) {
     }
 
     private static passType testHeight(Tile tile, int minHeight, int maxHeight, FilterType filterByHeight) {
@@ -97,6 +105,11 @@ public class TileFilter implements Serializable {
         return this;
     }
 
+    public TileFilter withExtent(Rectangle extent) {
+        this.filterExtent = extent;
+        return this;
+    }
+
     public void setDimension(Dimension dimension) {
         this.dimension = dimension;
         List<Layer> allLayers = new ArrayList(LayerManager.getInstance().getLayers());
@@ -105,13 +118,38 @@ public class TileFilter implements Serializable {
         this.layers = allLayers.stream().filter(layer -> layerIds.contains(layer.getId())).collect(Collectors.toList());
     }
 
+    private passType testExtent(Tile tile, FilterType filterByExtent) {
+        switch (filterByExtent) {
+            case IGNORE: {
+                return passType.SOME_BLOCKS;
+            }
+            case ONLY_ON: {
+                if (!filterExtent.contains(tile.getX(), tile.getY()))
+                    return passType.NO_BLOCKS;
+            }
+            case EXCEPT_ON: {
+                if (filterExtent.contains(tile.getX(), tile.getY()))
+                    return passType.NO_BLOCKS;
+            }
+            default:
+                return passType.SOME_BLOCKS;
+        }
+
+    }
+
     public passType testTile(Tile tile) {
+        passType extent = testExtent(tile, filterByExtent);
+        if (extent == passType.NO_BLOCKS) return passType.NO_BLOCKS;
+
         passType selection = testSelection(tile, filterBySelection);
         if (selection == passType.NO_BLOCKS) return passType.NO_BLOCKS;
+
         passType layers = testLayers(tile, layerIds, filterByLayer);
         if (layers == passType.NO_BLOCKS) return passType.NO_BLOCKS;
+
         passType terrains = testTerrains(tile, terrainIds, filterByTerrain);
         if (terrains == passType.NO_BLOCKS) return passType.NO_BLOCKS;
+
         passType height = testHeight(tile, minHeight, maxHeight, filterByHeight);
         if (height == passType.NO_BLOCKS) return passType.NO_BLOCKS;
 

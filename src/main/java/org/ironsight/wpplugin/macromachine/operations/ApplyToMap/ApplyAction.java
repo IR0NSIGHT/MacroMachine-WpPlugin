@@ -1,10 +1,14 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
+import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
@@ -121,12 +125,22 @@ public class ApplyAction {
             ui.beforeEachAction(action, dim);
             if (ui.isActionAbort())
                 break;
-            TileFilter earlyAbortFilter = new TileFilter();
-            ExecutionStatistic statistic = applyToDimensionWithFilter(dim,earlyAbortFilter,action,ui);
-            statistics.add(statistic);
-            ui.afterEachAction(statistic);
-            if (ui.isUpdateMapAfterEachAction() && dim.isEventsInhibited()) {
-                dim.setEventsInhibited(false);
+            TileFilter earlyAbortFilter = new TileFilter(action);
+            ExecutionStatistic statistic = null;
+            try {
+                statistic = applyToDimensionWithFilter(dim,earlyAbortFilter,action,ui);
+            } catch (Exception ex) {
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                ex.printStackTrace(pw);
+                GlobalActionPanel.ErrorPopUp(sw.toString());
+                break;
+            } finally {
+                statistics.add(statistic);
+                ui.afterEachAction(statistic);
+                if (ui.isUpdateMapAfterEachAction() && dim.isEventsInhibited()) {
+                    dim.setEventsInhibited(false);
+                }
             }
         }
         ui.afterEverything();
