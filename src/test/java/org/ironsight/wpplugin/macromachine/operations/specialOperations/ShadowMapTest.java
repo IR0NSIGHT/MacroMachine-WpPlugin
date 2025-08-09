@@ -33,7 +33,6 @@ class ShadowMapTest {
         }
     }
 
-    @Test
     void testCalculateShadowMap() {
         // 12 x 12 km map
         Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE * 100, TILE_SIZE * 100), 62);

@@ -71,7 +71,7 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     @Override
     public int getMaxValue() {
-        return biomes.length;
+        return biomes.length-1;
     }
 
     @Override
