@@ -12,10 +12,13 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     public int getValueAt(Dimension dim, int x, int y) {
         if (!dim.getExtent().contains(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
             return getMinValue();
-        int value = Math.min(100, Math.max(0, Math.round(dim.getWaterLevelAt(x, y) - dim.getHeightAt(x, y))));
+        int value = Math.min(getMaxValue(), Math.max(0, getWaterDepthRaw(dim,x,y)));
         return value;
     }
 
+    private int getWaterDepthRaw(Dimension dim, int x, int y) {
+        return Math.round(dim.getWaterLevelAt(x, y) - dim.getHeightAt(x, y));
+    }
     @Override
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());
@@ -26,7 +29,10 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     }
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
-        dim.setHeightAt(x, y, Math.round(dim.getHeightAt(x, y) - value));
+        int targetDepth = value;
+        int currentDepth = getWaterDepthRaw(dim,x,y);
+        int diff = currentDepth - targetDepth;
+        dim.setHeightAt(x, y, Math.round(dim.getHeightAt(x, y) + diff));
     }
 
     @Override
