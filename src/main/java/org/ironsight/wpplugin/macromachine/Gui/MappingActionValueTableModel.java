@@ -72,7 +72,7 @@ class MappingActionValueTableModel implements TableModel {
     }
 
     public void insertMappingPointNear(int rowIndex) {
-        for (int i = rowIndex; rowIndex < inputs.length; i++) {
+        for (int i = rowIndex; i < inputs.length; i++) {
             int mappingPointIndex = rowToMappingPointIdx[i];
             if (mappingPointIndex != -1)
                 continue; // already a mapping point, attempt next one
@@ -102,7 +102,6 @@ class MappingActionValueTableModel implements TableModel {
         for (TableModelListener l : listeners) {
             try {
                 l.tableChanged(event);
-
             } catch (ArrayIndexOutOfBoundsException ignored) {
                 ; //idk java swing sometimes doesnt like row converstion index to view. dont care
             }
