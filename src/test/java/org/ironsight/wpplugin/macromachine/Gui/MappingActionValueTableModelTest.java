@@ -17,7 +17,7 @@ class MappingActionValueTableModelTest {
     @Test
     void rebuildDataWithAction() {
         MappingActionValueTableModel model = new MappingActionValueTableModel();
-        assertNull(model.getAction());
+        assertNull(model.constructMapping());
         MappingAction action = MappingAction.getNewEmptyAction()
                 .withName("test")
                 .withDescription("test")
@@ -27,7 +27,7 @@ class MappingActionValueTableModelTest {
                 .withInput(new TerrainHeightIO(0, 255))
                 .withOutput(new AnnotationSetter());
         model.rebuildDataWithAction(action);
-        assertEquals(action, model.getAction());
+        assertEquals(action, model.constructMapping());
 
     }
 
@@ -144,7 +144,7 @@ class MappingActionValueTableModelTest {
                 headerChangedCalls[0]++;
             }
             if (e.getType() == TableModelEvent.UPDATE) {
-                updatedAction[0] = model.getAction();
+                updatedAction[0] = model.constructMapping();
                 updateCalls[0]++;
             }
 
@@ -167,19 +167,22 @@ class MappingActionValueTableModelTest {
         assertEquals(3,updateCalls[0],"another update was called");
         assertEquals(new MappingPointValue(3,action.getInput()), model.getValueAt(3,0),"value was inserted but it " +
                 "lives at a different index now");
-        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.getAction(),"the model " +
+        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.constructMapping(),"the model " +
                         "constructed the correct action with the new point.");
+        assertTrue(model.isCellEditable(3,0),"its a mapping point -> editable");
+        assertTrue(model.isCellEditable(3,1),"its a mapping point -> editable");
+
         //set same value again
         model.setValueAt(new MappingPointValue(3,action.getInput()),0,0);
         assertEquals(3,updateCalls[0], "no update should occur when same value is set again");
-        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.getAction());
+        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.constructMapping());
 
         //edit mapping point in output column from (3,18) to (3,9)
         assertTrue(model.isCellEditable(3,1));
         model.setValueAt(new MappingPointValue(9,action.getOutput()),3,1);
         assertEquals(new MappingPointValue(9,action.getOutput()), model.getValueAt(3,1),"value was inserted at index");
         assertEquals(4,updateCalls[0]," one more update");
-        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,9)}),model.getAction());
+        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,9)}),model.constructMapping());
     }
 
     @Test
