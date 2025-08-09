@@ -62,7 +62,7 @@ public class ActionEditor extends LayerMappingPanel {
         model.addTableModelListener(l -> {
             if (l.getType() == TableModelEvent.DELETE)
                 return; //dont update, bc the data is not there yet.
-            this.updateMapping(model.getAction());
+            this.updateMapping(model.constructMapping());
         });
         //set up sync between both components
 

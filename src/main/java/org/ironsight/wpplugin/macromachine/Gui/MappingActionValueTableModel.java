@@ -30,8 +30,10 @@ class MappingActionValueTableModel implements TableModel {
               if (isMappingPoint(rowIdx))
                   mappingPoints.add(new MappingPoint(inputs[rowIdx].numericValue,output[rowIdx].numericValue));
           }
-
+        if (this.action == null)
+            return null;
         MappingAction newAction = action.withNewPoints(mappingPoints.toArray(new MappingPoint[0]));
+          this.action = newAction;
         return newAction;
     }
     public void rebuildDataWithAction(MappingAction action) {
@@ -97,7 +99,7 @@ class MappingActionValueTableModel implements TableModel {
         }
     }
 
-    public MappingAction getAction() {
+    private MappingAction getAction() {
         return this.action;
     }
 
@@ -182,13 +184,17 @@ class MappingActionValueTableModel implements TableModel {
         if (!isCellEditable(rowIndex, columnIndex))
             return;
         assert aValue instanceof MappingPointValue;
-        if (columnIndex == INPUT_COLUMN_IDX)
-            inputs[rowIndex] = (MappingPointValue)aValue;
+        if (columnIndex == INPUT_COLUMN_IDX) { // input changes, mapping point is moved
+            int inputNumeric =((MappingPointValue) aValue).numericValue;
+            int inputTargetRow = inputNumeric - action.getInput().getMinValue();
+            inputs[inputTargetRow] = (MappingPointValue) aValue;
+            // old value at rowIndex remains untouched, but is not a mapping point anymore.
+            isMappingPoint[rowIndex] = false;
+            isMappingPoint[inputTargetRow] = true;
+        }
         else
             output[rowIndex] = (MappingPointValue)aValue;
         fireEvent(new TableModelEvent(this, rowIndex, rowIndex, TableModelEvent.UPDATE));
-
-
     }
 
     @Override
