@@ -5,9 +5,13 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
 public class WaterDepthProvider implements IPositionValueSetter, IPositionValueGetter {
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
+        if (!dim.getExtent().contains(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
+            return getMinValue();
         int value = Math.min(100, Math.max(0, Math.round(dim.getWaterLevelAt(x, y) - dim.getHeightAt(x, y))));
         return value;
     }

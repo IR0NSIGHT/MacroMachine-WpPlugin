@@ -25,7 +25,10 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        return dim.getTerrainAt(x, y).ordinal();
+        Terrain t = dim.getTerrainAt(x, y);
+        if (t == null)
+            return getMinValue();
+        return t.ordinal();
     }
 
     @Override
