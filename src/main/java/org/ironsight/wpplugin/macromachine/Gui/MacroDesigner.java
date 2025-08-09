@@ -6,10 +6,12 @@ import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
+import javax.crypto.Mac;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -227,20 +229,94 @@ public class MacroDesigner extends JPanel {
         boolean active = macro.getActiveActions()[row];
 
         JPopupMenu menu = new JPopupMenu();
-        JButton b = new JButton("enable/disable");
-        b.setText(macro.getActiveActions()[row] ? "disable" : "enable");
-        b.addActionListener(l -> {
-            boolean isTargetRowActive = macro.getActiveActions()[row];
-            boolean[] activeState = macro.getActiveActions();
-            for (int idx : selectedRows) {
-                activeState[idx] = !isTargetRowActive;
-            }
-            Macro m = macro.withUUIDs(macro.getExecutionUUIDs(), activeState);
-            setMacro(m, true);
-            b.setText(!isTargetRowActive ? "disable" : "enable");
-        });
-        menu.add(b);
+
+        {
+            JButton toggleActiveButton = new JButton();
+            toggleActiveButton.setText(macro.getActiveActions()[row] ? "disable" : "enable");
+            toggleActiveButton.setToolTipText("disabled items will be skipped when the macro is executed.");
+            toggleActiveButton.addActionListener(e -> onToggleEnableItem(row, toggleActiveButton));
+            menu.add(toggleActiveButton);
+        }
+
+        {
+            JButton nestToMacroButton = new JButton("nest into macro");
+            nestToMacroButton.setToolTipText("move all selected items into a nested macro.");
+            nestToMacroButton.addActionListener(l -> onMoveToNestedMacro(selectedRows));
+            menu.add(nestToMacroButton);
+        }
+
         return menu;
+    }
+
+    private void onMoveToNestedMacro(int[] selectedRows) {
+        // ask user for macro name
+        String input = JOptionPane.showInputDialog(
+                null,
+                "New macro name:",
+                "Input Needed",
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (input == null) {
+            return;
+        }
+
+        MappingActionContainer actionContainer = MappingActionContainer.getInstance();
+        UUID[] selectedUUIDs =
+                Arrays.stream(selectedRows)
+                        .mapToObj(row -> {
+                            UUID original = macro.getExecutionUUIDs()[row];
+                            if (!actionContainer.queryContains(original))
+                                return original; // its not a mapping and doesnt need cloning.
+                            MappingAction clone =
+                                    actionContainer.addMapping().withValuesFrom(actionContainer.queryById(original));
+                            actionContainer.updateMapping(clone, MacroMachinePlugin::error);
+                            return clone.getUid(); //clone action and return clones UUID
+                        })
+                        .toArray(UUID[]::new);
+
+        Macro nested =  MacroContainer.getInstance().addMapping().withName(input).withUUIDs(selectedUUIDs);
+        MacroContainer.getInstance().updateMapping(nested,MacroMachinePlugin::error);
+
+        ArrayList<UUID> remainingUUIDs = new ArrayList<>();
+        ArrayList<Boolean> activeItems = new ArrayList<>();
+        {
+            remainingUUIDs.addAll(Arrays.asList(macro.getExecutionUUIDs()));
+            for (boolean active: macro.getActiveActions())
+                activeItems.add(active);
+            HashSet<Integer> removedRows = new HashSet<>();
+            for (int row : selectedRows) {
+                removedRows.add(row);
+            }
+
+            // delete rows from the back
+            for (int row = remainingUUIDs.size() - 1; row >= 0; row--) {
+                if (removedRows.contains(row)) {
+                    remainingUUIDs.remove(row);
+                    activeItems.remove(row);
+                }
+            }
+            remainingUUIDs.add(selectedRows[0], nested.getUid());
+            activeItems.add(selectedRows[0], true);
+        }
+
+        boolean[] active = new boolean[activeItems.size()];
+        int i = 0;
+        for (boolean a : activeItems)
+            active[i++] = a;
+        Macro updatedSelf = macro.withUUIDs(remainingUUIDs.toArray(UUID[]::new), active);
+        setMacro(updatedSelf,true);
+    }
+
+    private void onToggleEnableItem(int row, JButton button) {
+        boolean isTargetRowActive = macro.getActiveActions()[row];
+        boolean[] activeState = macro.getActiveActions();
+        for (int idx : selectedRows) {
+            activeState[idx] = !isTargetRowActive;
+        }
+        Macro m = macro.withUUIDs(macro.getExecutionUUIDs(), activeState);
+        setMacro(m, true);
+        button.setText(!isTargetRowActive ? "disable" : "enable");
     }
 
     private void init() {
