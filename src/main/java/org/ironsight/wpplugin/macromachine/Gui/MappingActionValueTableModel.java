@@ -41,7 +41,7 @@ class MappingActionValueTableModel implements TableModel {
             return;
         if (action.equals(this.action))
             return;
-        boolean inputOutputChanged = this.action == null ||
+        boolean headerRowChanged = this.action == null ||
                 !(this.action.input.equals(action.input) && this.action.output.equals(action.getOutput()));
         this.action = action;
         int oldLength = inputs.length;
@@ -51,7 +51,7 @@ class MappingActionValueTableModel implements TableModel {
 
         rebuildData();
 
-        if (inputOutputChanged)
+        if (headerRowChanged)
             fireEvent(new TableModelEvent(this, TableModelEvent.HEADER_ROW));
 
         if (oldLength != 0 && newLength != 0)
@@ -61,6 +61,15 @@ class MappingActionValueTableModel implements TableModel {
     }
 
 
+    public void setIsMappingPoint(int[] rows, boolean isMappingPoint) {
+        if (rows.length == 0)
+            return;
+        for (int row : rows) {
+            this.isMappingPoint[row] = isMappingPoint;
+        }
+        this.rowToMappingPointIdx = reconstructRowToMappingPointIdx(this.isMappingPoint);
+        fireEvent(new TableModelEvent(this, rows[0],rows[rows.length-1], TableModelEvent.UPDATE));
+    }
 
     public void insertMappingPointNear(int rowIndex) {
         for (int i = rowIndex; rowIndex < inputs.length; i++) {
@@ -77,6 +86,7 @@ class MappingActionValueTableModel implements TableModel {
 
     public void deleteMappingPointAt(int[] rowIndex) {
         ArrayList<MappingPoint> mps = new ArrayList<>(Arrays.asList(action.getMappingPoints()));
+
         for (int i = rowIndex.length -1 ; i >= 0 ; i--) {
             int row = rowIndex[i];
             int mappingPointIndex = rowToMappingPointIdx[row];
@@ -103,6 +113,20 @@ class MappingActionValueTableModel implements TableModel {
         return this.action;
     }
 
+    private int[] reconstructRowToMappingPointIdx(boolean[] isMappingPoint) {
+        int [] rowToMappingPointIdx = new int[isMappingPoint.length];
+
+        // construct map inputValue -> mappingPointIndex
+        Arrays.fill(rowToMappingPointIdx, -1);
+        int mpIndex = 0;
+        for (int row = 0; row < isMappingPoint.length; row++) {
+            if (!isMappingPoint[row])
+                continue;
+            rowToMappingPointIdx[row] = mpIndex;
+            mpIndex++;
+        }
+        return rowToMappingPointIdx;
+    }
     private void rebuildData() {
         int rowAmount = IMappingValue.range(action.getInput());
         inputs = new MappingPointValue[rowAmount];
