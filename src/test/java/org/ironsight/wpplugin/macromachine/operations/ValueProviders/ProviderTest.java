@@ -82,6 +82,9 @@ public class ProviderTest {
 
     @Test
     void AllProvidersSetValueOutsideMinMax() {
+        /**
+         *  tests takes every IO type, creates a dimension and the sets + gets every allowed value for that IO type
+         */
         Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE ), 62);
         int testPosX = 100, testPosY = 100;
         assertTrue(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS), " our point is " +
@@ -90,17 +93,22 @@ public class ProviderTest {
             if (type == TEST)
                 continue;
             IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
-            if (ioInstance instanceof IPositionValueSetter) {
-                // output IO sets minimum
-                ((IPositionValueSetter) ioInstance).setValueAt(dim, testPosX, testPosY, ioInstance.getMinValue() );
-                // no exception was thrown.
-                if (ioInstance instanceof IPositionValueGetter) {
-                    // verify the value was actually set correctly
-                    int value = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
-                    assertEquals(ioInstance.getMinValue(), value,
-                            "unknown postion should always return min value" + ioInstance.getName());
+            ioInstance.prepareForDimension(dim);
+            for (int value = ioInstance.getMinValue(); value <= ioInstance.getMaxValue(); value ++) {
+                if (ioInstance instanceof IPositionValueSetter) {
+                    // output IO sets minimum
+                    ((IPositionValueSetter) ioInstance).setValueAt(dim, testPosX, testPosY, value );
+                    // no exception was thrown.
+                    if (ioInstance instanceof IPositionValueGetter) {
+                        // verify the value was actually set correctly
+                        int readValue = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
+                        assertEquals(value, readValue,
+                                "unknown postion should always return min value" + ioInstance.getName());
+                    }
                 }
             }
+
+
         }
     }
     @Test
