@@ -9,6 +9,8 @@ import org.pepsoft.worldpainter.Dimension;
 import java.awt.*;
 import java.util.Objects;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
 public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     @Override
     public String getName() {
@@ -84,7 +86,8 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     private TileContainer shadowMap;
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        assert shadowMap != null;
+        if (shadowMap == null || !shadowMap.existsTile(x >> TILE_SIZE_BITS,y >> TILE_SIZE_BITS))
+            return getMinValue();
         return shadowMap.getValueAt(x,y);
     }
 

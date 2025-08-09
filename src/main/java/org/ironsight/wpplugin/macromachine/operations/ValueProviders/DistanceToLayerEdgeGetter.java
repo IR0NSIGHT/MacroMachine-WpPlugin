@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.Objects;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimitedMapOperation, EditableIO {
     private final int maxDistance;
@@ -105,6 +106,8 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
      */
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
+        if (distanceMap == null || !distanceMap.existsTile(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
+            return getMinValue();
         return Math.min(getMaxValue(), distanceMap.getValueAt(x, y));
     }
 
@@ -164,14 +167,19 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
         tileX = Arrays.copyOf(tileXFiltered, tileArrIdx);
         tileY = Arrays.copyOf(tileYFiltered, tileArrIdx);
 
-        int startX = ArrayUtils.findMin(tileX), endX = ArrayUtils.findMax(tileX);
-        int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
-        Rectangle dimExtent = dimension.getExtent();
-        int expand = (int) Math.ceil(1f * getMaxValue() / TILE_SIZE);
-        Rectangle extent = new Rectangle(Math.max(dimExtent.x, startX - expand),
-                Math.max(dimExtent.y, startY - expand),
-                Math.min(dimExtent.width, endX - startX + 1 + 2 * expand),
-                Math.min(dimExtent.height, endY - startY + 1 + 2 * expand));
+        Rectangle extent;
+        if (tileX.length == 0) {
+            extent = new Rectangle(0,0,0,0);
+        } else {
+            int startX = ArrayUtils.findMin(tileX), endX = ArrayUtils.findMax(tileX);
+            int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
+            Rectangle dimExtent = dimension.getExtent();
+            int expand = (int) Math.ceil(1f * getMaxValue() / TILE_SIZE);
+            extent = new Rectangle(Math.max(dimExtent.x, startX - expand),
+                    Math.max(dimExtent.y, startY - expand),
+                    Math.min(dimExtent.width, endX - startX + 1 + 2 * expand),
+                    Math.min(dimExtent.height, endY - startY + 1 + 2 * expand));
+        }
         this.distanceMap = ShadowMap.expandBinaryMask(new BinaryLayerIO(layer, false),
                 dimension, extent);
     }

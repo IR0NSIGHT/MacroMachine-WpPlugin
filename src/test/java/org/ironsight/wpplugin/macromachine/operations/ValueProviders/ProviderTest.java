@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
@@ -11,8 +12,13 @@ import org.pepsoft.worldpainter.layers.PineForest;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
 
+import java.awt.*;
+
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
+import static org.ironsight.wpplugin.macromachine.operations.TestData.createDimension;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ProviderTest {
 
@@ -52,6 +58,24 @@ public class ProviderTest {
         assertNotEquals(new TerrainHeightIO(3,12),new TerrainHeightIO(27,99));
     }
 
+    @Test
+    void AllProvidersOutOfRangeTest() {
+        Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE ), 62);
+        int testPosX = 1000, testPosY = 1000;
+        assertFalse(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS), " our point is " +
+                "outside the dimension");
+        for (ProviderType type: ProviderType.values()) {
+            if (type == TEST)
+                continue;
+            IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
+            if (ioInstance instanceof IPositionValueGetter) {
+                // input
+                int value = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
+                // no exception was thrown.
+                assertEquals(ioInstance.getMinValue(), value, "unknown postion should always return min value");
+            }
+        }
+    }
     @Test
     void WaterLevelProviderGetSetValue() {
         WaterHeightAbsoluteIO h = new WaterHeightAbsoluteIO(-64,319);

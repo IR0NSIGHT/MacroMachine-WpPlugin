@@ -54,6 +54,8 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
+        if (tileContainer == null)
+            return getMinValue();
         return tileContainer.getValueAt(x, y);
     }
 

@@ -35,7 +35,8 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
             tileY = y >> TILE_SIZE_BITS;
             tile = dim.getTile(tileX, tileY);
         }
-        assert tile != null;
+        if (tile == null)
+            return getMinValue();
         return (int)EditableIO.clamp(Math.round( tile.getHeight(x & 127, y & 127)),getMinValue(),getMaxValue());
     }
 
