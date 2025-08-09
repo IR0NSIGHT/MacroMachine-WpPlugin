@@ -60,19 +60,46 @@ public class ProviderTest {
 
     @Test
     void AllProvidersOutOfRangeTest() {
+
+        for (ProviderType type: ProviderType.values()) {
+            Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE ), 62);
+            int testPosX = 1000, testPosY = 1000;
+            assertFalse(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS), " our point is " +
+                    "outside the dimension");
+            if (type == TEST)
+                continue;
+            IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
+            ioInstance.prepareForDimension(dim);
+            if (ioInstance instanceof IPositionValueGetter) {
+                // input
+                int value = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
+                // no exception was thrown.
+                assertEquals(ioInstance.getMinValue(), value,
+                        "unknown postion should always return min value " + ioInstance.getName());
+            }
+        }
+    }
+
+    @Test
+    void AllProvidersSetValueOutsideMinMax() {
         Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE ), 62);
-        int testPosX = 1000, testPosY = 1000;
-        assertFalse(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS), " our point is " +
+        int testPosX = 100, testPosY = 100;
+        assertTrue(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS), " our point is " +
                 "outside the dimension");
         for (ProviderType type: ProviderType.values()) {
             if (type == TEST)
                 continue;
             IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
-            if (ioInstance instanceof IPositionValueGetter) {
-                // input
-                int value = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
+            if (ioInstance instanceof IPositionValueSetter) {
+                // output IO sets minimum
+                ((IPositionValueSetter) ioInstance).setValueAt(dim, testPosX, testPosY, ioInstance.getMinValue() );
                 // no exception was thrown.
-                assertEquals(ioInstance.getMinValue(), value, "unknown postion should always return min value");
+                if (ioInstance instanceof IPositionValueGetter) {
+                    // verify the value was actually set correctly
+                    int value = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
+                    assertEquals(ioInstance.getMinValue(), value,
+                            "unknown postion should always return min value" + ioInstance.getName());
+                }
             }
         }
     }
