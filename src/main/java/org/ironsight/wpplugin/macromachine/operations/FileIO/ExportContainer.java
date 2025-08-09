@@ -26,9 +26,9 @@ public class ExportContainer implements Serializable {
         @Override
         public Layer[] deserialize(JsonParser p, DeserializationContext ctxt) {
             try {
-                byte[] data = Base64.getDecoder().decode(p.getText());
-                ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(data));
-                return (Layer[]) ois.readObject();
+                try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(p.getBinaryValue()))) {
+                    return (Layer[]) ois.readObject();
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Failed to deserialize Layer[]", e);
             }

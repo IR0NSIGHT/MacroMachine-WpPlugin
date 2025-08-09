@@ -268,7 +268,7 @@ public class MacroTreePanel extends JPanel {
         TreePath lastSelected = tree.getSelectionPath();
 
         int idx = lastSelected == null ? -1 : matchingPaths.indexOf(lastSelected);
-        int nextIdx = (idx + 1) % matchingPaths.size();
+        int nextIdx = (idx + 1) % Math.max(1,matchingPaths.size());
         TreePath nextSelected = matchingPaths.get(nextIdx);
         tree.setSelectionPath(nextSelected);
         tree.scrollPathToVisible(nextSelected);
