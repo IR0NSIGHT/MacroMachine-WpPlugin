@@ -11,8 +11,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class UserApplyActionCallback implements ApplyActionCallback {
-    int actionIdx = 0;
     private final boolean isDebug;
+    int actionIdx = 0;
     private DebugUserInterface debugUI;
     private List<MappingAction> steps;
 
@@ -23,8 +23,8 @@ public class UserApplyActionCallback implements ApplyActionCallback {
 
     @Override
     public void setProgressOfAction(int percent) {
-       String update = String.format("%d/%d - %d%%",this.actionIdx,steps.size(), percent);
-       System.out.println(update);
+        String update = String.format("%d/%d - %d%%", this.actionIdx, steps.size(), percent);
+        System.out.println(update);
     }
 
     @Override
@@ -61,8 +61,10 @@ public class UserApplyActionCallback implements ApplyActionCallback {
 
     @Override
     public void afterEachAction(ExecutionStatistic statistic) {
-        System.out.println("AFTER EACH ACTION : " + statistic.toString());
-        GlobalActionPanel.logMessage(statistic.toString());
+        if (statistic != null) {
+            System.out.println("AFTER EACH ACTION : " + statistic.toString());
+            GlobalActionPanel.logMessage(statistic.toString());
+        }
         this.actionIdx++;
     }
 

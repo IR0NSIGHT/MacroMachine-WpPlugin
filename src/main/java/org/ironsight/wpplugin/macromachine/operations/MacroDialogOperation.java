@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
@@ -129,6 +130,8 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
             statistics = ApplyAction.applyExecutionSteps(getDimension(), executionSteps, callback );
             ActionFilterIO.instance.releaseAfterApplication();
         } catch (Exception ex) {
+            System.out.println(ex);
+            MacroMachinePlugin.error(ex.getMessage());
             return statistics;
         } finally {
             if (getDimension().isEventsInhibited()) {
