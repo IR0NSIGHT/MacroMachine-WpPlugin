@@ -201,9 +201,29 @@ class MappingActionValueTableModel implements TableModel {
         return null;
     }
 
+    public void setValuesAt(Object aValue, int rowIndices[], int columnIndex) {
+        if (rowIndices.length == 0)
+            return;
+        for (int rowIndex : rowIndices) {
+            if (!isCellEditable(rowIndex, columnIndex))
+                continue;
+            assert aValue instanceof MappingPointValue;
+            if (columnIndex == INPUT_COLUMN_IDX) { // input changes, mapping point is moved
+                int inputNumeric =((MappingPointValue) aValue).numericValue;
+                int inputTargetRow = inputNumeric - action.getInput().getMinValue();
+                inputs[inputTargetRow] = (MappingPointValue) aValue;
+                // old value at rowIndex remains untouched, but is not a mapping point anymore.
+                isMappingPoint[rowIndex] = false;
+                isMappingPoint[inputTargetRow] = true;
+            }
+            else
+                output[rowIndex] = (MappingPointValue)aValue;
+        }
+        fireEvent(new TableModelEvent(this, rowIndices[0], rowIndices[rowIndices.length-1], TableModelEvent.UPDATE));
+    }
+
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-        System.out.println("TRY SET VALUE AT " + rowIndex + " TO " + aValue);
         if (!isCellEditable(rowIndex, columnIndex))
             return;
         assert aValue instanceof MappingPointValue;
