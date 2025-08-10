@@ -187,6 +187,8 @@ public class TileContainer {
      * @param value
      */
     public void setValueAt(int x, int y, int value) {
+        if (!existsTile(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
+            return;
         getTileAt(x, y).setValueAt(x + offsetX, y + offsetY, value);
     }
 
@@ -196,6 +198,8 @@ public class TileContainer {
      * @return
      */
     public int getValueAt(int x, int y) {
+        if (!existsTile(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
+            return Integer.MAX_VALUE;
         return getTileAt(x, y).getValueAt(x + offsetX, y + offsetY);
     }
 }

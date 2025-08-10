@@ -6,6 +6,8 @@ import org.pepsoft.worldpainter.Dimension;
 import java.awt.*;
 import java.util.Objects;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
 public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionValueSetter, EditableIO  {
     private final int min, max;
     public WaterHeightAbsoluteIO(int min, int max) {
@@ -14,6 +16,8 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
     }
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
+        if (!dim.getExtent().contains(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
+            return getMinValue();
         return dim.getWaterLevelAt(x, y);
     }
     @Override

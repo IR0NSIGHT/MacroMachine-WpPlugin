@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
@@ -11,8 +12,15 @@ import org.pepsoft.worldpainter.layers.PineForest;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
 
+import java.awt.*;
+import java.util.Arrays;
+import java.util.HashSet;
+
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
+import static org.ironsight.wpplugin.macromachine.operations.TestData.createDimension;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ProviderTest {
 
@@ -52,6 +60,59 @@ public class ProviderTest {
         assertNotEquals(new TerrainHeightIO(3,12),new TerrainHeightIO(27,99));
     }
 
+    @Test
+    void AllProvidersOutOfRangeTest() {
+
+        for (ProviderType type: ProviderType.values()) {
+            Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE ), 62);
+            int testPosX = 1000, testPosY = 1000;
+            assertFalse(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS), " our point is " +
+                    "outside the dimension");
+            if (type == TEST)
+                continue;
+            IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
+            ioInstance.prepareForDimension(dim);
+            if (ioInstance instanceof IPositionValueGetter) {
+                // input
+                int value = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
+                // no exception was thrown.
+                assertEquals(ioInstance.getMinValue(), value,
+                        "unknown postion should always return min value " + ioInstance.getName());
+            }
+        }
+    }
+
+    @Test
+    void AllProvidersSetValueOutsideMinMax() {
+        /**
+         *  tests takes every IO type, creates a dimension and the sets + gets every allowed value for that IO type
+         */
+        Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE ), 62);
+        int testPosX = 100, testPosY = 100;
+        assertTrue(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS), " our point is " +
+                "outside the dimension");
+        for (ProviderType type: ProviderType.values()) {
+            if (type == TEST)
+                continue;
+            IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
+            ioInstance.prepareForDimension(dim);
+            for (int value = ioInstance.getMinValue(); value <= ioInstance.getMaxValue(); value ++) {
+                if (ioInstance instanceof IPositionValueSetter) {
+                    // output IO sets minimum
+                    ((IPositionValueSetter) ioInstance).setValueAt(dim, testPosX, testPosY, value );
+                    // no exception was thrown.
+                    if (ioInstance instanceof IPositionValueGetter) {
+                        // verify the value was actually set correctly
+                        int readValue = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
+                        assertEquals(value, readValue,
+                                "unknown postion should always return min value" + ioInstance.getName());
+                    }
+                }
+            }
+
+
+        }
+    }
     @Test
     void WaterLevelProviderGetSetValue() {
         WaterHeightAbsoluteIO h = new WaterHeightAbsoluteIO(-64,319);
@@ -420,5 +481,23 @@ public class ProviderTest {
         assertEquals(Minecraft1_21Biomes.BIOME_BADLANDS, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
         io.setValueAt(dim, 19,20, Minecraft1_21Biomes.BIOME_BIRCH_FOREST);
         assertEquals(Minecraft1_21Biomes.BIOME_BIRCH_FOREST, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
+    }
+
+    @Test
+    void TestVoronoiIO() {
+
+        IPositionValueGetter input = new VoronoiIO(10,100,123456,1,100);
+        HashSet<Integer> seenValue = new HashSet<>();
+        for (int x = 100; x < 1300; x++) {
+            for (int y = -300; y <  2700; y++) {
+                int value = input.getValueAt(null,x,y);
+                seenValue.add(value);
+                //System.out.printf("%d ",value);
+            }
+            //System.out.println();
+        }
+        Integer[] seen = seenValue.toArray(Integer[]::new);
+        Arrays.sort(seen);
+        System.out.println(Arrays.toString(seen));
     }
 }

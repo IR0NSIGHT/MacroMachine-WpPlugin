@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import com.sun.source.tree.Tree;
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointButtonPanel;
@@ -269,11 +268,34 @@ public class MacroTreePanel extends JPanel {
         TreePath lastSelected = tree.getSelectionPath();
 
         int idx = lastSelected == null ? -1 : matchingPaths.indexOf(lastSelected);
-        int nextIdx = (idx + 1) % matchingPaths.size();
+        int nextIdx = (idx + 1) % Math.max(1,matchingPaths.size());
         TreePath nextSelected = matchingPaths.get(nextIdx);
         tree.setSelectionPath(nextSelected);
         tree.scrollPathToVisible(nextSelected);
         tree.expandPath(nextSelected);
+    }
+
+    private void onDeleteItem(ActionEvent e) {
+        blockUpdates = true;
+        HashSet<UUID> deletedUUIDS = new HashSet<>(getSelectedUUIDs(true, true));
+        ArrayList<Macro> updatedMacros = new ArrayList<>();
+        //remove Mapping Actions from all macros
+        for (Macro m : container.queryAll()) {
+            if (deletedUUIDS.contains(m.getUid()))
+                continue;
+            Macro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs)
+                    .filter(a -> !deletedUUIDS.contains(a))
+                    .toArray(UUID[]::new));
+            updatedMacros.add(updated);
+        }
+
+        container.updateMapping(MacroMachinePlugin::error, updatedMacros.toArray(new Macro[0]));
+
+        // Delete action / Macro in containers
+        container.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
+        mappingContainer.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
+        blockUpdates = false;
+        update();
     }
 
     private void init() {
@@ -372,31 +394,6 @@ public class MacroTreePanel extends JPanel {
         addButton.addActionListener(e -> this.onAddMacroPressed(false));
 
 
-        JButton removeButton = new JButton("Delete");
-        removeButton.setToolTipText("Delete all selected macros permanently");
-        removeButton.addActionListener(e -> {
-            blockUpdates = true;
-            HashSet<UUID> deletedUUIDS = new HashSet<>(getSelectedUUIDs(true, true));
-            ArrayList<Macro> updatedMacros = new ArrayList<>();
-            //remove Mapping Actions from all macros
-            for (Macro m : container.queryAll()) {
-                if (deletedUUIDS.contains(m.getUid()))
-                    continue;
-                Macro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs)
-                        .filter(a -> !deletedUUIDS.contains(a))
-                        .toArray(UUID[]::new));
-                updatedMacros.add(updated);
-            }
-
-            container.updateMapping(MacroMachinePlugin::error, updatedMacros.toArray(new Macro[0]));
-
-            // Delete action / Macro in containers
-            container.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
-            mappingContainer.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
-            blockUpdates = false;
-            update();
-        });
-
         JButton helpButton = getHelpButton("Global Tree View",
                 "This view shows your global list of macros and actions. You can" + " " +
                         "expand the macros, actions and their values.\n" +
@@ -408,29 +405,34 @@ public class MacroTreePanel extends JPanel {
                         " to " + "apply a macro as a global operation to " + "your map.");
 
         scrollPane.setPreferredSize(new Dimension(500, 600));
+        {   // right click button list
+            JButton deleteButton = new JButton("Delete");
+            deleteButton.setToolTipText("Delete all selected macros permanently");
+            deleteButton.addActionListener(this::onDeleteItem);
 
-        JButton exportMacroButton = new JButton("Export");
-        exportMacroButton.addActionListener(f -> onExportMacroPressed());
+            JButton exportMacroButton = new JButton("Export");
+            exportMacroButton.addActionListener(f -> onExportMacroPressed());
 
-        JButton importMacroButton = new JButton("Import");
-        importMacroButton.addActionListener(f -> onImportMacroPressed());
+            JButton createNewFromButton = new JButton("Add to new macro");
+            createNewFromButton.setToolTipText("Add all selected items to a new macro");
+            createNewFromButton.addActionListener(e -> onAddMacroPressed(true));
 
-        JButton createNewFromButton = new JButton("Add to new macro");
-        createNewFromButton.addActionListener(e -> onAddMacroPressed(true));
-
-        JButton[] buttonArr = new JButton[]{
-                removeButton,
-                exportMacroButton,
-                createNewFromButton
-        };
-        for (JButton b : buttonArr) {
-            b.setMaximumSize(new Dimension(Integer.MAX_VALUE, b.getPreferredSize().height));
-            buttons.add(b);
+            JButton[] buttonArr = new JButton[]{
+                    deleteButton,
+                    exportMacroButton,
+                    createNewFromButton
+            };
+            for (JButton b : buttonArr) {
+                b.setMaximumSize(new Dimension(Integer.MAX_VALUE, b.getPreferredSize().height));
+                buttons.add(b);
+            }
+            popupMenu.add(buttons);
         }
 
         debuggerUI = new BreakpointButtonPanel(this::onApply, this::getTreeStepper);
 
-        popupMenu.add(buttons);
+        JButton importMacroButton = new JButton("Import");
+        importMacroButton.addActionListener(f -> onImportMacroPressed());
 
         JPanel bottomButtons = new JPanel(new FlowLayout());
         bottomButtons.add(importMacroButton);

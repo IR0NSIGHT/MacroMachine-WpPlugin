@@ -10,6 +10,7 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 import java.util.EventObject;
 import java.util.List;
 
@@ -19,11 +20,17 @@ import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 public class MappingTextTable extends JPanel {
     private final MappingActionValueTableModel tableModel;
     private final JTable numberTable;
+    JScrollPane scrollPane;
     private boolean isFilterForMappingPoints = true;
     private JCheckBox groupValuesCheckBox;
     private TableRowSorter<MappingActionValueTableModel> sorter;
-    private int[] selectedRow = new int[0];
+    private int[] selectedViewRows = new int[0];
     private BlockingSelectionModel blockingSelectionModel;
+    private int[] getSelectedModelRows() {
+        int[] selectedModelRows =
+                Arrays.stream(numberTable.getSelectedRows()).map(viewRow ->  numberTable.convertRowIndexToModel(viewRow)).toArray();
+        return selectedModelRows;
+    }
     public MappingTextTable(MappingActionValueTableModel model, BlockingSelectionModel selectionModel) {
         this.blockingSelectionModel = selectionModel;
         numberTable = new JTable() {
@@ -31,7 +38,7 @@ public class MappingTextTable extends JPanel {
             public boolean editCellAt(int row, int column, EventObject e) {
                 // first click -> select
                 if (!numberTable.isCellSelected(row, column)) {
-                    SwingUtilities.invokeLater(()->numberTable.addRowSelectionInterval(row, row));
+                    SwingUtilities.invokeLater(() -> numberTable.addRowSelectionInterval(row, row));
                     return false;
                 }
                 return super.editCellAt(row, column, e);
@@ -53,9 +60,8 @@ public class MappingTextTable extends JPanel {
                 TableCellEditor editor = getCellEditor();
                 if (editor != null) {
                     Object value = editor.getCellEditorValue();
-                    for (int row : numberTable.getSelectedRows())
-                        setValueAt(value, row, editingColumn);
 
+                    model.setValuesAt(value, getSelectedModelRows(), editingColumn);
                     removeEditor();
                 }
             }
@@ -133,14 +139,14 @@ public class MappingTextTable extends JPanel {
 
 // Save selected row table
         numberTable.getSelectionModel().addListSelectionListener(e -> {
-            selectedRow = numberTable.getSelectedRows();
+            selectedViewRows = numberTable.getSelectedRows();
         });
 
 // Restore selected raw table after a value was changed in the table
         model.addTableModelListener(e -> SwingUtilities.invokeLater(() -> {
             System.out.println("RESTORE TABLE SELECTION OF MODEL CHANGED");
             try {
-                for (int selectedRow: selectedRow) {
+                for (int selectedRow : selectedViewRows) {
                     numberTable.addRowSelectionInterval(selectedRow, selectedRow);
                 }
             } catch (IllegalArgumentException ignored) {
@@ -153,74 +159,21 @@ public class MappingTextTable extends JPanel {
         numberTable.addMouseMotionListener(windowHanlde);
         scrollPane.addMouseWheelListener(windowHanlde);
     }
-    private class ValuePreviewWindow extends MouseAdapter {
-        JWindow previewWindow;
-        JLabel previewLabel;
-        public ValuePreviewWindow() {
-            previewWindow = new JWindow();
-            previewLabel = new JLabel();
-            previewLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-            previewWindow.add(previewLabel);
-            previewWindow.setSize(200,200); // Size of enlarged image
-        }
 
-        void setMouseOver(Point p) {
-            int row = numberTable.rowAtPoint(p);
-            int col = numberTable.columnAtPoint(p);
-            if (this.row == row && this.col == col)
-                return;
-
-            this.row = row;
-            this.col = col;
-            if (row >= 0 && (col == 1 ||col == 0)) {
-                Object cell = numberTable.getValueAt(row,col);
-                if (!(cell instanceof  MappingPointValue))
-                    return;
-
-                // Scale the image (larger)
-                BufferedImage scaledImage = new BufferedImage(100,100,TYPE_INT_RGB);
-                MappingPointValue mpv = (MappingPointValue)cell;
-                mpv.mappingValue.paint(scaledImage.getGraphics(), mpv.numericValue, new Dimension(scaledImage.getWidth(),
-                        scaledImage.getHeight()));
-
-                previewLabel.setIcon(new ImageIcon(scaledImage.getScaledInstance(previewWindow.getWidth(),
-                        previewWindow.getHeight(),
-                        SCALE_FAST)));
-
-                // Position the window near the mouse
-                Point locationOnScreen = numberTable.getLocationOnScreen();
-                previewWindow.setLocation(locationOnScreen.x + (int)p.getX() + 15,
-                        locationOnScreen.y + (int)p.getY() + 15);
-                previewWindow.setVisible(true);
-            }
-        }
-
-        @Override
-        public void mouseWheelMoved(MouseWheelEvent e) {
-            Point tablePoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), numberTable);
-            setMouseOver(tablePoint);
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-            row = -1; col = -1;
-            previewWindow.setVisible(true);
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-            row = -1; col = -1;
-            previewWindow.setVisible(false);
-        }
-
-        private int row, col;
-
-        @Override
-        public void mouseMoved(MouseEvent e) {
-            setMouseOver(e.getPoint());
+    private void onAddControlPoint(ActionEvent actionEvent) {
+        if (getSelectedModelRows() != null && getSelectedModelRows().length != 0) {
+            tableModel.setIsMappingPoint(getSelectedModelRows(), true);
+        } else {
+            tableModel.insertMappingPointNear(0);
         }
     }
-    JScrollPane scrollPane;
+
+    private void onRemoveControlPoint(ActionEvent actionEvent) {
+        if (numberTable.getSelectedRow() != -1) {
+            tableModel.deleteMappingPointAt(getSelectedModelRows());
+        }
+    }
+
     protected void initComponents() {
         isFilterForMappingPoints = true;
 
@@ -255,36 +208,90 @@ public class MappingTextTable extends JPanel {
 
         {
             JButton addMappingPointButton = new JButton("add control point");
-            addMappingPointButton.addActionListener(l -> {
-
-                if (numberTable.getSelectedRows() != null && numberTable.getSelectedRows().length != 0)
-                    for (int row : numberTable.getSelectedRows()) {
-                        tableModel.insertMappingPointNear(numberTable.convertRowIndexToModel(row));
-                    }
-                else {
-                    tableModel.insertMappingPointNear(0);
-                }
-            });
+            addMappingPointButton.addActionListener(this::onAddControlPoint);
             buttons.add(addMappingPointButton);
         }
         {
             JButton button = new JButton("remove control point");
-            button.addActionListener(l -> {
-                if (numberTable.getSelectedRow() != -1) {
-                    int[] selectedRows = numberTable.getSelectedRows();
-                    for (int i = 0; i < selectedRows.length; i++) {
-                        selectedRows[i] = numberTable.convertRowIndexToModel(selectedRows[i]);
-                    }
-                    tableModel.deleteMappingPointAt(selectedRows);
-                }
-
-            });
+            button.addActionListener(this::onRemoveControlPoint);
             buttons.add(button);
         }
 
         this.add(buttons, BorderLayout.SOUTH);
 
 
+    }
+
+    private class ValuePreviewWindow extends MouseAdapter {
+        JWindow previewWindow;
+        JLabel previewLabel;
+        private int row, col;
+
+        public ValuePreviewWindow() {
+            previewWindow = new JWindow();
+            previewLabel = new JLabel();
+            previewLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+            previewWindow.add(previewLabel);
+            previewWindow.setSize(200, 200); // Size of enlarged image
+        }
+
+        void setMouseOver(Point p) {
+            int row = numberTable.rowAtPoint(p);
+            int col = numberTable.columnAtPoint(p);
+            if (this.row == row && this.col == col)
+                return;
+
+            this.row = row;
+            this.col = col;
+            if (row >= 0 && (col == 1 || col == 0)) {
+                Object cell = numberTable.getValueAt(row, col);
+                if (!(cell instanceof MappingPointValue))
+                    return;
+
+                // Scale the image (larger)
+                BufferedImage scaledImage = new BufferedImage(100, 100, TYPE_INT_RGB);
+                MappingPointValue mpv = (MappingPointValue) cell;
+                mpv.mappingValue.paint(scaledImage.getGraphics(),
+                        mpv.numericValue,
+                        new Dimension(scaledImage.getWidth(),
+                                scaledImage.getHeight()));
+
+                previewLabel.setIcon(new ImageIcon(scaledImage.getScaledInstance(previewWindow.getWidth(),
+                        previewWindow.getHeight(),
+                        SCALE_FAST)));
+
+                // Position the window near the mouse
+                Point locationOnScreen = numberTable.getLocationOnScreen();
+                previewWindow.setLocation(locationOnScreen.x + (int) p.getX() + 15,
+                        locationOnScreen.y + (int) p.getY() + 15);
+                previewWindow.setVisible(true);
+            }
+        }
+
+        @Override
+        public void mouseWheelMoved(MouseWheelEvent e) {
+            Point tablePoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), numberTable);
+            setMouseOver(tablePoint);
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+            row = -1;
+            col = -1;
+            previewWindow.setVisible(true);
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+            row = -1;
+            col = -1;
+            previewWindow.setVisible(false);
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+            setMouseOver(e.getPoint());
+        }
     }
 }
 

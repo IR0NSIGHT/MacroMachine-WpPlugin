@@ -17,6 +17,10 @@ class TileContainerTest {
 
         container.setValueAt(19,45,-3);
         assertEquals(-3, container.getValueAt(19,45));
+
+        // attempt to set a value outside the extent
+        container.setValueAt(10000000,10000000,42069);
+        assertEquals(Integer.MAX_VALUE, container.getValueAt(10000000,10000000));
     }
 
     @Test

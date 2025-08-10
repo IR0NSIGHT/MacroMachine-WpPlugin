@@ -7,6 +7,8 @@ import org.pepsoft.worldpainter.layers.Biome;
 
 import java.awt.*;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
 public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValueSetter {
     String[] biomes;
 
@@ -47,6 +49,8 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
+        if (!dim.getExtent().contains(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
+            return getMinValue();
         return dim.getLayerValueAt(Biome.INSTANCE, x, y);
     }
 
@@ -67,7 +71,7 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     @Override
     public int getMaxValue() {
-        return biomes.length;
+        return biomes.length-1;
     }
 
     @Override

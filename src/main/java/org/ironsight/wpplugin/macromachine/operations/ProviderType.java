@@ -26,7 +26,8 @@ public enum ProviderType {
     ALWAYS,
     DISTANCE_TO_EDGE,
     PERLIN_NOISE,
-    SHADOW
+    SHADOW,
+    VORONOI_NOISE
     ;
 
     public static IMappingValue fromType(Object[] data, ProviderType type) {
@@ -77,6 +78,8 @@ public enum ProviderType {
                 return new PerlinNoiseIO(1,1, 42069,5);
             case SHADOW:
                 return new ShadowMapIO();
+            case VORONOI_NOISE:
+                return new VoronoiIO(0,100,987654321,5,100);
             default:
                 throw new IllegalArgumentException(
                         "not implemented: can not instantiate providers that need extra " + "information");
