@@ -53,7 +53,13 @@ public class CustomLayerControllerWrapper {
             // Create an instance of the App class
 
            // Class<?> appClass = Class.forName("org.pepsoft.worldpainter.App");
-            Object appInstance = App.getInstanceIfExists();
+            Class<?> appClass = Class.forName("org.pepsoft.worldpainter.App");
+
+            // Find the method (no parameters)
+            java.lang.reflect.Method method = appClass.getMethod("getInstanceIfExists");
+
+            // Call it as a static method (null for the instance)
+            Object appInstance = method.invoke(null);
 
             // Get the declared field from the App class
             Field customLayerControllerField = appInstance.getClass().getDeclaredField("customLayerController");

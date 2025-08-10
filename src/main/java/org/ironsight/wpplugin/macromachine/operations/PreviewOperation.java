@@ -1,15 +1,13 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.operations.AbstractPaintOperation;
-import org.pepsoft.worldpainter.operations.BrushOperation;
-import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
-import org.pepsoft.worldpainter.operations.RadiusOperation;
+import org.pepsoft.worldpainter.operations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +19,7 @@ import java.util.Set;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class PreviewOperation extends RadiusOperation {
+public class PreviewOperation extends AbstractBrushOperation {
 
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It is not visible to the user. It can
@@ -44,20 +42,7 @@ public class PreviewOperation extends RadiusOperation {
     private ArrayList<Tile> tilesInExtent = new ArrayList<>();
     private Platform platform;
     public PreviewOperation() {
-        super(NAME, DESCRIPTION, new MyShittyView(), ID); // ONE SHOT OP
-    }
-
-    private static WorldPainterView getWpView() {
-        App app = App.getInstanceIfExists();
-        if (app == null) return null;
-        try {
-            Field field = App.class.getDeclaredField("view");
-            field.setAccessible(true);
-            return (WorldPainterView) field.get(app);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
-            return null;
-        }
+        super(NAME, DESCRIPTION, ID);
     }
 
     private static boolean updateArraysFromTile(float[][] height, float[][] waterHeight, Material[][] terrain,
@@ -169,47 +154,6 @@ public class PreviewOperation extends RadiusOperation {
         submitArraysToViewer();
     }
 
-    static class MyShittyView extends WorldPainterView {
-
-        Dimension dim;
-        private boolean drawBrush = false;
-
-        @Override
-        public Dimension getDimension() {
-            return dim;
-        }
-
-        @Override
-        public void setDimension(Dimension dimension) {
-            this.dim = dimension;
-        }
-
-        @Override
-        public void updateStatusBar(int x, int y) {
-
-        }
-
-        @Override
-        public boolean isDrawBrush() {
-            return drawBrush;
-        }
-
-        @Override
-        public void setDrawBrush(boolean drawBrush) {
-            this.drawBrush = drawBrush;
-        }
-
-        @Override
-        public MapDragControl getMapDragControl() {
-            return new MyRadiusControl();
-        }
-
-        @Override
-        public RadiusControl getRadiusControl() {
-            return new MyRadiusControl();
-        }
-    }
-
     static class TileChangedListener implements Tile.Listener {
         private PreviewOperation op;
         private HashSet<Tile> dirtyTiles = new HashSet<>();
@@ -270,42 +214,6 @@ public class PreviewOperation extends RadiusOperation {
         @Override
         public void seedsChanged(Tile tile) {
 
-        }
-    }
-
-    static class MyRadiusControl implements RadiusControl, MapDragControl {
-        //dummy class, doesnt do anything. just so no nullpointer is thrown by the operation.q
-        int radius = 250;
-        boolean mapDrag = false;
-
-        @Override
-        public void increaseRadius(int i) {
-            radius += i;
-        }
-
-        @Override
-        public void increaseRadiusByOne() {
-            radius++;
-        }
-
-        @Override
-        public void decreaseRadius(int i) {
-            radius -= i;
-        }
-
-        @Override
-        public void decreaseRadiusByOne() {
-            radius--;
-        }
-
-        @Override
-        public boolean isMapDraggingInhibited() {
-            return mapDrag;
-        }
-
-        @Override
-        public void setMapDraggingInhibited(boolean b) {
-            mapDrag = b;
         }
     }
 }

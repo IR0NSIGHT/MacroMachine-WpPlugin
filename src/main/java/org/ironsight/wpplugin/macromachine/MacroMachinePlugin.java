@@ -4,6 +4,7 @@ import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
 import org.ironsight.wpplugin.macromachine.operations.MacroDialogOperation;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
 import org.pepsoft.worldpainter.WPContext;
+import org.pepsoft.worldpainter.WorldPainterView;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.AbstractPlugin;
@@ -35,7 +36,7 @@ public class MacroMachinePlugin extends AbstractPlugin implements
         LayerProvider,          // Implement this to provide one or more singular, unconfigurable layers
         OperationProvider      // Implement this to provide one or more custom operations for the Tools panel
 {
-
+    public WorldPainterView view;
     @Override
     public void init(WPContext context) {
         super.init(context);
