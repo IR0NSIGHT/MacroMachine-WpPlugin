@@ -130,8 +130,7 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
             statistics = ApplyAction.applyExecutionSteps(getDimension(), executionSteps, callback );
             ActionFilterIO.instance.releaseAfterApplication();
         } catch (Exception ex) {
-            System.out.println(ex);
-            MacroMachinePlugin.error(ex.getMessage());
+            GlobalActionPanel.ErrorPopUp(ex);
             return statistics;
         } finally {
             if (getDimension().isEventsInhibited()) {

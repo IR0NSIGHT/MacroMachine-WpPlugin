@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.layers.Annotations;
@@ -59,8 +60,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
             String name = Annotations.getColourName(value);
             return name + "(" + value + ")";
         } catch (ArrayIndexOutOfBoundsException ex) {
-            System.err.println(ex);
-            MacroMachinePlugin.error(ex.toString());
+            GlobalActionPanel.ErrorPopUp(ex);
         }
         return "ERROR";
     }

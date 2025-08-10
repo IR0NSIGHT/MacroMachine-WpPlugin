@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 
 import java.io.*;
 import java.net.URISyntaxException;
@@ -29,6 +30,59 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         this.type = type;
         this.filePath = filePath;
         this.defaultFileResourcePath = defaultFileResourcePath;
+    }
+
+    public static void ensureSaveFileExists(String saveFilePath, String defaultFileResourcePath)
+            throws URISyntaxException, IOException {
+        File saveFile = new File(saveFilePath);
+
+        if (!saveFile.exists()) {
+            try {
+                // Path to the default macros file in the resources directory
+                URL url = AbstractOperationContainer.class.getResource(defaultFileResourcePath);
+
+                if (url == null) {
+                    throw new IOException("Resource not found: " + defaultFileResourcePath);
+                }
+
+                // Copy the default macros file to the save file path
+                try (InputStream inputStream = AbstractOperationContainer.class.getResourceAsStream(
+                        defaultFileResourcePath)) {
+                    if (inputStream != null) {
+                        Files.copy(inputStream, saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        System.out.println("Copied the default resource file from " + url + " to " + saveFilePath);
+                    } else {
+                        throw new IOException("Failed to open stream for resource: " + defaultFileResourcePath);
+                    }
+                }
+            } catch (IOException e) {
+                GlobalActionPanel.ErrorPopUp("Failed to copy the default resource file: " + e.getMessage());
+            }
+        } else {
+            //error("Save file already exists at: " + saveFilePath);
+            createBackup(saveFile.getPath());
+        }
+    }
+
+    public static void createBackup(String filePath) {
+        // Convert the file path to a Path object
+        Path source = Paths.get(filePath);
+
+        // Create a human-readable timestamp
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm");
+        String timestamp = now.format(formatter);
+
+        // Create the backup file path by appending the timestamp
+        String backupFilePath = filePath + ".backup_" + timestamp;
+        Path target = Paths.get(backupFilePath);
+
+        try {
+            // Copy the file to the backup location
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            System.err.println("Failed to create backup: " + e.getMessage());
+        }
     }
 
     public String getFilePath() {
@@ -73,8 +127,9 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     }
 
     public void updateMapping(Consumer<String> onError, T... items) {
-        UUID[] uids = new UUID[items.length]; int idx = 0;
-        for (T mapping: items) {
+        UUID[] uids = new UUID[items.length];
+        int idx = 0;
+        for (T mapping : items) {
             if (mapping == null || mapping.getUid() == null) {
                 onError.accept("mapping has null UID:" + mapping);
                 continue;
@@ -111,7 +166,8 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     }
 
     protected abstract T getNewAction();
-    protected  abstract T getNewAction(UUID uuid);
+
+    protected abstract T getNewAction(UUID uuid);
 
     public void subscribe(Runnable runnable) {
         genericNotifies.add(runnable);
@@ -137,59 +193,6 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         return list;
     }
 
-    public static void ensureSaveFileExists(String saveFilePath, String defaultFileResourcePath)
-            throws URISyntaxException, IOException {
-        File saveFile = new File(saveFilePath);
-
-        if (!saveFile.exists()) {
-            try {
-                // Path to the default macros file in the resources directory
-                URL url = AbstractOperationContainer.class.getResource(defaultFileResourcePath);
-
-                if (url == null) {
-                    throw new IOException("Resource not found: " + defaultFileResourcePath);
-                }
-
-                // Copy the default macros file to the save file path
-                try (InputStream inputStream = AbstractOperationContainer.class.getResourceAsStream(defaultFileResourcePath)) {
-                    if (inputStream != null) {
-                        Files.copy(inputStream, saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        System.out.println("Copied the default resource file from " + url + " to " + saveFilePath);
-                    } else {
-                        throw new IOException("Failed to open stream for resource: " + defaultFileResourcePath);
-                    }
-                }
-            } catch (IOException e) {
-                error("Failed to copy the default resource file: " + e.getMessage());
-            }
-        } else {
-            //error("Save file already exists at: " + saveFilePath);
-            createBackup(saveFile.getPath());
-        }
-    }
-
-    public static void createBackup(String filePath) {
-        // Convert the file path to a Path object
-        Path source = Paths.get(filePath);
-
-        // Create a human-readable timestamp
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm");
-        String timestamp = now.format(formatter);
-
-        // Create the backup file path by appending the timestamp
-        String backupFilePath = filePath + ".backup_" + timestamp;
-        Path target = Paths.get(backupFilePath);
-
-        try {
-            // Copy the file to the backup location
-            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            System.err.println("Failed to create backup: " + e.getMessage());
-        }
-    }
-
-
     public void readFromFile() {
         if (suppressFileWriting) return;
         try {
@@ -199,15 +202,9 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
             lines = Files.readAllLines(Paths.get(filePath), StandardCharsets.UTF_8);
             String jsonString = String.join("", lines);
             fromSaveObject(jsonString);
-        }
-        catch (NoSuchFileException |FileNotFoundException e) {
-            error("save file not found: " + filePath);
-        } catch (JsonProcessingException e) {
-            error(filePath);
-            error(getClass().getSimpleName() + " - Error during file reading: " + e.getMessage());
-            throw new RuntimeException(e);
+        } catch (NoSuchFileException | FileNotFoundException e) {
+            GlobalActionPanel.ErrorPopUp(e);
         } catch (IOException | URISyntaxException e) {
-            error(e.toString());
             throw new RuntimeException(e);
         }
     }
@@ -235,8 +232,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error serializing object to JSON", e);
         } catch (IOException e) {
-            error(getClass().getSimpleName() + " - Error during file writing: " + e.getMessage());
-            e.printStackTrace();
+            GlobalActionPanel.ErrorPopUp(e);
         }
     }
 
