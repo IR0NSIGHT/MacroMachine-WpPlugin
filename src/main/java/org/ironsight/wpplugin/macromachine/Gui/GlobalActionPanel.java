@@ -16,6 +16,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -109,7 +111,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
                     uiCallback.afterEachAction(new ExecutionStatistic(a));
 
                 } catch (InterruptedException ex) {
-                    ;
+                    GlobalActionPanel.ErrorPopUp(ex);
                 }
             }
             uiCallback.afterEverything();
@@ -143,6 +145,20 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         );
 
     }
+    public static void ErrorPopUp(Exception ex) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        ex.printStackTrace(pw);
+        String message = sw.toString();
+        logMessage(message);
+        JOptionPane.showMessageDialog(null, message, "Error",
+                // Title of the dialog
+                JOptionPane.ERROR_MESSAGE
+                // Type of message (error icon)
+        );
+
+    }
+
 
     // Method to log messages
     public static void logMessage(String message) {
@@ -244,7 +260,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         macroDesigner = new MacroDesigner(this::onSubmitMacro);
         mappingEditor = new ActionEditor(this::onSubmitMapping);
         ioEditor = new InputOutputEditor(action -> MappingActionContainer.getInstance().updateMapping(action,
-                MacroMachinePlugin::error));
+                GlobalActionPanel::ErrorPopUp));
         editorPanel = new JPanel(new CardLayout());
         editorPanel.add(mappingEditor, MAPPING_EDITOR);
         editorPanel.add(macroDesigner, MACRO_DESIGNER);

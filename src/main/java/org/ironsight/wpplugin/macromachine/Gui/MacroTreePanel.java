@@ -289,7 +289,7 @@ public class MacroTreePanel extends JPanel {
             updatedMacros.add(updated);
         }
 
-        container.updateMapping(MacroMachinePlugin::error, updatedMacros.toArray(new Macro[0]));
+        container.updateMapping(GlobalActionPanel::ErrorPopUp, updatedMacros.toArray(new Macro[0]));
 
         // Delete action / Macro in containers
         container.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
@@ -462,7 +462,7 @@ public class MacroTreePanel extends JPanel {
             int idx = 0;
             for (UUID uuid : actionUids) {
                 MappingAction clone = mappingContainer.addMapping().withValuesFrom(mappingContainer.queryById(uuid));
-                mappingContainer.updateMapping(clone, MacroMachinePlugin::error);
+                mappingContainer.updateMapping(clone, GlobalActionPanel::ErrorPopUp);
                 uidArr[idx++] = clone.getUid();
             }
             for (UUID macroId : macroUids) {
@@ -471,7 +471,7 @@ public class MacroTreePanel extends JPanel {
         }
 
         Macro macro = container.addMapping().withUUIDs(uidArr);
-        container.updateMapping(macro, MacroMachinePlugin::error);
+        container.updateMapping(macro, GlobalActionPanel::ErrorPopUp);
         HashSet<UUID> set = new HashSet<>();
         set.add(macro.getUid());
         update(set);
@@ -500,7 +500,7 @@ public class MacroTreePanel extends JPanel {
                         MacroContainer.getInstance(),
                         macroFile,
                         policy,
-                        MacroMachinePlugin::error, InputOutputProvider.INSTANCE);
+                        GlobalActionPanel::ErrorPopUp, InputOutputProvider.INSTANCE);
             }
         }
     }

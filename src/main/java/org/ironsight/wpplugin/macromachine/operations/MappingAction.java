@@ -23,7 +23,7 @@ public class MappingAction implements SaveableAction {
     private final MappingPoint[] mappingPoints;
     private final String name;
     private final String description;
-    private final UUID uid;    //TODO make final and private
+    private final UUID uid;
     private final int[] mappings;
     //only for gui purposes, not part of the actual data. only use this flag if you set it yourself
     private boolean isActive;
@@ -339,10 +339,6 @@ public class MappingAction implements SaveableAction {
         output.setValueAt(dim, x, y, this.sanitizeOutput(outputValue));
     }
 
-    private boolean hasValueForInput(int input) {
-        return Arrays.stream(mappingPoints).anyMatch(p -> p.input == input);
-    }
-
     public int map(int input) {
         assert input >= this.input.getMinValue() :
                 "input " + input + " is out of range for minimum" + this.input.getMinValue();
@@ -351,11 +347,6 @@ public class MappingAction implements SaveableAction {
 
         int value = mappings[input - this.input.getMinValue()];
         return value;
-    }
-
-    public boolean isIllegalValue(int value, boolean input) {
-        if (input) return value == sanitizeInput(value);
-        else return value == sanitizeOutput(value);
     }
 
     public int sanitizeInput(int value) {
