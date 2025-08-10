@@ -9,6 +9,7 @@ import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.CustomLayerControllerWrapper;
+import org.pepsoft.worldpainter.WorldPainterView;
 import org.pepsoft.worldpainter.layers.CustomLayer;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
@@ -24,7 +25,7 @@ import static org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel.ErrorPop
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO.getUsedLayers;
 
-public class MacroDialogOperation extends AbstractOperation implements MacroApplicator {
+public class MacroDialogOperation extends AbstractBrushOperation implements MacroApplicator {
     private static final String NAME = "Macro Operation";
     private static final String DESCRIPTION = "Create complex reusable global operations to automate your workflow.";
 
@@ -150,11 +151,16 @@ public class MacroDialogOperation extends AbstractOperation implements MacroAppl
 
     }
 
-   /* @Override
-    public void setView(WorldPainterView view) {
-        this.mWorldPainterView = view;
+    @Override
+    protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
+
     }
-*/
+
+    /* @Override
+        public void setView(WorldPainterView view) {
+            this.mWorldPainterView = view;
+        }
+    */
     @Override
     public void interrupt() {
 
