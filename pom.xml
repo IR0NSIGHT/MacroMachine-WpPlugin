@@ -95,12 +95,6 @@
             <version>2.25.0</version>
         </dependency>
         <dependency>
-            <groupId>org.pepsoft.worldpainter</groupId>
-            <artifactId>WPGUI</artifactId>
-            <version>2.25.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <version>5.9.1</version>
