@@ -121,7 +121,9 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public String valueToString(int value) {
-        return String.format("%.0f%% (%d)",100f*value/15f,value);
+        if (value == 0)
+            return "Absent (0)";
+        return String.format("%.0f%% (%d)",100f*value+1/15f,value);
     }
 
     @Override
