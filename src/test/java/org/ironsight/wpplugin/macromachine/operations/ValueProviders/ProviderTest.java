@@ -13,6 +13,8 @@ import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.HashSet;
 
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
 import static org.ironsight.wpplugin.macromachine.operations.TestData.createDimension;
@@ -479,5 +481,23 @@ public class ProviderTest {
         assertEquals(Minecraft1_21Biomes.BIOME_BADLANDS, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
         io.setValueAt(dim, 19,20, Minecraft1_21Biomes.BIOME_BIRCH_FOREST);
         assertEquals(Minecraft1_21Biomes.BIOME_BIRCH_FOREST, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
+    }
+
+    @Test
+    void TestVoronoiIO() {
+
+        IPositionValueGetter input = new VoronoiIO(10,100,123456,1,100);
+        HashSet<Integer> seenValue = new HashSet<>();
+        for (int x = 100; x < 1300; x++) {
+            for (int y = -300; y <  2700; y++) {
+                int value = input.getValueAt(null,x,y);
+                seenValue.add(value);
+                //System.out.printf("%d ",value);
+            }
+            //System.out.println();
+        }
+        Integer[] seen = seenValue.toArray(Integer[]::new);
+        Arrays.sort(seen);
+        System.out.println(Arrays.toString(seen));
     }
 }
