@@ -31,7 +31,25 @@ public enum ProviderType {
     ;
 
     public static IMappingValue fromType(Object[] data, ProviderType type) {
-        IMappingValue newV = fromTypeDefault(type).instantiateFrom(data);
+        /**
+         * take save data, compare to default savedata.
+         * only use it if it has the correct type
+         * keep default entries if data item could not be used/was not present
+         */
+        Object[] dataSafe = ProviderType.fromTypeDefault(type).getSaveData();
+        for (int i = 0; i < dataSafe.length; i++) {
+            try {
+                Object dataObj = data[i];
+                Object dataDef = dataSafe[i];
+                if (dataObj.getClass().equals(dataDef.getClass()))
+                    dataSafe[i] = dataObj;
+            } catch (Exception ignored){
+                // System.err.println("exception when parsing save data obj:" + ignored);
+            };
+        }
+
+
+        IMappingValue newV = fromTypeDefault(type).instantiateFrom(dataSafe);
         assert newV.getProviderType() == type;
         return newV;
     }
