@@ -260,7 +260,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         macroDesigner = new MacroDesigner(this::onSubmitMacro);
         mappingEditor = new ActionEditor(this::onSubmitMapping);
         ioEditor = new InputOutputEditor(action -> MappingActionContainer.getInstance().updateMapping(action,
-                MacroMachinePlugin::error));
+                GlobalActionPanel::ErrorPopUp));
         editorPanel = new JPanel(new CardLayout());
         editorPanel.add(mappingEditor, MAPPING_EDITOR);
         editorPanel.add(macroDesigner, MACRO_DESIGNER);
