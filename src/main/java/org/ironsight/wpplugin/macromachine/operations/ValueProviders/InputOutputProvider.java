@@ -191,6 +191,11 @@ public class InputOutputProvider implements IMappingValueProvider,
         return dimension;
     }
 
+    /**
+     * gets layers from worldpainter API, each layer is the one loaded currently inside worldpainter, not some
+     * outdated instance.
+     * @return
+     */
     @Override
     public List<Layer> getLayers() {
         LinkedList<Layer> layers = new LinkedList<>();

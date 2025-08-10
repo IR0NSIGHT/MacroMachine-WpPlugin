@@ -60,9 +60,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        if (layer == null) {
-            layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
-        }
+        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null)
