@@ -18,19 +18,22 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimitedMapOperation, EditableIO {
+    private final boolean searchInwards;
     private final int maxDistance;
     protected String layerId;
     protected String layerName;
     protected Layer layer = null;
     private TileContainer distanceMap;
 
-    protected DistanceToLayerEdgeGetter(String name, String id, int maxDistance) {
+    protected DistanceToLayerEdgeGetter(boolean searchInwards, String name, String id, int maxDistance) {
+        this.searchInwards = searchInwards;
         this.layerId = id;
         this.layerName = name;
         this.maxDistance = maxDistance;
     }
 
-    public DistanceToLayerEdgeGetter(Layer layer, int maxDistance) {
+    public DistanceToLayerEdgeGetter(boolean searchInwards, Layer layer, int maxDistance) {
+        this.searchInwards = searchInwards;
         assert layer.dataSize == Layer.DataSize.BIT;
         this.layerName = layer.getName();
         this.layerId = layer.getId();
@@ -60,23 +63,26 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        try {
-            return new DistanceToLayerEdgeGetter((String) data[0], (String) data[1], (Integer) data[2]);
-        } catch (Exception ex) {
-            return new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE, 100);
 
+        try {
+            return new DistanceToLayerEdgeGetter(((Integer) data[3]) == 1,
+                    (String) data[0],
+                    (String) data[1],
+                    (Integer) data[2]);
+        } catch (Exception ex) {
+            return new DistanceToLayerEdgeGetter(searchInwards, MacroSelectionLayer.INSTANCE, 100);
         }
     }
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{layerName, layerId, (Integer) maxDistance};
+        return new Object[]{layerName, layerId, (Integer) maxDistance, searchInwards ? 1 : 0};
     }
 
     @Override
     public String valueToString(int value) {
-        if (value == 0) return "inside";
-        if (value == getMaxValue()) return "outside";
+        if (value == 0) return searchInwards ? "outside" : "inside";
+        if (value == getMaxValue()) return searchInwards ? "inside" : "outside";
         return value + "m from edge";
     }
 
@@ -133,7 +139,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DistanceToLayerEdgeGetter that = (DistanceToLayerEdgeGetter) o;
-        return Objects.equals(layerId, that.layerId) && this.maxDistance == that.maxDistance;
+        return Arrays.equals(getSaveData(), that.getSaveData()) ;
     }
 
     @Override
@@ -169,7 +175,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
 
         Rectangle extent;
         if (tileX.length == 0) {
-            extent = new Rectangle(0,0,0,0);
+            extent = new Rectangle(0, 0, 0, 0);
         } else {
             int startX = ArrayUtils.findMin(tileX), endX = ArrayUtils.findMax(tileX);
             int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
@@ -181,7 +187,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
                     Math.min(dimExtent.height, endY - startY + 1 + 2 * expand));
         }
         this.distanceMap = ShadowMap.expandBinaryMask(new BinaryLayerIO(layer, false),
-                dimension, extent);
+                dimension, extent, searchInwards);
     }
 
     @Override
@@ -191,21 +197,22 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
 
     @Override
     public int[] getEditableValues() {
-        return new int[]{maxDistance};
+        return new int[]{searchInwards ? 1 : 0, maxDistance};
     }
 
     @Override
     public String[] getValueNames() {
-        return new String[]{"max distance"};
+        return new String[]{"search inwards", "max distance"};
     }
 
     @Override
     public String[] getValueTooltips() {
-        return new String[]{"max distance to calculate. smaller values improve performance"};
+        return new String[]{"1 = search inwards of macroselection, 0 = search outwards of macroselection",
+                "max distance to calculate. smaller values improve performance"};
     }
 
     @Override
     public EditableIO instantiateWithValues(int[] values) {
-        return new DistanceToLayerEdgeGetter(layerName, layerId, values[0]);
+        return new DistanceToLayerEdgeGetter(values[0] == 1, layerName, layerId, values[1]);
     }
 }
