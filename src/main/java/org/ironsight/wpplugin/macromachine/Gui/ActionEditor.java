@@ -1,15 +1,10 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
-import org.pepsoft.minecraft.Block;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
@@ -31,7 +26,7 @@ public class ActionEditor extends LayerMappingPanel {
     protected void updateComponents() {
         mappingDisplay.setVisible(!mapping.input.isDiscrete());
         mappingDisplay.setMapping(mapping);
-        model.rebuildDataWithAction(mapping);
+        model.rebuildModelFromAction(mapping);
         topBar.setMapping(mapping);
         this.repaint();
     }
