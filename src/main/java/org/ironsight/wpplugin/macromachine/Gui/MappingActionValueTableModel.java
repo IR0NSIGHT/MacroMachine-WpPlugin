@@ -201,7 +201,7 @@ class MappingActionValueTableModel implements TableModel {
         return null;
     }
 
-    public void setValuesAt(Object aValue, int rowIndices[], int columnIndex) {
+    public void setValuesAt(Object aValue, int[] rowIndices, int columnIndex) {
         if (rowIndices.length == 0)
             return;
         for (int rowIndex : rowIndices) {
