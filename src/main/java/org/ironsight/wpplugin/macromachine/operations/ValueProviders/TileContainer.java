@@ -20,10 +20,13 @@ public class TileContainer {
         this(extent.width , extent.height, TILE_SIZE * extent.x, TILE_SIZE * extent.y,defaultValue);
     }
 
-    public void addAsValues(IPositionValueGetter getter, Dimension dim) {
+    public void addAsValues(IPositionValueGetter getter, Dimension dim, boolean invert) {
         for (int yPos = getMinYPos(); yPos < getMaxYPos(); yPos ++) {
             for (int xPos = getMinXPos(); xPos < getMaxXPos(); xPos ++) {
-                setValueAt(xPos,yPos, getter.getValueAt(dim, xPos, yPos));
+                int value = getter.getValueAt(dim, xPos, yPos);
+                if (invert)
+                    value = getter.getMaxValue() - value;
+                setValueAt(xPos,yPos, value);
             }
         }
     }
