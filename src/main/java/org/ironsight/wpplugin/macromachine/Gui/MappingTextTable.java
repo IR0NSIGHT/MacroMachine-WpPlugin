@@ -61,7 +61,7 @@ public class MappingTextTable extends JPanel {
                 if (editor != null) {
                     Object value = editor.getCellEditorValue();
 
-                    model.setValuesAt(value, getSelectedModelRows(), editingColumn);
+                    model.setValuesAt((MappingPointValue) value, getSelectedModelRows(), editingColumn);
                     removeEditor();
                 }
             }
