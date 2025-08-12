@@ -50,10 +50,11 @@ public class ActionEditor extends LayerMappingPanel {
 
         this.setLayout(new BorderLayout());
 
-        mappingDisplay = new MappingGridPanel();
+        mappingDisplay = new MappingGridPanel(selectionModel);
         assert model != null;
         assert selectionModel != null;
         table = new MappingTextTable(model, selectionModel);
+
         model.addTableModelListener(l -> {
             if (l.getType() == TableModelEvent.DELETE)
                 return; //dont update, bc the data is not there yet.

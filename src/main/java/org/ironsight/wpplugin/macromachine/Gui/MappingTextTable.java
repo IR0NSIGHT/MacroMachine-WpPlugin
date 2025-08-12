@@ -46,17 +46,13 @@ public class MappingTextTable extends JPanel {
 
             @Override
             public TableCellEditor getCellEditor(int row, int column) {
-                System.out.println("GET CELL EDITOR");
-
                 // second click -> edit
-
                 blockingSelectionModel.setSelectionBlocked(true);
                 return super.getCellEditor(row, column);
             }
 
             @Override
             public void editingStopped(ChangeEvent e) {
-                System.out.println("EDITING STOPPED:" + e);
                 TableCellEditor editor = getCellEditor();
                 if (editor != null) {
                     Object value = editor.getCellEditorValue();
@@ -72,7 +68,7 @@ public class MappingTextTable extends JPanel {
                 blockingSelectionModel.setSelectionBlocked(false);
             }
         };
-
+        selectionModel.setTable(numberTable);
         numberTable.setModel(model);
         numberTable.setSelectionModel(selectionModel);
         this.tableModel = model;
@@ -110,10 +106,9 @@ public class MappingTextTable extends JPanel {
         }
     }
 
-    private void addListeners(MappingActionValueTableModel model, ListSelectionModel selectionModel) {
+    private void addListeners(MappingActionValueTableModel model, BlockingSelectionModel selectionModel) {
         // Add listener to scroll to the selected row
         selectionModel.addListSelectionListener(e -> {
-            System.out.println("SELECTION UPDATE " + e);
             if (e.getValueIsAdjusting()) {
                 return;
             }
@@ -144,11 +139,8 @@ public class MappingTextTable extends JPanel {
 
 // Restore selected raw table after a value was changed in the table
         model.addTableModelListener(e -> SwingUtilities.invokeLater(() -> {
-            System.out.println("RESTORE TABLE SELECTION OF MODEL CHANGED");
             try {
-                for (int selectedRow : selectedViewRows) {
-                    numberTable.addRowSelectionInterval(selectedRow, selectedRow);
-                }
+                selectionModel.addSelectionRows(selectedViewRows);
             } catch (IllegalArgumentException ignored) {
                 // view row amount might be MUCH lower than expected. just ignore it
             }

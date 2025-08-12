@@ -96,7 +96,6 @@ class MappingActionValueTableModel implements TableModel {
     }
 
     public void fireEvent(TableModelEvent event) {
-        System.out.println("fire table model event " + event.getType() + " - " + event.getFirstRow() + ".."+ event.getLastRow());
         for (TableModelListener l : listeners) {
             try {
                 l.tableChanged(event);
