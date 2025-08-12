@@ -55,7 +55,7 @@ public class MacroDesigner extends JPanel {
                 ActionFilterIO.instance,
                 new MappingPoint[]{
                         new MappingPoint(0, ActionFilterIO.BLOCK_VALUE),
-                        new MappingPoint(0, ActionFilterIO.PASS_VALUE)
+                        new MappingPoint(1, ActionFilterIO.PASS_VALUE)
                 },
                 ActionType.LIMIT_TO,
                 "Filter: Only On Water",
