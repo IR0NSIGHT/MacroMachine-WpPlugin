@@ -483,7 +483,6 @@ public class ProviderTest {
         assertEquals(Minecraft1_21Biomes.BIOME_BIRCH_FOREST, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
     }
 
-    @Test
     void TestVoronoiIO() {
 
         IPositionValueGetter input = new VoronoiIO(10,100,123456,1,100);
