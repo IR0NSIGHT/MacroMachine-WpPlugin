@@ -40,7 +40,6 @@ public class MappingPointCellEditor implements TableCellEditor {
 
     @Override
     public boolean stopCellEditing() {
-        System.out.println("CELLEDITOR - STOP EDIT");
         dropdown.removePopupMenuListener(onComboboxSelected);
         dropdown.removeFocusListener(onDropdownFocusLost);
 
@@ -52,7 +51,6 @@ public class MappingPointCellEditor implements TableCellEditor {
 
     @Override
     public void cancelCellEditing() {
-        System.out.println("CELLEDITOR - CANCEL EDIT");
         dropdown.removePopupMenuListener(onComboboxSelected);
         dropdown.removeFocusListener(onDropdownFocusLost);
         for (CellEditorListener l : new ArrayList<>(listeners)) {
@@ -72,13 +70,11 @@ public class MappingPointCellEditor implements TableCellEditor {
 
     @Override
     public void addCellEditorListener(CellEditorListener l) {
-        System.out.println("ADD CELL EDITOR LISTENER");
         listeners.add(l);
     }
 
     @Override
     public void removeCellEditorListener(CellEditorListener l) {
-        System.out.println("REMOVE CELL EDITOR LISTENER");
         listeners.remove(l);
     }
 

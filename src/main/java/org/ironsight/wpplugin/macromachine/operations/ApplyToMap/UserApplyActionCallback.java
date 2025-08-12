@@ -23,20 +23,15 @@ public class UserApplyActionCallback implements ApplyActionCallback {
 
     @Override
     public void setProgressOfAction(int percent) {
-        String update = String.format("%d/%d - %d%%", this.actionIdx, steps.size(), percent);
-        System.out.println(update);
     }
 
     @Override
     public boolean isActionAbort() {
-        System.out.println("Test is abort:" + debugUI.isAbort());
         return debugUI.isAbort();
     }
 
     @Override
     public void beforeEachAction(MappingAction a, Dimension dimension) {
-        System.out.println("BEFORE EACH ACTION: " + a.getName());
-
         debugUI.OnReachedBreakpoint(actionIdx);
         DebugUserInterface.BreakpointReaction breakpointReaction = DebugUserInterface.BreakpointReaction.WAIT;
         if (isDebug) {
@@ -56,13 +51,11 @@ public class UserApplyActionCallback implements ApplyActionCallback {
 
     @Override
     public void afterEachTile(int tileX, int tileY) {
-        System.out.println("AFTER EACH TILE : " + tileX + "," + tileY);
     }
 
     @Override
     public void afterEachAction(ExecutionStatistic statistic) {
         if (statistic != null) {
-            System.out.println("AFTER EACH ACTION : " + statistic.toString());
             GlobalActionPanel.logMessage(statistic.toString());
         }
         this.actionIdx++;
@@ -75,8 +68,6 @@ public class UserApplyActionCallback implements ApplyActionCallback {
 
     @Override
     public void setAllActionsBeforeRun(List<MappingAction> steps) {
-        System.out.println("SET STEPS BEFORE RUN ACTION : " + steps.toString());
-
         this.steps = steps;
         this.actionIdx = 0;
         debugUI.SetBreakpoints(new ArrayList<>(steps));
@@ -84,7 +75,6 @@ public class UserApplyActionCallback implements ApplyActionCallback {
 
     @Override
     public void afterEverything() {
-        System.out.println("AFTER EVERYTHING : ");
         debugUI.afterEverything();
     }
 }

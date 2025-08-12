@@ -59,7 +59,6 @@ public class InputOutputEditor extends LayerMappingPanel {
     protected void updateComponents() {
         if (mapping == null)
             return;
-        System.out.println("update IO editor with values:" + (isInput ? mapping.input : mapping.output));
         if ((isInput && !(mapping.input instanceof EditableIO)) || (!isInput && !(mapping.output instanceof EditableIO))) {
             tableModel.setData(new int[0],new String[0], new String[0]);
         } else {
@@ -106,7 +105,6 @@ public class InputOutputEditor extends LayerMappingPanel {
                 int row = e.getFirstRow();
                 String key = (String) tableModel.getValueAt(row, 0);
                 Integer value = (Integer) tableModel.getValueAt(row, 1);
-                System.out.println("Value changed for key: " + key + ", new value: " + value);
                 // Call your callback function here
                 int[] newValues = new int[tableModel.getRowCount()];
                 for (int i = 0; i < newValues.length; i++) {

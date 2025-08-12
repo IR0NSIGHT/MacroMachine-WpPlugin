@@ -156,7 +156,6 @@ public class MacroTreePanel extends JPanel {
         LinkedList<TreePath> newSelections = new LinkedList<>();
         LinkedList<TreePath> newExpanded = new LinkedList<>();
         if (!selectItems.isEmpty()) {
-            System.out.println("UPDATE WITH SELECT ITEMS");
             List<TreePath> allPaths = findAllPaths(tree, newRoot, new LinkedList<>());
             for (TreePath path : allPaths) {
                 MacroTreeNode node = ((MacroTreeNode) path.getLastPathComponent());
@@ -178,8 +177,6 @@ public class MacroTreePanel extends JPanel {
                 }
             }
         } else {
-            System.out.println("UPDATE WITH NO FILTER");
-
             // create treepaths to keep previous selection and carry it over to newRoot.
             TreePath[] selectionPaths = tree.getSelectionPaths();
             if (selectionPaths != null) {
@@ -225,7 +222,6 @@ public class MacroTreePanel extends JPanel {
                         .indexOf(path.getLastPathComponent())));
 
         for (TreePath selected : selectedPaths) {
-            System.out.println("selected path in tree:" + selected.getLastPathComponent());
             MacroTreeNode node = (MacroTreeNode) selected.getLastPathComponent();
             switch (node.payloadType) {
                 case MACRO:
@@ -248,14 +244,10 @@ public class MacroTreePanel extends JPanel {
     }
 
     private void onTreeItemRightClick(MacroTreeNode node, MouseEvent e) {
-
-        System.out.println("source right clicked");
         popupMenu.show(e.getComponent(), e.getX(), e.getY());
     }
 
     private void onSearchEnter(String searchString) {
-        System.out.println("UPDATE WITH SEARCH FILTER");
-
         // find all paths that end in an item that matches the filterstring.
         List<TreePath> allPaths = findAllPaths(tree, (MacroTreeNode) tree.getModel().getRoot(), new LinkedList<>());
         List<TreePath> matchingPaths = allPaths.stream()

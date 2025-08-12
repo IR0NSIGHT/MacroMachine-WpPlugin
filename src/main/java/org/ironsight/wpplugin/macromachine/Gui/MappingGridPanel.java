@@ -6,64 +6,83 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static javax.swing.BorderFactory.createLineBorder;
 
-public class MappingGridPanel extends LayerMappingPanel implements IMappingPointSelector {
+public class MappingGridPanel extends LayerMappingPanel implements MouseListener, MouseMotionListener {
     private final int pointHitBoxRadius = 20;
+    private final BlockingSelectionModel selectionModel;
     int widthOutputStrings = 0;
     int fontheight;
+    int gridXDragStart, gridYDragStart;
+    int pixelXDragStart, pixelYDragStart;
     private int shiftX = 50;
     private int pixelSizeX = 500;
     private int pixelSizeY = 500;
     private float GRID_X_SCALE;
     private float GRID_Y_SCALE;
     private boolean drag;
-    private boolean[] selectedInputs;
-    private Consumer<boolean[]> onSelect = f -> {
-    };
     private boolean showCursor = false;
     private int mousePosX, mousePosY;
     private boolean mouseMoved = false;
     private int shiftY = 10;
 
-    public MappingGridPanel() {
-
-        //    this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
-        setBorder(BorderFactory.createEmptyBorder(100, 100, 100, 100));
+    public MappingGridPanel(BlockingSelectionModel selectionModel) {
+        this.selectionModel = selectionModel;
         initComponents();
+
+        this.selectionModel.addListSelectionListener(l -> {
+            if (l.getValueIsAdjusting())
+                return;
+            SwingUtilities.invokeLater(() -> {
+                revalidate();
+                repaint();
+            });
+        });
+        revalidate();
+        repaint();
     }
 
     @Override
     protected void updateComponents() {
-        if (selectedInputs == null ||
-                this.mapping.input.getMaxValue() - this.mapping.input.getMinValue() + 1 != selectedInputs.length) {
-            resetSelection();
-        }
-        System.out.println(" GRID PANEL UPDATE COMPONENTS");
-        SwingUtilities.invokeLater(()->{
+        SwingUtilities.invokeLater(() -> {
             revalidate();
             repaint();
         });
     }
 
     private void setInputSelection(MappingPoint point, boolean selected) {
-        this.selectedInputs[point.input - mapping.input.getMinValue()] = selected;
-        onSelect.accept(selectedInputs);
-        lastClickedPoint = point;
+        int selectedRow = point.input - mapping.input.getMinValue();
+        selectionModel.setSelectionModelRow(selectedRow);
     }
 
     private boolean isInputSelected(int input) {
-        return selectedInputs[input - mapping.input.getMinValue()];
+        int inputRow = input - mapping.input.getMinValue();
+        for (int row : selectionModel.getSelectedModelRows()) {
+            if (row == inputRow)
+                return true;
+        }
+        return false;
     }
 
     private void resetSelection() {
-        selectedInputs = new boolean[mapping.input.getMaxValue() - mapping.input.getMinValue() + 1];
+        selectionModel.clearSelection();
+    }
+
+    private MappingPoint getLastSelectedPoint() {
+        int lastSelectedRow = selectionModel.getLastSelectedModelRow();
+        if (lastSelectedRow == -1)
+            return null;
+        int lastSelectedInput = lastSelectedRow + mapping.input.getMinValue();
+        return new MappingPoint(lastSelectedInput, mapping.map(lastSelectedInput));
     }
 
     @Override
@@ -77,134 +96,8 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         };
 
         // Add a MouseListener to detect clicks inside the panel
-        MappingGridPanel panel = this;
-        grid.addMouseListener(new MouseAdapter() {
-            int gridXDragStart, gridYDragStart;
-            int pixelXDragStart, pixelYDragStart;
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (e.getButton() == MouseEvent.BUTTON1) {
-                    Point grid = pixelToGrid(e.getX(), e.getY());
-                    gridXDragStart = grid.x;
-                    gridYDragStart = grid.y;
-                    pixelXDragStart = e.getX();
-                    pixelYDragStart = e.getY();
-                    //update selected
-
-                    MappingPoint last = lastClickedPoint;
-                    boolean hit = selectPointNear(pixelXDragStart, pixelYDragStart, pointHitBoxRadius);
-                    if (last != lastClickedPoint)
-                        return; // do not drag a point that was just selected.
-                    drag = true;
-                }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                super.mouseReleased(e);
-                drag = false;
-                // Get the pixel coordinates of the click
-                int pixelX = e.getX();
-                int pixelY = e.getY();
-                Point pressed = pixelToGrid(pixelX, pixelY);
-
-                // Convert the pixel coordinates to grid coordinates
-                int gridX = pressed.x;
-                int gridY = pressed.y;
-
-                int MINIMAL_DRAG_DISTANCE = 30;
-                boolean dragged = distanceBetween(pixelX, pixelY, pixelXDragStart, pixelYDragStart) > MINIMAL_DRAG_DISTANCE;
-                if (e.getButton() == MouseEvent.BUTTON1) {
-                    if (!dragged) {    // INSERT POINT
-                        // Call the callback with the grid coordinates
-                        boolean hit = selectPointNear(pixelX, pixelY, pointHitBoxRadius);
-                        if (!hit) { //selected point didnt change,
-                            // INSERT NEW POINT
-                            MappingPoint[] newPoints = Arrays.copyOf(panel.mapping.getMappingPoints(),
-                                    panel.mapping.getMappingPoints().length + 1);
-                            MappingPoint p = new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
-                            newPoints[newPoints.length - 1] = p;
-
-                            updateMapping(mapping.withNewPoints(newPoints));
-                            resetSelection();
-                            setInputSelection(p, true); //select the new point
-                        } else {
-                            //implicitly set selected point, but dont do anything with it
-                        }
-                    }
-                } else if (e.getButton() == MouseEvent.BUTTON3) {   // RIGHT CLICK
-                    // DELETE SELECTED POINT
-                    if (lastClickedPoint == null)
-                        return;
-
-                    //test if rightclick occured far away from current selected point
-                    Point p = gridToPixel(lastClickedPoint.input,lastClickedPoint.output);
-                    p.x -= pixelX; p.y -= pixelY;
-                    double distPixel =Math.sqrt(p.x*p.x+p.y*p.y);
-                    if (distPixel > pointHitBoxRadius)
-                        return; //abort, click is to far away from selction
-
-                    //update selected
-                    boolean hit = selectPointNear(pixelX, pixelY, pointHitBoxRadius);
-
-                    if (panel.mapping.getMappingPoints().length <= 1) return;   //dont allow to delete the last
-                    // control point
-                    MappingPoint[] newPoints = Arrays.stream(panel.mapping.getMappingPoints())
-                            .filter(f -> !isInputSelected(f.input))
-                            .toArray(MappingPoint[]::new);
-                    Arrays.fill(selectedInputs, false);
-                    updateMapping(mapping.withNewPoints(newPoints));
-                }
-            }
-        });
-
-        grid.addMouseMotionListener(new MouseAdapter() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                // Get the pixel coordinates of the click
-                Point pressed = pixelToGrid(e.getX(), e.getY());
-                int gridX = pressed.x;
-                int gridY = pressed.y;
-                mousePosX = e.getX();
-                mousePosY = e.getY();
-                mouseMoved = true;
-
-                if (drag) {
-                    // move selected control points to current mouse position
-                    MappingPoint[] points = mapping.getMappingPoints().clone();
-                    boolean changed = false;
-                    boolean anotherPointPresent = Arrays.stream(points).anyMatch(p -> p.input == gridX);
-                    if (anotherPointPresent) {
-                        return; //do not overwrite existing points
-                    }
-                    for (int i = 0; i < points.length; i++) {
-                        mapping.getMappingPoints()[i] = points[i];
-
-                        if (isInputSelected(points[i].input)) {
-                            setInputSelection(points[i], false);  //deselect old
-                            points[i] = new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
-                            setInputSelection(points[i], true);   //reselect updated value
-                            changed = true;
-                        }
-                    }
-                    if (changed) updateMapping(mapping.withNewPoints(points));
-                }
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                // Optional: Handle mouse movement when not dragging
-                mousePosX = e.getX();
-                mousePosY = e.getY();
-                Point gridPos = pixelToGrid(mousePosX, mousePosY);
-                if (showCursor && mapping.sanitizeInput(gridPos.x) == gridPos.x &&
-                        mapping.sanitizeOutput(gridPos.y) == gridPos.y) {
-                    grid.repaint();
-                }
-                mouseMoved = true;
-            }
-        });
+        grid.addMouseListener(this);
+        grid.addMouseMotionListener(this);
 
         this.setLayout(new BorderLayout());
         this.add(grid, BorderLayout.CENTER);
@@ -221,8 +114,6 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         });
         this.add(buttons, BorderLayout.SOUTH);
         this.setPreferredSize(new Dimension(pixelSizeX, pixelSizeY));
-        //keep this, otherwise the size is fucked up
-        setBorder(null); // Remove the border
     }
 
     private void paintLineInGrid(float x1, float x2, float y1, float y2, Graphics g) {
@@ -457,7 +348,7 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
             return false;
         }
         final Function<MappingPoint, Double> distance = p -> {
-            Point p1 = gridToPixel(p.input,p.output);
+            Point p1 = gridToPixel(p.input, p.output);
 
             double dX = p1.x - pixelX;
             double dY = p1.y - pixelY;
@@ -483,7 +374,6 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
         return true;
     }
 
-    private MappingPoint lastClickedPoint;
     private float distanceBetween(int x1, int y1, int x2, int y2) {
         float dX = x1 - x2;
         float dY = y1 - y2;
@@ -498,28 +388,140 @@ public class MappingGridPanel extends LayerMappingPanel implements IMappingPoint
     }
 
     @Override
-    public void setOnSelect(Consumer<boolean[]> onSelect) {
-        this.onSelect = onSelect;
+    public void mouseClicked(MouseEvent e) {
+
     }
 
     @Override
-    public void setSelectedInputs(boolean[] selectedPointIdx) {
-        if (mapping == null) return;
-        int l = mapping.getMappingPoints().length;
-        Arrays.fill(selectedInputs, false);
-        selectedInputs = selectedPointIdx;
-        this.repaint();
+    public void mousePressed(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            Point grid = pixelToGrid(e.getX(), e.getY());
+            gridXDragStart = grid.x;
+            gridYDragStart = grid.y;
+            pixelXDragStart = e.getX();
+            pixelYDragStart = e.getY();
+            //update selected
+            MappingPoint previousSelected = getLastSelectedPoint();
+            boolean hit = selectPointNear(pixelXDragStart, pixelYDragStart, pointHitBoxRadius);
+            if (!Objects.equals(previousSelected, getLastSelectedPoint()))
+                return; // do not drag just selected point.
+            drag = true;
+        }
     }
 
-    // Helper class to represent a line
-    private static class Line {
-        int x, y, x1, y1;
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        drag = false;
+        // Get the pixel coordinates of the click
+        int pixelX = e.getX();
+        int pixelY = e.getY();
+        Point pressed = pixelToGrid(pixelX, pixelY);
 
-        Line(int x, int y, int x1, int y1) {
-            this.x = x;
-            this.y = y;
-            this.x1 = x1;
-            this.y1 = y1;
+        // Convert the pixel coordinates to grid coordinates
+        int gridX = pressed.x;
+        int gridY = pressed.y;
+
+        int MINIMAL_DRAG_DISTANCE = 30;
+        boolean dragged =
+                distanceBetween(pixelX, pixelY, pixelXDragStart, pixelYDragStart) > MINIMAL_DRAG_DISTANCE;
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            if (!dragged) {    // INSERT POINT
+                // Call the callback with the grid coordinates
+                boolean hit = selectPointNear(pixelX, pixelY, pointHitBoxRadius);
+                if (!hit) { //selected point didnt change,
+                    // INSERT NEW POINT
+                    MappingPoint[] newPoints = Arrays.copyOf(mapping.getMappingPoints(),
+                            mapping.getMappingPoints().length + 1);
+                    MappingPoint p =
+                            new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
+                    newPoints[newPoints.length - 1] = p;
+
+                    updateMapping(mapping.withNewPoints(newPoints));
+                    resetSelection();
+                    setInputSelection(p, true); //select the new point
+                } else {
+                    //implicitly set selected point, but dont do anything with it
+                }
+            }
+        } else if (e.getButton() == MouseEvent.BUTTON3) {   // RIGHT CLICK
+            // DELETE SELECTED POINT
+            MappingPoint lastClickedPoint = getLastSelectedPoint();
+            if (lastClickedPoint == null)
+                return;
+
+            //test if rightclick occured far away from current selected point
+            Point p = gridToPixel(lastClickedPoint.input, lastClickedPoint.output);
+            p.x -= pixelX;
+            p.y -= pixelY;
+            double distPixel = Math.sqrt(p.x * p.x + p.y * p.y);
+            if (distPixel > pointHitBoxRadius)
+                return; //abort, click is to far away from selction
+
+            //update selected
+            boolean hit = selectPointNear(pixelX, pixelY, pointHitBoxRadius);
+
+            // control point
+            MappingPoint[] newPoints = Arrays.stream(mapping.getMappingPoints())
+                    .filter(f -> !isInputSelected(f.input))
+                    .toArray(MappingPoint[]::new);
+            updateMapping(mapping.withNewPoints(newPoints));
+            resetSelection();
         }
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        // Get the pixel coordinates of the click
+        Point pressed = pixelToGrid(e.getX(), e.getY());
+        int gridX = pressed.x;
+        int gridY = pressed.y;
+        mousePosX = e.getX();
+        mousePosY = e.getY();
+        mouseMoved = true;
+
+
+        if (drag) {
+            MappingPoint draggedPoint = getLastSelectedPoint();
+            if (gridX == draggedPoint.input && gridY == draggedPoint.output)
+                return; // nothing to do.
+
+            // move selected control points to current mouse position
+            MappingPoint[] points = mapping.getMappingPoints().clone();
+            boolean changed = false;
+            boolean anotherPointPresent =
+                    Arrays.stream(points).anyMatch(p -> p.input == gridX && !p.equals(draggedPoint));
+            if (anotherPointPresent) {
+                return; //do not overwrite existing points
+            }
+            ArrayList<MappingPoint> newSelection = new ArrayList<>();
+            for (int i = 0; i < points.length; i++) {
+                if (isInputSelected(points[i].input)) {
+                    setInputSelection(points[i], false);  //deselect old
+                    points[i] = new MappingPoint(mapping.sanitizeInput(gridX), mapping.sanitizeOutput(gridY));
+                    newSelection.add(points[i]);
+                    changed = true;
+                }
+            }
+            if (!changed)
+                return;
+            updateMapping(mapping.withNewPoints(points));
+            for (MappingPoint mp : newSelection)
+                setInputSelection(mp, true);
+        }
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+
     }
 }
