@@ -4,9 +4,6 @@ name: Zip and Upload on Release
 on:
   release:
     types: [created, published]
-  push:
-    tags:
-      - 'wp-build-*'
 permissions:
   contents: write
 
