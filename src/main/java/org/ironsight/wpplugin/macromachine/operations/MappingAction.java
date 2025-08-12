@@ -46,11 +46,17 @@ public class MappingAction implements SaveableAction {
         this.actionType = type;
         this.uid = uid;
 
+        HashSet<Integer> seenInputValues = new HashSet<>();
         //filter out illegal mapping points (user might have edited save file)
         mappingPoints =
                 Arrays.stream(mappingPoints)
                         .filter(p -> sanitizeInput(p.input) == p.input) //input points
                         .map(p -> new MappingPoint(p.input, sanitizeOutput(p.output)))
+                        .filter(p -> { //only unique inputs.
+                            boolean alreadyExists = seenInputValues.contains(p.input);
+                            seenInputValues.add(p.input);
+                            return !alreadyExists;
+                        })
                         .toArray(MappingPoint[]::new);
 
         assert Arrays.stream(mappingPoints).noneMatch(p -> sanitizeInput(p.input) != p.input) : "mapping points " +

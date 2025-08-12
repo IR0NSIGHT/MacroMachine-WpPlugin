@@ -29,6 +29,13 @@ class MappingActionValueTableModelTest {
         model.rebuildDataWithAction(action);
         assertEquals(action, model.constructMapping());
 
+        for (MappingPoint mp: action.getMappingPoints()) {
+            int row = mp.input;
+            assertTrue(model.isMappingPoint(row));
+            assertTrue(model.isCellEditable(row,0));
+            assertTrue(model.isCellEditable(row,1));
+
+        }
     }
 
     @Test
