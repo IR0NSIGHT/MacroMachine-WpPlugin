@@ -74,9 +74,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        if (layer == null) {
-            layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
-        }
+        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null) {
@@ -123,7 +121,8 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     public String valueToString(int value) {
         if (value == 0)
             return "Absent (0)";
-        return String.format("%.0f%% (%d)",100f*value+1/15f,value);
+        return String.format("%.0f%% (%d)",1+99f*(value-1)/14f,value);
+        // 1, 8, 15, 22, 29, 36, 43, 51, 58, 65, 72, 79, 86, 93, 100 (worldpainter 14 step intensities)
     }
 
     @Override
