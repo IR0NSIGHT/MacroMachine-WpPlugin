@@ -115,7 +115,6 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
                 if (l instanceof CustomLayer && !controller.containsLayer(l)) {
                     ((CustomLayer) l).setPalette("MacroMachine");
                     controller.registerCustomLayer((CustomLayer) l, true);
-                    System.out.println("REGISTERED NEW LAYER " + l);
                 }
             }
 
