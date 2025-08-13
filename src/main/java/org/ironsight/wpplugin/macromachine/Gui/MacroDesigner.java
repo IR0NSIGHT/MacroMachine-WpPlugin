@@ -2,16 +2,13 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.DisplayUnitPickerDialog;
 import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.PickerFilterOption;
-import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
-import javax.crypto.Mac;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -19,11 +16,18 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
-import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
 import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.getAllPointsForDiscreteIO;
 
 public class MacroDesigner extends JPanel {
     Consumer<Macro> onSubmit;
+    PickerFilterOption macroFilter = new PickerFilterOption<>("macros", "show macros") {
+        @Override
+        public boolean block(Object item) {
+            return item instanceof Macro;
+        }
+    };
+    UUIDFilterOptions customActionsFilter = new UUIDFilterOptions("custom", "show user created actions");
+    UUIDFilterOptions defaultFilter = new UUIDFilterOptions("defaults", "show default actions");
     private Macro macro;
     private JTextField name;
     private JTextArea description;
@@ -36,6 +40,10 @@ public class MacroDesigner extends JPanel {
     MacroDesigner(Consumer<Macro> onSubmit) {
         this.onSubmit = onSubmit;
         init();
+
+        this.defaultFilter.setActive(true);
+        this.customActionsFilter.setActive(false);
+        this.macroFilter.setActive(false);
     }
 
     public static Collection<MappingAction> getDefaultFiltersAndEmptyAction() {
@@ -275,14 +283,14 @@ public class MacroDesigner extends JPanel {
                         })
                         .toArray(UUID[]::new);
 
-        Macro nested =  MacroContainer.getInstance().addMapping().withName(input).withUUIDs(selectedUUIDs);
-        MacroContainer.getInstance().updateMapping(nested,GlobalActionPanel::ErrorPopUp);
+        Macro nested = MacroContainer.getInstance().addMapping().withName(input).withUUIDs(selectedUUIDs);
+        MacroContainer.getInstance().updateMapping(nested, GlobalActionPanel::ErrorPopUp);
 
         ArrayList<UUID> remainingUUIDs = new ArrayList<>();
         ArrayList<Boolean> activeItems = new ArrayList<>();
         {
             remainingUUIDs.addAll(Arrays.asList(macro.getExecutionUUIDs()));
-            for (boolean active: macro.getActiveActions())
+            for (boolean active : macro.getActiveActions())
                 activeItems.add(active);
             HashSet<Integer> removedRows = new HashSet<>();
             for (int row : selectedRows) {
@@ -305,7 +313,7 @@ public class MacroDesigner extends JPanel {
         for (boolean a : activeItems)
             active[i++] = a;
         Macro updatedSelf = macro.withUUIDs(remainingUUIDs.toArray(UUID[]::new), active);
-        setMacro(updatedSelf,true);
+        setMacro(updatedSelf, true);
     }
 
     private void onToggleEnableItem(int row, JButton button) {
@@ -447,38 +455,19 @@ public class MacroDesigner extends JPanel {
         macrosAndActions.addAll(MappingActionContainer.getInstance().queryAll());
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
         Collection<MappingAction> defaultActions = getDefaultFiltersAndEmptyAction();
-        PickerFilterOption noMacroFilter = new PickerFilterOption("macros", "show macros") {
-            @Override
-            public boolean block(Object item) {
-                return item instanceof Macro;
-            }
-        };
 
-        PickerFilterOption noDefaultFilter = new PickerFilterOption("defaults", "show default actions") {
-            Set<UUID> matchingIds = defaultActions.stream()
-                    .map(MappingAction::getUid)
-                    .collect(Collectors.toCollection(HashSet::new));
 
-            @Override
-            public boolean block(Object item) {
-                return item instanceof MappingAction && matchingIds.contains(((MappingAction) item).getUid());
-            }
-        };
+        defaultFilter.setPassUUIDs(defaultActions.stream()
+                .map(MappingAction::getUid)
+                .collect(Collectors.toCollection(HashSet::new)));
 
-        PickerFilterOption noCustomActionsFilter = new PickerFilterOption("custom", "show user created actions") {
-            Set<UUID> matchingIds = MappingActionContainer.getInstance().queryAll().stream()
-                    .map(MappingAction::getUid)
-                    .collect(Collectors.toCollection(HashSet::new));
-
-            @Override
-            public boolean block(Object item) {
-                return item instanceof MappingAction && matchingIds.contains(((MappingAction) item).getUid());
-            }
-        };
+        customActionsFilter.setPassUUIDs(MappingActionContainer.getInstance().queryAll().stream()
+                .map(MappingAction::getUid)
+                .collect(Collectors.toCollection(HashSet::new)));
 
         JDialog dialog =
                 new DisplayUnitPickerDialog(macrosAndActions, this::onPickerSelection, new ArrayList<>(defaultActions),
-                        this, noMacroFilter, noDefaultFilter, noCustomActionsFilter);
+                        this, macroFilter, defaultFilter, customActionsFilter);
         dialog.setModal(true);
         dialog.setVisible(true);
     }
@@ -620,6 +609,23 @@ public class MacroDesigner extends JPanel {
         this.macro = macro;
         updateComponents();
         isUpdating = false;
+    }
+
+    private class UUIDFilterOptions extends PickerFilterOption {
+        Set<UUID> matchingIds = new HashSet<>();
+
+        public UUIDFilterOptions(String displayName, String tooltip) {
+            super(displayName, tooltip);
+        }
+
+        public void setPassUUIDs(Set<UUID> set) {
+            this.matchingIds = set;
+        }
+
+        @Override
+        public boolean block(Object item) {
+            return item instanceof SaveableAction && matchingIds.contains(((SaveableAction) item).getUid());
+        }
     }
 
 }

@@ -134,9 +134,10 @@ public class DisplayUnitPickerDialog extends JDialog {
                 } else {
                     addFilter(f); //"macros" is unchecked, add macro filter
                 }
+                f.setActive(filterCheckbox.isSelected());
             };
             filterCheckbox.addActionListener(updateFilter);
-            filterCheckbox.setSelected(true);
+            filterCheckbox.setSelected(f.isActive());
             updateFilter.actionPerformed(null);
 
         }

@@ -25,4 +25,13 @@ public class PickerFilterOption<T> {
     public boolean block(T item) {
         return true;
     }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    private boolean active;
+    public void setActive(boolean active) {
+        this.active = active;
+    }
 }
