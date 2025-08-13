@@ -2,14 +2,11 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
-import org.pepsoft.worldpainter.CustomLayerController;
 import org.pepsoft.worldpainter.CustomLayerControllerWrapper;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.*;
-import org.pepsoft.worldpainter.plugins.LayerProvider;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -118,7 +115,7 @@ public class InputOutputProvider implements IMappingValueProvider,
             }
         }
         getters.add(new ShadowMapIO());
-        getters.add(new DistanceToLayerEdgeGetter(MacroSelectionLayer.INSTANCE,100));
+        getters.add(new DistanceToLayerEdgeGetter(false, MacroSelectionLayer.INSTANCE,100));
         getters.add(new TerrainProvider());
         setters.add(new TerrainProvider());
         setters.add(new StonePaletteApplicator());
@@ -208,6 +205,9 @@ public class InputOutputProvider implements IMappingValueProvider,
                     .collect(Collectors.toCollection(ArrayList::new)));
         }
         layers.add(Annotations.INSTANCE); // hardcoded bc not part by default
+        for (Layer l : layers) {
+            this.layers.remove(l); // remove existing layer, to re-add with updated instance
+        }
         this.layers.addAll(layers);
         for (Layer l: layers) {
             layerIds.add(l.getId());

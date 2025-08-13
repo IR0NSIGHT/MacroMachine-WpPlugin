@@ -11,7 +11,7 @@ import java.util.Arrays;
 public class ShadowMap {
     public static TileContainer calculateShadowMap(Rectangle extent, TerrainHeightIO heightIO, Dimension dim) {
         TileContainer shadowmap = new TileContainer(extent, 0);
-        shadowmap.addAsValues(heightIO, dim);
+        shadowmap.addAsValues(heightIO, dim, false);
         for (int x = shadowmap.getMinXPos(); x < shadowmap.getMaxXPos(); x++) {
             // iterate column from south (-y) to north (+y)
             int[] column = shadowmap.getValueColumn(x);
@@ -21,9 +21,10 @@ public class ShadowMap {
         return shadowmap;
     }
 
-    public static TileContainer expandBinaryMask(BinaryLayerIO input, Dimension dimension, Rectangle extent) {
+    public static TileContainer expandBinaryMask(BinaryLayerIO input, Dimension dimension, Rectangle extent,
+                                                 boolean invert) {
         TileContainer container = new TileContainer(extent, 0);
-        container.addAsValues(input, dimension);
+        container.addAsValues(input, dimension, invert);
         return expandBinaryMask(container, 1);
     }
 
