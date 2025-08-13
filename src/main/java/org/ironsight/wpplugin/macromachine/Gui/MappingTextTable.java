@@ -26,11 +26,7 @@ public class MappingTextTable extends JPanel {
     private TableRowSorter<MappingActionValueTableModel> sorter;
     private int[] selectedViewRows = new int[0];
     private BlockingSelectionModel blockingSelectionModel;
-    private int[] getSelectedModelRows() {
-        int[] selectedModelRows =
-                Arrays.stream(numberTable.getSelectedRows()).map(viewRow ->  numberTable.convertRowIndexToModel(viewRow)).toArray();
-        return selectedModelRows;
-    }
+
     public MappingTextTable(MappingActionValueTableModel model, BlockingSelectionModel selectionModel) {
         this.blockingSelectionModel = selectionModel;
         numberTable = new JTable() {
@@ -74,6 +70,14 @@ public class MappingTextTable extends JPanel {
         this.tableModel = model;
         initComponents();
         addListeners(model, selectionModel);
+    }
+
+    private int[] getSelectedModelRows() {
+        int[] selectedModelRows =
+                Arrays.stream(numberTable.getSelectedRows())
+                        .map(viewRow -> numberTable.convertRowIndexToModel(viewRow))
+                        .toArray();
+        return selectedModelRows;
     }
 
     protected void updateComponents() {
@@ -153,10 +157,40 @@ public class MappingTextTable extends JPanel {
     }
 
     private void onAddControlPoint(ActionEvent actionEvent) {
-        if (getSelectedModelRows() != null && getSelectedModelRows().length != 0) {
-            tableModel.setIsMappingPoint(getSelectedModelRows(), true);
+        final int[] selectedModelRows = getSelectedModelRows();
+        boolean somethingSelected = selectedModelRows != null && selectedModelRows.length != 0;
+        // nothing is selected -> add control point at the very top
+        if (!somethingSelected) {
+            int addedPointRow = tableModel.insertMappingPointNear(0);
+            if (addedPointRow != -1)
+                SwingUtilities.invokeLater(() -> {
+                    blockingSelectionModel.setSelectionModelRow(addedPointRow);
+                });
+            return;
+        }
+
+        assert somethingSelected;
+
+        // find out if selection contains only control points or now
+        boolean atLeastOneNotControlPoint = false;
+        for (int row : selectedModelRows) {
+            if (!tableModel.isMappingPoint(row)) {
+                atLeastOneNotControlPoint = true;
+                break;
+            }
+        }
+
+        if (atLeastOneNotControlPoint) {
+            // at least one selected row is not a control point -> set to control point
+            tableModel.setIsMappingPoint(selectedModelRows, true);
+            // dont edit selection, didnt change.
         } else {
-            tableModel.insertMappingPointNear(0);
+            // all selected points are control points, insert near the end of selection
+            int addedPointRow = tableModel.insertMappingPointNear(selectedModelRows[selectedModelRows.length - 1]);
+            if (addedPointRow != -1)
+                SwingUtilities.invokeLater(() -> {
+                    blockingSelectionModel.setSelectionModelRow(addedPointRow);
+                });
         }
     }
 
