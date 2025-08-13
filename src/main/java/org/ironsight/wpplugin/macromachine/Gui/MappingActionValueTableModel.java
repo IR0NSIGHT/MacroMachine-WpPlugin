@@ -69,17 +69,23 @@ class MappingActionValueTableModel implements TableModel {
         fireEvent(new TableModelEvent(this, rows[0],rows[rows.length-1], TableModelEvent.UPDATE));
     }
 
-    public void insertMappingPointNear(int rowIndex) {
-        for (int i = rowIndex; i < inputs.length; i++) {
-            int mappingPointIndex = rowToMappingPointIdx[i];
+    /**
+     * insert a control point at the first opportunity, starting at rowindex, searching downwards (++)
+     * @param rowIndex
+     * @return model row index of isnerted point
+     */
+    public int insertMappingPointNear(int rowIndex) {
+        for (int row = rowIndex; row < inputs.length; row++) {
+            int mappingPointIndex = rowToMappingPointIdx[row];
             if (mappingPointIndex != -1)
                 continue; // already a mapping point, attempt next one
             MappingPoint[] mps = Arrays.copyOf(action.getMappingPoints(),action.getMappingPoints().length+1);
             //insert in back
-            mps[mps.length-1] = new MappingPoint(inputs[i].numericValue, action.map(inputs[i].numericValue));
+            mps[mps.length-1] = new MappingPoint(inputs[row].numericValue, action.map(inputs[row].numericValue));
             rebuildModelFromAction(this.getAction().withNewPoints(mps));
-            break;
+            return row;
         }
+        return -1;
     }
 
     public void deleteMappingPointAt(int[] rowIndex) {
