@@ -451,8 +451,19 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onAddMapping() {
+        Set<MappingAction> customActions = new TreeSet<>((o1, o2) -> {
+            if (o1.equalsWithoutUUID(o2)) {
+                return 0; // Treat as equal
+            } else {
+                // Define a consistent order for non-equal objects
+                return o1.getName().compareTo(o2.getName());
+            }
+        }
+        );
+        customActions.addAll(MappingActionContainer.getInstance().queryAll());
+
         ArrayList<IDisplayUnit> macrosAndActions = new ArrayList<>();
-        macrosAndActions.addAll(MappingActionContainer.getInstance().queryAll());
+        macrosAndActions.addAll(customActions);
         macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
         Collection<MappingAction> defaultActions = getDefaultFiltersAndEmptyAction();
 
