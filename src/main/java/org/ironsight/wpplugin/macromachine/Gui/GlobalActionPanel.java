@@ -77,7 +77,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
                 macros,
                 saveFile,
                 new ImportExportPolicy(),
-                s -> ErrorPopUp("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s),
+                s -> ErrorPopUpString("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s),
                 InputOutputProvider.INSTANCE);
 
         Runnable saveEverything = () -> ContainerIO.exportToFile(MappingActionContainer.getInstance(),
@@ -136,7 +136,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         return now.format(formatter);
     }
 
-    public static void ErrorPopUp(String message) {
+    public static void ErrorPopUpString(String message) {
         logMessage(message);
         JOptionPane.showMessageDialog(null, message, "Error",
                 // Title of the dialog
@@ -260,7 +260,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         macroDesigner = new MacroDesigner(this::onSubmitMacro);
         mappingEditor = new ActionEditor(this::onSubmitMapping);
         ioEditor = new InputOutputEditor(action -> MappingActionContainer.getInstance().updateMapping(action,
-                GlobalActionPanel::ErrorPopUp));
+                GlobalActionPanel::ErrorPopUpString));
         editorPanel = new JPanel(new CardLayout());
         editorPanel.add(mappingEditor, MAPPING_EDITOR);
         editorPanel.add(macroDesigner, MACRO_DESIGNER);
@@ -352,7 +352,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
     private void onSubmitMacro(Macro macro) {
         MacroContainer.getInstance().updateMapping(macro, e -> {
-            ErrorPopUp("Unable to save macro: " + e);
+            ErrorPopUpString("Unable to save macro: " + e);
         });
     }
 

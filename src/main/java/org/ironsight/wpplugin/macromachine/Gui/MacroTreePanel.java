@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointButtonPanel;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointListener;
@@ -22,12 +21,13 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 public class MacroTreePanel extends JPanel {
-    private final MacroContainer container;
+    private final MacroContainer macroContainer;
     private final MappingActionContainer mappingContainer;
     private final MacroApplicator applyToMap;
     DefaultTreeModel treeModel;
@@ -45,7 +45,7 @@ public class MacroTreePanel extends JPanel {
     MacroTreePanel(MacroContainer container, MappingActionContainer mappingContainer,
                    MacroApplicator applyToMap, ISelectItemCallback onSelectAction) {
         this.applyToMap = applyToMap;
-        this.container = container;
+        this.macroContainer = container;
         this.mappingContainer = mappingContainer;
         this.onSelectAction = onSelectAction;
         init();
@@ -91,6 +91,35 @@ public class MacroTreePanel extends JPanel {
         } else {
             return true;
         }
+    }
+
+    private static Macro cloneMacro(Macro original, ArrayList<MappingAction> clonedActions,
+                                    MacroContainer macroContainer, MappingActionContainer mappingContainer,
+                                    Consumer<String> onError) {
+        ArrayList<UUID> macroChildrenIds = new ArrayList<>();
+        ArrayList<MappingAction> clonedActionsTemp = new ArrayList<>();
+        // create clones for all actions
+        for (UUID childUID : original.getExecutionUUIDs()) {
+            if (mappingContainer.queryContains(childUID)) {
+                MappingAction actionClone = mappingContainer.queryById(childUID).withUUID(UUID.randomUUID());
+                clonedActionsTemp.add(actionClone);
+                macroChildrenIds.add(actionClone.getUid());
+            } else if (macroContainer.queryContains(childUID)) { // its a macro
+                macroChildrenIds.add(childUID);
+            } else {
+                onError.accept("can not clone macro, contains a NULL action for UUID " + childUID);
+                return null;
+            }
+        }
+
+        assert macroChildrenIds.size() == original.getActiveActions().length;
+
+        Macro clone = original.withUUID(UUID.randomUUID())
+                .withName(original.getName() + "_clone")
+                .withUUIDs(macroChildrenIds.toArray(UUID[]::new), original.getActiveActions());
+
+        clonedActions.addAll(clonedActionsTemp);
+        return clone;
     }
 
     public UserApplyActionCallback getUserCallback() {
@@ -260,7 +289,7 @@ public class MacroTreePanel extends JPanel {
         TreePath lastSelected = tree.getSelectionPath();
 
         int idx = lastSelected == null ? -1 : matchingPaths.indexOf(lastSelected);
-        int nextIdx = (idx + 1) % Math.max(1,matchingPaths.size());
+        int nextIdx = (idx + 1) % Math.max(1, matchingPaths.size());
         TreePath nextSelected = matchingPaths.get(nextIdx);
         tree.setSelectionPath(nextSelected);
         tree.scrollPathToVisible(nextSelected);
@@ -272,7 +301,7 @@ public class MacroTreePanel extends JPanel {
         HashSet<UUID> deletedUUIDS = new HashSet<>(getSelectedUUIDs(true, true));
         ArrayList<Macro> updatedMacros = new ArrayList<>();
         //remove Mapping Actions from all macros
-        for (Macro m : container.queryAll()) {
+        for (Macro m : macroContainer.queryAll()) {
             if (deletedUUIDS.contains(m.getUid()))
                 continue;
             Macro updated = m.withUUIDs(Arrays.stream(m.executionUUIDs)
@@ -281,17 +310,17 @@ public class MacroTreePanel extends JPanel {
             updatedMacros.add(updated);
         }
 
-        container.updateMapping(GlobalActionPanel::ErrorPopUp, updatedMacros.toArray(new Macro[0]));
+        macroContainer.updateMapping(GlobalActionPanel::ErrorPopUpString, updatedMacros.toArray(new Macro[0]));
 
         // Delete action / Macro in containers
-        container.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
+        macroContainer.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
         mappingContainer.deleteMapping(deletedUUIDS.toArray(new UUID[0]));
         blockUpdates = false;
         update();
     }
 
     private void init() {
-        container.subscribe(this::update);
+        macroContainer.subscribe(this::update);
         mappingContainer.subscribe(this::update);
         this.setLayout(new BorderLayout());
 
@@ -308,7 +337,7 @@ public class MacroTreePanel extends JPanel {
         this.add(searchField, BorderLayout.NORTH);
 
 
-        treeModel = new DefaultTreeModel(new MacroTreeNode(mappingContainer, container));
+        treeModel = new DefaultTreeModel(new MacroTreeNode(mappingContainer, macroContainer));
         tree = new JTree(treeModel);
         tree.setSelectionModel(new ToggleSelectionModel());
         tree.setRootVisible(true);
@@ -406,13 +435,18 @@ public class MacroTreePanel extends JPanel {
             exportMacroButton.addActionListener(f -> onExportMacroPressed());
 
             JButton createNewFromButton = new JButton("Add to new macro");
-            createNewFromButton.setToolTipText("Add all selected items to a new macro");
+            createNewFromButton.setToolTipText("Add all selected items into a new macro");
             createNewFromButton.addActionListener(e -> onAddMacroPressed(true));
+
+            JButton cloneMacroButton = new JButton("Clone macro");
+            cloneMacroButton.setToolTipText("Clone selected macros");
+            cloneMacroButton.addActionListener(e -> onCloneMacroPressed());
 
             JButton[] buttonArr = new JButton[]{
                     deleteButton,
                     exportMacroButton,
-                    createNewFromButton
+                    createNewFromButton,
+                    cloneMacroButton
             };
             for (JButton b : buttonArr) {
                 b.setMaximumSize(new Dimension(Integer.MAX_VALUE, b.getPreferredSize().height));
@@ -445,6 +479,37 @@ public class MacroTreePanel extends JPanel {
         });
     }
 
+    private void onCloneMacroPressed() {
+        Collection<UUID> macroUids = getSelectedUUIDs(true, false);
+
+        ArrayList<MappingAction> clonedActions = new ArrayList<>();
+        ArrayList<Macro> clonedMacros = new ArrayList<>();
+
+        for (UUID uuid : macroUids) {
+            Macro original = macroContainer.queryById(uuid);
+            Macro clone = cloneMacro(original, clonedActions, macroContainer, mappingContainer,
+                    GlobalActionPanel::ErrorPopUpString);
+            clonedMacros.add(clone);
+        }
+
+        mappingContainer.updateMapping(GlobalActionPanel::ErrorPopUpString,
+                clonedActions.toArray(MappingAction[]::new));
+        macroContainer.updateMapping(GlobalActionPanel::ErrorPopUpString,
+                clonedMacros.toArray(Macro[]::new));
+
+        SwingUtilities.invokeLater(()-> {
+            HashSet<UUID> newMacroUUIDs = new HashSet<>(clonedMacros.stream().map(Macro::getUid).toList());
+            MacroTreeNode rootNode = (MacroTreeNode) tree.getModel().getRoot();
+            ArrayList<TreePath> newMacroPaths = new ArrayList<>();
+            for (MacroTreeNode node : rootNode.getChildren()){
+                if (node.getPayloadType() == GlobalActionPanel.SELECTION_TPYE.MACRO && newMacroUUIDs.contains(node.getMacro().getUid())) {
+                    newMacroPaths.add(node.getPath());
+                }
+            }
+            tree.setSelectionPaths(newMacroPaths.toArray(TreePath[]::new));
+        });
+    }
+
     private void onAddMacroPressed(boolean useSelectedAsChildren) {
         UUID[] uidArr = new UUID[0];
         if (useSelectedAsChildren) {
@@ -454,7 +519,7 @@ public class MacroTreePanel extends JPanel {
             int idx = 0;
             for (UUID uuid : actionUids) {
                 MappingAction clone = mappingContainer.addMapping().withValuesFrom(mappingContainer.queryById(uuid));
-                mappingContainer.updateMapping(clone, GlobalActionPanel::ErrorPopUp);
+                mappingContainer.updateMapping(clone, GlobalActionPanel::ErrorPopUpString);
                 uidArr[idx++] = clone.getUid();
             }
             for (UUID macroId : macroUids) {
@@ -462,8 +527,8 @@ public class MacroTreePanel extends JPanel {
             }
         }
 
-        Macro macro = container.addMapping().withUUIDs(uidArr);
-        container.updateMapping(macro, GlobalActionPanel::ErrorPopUp);
+        Macro macro = macroContainer.addMapping().withUUIDs(uidArr);
+        macroContainer.updateMapping(macro, GlobalActionPanel::ErrorPopUpString);
         HashSet<UUID> set = new HashSet<>();
         set.add(macro.getUid());
         update(set);
@@ -484,7 +549,7 @@ public class MacroTreePanel extends JPanel {
             String outputDir = fileChooser.getSelectedFile().getPath();
             MacroMachineWindow.getDialog().setLastDirectoryPicked(outputDir);
             for (UUID macroId : getSelectedUUIDs(true, false)) {
-                Macro lastItem = container.queryById(macroId);
+                Macro lastItem = macroContainer.queryById(macroId);
                 MacroExportPolicy policy = new MacroExportPolicy(lastItem, MacroContainer.getInstance());
                 String fileName = sanitizeFileName(lastItem.getName()) + ".macro";
                 File macroFile = new File(outputDir + "/" + fileName);
@@ -492,7 +557,7 @@ public class MacroTreePanel extends JPanel {
                         MacroContainer.getInstance(),
                         macroFile,
                         policy,
-                        GlobalActionPanel::ErrorPopUp, InputOutputProvider.INSTANCE);
+                        GlobalActionPanel::ErrorPopUpString, InputOutputProvider.INSTANCE);
             }
         }
     }
@@ -513,7 +578,7 @@ public class MacroTreePanel extends JPanel {
                         selected,
                         new ConflictResolveImportPolicy(MacroContainer.getInstance(),
                                 MappingActionContainer.getInstance(), SwingUtilities.getWindowAncestor(this)),
-                        GlobalActionPanel::ErrorPopUp, InputOutputProvider.INSTANCE
+                        GlobalActionPanel::ErrorPopUpString, InputOutputProvider.INSTANCE
                 );
             }
         }
@@ -542,8 +607,9 @@ public class MacroTreePanel extends JPanel {
             return;
         }
 
-        final Macro executingMacro = container.queryById(((MacroTreeNode) selected.getLastPathComponent()).getMacro()
-                .getUid());
+        final Macro executingMacro =
+                macroContainer.queryById(((MacroTreeNode) selected.getLastPathComponent()).getMacro()
+                        .getUid());
         if (executingMacro == null) {
             macroIsCurrentlyExecuting = false;
             return;
@@ -553,7 +619,7 @@ public class MacroTreePanel extends JPanel {
         macroExecutionCallback = panel.getUserCallback();
 
         treeStepper = new TreeDebugStepperUI((MacroTreeNode) selected.getLastPathComponent(),
-                container,
+                macroContainer,
                 this.mappingContainer,
                 this::setStepperToPath);
         executorService.submit(() -> {

@@ -137,6 +137,9 @@ public class Macro implements SaveableAction {
         return new Macro(this.name, this.description, uuid, this.uid, activeActions);
     }
 
+    public Macro withUUID(UUID selfId) {
+        return new Macro(name,description, executionUUIDs.clone(), selfId,activeActions.clone());
+    }
     public static boolean[] deleteAt(boolean[] arr, int idx) {
         if (arr == null || idx < 0 || idx >= arr.length) {
             throw new IllegalArgumentException("Invalid index or array is null");

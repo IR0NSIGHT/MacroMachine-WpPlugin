@@ -278,13 +278,13 @@ public class MacroDesigner extends JPanel {
                                 return original; // its not a mapping and doesnt need cloning.
                             MappingAction clone =
                                     actionContainer.addMapping().withValuesFrom(actionContainer.queryById(original));
-                            actionContainer.updateMapping(clone, GlobalActionPanel::ErrorPopUp);
+                            actionContainer.updateMapping(clone, GlobalActionPanel::ErrorPopUpString);
                             return clone.getUid(); //clone action and return clones UUID
                         })
                         .toArray(UUID[]::new);
 
         Macro nested = MacroContainer.getInstance().addMapping().withName(input).withUUIDs(selectedUUIDs);
-        MacroContainer.getInstance().updateMapping(nested, GlobalActionPanel::ErrorPopUp);
+        MacroContainer.getInstance().updateMapping(nested, GlobalActionPanel::ErrorPopUpString);
 
         ArrayList<UUID> remainingUUIDs = new ArrayList<>();
         ArrayList<Boolean> activeItems = new ArrayList<>();
@@ -490,7 +490,7 @@ public class MacroDesigner extends JPanel {
         ArrayList<Integer> newSelection = new ArrayList<>();
         Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), (SaveableAction) selected,
                 () -> MappingActionContainer.getInstance().addMapping(),
-                a -> MappingActionContainer.getInstance().updateMapping(a, GlobalActionPanel::ErrorPopUp),
+                a -> MappingActionContainer.getInstance().updateMapping(a, GlobalActionPanel::ErrorPopUpString),
                 table.getSelectedRows(), newSelection);
         setMacro(newMacro, true);
         assert this.macro.equals(newMacro) : "macro was added an action, but action is not " +
