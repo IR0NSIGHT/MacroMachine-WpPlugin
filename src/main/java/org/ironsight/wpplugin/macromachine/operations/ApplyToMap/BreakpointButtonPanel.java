@@ -175,6 +175,7 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
     @Override
     public void afterEverything() {
         setButtonsActive(false);
+        stepperVisulaizer.afterEverything();
     }
 
     class MacroMachineButton extends JButton {
