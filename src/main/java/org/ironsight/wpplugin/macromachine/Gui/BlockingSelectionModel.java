@@ -29,6 +29,18 @@ class BlockingSelectionModel extends DefaultListSelectionModel {
         return lastSelectedModelRow;
     }
 
+    @Override
+    public void removeIndexInterval(int index0, int index1) {
+        super.removeIndexInterval(index0, index1);
+        lastSelectedModelRow = table.convertRowIndexToModel(index1);
+    }
+
+    @Override
+    public void removeSelectionInterval(int index0, int index1) {
+        super.removeSelectionInterval(index0, index1);
+        lastSelectedModelRow = table.convertRowIndexToModel(index1);
+    }
+
     public void setSelectionModelRow(int row) {
         int viewRow = table.convertRowIndexToView(row);
         if (viewRow == -1) {
@@ -49,6 +61,7 @@ class BlockingSelectionModel extends DefaultListSelectionModel {
     public void addSelectionInterval(int index0, int index1) {
         if (!selectionBlocked) {
             super.addSelectionInterval(index0, index1);
+            lastSelectedModelRow = table.convertRowIndexToModel(index1);
         }
     }
 
