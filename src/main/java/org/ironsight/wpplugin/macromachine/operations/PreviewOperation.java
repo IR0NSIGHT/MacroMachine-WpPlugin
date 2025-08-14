@@ -1,21 +1,19 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
-import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.ironsight.wpplugin.macromachine.threeDRendering.Export3DViewHelper.renderTileToSurfaceObject;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -41,40 +39,17 @@ public class PreviewOperation extends AbstractBrushOperation {
     private TileChangedListener listener = new TileChangedListener(this);
     private ArrayList<Tile> tilesInExtent = new ArrayList<>();
     private Platform platform;
+
     public PreviewOperation() {
         super(NAME, DESCRIPTION, ID);
     }
 
-    private static boolean updateArraysFromTile(float[][] height, float[][] waterHeight, Material[][] terrain,
-                                                Rectangle arrayExtents, Tile t, Platform p) {
-        boolean changed = false;
-        int tileStartX = t.getX() * TILE_SIZE;
-        int tileStartY = t.getY() * TILE_SIZE;
-        int startX = Math.max(0, arrayExtents.x - tileStartX);
-        int startY = Math.max(0, arrayExtents.y - tileStartY);
-        for (int x = startX; x < TILE_SIZE; x++) {
-            for (int y = startY; y < TILE_SIZE; y++) {
-                changed = true;
-                int absMapPosX = x + tileStartX;
-                int absMapPosY = y + tileStartY;
-                if (!arrayExtents.contains(absMapPosX, absMapPosY))
-                    continue;
-                int idxX = absMapPosX - arrayExtents.x;
-                int idxY = absMapPosY - arrayExtents.y;
-                int heightValue = t.getIntHeight(x, y);
-                height[idxX][idxY] = t.getIntHeight(x, y);
-                waterHeight[idxX][idxY] = t.getWaterLevel(x, y);
-                terrain[idxX][idxY] = t.getTerrain(x, y)
-                        .getMaterial(p, 123456L, absMapPosX, absMapPosY, heightValue, heightValue);
-            }
-        }
-        return changed;
-    }
-
-    void submitArraysToViewer() {
-        GlobalActionPanel.getSurfaceObject().setTerrainData(height, terrain, waterHeight);
-        GlobalActionPanel.flagForChangedSurfaceObject();
-    }
+    // HIGHLIGHT AREA
+    public static final Layer annotationLayer = new AnnotationLayer(
+            "macroMachine_3dpreview_annotationlayer", "3d " +
+            "Preview", "Shows " +
+            "what the 3d preview is currently " +
+            "rendering", Layer.DataSize.BIT, true, 65, '\0');
 
     /**
      * Perform the operation. For single shot operations this is invoked once per mouse-down. For continuous operations
@@ -108,50 +83,54 @@ public class PreviewOperation extends AbstractBrushOperation {
         // * paint - the currently selected paint
 
         int radius = this.getBrush().getEffectiveRadius();
-        int startX = Math.max(getDimension().getLowestX() * TILE_SIZE, centreX - radius);
-        int startY = Math.max(getDimension().getLowestY() * TILE_SIZE, centreY - radius);
-        int endX = Math.min((getDimension().getHighestX() + 1) * TILE_SIZE - 1,
-                centreX + radius);
-        int endY = Math.min((getDimension().getHighestY() + 1) * TILE_SIZE - 1,
-                centreY + radius);
-        int sizeX = Math.max(0, endX - startX);
-        int sizeY = Math.max(0, endY - startY);
 
-        lastExtent = new Rectangle(startX, startY, sizeX, sizeY);
-        for (Tile t : tilesInExtent)
-            t.removeListener(this.listener);
-        tilesInExtent.clear();
-
-        for (int x = startX >> TILE_SIZE_BITS; x <= endX >> TILE_SIZE_BITS; x++) {
-            for (int y = startY >> TILE_SIZE_BITS; y <= endY >> TILE_SIZE_BITS; y++) {
-                Tile t = getDimension().getTile(x, y);
-                t.addListener(this.listener);
-                tilesInExtent.add(getDimension().getTile(x, y));
-
-            }
-        }
-
-
-        height = new float[sizeX][];
-        waterHeight = new float[sizeX][];
-        terrain = new Material[sizeX][];
+        float tileRadius = 1f * radius / TILE_SIZE;
+        int tileRadiusMax = (int) Math.ceil(tileRadius);
         Dimension dim = getDimension();
 
-        platform = getView().getDimension().getWorld().getPlatform();
-        for (int x = 0; x < sizeX; x++) {
-            height[x] = new float[sizeY];
-            waterHeight[x] = new float[sizeY];
-            terrain[x] = new Material[sizeY];
-            for (int y = 0; y < sizeY; y++) {
-                height[x][y] = dim.getIntHeightAt(x + startX, y + startY);
-                waterHeight[x][y] = dim.getWaterLevelAt(x + startX, y + startY);
-                terrain[x][y] =
-                        dim.getTerrainAt(x + startX, y + startY)
-                                .getMaterial(platform, 123456L, x + startX, y + startY, height[x][y],
-                                        Math.round(height[x][y]));
+        Rectangle selectedSquare = new Rectangle(centreX - radius, centreY - radius, 2 * radius, 2 * radius);
+
+        HashSet<Tile> tiles = new HashSet<>();
+
+        // the tile in which the click position is
+        int centreXTile = centreX >> TILE_SIZE_BITS, centreYTile = centreY >> TILE_SIZE_BITS;
+        tiles.add(dim.getTile(centreXTile, centreYTile)); // always add the clicked tile itself.
+        for (int x = centreXTile - tileRadiusMax; x <= centreXTile + tileRadiusMax; x++) {
+            for (int y = centreYTile - tileRadiusMax; y <= centreYTile + tileRadiusMax; y++) {
+                if (!dim.getExtent().contains(x, y))
+                    continue;
+
+                int tileCenterBlockX = x * TILE_SIZE + TILE_SIZE/2;
+                int tileCenterBlockY = y * TILE_SIZE + TILE_SIZE/2;
+
+                if (!selectedSquare.contains(tileCenterBlockX, tileCenterBlockY)) {
+                    System.out.printf("reject chunk %d,%d because center %x %d not in extent %s",x,y,
+                            tileCenterBlockX, tileCenterBlockY, selectedSquare.toString());
+                    continue;
+                }
+
+                Tile t = dim.getTile(x, y);
+                assert t != null;
+                tiles.add(t);
             }
         }
-        submitArraysToViewer();
+
+        if (!dim.isEventsInhibited())
+            dim.setEventsInhibited(true);
+        dim.clearLayerData(annotationLayer);
+        for (Tile tile : tiles) {
+            tile = dim.getTileForEditing(tile.getX(),tile.getY());
+            for (int x = 0; x < TILE_SIZE; x++) {
+                for (int y = 0; y < TILE_SIZE; y++) {
+                    tile.setBitLayerValue(annotationLayer, x, y, true);
+                }
+            }
+        }
+        if (dim.isEventsInhibited())
+            dim.setEventsInhibited(false);
+
+        GlobalActionPanel.setSurfaceObject(renderTileToSurfaceObject(tiles, dim));
+        GlobalActionPanel.flagForChangedSurfaceObject();
     }
 
     static class TileChangedListener implements Tile.Listener {
@@ -175,13 +154,16 @@ public class PreviewOperation extends AbstractBrushOperation {
             if (dirtyTiles.isEmpty())
                 return;
             for (Tile t : dirtyTiles) {
-                boolean tileChanged = updateArraysFromTile(op.height, op.waterHeight, op.terrain, op.lastExtent, t,
-                        op.platform);
-                if (tileChanged)
-                    changed = true;
+                // boolean tileChanged = updateArraysFromTile(op.height, op.waterHeight, op.terrain, op
+                // .lastExtent, t,
+                //         op.platform);
+                // if (tileChanged)
+                //     changed = true;
             }
-            if (changed)
+        /*    if (changed)
                 op.submitArraysToViewer();
+                */
+
             dirtyTiles.clear();
             changed = false;
         }
@@ -216,4 +198,5 @@ public class PreviewOperation extends AbstractBrushOperation {
 
         }
     }
+
 }

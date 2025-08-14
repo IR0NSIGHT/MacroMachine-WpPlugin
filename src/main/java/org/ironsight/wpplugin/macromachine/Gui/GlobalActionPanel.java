@@ -11,6 +11,7 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionVa
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.ironsight.wpplugin.macromachine.threeDRendering.SurfaceObject;
 import org.pepsoft.worldpainter.dynmap.DynmapPreviewer;
+import org.pepsoft.worldpainter.objects.WPObject;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,7 +40,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     static JTextArea logPanel;
     private static DynmapPreviewer previewer = new DynmapPreviewer();
     private static GlobalActionPanel INSTANCE;
-    private static SurfaceObject surfaceObject = new SurfaceObject();
+    private static WPObject surfaceObject = new SurfaceObject();
     MacroTreePanel macroTreePanel;
     MacroDesigner macroDesigner;
     ActionEditor mappingEditor;
@@ -201,8 +202,12 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
     }
 
-    public static SurfaceObject getSurfaceObject() {
+    public static WPObject getSurfaceObject() {
         return surfaceObject;
+    }
+
+    public static void setSurfaceObject(WPObject surfaceObject) {
+        GlobalActionPanel.surfaceObject = surfaceObject;
     }
 
     private void onUpdate() {
@@ -242,6 +247,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     private void doRender3d() {
+
         getPreviewer().setObject(getSurfaceObject(), null); // immediate redraw
         rerender3d = false;
     }

@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
-import static org.ironsight.wpplugin.macromachine.operations.TestData.createDimension;
+import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.createDimension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;

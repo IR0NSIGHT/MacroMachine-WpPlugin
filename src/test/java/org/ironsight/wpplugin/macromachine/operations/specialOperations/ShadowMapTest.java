@@ -6,9 +6,8 @@ import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
-import java.util.Arrays;
 
-import static org.ironsight.wpplugin.macromachine.operations.TestData.createDimension;
+import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.createDimension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
