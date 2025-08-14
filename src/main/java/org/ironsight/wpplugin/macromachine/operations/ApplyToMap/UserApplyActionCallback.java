@@ -5,6 +5,7 @@ import org.ironsight.wpplugin.macromachine.operations.ExecutionStatistic;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.pepsoft.worldpainter.Dimension;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.stream.Collectors;
 public class UserApplyActionCallback implements ApplyActionCallback {
     private final boolean isDebug;
     int actionIdx = 0;
+    int totalActions = 0;
     private DebugUserInterface debugUI;
     private List<MappingAction> steps;
 
@@ -21,8 +23,10 @@ public class UserApplyActionCallback implements ApplyActionCallback {
         this.debugUI = debuggerUI;
     }
 
+
     @Override
     public void setProgressOfAction(int percent) {
+        debugUI.setProgessTo(actionIdx, percent, totalActions);
     }
 
     @Override
@@ -32,6 +36,8 @@ public class UserApplyActionCallback implements ApplyActionCallback {
 
     @Override
     public void beforeEachAction(MappingAction a, Dimension dimension) {
+        debugUI.setProgessTo(actionIdx, 0, totalActions);
+
         debugUI.OnReachedBreakpoint(actionIdx);
         DebugUserInterface.BreakpointReaction breakpointReaction = DebugUserInterface.BreakpointReaction.WAIT;
         if (isDebug) {
@@ -55,6 +61,8 @@ public class UserApplyActionCallback implements ApplyActionCallback {
 
     @Override
     public void afterEachAction(ExecutionStatistic statistic) {
+        debugUI.setProgessTo(actionIdx, 100, totalActions);
+
         if (statistic != null) {
             GlobalActionPanel.logMessage(statistic.toString());
         }
@@ -71,6 +79,8 @@ public class UserApplyActionCallback implements ApplyActionCallback {
         this.steps = steps;
         this.actionIdx = 0;
         debugUI.SetBreakpoints(new ArrayList<>(steps));
+        totalActions = steps.size();
+        debugUI.setProgessTo(0, 0, steps.size());
     }
 
     @Override
