@@ -1,0 +1,102 @@
+{
+  "exportDate" : "2025-08-14T12:40:00.7375265+02:00[Europe/Berlin]",
+  "comment" : "no comment",
+  "macros" : [ {
+    "macroName" : "Paint Mask: cyan + water",
+    "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+    "stepIds" : [ "03691238-5118-4bd3-a127-3b102259873f", "168093c4-3b5d-49f9-9fc6-8941a434e681", "a0addb75-1493-42cf-859e-e960d8135fc8" ],
+    "selfId" : "5651b769-14f3-4629-85dd-e8d6df650389",
+    "activeIds" : [ true, true, true ]
+  }, {
+    "macroName" : "Color: waterdistance to heatmap",
+    "description" : "inside cyan area, mark how far blocks are away from water sources using heatmap",
+    "stepIds" : [ "5651b769-14f3-4629-85dd-e8d6df650389", "f25cfc76-bcf2-48af-862c-46c9d847fd0e", "ac0682b2-0277-4b2a-a0af-67b32b3b5fd1" ],
+    "selfId" : "579ca107-7849-4193-a5ac-31dea9fdf980",
+    "activeIds" : [ true, true, true ]
+  }, {
+    "macroName" : "Set Filter: on land + cyan",
+    "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+    "stepIds" : [ "2f2048db-6d2a-430a-b2b8-6407b4b50bb1", "0b73f589-d704-455b-8d14-af12bf7b0bbe", "6410aad4-b61d-4905-a392-4b0a35bbd648" ],
+    "selfId" : "f25cfc76-bcf2-48af-862c-46c9d847fd0e",
+    "activeIds" : [ true, true, true ]
+  } ],
+  "actions" : [ {
+    "inputId" : "DISTANCE_TO_EDGE",
+    "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", 100, 0 ],
+    "outputId" : "NIBBLE_LAYER",
+    "outputData" : [ "Heatmap", "org.ironsight.wpplugin.macropainter.heatmaplayer", false, [ 8191, 24575, 39679, 56063, 65515, 65444, 65384, 65317, 1638144, 6487808, 10878720, 15466240, 16766720, 16751104, 16736256, 16720896 ] ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0, 15, 16 ],
+    "outputPoints" : [ 15, 1, 0 ],
+    "name" : "Heatmap near water",
+    "description" : "Default filter: block all blocks that are above this level",
+    "uid" : "ac0682b2-0277-4b2a-a0af-67b32b3b5fd1"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 1 ],
+    "name" : "Filter: Reset",
+    "description" : "Default filter: allow all blocks",
+    "uid" : "2f2048db-6d2a-430a-b2b8-6407b4b50bb1"
+  }, {
+    "inputId" : "ANNOTATION",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+    "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 ],
+    "name" : "Filter: Only On Annotations Cyan",
+    "description" : "Default filter: block all blocks that are not cyan annotated.",
+    "uid" : "0b73f589-d704-455b-8d14-af12bf7b0bbe"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "BINARY_LAYER",
+    "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 1 ],
+    "name" : "Apply: MacroSelection",
+    "description" : "Default action: apply grass to all blocks that have passed the filter",
+    "uid" : "a0addb75-1493-42cf-859e-e960d8135fc8"
+  }, {
+    "inputId" : "WATER_DEPTH",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 0, 1 ],
+    "outputPoints" : [ 1, 0 ],
+    "name" : "Filter: Only On Land",
+    "description" : "Default filter: block all blocks that are not above waterlevel",
+    "uid" : "6410aad4-b61d-4905-a392-4b0a35bbd648"
+  }, {
+    "inputId" : "ANNOTATION",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+    "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 ],
+    "name" : "Filter: Only On Annotations Cyan",
+    "description" : "Default filter: block all blocks that are not cyan annotated.",
+    "uid" : "03691238-5118-4bd3-a127-3b102259873f"
+  }, {
+    "inputId" : "WATER_DEPTH",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 0, 1 ],
+    "outputPoints" : [ 0, 1 ],
+    "name" : "Filter: Only On Water",
+    "description" : "Default filter: block all blocks that are not below waterlevel",
+    "uid" : "168093c4-3b5d-49f9-9fc6-8941a434e681"
+  } ],
+  "layers" : "rO0ABXVyAChbTG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXI7BDpGR8pvArcCAAB4cAAAAAA="
+}
