@@ -176,6 +176,10 @@ public class MappingAction implements SaveableAction {
         return new MappingAction(input, output, mappingPoints, actionType, name, description, uid);
     }
 
+    public MappingAction withUUID(UUID uuid) {
+        return new MappingAction(input, output, mappingPoints, actionType, name, description, uuid);
+    }
+
     public MappingAction withValuesFrom(MappingAction other) {
         return new MappingAction(other.input, other.output, other.mappingPoints, other.actionType, other.name,
                 other.description, this.uid);
