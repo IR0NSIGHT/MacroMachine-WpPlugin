@@ -19,9 +19,11 @@ public class TreeDebugStepperUI implements BreakpointListener {
     HashMap<UUID, MacroTreeNode> actionToNode = new HashMap<>();
     ArrayList<MappingAction> executionSteps;
     Consumer<TreePath> setStepperToNode;
+    private MacroTreeNode rootMacroNode;
     public TreeDebugStepperUI(MacroTreeNode rootMacro, MacroContainer macroContainer,
                               MappingActionContainer actionContainer, Consumer<TreePath> setStepperToNode) {
         this.setStepperToNode = setStepperToNode;
+        this.rootMacroNode = rootMacro;
         addToMapRecursive(rootMacro,actionToNode);
     }
 
@@ -63,6 +65,8 @@ public class TreeDebugStepperUI implements BreakpointListener {
 
     @Override
     public void afterEverything() {
-
+        SwingUtilities.invokeLater(() -> {
+            setStepperToNode.accept(rootMacroNode.getPath());
+        });
     }
 }
