@@ -21,8 +21,10 @@ public class MappingTextTable extends JPanel {
     private final MappingActionValueTableModel tableModel;
     private final JTable numberTable;
     JScrollPane scrollPane;
+    ValuePreviewWindow previeWindow;
     private boolean isFilterForMappingPoints = true;
     private JCheckBox groupValuesCheckBox;
+    private JCheckBox showPreviewWindow;
     private TableRowSorter<MappingActionValueTableModel> sorter;
     private int[] selectedViewRows = new int[0];
     private BlockingSelectionModel blockingSelectionModel;
@@ -151,10 +153,9 @@ public class MappingTextTable extends JPanel {
             }
         }));
 
-        ValuePreviewWindow windowHanlde = new ValuePreviewWindow();
-        numberTable.addMouseListener(windowHanlde);
-        numberTable.addMouseMotionListener(windowHanlde);
-        scrollPane.addMouseWheelListener(windowHanlde);
+        numberTable.addMouseListener(previeWindow);
+        numberTable.addMouseMotionListener(previeWindow);
+        scrollPane.addMouseWheelListener(previeWindow);
     }
 
     private void onAddControlPoint(ActionEvent actionEvent) {
@@ -204,6 +205,8 @@ public class MappingTextTable extends JPanel {
     protected void initComponents() {
         isFilterForMappingPoints = true;
 
+        previeWindow = new ValuePreviewWindow();
+
         this.setLayout(new BorderLayout());
         Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
         Border whiteBorder = new EmptyBorder(5, 5, 5, 5); // 5px white border
@@ -225,13 +228,24 @@ public class MappingTextTable extends JPanel {
         scrollPane = new JScrollPane(numberTable);
         this.add(scrollPane, BorderLayout.CENTER);
         JPanel buttons = new JPanel();
-        groupValuesCheckBox = new JCheckBox("Only Control Points");
-        groupValuesCheckBox.setSelected(isFilterForMappingPoints);
-        groupValuesCheckBox.addActionListener(f -> {
-            this.isFilterForMappingPoints = groupValuesCheckBox.isSelected();
-            setRowFilter(isFilterForMappingPoints);
-        });
-        buttons.add(groupValuesCheckBox);
+        {
+            groupValuesCheckBox = new JCheckBox("Only Control Points");
+            groupValuesCheckBox.setSelected(isFilterForMappingPoints);
+            groupValuesCheckBox.addActionListener(f -> {
+                this.isFilterForMappingPoints = groupValuesCheckBox.isSelected();
+                setRowFilter(isFilterForMappingPoints);
+            });
+            buttons.add(groupValuesCheckBox);
+        }
+
+        {
+            showPreviewWindow = new JCheckBox("Preview Window");
+            showPreviewWindow.setToolTipText("Show preview window when hovering over values in the table");
+            showPreviewWindow.setSelected(false);
+            showPreviewWindow.addActionListener(previeWindow);
+            buttons.add(showPreviewWindow);
+        }
+
 
         {
             JButton addMappingPointButton = new JButton("add control point");
@@ -249,10 +263,11 @@ public class MappingTextTable extends JPanel {
 
     }
 
-    private class ValuePreviewWindow extends MouseAdapter {
+    private class ValuePreviewWindow extends MouseAdapter implements ActionListener {
         JWindow previewWindow;
         JLabel previewLabel;
         private int row, col;
+        private boolean allowWindow = false;
 
         public ValuePreviewWindow() {
             previewWindow = new JWindow();
@@ -291,7 +306,7 @@ public class MappingTextTable extends JPanel {
                 Point locationOnScreen = numberTable.getLocationOnScreen();
                 previewWindow.setLocation(locationOnScreen.x + (int) p.getX() + 15,
                         locationOnScreen.y + (int) p.getY() + 15);
-                previewWindow.setVisible(true);
+                previewWindow.setVisible(allowWindow);
             }
         }
 
@@ -305,7 +320,7 @@ public class MappingTextTable extends JPanel {
         public void mouseEntered(MouseEvent e) {
             row = -1;
             col = -1;
-            previewWindow.setVisible(true);
+            previewWindow.setVisible(allowWindow);
         }
 
         @Override
@@ -318,6 +333,11 @@ public class MappingTextTable extends JPanel {
         @Override
         public void mouseMoved(MouseEvent e) {
             setMouseOver(e.getPoint());
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            allowWindow = showPreviewWindow.isSelected();
         }
     }
 }
