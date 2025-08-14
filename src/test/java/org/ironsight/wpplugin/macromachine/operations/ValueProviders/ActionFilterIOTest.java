@@ -1,10 +1,9 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.TestData;
+import org.ironsight.wpplugin.macromachine.threeDRendering.TestData;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 
-import javax.swing.*;
 import java.awt.*;
 
 import static org.junit.jupiter.api.Assertions.*;

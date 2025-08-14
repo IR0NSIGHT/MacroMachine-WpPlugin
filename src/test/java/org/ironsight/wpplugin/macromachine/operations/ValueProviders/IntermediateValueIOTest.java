@@ -3,7 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
-import org.ironsight.wpplugin.macromachine.operations.TestData;
+import org.ironsight.wpplugin.macromachine.threeDRendering.TestData;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;

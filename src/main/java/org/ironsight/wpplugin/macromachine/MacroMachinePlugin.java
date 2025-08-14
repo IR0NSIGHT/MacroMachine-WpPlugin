@@ -81,6 +81,7 @@ public class MacroMachinePlugin extends AbstractPlugin implements
             LAYERS = new ArrayList<>();
             LAYERS.add(MacroSelectionLayer.INSTANCE);
             LAYERS.add(HeatMapLayer.INSTANCE);
+            LAYERS.add(PreviewOperation.annotationLayer);
         }
         return LAYERS;
     }

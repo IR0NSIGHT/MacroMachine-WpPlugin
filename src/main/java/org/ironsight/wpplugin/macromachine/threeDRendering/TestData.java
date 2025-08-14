@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.macromachine.operations;
+package org.ironsight.wpplugin.macromachine.threeDRendering;
 
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.util.Box;
@@ -25,7 +25,7 @@ public final class TestData {
     public static final Theme THEME = SimpleTheme.createSingleTerrain(GRASS, MIN_HEIGHT, MAX_HEIGHT, 62);
     public static final long SEED = 0L;
 
-    private static TileFactory createTileFactory(int terrainHeight) {
+    public static TileFactory createTileFactory(int terrainHeight) {
         return new HeightMapTileFactory(SEED,
                 new ConstantHeightMap(terrainHeight),
                 MIN_HEIGHT,
