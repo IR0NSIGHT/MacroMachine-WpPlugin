@@ -14,6 +14,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
@@ -34,6 +35,7 @@ public class MacroTreePanel extends JPanel {
     JTree tree;
     ISelectItemCallback onSelectAction;
     JPopupMenu popupMenu = new JPopupMenu();
+    JPanel contentPanel;
     private BreakpointButtonPanel debuggerUI;
     private UserApplyActionCallback macroExecutionCallback;
     private String filterString = "";
@@ -41,6 +43,8 @@ public class MacroTreePanel extends JPanel {
     private boolean macroIsCurrentlyExecuting;
     private boolean blockUpdates = false;
     private BreakpointListener treeStepper;
+    private JButton toggleButton;
+    private boolean collapsed = false;
 
     MacroTreePanel(MacroContainer container, MappingActionContainer mappingContainer,
                    MacroApplicator applyToMap, ISelectItemCallback onSelectAction) {
@@ -320,9 +324,10 @@ public class MacroTreePanel extends JPanel {
     }
 
     private void init() {
+        contentPanel = new JPanel();
         macroContainer.subscribe(this::update);
         mappingContainer.subscribe(this::update);
-        this.setLayout(new BorderLayout());
+        contentPanel.setLayout(new BorderLayout());
 
         // Create a search field
         JTextField searchField = new JTextField();
@@ -334,7 +339,7 @@ public class MacroTreePanel extends JPanel {
             }
         });
         searchField.setBorder(BorderFactory.createTitledBorder("Search macro"));
-        this.add(searchField, BorderLayout.NORTH);
+        contentPanel.add(searchField, BorderLayout.NORTH);
 
 
         treeModel = new DefaultTreeModel(new MacroTreeNode(mappingContainer, macroContainer));
@@ -404,7 +409,7 @@ public class MacroTreePanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(tree,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        this.add(scrollPane, BorderLayout.CENTER);
+        contentPanel.add(scrollPane, BorderLayout.CENTER);
 
         JPanel buttons = new JPanel();
         buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
@@ -465,8 +470,32 @@ public class MacroTreePanel extends JPanel {
         bottomButtons.add(helpButton);
         bottomButtons.add(addButton);
         bottomButtons.add(debuggerUI);
-        this.add(bottomButtons, BorderLayout.SOUTH);
+        contentPanel.add(bottomButtons, BorderLayout.SOUTH);
+
+
+        // Toggle button (header)
+        toggleButton = new JButton("▼"); // ▼ for expanded, ▶ for collapsed
+        {
+            toggleButton.setFocusPainted(false);
+            toggleButton.setBorderPainted(false);
+            toggleButton.setContentAreaFilled(false);
+            toggleButton.setToolTipText("Hide / Show treeview");
+            toggleButton.setHorizontalAlignment(SwingConstants.LEFT);
+            toggleButton.addActionListener(e -> toggleCollapsed());
+        }
+        this.setLayout(new BorderLayout());
+        this.add(toggleButton, BorderLayout.NORTH);
+        this.add(contentPanel, BorderLayout.CENTER);
+
         this.invalidate();
+    }
+
+    private void toggleCollapsed() {
+        collapsed = !collapsed;
+        contentPanel.setVisible(!collapsed);
+        toggleButton.setText((collapsed ? "▶ " : "▼ "));
+        revalidate();
+        repaint();
     }
 
     protected BreakpointListener getTreeStepper() {
@@ -497,12 +526,13 @@ public class MacroTreePanel extends JPanel {
         macroContainer.updateMapping(GlobalActionPanel::ErrorPopUpString,
                 clonedMacros.toArray(Macro[]::new));
 
-        SwingUtilities.invokeLater(()-> {
+        SwingUtilities.invokeLater(() -> {
             HashSet<UUID> newMacroUUIDs = new HashSet<>(clonedMacros.stream().map(Macro::getUid).toList());
             MacroTreeNode rootNode = (MacroTreeNode) tree.getModel().getRoot();
             ArrayList<TreePath> newMacroPaths = new ArrayList<>();
-            for (MacroTreeNode node : rootNode.getChildren()){
-                if (node.getPayloadType() == GlobalActionPanel.SELECTION_TPYE.MACRO && newMacroUUIDs.contains(node.getMacro().getUid())) {
+            for (MacroTreeNode node : rootNode.getChildren()) {
+                if (node.getPayloadType() == GlobalActionPanel.SELECTION_TPYE.MACRO &&
+                        newMacroUUIDs.contains(node.getMacro().getUid())) {
                     newMacroPaths.add(node.getPath());
                 }
             }
