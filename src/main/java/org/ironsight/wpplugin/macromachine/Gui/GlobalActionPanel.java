@@ -43,7 +43,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     private static WPObject surfaceObject = new SurfaceObject();
     MacroTreePanel macroTreePanel;
     MacroDesigner macroDesigner;
-    ActionEditor mappingEditor;
+    ActionDesigner mappingEditor;
     InputOutputEditor ioEditor;
     //consumes macro to apply to map. callback for "user pressed apply-macro"
     MacroApplicator applyMacro;
@@ -264,7 +264,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         macroTreePanel.setMaximumSize(new Dimension(200, 0));
 
         macroDesigner = new MacroDesigner(this::onSubmitMacro);
-        mappingEditor = new ActionEditor(this::onSubmitMapping);
+        mappingEditor = new ActionDesigner(this::onSubmitMapping);
         ioEditor = new InputOutputEditor(action -> MappingActionContainer.getInstance().updateMapping(action,
                 GlobalActionPanel::ErrorPopUpString));
         editorPanel = new JPanel(new CardLayout());
