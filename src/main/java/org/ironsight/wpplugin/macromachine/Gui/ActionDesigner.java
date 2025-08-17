@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
-public class ActionEditor extends LayerMappingPanel {
+public class ActionDesigner extends LayerMappingPanel {
     private MappingActionValueTableModel model ;
     private BlockingSelectionModel selectionModel;
     private final Consumer<MappingAction> onSubmit;
@@ -17,7 +17,7 @@ public class ActionEditor extends LayerMappingPanel {
     private MappingTextTable table;
     private LayerMappingTopPanel topBar;
 
-    public ActionEditor(Consumer<MappingAction> onSubmit) {
+    public ActionDesigner(Consumer<MappingAction> onSubmit) {
         super();
         this.onSubmit = onSubmit;
     }
