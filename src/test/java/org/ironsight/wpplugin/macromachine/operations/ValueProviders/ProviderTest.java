@@ -73,11 +73,22 @@ public class ProviderTest {
             IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
             ioInstance.prepareForDimension(dim);
             if (ioInstance instanceof IPositionValueGetter) {
+
+
                 // input
                 int value = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
-                // no exception was thrown.
-                assertEquals(ioInstance.getMinValue(), value,
-                        "unknown postion should always return min value " + ioInstance.getName());
+// no exception was thrown.
+
+                //special case: distance getter
+                if (ioInstance instanceof DistanceToLayerEdgeGetter) {
+                    assertEquals(ioInstance.getMaxValue(), value,
+                            "unknown postion should always return max distance " + ioInstance.getName());
+                } else {
+
+                    assertEquals(ioInstance.getMinValue(), value,
+                            "unknown postion should always return min value " + ioInstance.getName());
+                }
+
             }
         }
     }
