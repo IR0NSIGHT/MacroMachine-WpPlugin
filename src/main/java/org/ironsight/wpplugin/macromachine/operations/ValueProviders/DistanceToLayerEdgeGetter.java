@@ -113,7 +113,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (distanceMap == null || !distanceMap.existsTile(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
-            return getMinValue();
+            return getMaxValue(); //outside the distance map
         return Math.min(getMaxValue(), distanceMap.getValueAt(x, y));
     }
 
