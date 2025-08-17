@@ -9,6 +9,8 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionVa
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -75,9 +77,6 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
         this.add(textInputs, BorderLayout.NORTH);
 
         nameField = new JTextField();
-        nameField.setFont(header1Font);
-        textInputs.add(nameField, BorderLayout.WEST);
-        nameField.setColumns(10);
         nameField.setBorder(BorderFactory.createTitledBorder("Action name"));
 
         nameField.addFocusListener(new FocusAdapter() {
@@ -87,6 +86,10 @@ public class LayerMappingTopPanel extends LayerMappingPanel {
                 if (isAllowEvents()) SwingUtilities.invokeLater(() -> updateFromInputs());
             }
         });
+
+        nameField.setFont(header1Font);
+        textInputs.add(nameField, BorderLayout.WEST);
+
 
         description = new JTextField();
         description.setBorder(BorderFactory.createTitledBorder("Description"));
