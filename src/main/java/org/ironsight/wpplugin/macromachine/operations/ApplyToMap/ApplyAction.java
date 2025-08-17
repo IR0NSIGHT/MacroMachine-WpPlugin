@@ -1,7 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
-import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.pepsoft.worldpainter.Dimension;
@@ -133,7 +132,7 @@ public class ApplyAction {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 ex.printStackTrace(pw);
-                GlobalActionPanel.ErrorPopUp(sw.toString());
+                GlobalActionPanel.ErrorPopUpString(sw.toString());
                 break;
             } finally {
                 statistics.add(statistic);

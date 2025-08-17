@@ -9,13 +9,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
-
-import static org.ironsight.wpplugin.macromachine.MacroMachinePlugin.error;
 
 public abstract class AbstractOperationContainer<T extends SaveableAction> {
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
@@ -56,7 +53,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
                     }
                 }
             } catch (IOException e) {
-                GlobalActionPanel.ErrorPopUp("Failed to copy the default resource file: " + e.getMessage());
+                GlobalActionPanel.ErrorPopUpString("Failed to copy the default resource file: " + e.getMessage());
             }
         } else {
             //error("Save file already exists at: " + saveFilePath);

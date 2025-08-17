@@ -176,6 +176,10 @@ public class MappingAction implements SaveableAction {
         return new MappingAction(input, output, mappingPoints, actionType, name, description, uid);
     }
 
+    public MappingAction withUUID(UUID uuid) {
+        return new MappingAction(input, output, mappingPoints, actionType, name, description, uuid);
+    }
+
     public MappingAction withValuesFrom(MappingAction other) {
         return new MappingAction(other.input, other.output, other.mappingPoints, other.actionType, other.name,
                 other.description, this.uid);
@@ -209,10 +213,14 @@ public class MappingAction implements SaveableAction {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         MappingAction mapping = (MappingAction) o;
+        return Objects.equals(this.getUid(), mapping.getUid()) && equalsWithoutUUID(mapping);
+    }
+
+    public boolean equalsWithoutUUID(MappingAction mapping) {
+        if (this == mapping) return true;
         return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) &&
                 actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) &&
-                Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description) &&
-                Objects.equals(this.getUid(), mapping.getUid());
+                Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
     }
 
     public boolean equalIgnoreUUID(Object o) {

@@ -1,7 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
-import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
@@ -9,7 +8,6 @@ import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.CustomLayerControllerWrapper;
-import org.pepsoft.worldpainter.WorldPainterView;
 import org.pepsoft.worldpainter.layers.CustomLayer;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.*;
@@ -18,10 +16,9 @@ import javax.swing.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel.ErrorPopUp;
+import static org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel.ErrorPopUpString;
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO.getUsedLayers;
 
@@ -39,7 +36,7 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
         ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(),
-                s -> ErrorPopUp("Can not load from savefile:\n"+saveFile.getPath()+"\n"+s), InputOutputProvider.INSTANCE);
+                s -> GlobalActionPanel.ErrorPopUpString("Can not load from savefile:\n"+saveFile.getPath()+"\n"+s), InputOutputProvider.INSTANCE);
 
         Runnable saveEverything = () -> ContainerIO.exportToFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
                 new ImportExportPolicy(), System.err::println, InputOutputProvider.INSTANCE);
@@ -83,7 +80,7 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
                     MappingActionContainer.getInstance());
             boolean hasNullActions = executionSteps.stream().anyMatch(Objects::isNull);
             if (hasNullActions) {
-                ErrorPopUp(
+                GlobalActionPanel.ErrorPopUpString(
                         "Some action in the execution list are null. This means they were deleted, but are still " +
                                 "linked into a macro." + " The macro can" + " " + "not be applied to the " + "map.");
                 return statistics;
@@ -96,15 +93,15 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
                     action.output.prepareForDimension(getDimension());
                     action.input.prepareForDimension(getDimension());
                 } catch (IllegalAccessError e) {
-                    ErrorPopUp(
+                    GlobalActionPanel.ErrorPopUpString(
                             "Action " + action.getName() + " can not be applied to the map." + e.getMessage());
                     return statistics;
                 } catch (OutOfMemoryError e) {
-                    ErrorPopUp(
+                    GlobalActionPanel.ErrorPopUpString(
                             "Action " + action.getName() + " consumed more memory than available:" + e.getMessage());
                     return statistics;
                 } catch (Exception e) {
-                    ErrorPopUp(
+                    GlobalActionPanel.ErrorPopUpString(
                             "Action " + action.getName() + " caused an exception:" + e.getMessage());
                     return statistics;
                 }
@@ -121,7 +118,7 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
             try {
                 ActionFilterIO.instance.prepareForDimension(getDimension());
             } catch (Exception e) {
-                ErrorPopUp(
+                GlobalActionPanel.ErrorPopUpString(
                         "ActionFilter Preparation caused an exception:" + e.getMessage());
                 return statistics;
             }

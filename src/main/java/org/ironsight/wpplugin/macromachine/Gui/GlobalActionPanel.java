@@ -11,6 +11,7 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionVa
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.ironsight.wpplugin.macromachine.threeDRendering.SurfaceObject;
 import org.pepsoft.worldpainter.dynmap.DynmapPreviewer;
+import org.pepsoft.worldpainter.objects.WPObject;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,10 +40,10 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     static JTextArea logPanel;
     private static DynmapPreviewer previewer = new DynmapPreviewer();
     private static GlobalActionPanel INSTANCE;
-    private static SurfaceObject surfaceObject = new SurfaceObject();
+    private static WPObject surfaceObject = new SurfaceObject();
     MacroTreePanel macroTreePanel;
     MacroDesigner macroDesigner;
-    ActionEditor mappingEditor;
+    ActionDesigner mappingEditor;
     InputOutputEditor ioEditor;
     //consumes macro to apply to map. callback for "user pressed apply-macro"
     MacroApplicator applyMacro;
@@ -77,7 +78,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
                 macros,
                 saveFile,
                 new ImportExportPolicy(),
-                s -> ErrorPopUp("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s),
+                s -> ErrorPopUpString("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s),
                 InputOutputProvider.INSTANCE);
 
         Runnable saveEverything = () -> ContainerIO.exportToFile(MappingActionContainer.getInstance(),
@@ -136,7 +137,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         return now.format(formatter);
     }
 
-    public static void ErrorPopUp(String message) {
+    public static void ErrorPopUpString(String message) {
         logMessage(message);
         JOptionPane.showMessageDialog(null, message, "Error",
                 // Title of the dialog
@@ -201,8 +202,12 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
     }
 
-    public static SurfaceObject getSurfaceObject() {
+    public static WPObject getSurfaceObject() {
         return surfaceObject;
+    }
+
+    public static void setSurfaceObject(WPObject surfaceObject) {
+        GlobalActionPanel.surfaceObject = surfaceObject;
     }
 
     private void onUpdate() {
@@ -242,6 +247,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     private void doRender3d() {
+
         getPreviewer().setObject(getSurfaceObject(), null); // immediate redraw
         rerender3d = false;
     }
@@ -258,9 +264,9 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         macroTreePanel.setMaximumSize(new Dimension(200, 0));
 
         macroDesigner = new MacroDesigner(this::onSubmitMacro);
-        mappingEditor = new ActionEditor(this::onSubmitMapping);
+        mappingEditor = new ActionDesigner(this::onSubmitMapping);
         ioEditor = new InputOutputEditor(action -> MappingActionContainer.getInstance().updateMapping(action,
-                GlobalActionPanel::ErrorPopUp));
+                GlobalActionPanel::ErrorPopUpString));
         editorPanel = new JPanel(new CardLayout());
         editorPanel.add(mappingEditor, MAPPING_EDITOR);
         editorPanel.add(macroDesigner, MACRO_DESIGNER);
@@ -352,7 +358,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
     private void onSubmitMacro(Macro macro) {
         MacroContainer.getInstance().updateMapping(macro, e -> {
-            ErrorPopUp("Unable to save macro: " + e);
+            ErrorPopUpString("Unable to save macro: " + e);
         });
     }
 

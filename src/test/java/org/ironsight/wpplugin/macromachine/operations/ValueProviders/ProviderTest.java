@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
-import static org.ironsight.wpplugin.macromachine.operations.TestData.createDimension;
+import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.createDimension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
@@ -73,11 +73,22 @@ public class ProviderTest {
             IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
             ioInstance.prepareForDimension(dim);
             if (ioInstance instanceof IPositionValueGetter) {
+
+
                 // input
                 int value = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
-                // no exception was thrown.
-                assertEquals(ioInstance.getMinValue(), value,
-                        "unknown postion should always return min value " + ioInstance.getName());
+// no exception was thrown.
+
+                //special case: distance getter
+                if (ioInstance instanceof DistanceToLayerEdgeGetter) {
+                    assertEquals(ioInstance.getMaxValue(), value,
+                            "unknown postion should always return max distance " + ioInstance.getName());
+                } else {
+
+                    assertEquals(ioInstance.getMinValue(), value,
+                            "unknown postion should always return min value " + ioInstance.getName());
+                }
+
             }
         }
     }

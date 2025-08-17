@@ -18,7 +18,8 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
     private JButton startDebugButton;
     private JButton abortButton;
     private JButton startButton;
-    private JProgressBar progressBar;
+    public JProgressBar globalProgressBar;
+    public JProgressBar localProgessBar;
     private boolean doContinue;
     private boolean doAbort = false;
     private boolean isRunning = false;
@@ -43,11 +44,19 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
 
         this.setLayout(new BorderLayout());
 
-        progressBar = new JProgressBar();
-        progressBar.setMinimum(0);
-        progressBar.setMaximum(100);
-        progressBar.setStringPainted(true); // Show percentage text
-        this.add(progressBar, BorderLayout.NORTH);
+        JPanel progressBars = new JPanel();
+        globalProgressBar = new JProgressBar();
+        globalProgressBar.setMinimum(0);
+        globalProgressBar.setMaximum(100);
+        globalProgressBar.setStringPainted(true); // Show percentage text
+        progressBars.add(globalProgressBar);
+
+        localProgessBar = new JProgressBar();
+        localProgessBar.setMinimum(0);
+        localProgessBar.setMaximum(100);
+        localProgessBar.setStringPainted(true); // Show percentage text
+        progressBars.add(localProgessBar);
+        this.add(progressBars, BorderLayout.NORTH);
 
         JPanel buttons = new JPanel(new FlowLayout());
         this.add(buttons, BorderLayout.CENTER);
@@ -111,6 +120,13 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
     }
 
     @Override
+    public void setProgessTo(int actionIndex, int actionpercent, int totalActions) {
+        globalProgressBar.setMaximum(totalActions);
+        globalProgressBar.setValue(actionIndex);
+        localProgessBar.setValue(actionpercent);
+    }
+
+    @Override
     public BreakpointReaction CheckBreakpointStatus(int index, MappingAction action) {
         if (doAbort) {
             return BreakpointReaction.ABORT;
@@ -126,7 +142,7 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
         SwingUtilities.invokeLater(()->{
             stepperButton.setToolTipText("continue with " + breakpoints.get(idx));
             stepperButton.setEnabled(true);
-            progressBar.setValue(idx);
+            globalProgressBar.setValue(idx);
         });
         stepperVisulaizer.OnReachedBreakpoint(idx);
     }
@@ -152,8 +168,8 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
         stepperVisulaizer.SetBreakpoints(breakpoints);
 
         SwingUtilities.invokeLater(() ->{
-            this.progressBar.setMinimum(0);
-            this.progressBar.setMaximum(breakpoints.size());
+            this.globalProgressBar.setMinimum(0);
+            this.globalProgressBar.setMaximum(breakpoints.size());
             setButtonsActive(true);
         });
     }
@@ -168,13 +184,17 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
         startDebugButton.setEnabled(!isRunning);
         abortButton.setEnabled(isRunning);
         stepperButton.setEnabled(isRunning);
-        progressBar.setValue(isRunning ? 0 : progressBar.getMaximum());
-        progressBar.setVisible(isRunning);
+        globalProgressBar.setValue(isRunning ? 0 : globalProgressBar.getMaximum());
+        globalProgressBar.setVisible(isRunning);
+
+        localProgessBar.setValue(isRunning ? 0 : localProgessBar.getMaximum());
+        localProgessBar.setVisible(isRunning);
     }
 
     @Override
     public void afterEverything() {
         setButtonsActive(false);
+        stepperVisulaizer.afterEverything();
     }
 
     class MacroMachineButton extends JButton {
