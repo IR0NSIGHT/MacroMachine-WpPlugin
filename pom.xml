@@ -6,7 +6,7 @@
 
     <groupId>org.ironsight.wpplugin.macroMachine</groupId>
     <artifactId>Macro-Machine-Plugin</artifactId>
-    <version>0.4.0</version>
+    <version>0.4.1</version>
 
     <repositories>
         <repository>
@@ -86,13 +86,13 @@
         <dependency>
             <groupId>org.pepsoft.worldpainter</groupId>
             <artifactId>WPCore</artifactId>
-            <version>2.25.0</version>
+            <version>2.26.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.pepsoft.worldpainter/WPDynmapPreviewer -->
         <dependency>
             <groupId>org.pepsoft.worldpainter</groupId>
             <artifactId>WPDynmapPreviewer</artifactId>
-            <version>2.25.0</version>
+            <version>2.26.0</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -113,7 +113,7 @@
                 <dependency>
                     <groupId>org.pepsoft.worldpainter</groupId>
                     <artifactId>WPGUI</artifactId>
-                    <version>2.25.0</version>
+                    <version>2.26.0</version>
                     <scope>compile</scope>
                 </dependency>
             </dependencies>
