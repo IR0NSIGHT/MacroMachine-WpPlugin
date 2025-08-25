@@ -1,27 +1,28 @@
 package org.ironsight.wpplugin.macromachine;
 
+import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityEditToolOperation;
+import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityLayer;
+import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityLayerEditor;
 import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
 import org.ironsight.wpplugin.macromachine.operations.MacroDialogOperation;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
+import org.pepsoft.worldpainter.Platform;
 import org.pepsoft.worldpainter.WPContext;
 import org.pepsoft.worldpainter.WorldPainterView;
+import org.pepsoft.worldpainter.layers.CustomLayer;
 import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.layers.LayerEditor;
 import org.pepsoft.worldpainter.operations.Operation;
-import org.pepsoft.worldpainter.plugins.AbstractPlugin;
-import org.pepsoft.worldpainter.plugins.LayerProvider;
-import org.pepsoft.worldpainter.plugins.OperationProvider;
-import org.pepsoft.worldpainter.plugins.WPPluginManager;
+import org.pepsoft.worldpainter.plugins.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel.ErrorPopUpString;
 import static org.ironsight.wpplugin.macromachine.Version.VERSION;
 
 /**
- * The main plugin class. This demo combines the various providers in one plugin class. You could of course also
- * separate them out into separate plugins classes for clarity. And of course you can leave out any providers for
- * services your plugin does not provide.
+ * The main plugin class. This demo combines the various providers in one plugin class. You could of course also separate them out into separate plugins classes for clarity. And of course
+ * you can leave out any providers for services your plugin does not provide.
  *
  * <p><strong>Note:</strong> this class is referred to from the {@code org.pepsoft.worldpainter.plugins} file, so when
  * you rename or copy it, be sure to keep that file up-to-date.
@@ -32,9 +33,11 @@ public class MacroMachinePlugin extends AbstractPlugin implements
         // classes, as long as each class implements Plugin and is mentioned in the org.pepsoft.worldpainter.plugins
         // registry file
         LayerProvider,          // Implement this to provide one or more singular, unconfigurable layers
-        OperationProvider      // Implement this to provide one or more custom operations for the Tools panel
-{
+        OperationProvider,      // Implement this to provide one or more custom operations for the Tools panel
+        CustomLayerProvider,
+        LayerEditorProvider {
     public WorldPainterView view;
+
     @Override
     public void init(WPContext context) {
         super.init(context);
@@ -45,6 +48,7 @@ public class MacroMachinePlugin extends AbstractPlugin implements
             instance = new MacroMachinePlugin();
         return instance;
     }
+
     private static MacroMachinePlugin instance;
     /**
      * Short, human-readble name of the plugin.
@@ -92,7 +96,23 @@ public class MacroMachinePlugin extends AbstractPlugin implements
             OPERATIONS = new ArrayList<>();
             OPERATIONS.add(new MacroDialogOperation());
             OPERATIONS.add(new PreviewOperation());
+            OPERATIONS.add(new CityEditToolOperation());
         }
         return OPERATIONS;
+    }
+
+    @Override
+    public List<Class<? extends CustomLayer>> getCustomLayers() {
+        List<Class<? extends CustomLayer>> customLayerTypes = new ArrayList<>();
+        customLayerTypes.add(CityLayer.class);
+        return customLayerTypes;
+    }
+
+    @Override
+    public <L extends Layer> LayerEditor<L> createLayerEditor(Platform platform, Class<L> layerType) {
+        if (layerType == CityLayer.class) {
+            return (LayerEditor<L>) new CityLayerEditor();
+        }
+        return null;
     }
 }
