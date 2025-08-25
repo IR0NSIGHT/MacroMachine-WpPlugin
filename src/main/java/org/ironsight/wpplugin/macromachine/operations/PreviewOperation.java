@@ -120,9 +120,11 @@ public class PreviewOperation extends AbstractBrushOperation {
         dim.clearLayerData(annotationLayer);
         for (Tile tile : tiles) {
             tile = dim.getTileForEditing(tile.getX(),tile.getY());
+            int width = 5;
             for (int x = 0; x < TILE_SIZE; x++) {
                 for (int y = 0; y < TILE_SIZE; y++) {
-                    tile.setBitLayerValue(annotationLayer, x, y, true);
+                    if (x < width || x > TILE_SIZE- width || y < width || y > TILE_SIZE - width)
+                        tile.setBitLayerValue(annotationLayer, x, y, true);
                 }
             }
         }
