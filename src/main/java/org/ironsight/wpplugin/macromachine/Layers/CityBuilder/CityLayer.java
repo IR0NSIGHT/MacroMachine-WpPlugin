@@ -46,13 +46,23 @@ public class CityLayer extends CustomLayer implements UndoListener {
 
     public void setDataAt(Dimension dimension, int blockX, int blockY, Direction rotation, boolean mirror, int schematicIdx) {
         database.setDataAt(blockX, blockY, rotation, mirror, schematicIdx);
-        repaintTile(blockX >> TILE_SIZE_BITS, blockY >> TILE_SIZE_BITS, dimension, database);
+
+        WPObject paintedSchem = getObjectForState(new ObjectState(rotation,mirror,schematicIdx));
+        if (paintedSchem == null)
+            return;
+        Point3i dims = paintedSchem.getDimensions();
+        for (int tileX =(blockX - dims.x) >> TILE_SIZE_BITS; tileX <= (blockX + dims.x) >> TILE_SIZE_BITS; tileX++) {
+            for (int tileY =(blockY - dims.y) >> TILE_SIZE_BITS; tileY <= (blockY + dims.y) >> TILE_SIZE_BITS; tileY++) {
+                repaintTile(tileX,tileY, dimension, database);
+            }
+        }
+
     }
 
     public Image getSchematicImage(ObjectState state) {
         WPObject schematic = getObjectForState(state);
-        assert schematic != null;
-        System.out.println("render schematic:" + schematic.getName() + " dims=" + schematic.getDimensions());
+        if (schematic == null)
+            return null;
 
         Point3i dims = schematic.getDimensions();
         int space = 3;
@@ -104,6 +114,8 @@ public class CityLayer extends CustomLayer implements UndoListener {
                 for (int z = object.getDimensions().z - 1; z >= 0; z--) {
                     if (object.getMaterial(x, y, z) != Material.AIR) {
                         int value = Math.max(1, 16 * z / height);
+                        int existing = tile.getLayerValue(this,totalPosX,totalPosY);
+                        value = Math.min(15,value + existing);
                         tile.setLayerValue(this, totalPosX, totalPosY, value);
                         break;
                     }
@@ -135,11 +147,16 @@ public class CityLayer extends CustomLayer implements UndoListener {
     }
 
     public void removeDataAt(Dimension dimension, int blockX, int blockY) {
-        int existingData = database.getDataAt(blockX, blockY);
-        boolean existsData = existingData >= 0;
-        if (existsData) {
+        WPObject paintedSchem =  getObjectAt(dimension,blockX,blockY, DefaultPlugin.JAVA_ANVIL_1_20_5);
+        if (paintedSchem != null) {
             database.setDataAt(blockX, blockY, Direction.NORTH, false, -1);
-            repaintTile(blockX >> TILE_SIZE_BITS, blockY >> TILE_SIZE_BITS, dimension, database);
+
+            Point3i dims = paintedSchem.getDimensions();
+            for (int tileX =(blockX - dims.x) >> TILE_SIZE_BITS; tileX <= (blockX + dims.x) >> TILE_SIZE_BITS; tileX++) {
+                for (int tileY =(blockY - dims.y) >> TILE_SIZE_BITS; tileY <= (blockY + dims.y) >> TILE_SIZE_BITS; tileY++) {
+                    repaintTile(tileX,tileY, dimension, database);
+                }
+            }
         }
     }
 
@@ -173,9 +190,8 @@ public class CityLayer extends CustomLayer implements UndoListener {
 
     private WPObject getObjectForState(ObjectState state) {
         int objectIdx = state.objectIndex;
-        if (objectIdx == -1)
+        if (objectIdx <0 || objectIdx >= objects.size())
             return null;
-
         WPObject object = objects.get(objectIdx);
 
         boolean mirror = state.mirrored;
