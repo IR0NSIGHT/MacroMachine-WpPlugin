@@ -40,9 +40,10 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private final static String HelpTitle = "City Editor";
     private final static String HELPTEXT = """
             this tool is for editing City Layers, a new special type of Custom Object Layer.
-            1. Create or import a city layer
+            1. Create or import a city layer (make sure your schematic offsets are centered and not 0,0,0)
             2. select the city layer
             3. select the city editor tool
+            4. select a custom brush (the one with the little arrow showing the rotation)
             - Left click to place a building
             - Right click to delete all buildings inside the brush area
             
@@ -52,10 +53,12 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             - SHIFT + mousewheel to scroll the building type list
             - ALT + mousewheel to rotate brush
              
-            - X key : mirror
+            - X key : mirror last selected building on map
             - C key : rotate last selected building on map
             - AWSD key : move last selected building on map
+            
             Warning: This layer is NOT compatible with undo/redo. Do NOT use undo/redo with this layer.
+            
             """;
     private final JPanel optionsPanel;
     private final JPanel contentPanel;
@@ -220,11 +223,12 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private void setSelectedObjectIndex(int index) {
         if (index == currentState.objectIndex)
             return;
-        assert index >= 0 && index < list.getModel().getSize();
+        if (index < 0 && index >= list.getModel().getSize())
+            return;
+
         this.currentState = new ObjectState(currentState.rotation, currentState.mirrored, index);
         if (list.getSelectedIndex() != index)
             list.setSelectedIndex(index);
-        System.out.println("Select object " + index + " -> " + getSelectedLayer().getObjectList().get(currentState.objectIndex).getName());
         onObjectStateChanged();
     }
 
@@ -385,6 +389,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             public void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Image original = getSelectedLayer().getSchematicImage(currentState);
+                if (original == null)
+                    return;
                 int scale =  Math.max(100, getHeight()) / original.getHeight(null);
                 Image img = original.getScaledInstance(original.getWidth(null)*scale,original.getHeight(null)*scale,Image.SCALE_REPLICATE);
                 width = img.getWidth(null);
@@ -399,6 +405,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         previewPanel.setPreferredSize(new java.awt.Dimension(50, 50));
         previewPanel.setMaximumSize(new java.awt.Dimension(300, 300));
         previewPanel.setMinimumSize(new java.awt.Dimension(50, 50));
+        content.add(getHelpButton(HelpTitle, HELPTEXT));
         content.add(rotateCheckBox);
         content.add(randomSelectCheckBox);
         content.add(isMirroredCheckbox);
@@ -406,7 +413,6 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         JScrollPane scrollPane = new JScrollPane(list);
         scrollPane.setMaximumSize(new java.awt.Dimension(1000,300));
         content.add(scrollPane);
-        content.add(getHelpButton(HelpTitle, HELPTEXT));
 
 
         optionsPanel.revalidate();

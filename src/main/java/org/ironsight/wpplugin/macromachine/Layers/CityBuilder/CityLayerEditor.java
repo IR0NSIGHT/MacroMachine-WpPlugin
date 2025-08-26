@@ -3,7 +3,6 @@ package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.util.DesktopUtils;
 import org.pepsoft.worldpainter.*;
-import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.AbstractLayerEditor;
 import org.pepsoft.worldpainter.layers.EditLayerDialog;
 import org.pepsoft.worldpainter.layers.bo2.EditObjectAttributes;
@@ -42,16 +41,37 @@ import static org.pepsoft.worldpainter.Platform.Capability.NAME_BASED;
 import static org.pepsoft.worldpainter.objects.WPObject.*;
 
 public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements ListSelectionListener, DocumentListener {
-    public static void main(String[] args) {
-        // set up singletons
-        WPPluginManager.initialise(UUID.randomUUID(),null);
-        Configuration.setInstance(new Configuration());
+    private static final Preferences prefs =
+            Preferences.userNodeForPackage(CityLayerEditor.class);
+    private static final String LAST_DIR_KEY = "lastDirectory";
 
+    // LayerEditor
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CityLayerEditor.class);
+    private static final long serialVersionUID = 1L;
+    private final DefaultListModel<WPObject> listModel;
+    private final NumberFormat numberFormat = NumberFormat.getInstance();
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton buttonAddFile;
+    private javax.swing.JButton buttonEdit;
+    private javax.swing.JButton buttonReloadAll;
+    private javax.swing.JButton buttonRemoveFile;
 
-        Window parent = new JWindow();
-        EditLayerDialog dlg = new EditLayerDialog(parent, DefaultPlugin.JAVA_ANVIL_1_19, new CityLayer("test","test"));
-        dlg.setVisible(() -> {});
-    }
+    // ListSelectionListener
+
+    // DocumentListener
+    private javax.swing.JTextField fieldName;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabelObejcts;
+    private javax.swing.JLabel jLabelName;
+    private javax.swing.JLabel jLabelPaint;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JSeparator jSeparator2;
+    private javax.swing.JList<WPObject> listObjects;
+    private org.pepsoft.worldpainter.layers.renderers.PaintPicker paintPicker1;
+    private ColourScheme colourScheme;
+
     public CityLayerEditor() {
         initComponents();
 
@@ -61,11 +81,19 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
 
         listObjects.getSelectionModel().addListSelectionListener(this);
         fieldName.getDocument().addDocumentListener(this);
-
-        updateBlocksPerAttempt();
     }
 
-    // LayerEditor
+    public static void main(String[] args) {
+        // set up singletons
+        WPPluginManager.initialise(UUID.randomUUID(), null);
+        Configuration.setInstance(new Configuration());
+
+
+        Window parent = new JWindow();
+        EditLayerDialog dlg = new EditLayerDialog(parent, DefaultPlugin.JAVA_ANVIL_1_19, new CityLayer("test", "test"));
+        dlg.setVisible(() -> {
+        });
+    }
 
     @Override
     public CityLayer createLayer() {
@@ -96,8 +124,6 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         for (WPObject object : layer.getObjectList()) {
             listModel.addElement(object.clone());
         }
-
-        refreshLeafDecaySettings();
 
         settingsChanged();
     }
@@ -144,14 +170,10 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         colourScheme = context.getColourScheme();
     }
 
-    // ListSelectionListener
-
     @Override
     public void valueChanged(ListSelectionEvent e) {
         settingsChanged();
     }
-
-    // DocumentListener
 
     @Override
     public void insertUpdate(DocumentEvent e) {
@@ -197,17 +219,12 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
     }
 
     private Platform getPlatform() {
-        try{
+        try {
             return context.getDimension().getWorld().getPlatform();
         } catch (NullPointerException ex) {
             return DefaultPlugin.JAVA_ANVIL_1_20_5;
         }
     }
-
-    private static final Preferences prefs =
-            Preferences.userNodeForPackage(CityLayerEditor.class);
-
-    private static final String LAST_DIR_KEY = "lastDirectory";
 
     private void addFilesOrDirectory() {
         JFileChooser fileChooser = new JFileChooser();
@@ -279,7 +296,6 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                     }
                 }
                 settingsChanged();
-                refreshLeafDecaySettings();
                 if (checkForNameOnlyMaterials && (!nameOnlyMaterialsNames.isEmpty())) {
                     String message;
                     if (nameOnlyMaterialsNames.size() > 4) {
@@ -329,12 +345,18 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
     }
 
     private void removeFiles() {
+        JOptionPane.showMessageDialog(
+                this,                            // parent component (can be null)
+                "Removing objects or changing the order of objects will mess up your already painted schematics!",          // message
+                "Warning",                        // title of popup
+                JOptionPane.WARNING_MESSAGE       // icon type
+        );
+
         int[] selectedIndices = listObjects.getSelectedIndices();
         for (int i = selectedIndices.length - 1; i >= 0; i--) {
             listModel.removeElementAt(selectedIndices[i]);
         }
         settingsChanged();
-        refreshLeafDecaySettings();
     }
 
     private void reloadObjects() {
@@ -398,10 +420,15 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         } else {
             showInfo(this, indices.length + " objects successfully reloaded", "Success");
         }
-        refreshLeafDecaySettings();
     }
 
     private void editObjects() {
+        JOptionPane.showMessageDialog(
+                this,                            // parent component (can be null)
+                "Editing schematics will also apply to your already painted schematics!",          // message
+                "Warning",                        // title of popup
+                JOptionPane.WARNING_MESSAGE       // icon type
+        );
         List<WPObject> selectedObjects = new ArrayList<>(listObjects.getSelectedIndices().length);
         int[] selectedIndices = listObjects.getSelectedIndices();
         for (int i = selectedIndices.length - 1; i >= 0; i--) {
@@ -411,148 +438,7 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         dialog.setVisible(true);
         if (!dialog.isCancelled()) {
             settingsChanged();
-            refreshLeafDecaySettings();
         }
-    }
-
-    private void refreshLeafDecaySettings() {
-        if (listModel.isEmpty()) {
-            labelLeafDecayTitle.setEnabled(false);
-            labelEffectiveLeafDecaySetting.setEnabled(false);
-            labelEffectiveLeafDecaySetting.setText("N/A");
-            buttonSetDecay.setEnabled(false);
-            buttonSetNoDecay.setEnabled(false);
-            buttonReset.setEnabled(false);
-            return;
-        }
-        boolean decayingLeavesFound = false;
-        boolean nonDecayingLeavesFound = false;
-        outer:
-        for (Enumeration<WPObject> e = listModel.elements(); e.hasMoreElements(); ) {
-            WPObject object = e.nextElement();
-            int leafDecayMode = object.getAttribute(ATTRIBUTE_LEAF_DECAY_MODE);
-            switch (leafDecayMode) {
-                case LEAF_DECAY_NO_CHANGE:
-                    // Leaf decay attribute not set (or set to "no change"); examine actual blocks
-                    object.prepareForExport(context.getDimension());
-                    Point3i dim = object.getDimensions();
-                    for (int x = 0; x < dim.x; x++) {
-                        for (int y = 0; y < dim.y; y++) {
-                            for (int z = 0; z < dim.z; z++) {
-                                if (object.getMask(x, y, z)) {
-                                    final Material material = object.getMaterial(x, y, z);
-                                    if (material.leafBlock) {
-                                        if (material.is(PERSISTENT)) {
-                                            // Non decaying leaf block
-                                            nonDecayingLeavesFound = true;
-                                            if (decayingLeavesFound) {
-                                                // We have enough information; no reason to continue the examination
-                                                break outer;
-                                            }
-                                        } else {
-                                            // Decaying leaf block
-                                            decayingLeavesFound = true;
-                                            if (nonDecayingLeavesFound) {
-                                                // We have enough information; no reason to continue the examination
-                                                break outer;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    break;
-                case LEAF_DECAY_OFF:
-                    // Leaf decay attribute set to "off"; don't examine blocks for performance (even though this could
-                    // lead to misleading information if the object doesn't contain any leaf blocks)
-                    nonDecayingLeavesFound = true;
-                    if (decayingLeavesFound) {
-                        // We have enough information; no reason to continue the examination
-                        break outer;
-                    }
-                    break;
-                case LEAF_DECAY_ON:
-                    // Leaf decay attribute set to "off"; don't examine blocks for performance (even though this could
-                    // lead to misleading information if the object doesn't contain any leaf blocks)
-                    decayingLeavesFound = true;
-                    if (nonDecayingLeavesFound) {
-                        // We have enough information; no reason to continue the examination
-                        break outer;
-                    }
-                    break;
-                default:
-                    throw new InternalError();
-            }
-        }
-
-        if (decayingLeavesFound) {
-            labelLeafDecayTitle.setEnabled(true);
-            labelEffectiveLeafDecaySetting.setEnabled(true);
-            buttonSetNoDecay.setEnabled(true);
-            buttonReset.setEnabled(true);
-            if (nonDecayingLeavesFound) {
-                // Both decaying and non decaying leaves found
-                labelEffectiveLeafDecaySetting.setText("<html>Decaying <i>and</i> non decaying leaves.</html>");
-                buttonSetDecay.setEnabled(true);
-            } else {
-                // Only decaying leaves found
-                labelEffectiveLeafDecaySetting.setText("<html>Leaves <b>do</b> decay.</html>");
-                buttonSetDecay.setEnabled(false);
-            }
-        } else {
-            if (nonDecayingLeavesFound) {
-                // Only non decaying leaves found
-                labelLeafDecayTitle.setEnabled(true);
-                labelEffectiveLeafDecaySetting.setEnabled(true);
-                labelEffectiveLeafDecaySetting.setText("<html>Leaves do <b>not</b> decay.</html>");
-                buttonSetDecay.setEnabled(true);
-                buttonSetNoDecay.setEnabled(false);
-                buttonReset.setEnabled(true);
-            } else {
-                // No leaf blocks encountered at all, so N/A
-                labelLeafDecayTitle.setEnabled(false);
-                labelEffectiveLeafDecaySetting.setEnabled(false);
-                labelEffectiveLeafDecaySetting.setText("N/A");
-                buttonSetDecay.setEnabled(false);
-                buttonSetNoDecay.setEnabled(false);
-                buttonReset.setEnabled(false);
-            }
-        }
-    }
-
-    private void setLeavesDecay() {
-        for (Enumeration<WPObject> e = listModel.elements(); e.hasMoreElements(); ) {
-            WPObject object = e.nextElement();
-            object.setAttribute(ATTRIBUTE_LEAF_DECAY_MODE, LEAF_DECAY_ON);
-        }
-        refreshLeafDecaySettings();
-    }
-
-    private void setLeavesNoDecay() {
-        for (Enumeration<WPObject> e = listModel.elements(); e.hasMoreElements(); ) {
-            WPObject object = e.nextElement();
-            object.setAttribute(ATTRIBUTE_LEAF_DECAY_MODE, LEAF_DECAY_OFF);
-        }
-        refreshLeafDecaySettings();
-    }
-
-    private void resetLeafDecay() {
-        for (Enumeration<WPObject> e = listModel.elements(); e.hasMoreElements(); ) {
-            WPObject object = e.nextElement();
-            object.getAttributes().remove(ATTRIBUTE_LEAF_DECAY_MODE.key);
-        }
-        refreshLeafDecaySettings();
-    }
-
-    private void updateBlocksPerAttempt() {
-        final int grid = (Integer) spinnerGrid.getValue();
-        final float blocksAt50 = (float) ((Integer) spinnerBlocksPerAttempt.getValue()) * grid * grid;
-        final float blocksAt1 = blocksAt50 * 64, blocksAt100 = round(blocksAt50 / 3.515625f);
-        labelBlocksPerAttempt.setText(format("one per %d blocks at 1%%; %d blocks at 50%%; %d blocks at 100%%)",
-                round(blocksAt1),
-                round(blocksAt50),
-                round((blocksAt100 <= 1) ? 1 : blocksAt100)));
     }
 
     /**
@@ -565,36 +451,17 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         jSeparator2 = new javax.swing.JSeparator();
         buttonEdit = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
-        labelLeafDecayTitle = new javax.swing.JLabel();
-        labelEffectiveLeafDecaySetting = new javax.swing.JLabel();
-        buttonSetDecay = new javax.swing.JButton();
-        buttonSetNoDecay = new javax.swing.JButton();
-        buttonReset = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         listObjects = new javax.swing.JList<>();
-        jLabel6 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
-        jLabel3 = new javax.swing.JLabel();
+        jLabelName = new javax.swing.JLabel();
         fieldName = new javax.swing.JTextField();
-        jLabel4 = new javax.swing.JLabel();
+        jLabelPaint = new javax.swing.JLabel();
         paintPicker1 = new org.pepsoft.worldpainter.layers.renderers.PaintPicker();
-        jLabel2 = new javax.swing.JLabel();
+        jLabelObejcts = new javax.swing.JLabel();
         buttonAddFile = new javax.swing.JButton();
         buttonRemoveFile = new javax.swing.JButton();
-        jLabel7 = new javax.swing.JLabel();
-        spinnerBlocksPerAttempt = new javax.swing.JSpinner();
-        labelBlocksPerAttempt = new javax.swing.JLabel();
-        jLabel10 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        spinnerGrid = new javax.swing.JSpinner();
-        jLabel8 = new javax.swing.JLabel();
-        jLabel9 = new javax.swing.JLabel();
-        spinnerRandomOffset = new javax.swing.JSpinner();
-        jLabel11 = new javax.swing.JLabel();
-        jLabel12 = new javax.swing.JLabel();
-        jLabel13 = new javax.swing.JLabel();
-        jLabel14 = new javax.swing.JLabel();
 
         buttonReloadAll.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/pepsoft/worldpainter/icons/arrow_rotate_clockwise.png"))); // NOI18N
         buttonReloadAll.setToolTipText("Reload all or selected objects from disk");
@@ -610,76 +477,6 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         buttonEdit.setMargin(new java.awt.Insets(2, 2, 2, 2));
         buttonEdit.addActionListener(this::buttonEditActionPerformed);
 
-        labelLeafDecayTitle.setText("Leaf decay settings for these objects:");
-
-        labelEffectiveLeafDecaySetting.setText("<html>Leaves do <b>not</b> decay.</html>");
-        labelEffectiveLeafDecaySetting.setEnabled(false);
-
-        buttonSetDecay.setText("Set all to decay");
-        buttonSetDecay.setToolTipText("Set all objects to decaying leaves");
-        buttonSetDecay.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonSetDecayActionPerformed(evt);
-            }
-        });
-
-        buttonSetNoDecay.setText("<html>Set all to <b>not</b> decay</html>");
-        buttonSetNoDecay.setToolTipText("Set all objects to non decaying leaves");
-        buttonSetNoDecay.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonSetNoDecayActionPerformed(evt);
-            }
-        });
-
-        buttonReset.setText("Reset");
-        buttonReset.setToolTipText("Reset leaf decay to object defaults");
-        buttonReset.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonResetActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-                jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(labelEffectiveLeafDecaySetting,
-                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(labelLeafDecayTitle)
-                                        .addGroup(jPanel3Layout.createSequentialGroup()
-                                                .addComponent(buttonSetDecay)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(buttonSetNoDecay,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(buttonReset)))
-                                .addGap(0, 0, Short.MAX_VALUE))
-        );
-        jPanel3Layout.setVerticalGroup(
-                jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(labelLeafDecayTitle)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(labelEffectiveLeafDecaySetting,
-                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(buttonSetDecay)
-                                        .addComponent(buttonSetNoDecay, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(buttonReset)))
-        );
-
         listObjects.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 listObjectsMouseClicked(evt);
@@ -687,22 +484,14 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         });
         jScrollPane1.setViewportView(listObjects);
 
-        jLabel6.setForeground(new java.awt.Color(0, 0, 255));
-        jLabel6.setText("<html><u>Get custom objects</u></html>");
-        jLabel6.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        jLabel6.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jLabel6MouseClicked(evt);
-            }
-        });
 
-        jLabel1.setText("Define your custom object layer on this screen.");
+        jLabel1.setText("Define your custom object layer on this screen. Make sure all objects have a proper offset.");
 
-        jLabel3.setText("Name:");
+        jLabelName.setText("Name:");
 
         fieldName.setColumns(15);
 
-        jLabel4.setText("Paint:");
+        jLabelPaint.setText("Paint:");
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -710,8 +499,8 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                 jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel3)
-                                        .addComponent(jLabel4))
+                                        .addComponent(jLabelName)
+                                        .addComponent(jLabelPaint))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                         .addComponent(paintPicker1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -722,15 +511,15 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                 jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel3)
+                                        .addComponent(jLabelName)
                                         .addComponent(fieldName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel4)
+                                        .addComponent(jLabelPaint)
                                         .addComponent(paintPicker1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
         );
 
-        jLabel2.setText("Object(s):");
+        jLabelObejcts.setText("Object(s):");
 
         buttonAddFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/pepsoft/worldpainter/icons/brick_add.png"))); // NOI18N
         buttonAddFile.setToolTipText("Add one or more objects");
@@ -745,52 +534,8 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         buttonRemoveFile.setToolTipText("Remove selected object(s)");
         buttonRemoveFile.setEnabled(false);
         buttonRemoveFile.setMargin(new java.awt.Insets(2, 2, 2, 2));
-        buttonRemoveFile.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonRemoveFileActionPerformed(evt);
-            }
-        });
+        buttonRemoveFile.addActionListener(this::buttonRemoveFileActionPerformed);
 
-        jLabel7.setText("Spawn chance:");
-
-        spinnerBlocksPerAttempt.setModel(new javax.swing.SpinnerNumberModel(20, 1, 99999, 1));
-        spinnerBlocksPerAttempt.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                spinnerBlocksPerAttemptStateChanged(evt);
-            }
-        });
-
-        labelBlocksPerAttempt.setText("one per x blocks at 1%; y blocks at 50%; z blocks at 100%)");
-
-        jLabel10.setText("one in");
-
-        jLabel5.setText("Grid:");
-
-        spinnerGrid.setModel(new javax.swing.SpinnerNumberModel(1, 1, 999, 1));
-        spinnerGrid.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                spinnerGridStateChanged(evt);
-            }
-        });
-
-        jLabel8.setText("(at 50%)");
-
-        jLabel9.setText("Random offset:");
-
-        spinnerRandomOffset.setModel(new javax.swing.SpinnerNumberModel(0, 0, 999, 1));
-        spinnerRandomOffset.addChangeListener(new javax.swing.event.ChangeListener() {
-            public void stateChanged(javax.swing.event.ChangeEvent evt) {
-                spinnerRandomOffsetStateChanged(evt);
-            }
-        });
-
-        jLabel11.setText("block(s)");
-
-        jLabel12.setText("Effective density:");
-
-        jLabel13.setText("(objects displaced in a random direction up to this distance)");
-
-        jLabel14.setText("block(s)");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
@@ -806,59 +551,23 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                                         .addComponent(buttonReloadAll, javax.swing.GroupLayout.Alignment.TRAILING)))
                         .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jLabel2)
+                                        .addComponent(jLabelObejcts)
                                         .addComponent(jLabel1)
-                                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addGroup(layout.createSequentialGroup()
                                                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(jSeparator2, javax.swing.GroupLayout.PREFERRED_SIZE, 2, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                        .addComponent(jLabel7)
-                                                        .addComponent(jLabel5)
-                                                        .addComponent(jLabel9)
-                                                        .addComponent(jLabel12))
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                                        .addGroup(layout.createSequentialGroup()
-                                                                .addComponent(spinnerRandomOffset,
-                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(jLabel11)
-                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(jLabel13))
-                                                        .addGroup(layout.createSequentialGroup()
-                                                                .addComponent(spinnerGrid,
-                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(jLabel14))
-                                                        .addComponent(labelBlocksPerAttempt)
-                                                        .addGroup(layout.createSequentialGroup()
-                                                                .addComponent(jLabel10)
-                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(spinnerBlocksPerAttempt,
-                                                                        javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                                        javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                                                .addComponent(jLabel8)))))
-                                .addGap(0, 0, Short.MAX_VALUE))
-        );
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                        ));
         layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup()
                                 .addComponent(jLabel1)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(jLabel2)
+                                .addComponent(jLabelObejcts)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                         .addGroup(layout.createSequentialGroup()
@@ -871,34 +580,6 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                                                 .addComponent(buttonReloadAll)
                                                 .addGap(0, 0, Short.MAX_VALUE))
                                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel5)
-                                        .addComponent(spinnerGrid, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel14))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel7)
-                                        .addComponent(spinnerBlocksPerAttempt,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel10)
-                                        .addComponent(jLabel8))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(labelBlocksPerAttempt)
-                                        .addComponent(jLabel12))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(jLabel9)
-                                        .addComponent(spinnerRandomOffset,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE,
-                                                javax.swing.GroupLayout.DEFAULT_SIZE,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(jLabel11)
-                                        .addComponent(jLabel13))
-                                .addGap(18, 18, 18)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                         .addComponent(jSeparator2)
                                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -914,17 +595,6 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         editObjects();
     }//GEN-LAST:event_buttonEditActionPerformed
 
-    private void buttonSetDecayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSetDecayActionPerformed
-        setLeavesDecay();
-    }//GEN-LAST:event_buttonSetDecayActionPerformed
-
-    private void buttonSetNoDecayActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonSetNoDecayActionPerformed
-        setLeavesNoDecay();
-    }//GEN-LAST:event_buttonSetNoDecayActionPerformed
-
-    private void buttonResetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonResetActionPerformed
-        resetLeafDecay();
-    }//GEN-LAST:event_buttonResetActionPerformed
 
     private void listObjectsMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_listObjectsMouseClicked
         if (evt.getClickCount() == 2) {
@@ -933,20 +603,9 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                 WPObject object = listModel.getElementAt(row);
                 EditObjectAttributes dialog = new EditObjectAttributes(SwingUtilities.getWindowAncestor(this), object, colourScheme);
                 dialog.setVisible(true);
-                if (!dialog.isCancelled()) {
-                    refreshLeafDecaySettings();
-                }
             }
         }
     }//GEN-LAST:event_listObjectsMouseClicked
-
-    private void jLabel6MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel6MouseClicked
-        try {
-            DesktopUtils.open(new URL("https://www.worldpainter.net/doc/legacy/customobjects"));
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Malformed URL exception while trying to open https://www.worldpainter.net/doc/legacy/customobjects", e);
-        }
-    }//GEN-LAST:event_jLabel6MouseClicked
 
     private void buttonAddFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonAddFileActionPerformed
         addFilesOrDirectory();
@@ -955,63 +614,4 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
     private void buttonRemoveFileActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonRemoveFileActionPerformed
         removeFiles();
     }//GEN-LAST:event_buttonRemoveFileActionPerformed
-
-    private void spinnerBlocksPerAttemptStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spinnerBlocksPerAttemptStateChanged
-        updateBlocksPerAttempt();
-        settingsChanged();
-    }//GEN-LAST:event_spinnerBlocksPerAttemptStateChanged
-
-    private void spinnerGridStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spinnerGridStateChanged
-        updateBlocksPerAttempt();
-        settingsChanged();
-    }//GEN-LAST:event_spinnerGridStateChanged
-
-    private void spinnerRandomOffsetStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_spinnerRandomOffsetStateChanged
-        settingsChanged();
-    }//GEN-LAST:event_spinnerRandomOffsetStateChanged
-
-
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton buttonAddFile;
-    private javax.swing.JButton buttonEdit;
-    private javax.swing.JButton buttonReloadAll;
-    private javax.swing.JButton buttonRemoveFile;
-    private javax.swing.JButton buttonReset;
-    private javax.swing.JButton buttonSetDecay;
-    private javax.swing.JButton buttonSetNoDecay;
-    private javax.swing.JTextField fieldName;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
-    private javax.swing.JLabel jLabel12;
-    private javax.swing.JLabel jLabel13;
-    private javax.swing.JLabel jLabel14;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JSeparator jSeparator2;
-    private javax.swing.JLabel labelBlocksPerAttempt;
-    private javax.swing.JLabel labelEffectiveLeafDecaySetting;
-    private javax.swing.JLabel labelLeafDecayTitle;
-    private javax.swing.JList<WPObject> listObjects;
-    private org.pepsoft.worldpainter.layers.renderers.PaintPicker paintPicker1;
-    private javax.swing.JSpinner spinnerBlocksPerAttempt;
-    private javax.swing.JSpinner spinnerGrid;
-    private javax.swing.JSpinner spinnerRandomOffset;
-    // End of variables declaration//GEN-END:variables
-
-    private final DefaultListModel<WPObject> listModel;
-    private final NumberFormat numberFormat = NumberFormat.getInstance();
-    private ColourScheme colourScheme;
-
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CityLayerEditor.class);
-    private static final long serialVersionUID = 1L;
 }
