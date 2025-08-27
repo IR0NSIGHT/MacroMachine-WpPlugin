@@ -1,13 +1,14 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
-import org.pepsoft.minecraft.Material;
-import org.pepsoft.util.DesktopUtils;
-import org.pepsoft.worldpainter.*;
+import org.pepsoft.worldpainter.ColourScheme;
+import org.pepsoft.worldpainter.Configuration;
+import org.pepsoft.worldpainter.DefaultPlugin;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Platform;
 import org.pepsoft.worldpainter.layers.AbstractLayerEditor;
 import org.pepsoft.worldpainter.layers.EditLayerDialog;
 import org.pepsoft.worldpainter.layers.bo2.EditObjectAttributes;
 import org.pepsoft.worldpainter.layers.bo2.WPObjectListCellRenderer;
-import org.pepsoft.worldpainter.layers.bo2.WPObjectPreviewer;
 import org.pepsoft.worldpainter.layers.exporters.ExporterSettings;
 import org.pepsoft.worldpainter.objects.WPObject;
 import org.pepsoft.worldpainter.plugins.CustomObjectManager;
@@ -18,27 +19,22 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.vecmath.Point3i;
 import java.awt.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.text.NumberFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.prefs.Preferences;
 import java.util.stream.IntStream;
 
-import static java.lang.Math.round;
 import static java.lang.String.format;
-import static org.pepsoft.minecraft.Material.PERSISTENT;
+import static org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityEditToolOperation.updateInstance;
 import static org.pepsoft.util.swing.MessageUtils.*;
 import static org.pepsoft.worldpainter.ExceptionHandler.doWithoutExceptionReporting;
 import static org.pepsoft.worldpainter.Platform.Capability.NAME_BASED;
-import static org.pepsoft.worldpainter.objects.WPObject.*;
+import static org.pepsoft.worldpainter.objects.WPObject.ATTRIBUTE_FILE;
 
 public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements ListSelectionListener, DocumentListener {
     private static final Preferences prefs =
@@ -49,16 +45,11 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CityLayerEditor.class);
     private static final long serialVersionUID = 1L;
     private final DefaultListModel<WPObject> listModel;
-    private final NumberFormat numberFormat = NumberFormat.getInstance();
-    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonAddFile;
     private javax.swing.JButton buttonEdit;
     private javax.swing.JButton buttonReloadAll;
     private javax.swing.JButton buttonRemoveFile;
 
-    // ListSelectionListener
-
-    // DocumentListener
     private javax.swing.JTextField fieldName;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabelObejcts;
@@ -113,6 +104,14 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
             throw new IllegalStateException("Settings invalid or incomplete");
         }
         saveSettings(layer);
+
+        try {
+            Dimension dim =context.getDimension();
+            layer.repaintAll(dim);
+        } catch (Exception ignored){
+
+        }
+        CityEditToolOperation.updateInstance();
     }
 
     @Override
@@ -133,7 +132,8 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         if (!isCommitAvailable()) {
             throw new IllegalStateException("Settings invalid or incomplete");
         }
-        final CityLayer previewLayer = saveSettings(layer);
+
+        final CityLayer previewLayer = saveSettings(null);
         return new ExporterSettings() {
             @Override
             public boolean isApplyEverywhere() {
@@ -195,12 +195,15 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
             layer = createLayer();
         }
 
-        layer.setName(fieldName.getText());
-        layer.setObjectList(IntStream.range(0, listModel.getSize())
+        var newObjects = IntStream.range(0, listModel.getSize())
                 .mapToObj(listModel::getElementAt)
-                .collect(java.util.stream.Collectors.toCollection(ArrayList::new)));
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+
+        layer.setObjectList(newObjects);
+        layer.setName(fieldName.getText());
         layer.setPaint(paintPicker1.getPaint());
         layer.setOpacity(paintPicker1.getOpacity());
+
 
         return layer;
     }
@@ -248,10 +251,6 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         CustomObjectManager.UniversalFileFilter fileFilter = CustomObjectManager.getInstance().getFileFilter();
         fileChooser.setFileFilter(fileFilter);
-        WPObjectPreviewer previewer = new WPObjectPreviewer();
-        //previewer.setDimension(App.getInstance().getDimension());
-        fileChooser.addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, previewer);
-        fileChooser.setAccessory(previewer);
         if (doWithoutExceptionReporting(() -> fileChooser.showOpenDialog(this)) == JFileChooser.APPROVE_OPTION) {
             prefs.put(LAST_DIR_KEY, fileChooser.getSelectedFile().getParent()); //remember path for next use
 
@@ -524,11 +523,7 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         buttonAddFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/pepsoft/worldpainter/icons/brick_add.png"))); // NOI18N
         buttonAddFile.setToolTipText("Add one or more objects");
         buttonAddFile.setMargin(new java.awt.Insets(2, 2, 2, 2));
-        buttonAddFile.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonAddFileActionPerformed(evt);
-            }
-        });
+        buttonAddFile.addActionListener(this::buttonAddFileActionPerformed);
 
         buttonRemoveFile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/pepsoft/worldpainter/icons/brick_delete.png"))); // NOI18N
         buttonRemoveFile.setToolTipText("Remove selected object(s)");
