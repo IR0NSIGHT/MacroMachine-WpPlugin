@@ -100,15 +100,18 @@
             <version>5.9.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.pepsoft.worldpainter</groupId>
+            <artifactId>WPGUI</artifactId>
+            <version>2.26.0</version>
+        </dependency>
     </dependencies>
 
     <profiles>
         <!-- Enable this profile and execute the test phase in order to run your plugin with WorldPainter. -->
         <profile>
-
             <id>testWithWorldPainter</id>
             <dependencies>
-
                 <!-- https://mvnrepository.com/artifact/org.pepsoft.worldpainter/WPGUI -->
                 <dependency>
                     <groupId>org.pepsoft.worldpainter</groupId>
@@ -137,8 +140,7 @@
                                 <argument>-classpath</argument>
                                 <classpath/>
                                 <!-- Uncomment this to enable debugging. Change suspend=n to suspend=y if you want to debug plugin loading or initialisation: -->
-                                <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
-                                </argument>
+                                <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005</argument>
                                 <argLine>-ea</argLine>
                                 <argLine>-Dsun.awt.disablegrab=true</argLine>
                                 <!-- These exports are needed from Java 9+ to make the JIDE GUI framework work: -->
@@ -162,8 +164,31 @@
                             </arguments>
                         </configuration>
                     </plugin>
+
+                    <!-- Copy WPGUI into target/lib -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>3.6.1</version>
+                        <executions>
+                            <execution>
+                                <id>copy-wpgui</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <includeArtifactIds>WPGUI</includeArtifactIds>
+                                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                                    <overWriteReleases>true</overWriteReleases>
+                                    <overWriteSnapshots>true</overWriteSnapshots>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
+
     </profiles>
 </project>

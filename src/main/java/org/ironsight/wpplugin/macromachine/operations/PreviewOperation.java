@@ -5,7 +5,7 @@ import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.operations.*;
+import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 
 import javax.swing.*;
 import java.awt.*;
