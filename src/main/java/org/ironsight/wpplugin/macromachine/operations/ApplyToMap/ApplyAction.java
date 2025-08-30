@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
@@ -15,10 +16,31 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ApplyAction {
 
-    public static ExecutionStatistic applyToDimensionWithFilter(Dimension dim, TileFilter filter,
+    public static class ApplicationContext {
+        public final Dimension dimension;
+        public final MacroContainer macros;
+        public final MappingActionContainer actions;
+        public final ActionFilterIO actionFilterIO;
+
+        public ApplicationContext(Dimension dimension, MacroContainer macros, MappingActionContainer actions, LayerProvider layerManager,
+                                  LayerProvider apiLayerManager, ActionFilterIO actionFilterIO) {
+            this.dimension = dimension;
+            this.macros = macros;
+            this.actions = actions;
+            this.internalLayerManager = layerManager;
+            this.actionFilterIO = actionFilterIO;
+            this.apiLayerManager = apiLayerManager;
+        }
+
+        public final LayerProvider internalLayerManager;
+        public final LayerProvider apiLayerManager;
+    }
+
+    public static ExecutionStatistic applyToDimensionWithFilter(ApplicationContext context, TileFilter filter,
                                                                 MappingAction action,
                                                                 ApplyActionCallback callback) {
-        filter.setDimension(dim);
+        Dimension dim = context.dimension;
+        filter.setContext(context);
         Iterator<? extends Tile> t = dim.getTiles().iterator();
         ExecutionStatistic statistic = new ExecutionStatistic(action);
         long startTime = System.currentTimeMillis();
@@ -32,7 +54,7 @@ public class ApplyAction {
 
         while (t.hasNext()) {
             Tile tile = t.next();
-            if (ActionFilterIO.instance.skipTile(tile.getX(), tile.getY()) &&
+            if (context.actionFilterIO.skipTile(tile.getX(), tile.getY()) && //FIXME move static instance to be member of applicationContext
                     !doesIncreaseActionFilter(action)) {
                 continue;
             }
@@ -64,7 +86,7 @@ public class ApplyAction {
                 break;
             //special case for actionfilter
             if (action.getOutput() instanceof ActionFilterIO) {
-                boolean skipTile = ActionFilterIO.instance.testTileEarlyAbort(tile, action);
+                boolean skipTile =context.actionFilterIO.testTileEarlyAbort(tile, action);
                 if (skipTile)
                     continue;
             }
@@ -74,7 +96,7 @@ public class ApplyAction {
                     final int x = xInTile + (tile.getX() << TILE_SIZE_BITS);
                     final int y = yInTile + (tile.getY() << TILE_SIZE_BITS);
                     if (pass == TileFilter.passType.ALL_BLOCKS || filter.pass(x, y)) {
-                        action.applyToPoint(dim, x, y);
+                        action.applyToPoint(dim, x, y, context.actionFilterIO);
                         statistic.touchedBlocks++;
                     }
                 }
@@ -82,7 +104,7 @@ public class ApplyAction {
                     break;
             }
             //this pass is done, for this tile calculate new minMax
-            ActionFilterIO.instance.getTileContainer().calculateMinMax(tile.getX() * TILE_SIZE,
+            context.actionFilterIO.getTileContainer().calculateMinMax(tile.getX() * TILE_SIZE,
                     tile.getY() * TILE_SIZE);
             tilesVisitedCount++;
             callback.setProgressOfAction(Math.round(100f * tilesVisitedCount / (totalTiles)));
@@ -112,9 +134,10 @@ public class ApplyAction {
                         action.actionType.equals(ActionType.AT_LEAST));
     }
 
-    public static ArrayList<ExecutionStatistic> applyExecutionSteps(Dimension dim,
+    public static ArrayList<ExecutionStatistic> applyExecutionSteps(ApplicationContext context,
                                                                     List<MappingAction> actions,
                                                                     ApplyActionCallback ui) {
+        Dimension dim = context.dimension;
         ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
         ui.setAllActionsBeforeRun(actions);
         for (MappingAction action : actions) {
@@ -127,7 +150,7 @@ public class ApplyAction {
             TileFilter earlyAbortFilter = new TileFilter(action);
             ExecutionStatistic statistic = null;
             try {
-                statistic = applyToDimensionWithFilter(dim,earlyAbortFilter,action,ui);
+                statistic = applyToDimensionWithFilter(context,earlyAbortFilter,action,ui);
             } catch (Exception ex) {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);

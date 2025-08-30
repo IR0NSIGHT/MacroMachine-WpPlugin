@@ -1,11 +1,19 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.layers.CustomLayer;
+import org.pepsoft.worldpainter.layers.Layer;
 
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO.getUsedLayers;
 
 /**
  * this class is a collection of MappingActions the action are ordered and executed in this order a macro can be
@@ -74,6 +82,86 @@ public class Macro implements SaveableAction {
             active[i] = activeUids.get(i);
         Macro newMacro = macro.withUUIDs(ids, active);
         return newMacro;
+    }
+
+    public static List<MappingAction> macroToFlatActions(Macro macro, MacroContainer macroContainer,
+                                                         MappingActionContainer actionContainer) {
+        List<UUID> steps = macro.collectActions(new LinkedList<>(), macroContainer, actionContainer);
+        List<MappingAction> executionSteps = steps.stream()
+                .map(actionContainer::queryById)
+                .collect(Collectors.toList());
+        return executionSteps;
+    }
+
+    public static Collection<ExecutionStatistic> applyMacroToDimension(ApplyAction.ApplicationContext context, Macro macro, ApplyActionCallback callback) {
+        assert context != null;
+
+        Dimension dim = context.dimension;
+        Collection<ExecutionStatistic> statistics = new ArrayList<>();
+        try {
+            if (!dim.isEventsInhibited()) {
+                dim.setEventsInhibited(true);
+            }
+            dim.rememberChanges();
+
+            List<MappingAction> executionSteps = macroToFlatActions(macro, context.macros,
+                    context.actions);
+            boolean hasNullActions = executionSteps.stream().anyMatch(Objects::isNull);
+            if (hasNullActions) {
+                GlobalActionPanel.ErrorPopUpString(
+                        "Some action in the execution list are null. This means they were deleted, but are still " +
+                                "linked into a macro." + " The macro can" + " " + "not be applied to the " + "map.");
+                return statistics;
+            }
+
+
+            // prepare action for dimension
+            for (MappingAction action : executionSteps) {
+                try {
+                    action.output.prepareForDimension(dim);
+                    action.input.prepareForDimension(dim);
+                } catch (IllegalAccessError e) {
+                    GlobalActionPanel.ErrorPopUpString(
+                            "Action " + action.getName() + " can not be applied to the map." + e.getMessage());
+                    return statistics;
+                } catch (OutOfMemoryError e) {
+                    GlobalActionPanel.ErrorPopUpString(
+                            "Action " + action.getName() + " consumed more memory than available:" + e.getMessage());
+                    return statistics;
+                } catch (Exception e) {
+                    GlobalActionPanel.ErrorPopUpString(
+                            "Action " + action.getName() + " caused an exception:" + e.getMessage());
+                    return statistics;
+                }
+            }
+            for (Layer l : getUsedLayers(executionSteps, context.internalLayerManager, System.err::println)) {
+                // add new layer to this .world
+                if (l instanceof CustomLayer && !context.apiLayerManager.existsLayerWithId(l.getId())) {
+                    ((CustomLayer) l).setPalette("MacroMachine");
+                    context.apiLayerManager.addLayer(l);
+                }
+            }
+
+            try {
+                context.actionFilterIO.prepareForDimension(dim);
+            } catch (Exception e) {
+                GlobalActionPanel.ErrorPopUpString(
+                        "ActionFilter Preparation caused an exception:" + e.getMessage());
+                return statistics;
+            }
+
+            // ----------------------- macro is ready and can be applied to map
+            statistics = ApplyAction.applyExecutionSteps(context, executionSteps, callback);
+            context.actionFilterIO.releaseAfterApplication();
+        } catch (Exception ex) {
+            GlobalActionPanel.ErrorPopUp(ex);
+            return statistics;
+        } finally {
+            if (dim.isEventsInhibited()) {
+                dim.setEventsInhibited(false);
+            }
+        }
+        return statistics;
     }
 
     public boolean[] getActiveActions() {

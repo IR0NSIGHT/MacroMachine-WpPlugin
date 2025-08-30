@@ -27,7 +27,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
-import static org.ironsight.wpplugin.macromachine.operations.MacroDialogOperation.macroToFlatActions;
+import static org.ironsight.wpplugin.macromachine.operations.Macro.macroToFlatActions;
 
 // top level panel that contains a selection list of macros/layers/input/output on the left, like a file browser
 // and an editor for the currently selected action on the right

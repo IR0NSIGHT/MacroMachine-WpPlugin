@@ -1,5 +1,8 @@
 package org.ironsight.wpplugin.macromachine.operations.specialOperations;
 
+import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.BinaryLayerIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionTileValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainHeightIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TileContainer;
 import org.junit.jupiter.api.Test;
@@ -32,10 +35,14 @@ class ShadowMapTest {
         }
     }
 
+    @Test
     void testCalculateShadowMap() {
-        // 12 x 12 km map
-        Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE * 100, TILE_SIZE * 100), 62);
-        ShadowMap.calculateShadowMap(dim.getExtent(), new TerrainHeightIO(-128, 1000), dim);
+        int size = 3;
+        Dimension dim = createDimension(new Rectangle(TILE_SIZE *-3 * size, TILE_SIZE *-4 * size, TILE_SIZE * 10 * size, TILE_SIZE * 10 * size), 62);
+        dim.setHeightAt(-17, 29, 90);
+        var shadowMap = ShadowMap.calculateShadowMap(dim.getExtent(), new TerrainHeightIO(-128, 1000), dim);
+        assertEquals(0, shadowMap.getValueAt(-17, 29));
+        assertEquals(90-62-1, shadowMap.getValueAt(-17, 28)); // north = shadow dir = y- axis in WP
     }
 
     @Test
@@ -123,7 +130,7 @@ class ShadowMapTest {
         assertEquals(14, container.getValueAt(p1x + 10, p1x + 10), "p1x,p1x is the closest point");
 
         // test random points i pulled from the WP map when encountering unexpected behaviour
-        assertEquals(dist(p2x,p2y,11,29), container.getValueAt(11, 29), "p2 is the closest point to this position");
+        assertEquals(dist(p2x, p2y, 11, 29), container.getValueAt(11, 29), "p2 is the closest point to this position");
 
         // test a point that should have been marked as 31 radius, but wasnt
         assertEquals(31, dist(p2x, p2y, 9, 37), "");
@@ -139,7 +146,7 @@ class ShadowMapTest {
     }
 
     private int distInt(int x, int y) {
-        return (int)Math.round(Math.sqrt(x*x+y*y));
+        return (int) Math.round(Math.sqrt(x * x + y * y));
     }
 
     @Test
@@ -147,7 +154,7 @@ class ShadowMapTest {
         {   //takes existing value, keeps it and writes distance map into the first16bits
             int[] horizDist = new int[]{0xFFFF, 0xFFFF, 7, 0xFFFF, 0xFFFF, 0xFFFF, 3, 0xFFFF, 0xFFFF, 0xFFFF};
 
-            int[] expHorz = new int[]{distInt(2,7), distInt(5,3), distInt(4,3),  distInt(3,3),  distInt(2,3),  distInt(1,3), 3,  distInt(1,3),  distInt(2,3), distInt(3,3)};
+            int[] expHorz = new int[]{distInt(2, 7), distInt(5, 3), distInt(4, 3), distInt(3, 3), distInt(2, 3), distInt(1, 3), 3, distInt(1, 3), distInt(2, 3), distInt(3, 3)};
             int[] distances = ShadowMap.expandBinaryLinearColumn(horizDist);
             assertArrayEquals(expHorz, distances);
         }
@@ -164,9 +171,23 @@ class ShadowMapTest {
 
     @Test
     void findEdgesOfValues() {
-        int[] arr = new int[]{0,0,0, 3, 3, 3, 3,0,0,0, 3, 3, 3,0,0,0,0,0};
-        int[] edges = ShadowMap.findEdgesOfValues(arr,0);
-        assertEquals(edges[0],3);
-        assertEquals(edges[1],12);
+        int[] arr = new int[]{0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 3, 3, 3, 0, 0, 0, 0, 0};
+        int[] edges = ShadowMap.findEdgesOfValues(arr, 0);
+        assertEquals(edges[0], 3);
+        assertEquals(edges[1], 12);
+    }
+
+    @Test
+    void testExpandBinaryMask() {
+        int sizeTiles = 20;
+        Dimension dim = createDimension(new Rectangle(TILE_SIZE *-1 * sizeTiles, TILE_SIZE *-1 * sizeTiles, TILE_SIZE * sizeTiles, TILE_SIZE * sizeTiles), 62);
+        BinaryLayerIO input = new BinaryLayerIO(MacroSelectionLayer.INSTANCE, false);
+        input.setValueAt(dim,-17,29,1);
+        var expandedMap = ShadowMap.expandBinaryMask(input,dim,dim.getExtent(),false);
+
+        assertEquals(0, expandedMap.getValueAt(-17, 29));
+        assertEquals(1, expandedMap.getValueAt(-17, 28));
+        assertEquals(2, expandedMap.getValueAt(-17, 27));
+
     }
 }
