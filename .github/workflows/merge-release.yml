@@ -1,9 +1,11 @@
 name: Check pom.xml version and merge
 
 on:
-  push:
-    branches:
-      - master
+  workflow_run:
+    workflows: ["Maven Test"]   # must match the name above
+    branches: ["master"]        # only when Maven Test ran on master
+    types:
+      - completed
 
 jobs:
   check-and-merge:
