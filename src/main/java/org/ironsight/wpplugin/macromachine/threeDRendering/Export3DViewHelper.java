@@ -128,7 +128,6 @@ public class Export3DViewHelper {
                     int blockPosZ = ((int) regionPos.getY() * CHUNKS_PER_SIDE + chunkY) * 16;
                     Chunk chunk = region.getChunk(chunkX + (int) regionPos.getX() * CHUNKS_PER_SIDE,
                             chunkY + (int) regionPos.getY() * CHUNKS_PER_SIDE);
-                    System.out.printf("chunk at %d, %d \n", blockPosX, blockPosZ);
                     if (chunk != null) {
                       /*  if (!minecraftWorldObject.getVolume().contains(blockPosX,blockPosZ, tileMaxHeight)) {
                             System.out.println("reject");

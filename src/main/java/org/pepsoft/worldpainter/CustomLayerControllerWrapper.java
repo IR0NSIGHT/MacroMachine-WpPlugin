@@ -1,34 +1,43 @@
 package org.pepsoft.worldpainter;
 
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
 import org.pepsoft.worldpainter.layers.CustomLayer;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class CustomLayerControllerWrapper {
+public class CustomLayerControllerWrapper implements LayerProvider {
     private CustomLayerController controller;
 
     /**
      * ONLY instantiate this if you KNOW for a fact an App instance exists.
      */
     public CustomLayerControllerWrapper() {
-        this.controller = getCustomLayerController();
-        assert controller != null;
+
     }
 
     public void registerCustomLayer(final CustomLayer layer, boolean activate) {
         try {
-            Method method = controller.getClass().getDeclaredMethod("registerCustomLayer", CustomLayer.class, boolean.class);
+            Method method = getController().getClass().getDeclaredMethod("registerCustomLayer", CustomLayer.class, boolean.class);
             method.setAccessible(true);
-            method.invoke(controller, layer, activate);
+            method.invoke(getController(), layer, activate);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to call registerCustomLayer via reflection", e);
+            System.err.println(e);
         }
+    }
+
+    CustomLayerController getController() {
+        if (controller == null)
+            this.controller = getCustomLayerController();
+        return controller;
     }
 
     public boolean containsLayer(Layer layer) {
@@ -39,10 +48,11 @@ public class CustomLayerControllerWrapper {
         try {
             Method m = CustomLayerController.class.getDeclaredMethod("getCustomLayers");
             m.setAccessible(true);
-            List<CustomLayer> layers = (List<CustomLayer>) m.invoke(controller);
+            List<CustomLayer> layers = (List<CustomLayer>) m.invoke(getController());
             return layers;
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NullPointerException e) {
+            System.err.println(e);
+            return List.of();
         }
     }
 
@@ -52,7 +62,7 @@ public class CustomLayerControllerWrapper {
         try {
             // Create an instance of the App class
 
-           // Class<?> appClass = Class.forName("org.pepsoft.worldpainter.App");
+            // Class<?> appClass = Class.forName("org.pepsoft.worldpainter.App");
             Class<?> appClass = Class.forName("org.pepsoft.worldpainter.App");
 
             // Find the method (no parameters)
@@ -72,5 +82,33 @@ public class CustomLayerControllerWrapper {
             e.printStackTrace();
             return null;
         }
+    }
+
+    @Override
+    public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
+        HashMap<String, CustomLayer> layers = new HashMap<>();
+        getController().getCustomLayers().forEach(l -> layers.put(l.getId(), l));
+        if (layers.containsKey(layerId))
+            return layers.get(layerId);
+        layerNotFoundError.accept(layerId);
+        return null;
+    }
+
+    @Override
+    public List<Layer> getLayers() {
+        return new ArrayList<>(getController().getCustomLayers());
+    }
+
+    @Override
+    public void addLayer(Layer layer) {
+        if (layer instanceof CustomLayer customLayer)
+            getController().registerCustomLayer(customLayer, true);
+    }
+
+    @Override
+    public boolean existsLayerWithId(String layerId) {
+        HashMap<String, CustomLayer> layers = new HashMap<>();
+        getController().getCustomLayers().forEach(l -> layers.put(l.getId(), l));
+        return (layers.containsKey(layerId));
     }
 }

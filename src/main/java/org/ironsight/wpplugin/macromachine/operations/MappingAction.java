@@ -310,9 +310,9 @@ public class MappingAction implements SaveableAction {
         return input.getName() + " " + actionType.displayName + " " + output.getName();
     }
 
-    public void applyToPoint(Dimension dim, int x, int y) {
+    public void applyToPoint(Dimension dim, int x, int y, ActionFilterIO actionFilterIO) {
         if (!output.getProviderType().equals(INTERMEDIATE_SELECTION) &&
-                ActionFilterIO.instance.getValueAt(dim, x, y) != ActionFilterIO.PASS_VALUE)
+                actionFilterIO.getValueAt(dim, x, y) != ActionFilterIO.PASS_VALUE)
             return;
 
         if (mappingPoints.length == 0) {

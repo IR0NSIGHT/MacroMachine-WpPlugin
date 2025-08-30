@@ -20,15 +20,22 @@ public class TileContainer {
         this(extent.width , extent.height, TILE_SIZE * extent.x, TILE_SIZE * extent.y,defaultValue);
     }
 
-    public void addAsValues(IPositionValueGetter getter, Dimension dim, boolean invert) {
-        for (int yPos = getMinYPos(); yPos < getMaxYPos(); yPos ++) {
-            for (int xPos = getMinXPos(); xPos < getMaxXPos(); xPos ++) {
-                int value = getter.getValueAt(dim, xPos, yPos);
-                if (invert)
-                    value = getter.getMaxValue() - value;
-                setValueAt(xPos,yPos, value);
+    public void addAsValues(IPositionTileValueGetter getter, Dimension dim, boolean invert) {
+        dim.getTiles().parallelStream().forEach(t -> {
+            int yOff = t.getY() * TILE_SIZE;
+            int xOff = t.getX() * TILE_SIZE;
+            if (!existsTile(t.getX(),t.getY()))
+                return;
+            IntegerTile intTile = getTileAt(xOff,yOff);
+            for (int yPos = 0; yPos < TILE_SIZE; yPos ++) {
+                for (int xPos = 0; xPos < TILE_SIZE; xPos ++) {
+                    int value = getter.getValueAt(t, xPos, yPos);
+                    if (invert)
+                        value = getter.getMaxValue() - value;
+                    intTile.setValueAt(  offsetX + xPos + xOff,yPos + yOff + offsetY, value);
+                }
             }
-        }
+        });
     }
 
     /**
@@ -154,7 +161,8 @@ public class TileContainer {
 
         int indexX = pointX >> Constants.TILE_SIZE_BITS;
         int indexY = pointY >> Constants.TILE_SIZE_BITS;
-
+        assert indexX < tiles.length : "" + indexX;
+        assert indexY < tiles[indexX].length : "" + indexY;
         return tiles[indexX][indexY];
     }
 

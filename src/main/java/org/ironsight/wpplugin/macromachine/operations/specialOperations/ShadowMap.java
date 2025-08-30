@@ -7,17 +7,26 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 import java.util.Arrays;
+import java.util.stream.IntStream;
+
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 public class ShadowMap {
     public static TileContainer calculateShadowMap(Rectangle extent, TerrainHeightIO heightIO, Dimension dim) {
         TileContainer shadowmap = new TileContainer(extent, 0);
         shadowmap.addAsValues(heightIO, dim, false);
-        for (int x = shadowmap.getMinXPos(); x < shadowmap.getMaxXPos(); x++) {
-            // iterate column from south (-y) to north (+y)
-            int[] column = shadowmap.getValueColumn(x);
-            int[] shadowColumn = calculateShadowFor(column);
-            shadowmap.setValueColumn(shadowColumn, x);
-        }
+
+        int minX = shadowmap.getMinXPos();
+        int maxX = shadowmap.getMaxXPos();
+
+        IntStream.iterate(minX, i -> i < maxX, i -> i + TILE_SIZE).parallel().forEach(x -> {
+            for (int xx = x; xx < x + TILE_SIZE; xx++) {
+                int[] column = shadowmap.getValueColumn(xx);
+                int[] shadowColumn = calculateShadowFor(column);
+                shadowmap.setValueColumn(shadowColumn, xx);
+            }
+        });
+
         return shadowmap;
     }
 
@@ -30,22 +39,22 @@ public class ShadowMap {
 
     public static TileContainer expandBinaryMask(TileContainer container,
                                                  int incrementPerStep) {
-        for (int y = container.getMinYPos(); y < container.getMaxYPos(); y++) {
-            //row by row
-            int[] row = container.getValueRow(y);
-            row = replaceValues(row, 0xFFFF, 0, false); // 1 -> 1, 0 -> 0xFFFF
-            row = replaceValues(row, 0, 0xFFFF, true); // 0xFFFF -> 0xFFFF, else -> 0
-            row = expandBinaryLinear(row, incrementPerStep, 0, 1);
-            row = expandBinaryLinear(row, incrementPerStep, row.length - 1, -1);
-            container.setValueRow(y, row);
-        }
+        IntStream.iterate(container.getMinYPos(), i -> i < container.getMaxYPos(), i->i+1).parallel().forEach(y -> {
+                //row by row
+                int[] row = container.getValueRow(y);
+                row = replaceValues(row, 0xFFFF, 0, false); // 1 -> 1, 0 -> 0xFFFF
+                row = replaceValues(row, 0, 0xFFFF, true); // 0xFFFF -> 0xFFFF, else -> 0
+                row = expandBinaryLinear(row, incrementPerStep, 0, 1);
+                row = expandBinaryLinear(row, incrementPerStep, row.length - 1, -1);
+                container.setValueRow(y, row);
+        });
 
-        for (int x = container.getMinXPos(); x < container.getMaxXPos(); x++) {
+        IntStream.iterate(container.getMinXPos(), i -> i < container.getMaxXPos(), i->i+1).parallel().forEach(x -> {
             //row by row
             int[] columnXDist = container.getValueColumn(x); // consists of set values 0 .. x and unset values 0xFFFF
             int[] distances = expandBinaryLinearColumn(columnXDist);
             container.setValueColumn(distances, x);
-        }
+        });
         return container;
     }
 

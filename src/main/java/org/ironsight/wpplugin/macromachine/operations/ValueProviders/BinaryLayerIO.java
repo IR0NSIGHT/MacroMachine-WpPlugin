@@ -2,12 +2,13 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
 import java.util.Objects;
 
-public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter, ILayerGetter {
+public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter, IPositionTileValueGetter, ILayerGetter {
     private String layerName;
     private final String layerId;
     boolean isCustom = false;
@@ -148,5 +149,10 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     @Override
     public String toString() {
         return getName();
+    }
+
+    @Override
+    public int getValueAt(Tile tile, int tileX, int tileY) {
+        return tile.getBitLayerValue(layer,tileX,tileY) ? 1 : 0;
     }
 }

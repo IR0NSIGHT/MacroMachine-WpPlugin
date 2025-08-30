@@ -1,15 +1,11 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.DistanceToLayerEdgeGetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ILayerGetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.layers.LayerManager;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
 
@@ -110,9 +106,9 @@ public class TileFilter implements Serializable {
         return this;
     }
 
-    public void setDimension(Dimension dimension) {
-        this.dimension = dimension;
-        List<Layer> allLayers = new ArrayList(LayerManager.getInstance().getLayers());
+    public void setContext(ApplyAction.ApplicationContext context) {
+        this.dimension = context.dimension;
+        List<Layer> allLayers = new ArrayList(context.internalLayerManager.getLayers());
         allLayers.add(Annotations.INSTANCE);
 
         this.layers = allLayers.stream().filter(layer -> layerIds.contains(layer.getId())).collect(Collectors.toList());

@@ -164,10 +164,6 @@ public class CityLayer extends CustomLayer implements UndoListener {
         }
     }
 
-    public int getItemIndexAt(int blockX, int blockY) {
-        return getObjectIdx(database.getDataAt(blockX, blockY));
-    }
-
     public ArrayList<WPObject> getObjectList() {
         return objects;
     }
@@ -328,7 +324,7 @@ public class CityLayer extends CustomLayer implements UndoListener {
     }
 
     @Override
-    public CustomLayer clone() {
+    public CityLayer clone() {
         CityLayer clone = new CityLayer(this.getName(), this.getDescription());
         ArrayList<WPObject> cloneList = new ArrayList<>();
         for (WPObject original : this.getObjectList()) {
@@ -339,7 +335,7 @@ public class CityLayer extends CustomLayer implements UndoListener {
         return clone;
     }
 
-    enum Direction {
+    public enum Direction {
         NORTH(0),
         EAST(1),
         SOUTH(2),

@@ -2,8 +2,9 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.pepsoft.minecraft.Material;
-import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Platform;
+import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 
@@ -131,8 +132,32 @@ public class PreviewOperation extends AbstractBrushOperation {
         if (dim.isEventsInhibited())
             dim.setEventsInhibited(false);
 
-        GlobalActionPanel.setSurfaceObject(renderTileToSurfaceObject(tiles, dim));
+        var schemObj = renderTileToSurfaceObject(tiles, dim);
+        GlobalActionPanel.setSurfaceObject(schemObj);
         GlobalActionPanel.flagForChangedSurfaceObject();
+/*
+        var clone = new Sponge2Schematic(schemObj);
+        try {
+            clone.save("D:\\Repos\\cubeArray\\testSchems\\exported_"+(int)(Math.random()*1000)+".schem");
+        } catch (IOException ex) {
+            System.err.println(ex);
+        }
+
+
+        Runnable task = () -> {
+            InstancedCubes renderer = null;
+            try {
+                renderer = new InstancedCubes(SchemReader.prepareData(java.util.List.of(schemObj)));
+                renderer.run();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+
+        Thread thread = new Thread(task);
+        thread.start();  // actually starts it in a new thread
+*/
+
     }
 
     static class TileChangedListener implements Tile.Listener {

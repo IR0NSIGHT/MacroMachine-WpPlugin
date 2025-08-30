@@ -21,7 +21,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     private transient TileContainer tileContainer;
     private boolean debugMode = false;
 
-    protected ActionFilterIO() {
+    public ActionFilterIO() {
     }
 
     public boolean isDebugMode() {
@@ -55,7 +55,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (tileContainer == null)
-            return getMinValue();
+            return PASS_VALUE; //pass by default
         return tileContainer.getValueAt(x, y) == PASS_VALUE ? PASS_VALUE : BLOCK_VALUE;
     }
 

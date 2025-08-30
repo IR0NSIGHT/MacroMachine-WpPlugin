@@ -8,7 +8,7 @@ import java.awt.*;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSetter, EditableIO {
+public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSetter, IPositionTileValueGetter, EditableIO {
     private final int minHeight;
     private final int maxHeight;
 
@@ -153,4 +153,8 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     }
 
 
+    @Override
+    public int getValueAt(Tile tile, int tileX, int tileY) {
+        return tile.getIntHeight(tileX,tileY);
+    }
 }

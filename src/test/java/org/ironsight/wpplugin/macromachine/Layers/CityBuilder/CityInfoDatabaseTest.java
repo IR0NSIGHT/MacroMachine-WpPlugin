@@ -2,8 +2,11 @@ package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
 import org.junit.jupiter.api.Test;
 
+import java.awt.*;
+
 import static org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityInfoDatabase.NO_DATA;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 class CityInfoDatabaseTest {
 
@@ -42,6 +45,13 @@ class CityInfoDatabaseTest {
 
     @Test
     void getTileData() {
+        CityInfoDatabase db = new CityInfoDatabase();
+        assertNull(db.getTileData(-17,18));
+        db.setDataAt(-17 * TILE_SIZE + 36,18 * TILE_SIZE + 27,12345678);
+        var tileData = db.getTileData(-17 ,18 );
+        assertNotNull(tileData);
+        assertEquals(1, tileData.size());
+        assertEquals(12345678, tileData.get(new Point(-17 * TILE_SIZE + 36,18 * TILE_SIZE + 27)));
     }
 
     @Test

@@ -162,6 +162,12 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         return newMap;
     }
 
+    public T addMapping(T item) {
+        mappings.put(item.getUid(), item);
+        notify(item.getUid());
+        return item;
+    }
+
     protected abstract T getNewAction();
 
     protected abstract T getNewAction(UUID uuid);

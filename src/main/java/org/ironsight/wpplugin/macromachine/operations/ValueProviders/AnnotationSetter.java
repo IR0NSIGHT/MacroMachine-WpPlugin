@@ -8,6 +8,24 @@ import org.pepsoft.worldpainter.layers.Layer;
 import java.awt.*;
 
 public class AnnotationSetter implements IPositionValueGetter, IPositionValueSetter, ILayerGetter {
+    public static final int ANNOTATION_ABSENT = 0;
+    public static final int ANNOTATION_WHITE = 1;
+    public static final int ANNOTATION_ORANGE = 2;
+    public static final int ANNOTATION_MAGENTA = 3;
+    public static final int ANNOTATION_LIGHT_BLUE = 4;
+    public static final int ANNOTATION_YELLOW = 5;
+    public static final int ANNOTATION_LIME = 6;
+    public static final int ANNOTATION_PINK = 7;
+    public static final int ANNOTATION_LIGHT_GREY = 8;
+    public static final int ANNOTATION_CYAN = 9;
+    public static final int ANNOTATION_PURPLE = 10;
+    public static final int ANNOTATION_BLUE = 11;
+    public static final int ANNOTATION_BROWN = 12;
+    public static final int ANNOTATION_GREEN = 13;
+    public static final int ANNOTATION_RED = 14;
+    public static final int ANNOTATION_BLACK = 15;
+
+
     private static final Color[] COLORS =
             new Color[]{Color.WHITE, Color.WHITE, Color.ORANGE, Color.MAGENTA, new Color(107, 177, 255),   //LIGHT BLUE
                     Color.YELLOW, new Color(34, 153, 84), //LIME

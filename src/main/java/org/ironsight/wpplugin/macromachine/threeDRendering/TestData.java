@@ -1,16 +1,24 @@
 package org.ironsight.wpplugin.macromachine.threeDRendering;
 
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.util.Box;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.exporting.MinecraftWorld;
 import org.pepsoft.worldpainter.heightMaps.ConstantHeightMap;
+import org.pepsoft.worldpainter.layers.CustomLayer;
+import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
 import org.pepsoft.worldpainter.themes.SimpleTheme;
 import org.pepsoft.worldpainter.themes.Theme;
 
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.function.Consumer;
 
 import static org.pepsoft.minecraft.Material.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
@@ -35,8 +43,7 @@ public final class TestData {
     }
 
     /**
-     *
-     * @param area area in blocks, must be aligned to TILE_SIZE modulo
+     * @param area          area in blocks, must be aligned to TILE_SIZE modulo
      * @param terrainHeight
      * @return
      */
@@ -53,10 +60,36 @@ public final class TestData {
         return dimension;
     }
 
+    public static LayerProvider getMockLayerProvider() {
+        return new LayerProvider() {
+            private HashMap<String, Layer> id_to_layer = new HashMap<>();
+            @Override
+            public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
+                if (!existsLayerWithId(layerId))
+                    layerNotFoundError.accept( layerId);
+                return id_to_layer.get(layerId);
+            }
+
+            @Override
+            public List<Layer> getLayers() {
+                return new ArrayList<>(id_to_layer.values());
+            }
+
+            @Override
+            public void addLayer(Layer layer) {
+                id_to_layer.put(layer.getId(),layer);
+            }
+
+            @Override
+            public boolean existsLayerWithId(String layerId) {
+                return id_to_layer.containsKey(layerId);
+            }
+        };
+    }
+
     /**
-     * Create an in-memory {@link MinecraftWorld} with the specified {@code area} and filled with blocks up to and
-     * including {@code terrainHeight}, consisting of one layer of bedrock, up to 63 layers of deepslate, as many layers
-     * of stone as required, three layers of dirt and one layer of grass block.
+     * Create an in-memory {@link MinecraftWorld} with the specified {@code area} and filled with blocks up to and including {@code terrainHeight}, consisting of one layer of bedrock, up to
+     * 63 layers of deepslate, as many layers of stone as required, three layers of dirt and one layer of grass block.
      */
     public static MinecraftWorld createMinecraftWorld(Rectangle area, int terrainHeight, Material terrainMaterial) {
         final Box volume = new Box(area.x, area.width, area.y, area.height, MIN_HEIGHT, MAX_HEIGHT);
