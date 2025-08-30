@@ -6,6 +6,7 @@ import org.pepsoft.worldpainter.Dimension;
 import java.awt.*;
 import java.util.Objects;
 
+@Deprecated // does not work anymore with iterating the map once per action
 public class IntermediateValueIO implements IPositionValueSetter, IPositionValueGetter {
     private static int value;
     private static int lastX;

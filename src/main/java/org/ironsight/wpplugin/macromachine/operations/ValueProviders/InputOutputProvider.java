@@ -142,9 +142,6 @@ public class InputOutputProvider implements IMappingValueProvider,
         getters.add(new VanillaBiomeProvider());
         setters.add(new VanillaBiomeProvider());
 
-        setters.add(new IntermediateValueIO(0, 100, ""));
-        getters.add(new IntermediateValueIO(0, 100, ""));
-
         getters.add(ActionFilterIO.instance);
         setters.add(ActionFilterIO.instance);
 

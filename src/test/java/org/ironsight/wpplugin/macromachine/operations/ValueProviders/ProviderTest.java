@@ -325,41 +325,6 @@ public class ProviderTest {
     }
 
     @Test
-    void intermediateValueTest() {
-        IntermediateValueIO io = new IntermediateValueIO(0,100,"");
-        Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
-        io.prepareForDimension(dim);
-
-        assertEquals(0,io.getValueAt(dim,18,19),"initial value is zero");
-        io.setValueAt(dim,18,19,27);
-        assertEquals(27, io.getValueAt(dim,18,19),"io remembers last set value");
-        io.setValueAt(dim,18,19,-43);   //io remembers this positions value
-        assertEquals(-43, io.getValueAt(dim,18,19),"io can modifiy previously set values");
-        assertEquals(0,io.getValueAt(dim,105,107),"other position has initial value, not previous value");
-        assertEquals(-43, io.getValueAt(dim,18,19),"previous position is remembered as long setter is not called to " +
-                "different coordinats");
-
-        //correct instantiation
-        IMappingValue v = fromType(new Object[]{0,27,"hello world"},INTERMEDIATE);
-        assertTrue(v instanceof IntermediateValueIO);
-        assertEquals(INTERMEDIATE, v.getProviderType());
-        assertEquals(0, v.getMinValue());
-        assertEquals(27,v.getMaxValue());
-
-        // can be saved and loaded with these values
-        IntermediateValueIO h = (IntermediateValueIO) v.instantiateFrom(v.getSaveData());
-        assertEquals(0, h.getMinValue());
-        assertEquals(27,h.getMaxValue());
-
-        // can handle wrong inputs
-        h = (IntermediateValueIO) fromType(new Object[]{},INTERMEDIATE);
-        assertEquals(0, h.getMinValue());
-        assertEquals(100,h.getMaxValue());
-
-        assertNotEquals(new IntermediateValueIO(3,12,""),new IntermediateValueIO(27,99,"hello"));
-    }
-
-    @Test
     void NibbleLayerTest() {
         NibbleLayerSetter io = new NibbleLayerSetter(PineForest.INSTANCE, false);
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
