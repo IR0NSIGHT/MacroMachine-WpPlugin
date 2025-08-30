@@ -4,6 +4,7 @@ import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityEditToolOperat
 import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityLayer;
 import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityLayerEditor;
 import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
+import org.ironsight.wpplugin.macromachine.Layers.RoadBuilder.RoadTool;
 import org.ironsight.wpplugin.macromachine.operations.MacroDialogOperation;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
 import org.pepsoft.worldpainter.Platform;
@@ -97,6 +98,7 @@ public class MacroMachinePlugin extends AbstractPlugin implements
             OPERATIONS.add(new MacroDialogOperation());
             OPERATIONS.add(new PreviewOperation());
             OPERATIONS.add(new CityEditToolOperation());
+            OPERATIONS.add(new RoadTool());
         }
         return OPERATIONS;
     }
