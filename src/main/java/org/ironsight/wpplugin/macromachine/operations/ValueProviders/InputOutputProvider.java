@@ -216,6 +216,10 @@ public class InputOutputProvider implements IMappingValueProvider,
     public void addLayer(Layer layer) {
         this.layers.add(layer);
         this.layerIds.add(layer.getId());
+
+        var controller = new CustomLayerControllerWrapper();
+        if (controller != null && !controller.containsLayer(layer) && layer instanceof CustomLayer customLayer)
+            controller.registerCustomLayer(customLayer,true);
         notifyListeners();
     }
 

@@ -22,7 +22,7 @@ jobs:
         id: check
         run: |
           CURR_VERSION=$(mvn help:evaluate -Dexpression="project.version" -q -DforceStdout)
-          git checkout HEAD~1 -- pom.xml
+          git checkout origin/release -- pom.xml
           PREV_VERSION=$(mvn help:evaluate -Dexpression="project.version" -q -DforceStdout)
           git reset .
           git restore .
@@ -50,8 +50,10 @@ jobs:
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
           git checkout release
-          git merge master --no-ff -m "release MacroMachine v${{ needs.check-version.outputs.current_version }}"
+          git merge master --squash  -X theirs
+          git commit -m "release MacroMachine v${{ needs.check-version.outputs.current_version }}"
           git push origin release
+          git status
           
           git checkout master
           git tag release-${{ needs.check-version.outputs.current_version }}

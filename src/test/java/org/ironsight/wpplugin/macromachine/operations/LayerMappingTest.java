@@ -177,6 +177,7 @@ class LayerMappingTest {
     @Test
     void applyToPoint() {   //an most simple test to check it can run without crashing
         {   //one point
+            ActionFilterIO actionFilter = new ActionFilterIO();
             Dimension dim = TestData.createDimension(new Rectangle(-2 * TILE_SIZE,
                     -2 * TILE_SIZE,
                     3 * TILE_SIZE,
@@ -192,10 +193,11 @@ class LayerMappingTest {
             mapper.output.prepareForDimension(dim);
             ActionFilterIO.instance.prepareForDimension(dim);
 
-            mapper.applyToPoint(dim, 0, 0);
+            mapper.applyToPoint(dim, 0, 0, actionFilter);
             assertEquals(3, dim.getLayerValueAt(Annotations.INSTANCE, 0, 0));
         }
         {   // no points
+            ActionFilterIO actionFilter = new ActionFilterIO();
             Dimension dim = TestData.createDimension(new Rectangle(-2 * TILE_SIZE,
                     -2 * TILE_SIZE,
                     3 * TILE_SIZE,
@@ -208,7 +210,7 @@ class LayerMappingTest {
                     "",
                     UUID.randomUUID());
 
-            mapper.applyToPoint(dim, 0, 0);
+            mapper.applyToPoint(dim, 0, 0, actionFilter);
             assertEquals(0, dim.getLayerValueAt(Annotations.INSTANCE, 0, 0));
         }
     }
