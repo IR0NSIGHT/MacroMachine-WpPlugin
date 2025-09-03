@@ -1,0 +1,63 @@
+{
+  "exportDate" : "2025-09-03T10:30:12.9318674+02:00[Europe/Berlin]",
+  "comment" : "no comment",
+  "macros" : [ {
+    "macroName" : "Fence around Cyan Annotation",
+    "description" : "applies a ground cover layer to mimic a rock-wall \non the eddge of cyan annotation",
+    "stepIds" : [ "6b4f67ec-528b-4f05-b546-ead8063642d4", "4282fec8-23e9-4ccb-b94c-911564bd715f" ],
+    "selfId" : "9ada9e32-5355-4b8e-a46e-5ed71e5eb717",
+    "activeIds" : [ true, true ]
+  }, {
+    "macroName" : "surround with fence",
+    "description" : "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+    "stepIds" : [ "17e2854f-9331-4f23-bee1-32d71b64fae3", "b0d7beb6-b78c-42f8-9c75-4dfaa337d645", "7694314d-bd53-4846-a18e-6ac2c93c9abc" ],
+    "selfId" : "4282fec8-23e9-4ccb-b94c-911564bd715f",
+    "activeIds" : [ true, true, true ]
+  } ],
+  "actions" : [ {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "BINARY_LAYER",
+    "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 0 ],
+    "name" : "Remove: MacroSelection",
+    "description" : "Default action: apply grass to all blocks that have passed the filter",
+    "uid" : "7694314d-bd53-4846-a18e-6ac2c93c9abc"
+  }, {
+    "inputId" : "ALWAYS",
+    "inputData" : [ ],
+    "outputId" : "BINARY_LAYER",
+    "outputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0 ],
+    "outputPoints" : [ 1 ],
+    "name" : "mark selection",
+    "description" : "new description",
+    "uid" : "17e2854f-9331-4f23-bee1-32d71b64fae3"
+  }, {
+    "inputId" : "ANNOTATION",
+    "inputData" : [ ],
+    "outputId" : "INTERMEDIATE_SELECTION",
+    "outputData" : [ ],
+    "actionType" : "LIMIT_TO",
+    "inputPoints" : [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 ],
+    "outputPoints" : [ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 ],
+    "name" : "Filter: Only On Annotations Cyan",
+    "description" : "Default filter: block all blocks that are not cyan annotated.",
+    "uid" : "6b4f67ec-528b-4f05-b546-ead8063642d4"
+  }, {
+    "inputId" : "DISTANCE_TO_EDGE",
+    "inputData" : [ "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", 3, 1 ],
+    "outputId" : "BINARY_LAYER",
+    "outputData" : [ "Stone Fencing", "My Ground Cover.b5a4aeac0aca674e", true ],
+    "actionType" : "SET",
+    "inputPoints" : [ 0, 1, 2, 3 ],
+    "outputPoints" : [ 0, 1, 0, 0 ],
+    "name" : "Surround with fencing",
+    "description" : "Default filter: block all blocks that are above this level",
+    "uid" : "b0d7beb6-b78c-42f8-9c75-4dfaa337d645"
+  } ],
+  "layers" : "rO0ABXVyAChbTG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXI7BDpGR8pvArcCAAB4cAAAAAFzcgA8b3JnLnBlcHNvZnQud29ybGRwYWludGVyLmxheWVycy5ncm91bmRjb3Zlci5Hcm91bmRDb3ZlckxheWVyAAAAAAAAAAECAAlJAAZjb2xvdXJJAAllZGdlV2lkdGhaAAZzbW9vdGhJAAl0aGlja25lc3NMAAllZGdlU2hhcGV0AEhMb3JnL3BlcHNvZnQvd29ybGRwYWludGVyL2xheWVycy9ncm91bmRjb3Zlci9Hcm91bmRDb3ZlckxheWVyJEVkZ2VTaGFwZTtMAAtsYXllckFuY2hvcnQASkxvcmcvcGVwc29mdC93b3JsZHBhaW50ZXIvbGF5ZXJzL2dyb3VuZGNvdmVyL0dyb3VuZENvdmVyTGF5ZXIkTGF5ZXJBbmNob3I7TAAIbWF0ZXJpYWx0ACBMb3JnL3BlcHNvZnQvbWluZWNyYWZ0L01hdGVyaWFsO0wADW1peGVkTWF0ZXJpYWx0AChMb3JnL3BlcHNvZnQvd29ybGRwYWludGVyL01peGVkTWF0ZXJpYWw7TAANbm9pc2VTZXR0aW5nc3QAKExvcmcvcGVwc29mdC93b3JsZHBhaW50ZXIvTm9pc2VTZXR0aW5nczt4cgArb3JnLnBlcHNvZnQud29ybGRwYWludGVyLmxheWVycy5DdXN0b21MYXllcgAAAAAAAAABAwALSQAFYmlvbWVJAAZjb2xvdXJaAAZleHBvcnRaAARoaWRlRgAHb3BhY2l0eUkAB3ZlcnNpb25MAAVpbmRleHQAE0xqYXZhL2xhbmcvSW50ZWdlcjtMAAdwYWxldHRldAASTGphdmEvbGFuZy9TdHJpbmc7TAAMcGFsZXR0ZUluZGV4cQB+AAlbAApzdG9yZWRJY29udAACW0JbAA1zdG9yZWRQYXR0ZXJucQB+AAt4cgAlb3JnLnBlcHNvZnQud29ybGRwYWludGVyLmxheWVycy5MYXllcgAAAAB33e1FAgAGWgAIZGlzY3JldGVJAAhwcmlvcml0eUwACGRhdGFTaXpldAAwTG9yZy9wZXBzb2Z0L3dvcmxkcGFpbnRlci9sYXllcnMvTGF5ZXIkRGF0YVNpemU7TAALZGVzY3JpcHRpb25xAH4ACkwAAmlkcQB+AApMAARuYW1lcQB+AAp4cAAAAAAefnIALm9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXIkRGF0YVNpemUAAAAAAAAAABIAAHhyAA5qYXZhLmxhbmcuRW51bQAAAAAAAAAAEgAAeHB0AANCSVR0ADZhIDEgYmxvY2sgbGF5ZXIgb2YgU3RvbmUgRmVuY2luZyBvbiB0b3Agb2YgdGhlIHRlcnJhaW50ACBNeSBHcm91bmQgQ292ZXIuYjVhNGFlYWMwYWNhNjc0ZXQADVN0b25lIEZlbmNpbmf//////5lmAAEAP4AAAAAAAARzcgARamF2YS5sYW5nLkludGVnZXIS4qCk94GHOAIAAUkABXZhbHVleHIAEGphdmEubGFuZy5OdW1iZXKGrJUdC5TgiwIAAHhwAAAAAnQADE1hY3JvTWFjaGluZXNxAH4AFgAAAAF1cgACW0Ks8xf4BghU4AIAAHhwAAAAWYlQTkcNChoKAAAADUlIRFIAAAAQAAAAEAgGAAAAH/P/YQAAACBJREFUeF5jYKAS+E8mhoP/M9NIw6MGjBowXA0gE1MOAJKfUrzZLIxQAAAAAElFTkSuQmCCcHgAAAAAAAAAAQAAAAABfnIARm9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuZ3JvdW5kY292ZXIuR3JvdW5kQ292ZXJMYXllciRFZGdlU2hhcGUAAAAAAAAAABIAAHhxAH4AEHQABVNIRUVSfnIASG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuZ3JvdW5kY292ZXIuR3JvdW5kQ292ZXJMYXllciRMYXllckFuY2hvcgAAAAAAAAAAEgAAeHEAfgAQdAAHVEVSUkFJTnBzcgAmb3JnLnBlcHNvZnQud29ybGRwYWludGVyLk1peGVkTWF0ZXJpYWwAAAAAAAAAAQIADEkABWJpb21lRAALbGF5ZXJYU2xvcGVEAAtsYXllcllTbG9wZVoABW5vaXNlWgAGcmVwZWF0RgAFc2NhbGVMAAZjb2xvdXJxAH4ACUwAAmlkdAAQTGphdmEvdXRpbC9VVUlEO0wABG1vZGV0AC1Mb3JnL3BlcHNvZnQvd29ybGRwYWludGVyL01peGVkTWF0ZXJpYWwkTW9kZTtMAARuYW1lcQB+AApbAARyb3dzdAAtW0xvcmcvcGVwc29mdC93b3JsZHBhaW50ZXIvTWl4ZWRNYXRlcmlhbCRSb3c7TAAJdmFyaWF0aW9ucQB+AAd4cP////8AAAAAAAAAAAAAAAAAAAAAAAA/gAAAcHNyAA5qYXZhLnV0aWwuVVVJRLyZA/eYbYUvAgACSgAMbGVhc3RTaWdCaXRzSgALbW9zdFNpZ0JpdHN4cLmw3fZtdAv5l+xSsvC7RqR+cgArb3JnLnBlcHNvZnQud29ybGRwYWludGVyLk1peGVkTWF0ZXJpYWwkTW9kZQAAAAAAAAAAEgAAeHEAfgAQdAAFTk9JU0V0AB5jb2JibGVzdG9uZS9jb2JibGVzdG9uZV9zbGEuLi51cgAtW0xvcmcucGVwc29mdC53b3JsZHBhaW50ZXIuTWl4ZWRNYXRlcmlhbCRSb3c7afYJtfPa0PgCAAB4cAAAAAZzcgAqb3JnLnBlcHNvZnQud29ybGRwYWludGVyLk1peGVkTWF0ZXJpYWwkUm93AAAAAAAAAAECAARGAAZjaGFuY2VJAApvY2N1cnJlbmNlRgAFc2NhbGVMAAhtYXRlcmlhbHEAfgAFeHAAAAAAAAAAAz+AAABzcgAeb3JnLnBlcHNvZnQubWluZWNyYWZ0Lk1hdGVyaWFsAAAAAHfe90kCAANJAAlibG9ja1R5cGVJAARkYXRhTAAIaWRlbnRpdHl0AClMb3JnL3BlcHNvZnQvbWluZWNyYWZ0L01hdGVyaWFsJElkZW50aXR5O3hwAAAABAAAAABzcgAnb3JnLnBlcHNvZnQubWluZWNyYWZ0Lk1hdGVyaWFsJElkZW50aXR5AAAAAAAAAAECAAJMAARuYW1lcQB+AApMAApwcm9wZXJ0aWVzdAAPTGphdmEvdXRpbC9NYXA7eHB0ABVtaW5lY3JhZnQ6Y29iYmxlc3RvbmVwc3EAfgAwAAAAAAAAAAM/gAAAc3EAfgAyAAAALAAAAANzcQB+ADV0ABptaW5lY3JhZnQ6Y29iYmxlc3RvbmVfc2xhYnNyADVjb20uZ29vZ2xlLmNvbW1vbi5jb2xsZWN0LkltbXV0YWJsZU1hcCRTZXJpYWxpemVkRm9ybQAAAAAAAAAAAgACTAAEa2V5c3QAEkxqYXZhL2xhbmcvT2JqZWN0O0wABnZhbHVlc3EAfgA+eHB1cgATW0xqYXZhLmxhbmcuT2JqZWN0O5DOWJ8QcylsAgAAeHAAAAACdAAEdHlwZXQAC3dhdGVybG9nZ2VkdXEAfgBAAAAAAnQABmJvdHRvbXQABWZhbHNlc3EAfgAwAAAAAAAAAAM/gAAAc3EAfgAyAAAAQwAAAANzcQB+ADV0ABxtaW5lY3JhZnQ6Y29iYmxlc3RvbmVfc3RhaXJzc3EAfgA9dXEAfgBAAAAABHQABmZhY2luZ3QABGhhbGZ0AAt3YXRlcmxvZ2dlZHQABXNoYXBldXEAfgBAAAAABHQABW5vcnRodAAGYm90dG9tcQB+AEZ0AAhzdHJhaWdodHNxAH4AMAAAAAAAAAADP4AAAHNxAH4AMgAAAEMAAAACc3EAfgA1cQB+AEpzcQB+AD11cQB+AEAAAAAEcQB+AE1xAH4ATnEAfgBPcQB+AFB1cQB+AEAAAAAEdAAFc291dGhxAH4AU3EAfgBGcQB+AFRzcQB+ADAAAAAAAAAAAz+AAABzcQB+ADIAAABDAAAAAHNxAH4ANXEAfgBKc3EAfgA9dXEAfgBAAAAABHEAfgBNcQB+AE5xAH4AT3EAfgBQdXEAfgBAAAAABHQABGVhc3RxAH4AU3EAfgBGcQB+AFRzcQB+ADAAAAAAAAAAAz+AAABxAH4AXXBw"
+}
