@@ -11,7 +11,7 @@ import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
 /**
  * STARMADE MOD CREATOR: Max1M DATE: 19.08.2025 TIME: 14:52
  */
-class CityInfoDatabase implements Serializable {
+public class CityInfoDatabase implements Serializable {
     public static final int NO_DATA = Integer.MIN_VALUE;
     @Serial
     private static final long serialVersionUID = 1L;
