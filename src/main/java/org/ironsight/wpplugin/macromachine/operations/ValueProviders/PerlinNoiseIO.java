@@ -29,7 +29,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
         // of predicting the histogram based on scale ampl seed or octaves. so we have to measure average histogram
         // and adjust accordingly.
         float min = Float.MAX_VALUE;
-        float max = Float.MIN_VALUE;
+        float max = Float.NEGATIVE_INFINITY;
         for (int x = -1000; x < 1000; x+=27) {
             for (int y = -1000; y < 1000; y+=27) {
                 float point = getRawValueAt(x,y);

@@ -58,7 +58,7 @@ public class IntegerTile {
      * @param y
      * @param value
      */
-    void setValueAt(int x, int y, int value) {
+    public void setValueAt(int x, int y, int value) {
         int index = (y % TILE_SIZE) * TILE_SIZE + (x % TILE_SIZE);
         values[index] = value;
     }
@@ -69,7 +69,7 @@ public class IntegerTile {
      * @param y
      * @return
      */
-    int getValueAt(int x, int y) {
+    public int getValueAt(int x, int y) {
         int index = (y % TILE_SIZE) * TILE_SIZE + (x % TILE_SIZE);
         return values[index];
     }

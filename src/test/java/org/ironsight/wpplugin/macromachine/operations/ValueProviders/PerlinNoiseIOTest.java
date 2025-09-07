@@ -26,7 +26,7 @@ class PerlinNoiseIOTest {
         }
 
         float min = Float.MAX_VALUE;
-        float max = Float.MIN_VALUE;
+        float max = Float.NEGATIVE_INFINITY;
         for (float x = -2550; x < 2550; x += 11.11f) {
             for (float y = -2550; y <= 2560; y += 13.13f) {
                 float value = (float) gen.noise(x, y, 0);
