@@ -49,12 +49,16 @@ jobs:
         run: |
           git config --global user.name 'GitHub Action'
           git config --global user.email 'action@github.com'
-          git checkout release
-          git merge master --squash  -X theirs
-          git commit -m "release MacroMachine v${{ needs.check-version.outputs.current_version }}"
-          git push origin release
-          git status
           
+          # add tag
           git checkout master
           git tag release-${{ needs.check-version.outputs.current_version }}
           git push --tag
+          
+          # set release to state of master and push
+          git checkout release
+          git reset origin/master --hard
+          git push -f origin release
+          git status
+          
+
