@@ -118,10 +118,10 @@ public class MappingTextTable extends JPanel {
             if (e.getValueIsAdjusting()) {
                 return;
             }
-            int selectedRow = numberTable.getSelectedRow();
-            if (selectedRow != -1) {
+            try {
                 int lastViewRow = numberTable.convertRowIndexToView(selectionModel.getLastSelectedModelRow());
                 numberTable.scrollRectToVisible(numberTable.getCellRect(lastViewRow, 0, true));
+            } catch (IndexOutOfBoundsException ignored) {
             }
         });
 
