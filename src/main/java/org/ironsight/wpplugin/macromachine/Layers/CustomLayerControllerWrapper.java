@@ -1,6 +1,7 @@
-package org.pepsoft.worldpainter;
+package org.ironsight.wpplugin.macromachine.Layers;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
+import org.pepsoft.worldpainter.CustomLayerController;
 import org.pepsoft.worldpainter.layers.CustomLayer;
 import org.pepsoft.worldpainter.layers.Layer;
 
@@ -9,39 +10,24 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
+/**
+ * API to worldpainters CustomLayerController, that manages all custom layers
+ * use to get proper list of customlayers avaialble in WP
+ * use to register new custom layers to WP
+ */
 public class CustomLayerControllerWrapper implements LayerProvider {
     private CustomLayerController controller;
 
-    /**
-     * ONLY instantiate this if you KNOW for a fact an App instance exists.
-     */
     public CustomLayerControllerWrapper() {
 
     }
 
-    public void registerCustomLayer(final CustomLayer layer, boolean activate) {
-        try {
-            Method method = getController().getClass().getDeclaredMethod("registerCustomLayer", CustomLayer.class, boolean.class);
-            method.setAccessible(true);
-            method.invoke(getController(), layer, activate);
-        } catch (Exception e) {
-            System.err.println(e);
-        }
-    }
-
-    CustomLayerController getController() {
-        if (controller == null)
-            this.controller = getCustomLayerController();
+    private CustomLayerController getController() {
+        if (controller == null) this.controller = getCustomLayerController();
         return controller;
-    }
-
-    public boolean containsLayer(Layer layer) {
-        return new HashSet<>(getCustomLayers().stream().map(Layer::getId).collect(Collectors.toList())).contains(layer.getId());
     }
 
     public List<CustomLayer> getCustomLayers() {
@@ -60,23 +46,11 @@ public class CustomLayerControllerWrapper implements LayerProvider {
         // private final CustomLayerController customLayerController
         // in org.pepsoft.worldpainter.App.java
         try {
-            // Create an instance of the App class
-
-            // Class<?> appClass = Class.forName("org.pepsoft.worldpainter.App");
             Class<?> appClass = Class.forName("org.pepsoft.worldpainter.App");
-
-            // Find the method (no parameters)
             java.lang.reflect.Method method = appClass.getMethod("getInstanceIfExists");
-
-            // Call it as a static method (null for the instance)
             Object appInstance = method.invoke(null);
-
-            // Get the declared field from the App class
             Field customLayerControllerField = appInstance.getClass().getDeclaredField("customLayerController");
-            // Make the field accessible
             customLayerControllerField.setAccessible(true);
-
-            // Get the value of the field from the instance
             return (CustomLayerController) customLayerControllerField.get(appInstance);
         } catch (Exception e) {
             e.printStackTrace();
@@ -87,28 +61,34 @@ public class CustomLayerControllerWrapper implements LayerProvider {
     @Override
     public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
         HashMap<String, CustomLayer> layers = new HashMap<>();
-        getController().getCustomLayers().forEach(l -> layers.put(l.getId(), l));
-        if (layers.containsKey(layerId))
-            return layers.get(layerId);
+        getCustomLayers().forEach(l -> layers.put(l.getId(), l));
+        if (layers.containsKey(layerId)) return layers.get(layerId);
         layerNotFoundError.accept(layerId);
         return null;
     }
 
     @Override
     public List<Layer> getLayers() {
-        return new ArrayList<>(getController().getCustomLayers());
+        return new ArrayList<>(getCustomLayers());
     }
 
     @Override
     public void addLayer(Layer layer) {
-        if (layer instanceof CustomLayer customLayer)
-            getController().registerCustomLayer(customLayer, true);
+        if (!(layer instanceof CustomLayer customLayer)) return;
+
+        try {
+            Method registerMethod = CustomLayerController.class.getDeclaredMethod("registerCustomLayer", CustomLayer.class, boolean.class);
+            registerMethod.setAccessible(true); // bypass access checks
+            registerMethod.invoke(getController(), customLayer, true);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NullPointerException e) {
+            System.err.println("Failed to register custom layer: " + e);
+        }
     }
 
     @Override
     public boolean existsLayerWithId(String layerId) {
         HashMap<String, CustomLayer> layers = new HashMap<>();
-        getController().getCustomLayers().forEach(l -> layers.put(l.getId(), l));
+        getCustomLayers().forEach(l -> layers.put(l.getId(), l));
         return (layers.containsKey(layerId));
     }
 }

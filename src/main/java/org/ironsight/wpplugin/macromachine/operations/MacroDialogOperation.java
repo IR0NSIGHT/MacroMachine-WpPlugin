@@ -1,19 +1,18 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.ironsight.wpplugin.macromachine.Layers.CustomLayerControllerWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
-import org.pepsoft.worldpainter.CustomLayerControllerWrapper;
-import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.operations.*;
+import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
 
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 

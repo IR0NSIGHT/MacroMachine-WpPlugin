@@ -2,7 +2,7 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
-import org.pepsoft.worldpainter.CustomLayerControllerWrapper;
+import org.ironsight.wpplugin.macromachine.Layers.CustomLayerControllerWrapper;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.*;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -214,12 +214,15 @@ public class InputOutputProvider implements IMappingValueProvider,
 
     @Override
     public void addLayer(Layer layer) {
+        if (layer == null)
+            return;
         this.layers.add(layer);
         this.layerIds.add(layer.getId());
 
+        // add layer to worldpainter API
         var controller = new CustomLayerControllerWrapper();
-        if (controller != null && !controller.containsLayer(layer) && layer instanceof CustomLayer customLayer)
-            controller.registerCustomLayer(customLayer,true);
+        if (!controller.existsLayerWithId(layer.getId()) && layer instanceof CustomLayer customLayer)
+            controller.addLayer(customLayer);
         notifyListeners();
     }
 
