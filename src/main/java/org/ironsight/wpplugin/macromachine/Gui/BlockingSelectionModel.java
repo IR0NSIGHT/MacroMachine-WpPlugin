@@ -41,12 +41,20 @@ class BlockingSelectionModel extends DefaultListSelectionModel {
         lastSelectedModelRow = table.convertRowIndexToModel(index1);
     }
 
+    /**
+     * select this model row
+     * @param row
+     */
     public void setSelectionModelRow(int row) {
-        int viewRow = table.convertRowIndexToView(row);
-        if (viewRow == -1) {
-            return;
+        try {
+            int viewRow = table.convertRowIndexToView(row);
+            if (viewRow == -1) {
+                return;
+            }
+            setSelectionInterval(viewRow, viewRow);
+        } catch (IndexOutOfBoundsException ignored) {
+
         }
-        setSelectionInterval(viewRow, viewRow);
     }
 
     @Override
