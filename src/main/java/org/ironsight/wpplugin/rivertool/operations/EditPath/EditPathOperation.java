@@ -3,7 +3,6 @@ package org.ironsight.wpplugin.rivertool.operations.EditPath;
 import org.ironsight.wpplugin.rivertool.Gui.OperationOptionsPanel;
 import org.ironsight.wpplugin.rivertool.Gui.OptionsLabel;
 import org.ironsight.wpplugin.rivertool.HalfWaySubdivider;
-import org.ironsight.wpplugin.rivertool.RepeatedTask;
 import org.ironsight.wpplugin.rivertool.Subdivide;
 import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
 import org.ironsight.wpplugin.rivertool.geometry.PaintDimension;
@@ -93,8 +92,6 @@ abstract public class EditPathOperation extends MouseOrTabletOperation implement
     private final LinkedList<ToolHistoryState> history = new LinkedList<>();
     private final HeightDimension dim;
     EditPathOptionsPanel eOptionsPanel;
-    int resolution3d = 2;
-    RepeatedTask task;
     private Brush brush;
     private Paint paint;
     private boolean shiftDown = false;

@@ -43,7 +43,6 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
                         
             """;
     private final JPanel optionsPanel = new JPanel();
-    List<Point4f> path = new ArrayList<>();
     ArrayList<Point4f> pathHandles = new ArrayList<>();
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
     private Paint paint;
