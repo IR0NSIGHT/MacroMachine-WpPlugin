@@ -1,12 +1,15 @@
 package org.ironsight.wpplugin.macromachine.Layers.RoadBuilder;
 
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
+import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AnnotationSetter;
 import org.pepsoft.util.swing.TiledImageViewer;
 import org.pepsoft.util.undo.BufferKey;
 import org.pepsoft.util.undo.UndoListener;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.brushes.Brush;
+import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
 import org.pepsoft.worldpainter.painting.Paint;
@@ -20,12 +23,13 @@ import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.lang.Math.*;
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
-import static org.ironsight.wpplugin.macromachine.Layers.RoadBuilder.RoadToolBackend.filterStrengthFor;
+import static org.ironsight.wpplugin.macromachine.Layers.RoadBuilder.RoadToolBackend.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -39,9 +43,9 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
                         
             """;
     private final JPanel optionsPanel = new JPanel();
-    ArrayList<Point4f> path = new ArrayList<>();
+    List<Point4f> path = new ArrayList<>();
+    ArrayList<Point4f> pathHandles = new ArrayList<>();
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
-    private Point4f lastPosition;
     private Paint paint;
     // only allow downwards movement
     private boolean onlyDown;
@@ -68,16 +72,14 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
     @Override
     protected void activate() throws PropertyVetoException {
         super.activate();
-        this.lastPosition = null;
-        this.path.clear();
+        this.pathHandles.clear();
         this.cachedTiles.clear();
     }
 
     @Override
     protected void deactivate() {
         super.deactivate();
-        this.lastPosition = null;
-        this.path.clear();
+        this.pathHandles.clear();
         this.cachedTiles.clear();
     }
 
@@ -243,7 +245,7 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private float getFixHeight() {
-        return lastPosition == null ? 62 : lastPosition.z;
+        return pathHandles.isEmpty() ? 62 : pathHandles.get(pathHandles.size() - 1).z;
     }
 
     @Override
@@ -263,20 +265,26 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
         float centreZ = getDimension().getHeightAt(centreX, centreY);
         Point4f thisPosition = new Point4f(centreX, centreY, centreZ, pathRadius);
         if (inverse) {
-            path.clear();
+            pathHandles.clear();
             this.cachedTiles.clear();
         } else {
+            pathHandles.add(thisPosition);
             if (!dim.isEventsInhibited()) dim.setEventsInhibited(true);
-            this.OnSmoothPath(thisPosition); //generate path
+            this.OnSmoothPath(pathHandles); //generate path
 
             if (dim.isEventsInhibited()) dim.setEventsInhibited(false);
         }
 
-        lastPosition = thisPosition;
+
         SwingUtilities.invokeLater(this::updateCheckboxTexts);
     }
 
-    private void OnSmoothPath(Point4f thisPosition) {
+    private void OnSmoothPath(List<Point4f> pathHandles) {
+        if (pathHandles.size() < 2)
+            return; // nothing to do
+        var thisPosition = pathHandles.get(pathHandles.size() - 1);
+        var lastPosition = pathHandles.get(pathHandles.size() - 2);
+
         Dimension dimension = getDimension();
         if (lastPosition != null) {
             // limit slope if necessary by adjusting thisPos.z
@@ -288,15 +296,34 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
             }
 
             // get new path section and append it
-            var newPathSection = RoadToolBackend.plotPathBetween(lastPosition, thisPosition);
-            this.path.addAll(newPathSection);
+            var pathRes = getPathFromHandles(pathHandles);
+
+
+
+            //DRAW RESULT ON MAP WITH ALL SEGMENTS
+            dimension.clearLayerData(PreviewOperation.annotationLayer);
+            for (var p : pathRes.path) {
+                dimension.setBitLayerValueAt(PreviewOperation.annotationLayer, Math.round(p.x), Math.round(p.y), true);
+            }
+            if (pathHandles.size() < 4)
+                return;
+
+            // cut off last segment that will change on next click anyways
+            Point4f secondLastHandle = pathHandles.get(pathHandles.size() - 2);
+            var path = pathRes.path.subList(0,pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
+
+            //changed segment: thirdlast to secondLast handle
+            Point4f thirdLastHandle = pathHandles.get(pathHandles.size() - 3);
+            var newPathSection = path.subList(
+                    pathRes.handlesToPathIndex.getOrDefault(thirdLastHandle,0),
+                    pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
 
             // mutate path with filters based on user input
             if (minPath) RoadToolBackend.forcePathToMinPos(path, point4f -> dimension.getHeightAt(Math.round(point4f.x), Math.round(point4f.y)));
             if (onlyDown) RoadToolBackend.forcePathOnlyDownhill(path);
             if (fixHeightTo) RoadToolBackend.forcePathToHeight(path, getFixHeight());
 
-            //collect tiles the newly added path section passed through
+            //collect tiles where the newly added path section passed through
             Set<Point3i> newPathTiles = RoadToolBackend.collectTilesAroundPath(newPathSection, transitionMultiplier);
 
             //cache all tiles that might be affected
