@@ -77,7 +77,7 @@ public class ContinuousCurve {
         //iterate all handleArrays and calculate a continous curve
         for (int n = 0; n < path.type.size; n++) {
             float[] nthHandles = flatHandles.get(n);
-            float defaultVal = n == RiverHandleInformation.RiverInformation.WATER_Z.idx + 2 ? 9999 : 5;
+            float defaultVal = n == RiverHandleInformation.RiverInformation.WATER_Z.idx + 2 ? 9999 : 5; //FIXME add this info the the RiverInfroamtion class
             float[] interpolated = CatMullRomInterpolation.interpolateCatmullRom(nthHandles, handleToCurveIdx,
                     segmentLengths, defaultVal);
             interpolatedCurve.add(interpolated);

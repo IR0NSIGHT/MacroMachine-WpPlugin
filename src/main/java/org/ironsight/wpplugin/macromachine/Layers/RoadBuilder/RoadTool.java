@@ -1,33 +1,33 @@
 package org.ironsight.wpplugin.macromachine.Layers.RoadBuilder;
 
-import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AnnotationSetter;
-import org.pepsoft.util.swing.TiledImageViewer;
+import org.pepsoft.util.AttributeKey;
 import org.pepsoft.util.undo.BufferKey;
+import org.pepsoft.util.undo.Cloneable;
 import org.pepsoft.util.undo.UndoListener;
-import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.brushes.Brush;
-import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
 import org.pepsoft.worldpainter.painting.Paint;
-import org.pepsoft.worldpainter.selection.SelectionChunk;
 
 import javax.swing.*;
-import javax.vecmath.*;
-
+import javax.vecmath.Point2f;
+import javax.vecmath.Point3i;
+import javax.vecmath.Point4f;
 import java.awt.*;
 import java.beans.PropertyVetoException;
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
-import static java.lang.Math.*;
+import static java.lang.Math.PI;
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 import static org.ironsight.wpplugin.macromachine.Layers.RoadBuilder.RoadToolBackend.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
@@ -42,13 +42,14 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
             Left click: Advance current path to this position
                         
             """;
+    private final static AttributeKey<PathHandlesContainer> PATHHANDLES_KEY = new AttributeKey<>("ROADTOOL-PATHHANDLES", new PathHandlesContainer(List.of()));
     private final JPanel optionsPanel = new JPanel();
     ArrayList<Point4f> pathHandles = new ArrayList<>();
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
     private Paint paint;
     // only allow downwards movement
     private boolean onlyDown;
-    private boolean minPath;
+    private boolean snapToTerrain;
     private boolean fixHeightTo;
     private boolean usePaint;
     private float slopeLimit = 0;
@@ -95,15 +96,15 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
             this.onlyDown = onlyDownCheckbox.isSelected();
             optionsPanel.add(onlyDownCheckbox);
         }
-   /*     {
-            minCheckbox = new JCheckBox("min heights");
-            minCheckbox.setToolTipText("if active, the path will take the lowest possible heights available. rightclick to reset height");
+       {
+            minCheckbox = new JCheckBox("snap to terrain");
+            minCheckbox.setToolTipText("if active, the path will stick to terrainheight. rightclick to reset height");
             minCheckbox.addActionListener(l -> {
-                this.minPath = minCheckbox.isSelected();
+                this.snapToTerrain = minCheckbox.isSelected();
             });
-            this.minPath = minCheckbox.isSelected();
+            this.snapToTerrain = minCheckbox.isSelected();
             optionsPanel.add(minCheckbox);
-        } */
+        }
         {
             usePaintCheckbox = new JCheckBox("usePaintCheckbox");
             usePaintCheckbox.setSelected(true);
@@ -258,6 +259,7 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
         Dimension dim = getDimension();
         if (dim == null) return;
+        pathHandles = new ArrayList<>(dim.getAttribute(PATHHANDLES_KEY).data);
         getPaint().setBrush(getBrush());
 
         int pathRadius = getBrush().getEffectiveRadius();
@@ -267,13 +269,16 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
             pathHandles.clear();
             this.cachedTiles.clear();
         } else {
+
             pathHandles.add(thisPosition);
             if (!dim.isEventsInhibited()) dim.setEventsInhibited(true);
+
             this.OnSmoothPath(pathHandles); //generate path
 
             if (dim.isEventsInhibited()) dim.setEventsInhibited(false);
         }
-
+        if (pathHandles != null)
+            dim.setAttribute(PATHHANDLES_KEY, new PathHandlesContainer(pathHandles), true);
 
         SwingUtilities.invokeLater(this::updateCheckboxTexts);
     }
@@ -298,7 +303,6 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
             var pathRes = getPathFromHandles(pathHandles);
 
 
-
             //DRAW RESULT ON MAP WITH ALL SEGMENTS
             dimension.clearLayerData(PreviewOperation.annotationLayer);
             for (var p : pathRes.path) {
@@ -309,18 +313,19 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
 
             // cut off last segment that will change on next click anyways
             Point4f secondLastHandle = pathHandles.get(pathHandles.size() - 2);
-            var path = pathRes.path.subList(0,pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
+            var path = pathRes.path.subList(0, pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
 
             //changed segment: thirdlast to secondLast handle
             Point4f thirdLastHandle = pathHandles.get(pathHandles.size() - 3);
             var newPathSection = path.subList(
-                    pathRes.handlesToPathIndex.getOrDefault(thirdLastHandle,0),
+                    pathRes.handlesToPathIndex.getOrDefault(thirdLastHandle, 0),
                     pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
 
             // mutate path with filters based on user input
-            if (minPath) RoadToolBackend.forcePathToMinPos(path, point4f -> dimension.getHeightAt(Math.round(point4f.x), Math.round(point4f.y)));
+            if (snapToTerrain) RoadToolBackend.forcePathToMinPos(path, point4f -> dimension.getHeightAt(Math.round(point4f.x), Math.round(point4f.y)));
             if (onlyDown) RoadToolBackend.forcePathOnlyDownhill(path);
             if (fixHeightTo) RoadToolBackend.forcePathToHeight(path, getFixHeight());
+            forceRadiusAtLeast(path,.5f); //always at least 1 thick
 
             //collect tiles where the newly added path section passed through
             Set<Point3i> newPathTiles = RoadToolBackend.collectTilesAroundPath(newPathSection, transitionMultiplier);
@@ -364,8 +369,10 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
                 Tile wpTile = dimension.getTileForEditing(floatTile.tilePosX, floatTile.tilePosY);
                 if (wpTile == null) return;
                 RoadToolBackend.writeHeightMapDataToTile(floatTile, wpTile);
-                var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
-                RoadToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());
+                if (usePaint) {
+                    var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
+                    RoadToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());
+                }
             });
 
             System.out.printf("Processed %d cachedTiles, %d path points total, current path length %d", totalTiles.get(), totalProcessedPath.get(), path.size());
@@ -414,6 +421,21 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
     @Override
     public void bufferChanged(BufferKey<?> key) {
 
+    }
+
+    private static class PathHandlesContainer implements Cloneable, Serializable {
+        @Serial
+        private static final long serialVersionUID = -1L;
+        List<Point4f> data;
+
+        public PathHandlesContainer(List<Point4f> data) {
+            this.data = data;
+        }
+
+        @Override
+        public PathHandlesContainer clone() {
+            return new PathHandlesContainer(data.stream().map(p -> (Point4f) p.clone()).collect(Collectors.toList()));
+        }
     }
 
     private class PathPosition {

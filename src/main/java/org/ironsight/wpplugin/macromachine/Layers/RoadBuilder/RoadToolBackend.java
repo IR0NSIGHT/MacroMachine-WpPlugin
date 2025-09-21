@@ -96,7 +96,7 @@ public class RoadToolBackend {
 
     static void forcePathToMinPos(List<Point4f> path, Function<Point4f, Float> getHeightAt) {
         for (Point4f point : path) {
-            point.z = Math.min(point.z, getHeightAt.apply(point));
+            point.z = getHeightAt.apply(point);
         }
     }
 
@@ -137,6 +137,12 @@ public class RoadToolBackend {
     static void forcePathToHeight(List<Point4f> path, float height) {
         for (Point4f point : path) {
             point.z = height;
+        }
+    }
+
+    static void forceRadiusAtLeast(List<Point4f> path, float minRadius) {
+        for (Point4f point : path) {
+            point.w = Math.max(point.w,minRadius);
         }
     }
 
@@ -235,9 +241,11 @@ public class RoadToolBackend {
                 float outHeight;
                 float filterStrength;
                 if (closest == null || distance > closest.w * transitionMultiplier) {
+                    //outside transition zone
                     outHeight = originalHeight;
                     filterStrength = 0;
                 } else if (distance <= closest.w) {
+                    // use closest points attributes for this point
                     outHeight = closest.z;
                     filterStrength = 1;
                 } else {

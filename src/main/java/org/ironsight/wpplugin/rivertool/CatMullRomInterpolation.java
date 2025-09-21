@@ -204,8 +204,8 @@ public class CatMullRomInterpolation {
         float start, end, handle0, handle1;
         start = positions[i];
         end = positions[i + 1];
-        handle0 = (tangents[i] * tangentMulti) / 3f + start;    //start point + 1/3 tangent in startpoint
-        handle1 = end - (tangents[i + 1] * tangentMulti) / 3f;
+        handle0 = (tangents[i] * tangentMulti) / 2f + start;    //start point + 1/3 tangent in startpoint
+        handle1 = end - (tangents[i + 1] * tangentMulti) / 2f;
 
         float[] interpolated = new float[length];
 
