@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.Layers.CustomLayerControllerWrapper;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.*;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
@@ -147,13 +148,13 @@ public class InputOutputProvider implements IMappingValueProvider,
 
         getters.add(AlwaysIO.instance);
 
+        // NOISE GENERATORS
         getters.add(new PerlinNoiseIO(100, 100, 42069, 5));
         getters.add(new VoronoiIO(0,100,123456,5,100));
+        getters.add(ProviderType.fromTypeDefault(ProviderType.RANDOM_NOISE));
 
         setters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
         getters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
-
-
 
         notifyListeners();
     }

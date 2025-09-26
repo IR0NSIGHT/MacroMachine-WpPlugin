@@ -95,21 +95,9 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer"
-                , false, defaultColorHex};
-        for (int i = 0; i < data.length; i++) {
-            saveData[i] = data[i];
-        }
-        try {
-            int[] colorHex = new int[16]; int i = 0;
-            for (Integer hex: ((ArrayList<Integer>) saveData[3]))
-                colorHex[i++] = hex;
-            return new NibbleLayerSetter((String) saveData[0], (String) saveData[1], (Boolean) saveData[2],
-                    colorHex);
-        } catch (ClassCastException ex) {
-            return new NibbleLayerSetter((String) saveData[0], (String) saveData[1], (Boolean) saveData[2],
-                    defaultColorHex);
-        }
+        return new NibbleLayerSetter((String) data[0], (String) data[1], (Boolean) data[2],
+                defaultColorHex);
+
     }
 
     @Override
