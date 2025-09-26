@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
@@ -460,7 +461,6 @@ public class ProviderTest {
     }
 
     void TestVoronoiIO() {
-
         IPositionValueGetter input = new VoronoiIO(10,100,123456,1,100);
         HashSet<Integer> seenValue = new HashSet<>();
         for (int x = 100; x < 1300; x++) {
@@ -475,4 +475,26 @@ public class ProviderTest {
         Arrays.sort(seen);
         System.out.println(Arrays.toString(seen));
     }
+
+    @Test
+    void TestRandomIO() {
+        float chance = 1/257f;
+        IPositionValueGetter input = new RandomNoise(10123456,chance);
+        int passCount = 0;
+        int rejectCount = 0;
+        for (int x = -1000; x < 1300; x++) {
+            for (int y = -300; y <  2700; y++) {
+                int value = input.getValueAt(null,x,y);
+                if (value == RandomNoise.PASS)
+                    passCount++;
+                else if (value == RandomNoise.BLOCK)
+                    rejectCount++;
+                else {
+                    Assertions.fail("illegal value: " + value);
+                    return;
+                }
+            }
+        }
+        assertEquals(chance,1f*passCount/rejectCount,0.1f,"random did not produce the expect distribution: "+ passCount +":"+rejectCount);
+      }
 }

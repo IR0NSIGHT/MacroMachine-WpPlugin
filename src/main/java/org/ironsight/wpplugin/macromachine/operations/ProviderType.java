@@ -27,7 +27,8 @@ public enum ProviderType {
     DISTANCE_TO_EDGE,
     PERLIN_NOISE,
     SHADOW,
-    VORONOI_NOISE
+    VORONOI_NOISE,
+    RANDOM_NOISE
     ;
 
     public static IMappingValue fromType(Object[] data, ProviderType type) {
@@ -98,6 +99,8 @@ public enum ProviderType {
                 return new ShadowMapIO();
             case VORONOI_NOISE:
                 return new VoronoiIO(0,100,987654321,5,100);
+            case RANDOM_NOISE:
+                return new RandomNoise(674930,1/10000f);
             default:
                 throw new IllegalArgumentException(
                         "not implemented: can not instantiate providers that need extra " + "information");
