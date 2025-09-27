@@ -32,12 +32,14 @@ public class CustomLayerControllerWrapper implements LayerProvider {
 
     public List<CustomLayer> getCustomLayers() {
         try {
-            Method m = CustomLayerController.class.getDeclaredMethod("getCustomLayers");
+            Class<?> controllerClass = Class.forName("org.pepsoft.worldpainter.CustomLayerController");
+            Method m = controllerClass.getDeclaredMethod("getCustomLayers");
             m.setAccessible(true);
             List<CustomLayer> layers = (List<CustomLayer>) m.invoke(getController());
             return layers;
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NullPointerException e) {
-            System.err.println(e);
+        } catch (ReflectiveOperationException | NullPointerException e) {
+            return List.of();
+        } catch (Exception ex) {
             return List.of();
         }
     }
@@ -77,10 +79,11 @@ public class CustomLayerControllerWrapper implements LayerProvider {
         if (!(layer instanceof CustomLayer customLayer)) return;
 
         try {
-            Method registerMethod = CustomLayerController.class.getDeclaredMethod("registerCustomLayer", CustomLayer.class, boolean.class);
+            Class<?> appClass = Class.forName("org.pepsoft.worldpainter.App");
+            Method registerMethod = appClass.getDeclaredMethod("registerCustomLayer", CustomLayer.class, boolean.class);
             registerMethod.setAccessible(true); // bypass access checks
             registerMethod.invoke(getController(), customLayer, true);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NullPointerException e) {
+        } catch (ClassNotFoundException |NoSuchMethodException | IllegalAccessException | InvocationTargetException | NullPointerException  e) {
             System.err.println("Failed to register custom layer: " + e);
         }
     }
