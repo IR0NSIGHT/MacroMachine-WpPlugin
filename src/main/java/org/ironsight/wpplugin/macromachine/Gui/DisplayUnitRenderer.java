@@ -20,10 +20,8 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
         implements TableCellRenderer, ListCellRenderer<Object> {
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-    JLabel input = new JLabel();
-    JLabel output = new JLabel();
+    JLabel summary = new JLabel();
     JPanel panel = new JPanel(new BorderLayout());
-    JLabel actionType = new JLabel();
     JLabel iconLabel = new JLabel();
     private final Function<IDisplayUnit, Boolean> isItemValid;
     public DisplayUnitRenderer(Function<IDisplayUnit, Boolean> isItemValid) {
@@ -44,18 +42,10 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
         nameLabel.setFont(LayerMappingTopPanel.header1Font);
         nameLabel.setVerticalAlignment(JLabel.CENTER);
 
-        input.setFont(LayerMappingTopPanel.header2Font);
-        input.setHorizontalTextPosition(SwingConstants.CENTER);
+        summary.setFont(LayerMappingTopPanel.header2Font);
+        summary.setHorizontalTextPosition(SwingConstants.CENTER);
 
-        output.setFont(LayerMappingTopPanel.header2Font);
-        output.setHorizontalTextPosition(SwingConstants.CENTER);
-
-        actionType.setFont(LayerMappingTopPanel.header2Font);
-        actionType.setHorizontalTextPosition(SwingConstants.CENTER);
-
-        inputoutput.add(input);
-        inputoutput.add(actionType);
-        inputoutput.add(output);
+        inputoutput.add(summary);
         inputoutput.setOpaque(false);
         panel.add(inputoutput, BorderLayout.CENTER);
     }
@@ -63,44 +53,34 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
     public void updateTo(Object mapping, boolean isActive) {
         if (mapping instanceof MappingAction) {
             MappingAction lm = (MappingAction) mapping;
-            input.setText(lm.input.getName());
-            output.setText(lm.output.getName());
-            actionType.setText(lm.actionType.getDisplayName());
+            summary.setText(lm.getSummary());
             nameLabel.setText(lm.getName());
             panel.setToolTipText(lm.getToolTipText());
             nameLabel.setFont(actionFont);
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.ACTION));
         } else if (mapping instanceof Macro) {
             Macro lm = (Macro) mapping;
-            input.setText("");
-            output.setText(lm.getExecutionUUIDs().length + " steps");
-            actionType.setText("Macro");
+            summary.setText("Macro " + lm.getExecutionUUIDs().length + " steps");
             nameLabel.setText(lm.getName());
             panel.setToolTipText(lm.getToolTipText());
             nameLabel.setFont(macroFont);
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.MACRO));
         } else if (mapping instanceof IPositionValueGetter) {
             IPositionValueGetter lm = (IPositionValueGetter) mapping;
-            input.setText("");
-            output.setText("");
-            actionType.setText("");
+            summary.setText("");
             nameLabel.setText(lm.getName());
             panel.setToolTipText(lm.getToolTipText());
             nameLabel.setFont(ioFont);
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.INPUT));
         } else if (mapping instanceof IPositionValueSetter) {
             IPositionValueSetter lm = (IPositionValueSetter) mapping;
-            input.setText("");
-            output.setText("");
-            actionType.setText("");
+            summary.setText("");
             nameLabel.setText(lm.getName());
             panel.setToolTipText(lm.getToolTipText());
             nameLabel.setFont(ioFont);
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.OUTPUT));
         } else {
-            input.setText("");
-            output.setText("");
-            actionType.setText("");
+            summary.setText("");
             nameLabel.setText("All macros");
             panel.setToolTipText("");
             nameLabel.setFont(ioFont);

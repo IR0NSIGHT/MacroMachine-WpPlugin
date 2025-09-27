@@ -6,6 +6,7 @@ import org.pepsoft.worldpainter.Dimension;
 
 import javax.vecmath.Point2d;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.INTERMEDIATE_SELECTION;
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.fromType;
@@ -162,6 +163,52 @@ public class MappingAction implements SaveableAction {
             }
         }
         return ranges;
+    }
+
+    public String getSummary() {
+        if (output.getProviderType().equals(INTERMEDIATE_SELECTION) && actionType.equals(ActionType.LIMIT_TO)) { //action filter limits
+            StringBuilder summary = new StringBuilder();
+            summary.append("Filter for ").append(input.getName());
+            var valuesString = "";
+            if (input.isDiscrete())
+                valuesString = Arrays.stream(mappingPoints)
+                        .filter(mp -> mp.output == ActionFilterIO.PASS_VALUE)
+                        .map(mp -> mp.input)
+                        .map(input::valueToString).collect(Collectors.joining(","));
+            else {
+                // build ranges
+                ArrayList<String> ranges = new ArrayList<>();
+                boolean allowPreviousValue = false;
+                int rangeLength = 0;
+                for (int inputValue = getInput().getMinValue(); inputValue <= getInput().getMaxValue(); inputValue++) {
+                    boolean allowThisValue = map(inputValue) == ActionFilterIO.PASS_VALUE;
+                    if (allowThisValue != allowPreviousValue) {
+                        if (allowPreviousValue) { //end of range
+                            if (rangeLength == 1)
+                                ranges.add(getInput().valueToString(inputValue-1)); //single point
+                            else {
+                                var start = getInput().valueToString(inputValue - rangeLength);
+                                var end = getInput().valueToString(inputValue - 1);
+                                ranges.add(start +".." + end);
+                            }
+                        }
+                        if (allowThisValue) { // start of new range
+                            rangeLength = 0;
+                        }
+                    }
+                    if (allowThisValue)
+                        rangeLength++;
+                    allowPreviousValue = allowThisValue;
+                }
+                valuesString = String.join(", ", ranges);;
+            }
+            summary.append(" (").append(valuesString).append(")");
+            return summary.toString();
+        } else {
+            return input.getName() + " " +
+                    actionType.displayName + " "
+                    + output.getName();
+        }
     }
 
     public IPositionValueSetter getOutput() {
