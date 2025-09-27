@@ -167,28 +167,42 @@ public class MappingAction implements SaveableAction {
 
     private String filterActionSummary() {
         StringBuilder summary = new StringBuilder();
-        summary.append("Filter for ").append(input.getName());
+        int block = 0;
+        int pass = 0;
+        for (int inputValue = getInput().getMinValue(); inputValue <= getInput().getMaxValue(); inputValue++)
+            if (map(inputValue) == ActionFilterIO.PASS_VALUE)
+                pass++;
+            else
+                block++;
+        int compareValue;
+        if (pass < block) {
+            summary.append("Filter for ").append(input.getName());
+            compareValue = ActionFilterIO.PASS_VALUE;
+        } else {
+            compareValue = ActionFilterIO.BLOCK_VALUE;
+            summary.append("Filter except ").append(input.getName());
+        }
         var valuesString = "";
         if (input.isDiscrete())
             valuesString = Arrays.stream(mappingPoints)
-                    .filter(mp -> mp.output == ActionFilterIO.PASS_VALUE)
+                    .filter(mp -> mp.output == compareValue)
                     .map(mp -> mp.input)
                     .map(input::valueToString).sorted().collect(Collectors.joining(","));
         else {
             // build ranges
             ArrayList<String> ranges = new ArrayList<>();
-            boolean allowPreviousValue = false;
+            boolean allowPreviousValue = compareValue != ActionFilterIO.PASS_VALUE;
             int rangeLength = 0;
             for (int inputValue = getInput().getMinValue(); inputValue <= getInput().getMaxValue(); inputValue++) {
-                boolean allowThisValue = map(inputValue) == ActionFilterIO.PASS_VALUE;
+                boolean allowThisValue = map(inputValue) == compareValue;
                 if (allowThisValue != allowPreviousValue || inputValue == getInput().getMaxValue()) {
                     if (allowPreviousValue) { //end of range
                         if (rangeLength == 1)
-                            ranges.add(getInput().valueToString(inputValue-1)); //single point
+                            ranges.add(getInput().valueToString(inputValue - 1)); //single point
                         else {
                             var start = getInput().valueToString(inputValue - rangeLength);
                             var end = getInput().valueToString(allowThisValue ? inputValue : inputValue - 1);
-                            ranges.add(start +"-" + end);
+                            ranges.add(start + "-" + end);
                         }
                     }
                     if (allowThisValue) { // start of new range
@@ -199,7 +213,8 @@ public class MappingAction implements SaveableAction {
                     rangeLength++;
                 allowPreviousValue = allowThisValue;
             }
-            valuesString = String.join(", ", ranges);;
+            valuesString = String.join(", ", ranges);
+            ;
         }
         summary.append(": ").append(valuesString);
         return summary.toString();
@@ -217,7 +232,7 @@ public class MappingAction implements SaveableAction {
                 return "Set " + output.getName() + " to at least " + output.valueToString(map(input.getMinValue()));
             }
             case INCREMENT, DECREMENT, MULTIPLY, DIVIDE -> {
-                return actionType.displayName+ " " + output.getName() + " by " + output.valueToString(map(input.getMinValue()));
+                return actionType.displayName + " " + output.getName() + " by " + output.valueToString(map(input.getMinValue()));
             }
             default -> {
                 return "ERROR";
@@ -230,8 +245,7 @@ public class MappingAction implements SaveableAction {
             return filterActionSummary();
         } else if (input.getProviderType().equals(ALWAYS)) {
             return alwaysActionSummary();
-        }
-        else {
+        } else {
             return input.getName() + " " +
                     actionType.displayName + " "
                     + output.getName();
