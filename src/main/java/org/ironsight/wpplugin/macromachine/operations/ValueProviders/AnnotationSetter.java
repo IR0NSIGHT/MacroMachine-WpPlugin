@@ -72,10 +72,10 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public String valueToString(int value) {
-        if (value == 0) return "Absent (0)";
+        if (value == 0) return "Absent";
         try {
             String name = Annotations.getColourName(value);
-            return name + "(" + value + ")";
+            return name;
         } catch (ArrayIndexOutOfBoundsException ex) {
             GlobalActionPanel.ErrorPopUp(ex);
         }

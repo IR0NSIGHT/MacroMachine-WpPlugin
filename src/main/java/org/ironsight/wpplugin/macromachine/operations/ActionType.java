@@ -16,7 +16,7 @@ package org.ironsight.wpplugin.macromachine.operations;
  */
 
 public enum ActionType {
-    INCREMENT("adds"),
+    INCREMENT("increments"),
     DECREMENT("subtracts"),
     MULTIPLY("multiplies"),
     DIVIDE("divides"),

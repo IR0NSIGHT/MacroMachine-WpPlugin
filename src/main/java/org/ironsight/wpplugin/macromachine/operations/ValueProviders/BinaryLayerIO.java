@@ -30,7 +30,7 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
 
     @Override
     public String getName() {
-        return layerName + (isCustom ? " (Custom) layer" : " layer");
+        return layerName + (isCustom ? " custom layer" : " layer");
     }
 
     public void setValueAt(Dimension dim, int x, int y, int value) {
@@ -58,9 +58,9 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
 
     public String valueToString(int value) {
         if (value == 0) {
-            return layerName + " OFF (" + value + ")";
+            return "OFF";
         } else {
-            return layerName + " ON (" + value + ")";
+            return "ON";
         }
     }
 

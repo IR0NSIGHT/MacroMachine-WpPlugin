@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
@@ -18,18 +18,19 @@ import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
 
 public class DisplayUnitRenderer extends DefaultTreeCellRenderer
         implements TableCellRenderer, ListCellRenderer<Object> {
+    private final Function<IDisplayUnit, Boolean> isItemValid;
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
     JLabel summary = new JLabel();
     JPanel panel = new JPanel(new BorderLayout());
     JLabel iconLabel = new JLabel();
-    private final Function<IDisplayUnit, Boolean> isItemValid;
+
     public DisplayUnitRenderer(Function<IDisplayUnit, Boolean> isItemValid) {
         this.isItemValid = isItemValid;
         init();
     }
 
-    private void init(){
+    private void init() {
         JPanel iconAndName = new JPanel(new FlowLayout(FlowLayout.LEFT));
         iconAndName.setOpaque(false);
         iconLabel.setPreferredSize(new Dimension(15, 15));
@@ -38,7 +39,7 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
 
         panel.add(iconAndName, BorderLayout.WEST);
         int border = 3;
-        panel.setBorder(BorderFactory.createEmptyBorder(border,border,border,border));
+        panel.setBorder(BorderFactory.createEmptyBorder(border, border, border, border));
         nameLabel.setFont(LayerMappingTopPanel.header1Font);
         nameLabel.setVerticalAlignment(JLabel.CENTER);
 
@@ -51,6 +52,7 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
     }
 
     public void updateTo(Object mapping, boolean isActive) {
+        nameLabel.setVisible(true);
         if (mapping instanceof MappingAction) {
             MappingAction lm = (MappingAction) mapping;
             summary.setText(lm.getSummary());
@@ -90,6 +92,7 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
             iconLabel.setIcon(IconManager.getIcon(IconManager.Icon.INVALID));
         }
         nameLabel.setForeground(isActive ? DEFAULT_FOREGROUND : INTERPOLATED_FOREGROUND);
+        revalidate();
     }
 
 
@@ -128,17 +131,17 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
 
                     break;
                 case INPUT:
-                    updateTo(((MacroTreeNode) value).getInput(),  node.isActive());
+                    updateTo(((MacroTreeNode) value).getInput(), node.isActive());
                     break;
                 case INVALID:
-                    updateTo(((MacroTreeNode) value).payload,  node.isActive());
+                    updateTo(((MacroTreeNode) value).payload, node.isActive());
                     break;
             }
         }
 
         if (selected) {
             panel.setBackground(SELECTED_BACKGROUND);
-        } else panel.setBackground( DEFAULT_BACKGROUND );
+        } else panel.setBackground(DEFAULT_BACKGROUND);
         panel.invalidate();
         return panel;
 
