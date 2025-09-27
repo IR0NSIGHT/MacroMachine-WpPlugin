@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import org.ironsight.wpplugin.macromachine.Gui.Settings;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Dimension;
@@ -8,8 +9,7 @@ import javax.vecmath.Point2d;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.ironsight.wpplugin.macromachine.operations.ProviderType.INTERMEDIATE_SELECTION;
-import static org.ironsight.wpplugin.macromachine.operations.ProviderType.fromType;
+import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
 
 /**
  * this class represents a single global-operation. it can be applied to the map each Actions has an input (f.e. terrain
@@ -165,46 +165,73 @@ public class MappingAction implements SaveableAction {
         return ranges;
     }
 
-    public String getSummary() {
-        if (output.getProviderType().equals(INTERMEDIATE_SELECTION) && actionType.equals(ActionType.LIMIT_TO)) { //action filter limits
-            StringBuilder summary = new StringBuilder();
-            summary.append("Filter for ").append(input.getName());
-            var valuesString = "";
-            if (input.isDiscrete())
-                valuesString = Arrays.stream(mappingPoints)
-                        .filter(mp -> mp.output == ActionFilterIO.PASS_VALUE)
-                        .map(mp -> mp.input)
-                        .map(input::valueToString).collect(Collectors.joining(","));
-            else {
-                // build ranges
-                ArrayList<String> ranges = new ArrayList<>();
-                boolean allowPreviousValue = false;
-                int rangeLength = 0;
-                for (int inputValue = getInput().getMinValue(); inputValue <= getInput().getMaxValue(); inputValue++) {
-                    boolean allowThisValue = map(inputValue) == ActionFilterIO.PASS_VALUE;
-                    if (allowThisValue != allowPreviousValue) {
-                        if (allowPreviousValue) { //end of range
-                            if (rangeLength == 1)
-                                ranges.add(getInput().valueToString(inputValue-1)); //single point
-                            else {
-                                var start = getInput().valueToString(inputValue - rangeLength);
-                                var end = getInput().valueToString(inputValue - 1);
-                                ranges.add(start +".." + end);
-                            }
-                        }
-                        if (allowThisValue) { // start of new range
-                            rangeLength = 0;
+    private String filterActionSummary() {
+        StringBuilder summary = new StringBuilder();
+        summary.append("Filter for ").append(input.getName());
+        var valuesString = "";
+        if (input.isDiscrete())
+            valuesString = Arrays.stream(mappingPoints)
+                    .filter(mp -> mp.output == ActionFilterIO.PASS_VALUE)
+                    .map(mp -> mp.input)
+                    .map(input::valueToString).sorted().collect(Collectors.joining(","));
+        else {
+            // build ranges
+            ArrayList<String> ranges = new ArrayList<>();
+            boolean allowPreviousValue = false;
+            int rangeLength = 0;
+            for (int inputValue = getInput().getMinValue(); inputValue <= getInput().getMaxValue(); inputValue++) {
+                boolean allowThisValue = map(inputValue) == ActionFilterIO.PASS_VALUE;
+                if (allowThisValue != allowPreviousValue || inputValue == getInput().getMaxValue()) {
+                    if (allowPreviousValue) { //end of range
+                        if (rangeLength == 1)
+                            ranges.add(getInput().valueToString(inputValue-1)); //single point
+                        else {
+                            var start = getInput().valueToString(inputValue - rangeLength);
+                            var end = getInput().valueToString(allowThisValue ? inputValue : inputValue - 1);
+                            ranges.add(start +"-" + end);
                         }
                     }
-                    if (allowThisValue)
-                        rangeLength++;
-                    allowPreviousValue = allowThisValue;
+                    if (allowThisValue) { // start of new range
+                        rangeLength = 0;
+                    }
                 }
-                valuesString = String.join(", ", ranges);;
+                if (allowThisValue)
+                    rangeLength++;
+                allowPreviousValue = allowThisValue;
             }
-            summary.append(" (").append(valuesString).append(")");
-            return summary.toString();
-        } else {
+            valuesString = String.join(", ", ranges);;
+        }
+        summary.append(": ").append(valuesString);
+        return summary.toString();
+    }
+
+    private String alwaysActionSummary() {
+        switch (actionType) {
+            case SET -> {
+                return "Set " + output.getName() + " to " + output.valueToString(map(input.getMinValue()));
+            }
+            case LIMIT_TO -> {
+                return "Limit " + output.getName() + " to " + output.valueToString(map(input.getMinValue()));
+            }
+            case AT_LEAST -> {
+                return "Set " + output.getName() + " to at least " + output.valueToString(map(input.getMinValue()));
+            }
+            case INCREMENT, DECREMENT, MULTIPLY, DIVIDE -> {
+                return actionType.displayName+ " " + output.getName() + " by " + output.valueToString(map(input.getMinValue()));
+            }
+            default -> {
+                return "ERROR";
+            }
+        }
+    }
+
+    public String getSummary() {
+        if (output.getProviderType().equals(INTERMEDIATE_SELECTION)) { //action filter limits
+            return filterActionSummary();
+        } else if (input.getProviderType().equals(ALWAYS)) {
+            return alwaysActionSummary();
+        }
+        else {
             return input.getName() + " " +
                     actionType.displayName + " "
                     + output.getName();
@@ -354,7 +381,7 @@ public class MappingAction implements SaveableAction {
 
     @Override
     public String getToolTipText() {
-        return input.getName() + " " + actionType.displayName + " " + output.getName();
+        return getSummary();
     }
 
     public void applyToPoint(Dimension dim, int x, int y, ActionFilterIO actionFilterIO) {

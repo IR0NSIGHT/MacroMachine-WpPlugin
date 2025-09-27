@@ -430,7 +430,7 @@ public class MacroTreePanel extends JPanel {
                         " your " + "save-files. These are global and the same for all projects.\n" + " Press 'Apply'" +
                         " to " + "apply a macro as a global operation to " + "your map.");
 
-        scrollPane.setPreferredSize(new Dimension(500, 600));
+        scrollPane.setPreferredSize(new Dimension(700, 600));
         {   // right click button list
             JButton deleteButton = new JButton("Delete");
             deleteButton.setToolTipText("Delete all selected macros permanently");
