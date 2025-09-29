@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.function.Predicate;
 
 public class CatMullRomInterpolation {
-    public static float[] interpolateCatmullRom(float[] positions, int[] handleToCurveIdx, int[] segmentLengths, float defaultVaule) {
+    public static float[] interpolateCatmullRom(float[] positions, float[] handleStrengths, int[] handleToCurveIdx, int[] segmentLengths, float defaultVaule) {
         if (positions.length < 2)
             return positions.clone();
 
@@ -31,13 +31,13 @@ public class CatMullRomInterpolation {
         float[] segmentLengthsFloat = new float[segmentLengths.length];
         for (int i = 0; i < segmentLengths.length; i++)
             segmentLengthsFloat[i] = segmentLengths[i];
-        HandleAndIdcs in = new HandleAndIdcs(handlesWithSomeValues, handleToCurveIdx.clone(), segmentLengthsFloat);
+        HandleAndIdcs in = new HandleAndIdcs(handlesWithSomeValues, handleToCurveIdx.clone(), segmentLengthsFloat, handleStrengths);
         HandleAndIdcs ready = HandleAndIdcs.removeInheritValues(in);
 
         float[] tangents = tangentsFromPositions(ready.positions, ready.segmentLengths);
         assert ArrayUtility.isValidArray(tangents) : "some illegal values are in this float array: "+ Arrays.toString(tangents);
 
-        float[] interpolatedPositions = interpolateFromHandles(ready.positions, tangents, ready.idcs);
+        float[] interpolatedPositions = interpolateFromHandles(ready.positions, ready.handleStrengths, tangents, ready.idcs);
         assert ArrayUtility.isValidArray(interpolatedPositions) : "some illegal values are in this float array: "+ Arrays.toString(tangents);
 
         assert interpolatedPositions.length == 1 + handleToCurveIdx[handleToCurveIdx.length - 1] : "interpolated " +
@@ -145,7 +145,7 @@ public class CatMullRomInterpolation {
      * @return interpolated curve that fills unknown positions between the handles using catmull rom
      * @requires handles must not contain INHERIT values
      */
-    public static float[] interpolateFromHandles(float[] positions, float[] tangents, int[] curveIdxByHandle) {
+    public static float[] interpolateFromHandles(float[] positions, float[] handleStrengths, float[] tangents, int[] curveIdxByHandle) {
         assert positions.length == curveIdxByHandle.length && tangents.length == positions.length : "both arrays" +
                 " must be the same length as the represent the "
                 + "same curveHandles";
@@ -158,7 +158,7 @@ public class CatMullRomInterpolation {
         ArrayList<float[]> curveSegments = new ArrayList<>(positions.length);
         //interpolate segment by segment
         for (int i = 0; i < positions.length - 1; i++) {
-            float[] segment = interpolateSegment(positions, tangents, curveIdxByHandle, i);
+            float[] segment = interpolateSegment(positions, handleStrengths, tangents, curveIdxByHandle, i);
             curveSegments.add(segment);
         }
         //add last handle that was excluded in the last segment
@@ -189,7 +189,7 @@ public class CatMullRomInterpolation {
      * @param i             index of segment start. can be 0 to length-3
      * @return interpolated segment between handle[i+1] and handle[i+2]
      */
-    public static float[] interpolateSegment(float[] positions, float[] tangents, int[] handleToCurve, int i) {
+    public static float[] interpolateSegment(float[] positions, float[] handleStrenghts, float[] tangents, int[] handleToCurve, int i) {
         assert i >= 0;
         assert i < positions.length - 1;
         assert positions.length == handleToCurve.length && positions.length == tangents.length : "all arrays must be " +
@@ -200,7 +200,7 @@ public class CatMullRomInterpolation {
         int endIdx = handleToCurve[i + 1];
 
         int length = endIdx - startIdx;
-        float tangentMulti = length;
+        float tangentMulti = length * (handleStrenghts[i] + handleStrenghts[i+1]) / 2f;
         float start, end, handle0, handle1;
         start = positions[i];
         end = positions[i + 1];

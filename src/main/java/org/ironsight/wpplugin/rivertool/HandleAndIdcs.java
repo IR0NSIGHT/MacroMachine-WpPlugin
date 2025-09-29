@@ -6,13 +6,14 @@ public class HandleAndIdcs {
     public final float[] positions;
     public final int[] idcs;
     public final float[] segmentLengths;
-
-    public HandleAndIdcs(float[] positions, int[] idcs, float[] segmentLengths) {
+    public final float[] handleStrengths;
+    public HandleAndIdcs(float[] positions, int[] idcs, float[] segmentLengths, float[] handleStrengths) {
         if (positions.length != idcs.length || idcs.length != segmentLengths.length)
             throw new IllegalArgumentException("all arrays must be of same length.");
         this.positions = positions;
         this.idcs = idcs;
         this.segmentLengths = segmentLengths;
+        this.handleStrengths = handleStrengths;
     }
 
     public static HandleAndIdcs removeInheritValues(HandleAndIdcs struct) {
@@ -27,7 +28,8 @@ public class HandleAndIdcs {
         float[] newPositions = ArrayUtility.removePositions(struct.positions, removeMarkers);
         int[] newHandleToCurve = ArrayUtility.removePositions(struct.idcs, removeMarkers);
         float[] newSegmentLengths = ArrayUtility.sumIndices(struct.segmentLengths, removeMarkers);
-        HandleAndIdcs out = new HandleAndIdcs(newPositions, newHandleToCurve, newSegmentLengths);
+        float[] newHandleStrengths = ArrayUtility.removePositions(struct.handleStrengths, removeMarkers);
+        HandleAndIdcs out = new HandleAndIdcs(newPositions, newHandleToCurve, newSegmentLengths, newHandleStrengths);
 
         //postcondition
         assert !ArrayUtility.linearSearch(out.positions, RiverHandleInformation.INHERIT_VALUE) : "array still contains INHERIT values";

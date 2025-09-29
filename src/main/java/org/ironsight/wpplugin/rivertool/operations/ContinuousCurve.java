@@ -74,11 +74,18 @@ public class ContinuousCurve {
                 xsHandleOffsets, ysHandleOffsets);
         int[] handleToCurveIdx = handleToCurve(segmentLengths);
 
+        float[] handleStrength;
+        if (path.type.handleStrengthIndex != -1) {
+            handleStrength = flatHandles.get(path.type.handleStrengthIndex);
+        } else {
+            handleStrength =new float[path.amountHandles()];
+            Arrays.fill(handleStrength,1);
+        }
         //iterate all handleArrays and calculate a continous curve
         for (int n = 0; n < path.type.size; n++) {
             float[] nthHandles = flatHandles.get(n);
             float defaultVal = n == RiverHandleInformation.RiverInformation.WATER_Z.idx + 2 ? 9999 : 5; //FIXME add this info the the RiverInfroamtion class
-            float[] interpolated = CatMullRomInterpolation.interpolateCatmullRom(nthHandles, handleToCurveIdx,
+            float[] interpolated = CatMullRomInterpolation.interpolateCatmullRom(nthHandles, handleStrength, handleToCurveIdx,
                     segmentLengths, defaultVal);
             interpolatedCurve.add(interpolated);
         }

@@ -8,6 +8,7 @@ import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 
         public final int size;
         public final int posSize;
+        public int handleStrengthIndex = -1;
         public final RiverHandleInformation.RiverInformation[] information;
 
         public PointType(RiverHandleInformation.RiverInformation[] information, int posSize) {

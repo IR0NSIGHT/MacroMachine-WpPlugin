@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import static java.lang.Math.*;
+import static org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation.RiverInformation.HANDLE_FACTOR;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
 
@@ -30,16 +31,18 @@ public class RoadToolBackend {
             this.handlesToPathIndex = handlesToPathIndex;
         }
     }
-    static PathResult getPathFromHandles(List<Point4f> handles) {
+    static PathResult getPathFromHandles(List<Point4f> handles, float handleStrength) {
         var api = RiverTool.create();
-        var handlesData = handles.stream().map(p -> new float[]{p.x, p.y, p.z, p.w}).map(RiverToolAPI.PositionInformation::new).toList();
+        var handlesData = handles.stream().map(p -> new float[]{p.x, p.y, p.z, p.w, handleStrength}).map(RiverToolAPI.PositionInformation::new).toList();
         PointType type = new PointType(
                 new RiverHandleInformation.RiverInformation[]{
                         new RiverHandleInformation.RiverInformation(0, "POINT_HEIGHT", "point height absolute", -10000, 10000),
-                        new RiverHandleInformation.RiverInformation(1, "BRUSH_RADIUS", "radius", 0, 10000)
+                        new RiverHandleInformation.RiverInformation(1, "BRUSH_RADIUS", "radius", 0, 10000),
                 },
                 2
         );
+        type.handleStrengthIndex = 4;
+
         var path = api.handlesToConnectedBezierPath(handlesData, type);
         var curve = path.stream().map(p -> p.data).map(arr -> new Point4f(arr[0], arr[1], arr[2], arr[3])).toList();
         var handlesToPathIndex = new HashMap<Point4f, Integer>(handles.size());

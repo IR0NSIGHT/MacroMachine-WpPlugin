@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Layers.RoadBuilder;
 
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AnnotationSetter;
 import org.pepsoft.util.AttributeKey;
 import org.pepsoft.util.undo.BufferKey;
 import org.pepsoft.util.undo.Cloneable;
@@ -8,6 +9,7 @@ import org.pepsoft.util.undo.UndoListener;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.brushes.Brush;
+import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
 import org.pepsoft.worldpainter.painting.Paint;
@@ -53,11 +55,13 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
     private boolean fixHeightTo;
     private boolean usePaint;
     private float slopeLimit = 0;
+    private float handleStrength = 0f;
     private JCheckBox onlyDownCheckbox;
     private JCheckBox minCheckbox;
     private JCheckBox fixHeightCheckbox;
     private JCheckBox usePaintCheckbox;
     private JSpinner limitSlopeSpinner;
+    private JSpinner handleFactorSpinner;
     private JSpinner transitionMultiSpinner;
     private JPanel brushQuerschnitt;
     private CrossSectionShape brushProfile;
@@ -123,6 +127,17 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
             });
             this.fixHeightTo = fixHeightCheckbox.isSelected();
             optionsPanel.add(fixHeightCheckbox);
+        }
+        {
+            handleFactorSpinner = new JSpinner(new SpinnerNumberModel(0.5d,-1d,2d,0.1d));
+            handleFactorSpinner.setToolTipText("Controls how curve the path is. 0 = straight lines, 1 = normal curves, 2 = exaggerated curves, -1 = cursive");
+            handleFactorSpinner.addChangeListener(l -> {
+                handleStrength = ((Number) handleFactorSpinner.getValue()).floatValue();
+            });
+            JPanel panel = new JPanel();
+            panel.add(new JLabel("Curve strength"));
+            panel.add(handleFactorSpinner);
+            optionsPanel.add(panel);
         }
         {
 
@@ -300,7 +315,7 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
             }
 
             // get new path section and append it
-            var pathRes = getPathFromHandles(pathHandles);
+            var pathRes = getPathFromHandles(pathHandles, handleStrength);
 
 
             //DRAW RESULT ON MAP WITH ALL SEGMENTS

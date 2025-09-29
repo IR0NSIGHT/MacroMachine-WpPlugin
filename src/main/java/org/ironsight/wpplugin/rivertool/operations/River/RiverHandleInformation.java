@@ -202,7 +202,7 @@ public class RiverHandleInformation {
     }
 
     public static class RiverInformation {
-
+        public static final String HANDLE_FACTOR = "HANDLE_FACTOR";
         public static final RiverInformation RIVER_RADIUS = new RiverInformation(0, "river radius", "radius of the river ", 0, 1000);
         public static final RiverInformation RIVER_DEPTH = new RiverInformation(1, "river depth", "depth of the" +
                 " river ", 0, 1000);
