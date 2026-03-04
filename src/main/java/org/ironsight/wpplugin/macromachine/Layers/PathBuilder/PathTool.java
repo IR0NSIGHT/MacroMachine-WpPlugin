@@ -100,7 +100,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         {
             minCheckbox = new JCheckBox("snap to terrain");
-            minCheckbox.setToolTipText("if active, the path will stick to terrainheight. rightclick to reset height");
+            minCheckbox.setToolTipText("if active, the path will follow the terrain instead of building 'bridges'.");
             minCheckbox.addActionListener(l -> {
                 this.snapToTerrain = minCheckbox.isSelected();
             });
@@ -124,7 +124,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 this.fixHeightTo = fixHeightCheckbox.isSelected();
             });
             this.fixHeightTo = fixHeightCheckbox.isSelected();
-            optionsPanel.add(fixHeightCheckbox);
+            //optionsPanel.add(fixHeightCheckbox); // FIXME: disabled because it causes wierd artifacts across tile lines
         }
         {
             handleFactorSpinner = new JSpinner(new SpinnerNumberModel(handleStrength, -1d, 2d, 0.1d));
