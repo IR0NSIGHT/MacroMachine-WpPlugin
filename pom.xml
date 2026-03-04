@@ -36,7 +36,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <worldpainter.version>2.26.0</worldpainter.version>
+        <worldpainter.version>2.26.1</worldpainter.version>
     </properties>
 
     <build>
