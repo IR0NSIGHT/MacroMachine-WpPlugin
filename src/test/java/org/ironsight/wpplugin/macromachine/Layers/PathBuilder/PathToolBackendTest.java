@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.macromachine.Layers.RoadBuilder;
+package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
 import org.junit.jupiter.api.Test;
 
@@ -8,13 +8,13 @@ import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class RoadToolBackendTest {
+class PathToolBackendTest {
 
     @Test
     void plotPathBetween() {
         Point4f start = new Point4f(10,20,0,0);
         Point4f end = new Point4f(20,20,0,0);
-        var path = RoadToolBackend.plotPathBetween(start,end);
+        var path = PathToolBackend.plotPathBetween(start,end);
         assertFalse(path.contains(start));
         assertEquals(10,path.size());
         assertEquals(end, path.get(path.size()-1));
@@ -28,7 +28,7 @@ class RoadToolBackendTest {
         path.add(new Point4f(12,16,100,0));
         path.add(new Point4f(12,17,100,0));
 
-        RoadToolBackend.forcePathToMinPos(path, p -> p.y);
+        PathToolBackend.forcePathToMinPos(path, p -> p.y);
         assertEquals(path.get(0),new Point4f(12,14,14,0));
         assertEquals(path.get(1),new Point4f(12,15,15,0));
         assertEquals(path.get(2),new Point4f(12,16,16,0));
@@ -51,7 +51,7 @@ class RoadToolBackendTest {
         path.add(new Point4f(12,16,90,0));
         path.add(new Point4f(12,17,100,0));
 
-        RoadToolBackend.forcePathOnlyDownhill(path);
+        PathToolBackend.forcePathOnlyDownhill(path);
         assertEquals(path.get(0),new Point4f(12,14,100,0));
         assertEquals(path.get(1),new Point4f(12,15,100,0));
         assertEquals(path.get(2),new Point4f(12,16,90,0));
@@ -66,7 +66,7 @@ class RoadToolBackendTest {
         path.add(new Point4f(12,16,90,0));
         path.add(new Point4f(12,17,100,0));
 
-        RoadToolBackend.forcePathToHeight(path, 17);
+        PathToolBackend.forcePathToHeight(path, 17);
         assertEquals(path.get(0),new Point4f(12,14,17,0));
         assertEquals(path.get(1),new Point4f(12,15,17,0));
         assertEquals(path.get(2),new Point4f(12,16,17,0));
@@ -79,7 +79,7 @@ class RoadToolBackendTest {
 
     @Test
     void xyDistSq() {
-        var d = RoadToolBackend.xyDistSq(new Point4f(12,14,17,0),new Point4f(22,34,-17,100));
+        var d = PathToolBackend.xyDistSq(new Point4f(12,14,17,0),new Point4f(22,34,-17,100));
         assertEquals(10*10+20*20,d);
     }
 
@@ -101,7 +101,7 @@ class RoadToolBackendTest {
             path.add(new Point4f(5, -5, 90, 0)); //inside BBX
             path.add(new Point4f(12, 17, 100, 10));
 
-            var subPath = RoadToolBackend.getSubPathFor(new Point2i(-10, -10), new Point2i(10, 10), path, 1);
+            var subPath = PathToolBackend.getSubPathFor(new Point2i(-10, -10), new Point2i(10, 10), path, 1);
             assertTrue(subPath.contains(path.get(2)));
             assertTrue(subPath.contains(path.get(3)));
 
@@ -113,7 +113,7 @@ class RoadToolBackendTest {
             path.add(new Point4f(5, -5, 90, 0)); //inside BBX
             path.add(new Point4f(12, 17, 100, 0));
 
-            var subPath = RoadToolBackend.getSubPathFor(new Point2i(-10, -10), new Point2i(10, 10), path, 1);
+            var subPath = PathToolBackend.getSubPathFor(new Point2i(-10, -10), new Point2i(10, 10), path, 1);
             assertTrue(subPath.contains(path.get(2)));
         }
         {
@@ -123,7 +123,7 @@ class RoadToolBackendTest {
             path.add(new Point4f(12, 16, 90, 0));
             path.add(new Point4f(12, 17, 100, 0));
 
-            var subPath = RoadToolBackend.getSubPathFor(new Point2i(-10, -10), new Point2i(10, 10), path, 1);
+            var subPath = PathToolBackend.getSubPathFor(new Point2i(-10, -10), new Point2i(10, 10), path, 1);
             assertTrue(subPath.isEmpty());
         }
     }

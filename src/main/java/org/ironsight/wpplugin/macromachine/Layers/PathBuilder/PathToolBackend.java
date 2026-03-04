@@ -1,5 +1,9 @@
-package org.ironsight.wpplugin.macromachine.Layers.RoadBuilder;
+package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
+import org.ironsight.wpplugin.rivertool.API.RiverTool;
+import org.ironsight.wpplugin.rivertool.API.RiverToolAPI;
+import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
+import org.ironsight.wpplugin.rivertool.pathing.PointType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.painting.Paint;
@@ -7,7 +11,6 @@ import org.pepsoft.worldpainter.painting.Paint;
 import javax.vecmath.Point2f;
 import javax.vecmath.Point3i;
 import javax.vecmath.Point4f;
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
@@ -16,7 +19,63 @@ import static java.lang.Math.*;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
 
-public class RoadToolBackend {
+public class PathToolBackend {
+
+    static class PathResult {
+        public final List<Point4f> path;
+        public final  HashMap<Point4f,Integer> handlesToPathIndex;
+
+        PathResult(List<Point4f> path, HashMap<Point4f,Integer> handlesToPathIndex) {
+            this.path = path;
+            this.handlesToPathIndex = handlesToPathIndex;
+        }
+    }
+    static PathResult getPathFromHandles(List<Point4f> handles, float handleStrength) {
+        var api = RiverTool.create();
+        var handlesData = handles.stream().map(p -> new float[]{p.x, p.y, p.z, p.w, handleStrength}).map(RiverToolAPI.PositionInformation::new).toList();
+        PointType type = new PointType(
+                new RiverHandleInformation.RiverInformation[]{
+                        new RiverHandleInformation.RiverInformation(0, "POINT_HEIGHT", "point height absolute", -10000, 10000),
+                        new RiverHandleInformation.RiverInformation(1, "BRUSH_RADIUS", "radius", 0, 10000),
+                },
+                2
+        );
+        type.handleStrengthIndex = 4;
+
+        var path = api.handlesToConnectedBezierPath(handlesData, type);
+        var curve = path.stream().map(p -> p.data).map(arr -> new Point4f(arr[0], arr[1], arr[2], arr[3])).toList();
+        var handlesToPathIndex = new HashMap<Point4f, Integer>(handles.size());
+        for (int curveIdx = 0, handleIdx = 0; curveIdx < curve.size() && handleIdx < handles.size(); curveIdx++) {
+            var curvePoint = new Point2f(curve.get(curveIdx).x,curve.get(curveIdx).y);
+            var handlePoint = new Point2f(handles.get(handleIdx).x,handles.get(handleIdx).y);
+            if (curvePoint.equals(handlePoint)) {
+                handlesToPathIndex.put(handles.get(handleIdx), curveIdx);
+                handleIdx++;
+            }
+        }
+
+        return new PathResult(curve, handlesToPathIndex);
+    }
+
+    /**
+     * takes path and cuts off anything before start.
+     *
+     * @param start
+     * @param path
+     * @return path starting with start and all following points
+     */
+    static List<Point4f> getPathStartingAt(Point4f start, Collection<Point4f> path) {
+        ArrayList<Point4f> outPath = new ArrayList<>();
+        boolean add = false;
+        for (var p : path) {
+            if (p.equals(start))
+                add = true;
+            if (add)
+                outPath.add(p);
+        }
+        return outPath;
+    }
+
     /**
      * generates path between positions, excludes startPos
      *
@@ -37,9 +96,9 @@ public class RoadToolBackend {
         return path;
     }
 
-    static void forcePathToMinPos(ArrayList<Point4f> path, Function<Point4f, Float> getHeightAt) {
+    static void forcePathToMinPos(List<Point4f> path, Function<Point4f, Float> getHeightAt) {
         for (Point4f point : path) {
-            point.z = Math.min(point.z, getHeightAt.apply(point));
+            point.z = getHeightAt.apply(point);
         }
     }
 
@@ -60,18 +119,16 @@ public class RoadToolBackend {
     }
 
     static void writePaintDataToDimension(FloatTile in, Dimension out, Paint paint) {
-        if (in == null || out == null || paint == null)
-            return;
+        if (in == null || out == null || paint == null) return;
         int tileX = in.tilePosX << TILE_SIZE_BITS;
         int tileY = in.tilePosY << TILE_SIZE_BITS;
         for (int xx = 0; xx < TILE_SIZE; xx++)
             for (int yy = 0; yy < TILE_SIZE; yy++) {
-                if (in.getValueAt(xx, yy) == 1)
-                    paint.applyPixel(out, xx + tileX, yy + tileY);
+                if (in.getValueAt(xx, yy) == 1) paint.applyPixel(out, xx + tileX, yy + tileY);
             }
     }
 
-    static void forcePathOnlyDownhill(ArrayList<Point4f> path) {
+    static void forcePathOnlyDownhill(List<Point4f> path) {
         float previousZ = Float.MAX_VALUE;
         for (Point4f point : path) {
             point.z = Math.min(point.z, previousZ);
@@ -79,9 +136,15 @@ public class RoadToolBackend {
         }
     }
 
-    static void forcePathToHeight(ArrayList<Point4f> path, float height) {
+    static void forcePathToHeight(List<Point4f> path, float height) {
         for (Point4f point : path) {
             point.z = height;
+        }
+    }
+
+    static void forceRadiusAtLeast(List<Point4f> path, float minRadius) {
+        for (Point4f point : path) {
+            point.w = Math.max(point.w,minRadius);
         }
     }
 
@@ -125,9 +188,7 @@ public class RoadToolBackend {
             end.y = Math.max(end.y, p.y);
         }
 
-        return new Point2i[]{new Point2i(start.x, start.y)
-                , new Point2i(end.x, end.y)
-        };
+        return new Point2i[]{new Point2i(start.x, start.y), new Point2i(end.x, end.y)};
     }
 
     /**
@@ -141,8 +202,7 @@ public class RoadToolBackend {
         ArrayList<Point4f> subPath = new ArrayList<>();
         for (var pathPoint : path) {
             int radius = (int) Math.ceil(pathPoint.w * radiusMultiplier);
-            if (contains(pathPoint, new Point2i(start.x - radius, start.y - radius), new Point2i(end.x + radius, end.y + radius)))
-                subPath.add(pathPoint);
+            if (contains(pathPoint, new Point2i(start.x - radius, start.y - radius), new Point2i(end.x + radius, end.y + radius))) subPath.add(pathPoint);
         }
         return subPath;
     }
@@ -153,12 +213,10 @@ public class RoadToolBackend {
 
     protected static FloatTile applyToTile(FloatTile heightInputTile, FloatTile paintOutput, Point3i tilePos, CrossSectionShape filterCrossSection, ArrayList<Point4f> subPath,
                                            float transitionMultiplier) {
-        if (heightInputTile == null)
-            return null;
-        if (subPath.isEmpty())
-            return null;
+        if (heightInputTile == null) return null;
+        if (subPath.isEmpty()) return null;
 
-        var ext = RoadToolBackend.getMinMaxPos(subPath);
+        var ext = PathToolBackend.getMinMaxPos(subPath);
         QuadTree tree = new QuadTree(ext[0].x, ext[0].y, ext[1].x, ext[1].y);
         for (var p : subPath)
             tree.insert(new Point2i(p.x, p.y));
@@ -185,9 +243,11 @@ public class RoadToolBackend {
                 float outHeight;
                 float filterStrength;
                 if (closest == null || distance > closest.w * transitionMultiplier) {
+                    //outside transition zone
                     outHeight = originalHeight;
                     filterStrength = 0;
                 } else if (distance <= closest.w) {
+                    // use closest points attributes for this point
                     outHeight = closest.z;
                     filterStrength = 1;
                 } else {
@@ -202,8 +262,7 @@ public class RoadToolBackend {
     }
 
     protected static float filterStrengthFor(float distance, float maxDistance, float transitionMultiplier, CrossSectionShape filterCrossSection) {
-        if (distance < maxDistance)
-            return 1;
+        if (distance < maxDistance) return 1;
         float baseMaxDist = maxDistance * transitionMultiplier - maxDistance;
         float thisDist = distance - maxDistance;
         float distanceT = 1 - Math.min(1, Math.max(0, (float) (thisDist / baseMaxDist)));
