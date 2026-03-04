@@ -170,10 +170,12 @@ public class ContainerIO {
      */
     private static boolean containsSharedActions(ExportContainer data, Consumer<String> onImportError) {
         HashSet<UUID> macrosSet = new HashSet<>();
-        HashSet<UUID> seenActions = new HashSet<>();
+        HashMap<UUID, MacroJsonWrapper> seenActions = new HashMap<>();
         //collect all macro uids
         for (MacroJsonWrapper macroData : data.getMacros()) {
             Macro macro = toMacro(macroData);
+            if (macrosSet.contains(macro.getUid()))
+                onImportError.accept("Illegal: Macro " + macro.getName()+" is defined twice in the savefile with its UID " + macro.getUid());
             macrosSet.add(macro.getUid());
         }
         //test all child actions
@@ -181,11 +183,11 @@ public class ContainerIO {
             for (UUID child : macroData.getStepIds()) {
                 if (macrosSet.contains(child))
                     continue; //we dont care about nested macros
-                if (seenActions.contains(child)) {
-                    onImportError.accept("Illegal: action " + child + " is used by multiple macros.");
+                if (seenActions.containsKey(child)) {
+                    onImportError.accept("Illegal: action " + child + " is used by at least two macros:" + macroData.getMacroName() + " and " + seenActions.get(child).getMacroName());
                     return true;
                 }
-                seenActions.add(child);
+                seenActions.put(child, macroData);
             }
 
         }

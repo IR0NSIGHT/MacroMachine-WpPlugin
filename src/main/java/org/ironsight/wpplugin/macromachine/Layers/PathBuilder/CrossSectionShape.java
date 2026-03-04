@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.macromachine.Layers.RoadBuilder;
+package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
 /**
  * implementation of a 1d function f(t) to construct a filter strength for t=distance to something must be continuous, can NOT be discrete
