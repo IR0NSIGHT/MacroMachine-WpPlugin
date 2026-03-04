@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.macromachine.Layers.RoadBuilder;
+package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
 import org.ironsight.wpplugin.rivertool.API.RiverTool;
 import org.ironsight.wpplugin.rivertool.API.RiverToolAPI;
@@ -16,11 +16,10 @@ import java.util.List;
 import java.util.function.Function;
 
 import static java.lang.Math.*;
-import static org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation.RiverInformation.HANDLE_FACTOR;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
 
-public class RoadToolBackend {
+public class PathToolBackend {
 
     static class PathResult {
         public final List<Point4f> path;
@@ -217,7 +216,7 @@ public class RoadToolBackend {
         if (heightInputTile == null) return null;
         if (subPath.isEmpty()) return null;
 
-        var ext = RoadToolBackend.getMinMaxPos(subPath);
+        var ext = PathToolBackend.getMinMaxPos(subPath);
         QuadTree tree = new QuadTree(ext[0].x, ext[0].y, ext[1].x, ext[1].y);
         for (var p : subPath)
             tree.insert(new Point2i(p.x, p.y));

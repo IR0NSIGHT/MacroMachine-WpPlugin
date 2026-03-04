@@ -1,7 +1,6 @@
-package org.ironsight.wpplugin.macromachine.Layers.RoadBuilder;
+package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AnnotationSetter;
 import org.pepsoft.util.AttributeKey;
 import org.pepsoft.util.undo.BufferKey;
 import org.pepsoft.util.undo.Cloneable;
@@ -9,7 +8,6 @@ import org.pepsoft.util.undo.UndoListener;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.brushes.Brush;
-import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
 import org.pepsoft.worldpainter.painting.Paint;
@@ -31,20 +29,20 @@ import java.util.stream.Collectors;
 
 import static java.lang.Math.PI;
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
-import static org.ironsight.wpplugin.macromachine.Layers.RoadBuilder.RoadToolBackend.*;
+import static org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathToolBackend.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class RoadTool extends AbstractBrushOperation implements PaintOperation, UndoListener {
+public class PathTool extends AbstractBrushOperation implements PaintOperation, UndoListener {
     private static final String help = """
-            Roadtool will connect clicked positions into a path and smoothly blend them into existing terrain, based on the brush you are using.
-            Recommend to only use circular brushes.
+            PathTool will connect clicked positions into a path and smoothly blend them into existing terrain, based on the brush you are using.
                         
             Right click: Start new path at this position
             Left click: Advance current path to this position
                         
             """;
-    private final static AttributeKey<PathHandlesContainer> PATHHANDLES_KEY = new AttributeKey<>("ROADTOOL-PATHHANDLES", new PathHandlesContainer(List.of()));
+    // use flat list of floats to not create any serialization dependecies to custom classes. use like a float buffer
+    private final static AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES", new ArrayList<Float>());
     private final JPanel optionsPanel = new JPanel();
     ArrayList<Point4f> pathHandles = new ArrayList<>();
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
@@ -67,7 +65,7 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
     private CrossSectionShape brushProfile;
     private float transitionMultiplier = 2;
 
-    public RoadTool() {
+    public PathTool() {
         super("Road Tool", "Create smooth roads", "MacroMachine_RoadTool"); //ONE SHOT OP
         init();
     }
@@ -100,7 +98,7 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
             this.onlyDown = onlyDownCheckbox.isSelected();
             optionsPanel.add(onlyDownCheckbox);
         }
-       {
+        {
             minCheckbox = new JCheckBox("snap to terrain");
             minCheckbox.setToolTipText("if active, the path will stick to terrainheight. rightclick to reset height");
             minCheckbox.addActionListener(l -> {
@@ -129,7 +127,7 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
             optionsPanel.add(fixHeightCheckbox);
         }
         {
-            handleFactorSpinner = new JSpinner(new SpinnerNumberModel(0.5d,-1d,2d,0.1d));
+            handleFactorSpinner = new JSpinner(new SpinnerNumberModel(handleStrength, -1d, 2d, 0.1d));
             handleFactorSpinner.setToolTipText("Controls how curve the path is. 0 = straight lines, 1 = normal curves, 2 = exaggerated curves, -1 = cursive");
             handleFactorSpinner.addChangeListener(l -> {
                 handleStrength = ((Number) handleFactorSpinner.getValue()).floatValue();
@@ -274,7 +272,16 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
         Dimension dim = getDimension();
         if (dim == null) return;
-        pathHandles = new ArrayList<>(dim.getAttribute(PATHHANDLES_KEY).data);
+
+        {   // pull data from attributes
+            pathHandles = new ArrayList<>();
+            var rawData = dim.getAttribute(PATHHANDLES_KEY);
+            assert rawData.size() % 4 == 0;
+            for (int i = 0; i < rawData.size(); i += 4) {
+                pathHandles.add(new Point4f(rawData.get(i), rawData.get(i + 1), rawData.get(i + 2), rawData.get(i + 3)));
+            }
+        }
+
         getPaint().setBrush(getBrush());
 
         int pathRadius = getBrush().getEffectiveRadius();
@@ -292,8 +299,18 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
 
             if (dim.isEventsInhibited()) dim.setEventsInhibited(false);
         }
-        if (pathHandles != null)
-            dim.setAttribute(PATHHANDLES_KEY, new PathHandlesContainer(pathHandles), true);
+        { // Push path handles to dimension attribute as flat float array (list)
+            if (pathHandles != null) {
+                var flatData = new ArrayList<Float>();
+                for (var point : pathHandles) {
+                    flatData.add(point.x);
+                    flatData.add(point.y);
+                    flatData.add(point.z);
+                    flatData.add(point.w);
+                }
+                dim.setAttribute(PATHHANDLES_KEY, flatData, true);
+            }
+        }
 
         SwingUtilities.invokeLater(this::updateCheckboxTexts);
     }
@@ -337,20 +354,20 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
                     pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
 
             // mutate path with filters based on user input
-            if (snapToTerrain) RoadToolBackend.forcePathToMinPos(path, point4f -> dimension.getHeightAt(Math.round(point4f.x), Math.round(point4f.y)));
-            if (onlyDown) RoadToolBackend.forcePathOnlyDownhill(path);
-            if (fixHeightTo) RoadToolBackend.forcePathToHeight(path, getFixHeight());
-            forceRadiusAtLeast(path,.5f); //always at least 1 thick
+            if (snapToTerrain) PathToolBackend.forcePathToMinPos(path, point4f -> dimension.getHeightAt(Math.round(point4f.x), Math.round(point4f.y)));
+            if (onlyDown) PathToolBackend.forcePathOnlyDownhill(path);
+            if (fixHeightTo) PathToolBackend.forcePathToHeight(path, getFixHeight());
+            forceRadiusAtLeast(path, .5f); //always at least 1 thick
 
             //collect tiles where the newly added path section passed through
-            Set<Point3i> newPathTiles = RoadToolBackend.collectTilesAroundPath(newPathSection, transitionMultiplier);
+            Set<Point3i> newPathTiles = PathToolBackend.collectTilesAroundPath(newPathSection, transitionMultiplier);
 
             //cache all tiles that might be affected
             for (var tilePos : newPathTiles) {
                 var tile = dimension.getTile(tilePos.x, tilePos.y);
                 if (tile == null) continue;
                 if (cachedTiles.containsKey(tilePos)) continue;
-                var clone = RoadToolBackend.cloneHeightMapData(tile);
+                var clone = PathToolBackend.cloneHeightMapData(tile);
                 cachedTiles.put(tilePos, clone);
             }
 
@@ -371,11 +388,11 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
                         Point2i tileAreaEnd = new Point2i(TILE_SIZE + ((tilePos.x) << TILE_SIZE_BITS), TILE_SIZE + ((tilePos.y) << TILE_SIZE_BITS));
                         var paintOutput = new FloatTile(tilePos);
                         paintOutputMap.put(tilePos, paintOutput);
-                        return RoadToolBackend.applyToTile(cachedTiles.get(tilePos),
+                        return PathToolBackend.applyToTile(cachedTiles.get(tilePos),
                                 paintOutput,
                                 tilePos,
                                 brushProfile,
-                                RoadToolBackend.getSubPathFor(tileAreaStart, tileAreaEnd, path, transitionMultiplier),
+                                PathToolBackend.getSubPathFor(tileAreaStart, tileAreaEnd, path, transitionMultiplier),
                                 getTransitionMultiplier());
                     }).toList();
             outputTiles.forEach(floatTile -> {
@@ -383,10 +400,10 @@ public class RoadTool extends AbstractBrushOperation implements PaintOperation, 
                     return;
                 Tile wpTile = dimension.getTileForEditing(floatTile.tilePosX, floatTile.tilePosY);
                 if (wpTile == null) return;
-                RoadToolBackend.writeHeightMapDataToTile(floatTile, wpTile);
+                PathToolBackend.writeHeightMapDataToTile(floatTile, wpTile);
                 if (usePaint) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
-                    RoadToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());
+                    PathToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());
                 }
             });
 

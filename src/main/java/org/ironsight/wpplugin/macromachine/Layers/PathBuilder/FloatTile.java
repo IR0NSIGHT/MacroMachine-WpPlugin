@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.macromachine.Layers.RoadBuilder;
+package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
 
 import javax.vecmath.Point3i;
