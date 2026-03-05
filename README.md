@@ -12,6 +12,7 @@ Actions and Macros are saved into the plugins folder and available in all worldp
 ## Tutorials
 This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK3xeIs6RQjUkl&si=5lPTMk5lmbzcvMZM) contains tutorial videos that cover the most important steps.
 
+
 ### Download
 [Youtube Tutorial](https://youtu.be/FtfwxDTzWgk?si=2JaUsOgvU1c2SFsF)  
 1. go to the [release page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/latest)
