@@ -25,6 +25,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     public static final int ANNOTATION_RED = 14;
     public static final int ANNOTATION_BLACK = 15;
 
+    public static final int DO_NOTHING = -1;
 
     private static final Color[] COLORS =
             new Color[]{Color.WHITE, Color.WHITE, Color.ORANGE, Color.MAGENTA, new Color(107, 177, 255),   //LIGHT BLUE
@@ -52,7 +53,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public int getMinValue() {
-        return 0;
+        return DO_NOTHING;
     }
 
     @Override
@@ -72,7 +73,8 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public String valueToString(int value) {
-        if (value == 0) return "Absent";
+        if (value == DO_NOTHING) return "skip";
+        if (value == ANNOTATION_ABSENT) return "Absent";
         try {
             String name = Annotations.getColourName(value);
             return name;
@@ -99,7 +101,10 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public void paint(Graphics g, int value, Dimension dim) {
-        g.setColor(COLORS[value]);
+        if (value == DO_NOTHING)
+            g.setColor(Color.gray);
+        else
+            g.setColor(COLORS[value]);
         g.fillRect(0, 0, dim.width, dim.height);
     }
 
@@ -125,6 +130,8 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public void setValueAt(org.pepsoft.worldpainter.Dimension dim, int x, int y, int value) {
+        if (value == DO_NOTHING)
+            return;
         dim.setLayerValueAt(Annotations.INSTANCE, x, y, value);
     }
 
