@@ -4,7 +4,9 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -13,11 +15,19 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
     public WaterHeightAbsoluteIO(int min, int max) {
         this.min = min;
         this.max = max;
+        values = IntStream.range(min - 1, max +  1).toArray();
+        values[0] = IGNORE;
     }
 
+    private final int IGNORE = Integer.MAX_VALUE;
     @Override
     public boolean isIgnoreValue(int value) {
-        return value == Integer.MAX_VALUE;
+        return value == IGNORE;
+    }
+    private final int[] values;
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
     }
 
 
@@ -65,6 +75,8 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
 
     @Override
     public String valueToString(int value) {
+        if (value == IGNORE)
+            return "Skip";
         return Integer.toString(value);
     }
 

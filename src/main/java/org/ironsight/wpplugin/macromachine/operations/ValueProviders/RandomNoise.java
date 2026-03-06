@@ -5,6 +5,7 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
 
@@ -78,6 +79,12 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
     @Override
     public int getMinValue() {
         return BLOCK;
+    }
+
+    private final int[] values = new int[]{BLOCK, PASS};
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
     }
 
     @Override

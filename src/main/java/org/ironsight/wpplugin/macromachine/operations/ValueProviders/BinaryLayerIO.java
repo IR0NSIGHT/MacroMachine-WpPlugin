@@ -6,6 +6,7 @@ import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter, IPositionTileValueGetter, ILayerGetter {
@@ -27,9 +28,16 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         this.layerName = name;
         this.isCustom = isCustom;
     }
+
+    private final int IGNORE_VALUE = Integer.MIN_VALUE;
+    private final int[] values = new int[]{ IGNORE_VALUE, 0, 1 };
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
+    }
     @Override
     public boolean isIgnoreValue(int value) {
-        return value == -1;
+        return value == IGNORE_VALUE;
     }
 
     @Override
@@ -61,6 +69,8 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     }
 
     public String valueToString(int value) {
+        if (value == IGNORE_VALUE)
+            return "Skip";
         if (value == 0) {
             return "OFF";
         } else {

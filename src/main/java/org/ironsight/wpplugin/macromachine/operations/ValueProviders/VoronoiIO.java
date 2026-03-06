@@ -5,7 +5,9 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -25,6 +27,8 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO {
         generator.setSeed(seed);
         generator.setFrequency(frequency);
         valueRange = max - min + 1;
+
+        this.values = IntStream.range(min,max+ 1).toArray();
     }
 
     @Override
@@ -56,7 +60,11 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO {
     public int getMinValue() {
         return min;
     }
-
+    private final int[] values;
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
+    }
     @Override
     public void prepareForDimension(Dimension dim) throws IllegalAccessError {
 

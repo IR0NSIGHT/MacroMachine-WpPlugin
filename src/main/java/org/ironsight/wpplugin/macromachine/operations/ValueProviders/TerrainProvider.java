@@ -8,11 +8,15 @@ import org.pepsoft.worldpainter.colourschemes.HardcodedColourScheme;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter {
     private static final ColourScheme colorScheme = new HardcodedColourScheme();
 
     public TerrainProvider() {
+        values = IntStream.range(-1, Terrain.values().length).toArray();
+        values[0] = IGNORE;
     }
     @Override
     public String toString() {
@@ -65,9 +69,15 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     public int getMinValue() {
         return 0;
     }
+    private final int IGNORE = Integer.MAX_VALUE;
     @Override
     public boolean isIgnoreValue(int value) {
-        return value == -1;
+        return value == IGNORE;
+    }
+    private final int[] values;
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
     }
 
     @Override
@@ -87,6 +97,8 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public String valueToString(int value) {
+        if (value == IGNORE)
+            return "skip";
         return Terrain.values()[value].getName();
     }
 

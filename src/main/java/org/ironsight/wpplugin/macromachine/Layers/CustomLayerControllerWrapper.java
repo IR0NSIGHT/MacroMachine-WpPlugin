@@ -55,7 +55,6 @@ public class CustomLayerControllerWrapper implements LayerProvider {
             customLayerControllerField.setAccessible(true);
             return (CustomLayerController) customLayerControllerField.get(appInstance);
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }

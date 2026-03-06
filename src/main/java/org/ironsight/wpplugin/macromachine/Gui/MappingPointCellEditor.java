@@ -85,7 +85,7 @@ public class MappingPointCellEditor implements TableCellEditor {
         dropdown.removeAllItems();
 
         IMappingValue mappingValue = ((MappingPointValue) value).mappingValue;
-        ArrayList<MappingPointValue> arr = new ArrayList<>(mappingValue.getMaxValue() - mappingValue.getMinValue());
+        ArrayList<MappingPointValue> arr = new ArrayList<>(mappingValue.getMaxValue() - mappingValue.getMinValue() + 1);
         for (int i = mappingValue.getMinValue(); i <= mappingValue.getMaxValue(); i++) {
             MappingPointValue pointValue = ((MappingPointValue) value).withValue(i);
             arr.add(pointValue);

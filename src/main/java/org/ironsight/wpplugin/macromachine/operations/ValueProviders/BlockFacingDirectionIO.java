@@ -5,6 +5,8 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
@@ -42,6 +44,12 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
         assert angleDegrees >= 0;
         assert angleDegrees < 360;
         return (int) Math.floor(angleDegrees);
+    }
+
+    private final int[] values = IntStream.range(0,360).toArray();
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
@@ -23,12 +24,6 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     public ActionFilterIO() {
     }
-
-    @Override
-    public boolean isIgnoreValue(int value) {
-        return value == -1;
-    }
-
 
     public boolean isDebugMode() {
         return debugMode;
@@ -178,6 +173,17 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
         return 0;
     }
 
+    private final int IGNORE_VALUE = Integer.MIN_VALUE;
+    private final int[] values = new int[]{ IGNORE_VALUE, BLOCK_VALUE, PASS_VALUE };
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
+    }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE_VALUE;
+    }
+
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
         return instance;
@@ -190,6 +196,8 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public String valueToString(int value) {
+        if (value == IGNORE_VALUE)
+            return "Skip";
         return value == PASS_VALUE ? "PASS (1)" : "BLOCK (0)";
     }
 

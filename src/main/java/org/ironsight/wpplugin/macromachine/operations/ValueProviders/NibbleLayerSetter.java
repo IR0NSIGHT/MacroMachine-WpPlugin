@@ -7,6 +7,7 @@ import org.pepsoft.worldpainter.layers.renderers.NibbleLayerRenderer;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter, ILayerGetter {
@@ -72,10 +73,15 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         dim.setLayerValueAt(layer, x, y, value);
     }
 
-    private final int IGNORE = -1;
+    private final int IGNORE_VALUE = Integer.MIN_VALUE;
+    private final int[] values = new int[]{ IGNORE_VALUE, 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
+    }
     @Override
     public boolean isIgnoreValue(int value) {
-        return value == IGNORE;
+        return value == IGNORE_VALUE;
     }
 
     @Override
@@ -113,6 +119,8 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public String valueToString(int value) {
+        if (value == IGNORE_VALUE)
+            return "Skip";
         if (value == 0)
             return "Absent";
         return String.format("%.0f%%",1+99f*(value-1)/14f);

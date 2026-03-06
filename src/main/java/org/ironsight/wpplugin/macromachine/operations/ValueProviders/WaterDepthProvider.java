@@ -4,7 +4,9 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -13,6 +15,11 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     private final static Color SHORE_BLUE = new Color(159, 181, 255);
     private final static Color DEEP_BLUE = new Color(0, 46, 171);
 
+    public WaterDepthProvider() {
+        values = IntStream.range(getMinValue() - 1, getMaxValue()+1).toArray();
+        values[0] = IGNORE;
+    }
+
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (!dim.getExtent().contains(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
@@ -20,12 +27,16 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
         int value = Math.min(getMaxValue(), Math.max(0, getWaterDepthRaw(dim, x, y)));
         return value;
     }
-
+    private final int IGNORE = Integer.MAX_VALUE;
     @Override
     public boolean isIgnoreValue(int value) {
-        return value == Integer.MAX_VALUE;
+        return value == IGNORE;
     }
-
+    private final int[] values;
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
+    }
 
     private int getWaterDepthRaw(Dimension dim, int x, int y) {
         return Math.round(dim.getWaterLevelAt(x, y) - dim.getHeightAt(x, y));
@@ -86,6 +97,8 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
 
     @Override
     public String valueToString(int value) {
+        if (value == IGNORE)
+            return "Skip";
         if (value == 0)
             return "Land (0)";
         return String.format("Water (%d)", value);

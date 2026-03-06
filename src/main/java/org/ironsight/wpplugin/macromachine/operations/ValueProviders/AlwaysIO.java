@@ -4,9 +4,11 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.util.Arrays;
 
 public class AlwaysIO implements IPositionValueGetter {
     public static AlwaysIO instance = new AlwaysIO();
+    private final int[] values = new int[]{0};
 
     @Override
     public String getToolTipText() {
@@ -21,6 +23,11 @@ public class AlwaysIO implements IPositionValueGetter {
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         return 0;
+    }
+
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
     }
 
     @Override
@@ -77,10 +84,12 @@ public class AlwaysIO implements IPositionValueGetter {
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
 
     }
+
     @Override
     public String toString() {
         return getName();
     }
+
     @Override
     public ProviderType getProviderType() {
         return ProviderType.ALWAYS;

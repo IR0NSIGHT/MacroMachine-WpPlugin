@@ -5,8 +5,10 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter, ILayerGetter {
     Random random = new Random();
@@ -32,9 +34,15 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         this.isCustom = isCustom;
     }
 
+    private final int IGNORE_VALUE = -1;
+    private final int[] values = IntStream.range(IGNORE_VALUE, getMaxValue() + 1).toArray();
+    @Override
+    public int[] getAllValues() {
+        return Arrays.copyOf(values, values.length);
+    }
     @Override
     public boolean isIgnoreValue(int value) {
-        return value == -1;
+        return value == IGNORE_VALUE;
     }
 
 
