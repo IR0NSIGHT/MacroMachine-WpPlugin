@@ -27,6 +27,10 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         this.layerName = name;
         this.isCustom = isCustom;
     }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == -1;
+    }
 
     @Override
     public String getName() {

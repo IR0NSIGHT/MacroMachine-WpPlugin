@@ -74,7 +74,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public String valueToString(int value) {
         if (value == DO_NOTHING) return "skip";
-        if (value == ANNOTATION_ABSENT) return "Absent";
+        if (value == ANNOTATION_ABSENT) return "No annotation";
         try {
             String name = Annotations.getColourName(value);
             return name;
@@ -133,6 +133,11 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
         if (value == DO_NOTHING)
             return;
         dim.setLayerValueAt(Annotations.INSTANCE, x, y, value);
+    }
+
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == DO_NOTHING;
     }
 
     @Override

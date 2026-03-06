@@ -21,6 +21,12 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
         return value;
     }
 
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == Integer.MAX_VALUE;
+    }
+
+
     private int getWaterDepthRaw(Dimension dim, int x, int y) {
         return Math.round(dim.getWaterLevelAt(x, y) - dim.getHeightAt(x, y));
     }

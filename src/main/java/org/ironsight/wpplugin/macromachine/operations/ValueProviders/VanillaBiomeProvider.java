@@ -105,6 +105,12 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     }
 
     @Override
+    public boolean isIgnoreValue(int value) {
+        return value == -1;
+    }
+
+
+    @Override
     public void prepareForDimension(Dimension dim) {
 
     }

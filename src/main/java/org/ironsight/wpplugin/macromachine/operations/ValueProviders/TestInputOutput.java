@@ -10,6 +10,10 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     public void setValueAt(Dimension dim, int x, int y, int value) {
 
     }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == Integer.MAX_VALUE;
+    }
 
     @Override
     public boolean equals(Object obj) {

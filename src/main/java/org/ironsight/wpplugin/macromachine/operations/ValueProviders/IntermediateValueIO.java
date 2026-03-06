@@ -59,6 +59,11 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
     }
 
     @Override
+    public boolean isIgnoreValue(int value) {
+        return false;
+    }
+
+    @Override
     public void prepareForDimension(Dimension dim) {
 
     }

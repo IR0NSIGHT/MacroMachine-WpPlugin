@@ -14,6 +14,13 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
         this.min = min;
         this.max = max;
     }
+
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == Integer.MAX_VALUE;
+    }
+
+
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (!dim.getExtent().contains(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))

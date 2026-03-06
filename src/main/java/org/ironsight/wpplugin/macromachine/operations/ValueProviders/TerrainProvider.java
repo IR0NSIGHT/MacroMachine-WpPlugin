@@ -65,6 +65,10 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     public int getMinValue() {
         return 0;
     }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == -1;
+    }
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {

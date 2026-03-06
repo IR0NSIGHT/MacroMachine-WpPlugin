@@ -73,6 +73,11 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     }
 
     @Override
+    public boolean isIgnoreValue(int value) {
+        return value == Integer.MAX_VALUE;
+    }
+
+    @Override
     public void prepareForDimension(Dimension dim) {
 
     }

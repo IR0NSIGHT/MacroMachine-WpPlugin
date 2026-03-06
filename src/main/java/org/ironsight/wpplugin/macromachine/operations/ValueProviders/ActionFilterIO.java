@@ -24,6 +24,12 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     public ActionFilterIO() {
     }
 
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == -1;
+    }
+
+
     public boolean isDebugMode() {
         return debugMode;
     }

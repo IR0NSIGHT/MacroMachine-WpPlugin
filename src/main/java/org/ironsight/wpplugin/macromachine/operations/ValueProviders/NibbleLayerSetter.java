@@ -72,6 +72,12 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         dim.setLayerValueAt(layer, x, y, value);
     }
 
+    private final int IGNORE = -1;
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE;
+    }
+
     @Override
     public void prepareForDimension(Dimension dim) {
         layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});

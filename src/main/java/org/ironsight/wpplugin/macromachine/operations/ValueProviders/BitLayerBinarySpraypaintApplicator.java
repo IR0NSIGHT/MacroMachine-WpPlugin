@@ -33,6 +33,12 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     }
 
     @Override
+    public boolean isIgnoreValue(int value) {
+        return value == -1;
+    }
+
+
+    @Override
     public boolean isVirtual() {
         return false;
     }
