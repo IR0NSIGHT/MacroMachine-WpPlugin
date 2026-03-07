@@ -7,17 +7,23 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import java.awt.*;
 
 public interface IMappingValue extends IDisplayUnit {
-    static int sanitizeValue(int value, IMappingValue mappingValue) {
-        return Math.max(Math.min(value, mappingValue.getMaxValue()), mappingValue.getMinValue());
+    static int sanitizeValue(int value, IMappingValue getterSetter) { // FIXME only call thi
+        return Math.max(Math.min(value, getterSetter.getMaxValue()), getterSetter.getMinValue());
+    }
+
+    static boolean inNumericRange(int value, IMappingValue getterSetter) {
+        return value <= getterSetter.getMaxValue() && value >= getterSetter.getMinValue();
     }
 
     static MappingPoint[] getAllPointsForDiscreteIO(IPositionValueSetter mappingValue, int outputValue) {
-        MappingPoint[] arr = new MappingPoint[range(mappingValue)];
+        MappingPoint[] arr = new MappingPoint[mappingValue.getAllOutputValues().length];
         for (int i = 0; i < arr.length; i++) {
             arr[i] = new MappingPoint(i,outputValue);
         }
         return arr;
     }
+
+    int[] getAllPossibleValues();
 
     static int range(IMappingValue mappingValue) {
         return mappingValue.getMaxValue() - mappingValue.getMinValue() + 1;
@@ -34,8 +40,6 @@ public interface IMappingValue extends IDisplayUnit {
     int getMaxValue();
 
     int getMinValue();
-
-    int[] getAllValues();
 
     void prepareForDimension(org.pepsoft.worldpainter.Dimension dim) throws IllegalAccessError;
 

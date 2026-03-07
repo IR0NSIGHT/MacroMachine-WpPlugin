@@ -17,8 +17,9 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     public TerrainHeightIO(int minHeight, int maxHeight) {
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;
-        values = IntStream.range(minHeight - 1, maxHeight + 1).toArray();
-        values[0] = IGNORE_VALUE;
+        outputValues = IntStream.range(minHeight - 1, maxHeight + 1).toArray();
+        outputValues[0] = IGNORE_VALUE;
+        inputValues = IntStream.range(minHeight, maxHeight + 1).toArray();
     }
 
     @Override
@@ -55,6 +56,11 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return false;
     }
@@ -78,14 +84,21 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     }
 
     private final int IGNORE_VALUE = Integer.MIN_VALUE;
-    private final int[] values;
+    private final int[] inputValues;
+    private final int[] outputValues;
+
     @Override
-    public int[] getAllValues() {
-        return Arrays.copyOf(values, values.length);
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues, inputValues.length);
     }
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_VALUE;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
     }
 
     @Override
@@ -129,6 +142,12 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value)) {
+            g.setColor(Color.gray);
+            g.fillRect(0,0,dim.width,dim.height);
+            return;
+        }
+
         float percent = (value - getMinValue() * 1f) / (getMaxValue() - getMinValue());
 
         g.setColor(new Color(131, 154, 255));

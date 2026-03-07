@@ -27,7 +27,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
     private TileContainer distanceMap;
     private final int[] values;
     @Override
-    public int[] getAllValues() {
+    public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
     protected DistanceToLayerEdgeGetter(boolean searchInwards, String name, String id, int maxDistance) {
@@ -147,6 +147,11 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
         if (o == null || getClass() != o.getClass()) return false;
         DistanceToLayerEdgeGetter that = (DistanceToLayerEdgeGetter) o;
         return Arrays.equals(getSaveData(), that.getSaveData()) ;
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
     }
 
     @Override

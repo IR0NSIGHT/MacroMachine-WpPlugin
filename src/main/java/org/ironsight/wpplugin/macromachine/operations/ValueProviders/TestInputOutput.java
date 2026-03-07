@@ -21,9 +21,15 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     public boolean isIgnoreValue(int value) {
         return value == Integer.MAX_VALUE;
     }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return new int[0];
+    }
+
     private final int[] values;
     @Override
-    public int[] getAllValues() {
+    public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
     @Override
@@ -42,6 +48,11 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     @Override
     public int hashCode() {
         return getProviderType().hashCode();
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return new int[0];
     }
 
     @Override

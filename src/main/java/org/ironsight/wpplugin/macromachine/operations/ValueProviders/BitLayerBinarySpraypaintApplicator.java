@@ -27,7 +27,10 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         this.layerName = layer.getName();
         this.isCustom = isCustom;
     }
-
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
+    }
     BitLayerBinarySpraypaintApplicator(String layerId, String layerName, boolean isCustom) {
         this.layerId = layerId;
         this.layerName = layerName;
@@ -35,10 +38,10 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     }
 
     private final int IGNORE_VALUE = -1;
-    private final int[] values = IntStream.range(IGNORE_VALUE, getMaxValue() + 1).toArray();
+    private final int[] outputValues = IntStream.range(IGNORE_VALUE, getMaxValue() + 1).toArray();
     @Override
-    public int[] getAllValues() {
-        return Arrays.copyOf(values, values.length);
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
     }
     @Override
     public boolean isIgnoreValue(int value) {
@@ -100,6 +103,8 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public String valueToString(int value) {
+        if (isIgnoreValue(value))
+            return "skip";
         return value + "%";
     }
 

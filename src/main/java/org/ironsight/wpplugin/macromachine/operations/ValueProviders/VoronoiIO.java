@@ -47,6 +47,11 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO {
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return true;
     }
@@ -62,7 +67,7 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO {
     }
     private final int[] values;
     @Override
-    public int[] getAllValues() {
+    public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
     @Override

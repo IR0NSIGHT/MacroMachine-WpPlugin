@@ -40,6 +40,11 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return false;
     }
@@ -109,14 +114,21 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     }
 
     private final int IGNORE_VALUE = -1;
-    private final int[] values = IntStream.range(-1, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
+    private final int[] inputValues = IntStream.range(0, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
+    private final int[] outputValues = IntStream.range(-1, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
+
     @Override
-    public int[] getAllValues() {
-        return Arrays.copyOf(values, values.length);
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues, inputValues.length);
     }
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_VALUE;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues,outputValues.length);
     }
 
     @Override

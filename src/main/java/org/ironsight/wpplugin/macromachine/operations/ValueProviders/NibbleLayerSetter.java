@@ -6,7 +6,6 @@ import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.renderers.NibbleLayerRenderer;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -56,14 +55,18 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         if (layer.getRenderer() == null || !(layer.getRenderer() instanceof NibbleLayerRenderer))
             return;
         NibbleLayerRenderer renderer = (NibbleLayerRenderer) layer.getRenderer();
-        for (int value = getMinValue(); value <= getMaxValue(); value++) {
+        for (int value : getAllInputValues()) {
+            if (isIgnoreValue(value))
+                continue;
             colorHex[value] = renderer.getPixelColour(0,0,0,value);
         }
         setColorsFromData(colorHex);
     }
 
     private void setColorsFromData(int[] colorHex) {
-        for (int value = getMinValue(); value <= getMaxValue(); value++) {
+        for (int value : getAllInputValues()) {
+            if (isIgnoreValue(value))
+                continue;
             COLORS[value] = new Color(colorHex[value]);
         }
     }
@@ -74,14 +77,21 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     }
 
     private final int IGNORE_VALUE = Integer.MIN_VALUE;
-    private final int[] values = new int[]{ IGNORE_VALUE, 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+    private final int[] outputValues = new int[]{ IGNORE_VALUE, 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+    private final int[] inputValues = new int[]{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+
     @Override
-    public int[] getAllValues() {
-        return Arrays.copyOf(values, values.length);
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues, inputValues.length);
     }
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_VALUE;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
     }
 
     @Override
@@ -155,7 +165,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public String getDescription() {
-        return "layer " + layerName + " with values 0 to 15, where 0 is absent, 15 is full";
+        return "layer " + layerName + " with outputValues 0 to 15, where 0 is absent, 15 is full";
     }
 
     @Override
@@ -174,6 +184,11 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         if (o == null || getClass() != o.getClass()) return false;
         NibbleLayerSetter that = (NibbleLayerSetter) o;
         return Objects.equals(layerId, that.layerId);
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
     }
 
     @Override

@@ -1,10 +1,13 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AnnotationSetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.PerlinNoiseIO;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import java.awt.*;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
@@ -29,6 +32,18 @@ public class ActionDesigner extends LayerMappingPanel {
         model.rebuildModelFromAction(mapping);
         topBar.setMapping(mapping);
         this.repaint();
+    }
+
+
+    public static void main(String[] args) {
+        JFrame frame = new JFrame();
+        LayerMappingPanel lmp = new ActionDesigner(System.out::println);
+        MappingAction ma = new MappingAction(new PerlinNoiseIO(10,10,12345,3),
+                new AnnotationSetter(), new MappingPoint[0], ActionType.SET, "","", UUID.randomUUID());
+        lmp.setMapping(ma);
+        frame.add(lmp);
+        frame.pack();
+        frame.setVisible(true);
     }
 
     @Override
