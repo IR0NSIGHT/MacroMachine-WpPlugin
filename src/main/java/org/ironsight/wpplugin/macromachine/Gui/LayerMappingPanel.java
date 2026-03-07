@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.function.Consumer;
 
 public abstract class LayerMappingPanel extends JPanel {
+
     protected MappingAction mapping;
     private boolean allowEvents = true;
     private Consumer<MappingAction> onUpdate = f -> {

@@ -75,7 +75,7 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     }
 
     @Override
-    public int[] getAllValues() {
+    public int[] getAllOutputValues() {
         return Arrays.copyOf(values, values.length);
     }
 
@@ -87,6 +87,11 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     @Override
     public void prepareForDimension(Dimension dim) {
 
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
     }
 
     @Override

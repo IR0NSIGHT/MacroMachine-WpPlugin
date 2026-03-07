@@ -33,8 +33,16 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
                     Color.GREEN, Color.RED, Color.BLACK};
     private static AnnotationSetter instance;
     private final int IGNORE_OUTPUT = -1;
-    private final int[] VALUES = new int[]{
+    private final int[] OUTPUT_VALUES = new int[]{
             IGNORE_OUTPUT,
+            ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE, ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK, ANNOTATION_LIGHT_GREY,
+            ANNOTATION_CYAN, ANNOTATION_PURPLE, ANNOTATION_BLUE,
+            ANNOTATION_BROWN,
+            ANNOTATION_GREEN,
+            ANNOTATION_RED,
+            ANNOTATION_BLACK
+    };
+    private final int[] INPUT_VALUES = new int[]{
             ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE, ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK, ANNOTATION_LIGHT_GREY,
             ANNOTATION_CYAN, ANNOTATION_PURPLE, ANNOTATION_BLUE,
             ANNOTATION_BROWN,
@@ -70,8 +78,8 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
 
     @Override
-    public int[] getAllValues() {
-        return Arrays.copyOf(VALUES, VALUES.length);
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(INPUT_VALUES, INPUT_VALUES.length);
     }
 
     @Override
@@ -114,12 +122,22 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return false;
     }
 
     @Override
     public void paint(Graphics g, int value, Dimension dim) {
+        if (isIgnoreValue(value)) {
+            g.setColor(Color.gray);
+            g.fillRect(0,0,dim.width,dim.height);
+            return;
+        }
         g.setColor(COLORS[value]);
         g.fillRect(0, 0, dim.width, dim.height);
     }
@@ -152,6 +170,11 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_OUTPUT;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(OUTPUT_VALUES, OUTPUT_VALUES.length);
     }
 
     @Override

@@ -1,19 +1,13 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.pepsoft.worldpainter.Constants;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
-import org.pepsoft.worldpainter.selection.SelectionBlock;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Iterator;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ActionFilterIO implements IPositionValueSetter, IPositionValueGetter {
     public static final int PASS_VALUE = 1;
@@ -41,6 +35,11 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     @Override
     public int hashCode() {
         return getProviderType().hashCode();
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
     }
 
     @Override
@@ -118,7 +117,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
             if (filterAction.getInput().getProviderType().equals(ProviderType.HEIGHT)) {
                 TerrainHeightIO io = (TerrainHeightIO) filterAction.getInput();
                 int lowestPassingHeight = io.getMaxValue();
-                for (int h = io.getMinValue(); h <= io.getMaxValue(); h++) {
+                for (int h : io.getAllInputValues()) {
                     if (filterAction.map(h) == PASS_VALUE) {
                         lowestPassingHeight = h;
                         break;
@@ -174,14 +173,18 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     }
 
     private final int IGNORE_VALUE = Integer.MIN_VALUE;
-    private final int[] values = new int[]{ IGNORE_VALUE, BLOCK_VALUE, PASS_VALUE };
     @Override
-    public int[] getAllValues() {
-        return Arrays.copyOf(values, values.length);
+    public int[] getAllInputValues() {
+        return new int[]{ BLOCK_VALUE, PASS_VALUE };
     }
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_VALUE;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return new int[]{ IGNORE_VALUE, BLOCK_VALUE, PASS_VALUE };
     }
 
     @Override

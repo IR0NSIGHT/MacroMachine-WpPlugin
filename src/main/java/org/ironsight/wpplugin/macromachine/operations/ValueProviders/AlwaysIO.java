@@ -16,6 +16,11 @@ public class AlwaysIO implements IPositionValueGetter {
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return true;
     }
@@ -26,7 +31,7 @@ public class AlwaysIO implements IPositionValueGetter {
     }
 
     @Override
-    public int[] getAllValues() {
+    public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
 

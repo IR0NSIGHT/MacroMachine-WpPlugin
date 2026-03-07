@@ -67,6 +67,11 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return true;
     }
@@ -83,7 +88,7 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
 
     private final int[] values = new int[]{BLOCK, PASS};
     @Override
-    public int[] getAllValues() {
+    public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
 

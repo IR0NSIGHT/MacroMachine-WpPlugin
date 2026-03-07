@@ -30,11 +30,17 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     }
 
     private final int IGNORE_VALUE = Integer.MIN_VALUE;
-    private final int[] values = new int[]{ IGNORE_VALUE, 0, 1 };
+    private final int[] outputValues = new int[]{ IGNORE_VALUE, 0, 1 };
     @Override
-    public int[] getAllValues() {
-        return Arrays.copyOf(values, values.length);
+    public int[] getAllInputValues() {
+        return new int[]{ 0, 1};
     }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues,outputValues.length);
+    }
+
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_VALUE;
@@ -120,6 +126,11 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     @Override
     public int hashCode() {
         return Objects.hash(layerId);
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
     }
 
     @Override

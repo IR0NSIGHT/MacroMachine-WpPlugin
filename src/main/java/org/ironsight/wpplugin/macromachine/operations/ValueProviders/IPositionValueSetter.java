@@ -8,4 +8,6 @@ public interface IPositionValueSetter extends IDisplayUnit, Serializable, IMappi
     void setValueAt(Dimension dim, int x, int y, int value);
 
     boolean isIgnoreValue(int value);
+
+    int[] getAllOutputValues();
 }

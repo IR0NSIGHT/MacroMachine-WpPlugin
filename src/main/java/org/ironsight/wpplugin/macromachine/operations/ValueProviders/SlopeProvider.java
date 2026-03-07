@@ -27,6 +27,11 @@ public class SlopeProvider implements IPositionValueGetter {
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return false;
     }
@@ -62,7 +67,7 @@ public class SlopeProvider implements IPositionValueGetter {
     }
     private final int[] values = IntStream.range(0,90+1).toArray();
     @Override
-    public int[] getAllValues() {
+    public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
     @Override

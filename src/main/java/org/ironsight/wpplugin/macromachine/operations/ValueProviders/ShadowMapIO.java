@@ -33,6 +33,11 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return false;
     }
@@ -48,7 +53,7 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     }
 
     @Override
-    public int[] getAllValues() {
+    public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
 

@@ -48,7 +48,7 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
 
     private final int[] values = IntStream.range(0,360).toArray();
     @Override
-    public int[] getAllValues() {
+    public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
 
@@ -64,6 +64,11 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
     @Override
     public int hashCode() {
         return getProviderType().hashCode();
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
     }
 
     @Override
