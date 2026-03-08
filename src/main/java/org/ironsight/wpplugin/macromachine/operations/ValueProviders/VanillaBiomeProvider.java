@@ -6,6 +6,8 @@ import org.pepsoft.worldpainter.biomeschemes.Minecraft1_21Biomes;
 import org.pepsoft.worldpainter.layers.Biome;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -35,6 +37,11 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     @Override
     public int hashCode() {
         return getProviderType().hashCode();
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
     }
 
     @Override
@@ -76,6 +83,8 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     @Override
     public String valueToString(int value) {
+        if (value == IGNORE_VALUE)
+            return "Skip";
         if (value < 0 || value >= biomes.length) return "INVALID (" + value + ")";
         if (value == 255)
             return "Auto Biome";
@@ -102,6 +111,24 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
         dim.setLayerValueAt(Biome.INSTANCE, x, y, value);
+    }
+
+    private final int IGNORE_VALUE = -1;
+    private final int[] inputValues = IntStream.range(0, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
+    private final int[] outputValues = IntStream.range(-1, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
+
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues, inputValues.length);
+    }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE_VALUE;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues,outputValues.length);
     }
 
     @Override

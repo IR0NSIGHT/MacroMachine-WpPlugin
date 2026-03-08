@@ -2,7 +2,7 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
 
-import java.util.Comparator;
+import java.util.Arrays;
 import java.util.Objects;
 
 public class MappingPointValue implements Comparable<MappingPointValue> {
@@ -10,9 +10,7 @@ public class MappingPointValue implements Comparable<MappingPointValue> {
     int numericValue;
 
 
-    public MappingPointValue(int numericValue, IMappingValue mappingValue) {
-        assert (IMappingValue.sanitizeValue(numericValue,mappingValue) == numericValue) : "illegal value for this " +
-                "mapping";
+    public MappingPointValue(int numericValue, IMappingValue mappingValue) { //TODO make constructors forgetter OR setter to diffferentiate context?
         this.numericValue = numericValue;
         this.mappingValue = mappingValue;
     }

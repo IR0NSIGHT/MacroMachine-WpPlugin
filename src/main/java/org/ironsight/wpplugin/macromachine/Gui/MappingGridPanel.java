@@ -146,52 +146,63 @@ public class MappingGridPanel extends LayerMappingPanel implements MouseListener
         g.drawOval(pixelPos.x - radius / 2, pixelPos.y - radius / 2, radius, radius);
 
         //dot on mapped value
-        int mapped = mapping.map(gridPos.x);
-        g.setColor(Color.RED);
-        radius = 8;
-        pixelPos = gridToPixel(gridPos.x, mapped);
-        ((Graphics2D) g).setStroke(new BasicStroke(2));
+        int cursorPosOutputValue = mapping.map(gridPos.x);
+        if (!mapping.getOutput().isIgnoreValue(cursorPosOutputValue)) {
+            g.setColor(Color.RED);
+            radius = 8;
+            pixelPos = gridToPixel(gridPos.x, cursorPosOutputValue);
+            ((Graphics2D) g).setStroke(new BasicStroke(2));
 
-        g.drawRect(pixelPos.x - radius / 2, pixelPos.y - radius / 2, radius, radius);
+            g.drawRect(pixelPos.x - radius / 2, pixelPos.y - radius / 2, radius, radius);
+        }
         resetSelection();
     }
 
+    /**
+     * paint mapping input/outputs as a curve on a 2d grid (only paints curve, not grid)
+     * @param g
+     */
     protected void paintCurveLines(Graphics2D g) {
         g.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
         g.setColor(Color.red);
         if (mapping.output.isDiscrete()) {
             if (mapping.getMappingPoints().length > 0) {
                 MappingPoint p = mapping.getMappingPoints()[0];
-                paintLineInGrid(mapping.input.getMinValue(), p.output, p.input, p.output, g);
+                if (!mapping.getOutput().isIgnoreValue(p.output))
+                    paintLineInGrid(mapping.input.getMinValue(), p.output, p.input, p.output, g);
 
                 p = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-                paintLineInGrid(p.input, p.output, mapping.input.getMaxValue(), p.output, g);
+                if (!mapping.getOutput().isIgnoreValue(p.output))
+                    paintLineInGrid(p.input, p.output, mapping.input.getMaxValue(), p.output, g);
             }
             for (int i = 1; i < mapping.getMappingPoints().length; i++) {
                 MappingPoint a2 = mapping.getMappingPoints()[i];
                 MappingPoint a1 = mapping.getMappingPoints()[i - 1];
-                paintLineInGrid(a1.input + 0.5f, a2.output, a2.input, a2.output, g);   //left right
-                //     paintLineInGrid(a1.input + 0.5f, a1.output, a1.input + 0.5f, a2.output, g);   //up down
+                if (!mapping.getOutput().isIgnoreValue(a1.output) && !mapping.getOutput().isIgnoreValue(a2.output))
+                    paintLineInGrid(a1.input + 0.5f, a2.output, a2.input, a2.output, g);   //left right
             }
         } else {
             {
                 if (mapping.getMappingPoints().length != 0) {
                     MappingPoint a = mapping.getMappingPoints()[0];
-                    paintLineInGrid(mapping.input.getMinValue(), a.output, a.input, a.output, g);
+                    if (!mapping.getOutput().isIgnoreValue(a.output))
+                        paintLineInGrid(mapping.input.getMinValue(), a.output, a.input, a.output, g);
 
                     MappingPoint b = mapping.getMappingPoints()[mapping.getMappingPoints().length - 1];
-                    paintLineInGrid(b.input, b.output, mapping.input.getMaxValue(), b.output, g);
+                    if (!mapping.getOutput().isIgnoreValue(b.output))
+                        paintLineInGrid(b.input, b.output, mapping.input.getMaxValue(), b.output, g);
                 }
             }
             for (int i = 0; i < mapping.getMappingPoints().length - 1; i++) {
                 MappingPoint a = mapping.getMappingPoints()[i];
                 MappingPoint b = mapping.getMappingPoints()[i + 1];
 
-                paintLineInGrid(a.input, a.output, b.input, b.output, g);
+                if (!mapping.getOutput().isIgnoreValue(a.output) && !mapping.getOutput().isIgnoreValue(b.output))
+                    paintLineInGrid(a.input, a.output, b.input, b.output, g);
             }
         }
         for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
-            if (isInputSelected(i)) {
+            if (isInputSelected(i) && !mapping.getOutput().isIgnoreValue(mapping.map(i))) {
                 Point gridPos = gridToPixel(i, mapping.map(i));
                 int size = 4;
                 g.drawRect(gridPos.x - size / 2, gridPos.y - size / 2, size, size);
@@ -304,7 +315,7 @@ public class MappingGridPanel extends LayerMappingPanel implements MouseListener
 
         paintMappingPoints(g2d);
         paintCurveLines((Graphics2D) g);
-        paintCursor(g);
+        //paintCursor(g);
         mouseMoved = false;
     }
 
@@ -313,6 +324,8 @@ public class MappingGridPanel extends LayerMappingPanel implements MouseListener
         g2d.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{4, 4}, 0));
         g2d.setColor(Color.red);
         for (MappingPoint p : mapping.getMappingPoints()) {
+            if (mapping.getOutput().isIgnoreValue(p.output))
+                continue;
             int radius = 10;  // Circle radius
             Point start = gridToPixel(p.input, p.output);
 
@@ -344,7 +357,7 @@ public class MappingGridPanel extends LayerMappingPanel implements MouseListener
             points.add(p);
         }
         if (points.size() == 0) {
-            assert false : "this shouldnt happen, not allowed";
+        //    assert false : "this shouldnt happen, not allowed";
             return false;
         }
         final Function<MappingPoint, Double> distance = p -> {
@@ -492,6 +505,8 @@ public class MappingGridPanel extends LayerMappingPanel implements MouseListener
 
         if (drag) {
             MappingPoint draggedPoint = getLastSelectedPoint();
+            if (draggedPoint == null)
+                return;
             if (gridX == draggedPoint.input && gridY == draggedPoint.output)
                 return; // nothing to do.
 

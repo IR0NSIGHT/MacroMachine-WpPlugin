@@ -9,6 +9,8 @@ import java.util.Arrays;
 
 public class StonePaletteApplicator implements IPositionValueSetter {
     private final Terrain[] materials;
+    private final int IGNORE_VALUE = Integer.MIN_VALUE;
+    private final int[] values = new int[]{IGNORE_VALUE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}; // index in stone palette
     Color[] colors = new Color[]{
             // Terrain.GRASS (Grass Block)
             new Color(85, 107, 47),      // Dark Olive Green
@@ -73,8 +75,23 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     }
 
     @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(values, values.length);
+    }
+
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE_VALUE;
+    }
+
+    @Override
     public void prepareForDimension(Dimension dim) {
 
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
     }
 
     @Override
@@ -111,6 +128,8 @@ public class StonePaletteApplicator implements IPositionValueSetter {
 
     @Override
     public String valueToString(int value) {
+        if (value == IGNORE_VALUE)
+            return "Skip";
         if (value < 0 || value > materials.length) return "INVALID";
         return materials[value].getName();
     }

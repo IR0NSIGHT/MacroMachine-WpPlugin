@@ -7,4 +7,7 @@ import java.io.Serializable;
 public interface IPositionValueSetter extends IDisplayUnit, Serializable, IMappingValue {
     void setValueAt(Dimension dim, int x, int y, int value);
 
+    boolean isIgnoreValue(int value);
+
+    int[] getAllOutputValues();
 }

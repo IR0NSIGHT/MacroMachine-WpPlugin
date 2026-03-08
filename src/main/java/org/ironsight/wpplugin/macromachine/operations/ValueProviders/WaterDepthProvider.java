@@ -4,7 +4,8 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
-import java.util.Collection;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -12,6 +13,15 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     private final static Color LAND_GREEN = new Color(43, 157, 0);
     private final static Color SHORE_BLUE = new Color(159, 181, 255);
     private final static Color DEEP_BLUE = new Color(0, 46, 171);
+    private final int IGNORE = Integer.MAX_VALUE;
+    private final int[] outputValues;
+    private final int[] inputValues;
+
+    public WaterDepthProvider() {
+        outputValues = IntStream.range(getMinValue() - 1, getMaxValue() + 1).toArray();
+        outputValues[0] = IGNORE;
+        inputValues = IntStream.range(getMinValue(), getMaxValue() + 1).toArray();
+    }
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
@@ -19,6 +29,21 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
             return getMinValue();
         int value = Math.min(getMaxValue(), Math.max(0, getWaterDepthRaw(dim, x, y)));
         return value;
+    }
+
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
+    }
+
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues, inputValues.length);
     }
 
     private int getWaterDepthRaw(Dimension dim, int x, int y) {
@@ -80,6 +105,8 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
 
     @Override
     public String valueToString(int value) {
+        if (value == IGNORE)
+            return "Skip";
         if (value == 0)
             return "Land (0)";
         return String.format("Water (%d)", value);
@@ -92,6 +119,11 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value)) {
+            g.setColor(Color.gray);
+            g.fillRect(0, 0, dim.width, dim.height);
+            return;
+        }
         g.setColor(LAND_GREEN);
         g.fillRect(0, 0, dim.width, dim.height);
 
@@ -108,6 +140,11 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     @Override
     public ProviderType getProviderType() {
         return ProviderType.WATER_DEPTH;
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
     }
 
     @Override

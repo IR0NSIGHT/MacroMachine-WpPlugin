@@ -5,8 +5,10 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
+import java.util.stream.IntStream;
 
 public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter, ILayerGetter {
     Random random = new Random();
@@ -25,12 +27,27 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         this.layerName = layer.getName();
         this.isCustom = isCustom;
     }
-
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
+    }
     BitLayerBinarySpraypaintApplicator(String layerId, String layerName, boolean isCustom) {
         this.layerId = layerId;
         this.layerName = layerName;
         this.isCustom = isCustom;
     }
+
+    private final int IGNORE_VALUE = -1;
+    private final int[] outputValues = IntStream.range(IGNORE_VALUE, getMaxValue() + 1).toArray();
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
+    }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE_VALUE;
+    }
+
 
     @Override
     public boolean isVirtual() {
@@ -86,6 +103,8 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public String valueToString(int value) {
+        if (isIgnoreValue(value))
+            return "skip";
         return value + "%";
     }
 

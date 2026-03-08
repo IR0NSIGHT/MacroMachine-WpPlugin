@@ -40,6 +40,8 @@ public enum ProviderType {
         Object[] dataSafe = ProviderType.fromTypeDefault(type).getSaveData();
         for (int i = 0; i < dataSafe.length; i++) {
             try {
+                if (i >= data.length)
+                    continue;
                 Object dataObj = data[i];
                 Object dataDef = dataSafe[i];
                 if (dataObj.getClass().equals(dataDef.getClass()))

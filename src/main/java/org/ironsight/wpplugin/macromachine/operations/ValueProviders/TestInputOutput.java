@@ -4,13 +4,34 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class TestInputOutput implements IPositionValueSetter, IPositionValueGetter {
+    public TestInputOutput() {
+        values = IntStream.range(getMinValue() - 1, getMaxValue()+1).toArray();
+        values[0] = IGNORE;
+    }
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
 
     }
+    private final int IGNORE = Integer.MAX_VALUE;
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == Integer.MAX_VALUE;
+    }
 
+    @Override
+    public int[] getAllOutputValues() {
+        return new int[0];
+    }
+
+    private final int[] values;
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(values, values.length);
+    }
     @Override
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());
@@ -27,6 +48,11 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     @Override
     public int hashCode() {
         return getProviderType().hashCode();
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return new int[0];
     }
 
     @Override

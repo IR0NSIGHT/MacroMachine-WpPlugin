@@ -13,6 +13,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
@@ -24,12 +25,17 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
     protected String layerName;
     protected Layer layer = null;
     private TileContainer distanceMap;
-
+    private final int[] values;
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(values, values.length);
+    }
     protected DistanceToLayerEdgeGetter(boolean searchInwards, String name, String id, int maxDistance) {
         this.searchInwards = searchInwards;
         this.layerId = id;
         this.layerName = name;
         this.maxDistance = maxDistance;
+        this.values = IntStream.range(0, maxDistance + 1).toArray();
     }
 
     public DistanceToLayerEdgeGetter(boolean searchInwards, Layer layer, int maxDistance) {
@@ -38,6 +44,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
         this.layerName = layer.getName();
         this.layerId = layer.getId();
         this.maxDistance = maxDistance;
+        this.values = IntStream.range(0, maxDistance + 1).toArray();
     }
 
     @Override
@@ -140,6 +147,11 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
         if (o == null || getClass() != o.getClass()) return false;
         DistanceToLayerEdgeGetter that = (DistanceToLayerEdgeGetter) o;
         return Arrays.equals(getSaveData(), that.getSaveData()) ;
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
     }
 
     @Override

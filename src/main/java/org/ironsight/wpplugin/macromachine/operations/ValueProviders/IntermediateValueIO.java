@@ -4,6 +4,7 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Objects;
 
 @Deprecated // does not work anymore with iterating the map once per action
@@ -47,6 +48,11 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return new int[0];
+    }
+
+    @Override
     public boolean isVirtual() {
         return true;
     }
@@ -56,6 +62,22 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
         IntermediateValueIO.value = value;
         lastX = x;
         lastY = y;
+    }
+
+    private final int IGNORE_VALUE = Integer.MIN_VALUE;
+    private final int[] values = new int[]{ IGNORE_VALUE, 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(values, values.length);
+    }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE_VALUE;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return new int[0];
     }
 
     @Override
