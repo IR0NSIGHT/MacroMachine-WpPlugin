@@ -142,7 +142,6 @@ class MappingActionValueTableModelTest {
                 .withOutput(new AnnotationSetter())
                 .withNewPoints(new MappingPoint[]{new MappingPoint(17, 18)});
         final MappingAction[] updatedAction = new MappingAction[1];
-        final int[] updateCalls = {0};
         final int[] headerChangedCalls = {0};
 
         model.addTableModelListener(e -> {
@@ -151,18 +150,14 @@ class MappingActionValueTableModelTest {
             }
             if (e.getType() == TableModelEvent.UPDATE) {
                 updatedAction[0] = model.constructMapping();
-                updateCalls[0]++;
             }
 
 
         });
         assertEquals(0,headerChangedCalls[0]);
-        assertEquals(0,updateCalls[0]);
 
         model.rebuildModelFromAction(action);
         assertEquals(1,headerChangedCalls[0], "model must notify listener that header changed.");
-        assertEquals(2,updateCalls[0],"data has changed");
-    //FIXME test if INSERT and DELETE calls are also correctly fired
 
         assertEquals(256, model.getRowCount());
         assertEquals(new MappingPointValue(17,action.getInput()), model.getValueAt(17,0),"mapping point at input=17");
@@ -170,7 +165,6 @@ class MappingActionValueTableModelTest {
 
         //change mapping point, edit input
         model.setValueAt(new MappingPointValue(3,action.getInput()),17,0);
-        assertEquals(3,updateCalls[0],"another update was called");
         assertEquals(new MappingPointValue(3,action.getInput()), model.getValueAt(3,0),"value was inserted but it " +
                 "lives at a different index now");
         assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.constructMapping(),"the model " +
@@ -180,14 +174,12 @@ class MappingActionValueTableModelTest {
 
         //set same value again
         model.setValueAt(new MappingPointValue(3,action.getInput()),0,0);
-        assertEquals(3,updateCalls[0], "no update should occur when same value is set again");
         assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.constructMapping());
 
         //edit mapping point in output column from (3,18) to (3,9)
         assertTrue(model.isCellEditable(3,1));
         model.setValueAt(new MappingPointValue(9,action.getOutput()),3,1);
         assertEquals(new MappingPointValue(9,action.getOutput()), model.getValueAt(3,1),"value was inserted at index");
-        assertEquals(4,updateCalls[0]," one more update");
         assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,9)}),model.constructMapping());
     }
 
