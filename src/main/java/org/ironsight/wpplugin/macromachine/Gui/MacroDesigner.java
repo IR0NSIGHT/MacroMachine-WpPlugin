@@ -37,8 +37,10 @@ public class MacroDesigner extends JPanel {
     private boolean isUpdating;
     private int[] selectedRows = new int[0];
 
-    MacroDesigner(Consumer<Macro> onSubmit) {
+    MacroDesigner(MappingActionContainer actionContainer, Consumer<Macro> onSubmit, MacroContainer macroContainer) {
+        this.actionContainer = actionContainer;
         this.onSubmit = onSubmit;
+        this.macroContainer = macroContainer;
         init();
 
         this.defaultFilter.setActive(true);
@@ -231,16 +233,37 @@ public class MacroDesigner extends JPanel {
         return items;
     }
 
+    public static void main(String[] args) {
+        JFrame frame = new JFrame();
+        MacroContainer macroContainer = new MacroContainer("./test.json");
+        MappingActionContainer actionContainer = new MappingActionContainer("./test_actions.json");
+
+        MacroDesigner macroDesigner = new MacroDesigner(actionContainer, System.out::println, macroContainer);
+                MappingAction ma = new MappingAction(new PerlinNoiseIO(10,10,12345,3),
+                new AnnotationSetter(), new MappingPoint[0], ActionType.SET, "","", UUID.randomUUID());
+
+        Macro macro = new Macro("test macro","this macro does some things and some other things",new UUID[0], UUID.randomUUID(), new boolean[0]);
+
+        // set up a couple random actions in action container
+        Random r = new Random(42069);
+        java.util.List<MappingAction> actions = getDefaultFiltersAndEmptyAction().stream().filter(a -> r.nextBoolean()).map(a -> a.withUUID(UUID.randomUUID())).toList();
+        actions.forEach(actionContainer::addMapping);
+
+        macro = macro.withUUIDs(actions.stream().map(MappingAction::getUid).toArray(UUID[]::new));
+        macroContainer.updateMapping(macro, System.err::println);
+
+        macroDesigner.setMacro(macro,true);
+        frame.add(macroDesigner);
+        frame.pack();
+        frame.setVisible(true);
+    }
+
     private JPopupMenu createPopupMenu(int row, int column, int[] selectedRows) {
-        //row is index of action
-        UUID id = macro.getExecutionUUIDs()[row];
-        boolean active = macro.getActiveActions()[row];
-
         JPopupMenu menu = new JPopupMenu();
-
+        menu.setLayout(new GridLayout(0,1));
         {
             JButton toggleActiveButton = new JButton();
-            toggleActiveButton.setText(macro.getActiveActions()[row] ? "disable" : "enable");
+            toggleActiveButton.setText(macro.getActiveActions()[row] ? "disable" : "enable"); //FIXME: Filter:Reset default action appears ALWAYS active? why is that?
             toggleActiveButton.setToolTipText("disabled items will be skipped when the macro is executed.");
             toggleActiveButton.addActionListener(e -> onToggleEnableItem(row, toggleActiveButton));
             menu.add(toggleActiveButton);
@@ -251,6 +274,34 @@ public class MacroDesigner extends JPanel {
             nestToMacroButton.setToolTipText("move all selected items into a nested macro.");
             nestToMacroButton.addActionListener(l -> onMoveToNestedMacro(selectedRows));
             menu.add(nestToMacroButton);
+        }
+
+        {
+            JButton addButton = new JButton("Add");
+            addButton.setToolTipText("Add an existing action or macro.");
+            addButton.addActionListener(e -> onAddMapping());
+            menu.add(addButton);
+        }
+
+        {
+            JButton removeButton = new JButton("Remove");
+            removeButton.setToolTipText("Delete the selected item from this macro. Nested macros are only removed, not deleted.");
+            removeButton.addActionListener(e -> onDeleteMapping());
+            menu.add(removeButton);
+        }
+
+        {
+            JButton moveUpButton = new JButton("Move Up");
+            moveUpButton.setToolTipText("Move up the selected action in the order of execution.");
+            moveUpButton.addActionListener(e -> onMoveUpMapping());
+            menu.add(moveUpButton);
+        }
+
+        {
+            JButton moveDownButton = new JButton("Move Down");
+            moveDownButton.setToolTipText("Move down the selected action in the order of execution.");
+            moveDownButton.addActionListener(e -> onMoveDownMapping());
+            menu.add(moveDownButton);
         }
 
         return menu;
@@ -269,7 +320,6 @@ public class MacroDesigner extends JPanel {
             return;
         }
 
-        MappingActionContainer actionContainer = MappingActionContainer.getInstance();
         UUID[] selectedUUIDs =
                 Arrays.stream(selectedRows)
                         .mapToObj(row -> {
@@ -283,8 +333,8 @@ public class MacroDesigner extends JPanel {
                         })
                         .toArray(UUID[]::new);
 
-        Macro nested = MacroContainer.getInstance().addMapping().withName(input).withUUIDs(selectedUUIDs);
-        MacroContainer.getInstance().updateMapping(nested, GlobalActionPanel::ErrorPopUpString);
+        Macro nested = macroContainer.addMapping().withName(input).withUUIDs(selectedUUIDs);
+        macroContainer.updateMapping(nested, GlobalActionPanel::ErrorPopUpString);
 
         ArrayList<UUID> remainingUUIDs = new ArrayList<>();
         ArrayList<Boolean> activeItems = new ArrayList<>();
@@ -401,26 +451,6 @@ public class MacroDesigner extends JPanel {
         this.add(nameAndDescriptionPanel, BorderLayout.NORTH);
 
         JPanel buttons = new JPanel(new FlowLayout());
-        addButton = new JButton("Add");
-        addButton.setToolTipText("Add an existing action to this macro below the last selected one.");
-        addButton.addActionListener(e -> onAddMapping());
-        buttons.add(addButton);
-
-        removeButton = new JButton("Remove");
-        removeButton.setToolTipText("Remove an existing action from this macro. Action is not permanently deleted and" +
-                " still exists in global list.");
-        removeButton.addActionListener(e -> onDeleteMapping());
-        buttons.add(removeButton);
-
-        moveUpButton = new JButton("Move Up");
-        moveUpButton.setToolTipText("Move up the selected action in the order of execution.");
-        moveUpButton.addActionListener(e -> onMoveUpMapping());
-        buttons.add(moveUpButton);
-
-        moveDownButton = new JButton("Move Down");
-        moveDownButton.setToolTipText("Move down the selected action in the order of execution.");
-        moveDownButton.addActionListener(e -> onMoveDownMapping());
-        buttons.add(moveDownButton);
 
         JButton submitButton = new JButton("Save");
         submitButton.setToolTipText("submit macro and save changes to global list.");
@@ -449,7 +479,8 @@ public class MacroDesigner extends JPanel {
 
         prepareTableModel();
     }
-
+    private final MappingActionContainer actionContainer;
+    private final MacroContainer macroContainer;
     private void onAddMapping() {
         Set<MappingAction> customActions = new TreeSet<>((o1, o2) -> {
             if (o1.equalsWithoutUUID(o2)) {
@@ -460,11 +491,11 @@ public class MacroDesigner extends JPanel {
             }
         }
         );
-        customActions.addAll(MappingActionContainer.getInstance().queryAll());
+        customActions.addAll(actionContainer.queryAll());
 
         ArrayList<IDisplayUnit> macrosAndActions = new ArrayList<>();
         macrosAndActions.addAll(customActions);
-        macrosAndActions.addAll(MacroContainer.getInstance().queryAll());
+        macrosAndActions.addAll(macroContainer.queryAll());
         Collection<MappingAction> defaultActions = getDefaultFiltersAndEmptyAction();
 
 
@@ -472,7 +503,7 @@ public class MacroDesigner extends JPanel {
                 .map(MappingAction::getUid)
                 .collect(Collectors.toCollection(HashSet::new)));
 
-        customActionsFilter.setPassUUIDs(MappingActionContainer.getInstance().queryAll().stream()
+        customActionsFilter.setPassUUIDs(actionContainer.queryAll().stream()
                 .map(MappingAction::getUid)
                 .collect(Collectors.toCollection(HashSet::new)));
 
@@ -489,8 +520,8 @@ public class MacroDesigner extends JPanel {
             selected = ((MappingAction) selected).deepCopy();
         ArrayList<Integer> newSelection = new ArrayList<>();
         Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), (SaveableAction) selected,
-                () -> MappingActionContainer.getInstance().addMapping(),
-                a -> MappingActionContainer.getInstance().updateMapping(a, GlobalActionPanel::ErrorPopUpString),
+                () -> actionContainer.addMapping(),
+                a -> actionContainer.updateMapping(a, GlobalActionPanel::ErrorPopUpString),
                 table.getSelectedRows(), newSelection);
         setMacro(newMacro, true);
         assert this.macro.equals(newMacro) : "macro was added an action, but action is not " +
@@ -586,9 +617,9 @@ public class MacroDesigner extends JPanel {
 
         int row = 0;
         for (UUID id : macro.executionUUIDs) {
-            SaveableAction m = MappingActionContainer.getInstance().queryById(id);
+            SaveableAction m = actionContainer.queryById(id);
             if (m == null)
-                m = MacroContainer.getInstance().queryById(id);
+                m = macroContainer.queryById(id);
             m.setActive(macro.getActiveActions()[row]);
             table.setValueAt(m, row++, 0);
         }

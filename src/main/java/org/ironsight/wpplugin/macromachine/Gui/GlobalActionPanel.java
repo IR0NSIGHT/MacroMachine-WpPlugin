@@ -253,8 +253,11 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     private void init() {
-        MacroContainer.getInstance().subscribe(this::onUpdate);
-        MappingActionContainer.getInstance().subscribe(this::onUpdate);
+        MacroContainer macroContainer = MacroContainer.getInstance();
+        macroContainer.subscribe(this::onUpdate);
+
+        MappingActionContainer actionContainer = MappingActionContainer.getInstance();
+        actionContainer.subscribe(this::onUpdate);
 
         this.setLayout(new BorderLayout());
         macroTreePanel = new MacroTreePanel(MacroContainer.getInstance(),
@@ -263,7 +266,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
                 this::onSelect);
         macroTreePanel.setMaximumSize(new Dimension(200, 0));
 
-        macroDesigner = new MacroDesigner(this::onSubmitMacro);
+        macroDesigner = new MacroDesigner(actionContainer, this::onSubmitMacro, macroContainer);
         mappingEditor = new ActionDesigner(this::onSubmitMapping);
         ioEditor = new InputOutputEditor(action -> MappingActionContainer.getInstance().updateMapping(action,
                 GlobalActionPanel::ErrorPopUpString));
