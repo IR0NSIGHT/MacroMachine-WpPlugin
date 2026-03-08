@@ -22,7 +22,7 @@ public class MappingTextTable extends JPanel {
     private final JTable numberTable;
     JScrollPane scrollPane;
     ValuePreviewWindow previeWindow;
-    private boolean isFilterForMappingPoints = true;
+    private boolean isFilterHideAutomaticValues = false;
     private JCheckBox groupValuesCheckBox;
     private JCheckBox showPreviewWindow;
     private TableRowSorter<MappingActionValueTableModel> sorter;
@@ -134,8 +134,11 @@ public class MappingTextTable extends JPanel {
         numberTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (!numberTable.isEditing() && e.getButton() == MouseEvent.BUTTON3)
-                    selectionModel.clearSelection(); // right click}
+                if (!numberTable.isEditing() && e.getButton() == MouseEvent.BUTTON3) {
+                    // Show the popup menu
+                    JPopupMenu popupMenu = createRightClickMenu(selectionModel.getSelectedModelRows());
+                    popupMenu.show(numberTable, e.getX(), e.getY());
+                }
             }
         });
 
@@ -158,53 +161,71 @@ public class MappingTextTable extends JPanel {
         scrollPane.addMouseWheelListener(previeWindow);
     }
 
-    private void onAddControlPoint(ActionEvent actionEvent) {
-        final int[] selectedModelRows = getSelectedModelRows();
-        boolean somethingSelected = selectedModelRows != null && selectedModelRows.length != 0;
-        // nothing is selected -> add control point at the very top
-        if (!somethingSelected) {
-            int addedPointRow = tableModel.insertMappingPointNear(0);
-            if (addedPointRow != -1)
-                SwingUtilities.invokeLater(() -> {
-                    blockingSelectionModel.setSelectionModelRow(addedPointRow);
-                });
-            return;
+    private JPopupMenu createRightClickMenu(int[] selectedModelRows) {
+        JPopupMenu menu = new JPopupMenu();
+        menu.setLayout(new GridLayout(0,1));
+
+        boolean fixedValuesSelected = Arrays.stream(selectedModelRows).anyMatch(tableModel::isMappingPoint);
+        boolean interpolatedValuesSelected = Arrays.stream(selectedModelRows).anyMatch(r -> !tableModel.isMappingPoint(r));
+        {
+            JButton button = new JButton("clear selection");
+            button.addActionListener(e -> {
+                clearSelection();
+                menu.setVisible(false);
+            });
+            menu.add(button);
         }
 
-        assert somethingSelected;
-
-        // find out if selection contains only control points or now
-        boolean atLeastOneNotControlPoint = false;
-        for (int row : selectedModelRows) {
-            if (!tableModel.isMappingPoint(row)) {
-                atLeastOneNotControlPoint = true;
-                break;
-            }
+        if (interpolatedValuesSelected) {
+            JButton button = new JButton("make fixed value");
+            button.setToolTipText("fixed values are set by you. They influence the values of nearby automatic values.");
+            button.addActionListener(e -> {
+                this.onMakeFixedValue(e);
+                menu.setVisible(false);
+            });
+            menu.add(button);
         }
 
-        if (atLeastOneNotControlPoint) {
-            // at least one selected row is not a control point -> set to control point
-            tableModel.setIsMappingPoint(selectedModelRows, true);
-            // dont edit selection, didnt change.
-        } else {
-            // all selected points are control points, insert near the end of selection
-            int addedPointRow = tableModel.insertMappingPointNear(selectedModelRows[selectedModelRows.length - 1]);
-            if (addedPointRow != -1)
-                SwingUtilities.invokeLater(() -> {
-                    blockingSelectionModel.setSelectionModelRow(addedPointRow);
-                });
+        if (fixedValuesSelected) {
+            JButton button = new JButton("make automatic value");
+            button.setToolTipText("automatic values are calculated, based on the nearest fixed values. You can not edit them directly.");
+            button.addActionListener(e -> {
+                this.onMakeAutomaticValue();
+                menu.setVisible(false);
+            });
+            menu.add(button);
         }
+
+        return menu;
     }
 
-    private void onRemoveControlPoint(ActionEvent actionEvent) {
+    private void clearSelection() {
+        this.blockingSelectionModel.clearSelection();
+    }
+
+    private void onMakeFixedValue(ActionEvent actionEvent) {
+        final int[] selectedModelRows = getSelectedModelRows();
+        boolean somethingSelected = selectedModelRows != null && selectedModelRows.length != 0;
+        if (!somethingSelected) {
+            return;
+        }
+        // easy case: a point is not yet a mapping point
+        var notYetMappingPoints = Arrays.stream(selectedModelRows)
+                .filter(row -> !tableModel.isMappingPoint(row))
+                .toArray();
+        tableModel.setIsMappingPoint(notYetMappingPoints, true);
+        SwingUtilities.invokeLater(() -> {
+            Arrays.stream(notYetMappingPoints).forEach(blockingSelectionModel::setSelectionModelRow);
+        });
+    }
+
+    private void onMakeAutomaticValue() {
         if (numberTable.getSelectedRow() != -1) {
             tableModel.deleteMappingPointAt(getSelectedModelRows());
         }
     }
 
     protected void initComponents() {
-        isFilterForMappingPoints = true;
-
         previeWindow = new ValuePreviewWindow();
 
         this.setLayout(new BorderLayout());
@@ -217,7 +238,7 @@ public class MappingTextTable extends JPanel {
         sorter = new TableRowSorter<>(tableModel);
         sorter.setSortsOnUpdates(true);
         numberTable.setRowSorter(sorter);
-        setRowFilter(isFilterForMappingPoints);
+        setRowFilter(isFilterHideAutomaticValues);
 
         Font font = new Font("Arial", Font.PLAIN, 24);
         numberTable.setFont(font);
@@ -229,11 +250,11 @@ public class MappingTextTable extends JPanel {
         this.add(scrollPane, BorderLayout.CENTER);
         JPanel buttons = new JPanel();
         {
-            groupValuesCheckBox = new JCheckBox("Only Control Points");
-            groupValuesCheckBox.setSelected(isFilterForMappingPoints);
+            groupValuesCheckBox = new JCheckBox("Hide automatic values");
+            groupValuesCheckBox.setSelected(isFilterHideAutomaticValues);
             groupValuesCheckBox.addActionListener(f -> {
-                this.isFilterForMappingPoints = groupValuesCheckBox.isSelected();
-                setRowFilter(isFilterForMappingPoints);
+                this.isFilterHideAutomaticValues = groupValuesCheckBox.isSelected();
+                setRowFilter(isFilterHideAutomaticValues);
             });
             buttons.add(groupValuesCheckBox);
         }
@@ -244,18 +265,6 @@ public class MappingTextTable extends JPanel {
             showPreviewWindow.setSelected(false);
             showPreviewWindow.addActionListener(previeWindow);
             buttons.add(showPreviewWindow);
-        }
-
-
-        {
-            JButton addMappingPointButton = new JButton("add control point");
-            addMappingPointButton.addActionListener(this::onAddControlPoint);
-            buttons.add(addMappingPointButton);
-        }
-        {
-            JButton button = new JButton("remove control point");
-            button.addActionListener(this::onRemoveControlPoint);
-            buttons.add(button);
         }
 
         this.add(buttons, BorderLayout.SOUTH);

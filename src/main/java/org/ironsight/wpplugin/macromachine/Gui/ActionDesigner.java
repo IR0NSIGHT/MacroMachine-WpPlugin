@@ -38,8 +38,15 @@ public class ActionDesigner extends LayerMappingPanel {
     public static void main(String[] args) {
         JFrame frame = new JFrame();
         LayerMappingPanel lmp = new ActionDesigner(System.out::println);
-        MappingAction ma = new MappingAction(new PerlinNoiseIO(10,10,12345,3),
-                new AnnotationSetter(), new MappingPoint[0], ActionType.SET, "","", UUID.randomUUID());
+        MappingAction ma = new MappingAction(
+                new PerlinNoiseIO(10,10,12345,3),
+                new AnnotationSetter(),
+                new MappingPoint[]{
+                        new MappingPoint( 3, AnnotationSetter.ANNOTATION_BLUE),
+                        new MappingPoint(10, AnnotationSetter.IGNORE_OUTPUT)},
+                ActionType.SET,
+                "Blue annotation perlin blobs","Create perlin islands with annotation blue",
+                UUID.randomUUID());
         lmp.setMapping(ma);
         frame.add(lmp);
         frame.pack();
