@@ -51,6 +51,8 @@ public class CustomLayerControllerWrapper implements LayerProvider {
             Class<?> appClass = Class.forName("org.pepsoft.worldpainter.App");
             java.lang.reflect.Method method = appClass.getMethod("getInstanceIfExists");
             Object appInstance = method.invoke(null);
+            if (appInstance == null)
+                return null;
             Field customLayerControllerField = appInstance.getClass().getDeclaredField("customLayerController");
             customLayerControllerField.setAccessible(true);
             return (CustomLayerController) customLayerControllerField.get(appInstance);
