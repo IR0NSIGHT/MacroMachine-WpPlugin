@@ -1,5 +1,10 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.ironsight.wpplugin.macromachine.operations.ActionType;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -10,12 +15,15 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.util.Arrays;
-import java.util.EventObject;
+import java.util.*;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static java.awt.Image.SCALE_FAST;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+import static org.ironsight.wpplugin.macromachine.Gui.MappingActionValueTableModel.INPUT_COLUMN_IDX;
+import static org.ironsight.wpplugin.macromachine.Gui.MappingActionValueTableModel.OUTPUT_COLUMN_IDX;
 
 public class MappingTextTable extends JPanel {
     private final MappingActionValueTableModel tableModel;
@@ -29,6 +37,53 @@ public class MappingTextTable extends JPanel {
     private int[] selectedViewRows = new int[0];
     private BlockingSelectionModel blockingSelectionModel;
 
+    private String getToolTipForRow(int row) {
+        if (tableModel.getValueAt(row, INPUT_COLUMN_IDX) instanceof MappingPointValue input &&
+            tableModel.getValueAt(row, OUTPUT_COLUMN_IDX) instanceof MappingPointValue output) {
+            return Explain(input, output, tableModel.constructMapping().getActionType());
+        }
+        return "";
+    }
+
+    public static void main(String[] args) {
+        var allGetterSetters = Arrays.stream(ProviderType.values()).map(ProviderType::fromTypeDefault).toList();
+        var allGetters = allGetterSetters.stream().filter(g -> g instanceof IPositionValueGetter).map(g -> (IPositionValueGetter)g).toList();
+        var allSetters = allGetterSetters.stream().filter(g -> g instanceof IPositionValueSetter).map(g -> (IPositionValueSetter)g).toList();
+        Random r = new Random(42069);
+        Function<int[],Integer> getRandom = arr -> {
+            if (arr.length == 0)
+                return 0;
+            return arr[r.nextInt(arr.length)];
+        };
+        for (var type: ActionType.values()) {
+        for (var setter: allSetters) {
+            for (var getter : allGetters) {
+                    var input = new MappingPointValue(getRandom.apply(getter.getAllInputValues()),getter);
+                    var output = new MappingPointValue(getRandom.apply(setter.getAllOutputValues()),setter);
+
+                    var explained = Explain(input,output,type);
+                    System.out.println(explained);
+                }
+            }
+        }
+    }
+
+    public static String Explain(MappingPointValue input, MappingPointValue output, ActionType actionType) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Where ")
+                .append(input.mappingValue.getName())
+                .append(" is ")
+
+                .append(input.mappingValue.valueToString(input.numericValue))
+                .append(", ");
+        if (output.mappingValue instanceof IPositionValueSetter setter && setter.isIgnoreValue(output.numericValue)) {
+            builder.append(" do nothing.");
+        } else {
+            builder.append(actionType.getExplanationFor(output)).append(".");
+        }
+
+        return builder.toString();
+    }
     public MappingTextTable(MappingActionValueTableModel model, BlockingSelectionModel selectionModel) {
         this.blockingSelectionModel = selectionModel;
         numberTable = new JTable() {
@@ -40,6 +95,19 @@ public class MappingTextTable extends JPanel {
                     return false;
                 }
                 return super.editCellAt(row, column, e);
+            }
+
+            @Override
+            public String getToolTipText(MouseEvent e) {
+                Point p = e.getPoint();
+                int row = rowAtPoint(p);
+                int col = columnAtPoint(p);
+
+                if (row == -1 || col == -1) {
+                    return null;
+                }
+
+                return getToolTipForRow(row);
             }
 
             @Override

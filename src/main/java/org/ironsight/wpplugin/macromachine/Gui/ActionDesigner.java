@@ -1,8 +1,8 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.*;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AnnotationSetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.PerlinNoiseIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
+import org.pepsoft.worldpainter.layers.PineForest;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -47,6 +47,18 @@ public class ActionDesigner extends LayerMappingPanel {
                 ActionType.SET,
                 "Blue annotation perlin blobs","Create perlin islands with annotation blue",
                 UUID.randomUUID());
+
+        var setter = new NibbleLayerSetter(PineForest.INSTANCE, false);
+        var OceanHeight = new MappingAction(
+                new TerrainHeightIO(-64,312),
+                setter,
+                new MappingPoint[]{
+                        new MappingPoint(0 /*ocean*/, 31),
+                        new MappingPoint(1, setter.IGNORE_VALUE)},
+                ActionType.LIMIT_TO,
+                "No pines in the ocean","xx",
+                UUID.randomUUID());
+
         lmp.setMapping(ma);
         frame.add(lmp);
         frame.pack();
