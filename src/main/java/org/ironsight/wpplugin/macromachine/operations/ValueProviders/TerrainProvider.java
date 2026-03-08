@@ -8,16 +8,25 @@ import org.pepsoft.worldpainter.colourschemes.HardcodedColourScheme;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter {
     private static final ColourScheme colorScheme = new HardcodedColourScheme();
-
+    private final int IGNORE = Integer.MAX_VALUE;
+    private final int[] outputValues;
+    private final int[] inputValues;
     public TerrainProvider() {
+        outputValues = IntStream.range(-1, Terrain.values().length).toArray();
+        outputValues[0] = IGNORE;
+        inputValues = IntStream.range(0,Terrain.values().length).toArray();
     }
+
     @Override
     public String toString() {
         return getName();
     }
+
     @Override
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());
@@ -34,6 +43,11 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     @Override
     public int hashCode() {
         return getProviderType().hashCode();
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
     }
 
     @Override
@@ -67,6 +81,21 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     }
 
     @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE;
+    }
+
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues,inputValues.length);
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
+    }
+
+    @Override
     public IMappingValue instantiateFrom(Object[] data) {
         return new TerrainProvider();
     }
@@ -83,6 +112,8 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public String valueToString(int value) {
+        if (value == IGNORE)
+            return "skip";
         return Terrain.values()[value].getName();
     }
 
@@ -103,10 +134,12 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
         BufferedImage terrainImg = terrain.getScaledIcon(Math.min(dim.height, dim.width), colorScheme);
         g.drawImage(terrainImg, 0, 0, null);
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
     }
+
     @Override
     public ProviderType getProviderType() {
         return ProviderType.TERRAIN;

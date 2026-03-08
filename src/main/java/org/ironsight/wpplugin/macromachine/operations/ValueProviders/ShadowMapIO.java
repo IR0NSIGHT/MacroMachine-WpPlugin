@@ -7,11 +7,16 @@ import org.ironsight.wpplugin.macromachine.operations.specialOperations.ShadowMa
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
+    private final int[] values = IntStream.range(0, 100).toArray();
+    private TileContainer shadowMap;
+
     @Override
     public String getName() {
         return "Shadow";
@@ -28,6 +33,11 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return false;
     }
@@ -40,6 +50,11 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     @Override
     public int getMinValue() {
         return 0;
+    }
+
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(values, values.length);
     }
 
     @Override
@@ -70,35 +85,34 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         if (value != 0) {
-            float point = ((float)value)/getMaxValue();
-            int color = (int)(64 * point + (1-point) * 192);
-            g.setColor(new Color(color,color,color));
-        }
-        else
+            float point = ((float) value) / getMaxValue();
+            int color = (int) (64 * point + (1 - point) * 192);
+            g.setColor(new Color(color, color, color));
+        } else
             g.setColor(Color.WHITE);
-        g.fillRect(0,0,dim.width,dim.height);
+        g.fillRect(0, 0, dim.width, dim.height);
     }
 
     @Override
     public ProviderType getProviderType() {
         return ProviderType.SHADOW;
     }
-    private TileContainer shadowMap;
+
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        if (shadowMap == null || !shadowMap.existsTile(x >> TILE_SIZE_BITS,y >> TILE_SIZE_BITS))
+        if (shadowMap == null || !shadowMap.existsTile(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
             return getMinValue();
-        return shadowMap.getValueAt(x,y);
+        return shadowMap.getValueAt(x, y);
     }
 
     public void calculateShadowMap(Dimension dim, TerrainHeightIO heightIO, int[] tileX, int[] tileY) {
         int startX = ArrayUtils.findMin(tileX), endX = ArrayUtils.findMax(tileX);
         int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
-        Rectangle extent = new Rectangle(startX,startY,endX-startX + 1, endY-startY + 1);
+        Rectangle extent = new Rectangle(startX, startY, endX - startX + 1, endY - startY + 1);
         this.shadowMap = ShadowMap.calculateShadowMap(extent, heightIO, dim);
     }
 
-    public void releaseShadowMap(){
+    public void releaseShadowMap() {
         this.shadowMap = null;
     }
 
@@ -110,7 +124,7 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
 
     @Override
     public void prepareRightBeforeRun(Dimension dimension, int[] tileX, int[] tileY) {
-        this.calculateShadowMap(dimension, new TerrainHeightIO(-5000,5000), tileX, tileY);
+        this.calculateShadowMap(dimension, new TerrainHeightIO(-5000, 5000), tileX, tileY);
         assert shadowMap != null;
     }
 

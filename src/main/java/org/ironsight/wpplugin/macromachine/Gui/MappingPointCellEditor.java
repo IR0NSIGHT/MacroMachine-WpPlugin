@@ -1,7 +1,8 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
-import org.pepsoft.minecraft.Block;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -12,6 +13,7 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EventObject;
 
@@ -84,18 +86,16 @@ public class MappingPointCellEditor implements TableCellEditor {
         assert value instanceof MappingPointValue;
         dropdown.removeAllItems();
 
-        IMappingValue mappingValue = ((MappingPointValue) value).mappingValue;
-        ArrayList<MappingPointValue> arr = new ArrayList<>(mappingValue.getMaxValue() - mappingValue.getMinValue());
-        for (int i = mappingValue.getMinValue(); i <= mappingValue.getMaxValue(); i++) {
-            MappingPointValue pointValue = ((MappingPointValue) value).withValue(i);
-            arr.add(pointValue);
-        }
+        // TODO dont display skip for inputs
 
-        if (mappingValue.isDiscrete()) {
-            arr.sort(Comparator.comparing(o -> o.mappingValue.valueToString(o.numericValue)));
-        }
-        for (MappingPointValue mappingPointValue : arr) {
-            dropdown.addItem(mappingPointValue);
+        { // collect avaialbe values to offer in the dropdown for user selection
+            IMappingValue mappingValue = ((MappingPointValue) value).mappingValue;
+            java.util.List<MappingPointValue> arr;
+            arr = Arrays.stream(mappingValue.getAllPossibleValues()).mapToObj(((MappingPointValue) value)::withValue).toList();
+            if (mappingValue.isDiscrete()) { // sort alphavetically, bc discrete values only show a name not a numeric value to user
+                arr = arr.stream().sorted(Comparator.comparing(o -> o.mappingValue.valueToString(o.numericValue))).toList();
+            }
+            arr.forEach(dropdown::addItem);
         }
 
         dropdown.setSelectedItem(value);

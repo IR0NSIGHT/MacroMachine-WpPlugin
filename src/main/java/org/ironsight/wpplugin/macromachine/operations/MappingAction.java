@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import org.ironsight.wpplugin.macromachine.Gui.Settings;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Dimension;
@@ -73,7 +72,9 @@ public class MappingAction implements SaveableAction {
         if (output.isDiscrete()) {  // DO NOT INTERPOLATE OUTPUT
             if (this.mappingPoints.length == 0) return;
             int j = -1;
-            for (int i = input.getMinValue(); i <= input.getMaxValue(); i++) {
+            for (int i : input.getAllInputValues()) {
+                if (input instanceof IPositionValueSetter setter && setter.isIgnoreValue(i))
+                    continue;
                 int mappingPointIdx = Math.max(Math.min(j + 1, mappingPoints.length - 1), 0);
                 MappingPoint point = mappingPoints[mappingPointIdx];
                 if (point.input == i) {
@@ -169,7 +170,7 @@ public class MappingAction implements SaveableAction {
         StringBuilder summary = new StringBuilder();
         int block = 0;
         int pass = 0;
-        for (int inputValue = getInput().getMinValue(); inputValue <= getInput().getMaxValue(); inputValue++)
+        for (int inputValue : input.getAllInputValues())
             if (map(inputValue) == ActionFilterIO.PASS_VALUE)
                 pass++;
             else
@@ -193,7 +194,7 @@ public class MappingAction implements SaveableAction {
             ArrayList<String> ranges = new ArrayList<>();
             boolean allowPreviousValue = compareValue != ActionFilterIO.PASS_VALUE;
             int rangeLength = 0;
-            for (int inputValue = getInput().getMinValue(); inputValue <= getInput().getMaxValue(); inputValue++) {
+            for (int inputValue : getInput().getAllInputValues()) {
                 boolean allowThisValue = map(inputValue) == compareValue;
                 if (allowThisValue != allowPreviousValue || inputValue == getInput().getMaxValue()) {
                     if (allowPreviousValue) { //end of range
@@ -409,6 +410,8 @@ public class MappingAction implements SaveableAction {
         int value = (int) EditableIO.clamp(input.getValueAt(dim, x, y), input.getMinValue(), input.getMaxValue());
 
         int modifier = map(value);
+        if (output.isIgnoreValue(modifier))
+            return; // "skip" was selected as the output value by the user
 
         int existingValue =
                 output instanceof IPositionValueGetter ? ((IPositionValueGetter) output).getValueAt(dim, x, y) : 0;
@@ -456,6 +459,8 @@ public class MappingAction implements SaveableAction {
     }
 
     public int sanitizeOutput(int value) {
+        if (output.isIgnoreValue(value))
+            return value;
         return Math.min(output.getMaxValue(), Math.max(output.getMinValue(), value));
     }
 

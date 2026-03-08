@@ -95,7 +95,19 @@ public class ProviderTest {
     }
 
     @Test
-    void AllProvidersSetValueOutsideMinMax() {
+    void AllProvidersCanStringifyValues() {
+        for (ProviderType type: ProviderType.values()) {
+            IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
+            System.out.println(ioInstance.getName() + " #############");
+            for (int value : ioInstance.getAllPossibleValues()) {
+                String valueString = ioInstance.valueToString(value);
+                System.out.println(value + " -> " + valueString);
+            }
+        }
+    }
+
+    @Test
+    void AllProvidersSetValue() {
         /**
          *  tests takes every IO type, creates a dimension and the sets + gets every allowed value for that IO type
          */
@@ -108,8 +120,10 @@ public class ProviderTest {
                 continue;
             IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
             ioInstance.prepareForDimension(dim);
-            for (int value = ioInstance.getMinValue(); value <= ioInstance.getMaxValue(); value ++) {
-                if (ioInstance instanceof IPositionValueSetter) {
+            for (int value : ioInstance.getAllPossibleValues()) {
+                if (ioInstance instanceof IPositionValueSetter setter) {
+                    if (setter.isIgnoreValue(value))
+                        continue;
                     // output IO sets minimum
                     ((IPositionValueSetter) ioInstance).setValueAt(dim, testPosX, testPosY, value );
                     // no exception was thrown.
@@ -117,7 +131,7 @@ public class ProviderTest {
                         // verify the value was actually set correctly
                         int readValue = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
                         assertEquals(value, readValue,
-                                "unknown postion should always return min value" + ioInstance.getName());
+                                "set pos to have value=" + value + " but afterwards read value="+readValue + ioInstance.getName());
                     }
                 }
             }

@@ -6,6 +6,7 @@ import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Layer;
 
 import java.awt.*;
+import java.util.Arrays;
 
 public class AnnotationSetter implements IPositionValueGetter, IPositionValueSetter, ILayerGetter {
     public static final int ANNOTATION_ABSENT = 0;
@@ -24,8 +25,6 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     public static final int ANNOTATION_GREEN = 13;
     public static final int ANNOTATION_RED = 14;
     public static final int ANNOTATION_BLACK = 15;
-
-
     private static final Color[] COLORS =
             new Color[]{Color.WHITE, Color.WHITE, Color.ORANGE, Color.MAGENTA, new Color(107, 177, 255),   //LIGHT BLUE
                     Color.YELLOW, new Color(34, 153, 84), //LIME
@@ -33,18 +32,40 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
                     Color.BLUE, new Color(165, 42, 42), // brown
                     Color.GREEN, Color.RED, Color.BLACK};
     private static AnnotationSetter instance;
-    @Override
-    public String getToolTipText() {
-        return getDescription();
-    }
+    private final int IGNORE_OUTPUT = -1;
+    private final int[] OUTPUT_VALUES = new int[]{
+            IGNORE_OUTPUT,
+            ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE, ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK, ANNOTATION_LIGHT_GREY,
+            ANNOTATION_CYAN, ANNOTATION_PURPLE, ANNOTATION_BLUE,
+            ANNOTATION_BROWN,
+            ANNOTATION_GREEN,
+            ANNOTATION_RED,
+            ANNOTATION_BLACK
+    };
+    private final int[] INPUT_VALUES = new int[]{
+            ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE, ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK, ANNOTATION_LIGHT_GREY,
+            ANNOTATION_CYAN, ANNOTATION_PURPLE, ANNOTATION_BLUE,
+            ANNOTATION_BROWN,
+            ANNOTATION_GREEN,
+            ANNOTATION_RED,
+            ANNOTATION_BLACK
+    };
+
     private static AnnotationSetter getInstance() {
         if (instance == null) instance = new AnnotationSetter();
         return instance;
     }
+
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
+
     @Override
     public String toString() {
         return getName();
     }
+
     @Override
     public int getMaxValue() {
         return COLORS.length - 1;
@@ -53,6 +74,12 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public int getMinValue() {
         return 0;
+    }
+
+
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(INPUT_VALUES, INPUT_VALUES.length);
     }
 
     @Override
@@ -72,7 +99,9 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public String valueToString(int value) {
-        if (value == 0) return "Absent";
+        if (value == IGNORE_OUTPUT)
+            return "Skip";
+        if (value == ANNOTATION_ABSENT) return "No annotation";
         try {
             String name = Annotations.getColourName(value);
             return name;
@@ -93,12 +122,22 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return false;
     }
 
     @Override
     public void paint(Graphics g, int value, Dimension dim) {
+        if (isIgnoreValue(value)) {
+            g.setColor(Color.gray);
+            g.fillRect(0,0,dim.width,dim.height);
+            return;
+        }
         g.setColor(COLORS[value]);
         g.fillRect(0, 0, dim.width, dim.height);
     }
@@ -126,6 +165,16 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public void setValueAt(org.pepsoft.worldpainter.Dimension dim, int x, int y, int value) {
         dim.setLayerValueAt(Annotations.INSTANCE, x, y, value);
+    }
+
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE_OUTPUT;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(OUTPUT_VALUES, OUTPUT_VALUES.length);
     }
 
     @Override

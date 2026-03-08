@@ -5,6 +5,8 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -15,6 +17,9 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     public TerrainHeightIO(int minHeight, int maxHeight) {
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;
+        outputValues = IntStream.range(minHeight - 1, maxHeight + 1).toArray();
+        outputValues[0] = IGNORE_VALUE;
+        inputValues = IntStream.range(minHeight, maxHeight + 1).toArray();
     }
 
     @Override
@@ -51,6 +56,11 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return false;
     }
@@ -73,6 +83,23 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
         dim.setHeightAt(x, y, value);
     }
 
+    private final int IGNORE_VALUE = Integer.MIN_VALUE;
+    private final int[] inputValues;
+    private final int[] outputValues;
+
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues, inputValues.length);
+    }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE_VALUE;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
+    }
 
     @Override
     public int getMinValue() {
@@ -103,7 +130,9 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public String valueToString(int value) {
-        return value + "H";
+        if (IGNORE_VALUE == value)
+            return "skip";
+        return value + " H";
     }
 
     @Override
@@ -113,6 +142,12 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value)) {
+            g.setColor(Color.gray);
+            g.fillRect(0,0,dim.width,dim.height);
+            return;
+        }
+
         float percent = (value - getMinValue() * 1f) / (getMaxValue() - getMinValue());
 
         g.setColor(new Color(131, 154, 255));

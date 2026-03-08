@@ -5,6 +5,8 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
@@ -44,6 +46,12 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
         return (int) Math.floor(angleDegrees);
     }
 
+    private final int[] values = IntStream.range(0,360).toArray();
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(values, values.length);
+    }
+
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (x <= dim.getLowestX() * TILE_SIZE || y <= dim.getLowestY() * TILE_SIZE ||
@@ -56,6 +64,11 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
     @Override
     public int hashCode() {
         return getProviderType().hashCode();
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
     }
 
     @Override

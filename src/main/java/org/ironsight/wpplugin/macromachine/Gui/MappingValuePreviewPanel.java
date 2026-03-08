@@ -1,12 +1,12 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.StonePaletteApplicator;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.util.Arrays;
 
 public class MappingValuePreviewPanel extends JPanel {
     private IMappingValue mappingValue;
@@ -39,6 +39,10 @@ public class MappingValuePreviewPanel extends JPanel {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        mappingValue.paint(g, IMappingValue.sanitizeValue(value, mappingValue), getSize());
+        if (Arrays.stream(mappingValue.getAllPossibleValues()).noneMatch(value1 -> value1 == value)) {
+            assert false : "trying to paint a value thats not part of the value range.";
+            return;
+        }
+        mappingValue.paint(g, value, getSize());
     }
 }

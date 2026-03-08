@@ -6,7 +6,9 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
@@ -23,7 +25,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
         this.seed = seed;
         this.octaves = Math.max(Math.min(octaves, octaveNormalizer.length-1),1);
         generator = new ImprovedNoise(42069);
-
+        this.values = IntStream.range(0, (int) (Math.ceil(amplitude) + 1)).toArray();
         //brute force collect data to force generator output range into [0,1]
         // dev note: improvedNoise does not reliable produce values across the whole histogram and there seems no way
         // of predicting the histogram based on scale ampl seed or octaves. so we have to measure average histogram
@@ -39,6 +41,8 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
         }
         shift = min;
         multi = (max-min);
+
+
 
         if (imagesByValue == null) {
             imagesByValue = new BufferedImage[0];
@@ -57,6 +61,11 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     }
 
     @Override
+    public int[] getAllPossibleValues() {
+        return getAllInputValues();
+    }
+
+    @Override
     public boolean isVirtual() {
         return true;
     }
@@ -70,7 +79,11 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     public int getMinValue() {
         return 0;
     }
-
+    private final int[] values;
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(values, values.length);
+    }
     @Override
     public void prepareForDimension(Dimension dim) throws IllegalAccessError {
 

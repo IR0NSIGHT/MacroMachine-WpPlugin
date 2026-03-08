@@ -4,26 +4,54 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionValueSetter, EditableIO  {
+public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionValueSetter, EditableIO {
     private final int min, max;
+    private final int IGNORE = Integer.MAX_VALUE;
+    private final int[] outputValues;
+    private final int[] inputValues;
+
     public WaterHeightAbsoluteIO(int min, int max) {
         this.min = min;
         this.max = max;
+        outputValues = IntStream.range(min - 1, max + 1).toArray();
+        outputValues[0] = IGNORE;
+        inputValues = IntStream.range(min,max + 1).toArray();
     }
+
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
+    }
+
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues, inputValues.length);
+    }
+
+
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (!dim.getExtent().contains(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
             return getMinValue();
         return dim.getWaterLevelAt(x, y);
     }
+
     @Override
     public String toString() {
         return getName();
     }
+
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
         dim.setWaterLevelAt(x, y, value);
@@ -47,23 +75,30 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
         if (data.length == 0)
-            return new WaterHeightAbsoluteIO(-64,319);
-        return new WaterHeightAbsoluteIO((Integer)data[0],(Integer)data[1]);
+            return new WaterHeightAbsoluteIO(-64, 319);
+        return new WaterHeightAbsoluteIO((Integer) data[0], (Integer) data[1]);
     }
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{min,max};
+        return new Object[]{min, max};
     }
 
     @Override
     public String valueToString(int value) {
+        if (value == IGNORE)
+            return "Skip";
         return Integer.toString(value);
     }
 
     @Override
     public boolean isDiscrete() {
         return false;
+    }
+
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
     }
 
     @Override
@@ -88,6 +123,11 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value)) {
+            g.setColor(Color.gray);
+            g.fillRect(0, 0, dim.width, dim.height);
+            return;
+        }
         float percent = (value - getMinValue() * 1f) / (getMaxValue() - getMinValue());
 
         g.setColor(Color.GRAY);
@@ -111,23 +151,24 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
 
     @Override
     public int[] getEditableValues() {
-        return new int[]{min,max};
+        return new int[]{min, max};
     }
 
     @Override
     public String[] getValueNames() {
-        return new String[]{"min","max"};
+        return new String[]{"min", "max"};
     }
 
     @Override
     public String[] getValueTooltips() {
-        return new String[]{"lowest allowed value","highest allowed value"};
+        return new String[]{"lowest allowed value", "highest allowed value"};
     }
 
     @Override
     public EditableIO instantiateWithValues(int[] values) {
-        return new WaterHeightAbsoluteIO(values[0],values[1]);
+        return new WaterHeightAbsoluteIO(values[0], values[1]);
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
