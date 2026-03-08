@@ -58,7 +58,6 @@ class MappingActionValueTableModel implements TableModel {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-
     }
 
 

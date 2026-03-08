@@ -47,7 +47,7 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public int[] getAllPossibleValues() {
-        return new int[0];
+        return getAllOutputValues();
     }
 
     @Override
