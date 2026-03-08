@@ -531,25 +531,59 @@ public class MacroDesigner extends JPanel {
             table.addRowSelectionInterval(row, row);
         }
     }
+    public static Macro moveUp(Macro macro, int[] selectedItemIndices) {
+        UUID[] ids = macro.getExecutionUUIDs().clone();
+        boolean[] active = macro.getActiveActions();
+
+
+        if (selectedItemIndices.length == 0) return macro;
+        if (selectedItemIndices[0] == 0) return macro;
+
+        for (int row : selectedItemIndices) {
+            UUID tmpId = ids[row - 1];
+            ids[row - 1] = ids[row];
+            ids[row] = tmpId;
+
+            boolean tmpActive = active[row - 1];
+            active[row - 1] = active[row];
+            active[row] = tmpActive;
+        }
+        return macro.withUUIDs(ids,active);
+    }
+
+    public static Macro moveDown(Macro macro, int[] selectedItemIndices) {
+        UUID[] ids = macro.getExecutionUUIDs().clone();
+        boolean[] active = macro.getActiveActions().clone();
+
+        if (selectedItemIndices.length == 0) return macro;
+        if (selectedItemIndices[selectedItemIndices.length - 1] == ids.length - 1) return macro;
+
+        for (int i = selectedItemIndices.length - 1; i >= 0; i--) {
+            int row = selectedItemIndices[i];
+
+            UUID tmpId = ids[row + 1];
+            ids[row + 1] = ids[row];
+            ids[row] = tmpId;
+
+            boolean tmpActive = active[row + 1];
+            active[row + 1] = active[row];
+            active[row] = tmpActive;
+        }
+
+        return macro.withUUIDs(ids, active);
+    }
 
     private void onMoveUpMapping() {
-        if (table.getSelectedRows().length == 0) return;
-        int anchorRow = table.getSelectedRows()[0];
-        if (anchorRow > 0 && anchorRow < table.getRowCount()) {
-            Macro macro = this.macro;
-            UUID[] ids = macro.executionUUIDs.clone();
-            boolean[] active = macro.getActiveActions();
-            for (int selectedRow : table.getSelectedRows()) {
-                ids[selectedRow - 1] = macro.executionUUIDs[selectedRow];
-                active[selectedRow - 1] = macro.getActiveActions()[selectedRow];
-                ids[selectedRow] = macro.executionUUIDs[selectedRow - 1];
-                active[selectedRow] = macro.getActiveActions()[selectedRow - 1];
-            }
+        int[] selected = table.getSelectedRows();
+        if (selected.length == 0) return;
 
-            shiftRowSelection(table.getSelectedRows(), -1);
-            setMacro(macro.withUUIDs(ids, active), true);
-            scrollPane.scrollRectToVisible(table.getCellRect(table.getSelectedRows()[0], 0, true));
-        }
+        int anchorRow = selected[0];
+        if (anchorRow == 0) return;
+
+        Macro newMacro = moveUp(macro, selectedRows);
+        shiftRowSelection(selected, -1);
+        setMacro(newMacro, true);
+        scrollPane.scrollRectToVisible(table.getCellRect(selected[0] - 1, 0, true));
     }
 
     private void shiftRowSelection(int[] selectedRows, int shift) {
@@ -566,17 +600,9 @@ public class MacroDesigner extends JPanel {
         if (table.getSelectedRows().length == 0) return;
         int anchorRow = table.getSelectedRows()[table.getSelectedRows().length - 1];
         if (anchorRow >= 0 && anchorRow < table.getRowCount() - 1) {
-            UUID[] ids = macro.executionUUIDs.clone();
-            boolean[] active = macro.getActiveActions().clone();
-            for (int selectedRow : table.getSelectedRows()) {
-                ids[selectedRow + 1] = macro.executionUUIDs[selectedRow];
-                ids[selectedRow] = macro.executionUUIDs[selectedRow + 1];
-                active[selectedRow + 1] = macro.getActiveActions()[selectedRow];
-                active[selectedRow] = macro.getActiveActions()[selectedRow + 1];
-            }
-
+            Macro newMacro = moveDown(macro,selectedRows);
             shiftRowSelection(table.getSelectedRows(), +1);
-            setMacro(macro.withUUIDs(ids, active), true);
+            setMacro(newMacro, true);
             //scroll to bottom selected row
             scrollPane.scrollRectToVisible(table.getCellRect(table.getSelectedRows()[table.getSelectedRows().length -
                     1], 0, true));
