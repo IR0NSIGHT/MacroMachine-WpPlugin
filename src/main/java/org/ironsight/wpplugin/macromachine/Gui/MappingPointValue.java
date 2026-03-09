@@ -6,8 +6,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 public class MappingPointValue implements Comparable<MappingPointValue> {
-    IMappingValue mappingValue;
-    int numericValue;
+    public IMappingValue mappingValue;
+    public  int numericValue;
 
 
     public MappingPointValue(int numericValue, IMappingValue mappingValue) { //TODO make constructors forgetter OR setter to diffferentiate context?
