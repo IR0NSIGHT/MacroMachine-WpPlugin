@@ -37,10 +37,13 @@ public class MacroDesigner extends JPanel {
     private boolean isUpdating;
     private int[] selectedRows = new int[0];
 
-    MacroDesigner(MappingActionContainer actionContainer, Consumer<Macro> onSubmit, MacroContainer macroContainer) {
+    private final ISelectItemCallback itemInteraction;
+
+    MacroDesigner(MappingActionContainer actionContainer, Consumer<Macro> onSubmit, MacroContainer macroContainer, ISelectItemCallback itemInteraction) {
         this.actionContainer = actionContainer;
         this.onSubmit = onSubmit;
         this.macroContainer = macroContainer;
+        this.itemInteraction = itemInteraction;
         init();
 
         this.defaultFilter.setActive(true);
@@ -238,7 +241,12 @@ public class MacroDesigner extends JPanel {
         MacroContainer macroContainer = new MacroContainer("./test.json");
         MappingActionContainer actionContainer = new MappingActionContainer("./test_actions.json");
 
-        MacroDesigner macroDesigner = new MacroDesigner(actionContainer, System.out::println, macroContainer);
+        MacroDesigner macroDesigner = new MacroDesigner(actionContainer, System.out::println, macroContainer, new ISelectItemCallback() {
+            @Override
+            public void onSelect(SaveableAction action, GlobalActionPanel.SELECTION_TPYE type) {
+                System.out.println("SELECT " + action + " TYPE " + type);
+            }
+        });
                 MappingAction ma = new MappingAction(new PerlinNoiseIO(10,10,12345,3),
                 new AnnotationSetter(), new MappingPoint[0], ActionType.SET, "","", UUID.randomUUID());
 
@@ -256,6 +264,23 @@ public class MacroDesigner extends JPanel {
         frame.add(macroDesigner);
         frame.pack();
         frame.setVisible(true);
+    }
+
+    /**
+     * user requested to edit the selected item (macro or action)
+     */
+    private void onEditItem() {
+        int selected = table.getSelectedRow();
+        if (selected == -1) return;
+        onSave();
+        Object item = table.getValueAt(table.getSelectedRow(), 0);
+        if (item instanceof Macro macro) {
+            itemInteraction.onSelect(macro, GlobalActionPanel.SELECTION_TPYE.MACRO);
+        } else if (item instanceof MappingAction action) {
+            itemInteraction.onSelect(action, GlobalActionPanel.SELECTION_TPYE.ACTION);
+        } else {
+            assert false : "unsupported type";
+        }
     }
 
     private JPopupMenu createPopupMenu(int row, int column, int[] selectedRows) {
@@ -288,6 +313,13 @@ public class MacroDesigner extends JPanel {
             removeButton.setToolTipText("Delete the selected item from this macro. Nested macros are only removed, not deleted.");
             removeButton.addActionListener(e -> onDeleteMapping());
             menu.add(removeButton);
+        }
+
+        {
+            JButton editButton = new JButton("Edit");
+            editButton.setToolTipText("Open the designer for this item, autosaves current state");
+            editButton.addActionListener(e -> onEditItem());
+            menu.add(editButton);
         }
 
         {
@@ -376,6 +408,13 @@ public class MacroDesigner extends JPanel {
         setMacro(m, true);
         button.setText(!isTargetRowActive ? "disable" : "enable");
     }
+    private void onSave() {
+        if (onSubmit == null) {
+            assert false;
+            return;
+        }
+        onSubmit.accept(this.macro);
+    }
 
     private void init() {
         this.setLayout(new BorderLayout());
@@ -454,7 +493,7 @@ public class MacroDesigner extends JPanel {
 
         JButton submitButton = new JButton("Save");
         submitButton.setToolTipText("submit macro and save changes to global list.");
-        submitButton.addActionListener(e -> onSubmit.accept(this.macro));
+        submitButton.addActionListener(e -> onSave());
         buttons.add(submitButton);
 
         buttons.add(getHelpButton("Macro Editor",

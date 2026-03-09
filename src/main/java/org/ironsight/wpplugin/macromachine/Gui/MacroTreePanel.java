@@ -9,6 +9,7 @@ import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.MacroExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
+import javax.crypto.Mac;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.*;
@@ -278,6 +279,24 @@ public class MacroTreePanel extends JPanel {
 
     private void onTreeItemRightClick(MacroTreeNode node, MouseEvent e) {
         popupMenu.show(e.getComponent(), e.getX(), e.getY());
+    }
+
+    public void selectItemInTree(SaveableAction macroOrAction) {
+        var currentSelPath = tree.getSelectionPath();
+
+        // is currently a macro selected?
+        if (currentSelPath != null && currentSelPath.getLastPathComponent() instanceof MacroTreeNode node && node.getPayloadType() == GlobalActionPanel.SELECTION_TPYE.MACRO) {
+            // find if the new selection is a child of this macro
+            List<UUID> children = Arrays.stream(node.getMacro().getExecutionUUIDs()).toList();
+            int index = children.indexOf(macroOrAction.getUid());
+            if (index != -1) {
+                var childNode = node.getChildren()[index];
+                var newSelectPath = currentSelPath.pathByAddingChild(childNode);
+                SwingUtilities.invokeLater(()->{
+                    tree.setSelectionPath(newSelectPath);
+                });
+            }
+        }
     }
 
     private void onSearchEnter(String searchString) {
@@ -616,6 +635,7 @@ public class MacroTreePanel extends JPanel {
 
     private void onItemInTreeSelected(SaveableAction item, GlobalActionPanel.SELECTION_TPYE type) {
         onSelectAction.onSelect(item, type);
+        System.out.println(tree.getSelectionPath());
     }
 
     private void onApply(boolean isDebug) {
