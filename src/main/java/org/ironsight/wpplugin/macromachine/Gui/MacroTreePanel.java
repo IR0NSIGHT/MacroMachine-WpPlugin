@@ -452,23 +452,20 @@ public class MacroTreePanel extends JPanel {
         {   // right click button list
             popupMenu.setLayout(new GridLayout(0,1));
 
-            JButton deleteButton = new JButton("Delete");
-            deleteButton.setToolTipText("Delete all selected macros permanently. Nested macros are not deleted.");
-            deleteButton.addActionListener(this::onDeleteItem);
-            popupMenu.add(deleteButton);
+            JButton startButton = debuggerUI.newStartButton();
+            popupMenu.add(startButton);
 
-            JButton exportMacroButton = new JButton("Export");
-            exportMacroButton.addActionListener(f -> onExportMacroPressed());
-            popupMenu.add(exportMacroButton);
+            JButton debugButton = debuggerUI.newDebugButton();
+            popupMenu.add(debugButton);
 
-            JButton createNewFromButton = new JButton("Add to new macro");
+            JButton createNewFromButton = new JButton("New macro from selection");
             createNewFromButton.setToolTipText("Add all selected items into a new macro");
             createNewFromButton.addActionListener(e -> onAddMacroPressed(true));
             popupMenu.add(createNewFromButton);
 
-            JButton addButton = new JButton("Add empty macro here");
-            addButton.setToolTipText("Create a new, empty macro.");
-            addButton.addActionListener(e -> this.onAddMacroPressed(true));
+            JButton addButton = new JButton("New, empty macro");
+            addButton.setToolTipText("Create a new, empty macro on top level.");
+            addButton.addActionListener(e -> this.onAddMacroPressed(false));
             popupMenu.add(addButton);
 
             JButton cloneMacroButton = new JButton("Clone macro");
@@ -476,11 +473,14 @@ public class MacroTreePanel extends JPanel {
             cloneMacroButton.addActionListener(e -> onCloneMacroPressed());
             popupMenu.add(cloneMacroButton);
 
-            JButton startButton = debuggerUI.newStartButton();
-            popupMenu.add(startButton);
+            JButton exportMacroButton = new JButton("Export");
+            exportMacroButton.addActionListener(f -> onExportMacroPressed());
+            popupMenu.add(exportMacroButton);
 
-            JButton debugButton = debuggerUI.newDebugButton();
-            popupMenu.add(debugButton);
+            JButton deleteButton = new JButton("Delete");
+            deleteButton.setToolTipText("Delete all selected macros permanently. Nested macros are not deleted.");
+            deleteButton.addActionListener(this::onDeleteItem);
+            popupMenu.add(deleteButton);
         }
 
 
