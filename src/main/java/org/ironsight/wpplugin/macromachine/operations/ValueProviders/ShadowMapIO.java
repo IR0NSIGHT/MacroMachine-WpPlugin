@@ -74,7 +74,7 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
 
     @Override
     public String valueToString(int value) {
-        return value != 0 ? "Shaded " + value : "Sun";
+        return value != 0 ? "Shadow depth " + value : "Sun";
     }
 
     @Override

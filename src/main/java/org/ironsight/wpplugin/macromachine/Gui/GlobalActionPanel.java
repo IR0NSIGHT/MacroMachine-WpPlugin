@@ -219,15 +219,18 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         if (mapping == null && (selectionType == SELECTION_TPYE.ACTION || selectionType == SELECTION_TPYE.INPUT ||
                 selectionType == SELECTION_TPYE.OUTPUT))
             selectionType = SELECTION_TPYE.INVALID;
+        //FIXME: notify MacroTreePanel that an item was selected.
 
         switch (selectionType) {
             case MACRO:
                 macroDesigner.setMacro(macro, true);
                 layout.show(editorPanel, MACRO_DESIGNER);
+                macroTreePanel.selectItemInTree(macro);
                 break;
             case ACTION:
                 mappingEditor.setMapping(mapping);
                 layout.show(editorPanel, MAPPING_EDITOR);
+                macroTreePanel.selectItemInTree(mapping);
                 break;
             case INPUT:
                 ioEditor.setMapping(mapping);
@@ -253,8 +256,11 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     private void init() {
-        MacroContainer.getInstance().subscribe(this::onUpdate);
-        MappingActionContainer.getInstance().subscribe(this::onUpdate);
+        MacroContainer macroContainer = MacroContainer.getInstance();
+        macroContainer.subscribe(this::onUpdate);
+
+        MappingActionContainer actionContainer = MappingActionContainer.getInstance();
+        actionContainer.subscribe(this::onUpdate);
 
         this.setLayout(new BorderLayout());
         macroTreePanel = new MacroTreePanel(MacroContainer.getInstance(),
@@ -263,7 +269,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
                 this::onSelect);
         macroTreePanel.setMaximumSize(new Dimension(200, 0));
 
-        macroDesigner = new MacroDesigner(this::onSubmitMacro);
+        macroDesigner = new MacroDesigner(actionContainer, this::onSubmitMacro, macroContainer, this);
         mappingEditor = new ActionDesigner(this::onSubmitMapping);
         ioEditor = new InputOutputEditor(action -> MappingActionContainer.getInstance().updateMapping(action,
                 GlobalActionPanel::ErrorPopUpString));

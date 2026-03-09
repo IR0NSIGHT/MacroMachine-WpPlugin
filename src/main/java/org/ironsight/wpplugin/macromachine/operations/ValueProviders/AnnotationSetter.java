@@ -32,7 +32,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
                     Color.BLUE, new Color(165, 42, 42), // brown
                     Color.GREEN, Color.RED, Color.BLACK};
     private static AnnotationSetter instance;
-    private final int IGNORE_OUTPUT = -1;
+    public static final int IGNORE_OUTPUT = -1;
     private final int[] OUTPUT_VALUES = new int[]{
             IGNORE_OUTPUT,
             ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE, ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK, ANNOTATION_LIGHT_GREY,

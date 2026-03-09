@@ -26,21 +26,45 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
     private BreakpointListener stepperVisulaizer;
     private Supplier<BreakpointListener> getStepperVisualizer;
 
+    private void onStartButton() {
+        onUserStartsMacro.accept(false);
+    }
+
+    private void onStartDebugButton() {
+        onUserStartsMacro.accept(Boolean.TRUE);
+    }
+
+    public JButton newStartButton() {
+        JButton startButton = new MacroMachineButton("▶");
+        startButton.setToolTipText("Start macro");
+        startButton.addActionListener(l -> onStartButton() );
+        return startButton;
+    }
+
+    public JButton newDebugButton() {
+        JButton startDebugButton = new MacroMachineButton("\uD83D\uDC1E"); /*bug*/
+        startDebugButton.addActionListener(l -> onStartDebugButton());
+        startDebugButton.setToolTipText("Start macro with debugger");
+        return startDebugButton;
+    }
+
+    private final Consumer<Boolean> onUserStartsMacro;
+
+
     public BreakpointButtonPanel(Consumer<Boolean> onUserStartsMacro,
                                  Supplier<BreakpointListener> getStepperVisualizer) {
+        this.onUserStartsMacro = onUserStartsMacro;
+
+
         this.getStepperVisualizer = getStepperVisualizer;
-        this.startButton = new MacroMachineButton("▶");
-        startButton.setToolTipText("Start macro");
-        startButton.addActionListener(l -> onUserStartsMacro.accept(false));
+        this.startButton = newStartButton();
 
         this.stepperButton = new MacroMachineButton("⏩");
         stepperButton.setToolTipText("Continue next step");
         this.abortButton = new MacroMachineButton("◼");
         abortButton.setToolTipText("abort current macro");
 
-        startDebugButton = new MacroMachineButton("\uD83D\uDC1E"); /*bug*/
-        startDebugButton.addActionListener(l -> onUserStartsMacro.accept(Boolean.TRUE));
-        startDebugButton.setToolTipText("Start macro with debugger");
+        startDebugButton = newDebugButton();
 
         this.setLayout(new BorderLayout());
 

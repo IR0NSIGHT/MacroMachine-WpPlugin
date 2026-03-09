@@ -163,6 +163,10 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     }
 
     public T addMapping(T item) {
+        if (item.getUid() == null) {
+            assert  false : " items HAVE to have a UUID";
+            return item;
+        }
         mappings.put(item.getUid(), item);
         notify(item.getUid());
         return item;

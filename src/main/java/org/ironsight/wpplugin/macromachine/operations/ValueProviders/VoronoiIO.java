@@ -88,7 +88,7 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO {
 
     @Override
     public String valueToString(int value) {
-        return Integer.toString(value);
+        return "ID-" + value;
     }
 
     @Override

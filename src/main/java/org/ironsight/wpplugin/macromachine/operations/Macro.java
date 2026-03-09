@@ -187,7 +187,7 @@ public class Macro implements SaveableAction {
     }
 
     public UUID[] getExecutionUUIDs() {
-        return executionUUIDs;
+        return executionUUIDs; //FIXME clone?
     }
 
     public Macro withName(String name) {

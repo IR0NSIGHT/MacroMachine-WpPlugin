@@ -59,7 +59,7 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
 
     @Override
     public String getName() {
-        return "water level absolute";
+        return "water level";
     }
 
     @Override

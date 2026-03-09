@@ -76,7 +76,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         dim.setLayerValueAt(layer, x, y, value);
     }
 
-    private final int IGNORE_VALUE = Integer.MIN_VALUE;
+    public final int IGNORE_VALUE = Integer.MIN_VALUE;
     private final int[] outputValues = new int[]{ IGNORE_VALUE, 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
     private final int[] inputValues = new int[]{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
 
@@ -144,6 +144,8 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value))
+            return;
         g.setColor(COLORS[value]);
         g.fillRect(0, 0, dim.width, dim.height);
     }

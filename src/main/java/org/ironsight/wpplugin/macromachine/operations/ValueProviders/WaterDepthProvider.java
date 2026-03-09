@@ -80,7 +80,7 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
 
     @Override
     public String getDescription() {
-        return "height of terrain below water level. only changes terrain, not water!";
+        return "depth of water. if used as output, it only changes terrain height, not water level!";
     }
 
     @Override
@@ -109,7 +109,7 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
             return "Skip";
         if (value == 0)
             return "Land (0)";
-        return String.format("Water (%d)", value);
+        return String.format("%d deep", value);
     }
 
     @Override

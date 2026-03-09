@@ -16,8 +16,8 @@ import java.util.LinkedList;
 import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.inNumericRange;
 
 class MappingActionValueTableModel implements TableModel {
-    private static final int INPUT_COLUMN_IDX = 0;
-    private static final int OUTPUT_COLUMN_IDX = 1;
+    public static final int INPUT_COLUMN_IDX = 0;
+    public static final int OUTPUT_COLUMN_IDX = 1;
     private final LinkedList<TableModelListener> listeners = new LinkedList<>();
     private MappingAction action;
 
