@@ -7,6 +7,7 @@ import org.pepsoft.worldpainter.Configuration;
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -55,6 +56,18 @@ public class MacroContainer extends AbstractOperationContainer<Macro> {
         for (Macro instance : obj) {
             this.putMapping(instance);
         }
+    }
+
+    public Set<UUID> getTopLevelMacros() {
+        HashSet<UUID> topLevels = new HashSet<>();
+        queryAll().stream().map(Macro::getUid).forEach(topLevels::add);
+
+        for (Macro m: queryAll()) {
+            for (UUID children : m.getExecutionUUIDs()) {
+                topLevels.remove(children);
+            }
+        }
+        return topLevels;
     }
 
     @Override

@@ -37,10 +37,13 @@ class MacroTreeNode implements TreeNode {
      */
     public MacroTreeNode(MappingActionContainer actions, MacroContainer macros) {
         //ROOT NODE
-        children = new MacroTreeNode[macros.queryAll().size()];
         int i = 0;
+        var topLevelMacros = macros.getTopLevelMacros();
+        children = new MacroTreeNode[topLevelMacros.size()];
+
         for (Macro macro : macros.queryAll()
                 .stream()
+                .filter(macro -> topLevelMacros.contains(macro.getUid()))
                 .sorted(Comparator.comparing(m -> m.getName().toLowerCase()))
                 .toArray(Macro[]::new)) {
             children[i++] = new MacroTreeNode(macro, true, actions, macros);

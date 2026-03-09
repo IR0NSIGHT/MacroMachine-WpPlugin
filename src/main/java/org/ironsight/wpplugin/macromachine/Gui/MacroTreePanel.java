@@ -434,10 +434,6 @@ public class MacroTreePanel extends JPanel {
         buttons.setLayout(new BoxLayout(buttons, BoxLayout.Y_AXIS));
         buttons.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JButton addButton = new JButton("Create macro");
-        addButton.setToolTipText("Create a new, empty macro.");
-        addButton.addActionListener(e -> this.onAddMacroPressed(false));
-
 
         JButton helpButton = getHelpButton("Global Tree View",
                 "This view shows your global list of macros and actions. You can" + " " +
@@ -450,36 +446,43 @@ public class MacroTreePanel extends JPanel {
                         " to " + "apply a macro as a global operation to " + "your map.");
 
         scrollPane.setPreferredSize(new Dimension(700, 600));
+
+        debuggerUI = new BreakpointButtonPanel(this::onApply, this::getTreeStepper);
+
         {   // right click button list
+            popupMenu.setLayout(new GridLayout(0,1));
+
             JButton deleteButton = new JButton("Delete");
-            deleteButton.setToolTipText("Delete all selected macros permanently");
+            deleteButton.setToolTipText("Delete all selected macros permanently. Nested macros are not deleted.");
             deleteButton.addActionListener(this::onDeleteItem);
+            popupMenu.add(deleteButton);
 
             JButton exportMacroButton = new JButton("Export");
             exportMacroButton.addActionListener(f -> onExportMacroPressed());
+            popupMenu.add(exportMacroButton);
 
             JButton createNewFromButton = new JButton("Add to new macro");
             createNewFromButton.setToolTipText("Add all selected items into a new macro");
             createNewFromButton.addActionListener(e -> onAddMacroPressed(true));
+            popupMenu.add(createNewFromButton);
+
+            JButton addButton = new JButton("Add empty macro here");
+            addButton.setToolTipText("Create a new, empty macro.");
+            addButton.addActionListener(e -> this.onAddMacroPressed(true));
+            popupMenu.add(addButton);
 
             JButton cloneMacroButton = new JButton("Clone macro");
             cloneMacroButton.setToolTipText("Clone selected macros");
             cloneMacroButton.addActionListener(e -> onCloneMacroPressed());
+            popupMenu.add(cloneMacroButton);
 
-            JButton[] buttonArr = new JButton[]{
-                    deleteButton,
-                    exportMacroButton,
-                    createNewFromButton,
-                    cloneMacroButton
-            };
-            for (JButton b : buttonArr) {
-                b.setMaximumSize(new Dimension(Integer.MAX_VALUE, b.getPreferredSize().height));
-                buttons.add(b);
-            }
-            popupMenu.add(buttons);
+            JButton startButton = debuggerUI.newStartButton();
+            popupMenu.add(startButton);
+
+            JButton debugButton = debuggerUI.newDebugButton();
+            popupMenu.add(debugButton);
         }
 
-        debuggerUI = new BreakpointButtonPanel(this::onApply, this::getTreeStepper);
 
         JButton importMacroButton = new JButton("Import");
         importMacroButton.addActionListener(f -> onImportMacroPressed());
@@ -487,10 +490,8 @@ public class MacroTreePanel extends JPanel {
         JPanel bottomButtons = new JPanel(new FlowLayout());
         bottomButtons.add(importMacroButton);
         bottomButtons.add(helpButton);
-        bottomButtons.add(addButton);
         bottomButtons.add(debuggerUI);
         contentPanel.add(bottomButtons, BorderLayout.SOUTH);
-
 
         // Toggle button (header)
         toggleButton = new JButton("▼"); // ▼ for expanded, ▶ for collapsed
