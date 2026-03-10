@@ -75,14 +75,15 @@ public class DisplayUnitPickerDialog extends JDialog {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
 
-        PickerFilterOption noMacroFilter = new PickerFilterOption("macros", "show macros") {
+        PickerFilterOption showMacrosFilter = new PickerFilterOption("macros", "show macros") {
             @Override
             public boolean block(Object item) {
                 return item instanceof Macro;
             }
         };
 
-        PickerFilterOption noDefaultFilter = new PickerFilterOption("defaults", "show default actions") {
+
+        PickerFilterOption showActions = new PickerFilterOption("defaults", "show default actions") {
             Set<UUID> matchingIds = defaultMappings.stream()
                     .map(MappingAction::getUid)
                     .collect(Collectors.toCollection(HashSet::new));
@@ -93,7 +94,7 @@ public class DisplayUnitPickerDialog extends JDialog {
             }
         };
 
-        PickerFilterOption noCustomActionsFilter = new PickerFilterOption("custom","show user created actions") {
+        PickerFilterOption showCustom = new PickerFilterOption("custom","show user created actions") {
             Set<UUID> matchingIds = container.queryAll().stream()
                     .map(MappingAction::getUid)
                     .collect(Collectors.toCollection(HashSet::new));
@@ -103,10 +104,16 @@ public class DisplayUnitPickerDialog extends JDialog {
             }
         };
 
+        showMacrosFilter.setActive(true);
+        showActions.setActive(true);
+        showCustom.setActive(true);
+
         Dialog dlg = new DisplayUnitPickerDialog(allItems,
                 System.out::println,
                 Collections.singleton(MappingAction.getNewEmptyAction()),
-                frame, noMacroFilter, noDefaultFilter, noCustomActionsFilter);
+                frame, showMacrosFilter, showActions, showCustom);
+
+
         dlg.setVisible(true);
     }
 
