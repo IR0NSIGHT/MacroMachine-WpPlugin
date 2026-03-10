@@ -211,6 +211,8 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value))
+            return;
         g.setColor(value == PASS_VALUE ? Color.GREEN : Color.RED);
         g.fillRect(0, 0, dim.width, dim.height);
     }
