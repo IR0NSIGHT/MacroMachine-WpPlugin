@@ -285,12 +285,13 @@ public class MacroDesigner extends JPanel {
         }
     }
 
-    private JPopupMenu createPopupMenu(int row, int column, int[] selectedRows) {
+    private JPopupMenu createPopupMenu(int row, int[] selectedRows) {
         JPopupMenu menu = new JPopupMenu();
         menu.setLayout(new GridLayout(0,1));
+
         {
             JButton toggleActiveButton = new JButton();
-            toggleActiveButton.setText(macro.getActiveActions()[row] ? "disable" : "enable"); //FIXME: Filter:Reset default action appears ALWAYS active? why is that?
+            toggleActiveButton.setText(row < 0 || macro.getActiveActions()[row] ? "disable" : "enable");
             toggleActiveButton.setToolTipText("disabled items will be skipped when the macro is executed.");
             toggleActiveButton.addActionListener(e -> onToggleEnableItem(row, toggleActiveButton));
             menu.add(toggleActiveButton);
@@ -493,12 +494,23 @@ public class MacroDesigner extends JPanel {
                         table.addColumnSelectionInterval(column, column);
 
                         // Show the popup menu
-                        JPopupMenu popupMenu = createPopupMenu(row, column, table.getSelectedRows());
+                        JPopupMenu popupMenu = createPopupMenu(row, table.getSelectedRows());
                         popupMenu.show(table, e.getX(), e.getY());
                     }
                 }
             }
         });
+
+        scrollPane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                super.mouseReleased(e);
+                // Show the popup menu
+                JPopupMenu popupMenu = createPopupMenu(-1, table.getSelectedRows());
+                popupMenu.show(table, e.getX(), e.getY());
+            }
+        });
+
 
         JPanel nameAndDescriptionPanel = new JPanel();
         nameAndDescriptionPanel.setLayout(new BoxLayout(nameAndDescriptionPanel, BoxLayout.Y_AXIS));
