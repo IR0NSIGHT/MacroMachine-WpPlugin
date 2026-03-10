@@ -6,7 +6,7 @@
 
     <groupId>org.ironsight.wpplugin.macroMachine</groupId>
     <artifactId>Macro-Machine-Plugin</artifactId>
-    <version>0.4.9</version>
+    <version>0.4.10_SNAPSHOT_1</version>
 
     <repositories>
         <repository>
