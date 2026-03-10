@@ -115,6 +115,8 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value))
+            return;
         //value is 0 to 100
         g.setColor(Color.black);
         g.fillRect(0, 0, dim.width, dim.height);

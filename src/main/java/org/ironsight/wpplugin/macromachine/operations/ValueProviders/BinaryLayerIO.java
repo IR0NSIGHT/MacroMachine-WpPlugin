@@ -89,6 +89,8 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     }
 
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value))
+            return;
         if (value == 0) return;
         g.setColor(Color.red);
         g.fillRect(0, 0, dim.width, dim.height);

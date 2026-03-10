@@ -62,6 +62,8 @@ public class SelectionIO extends BinaryLayerIO {
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         super.paint(g, value, dim);
+        if (isIgnoreValue(value))
+            return;
         if (value == 0) // not selected
             g.setColor(Color.LIGHT_GRAY);
         if (value == 1)
