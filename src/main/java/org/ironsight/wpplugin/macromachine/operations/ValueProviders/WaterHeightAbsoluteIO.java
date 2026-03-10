@@ -124,8 +124,6 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         if (isIgnoreValue(value)) {
-            g.setColor(Color.gray);
-            g.fillRect(0, 0, dim.width, dim.height);
             return;
         }
         float percent = (value - getMinValue() * 1f) / (getMaxValue() - getMinValue());

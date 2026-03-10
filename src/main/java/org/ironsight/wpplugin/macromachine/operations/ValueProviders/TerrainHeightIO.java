@@ -143,8 +143,6 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         if (isIgnoreValue(value)) {
-            g.setColor(Color.gray);
-            g.fillRect(0,0,dim.width,dim.height);
             return;
         }
 

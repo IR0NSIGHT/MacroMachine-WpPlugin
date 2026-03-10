@@ -134,8 +134,6 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public void paint(Graphics g, int value, Dimension dim) {
         if (isIgnoreValue(value)) {
-            g.setColor(Color.gray);
-            g.fillRect(0,0,dim.width,dim.height);
             return;
         }
         g.setColor(COLORS[value]);

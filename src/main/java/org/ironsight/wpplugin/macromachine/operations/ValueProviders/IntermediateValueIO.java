@@ -138,6 +138,8 @@ public class IntermediateValueIO implements IPositionValueSetter, IPositionValue
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value))
+            return;
         float percent = ((float) value - getMinValue()) / (getMaxValue() - getMinValue());
         g.setColor(Color.black);
         g.fillRect(0, 0, dim.width, dim.height);

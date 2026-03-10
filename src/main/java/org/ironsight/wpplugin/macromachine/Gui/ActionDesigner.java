@@ -16,7 +16,7 @@ public class ActionDesigner extends LayerMappingPanel {
     private MappingActionValueTableModel model ;
     private BlockingSelectionModel selectionModel;
     private final Consumer<MappingAction> onSubmit;
-    private MappingGridPanel mappingDisplay;
+    private MappingGridPanel gridPanel;
     private MappingTextTable table;
     private LayerMappingTopPanel topBar;
 
@@ -27,8 +27,8 @@ public class ActionDesigner extends LayerMappingPanel {
 
     @Override
     protected void updateComponents() {
-        mappingDisplay.setVisible(!mapping.input.isDiscrete());
-        mappingDisplay.setMapping(mapping);
+        gridPanel.setVisible(!mapping.input.isDiscrete());
+        gridPanel.setMapping(mapping);
         model.rebuildModelFromAction(mapping);
         topBar.setMapping(mapping);
         this.repaint();
@@ -84,7 +84,7 @@ public class ActionDesigner extends LayerMappingPanel {
 
         this.setLayout(new BorderLayout());
 
-        mappingDisplay = new MappingGridPanel(selectionModel);
+        gridPanel = new MappingGridPanel(selectionModel);
         assert model != null;
         assert selectionModel != null;
         table = new MappingTextTable(model, selectionModel);
@@ -96,7 +96,7 @@ public class ActionDesigner extends LayerMappingPanel {
         });
         //set up sync between both components
 
-        mappingDisplay.setOnUpdate(this::updateMapping);
+        gridPanel.setOnUpdate(this::updateMapping);
 
         topBar = new LayerMappingTopPanel();
         topBar.setOnUpdate(this::updateMapping);
@@ -132,6 +132,6 @@ public class ActionDesigner extends LayerMappingPanel {
         this.add(topBar, BorderLayout.NORTH);
         this.add(table, BorderLayout.EAST);
         this.add(buttonPanel, BorderLayout.SOUTH);
-        this.add(mappingDisplay, BorderLayout.CENTER);
+        this.add(gridPanel, BorderLayout.CENTER);
     }
 }

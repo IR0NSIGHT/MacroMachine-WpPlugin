@@ -130,6 +130,8 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value))
+            return;
         Terrain terrain = Terrain.values()[value];
         BufferedImage terrainImg = terrain.getScaledIcon(Math.min(dim.height, dim.width), colorScheme);
         g.drawImage(terrainImg, 0, 0, null);

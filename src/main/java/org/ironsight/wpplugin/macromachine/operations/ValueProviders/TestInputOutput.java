@@ -97,6 +97,8 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value))
+            return;
         g.setColor(Color.RED);
         g.fillRect(0, 0, dim.width, dim.height);
     }

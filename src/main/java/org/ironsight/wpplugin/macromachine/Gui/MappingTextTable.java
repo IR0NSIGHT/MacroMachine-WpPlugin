@@ -199,16 +199,17 @@ public class MappingTextTable extends JPanel {
 
             }
         });
-        numberTable.addMouseListener(new MouseAdapter() {
+        MouseAdapter rightClickListener = new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
+            public void mousePressed(MouseEvent e) {
                 if (!numberTable.isEditing() && e.getButton() == MouseEvent.BUTTON3) {
                     // Show the popup menu
                     JPopupMenu popupMenu = createRightClickMenu(selectionModel.getSelectedModelRows());
                     popupMenu.show(numberTable, e.getX(), e.getY());
                 }
             }
-        });
+        };
+        numberTable.addMouseListener(rightClickListener);
 
 // Save selected row table
         numberTable.getSelectionModel().addListSelectionListener(e -> {
@@ -227,6 +228,7 @@ public class MappingTextTable extends JPanel {
         numberTable.addMouseListener(previeWindow);
         numberTable.addMouseMotionListener(previeWindow);
         scrollPane.addMouseWheelListener(previeWindow);
+        scrollPane.addMouseListener(rightClickListener);
     }
 
     private JPopupMenu createRightClickMenu(int[] selectedModelRows) {
