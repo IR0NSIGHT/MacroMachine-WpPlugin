@@ -7,6 +7,8 @@ import org.pepsoft.worldpainter.layers.PineForest;
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -23,6 +25,20 @@ public class ActionDesigner extends LayerMappingPanel {
     public ActionDesigner(Consumer<MappingAction> onSubmit) {
         super();
         this.onSubmit = onSubmit;
+
+        // ADD CTRL S FOR SAVING
+        KeyStroke ctrlS = KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK);
+        InputMap inputMap = this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = this.getActionMap();
+        inputMap.put(ctrlS, "save");
+        actionMap.put("save", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onSave();
+                // call your save method here
+            }
+        });
+
     }
 
     @Override
@@ -65,6 +81,10 @@ public class ActionDesigner extends LayerMappingPanel {
         frame.setVisible(true);
     }
 
+    private void onSave() {
+        onSubmit.accept(model.constructMapping());
+    }
+
     @Override
     protected void initComponents() {
         model = new MappingActionValueTableModel();
@@ -102,8 +122,8 @@ public class ActionDesigner extends LayerMappingPanel {
         topBar.setOnUpdate(this::updateMapping);
 
         JButton submitButtom = new JButton("save");
-        submitButtom.setToolTipText("Submit action and save to global list.");
-        submitButtom.addActionListener(e -> onSubmit.accept(model.constructMapping()));
+        submitButtom.setToolTipText("Submit action and save to global list. Use ctrl + S as a shortcut.");
+        submitButtom.addActionListener(e -> onSave());
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(submitButtom);
