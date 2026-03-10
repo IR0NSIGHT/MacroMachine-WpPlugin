@@ -9,6 +9,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -416,6 +418,21 @@ public class MacroDesigner extends JPanel {
         onSubmit.accept(this.macro);
     }
 
+    private void initKeyMap() {
+        // ADD CTRL S FOR SAVING
+        KeyStroke ctrlS = KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK);
+        InputMap inputMap = this.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actionMap = this.getActionMap();
+        inputMap.put(ctrlS, "save");
+        actionMap.put("save", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onSave();
+                // call your save method here
+            }
+        });
+    }
+
     private void init() {
         this.setLayout(new BorderLayout());
 
@@ -517,6 +534,8 @@ public class MacroDesigner extends JPanel {
         this.add(tabbedPane, BorderLayout.CENTER);
 
         prepareTableModel();
+
+        initKeyMap();
     }
     private final MappingActionContainer actionContainer;
     private final MacroContainer macroContainer;
