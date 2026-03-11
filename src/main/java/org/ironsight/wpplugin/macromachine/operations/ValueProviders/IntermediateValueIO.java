@@ -8,147 +8,26 @@ import java.util.Arrays;
 import java.util.Objects;
 
 @Deprecated // does not work anymore with iterating the map once per action
-public class IntermediateValueIO implements IPositionValueSetter, IPositionValueGetter {
-    private static int value;
-    private static int lastX;
-    private static int lastY;
-    @Override
-    public String toString() {
-        return getName();
-    }
-    private final int min, max;
-    private final String customName;    //user names this intermediat value to represetn "snow chance" f.e.
-
-    public IntermediateValueIO(int min, int max, String customName) {
-        this.min = min;
-        this.max = max;
-        this.customName = customName;
-    }
-    @Override
-    public String getToolTipText() {
-        return getDescription();
-    }
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        IntermediateValueIO that = (IntermediateValueIO) o;
-        return min == that.min && max == that.max && Objects.equals(customName, that.customName);
-    }
-
-    @Override
-    public int getValueAt(Dimension dim, int x, int y) {
-        if (lastX != x || lastY != y) return 0;
-        return value;
-    }
-
-    @Override
-    public int hashCode() {
-        return getProviderType().hashCode();
-    }
-
-    @Override
-    public int[] getAllPossibleValues() {
-        return new int[0];
-    }
-
-    @Override
-    public boolean isVirtual() {
-        return true;
-    }
-
-    @Override
-    public void setValueAt(Dimension dim, int x, int y, int value) {
-        IntermediateValueIO.value = value;
-        lastX = x;
-        lastY = y;
-    }
-
-    private final int IGNORE_VALUE = Integer.MIN_VALUE;
-    private final int[] values = new int[]{ IGNORE_VALUE, 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
-    @Override
-    public int[] getAllInputValues() {
-        return Arrays.copyOf(values, values.length);
-    }
-    @Override
-    public boolean isIgnoreValue(int value) {
-        return value == IGNORE_VALUE;
-    }
-
-    @Override
-    public int[] getAllOutputValues() {
-        return new int[0];
-    }
-
-    @Override
-    public void prepareForDimension(Dimension dim) {
-
-    }
+public class IntermediateValueIO extends AnnotationSetter {
 
     @Override
     public String getName() {
-        return "Intermediate Value" + (customName.isEmpty() ? "" : "("+customName+")");
+        return "Intermediate Value";
     }
 
     @Override
     public String getDescription() {
-        return "a value to temporarily store an intermediate result. will not exist before or after macro execution, " +
-                "only while the macro runs.";
+        return "obsolete and discontinued.";
     }
 
-    @Override
-    public int getMaxValue() {
-        return max;
-    }
-
-    @Override
-    public int getMinValue() {
-        return min;
-    }
-
-    @Override
-    public IMappingValue instantiateFrom(Object[] data) {
-        try {
-            int min = (int)EditableIO.clamp ((Integer)data[0], -100,100);
-            int max =(int)EditableIO.clamp ((Integer)data[1], -100,100);
-            return new IntermediateValueIO(min, max, (String)data[2]);
-        } catch (Exception ex) {
-            return new IntermediateValueIO(0,100,"");
-        }
-    }
-
-    @Override
-    public Object[] getSaveData() {
-        return new Object[]{
-                min,
-                max,
-                customName
-        };
-    }
-
-    @Override
-    public String valueToString(int value) {
-        return Integer.toString(value);
-    }
-
-    @Override
-    public boolean isDiscrete() {
-        return false;
-    }
-
-    @Override
-    public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        if (isIgnoreValue(value))
-            return;
-        float percent = ((float) value - getMinValue()) / (getMaxValue() - getMinValue());
-        g.setColor(Color.black);
-        g.fillRect(0, 0, dim.width, dim.height);
-        g.setColor(Color.RED);
-        g.fillRect(0, 0, (int) (dim.width * percent), dim.height);
-    }
 
     @Override
     public ProviderType getProviderType() {
         return ProviderType.INTERMEDIATE;
+    }
+
+    @Override
+    public IMappingValue instantiateFrom(Object[] data) {
+        return new IntermediateValueIO();
     }
 }

@@ -10,6 +10,7 @@ import org.pepsoft.worldpainter.layers.Annotations;
 import javax.vecmath.Point2d;
 import java.awt.*;
 import java.io.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -171,6 +172,17 @@ class LayerMappingTest {
             for (int i = 150; i < 300; i++) { //plateau after second point
                 assertEquals(10, mapper.map(i));
             }
+        }
+
+        {   // action with interpolateable output with IGNROE output
+            MappingAction mapper = new MappingAction(
+                    new TerrainHeightIO(-5,10), new WaterHeightAbsoluteIO(0,20), new MappingPoint[]{
+                    new MappingPoint(-3,3), new MappingPoint(5,11), new MappingPoint(9,WaterHeightAbsoluteIO.IGNORE)
+
+            }, ActionType.SET, "", "", UUID.randomUUID());
+            var mappedValues = Arrays.stream(mapper.input.getAllInputValues()).map(mapper::map).toArray();
+            var expectedValues = new int[]{3,3,3,4,5,6,7,8,9,10,11,11,11,11,WaterHeightAbsoluteIO.IGNORE,WaterHeightAbsoluteIO.IGNORE};
+            assertArrayEquals(expectedValues, mappedValues, "mapping was incorrect");
         }
     }
 
