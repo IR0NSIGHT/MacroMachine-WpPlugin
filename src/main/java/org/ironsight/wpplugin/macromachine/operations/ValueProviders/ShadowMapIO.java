@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
-    private final int[] values = IntStream.range(0, 100).toArray();
+    private final int[] values = IntStream.range(getMinValue(), getMaxValue()+1).toArray();
     private TileContainer shadowMap;
 
     @Override

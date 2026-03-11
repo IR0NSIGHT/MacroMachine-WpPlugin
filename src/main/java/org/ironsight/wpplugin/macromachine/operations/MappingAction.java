@@ -68,8 +68,9 @@ public class MappingAction implements SaveableAction {
                 .sorted(Comparator.comparing(mp -> mp.input)).toArray(MappingPoint[]::new);
 
         //direct mapping: mappings[input] = output. fast and reliable
-        this.mappings = new int[input.getMaxValue() + 1 - input.getMinValue()];
+
         if (output.isDiscrete()) {  // DO NOT INTERPOLATE OUTPUT
+            mappings = new int[input.getMaxValue() + 1 - input.getMinValue()];
             if (this.mappingPoints.length == 0) return;
             int j = -1;
             for (int i : input.getAllInputValues()) {
@@ -85,38 +86,57 @@ public class MappingAction implements SaveableAction {
                 mappings[i - input.getMinValue()] = point.output;
             }
         } else {
-            if (this.mappingPoints.length == 0) return;
-            if (this.mappingPoints.length == 1) {
-                Arrays.fill(mappings, mappingPoints[0].output);
-                return;
-            }
-            ;
-            // 2 or more mapping points are enough to interpolate
-
-            //prepare input points by adding min-input and max-input points for easier index finding of interpolation
-            LinkedList<MappingPoint> points = new LinkedList<>(Arrays.asList(mappingPoints));
-            if (points.getFirst().input != input.getMinValue())
-                points.addFirst(new MappingPoint(input.getMinValue(), points.getFirst().output));
-
-            if (points.getLast().input != input.getMaxValue())
-                points.addLast(new MappingPoint(input.getMaxValue(), points.getLast().output));
-            assert points.size() >= 2 : "at least min and max points on the input scale are defined";
-
-            for (int i = 0; i < points.size() - 1; i++) {
-                MappingPoint low = points.get(i);
-                MappingPoint high = points.get(i + 1);
-                mappings[low.input - input.getMinValue()] = low.output;
-                int range = (high.input - low.input);
-                for (int inputValue = low.input + 1; inputValue <= high.input; inputValue++) {
-                    float t = (1f * inputValue - low.input) / range;
-                    int outputValue = Math.round((1 - t) * low.output + (t) * high.output);
-
-                    if (inputValue > input.getMaxValue()) return;
-                    mappings[inputValue - input.getMinValue()] = outputValue;
-                }
-            }
+            mappings = generateInterpolatedOutput(mappingPoints, input, output);
         }
 
+    }
+
+    public static int[] generateInterpolatedOutput(MappingPoint[] mappingPoints, IPositionValueGetter getter, IPositionValueSetter setter) {
+        int[] mappings = new int[getter.getAllInputValues().length];
+        Arrays.fill(mappings, setter.getMinValue());
+
+        if (mappingPoints.length == 0) return mappings;
+        if (mappingPoints.length == 1) {
+            Arrays.fill(mappings, mappingPoints[0].output);
+            return mappings;
+        }
+
+        // ####  2 or more mapping points are enough to interpolate #####
+
+        //prepare input points by adding min-input and max-input points for easier index finding of interpolation
+        LinkedList<MappingPoint> points = new LinkedList<>(Arrays.asList(mappingPoints));
+        if (points.getFirst().input != getter.getMinValue())
+            points.addFirst(new MappingPoint(getter.getMinValue(), points.getFirst().output));
+
+        if (points.getLast().input != getter.getMaxValue())
+            points.addLast(new MappingPoint(getter.getMaxValue(), points.getLast().output));
+        assert points.size() >= 2 : "at least min and max points on the input scale are defined";
+        assert points.getFirst().input == getter.getMinValue();
+        assert points.getLast().input == getter.getMaxValue();
+        // #### calculate actual interpolated points ####
+
+        for (int i = 0; i < points.size() - 1; i++) {
+            MappingPoint low = points.get(i);
+            MappingPoint high = points.get(i + 1);
+
+            mappings[low.input - getter.getMinValue()] = low.output;
+            int range = (high.input - low.input);
+            boolean useIgnoreOutput = false;
+            int ignore = -1;
+            if (setter.isIgnoreValue(low.output) || setter.isIgnoreValue(high.output)) {
+                ignore = low.output;
+                useIgnoreOutput = true;
+            }
+
+            for (int inputValue = low.input + 1; inputValue <= high.input; inputValue++) {
+                float t = (1f * inputValue - low.input) / range;
+                int outputValue = useIgnoreOutput ? ignore : Math.round((1 - t) * low.output + (t) * high.output);
+
+                assert (inputValue <= getter.getMaxValue());
+                mappings[inputValue - getter.getMinValue()] = outputValue;
+            }
+        }
+        return mappings;
     }
 
     public static MappingAction getNewEmptyAction(UUID id) {

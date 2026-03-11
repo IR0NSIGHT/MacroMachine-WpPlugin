@@ -83,7 +83,7 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
         dim.setHeightAt(x, y, value);
     }
 
-    private final int IGNORE_VALUE = Integer.MIN_VALUE;
+    public static final int IGNORE_VALUE = Integer.MIN_VALUE;
     private final int[] inputValues;
     private final int[] outputValues;
 

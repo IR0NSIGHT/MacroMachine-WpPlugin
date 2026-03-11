@@ -24,13 +24,13 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
 
     @Override
     public int[] getAllOutputValues() {
-        return new int[0];
+        return values   ;
     }
 
     private final int[] values;
     @Override
     public int[] getAllInputValues() {
-        return Arrays.copyOf(values, values.length);
+        return  IntStream.range(getMinValue(), getMaxValue()+1).toArray();
     }
     @Override
     public boolean equals(Object obj) {

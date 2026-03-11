@@ -12,7 +12,7 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionValueSetter, EditableIO {
     private final int min, max;
-    private final int IGNORE = Integer.MAX_VALUE;
+    public static final int IGNORE = Integer.MAX_VALUE;
     private final int[] outputValues;
     private final int[] inputValues;
 

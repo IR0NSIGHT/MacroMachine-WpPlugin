@@ -70,7 +70,7 @@ public enum ProviderType {
             case WATER_DEPTH:
                 return new WaterDepthProvider();
             case INTERMEDIATE:
-                return new IntermediateValueIO(0,100,"");
+                return new IntermediateValueIO();
             case STONE_PALETTE:
                 return new StonePaletteApplicator();
             case VANILLA_BIOME:
