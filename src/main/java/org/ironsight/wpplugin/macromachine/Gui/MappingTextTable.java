@@ -36,7 +36,6 @@ public class MappingTextTable extends JPanel {
     private TableRowSorter<MappingActionValueTableModel> sorter;
     private int[] selectedViewRows = new int[0];
     private BlockingSelectionModel blockingSelectionModel;
-
     private String getToolTipForRow(int row) {
         if (tableModel.getValueAt(row, INPUT_COLUMN_IDX) instanceof MappingPointValue input &&
             tableModel.getValueAt(row, OUTPUT_COLUMN_IDX) instanceof MappingPointValue output) {
@@ -315,7 +314,7 @@ public class MappingTextTable extends JPanel {
         MappingPointCellRenderer cellRenderer = new MappingPointCellRenderer();
         numberTable.setDefaultRenderer(MappingPointValue.class, cellRenderer);
         numberTable.setRowHeight(cellRenderer.getPreferredHeight());
-        numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor());
+        numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor(INPUT_COLUMN_IDX));
         scrollPane = new JScrollPane(numberTable);
         this.add(scrollPane, BorderLayout.CENTER);
         JPanel buttons = new JPanel();

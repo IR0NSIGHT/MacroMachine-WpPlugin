@@ -39,10 +39,6 @@ public class MappingValuePreviewPanel extends JPanel {
     @Override
     public void paint(Graphics g) {
         super.paint(g);
-        if (Arrays.stream(mappingValue.getAllPossibleValues()).noneMatch(value1 -> value1 == value)) {
-            assert false : "trying to paint a value thats not part of the value range.";
-            return;
-        }
         mappingValue.paint(g, value, getSize());
     }
 }
