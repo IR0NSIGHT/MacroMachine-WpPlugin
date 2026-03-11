@@ -1,5 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.util.Comparator;
+
 public interface IDisplayUnit {
     String getName();
 
@@ -13,5 +15,4 @@ public interface IDisplayUnit {
                 lowerCaseString.contains(item.getName().toLowerCase()) ||
                 lowerCaseString.contains(item.getDescription().toLowerCase());
     };
-
 }

@@ -14,14 +14,14 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.EventObject;
 
 public class MappingPointCellEditor implements TableCellEditor {
     private final JComboBox<MappingPointValue> dropdown = new JComboBox<>();
     private final ArrayList<CellEditorListener> listeners = new ArrayList<>();
-
-    public MappingPointCellEditor() {
+    private final int inputColumn;
+    public MappingPointCellEditor(int inputRow) {
+        this.inputColumn = inputRow;
         dropdown.setRenderer(new MappingPointCellRenderer());
     }
 
@@ -81,7 +81,7 @@ public class MappingPointCellEditor implements TableCellEditor {
     }
 
     @Override
-    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int viewRow, int viewColumn) {
         assert value != null;
         assert value instanceof MappingPointValue;
         dropdown.removeAllItems();
@@ -91,11 +91,19 @@ public class MappingPointCellEditor implements TableCellEditor {
         { // collect avaialbe values to offer in the dropdown for user selection
             IMappingValue mappingValue = ((MappingPointValue) value).mappingValue;
             java.util.List<MappingPointValue> arr;
-            arr = Arrays.stream(mappingValue.getAllPossibleValues()).mapToObj(((MappingPointValue) value)::withValue).toList();
-            if (mappingValue.isDiscrete()) { // sort alphavetically, bc discrete values only show a name not a numeric value to user
-                arr = arr.stream().sorted(Comparator.comparing(o -> o.mappingValue.valueToString(o.numericValue))).toList();
+            int modelColumn = table.convertColumnIndexToModel(viewColumn);
+            int[] values;
+            if (inputColumn == modelColumn &&  mappingValue instanceof IPositionValueGetter getter ) {
+                values = getter.getAllInputValues();
+            } else if (inputColumn != modelColumn && mappingValue instanceof IPositionValueSetter setter) {
+                values = setter.getAllOutputValues();
+            } else {
+                assert false;
+                values = mappingValue.getAllPossibleValues();
             }
-            arr.forEach(dropdown::addItem);
+
+            arr = Arrays.stream(values).mapToObj(((MappingPointValue) value)::withValue).toList();
+            arr.stream().sorted().forEach(dropdown::addItem);
         }
 
         dropdown.setSelectedItem(value);
