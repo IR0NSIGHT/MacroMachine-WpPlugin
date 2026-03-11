@@ -14,10 +14,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -30,22 +27,96 @@ public class DisplayUnitPickerDialog extends JDialog {
     private final DisplayValueRowFilter rowFilter = new DisplayValueRowFilter();
     private HashSet<PickerFilterOption> activeFilters = new HashSet<>();
     private TableRowSorter<TableModel> rowSorter;
-
+    private final Consumer<IDisplayUnit> onSubmit;
     public DisplayUnitPickerDialog(ArrayList<IDisplayUnit> layerMappings,
                                    Consumer<IDisplayUnit> onSubmit,
                                    Collection<IDisplayUnit> topActions,
                                    Component parent, PickerFilterOption... filters) {
         super();
         this.setLayout(new BorderLayout());
-
+        this.onSubmit = onSubmit;
         init(layerMappings, onSubmit, topActions);
         initFilters(filters);
+        setupKeyActions();
+
         setModal(true);
         setAlwaysOnTop(true);
         pack();
         if (parent != null) {
             setLocation(parent.getLocationOnScreen());
         }
+
+        tableSelectFirstRow();
+        SwingUtilities.invokeLater(() ->
+            searchField.requestFocus()
+        );
+    }
+
+    private void setupKeyActions() {
+        JRootPane root = getRootPane();
+        InputMap im = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = root.getActionMap();
+
+// Arrow Down
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, 0), "moveDown");
+        am.put("moveDown", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int row = table.getSelectedRow();
+                int next = Math.min(row + 1, table.getRowCount() - 1);
+
+                if (next >= 0) {
+                    table.setRowSelectionInterval(next, next);
+                    table.scrollRectToVisible(table.getCellRect(next, 0, true));
+                }
+            }
+        });
+
+// Arrow Up
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, 0), "moveUp");
+        am.put("moveUp", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int row = table.getSelectedRow();
+                int prev = Math.max(row - 1, 0);
+
+                if (table.getRowCount() > 0) {
+                    table.setRowSelectionInterval(prev, prev);
+                    table.scrollRectToVisible(table.getCellRect(prev, 0, true));
+                }
+            }
+        });
+
+// Enter
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "confirm");
+        am.put("confirm", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                onSubmitSelected();
+            }
+        });
+
+// Escape
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "cancel");
+        am.put("cancel", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+            }
+        });
+
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    int row = table.rowAtPoint(e.getPoint());
+                    if (row >= 0) {
+                        table.setRowSelectionInterval(row,row);
+                        onSubmitSelected(); // your method
+                    }
+                }
+            }
+        });
     }
 
     public static void main(String[] args) {
@@ -151,24 +222,29 @@ public class DisplayUnitPickerDialog extends JDialog {
         this.add(filterCheckboxes, BorderLayout.NORTH);
     }
 
+    private JTable table;
+    private JTextField searchField;
     private void init(ArrayList<IDisplayUnit> items,
                       Consumer<IDisplayUnit> onSubmit,
                       Collection<IDisplayUnit> specialTopAction) {
 
         DefaultTableModel tableModel = createTableModel(items, specialTopAction);
-        JTable table = createTable(tableModel);
+        table = createTable(tableModel);
         rowSorter = new TableRowSorter<>(table.getModel());
         table.setRowSorter(rowSorter);
         rowSorter.setRowFilter(rowFilter);
 
-        JButton okButton = createOkButton(table, onSubmit);
+        JButton okButton = new JButton("OK");
+        okButton.addActionListener(e -> {
+            onSubmitSelected();
+        });
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(e -> dispose());
 
         resizeRowHeights(table);
         table.setTableHeader(null);
 
-        JTextField searchField = createSearchField(rowSorter);
+        searchField = createSearchField(rowSorter);
         JPanel searchPanel = createSearchPanel(searchField);
 
         JPanel contentPanel = new JPanel(new BorderLayout());
@@ -223,19 +299,13 @@ public class DisplayUnitPickerDialog extends JDialog {
             table.setRowHeight(i, height);
     }
 
-    private JButton createOkButton(JTable table, Consumer<IDisplayUnit> onSubmit) {
-        JButton okButton = new JButton("OK");
-        okButton.addActionListener(e -> {
-            int selectedRow = table.getSelectedRow();
-            if (selectedRow >= 0) {
-                IDisplayUnit selected = (IDisplayUnit) table.getValueAt(selectedRow, 0);
-                onSubmit.accept(selected);
-                dispose();
-            }
-        });
-        return okButton;
+    private void onSubmitSelected() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow >= 0) {
+            IDisplayUnit selected = (IDisplayUnit) table.getValueAt(selectedRow, 0);
+            this.onSubmit.accept(selected);
+        }
     }
-
 
     private JTextField createSearchField(TableRowSorter<TableModel> rowSorter) {
         JTextField searchField = new JTextField(15);
@@ -258,9 +328,15 @@ public class DisplayUnitPickerDialog extends JDialog {
                 String text = searchField.getText();
                 rowFilter.setString(text);
                 rowSorter.setRowFilter(rowFilter);
+                tableSelectFirstRow();
             }
         });
         return searchField;
+    }
+
+    private void tableSelectFirstRow() {
+        if (table.getRowCount() > 0)
+            table.setRowSelectionInterval(0,0); // select first item after search changed
     }
 
     private JPanel createSearchPanel(JTextField searchField) {
