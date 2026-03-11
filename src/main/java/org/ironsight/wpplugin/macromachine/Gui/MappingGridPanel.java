@@ -82,6 +82,8 @@ public class MappingGridPanel extends LayerMappingPanel implements MouseListener
         if (lastSelectedRow == -1)
             return null;
         int lastSelectedInput = lastSelectedRow + mapping.input.getMinValue();
+        if (lastSelectedInput < mapping.getInput().getMinValue() || lastSelectedInput > mapping.getInput().getMaxValue())
+            return null;
         return new MappingPoint(lastSelectedInput, mapping.map(lastSelectedInput));
     }
 
