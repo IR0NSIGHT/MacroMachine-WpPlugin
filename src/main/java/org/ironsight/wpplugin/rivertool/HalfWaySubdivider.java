@@ -6,7 +6,8 @@ import java.util.Random;
 import static org.ironsight.wpplugin.rivertool.operations.ApplyPath.ApplyRiverOperation.angleOf;
 import static org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation.INHERIT_VALUE;
 
-public class HalfWaySubdivider implements Subdivide {
+public class HalfWaySubdivider implements Subdivide
+{
     private final float xRange;
     private final float yRange;
     private final boolean relative;
@@ -33,7 +34,7 @@ public class HalfWaySubdivider implements Subdivide {
         assert randomX > -1 && randomX < 1;
         double tangentAngle = angleOf(Math.round(x2 - x1), Math.round(y2 - y1));
         dist *= randomX * xRange;
-        //a point 90° to a-b line and with distance = dist
+        // a point 90° to a-b line and with distance = dist
         int x = (int) Math.round(dist * Math.cos(tangentAngle + Math.PI / 2));
         int y = (int) Math.round(dist * Math.sin(tangentAngle + Math.PI / 2));
         out[0] = (x1 + x2) / 2 + x;
@@ -41,4 +42,3 @@ public class HalfWaySubdivider implements Subdivide {
         return out;
     }
 }
-

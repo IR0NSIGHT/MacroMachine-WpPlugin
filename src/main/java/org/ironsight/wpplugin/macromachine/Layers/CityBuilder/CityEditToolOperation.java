@@ -35,7 +35,8 @@ import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 /**
  * STARMADE MOD CREATOR: Max1M DATE: 19.08.2025 TIME: 14:54
  */
-public class CityEditToolOperation extends AbstractBrushOperation implements PaintOperation, KeyEventDispatcher {
+public class CityEditToolOperation extends AbstractBrushOperation implements PaintOperation, KeyEventDispatcher
+{
     private final static String HelpTitle = "City Editor";
     private final static String HELPTEXT = """
             this tool is for editing City Layers, a new special type of Custom Object Layer.
@@ -45,19 +46,19 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             4. select a custom brush (the one with the little arrow showing the rotation)
             - Left click to place a building
             - Right click to delete all buildings inside the brush area
-                        
+
             - CTRL + left click to select a building type on the map
             - CTRL + right click to move last placed building to new position
-                        
+
             - SHIFT + mousewheel to scroll the building type list
             - ALT + mousewheel to rotate brush
-             
+
             - X key : mirror last selected building on map
             - C key : rotate last selected building on map
             - AWSD key : move last selected building on map
-                        
+
             Warning: This layer is NOT compatible with undo/redo. Do NOT use undo/redo with this layer.
-                        
+
             """;
     private static CityEditToolOperation instance;
     private final JPanel optionsPanel;
@@ -84,9 +85,12 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         init();
         Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
 
-            if (e instanceof MouseWheelEvent ev && isActive() && (ev.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0) {
-                if (ev.getComponent().equals(SwingUtilities.getDeepestComponentAt(
-                        ev.getComponent(), ev.getX(), ev.getY()))) { // fire only once
+            if (e instanceof MouseWheelEvent ev && isActive()
+                    && (ev.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0) {
+                if (ev.getComponent()
+                        .equals(SwingUtilities.getDeepestComponentAt(ev.getComponent(), ev.getX(), ev.getY()))) { // fire
+                                                                                                                  // only
+                                                                                                                  // once
                     onMouseWheel(ev.getWheelRotation());
                 }
             }
@@ -107,7 +111,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     public static void main(String[] args) throws IOException {
         // set up layer
         CityLayer layer = new CityLayer("test-city-layer", "this is a description");
-        File dir = new File("C:/Users/Max1M/curseforge/minecraft/Instances/neoforge 1.12.1 camboi shaders/config/worldedit/schematics");
+        File dir = new File(
+                "C:/Users/Max1M/curseforge/minecraft/Instances/neoforge 1.12.1 camboi shaders/config/worldedit/schematics");
         File[] files = dir.listFiles();
         ArrayList<WPObject> schematics = new ArrayList<>();
         if (files != null) {
@@ -125,7 +130,6 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         var op = new CityEditToolOperation();
         op.setBrush(SymmetricBrush.CONSTANT_SQUARE);
         op.setPaint(new NibbleLayerPaint(layer));
-
 
         JFrame frame = new JFrame();
         frame.add(op.optionsPanel);
@@ -157,25 +161,25 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                 if (!getDimension().isEventsInhibited())
                     getDimension().setEventsInhibited(true);
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_W:
+                    case KeyEvent.VK_W :
                         onMoveAt(lastCentreX, lastCentreY - 1, getSelectedLayer());
                         break;
-                    case KeyEvent.VK_S:
+                    case KeyEvent.VK_S :
                         onMoveAt(lastCentreX, lastCentreY + 1, getSelectedLayer());
                         break;
 
-                    case KeyEvent.VK_A:
+                    case KeyEvent.VK_A :
                         onMoveAt(lastCentreX - 1, lastCentreY, getSelectedLayer());
                         break;
-                    case KeyEvent.VK_D:
+                    case KeyEvent.VK_D :
                         onMoveAt(lastCentreX + 1, lastCentreY, getSelectedLayer());
                         break;
-                    case KeyEvent.VK_C:
+                    case KeyEvent.VK_C :
                         setRotation(currentState.rotation.nextRotation());
                         onMoveAt(lastCentreX, lastCentreY, getSelectedLayer());
                         break;
 
-                    case KeyEvent.VK_X: // MIRROR
+                    case KeyEvent.VK_X : // MIRROR
                         setIsMirrored(!currentState.mirrored);
                         onMoveAt(lastCentreX, lastCentreY, getSelectedLayer());
                         break;
@@ -326,7 +330,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private void ensureLayerHasUndoManager(CityLayer layer, Dimension dimension) {
         try {
             UndoManager undoManager = getUndoManager(dimension);
-            undoManager.removeListener(layer); //gotta remove otherwise we add over and over
+            undoManager.removeListener(layer); // gotta remove otherwise we add over and over
             layer.registerLayer(undoManager);
         } catch (IllegalAccessException | NoSuchFieldException ex) {
             GlobalActionPanel.ErrorPopUp(ex);
@@ -405,7 +409,6 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         scrollPane.setMaximumSize(new java.awt.Dimension(1000, 300));
         content.add(scrollPane);
 
-
         optionsPanel.revalidate();
         optionsPanel.repaint();
     }
@@ -421,7 +424,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                 if (original == null)
                     return;
                 int scale = Math.max(100, getHeight()) / original.getHeight(null);
-                Image img = original.getScaledInstance(original.getWidth(null) * scale, original.getHeight(null) * scale, Image.SCALE_REPLICATE);
+                Image img = original.getScaledInstance(original.getWidth(null) * scale,
+                        original.getHeight(null) * scale, Image.SCALE_REPLICATE);
                 width = img.getWidth(null);
                 g.drawImage(img, 0, 0, null);
             }
@@ -467,7 +471,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         WPObject object = layer.getObjectList().get(selectedObjectIndex);
         Point3i dim = object.getDimensions();
 
-        //update brush radius
+        // update brush radius
         int desiredRadius = Math.max(dim.x, dim.y) / 2;
         if (desiredRadius != getBrush().getRadius() && getView() != null) {
             int diff = desiredRadius - getBrush().getRadius();
@@ -483,7 +487,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             }
         }
 
-        //update checkbox
+        // update checkbox
         isMirroredCheckbox.setSelected(currentState.mirrored);
 
         list.setSelectedIndex(currentState.objectIndex);

@@ -9,7 +9,8 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter, IPositionTileValueGetter, ILayerGetter {
+public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter, IPositionTileValueGetter, ILayerGetter
+{
     private String layerName;
     private final String layerId;
     boolean isCustom = false;
@@ -30,15 +31,15 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     }
 
     private final int IGNORE_VALUE = Integer.MIN_VALUE;
-    private final int[] outputValues = new int[]{ IGNORE_VALUE, 0, 1 };
+    private final int[] outputValues = new int[]{IGNORE_VALUE, 0, 1};
     @Override
     public int[] getAllInputValues() {
-        return new int[]{ 0, 1};
+        return new int[]{0, 1};
     }
 
     @Override
     public int[] getAllOutputValues() {
-        return Arrays.copyOf(outputValues,outputValues.length);
+        return Arrays.copyOf(outputValues, outputValues.length);
     }
 
     @Override
@@ -67,11 +68,12 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
+        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {
+        });
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null)
-            layerName = layer.getName(); //maybe name was updated
+            layerName = layer.getName(); // maybe name was updated
     }
 
     public String valueToString(int value) {
@@ -91,15 +93,16 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         if (isIgnoreValue(value))
             return;
-        if (value == 0) return;
+        if (value == 0)
+            return;
         g.setColor(Color.red);
         g.fillRect(0, 0, dim.width, dim.height);
     }
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer"
-                , false};
+        Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+                false};
         for (int i = 0; i < data.length; i++) {
             saveData[i] = data[i];
         }
@@ -142,8 +145,10 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         BinaryLayerIO that = (BinaryLayerIO) o;
         return Objects.equals(layerId, that.layerId);
     }
@@ -180,6 +185,6 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
 
     @Override
     public int getValueAt(Tile tile, int tileX, int tileY) {
-        return tile.getBitLayerValue(layer,tileX,tileY) ? 1 : 0;
+        return tile.getBitLayerValue(layer, tileX, tileY) ? 1 : 0;
     }
 }

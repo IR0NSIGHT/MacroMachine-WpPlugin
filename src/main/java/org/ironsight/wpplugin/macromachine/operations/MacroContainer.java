@@ -11,9 +11,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import static org.ironsight.wpplugin.macromachine.operations.MappingActionContainer.isDebugMode;
-
-public class MacroContainer extends AbstractOperationContainer<Macro> {
+public class MacroContainer extends AbstractOperationContainer<Macro>
+{
     private static MacroContainer instance;
 
     public MacroContainer(String filePath) {
@@ -41,11 +40,10 @@ public class MacroContainer extends AbstractOperationContainer<Macro> {
 
     @Override
     protected Macro getNewAction(UUID uuid) {
-        return new Macro("New Mapping Macro",
-                "this macro is a collection of Mappings, each applied in order " + "to" + " the map to achieve " +
-                        "complex, reusable, one-click operations.",
-                new UUID[0],
-                uuid, new boolean[0]);
+        return new Macro(
+                "New Mapping Macro", "this macro is a collection of Mappings, each applied in order " + "to"
+                        + " the map to achieve " + "complex, reusable, one-click operations.",
+                new UUID[0], uuid, new boolean[0]);
     }
 
     @Override
@@ -62,7 +60,7 @@ public class MacroContainer extends AbstractOperationContainer<Macro> {
         HashSet<UUID> topLevels = new HashSet<>();
         queryAll().stream().map(Macro::getUid).forEach(topLevels::add);
 
-        for (Macro m: queryAll()) {
+        for (Macro m : queryAll()) {
             for (UUID children : m.getExecutionUUIDs()) {
                 topLevels.remove(children);
             }

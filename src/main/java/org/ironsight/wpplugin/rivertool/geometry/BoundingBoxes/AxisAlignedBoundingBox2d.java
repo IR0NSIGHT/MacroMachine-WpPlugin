@@ -4,7 +4,8 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Iterator;
 
-public class AxisAlignedBoundingBox2d implements BoundingBox {
+public class AxisAlignedBoundingBox2d implements BoundingBox
+{
     final Point maxPoint;
     final Point minPoint;
     public final int id;
@@ -25,8 +26,7 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
 
     public AxisAlignedBoundingBox2d(Collection<Point> points, int id) {
         this.id = id;
-        int xMin = Integer.MAX_VALUE, xMax = Integer.MIN_VALUE,
-                yMin = Integer.MAX_VALUE, yMax = Integer.MIN_VALUE;
+        int xMin = Integer.MAX_VALUE, xMax = Integer.MIN_VALUE, yMin = Integer.MAX_VALUE, yMax = Integer.MIN_VALUE;
         for (Point p : points) {
             xMin = Math.min(xMin, p.x);
             xMax = Math.max(xMax, p.x);
@@ -39,7 +39,7 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
 
     public static AxisAlignedBoundingBox2d fromPoints(Collection<Point> points) {
 
-        return new AxisAlignedBoundingBox2d(points,0);
+        return new AxisAlignedBoundingBox2d(points, 0);
     }
 
     @Override
@@ -50,7 +50,7 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
     @Override
     public AxisAlignedBoundingBox2d expand(double size) {
         return new AxisAlignedBoundingBox2d(new Point((int) (minPoint.x - size), (int) (minPoint.y - size)),
-                new Point((int) Math.ceil(maxPoint.x + size), (int) Math.ceil(maxPoint.y + size)),id);
+                new Point((int) Math.ceil(maxPoint.x + size), (int) Math.ceil(maxPoint.y + size)), id);
     }
 
     public Iterator<Point> areaIterator() {
@@ -83,9 +83,7 @@ public class AxisAlignedBoundingBox2d implements BoundingBox {
 
     @Override
     public String toString() {
-        return "AxisAlignedBoundingBox2d{" +
-                "width =" + (maxPoint.x - minPoint.x) +
-                "height =" + (maxPoint.y - minPoint.y) +
-                '}';
+        return "AxisAlignedBoundingBox2d{" + "width =" + (maxPoint.x - minPoint.x) + "height ="
+                + (maxPoint.y - minPoint.y) + '}';
     }
 }

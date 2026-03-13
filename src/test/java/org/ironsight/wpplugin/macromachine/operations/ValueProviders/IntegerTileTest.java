@@ -5,11 +5,12 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
-class IntegerTileTest {
+class IntegerTileTest
+{
     @Test
     void construct() {
         IntegerTile tile = new IntegerTile(67);
-        assertEquals(67,tile.getMin());
+        assertEquals(67, tile.getMin());
         assertEquals(67, tile.getMax());
     }
     @Test
@@ -31,8 +32,8 @@ class IntegerTileTest {
         assertEquals(17, tile.getMin());
         assertEquals(17, tile.getMax());
 
-        tile.setValueAt(17,123,1234567);
-        tile.setValueAt(1,2,-123456789);
+        tile.setValueAt(17, 123, 1234567);
+        tile.setValueAt(1, 2, -123456789);
         tile.calculateMinMax();
         assertEquals(-123456789, tile.getMin());
         assertEquals(1234567, tile.getMax());

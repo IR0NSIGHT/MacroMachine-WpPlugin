@@ -7,16 +7,16 @@ import org.ironsight.wpplugin.rivertool.geometry.BoundingBoxes.TreeBoundingBox;
 import java.awt.*;
 import java.util.*;
 
-public class PathGeometryHelper implements BoundingBox {
+public class PathGeometryHelper implements BoundingBox
+{
     private final Path path;
     private final ArrayList<Point> curve;
     private final int[] segmentStartIdcs;
     private final double radius;
     private final TreeBoundingBox treeBoundingBox;
 
-    private PathGeometryHelper(Path path, TreeBoundingBox boundingBoxes, ArrayList<Point> positions,
-                               double radius
-            , int[] segmentStartIdcs) {
+    private PathGeometryHelper(Path path, TreeBoundingBox boundingBoxes, ArrayList<Point> positions, double radius,
+            int[] segmentStartIdcs) {
         this.path = path;
         this.curve = positions;
         this.treeBoundingBox = boundingBoxes;
@@ -29,7 +29,7 @@ public class PathGeometryHelper implements BoundingBox {
         this.curve = positions;
         this.radius = radius;
 
-        int boxSizeFacctor = 10; //no zero divisor
+        int boxSizeFacctor = 10; // no zero divisor
         int amountBoxes = Math.max(0, curve.size() / boxSizeFacctor + 1);
         segmentStartIdcs = new int[amountBoxes + 1];
         int segmentIdx = 0;
@@ -38,8 +38,8 @@ public class PathGeometryHelper implements BoundingBox {
         }
         segmentStartIdcs[segmentIdx] = curve.size();
 
-        ArrayList<AxisAlignedBoundingBox2d> boundingBoxes = new ArrayList<>(PointUtils.toBoundingBoxes(this.curve,
-                boxSizeFacctor, radius));
+        ArrayList<AxisAlignedBoundingBox2d> boundingBoxes = new ArrayList<>(
+                PointUtils.toBoundingBoxes(this.curve, boxSizeFacctor, radius));
         treeBoundingBox = TreeBoundingBox.constructTree(boundingBoxes);
         for (Point p : this.curve) {
             assert this.contains(p);
@@ -48,9 +48,11 @@ public class PathGeometryHelper implements BoundingBox {
     }
 
     /**
-     * get all points closer than radius mapped to the point on curve they are closest to
+     * get all points closer than radius mapped to the point on curve they are
+     * closest to
      *
-     * @return map: key=points on continuous curve, value: list of points withint radius that are closest to the key
+     * @return map: key=points on continuous curve, value: list of points withint
+     *         radius that are closest to the key
      */
     public HashMap<Point, Collection<Point>> getParentage() {
         double maxRadiusSquared = radius * radius;
@@ -66,8 +68,8 @@ public class PathGeometryHelper implements BoundingBox {
         for (Point point : allNearby) {
             assert this.contains(point);
             Point parentOnCurve = closestCurvePointFor(point);
-            assert !curve.contains(point) || point.equals(parentOnCurve) : "cant assign a curvepoint to another " +
-                    "parent than himself";
+            assert !curve.contains(point) || point.equals(parentOnCurve)
+                    : "cant assign a curvepoint to another " + "parent than himself";
             if (point.distanceSq(parentOnCurve) < maxRadiusSquared) {
                 assert parentage.containsKey(parentOnCurve);
                 parentage.get(parentOnCurve).add(point);
@@ -78,7 +80,7 @@ public class PathGeometryHelper implements BoundingBox {
     }
 
     Collection<Point> allNearbyPoints() {
-        //iterate all points for all bounding boxes
+        // iterate all points for all bounding boxes
         HashSet<Point> allNearby = new HashSet<>(curve);
         int[] factors = {1, -1};
         for (Point c : curve) {
@@ -121,7 +123,7 @@ public class PathGeometryHelper implements BoundingBox {
     }
 
     Collection<Integer> getContainingIdcs(Point nearby) {
-        //find bbxs nearby belongs to
+        // find bbxs nearby belongs to
         LinkedList<Integer> insideIdcs = new LinkedList<>();
         treeBoundingBox.collectContainingAABBxsIds(nearby, insideIdcs);
         return insideIdcs;

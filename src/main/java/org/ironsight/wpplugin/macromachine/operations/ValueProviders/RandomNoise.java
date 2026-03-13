@@ -11,13 +11,14 @@ import java.util.Random;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
-public class RandomNoise implements IPositionValueGetter, IPositionTileValueGetter, EditableIO {
+public class RandomNoise implements IPositionValueGetter, IPositionTileValueGetter, EditableIO
+{
     private final int seed;
     // between 0 and 1
     private final float chance;
     private final Random random;
     public static final int BLOCK = 0;
-    public  static final int PASS = 1;
+    public static final int PASS = 1;
 
     public RandomNoise(int seed, float chance) {
         this.seed = seed;
@@ -111,7 +112,9 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
 
     @Override
     public String valueToString(int value) {
-        return value == PASS ? String.format("1 in %d blocks",Math.round(1f/chance)) : String.format("%d in %d blocks",Math.round(1f/chance)-1,Math.round(1f/chance));
+        return value == PASS
+                ? String.format("1 in %d blocks", Math.round(1f / chance))
+                : String.format("%d in %d blocks", Math.round(1f / chance) - 1, Math.round(1f / chance));
     }
 
     @Override
@@ -132,7 +135,9 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
 
     @Override
     public int getValueAt(Tile tile, int tileX, int tileY) {
-        return getRandomPassForPos(tileX + tile.getX() * TILE_SIZE, tileY + tile.getX() * TILE_SIZE, chance, random) ? PASS : BLOCK;
+        return getRandomPassForPos(tileX + tile.getX() * TILE_SIZE, tileY + tile.getX() * TILE_SIZE, chance, random)
+                ? PASS
+                : BLOCK;
     }
 
     @Override
@@ -142,8 +147,10 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         RandomNoise that = (RandomNoise) o;
         return seed == that.seed && Float.compare(chance, that.chance) == 0;
     }
@@ -155,9 +162,6 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
 
     @Override
     public String toString() {
-        return "RandomNoise{" +
-                "seed=" + seed +
-                ", chance=" + chance +
-                '}';
+        return "RandomNoise{" + "seed=" + seed + ", chance=" + chance + '}';
     }
 }

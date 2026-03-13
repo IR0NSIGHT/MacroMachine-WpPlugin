@@ -9,7 +9,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MacroDesignerTest {
+public class MacroDesignerTest
+{
     @Test
     void insertSingleActionIntoEmptyMacro() {
         MappingActionContainer container = new MappingActionContainer("./TestMappings.json");
@@ -20,19 +21,15 @@ public class MacroDesignerTest {
         assertEquals(0, container.queryAll().size());
 
         ArrayList<Integer> newSelection = new ArrayList<>();
-        Macro inserted = Macro.insertSaveableActionToList(
-                macro.clone(),
-                inputItem,
-                container::addMapping,
-                action -> container.updateMapping(action, Assertions::fail),
-                new int[0],
-                newSelection);
+        Macro inserted = Macro.insertSaveableActionToList(macro.clone(), inputItem, container::addMapping,
+                action -> container.updateMapping(action, Assertions::fail), new int[0], newSelection);
         assertEquals(1, inserted.getExecutionUUIDs().length);
-        assertNotEquals(inputItem.getUid(), inserted.getExecutionUUIDs()[0],"macro receives a clone, not the original " +
-                "input");
+        assertNotEquals(inputItem.getUid(), inserted.getExecutionUUIDs()[0],
+                "macro receives a clone, not the original " + "input");
         MappingAction addedItem = container.queryById(inserted.getExecutionUUIDs()[0]);
-        assertTrue(addedItem.equalIgnoreUUID(inputItem),"input and added item have same values, but not UUID");
-        assertNotEquals(addedItem.getUid(), inputItem.getUid(),"input and added item are not true equal (different uuid)");
+        assertTrue(addedItem.equalIgnoreUUID(inputItem), "input and added item have same values, but not UUID");
+        assertNotEquals(addedItem.getUid(), inputItem.getUid(),
+                "input and added item are not true equal (different uuid)");
         assertEquals(1, container.queryAll().size(), "inserting cloned the action and updated the container");
 
         ArrayList<Integer> expectedSelection = new ArrayList<>();
@@ -48,7 +45,7 @@ public class MacroDesignerTest {
             actionIds[i] = UUID.randomUUID();
         }
         boolean[] activeIds = new boolean[actionIds.length];
-        Arrays.fill(activeIds,true);
+        Arrays.fill(activeIds, true);
         Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID(), activeIds);
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
@@ -56,16 +53,12 @@ public class MacroDesignerTest {
         MappingAction inputItem = MappingAction.getNewEmptyAction().withName("my new item");
 
         ArrayList<Integer> newSelection = new ArrayList<>();
-        Macro inserted = Macro.insertSaveableActionToList(
-                macro.clone(),
-                inputItem,
-                container::addMapping,
-                action -> container.updateMapping(action, Assertions::fail),
-                new int[0], //tail insert
+        Macro inserted = Macro.insertSaveableActionToList(macro.clone(), inputItem, container::addMapping,
+                action -> container.updateMapping(action, Assertions::fail), new int[0], // tail insert
                 newSelection);
         assertEquals(5, inserted.getExecutionUUIDs().length);
-        UUID[] expectedIds =  Arrays.copyOf(actionIds, 5);
-        expectedIds[4] = container.queryAll().get(0).getUid();  //inserted at tail
+        UUID[] expectedIds = Arrays.copyOf(actionIds, 5);
+        expectedIds[4] = container.queryAll().get(0).getUid(); // inserted at tail
 
         assertArrayEquals(expectedIds, inserted.getExecutionUUIDs());
 
@@ -83,7 +76,7 @@ public class MacroDesignerTest {
         }
 
         boolean[] activeIds = new boolean[actionIds.length];
-        Arrays.fill(activeIds,true);
+        Arrays.fill(activeIds, true);
 
         Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID(), activeIds);
         assertEquals(4, macro.getExecutionUUIDs().length);
@@ -92,17 +85,14 @@ public class MacroDesignerTest {
         MappingAction inputItem = MappingAction.getNewEmptyAction().withName("my new item");
 
         ArrayList<Integer> newSelection = new ArrayList<>();
-        Macro inserted = Macro.insertSaveableActionToList(
-                macro.clone(),
-                inputItem,
-                container::addMapping,
-                action -> container.updateMapping(action, Assertions::fail),
-                new int[]{2}, //insert after index=2 in list => at index 3
+        Macro inserted = Macro.insertSaveableActionToList(macro.clone(), inputItem, container::addMapping,
+                action -> container.updateMapping(action, Assertions::fail), new int[]{2}, // insert after index=2 in
+                                                                                           // list => at index 3
                 newSelection);
         assertEquals(5, inserted.getExecutionUUIDs().length);
-        UUID[] expectedIds =  Arrays.copyOf(actionIds, 5);
-        //ids 0,1,2 stay same
-        expectedIds[3] = container.queryAll().get(0).getUid();  //inserted after idx 2
+        UUID[] expectedIds = Arrays.copyOf(actionIds, 5);
+        // ids 0,1,2 stay same
+        expectedIds[3] = container.queryAll().get(0).getUid(); // inserted after idx 2
         expectedIds[4] = actionIds[3];
 
         assertArrayEquals(expectedIds, inserted.getExecutionUUIDs());
@@ -116,7 +106,7 @@ public class MacroDesignerTest {
             actionIds[i] = UUID.randomUUID();
         }
         boolean[] activeIds = new boolean[actionIds.length];
-        Arrays.fill(activeIds,true);
+        Arrays.fill(activeIds, true);
         Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID(), activeIds);
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
@@ -125,16 +115,16 @@ public class MacroDesignerTest {
 
         ArrayList<Integer> newSelection = new ArrayList<>();
         ArrayList<UUID> addedIdsInOrder = new ArrayList<>();
-        Macro inserted = Macro.insertSaveableActionToList(
-                macro.clone(),
-                inputItem,
-                () -> { MappingAction lm = container.addMapping(); addedIdsInOrder.add(lm.getUid()); return lm; },
-                action -> container.updateMapping(action, Assertions::fail),
-                new int[]{2,3}, //insert after index=2 in list => at index 3
+        Macro inserted = Macro.insertSaveableActionToList(macro.clone(), inputItem, () -> {
+            MappingAction lm = container.addMapping();
+            addedIdsInOrder.add(lm.getUid());
+            return lm;
+        }, action -> container.updateMapping(action, Assertions::fail), new int[]{2, 3}, // insert after index=2 in list
+                                                                                         // => at index 3
                 newSelection);
         assertEquals(6, inserted.getExecutionUUIDs().length);
 
-        //ids: 0,1,2, insert, 3, insert
+        // ids: 0,1,2, insert, 3, insert
         assertEquals(actionIds[0], inserted.getExecutionUUIDs()[0]);
         assertEquals(actionIds[1], inserted.getExecutionUUIDs()[1]);
         assertEquals(actionIds[2], inserted.getExecutionUUIDs()[2]);
@@ -156,34 +146,31 @@ public class MacroDesignerTest {
             actionIds[i] = UUID.randomUUID();
         }
         boolean[] activeIds = new boolean[actionIds.length];
-        Arrays.fill(activeIds,true);
-        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID(),activeIds);
+        Arrays.fill(activeIds, true);
+        Macro macro = new Macro("test", "descr", actionIds, UUID.randomUUID(), activeIds);
         assertEquals(4, macro.getExecutionUUIDs().length);
         assertArrayEquals(actionIds, macro.getExecutionUUIDs());
 
         Macro inputItem = new Macro("myNewMacro", "descr", new UUID[0], UUID.randomUUID(), new boolean[0]);
 
         ArrayList<Integer> newSelection = new ArrayList<>();
-        Macro inserted = Macro.insertSaveableActionToList(
-                macro.clone(),
-                inputItem,
-                () -> { Assertions.fail("not supposed to be called"); return null; },
-                action -> {
-                    Assertions.fail("not supposed to be called");
-                },
-                new int[]{2,3}, //insert after index=2 in list => at index 3
+        Macro inserted = Macro.insertSaveableActionToList(macro.clone(), inputItem, () -> {
+            Assertions.fail("not supposed to be called");
+            return null;
+        }, action -> {
+            Assertions.fail("not supposed to be called");
+        }, new int[]{2, 3}, // insert after index=2 in list => at index 3
                 newSelection);
         assertEquals(6, inserted.getExecutionUUIDs().length);
 
-        //ids: 0,1,2, insert, 3, insert
+        // ids: 0,1,2, insert, 3, insert
         assertEquals(actionIds[0], inserted.getExecutionUUIDs()[0]);
         assertEquals(actionIds[1], inserted.getExecutionUUIDs()[1]);
         assertEquals(actionIds[2], inserted.getExecutionUUIDs()[2]);
-        assertEquals(inputItem.getUid(), inserted.getExecutionUUIDs()[3], "macro is linked, not cloned so the UID is " +
-                "known");
+        assertEquals(inputItem.getUid(), inserted.getExecutionUUIDs()[3],
+                "macro is linked, not cloned so the UID is " + "known");
         assertEquals(actionIds[3], inserted.getExecutionUUIDs()[4]);
         assertEquals(inputItem.getUid(), inserted.getExecutionUUIDs()[3]);
-
 
         ArrayList<Integer> expectedSelection = new ArrayList<>();
         expectedSelection.add(3);

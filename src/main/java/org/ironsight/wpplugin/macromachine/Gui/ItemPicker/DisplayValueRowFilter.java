@@ -7,14 +7,15 @@ import javax.swing.table.TableModel;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DisplayValueRowFilter extends RowFilter<TableModel, Integer> {
+public class DisplayValueRowFilter extends RowFilter<TableModel, Integer>
+{
 
-    private Pattern pattern= Pattern.compile("(?i)" + Pattern.quote(""));
+    private Pattern pattern = Pattern.compile("(?i)" + Pattern.quote(""));
     private PickerFilterOption[] filters = new PickerFilterOption[0];
     public DisplayValueRowFilter() {
 
     }
-    public void setFilters( PickerFilterOption... filters) {
+    public void setFilters(PickerFilterOption... filters) {
         this.filters = filters;
     }
     public void setString(String searchString) {
@@ -36,8 +37,8 @@ public class DisplayValueRowFilter extends RowFilter<TableModel, Integer> {
 
             Matcher matcher = pattern.matcher(text);
             if (matcher.find()) {
-                for (PickerFilterOption filter: filters) {
-                    if (filter.block(value)) { //filter out anything the filters match on
+                for (PickerFilterOption filter : filters) {
+                    if (filter.block(value)) { // filter out anything the filters match on
                         return false;
                     }
                 }

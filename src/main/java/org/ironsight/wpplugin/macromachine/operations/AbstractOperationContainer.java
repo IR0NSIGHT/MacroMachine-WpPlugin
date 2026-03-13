@@ -14,7 +14,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 
-public abstract class AbstractOperationContainer<T extends SaveableAction> {
+public abstract class AbstractOperationContainer<T extends SaveableAction>
+{
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
     private final HashMap<UUID, ArrayList<Runnable>> uidNotifies = new HashMap<>();
     private final HashMap<UUID, T> mappings = new HashMap<>();
@@ -43,8 +44,8 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
                 }
 
                 // Copy the default macros file to the save file path
-                try (InputStream inputStream = AbstractOperationContainer.class.getResourceAsStream(
-                        defaultFileResourcePath)) {
+                try (InputStream inputStream = AbstractOperationContainer.class
+                        .getResourceAsStream(defaultFileResourcePath)) {
                     if (inputStream != null) {
                         Files.copy(inputStream, saveFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         System.out.println("Copied the default resource file from " + url + " to " + saveFilePath);
@@ -56,7 +57,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
                 GlobalActionPanel.ErrorPopUpString("Failed to copy the default resource file: " + e.getMessage());
             }
         } else {
-            //error("Save file already exists at: " + saveFilePath);
+            // error("Save file already exists at: " + saveFilePath);
             createBackup(saveFile.getPath());
         }
     }
@@ -132,7 +133,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
                 continue;
             }
 
-            //filter for identity
+            // filter for identity
             if (!mappings.containsKey(mapping.getUid()) || queryById(mapping.getUid()).equals(mapping)) {
                 mapping.getUid();
             }
@@ -164,7 +165,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
 
     public T addMapping(T item) {
         if (item.getUid() == null) {
-            assert  false : " items HAVE to have a UUID";
+            assert false : " items HAVE to have a UUID";
             return item;
         }
         mappings.put(item.getUid(), item);
@@ -192,7 +193,8 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
 
     public void unsubscribeToMapping(UUID uid, Runnable runnable) {
         ArrayList<Runnable> listeners = uidNotifies.getOrDefault(uid, null);
-        if (listeners != null) listeners.remove(runnable);
+        if (listeners != null)
+            listeners.remove(runnable);
     }
 
     public ArrayList<T> queryAll() {
@@ -201,7 +203,8 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     }
 
     public void readFromFile() {
-        if (suppressFileWriting) return;
+        if (suppressFileWriting)
+            return;
         try {
             ensureSaveFileExists(filePath, defaultFileResourcePath);
             mappings.clear();
@@ -216,7 +219,6 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         }
     }
 
-
     protected abstract void fromSaveObject(String jsonString) throws JsonProcessingException;
 
     protected void putMapping(T mapping) {
@@ -225,7 +227,8 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
     }
 
     public void writeToFile() {
-        if (suppressFileWriting) return;
+        if (suppressFileWriting)
+            return;
 
         ObjectMapper objectMapper = new ObjectMapper();
 

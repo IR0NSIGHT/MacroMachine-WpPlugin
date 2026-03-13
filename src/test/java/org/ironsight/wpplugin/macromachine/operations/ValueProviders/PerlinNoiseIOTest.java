@@ -2,20 +2,21 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import com.kenperlin.ImprovedNoise;
 import org.junit.jupiter.api.Test;
-import org.pepsoft.util.PerlinNoise;
 
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class PerlinNoiseIOTest {
+class PerlinNoiseIOTest
+{
 
     @Test
     void PerlinGenerator() {
-        // test for myself to gather understanding on what values the ImprovedNoise perlin generator produces
+        // test for myself to gather understanding on what values the ImprovedNoise
+        // perlin generator produces
         float amplitude = 1;
         ImprovedNoise gen = new ImprovedNoise(1234567);
-        //period is 256
+        // period is 256
         assertEquals(gen.noise(7, 0, 0), gen.noise(256 + 7, 0, 0));
         assertEquals(gen.noise(0, 0, 0), gen.noise(1, 0, 0));
         assertEquals(gen.noise(-1, 0, 0), gen.noise(1, 0, 0));
@@ -55,7 +56,8 @@ class PerlinNoiseIOTest {
 
     @Test
     void getValueAt() {
-        // unit test to ensure the perlin IO produces values across the whole intervall of [0, amplitude] and doesnt
+        // unit test to ensure the perlin IO produces values across the whole intervall
+        // of [0, amplitude] and doesnt
         // just cluster around the median
         float scale = 27f;
         int amplitude = 12;
@@ -70,7 +72,7 @@ class PerlinNoiseIOTest {
                 assertTrue(0 <= value, "value=" + value + " at" + Arrays.toString(new int[]{x, y}));
             }
         }
-        //full range from zero to 255 is actually hit
+        // full range from zero to 255 is actually hit
         for (int hits : histogram) {
             assertNotEquals(0, hits);
         }
@@ -83,8 +85,7 @@ class PerlinNoiseIOTest {
         assertArrayEquals(new int[]{12, 13, 3, 14}, values);
         PerlinNoiseIO newIo = io.instantiateWithValues(new int[]{12, 13, 7, 14});
         assertArrayEquals(new int[]{12, 13, 7, 14}, newIo.getEditableValues());
-        assertNotEquals(io,newIo);
+        assertNotEquals(io, newIo);
     }
-
 
 }

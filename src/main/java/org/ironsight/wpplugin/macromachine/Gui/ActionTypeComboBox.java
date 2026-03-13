@@ -4,7 +4,8 @@ import org.ironsight.wpplugin.macromachine.operations.ActionType;
 
 import javax.swing.*;
 
-public class ActionTypeComboBox extends JComboBox<String> {
+public class ActionTypeComboBox extends JComboBox<String>
+{
 
     public ActionTypeComboBox() {
         for (ActionType t : ActionType.values())
@@ -20,4 +21,3 @@ public class ActionTypeComboBox extends JComboBox<String> {
         assert this.getSelectedProvider().equals(type);
     }
 }
-

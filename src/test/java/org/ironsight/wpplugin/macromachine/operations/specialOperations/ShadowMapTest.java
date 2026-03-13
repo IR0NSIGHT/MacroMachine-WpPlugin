@@ -2,7 +2,6 @@ package org.ironsight.wpplugin.macromachine.operations.specialOperations;
 
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.BinaryLayerIO;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionTileValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainHeightIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TileContainer;
 import org.junit.jupiter.api.Test;
@@ -14,7 +13,8 @@ import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.creat
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
-class ShadowMapTest {
+class ShadowMapTest
+{
 
     @Test
     void calculateShadowMap() {
@@ -38,11 +38,12 @@ class ShadowMapTest {
     @Test
     void testCalculateShadowMap() {
         int size = 3;
-        Dimension dim = createDimension(new Rectangle(TILE_SIZE *-3 * size, TILE_SIZE *-4 * size, TILE_SIZE * 10 * size, TILE_SIZE * 10 * size), 62);
+        Dimension dim = createDimension(new Rectangle(TILE_SIZE * -3 * size, TILE_SIZE * -4 * size,
+                TILE_SIZE * 10 * size, TILE_SIZE * 10 * size), 62);
         dim.setHeightAt(-17, 29, 90);
         var shadowMap = ShadowMap.calculateShadowMap(dim.getExtent(), new TerrainHeightIO(-128, 1000), dim);
         assertEquals(0, shadowMap.getValueAt(-17, 29));
-        assertEquals(90-62-1, shadowMap.getValueAt(-17, 28)); // north = shadow dir = y- axis in WP
+        assertEquals(90 - 62 - 1, shadowMap.getValueAt(-17, 28)); // north = shadow dir = y- axis in WP
     }
 
     @Test
@@ -63,25 +64,25 @@ class ShadowMapTest {
 
     @Test
     void expandBinaryLinear() {
-        { //left to right one peak
+        { // left to right one peak
             int[] row = new int[]{0, 0, 0, 0, 0, 100, 100, 100, 100, 100};
             int[] res = ShadowMap.expandBinaryLinear(row.clone(), 1, 0, 1);
             int[] expected = new int[]{0, 0, 0, 0, 0, 1, 2, 3, 4, 5};
             assertArrayEquals(expected, res);
         }
-        { //left to right a couple peaks
+        { // left to right a couple peaks
             int[] row = new int[]{0, 0, 0, 0, 0, 100, 0, 100, 20, 30, 0, 0};
             int[] res = ShadowMap.expandBinaryLinear(row.clone(), 1, 0, 1);
             int[] exp = new int[]{0, 0, 0, 0, 0, 1, 0, 1, 2, 3, 0, 0};
             assertArrayEquals(exp, res);
         }
-        { //right ot left one peak
+        { // right ot left one peak
             int[] row = new int[]{100, 100, 100, 100, 0, 100, 100, 100, 100, 100};
             int[] res = ShadowMap.expandBinaryLinear(row.clone(), 3, row.length - 1, -1);
             int[] expected = new int[]{12, 9, 6, 3, 0, 100, 100, 100, 100, 100};
             assertArrayEquals(expected, res);
         }
-        { //right to left after left to right
+        { // right to left after left to right
             int[] row = ShadowMap.expandBinaryLinear(new int[]{100, 100, 100, 0, 100, 0, 0, 100, 100, 100, 100}, 1, 0,
                     1);
             int[] res = ShadowMap.expandBinaryLinear(row.clone(), 1, row.length - 1, -1);
@@ -112,24 +113,25 @@ class ShadowMapTest {
     void expandBinaryMask() {
         TileContainer container = new TileContainer(new Rectangle(0, 0, 1, 1), 0);
         int p1x = 0, p1y = 0, p2x = 37, p2y = 23;
-        container.setValueAt(p1x, p1y, 1); //binary
-        container.setValueAt(p2x, p2y, 1); //binary
+        container.setValueAt(p1x, p1y, 1); // binary
+        container.setValueAt(p2x, p2y, 1); // binary
 
         ShadowMap.expandBinaryMask(container, 1);
         assertEquals(0, container.getValueAt(p1x, p1y), "distance to mask must be zero for set points");
         assertEquals(0, container.getValueAt(p2x, p2y), "distance to mask must be zero for set points");
-        //test points moving away from the common center
+        // test points moving away from the common center
 
         assertEquals(10, container.getValueAt(p2x + 10, p2y), "p2x,p2y is the closest point");
         assertEquals(10, container.getValueAt(p2x, p2y + 10), "p2x,p2y is the closest point");
         assertEquals(14, container.getValueAt(p2x - 10, p2y + 10), "p2x,p2y is the closest point");
 
-        //test points inbetween both maskes points
+        // test points inbetween both maskes points
         assertEquals(10, container.getValueAt(p1x + 10, p1y), "p1x,p1x is the closest point");
         assertEquals(10, container.getValueAt(p1x, p1y + 10), "p1x,p1x is the closest point");
         assertEquals(14, container.getValueAt(p1x + 10, p1x + 10), "p1x,p1x is the closest point");
 
-        // test random points i pulled from the WP map when encountering unexpected behaviour
+        // test random points i pulled from the WP map when encountering unexpected
+        // behaviour
         assertEquals(dist(p2x, p2y, 11, 29), container.getValueAt(11, 29), "p2 is the closest point to this position");
 
         // test a point that should have been marked as 31 radius, but wasnt
@@ -151,10 +153,11 @@ class ShadowMapTest {
 
     @Test
     void expandBinaryLinearColumn() {
-        {   //takes existing value, keeps it and writes distance map into the first16bits
+        { // takes existing value, keeps it and writes distance map into the first16bits
             int[] horizDist = new int[]{0xFFFF, 0xFFFF, 7, 0xFFFF, 0xFFFF, 0xFFFF, 3, 0xFFFF, 0xFFFF, 0xFFFF};
 
-            int[] expHorz = new int[]{distInt(2, 7), distInt(5, 3), distInt(4, 3), distInt(3, 3), distInt(2, 3), distInt(1, 3), 3, distInt(1, 3), distInt(2, 3), distInt(3, 3)};
+            int[] expHorz = new int[]{distInt(2, 7), distInt(5, 3), distInt(4, 3), distInt(3, 3), distInt(2, 3),
+                    distInt(1, 3), 3, distInt(1, 3), distInt(2, 3), distInt(3, 3)};
             int[] distances = ShadowMap.expandBinaryLinearColumn(horizDist);
             assertArrayEquals(expHorz, distances);
         }
@@ -180,10 +183,11 @@ class ShadowMapTest {
     @Test
     void testExpandBinaryMask() {
         int sizeTiles = 20;
-        Dimension dim = createDimension(new Rectangle(TILE_SIZE *-1 * sizeTiles, TILE_SIZE *-1 * sizeTiles, TILE_SIZE * sizeTiles, TILE_SIZE * sizeTiles), 62);
+        Dimension dim = createDimension(new Rectangle(TILE_SIZE * -1 * sizeTiles, TILE_SIZE * -1 * sizeTiles,
+                TILE_SIZE * sizeTiles, TILE_SIZE * sizeTiles), 62);
         BinaryLayerIO input = new BinaryLayerIO(MacroSelectionLayer.INSTANCE, false);
-        input.setValueAt(dim,-17,29,1);
-        var expandedMap = ShadowMap.expandBinaryMask(input,dim,dim.getExtent(),false);
+        input.setValueAt(dim, -17, 29, 1);
+        var expandedMap = ShadowMap.expandBinaryMask(input, dim, dim.getExtent(), false);
 
         assertEquals(0, expandedMap.getValueAt(-17, 29));
         assertEquals(1, expandedMap.getValueAt(-17, 28));

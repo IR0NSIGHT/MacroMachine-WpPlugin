@@ -6,7 +6,8 @@ import org.pepsoft.worldpainter.Dimension;
 import java.awt.*;
 import java.util.Arrays;
 
-public class AlwaysIO implements IPositionValueGetter {
+public class AlwaysIO implements IPositionValueGetter
+{
     public static AlwaysIO instance = new AlwaysIO();
     private final int[] values = new int[]{0};
 

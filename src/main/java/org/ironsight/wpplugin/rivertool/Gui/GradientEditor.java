@@ -11,7 +11,8 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.function.Consumer;
 
-public class GradientEditor extends JPanel {
+public class GradientEditor extends JPanel
+{
     private final Consumer<Gradient> submit;
     private final Consumer<Gradient> update;
     JLabel warning = new JLabel("WARNING:");
@@ -46,7 +47,7 @@ public class GradientEditor extends JPanel {
             // Trigger callback with updated arrays
             gr = new Gradient(updatedPoints, updatedValues);
 
-            //validate points are monotone rising
+            // validate points are monotone rising
             for (int i = 1; i < updatedPoints.length; i++) {
                 if (!(updatedPoints[i - 1] < updatedPoints[i])) {
                     invalid = true;
@@ -168,6 +169,5 @@ public class GradientEditor extends JPanel {
         revalidate();
         repaint();
     }
-
 
 }

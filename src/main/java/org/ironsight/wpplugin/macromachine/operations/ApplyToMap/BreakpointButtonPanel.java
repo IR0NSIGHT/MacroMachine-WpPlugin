@@ -12,7 +12,8 @@ import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.D
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_FOREGROUND;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
 
-public class BreakpointButtonPanel extends JPanel implements DebugUserInterface {
+public class BreakpointButtonPanel extends JPanel implements DebugUserInterface
+{
     private ArrayList<MappingAction> breakpoints;
     private JButton stepperButton;
     private JButton startDebugButton;
@@ -37,12 +38,12 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
     public JButton newStartButton() {
         JButton startButton = new MacroMachineButton("▶");
         startButton.setToolTipText("Start macro");
-        startButton.addActionListener(l -> onStartButton() );
+        startButton.addActionListener(l -> onStartButton());
         return startButton;
     }
 
     public JButton newDebugButton() {
-        JButton startDebugButton = new MacroMachineButton("\uD83D\uDC1E"); /*bug*/
+        JButton startDebugButton = new MacroMachineButton("\uD83D\uDC1E"); /* bug */
         startDebugButton.addActionListener(l -> onStartDebugButton());
         startDebugButton.setToolTipText("Start macro with debugger");
         return startDebugButton;
@@ -50,11 +51,9 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
 
     private final Consumer<Boolean> onUserStartsMacro;
 
-
     public BreakpointButtonPanel(Consumer<Boolean> onUserStartsMacro,
-                                 Supplier<BreakpointListener> getStepperVisualizer) {
+            Supplier<BreakpointListener> getStepperVisualizer) {
         this.onUserStartsMacro = onUserStartsMacro;
-
 
         this.getStepperVisualizer = getStepperVisualizer;
         this.startButton = newStartButton();
@@ -102,29 +101,27 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
         frame.setSize(300, 200);
 
         DebugUserInterface panel = new BreakpointButtonPanel(f -> {
-        }, () ->
-                new BreakpointListener() {
-                    @Override
-                    public void OnReachedBreakpoint(int idx) {
+        }, () -> new BreakpointListener() {
+            @Override
+            public void OnReachedBreakpoint(int idx) {
 
-                    }
+            }
 
-                    @Override
-                    public void PostReachedBreakpoint(int idx) {
+            @Override
+            public void PostReachedBreakpoint(int idx) {
 
-                    }
+            }
 
-                    @Override
-                    public void SetBreakpoints(ArrayList<MappingAction> breakpoints) {
+            @Override
+            public void SetBreakpoints(ArrayList<MappingAction> breakpoints) {
 
-                    }
+            }
 
-                    @Override
-                    public void afterEverything() {
+            @Override
+            public void afterEverything() {
 
-                    }
-                }
-        );
+            }
+        });
         // Add the button to the frame
         frame.add((JPanel) panel);
 
@@ -163,7 +160,7 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
 
     @Override
     public void OnReachedBreakpoint(int idx) {
-        SwingUtilities.invokeLater(()->{
+        SwingUtilities.invokeLater(() -> {
             stepperButton.setToolTipText("continue with " + breakpoints.get(idx));
             stepperButton.setEnabled(true);
             globalProgressBar.setValue(idx);
@@ -174,7 +171,7 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
     @Override
     public void PostReachedBreakpoint(int idx) {
         doContinue = false;
-        SwingUtilities.invokeLater(()->{
+        SwingUtilities.invokeLater(() -> {
             stepperButton.setToolTipText("continue");
             stepperButton.setEnabled(false);
         });
@@ -191,7 +188,7 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
         this.stepperVisulaizer = getStepperVisualizer.get();
         stepperVisulaizer.SetBreakpoints(breakpoints);
 
-        SwingUtilities.invokeLater(() ->{
+        SwingUtilities.invokeLater(() -> {
             this.globalProgressBar.setMinimum(0);
             this.globalProgressBar.setMaximum(breakpoints.size());
             setButtonsActive(true);
@@ -221,7 +218,8 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface 
         stepperVisulaizer.afterEverything();
     }
 
-    class MacroMachineButton extends JButton {
+    class MacroMachineButton extends JButton
+    {
         public MacroMachineButton(String text) {
             this.setBackground(DEFAULT_BACKGROUND);
             this.setForeground(DEFAULT_FOREGROUND);

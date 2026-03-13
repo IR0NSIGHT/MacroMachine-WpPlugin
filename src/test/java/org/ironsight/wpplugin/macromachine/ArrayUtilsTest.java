@@ -3,7 +3,8 @@ package org.ironsight.wpplugin.macromachine;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class ArrayUtilsTest {
+class ArrayUtilsTest
+{
 
     // ---- findMin tests ----
 
@@ -87,10 +88,10 @@ class ArrayUtilsTest {
 
     @Test
     void padLeftRight() {
-        float[] center = {10,11,12,13};
-        float[] right = {6,7,8};
-        float[] expected = {8,7,6,10,11,12,13,6,7,8};
-        float[] res = ArrayUtils.padLeftRight(center,right);
-        assertArrayEquals(expected,res);
+        float[] center = {10, 11, 12, 13};
+        float[] right = {6, 7, 8};
+        float[] expected = {8, 7, 6, 10, 11, 12, 13, 6, 7, 8};
+        float[] res = ArrayUtils.padLeftRight(center, right);
+        assertArrayEquals(expected, res);
     }
 }

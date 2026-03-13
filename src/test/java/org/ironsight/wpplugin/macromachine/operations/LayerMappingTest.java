@@ -17,19 +17,16 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 
-class LayerMappingTest {
+class LayerMappingTest
+{
 
     @Test
     void serialize() {
         try {
             // Create an instance of the object
-            MappingAction originalObject = new MappingAction(new TerrainHeightIO(-64,319),
-                    new NibbleLayerSetter(Annotations.INSTANCE, false),
-                    new MappingPoint[]{new MappingPoint(7, 12)},
-                    ActionType.DIVIDE,
-                    "hello",
-                    "world with a space",
-                    UUID.randomUUID());
+            MappingAction originalObject = new MappingAction(new TerrainHeightIO(-64, 319),
+                    new NibbleLayerSetter(Annotations.INSTANCE, false), new MappingPoint[]{new MappingPoint(7, 12)},
+                    ActionType.DIVIDE, "hello", "world with a space", UUID.randomUUID());
 
             // Serialize the object
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -54,23 +51,15 @@ class LayerMappingTest {
             IMappingValue provider = ProviderType.fromTypeDefault(type);
             MappingAction original = null;
             if (provider instanceof IPositionValueGetter) {
-                original = new MappingAction((IPositionValueGetter) provider,
-                        new TestInputOutput(),
+                original = new MappingAction((IPositionValueGetter) provider, new TestInputOutput(),
                         new MappingPoint[]{new MappingPoint(provider.getMinValue(), 5),
                                 new MappingPoint(provider.getMaxValue(), -3)},
-                        ActionType.SET,
-                        "test",
-                        "test description",
-                        UUID.randomUUID());
+                        ActionType.SET, "test", "test description", UUID.randomUUID());
             } else if (provider instanceof IPositionValueSetter) {
-                original = new MappingAction(new TestInputOutput(),
-                        (IPositionValueSetter) provider,
+                original = new MappingAction(new TestInputOutput(), (IPositionValueSetter) provider,
                         new MappingPoint[]{new MappingPoint(provider.getMinValue(), 5),
                                 new MappingPoint(provider.getMaxValue(), 1)},
-                        ActionType.SET,
-                        "test",
-                        "test description",
-                        UUID.randomUUID());
+                        ActionType.SET, "test", "test description", UUID.randomUUID());
             } else {
                 fail();
             }
@@ -83,34 +72,28 @@ class LayerMappingTest {
 
     @Test
     void discreteMap() {
-        MappingAction action = new MappingAction(new TerrainHeightIO(-64,319),
-                ActionFilterIO.instance,
+        MappingAction action = new MappingAction(new TerrainHeightIO(-64, 319), ActionFilterIO.instance,
                 new MappingPoint[]{new MappingPoint(100, 0), new MappingPoint(200, 1), new MappingPoint(250, 0)},
-                ActionType.SET,
-                "",
-                "",
-                UUID.randomUUID());
+                ActionType.SET, "", "", UUID.randomUUID());
         for (int input = action.input.getMinValue(); input <= action.input.getMaxValue(); input++) {
             int output = action.map(input);
-            if (input <= 100) assertEquals(0, output, "" + input);
-            else if (input <= 200) assertEquals(1, output, "" + input);
-            else assertEquals(0, output, "" + input);
+            if (input <= 100)
+                assertEquals(0, output, "" + input);
+            else if (input <= 200)
+                assertEquals(1, output, "" + input);
+            else
+                assertEquals(0, output, "" + input);
         }
     }
 
     @Test
     void map() {
 
-        {   // SHORT RANGE MAPPING
-            MappingAction linear = new MappingAction(new TestInputOutput(),
-                    new TestInputOutput(),
-                    new MappingPoint[]{new MappingPoint(1, 100),
-                            new MappingPoint(6, 100 + 500),
-                            new MappingPoint(11, 1000)},
-                    ActionType.SET,
-                    "",
-                    "",
-                    UUID.randomUUID());
+        { // SHORT RANGE MAPPING
+            MappingAction linear = new MappingAction(
+                    new TestInputOutput(), new TestInputOutput(), new MappingPoint[]{new MappingPoint(1, 100),
+                            new MappingPoint(6, 100 + 500), new MappingPoint(11, 1000)},
+                    ActionType.SET, "", "", UUID.randomUUID());
 
             assertEquals(100, linear.map(1));
             assertEquals(600, linear.map(6));
@@ -120,17 +103,11 @@ class LayerMappingTest {
             assertEquals(100 + 300, linear.map(4));
         }
 
-
-        {   // LINEAR WITH 3 POINTS
-            MappingAction linear = new MappingAction(new TestInputOutput(),
-                    new TestInputOutput(),
-                    new MappingPoint[]{new MappingPoint(10, 100),
-                            new MappingPoint(50 + 10, 100 + 500),
-                            new MappingPoint(110, 1000)},
-                    ActionType.SET,
-                    "",
-                    "",
-                    UUID.randomUUID());
+        { // LINEAR WITH 3 POINTS
+            MappingAction linear = new MappingAction(
+                    new TestInputOutput(), new TestInputOutput(), new MappingPoint[]{new MappingPoint(10, 100),
+                            new MappingPoint(50 + 10, 100 + 500), new MappingPoint(110, 1000)},
+                    ActionType.SET, "", "", UUID.randomUUID());
 
             assertEquals(100, linear.map(10));
             assertEquals(600, linear.map(60));
@@ -140,67 +117,53 @@ class LayerMappingTest {
             assertEquals(100 + 300, linear.map(30 + 10));
         }
 
-        {   // STATIC ONE POINT
-            MappingAction mapper = new MappingAction(new TestInputOutput(),
-                    new TestInputOutput(),
-                    new MappingPoint[]{new MappingPoint(57, 89)},
-                    ActionType.SET,
-                    "",
-                    "",
-                    UUID.randomUUID());
+        { // STATIC ONE POINT
+            MappingAction mapper = new MappingAction(new TestInputOutput(), new TestInputOutput(),
+                    new MappingPoint[]{new MappingPoint(57, 89)}, ActionType.SET, "", "", UUID.randomUUID());
 
             for (int i = new TestInputOutput().getMinValue(); i < new TestInputOutput().getMaxValue(); i++) {
                 assertEquals(89, mapper.map(i));
             }
         }
 
-        {   // 2 POINT LINEAR AT FIRST THAN PLATEAU
-            MappingAction mapper = new MappingAction(new TerrainHeightIO(-64,319),
+        { // 2 POINT LINEAR AT FIRST THAN PLATEAU
+            MappingAction mapper = new MappingAction(new TerrainHeightIO(-64, 319),
                     new NibbleLayerSetter(Annotations.INSTANCE, false),
-                    new MappingPoint[]{new MappingPoint(50, 0), new MappingPoint(150, 10),},
-                    ActionType.SET,
-                    "",
-                    "",
+                    new MappingPoint[]{new MappingPoint(50, 0), new MappingPoint(150, 10),}, ActionType.SET, "", "",
                     UUID.randomUUID());
 
-            for (int i = 0; i < 50; i++) { //plateau before first point
+            for (int i = 0; i < 50; i++) { // plateau before first point
                 assertEquals(0, mapper.map(i), i + "->" + mapper.map(i));
             }
-            for (int i = 50; i < 150; i++) { //linear between points
+            for (int i = 50; i < 150; i++) { // linear between points
                 assertEquals(Math.round(((float) i - 50) / 10), mapper.map(i), i + "->" + mapper.map(i));
             }
-            for (int i = 150; i < 300; i++) { //plateau after second point
+            for (int i = 150; i < 300; i++) { // plateau after second point
                 assertEquals(10, mapper.map(i));
             }
         }
 
-        {   // action with interpolateable output with IGNROE output
-            MappingAction mapper = new MappingAction(
-                    new TerrainHeightIO(-5,10), new WaterHeightAbsoluteIO(0,20), new MappingPoint[]{
-                    new MappingPoint(-3,3), new MappingPoint(5,11), new MappingPoint(9,WaterHeightAbsoluteIO.IGNORE)
+        { // action with interpolateable output with IGNROE output
+            MappingAction mapper = new MappingAction(new TerrainHeightIO(-5, 10), new WaterHeightAbsoluteIO(0, 20),
+                    new MappingPoint[]{new MappingPoint(-3, 3), new MappingPoint(5, 11),
+                            new MappingPoint(9, WaterHeightAbsoluteIO.IGNORE)
 
-            }, ActionType.SET, "", "", UUID.randomUUID());
+                    }, ActionType.SET, "", "", UUID.randomUUID());
             var mappedValues = Arrays.stream(mapper.input.getAllInputValues()).map(mapper::map).toArray();
-            var expectedValues = new int[]{3,3,3,4,5,6,7,8,9,10,11,11,11,11,WaterHeightAbsoluteIO.IGNORE,WaterHeightAbsoluteIO.IGNORE};
+            var expectedValues = new int[]{3, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 11, 11, WaterHeightAbsoluteIO.IGNORE,
+                    WaterHeightAbsoluteIO.IGNORE};
             assertArrayEquals(expectedValues, mappedValues, "mapping was incorrect");
         }
     }
 
     @Test
-    void applyToPoint() {   //an most simple test to check it can run without crashing
-        {   //one point
+    void applyToPoint() { // an most simple test to check it can run without crashing
+        { // one point
             ActionFilterIO actionFilter = new ActionFilterIO();
-            Dimension dim = TestData.createDimension(new Rectangle(-2 * TILE_SIZE,
-                    -2 * TILE_SIZE,
-                    3 * TILE_SIZE,
-                    3 * TILE_SIZE), 0);
-            MappingAction mapper = new MappingAction(new TestInputOutput(),
-                    new AnnotationSetter(),
-                    new MappingPoint[]{new MappingPoint(57, 3)},
-                    ActionType.SET,
-                    "",
-                    "",
-                    UUID.randomUUID());
+            Dimension dim = TestData
+                    .createDimension(new Rectangle(-2 * TILE_SIZE, -2 * TILE_SIZE, 3 * TILE_SIZE, 3 * TILE_SIZE), 0);
+            MappingAction mapper = new MappingAction(new TestInputOutput(), new AnnotationSetter(),
+                    new MappingPoint[]{new MappingPoint(57, 3)}, ActionType.SET, "", "", UUID.randomUUID());
             mapper.input.prepareForDimension(dim);
             mapper.output.prepareForDimension(dim);
             ActionFilterIO.instance.prepareForDimension(dim);
@@ -208,19 +171,12 @@ class LayerMappingTest {
             mapper.applyToPoint(dim, 0, 0, actionFilter);
             assertEquals(3, dim.getLayerValueAt(Annotations.INSTANCE, 0, 0));
         }
-        {   // no points
+        { // no points
             ActionFilterIO actionFilter = new ActionFilterIO();
-            Dimension dim = TestData.createDimension(new Rectangle(-2 * TILE_SIZE,
-                    -2 * TILE_SIZE,
-                    3 * TILE_SIZE,
-                    3 * TILE_SIZE), 0);
-            MappingAction mapper = new MappingAction(new TestInputOutput(),
-                    new AnnotationSetter(),
-                    new MappingPoint[]{},
-                    ActionType.SET,
-                    "",
-                    "",
-                    UUID.randomUUID());
+            Dimension dim = TestData
+                    .createDimension(new Rectangle(-2 * TILE_SIZE, -2 * TILE_SIZE, 3 * TILE_SIZE, 3 * TILE_SIZE), 0);
+            MappingAction mapper = new MappingAction(new TestInputOutput(), new AnnotationSetter(),
+                    new MappingPoint[]{}, ActionType.SET, "", "", UUID.randomUUID());
 
             mapper.applyToPoint(dim, 0, 0, actionFilter);
             assertEquals(0, dim.getLayerValueAt(Annotations.INSTANCE, 0, 0));
@@ -230,7 +186,7 @@ class LayerMappingTest {
     @Test
     void calculateRanges() {
         {
-            MappingAction mapper = new MappingAction(new TestInputOutput(),   //-5 .. 1000
+            MappingAction mapper = new MappingAction(new TestInputOutput(), // -5 .. 1000
                     new AnnotationSetter(), new MappingPoint[]{}, ActionType.SET, "", "", UUID.randomUUID());
             List<Point2d> ranges = MappingAction.calculateRanges(mapper);
             assertEquals(1, ranges.size());
@@ -238,27 +194,25 @@ class LayerMappingTest {
         }
 
         {
-            MappingAction mapper = new MappingAction(new TestInputOutput(),   //-5 .. 1000
-                    new AnnotationSetter(), new MappingPoint[]{
-                            new MappingPoint(10,3), new MappingPoint(100,7)
-            }, ActionType.SET, "", "", UUID.randomUUID());
+            MappingAction mapper = new MappingAction(new TestInputOutput(), // -5 .. 1000
+                    new AnnotationSetter(), new MappingPoint[]{new MappingPoint(10, 3), new MappingPoint(100, 7)},
+                    ActionType.SET, "", "", UUID.randomUUID());
             List<Point2d> ranges = MappingAction.calculateRanges(mapper);
             assertEquals(2, ranges.size());
             assertEquals(new Point2d(-5, 10), ranges.get(0));
             assertEquals(new Point2d(11, 1000), ranges.get(1));
-            int total =0;
+            int total = 0;
             for (Point2d range : ranges) {
-                int outValue = mapper.map((int)range.x);
-                for (int i = (int)range.x; i <= range.y; i++) {
-                    assertEquals(mapper.map(i), outValue, "range did not contain only one output value" + range + " " +
-                            "i="+i);
+                int outValue = mapper.map((int) range.x);
+                for (int i = (int) range.x; i <= range.y; i++) {
+                    assertEquals(mapper.map(i), outValue,
+                            "range did not contain only one output value" + range + " " + "i=" + i);
                     total++;
                 }
             }
 
-            assertEquals(mapper.input.getMaxValue()-mapper.input.getMinValue() +1, total,"ranges did not cover all " +
-                    "input" +
-                    " values");
+            assertEquals(mapper.input.getMaxValue() - mapper.input.getMinValue() + 1, total,
+                    "ranges did not cover all " + "input" + " values");
         }
     }
 }

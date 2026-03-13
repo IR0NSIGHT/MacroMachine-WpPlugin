@@ -5,11 +5,11 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUni
 import java.io.Serializable;
 import java.util.UUID;
 
-public interface SaveableAction extends Serializable, IDisplayUnit {
+public interface SaveableAction extends Serializable, IDisplayUnit
+{
     UUID getUid();
 
     boolean isActive();
-
 
     void setActive(boolean active);
 

@@ -11,7 +11,8 @@ import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class VoronoiIO implements IPositionValueGetter, EditableIO {
+public class VoronoiIO implements IPositionValueGetter, EditableIO
+{
     private final int min, max, seed, frequency;
     private final float scale;
     private final Voronoi generator;
@@ -28,7 +29,7 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO {
         generator.setFrequency(frequency);
         valueRange = max - min + 1;
 
-        this.values = IntStream.range(min,max+ 1).toArray();
+        this.values = IntStream.range(min, max + 1).toArray();
     }
 
     @Override
@@ -137,12 +138,13 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         VoronoiIO voronoiIO = (VoronoiIO) o;
-        return min == voronoiIO.min && max == voronoiIO.max && seed == voronoiIO.seed &&
-                frequency == voronoiIO.frequency &&
-                Float.compare(scale, voronoiIO.scale) == 0;
+        return min == voronoiIO.min && max == voronoiIO.max && seed == voronoiIO.seed
+                && frequency == voronoiIO.frequency && Float.compare(scale, voronoiIO.scale) == 0;
     }
 
     @Override

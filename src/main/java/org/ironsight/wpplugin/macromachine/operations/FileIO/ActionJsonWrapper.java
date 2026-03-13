@@ -1,6 +1,5 @@
 package org.ironsight.wpplugin.macromachine.operations.FileIO;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.ironsight.wpplugin.macromachine.operations.ActionType;
@@ -12,7 +11,8 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
-public class ActionJsonWrapper {
+public class ActionJsonWrapper
+{
     private ProviderType inputId;
     private Object[] inputData;
     private ProviderType outputId;
@@ -24,18 +24,12 @@ public class ActionJsonWrapper {
     private String description;
     private UUID uid;
 
-
     @JsonCreator
-    public ActionJsonWrapper(
-            @JsonProperty("inputId") ProviderType inputId,
-            @JsonProperty("inputData") Object[] inputData,
-            @JsonProperty("outputId") ProviderType outputId,
-            @JsonProperty("outputData") Object[] outputData,
-            @JsonProperty("actionType") ActionType actionType,
-            @JsonProperty("inputPoints") int[] inputPoints,
-            @JsonProperty("outputPoints") int[] outputPoints,
-            @JsonProperty("name") String name,
-            @JsonProperty("description") String description,
+    public ActionJsonWrapper(@JsonProperty("inputId") ProviderType inputId,
+            @JsonProperty("inputData") Object[] inputData, @JsonProperty("outputId") ProviderType outputId,
+            @JsonProperty("outputData") Object[] outputData, @JsonProperty("actionType") ActionType actionType,
+            @JsonProperty("inputPoints") int[] inputPoints, @JsonProperty("outputPoints") int[] outputPoints,
+            @JsonProperty("name") String name, @JsonProperty("description") String description,
             @JsonProperty("uid") UUID uid) {
         this.inputId = inputId;
         this.inputData = inputData;
@@ -158,17 +152,16 @@ public class ActionJsonWrapper {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         ActionJsonWrapper that = (ActionJsonWrapper) o;
-        return getInputId() == that.getInputId() && Arrays.equals(getInputData(), that.getInputData()) &&
-                getOutputId() == that.getOutputId() && Arrays.equals(getOutputData(), that.getOutputData()) &&
-                getActionType() == that.getActionType() &&
-                Arrays.equals(getInputPoints(), that.getInputPoints()) &&
-                Arrays.equals(getOutputPoints(), that.getOutputPoints()) &&
-                Objects.equals(getName(), that.getName()) &&
-                Objects.equals(getDescription(), that.getDescription()) &&
-                Objects.equals(getUid(), that.getUid());
+        return getInputId() == that.getInputId() && Arrays.equals(getInputData(), that.getInputData())
+                && getOutputId() == that.getOutputId() && Arrays.equals(getOutputData(), that.getOutputData())
+                && getActionType() == that.getActionType() && Arrays.equals(getInputPoints(), that.getInputPoints())
+                && Arrays.equals(getOutputPoints(), that.getOutputPoints()) && Objects.equals(getName(), that.getName())
+                && Objects.equals(getDescription(), that.getDescription()) && Objects.equals(getUid(), that.getUid());
     }
 
     @Override

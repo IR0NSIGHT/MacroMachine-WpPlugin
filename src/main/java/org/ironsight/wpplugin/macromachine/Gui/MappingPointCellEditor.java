@@ -16,7 +16,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EventObject;
 
-public class MappingPointCellEditor implements TableCellEditor {
+public class MappingPointCellEditor implements TableCellEditor
+{
     private final JComboBox<MappingPointValue> dropdown = new JComboBox<>();
     private final ArrayList<CellEditorListener> listeners = new ArrayList<>();
     private final int inputColumn;
@@ -58,7 +59,8 @@ public class MappingPointCellEditor implements TableCellEditor {
         for (CellEditorListener l : new ArrayList<>(listeners)) {
             l.editingCanceled(new ChangeEvent(this));
         }
-    }    private final FocusListener onDropdownFocusLost = new FocusListener() {
+    }
+    private final FocusListener onDropdownFocusLost = new FocusListener() {
         @Override
         public void focusGained(FocusEvent e) {
 
@@ -81,7 +83,8 @@ public class MappingPointCellEditor implements TableCellEditor {
     }
 
     @Override
-    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int viewRow, int viewColumn) {
+    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int viewRow,
+            int viewColumn) {
         assert value != null;
         assert value instanceof MappingPointValue;
         dropdown.removeAllItems();
@@ -93,7 +96,7 @@ public class MappingPointCellEditor implements TableCellEditor {
             java.util.List<MappingPointValue> arr;
             int modelColumn = table.convertColumnIndexToModel(viewColumn);
             int[] values;
-            if (inputColumn == modelColumn &&  mappingValue instanceof IPositionValueGetter getter ) {
+            if (inputColumn == modelColumn && mappingValue instanceof IPositionValueGetter getter) {
                 values = getter.getAllInputValues();
             } else if (inputColumn != modelColumn && mappingValue instanceof IPositionValueSetter setter) {
                 values = setter.getAllOutputValues();
@@ -117,8 +120,6 @@ public class MappingPointCellEditor implements TableCellEditor {
         return dropdown;
     }
 
-
-
     private PopupMenuListener onComboboxSelected = new PopupMenuListener() {
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
@@ -135,6 +136,5 @@ public class MappingPointCellEditor implements TableCellEditor {
             cancelCellEditing();
         }
     };
-
 
 }

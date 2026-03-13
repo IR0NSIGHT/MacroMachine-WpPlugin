@@ -17,7 +17,6 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static java.awt.Image.SCALE_FAST;
@@ -25,7 +24,8 @@ import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static org.ironsight.wpplugin.macromachine.Gui.MappingActionValueTableModel.INPUT_COLUMN_IDX;
 import static org.ironsight.wpplugin.macromachine.Gui.MappingActionValueTableModel.OUTPUT_COLUMN_IDX;
 
-public class MappingTextTable extends JPanel {
+public class MappingTextTable extends JPanel
+{
     private final MappingActionValueTableModel tableModel;
     private final JTable numberTable;
     JScrollPane scrollPane;
@@ -37,8 +37,8 @@ public class MappingTextTable extends JPanel {
     private int[] selectedViewRows = new int[0];
     private BlockingSelectionModel blockingSelectionModel;
     private String getToolTipForRow(int row) {
-        if (tableModel.getValueAt(row, INPUT_COLUMN_IDX) instanceof MappingPointValue input &&
-            tableModel.getValueAt(row, OUTPUT_COLUMN_IDX) instanceof MappingPointValue output) {
+        if (tableModel.getValueAt(row, INPUT_COLUMN_IDX) instanceof MappingPointValue input
+                && tableModel.getValueAt(row, OUTPUT_COLUMN_IDX) instanceof MappingPointValue output) {
             return Explain(input, output, tableModel.constructMapping().getActionType());
         }
         return "";
@@ -46,21 +46,27 @@ public class MappingTextTable extends JPanel {
 
     public static void main(String[] args) {
         var allGetterSetters = Arrays.stream(ProviderType.values()).map(ProviderType::fromTypeDefault).toList();
-        var allGetters = allGetterSetters.stream().filter(g -> g instanceof IPositionValueGetter).map(g -> (IPositionValueGetter)g).toList();
-        var allSetters = allGetterSetters.stream().filter(g -> g instanceof IPositionValueSetter).map(g -> (IPositionValueSetter)g).toList();
+        var allGetters = allGetterSetters.stream()
+                .filter(g -> g instanceof IPositionValueGetter)
+                .map(g -> (IPositionValueGetter) g)
+                .toList();
+        var allSetters = allGetterSetters.stream()
+                .filter(g -> g instanceof IPositionValueSetter)
+                .map(g -> (IPositionValueSetter) g)
+                .toList();
         Random r = new Random(42069);
-        Function<int[],Integer> getRandom = arr -> {
+        Function<int[], Integer> getRandom = arr -> {
             if (arr.length == 0)
                 return 0;
             return arr[r.nextInt(arr.length)];
         };
-        for (var type: ActionType.values()) {
-        for (var setter: allSetters) {
-            for (var getter : allGetters) {
-                    var input = new MappingPointValue(getRandom.apply(getter.getAllInputValues()),getter);
-                    var output = new MappingPointValue(getRandom.apply(setter.getAllOutputValues()),setter);
+        for (var type : ActionType.values()) {
+            for (var setter : allSetters) {
+                for (var getter : allGetters) {
+                    var input = new MappingPointValue(getRandom.apply(getter.getAllInputValues()), getter);
+                    var output = new MappingPointValue(getRandom.apply(setter.getAllOutputValues()), setter);
 
-                    var explained = Explain(input,output,type);
+                    var explained = Explain(input, output, type);
                     System.out.println(explained);
                 }
             }
@@ -142,17 +148,17 @@ public class MappingTextTable extends JPanel {
     }
 
     private int[] getSelectedModelRows() {
-        int[] selectedModelRows =
-                Arrays.stream(numberTable.getSelectedRows())
-                        .map(viewRow -> numberTable.convertRowIndexToModel(viewRow))
-                        .toArray();
+        int[] selectedModelRows = Arrays.stream(numberTable.getSelectedRows())
+                .map(viewRow -> numberTable.convertRowIndexToModel(viewRow))
+                .toArray();
         return selectedModelRows;
     }
 
     protected void updateComponents() {
         TableRowSorter<?> sorter = (TableRowSorter<?>) numberTable.getRowSorter();
         List<? extends RowSorter.SortKey> sortKeys = sorter.getSortKeys();
-// force stop current edit, because the amount of rows changes, and otherwise will cause array index out
+        // force stop current edit, because the amount of rows changes, and otherwise
+        // will cause array index out
         // of bounds
         if (numberTable.isEditing()) {
             TableCellEditor editor = numberTable.getCellEditor();
@@ -210,12 +216,12 @@ public class MappingTextTable extends JPanel {
         };
         numberTable.addMouseListener(rightClickListener);
 
-// Save selected row table
+        // Save selected row table
         numberTable.getSelectionModel().addListSelectionListener(e -> {
             selectedViewRows = numberTable.getSelectedRows();
         });
 
-// Restore selected raw table after a value was changed in the table
+        // Restore selected raw table after a value was changed in the table
         model.addTableModelListener(e -> SwingUtilities.invokeLater(() -> {
             try {
                 selectionModel.addSelectionRows(selectedViewRows);
@@ -232,10 +238,11 @@ public class MappingTextTable extends JPanel {
 
     private JPopupMenu createRightClickMenu(int[] selectedModelRows) {
         JPopupMenu menu = new JPopupMenu();
-        menu.setLayout(new GridLayout(0,1));
+        menu.setLayout(new GridLayout(0, 1));
 
         boolean fixedValuesSelected = Arrays.stream(selectedModelRows).anyMatch(tableModel::isMappingPoint);
-        boolean interpolatedValuesSelected = Arrays.stream(selectedModelRows).anyMatch(r -> !tableModel.isMappingPoint(r));
+        boolean interpolatedValuesSelected = Arrays.stream(selectedModelRows)
+                .anyMatch(r -> !tableModel.isMappingPoint(r));
         {
             JButton button = new JButton("clear selection");
             button.addActionListener(e -> {
@@ -257,7 +264,8 @@ public class MappingTextTable extends JPanel {
 
         if (fixedValuesSelected) {
             JButton button = new JButton("make automatic value");
-            button.setToolTipText("automatic values are calculated, based on the nearest fixed values. You can not edit them directly.");
+            button.setToolTipText(
+                    "automatic values are calculated, based on the nearest fixed values. You can not edit them directly.");
             button.addActionListener(e -> {
                 this.onMakeAutomaticValue();
                 menu.setVisible(false);
@@ -338,10 +346,10 @@ public class MappingTextTable extends JPanel {
 
         this.add(buttons, BorderLayout.SOUTH);
 
-
     }
 
-    private class ValuePreviewWindow extends MouseAdapter implements ActionListener {
+    private class ValuePreviewWindow extends MouseAdapter implements ActionListener
+    {
         JWindow previewWindow;
         JLabel previewLabel;
         private int row, col;
@@ -371,14 +379,11 @@ public class MappingTextTable extends JPanel {
                 // Scale the image (larger)
                 BufferedImage scaledImage = new BufferedImage(100, 100, TYPE_INT_RGB);
                 MappingPointValue mpv = (MappingPointValue) cell;
-                mpv.mappingValue.paint(scaledImage.getGraphics(),
-                        mpv.numericValue,
-                        new Dimension(scaledImage.getWidth(),
-                                scaledImage.getHeight()));
+                mpv.mappingValue.paint(scaledImage.getGraphics(), mpv.numericValue,
+                        new Dimension(scaledImage.getWidth(), scaledImage.getHeight()));
 
                 previewLabel.setIcon(new ImageIcon(scaledImage.getScaledInstance(previewWindow.getWidth(),
-                        previewWindow.getHeight(),
-                        SCALE_FAST)));
+                        previewWindow.getHeight(), SCALE_FAST)));
 
                 // Position the window near the mouse
                 Point locationOnScreen = numberTable.getLocationOnScreen();
@@ -419,5 +424,3 @@ public class MappingTextTable extends JPanel {
         }
     }
 }
-
-

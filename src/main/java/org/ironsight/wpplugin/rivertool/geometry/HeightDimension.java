@@ -3,7 +3,8 @@ package org.ironsight.wpplugin.rivertool.geometry;
 import java.awt.*;
 import java.util.HashMap;
 
-public interface HeightDimension {
+public interface HeightDimension
+{
     static HeightDimension getImmutableDimension62() {
         return new HeightDimension() {
 
@@ -39,4 +40,3 @@ public interface HeightDimension {
 
     void setHeight(int x, int y, float z);
 }
-

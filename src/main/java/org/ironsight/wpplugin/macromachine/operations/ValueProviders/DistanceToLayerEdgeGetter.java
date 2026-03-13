@@ -18,7 +18,8 @@ import java.util.stream.IntStream;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimitedMapOperation, EditableIO {
+public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimitedMapOperation, EditableIO
+{
     private final boolean searchInwards;
     private final int maxDistance;
     protected String layerId;
@@ -54,7 +55,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null)
-            layerName = layer.getName(); //maybe name was updated
+            layerName = layer.getName(); // maybe name was updated
 
     }
 
@@ -72,9 +73,7 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
     public IMappingValue instantiateFrom(Object[] data) {
 
         try {
-            return new DistanceToLayerEdgeGetter(((Integer) data[3]) == 1,
-                    (String) data[0],
-                    (String) data[1],
+            return new DistanceToLayerEdgeGetter(((Integer) data[3]) == 1, (String) data[0], (String) data[1],
                     (Integer) data[2]);
         } catch (Exception ex) {
             return new DistanceToLayerEdgeGetter(searchInwards, MacroSelectionLayer.INSTANCE, 100);
@@ -88,8 +87,10 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
 
     @Override
     public String valueToString(int value) {
-        if (value == 0) return searchInwards ? "outside" : "inside";
-        if (value == getMaxValue()) return searchInwards ? "inside" : "outside";
+        if (value == 0)
+            return searchInwards ? "outside" : "inside";
+        if (value == getMaxValue())
+            return searchInwards ? "inside" : "outside";
         return value + "m from edge";
     }
 
@@ -115,12 +116,13 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
      * @param dim
      * @param x
      * @param y
-     * @return: 0 = not in layer, 1-max = distance to edge, max+: somewhere inside layer but further away than max
+     * @return: 0 = not in layer, 1-max = distance to edge, max+: somewhere inside
+     *          layer but further away than max
      */
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (distanceMap == null || !distanceMap.existsTile(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
-            return getMaxValue(); //outside the distance map
+            return getMaxValue(); // outside the distance map
         return Math.min(getMaxValue(), distanceMap.getValueAt(x, y));
     }
 
@@ -131,9 +133,8 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
 
     @Override
     public String getDescription() {
-        return "distance to edge of " + layerName + " with distance 0 to " + getMaxValue() +
-                " where 0 is right at the " +
-                "edge. possibly very slow operation depending on how many blocks it has to check.";
+        return "distance to edge of " + layerName + " with distance 0 to " + getMaxValue() + " where 0 is right at the "
+                + "edge. possibly very slow operation depending on how many blocks it has to check.";
     }
 
     @Override
@@ -143,10 +144,12 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         DistanceToLayerEdgeGetter that = (DistanceToLayerEdgeGetter) o;
-        return Arrays.equals(getSaveData(), that.getSaveData()) ;
+        return Arrays.equals(getSaveData(), that.getSaveData());
     }
 
     @Override
@@ -193,13 +196,12 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
             int startY = ArrayUtils.findMin(tileY), endY = ArrayUtils.findMax(tileY);
             Rectangle dimExtent = dimension.getExtent();
             int expand = (int) Math.ceil(1f * getMaxValue() / TILE_SIZE);
-            extent = new Rectangle(Math.max(dimExtent.x, startX - expand),
-                    Math.max(dimExtent.y, startY - expand),
+            extent = new Rectangle(Math.max(dimExtent.x, startX - expand), Math.max(dimExtent.y, startY - expand),
                     Math.min(dimExtent.width, endX - startX + 1 + 2 * expand),
                     Math.min(dimExtent.height, endY - startY + 1 + 2 * expand));
         }
-        this.distanceMap = ShadowMap.expandBinaryMask(new BinaryLayerIO(layer, false),
-                dimension, extent, searchInwards);
+        this.distanceMap = ShadowMap.expandBinaryMask(new BinaryLayerIO(layer, false), dimension, extent,
+                searchInwards);
     }
 
     @Override

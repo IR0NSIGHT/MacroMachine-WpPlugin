@@ -8,27 +8,28 @@ import static org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityInfoDat
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
-class CityInfoDatabaseTest {
+class CityInfoDatabaseTest
+{
 
     @Test
     void deleteAllWithValue() {
         CityInfoDatabase db = new CityInfoDatabase();
-        db.setDataAt(10,10,57);
-        db.setDataAt(10,13,50);
-        db.setDataAt(120,13,50);
-        db.setDataAt(1400,13,50);
+        db.setDataAt(10, 10, 57);
+        db.setDataAt(10, 13, 50);
+        db.setDataAt(120, 13, 50);
+        db.setDataAt(1400, 13, 50);
 
-        assertEquals(57,db.getDataAt(10,10));
-        assertEquals(50,db.getDataAt(10,13));
-        assertEquals(50,db.getDataAt(120,13));
-        assertEquals(50,db.getDataAt(1400,13));
+        assertEquals(57, db.getDataAt(10, 10));
+        assertEquals(50, db.getDataAt(10, 13));
+        assertEquals(50, db.getDataAt(120, 13));
+        assertEquals(50, db.getDataAt(1400, 13));
 
-        boolean deletedSome= db.deleteAllWithValue(50,0xFFFFFFFF);
+        boolean deletedSome = db.deleteAllWithValue(50, 0xFFFFFFFF);
         assertTrue(deletedSome);
-        assertEquals(57,db.getDataAt(10,10));
-        assertEquals(NO_DATA,db.getDataAt(10,13));
-        assertEquals(NO_DATA,db.getDataAt(120,13));
-        assertEquals(NO_DATA,db.getDataAt(1400,13));
+        assertEquals(57, db.getDataAt(10, 10));
+        assertEquals(NO_DATA, db.getDataAt(10, 13));
+        assertEquals(NO_DATA, db.getDataAt(120, 13));
+        assertEquals(NO_DATA, db.getDataAt(1400, 13));
     }
 
     @Test
@@ -36,43 +37,43 @@ class CityInfoDatabaseTest {
         CityInfoDatabase db = new CityInfoDatabase();
         assertTrue(db.isEmpty());
 
-        db.setDataAt(100,200,300);
+        db.setDataAt(100, 200, 300);
         assertFalse(db.isEmpty());
 
-        db.setDataAt(100,200,NO_DATA);
+        db.setDataAt(100, 200, NO_DATA);
         assertTrue(db.isEmpty());
     }
 
     @Test
     void getTileData() {
         CityInfoDatabase db = new CityInfoDatabase();
-        assertNull(db.getTileData(-17,18));
-        db.setDataAt(-17 * TILE_SIZE + 36,18 * TILE_SIZE + 27,12345678);
-        var tileData = db.getTileData(-17 ,18 );
+        assertNull(db.getTileData(-17, 18));
+        db.setDataAt(-17 * TILE_SIZE + 36, 18 * TILE_SIZE + 27, 12345678);
+        var tileData = db.getTileData(-17, 18);
         assertNotNull(tileData);
         assertEquals(1, tileData.size());
-        assertEquals(12345678, tileData.get(new Point(-17 * TILE_SIZE + 36,18 * TILE_SIZE + 27)));
+        assertEquals(12345678, tileData.get(new Point(-17 * TILE_SIZE + 36, 18 * TILE_SIZE + 27)));
     }
 
     @Test
     void setGetDataAt() {
         CityInfoDatabase db = new CityInfoDatabase();
         assertTrue(db.isEmpty());
-        assertEquals(CityInfoDatabase.NO_DATA, db.getDataAt(15,16));
+        assertEquals(CityInfoDatabase.NO_DATA, db.getDataAt(15, 16));
 
         // add data
-        db.setDataAt(15,16, 37);
-        assertEquals(37, db.getDataAt(15,16));
+        db.setDataAt(15, 16, 37);
+        assertEquals(37, db.getDataAt(15, 16));
         assertFalse(db.isEmpty());
 
-        //mutate data
-        db.setDataAt(15,16, 12345);
-        assertEquals(12345, db.getDataAt(15,16));
+        // mutate data
+        db.setDataAt(15, 16, 12345);
+        assertEquals(12345, db.getDataAt(15, 16));
         assertFalse(db.isEmpty());
 
-        //remove data
-        db.setDataAt(15,16, NO_DATA);
-        assertEquals(NO_DATA, db.getDataAt(15,16));
+        // remove data
+        db.setDataAt(15, 16, NO_DATA);
+        assertEquals(NO_DATA, db.getDataAt(15, 16));
         assertTrue(db.isEmpty());
     }
 }

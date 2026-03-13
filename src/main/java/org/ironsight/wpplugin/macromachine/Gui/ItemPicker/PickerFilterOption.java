@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Gui.ItemPicker;
 
-public class PickerFilterOption<T> {
+public class PickerFilterOption<T>
+{
     public String getDisplayName() {
         return displayName;
     }
@@ -19,6 +20,7 @@ public class PickerFilterOption<T> {
 
     /**
      * test if this item matches the filter.
+     *
      * @param item
      * @return
      */

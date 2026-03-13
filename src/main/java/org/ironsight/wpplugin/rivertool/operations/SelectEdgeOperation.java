@@ -19,11 +19,12 @@ import static org.ironsight.wpplugin.rivertool.Gui.OptionsLabel.numericInput;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class SelectEdgeOperation extends MouseOrTabletOperation {
+public class SelectEdgeOperation extends MouseOrTabletOperation
+{
     static final int CYAN = 9;
     private static final String NAME = "Select Edge Operation";
-    private static final String DESCRIPTION = "Select the edge of all cyan annotated blocks and expand/reduce them " +
-            "with a spraypaint gradient.";
+    private static final String DESCRIPTION = "Select the edge of all cyan annotated blocks and expand/reduce them "
+            + "with a spraypaint gradient.";
     private static final String ID = "select_edge_operation";
     private final SelectEdgeOptions options = new SelectEdgeOptions();
     Random r = new Random();
@@ -49,15 +50,14 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
         JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10));
         main.add(panel);
-        {   //SPINNER WIDTH
+        { // SPINNER WIDTH
             OptionsLabel l = numericInput("width", "how wide the edge should be",
-                    new SpinnerNumberModel(options.width, 1, 100, 1.), f -> options.width = f.intValue(),
-                    () -> {
+                    new SpinnerNumberModel(options.width, 1, 100, 1.), f -> options.width = f.intValue(), () -> {
                     });
             panel.add(l.getLabels()[0]);
         }
 
-        {   //EXECUTE BUTTON
+        { // EXECUTE BUTTON
             JButton button3 = new JButton("Run");
             // Add action listeners to handle button click events
             button3.addActionListener(new ActionListener() {
@@ -95,16 +95,16 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
                 public void actionPerformed(ActionEvent e) {
                     String selectedOption = (String) dropdown.getSelectedItem();
                     switch (selectedOption) {
-                        case "Out":
+                        case "Out" :
                             options.dir = SelectEdgeOptions.DIRECTION.OUTWARD;
                             break;
-                        case "In":
+                        case "In" :
                             options.dir = SelectEdgeOptions.DIRECTION.INWARD;
                             break;
-                        case "Both":
+                        case "Both" :
                             options.dir = SelectEdgeOptions.DIRECTION.BOTH;
                             break;
-                        case "Out and keep":
+                        case "Out and keep" :
                             options.dir = SelectEdgeOptions.DIRECTION.OUT_AND_KEEP;
                     }
                 }
@@ -145,7 +145,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
         dialog.setVisible(true);
     }
 
-
     @Override
     protected void activate() throws PropertyVetoException {
 
@@ -164,8 +163,8 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
             if (tile.hasLayer(Annotations.INSTANCE)) {
                 for (int xInTile = 0; xInTile < TILE_SIZE; xInTile++) {
                     for (int yInTile = 0; yInTile < TILE_SIZE; yInTile++) {
-                        final int x = xInTile + (tile.getX() << TILE_SIZE_BITS), y =
-                                yInTile + (tile.getY() << TILE_SIZE_BITS);
+                        final int x = xInTile + (tile.getX() << TILE_SIZE_BITS),
+                                y = yInTile + (tile.getY() << TILE_SIZE_BITS);
                         int annotation = tile.getLayerValue(Annotations.INSTANCE, xInTile, yInTile);
                         if (annotation == annotationMatch) {
                             matches.add(new Point(x, y));
@@ -186,27 +185,27 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
 
         Set<Point> restrictions = new HashSet<>();
         switch (options.dir) {
-            case BOTH:
-                //no restrictions
+            case BOTH :
+                // no restrictions
                 edge = start.ring(1);
                 break;
-            case OUTWARD:
+            case OUTWARD :
                 edge = start.ring(1);
                 restrictions = start.ring(0).keySet();
                 break;
-            case INWARD:
-                edge = start.ring(1);   //initial first outer layer
-                restrictions = start.ring(2).keySet(); //initial second outwards layer
+            case INWARD :
+                edge = start.ring(1); // initial first outer layer
+                restrictions = start.ring(2).keySet(); // initial second outwards layer
 
-                //walk inwards once
+                // walk inwards once
                 start = new RingFinder(edge, 1, restrictions);
                 restrictions = edge.keySet();
-                edge = start.ring(1);   //first inwards layer
+                edge = start.ring(1); // first inwards layer
 
                 break;
-            case OUT_AND_KEEP:
-                //edge stays the same
-                //no restrictions
+            case OUT_AND_KEEP :
+                // edge stays the same
+                // no restrictions
                 break;
         }
         start = new RingFinder(edge, amountRings, restrictions);
@@ -236,15 +235,14 @@ public class SelectEdgeOperation extends MouseOrTabletOperation {
     @Override
     protected void tick(int i, int i1, boolean b, boolean b1, float v) {
 
-
     }
 
-    private static class SelectEdgeOptions {
+    private static class SelectEdgeOptions
+    {
         int width = 3;
         DIRECTION dir = DIRECTION.OUTWARD;
 
-        Gradient gradient = new Gradient(
-                new float[]{0.01f, 0.15f, 0.25f, 0.5f, 1f},
+        Gradient gradient = new Gradient(new float[]{0.01f, 0.15f, 0.25f, 0.5f, 1f},
                 new float[]{1f, 0.4f, 0.2f, 0.1f, 0.03f});
 
         enum DIRECTION {

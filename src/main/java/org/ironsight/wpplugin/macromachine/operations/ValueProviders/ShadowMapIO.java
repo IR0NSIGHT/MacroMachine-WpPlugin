@@ -8,13 +8,13 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
-    private final int[] values = IntStream.range(getMinValue(), getMaxValue()+1).toArray();
+public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation
+{
+    private final int[] values = IntStream.range(getMinValue(), getMaxValue() + 1).toArray();
     private TileContainer shadowMap;
 
     @Override
@@ -118,7 +118,8 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
+        if (this == o)
+            return true;
         return o != null && getClass() == o.getClass();
     }
 

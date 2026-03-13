@@ -16,8 +16,8 @@ import java.util.function.Function;
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.*;
 
-public class DisplayUnitRenderer extends DefaultTreeCellRenderer
-        implements TableCellRenderer, ListCellRenderer<Object> {
+public class DisplayUnitRenderer extends DefaultTreeCellRenderer implements TableCellRenderer, ListCellRenderer<Object>
+{
     private final Function<IDisplayUnit, Boolean> isItemValid;
     JLabel nameLabel = new JLabel();
     JPanel inputoutput = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -95,15 +95,15 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
         revalidate();
     }
 
-
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-                                                   int row, int column) {
+            int row, int column) {
         boolean active = !(value instanceof SaveableAction) || ((SaveableAction) value).isActive();
         updateTo(value, active);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
-        } else panel.setBackground(DEFAULT_BACKGROUND);
+        } else
+            panel.setBackground(DEFAULT_BACKGROUND);
         return panel;
     }
 
@@ -111,29 +111,30 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
         updateTo(value, true);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
-        } else panel.setBackground(DEFAULT_BACKGROUND);
+        } else
+            panel.setBackground(DEFAULT_BACKGROUND);
         return panel;
     }
 
     @Override
     public Component getTreeCellRendererComponent(JTree tree, Object value, boolean selected, boolean expanded,
-                                                  boolean leaf, int row, boolean hasFocus) {
+            boolean leaf, int row, boolean hasFocus) {
         assert value instanceof MacroTreeNode;
         MacroTreeNode node = (MacroTreeNode) value;
         if (value instanceof MacroTreeNode) {
             switch (((MacroTreeNode) value).payloadType) {
-                case MACRO:
-                case ACTION:
+                case MACRO :
+                case ACTION :
                     updateTo(((MacroTreeNode) value).payload, node.isActive());
                     break;
-                case OUTPUT:
+                case OUTPUT :
                     updateTo(((MacroTreeNode) value).getOutput(), node.isActive());
 
                     break;
-                case INPUT:
+                case INPUT :
                     updateTo(((MacroTreeNode) value).getInput(), node.isActive());
                     break;
-                case INVALID:
+                case INVALID :
                     updateTo(((MacroTreeNode) value).payload, node.isActive());
                     break;
             }
@@ -141,7 +142,8 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
 
         if (selected) {
             panel.setBackground(SELECTED_BACKGROUND);
-        } else panel.setBackground(DEFAULT_BACKGROUND);
+        } else
+            panel.setBackground(DEFAULT_BACKGROUND);
         panel.invalidate();
         return panel;
 
@@ -149,11 +151,12 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer
 
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-                                                  boolean cellHasFocus) {
+            boolean cellHasFocus) {
         updateTo(value, true);
         if (isSelected) {
             panel.setBackground(SELECTED_BACKGROUND);
-        } else panel.setBackground(DEFAULT_BACKGROUND);
+        } else
+            panel.setBackground(DEFAULT_BACKGROUND);
         return panel;
     }
 }

@@ -18,20 +18,18 @@ import org.pepsoft.worldpainter.objects.WPObject;
 import javax.vecmath.Point3i;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.Raster;
-import java.awt.image.RescaleOp;
 import java.io.File;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
 import static org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityInfoDatabase.NO_DATA;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 import static org.pepsoft.worldpainter.objects.WPObject.ATTRIBUTE_FILE;
 
-public class CityLayer extends CustomLayer implements UndoListener {
+public class CityLayer extends CustomLayer implements UndoListener
+{
     public static final int MIRROR_BIT_MASK = 0b1;
     public static final int MIRROR_BIT_SHIFT = 0;
     public static final int ID_BIT_SHIFT = 4;
@@ -48,7 +46,7 @@ public class CityLayer extends CustomLayer implements UndoListener {
     }
 
     public void setDataAt(Dimension dimension, int blockX, int blockY, ObjectState state) {
-        if (state == null ||  state.objectIndex < 0 || state.objectIndex >= objects.size())
+        if (state == null || state.objectIndex < 0 || state.objectIndex >= objects.size())
             return;
 
         database.setDataAt(blockX, blockY, getValueForState(state.rotation, state.mirrored, state.objectIndex));
@@ -58,7 +56,8 @@ public class CityLayer extends CustomLayer implements UndoListener {
             return;
         Point3i dims = paintedSchem.getDimensions();
         for (int tileX = (blockX - dims.x) >> TILE_SIZE_BITS; tileX <= (blockX + dims.x) >> TILE_SIZE_BITS; tileX++) {
-            for (int tileY = (blockY - dims.y) >> TILE_SIZE_BITS; tileY <= (blockY + dims.y) >> TILE_SIZE_BITS; tileY++) {
+            for (int tileY = (blockY - dims.y) >> TILE_SIZE_BITS; tileY <= (blockY
+                    + dims.y) >> TILE_SIZE_BITS; tileY++) {
                 repaintTile(tileX, tileY, dimension, database);
             }
         }
@@ -89,9 +88,9 @@ public class CityLayer extends CustomLayer implements UndoListener {
                     if (mat != Material.AIR) {
                         double value = (Math.sqrt(1f * z / height)) * 0.5f + 0.5f;
                         Color base = new Color(mat.colour);
-                        Color darkenFactor = new Color((int) (Math.max(0, Math.min(255, value * base.getRed()))), (int) (Math.max(0, Math.min(255, value * base.getGreen()))),
-                                (int) (Math.max(0, Math.min(255,
-                                        value * base.getBlue()))));
+                        Color darkenFactor = new Color((int) (Math.max(0, Math.min(255, value * base.getRed()))),
+                                (int) (Math.max(0, Math.min(255, value * base.getGreen()))),
+                                (int) (Math.max(0, Math.min(255, value * base.getBlue()))));
                         graphics2D.setColor(darkenFactor);
                         graphics2D.fillRect(x + width, heightPx + totalPosY, 1, 1);
                         break;
@@ -134,14 +133,14 @@ public class CityLayer extends CustomLayer implements UndoListener {
         Tile tile = dimension.getTileForEditing(tileX, tileY);
         tile.clearLayerData(this);
 
-        //find all objects that live in tile
+        // find all objects that live in tile
         for (int tileXX = tileX - 1; tileXX <= tileX + 1; tileXX++)
             for (int tileYY = tileY - 1; tileYY <= tileY + 1; tileYY++) {
                 HashMap<Point, Integer> tileData = database.getTileData(tileXX, tileYY);
                 if (tileData == null)
                     continue;
                 for (var pos : tileData.keySet()) {
-                    ObjectState state = getInformationAt(pos.x,pos.y);
+                    ObjectState state = getInformationAt(pos.x, pos.y);
                     WPObject object = getObjectForState(state);
                     if (object == null)
                         continue;
@@ -156,8 +155,10 @@ public class CityLayer extends CustomLayer implements UndoListener {
             database.setDataAt(blockX, blockY, NO_DATA);
 
             Point3i dims = paintedSchem.getDimensions();
-            for (int tileX = (blockX - dims.x) >> TILE_SIZE_BITS; tileX <= (blockX + dims.x) >> TILE_SIZE_BITS; tileX++) {
-                for (int tileY = (blockY - dims.y) >> TILE_SIZE_BITS; tileY <= (blockY + dims.y) >> TILE_SIZE_BITS; tileY++) {
+            for (int tileX = (blockX - dims.x) >> TILE_SIZE_BITS; tileX <= (blockX
+                    + dims.x) >> TILE_SIZE_BITS; tileX++) {
+                for (int tileY = (blockY - dims.y) >> TILE_SIZE_BITS; tileY <= (blockY
+                        + dims.y) >> TILE_SIZE_BITS; tileY++) {
                     repaintTile(tileX, tileY, dimension, database);
                 }
             }
@@ -170,7 +171,8 @@ public class CityLayer extends CustomLayer implements UndoListener {
 
     public void setObjectList(ArrayList<WPObject> newObjects) {
         ArrayList<Integer> oldIndicesToDelete = new ArrayList<>();
-        //todo: make possible to map old idx to new idx, f.e. if index 5 of size 10 was deleted, to not clear 6,7,8,9 indices bc of shift
+        // todo: make possible to map old idx to new idx, f.e. if index 5 of size 10 was
+        // deleted, to not clear 6,7,8,9 indices bc of shift
 
         for (int i = 0; i < getObjectList().size(); i++) {
             WPObject oldObj = getObjectList().get(i);
@@ -182,7 +184,7 @@ public class CityLayer extends CustomLayer implements UndoListener {
 
             File oldFile = oldObj.getAttribute(ATTRIBUTE_FILE);
             File newFile = newObj.getAttribute(ATTRIBUTE_FILE);
-            if (oldFile == null || !oldFile.equals(newFile)) { //the new item points to a different file
+            if (oldFile == null || !oldFile.equals(newFile)) { // the new item points to a different file
                 oldIndicesToDelete.add(i);
             }
         }
@@ -254,7 +256,8 @@ public class CityLayer extends CustomLayer implements UndoListener {
     }
 
     private int getValueForState(Direction rotation, boolean isMirror, int schematicIdx) {
-        return rotation.ordinal() << CityLayer.ROTATION_BIT_SHIFT | (isMirror ? 1 : 0) << CityLayer.MIRROR_BIT_SHIFT | schematicIdx << CityLayer.ID_BIT_SHIFT;
+        return rotation.ordinal() << CityLayer.ROTATION_BIT_SHIFT | (isMirror ? 1 : 0) << CityLayer.MIRROR_BIT_SHIFT
+                | schematicIdx << CityLayer.ID_BIT_SHIFT;
     }
 
     private Direction getRotation(int layerValue) {
@@ -282,8 +285,8 @@ public class CityLayer extends CustomLayer implements UndoListener {
             if (!dim.isEventsInhibited()) {
                 dim.setEventsInhibited(true);
             }
-            for (Tile t: dim.getTiles()) {
-                repaintTile(t.getX(),t.getY(),dim, database);
+            for (Tile t : dim.getTiles()) {
+                repaintTile(t.getX(), t.getY(), dim, database);
             }
         } catch (Exception exception) {
 
@@ -336,10 +339,7 @@ public class CityLayer extends CustomLayer implements UndoListener {
     }
 
     public enum Direction {
-        NORTH(0),
-        EAST(1),
-        SOUTH(2),
-        WEST(3);
+        NORTH(0), EAST(1), SOUTH(2), WEST(3);
         final int rotateSteps;
 
         Direction(int rotateSteps) {

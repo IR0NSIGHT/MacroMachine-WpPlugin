@@ -8,31 +8,32 @@ import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class PathToolBackendTest {
+class PathToolBackendTest
+{
 
     @Test
     void plotPathBetween() {
-        Point4f start = new Point4f(10,20,0,0);
-        Point4f end = new Point4f(20,20,0,0);
-        var path = PathToolBackend.plotPathBetween(start,end);
+        Point4f start = new Point4f(10, 20, 0, 0);
+        Point4f end = new Point4f(20, 20, 0, 0);
+        var path = PathToolBackend.plotPathBetween(start, end);
         assertFalse(path.contains(start));
-        assertEquals(10,path.size());
-        assertEquals(end, path.get(path.size()-1));
+        assertEquals(10, path.size());
+        assertEquals(end, path.get(path.size() - 1));
     }
 
     @Test
     void forcePathToMinPos() {
         var path = new ArrayList<Point4f>();
-        path.add(new Point4f(12,14,100,0));
-        path.add(new Point4f(12,15,100,0));
-        path.add(new Point4f(12,16,100,0));
-        path.add(new Point4f(12,17,100,0));
+        path.add(new Point4f(12, 14, 100, 0));
+        path.add(new Point4f(12, 15, 100, 0));
+        path.add(new Point4f(12, 16, 100, 0));
+        path.add(new Point4f(12, 17, 100, 0));
 
         PathToolBackend.forcePathToMinPos(path, p -> p.y);
-        assertEquals(path.get(0),new Point4f(12,14,14,0));
-        assertEquals(path.get(1),new Point4f(12,15,15,0));
-        assertEquals(path.get(2),new Point4f(12,16,16,0));
-        assertEquals(path.get(3),new Point4f(12,17,17,0));
+        assertEquals(path.get(0), new Point4f(12, 14, 14, 0));
+        assertEquals(path.get(1), new Point4f(12, 15, 15, 0));
+        assertEquals(path.get(2), new Point4f(12, 16, 16, 0));
+        assertEquals(path.get(3), new Point4f(12, 17, 17, 0));
     }
 
     @Test
@@ -46,31 +47,31 @@ class PathToolBackendTest {
     @Test
     void forcePathOnlyDownhill() {
         var path = new ArrayList<Point4f>();
-        path.add(new Point4f(12,14,100,0));
-        path.add(new Point4f(12,15,101,0));
-        path.add(new Point4f(12,16,90,0));
-        path.add(new Point4f(12,17,100,0));
+        path.add(new Point4f(12, 14, 100, 0));
+        path.add(new Point4f(12, 15, 101, 0));
+        path.add(new Point4f(12, 16, 90, 0));
+        path.add(new Point4f(12, 17, 100, 0));
 
         PathToolBackend.forcePathOnlyDownhill(path);
-        assertEquals(path.get(0),new Point4f(12,14,100,0));
-        assertEquals(path.get(1),new Point4f(12,15,100,0));
-        assertEquals(path.get(2),new Point4f(12,16,90,0));
-        assertEquals(path.get(3),new Point4f(12,17,90,0));
+        assertEquals(path.get(0), new Point4f(12, 14, 100, 0));
+        assertEquals(path.get(1), new Point4f(12, 15, 100, 0));
+        assertEquals(path.get(2), new Point4f(12, 16, 90, 0));
+        assertEquals(path.get(3), new Point4f(12, 17, 90, 0));
     }
 
     @Test
     void forcePathToHeight() {
         var path = new ArrayList<Point4f>();
-        path.add(new Point4f(12,14,100,0));
-        path.add(new Point4f(12,15,101,0));
-        path.add(new Point4f(12,16,90,0));
-        path.add(new Point4f(12,17,100,0));
+        path.add(new Point4f(12, 14, 100, 0));
+        path.add(new Point4f(12, 15, 101, 0));
+        path.add(new Point4f(12, 16, 90, 0));
+        path.add(new Point4f(12, 17, 100, 0));
 
         PathToolBackend.forcePathToHeight(path, 17);
-        assertEquals(path.get(0),new Point4f(12,14,17,0));
-        assertEquals(path.get(1),new Point4f(12,15,17,0));
-        assertEquals(path.get(2),new Point4f(12,16,17,0));
-        assertEquals(path.get(3),new Point4f(12,17,17,0));
+        assertEquals(path.get(0), new Point4f(12, 14, 17, 0));
+        assertEquals(path.get(1), new Point4f(12, 15, 17, 0));
+        assertEquals(path.get(2), new Point4f(12, 16, 17, 0));
+        assertEquals(path.get(3), new Point4f(12, 17, 17, 0));
     }
 
     @Test
@@ -79,8 +80,8 @@ class PathToolBackendTest {
 
     @Test
     void xyDistSq() {
-        var d = PathToolBackend.xyDistSq(new Point4f(12,14,17,0),new Point4f(22,34,-17,100));
-        assertEquals(10*10+20*20,d);
+        var d = PathToolBackend.xyDistSq(new Point4f(12, 14, 17, 0), new Point4f(22, 34, -17, 100));
+        assertEquals(10 * 10 + 20 * 20, d);
     }
 
     @Test
@@ -98,7 +99,7 @@ class PathToolBackendTest {
             var path = new ArrayList<Point4f>();
             path.add(new Point4f(12, 14, 100, 0));
             path.add(new Point4f(12, 15, 101, 0));
-            path.add(new Point4f(5, -5, 90, 0)); //inside BBX
+            path.add(new Point4f(5, -5, 90, 0)); // inside BBX
             path.add(new Point4f(12, 17, 100, 10));
 
             var subPath = PathToolBackend.getSubPathFor(new Point2i(-10, -10), new Point2i(10, 10), path, 1);
@@ -110,7 +111,7 @@ class PathToolBackendTest {
             var path = new ArrayList<Point4f>();
             path.add(new Point4f(12, 14, 100, 0));
             path.add(new Point4f(12, 15, 101, 0));
-            path.add(new Point4f(5, -5, 90, 0)); //inside BBX
+            path.add(new Point4f(5, -5, 90, 0)); // inside BBX
             path.add(new Point4f(12, 17, 100, 0));
 
             var subPath = PathToolBackend.getSubPathFor(new Point2i(-10, -10), new Point2i(10, 10), path, 1);

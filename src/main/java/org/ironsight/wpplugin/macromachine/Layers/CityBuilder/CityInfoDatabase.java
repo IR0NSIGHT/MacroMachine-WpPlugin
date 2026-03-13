@@ -11,7 +11,8 @@ import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
 /**
  * STARMADE MOD CREATOR: Max1M DATE: 19.08.2025 TIME: 14:52
  */
-public class CityInfoDatabase implements Serializable {
+public class CityInfoDatabase implements Serializable
+{
     public static final int NO_DATA = Integer.MIN_VALUE;
     @Serial
     private static final long serialVersionUID = 1L;
@@ -19,10 +20,10 @@ public class CityInfoDatabase implements Serializable {
 
     public boolean deleteAllWithValue(int index, int mask) {
         boolean deletedSome = false;
-        for (var tileInfo: tileInformation.values()) {
+        for (var tileInfo : tileInformation.values()) {
             LinkedList<Point> toDelete = new LinkedList<>();
-            for (var entry: tileInfo.entrySet()) {
-                if ( (entry.getValue().intValue() & mask) == index) {
+            for (var entry : tileInfo.entrySet()) {
+                if ((entry.getValue().intValue() & mask) == index) {
                     toDelete.add(entry.getKey());
                 }
             }

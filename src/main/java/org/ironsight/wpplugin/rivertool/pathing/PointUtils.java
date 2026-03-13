@@ -11,7 +11,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class PointUtils {
+public class PointUtils
+{
 
     public static Rectangle pointExtent(Rectangle extent) {
         Rectangle rect = new Rectangle(extent);
@@ -52,7 +53,7 @@ public class PointUtils {
     }
 
     public static ArrayList<AxisAlignedBoundingBox2d> toBoundingBoxes(ArrayList<Point> curve, int boxSizeFactor,
-                                                                      double radius) {
+            double radius) {
         ArrayList<AxisAlignedBoundingBox2d> bbxs = new ArrayList<>(curve.size() / boxSizeFactor + 1);
         for (int i = 0; i < curve.size(); i += boxSizeFactor) {
             int boxId = i / boxSizeFactor;
@@ -78,7 +79,8 @@ public class PointUtils {
      *
      * @param p
      * @param color
-     * @param size, 0 size = single dot on map
+     * @param size,
+     *            0 size = single dot on map
      */
     public static void markPoint(Point p, int color, int size, PaintDimension dim) {
         for (int i = -size; i <= size; i++) {
@@ -106,7 +108,7 @@ public class PointUtils {
     }
 
     static float getPositionalLength(float[] pointA, int positionDigits) {
-        //euclidian distance of B and C positions
+        // euclidian distance of B and C positions
         float dist = 0;
         for (int i = 0; i < positionDigits; i++) {
             float distI = pointA[i];
@@ -120,7 +122,7 @@ public class PointUtils {
         ArrayList<float[]> result = new ArrayList<>(points.size());
         for (int i = 0; i < points.size(); i++) {
             float[] point = points.get(i);
-            float[] point2D =  RiverHandleInformation.positionInformation(point[0], point[1], PointType.POSITION_2D);
+            float[] point2D = RiverHandleInformation.positionInformation(point[0], point[1], PointType.POSITION_2D);
             result.add(point2D);
         }
         return result;
@@ -129,7 +131,7 @@ public class PointUtils {
     public static float getPositionalDistance(float[] pointA, float[] pointB, int positionDigits) {
         assert pointA != null;
         assert pointB != null;
-        //euclidian distance of B and C positions
+        // euclidian distance of B and C positions
         float dist = 0;
         for (int i = 0; i < positionDigits; i++) {
             float distI = pointA[i] - pointB[i];
@@ -160,8 +162,10 @@ public class PointUtils {
 
     /**
      *
-     * @param meta handle with meta info
-     * @param position position information to use
+     * @param meta
+     *            handle with meta info
+     * @param position
+     *            position information to use
      * @return handle that has meta from poiint and position from positon
      */
     public static float[] setPosition2D(float[] meta, float[] position) {

@@ -7,17 +7,18 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-public class TreeBoundingBox extends AxisAlignedBoundingBox2d {
+public class TreeBoundingBox extends AxisAlignedBoundingBox2d
+{
     final int sumChilds;
     private final AxisAlignedBoundingBox2d leftChild;
     private final AxisAlignedBoundingBox2d rightChild;
 
     public TreeBoundingBox(AxisAlignedBoundingBox2d leftChild, AxisAlignedBoundingBox2d rightChild) {
-        super(Arrays.asList(leftChild.minPoint, leftChild.maxPoint, rightChild.minPoint, rightChild.maxPoint),-1);
+        super(Arrays.asList(leftChild.minPoint, leftChild.maxPoint, rightChild.minPoint, rightChild.maxPoint), -1);
         this.leftChild = leftChild;
         this.rightChild = rightChild;
-        this.sumChilds =
-                (leftChild instanceof TreeBoundingBox ? ((TreeBoundingBox) leftChild).sumChilds : 1) + (rightChild instanceof TreeBoundingBox ? ((TreeBoundingBox) rightChild).sumChilds : 1);
+        this.sumChilds = (leftChild instanceof TreeBoundingBox ? ((TreeBoundingBox) leftChild).sumChilds : 1)
+                + (rightChild instanceof TreeBoundingBox ? ((TreeBoundingBox) rightChild).sumChilds : 1);
     }
 
     public static TreeBoundingBox constructTree(Collection<AxisAlignedBoundingBox2d> neighbouringBoxes) {
@@ -96,9 +97,6 @@ public class TreeBoundingBox extends AxisAlignedBoundingBox2d {
 
     @Override
     public String toString() {
-        return "TreeBoundingBox{" +
-                super.toString() +
-                "childs=" + sumChilds +
-                '}';
+        return "TreeBoundingBox{" + super.toString() + "childs=" + sumChilds + '}';
     }
 }

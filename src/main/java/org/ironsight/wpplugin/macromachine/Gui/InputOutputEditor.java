@@ -13,13 +13,16 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.function.Consumer;
 
-public class InputOutputEditor extends LayerMappingPanel {
+public class InputOutputEditor extends LayerMappingPanel
+{
     public static void main(String[] args) {
         JFrame frame = new JFrame();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
-        InputOutputEditor editor = new InputOutputEditor(f -> { System.out.println("update mapping to:" + f); });
-        MappingAction lm = MappingAction.getNewEmptyAction().withInput(new PerlinNoiseIO(10,20,123456789, 3));
+        InputOutputEditor editor = new InputOutputEditor(f -> {
+            System.out.println("update mapping to:" + f);
+        });
+        MappingAction lm = MappingAction.getNewEmptyAction().withInput(new PerlinNoiseIO(10, 20, 123456789, 3));
         editor.setMapping(lm);
         frame.add(new JLabel("HELLO WORLD"), BorderLayout.NORTH);
         frame.add(editor, BorderLayout.CENTER);
@@ -49,8 +52,9 @@ public class InputOutputEditor extends LayerMappingPanel {
             assert false;
             return;
         }
-        MappingAction updated = isInput ? mapping.withInput((IPositionValueGetter) io.instantiateWithValues(newValues)) :
-                mapping.withOutput((IPositionValueSetter) io.instantiateWithValues(newValues));
+        MappingAction updated = isInput
+                ? mapping.withInput((IPositionValueGetter) io.instantiateWithValues(newValues))
+                : mapping.withOutput((IPositionValueSetter) io.instantiateWithValues(newValues));
         onChanged.accept(updated);
         setMapping(updated);
     }
@@ -59,12 +63,12 @@ public class InputOutputEditor extends LayerMappingPanel {
     protected void updateComponents() {
         if (mapping == null)
             return;
-        if ((isInput && !(mapping.input instanceof EditableIO)) || (!isInput && !(mapping.output instanceof EditableIO))) {
-            tableModel.setData(new int[0],new String[0], new String[0]);
+        if ((isInput && !(mapping.input instanceof EditableIO))
+                || (!isInput && !(mapping.output instanceof EditableIO))) {
+            tableModel.setData(new int[0], new String[0], new String[0]);
         } else {
             io = isInput ? (EditableIO) mapping.input : (EditableIO) mapping.output;
-            tableModel.setData(
-                    io.getEditableValues(), io.getValueNames(), io.getValueTooltips());
+            tableModel.setData(io.getEditableValues(), io.getValueNames(), io.getValueTooltips());
         }
         this.invalidate();
         this.repaint();
@@ -72,8 +76,7 @@ public class InputOutputEditor extends LayerMappingPanel {
 
     @Override
     protected void initComponents() {
-        tableModel =
-                new KeyValueTableModel();
+        tableModel = new KeyValueTableModel();
         JTable table = new JTable(tableModel) {
             @Override
             public String getToolTipText(java.awt.event.MouseEvent event) {
@@ -121,7 +124,8 @@ public class InputOutputEditor extends LayerMappingPanel {
     }
 
     // Custom table model
-    static class KeyValueTableModel extends AbstractTableModel {
+    static class KeyValueTableModel extends AbstractTableModel
+    {
         private final String[] columnNames = {"Key", "Value"};
         String[] toolTips = new String[0];
         private Object[][] data = new Object[0][];

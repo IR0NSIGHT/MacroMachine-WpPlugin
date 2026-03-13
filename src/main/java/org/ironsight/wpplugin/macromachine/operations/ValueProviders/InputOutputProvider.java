@@ -12,8 +12,11 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class InputOutputProvider implements IMappingValueProvider,
-        org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider {
+public class InputOutputProvider
+        implements
+            IMappingValueProvider,
+            org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider
+{
     public static InputOutputProvider INSTANCE = new InputOutputProvider();
     public final ArrayList<IMappingValue> setters = new ArrayList<>();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
@@ -86,8 +89,10 @@ public class InputOutputProvider implements IMappingValueProvider,
 
         Iterable<Layer> layers = getLayers();
         for (Layer l : layers) {
-            if (l instanceof CustomLayer) continue;
-            if (l instanceof Annotations || l instanceof Biome) continue;
+            if (l instanceof CustomLayer)
+                continue;
+            if (l instanceof Annotations || l instanceof Biome)
+                continue;
             if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
                 setters.add(new NibbleLayerSetter(l, false));
                 getters.add(new NibbleLayerSetter(l, false));
@@ -99,7 +104,8 @@ public class InputOutputProvider implements IMappingValueProvider,
             }
         }
         for (Layer l : layers) {
-            if (!(l instanceof CustomLayer)) continue;
+            if (!(l instanceof CustomLayer))
+                continue;
             if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
                 if (inputSettings.allowCustomLayers)
                     setters.add(new NibbleLayerSetter(l, true));
@@ -116,7 +122,7 @@ public class InputOutputProvider implements IMappingValueProvider,
             }
         }
         getters.add(new ShadowMapIO());
-        getters.add(new DistanceToLayerEdgeGetter(false, MacroSelectionLayer.INSTANCE,100));
+        getters.add(new DistanceToLayerEdgeGetter(false, MacroSelectionLayer.INSTANCE, 100));
         getters.add(new TerrainProvider());
         setters.add(new TerrainProvider());
         setters.add(new StonePaletteApplicator());
@@ -150,7 +156,7 @@ public class InputOutputProvider implements IMappingValueProvider,
 
         // NOISE GENERATORS
         getters.add(new PerlinNoiseIO(100, 100, 42069, 5));
-        getters.add(new VoronoiIO(0,100,123456,5,100));
+        getters.add(new VoronoiIO(0, 100, 123456, 5, 100));
         getters.add(ProviderType.fromTypeDefault(ProviderType.RANDOM_NOISE));
 
         setters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
@@ -187,19 +193,22 @@ public class InputOutputProvider implements IMappingValueProvider,
     }
 
     /**
-     * gets layers from worldpainter API, each layer is the one loaded currently inside worldpainter, not some
-     * outdated instance.
+     * gets layers from worldpainter API, each layer is the one loaded currently
+     * inside worldpainter, not some outdated instance.
+     *
      * @return
      */
     @Override
     public List<Layer> getLayers() {
         LinkedList<Layer> layers = new LinkedList<>();
         if (getDimension() != null) {
-            layers.addAll(LayerManager.getInstance().getLayers()); //vanilla layers
+            layers.addAll(LayerManager.getInstance().getLayers()); // vanilla layers
 
             layers.addAll(new CustomLayerControllerWrapper().getCustomLayers());
         } else {
-            layers.addAll(Arrays.stream(new Layer[]{PineForest.INSTANCE, DeciduousForest.INSTANCE, Frost.INSTANCE, MacroSelectionLayer.INSTANCE, HeatMapLayer.INSTANCE})
+            layers.addAll(Arrays
+                    .stream(new Layer[]{PineForest.INSTANCE, DeciduousForest.INSTANCE, Frost.INSTANCE,
+                            MacroSelectionLayer.INSTANCE, HeatMapLayer.INSTANCE})
                     .collect(Collectors.toCollection(ArrayList::new)));
         }
         layers.add(Annotations.INSTANCE); // hardcoded bc not part by default
@@ -207,7 +216,7 @@ public class InputOutputProvider implements IMappingValueProvider,
             this.layers.remove(l); // remove existing layer, to re-add with updated instance
         }
         this.layers.addAll(layers);
-        for (Layer l: layers) {
+        for (Layer l : layers) {
             layerIds.add(l.getId());
         }
         return new ArrayList<>(this.layers);
@@ -232,15 +241,15 @@ public class InputOutputProvider implements IMappingValueProvider,
         return this.layerIds.contains(layerId);
     }
 
-
-    private class AllowedLayerSettings {
+    private class AllowedLayerSettings
+    {
         boolean allowCustomLayers;
         boolean allowDefaultLayers;
         boolean allowSelection;
         boolean allowAnnotations;
 
         public AllowedLayerSettings(boolean allowCustomLayers, boolean allowDefaultLayers, boolean allowSelection,
-                                    boolean allowAnnotations) {
+                boolean allowAnnotations) {
             this.allowCustomLayers = allowCustomLayers;
             this.allowDefaultLayers = allowDefaultLayers;
             this.allowSelection = allowSelection;

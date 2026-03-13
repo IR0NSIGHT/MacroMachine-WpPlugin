@@ -15,23 +15,20 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class FileConflictResolverDialog extends JDialog {
+public class FileConflictResolverDialog extends JDialog
+{
 
     private boolean overwrite = false;
     private boolean remember = false;
 
     public FileConflictResolverDialog(JFrame owner, SaveableAction original, SaveableAction imported) {
         // Create a modal dialog
-        super(owner, "Resolve " +
-                        "Import Conflict"
-                , true);
+        super(owner, "Resolve " + "Import Conflict", true);
         init(owner, original, imported);
     }
     public FileConflictResolverDialog(JDialog owner, SaveableAction original, SaveableAction imported) {
         // Create a modal dialog
-        super(owner, "Resolve " +
-                        "Import Conflict"
-                , true);
+        super(owner, "Resolve " + "Import Conflict", true);
         init(owner, original, imported);
     }
 
@@ -46,10 +43,9 @@ public class FileConflictResolverDialog extends JDialog {
             MappingAction a = MappingAction.getNewEmptyAction()
                     .withName("Paint trees on cyan v1")
                     .withInput(new AnnotationSetter())
-                    .withOutput(new NibbleLayerSetter(
-                            PineForest.INSTANCE, false));
-            FileConflictResolverDialog dialog = new FileConflictResolverDialog(frame,
-                    a,a.withName("Paint trees on cyan v2"));
+                    .withOutput(new NibbleLayerSetter(PineForest.INSTANCE, false));
+            FileConflictResolverDialog dialog = new FileConflictResolverDialog(frame, a,
+                    a.withName("Paint trees on cyan v2"));
             dialog.setVisible(true);
         });
     }
@@ -70,11 +66,8 @@ public class FileConflictResolverDialog extends JDialog {
         JPanel importedPanel = (JPanel) new DisplayUnitRenderer(MacroTreePanel::isValidItem).renderFor(imported, false);
         importedPanel.setBorder(BorderFactory.createTitledBorder("Imported:"));
 
-        JLabel conflictLabel =
-                new JLabel(
-                        "The imported " + (original instanceof Macro ? "macro" : "action") + " already exists in your " +
-                                "savefile:",
-                        SwingConstants.CENTER);
+        JLabel conflictLabel = new JLabel("The imported " + (original instanceof Macro ? "macro" : "action")
+                + " already exists in your " + "savefile:", SwingConstants.CENTER);
         center.add(conflictLabel);
         center.add(originalPanel);
         center.add(importedPanel);

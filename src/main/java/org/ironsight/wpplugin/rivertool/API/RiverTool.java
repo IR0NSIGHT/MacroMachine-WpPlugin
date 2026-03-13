@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.rivertool.API;
 
-
-public final class RiverTool {
+public final class RiverTool
+{
     private RiverTool() {
     } // prevent instantiation
 

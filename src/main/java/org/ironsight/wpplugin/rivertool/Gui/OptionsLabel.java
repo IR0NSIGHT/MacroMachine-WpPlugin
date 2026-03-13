@@ -6,9 +6,10 @@ import javax.swing.*;
 import java.text.ParseException;
 import java.util.function.Consumer;
 
-public interface OptionsLabel {
+public interface OptionsLabel
+{
     static OptionsLabel numericInput(String text, String tooltip, SpinnerNumberModel number,
-                                     Consumer<Float> setOptionValue, Runnable notifyAfterReconfigure) {
+            Consumer<Float> setOptionValue, Runnable notifyAfterReconfigure) {
         JLabel textL = new JLabel();
         textL.setText(text);
         textL.setToolTipText(tooltip);
@@ -35,7 +36,7 @@ public interface OptionsLabel {
                             float val = ((Double) value).floatValue();
                             if (val == RiverHandleInformation.INHERIT_VALUE)
                                 return "INHERIT";
-                            return String.format("%.2f",val);
+                            return String.format("%.2f", val);
                         }
                         return value.toString();
                     }
@@ -44,12 +45,10 @@ public interface OptionsLabel {
         });
 
         spinner.setEnabled(true);
-        spinner.addChangeListener(
-                evt -> {
-                    setOptionValue.accept(((Double) spinner.getValue()).floatValue());
-                    notifyAfterReconfigure.run();
-                }
-        );
+        spinner.addChangeListener(evt -> {
+            setOptionValue.accept(((Double) spinner.getValue()).floatValue());
+            notifyAfterReconfigure.run();
+        });
 
         // Create a horizontal Box to hold the label and spinner on the same line
         Box horizontalBox = Box.createHorizontalBox();
@@ -62,4 +61,3 @@ public interface OptionsLabel {
 
     JComponent[] getLabels();
 }
-

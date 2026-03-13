@@ -4,7 +4,8 @@ import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 
 import java.util.ArrayList;
 
-public interface BreakpointListener {
+public interface BreakpointListener
+{
     void OnReachedBreakpoint(int idx);
 
     void PostReachedBreakpoint(int idx);

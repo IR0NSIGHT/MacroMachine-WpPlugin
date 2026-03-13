@@ -9,15 +9,13 @@ import java.util.Objects;
 import java.util.UUID;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-class MacroJsonWrapper {
+class MacroJsonWrapper
+{
 
     @JsonCreator
-    public MacroJsonWrapper(
-            @JsonProperty("macroName") String macroName,
-            @JsonProperty("description") String description,
-            @JsonProperty("stepIds") UUID[] stepIds,
-            @JsonProperty("selfId") UUID selfId,
-            @JsonProperty("activeIds") boolean[] activeIds) {
+    public MacroJsonWrapper(@JsonProperty("macroName") String macroName,
+            @JsonProperty("description") String description, @JsonProperty("stepIds") UUID[] stepIds,
+            @JsonProperty("selfId") UUID selfId, @JsonProperty("activeIds") boolean[] activeIds) {
         this.macroName = macroName;
         this.description = description;
         this.stepIds = stepIds;
@@ -58,13 +56,14 @@ class MacroJsonWrapper {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         MacroJsonWrapper that = (MacroJsonWrapper) o;
-        return Objects.equals(getSelfId(), that.getSelfId()) &&
-                Objects.equals(getMacroName(), that.getMacroName()) &&
-                Objects.equals(getDescription(), that.getDescription()) &&
-                Arrays.equals(getStepIds(), that.getStepIds()) && Arrays.equals(getActiveIds(), that.getActiveIds());
+        return Objects.equals(getSelfId(), that.getSelfId()) && Objects.equals(getMacroName(), that.getMacroName())
+                && Objects.equals(getDescription(), that.getDescription())
+                && Arrays.equals(getStepIds(), that.getStepIds()) && Arrays.equals(getActiveIds(), that.getActiveIds());
     }
 
     @Override

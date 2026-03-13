@@ -10,7 +10,8 @@ import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSetter, IPositionTileValueGetter, EditableIO {
+public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSetter, IPositionTileValueGetter, EditableIO
+{
     private final int minHeight;
     private final int maxHeight;
 
@@ -42,7 +43,7 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
         }
         if (tile == null)
             return getMinValue();
-        return (int)EditableIO.clamp(Math.round( tile.getHeight(x & 127, y & 127)),getMinValue(),getMaxValue());
+        return (int) EditableIO.clamp(Math.round(tile.getHeight(x & 127, y & 127)), getMinValue(), getMaxValue());
     }
 
     @Override
@@ -72,8 +73,10 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         TerrainHeightIO that = (TerrainHeightIO) o;
         return minHeight == that.minHeight && maxHeight == that.maxHeight;
     }
@@ -106,22 +109,19 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
         return minHeight;
     }
 
-
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
         if (data.length == 0)
-            return new TerrainHeightIO(-64,319);
-        int minHeight = (int)data[0];
-        int maxHeight = (int)data[1];
-        return new TerrainHeightIO(minHeight,maxHeight);
+            return new TerrainHeightIO(-64, 319);
+        int minHeight = (int) data[0];
+        int maxHeight = (int) data[1];
+        return new TerrainHeightIO(minHeight, maxHeight);
     }
-
 
     @Override
     public Object[] getSaveData() {
-        return new Object[]{(Integer)minHeight,(Integer)maxHeight};
+        return new Object[]{(Integer) minHeight, (Integer) maxHeight};
     }
-
 
     @Override
     public int getMaxValue() {
@@ -159,7 +159,6 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
         return ProviderType.HEIGHT;
     }
 
-
     @Override
     public void prepareForDimension(Dimension dim) {
 
@@ -167,27 +166,26 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public int[] getEditableValues() {
-        return new int[]{minHeight,maxHeight};
+        return new int[]{minHeight, maxHeight};
     }
 
     @Override
     public String[] getValueNames() {
-        return new String[]{"min","max"};
+        return new String[]{"min", "max"};
     }
 
     @Override
     public String[] getValueTooltips() {
-        return new String[]{"lowest value allowed","highest value allowed"};
+        return new String[]{"lowest value allowed", "highest value allowed"};
     }
 
     @Override
     public EditableIO instantiateWithValues(int[] values) {
-        return new TerrainHeightIO(values[0],values[1]);
+        return new TerrainHeightIO(values[0], values[1]);
     }
-
 
     @Override
     public int getValueAt(Tile tile, int tileX, int tileY) {
-        return tile.getIntHeight(tileX,tileY);
+        return tile.getIntHeight(tileX, tileY);
     }
 }

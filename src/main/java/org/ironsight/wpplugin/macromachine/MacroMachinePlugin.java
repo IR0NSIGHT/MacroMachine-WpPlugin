@@ -22,21 +22,29 @@ import java.util.List;
 import static org.ironsight.wpplugin.macromachine.Version.VERSION;
 
 /**
- * The main plugin class. This demo combines the various providers in one plugin class. You could of course also separate them out into separate plugins classes for clarity. And of course
- * you can leave out any providers for services your plugin does not provide.
+ * The main plugin class. This demo combines the various providers in one plugin
+ * class. You could of course also separate them out into separate plugins
+ * classes for clarity. And of course you can leave out any providers for
+ * services your plugin does not provide.
  *
- * <p><strong>Note:</strong> this class is referred to from the {@code org.pepsoft.worldpainter.plugins} file, so when
- * you rename or copy it, be sure to keep that file up-to-date.
+ * <p>
+ * <strong>Note:</strong> this class is referred to from the
+ * {@code org.pepsoft.worldpainter.plugins} file, so when you rename or copy it,
+ * be sure to keep that file up-to-date.
  */
 @SuppressWarnings("unused") // Instantiated by WorldPainter
-public class MacroMachinePlugin extends AbstractPlugin implements
-        // This demo has the plugin class implementing all of these, but they may also be implemented by separate
-        // classes, as long as each class implements Plugin and is mentioned in the org.pepsoft.worldpainter.plugins
-        // registry file
-        LayerProvider,          // Implement this to provide one or more singular, unconfigurable layers
-        OperationProvider,      // Implement this to provide one or more custom operations for the Tools panel
-        CustomLayerProvider,
-        LayerEditorProvider {
+public class MacroMachinePlugin extends AbstractPlugin
+        implements
+            // This demo has the plugin class implementing all of these, but they may also
+            // be implemented by separate
+            // classes, as long as each class implements Plugin and is mentioned in the
+            // org.pepsoft.worldpainter.plugins
+            // registry file
+            LayerProvider, // Implement this to provide one or more singular, unconfigurable layers
+            OperationProvider, // Implement this to provide one or more custom operations for the Tools panel
+            CustomLayerProvider,
+            LayerEditorProvider
+{
     public WorldPainterView view;
 
     @Override

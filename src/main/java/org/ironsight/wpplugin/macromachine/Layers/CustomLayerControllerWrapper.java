@@ -15,10 +15,11 @@ import java.util.function.Consumer;
 
 /**
  * API to worldpainters CustomLayerController, that manages all custom layers
- * use to get proper list of customlayers avaialble in WP
- * use to register new custom layers to WP
+ * use to get proper list of customlayers avaialble in WP use to register new
+ * custom layers to WP
  */
-public class CustomLayerControllerWrapper implements LayerProvider {
+public class CustomLayerControllerWrapper implements LayerProvider
+{
     private CustomLayerController controller;
 
     public CustomLayerControllerWrapper() {
@@ -26,7 +27,8 @@ public class CustomLayerControllerWrapper implements LayerProvider {
     }
 
     private CustomLayerController getController() {
-        if (controller == null) this.controller = getCustomLayerController();
+        if (controller == null)
+            this.controller = getCustomLayerController();
         return controller;
     }
 
@@ -65,7 +67,8 @@ public class CustomLayerControllerWrapper implements LayerProvider {
     public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
         HashMap<String, CustomLayer> layers = new HashMap<>();
         getCustomLayers().forEach(l -> layers.put(l.getId(), l));
-        if (layers.containsKey(layerId)) return layers.get(layerId);
+        if (layers.containsKey(layerId))
+            return layers.get(layerId);
         layerNotFoundError.accept(layerId);
         return null;
     }
@@ -77,14 +80,16 @@ public class CustomLayerControllerWrapper implements LayerProvider {
 
     @Override
     public void addLayer(Layer layer) {
-        if (!(layer instanceof CustomLayer customLayer)) return;
+        if (!(layer instanceof CustomLayer customLayer))
+            return;
 
         try {
             Class<?> appClass = Class.forName("org.pepsoft.worldpainter.App");
             Method registerMethod = appClass.getDeclaredMethod("registerCustomLayer", CustomLayer.class, boolean.class);
             registerMethod.setAccessible(true); // bypass access checks
             registerMethod.invoke(getController(), customLayer, true);
-        } catch (ClassNotFoundException |NoSuchMethodException | IllegalAccessException | InvocationTargetException | NullPointerException  e) {
+        } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | InvocationTargetException
+                | NullPointerException e) {
             System.err.println("Failed to register custom layer: " + e);
         }
     }

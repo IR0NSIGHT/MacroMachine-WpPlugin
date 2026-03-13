@@ -7,7 +7,8 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-public class SlopeProvider implements IPositionValueGetter {
+public class SlopeProvider implements IPositionValueGetter
+{
     /**
      * slope in degrees 0-90
      *
@@ -65,7 +66,7 @@ public class SlopeProvider implements IPositionValueGetter {
     public int getMaxValue() {
         return 90;
     }
-    private final int[] values = IntStream.range(0,90+1).toArray();
+    private final int[] values = IntStream.range(0, 90 + 1).toArray();
     @Override
     public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);

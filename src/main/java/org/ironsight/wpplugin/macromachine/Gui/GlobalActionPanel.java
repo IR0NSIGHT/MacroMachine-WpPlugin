@@ -31,7 +31,8 @@ import static org.ironsight.wpplugin.macromachine.operations.Macro.macroToFlatAc
 
 // top level panel that contains a selection list of macros/layers/input/output on the left, like a file browser
 // and an editor for the currently selected action on the right
-public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
+public class GlobalActionPanel extends JPanel implements ISelectItemCallback
+{
     public static final String MAPPING_EDITOR = "mappingEditor";
     public static final String INVALID_SELECTION = "invalidSelection";
     public static final String MACRO_DESIGNER = "macroDesigner";
@@ -45,7 +46,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     MacroDesigner macroDesigner;
     ActionDesigner mappingEditor;
     InputOutputEditor ioEditor;
-    //consumes macro to apply to map. callback for "user pressed apply-macro"
+    // consumes macro to apply to map. callback for "user pressed apply-macro"
     MacroApplicator applyMacro;
     CardLayout layout;
     JPanel editorPanel;
@@ -57,7 +58,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     private boolean showTabbedPane = true;
     private boolean rerender3d = false;
     private Dimension[] expandedStateSizes = new Dimension[2];
-
 
     public GlobalActionPanel(MacroApplicator applyToMap, Window dialog) {
         INSTANCE = this;
@@ -74,18 +74,12 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         MappingActionContainer.SetInstance(new MappingActionContainer("./src/main/resources/DefaultActions.json"));
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
-        ContainerIO.importFile(layers,
-                macros,
-                saveFile,
-                new ImportExportPolicy(),
+        ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(),
                 s -> ErrorPopUpString("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s),
                 InputOutputProvider.INSTANCE);
 
         Runnable saveEverything = () -> ContainerIO.exportToFile(MappingActionContainer.getInstance(),
-                MacroContainer.getInstance(),
-                saveFile,
-                new ImportExportPolicy(),
-                System.err::println,
+                MacroContainer.getInstance(), saveFile, new ImportExportPolicy(), System.err::println,
                 InputOutputProvider.INSTANCE);
         MappingActionContainer.getInstance().subscribe(saveEverything);
         MacroContainer.getInstance().subscribe(saveEverything);
@@ -97,9 +91,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         frame.setVisible(true);
 
         JFrame diag = createDialog(frame, (macro, uiCallback) -> {
-            ArrayList<MappingAction> steps =
-                    new ArrayList<>(macroToFlatActions(macro, MacroContainer.getInstance(),
-                            MappingActionContainer.getInstance()));
+            ArrayList<MappingAction> steps = new ArrayList<>(
+                    macroToFlatActions(macro, MacroContainer.getInstance(), MappingActionContainer.getInstance()));
             int i = 0;
             uiCallback.setAllActionsBeforeRun(steps);
             for (MappingAction a : steps) {
@@ -124,7 +117,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     /**
      * Returns the current timestamp in a human-readable format.
      *
-     * @return The current timestamp as a String in the format "yyyy-MM-dd HH:mm:ss".
+     * @return The current timestamp as a String in the format "yyyy-MM-dd
+     *         HH:mm:ss".
      */
     public static String getCurrentTimestamp() {
         // Get the current date and time
@@ -142,7 +136,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         JOptionPane.showMessageDialog(null, message, "Error",
                 // Title of the dialog
                 JOptionPane.ERROR_MESSAGE
-                // Type of message (error icon)
+        // Type of message (error icon)
         );
 
     }
@@ -155,11 +149,10 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         JOptionPane.showMessageDialog(null, message, "Error",
                 // Title of the dialog
                 JOptionPane.ERROR_MESSAGE
-                // Type of message (error icon)
+        // Type of message (error icon)
         );
 
     }
-
 
     // Method to log messages
     public static void logMessage(String message) {
@@ -216,33 +209,33 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         if (macro == null && selectionType == SELECTION_TPYE.MACRO)
             selectionType = SELECTION_TPYE.INVALID;
 
-        if (mapping == null && (selectionType == SELECTION_TPYE.ACTION || selectionType == SELECTION_TPYE.INPUT ||
-                selectionType == SELECTION_TPYE.OUTPUT))
+        if (mapping == null && (selectionType == SELECTION_TPYE.ACTION || selectionType == SELECTION_TPYE.INPUT
+                || selectionType == SELECTION_TPYE.OUTPUT))
             selectionType = SELECTION_TPYE.INVALID;
-        //FIXME: notify MacroTreePanel that an item was selected.
+        // FIXME: notify MacroTreePanel that an item was selected.
 
         switch (selectionType) {
-            case MACRO:
+            case MACRO :
                 macroDesigner.setMacro(macro, true);
                 layout.show(editorPanel, MACRO_DESIGNER);
                 macroTreePanel.selectItemInTree(macro);
                 break;
-            case ACTION:
+            case ACTION :
                 mappingEditor.setMapping(mapping);
                 layout.show(editorPanel, MAPPING_EDITOR);
                 macroTreePanel.selectItemInTree(mapping);
                 break;
-            case INPUT:
+            case INPUT :
                 ioEditor.setMapping(mapping);
                 ioEditor.setIsInput(true);
                 layout.show(editorPanel, INPUT_OUTPUT_DESIGNER);
                 break;
-            case OUTPUT:
+            case OUTPUT :
                 ioEditor.setIsInput(false);
                 ioEditor.setMapping(mapping);
                 layout.show(editorPanel, INPUT_OUTPUT_DESIGNER);
                 break;
-            case INVALID:
+            case INVALID :
                 layout.show(editorPanel, INVALID_SELECTION);
                 break;
         }
@@ -263,16 +256,14 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         actionContainer.subscribe(this::onUpdate);
 
         this.setLayout(new BorderLayout());
-        macroTreePanel = new MacroTreePanel(MacroContainer.getInstance(),
-                MappingActionContainer.getInstance(),
-                applyMacro,
-                this::onSelect);
+        macroTreePanel = new MacroTreePanel(MacroContainer.getInstance(), MappingActionContainer.getInstance(),
+                applyMacro, this::onSelect);
         macroTreePanel.setMaximumSize(new Dimension(200, 0));
 
         macroDesigner = new MacroDesigner(actionContainer, this::onSubmitMacro, macroContainer, this);
         mappingEditor = new ActionDesigner(this::onSubmitMapping);
-        ioEditor = new InputOutputEditor(action -> MappingActionContainer.getInstance().updateMapping(action,
-                GlobalActionPanel::ErrorPopUpString));
+        ioEditor = new InputOutputEditor(action -> MappingActionContainer.getInstance()
+                .updateMapping(action, GlobalActionPanel::ErrorPopUpString));
         editorPanel = new JPanel(new CardLayout());
         editorPanel.add(mappingEditor, MAPPING_EDITOR);
         editorPanel.add(macroDesigner, MACRO_DESIGNER);
@@ -297,7 +288,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         tabbedPane.add("log", logPanel);
 
         previewer.setInclination(30);
-        previewer.setObject(new SurfaceObject()/*empty dummy*/, null);
+        previewer.setObject(new SurfaceObject()/* empty dummy */, null);
         tabbedPane.add("3d", previewer);
 
         previewer.addHierarchyListener(e -> {
@@ -331,7 +322,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     }
 
     private void showLargeVersion(boolean expanded) {
-        //save current state
+        // save current state
 
         expandedStateSizes[expanded ? 0 : 1] = this.dialog.getSize();
         tabbedPane.setVisible(expanded);
@@ -349,9 +340,9 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
     public void onSelect(SaveableAction action, SELECTION_TPYE type) {
         selectionType = type;
         switch (selectionType) {
-            case MACRO:
+            case MACRO :
                 currentSelectedMacro = action.getUid();
-            case ACTION:
+            case ACTION :
                 currentSelectedLayer = action.getUid();
         }
         onUpdate();
@@ -377,7 +368,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         MACRO, ACTION, INPUT, OUTPUT, INVALID, NONE
     }
 
-    public interface ApplyToMapCallback {
+    public interface ApplyToMapCallback
+    {
         void applyToMap(Macro macro, Consumer<ApplyAction.Progess> setProgress);
 
         void applyToMap(Macro macro, ApplyAction.Progess progess);

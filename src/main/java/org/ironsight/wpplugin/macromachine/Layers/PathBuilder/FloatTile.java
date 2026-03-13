@@ -1,12 +1,12 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
-
 import javax.vecmath.Point3i;
 import java.util.Arrays;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
-public class FloatTile {
+public class FloatTile
+{
     public int tilePosX;
     public int tilePosY;
     private float min, max;
@@ -23,7 +23,8 @@ public class FloatTile {
 
     public void fillWith(float value) {
         Arrays.fill(values, value);
-        max = value; min = value;
+        max = value;
+        min = value;
     }
 
     public float getMin() {
@@ -34,7 +35,7 @@ public class FloatTile {
         return max;
     }
 
-    public void calculateMinMax(){
+    public void calculateMinMax() {
         float[] minMax = calculateMinMax(values);
         this.min = minMax[0];
         this.max = minMax[1];
@@ -62,7 +63,8 @@ public class FloatTile {
 
     /**
      *
-     * @param x global pos
+     * @param x
+     *            global pos
      * @param y
      * @param value
      */
@@ -73,7 +75,8 @@ public class FloatTile {
 
     /**
      *
-     * @param x global pos
+     * @param x
+     *            global pos
      * @param y
      * @return
      */

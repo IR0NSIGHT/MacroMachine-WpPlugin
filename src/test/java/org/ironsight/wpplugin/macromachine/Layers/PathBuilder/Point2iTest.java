@@ -4,7 +4,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class Point2iTest {
+class Point2iTest
+{
 
     @Test
     void distanceSquared() {
@@ -24,7 +25,7 @@ class Point2iTest {
     void equality() {
         var p1 = new Point2i(10010, 10010);
         var p2 = new Point2i(10010, 10010);
-        assertNotSame(p1,p2);
-        assertEquals(p1,p2);
+        assertNotSame(p1, p2);
+        assertEquals(p1, p2);
     }
 }

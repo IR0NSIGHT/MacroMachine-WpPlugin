@@ -5,7 +5,8 @@ import org.ironsight.wpplugin.macromachine.operations.*;
 import javax.swing.*;
 import java.awt.*;
 
-public class ConflictResolveImportPolicy extends ImportExportPolicy {
+public class ConflictResolveImportPolicy extends ImportExportPolicy
+{
     private MacroContainer macroContainer;
     private MappingActionContainer actionContainer;
     private Window parent;
@@ -34,11 +35,11 @@ public class ConflictResolveImportPolicy extends ImportExportPolicy {
                 return false; // nothing to do, just skip
             FileConflictResolverDialog diag;
             if (parent instanceof JDialog)
-                diag = new FileConflictResolverDialog((JDialog) parent,original, action );
+                diag = new FileConflictResolverDialog((JDialog) parent, original, action);
             else if (parent instanceof JFrame)
-                diag = new FileConflictResolverDialog((JFrame) parent,original, action);
+                diag = new FileConflictResolverDialog((JFrame) parent, original, action);
             else
-                diag = new FileConflictResolverDialog((JFrame) null, original,action);
+                diag = new FileConflictResolverDialog((JFrame) null, original, action);
             diag.setVisible(true);
             if (diag.isRemember() && diag.isOverwrite())
                 allowAll = true;

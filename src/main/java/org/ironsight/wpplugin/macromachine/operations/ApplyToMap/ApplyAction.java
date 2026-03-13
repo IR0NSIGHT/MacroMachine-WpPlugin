@@ -14,16 +14,18 @@ import java.util.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class ApplyAction {
+public class ApplyAction
+{
 
-    public static class ApplicationContext {
+    public static class ApplicationContext
+    {
         public final Dimension dimension;
         public final MacroContainer macros;
         public final MappingActionContainer actions;
         public final ActionFilterIO actionFilterIO;
 
-        public ApplicationContext(Dimension dimension, MacroContainer macros, MappingActionContainer actions, LayerProvider layerManager,
-                                  LayerProvider apiLayerManager, ActionFilterIO actionFilterIO) {
+        public ApplicationContext(Dimension dimension, MacroContainer macros, MappingActionContainer actions,
+                LayerProvider layerManager, LayerProvider apiLayerManager, ActionFilterIO actionFilterIO) {
             this.dimension = dimension;
             this.macros = macros;
             this.actions = actions;
@@ -37,8 +39,7 @@ public class ApplyAction {
     }
 
     public static ExecutionStatistic applyToDimensionWithFilter(ApplicationContext context, TileFilter filter,
-                                                                MappingAction action,
-                                                                ApplyActionCallback callback) {
+            MappingAction action, ApplyActionCallback callback) {
         Dimension dim = context.dimension;
         filter.setContext(context);
         Iterator<? extends Tile> t = dim.getTiles().iterator();
@@ -47,14 +48,14 @@ public class ApplyAction {
         int totalTiles = dim.getTiles().size();
         int tilesVisitedCount = 0;
 
-
         // find area of operations: all chunks that will be visited:
         int[] tileX = new int[dim.getTiles().size()], tileY = new int[dim.getTiles().size()];
         int tileArrIdx = 0;
 
         while (t.hasNext()) {
             Tile tile = t.next();
-            if (context.actionFilterIO.skipTile(tile.getX(), tile.getY()) && //FIXME move static instance to be member of applicationContext
+            if (context.actionFilterIO.skipTile(tile.getX(), tile.getY()) && // FIXME move static instance to be member
+                                                                             // of applicationContext
                     !doesIncreaseActionFilter(action)) {
                 continue;
             }
@@ -84,9 +85,9 @@ public class ApplyAction {
             statistic.touchedTiles++;
             if (callback.isActionAbort())
                 break;
-            //special case for actionfilter
+            // special case for actionfilter
             if (action.getOutput() instanceof ActionFilterIO) {
-                boolean skipTile =context.actionFilterIO.testTileEarlyAbort(tile, action);
+                boolean skipTile = context.actionFilterIO.testTileEarlyAbort(tile, action);
                 if (skipTile)
                     continue;
             }
@@ -103,12 +104,11 @@ public class ApplyAction {
                 if (callback.isActionAbort())
                     break;
             }
-            //this pass is done, for this tile calculate new minMax
-            context.actionFilterIO.getTileContainer().calculateMinMax(tile.getX() * TILE_SIZE,
-                    tile.getY() * TILE_SIZE);
+            // this pass is done, for this tile calculate new minMax
+            context.actionFilterIO.getTileContainer().calculateMinMax(tile.getX() * TILE_SIZE, tile.getY() * TILE_SIZE);
             tilesVisitedCount++;
             callback.setProgressOfAction(Math.round(100f * tilesVisitedCount / (totalTiles)));
-            callback.afterEachTile(tile.getX(),tile.getY());
+            callback.afterEachTile(tile.getX(), tile.getY());
         }
         callback.setProgressOfAction(100);
 
@@ -127,16 +127,14 @@ public class ApplyAction {
      * @return
      */
     public static boolean doesIncreaseActionFilter(MappingAction action) {
-        return action.output.getProviderType().equals(ProviderType.INTERMEDIATE_SELECTION) &&
-                (action.actionType.equals(ActionType.SET) ||
-                        action.actionType.equals(ActionType.INCREMENT) ||
-                        action.actionType.equals(ActionType.MULTIPLY) ||
-                        action.actionType.equals(ActionType.AT_LEAST));
+        return action.output.getProviderType().equals(ProviderType.INTERMEDIATE_SELECTION)
+                && (action.actionType.equals(ActionType.SET) || action.actionType.equals(ActionType.INCREMENT)
+                        || action.actionType.equals(ActionType.MULTIPLY)
+                        || action.actionType.equals(ActionType.AT_LEAST));
     }
 
     public static ArrayList<ExecutionStatistic> applyExecutionSteps(ApplicationContext context,
-                                                                    List<MappingAction> actions,
-                                                                    ApplyActionCallback ui) {
+            List<MappingAction> actions, ApplyActionCallback ui) {
         Dimension dim = context.dimension;
         ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
         ui.setAllActionsBeforeRun(actions);
@@ -150,7 +148,7 @@ public class ApplyAction {
             TileFilter earlyAbortFilter = new TileFilter(action);
             ExecutionStatistic statistic = null;
             try {
-                statistic = applyToDimensionWithFilter(context,earlyAbortFilter,action,ui);
+                statistic = applyToDimensionWithFilter(context, earlyAbortFilter, action, ui);
             } catch (Exception ex) {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
@@ -170,10 +168,11 @@ public class ApplyAction {
         return statistics;
     }
 
-    public static class Progess {
+    public static class Progess
+    {
         public final int step;
         public final int totalSteps;
-        public final float progressInStep; //0..1
+        public final float progressInStep; // 0..1
 
         public Progess(int step, int totalSteps, float progressInStep) {
             this.step = step;

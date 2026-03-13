@@ -8,7 +8,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
-public class KernelConvolution {
+public class KernelConvolution
+{
     final HashMap<Point, Float> xSmoothedPoints;
     final int radius;
     final HeightDimension dimension;
@@ -31,10 +32,15 @@ public class KernelConvolution {
     /**
      * Generates a Gaussian curve as a float array.
      *
-     * @param size      Number of points in the curve
-     * @param maxHeight Maximum height of the curve (A in the Gaussian function)
-     * @param mean      The mean (center) of the curve (μ in the Gaussian function)
-     * @param stdDev    The standard deviation (width) of the curve (σ in the Gaussian function)
+     * @param size
+     *            Number of points in the curve
+     * @param maxHeight
+     *            Maximum height of the curve (A in the Gaussian function)
+     * @param mean
+     *            The mean (center) of the curve (μ in the Gaussian function)
+     * @param stdDev
+     *            The standard deviation (width) of the curve (σ in the Gaussian
+     *            function)
      * @return A float array representing the Gaussian curve
      */
     public static float[] generateGaussianCurve(int size, float maxHeight, float mean, float stdDev) {
@@ -63,7 +69,7 @@ public class KernelConvolution {
         }
         kernel[kernelWidth] = 0f;
 
-        //Normalize kernel
+        // Normalize kernel
         for (int i = 0; i < kernel.length; i++) {
             kernel[i] = kernel[i] / kernelWidth;
         }
@@ -71,7 +77,7 @@ public class KernelConvolution {
         float[] gradients = new float[input.length];
 
         if (input.length < kernelWidth * 2 + 1) {
-            //its pointless because its not wide enough to use the kernel even once
+            // its pointless because its not wide enough to use the kernel even once
             return gradients;
         }
 
@@ -86,9 +92,9 @@ public class KernelConvolution {
 
             gradients[i] = gradient;
         }
-        //spread first couple and last couple gradients to fill unset ones
+        // spread first couple and last couple gradients to fill unset ones
         for (int i = 0; i < kernelWidth; i++) {
-            gradients[i] = gradients[kernelWidth];  //use first calculated gradients in all before
+            gradients[i] = gradients[kernelWidth]; // use first calculated gradients in all before
         }
         for (int i = gradients.length - 1; i > gradients.length - kernelWidth - 1; i--) {
             gradients[i] = gradients[gradients.length - 1 - kernelWidth];
@@ -119,7 +125,7 @@ public class KernelConvolution {
     }
 
     public void smoothPoints(float[] kernel, float kernelSum) {
-        //smooth in x dir, store locally to not influence other points being calculated
+        // smooth in x dir, store locally to not influence other points being calculated
         for (Point curvePoint : points) {
             float sum = 0;
             for (int x = 0; x < kernel.length; x++) {
@@ -131,7 +137,7 @@ public class KernelConvolution {
             xSmoothedPoints.put(curvePoint, sum);
         }
 
-        //smooth in y dir using precalculated smoothed x values
+        // smooth in y dir using precalculated smoothed x values
         for (Point curvePoint : corePoints) {
             float sum = 0;
             for (int y = 0; y < kernel.length; y++) {

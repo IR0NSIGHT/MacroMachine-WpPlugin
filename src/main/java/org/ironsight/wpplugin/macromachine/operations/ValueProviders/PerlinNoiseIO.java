@@ -12,7 +12,8 @@ import java.util.stream.IntStream;
 
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
-public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
+public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
+{
     private final float scale;
     private final float amplitude;
     private final long seed;
@@ -23,26 +24,26 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
         this.scale = scale;
         this.amplitude = amplitude;
         this.seed = seed;
-        this.octaves = Math.max(Math.min(octaves, octaveNormalizer.length-1),1);
+        this.octaves = Math.max(Math.min(octaves, octaveNormalizer.length - 1), 1);
         generator = new ImprovedNoise(42069);
         this.values = IntStream.range(0, (int) (Math.ceil(amplitude) + 1)).toArray();
-        //brute force collect data to force generator output range into [0,1]
-        // dev note: improvedNoise does not reliable produce values across the whole histogram and there seems no way
-        // of predicting the histogram based on scale ampl seed or octaves. so we have to measure average histogram
+        // brute force collect data to force generator output range into [0,1]
+        // dev note: improvedNoise does not reliable produce values across the whole
+        // histogram and there seems no way
+        // of predicting the histogram based on scale ampl seed or octaves. so we have
+        // to measure average histogram
         // and adjust accordingly.
         float min = Float.MAX_VALUE;
         float max = Float.NEGATIVE_INFINITY;
-        for (int x = -1000; x < 1000; x+=27) {
-            for (int y = -1000; y < 1000; y+=27) {
-                float point = getRawValueAt(x,y);
+        for (int x = -1000; x < 1000; x += 27) {
+            for (int y = -1000; y < 1000; y += 27) {
+                float point = getRawValueAt(x, y);
                 min = Math.min(point, min);
                 max = Math.max(point, max);
             }
         }
         shift = min;
-        multi = (max-min);
-
-
+        multi = (max - min);
 
         if (imagesByValue == null) {
             imagesByValue = new BufferedImage[0];
@@ -94,7 +95,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
         int[] intArray = new int[data.length];
 
         for (int i = 0; i < data.length; i++) {
-            intArray[i] = (int)data[i]; // Autoboxing converts int to Integer
+            intArray[i] = (int) data[i]; // Autoboxing converts int to Integer
         }
         return instantiateWithValues(intArray);
     }
@@ -121,10 +122,10 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     }
 
     private static BufferedImage[] getImagesForValues() {
-        PerlinNoiseIO io = new PerlinNoiseIO(100,100,123456789,8);
+        PerlinNoiseIO io = new PerlinNoiseIO(100, 100, 123456789, 8);
         BufferedImage[] images = new BufferedImage[101];
         for (int value = 0; value <= 100; value++) {
-            BufferedImage img = new BufferedImage(200,200,TYPE_INT_RGB);
+            BufferedImage img = new BufferedImage(200, 200, TYPE_INT_RGB);
             images[value] = img;
             int perlinSIze = 256;
             int range = 2;
@@ -132,14 +133,15 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
             int lower = value - range;
             for (int x = 0; x < img.getWidth(); x++) {
                 for (int y = 0; y < img.getHeight(); y++) {
-                    int posValue = io.getValueAt(null,x*perlinSIze/img.getWidth(),y*perlinSIze/img.getHeight());
+                    int posValue = io.getValueAt(null, x * perlinSIze / img.getWidth(),
+                            y * perlinSIze / img.getHeight());
                     float point = (float) posValue / 100;
                     Color color;
                     if (lower <= posValue && posValue <= upper)
                         color = Color.RED;
                     else
-                       color = new Color(point, point, point);
-                    img.setRGB(x,y, color.getRGB());
+                        color = new Color(point, point, point);
+                    img.setRGB(x, y, color.getRGB());
                 }
             }
         }
@@ -150,29 +152,24 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         int point = (int) Math.round(100f * (value - getMinValue()) / getMaxValue());
         BufferedImage img = imagesByValue[point];
-        g.drawImage(img,0,0, dim.width,dim.height, null);
+        g.drawImage(img, 0, 0, dim.width, dim.height, null);
     }
 
     @Override
     public ProviderType getProviderType() {
         return ProviderType.PERLIN_NOISE;
     }
-    private static final float[] octaveNormalizer = new float[]{
-            1,  //should be zero but would cause division error
-            1,
-            1 + 1/2f,
-            1 + 1/2f + 1/4f,
-            1 + 1/2f + 1/4f + 1/8f,
-            1 + 1/2f + 1/4f + 1/8f + 1/16f,
-            1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f,
-            1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f + 1/64f,
-            1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f + 1/64f + 1/128f,
-            1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f + 1/64f + 1/128f + 1/256f,
-            1 + 1/2f + 1/4f + 1/8f + 1/16f + 1/32f + 1/64f + 1/128f + 1/256f + 1/512f,
-    };
+    private static final float[] octaveNormalizer = new float[]{1, // should be zero but would cause division error
+            1, 1 + 1 / 2f, 1 + 1 / 2f + 1 / 4f, 1 + 1 / 2f + 1 / 4f + 1 / 8f, 1 + 1 / 2f + 1 / 4f + 1 / 8f + 1 / 16f,
+            1 + 1 / 2f + 1 / 4f + 1 / 8f + 1 / 16f + 1 / 32f,
+            1 + 1 / 2f + 1 / 4f + 1 / 8f + 1 / 16f + 1 / 32f + 1 / 64f,
+            1 + 1 / 2f + 1 / 4f + 1 / 8f + 1 / 16f + 1 / 32f + 1 / 64f + 1 / 128f,
+            1 + 1 / 2f + 1 / 4f + 1 / 8f + 1 / 16f + 1 / 32f + 1 / 64f + 1 / 128f + 1 / 256f,
+            1 + 1 / 2f + 1 / 4f + 1 / 8f + 1 / 16f + 1 / 32f + 1 / 64f + 1 / 128f + 1 / 256f + 1 / 512f,};
 
     /**
      * returns perlin noise value between [0,1]
+     *
      * @param x
      * @param y
      * @return
@@ -180,19 +177,19 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     private float getRawValueAt(int x, int y) {
         float value = 0;
         for (int i = 1; i < Math.pow(2, octaves); i *= 2) { // harmonic series (?)
-            //improved noise wraps at 256 by default implementation and returns [-1,1]
-            double rawValue = generator.noise((x) / (scale / i), (y) / (scale / i), seed); //-1..1+
-            rawValue += 1 - 0.495; //shift lower bound of histogram upwards
+            // improved noise wraps at 256 by default implementation and returns [-1,1]
+            double rawValue = generator.noise((x) / (scale / i), (y) / (scale / i), seed); // -1..1+
+            rawValue += 1 - 0.495; // shift lower bound of histogram upwards
             rawValue *= 1.5375;
             value += (float) rawValue / i;
         }
-        assert octaves <= octaveNormalizer.length -1;
+        assert octaves <= octaveNormalizer.length - 1;
         value = value / octaveNormalizer[octaves];
         return value;
     }
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        float value = getRawValueAt(x,y);
+        float value = getRawValueAt(x, y);
         value -= shift;
         value /= multi;
         int finalValue = (int) Math.max(0, Math.min(amplitude, value * amplitude));
@@ -209,14 +206,14 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
 
     @Override
     public String[] getValueNames() {
-        return new String[]{"scale", "amplitude","octaves","seed"};
+        return new String[]{"scale", "amplitude", "octaves", "seed"};
     }
 
     @Override
     public String[] getValueTooltips() {
         return new String[]{"the size of the noise in x/y direction.",
-                "the size of the perlin noise in z direction, will produce exactly <amplitude> amount of values " +
-                        "starting at zero",
+                "the size of the perlin noise in z direction, will produce exactly <amplitude> amount of values "
+                        + "starting at zero",
                 "less octaves = smoother, more octaves = bumpier",
                 "seed that determines the shape of the random noise"};
     }
@@ -226,26 +223,25 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
     private static final int OCTAVES_IDX = 2;
     private static final int SEED_IDX = 3;
 
-
-
     @Override
     public PerlinNoiseIO instantiateWithValues(int[] values) {
         assert values.length == 4;
         float scale = EditableIO.clamp(values[SCALE_IDX], 1, 30000);
         float amplitude = EditableIO.clamp(values[AMPLITUDE_IDX], 1, 1000);
-        int octaves = (int) EditableIO.clamp(values[OCTAVES_IDX], 1, octaveNormalizer.length-1);
+        int octaves = (int) EditableIO.clamp(values[OCTAVES_IDX], 1, octaveNormalizer.length - 1);
         long seed = (long) EditableIO.clamp(values[SEED_IDX], 0, Integer.MAX_VALUE);
         return new PerlinNoiseIO(scale, amplitude, seed, octaves);
     }
 
-
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         PerlinNoiseIO that = (PerlinNoiseIO) o;
-        return Float.compare(scale, that.scale) == 0 && Float.compare(amplitude, that.amplitude) == 0 &&
-                seed == that.seed && this.octaves == that.octaves;
+        return Float.compare(scale, that.scale) == 0 && Float.compare(amplitude, that.amplitude) == 0
+                && seed == that.seed && this.octaves == that.octaves;
     }
 
     @Override

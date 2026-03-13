@@ -15,26 +15,27 @@ import java.util.function.Consumer;
 /**
  * visualize the debug stepper, breakpoints etc in a tree of macro/actions
  */
-public class TreeDebugStepperUI implements BreakpointListener {
+public class TreeDebugStepperUI implements BreakpointListener
+{
     HashMap<UUID, MacroTreeNode> actionToNode = new HashMap<>();
     ArrayList<MappingAction> executionSteps;
     Consumer<TreePath> setStepperToNode;
     private MacroTreeNode rootMacroNode;
     public TreeDebugStepperUI(MacroTreeNode rootMacro, MacroContainer macroContainer,
-                              MappingActionContainer actionContainer, Consumer<TreePath> setStepperToNode) {
+            MappingActionContainer actionContainer, Consumer<TreePath> setStepperToNode) {
         this.setStepperToNode = setStepperToNode;
         this.rootMacroNode = rootMacro;
-        addToMapRecursive(rootMacro,actionToNode);
+        addToMapRecursive(rootMacro, actionToNode);
     }
 
     private void addToMapRecursive(MacroTreeNode node, HashMap<UUID, MacroTreeNode> actionToNode) {
         if (node.getPayloadType() == GlobalActionPanel.SELECTION_TPYE.ACTION) {
-            actionToNode.put(node.getAction().getUid(),node);
+            actionToNode.put(node.getAction().getUid(), node);
         }
         if (node.getPayloadType() == GlobalActionPanel.SELECTION_TPYE.MACRO) {
             assert node.getChildren().length == node.getMacro().getExecutionUUIDs().length;
-            for (MacroTreeNode child: node.getChildren())
-                addToMapRecursive(child,actionToNode);
+            for (MacroTreeNode child : node.getChildren())
+                addToMapRecursive(child, actionToNode);
         }
 
     }
@@ -48,7 +49,7 @@ public class TreeDebugStepperUI implements BreakpointListener {
         if (node == null)
             return;
         TreePath path = node.getPath();
-        SwingUtilities.invokeLater(()->{
+        SwingUtilities.invokeLater(() -> {
             setStepperToNode.accept(path);
         });
     }
