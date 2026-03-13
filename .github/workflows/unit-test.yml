@@ -29,3 +29,6 @@ jobs:
 
       - name: Run Maven tests
         run: mvn test
+
+      - name: Check formatting
+        run: mvn -B spotless:check
