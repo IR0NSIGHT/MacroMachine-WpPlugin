@@ -11,12 +11,15 @@ import java.util.stream.Collectors;
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
 
 /**
- * this class represents a single global-operation. it can be applied to the map each Actions has an input (f.e. terrain
- * height) and an output (f.e. annotation) the MappingPoints define which input value is mapped to which output value
- * f.e. ranges 62H to 85H -> Annotation.WHITE Actions modifiy the output value, they can either Set the value (easiest)
- * or do math. this is decided by the action Type
+ * this class represents a single global-operation. it can be applied to the map
+ * each Actions has an input (f.e. terrain height) and an output (f.e.
+ * annotation) the MappingPoints define which input value is mapped to which
+ * output value f.e. ranges 62H to 85H -> Annotation.WHITE Actions modifiy the
+ * output value, they can either Set the value (easiest) or do math. this is
+ * decided by the action Type
  */
-public class MappingAction implements SaveableAction {
+public class MappingAction implements SaveableAction
+{
     public final IPositionValueGetter input;
     public final IPositionValueSetter output;
     public final ActionType actionType;
@@ -25,11 +28,12 @@ public class MappingAction implements SaveableAction {
     private final String description;
     private final UUID uid;
     private final int[] mappings;
-    //only for gui purposes, not part of the actual data. only use this flag if you set it yourself
+    // only for gui purposes, not part of the actual data. only use this flag if you
+    // set it yourself
     private boolean isActive;
 
     public MappingAction(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
-                         ActionType type, String name, String description, UUID uid) {
+            ActionType type, String name, String description, UUID uid) {
         assert name != null;
         assert description != null;
         assert input != null;
@@ -37,7 +41,6 @@ public class MappingAction implements SaveableAction {
         assert mappingPoints != null;
         assert type != null;
         assert Arrays.stream(mappingPoints).noneMatch(Objects::isNull);
-
 
         this.name = name;
         this.description = description;
@@ -47,31 +50,33 @@ public class MappingAction implements SaveableAction {
         this.uid = uid;
 
         HashSet<Integer> seenInputValues = new HashSet<>();
-        //filter out illegal mapping points (user might have edited save file)
-        mappingPoints =
-                Arrays.stream(mappingPoints)
-                        .filter(p -> sanitizeInput(p.input) == p.input) //input points
-                        .map(p -> new MappingPoint(p.input, sanitizeOutput(p.output)))
-                        .filter(p -> { //only unique inputs.
-                            boolean alreadyExists = seenInputValues.contains(p.input);
-                            seenInputValues.add(p.input);
-                            return !alreadyExists;
-                        })
-                        .toArray(MappingPoint[]::new);
+        // filter out illegal mapping points (user might have edited save file)
+        mappingPoints = Arrays.stream(mappingPoints)
+                .filter(p -> sanitizeInput(p.input) == p.input) // input points
+                .map(p -> new MappingPoint(p.input, sanitizeOutput(p.output)))
+                .filter(p -> { // only unique inputs.
+                    boolean alreadyExists = seenInputValues.contains(p.input);
+                    seenInputValues.add(p.input);
+                    return !alreadyExists;
+                })
+                .toArray(MappingPoint[]::new);
 
-        assert Arrays.stream(mappingPoints).noneMatch(p -> sanitizeInput(p.input) != p.input) : "mapping points " +
-                "contain illegal input values";
-        assert Arrays.stream(mappingPoints).noneMatch(p -> sanitizeOutput(p.output) != p.output) : "mapping points " +
-                "contain illegal output values";
+        assert Arrays.stream(mappingPoints).noneMatch(p -> sanitizeInput(p.input) != p.input)
+                : "mapping points " + "contain illegal input values";
+        assert Arrays.stream(mappingPoints).noneMatch(p -> sanitizeOutput(p.output) != p.output)
+                : "mapping points " + "contain illegal output values";
         this.mappingPoints = Arrays.stream(mappingPoints)
-                // .map(mp -> new MappingPoint(sanitizeInput(mp.input), sanitizeOutput(mp.output)))
-                .sorted(Comparator.comparing(mp -> mp.input)).toArray(MappingPoint[]::new);
+                // .map(mp -> new MappingPoint(sanitizeInput(mp.input),
+                // sanitizeOutput(mp.output)))
+                .sorted(Comparator.comparing(mp -> mp.input))
+                .toArray(MappingPoint[]::new);
 
-        //direct mapping: mappings[input] = output. fast and reliable
+        // direct mapping: mappings[input] = output. fast and reliable
 
-        if (output.isDiscrete()) {  // DO NOT INTERPOLATE OUTPUT
+        if (output.isDiscrete()) { // DO NOT INTERPOLATE OUTPUT
             mappings = new int[input.getMaxValue() + 1 - input.getMinValue()];
-            if (this.mappingPoints.length == 0) return;
+            if (this.mappingPoints.length == 0)
+                return;
             int j = -1;
             for (int i : input.getAllInputValues()) {
                 if (input instanceof IPositionValueSetter setter && setter.isIgnoreValue(i))
@@ -91,19 +96,22 @@ public class MappingAction implements SaveableAction {
 
     }
 
-    public static int[] generateInterpolatedOutput(MappingPoint[] mappingPoints, IPositionValueGetter getter, IPositionValueSetter setter) {
+    public static int[] generateInterpolatedOutput(MappingPoint[] mappingPoints, IPositionValueGetter getter,
+            IPositionValueSetter setter) {
         int[] mappings = new int[getter.getAllInputValues().length];
         Arrays.fill(mappings, setter.getMinValue());
 
-        if (mappingPoints.length == 0) return mappings;
+        if (mappingPoints.length == 0)
+            return mappings;
         if (mappingPoints.length == 1) {
             Arrays.fill(mappings, mappingPoints[0].output);
             return mappings;
         }
 
-        // ####  2 or more mapping points are enough to interpolate #####
+        // #### 2 or more mapping points are enough to interpolate #####
 
-        //prepare input points by adding min-input and max-input points for easier index finding of interpolation
+        // prepare input points by adding min-input and max-input points for easier
+        // index finding of interpolation
         LinkedList<MappingPoint> points = new LinkedList<>(Arrays.asList(mappingPoints));
         if (points.getFirst().input != getter.getMinValue())
             points.addFirst(new MappingPoint(getter.getMinValue(), points.getFirst().output));
@@ -140,9 +148,8 @@ public class MappingAction implements SaveableAction {
     }
 
     public static MappingAction getNewEmptyAction(UUID id) {
-        return new MappingAction(new TerrainHeightIO(-64, 319),
-                new AnnotationSetter(),
-                new MappingPoint[0], ActionType.SET, "create new action", "new description", id);
+        return new MappingAction(new TerrainHeightIO(-64, 319), new AnnotationSetter(), new MappingPoint[0],
+                ActionType.SET, "create new action", "new description", id);
     }
 
     public static MappingAction getNewEmptyAction() {
@@ -159,13 +166,8 @@ public class MappingAction implements SaveableAction {
         for (int i = 0; i < points.length; i++) {
             points[i] = new MappingPoint(wrapper.getInputPoints()[i], wrapper.getOutputPoints()[i]);
         }
-        MappingAction mapping = new MappingAction(input,
-                output,
-                points,
-                wrapper.getActionType(),
-                wrapper.getName(),
-                wrapper.getDescription(),
-                wrapper.getUid());
+        MappingAction mapping = new MappingAction(input, output, points, wrapper.getActionType(), wrapper.getName(),
+                wrapper.getDescription(), wrapper.getUid());
         return mapping;
     }
 
@@ -208,7 +210,9 @@ public class MappingAction implements SaveableAction {
             valuesString = Arrays.stream(mappingPoints)
                     .filter(mp -> mp.output == compareValue)
                     .map(mp -> mp.input)
-                    .map(input::valueToString).sorted().collect(Collectors.joining(","));
+                    .map(input::valueToString)
+                    .sorted()
+                    .collect(Collectors.joining(","));
         else {
             // build ranges
             ArrayList<String> ranges = new ArrayList<>();
@@ -217,9 +221,9 @@ public class MappingAction implements SaveableAction {
             for (int inputValue : getInput().getAllInputValues()) {
                 boolean allowThisValue = map(inputValue) == compareValue;
                 if (allowThisValue != allowPreviousValue || inputValue == getInput().getMaxValue()) {
-                    if (allowPreviousValue) { //end of range
+                    if (allowPreviousValue) { // end of range
                         if (rangeLength == 1)
-                            ranges.add(getInput().valueToString(inputValue - 1)); //single point
+                            ranges.add(getInput().valueToString(inputValue - 1)); // single point
                         else {
                             var start = getInput().valueToString(inputValue - rangeLength);
                             var end = getInput().valueToString(allowThisValue ? inputValue : inputValue - 1);
@@ -234,8 +238,7 @@ public class MappingAction implements SaveableAction {
                     rangeLength++;
                 allowPreviousValue = allowThisValue;
             }
-            valuesString = String.join(", ", ranges);
-            ;
+            valuesString = String.join(", ", ranges);;
         }
         summary.append(": ").append(valuesString);
         return summary.toString();
@@ -253,7 +256,8 @@ public class MappingAction implements SaveableAction {
                 return "Set " + output.getName() + " to at least " + output.valueToString(map(input.getMinValue()));
             }
             case INCREMENT, DECREMENT, MULTIPLY, DIVIDE -> {
-                return actionType.displayName + " " + output.getName() + " by " + output.valueToString(map(input.getMinValue()));
+                return actionType.displayName + " " + output.getName() + " by "
+                        + output.valueToString(map(input.getMinValue()));
             }
             default -> {
                 return "ERROR";
@@ -262,14 +266,12 @@ public class MappingAction implements SaveableAction {
     }
 
     public String getSummary() {
-        if (output.getProviderType().equals(INTERMEDIATE_SELECTION)) { //action filter limits
+        if (output.getProviderType().equals(INTERMEDIATE_SELECTION)) { // action filter limits
             return filterActionSummary();
         } else if (input.getProviderType().equals(ALWAYS)) {
             return alwaysActionSummary();
         } else {
-            return input.getName() + " " +
-                    actionType.displayName + " "
-                    + output.getName();
+            return input.getName() + " " + actionType.displayName + " " + output.getName();
         }
     }
 
@@ -319,26 +321,31 @@ public class MappingAction implements SaveableAction {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         MappingAction mapping = (MappingAction) o;
         return Objects.equals(this.getUid(), mapping.getUid()) && equalsWithoutUUID(mapping);
     }
 
     public boolean equalsWithoutUUID(MappingAction mapping) {
-        if (this == mapping) return true;
-        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) &&
-                actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) &&
-                Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
+        if (this == mapping)
+            return true;
+        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output)
+                && actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints)
+                && Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
     }
 
     public boolean equalIgnoreUUID(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         MappingAction mapping = (MappingAction) o;
-        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output) &&
-                actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints) &&
-                Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
+        return Objects.equals(input, mapping.input) && Objects.equals(output, mapping.output)
+                && actionType == mapping.actionType && Arrays.equals(mappingPoints, mapping.mappingPoints)
+                && Objects.equals(name, mapping.name) && Objects.equals(description, mapping.description);
     }
 
     public UUID getUid() {
@@ -347,12 +354,8 @@ public class MappingAction implements SaveableAction {
 
     @Override
     public String toString() {
-        return "MappingAction{" +
-                "name='" + name + '\'' +
-                ", input=" + input +
-                ", output=" + output +
-                ", actionType=" + actionType +
-                '}';
+        return "MappingAction{" + "name='" + name + '\'' + ", input=" + input + ", output=" + output + ", actionType="
+                + actionType + '}';
     }
 
     public MappingPoint[] getMappingPoints() {
@@ -366,28 +369,16 @@ public class MappingAction implements SaveableAction {
     public MappingAction deepCopy() {
         return new MappingAction((IPositionValueGetter) this.input.instantiateFrom(this.input.getSaveData()),
                 (IPositionValueSetter) this.output.instantiateFrom(this.output.getSaveData()),
-                this.mappingPoints.clone(),
-                this.actionType,
-                this.name,
-                this.description,
-                this.uid
-        );
+                this.mappingPoints.clone(), this.actionType, this.name, this.description, this.uid);
     }
 
     public MappingAction withNewPoints(MappingPoint[] mappingPoints) {
-        mappingPoints = Arrays.stream(mappingPoints)
-                .map(this::sanitize)
-                .toArray(MappingPoint[]::new);
+        mappingPoints = Arrays.stream(mappingPoints).map(this::sanitize).toArray(MappingPoint[]::new);
 
         TreeSet<MappingPoint> newPoints = new TreeSet<>(Comparator.comparingInt(o -> o.input));
         newPoints.addAll(Arrays.asList(mappingPoints));
-        return new MappingAction(this.input,
-                this.output,
-                newPoints.toArray(new MappingPoint[0]),
-                this.getActionType(),
-                this.getName(),
-                this.getDescription(),
-                this.uid);
+        return new MappingAction(this.input, this.output, newPoints.toArray(new MappingPoint[0]), this.getActionType(),
+                this.getName(), this.getDescription(), this.uid);
     }
 
     @Override
@@ -420,8 +411,8 @@ public class MappingAction implements SaveableAction {
     }
 
     public void applyToPoint(Dimension dim, int x, int y, ActionFilterIO actionFilterIO) {
-        if (!output.getProviderType().equals(INTERMEDIATE_SELECTION) &&
-                actionFilterIO.getValueAt(dim, x, y) != ActionFilterIO.PASS_VALUE)
+        if (!output.getProviderType().equals(INTERMEDIATE_SELECTION)
+                && actionFilterIO.getValueAt(dim, x, y) != ActionFilterIO.PASS_VALUE)
             return;
 
         if (mappingPoints.length == 0) {
@@ -433,42 +424,43 @@ public class MappingAction implements SaveableAction {
         if (output.isIgnoreValue(modifier))
             return; // "skip" was selected as the output value by the user
 
-        int existingValue =
-                output instanceof IPositionValueGetter ? ((IPositionValueGetter) output).getValueAt(dim, x, y) : 0;
+        int existingValue = output instanceof IPositionValueGetter
+                ? ((IPositionValueGetter) output).getValueAt(dim, x, y)
+                : 0;
         int outputValue;
         switch (actionType) {
-            case SET:
+            case SET :
                 outputValue = modifier;
                 break;
-            case DIVIDE:
+            case DIVIDE :
                 outputValue = Math.round(1f * existingValue / modifier);
                 break;
-            case MULTIPLY:
+            case MULTIPLY :
                 outputValue = existingValue * modifier;
                 break;
-            case DECREMENT:
+            case DECREMENT :
                 outputValue = existingValue - modifier;
                 break;
-            case INCREMENT:
+            case INCREMENT :
                 outputValue = existingValue + modifier;
                 break;
-            case LIMIT_TO:
+            case LIMIT_TO :
                 outputValue = Math.min(existingValue, modifier);
                 break;
-            case AT_LEAST:
+            case AT_LEAST :
                 outputValue = Math.max(existingValue, modifier);
                 break;
-            default:
+            default :
                 throw new EnumConstantNotPresentException(ActionType.class, actionType.displayName);
         }
         output.setValueAt(dim, x, y, this.sanitizeOutput(outputValue));
     }
 
     public int map(int input) {
-        assert input >= this.input.getMinValue() :
-                "input " + input + " is out of range for minimum" + this.input.getMinValue();
-        assert input <= this.input.getMaxValue() :
-                "invalid input" + input + " has to be lower equal than " + this.input.getMaxValue();
+        assert input >= this.input.getMinValue()
+                : "input " + input + " is out of range for minimum" + this.input.getMinValue();
+        assert input <= this.input.getMaxValue()
+                : "invalid input" + input + " has to be lower equal than " + this.input.getMaxValue();
 
         int value = mappings[input - this.input.getMinValue()];
         return value;

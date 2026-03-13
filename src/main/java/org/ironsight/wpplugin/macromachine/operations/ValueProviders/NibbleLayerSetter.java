@@ -9,24 +9,25 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter, ILayerGetter {
-    private final Color[] COLORS = new Color[]{new Color(0, 0, 0),       // Black
-            new Color(0, 0, 0),       // Black
-            new Color(0, 16, 0),      // Very dark green
-            new Color(0, 32, 0),      // Dark green
-            new Color(0, 48, 0),      // Darker green
-            new Color(0, 64, 0),      // Medium-dark green
-            new Color(0, 80, 0),      // Medium green
-            new Color(0, 96, 0),      // Slightly lighter green
-            new Color(0, 112, 0),     // Light green
-            new Color(0, 128, 0),     // Lighter green
-            new Color(0, 144, 0),     // Bright green
-            new Color(0, 160, 0),     // Brighter green
-            new Color(0, 176, 0),     // Vibrant green
-            new Color(0, 192, 0),     // Very vibrant green
-            new Color(0, 208, 0),     // Almost neon green
-            new Color(0, 224, 0),     // Neon green
-            new Color(0, 255, 0)      // Pure green
+public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter, ILayerGetter
+{
+    private final Color[] COLORS = new Color[]{new Color(0, 0, 0), // Black
+            new Color(0, 0, 0), // Black
+            new Color(0, 16, 0), // Very dark green
+            new Color(0, 32, 0), // Dark green
+            new Color(0, 48, 0), // Darker green
+            new Color(0, 64, 0), // Medium-dark green
+            new Color(0, 80, 0), // Medium green
+            new Color(0, 96, 0), // Slightly lighter green
+            new Color(0, 112, 0), // Light green
+            new Color(0, 128, 0), // Lighter green
+            new Color(0, 144, 0), // Bright green
+            new Color(0, 160, 0), // Brighter green
+            new Color(0, 176, 0), // Vibrant green
+            new Color(0, 192, 0), // Very vibrant green
+            new Color(0, 208, 0), // Almost neon green
+            new Color(0, 224, 0), // Neon green
+            new Color(0, 255, 0) // Pure green
     };
 
     private final static int[] defaultColorHex = new int[16];
@@ -58,7 +59,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         for (int value : getAllInputValues()) {
             if (isIgnoreValue(value))
                 continue;
-            colorHex[value] = renderer.getPixelColour(0,0,0,value);
+            colorHex[value] = renderer.getPixelColour(0, 0, 0, value);
         }
         setColorsFromData(colorHex);
     }
@@ -77,8 +78,8 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     }
 
     public final int IGNORE_VALUE = Integer.MIN_VALUE;
-    private final int[] outputValues = new int[]{ IGNORE_VALUE, 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
-    private final int[] inputValues = new int[]{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+    private final int[] outputValues = new int[]{IGNORE_VALUE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+    private final int[] inputValues = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 
     @Override
     public int[] getAllInputValues() {
@@ -96,11 +97,12 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
+        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {
+        });
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null) {
-            layerName = layer.getName(); //maybe name was updated
+            layerName = layer.getName(); // maybe name was updated
             pullColorsFromLayer();
         }
     }
@@ -117,8 +119,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return new NibbleLayerSetter((String) data[0], (String) data[1], (Boolean) data[2],
-                defaultColorHex);
+        return new NibbleLayerSetter((String) data[0], (String) data[1], (Boolean) data[2], defaultColorHex);
 
     }
 
@@ -133,8 +134,9 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
             return "Skip";
         if (value == 0)
             return "Absent";
-        return String.format("%.0f%%",1+99f*(value-1)/14f);
-        // 1, 8, 15, 22, 29, 36, 43, 51, 58, 65, 72, 79, 86, 93, 100 (worldpainter 14 step intensities)
+        return String.format("%.0f%%", 1 + 99f * (value - 1) / 14f);
+        // 1, 8, 15, 22, 29, 36, 43, 51, 58, 65, 72, 79, 86, 93, 100 (worldpainter 14
+        // step intensities)
     }
 
     @Override
@@ -182,8 +184,10 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         NibbleLayerSetter that = (NibbleLayerSetter) o;
         return Objects.equals(layerId, that.layerId);
     }

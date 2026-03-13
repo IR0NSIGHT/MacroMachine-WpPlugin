@@ -5,7 +5,8 @@ import java.awt.*;
 
 import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
 
-public class HelpDialog extends JDialog {
+public class HelpDialog extends JDialog
+{
 
     public HelpDialog(Frame owner, String title, String helpText) {
         super(owner, "Help", true); // Modal dialog
@@ -55,11 +56,11 @@ public class HelpDialog extends JDialog {
             // Add a help button
             JButton helpButton = new JButton("Help");
             helpButton.addActionListener(e -> {
-                String helpText = "This application allows you to perform various tasks:\n" +
-                        "1. Use the buttons to add, edit, or remove items.\n" +
-                        "2. Navigate through the menu to access settings.\n" +
-                        "3. Refer to the documentation for more details.\n" +
-                        "For additional assistance, contact support.\n";
+                String helpText = "This application allows you to perform various tasks:\n"
+                        + "1. Use the buttons to add, edit, or remove items.\n"
+                        + "2. Navigate through the menu to access settings.\n"
+                        + "3. Refer to the documentation for more details.\n"
+                        + "For additional assistance, contact support.\n";
                 new HelpDialog(frame, "My new application", helpText).setVisible(true);
             });
 

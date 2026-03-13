@@ -7,7 +7,8 @@ import org.pepsoft.worldpainter.selection.SelectionChunk;
 
 import java.awt.*;
 
-public class SelectionIO extends BinaryLayerIO {
+public class SelectionIO extends BinaryLayerIO
+{
     @Override
     public String getName() {
         return "Selection";
@@ -31,8 +32,8 @@ public class SelectionIO extends BinaryLayerIO {
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        return dim.getBitLayerValueAt(SelectionBlock.INSTANCE, x, y) ||
-                dim.getBitLayerValueAt(SelectionChunk.INSTANCE, x, y) ? 1 : 0;
+        return dim.getBitLayerValueAt(SelectionBlock.INSTANCE, x, y)
+                || dim.getBitLayerValueAt(SelectionChunk.INSTANCE, x, y) ? 1 : 0;
     }
 
     @Override
@@ -42,7 +43,7 @@ public class SelectionIO extends BinaryLayerIO {
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        //not required
+        // not required
     }
 
     @Override
@@ -68,6 +69,6 @@ public class SelectionIO extends BinaryLayerIO {
             g.setColor(Color.LIGHT_GRAY);
         if (value == 1)
             g.setColor(Color.yellow);
-        g.fillRect(0,0,dim.width,dim.height);
+        g.fillRect(0, 0, dim.width, dim.height);
     }
 }

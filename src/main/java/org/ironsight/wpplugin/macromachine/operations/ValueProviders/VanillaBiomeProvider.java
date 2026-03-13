@@ -11,7 +11,8 @@ import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValueSetter {
+public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValueSetter
+{
     String[] biomes;
 
     public VanillaBiomeProvider() {
@@ -78,17 +79,19 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     @Override
     public int getMaxValue() {
-        return biomes.length-1;
+        return biomes.length - 1;
     }
 
     @Override
     public String valueToString(int value) {
         if (value == IGNORE_VALUE)
             return "Skip";
-        if (value < 0 || value >= biomes.length) return "INVALID (" + value + ")";
+        if (value < 0 || value >= biomes.length)
+            return "INVALID (" + value + ")";
         if (value == 255)
             return "Auto Biome";
-        if (biomes[value] == null) return "zzz-NULL-(" + value + ")";
+        if (biomes[value] == null)
+            return "zzz-NULL-(" + value + ")";
         return biomes[value];
     }
 
@@ -130,7 +133,7 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     @Override
     public int[] getAllOutputValues() {
-        return Arrays.copyOf(outputValues,outputValues.length);
+        return Arrays.copyOf(outputValues, outputValues.length);
     }
 
     @Override

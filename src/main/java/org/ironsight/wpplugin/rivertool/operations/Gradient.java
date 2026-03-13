@@ -2,7 +2,8 @@ package org.ironsight.wpplugin.rivertool.operations;
 
 import java.util.Arrays;
 
-public class Gradient {
+public class Gradient
+{
     public final float[] positions;
     public final float[] values;
 

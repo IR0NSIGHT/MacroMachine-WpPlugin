@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class Path implements Iterable<float[]> {
+public class Path implements Iterable<float[]>
+{
     public final PointType type;
     private final ArrayList<float[]> handles;
 
@@ -50,7 +51,8 @@ public class Path implements Iterable<float[]> {
     public static float[] interpolateWaterZ(ContinuousCurve curve, HeightDimension dim) {
         float[] out = new float[curve.curveLength()];
         Point first = curve.getPositions2d()[0];
-        out[0] = Math.min(curve.getInfo(RiverHandleInformation.RiverInformation.WATER_Z)[0], dim.getHeight(first.x, first.y));
+        out[0] = Math.min(curve.getInfo(RiverHandleInformation.RiverInformation.WATER_Z)[0],
+                dim.getHeight(first.x, first.y));
         Point[] positions = curve.getPositions2d();
         for (int i = 1; i < curve.curveLength(); i++) {
             float curveZ = curve.getInfo(RiverHandleInformation.RiverInformation.WATER_Z)[i];
@@ -85,7 +87,8 @@ public class Path implements Iterable<float[]> {
 
     public int indexOfPosition(float[] p) {
         for (int i = 0; i < handles.size(); i++) {
-            if (PointUtils.arePositionalsEqual(p, handles.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value)) return i;
+            if (PointUtils.arePositionalsEqual(p, handles.get(i), RiverHandleInformation.PositionSize.SIZE_2_D.value))
+                return i;
         }
         return -1;
     }
@@ -123,7 +126,8 @@ public class Path implements Iterable<float[]> {
     }
 
     public float[] getTail() {
-        if (amountHandles() == 0) throw new IllegalArgumentException("can not access tail of zero-length path!");
+        if (amountHandles() == 0)
+            throw new IllegalArgumentException("can not access tail of zero-length path!");
         return handles.get(amountHandles() - 1);
     }
 
@@ -131,15 +135,18 @@ public class Path implements Iterable<float[]> {
         if (amountHandles() < 2)
             throw new IllegalAccessException("can not find previous point on path with less than 2 points.");
         int idx = indexOfPosition(point);
-        if (idx == -1) throw new IllegalAccessException("this point is not part of the path.");
-        if (idx == 0) return handles.get(1);
+        if (idx == -1)
+            throw new IllegalAccessException("this point is not part of the path.");
+        if (idx == 0)
+            return handles.get(1);
         return handles.get(idx - 1);
     }
 
     public Path insertPointAfter(float[] point, float[] newPosition) {
         Path sum = new Path(this.handles, this.type);
         int idx = indexOfPosition(point);
-        if (idx == -1) throw new IllegalArgumentException("can not find point " + Arrays.toString(point) + "in path");
+        if (idx == -1)
+            throw new IllegalArgumentException("can not find point " + Arrays.toString(point) + "in path");
         sum.handles.add(idx + 1, newPosition);
         assert invariant();
         return sum;
@@ -178,7 +185,8 @@ public class Path implements Iterable<float[]> {
     }
 
     public int getClosestHandleIdxTo(float[] coord) throws IllegalAccessException {
-        if (amountHandles() == 0) throw new IllegalAccessException("can not find closest handle on zero-handle-path");
+        if (amountHandles() == 0)
+            throw new IllegalAccessException("can not find closest handle on zero-handle-path");
         int closest = -1;
         double distMinSquared = Double.MAX_VALUE;
         for (int i = 0; i < handles.size(); i++) {
@@ -197,16 +205,19 @@ public class Path implements Iterable<float[]> {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Path) {
-            if (this.type != ((Path) obj).type) return false;
+            if (this.type != ((Path) obj).type)
+                return false;
             for (int i = 0; i < handles.size(); i++) {
                 float[] own = handleByIndex(i);
                 float[] theirs = ((Path) obj).handleByIndex(i);
                 for (int n = 0; n < own.length; n++) {
-                    if (own[n] != theirs[n]) return false;
+                    if (own[n] != theirs[n])
+                        return false;
                 }
             }
             return true;
-        } else return false;
+        } else
+            return false;
     }
 
     public Path clone() {

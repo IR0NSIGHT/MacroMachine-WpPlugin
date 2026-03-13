@@ -7,47 +7,40 @@ import org.pepsoft.worldpainter.Terrain;
 import java.awt.*;
 import java.util.Arrays;
 
-public class StonePaletteApplicator implements IPositionValueSetter {
+public class StonePaletteApplicator implements IPositionValueSetter
+{
     private final Terrain[] materials;
     private final int IGNORE_VALUE = Integer.MIN_VALUE;
     private final int[] values = new int[]{IGNORE_VALUE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}; // index in stone palette
     Color[] colors = new Color[]{
             // Terrain.GRASS (Grass Block)
-            new Color(85, 107, 47),      // Dark Olive Green
+            new Color(85, 107, 47), // Dark Olive Green
             // Terrain.GRAVEL (Gravel)
-            new Color(112, 112, 112),    // Gray
+            new Color(112, 112, 112), // Gray
             // Terrain.STONE (Stone)
-            new Color(169, 169, 169),    // Dark Gray
+            new Color(169, 169, 169), // Dark Gray
             // Terrain.COBBLESTONE (Cobblestone)
-            new Color(128, 128, 128),    // Gray
+            new Color(128, 128, 128), // Gray
             // Terrain.MOSSY_COBBLESTONE (Mossy Cobblestone)
-            new Color(85, 107, 47),      // Dark Olive Green
+            new Color(85, 107, 47), // Dark Olive Green
             // Terrain.GRANITE (Granite)
-            new Color(179, 83, 57),      // Reddish Granite
+            new Color(179, 83, 57), // Reddish Granite
             // Terrain.DIORITE (Diorite)
-            new Color(212, 212, 212),    // Light Gray
+            new Color(212, 212, 212), // Light Gray
             // Terrain.ANDESITE (Andesite)
-            new Color(128, 128, 128),    // Gray
+            new Color(128, 128, 128), // Gray
             // Terrain.DEEPSLATE (Deepslate)
-            new Color(44, 44, 48),       // Dark Slate
+            new Color(44, 44, 48), // Dark Slate
             // Terrain.STONE_MIX (Stone Mix)
-            new Color(128, 128, 128),    // Mixed Gray
+            new Color(128, 128, 128), // Mixed Gray
             // Terrain.ROCK (Rock)
-            new Color(169, 169, 169)     // Dark Gray (similar to Stone)
+            new Color(169, 169, 169) // Dark Gray (similar to Stone)
     };
 
     public StonePaletteApplicator() {
-        materials = new Terrain[]{Terrain.GRASS,
-                Terrain.GRAVEL,
-                Terrain.STONE,
-                Terrain.COBBLESTONE,
-                Terrain.MOSSY_COBBLESTONE,
-                Terrain.GRANITE,
-                Terrain.DIORITE,
-                Terrain.ANDESITE,
-                Terrain.DEEPSLATE,
-                Terrain.STONE_MIX,
-                Terrain.ROCK};
+        materials = new Terrain[]{Terrain.GRASS, Terrain.GRAVEL, Terrain.STONE, Terrain.COBBLESTONE,
+                Terrain.MOSSY_COBBLESTONE, Terrain.GRANITE, Terrain.DIORITE, Terrain.ANDESITE, Terrain.DEEPSLATE,
+                Terrain.STONE_MIX, Terrain.ROCK};
     }
 
     public StonePaletteApplicator(Terrain[] materials) {
@@ -116,13 +109,12 @@ public class StonePaletteApplicator implements IPositionValueSetter {
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        return new StonePaletteApplicator(Arrays.stream(data)
-                .map(f -> Terrain.values()[(int) f])
-                .toArray(Terrain[]::new));
+        return new StonePaletteApplicator(
+                Arrays.stream(data).map(f -> Terrain.values()[(int) f]).toArray(Terrain[]::new));
     }
 
     @Override
-    public Object[] getSaveData() { //int[] with enum ordinals
+    public Object[] getSaveData() { // int[] with enum ordinals
         return Arrays.stream(materials).map(f -> f.ordinal()).toArray();
     }
 
@@ -130,7 +122,8 @@ public class StonePaletteApplicator implements IPositionValueSetter {
     public String valueToString(int value) {
         if (value == IGNORE_VALUE)
             return "Skip";
-        if (value < 0 || value > materials.length) return "INVALID";
+        if (value < 0 || value > materials.length)
+            return "INVALID";
         return materials[value].getName();
     }
 
@@ -154,7 +147,7 @@ public class StonePaletteApplicator implements IPositionValueSetter {
 
     @Override
     public boolean equals(Object obj) {
-        return obj != null && this.getClass().equals(obj.getClass()) &&
-                Arrays.equals(materials, ((StonePaletteApplicator) obj).materials);
+        return obj != null && this.getClass().equals(obj.getClass())
+                && Arrays.equals(materials, ((StonePaletteApplicator) obj).materials);
     }
 }

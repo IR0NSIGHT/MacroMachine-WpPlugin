@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.pepsoft.worldpainter.Constants;
-
 import java.util.Arrays;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
-public class IntegerTile {
+public class IntegerTile
+{
     private int min, max;
     public IntegerTile(int defaultValue) {
         fillWith(defaultValue);
@@ -15,7 +14,8 @@ public class IntegerTile {
 
     public void fillWith(int value) {
         Arrays.fill(values, value);
-        max = value; min = value;
+        max = value;
+        min = value;
     }
 
     public int getMin() {
@@ -26,7 +26,7 @@ public class IntegerTile {
         return max;
     }
 
-    public void calculateMinMax(){
+    public void calculateMinMax() {
         int[] minMax = calculateMinMax(values);
         this.min = minMax[0];
         this.max = minMax[1];
@@ -54,7 +54,8 @@ public class IntegerTile {
 
     /**
      *
-     * @param x global pos
+     * @param x
+     *            global pos
      * @param y
      * @param value
      */
@@ -65,7 +66,8 @@ public class IntegerTile {
 
     /**
      *
-     * @param x global pos
+     * @param x
+     *            global pos
      * @param y
      * @return
      */
@@ -78,7 +80,7 @@ public class IntegerTile {
         System.out.println("---------------------");
         for (int y = 0; y < TILE_SIZE; y++) {
             for (int x = 0; x < TILE_SIZE; x++) {
-                System.out.print(getValueAt(x,y)+" ");
+                System.out.print(getValueAt(x, y) + " ");
             }
             System.out.println("");
         }

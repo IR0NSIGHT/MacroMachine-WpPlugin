@@ -16,12 +16,13 @@ import java.util.Collection;
 
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 
-public class MacroDialogOperation extends AbstractBrushOperation implements MacroApplicator {
+public class MacroDialogOperation extends AbstractBrushOperation implements MacroApplicator
+{
     private static final String NAME = "Macro Operation";
     private static final String DESCRIPTION = "Create complex reusable global operations to automate your workflow.";
 
     public MacroDialogOperation() {
-        super(NAME, DESCRIPTION, "macrooperation"); //one shot op
+        super(NAME, DESCRIPTION, "macrooperation"); // one shot op
         File saveFile = new File(MacroContainer.getActionsFilePath() + "/savefile.macro");
 
         MacroContainer.SetInstance(new MacroContainer(null));
@@ -30,10 +31,13 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
         ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(),
-                s -> GlobalActionPanel.ErrorPopUpString("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s), InputOutputProvider.INSTANCE);
+                s -> GlobalActionPanel
+                        .ErrorPopUpString("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s),
+                InputOutputProvider.INSTANCE);
 
-        Runnable saveEverything = () -> ContainerIO.exportToFile(MappingActionContainer.getInstance(), MacroContainer.getInstance(), saveFile,
-                new ImportExportPolicy(), System.err::println, InputOutputProvider.INSTANCE);
+        Runnable saveEverything = () -> ContainerIO.exportToFile(MappingActionContainer.getInstance(),
+                MacroContainer.getInstance(), saveFile, new ImportExportPolicy(), System.err::println,
+                InputOutputProvider.INSTANCE);
 
         MappingActionContainer.getInstance().subscribe(saveEverything);
         MacroContainer.getInstance().subscribe(saveEverything);
@@ -43,7 +47,7 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
         try {
             InputOutputProvider.INSTANCE.updateFrom(getDimension());
             JFrame dialog = createDialog(null, this);
-            dialog.toFront();              // Bring it to the front
+            dialog.toFront(); // Bring it to the front
             dialog.requestFocusInWindow();
             dialog.setVisible(true);
         } catch (Exception ex) {
@@ -52,16 +56,10 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
     }
 
     @Override
-    public Collection<ExecutionStatistic> applyLayerAction(Macro macro,
-                                                           ApplyActionCallback callback) {
-        ApplyAction.ApplicationContext context = new ApplyAction.ApplicationContext(
-                getDimension(),
-                MacroContainer.getInstance(),
-                MappingActionContainer.getInstance(),
-                InputOutputProvider.INSTANCE,
-                new CustomLayerControllerWrapper(),
-                ActionFilterIO.instance
-        );
+    public Collection<ExecutionStatistic> applyLayerAction(Macro macro, ApplyActionCallback callback) {
+        ApplyAction.ApplicationContext context = new ApplyAction.ApplicationContext(getDimension(),
+                MacroContainer.getInstance(), MappingActionContainer.getInstance(), InputOutputProvider.INSTANCE,
+                new CustomLayerControllerWrapper(), ActionFilterIO.instance);
 
         return Macro.applyMacroToDimension(context, macro, callback);
     }

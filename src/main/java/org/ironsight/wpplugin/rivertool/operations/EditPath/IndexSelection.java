@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.rivertool.operations.EditPath;
 
-public class IndexSelection {
+public class IndexSelection
+{
     private final boolean[] selectedIdcs;
     private final int amountHandles;
     private int cursorHandleIdx;

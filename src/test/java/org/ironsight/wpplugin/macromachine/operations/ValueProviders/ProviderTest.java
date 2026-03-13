@@ -23,64 +23,64 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class ProviderTest {
+public class ProviderTest
+{
 
     @Test
     void HeightProviderGetSetValue() {
-        TerrainHeightIO h = new TerrainHeightIO(-64,319);
+        TerrainHeightIO h = new TerrainHeightIO(-64, 319);
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
-        dim.setHeightAt(14,15,77);
-        assertEquals(77, h.getValueAt(dim,14,15));
-        dim.setHeightAt(14,15,-5);
-        assertEquals(-5, h.getValueAt(dim,14,15));
+        dim.setHeightAt(14, 15, 77);
+        assertEquals(77, h.getValueAt(dim, 14, 15));
+        dim.setHeightAt(14, 15, -5);
+        assertEquals(-5, h.getValueAt(dim, 14, 15));
 
-        h.setValueAt(dim, 17,18,19);
-        assertEquals(19, dim.getHeightAt(17,18));
-        h.setValueAt(dim, 17,18,21);
-        assertEquals(21, dim.getHeightAt(17,18));
+        h.setValueAt(dim, 17, 18, 19);
+        assertEquals(19, dim.getHeightAt(17, 18));
+        h.setValueAt(dim, 17, 18, 21);
+        assertEquals(21, dim.getHeightAt(17, 18));
 
-        //correct instantiation
-        IMappingValue v = fromType(new Object[]{0,255},HEIGHT);
+        // correct instantiation
+        IMappingValue v = fromType(new Object[]{0, 255}, HEIGHT);
         assertTrue(v instanceof TerrainHeightIO);
         assertEquals(HEIGHT, v.getProviderType());
         assertEquals(0, v.getMinValue());
-        assertEquals(255,v.getMaxValue());
+        assertEquals(255, v.getMaxValue());
 
         // can be saved and loaded with these values
         h = (TerrainHeightIO) v.instantiateFrom(v.getSaveData());
         assertEquals(0, h.getMinValue());
-        assertEquals(255,h.getMaxValue());
+        assertEquals(255, h.getMaxValue());
 
         // can handle wrong inputs
-        h = (TerrainHeightIO) fromType(new Object[]{},HEIGHT);
+        h = (TerrainHeightIO) fromType(new Object[]{}, HEIGHT);
         assertEquals(-64, h.getMinValue());
-        assertEquals(319,h.getMaxValue());
+        assertEquals(319, h.getMaxValue());
 
-        assertNotEquals(new TerrainHeightIO(3,12),new TerrainHeightIO(27,99));
+        assertNotEquals(new TerrainHeightIO(3, 12), new TerrainHeightIO(27, 99));
     }
 
     @Test
     void AllProvidersOutOfRangeTest() {
 
-        for (ProviderType type: ProviderType.values()) {
-            Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE ), 62);
+        for (ProviderType type : ProviderType.values()) {
+            Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE), 62);
             int testPosX = 1000, testPosY = 1000;
-            assertFalse(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS), " our point is " +
-                    "outside the dimension");
+            assertFalse(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS),
+                    " our point is " + "outside the dimension");
             if (type == TEST)
                 continue;
             IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
             ioInstance.prepareForDimension(dim);
             if (ioInstance instanceof IPositionValueGetter) {
 
-
                 // input
-                int value = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
-// no exception was thrown.
+                int value = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY);
+                // no exception was thrown.
 
-                //special case: distance getter
+                // special case: distance getter
                 if (ioInstance instanceof DistanceToLayerEdgeGetter) {
                     assertEquals(ioInstance.getMaxValue(), value,
                             "unknown postion should always return max distance " + ioInstance.getName());
@@ -96,7 +96,7 @@ public class ProviderTest {
 
     @Test
     void AllProvidersCanStringifyValues() {
-        for (ProviderType type: ProviderType.values()) {
+        for (ProviderType type : ProviderType.values()) {
             IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
             System.out.println(ioInstance.getName() + " #############");
             for (int value : ioInstance.getAllPossibleValues()) {
@@ -109,13 +109,14 @@ public class ProviderTest {
     @Test
     void AllProvidersSetValue() {
         /**
-         *  tests takes every IO type, creates a dimension and the sets + gets every allowed value for that IO type
+         * tests takes every IO type, creates a dimension and the sets + gets every
+         * allowed value for that IO type
          */
-        Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE ), 62);
+        Dimension dim = createDimension(new Rectangle(0, 0, TILE_SIZE, TILE_SIZE), 62);
         int testPosX = 100, testPosY = 100;
-        assertTrue(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS), " our point is " +
-                "outside the dimension");
-        for (ProviderType type: ProviderType.values()) {
+        assertTrue(dim.getExtent().contains(testPosX >> TILE_SIZE_BITS, testPosY >> TILE_SIZE_BITS),
+                " our point is " + "outside the dimension");
+        for (ProviderType type : ProviderType.values()) {
             if (type == TEST)
                 continue;
             IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
@@ -125,54 +126,53 @@ public class ProviderTest {
                     if (setter.isIgnoreValue(value))
                         continue;
                     // output IO sets minimum
-                    ((IPositionValueSetter) ioInstance).setValueAt(dim, testPosX, testPosY, value );
+                    ((IPositionValueSetter) ioInstance).setValueAt(dim, testPosX, testPosY, value);
                     // no exception was thrown.
                     if (ioInstance instanceof IPositionValueGetter) {
                         // verify the value was actually set correctly
-                        int readValue = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY );
-                        assertEquals(value, readValue,
-                                "set pos to have value=" + value + " but afterwards read value="+readValue + ioInstance.getName());
+                        int readValue = ((IPositionValueGetter) ioInstance).getValueAt(dim, testPosX, testPosY);
+                        assertEquals(value, readValue, "set pos to have value=" + value + " but afterwards read value="
+                                + readValue + ioInstance.getName());
                     }
                 }
             }
-
 
         }
     }
     @Test
     void WaterLevelProviderGetSetValue() {
-        WaterHeightAbsoluteIO h = new WaterHeightAbsoluteIO(-64,319);
+        WaterHeightAbsoluteIO h = new WaterHeightAbsoluteIO(-64, 319);
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
-        dim.setWaterLevelAt(14,15,77);
-        assertEquals(77, h.getValueAt(dim,14,15));
-        dim.setWaterLevelAt(14,15,-5);
-        assertEquals(-5, h.getValueAt(dim,14,15));
+        dim.setWaterLevelAt(14, 15, 77);
+        assertEquals(77, h.getValueAt(dim, 14, 15));
+        dim.setWaterLevelAt(14, 15, -5);
+        assertEquals(-5, h.getValueAt(dim, 14, 15));
 
-        h.setValueAt(dim, 17,18,19);
-        assertEquals(19, dim.getWaterLevelAt(17,18));
-        h.setValueAt(dim, 17,18,21);
-        assertEquals(21, dim.getWaterLevelAt(17,18));
+        h.setValueAt(dim, 17, 18, 19);
+        assertEquals(19, dim.getWaterLevelAt(17, 18));
+        h.setValueAt(dim, 17, 18, 21);
+        assertEquals(21, dim.getWaterLevelAt(17, 18));
 
-        //correct instantiation
-        IMappingValue v = fromType(new Object[]{0,255},WATER_HEIGHT);
+        // correct instantiation
+        IMappingValue v = fromType(new Object[]{0, 255}, WATER_HEIGHT);
         assertTrue(v instanceof WaterHeightAbsoluteIO);
         assertEquals(WATER_HEIGHT, v.getProviderType());
         assertEquals(0, v.getMinValue());
-        assertEquals(255,v.getMaxValue());
+        assertEquals(255, v.getMaxValue());
 
         // can be saved and loaded with these values
         h = (WaterHeightAbsoluteIO) v.instantiateFrom(v.getSaveData());
         assertEquals(0, h.getMinValue());
-        assertEquals(255,h.getMaxValue());
+        assertEquals(255, h.getMaxValue());
 
         // can handle wrong inputs
-        h = (WaterHeightAbsoluteIO) fromType(new Object[]{},WATER_HEIGHT);
+        h = (WaterHeightAbsoluteIO) fromType(new Object[]{}, WATER_HEIGHT);
         assertEquals(-64, h.getMinValue());
-        assertEquals(319,h.getMaxValue());
+        assertEquals(319, h.getMaxValue());
 
-        assertNotEquals(new WaterHeightAbsoluteIO(3,12),new WaterHeightAbsoluteIO(27,99));
+        assertNotEquals(new WaterHeightAbsoluteIO(3, 12), new WaterHeightAbsoluteIO(27, 99));
 
     }
 
@@ -182,27 +182,27 @@ public class ProviderTest {
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
-        //land below water
-        dim.setWaterLevelAt(14,15,77);
-        dim.setHeightAt(14,15,77-3);
-        assertEquals(3, h.getValueAt(dim,14,15));
+        // land below water
+        dim.setWaterLevelAt(14, 15, 77);
+        dim.setHeightAt(14, 15, 77 - 3);
+        assertEquals(3, h.getValueAt(dim, 14, 15));
 
-        //land above water
-        dim.setWaterLevelAt(14,15,77);
-        dim.setHeightAt(14,15,77+3);
-        assertEquals(0, h.getValueAt(dim,14,15));
+        // land above water
+        dim.setWaterLevelAt(14, 15, 77);
+        dim.setHeightAt(14, 15, 77 + 3);
+        assertEquals(0, h.getValueAt(dim, 14, 15));
 
-        //land equals water
-        dim.setWaterLevelAt(14,15,77);
-        dim.setHeightAt(14,15,77);
-        assertEquals(0, h.getValueAt(dim,14,15));
+        // land equals water
+        dim.setWaterLevelAt(14, 15, 77);
+        dim.setHeightAt(14, 15, 77);
+        assertEquals(0, h.getValueAt(dim, 14, 15));
 
-        //set values
-        dim.setHeightAt(17,18,77);
-        dim.setWaterLevelAt(17,18,77);
-        h.setValueAt(dim, 17,18,3);
-        assertEquals(77 , dim.getWaterLevelAt(17,18), "water depth should not touch waterlevel");
-        assertEquals(77-3, dim.getHeightAt(17,18), "water depth should change terrain height to achieve waterdepth");
+        // set values
+        dim.setHeightAt(17, 18, 77);
+        dim.setWaterLevelAt(17, 18, 77);
+        h.setValueAt(dim, 17, 18, 3);
+        assertEquals(77, dim.getWaterLevelAt(17, 18), "water depth should not touch waterlevel");
+        assertEquals(77 - 3, dim.getHeightAt(17, 18), "water depth should change terrain height to achieve waterdepth");
 
     }
 
@@ -212,15 +212,15 @@ public class ProviderTest {
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
-        dim.setLayerValueAt(Annotations.INSTANCE,14,15, 5);
-        assertEquals(5, h.getValueAt(dim,14,15));
-        dim.setLayerValueAt(Annotations.INSTANCE,14,15, 7);
-        assertEquals(7, h.getValueAt(dim,14,15));
+        dim.setLayerValueAt(Annotations.INSTANCE, 14, 15, 5);
+        assertEquals(5, h.getValueAt(dim, 14, 15));
+        dim.setLayerValueAt(Annotations.INSTANCE, 14, 15, 7);
+        assertEquals(7, h.getValueAt(dim, 14, 15));
 
-        h.setValueAt(dim, 17,18,6);
-        assertEquals(6, dim.getLayerValueAt(Annotations.INSTANCE, 17,18));
-        h.setValueAt(dim, 17,18,3);
-        assertEquals(3, dim.getLayerValueAt(Annotations.INSTANCE, 17,18));
+        h.setValueAt(dim, 17, 18, 6);
+        assertEquals(6, dim.getLayerValueAt(Annotations.INSTANCE, 17, 18));
+        h.setValueAt(dim, 17, 18, 3);
+        assertEquals(3, dim.getLayerValueAt(Annotations.INSTANCE, 17, 18));
     }
 
     @Test
@@ -229,7 +229,7 @@ public class ProviderTest {
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
-        assertEquals(0, h.getValueAt(dim,14,15),"always IO always returns value zero, nothing else");
+        assertEquals(0, h.getValueAt(dim, 14, 15), "always IO always returns value zero, nothing else");
     }
 
     @Test
@@ -238,16 +238,16 @@ public class ProviderTest {
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
-        dim.setBitLayerValueAt(Frost.INSTANCE,17,18,false);
+        dim.setBitLayerValueAt(Frost.INSTANCE, 17, 18, false);
         assertFalse(dim.getBitLayerValueAt(Frost.INSTANCE, 17, 18));
-        assertEquals(0, h.getValueAt(dim,17,18),"no frost");
-        dim.setBitLayerValueAt(Frost.INSTANCE,17,18,true);
-        assertEquals(1, h.getValueAt(dim,17,18),"has frost");
+        assertEquals(0, h.getValueAt(dim, 17, 18), "no frost");
+        dim.setBitLayerValueAt(Frost.INSTANCE, 17, 18, true);
+        assertEquals(1, h.getValueAt(dim, 17, 18), "has frost");
 
         assertFalse(dim.getBitLayerValueAt(Frost.INSTANCE, 21, 22));
-        h.setValueAt(dim,21,22,1);
+        h.setValueAt(dim, 21, 22, 1);
         assertTrue(dim.getBitLayerValueAt(Frost.INSTANCE, 21, 22));
-        h.setValueAt(dim,21,22,0);
+        h.setValueAt(dim, 21, 22, 0);
         assertFalse(dim.getBitLayerValueAt(Frost.INSTANCE, 21, 22));
 
     }
@@ -261,7 +261,7 @@ public class ProviderTest {
         int spraypaintChancePercent = 77;
 
         int hits = 0;
-        for (int y = 0; y < 100; y ++) {
+        for (int y = 0; y < 100; y++) {
             for (int x = 0; x < 100; x++) {
                 assertFalse(dim.getBitLayerValueAt(Frost.INSTANCE, x, y));
                 h.setValueAt(dim, x, y, spraypaintChancePercent);
@@ -269,16 +269,16 @@ public class ProviderTest {
                     hits++;
             }
         }
-        assertTrue(100*spraypaintChancePercent*0.99 <= hits, "hits less often than 99% requested chance");
-        assertTrue(100*spraypaintChancePercent*1.01 >= hits, "hits more often than 101% requested chance");
+        assertTrue(100 * spraypaintChancePercent * 0.99 <= hits, "hits less often than 99% requested chance");
+        assertTrue(100 * spraypaintChancePercent * 1.01 >= hits, "hits more often than 101% requested chance");
 
-        //check that random decision is stable for coordinates
-        h.setValueAt(dim, 17,18, spraypaintChancePercent);
-        boolean value = dim.getLayerValueAt(Frost.INSTANCE,17,18) == 0;
+        // check that random decision is stable for coordinates
+        h.setValueAt(dim, 17, 18, spraypaintChancePercent);
+        boolean value = dim.getLayerValueAt(Frost.INSTANCE, 17, 18) == 0;
         for (int i = 0; i < 100; i++) {
-            h.setValueAt(dim, 17,18, spraypaintChancePercent);
-            assertEquals(value,dim.getLayerValueAt(Frost.INSTANCE,17,18) == 0, "spraypainting again caused change of " +
-                    "value at i="+i);
+            h.setValueAt(dim, 17, 18, spraypaintChancePercent);
+            assertEquals(value, dim.getLayerValueAt(Frost.INSTANCE, 17, 18) == 0,
+                    "spraypainting again caused change of " + "value at i=" + i);
         }
 
     }
@@ -289,7 +289,7 @@ public class ProviderTest {
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         h.prepareForDimension(dim);
 
-        {        //create world with slope 45° all facing -x: west
+        { // create world with slope 45° all facing -x: west
             for (int y = 0; y < 100; y++) {
                 for (int x = 0; x < 100; x++) {
                     int height = y;
@@ -300,7 +300,7 @@ public class ProviderTest {
             int compassDirAngle = h.getValueAt(dim, 17, 18);
             assertEquals(0, compassDirAngle);
         }
-        {        //create world with slope 45° all facing -x: west
+        { // create world with slope 45° all facing -x: west
             for (int y = 0; y < 100; y++) {
                 for (int x = 0; x < 100; x++) {
                     int height = -y;
@@ -312,7 +312,7 @@ public class ProviderTest {
             assertEquals(180, compassDirAngle);
         }
 
-        {        //create world with slope 45° all facing -x: west
+        { // create world with slope 45° all facing -x: west
             int hits = 0;
             for (int y = 0; y < 100; y++) {
                 for (int x = 0; x < 100; x++) {
@@ -325,7 +325,7 @@ public class ProviderTest {
             assertEquals(270, compassDirAngle);
         }
 
-        {        //create world with slope 45° all facing -x: west
+        { // create world with slope 45° all facing -x: west
             int hits = 0;
             for (int y = 0; y < 100; y++) {
                 for (int x = 0; x < 100; x++) {
@@ -345,15 +345,15 @@ public class ProviderTest {
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         io.prepareForDimension(dim);
 
-        dim.setLayerValueAt(PineForest.INSTANCE,18,19,5);
-        assertEquals(5,io.getValueAt(dim,18,19),"read from dim");
-        dim.setLayerValueAt(PineForest.INSTANCE,18,19,7);
-        assertEquals(7,io.getValueAt(dim,18,19),"read from dim after modification");
+        dim.setLayerValueAt(PineForest.INSTANCE, 18, 19, 5);
+        assertEquals(5, io.getValueAt(dim, 18, 19), "read from dim");
+        dim.setLayerValueAt(PineForest.INSTANCE, 18, 19, 7);
+        assertEquals(7, io.getValueAt(dim, 18, 19), "read from dim after modification");
 
-        io.setValueAt(dim,18,19,3);
-        assertEquals(3,dim.getLayerValueAt(PineForest.INSTANCE,18,19));
-        io.setValueAt(dim,18,19,1);
-        assertEquals(1,dim.getLayerValueAt(PineForest.INSTANCE,18,19));
+        io.setValueAt(dim, 18, 19, 3);
+        assertEquals(3, dim.getLayerValueAt(PineForest.INSTANCE, 18, 19));
+        io.setValueAt(dim, 18, 19, 1);
+        assertEquals(1, dim.getLayerValueAt(PineForest.INSTANCE, 18, 19));
     }
 
     @Test
@@ -362,26 +362,26 @@ public class ProviderTest {
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         io.prepareForDimension(dim);
 
-        //select block
-        dim.setBitLayerValueAt(SelectionBlock.INSTANCE,18,19,true);
-        assertEquals(1,io.getValueAt(dim,18,19),"read from dim");
-        dim.setBitLayerValueAt(SelectionBlock.INSTANCE,18,19,false);
-        assertEquals(0,io.getValueAt(dim,18,19),"read from dim");
+        // select block
+        dim.setBitLayerValueAt(SelectionBlock.INSTANCE, 18, 19, true);
+        assertEquals(1, io.getValueAt(dim, 18, 19), "read from dim");
+        dim.setBitLayerValueAt(SelectionBlock.INSTANCE, 18, 19, false);
+        assertEquals(0, io.getValueAt(dim, 18, 19), "read from dim");
 
-        dim.setBitLayerValueAt(SelectionChunk.INSTANCE,18,19,true);
-        assertEquals(1,io.getValueAt(dim,18,19),"read from dim");
-        dim.setBitLayerValueAt(SelectionChunk.INSTANCE,18,19,false);
-        assertEquals(0,io.getValueAt(dim,18,19),"read from dim");
+        dim.setBitLayerValueAt(SelectionChunk.INSTANCE, 18, 19, true);
+        assertEquals(1, io.getValueAt(dim, 18, 19), "read from dim");
+        dim.setBitLayerValueAt(SelectionChunk.INSTANCE, 18, 19, false);
+        assertEquals(0, io.getValueAt(dim, 18, 19), "read from dim");
 
-        io.setValueAt(dim,18,19,1);
-        assertEquals(true, dim.getBitLayerValueAt(SelectionBlock.INSTANCE,18,19),"io wrties to block select layer");
+        io.setValueAt(dim, 18, 19, 1);
+        assertEquals(true, dim.getBitLayerValueAt(SelectionBlock.INSTANCE, 18, 19), "io wrties to block select layer");
 
-        dim.setBitLayerValueAt(SelectionChunk.INSTANCE,18,19,true);
-        io.setValueAt(dim,18,19,0);
-        assertEquals(false, dim.getBitLayerValueAt(SelectionBlock.INSTANCE,18,19),"io sets block and chunk select to " +
-                "zero");
-        assertEquals(false, dim.getBitLayerValueAt(SelectionChunk.INSTANCE,18,19),"io sets block and chunk select to " +
-                "zero");
+        dim.setBitLayerValueAt(SelectionChunk.INSTANCE, 18, 19, true);
+        io.setValueAt(dim, 18, 19, 0);
+        assertEquals(false, dim.getBitLayerValueAt(SelectionBlock.INSTANCE, 18, 19),
+                "io sets block and chunk select to " + "zero");
+        assertEquals(false, dim.getBitLayerValueAt(SelectionChunk.INSTANCE, 18, 19),
+                "io sets block and chunk select to " + "zero");
     }
 
     @Test
@@ -392,7 +392,7 @@ public class ProviderTest {
 
         assertEquals(0, io.getValueAt(dim, 17, 18));
 
-        {        //create world with slope 45° in y dir
+        { // create world with slope 45° in y dir
             for (int y = 0; y < 100; y++) {
                 for (int x = 0; x < 100; x++) {
                     int height = y;
@@ -401,17 +401,17 @@ public class ProviderTest {
             }
             assertEquals(45, io.getValueAt(dim, 17, 18));
         }
-        {        //create world with slope 2up, 1 over
+        { // create world with slope 2up, 1 over
             for (int y = 0; y < 100; y++) {
                 for (int x = 0; x < 100; x++) {
-                    int height = y*2;
+                    int height = y * 2;
                     dim.setHeightAt(x, y, height);
                 }
             }
             assertEquals(63, io.getValueAt(dim, 17, 18));
         }
 
-        {        //create world with slope 45° in x dir
+        { // create world with slope 45° in x dir
             for (int y = 0; y < 100; y++) {
                 for (int x = 0; x < 100; x++) {
                     int height = x;
@@ -420,7 +420,7 @@ public class ProviderTest {
             }
             assertEquals(45, io.getValueAt(dim, 17, 18));
         }
-        {        //create world with slope 45° in x dir
+        { // create world with slope 45° in x dir
             for (int y = 0; y < 100; y++) {
                 for (int x = 0; x < 100; x++) {
                     int height = -x;
@@ -429,7 +429,7 @@ public class ProviderTest {
             }
             assertEquals(45, io.getValueAt(dim, 17, 18));
         }
-        {        //create world with slope 45° in x dir
+        { // create world with slope 45° in x dir
             for (int y = 0; y < 100; y++) {
                 for (int x = 0; x < 100; x++) {
                     int height = -y;
@@ -446,15 +446,15 @@ public class ProviderTest {
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         io.prepareForDimension(dim);
 
-        dim.setTerrainAt(17,18, Terrain.BEACHES);
-        assertEquals(Terrain.BEACHES.ordinal(), io.getValueAt(dim,17,18));
-        dim.setTerrainAt(17,18, Terrain.STONE);
-        assertEquals(Terrain.STONE.ordinal(), io.getValueAt(dim,17,18));
+        dim.setTerrainAt(17, 18, Terrain.BEACHES);
+        assertEquals(Terrain.BEACHES.ordinal(), io.getValueAt(dim, 17, 18));
+        dim.setTerrainAt(17, 18, Terrain.STONE);
+        assertEquals(Terrain.STONE.ordinal(), io.getValueAt(dim, 17, 18));
 
-        io.setValueAt(dim, 19,20, Terrain.DIORITE.ordinal());
-        assertEquals(Terrain.DIORITE, dim.getTerrainAt(19,20));
-        io.setValueAt(dim,19,20, Terrain.OBSIDIAN.ordinal());
-        assertEquals(Terrain.OBSIDIAN, dim.getTerrainAt(19,20));
+        io.setValueAt(dim, 19, 20, Terrain.DIORITE.ordinal());
+        assertEquals(Terrain.DIORITE, dim.getTerrainAt(19, 20));
+        io.setValueAt(dim, 19, 20, Terrain.OBSIDIAN.ordinal());
+        assertEquals(Terrain.OBSIDIAN, dim.getTerrainAt(19, 20));
     }
 
     @Test
@@ -463,27 +463,27 @@ public class ProviderTest {
         Dimension dim = TestDimension.createDimension(new TestDimension.DimensionParams());
         io.prepareForDimension(dim);
 
-        dim.setLayerValueAt(Biome.INSTANCE, 17,18, Minecraft1_21Biomes.BIOME_DESERT);
-        assertEquals(Minecraft1_21Biomes.BIOME_DESERT, io.getValueAt(dim,17,18));
-        dim.setLayerValueAt(Biome.INSTANCE, 17,18, Minecraft1_21Biomes.BIOME_BADLANDS);
-        assertEquals(Minecraft1_21Biomes.BIOME_BADLANDS, io.getValueAt(dim,17,18));
+        dim.setLayerValueAt(Biome.INSTANCE, 17, 18, Minecraft1_21Biomes.BIOME_DESERT);
+        assertEquals(Minecraft1_21Biomes.BIOME_DESERT, io.getValueAt(dim, 17, 18));
+        dim.setLayerValueAt(Biome.INSTANCE, 17, 18, Minecraft1_21Biomes.BIOME_BADLANDS);
+        assertEquals(Minecraft1_21Biomes.BIOME_BADLANDS, io.getValueAt(dim, 17, 18));
 
-        io.setValueAt(dim, 19,20, Minecraft1_21Biomes.BIOME_BADLANDS);
-        assertEquals(Minecraft1_21Biomes.BIOME_BADLANDS, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
-        io.setValueAt(dim, 19,20, Minecraft1_21Biomes.BIOME_BIRCH_FOREST);
-        assertEquals(Minecraft1_21Biomes.BIOME_BIRCH_FOREST, dim.getLayerValueAt(Biome.INSTANCE, 19,20));
+        io.setValueAt(dim, 19, 20, Minecraft1_21Biomes.BIOME_BADLANDS);
+        assertEquals(Minecraft1_21Biomes.BIOME_BADLANDS, dim.getLayerValueAt(Biome.INSTANCE, 19, 20));
+        io.setValueAt(dim, 19, 20, Minecraft1_21Biomes.BIOME_BIRCH_FOREST);
+        assertEquals(Minecraft1_21Biomes.BIOME_BIRCH_FOREST, dim.getLayerValueAt(Biome.INSTANCE, 19, 20));
     }
 
     void TestVoronoiIO() {
-        IPositionValueGetter input = new VoronoiIO(10,100,123456,1,100);
+        IPositionValueGetter input = new VoronoiIO(10, 100, 123456, 1, 100);
         HashSet<Integer> seenValue = new HashSet<>();
         for (int x = 100; x < 1300; x++) {
-            for (int y = -300; y <  2700; y++) {
-                int value = input.getValueAt(null,x,y);
+            for (int y = -300; y < 2700; y++) {
+                int value = input.getValueAt(null, x, y);
                 seenValue.add(value);
-                //System.out.printf("%d ",value);
+                // System.out.printf("%d ",value);
             }
-            //System.out.println();
+            // System.out.println();
         }
         Integer[] seen = seenValue.toArray(Integer[]::new);
         Arrays.sort(seen);
@@ -492,13 +492,13 @@ public class ProviderTest {
 
     @Test
     void TestRandomIO() {
-        float chance = 1/257f;
-        IPositionValueGetter input = new RandomNoise(10123456,chance);
+        float chance = 1 / 257f;
+        IPositionValueGetter input = new RandomNoise(10123456, chance);
         int passCount = 0;
         int rejectCount = 0;
         for (int x = -1000; x < 1300; x++) {
-            for (int y = -300; y <  2700; y++) {
-                int value = input.getValueAt(null,x,y);
+            for (int y = -300; y < 2700; y++) {
+                int value = input.getValueAt(null, x, y);
                 if (value == RandomNoise.PASS)
                     passCount++;
                 else if (value == RandomNoise.BLOCK)
@@ -509,6 +509,7 @@ public class ProviderTest {
                 }
             }
         }
-        assertEquals(chance,1f*passCount/rejectCount,0.1f,"random did not produce the expect distribution: "+ passCount +":"+rejectCount);
-      }
+        assertEquals(chance, 1f * passCount / rejectCount, 0.1f,
+                "random did not produce the expect distribution: " + passCount + ":" + rejectCount);
+    }
 }

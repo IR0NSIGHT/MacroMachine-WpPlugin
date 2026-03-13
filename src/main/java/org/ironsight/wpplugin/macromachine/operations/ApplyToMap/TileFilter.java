@@ -16,9 +16,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * a filter to check if a tile should be further touched or if we can abort early.
+ * a filter to check if a tile should be further touched or if we can abort
+ * early.
  */
-public class TileFilter implements Serializable {
+public class TileFilter implements Serializable
+{
     private FilterType filterBySelection = FilterType.IGNORE;
     private FilterType filterByExtent = FilterType.IGNORE;
     private Set<String> layerIds = new HashSet<>();
@@ -29,7 +31,8 @@ public class TileFilter implements Serializable {
     private int maxHeight = 0;
     private transient Dimension dimension;
     private transient List<Layer> layers;
-    // layer Only-On is "one of these must be present". except-on is "none of these must be present"
+    // layer Only-On is "one of these must be present". except-on is "none of these
+    // must be present"
     private FilterType filterByLayer = FilterType.IGNORE;
     private Rectangle filterExtent;
 
@@ -37,40 +40,49 @@ public class TileFilter implements Serializable {
     }
 
     private static passType testHeight(Tile tile, int minHeight, int maxHeight, FilterType filterByHeight) {
-        if (filterByHeight == FilterType.IGNORE) return passType.SOME_BLOCKS;
-        else if (filterByHeight == FilterType.EXCEPT_ON && tile.getMinHeight() > maxHeight ||
-                tile.getMaxHeight() < minHeight) return passType.ALL_BLOCKS;
-        else if (filterByHeight == FilterType.ONLY_ON && tile.getMinHeight() <= minHeight &&
-                tile.getMaxHeight() >= maxHeight) return passType.NO_BLOCKS;
+        if (filterByHeight == FilterType.IGNORE)
+            return passType.SOME_BLOCKS;
+        else if (filterByHeight == FilterType.EXCEPT_ON && tile.getMinHeight() > maxHeight
+                || tile.getMaxHeight() < minHeight)
+            return passType.ALL_BLOCKS;
+        else if (filterByHeight == FilterType.ONLY_ON && tile.getMinHeight() <= minHeight
+                && tile.getMaxHeight() >= maxHeight)
+            return passType.NO_BLOCKS;
         return passType.SOME_BLOCKS;
     }
 
     private static passType testTerrains(Tile tile, Set<Terrain> terrainIds, FilterType filterByTerrain) {
-        if (filterByTerrain == FilterType.IGNORE) return passType.SOME_BLOCKS;
-        else if (filterByTerrain == FilterType.EXCEPT_ON &&
-                tile.getAllTerrains().stream().noneMatch(terrainIds::contains)) return passType.ALL_BLOCKS;
-        else if (filterByTerrain == FilterType.ONLY_ON &&
-                tile.getAllTerrains().stream().noneMatch(terrainIds::contains)) return passType.NO_BLOCKS;
+        if (filterByTerrain == FilterType.IGNORE)
+            return passType.SOME_BLOCKS;
+        else if (filterByTerrain == FilterType.EXCEPT_ON
+                && tile.getAllTerrains().stream().noneMatch(terrainIds::contains))
+            return passType.ALL_BLOCKS;
+        else if (filterByTerrain == FilterType.ONLY_ON
+                && tile.getAllTerrains().stream().noneMatch(terrainIds::contains))
+            return passType.NO_BLOCKS;
         return passType.SOME_BLOCKS;
     }
 
     private static passType testLayers(Tile tile, Set<String> layerIds, FilterType filterByLayer) {
-        if (filterByLayer == FilterType.IGNORE) return passType.SOME_BLOCKS;
-        else if (filterByLayer == FilterType.EXCEPT_ON &&
-                tile.getLayers().stream().noneMatch(l -> layerIds.contains(l.getId()))) return passType.ALL_BLOCKS;
-        else if (filterByLayer == FilterType.ONLY_ON &&
-                tile.getLayers().stream().noneMatch(l -> layerIds.contains(l.getId()))) return passType.NO_BLOCKS;
+        if (filterByLayer == FilterType.IGNORE)
+            return passType.SOME_BLOCKS;
+        else if (filterByLayer == FilterType.EXCEPT_ON
+                && tile.getLayers().stream().noneMatch(l -> layerIds.contains(l.getId())))
+            return passType.ALL_BLOCKS;
+        else if (filterByLayer == FilterType.ONLY_ON
+                && tile.getLayers().stream().noneMatch(l -> layerIds.contains(l.getId())))
+            return passType.NO_BLOCKS;
         return passType.SOME_BLOCKS;
     }
 
     private static passType testSelection(Tile tile, FilterType filterBySelection) {
         switch (filterBySelection) {
-            case IGNORE:
+            case IGNORE :
                 return passType.SOME_BLOCKS;
-            case ONLY_ON:
+            case ONLY_ON :
                 if (!tile.hasLayer(SelectionBlock.INSTANCE) && !tile.hasLayer(SelectionChunk.INSTANCE))
                     return passType.NO_BLOCKS;
-            case EXCEPT_ON:
+            case EXCEPT_ON :
                 if (!tile.hasLayer(SelectionBlock.INSTANCE) && !tile.hasLayer(SelectionChunk.INSTANCE))
                     return passType.ALL_BLOCKS;
         }
@@ -116,18 +128,18 @@ public class TileFilter implements Serializable {
 
     private passType testExtent(Tile tile, FilterType filterByExtent) {
         switch (filterByExtent) {
-            case IGNORE: {
+            case IGNORE : {
                 return passType.SOME_BLOCKS;
             }
-            case ONLY_ON: {
+            case ONLY_ON : {
                 if (!filterExtent.contains(tile.getX(), tile.getY()))
                     return passType.NO_BLOCKS;
             }
-            case EXCEPT_ON: {
+            case EXCEPT_ON : {
                 if (filterExtent.contains(tile.getX(), tile.getY()))
                     return passType.NO_BLOCKS;
             }
-            default:
+            default :
                 return passType.SOME_BLOCKS;
         }
 
@@ -135,66 +147,83 @@ public class TileFilter implements Serializable {
 
     public passType testTile(Tile tile) {
         passType extent = testExtent(tile, filterByExtent);
-        if (extent == passType.NO_BLOCKS) return passType.NO_BLOCKS;
+        if (extent == passType.NO_BLOCKS)
+            return passType.NO_BLOCKS;
 
         passType selection = testSelection(tile, filterBySelection);
-        if (selection == passType.NO_BLOCKS) return passType.NO_BLOCKS;
+        if (selection == passType.NO_BLOCKS)
+            return passType.NO_BLOCKS;
 
         passType layers = testLayers(tile, layerIds, filterByLayer);
-        if (layers == passType.NO_BLOCKS) return passType.NO_BLOCKS;
+        if (layers == passType.NO_BLOCKS)
+            return passType.NO_BLOCKS;
 
         passType terrains = testTerrains(tile, terrainIds, filterByTerrain);
-        if (terrains == passType.NO_BLOCKS) return passType.NO_BLOCKS;
+        if (terrains == passType.NO_BLOCKS)
+            return passType.NO_BLOCKS;
 
         passType height = testHeight(tile, minHeight, maxHeight, filterByHeight);
-        if (height == passType.NO_BLOCKS) return passType.NO_BLOCKS;
+        if (height == passType.NO_BLOCKS)
+            return passType.NO_BLOCKS;
 
-        if (selection == passType.ALL_BLOCKS && terrains == passType.ALL_BLOCKS && height == passType.ALL_BLOCKS &&
-                layers == passType.ALL_BLOCKS) return passType.ALL_BLOCKS;
+        if (selection == passType.ALL_BLOCKS && terrains == passType.ALL_BLOCKS && height == passType.ALL_BLOCKS
+                && layers == passType.ALL_BLOCKS)
+            return passType.ALL_BLOCKS;
 
         return passType.SOME_BLOCKS;
     }
 
     public boolean passSelection(int x, int y) {
-        if (filterBySelection == FilterType.IGNORE) return true;
+        if (filterBySelection == FilterType.IGNORE)
+            return true;
         else if (filterBySelection == FilterType.ONLY_ON)
-            return dimension.getBitLayerValueAt(SelectionBlock.INSTANCE, x, y) ||
-                    dimension.getBitLayerValueAt(SelectionChunk.INSTANCE, x, y);
+            return dimension.getBitLayerValueAt(SelectionBlock.INSTANCE, x, y)
+                    || dimension.getBitLayerValueAt(SelectionChunk.INSTANCE, x, y);
         else if (filterBySelection == FilterType.EXCEPT_ON)
-            return !dimension.getBitLayerValueAt(SelectionBlock.INSTANCE, x, y) &&
-                    !dimension.getBitLayerValueAt(SelectionChunk.INSTANCE, x, y);
+            return !dimension.getBitLayerValueAt(SelectionBlock.INSTANCE, x, y)
+                    && !dimension.getBitLayerValueAt(SelectionChunk.INSTANCE, x, y);
         return false;
     }
 
     public boolean passLayer(int x, int y) {
-        if (filterByLayer == FilterType.IGNORE) return true;
+        if (filterByLayer == FilterType.IGNORE)
+            return true;
         if (filterByLayer == FilterType.ONLY_ON) {
             for (Layer layer : layers) {
-                if (layer.dataSize.equals(Layer.DataSize.BIT) && dimension.getBitLayerValueAt(layer, x, y)) return true;
-                else if (dimension.getLayerValueAt(layer, x, y) != 0) return true;
+                if (layer.dataSize.equals(Layer.DataSize.BIT) && dimension.getBitLayerValueAt(layer, x, y))
+                    return true;
+                else if (dimension.getLayerValueAt(layer, x, y) != 0)
+                    return true;
             }
             return false;
         }
 
-        if (filterByLayer == FilterType.EXCEPT_ON) for (Layer layer : layers) {
-            if (dimension.getLayerValueAt(layer, x, y) != 0) return false;
-        }
+        if (filterByLayer == FilterType.EXCEPT_ON)
+            for (Layer layer : layers) {
+                if (dimension.getLayerValueAt(layer, x, y) != 0)
+                    return false;
+            }
 
         return true;
     }
 
     public boolean passTerrain(int x, int y) {
-        if (filterByTerrain == FilterType.IGNORE) return true;
+        if (filterByTerrain == FilterType.IGNORE)
+            return true;
         Terrain present = dimension.getTerrainAt(x, y);
-        if (filterByTerrain == FilterType.ONLY_ON && terrainIds.contains(present)) return true;
+        if (filterByTerrain == FilterType.ONLY_ON && terrainIds.contains(present))
+            return true;
         return filterByTerrain != FilterType.EXCEPT_ON || !terrainIds.contains(present);
     }
 
     public boolean passHeight(int x, int y) {
-        if (filterByHeight == FilterType.IGNORE) return true;
+        if (filterByHeight == FilterType.IGNORE)
+            return true;
         float height = dimension.getHeightAt(x, y);
-        if (filterByHeight == FilterType.EXCEPT_ON) return (height > maxHeight || height < minHeight);
-        if (filterByHeight == FilterType.ONLY_ON) return (height <= maxHeight && height >= minHeight);
+        if (filterByHeight == FilterType.EXCEPT_ON)
+            return (height > maxHeight || height < minHeight);
+        if (filterByHeight == FilterType.ONLY_ON)
+            return (height <= maxHeight && height >= minHeight);
         return true;
     }
 
@@ -236,10 +265,10 @@ public class TileFilter implements Serializable {
 
     @Override
     public String toString() {
-        return "TileFilter{" + "filterBySelection=" + filterBySelection + ", layerIds=" + layerIds +
-                ", filterByTerrain=" + filterByTerrain + ", terrainIds=" + terrainIds + ", filterByHeight=" +
-                filterByHeight + ", minHeight=" + minHeight + ", maxHeight=" + maxHeight + ", filterByLayer=" +
-                filterByLayer + '}';
+        return "TileFilter{" + "filterBySelection=" + filterBySelection + ", layerIds=" + layerIds
+                + ", filterByTerrain=" + filterByTerrain + ", terrainIds=" + terrainIds + ", filterByHeight="
+                + filterByHeight + ", minHeight=" + minHeight + ", maxHeight=" + maxHeight + ", filterByLayer="
+                + filterByLayer + '}';
     }
 
     enum passType {

@@ -10,7 +10,8 @@ import org.junit.jupiter.api.Test;
 import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIOTest.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-class MacroExportPolicyTest {
+class MacroExportPolicyTest
+{
     private MappingActionContainer actionContainer;
     private MacroContainer macroContainer;
 
@@ -23,7 +24,7 @@ class MacroExportPolicyTest {
         assertEquals(0, actionContainer.queryAll().size());
 
         ContainerIOTest.fillWithData(actionContainer, macroContainer);
-        assertEquals(3, macroContainer.queryAll().size(),"expect macros: empty, simple, complex");
+        assertEquals(3, macroContainer.queryAll().size(), "expect macros: empty, simple, complex");
         assertEquals(2, actionContainer.queryAll().size()); // 2 actions
     }
     @Test
@@ -35,12 +36,12 @@ class MacroExportPolicyTest {
 
         for (Macro m : macroContainer.queryAll()) {
             if (m.getUid().equals(emptyMacroUID))
-                assertTrue( macroExportPolicy.allowImportExport(m));
+                assertTrue(macroExportPolicy.allowImportExport(m));
             else
                 assertFalse(macroExportPolicy.allowImportExport(m));
         }
 
-        for (MappingAction a: actionContainer.queryAll())
+        for (MappingAction a : actionContainer.queryAll())
             assertFalse(macroExportPolicy.allowImportExport(a));
     }
 
@@ -53,11 +54,11 @@ class MacroExportPolicyTest {
 
         for (Macro m : macroContainer.queryAll()) {
             if (m.getUid().equals(simpleMacroUID))
-                assertTrue( macroExportPolicy.allowImportExport(m));
+                assertTrue(macroExportPolicy.allowImportExport(m));
             else
                 assertFalse(macroExportPolicy.allowImportExport(m));
         }
-        for (MappingAction a: actionContainer.queryAll())
+        for (MappingAction a : actionContainer.queryAll())
             if (a.getUid().equals(applyGrassAction01) || a.getUid().equals(applyGrassAction02))
                 assertTrue(macroExportPolicy.allowImportExport(a));
             else
@@ -72,13 +73,14 @@ class MacroExportPolicyTest {
         MacroExportPolicy macroExportPolicy = new MacroExportPolicy(complexMacro, macroContainer);
 
         for (Macro m : macroContainer.queryAll()) {
-            if (m.getUid().equals(complexMacroUID) || m.getUid().equals(simpleMacroUID) || m.getUid().equals(emptyMacroUID))
-                assertTrue( macroExportPolicy.allowImportExport(m));
+            if (m.getUid().equals(complexMacroUID) || m.getUid().equals(simpleMacroUID)
+                    || m.getUid().equals(emptyMacroUID))
+                assertTrue(macroExportPolicy.allowImportExport(m));
             else
                 assertFalse(macroExportPolicy.allowImportExport(m));
         }
 
-        for (MappingAction a: actionContainer.queryAll())
+        for (MappingAction a : actionContainer.queryAll())
             if (a.getUid().equals(applyGrassAction01) || a.getUid().equals(applyGrassAction02))
                 assertTrue(macroExportPolicy.allowImportExport(a));
             else

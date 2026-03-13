@@ -9,7 +9,8 @@ import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class WaterDepthProvider implements IPositionValueSetter, IPositionValueGetter {
+public class WaterDepthProvider implements IPositionValueSetter, IPositionValueGetter
+{
     private final static Color LAND_GREEN = new Color(43, 157, 0);
     private final static Color SHORE_BLUE = new Color(159, 181, 255);
     private final static Color DEEP_BLUE = new Color(0, 46, 171);

@@ -4,9 +4,7 @@ import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.layers.PineForest;
 import org.pepsoft.worldpainter.layers.plants.PlantLayer;
 
 import java.awt.*;
@@ -15,11 +13,11 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ContainerIOTest {
+class ContainerIOTest
+{
     public static final UUID emptyMacroUID = UUID.fromString("f448bd00-3cc7-4451-8bac-5b3bf36634c0");
     public static final UUID simpleMacroUID = UUID.fromString("fd69b6c6-1885-4d55-9c03-f73e9394cc7e");
     public static final UUID complexMacroUID = UUID.fromString("e9462d29-bb6c-4eed-8d2f-23c3c9014b4b");
@@ -38,18 +36,19 @@ class ContainerIOTest {
 
     public static void fillWithData(MappingActionContainer actions, MacroContainer macros) {
         // empty macro
-        Macro emptyMacro =
-                macros.addMapping(emptyMacroUID).withName("My empty macro").withDescription("this macro is empty");
+        Macro emptyMacro = macros.addMapping(emptyMacroUID)
+                .withName("My empty macro")
+                .withDescription("this macro is empty");
         macros.updateMapping(emptyMacro, Assertions::fail);
         // macro with 2 actions
-        Macro simpleMacro =
-                macros.addMapping(simpleMacroUID).withName("My simple macro").withDescription("this macro executes" +
-                        " 2 " + "actions");
+        Macro simpleMacro = macros.addMapping(simpleMacroUID)
+                .withName("My simple macro")
+                .withDescription("this macro executes" + " 2 " + "actions");
         {
-            MappingAction action01 =
-                    actions.addMapping(applyGrassAction01).withValuesFrom(applyGrassEverywhere().withName("action 01"));
-            MappingAction action02 =
-                    actions.addMapping(applyGrassAction02).withValuesFrom(applyGrassEverywhere().withName("action 02"));
+            MappingAction action01 = actions.addMapping(applyGrassAction01)
+                    .withValuesFrom(applyGrassEverywhere().withName("action 01"));
+            MappingAction action02 = actions.addMapping(applyGrassAction02)
+                    .withValuesFrom(applyGrassEverywhere().withName("action 02"));
             macros.updateMapping(simpleMacro.withUUIDs(new UUID[]{action01.getUid(), action02.getUid()}),
                     Assertions::fail);
         }
@@ -66,8 +65,8 @@ class ContainerIOTest {
         MacroJsonWrapper[] macros = new MacroJsonWrapper[3];
         ActionJsonWrapper[] actions = new ActionJsonWrapper[5];
         for (int i = 0; i < actions.length; i++) {
-            actions[i] = new ActionJsonWrapper(MappingAction.getNewEmptyAction(UUID.randomUUID())
-                    .withName("test-action-" + i));
+            actions[i] = new ActionJsonWrapper(
+                    MappingAction.getNewEmptyAction(UUID.randomUUID()).withName("test-action-" + i));
         }
         UUID[][] actionsInMacro = new UUID[3][];
         actionsInMacro[0] = new UUID[]{actions[0].getUid()};
@@ -75,12 +74,9 @@ class ContainerIOTest {
         actionsInMacro[2] = new UUID[]{actions[2].getUid(), actions[3].getUid(), actions[4].getUid()};
 
         for (int i = 0; i < macros.length; i++) {
-            macros[i] = new MacroJsonWrapper("alpine-" + i, "uwu owo doing doing",
-                    actionsInMacro[i],
-                    UUID.randomUUID(),
+            macros[i] = new MacroJsonWrapper("alpine-" + i, "uwu owo doing doing", actionsInMacro[i], UUID.randomUUID(),
                     new boolean[0]);
         }
-
 
         ExportContainer container = new ExportContainer("2025-06-14-17-04", "no comment", macros, actions,
                 new Layer[0]);
@@ -134,12 +130,12 @@ class ContainerIOTest {
         assertEquals(0, macroContainer.queryAll().size());
         assertEquals(0, actionContainer.queryAll().size());
 
-
         ExportContainer dataContainer = getContainerWithData();
         File tempFile = Files.createTempFile("test", ".tmp").toFile();
         ContainerIO.writeContainerToFile(dataContainer, tempFile);
 
-        ContainerIO.importFile(actionContainer, macroContainer, tempFile, new ImportExportPolicy(), Assertions::fail, layerProvider);
+        ContainerIO.importFile(actionContainer, macroContainer, tempFile, new ImportExportPolicy(), Assertions::fail,
+                layerProvider);
 
         assertEquals(dataContainer.getMacros().length, macroContainer.queryAll().size());
         assertEquals(dataContainer.getActions().length, actionContainer.queryAll().size());
@@ -165,8 +161,7 @@ class ContainerIOTest {
 
         assertEquals(0, macroContainer.queryAll().size());
         assertEquals(0, actionContainer.queryAll().size());
-        Layer plantsLayer =  new PlantLayer("Plants", "A custom collection of plants",
-                Color.GREEN);
+        Layer plantsLayer = new PlantLayer("Plants", "A custom collection of plants", Color.GREEN);
 
         LayerProvider mockProvider = new LayerProvider() {
             @Override
@@ -191,7 +186,7 @@ class ContainerIOTest {
         };
 
         UUID actionId = UUID.fromString("2d201b86-f765-4750-a5d0-301363537d68");
-        {        //create action with a layer
+        { // create action with a layer
             MappingAction a = actionContainer.addMapping(actionId)
                     .withName("apply pines")
                     .withInput(new TerrainHeightIO(0, 100))
@@ -204,16 +199,15 @@ class ContainerIOTest {
         macroContainer.updateMapping(Assertions::fail,
                 macroContainer.addMapping(macroId).withName("paint pines macro").withUUIDs(new UUID[]{actionId}));
 
-        ExportContainer c =  ContainerIO.toExportContainer(actionContainer, macroContainer, new ImportExportPolicy(),
-                Assertions::fail,
-                mockProvider);
-        assertArrayEquals(new Layer[]{ plantsLayer }, c.getLayers());
+        ExportContainer c = ContainerIO.toExportContainer(actionContainer, macroContainer, new ImportExportPolicy(),
+                Assertions::fail, mockProvider);
+        assertArrayEquals(new Layer[]{plantsLayer}, c.getLayers());
 
         File tempFile = Files.createTempFile("test", ".tmp").toFile();
         ContainerIO.writeContainerToFile(c, tempFile);
         ExportContainer imported = ContainerIO.readFromFile(tempFile);
         assertEquals(0, c.getLayers()[0].compareTo(imported.getLayers()[0]));
-        assertEquals(c.getLayers()[0].getId(),imported.getLayers()[0].getId());
+        assertEquals(c.getLayers()[0].getId(), imported.getLayers()[0].getId());
     }
 
     @Test
@@ -232,59 +226,36 @@ class ContainerIOTest {
         ContainerIO.exportToFile(actionContainer, macroContainer, tempFile, new ImportExportPolicy(), Assertions::fail,
                 InputOutputProvider.INSTANCE);
 
-        String content = new String(Files.readAllBytes(tempFile.toPath()))
-                .replace("\r\n", "\n")
+        String content = new String(Files.readAllBytes(tempFile.toPath())).replace("\r\n", "\n")
                 .replace('\r', '\n')
                 .replaceAll("  \"exportDate\"\\s*:\\s*\".*?\"", "  \"exportDate\" : \"now\"");
 
-        assertEquals("{\n" +
-                "  \"exportDate\" : \"now\",\n" +
-                "  \"comment\" : \"no comment\",\n" +
-                "  \"macros\" : [ {\n" +
-                "    \"macroName\" : \"My simple macro\",\n" +
-                "    \"description\" : \"this macro executes 2 actions\",\n" +
-                "    \"stepIds\" : [ \"8378edd5-88ab-4b8e-b274-c05a7c7713c4\", " +
-                "\"77b21f11-d454-47f8-8085-cfd9bf9a9f4b\" ],\n" +
-                "    \"selfId\" : \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\",\n" +
-                "    \"activeIds\" : [ true, true ]\n" +
-                "  }, {\n" +
-                "    \"macroName\" : \"My complex macro\",\n" +
-                "    \"description\" : \"this macro contains another macro\",\n" +
-                "    \"stepIds\" : [ \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\", " +
-                "\"f448bd00-3cc7-4451-8bac-5b3bf36634c0\" ],\n" +
-                "    \"selfId\" : \"e9462d29-bb6c-4eed-8d2f-23c3c9014b4b\",\n" +
-                "    \"activeIds\" : [ true, true ]\n" +
-                "  }, {\n" +
-                "    \"macroName\" : \"My empty macro\",\n" +
-                "    \"description\" : \"this macro is empty\",\n" +
-                "    \"stepIds\" : [ ],\n" +
-                "    \"selfId\" : \"f448bd00-3cc7-4451-8bac-5b3bf36634c0\",\n" +
-                "    \"activeIds\" : [ ]\n" +
-                "  } ],\n" +
-                "  \"actions\" : [ {\n" +
-                "    \"inputId\" : \"HEIGHT\",\n" +
-                "    \"inputData\" : [ -64, 319 ],\n" +
-                "    \"outputId\" : \"ANNOTATION\",\n" +
-                "    \"outputData\" : [ ],\n" +
-                "    \"actionType\" : \"SET\",\n" +
-                "    \"inputPoints\" : [ ],\n" +
-                "    \"outputPoints\" : [ ],\n" +
-                "    \"name\" : \"New Action\",\n" +
-                "    \"description\" : \"description of the action\",\n" +
-                "    \"uid\" : \"77b21f11-d454-47f8-8085-cfd9bf9a9f4b\"\n" +
-                "  }, {\n" +
-                "    \"inputId\" : \"HEIGHT\",\n" +
-                "    \"inputData\" : [ -64, 319 ],\n" +
-                "    \"outputId\" : \"ANNOTATION\",\n" +
-                "    \"outputData\" : [ ],\n" +
-                "    \"actionType\" : \"SET\",\n" +
-                "    \"inputPoints\" : [ ],\n" +
-                "    \"outputPoints\" : [ ],\n" +
-                "    \"name\" : \"New Action\",\n" +
-                "    \"description\" : \"description of the action\",\n" +
-                "    \"uid\" : \"8378edd5-88ab-4b8e-b274-c05a7c7713c4\"\n" +
-                "  } ],\n" +
-                "  \"layers\" : \"rO0ABXVyAChbTG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXI7BDpGR8pvArcCAAB4cAAAAAA=\"\n" +
-                "}", content);
+        assertEquals("{\n" + "  \"exportDate\" : \"now\",\n" + "  \"comment\" : \"no comment\",\n"
+                + "  \"macros\" : [ {\n" + "    \"macroName\" : \"My simple macro\",\n"
+                + "    \"description\" : \"this macro executes 2 actions\",\n"
+                + "    \"stepIds\" : [ \"8378edd5-88ab-4b8e-b274-c05a7c7713c4\", "
+                + "\"77b21f11-d454-47f8-8085-cfd9bf9a9f4b\" ],\n"
+                + "    \"selfId\" : \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\",\n"
+                + "    \"activeIds\" : [ true, true ]\n" + "  }, {\n" + "    \"macroName\" : \"My complex macro\",\n"
+                + "    \"description\" : \"this macro contains another macro\",\n"
+                + "    \"stepIds\" : [ \"fd69b6c6-1885-4d55-9c03-f73e9394cc7e\", "
+                + "\"f448bd00-3cc7-4451-8bac-5b3bf36634c0\" ],\n"
+                + "    \"selfId\" : \"e9462d29-bb6c-4eed-8d2f-23c3c9014b4b\",\n"
+                + "    \"activeIds\" : [ true, true ]\n" + "  }, {\n" + "    \"macroName\" : \"My empty macro\",\n"
+                + "    \"description\" : \"this macro is empty\",\n" + "    \"stepIds\" : [ ],\n"
+                + "    \"selfId\" : \"f448bd00-3cc7-4451-8bac-5b3bf36634c0\",\n" + "    \"activeIds\" : [ ]\n"
+                + "  } ],\n" + "  \"actions\" : [ {\n" + "    \"inputId\" : \"HEIGHT\",\n"
+                + "    \"inputData\" : [ -64, 319 ],\n" + "    \"outputId\" : \"ANNOTATION\",\n"
+                + "    \"outputData\" : [ ],\n" + "    \"actionType\" : \"SET\",\n" + "    \"inputPoints\" : [ ],\n"
+                + "    \"outputPoints\" : [ ],\n" + "    \"name\" : \"New Action\",\n"
+                + "    \"description\" : \"description of the action\",\n"
+                + "    \"uid\" : \"77b21f11-d454-47f8-8085-cfd9bf9a9f4b\"\n" + "  }, {\n"
+                + "    \"inputId\" : \"HEIGHT\",\n" + "    \"inputData\" : [ -64, 319 ],\n"
+                + "    \"outputId\" : \"ANNOTATION\",\n" + "    \"outputData\" : [ ],\n"
+                + "    \"actionType\" : \"SET\",\n" + "    \"inputPoints\" : [ ],\n" + "    \"outputPoints\" : [ ],\n"
+                + "    \"name\" : \"New Action\",\n" + "    \"description\" : \"description of the action\",\n"
+                + "    \"uid\" : \"8378edd5-88ab-4b8e-b274-c05a7c7713c4\"\n" + "  } ],\n"
+                + "  \"layers\" : \"rO0ABXVyAChbTG9yZy5wZXBzb2Z0LndvcmxkcGFpbnRlci5sYXllcnMuTGF5ZXI7BDpGR8pvArcCAAB4cAAAAAA=\"\n"
+                + "}", content);
     }
 }

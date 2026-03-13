@@ -11,7 +11,8 @@ import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter {
+public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter
+{
     private static final ColourScheme colorScheme = new HardcodedColourScheme();
     private final int IGNORE = Integer.MAX_VALUE;
     private final int[] outputValues;
@@ -19,7 +20,7 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     public TerrainProvider() {
         outputValues = IntStream.range(-1, Terrain.values().length).toArray();
         outputValues[0] = IGNORE;
-        inputValues = IntStream.range(0,Terrain.values().length).toArray();
+        inputValues = IntStream.range(0, Terrain.values().length).toArray();
     }
 
     @Override
@@ -87,7 +88,7 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public int[] getAllInputValues() {
-        return Arrays.copyOf(inputValues,inputValues.length);
+        return Arrays.copyOf(inputValues, inputValues.length);
     }
 
     @Override

@@ -13,14 +13,16 @@ import java.util.function.Consumer;
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.SELECTED_BACKGROUND;
 
-public class IoSelectLabel extends JPanel {
+public class IoSelectLabel extends JPanel
+{
     private final IMappingValueProvider provider;
     private DisplayUnitRenderer renderer = new DisplayUnitRenderer(f -> true);
     private IMappingValue selected;
     private Consumer<IMappingValue> onChangeCallback;
 
     /**
-     * component to display currently selected input or output (getter/setter) and select-editor on click
+     * component to display currently selected input or output (getter/setter) and
+     * select-editor on click
      *
      * @param onChangeCallback
      * @param provider
@@ -37,14 +39,14 @@ public class IoSelectLabel extends JPanel {
 
     private void showPickingDialog() {
         new DisplayUnitPickerDialog(new ArrayList<IDisplayUnit>(provider.getItems()), this::onPickerSubmit,
-                Collections.emptyList(), true,
-                this).setVisible(true);
+                Collections.emptyList(), true, this).setVisible(true);
 
     }
 
     private void onPickerSubmit(IDisplayUnit selected) {
         SetSelected((IMappingValue) selected);
-        onChangeCallback.accept(((IMappingValue) selected).instantiateFrom(((IMappingValue) selected).getSaveData()));  //return clone
+        onChangeCallback.accept(((IMappingValue) selected).instantiateFrom(((IMappingValue) selected).getSaveData())); // return
+                                                                                                                       // clone
     }
 
     private void addClickListener(JPanel panel) {
@@ -74,10 +76,8 @@ public class IoSelectLabel extends JPanel {
 
     public void SetSelected(IMappingValue getter) {
         selected = getter;
-        Component p = renderer.renderFor(getter, false); //implicitly updates our child component
+        Component p = renderer.renderFor(getter, false); // implicitly updates our child component
         this.invalidate();
         this.repaint();
     }
 }
-
-

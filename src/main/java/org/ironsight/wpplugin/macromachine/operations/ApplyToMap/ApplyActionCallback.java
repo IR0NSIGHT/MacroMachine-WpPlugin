@@ -7,9 +7,11 @@ import org.pepsoft.worldpainter.Dimension;
 import java.util.List;
 
 /**
- * callback to inform GUI of the progress for executing a macro / applying an action to a dimension
+ * callback to inform GUI of the progress for executing a macro / applying an
+ * action to a dimension
  */
-public interface ApplyActionCallback {
+public interface ApplyActionCallback
+{
     void setProgressOfAction(int percent);
 
     boolean isActionAbort();
@@ -21,7 +23,9 @@ public interface ApplyActionCallback {
     void afterEachAction(ExecutionStatistic statistic);
 
     /**
-     * allow UI events to be genereated after the action is complete? FALSE: wait until everything is done
+     * allow UI events to be genereated after the action is complete? FALSE: wait
+     * until everything is done
+     *
      * @return
      */
     boolean isUpdateMapAfterEachAction();

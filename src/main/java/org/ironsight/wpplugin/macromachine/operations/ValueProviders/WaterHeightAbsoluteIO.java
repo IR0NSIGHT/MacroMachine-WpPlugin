@@ -10,7 +10,8 @@ import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionValueSetter, EditableIO {
+public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionValueSetter, EditableIO
+{
     private final int min, max;
     public static final int IGNORE = Integer.MAX_VALUE;
     private final int[] outputValues;
@@ -21,7 +22,7 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
         this.max = max;
         outputValues = IntStream.range(min - 1, max + 1).toArray();
         outputValues[0] = IGNORE;
-        inputValues = IntStream.range(min,max + 1).toArray();
+        inputValues = IntStream.range(min, max + 1).toArray();
     }
 
     @Override
@@ -38,7 +39,6 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
     public int[] getAllInputValues() {
         return Arrays.copyOf(inputValues, inputValues.length);
     }
-
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
@@ -141,8 +141,10 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         WaterHeightAbsoluteIO that = (WaterHeightAbsoluteIO) o;
         return min == that.min && max == that.max;
     }

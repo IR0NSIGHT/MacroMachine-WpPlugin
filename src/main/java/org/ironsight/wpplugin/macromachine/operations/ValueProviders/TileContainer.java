@@ -2,14 +2,14 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.pepsoft.worldpainter.Constants;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.Tile;
 
 import java.awt.*;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class TileContainer {
+public class TileContainer
+{
 
     private final IntegerTile[][] tiles;
     private final int offsetX;
@@ -17,22 +17,22 @@ public class TileContainer {
     private final int width, height;
 
     public TileContainer(Rectangle extent, int defaultValue) {
-        this(extent.width , extent.height, TILE_SIZE * extent.x, TILE_SIZE * extent.y,defaultValue);
+        this(extent.width, extent.height, TILE_SIZE * extent.x, TILE_SIZE * extent.y, defaultValue);
     }
 
     public void addAsValues(IPositionTileValueGetter getter, Dimension dim, boolean invert) {
         dim.getTiles().parallelStream().forEach(t -> {
             int yOff = t.getY() * TILE_SIZE;
             int xOff = t.getX() * TILE_SIZE;
-            if (!existsTile(t.getX(),t.getY()))
+            if (!existsTile(t.getX(), t.getY()))
                 return;
-            IntegerTile intTile = getTileAt(xOff,yOff);
-            for (int yPos = 0; yPos < TILE_SIZE; yPos ++) {
-                for (int xPos = 0; xPos < TILE_SIZE; xPos ++) {
+            IntegerTile intTile = getTileAt(xOff, yOff);
+            for (int yPos = 0; yPos < TILE_SIZE; yPos++) {
+                for (int xPos = 0; xPos < TILE_SIZE; xPos++) {
                     int value = getter.getValueAt(t, xPos, yPos);
                     if (invert)
                         value = getter.getMaxValue() - value;
-                    intTile.setValueAt(  offsetX + xPos + xOff,yPos + yOff + offsetY, value);
+                    intTile.setValueAt(offsetX + xPos + xOff, yPos + yOff + offsetY, value);
                 }
             }
         });
@@ -40,14 +40,15 @@ public class TileContainer {
 
     /**
      * get row at position y as array
+     *
      * @param yPos
      * @return
      */
     public int[] getValueRow(int yPos) {
-        int[] row = new int[getMaxXPos()-getMinXPos()];
+        int[] row = new int[getMaxXPos() - getMinXPos()];
         int start = getMinXPos();
         for (int x = start; x < getMaxXPos(); x++) {
-            row[x - start] = getValueAt(x,yPos);
+            row[x - start] = getValueAt(x, yPos);
         }
         return row;
     }
@@ -55,7 +56,7 @@ public class TileContainer {
     public void setValueRow(int yPos, int[] row) {
         int start = getMinXPos();
         for (int x = start; x < getMaxXPos(); x++) {
-            setValueAt(x,yPos,row[x-start]);
+            setValueAt(x, yPos, row[x - start]);
         }
     }
 
@@ -65,14 +66,15 @@ public class TileContainer {
 
     /**
      * get column at position x as array
+     *
      * @param xPos
      * @return
      */
-    public int[] getValueColumn(int xPos){
-        int[] row = new int[getMaxYPos()-getMinYPos()];
+    public int[] getValueColumn(int xPos) {
+        int[] row = new int[getMaxYPos() - getMinYPos()];
         int start = getMinYPos();
         for (int y = start; y < getMaxYPos(); y++) {
-            row[y - start] = getValueAt(xPos,y);
+            row[y - start] = getValueAt(xPos, y);
         }
         return row;
     }
@@ -80,7 +82,7 @@ public class TileContainer {
     public void setValueColumn(int[] column, int xPos) {
         int start = getMinYPos();
         for (int y = start; y < getMaxYPos(); y++) {
-            setValueAt(xPos,y,column[y - start]);
+            setValueAt(xPos, y, column[y - start]);
         }
     }
 
@@ -151,7 +153,6 @@ public class TileContainer {
         return -offsetY;
     }
 
-
     private IntegerTile getTileAt(int pointX, int pointY) {
         pointX += offsetX;
         pointY += offsetY;
@@ -191,9 +192,9 @@ public class TileContainer {
         return getTileAt(x, y).getMin();
     }
 
-
     /**
-     * @param x     global pos
+     * @param x
+     *            global pos
      * @param y
      * @param value
      */
@@ -204,7 +205,8 @@ public class TileContainer {
     }
 
     /**
-     * @param x global pos
+     * @param x
+     *            global pos
      * @param y
      * @return
      */

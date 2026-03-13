@@ -2,7 +2,8 @@ package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
 import java.util.Objects;
 
-public class Point2i {
+public class Point2i
+{
     public float x, y;
 
     public Point2i(float x, float y) {

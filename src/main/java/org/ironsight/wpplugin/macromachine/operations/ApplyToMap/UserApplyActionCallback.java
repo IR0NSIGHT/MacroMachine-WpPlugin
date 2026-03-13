@@ -7,11 +7,10 @@ import org.pepsoft.worldpainter.Dimension;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class UserApplyActionCallback implements ApplyActionCallback {
+public class UserApplyActionCallback implements ApplyActionCallback
+{
     private final boolean isDebug;
     int actionIdx = 0;
     int totalActions = 0;
@@ -22,7 +21,6 @@ public class UserApplyActionCallback implements ApplyActionCallback {
         this.isDebug = isDebug;
         this.debugUI = debuggerUI;
     }
-
 
     @Override
     public void setProgressOfAction(int percent) {

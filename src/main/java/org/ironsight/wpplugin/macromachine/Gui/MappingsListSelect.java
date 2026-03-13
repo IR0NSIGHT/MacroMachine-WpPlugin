@@ -12,7 +12,8 @@ import java.awt.event.ActionListener;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class MappingsListSelect extends LayerMappingPanel {
+public class MappingsListSelect extends LayerMappingPanel
+{
     JList<ListItem> list;
     JScrollPane scrollPane;
     JButton addButton;
@@ -32,7 +33,8 @@ public class MappingsListSelect extends LayerMappingPanel {
             model.addElement(new ListItem(m));
         }
         list.setModel(model);
-        if (this.mapping != null) list.setSelectedValue(new ListItem(this.mapping), true);
+        if (this.mapping != null)
+            list.setSelectedValue(new ListItem(this.mapping), true);
         list.repaint();
     }
 
@@ -44,12 +46,13 @@ public class MappingsListSelect extends LayerMappingPanel {
 
         // Wrap the JList in a JScrollPane
         scrollPane = new JScrollPane(list);
-        //    scrollPane.setBounds(50, 20, 200, 100); // Set size and position
+        // scrollPane.setBounds(50, 20, 200, 100); // Set size and position
         list.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 ListItem item = list.getSelectedValue();
-                if (item == null) return;
+                if (item == null)
+                    return;
                 updateMapping(item.mappingItem);
             }
         });
@@ -81,7 +84,8 @@ public class MappingsListSelect extends LayerMappingPanel {
         return (this.mapping != null) ? this.mapping.getUid() : null;
     }
 
-    private static class ListItem {
+    private static class ListItem
+    {
         final MappingAction mappingItem;
 
         public ListItem(MappingAction mappingItem) {
@@ -95,7 +99,7 @@ public class MappingsListSelect extends LayerMappingPanel {
         }
 
         @Override
-        public boolean equals(Object obj) { //by UID
+        public boolean equals(Object obj) { // by UID
             return obj instanceof ListItem && this.mappingItem.getUid().equals(((ListItem) obj).mappingItem.getUid());
         }
     }

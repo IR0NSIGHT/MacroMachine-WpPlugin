@@ -10,16 +10,16 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class QuadTreeTest {
+class QuadTreeTest
+{
 
     @Test
     void insert() {
         Random random = new Random(12345);
-        var root = new QuadTree(-1000,-1000,1000,1000);
-        List<Point2i> points =
-                IntStream.range(0, 40000)
-                        .mapToObj(i -> new Point2i(random.nextInt(-100, 100), random.nextInt(-100, 100)))
-                        .toList();
+        var root = new QuadTree(-1000, -1000, 1000, 1000);
+        List<Point2i> points = IntStream.range(0, 40000)
+                .mapToObj(i -> new Point2i(random.nextInt(-100, 100), random.nextInt(-100, 100)))
+                .toList();
 
         points.forEach(root::insert);
 
@@ -34,19 +34,18 @@ class QuadTreeTest {
                     bruteForceClosest.set(p);
                 }
             });
-            //there is no guarantee that the points are equal, because the order of testing decides which one is picked between equally distant points.
-            assertEquals(query.distanceSquared(bruteForceClosest.get()), query.distanceSquared(treeClosest), "mismatch for query " + query);
+            // there is no guarantee that the points are equal, because the order of testing
+            // decides which one is picked between equally distant points.
+            assertEquals(query.distanceSquared(bruteForceClosest.get()), query.distanceSquared(treeClosest),
+                    "mismatch for query " + query);
         };
 
-
-        var point1 = new Point2i(5,-50);
+        var point1 = new Point2i(5, -50);
         testTreeQueryCorrect.accept(point1);
-
 
         IntStream.range(0, 2090)
                 .mapToObj(i -> new Point2i(random.nextInt(-100, 100), random.nextInt(-100, 100)))
                 .forEach(testTreeQueryCorrect);
-
 
     }
 

@@ -10,7 +10,8 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter, ILayerGetter {
+public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter, ILayerGetter
+{
     Random random = new Random();
     private String layerName;
     private String layerId;
@@ -48,7 +49,6 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         return value == IGNORE_VALUE;
     }
 
-
     @Override
     public boolean isVirtual() {
         return false;
@@ -58,7 +58,8 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
      * @param dim
      * @param x
      * @param y
-     * @param value 0 to 100 chance
+     * @param value
+     *            0 to 100 chance
      */
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
@@ -77,22 +78,22 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public void prepareForDimension(Dimension dim) {
-        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
+        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {
+        });
         if (layer == null)
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null)
-            layerName = layer.getName(); //maybe name was updated
+            layerName = layer.getName(); // maybe name was updated
     }
 
     @Override
     public IMappingValue instantiateFrom(Object[] data) {
-        Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer"
-                , false};
+        Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+                false};
         for (int i = 0; i < data.length; i++) {
             saveData[i] = data[i];
         }
-        return new BitLayerBinarySpraypaintApplicator((String) saveData[0],
-                (String) saveData[1],
+        return new BitLayerBinarySpraypaintApplicator((String) saveData[0], (String) saveData[1],
                 (Boolean) saveData[2]);
     }
 
@@ -117,7 +118,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         if (isIgnoreValue(value))
             return;
-        //value is 0 to 100
+        // value is 0 to 100
         g.setColor(Color.black);
         g.fillRect(0, 0, dim.width, dim.height);
         g.setColor(Color.RED);
@@ -125,7 +126,8 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         int cellSize = dim.width / range;
         for (int y = 0; y <= range; y++) {
             for (int x = 0; x <= range; x++) {
-                if (doPaintPos(x, y, value)) g.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                if (doPaintPos(x, y, value))
+                    g.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
             }
         }
     }
@@ -137,7 +139,8 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public String getName() {
-        return layerName + (isCustom ? " custom layer" : " layer");    }
+        return layerName + (isCustom ? " custom layer" : " layer");
+    }
 
     @Override
     public String getDescription() {
@@ -165,8 +168,10 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         BitLayerBinarySpraypaintApplicator that = (BitLayerBinarySpraypaintApplicator) o;
         return Objects.equals(layerId, that.layerId);
     }
@@ -195,6 +200,5 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     public Layer getLayer() {
         return layer;
     }
-
 
 }

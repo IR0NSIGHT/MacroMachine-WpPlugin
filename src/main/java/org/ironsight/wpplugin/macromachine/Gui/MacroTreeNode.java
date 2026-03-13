@@ -12,7 +12,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-class MacroTreeNode implements TreeNode {
+class MacroTreeNode implements TreeNode
+{
     final Object payload;
     GlobalActionPanel.SELECTION_TPYE payloadType;
 
@@ -36,7 +37,7 @@ class MacroTreeNode implements TreeNode {
      * @param macros
      */
     public MacroTreeNode(MappingActionContainer actions, MacroContainer macros) {
-        //ROOT NODE
+        // ROOT NODE
         int i = 0;
         var topLevelMacros = macros.getTopLevelMacros();
         children = new MacroTreeNode[topLevelMacros.size()];
@@ -140,21 +141,23 @@ class MacroTreeNode implements TreeNode {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         MacroTreeNode that = (MacroTreeNode) o;
         if (this.getPayloadType() != that.getPayloadType())
             return false;
         switch (getPayloadType()) {
-            case INVALID: //root
+            case INVALID : // root
                 return true;
-            case MACRO:
+            case MACRO :
                 return this.getMacro().getUid().equals(that.getMacro().getUid());
-            case ACTION:
-            case INPUT:
-            case OUTPUT:
+            case ACTION :
+            case INPUT :
+            case OUTPUT :
                 return this.getAction().getUid().equals(that.getAction().getUid());
-            default:
+            default :
                 throw new RuntimeException("incomplete enum");
         }
     }
@@ -228,24 +231,22 @@ class MacroTreeNode implements TreeNode {
 
     public IDisplayUnit getPayload() {
         switch (payloadType) {
-            case INVALID:
-            case MACRO:
-            case ACTION:
+            case INVALID :
+            case MACRO :
+            case ACTION :
                 return (IDisplayUnit) payload;
-            case INPUT:
+            case INPUT :
                 return getInput();
-            case OUTPUT:
+            case OUTPUT :
                 return getOutput();
-            default:
+            default :
                 return null;
         }
     }
 
     @Override
     public String toString() {
-        return "MacroTreeNode{" +
-                "payload=" + ((IDisplayUnit) payload).getName() +
-                ", payloadType=" + payloadType +
-                '}';
+        return "MacroTreeNode{" + "payload=" + ((IDisplayUnit) payload).getName() + ", payloadType=" + payloadType
+                + '}';
     }
 }

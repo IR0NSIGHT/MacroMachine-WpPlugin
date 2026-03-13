@@ -2,7 +2,8 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import java.awt.*;
 
-public class IDisplayUnitCellRenderer{
+public class IDisplayUnitCellRenderer
+{
 
     public static final Color SELECTED_BACKGROUND = new Color(205, 199, 255);
     public static final Color SELECTED_FOREGROUND = Color.BLACK;

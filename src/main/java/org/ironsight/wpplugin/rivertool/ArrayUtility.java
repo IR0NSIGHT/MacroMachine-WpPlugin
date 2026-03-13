@@ -2,7 +2,8 @@ package org.ironsight.wpplugin.rivertool;
 
 import java.util.*;
 
-public class ArrayUtility {
+public class ArrayUtility
+{
 
     public static boolean isValidArray(float[] arr) {
         for (float element : arr) {
@@ -13,12 +14,11 @@ public class ArrayUtility {
         return true;
     }
 
-
     /**
-     * will turn a n x m list into an m x n list
-     * deep-clones inputs
+     * will turn a n x m list into an m x n list deep-clones inputs
      *
-     * @param input matrix N x M
+     * @param input
+     *            matrix N x M
      * @return matrix M x N
      */
     public static ArrayList<float[]> transposeMatrix(ArrayList<float[]> input) {
@@ -44,7 +44,7 @@ public class ArrayUtility {
     public static float[] toFloatArray(Collection<Float> list) {
         float[] array = new float[list.size()];
         int i = 0;
-        for (Float f: list) {
+        for (Float f : list) {
             array[i++] = f;
         }
         return array;
@@ -83,11 +83,10 @@ public class ArrayUtility {
     }
 
     /**
-     * will take original array + marker array and combine marked indices with the previous ones.
-     * all marked positions will be removed
-     * unmarked positions gain the sum of marked values following it
-     * 1,2,3,4,5 with 1 and 5 unmarked => {1+2+3+4,5
-     * }
+     * will take original array + marker array and combine marked indices with the
+     * previous ones. all marked positions will be removed unmarked positions gain
+     * the sum of marked values following it 1,2,3,4,5 with 1 and 5 unmarked =>
+     * {1+2+3+4,5 }
      *
      * @param original
      * @param toBeRemoved
@@ -124,8 +123,8 @@ public class ArrayUtility {
             } else
                 result[entry.getKey()] += entry.getValue();
         }
-        assert sumArray(result) == sumArray(original) :
-                "the sum must be the same for both arrays:\n" + Arrays.toString(result) + "\n" + Arrays.toString(original);
+        assert sumArray(result) == sumArray(original) : "the sum must be the same for both arrays:\n"
+                + Arrays.toString(result) + "\n" + Arrays.toString(original);
         return result;
     }
 

@@ -6,7 +6,8 @@ import java.util.Properties;
 /**
  * Utility class for making the Maven project version number available to code.
  */
-public class Version {
+public class Version
+{
     public static final String VERSION;
 
     static {

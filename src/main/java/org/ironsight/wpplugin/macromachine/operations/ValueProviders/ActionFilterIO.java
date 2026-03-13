@@ -7,9 +7,9 @@ import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
 
 import java.awt.*;
-import java.util.Arrays;
 
-public class ActionFilterIO implements IPositionValueSetter, IPositionValueGetter {
+public class ActionFilterIO implements IPositionValueSetter, IPositionValueGetter
+{
     public static final int PASS_VALUE = 1;
     public static final int BLOCK_VALUE = 0;
     public static ActionFilterIO instance = new ActionFilterIO();
@@ -55,7 +55,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (tileContainer == null)
-            return PASS_VALUE; //pass by default
+            return PASS_VALUE; // pass by default
         return tileContainer.getValueAt(x, y) == PASS_VALUE ? PASS_VALUE : BLOCK_VALUE;
     }
 
@@ -73,39 +73,36 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
         if (debugMode)
             tileContainer = null;
         Rectangle rect = dim.getExtent();
-        tileContainer =
-                debugMode ?
-                        new DebugTileContainer(dim, Annotations.INSTANCE, new int[]{14/*red*/,6/*green*/}, rect.width,
-                                rect.height,
-                                rect.x * Constants.TILE_SIZE,
-                                rect.y * Constants.TILE_SIZE, PASS_VALUE) :
-                        new TileContainer(rect.width, rect.height, rect.x * Constants.TILE_SIZE,
-                                rect.y * Constants.TILE_SIZE, PASS_VALUE);
+        tileContainer = debugMode
+                ? new DebugTileContainer(dim, Annotations.INSTANCE, new int[]{14/* red */, 6/* green */}, rect.width,
+                        rect.height, rect.x * Constants.TILE_SIZE, rect.y * Constants.TILE_SIZE, PASS_VALUE)
+                : new TileContainer(rect.width, rect.height, rect.x * Constants.TILE_SIZE, rect.y * Constants.TILE_SIZE,
+                        PASS_VALUE);
     }
 
     /**
-     * special case for action filter: check if the tile can be completly set to BLOCK early on, and then be skipped fo
-     * rthe whole action. better performance than having to test all blocks in tile
+     * special case for action filter: check if the tile can be completly set to
+     * BLOCK early on, and then be skipped fo rthe whole action. better performance
+     * than having to test all blocks in tile
      *
      * @param tile
      * @param filterAction
-     * @return true: tile can be skipped, all actions already happened. false: gotta iterate all blocks in tile
+     * @return true: tile can be skipped, all actions already happened. false: gotta
+     *         iterate all blocks in tile
      */
     public boolean testTileEarlyAbort(Tile tile, MappingAction filterAction) {
         // ALWAYS SETS FILTER to value x
-        if (filterAction.actionType.equals(ActionType.SET) &&
-                filterAction.getInput().getProviderType().equals(ProviderType.ALWAYS)) {
-            tileContainer.fillTile(tile.getX(),tile.getY(), filterAction.map(BLOCK_VALUE));
+        if (filterAction.actionType.equals(ActionType.SET)
+                && filterAction.getInput().getProviderType().equals(ProviderType.ALWAYS)) {
+            tileContainer.fillTile(tile.getX(), tile.getY(), filterAction.map(BLOCK_VALUE));
             return true;
         }
 
         // filter blocks all points that are missing the layer => early flag whole tile
-        if ((filterAction.actionType == ActionType.LIMIT_TO ||
-                filterAction.actionType == ActionType.SET)) {
+        if ((filterAction.actionType == ActionType.LIMIT_TO || filterAction.actionType == ActionType.SET)) {
 
             // LAYER LIMITS/SETS FILTER to BLOCK
-            if (filterAction.getInput() instanceof ILayerGetter &&
-                    filterAction.map(0 /*absent*/) == BLOCK_VALUE) {
+            if (filterAction.getInput() instanceof ILayerGetter && filterAction.map(0 /* absent */) == BLOCK_VALUE) {
                 ILayerGetter input = (ILayerGetter) filterAction.getInput();
                 if (!tile.hasLayer(input.getLayer())) {
                     tileContainer.fillTile(tile.getX(), tile.getY(), BLOCK_VALUE);
@@ -130,7 +127,8 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
                         break;
                     }
                 }
-                // lowestPassingHeight and highestPassingHeight define the range where the filter would let a tile PASS
+                // lowestPassingHeight and highestPassingHeight define the range where the
+                // filter would let a tile PASS
                 if (tile.getHighestIntHeight() < lowestPassingHeight) {
                     tileContainer.fillTile(tile.getX(), tile.getY(), BLOCK_VALUE);
                     return true;
@@ -175,7 +173,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     private final int IGNORE_VALUE = Integer.MIN_VALUE;
     @Override
     public int[] getAllInputValues() {
-        return new int[]{ BLOCK_VALUE, PASS_VALUE };
+        return new int[]{BLOCK_VALUE, PASS_VALUE};
     }
     @Override
     public boolean isIgnoreValue(int value) {
@@ -184,7 +182,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public int[] getAllOutputValues() {
-        return new int[]{ IGNORE_VALUE, BLOCK_VALUE, PASS_VALUE };
+        return new int[]{IGNORE_VALUE, BLOCK_VALUE, PASS_VALUE};
     }
 
     @Override

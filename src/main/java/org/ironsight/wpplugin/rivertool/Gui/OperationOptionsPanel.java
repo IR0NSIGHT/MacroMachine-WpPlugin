@@ -6,7 +6,8 @@ package org.ironsight.wpplugin.rivertool.Gui;//
 import javax.swing.*;
 import java.util.ArrayList;
 
-public abstract class OperationOptionsPanel<Options> extends JPanel {
+public abstract class OperationOptionsPanel<Options> extends JPanel
+{
     private final Options options;
     ArrayList<OptionsLabel> inputs;
     public OperationOptionsPanel(Options options) {
@@ -19,7 +20,8 @@ public abstract class OperationOptionsPanel<Options> extends JPanel {
     private void initComponents(ArrayList<OptionsLabel> inputs) {
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
-        GroupLayout.ParallelGroup horizontalGroup = layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING);
+        GroupLayout.ParallelGroup horizontalGroup = layout
+                .createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING);
         for (OptionsLabel l : inputs) {
             for (JComponent c : l.getLabels())
                 horizontalGroup.addComponent(c);
@@ -33,9 +35,8 @@ public abstract class OperationOptionsPanel<Options> extends JPanel {
             sequentialGroup.addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED);
         }
 
-        layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING).addGroup(sequentialGroup
-                .addGap(0, 0, 0))
-        );
+        layout.setVerticalGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(sequentialGroup.addGap(0, 0, 0)));
     }
 
     // Method to remove components and clean up
@@ -59,14 +60,14 @@ public abstract class OperationOptionsPanel<Options> extends JPanel {
     }
 
     private void displayOptions(Options options) {
-        //clean up old components
+        // clean up old components
         removeComponentsAndCleanup(inputs);
 
-        //construct components
+        // construct components
         inputs = addComponents(options, this::onOptionsReconfigured);
         this.revalidate();
 
-        //add components to panel
+        // add components to panel
         this.initComponents(inputs);
     }
 }

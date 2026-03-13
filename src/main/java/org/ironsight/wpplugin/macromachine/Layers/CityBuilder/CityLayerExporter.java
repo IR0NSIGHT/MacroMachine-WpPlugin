@@ -7,18 +7,14 @@ import org.pepsoft.worldpainter.exporting.Fixup;
 import org.pepsoft.worldpainter.exporting.IncidentalLayerExporter;
 import org.pepsoft.worldpainter.exporting.MinecraftWorld;
 import org.pepsoft.worldpainter.exporting.SecondPassLayerExporter;
-import org.pepsoft.worldpainter.layers.Bo2Layer;
 import org.pepsoft.worldpainter.layers.FloodWithLava;
-import org.pepsoft.worldpainter.layers.bo2.Bo2ObjectProvider;
 import org.pepsoft.worldpainter.layers.exporters.ExporterSettings;
 import org.pepsoft.worldpainter.layers.exporters.WPObjectExporter;
 import org.pepsoft.worldpainter.objects.WPObject;
 
 import javax.vecmath.Point3i;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 
 import static org.pepsoft.minecraft.Material.AIR;
@@ -26,9 +22,11 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 import static org.pepsoft.worldpainter.objects.WPObject.*;
 
 public class CityLayerExporter extends WPObjectExporter<CityLayer>
-        implements SecondPassLayerExporter, IncidentalLayerExporter {
-    public CityLayerExporter(Dimension dimension, Platform platform,
-                             ExporterSettings settings, CityLayer layer) {
+        implements
+            SecondPassLayerExporter,
+            IncidentalLayerExporter
+{
+    public CityLayerExporter(Dimension dimension, Platform platform, ExporterSettings settings, CityLayer layer) {
         super(dimension, platform, settings, layer);
     }
 
@@ -55,13 +53,19 @@ public class CityLayerExporter extends WPObjectExporter<CityLayer>
     }
 
     /**
-     * Determines whether an object's attributes allow it to be placed at a certain location, and if so where along the vertical axis.
+     * Determines whether an object's attributes allow it to be placed at a certain
+     * location, and if so where along the vertical axis.
      *
-     * @return An indication of where along the vertical axis the object may be placed, which may be {@link Placement#NONE} if it may not be placed at all.
+     * @return An indication of where along the vertical axis the object may be
+     *         placed, which may be {@link Placement#NONE} if it may not be placed
+     *         at all.
      */
-    private Placement getPlacement(final MinecraftWorld minecraftWorld, final Dimension dimension, final int x, final int y, final int z, final WPObject object) {
-        final boolean spawnUnderWater = object.getAttribute(ATTRIBUTE_SPAWN_IN_WATER), spawnUnderLava = object.getAttribute(ATTRIBUTE_SPAWN_IN_LAVA);
-        final boolean spawnOnWater = object.getAttribute(ATTRIBUTE_SPAWN_ON_WATER), spawnOnLava = object.getAttribute(ATTRIBUTE_SPAWN_ON_LAVA);
+    private Placement getPlacement(final MinecraftWorld minecraftWorld, final Dimension dimension, final int x,
+            final int y, final int z, final WPObject object) {
+        final boolean spawnUnderWater = object.getAttribute(ATTRIBUTE_SPAWN_IN_WATER),
+                spawnUnderLava = object.getAttribute(ATTRIBUTE_SPAWN_IN_LAVA);
+        final boolean spawnOnWater = object.getAttribute(ATTRIBUTE_SPAWN_ON_WATER),
+                spawnOnLava = object.getAttribute(ATTRIBUTE_SPAWN_ON_LAVA);
         final boolean flooded;
         if (object.getAttribute(ATTRIBUTE_HEIGHT_MODE) == HEIGHT_MODE_TERRAIN) {
             flooded = dimension.getWaterLevelAt(x, y) >= z;
@@ -78,7 +82,9 @@ public class CityLayerExporter extends WPObjectExporter<CityLayer>
                 return Placement.FLOATING;
             }
         } else if (!flooded) {
-            Material materialUnderCoords = (z > minecraftWorld.getMinHeight()) ? minecraftWorld.getMaterialAt(x, y, z - 1) : AIR;
+            Material materialUnderCoords = (z > minecraftWorld.getMinHeight())
+                    ? minecraftWorld.getMaterialAt(x, y, z - 1)
+                    : AIR;
             if (object.getAttribute(ATTRIBUTE_SPAWN_ON_LAND) && (!materialUnderCoords.veryInsubstantial)) {
                 return Placement.ON_LAND;
             } else if ((!object.getAttribute(ATTRIBUTE_NEEDS_FOUNDATION)) && materialUnderCoords.veryInsubstantial) {
@@ -101,8 +107,9 @@ public class CityLayerExporter extends WPObjectExporter<CityLayer>
                         if (object == null)
                             continue;
 
-                        final int height = ((object.getAttribute(ATTRIBUTE_HEIGHT_MODE) == HEIGHT_MODE_TERRAIN) ? (dimension.getIntHeightAt(xx, yy) + 1) : 0)
-                                + object.getAttribute(ATTRIBUTE_VERTICAL_OFFSET);
+                        final int height = ((object.getAttribute(ATTRIBUTE_HEIGHT_MODE) == HEIGHT_MODE_TERRAIN)
+                                ? (dimension.getIntHeightAt(xx, yy) + 1)
+                                : 0) + object.getAttribute(ATTRIBUTE_VERTICAL_OFFSET);
 
                         final Placement placement = getPlacement(minecraftWorld, dimension, xx, yy, height, object);
 

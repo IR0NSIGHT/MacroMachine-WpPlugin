@@ -2,7 +2,8 @@ package org.ironsight.wpplugin.macromachine.Gui;
 
 import javax.swing.*;
 
-class BlockingSelectionModel extends DefaultListSelectionModel {
+class BlockingSelectionModel extends DefaultListSelectionModel
+{
     private boolean selectionBlocked = false;
     private JTable table;
     private int lastSelectedModelRow = -1;
@@ -43,6 +44,7 @@ class BlockingSelectionModel extends DefaultListSelectionModel {
 
     /**
      * select this model row
+     *
      * @param row
      */
     public void setSelectionModelRow(int row) {
@@ -76,7 +78,7 @@ class BlockingSelectionModel extends DefaultListSelectionModel {
     public void addSelectionRows(int[] rows) {
         selectionBlocked = true;
         for (int row : rows) {
-            addSelectionInterval(row,row);
+            addSelectionInterval(row, row);
         }
         selectionBlocked = false;
     }

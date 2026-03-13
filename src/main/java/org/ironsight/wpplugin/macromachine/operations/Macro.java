@@ -16,13 +16,16 @@ import java.util.stream.Collectors;
 import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO.getUsedLayers;
 
 /**
- * this class is a collection of MappingActions the action are ordered and executed in this order a macro can be
- * executed and will apply each of its nested action to the map macros can container Actions or other Macros (nesting)
- * recursion is technically possible but not allowed because there is no way to detect infinite recursion.
+ * this class is a collection of MappingActions the action are ordered and
+ * executed in this order a macro can be executed and will apply each of its
+ * nested action to the map macros can container Actions or other Macros
+ * (nesting) recursion is technically possible but not allowed because there is
+ * no way to detect infinite recursion.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Macro implements SaveableAction {
-    //ordered list of layermappings
+public class Macro implements SaveableAction
+{
+    // ordered list of layermappings
     public final UUID[] executionUUIDs;
     private final boolean[] activeActions;
     private final String name;
@@ -38,24 +41,28 @@ public class Macro implements SaveableAction {
 
     /**
      * @param macro
-     * @param item            action or macro to insert
-     * @param createNewAction getter to clone action if necessary
-     * @param targetRows      insert item at each of those rows
-     * @param outNewSelection output array with indices of row selection. old rows stay selected.
+     * @param item
+     *            action or macro to insert
+     * @param createNewAction
+     *            getter to clone action if necessary
+     * @param targetRows
+     *            insert item at each of those rows
+     * @param outNewSelection
+     *            output array with indices of row selection. old rows stay
+     *            selected.
      * @return new macro
      */
     public static Macro insertSaveableActionToList(Macro macro, SaveableAction item,
-                                                   Supplier<MappingAction> createNewAction,
-                                                   Consumer<MappingAction> updateAction, int[] targetRows,
-                                                   ArrayList<Integer> outNewSelection) {
+            Supplier<MappingAction> createNewAction, Consumer<MappingAction> updateAction, int[] targetRows,
+            ArrayList<Integer> outNewSelection) {
         if (targetRows.length == 0) {
             targetRows = new int[]{macro.getExecutionUUIDs().length - 1};
         }
-        //insert any mapping from container at tail of list
+        // insert any mapping from container at tail of list
         ArrayList<UUID> uids = new ArrayList<>();
         Collections.addAll(uids, macro.executionUUIDs);
         ArrayList<Boolean> activeUids = new ArrayList<>();
-        for (boolean b: macro.activeActions)
+        for (boolean b : macro.activeActions)
             activeUids.add(b);
 
         int counter = 0;
@@ -85,7 +92,7 @@ public class Macro implements SaveableAction {
     }
 
     public static List<MappingAction> macroToFlatActions(Macro macro, MacroContainer macroContainer,
-                                                         MappingActionContainer actionContainer) {
+            MappingActionContainer actionContainer) {
         List<UUID> steps = macro.collectActions(new LinkedList<>(), macroContainer, actionContainer);
         List<MappingAction> executionSteps = steps.stream()
                 .map(actionContainer::queryById)
@@ -93,7 +100,8 @@ public class Macro implements SaveableAction {
         return executionSteps;
     }
 
-    public static Collection<ExecutionStatistic> applyMacroToDimension(ApplyAction.ApplicationContext context, Macro macro, ApplyActionCallback callback) {
+    public static Collection<ExecutionStatistic> applyMacroToDimension(ApplyAction.ApplicationContext context,
+            Macro macro, ApplyActionCallback callback) {
         assert context != null;
 
         Dimension dim = context.dimension;
@@ -104,16 +112,14 @@ public class Macro implements SaveableAction {
             }
             dim.rememberChanges();
 
-            List<MappingAction> executionSteps = macroToFlatActions(macro, context.macros,
-                    context.actions);
+            List<MappingAction> executionSteps = macroToFlatActions(macro, context.macros, context.actions);
             boolean hasNullActions = executionSteps.stream().anyMatch(Objects::isNull);
             if (hasNullActions) {
                 GlobalActionPanel.ErrorPopUpString(
-                        "Some action in the execution list are null. This means they were deleted, but are still " +
-                                "linked into a macro." + " The macro can" + " " + "not be applied to the " + "map.");
+                        "Some action in the execution list are null. This means they were deleted, but are still "
+                                + "linked into a macro." + " The macro can" + " " + "not be applied to the " + "map.");
                 return statistics;
             }
-
 
             // prepare action for dimension
             for (MappingAction action : executionSteps) {
@@ -129,8 +135,8 @@ public class Macro implements SaveableAction {
                             "Action " + action.getName() + " consumed more memory than available:" + e.getMessage());
                     return statistics;
                 } catch (Exception e) {
-                    GlobalActionPanel.ErrorPopUpString(
-                            "Action " + action.getName() + " caused an exception:" + e.getMessage());
+                    GlobalActionPanel
+                            .ErrorPopUpString("Action " + action.getName() + " caused an exception:" + e.getMessage());
                     return statistics;
                 }
             }
@@ -145,8 +151,7 @@ public class Macro implements SaveableAction {
             try {
                 context.actionFilterIO.prepareForDimension(dim);
             } catch (Exception e) {
-                GlobalActionPanel.ErrorPopUpString(
-                        "ActionFilter Preparation caused an exception:" + e.getMessage());
+                GlobalActionPanel.ErrorPopUpString("ActionFilter Preparation caused an exception:" + e.getMessage());
                 return statistics;
             }
 
@@ -178,7 +183,8 @@ public class Macro implements SaveableAction {
         isActive = active;
     }
 
-    //only for gui purposes, not part of the actual data. only use this flag if you set it yourself
+    // only for gui purposes, not part of the actual data. only use this flag if you
+    // set it yourself
     private boolean isActive;
 
     @Override
@@ -187,7 +193,7 @@ public class Macro implements SaveableAction {
     }
 
     public UUID[] getExecutionUUIDs() {
-        return executionUUIDs; //FIXME clone?
+        return executionUUIDs; // FIXME clone?
     }
 
     public Macro withName(String name) {
@@ -205,19 +211,19 @@ public class Macro implements SaveableAction {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Macro that = (Macro) o;
-        return Arrays.equals(executionUUIDs, that.executionUUIDs) && Objects.equals(name, that.name) &&
-                Objects.equals(description, that.description) && Objects.equals(uid, that.uid) && Arrays.equals(activeActions, that.activeActions);
+        return Arrays.equals(executionUUIDs, that.executionUUIDs) && Objects.equals(name, that.name)
+                && Objects.equals(description, that.description) && Objects.equals(uid, that.uid)
+                && Arrays.equals(activeActions, that.activeActions);
     }
 
     @Override
     public Macro clone() {
-        return new Macro(this.name,
-                this.description,
-                this.executionUUIDs.clone(),
-                this.uid,
+        return new Macro(this.name, this.description, this.executionUUIDs.clone(), this.uid,
                 this.activeActions.clone());
     }
 
@@ -226,7 +232,7 @@ public class Macro implements SaveableAction {
     }
 
     public Macro withUUID(UUID selfId) {
-        return new Macro(name,description, executionUUIDs.clone(), selfId,activeActions.clone());
+        return new Macro(name, description, executionUUIDs.clone(), selfId, activeActions.clone());
     }
     public static boolean[] deleteAt(boolean[] arr, int idx) {
         if (arr == null || idx < 0 || idx >= arr.length) {
@@ -264,8 +270,7 @@ public class Macro implements SaveableAction {
         newIds[oldIdx] = getExecutionUUIDs()[newIdx];
         active[newIdx] = getActiveActions()[oldIdx];
         active[oldIdx] = getActiveActions()[newIdx];
-        return new Macro(this.name, this.description,newIds, this.uid,
-                active);
+        return new Macro(this.name, this.description, newIds, this.uid, active);
     }
 
     /**
@@ -311,16 +316,16 @@ public class Macro implements SaveableAction {
         return description;
     }
 
-
-    public List<UUID> collectActions(List<UUID> actionList, MacroContainer macroContainer, MappingActionContainer actionContainer) {
+    public List<UUID> collectActions(List<UUID> actionList, MacroContainer macroContainer,
+            MappingActionContainer actionContainer) {
         int idx = 0;
         for (UUID id : this.executionUUIDs) {
-            SaveableAction action =macroContainer.queryById(id);
+            SaveableAction action = macroContainer.queryById(id);
             if (!this.activeActions[idx++])
                 continue;
-            if (action != null) {//macro
-                //macro adds its own steps recursively
-                ((Macro) action).collectActions(actionList,macroContainer,actionContainer);
+            if (action != null) {// macro
+                // macro adds its own steps recursively
+                ((Macro) action).collectActions(actionList, macroContainer, actionContainer);
             } else {
                 action = actionContainer.queryById(id);
                 if (action != null)
@@ -331,12 +336,14 @@ public class Macro implements SaveableAction {
     }
 
     public boolean hasLoop(HashSet<UUID> seen, MacroContainer container) {
-        if (seen.contains(this.uid)) return true;
+        if (seen.contains(this.uid))
+            return true;
         seen.add(this.uid);
         boolean childLoop = false;
         for (UUID uuid : this.executionUUIDs) {
             Macro macro = container.queryById(uuid);
-            if (macro != null && macro.hasLoop((HashSet<UUID>) seen.clone(), container)) return true;
+            if (macro != null && macro.hasLoop((HashSet<UUID>) seen.clone(), container))
+                return true;
         }
         return childLoop;
     }
@@ -345,10 +352,12 @@ public class Macro implements SaveableAction {
         for (UUID mappingUid : executionUUIDs) {
             MappingAction mapping = container.queryById(mappingUid);
             Macro nestedMacro = macroContainer.queryById(mappingUid);
-            if (mapping == null && nestedMacro == null) return false;
+            if (mapping == null && nestedMacro == null)
+                return false;
             else if (nestedMacro != null && !nestedMacro.containsNoUnknownActions(container, macroContainer))
                 return false;
-            else continue;
+            else
+                continue;
         }
         return true;
     }

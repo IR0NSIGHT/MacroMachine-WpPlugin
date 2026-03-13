@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.getAllPointsForDiscreteIO;
 
-public class MacroDesigner extends JPanel {
+public class MacroDesigner extends JPanel
+{
     Consumer<Macro> onSubmit;
     PickerFilterOption macroFilter = new PickerFilterOption<>("macros", "show macros") {
         @Override
@@ -41,7 +42,8 @@ public class MacroDesigner extends JPanel {
 
     private final ISelectItemCallback itemInteraction;
 
-    MacroDesigner(MappingActionContainer actionContainer, Consumer<Macro> onSubmit, MacroContainer macroContainer, ISelectItemCallback itemInteraction) {
+    MacroDesigner(MappingActionContainer actionContainer, Consumer<Macro> onSubmit, MacroContainer macroContainer,
+            ISelectItemCallback itemInteraction) {
         this.actionContainer = actionContainer;
         this.onSubmit = onSubmit;
         this.macroContainer = macroContainer;
@@ -56,185 +58,89 @@ public class MacroDesigner extends JPanel {
     public static Collection<MappingAction> getDefaultFiltersAndEmptyAction() {
         LinkedList<MappingAction> items = new LinkedList<>();
         items.add(MappingAction.getNewEmptyAction());
-        items.add(new MappingAction(new AlwaysIO(),
-                ActionFilterIO.instance,
-                new MappingPoint[]{
-                        new MappingPoint(0, ActionFilterIO.PASS_VALUE)
-                },
-                ActionType.SET,
-                "Filter: Reset",
-                "Default filter: allow all blocks",
-                null
-        ));
-        items.add(new MappingAction(new WaterDepthProvider(),
-                ActionFilterIO.instance,
-                new MappingPoint[]{
-                        new MappingPoint(0, ActionFilterIO.BLOCK_VALUE),
-                        new MappingPoint(1, ActionFilterIO.PASS_VALUE)
-                },
-                ActionType.LIMIT_TO,
-                "Filter: Only On Water",
-                "Default filter: block all blocks that are not below waterlevel",
-                null
-        ));
-        items.add(new MappingAction(new WaterDepthProvider(),
-                ActionFilterIO.instance,
-                new MappingPoint[]{
-                        new MappingPoint(0, ActionFilterIO.PASS_VALUE),
-                        new MappingPoint(1, ActionFilterIO.BLOCK_VALUE)
-                },
-                ActionType.LIMIT_TO,
-                "Filter: Only On Land",
-                "Default filter: block all blocks that are not above waterlevel",
-                null
-        ));
-        items.add(new MappingAction(new TerrainHeightIO(-64, 319),
-                ActionFilterIO.instance,
-                new MappingPoint[]{
-                        new MappingPoint(73, ActionFilterIO.PASS_VALUE),
-                        new MappingPoint(319, ActionFilterIO.BLOCK_VALUE)
-                },
-                ActionType.LIMIT_TO,
-                "Filter: Below height",
-                "Default filter: block all blocks that are above this level",
-                null
-        ));
-        items.add(new MappingAction(new TerrainHeightIO(-64, 319),
-                ActionFilterIO.instance,
-                new MappingPoint[]{
-                        new MappingPoint(73, ActionFilterIO.BLOCK_VALUE),
-                        new MappingPoint(319, ActionFilterIO.PASS_VALUE)
-                },
-                ActionType.LIMIT_TO,
-                "Filter: Above height",
-                "Default filter: block all blocks that below this level",
-                null
-        ));
-        items.add(new MappingAction(new SlopeProvider(),
-                ActionFilterIO.instance,
-                new MappingPoint[]{
-                        new MappingPoint(45, ActionFilterIO.BLOCK_VALUE),
-                        new MappingPoint(90, ActionFilterIO.PASS_VALUE)
-                },
-                ActionType.LIMIT_TO,
-                "Filter: Above degrees",
-                "Default filter: block all blocks that are flatter than this angle",
-                null
-        ));
-        items.add(new MappingAction(new SlopeProvider(),
-                ActionFilterIO.instance,
-                new MappingPoint[]{
-                        new MappingPoint(45, ActionFilterIO.PASS_VALUE),
-                        new MappingPoint(90, ActionFilterIO.BLOCK_VALUE)
-                },
-                ActionType.LIMIT_TO,
-                "Filter: Below degrees",
-                "Default filter: block all blocks that are steeper than this angle",
-                null
-        ));
+        items.add(new MappingAction(new AlwaysIO(), ActionFilterIO.instance,
+                new MappingPoint[]{new MappingPoint(0, ActionFilterIO.PASS_VALUE)}, ActionType.SET, "Filter: Reset",
+                "Default filter: allow all blocks", null));
+        items.add(new MappingAction(new WaterDepthProvider(), ActionFilterIO.instance,
+                new MappingPoint[]{new MappingPoint(0, ActionFilterIO.BLOCK_VALUE),
+                        new MappingPoint(1, ActionFilterIO.PASS_VALUE)},
+                ActionType.LIMIT_TO, "Filter: Only On Water",
+                "Default filter: block all blocks that are not below waterlevel", null));
+        items.add(new MappingAction(new WaterDepthProvider(), ActionFilterIO.instance,
+                new MappingPoint[]{new MappingPoint(0, ActionFilterIO.PASS_VALUE),
+                        new MappingPoint(1, ActionFilterIO.BLOCK_VALUE)},
+                ActionType.LIMIT_TO, "Filter: Only On Land",
+                "Default filter: block all blocks that are not above waterlevel", null));
+        items.add(new MappingAction(new TerrainHeightIO(-64, 319), ActionFilterIO.instance,
+                new MappingPoint[]{new MappingPoint(73, ActionFilterIO.PASS_VALUE),
+                        new MappingPoint(319, ActionFilterIO.BLOCK_VALUE)},
+                ActionType.LIMIT_TO, "Filter: Below height",
+                "Default filter: block all blocks that are above this level", null));
+        items.add(new MappingAction(new TerrainHeightIO(-64, 319), ActionFilterIO.instance,
+                new MappingPoint[]{new MappingPoint(73, ActionFilterIO.BLOCK_VALUE),
+                        new MappingPoint(319, ActionFilterIO.PASS_VALUE)},
+                ActionType.LIMIT_TO, "Filter: Above height", "Default filter: block all blocks that below this level",
+                null));
+        items.add(new MappingAction(new SlopeProvider(), ActionFilterIO.instance,
+                new MappingPoint[]{new MappingPoint(45, ActionFilterIO.BLOCK_VALUE),
+                        new MappingPoint(90, ActionFilterIO.PASS_VALUE)},
+                ActionType.LIMIT_TO, "Filter: Above degrees",
+                "Default filter: block all blocks that are flatter than this angle", null));
+        items.add(new MappingAction(new SlopeProvider(), ActionFilterIO.instance,
+                new MappingPoint[]{new MappingPoint(45, ActionFilterIO.PASS_VALUE),
+                        new MappingPoint(90, ActionFilterIO.BLOCK_VALUE)},
+                ActionType.LIMIT_TO, "Filter: Below degrees",
+                "Default filter: block all blocks that are steeper than this angle", null));
         MappingPoint[] allBiomesBlocked = getAllPointsForDiscreteIO(new VanillaBiomeProvider(),
                 ActionFilterIO.BLOCK_VALUE);
-        allBiomesBlocked[1] = new MappingPoint(1 /*plains*/, ActionFilterIO.PASS_VALUE);
-        items.add(new MappingAction(new VanillaBiomeProvider(),
-                ActionFilterIO.instance,
-                allBiomesBlocked,
-                ActionType.LIMIT_TO,
-                "Filter: Only on biome",
-                "Default filter: block all blocks that are not this biome type",
-                null
-        ));
-        MappingPoint[] allBiomesPass = getAllPointsForDiscreteIO(new VanillaBiomeProvider(),
-                ActionFilterIO.PASS_VALUE);
-        allBiomesBlocked[1] = new MappingPoint(1 /*plains*/, ActionFilterIO.BLOCK_VALUE);
-        items.add(new MappingAction(new VanillaBiomeProvider(),
-                ActionFilterIO.instance,
-                allBiomesPass,
-                ActionType.LIMIT_TO,
-                "Filter: Except on biome",
-                "Default filter: block all blocks that are this biome type",
-                null
-        ));
+        allBiomesBlocked[1] = new MappingPoint(1 /* plains */, ActionFilterIO.PASS_VALUE);
+        items.add(new MappingAction(new VanillaBiomeProvider(), ActionFilterIO.instance, allBiomesBlocked,
+                ActionType.LIMIT_TO, "Filter: Only on biome",
+                "Default filter: block all blocks that are not this biome type", null));
+        MappingPoint[] allBiomesPass = getAllPointsForDiscreteIO(new VanillaBiomeProvider(), ActionFilterIO.PASS_VALUE);
+        allBiomesBlocked[1] = new MappingPoint(1 /* plains */, ActionFilterIO.BLOCK_VALUE);
+        items.add(new MappingAction(new VanillaBiomeProvider(), ActionFilterIO.instance, allBiomesPass,
+                ActionType.LIMIT_TO, "Filter: Except on biome",
+                "Default filter: block all blocks that are this biome type", null));
         {
             MappingPoint[] allTerrainsPass = getAllPointsForDiscreteIO(new TerrainProvider(),
                     ActionFilterIO.BLOCK_VALUE);
-            allTerrainsPass[0] = new MappingPoint(0 /*grass*/, ActionFilterIO.PASS_VALUE);
-            items.add(new MappingAction(new TerrainProvider(),
-                    ActionFilterIO.instance,
-                    allTerrainsPass,
-                    ActionType.LIMIT_TO,
-                    "Filter: Only on terrain",
-                    "Default filter: block all blocks that are this terrain type",
-                    null
-            ));
+            allTerrainsPass[0] = new MappingPoint(0 /* grass */, ActionFilterIO.PASS_VALUE);
+            items.add(new MappingAction(new TerrainProvider(), ActionFilterIO.instance, allTerrainsPass,
+                    ActionType.LIMIT_TO, "Filter: Only on terrain",
+                    "Default filter: block all blocks that are this terrain type", null));
         }
         {
-            MappingPoint[] allTerrains = getAllPointsForDiscreteIO(new TerrainProvider(),
-                    ActionFilterIO.PASS_VALUE);
-            allTerrains[0] = new MappingPoint(0 /*grass*/, ActionFilterIO.BLOCK_VALUE);
-            items.add(new MappingAction(new TerrainProvider(),
-                    ActionFilterIO.instance,
-                    allTerrains,
-                    ActionType.LIMIT_TO,
-                    "Filter: Except on terrain",
-                    "Default filter: block all blocks that are not this terrain type",
-                    null
-            ));
+            MappingPoint[] allTerrains = getAllPointsForDiscreteIO(new TerrainProvider(), ActionFilterIO.PASS_VALUE);
+            allTerrains[0] = new MappingPoint(0 /* grass */, ActionFilterIO.BLOCK_VALUE);
+            items.add(new MappingAction(new TerrainProvider(), ActionFilterIO.instance, allTerrains,
+                    ActionType.LIMIT_TO, "Filter: Except on terrain",
+                    "Default filter: block all blocks that are not this terrain type", null));
         }
-        items.add(new MappingAction(new SelectionIO(),
-                ActionFilterIO.instance,
-                new MappingPoint[]{
-                        new MappingPoint(0, ActionFilterIO.BLOCK_VALUE),
-                        new MappingPoint(1, ActionFilterIO.PASS_VALUE),
-                },
-                ActionType.LIMIT_TO,
-                "Filter: Inside Selection",
-                "Default filter: block all blocks that are not in selection.",
-                null
-        ));
+        items.add(new MappingAction(new SelectionIO(), ActionFilterIO.instance,
+                new MappingPoint[]{new MappingPoint(0, ActionFilterIO.BLOCK_VALUE),
+                        new MappingPoint(1, ActionFilterIO.PASS_VALUE),},
+                ActionType.LIMIT_TO, "Filter: Inside Selection",
+                "Default filter: block all blocks that are not in selection.", null));
 
-        items.add(new MappingAction(new SelectionIO(),
-                ActionFilterIO.instance,
-                new MappingPoint[]{
-                        new MappingPoint(0, ActionFilterIO.PASS_VALUE),
-                        new MappingPoint(1, ActionFilterIO.BLOCK_VALUE),
-                },
-                ActionType.LIMIT_TO,
-                "Filter: Outside Selection",
-                "Default filter: block all blocks that are  in selection.",
-                null
-        ));
-        items.add(new MappingAction(new AlwaysIO(),
-                ActionFilterIO.instance,
-                new MappingPoint[]{
-                        new MappingPoint(0, ActionFilterIO.PASS_VALUE),
-                },
-                ActionType.SET,
-                "Filter: Reset, allow all",
-                "Default filter: block nothing.",
-                null
-        ));
+        items.add(new MappingAction(new SelectionIO(), ActionFilterIO.instance,
+                new MappingPoint[]{new MappingPoint(0, ActionFilterIO.PASS_VALUE),
+                        new MappingPoint(1, ActionFilterIO.BLOCK_VALUE),},
+                ActionType.LIMIT_TO, "Filter: Outside Selection",
+                "Default filter: block all blocks that are  in selection.", null));
+        items.add(new MappingAction(new AlwaysIO(), ActionFilterIO.instance,
+                new MappingPoint[]{new MappingPoint(0, ActionFilterIO.PASS_VALUE),}, ActionType.SET,
+                "Filter: Reset, allow all", "Default filter: block nothing.", null));
 
         MappingPoint[] allAnnotationsBlock = getAllPointsForDiscreteIO(new AnnotationSetter(),
                 ActionFilterIO.BLOCK_VALUE);
-        allAnnotationsBlock[9] = new MappingPoint(9 /*cyan*/, ActionFilterIO.PASS_VALUE);
-        items.add(new MappingAction(new AnnotationSetter(),
-                ActionFilterIO.instance,
-                allAnnotationsBlock,
-                ActionType.LIMIT_TO,
-                "Filter: Only On Annotations Cyan",
-                "Default filter: block all blocks that are not cyan annotated.",
-                null
-        ));
-        items.add(new MappingAction(new AlwaysIO(),
-                new TerrainProvider(),
-                new MappingPoint[]{
-                        new MappingPoint(0, 0)
-                },
-                ActionType.SET,
-                "Apply: Grass",
-                "Default action: apply grass to all blocks that have passed the filter",
-                null
-        ));
+        allAnnotationsBlock[9] = new MappingPoint(9 /* cyan */, ActionFilterIO.PASS_VALUE);
+        items.add(new MappingAction(new AnnotationSetter(), ActionFilterIO.instance, allAnnotationsBlock,
+                ActionType.LIMIT_TO, "Filter: Only On Annotations Cyan",
+                "Default filter: block all blocks that are not cyan annotated.", null));
+        items.add(new MappingAction(new AlwaysIO(), new TerrainProvider(), new MappingPoint[]{new MappingPoint(0, 0)},
+                ActionType.SET, "Apply: Grass", "Default action: apply grass to all blocks that have passed the filter",
+                null));
         return items;
     }
 
@@ -243,26 +149,31 @@ public class MacroDesigner extends JPanel {
         MacroContainer macroContainer = new MacroContainer("./test.json");
         MappingActionContainer actionContainer = new MappingActionContainer("./test_actions.json");
 
-        MacroDesigner macroDesigner = new MacroDesigner(actionContainer, System.out::println, macroContainer, new ISelectItemCallback() {
-            @Override
-            public void onSelect(SaveableAction action, GlobalActionPanel.SELECTION_TPYE type) {
-                System.out.println("SELECT " + action + " TYPE " + type);
-            }
-        });
-                MappingAction ma = new MappingAction(new PerlinNoiseIO(10,10,12345,3),
-                new AnnotationSetter(), new MappingPoint[0], ActionType.SET, "","", UUID.randomUUID());
+        MacroDesigner macroDesigner = new MacroDesigner(actionContainer, System.out::println, macroContainer,
+                new ISelectItemCallback() {
+                    @Override
+                    public void onSelect(SaveableAction action, GlobalActionPanel.SELECTION_TPYE type) {
+                        System.out.println("SELECT " + action + " TYPE " + type);
+                    }
+                });
+        MappingAction ma = new MappingAction(new PerlinNoiseIO(10, 10, 12345, 3), new AnnotationSetter(),
+                new MappingPoint[0], ActionType.SET, "", "", UUID.randomUUID());
 
-        Macro macro = new Macro("test macro","this macro does some things and some other things",new UUID[0], UUID.randomUUID(), new boolean[0]);
+        Macro macro = new Macro("test macro", "this macro does some things and some other things", new UUID[0],
+                UUID.randomUUID(), new boolean[0]);
 
         // set up a couple random actions in action container
         Random r = new Random(42069);
-        java.util.List<MappingAction> actions = getDefaultFiltersAndEmptyAction().stream().filter(a -> r.nextBoolean()).map(a -> a.withUUID(UUID.randomUUID())).toList();
+        java.util.List<MappingAction> actions = getDefaultFiltersAndEmptyAction().stream()
+                .filter(a -> r.nextBoolean())
+                .map(a -> a.withUUID(UUID.randomUUID()))
+                .toList();
         actions.forEach(actionContainer::addMapping);
 
         macro = macro.withUUIDs(actions.stream().map(MappingAction::getUid).toArray(UUID[]::new));
         macroContainer.updateMapping(macro, System.err::println);
 
-        macroDesigner.setMacro(macro,true);
+        macroDesigner.setMacro(macro, true);
         frame.add(macroDesigner);
         frame.pack();
         frame.setVisible(true);
@@ -273,7 +184,8 @@ public class MacroDesigner extends JPanel {
      */
     private void onEditItem() {
         int selected = table.getSelectedRow();
-        if (selected == -1) return;
+        if (selected == -1)
+            return;
         onSave();
         Object item = table.getValueAt(table.getSelectedRow(), 0);
         if (item instanceof Macro macro) {
@@ -287,7 +199,7 @@ public class MacroDesigner extends JPanel {
 
     private JPopupMenu createPopupMenu(int row, int[] selectedRows) {
         JPopupMenu menu = new JPopupMenu();
-        menu.setLayout(new GridLayout(0,1));
+        menu.setLayout(new GridLayout(0, 1));
 
         {
             JButton toggleActiveButton = new JButton();
@@ -313,7 +225,8 @@ public class MacroDesigner extends JPanel {
 
         {
             JButton removeButton = new JButton("Remove");
-            removeButton.setToolTipText("Delete the selected item from this macro. Nested macros are only removed, not deleted.");
+            removeButton.setToolTipText(
+                    "Delete the selected item from this macro. Nested macros are only removed, not deleted.");
             removeButton.addActionListener(e -> onDeleteMapping());
             menu.add(removeButton);
         }
@@ -344,29 +257,20 @@ public class MacroDesigner extends JPanel {
 
     private void onMoveToNestedMacro(int[] selectedRows) {
         // ask user for macro name
-        String input = JOptionPane.showInputDialog(
-                null,
-                "New macro name:",
-                "Input Needed",
-                JOptionPane.PLAIN_MESSAGE
-        );
+        String input = JOptionPane.showInputDialog(null, "New macro name:", "Input Needed", JOptionPane.PLAIN_MESSAGE);
 
         if (input == null) {
             return;
         }
 
-        UUID[] selectedUUIDs =
-                Arrays.stream(selectedRows)
-                        .mapToObj(row -> {
-                            UUID original = macro.getExecutionUUIDs()[row];
-                            if (!actionContainer.queryContains(original))
-                                return original; // its not a mapping and doesnt need cloning.
-                            MappingAction clone =
-                                    actionContainer.addMapping().withValuesFrom(actionContainer.queryById(original));
-                            actionContainer.updateMapping(clone, GlobalActionPanel::ErrorPopUpString);
-                            return clone.getUid(); //clone action and return clones UUID
-                        })
-                        .toArray(UUID[]::new);
+        UUID[] selectedUUIDs = Arrays.stream(selectedRows).mapToObj(row -> {
+            UUID original = macro.getExecutionUUIDs()[row];
+            if (!actionContainer.queryContains(original))
+                return original; // its not a mapping and doesnt need cloning.
+            MappingAction clone = actionContainer.addMapping().withValuesFrom(actionContainer.queryById(original));
+            actionContainer.updateMapping(clone, GlobalActionPanel::ErrorPopUpString);
+            return clone.getUid(); // clone action and return clones UUID
+        }).toArray(UUID[]::new);
 
         Macro nested = macroContainer.addMapping().withName(input).withUUIDs(selectedUUIDs);
         macroContainer.updateMapping(nested, GlobalActionPanel::ErrorPopUpString);
@@ -474,12 +378,11 @@ public class MacroDesigner extends JPanel {
             }
         };
         table.setDefaultRenderer(Object.class, new DisplayUnitRenderer(MacroTreePanel::isValidItem));
-        //FIXME add actual
+        // FIXME add actual
         // check if
         // action is usable
         scrollPane = new JScrollPane(table);
         editorPanel.add(scrollPane, BorderLayout.CENTER);
-
 
         table.addMouseListener(new MouseAdapter() {
             @Override
@@ -511,7 +414,6 @@ public class MacroDesigner extends JPanel {
             }
         });
 
-
         JPanel nameAndDescriptionPanel = new JPanel();
         nameAndDescriptionPanel.setLayout(new BoxLayout(nameAndDescriptionPanel, BoxLayout.Y_AXIS));
         nameAndDescriptionPanel.add(name);
@@ -526,12 +428,12 @@ public class MacroDesigner extends JPanel {
         buttons.add(submitButton);
 
         buttons.add(getHelpButton("Macro Editor",
-                "In the macro editor, you define which actions are executed and in " +
-                        "which order. The top-most action is run first, then the next one and so on. All actions in a" +
-                        " macro " + "are always executed when the macro is executed.\n" +
-                        "A macro is a collection of actions, similar to a group of global operations. It has a name " +
-                        "and " + "description and can be reused in any project.\n" +
-                        "Use the save button to save your changes to the global list."));
+                "In the macro editor, you define which actions are executed and in "
+                        + "which order. The top-most action is run first, then the next one and so on. All actions in a"
+                        + " macro " + "are always executed when the macro is executed.\n"
+                        + "A macro is a collection of actions, similar to a group of global operations. It has a name "
+                        + "and " + "description and can be reused in any project.\n"
+                        + "Use the save button to save your changes to the global list."));
         editorPanel.add(buttons, BorderLayout.SOUTH);
 
         // Create a JTabbedPane
@@ -559,8 +461,7 @@ public class MacroDesigner extends JPanel {
                 // Define a consistent order for non-equal objects
                 return o1.getName().compareTo(o2.getName());
             }
-        }
-        );
+        });
         customActions.addAll(actionContainer.queryAll());
 
         ArrayList<IDisplayUnit> macrosAndActions = new ArrayList<>();
@@ -568,18 +469,16 @@ public class MacroDesigner extends JPanel {
         macrosAndActions.addAll(macroContainer.queryAll());
         Collection<MappingAction> defaultActions = getDefaultFiltersAndEmptyAction();
 
+        defaultFilter.setPassUUIDs(
+                defaultActions.stream().map(MappingAction::getUid).collect(Collectors.toCollection(HashSet::new)));
 
-        defaultFilter.setPassUUIDs(defaultActions.stream()
+        customActionsFilter.setPassUUIDs(actionContainer.queryAll()
+                .stream()
                 .map(MappingAction::getUid)
                 .collect(Collectors.toCollection(HashSet::new)));
 
-        customActionsFilter.setPassUUIDs(actionContainer.queryAll().stream()
-                .map(MappingAction::getUid)
-                .collect(Collectors.toCollection(HashSet::new)));
-
-        JDialog dialog =
-                new DisplayUnitPickerDialog(macrosAndActions, this::onPickerSelection, new ArrayList<>(defaultActions), false,
-                        this, macroFilter, defaultFilter, customActionsFilter);
+        JDialog dialog = new DisplayUnitPickerDialog(macrosAndActions, this::onPickerSelection,
+                new ArrayList<>(defaultActions), false, this, macroFilter, defaultFilter, customActionsFilter);
         dialog.setModal(true);
         dialog.setVisible(true);
     }
@@ -591,11 +490,11 @@ public class MacroDesigner extends JPanel {
         ArrayList<Integer> newSelection = new ArrayList<>();
         Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), (SaveableAction) selected,
                 () -> actionContainer.addMapping(),
-                a -> actionContainer.updateMapping(a, GlobalActionPanel::ErrorPopUpString),
-                table.getSelectedRows(), newSelection);
+                a -> actionContainer.updateMapping(a, GlobalActionPanel::ErrorPopUpString), table.getSelectedRows(),
+                newSelection);
         setMacro(newMacro, true);
-        assert this.macro.equals(newMacro) : "macro was added an action, but action is not " +
-                "present after gui update";
+        assert this.macro.equals(newMacro)
+                : "macro was added an action, but action is not " + "present after gui update";
         table.clearSelection();
         for (int row : newSelection) {
             table.addRowSelectionInterval(row, row);
@@ -605,9 +504,10 @@ public class MacroDesigner extends JPanel {
         UUID[] ids = macro.getExecutionUUIDs().clone();
         boolean[] active = macro.getActiveActions();
 
-
-        if (selectedItemIndices.length == 0) return macro;
-        if (selectedItemIndices[0] == 0) return macro;
+        if (selectedItemIndices.length == 0)
+            return macro;
+        if (selectedItemIndices[0] == 0)
+            return macro;
 
         for (int row : selectedItemIndices) {
             UUID tmpId = ids[row - 1];
@@ -618,15 +518,17 @@ public class MacroDesigner extends JPanel {
             active[row - 1] = active[row];
             active[row] = tmpActive;
         }
-        return macro.withUUIDs(ids,active);
+        return macro.withUUIDs(ids, active);
     }
 
     public static Macro moveDown(Macro macro, int[] selectedItemIndices) {
         UUID[] ids = macro.getExecutionUUIDs().clone();
         boolean[] active = macro.getActiveActions().clone();
 
-        if (selectedItemIndices.length == 0) return macro;
-        if (selectedItemIndices[selectedItemIndices.length - 1] == ids.length - 1) return macro;
+        if (selectedItemIndices.length == 0)
+            return macro;
+        if (selectedItemIndices[selectedItemIndices.length - 1] == ids.length - 1)
+            return macro;
 
         for (int i = selectedItemIndices.length - 1; i >= 0; i--) {
             int row = selectedItemIndices[i];
@@ -645,10 +547,12 @@ public class MacroDesigner extends JPanel {
 
     private void onMoveUpMapping() {
         int[] selected = table.getSelectedRows();
-        if (selected.length == 0) return;
+        if (selected.length == 0)
+            return;
 
         int anchorRow = selected[0];
-        if (anchorRow == 0) return;
+        if (anchorRow == 0)
+            return;
 
         Macro newMacro = moveUp(macro, selectedRows);
         shiftRowSelection(selected, -1);
@@ -667,15 +571,16 @@ public class MacroDesigner extends JPanel {
     }
 
     private void onMoveDownMapping() {
-        if (table.getSelectedRows().length == 0) return;
+        if (table.getSelectedRows().length == 0)
+            return;
         int anchorRow = table.getSelectedRows()[table.getSelectedRows().length - 1];
         if (anchorRow >= 0 && anchorRow < table.getRowCount() - 1) {
-            Macro newMacro = moveDown(macro,selectedRows);
+            Macro newMacro = moveDown(macro, selectedRows);
             shiftRowSelection(table.getSelectedRows(), +1);
             setMacro(newMacro, true);
-            //scroll to bottom selected row
-            scrollPane.scrollRectToVisible(table.getCellRect(table.getSelectedRows()[table.getSelectedRows().length -
-                    1], 0, true));
+            // scroll to bottom selected row
+            scrollPane.scrollRectToVisible(
+                    table.getCellRect(table.getSelectedRows()[table.getSelectedRows().length - 1], 0, true));
         }
     }
 
@@ -686,7 +591,8 @@ public class MacroDesigner extends JPanel {
         }
         Macro macro = this.macro;
         for (int i = macro.executionUUIDs.length - 1; i >= 0; i--) {
-            if (!toBeRemoved.contains(i)) continue;
+            if (!toBeRemoved.contains(i))
+                continue;
             macro = macro.withRemovedItem(i);
         }
         setMacro(macro, true);
@@ -721,7 +627,8 @@ public class MacroDesigner extends JPanel {
         }
 
         table.getSelectionModel().addListSelectionListener(e -> {
-            if (e.getValueIsAdjusting() || isUpdating || Arrays.equals(selectedRows, table.getSelectedRows())) return;
+            if (e.getValueIsAdjusting() || isUpdating || Arrays.equals(selectedRows, table.getSelectedRows()))
+                return;
             selectedRows = table.getSelectedRows();
         });
 
@@ -741,7 +648,8 @@ public class MacroDesigner extends JPanel {
 
     public void setMacro(Macro macro, boolean forceUpdate) {
         assert macro != null;
-        if (!forceUpdate && this.macro != null && this.macro.equals(macro)) return; //dont update if nothing changed
+        if (!forceUpdate && this.macro != null && this.macro.equals(macro))
+            return; // dont update if nothing changed
         isUpdating = true;
 
         this.macro = macro;
@@ -749,7 +657,8 @@ public class MacroDesigner extends JPanel {
         isUpdating = false;
     }
 
-    private class UUIDFilterOptions extends PickerFilterOption {
+    private class UUIDFilterOptions extends PickerFilterOption
+    {
         Set<UUID> matchingIds = new HashSet<>();
 
         public UUIDFilterOptions(String displayName, String tooltip) {

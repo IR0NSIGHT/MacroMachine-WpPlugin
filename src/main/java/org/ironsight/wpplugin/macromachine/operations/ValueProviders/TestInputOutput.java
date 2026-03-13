@@ -4,12 +4,12 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
 import java.awt.*;
-import java.util.Arrays;
 import java.util.stream.IntStream;
 
-public class TestInputOutput implements IPositionValueSetter, IPositionValueGetter {
+public class TestInputOutput implements IPositionValueSetter, IPositionValueGetter
+{
     public TestInputOutput() {
-        values = IntStream.range(getMinValue() - 1, getMaxValue()+1).toArray();
+        values = IntStream.range(getMinValue() - 1, getMaxValue() + 1).toArray();
         values[0] = IGNORE;
     }
     @Override
@@ -24,13 +24,13 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
 
     @Override
     public int[] getAllOutputValues() {
-        return values   ;
+        return values;
     }
 
     private final int[] values;
     @Override
     public int[] getAllInputValues() {
-        return  IntStream.range(getMinValue(), getMaxValue()+1).toArray();
+        return IntStream.range(getMinValue(), getMaxValue() + 1).toArray();
     }
     @Override
     public boolean equals(Object obj) {

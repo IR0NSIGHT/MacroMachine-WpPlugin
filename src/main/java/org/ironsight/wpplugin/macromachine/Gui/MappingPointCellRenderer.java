@@ -1,16 +1,13 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
-
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 
-public class MappingPointCellRenderer implements TableCellRenderer, ListCellRenderer<MappingPointValue> {
+public class MappingPointCellRenderer implements TableCellRenderer, ListCellRenderer<MappingPointValue>
+{
     private final JPanel panel;
     private final JLabel textLabel;
     private final MappingValuePreviewPanel valueRenderer;
@@ -39,7 +36,8 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
 
         valueRenderer.setMappingValue(point.mappingValue);
         valueRenderer.setValue(point.numericValue);
-        textLabel.setFont(isEditable ? textLabel.getFont().deriveFont(Font.PLAIN) : textLabel.getFont().deriveFont(Font.ITALIC));
+        textLabel.setFont(
+                isEditable ? textLabel.getFont().deriveFont(Font.PLAIN) : textLabel.getFont().deriveFont(Font.ITALIC));
 
         if (isSelected) {
             textLabel.setBackground(SELECTED_BACKGROUND);
@@ -53,20 +51,19 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
         }
     }
 
-
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-                                                   int row, int column) {
+            int row, int column) {
         assert value != null;
         assert value instanceof MappingPointValue;
-        updateTo((MappingPointValue) value, table.isCellEditable(row,column), isSelected);
+        updateTo((MappingPointValue) value, table.isCellEditable(row, column), isSelected);
 
         return panel;
     }
 
     @Override
     public Component getListCellRendererComponent(JList<? extends MappingPointValue> list, MappingPointValue value,
-                                                  int index, boolean isSelected, boolean cellHasFocus) {
+            int index, boolean isSelected, boolean cellHasFocus) {
         assert value != null;
         updateTo(value, false, isSelected);
 

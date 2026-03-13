@@ -13,7 +13,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-public class ContinuousCurve {
+public class ContinuousCurve
+{
     private final int length;
     private final ArrayList<float[]> flatCurve;
     private final HashMap<RiverHandleInformation.RiverInformation, Float> maxima = new HashMap<>();
@@ -52,23 +53,22 @@ public class ContinuousCurve {
         if (path.amountHandles() == 0)
             return new ContinuousCurve(new ArrayList<>(), path.type);
 
-        //handles exist as flat lists, only true coords are used
+        // handles exist as flat lists, only true coords are used
         ArrayList<float[]> flatHandles = ArrayUtility.transposeMatrix(onlyNonInterpolateHandles(path.getHandles()));
         ArrayList<float[]> interpolatedCurve = new ArrayList<>(flatHandles.size());
 
         float[] xsPos = flatHandles.get(0);
         float[] ysPos = flatHandles.get(1);
-        assert Arrays.binarySearch(xsPos, RiverHandleInformation.INHERIT_VALUE) < 0 : "inherit must not be part of " +
-                "the x position " +
-                "interpolation";
-        assert Arrays.binarySearch(ysPos, RiverHandleInformation.INHERIT_VALUE) < 0 : "inherit must not be part of " +
-                "the y position " +
-                "interpolation";
+        assert Arrays.binarySearch(xsPos, RiverHandleInformation.INHERIT_VALUE) < 0
+                : "inherit must not be part of " + "the x position " + "interpolation";
+        assert Arrays.binarySearch(ysPos, RiverHandleInformation.INHERIT_VALUE) < 0
+                : "inherit must not be part of " + "the y position " + "interpolation";
 
-        //calculate the handle offsets using catmull rom and padding
+        // calculate the handle offsets using catmull rom and padding
         float[] xsHandleOffsets = positionsToHandleOffsetCatmullRom(xsPos);
         float[] ysHandleOffsets = positionsToHandleOffsetCatmullRom(ysPos);
-        assert xsPos.length == ysPos.length && xsPos.length == xsHandleOffsets.length && ysPos.length == ysHandleOffsets.length : "positions and halndPerPositon must all be same length";
+        assert xsPos.length == ysPos.length && xsPos.length == xsHandleOffsets.length
+                && ysPos.length == ysHandleOffsets.length : "positions and halndPerPositon must all be same length";
 
         int[] segmentLengths = CatMullRomInterpolation.estimateSegmentLengths(flatHandles.get(0), flatHandles.get(1),
                 xsHandleOffsets, ysHandleOffsets);
@@ -78,15 +78,19 @@ public class ContinuousCurve {
         if (path.type.handleStrengthIndex != -1) {
             handleStrength = flatHandles.get(path.type.handleStrengthIndex);
         } else {
-            handleStrength =new float[path.amountHandles()];
-            Arrays.fill(handleStrength,1);
+            handleStrength = new float[path.amountHandles()];
+            Arrays.fill(handleStrength, 1);
         }
-        //iterate all handleArrays and calculate a continous curve
+        // iterate all handleArrays and calculate a continous curve
         for (int n = 0; n < path.type.size; n++) {
             float[] nthHandles = flatHandles.get(n);
-            float defaultVal = n == RiverHandleInformation.RiverInformation.WATER_Z.idx + 2 ? 9999 : 5; //FIXME add this info the the RiverInfroamtion class
-            float[] interpolated = CatMullRomInterpolation.interpolateCatmullRom(nthHandles, handleStrength, handleToCurveIdx,
-                    segmentLengths, defaultVal);
+            float defaultVal = n == RiverHandleInformation.RiverInformation.WATER_Z.idx + 2 ? 9999 : 5; // FIXME add
+                                                                                                        // this info the
+                                                                                                        // the
+                                                                                                        // RiverInfroamtion
+                                                                                                        // class
+            float[] interpolated = CatMullRomInterpolation.interpolateCatmullRom(nthHandles, handleStrength,
+                    handleToCurveIdx, segmentLengths, defaultVal);
             interpolatedCurve.add(interpolated);
         }
 
@@ -98,7 +102,8 @@ public class ContinuousCurve {
     /**
      * non flat handle list
      *
-     * @param handles list of { x y coords}
+     * @param handles
+     *            list of { x y coords}
      * @return
      */
     private static ArrayList<float[]> onlyNonInterpolateHandles(ArrayList<float[]> handles) {
@@ -114,19 +119,19 @@ public class ContinuousCurve {
     public static float[] positionsToHandleOffsetCatmullRom(float[] positions) {
         float[] handleOffsets = new float[positions.length];
 
-        //catmull rom from neighbours where possible
+        // catmull rom from neighbours where possible
         for (int i = 1; i < handleOffsets.length - 1; i++) {
-            handleOffsets[i] = (positions[i + 1] - positions[i - 1]) / 4f;    //TODO this might cause overshooting if
+            handleOffsets[i] = (positions[i + 1] - positions[i - 1]) / 4f; // TODO this might cause overshooting if
             // one of the two neighbours is very far away
         }
 
-        //first and last pos only have 1 neighbour
+        // first and last pos only have 1 neighbour
         if (handleOffsets.length > 2) {
             handleOffsets[0] = (positions[1] - positions[0]) / 2f;
             int l = handleOffsets.length;
             handleOffsets[l - 1] = (positions[l - 1] - positions[l - 2]) / 2f;
         } else {
-            //zero or one position
+            // zero or one position
             Arrays.fill(handleOffsets, 0);
         }
         return handleOffsets;
@@ -154,13 +159,13 @@ public class ContinuousCurve {
             float yDiff = Math.abs(thisPos[1] - previous[1]);
             float range = Math.max(xDiff, yDiff);
 
-            //fill holes:
+            // fill holes:
             for (int step = 1; step < range; step++) {
                 float t = step / range;
                 float[] newPoint = linearInterpolate(previous, thisPos, t);
                 newPoint[0] = Math.round(newPoint[0]);
                 newPoint[1] = Math.round(newPoint[1]);
-                continuousPositions.add(newPoint);  //contains previous up to one before thisPos
+                continuousPositions.add(newPoint); // contains previous up to one before thisPos
             }
             continuousPositions.add(thisPos);
 
@@ -213,7 +218,7 @@ public class ContinuousCurve {
             float[] next = handles.get(i);
             if (existing[0] - next[0] != 0 && existing[1] - next[1] != 0) {
                 float[] diag = linearInterpolate(existing, next, 0.5f);
-                //mix x coord so they are connected
+                // mix x coord so they are connected
                 diag[0] = existing[0];
                 diag[1] = next[1];
                 outHandles.add(diag);
@@ -232,7 +237,7 @@ public class ContinuousCurve {
     public static int[] handleToCurve(float[] xsPos, float[] ysPos) {
         float[] xsOff = positionsToHandleOffsetCatmullRom(xsPos);
         float[] ysOff = positionsToHandleOffsetCatmullRom(ysPos);
-        //we know the positions of each handle already through magic
+        // we know the positions of each handle already through magic
         int[] segmentSizes = CatMullRomInterpolation.estimateSegmentLengths(xsPos, ysPos, xsOff, ysOff);
         return handleToCurve(segmentSizes);
     }
@@ -246,10 +251,9 @@ public class ContinuousCurve {
         for (int i = 0; i < handleToCurveIdx.length; i++)
             handlesIdcsOut[i] = Math.round(handleToCurveIdx[i]);
 
-
         for (int i = 1; i < handlesIdcsOut.length; i++)
-            assert handlesIdcsOut[i] > handlesIdcsOut[i - 1] :
-                    "not strictly monotone: " + Arrays.toString(handlesIdcsOut);
+            assert handlesIdcsOut[i] > handlesIdcsOut[i - 1]
+                    : "not strictly monotone: " + Arrays.toString(handlesIdcsOut);
 
         return handlesIdcsOut;
     }
@@ -258,12 +262,13 @@ public class ContinuousCurve {
         int[] handleToCurve = new int[p.amountHandles()];
         int handleIdx = 0;
         for (int i = 0; i < curve.curveLength(); i++) {
-            if (curve.getPosX(i) == Math.round(p.handleByIndex(handleIdx)[0]) && curve.getPosY(i) == Math.round(p.handleByIndex(handleIdx)[1])) {
+            if (curve.getPosX(i) == Math.round(p.handleByIndex(handleIdx)[0])
+                    && curve.getPosY(i) == Math.round(p.handleByIndex(handleIdx)[1])) {
                 handleToCurve[handleIdx++] = i;
             }
         }
-        assert handleToCurve[handleToCurve.length - 1] == curve.curveLength() - 1 : "last handle must be at last " +
-                "position in curve";
+        assert handleToCurve[handleToCurve.length - 1] == curve.curveLength() - 1
+                : "last handle must be at last " + "position in curve";
         return handleToCurve;
     }
 
@@ -361,7 +366,8 @@ public class ContinuousCurve {
     }
 
     public ArrayList<float[]> getCurveAsPositions() {
-        ArrayList<float[]> positions = ArrayUtility.transposeMatrix(flatCurve); //each entry is one position with x,y and other data
+        ArrayList<float[]> positions = ArrayUtility.transposeMatrix(flatCurve); // each entry is one position with x,y
+                                                                                // and other data
         return positions;
     }
 }

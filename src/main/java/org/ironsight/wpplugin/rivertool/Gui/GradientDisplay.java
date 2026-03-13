@@ -6,7 +6,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
 
-public class GradientDisplay extends JPanel {
+public class GradientDisplay extends JPanel
+{
     private Gradient gradient;
 
     public GradientDisplay(Gradient gradient) {
@@ -15,9 +16,8 @@ public class GradientDisplay extends JPanel {
 
     public static void main(String[] args) {
         // Example Gradient class for testing (replace with your implementation)
-        Gradient gradient = new Gradient(new float[]{0.1f, 0.25f, 0.5f, 0.75f, 1f}, new float[]{1f, 0.5f, 0.25f, 0.1f
-                , 0.05f});
-
+        Gradient gradient = new Gradient(new float[]{0.1f, 0.25f, 0.5f, 0.75f, 1f},
+                new float[]{1f, 0.5f, 0.25f, 0.1f, 0.05f});
 
     }
 

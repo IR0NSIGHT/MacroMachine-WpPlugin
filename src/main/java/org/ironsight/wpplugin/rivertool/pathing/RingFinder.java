@@ -5,7 +5,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-public class RingFinder {
+public class RingFinder
+{
     public Set<Point> restriction = new HashSet<>();
     HashMap<Integer, HashMap<Point, Float>> rings = new HashMap<>();
 

@@ -2,7 +2,6 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.Tile;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -10,14 +9,17 @@ import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
-public class BlockFacingDirectionIO implements IPositionValueGetter {
+public class BlockFacingDirectionIO implements IPositionValueGetter
+{
     private final String[] directionNames = new String[]{"N", "NE", "E", "SE", "S", "SW", "W", "NW"};
 
     /**
      * Calculates the slope's facing direction (0-360 degrees) at (x, y).
      *
-     * @param x The x-coordinate of the block.
-     * @param y The y-coordinate of the block.
+     * @param x
+     *            The x-coordinate of the block.
+     * @param y
+     *            The y-coordinate of the block.
      * @return The facing direction in degrees (0-360).
      */
     public static int calculateSlopeFacing(int x, int y, Dimension dimension) {
@@ -31,9 +33,10 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
         double gradientX = (heightWest - heightEast) / 2.0; // Change in the east-west direction
         double gradientY = (heightNorth - heightSouth) / 2.0; // Change in the north-south direction
 
-        // Calculate the angle using atan2 (note the negative gradientY for north alignment)
+        // Calculate the angle using atan2 (note the negative gradientY for north
+        // alignment)
         double angleRadians = Math.atan2(-gradientY, gradientX);
-        double angleDegrees = (Math.toDegrees(angleRadians) + 90) % 360;    //ChatGPT made it look to the east, 90°
+        double angleDegrees = (Math.toDegrees(angleRadians) + 90) % 360; // ChatGPT made it look to the east, 90°
         // offset
         // corerctts it
 
@@ -46,7 +49,7 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
         return (int) Math.floor(angleDegrees);
     }
 
-    private final int[] values = IntStream.range(0,360).toArray();
+    private final int[] values = IntStream.range(0, 360).toArray();
     @Override
     public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
@@ -54,8 +57,8 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
 
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
-        if (x <= dim.getLowestX() * TILE_SIZE || y <= dim.getLowestY() * TILE_SIZE ||
-                x >= (dim.getHighestX() + 1) * TILE_SIZE || y >= (dim.getHighestY() + 1) * TILE_SIZE) {
+        if (x <= dim.getLowestX() * TILE_SIZE || y <= dim.getLowestY() * TILE_SIZE
+                || x >= (dim.getHighestX() + 1) * TILE_SIZE || y >= (dim.getHighestY() + 1) * TILE_SIZE) {
             return 0;
         }
         return calculateSlopeFacing(x, y, dim);
@@ -90,7 +93,6 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
     public String getToolTipText() {
         return getDescription();
     }
-
 
     @Override
     public int getMaxValue() {
@@ -140,13 +142,13 @@ public class BlockFacingDirectionIO implements IPositionValueGetter {
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         Graphics2D graphics = (Graphics2D) g;
-        //rotate local space so that local north points into desired direction
+        // rotate local space so that local north points into desired direction
         graphics.translate(dim.getWidth() / 2.0, dim.getHeight() / 2.0);
         graphics.rotate(Math.toRadians(value));
         g.setColor(Color.red);
         ((Graphics2D) g).setStroke(new BasicStroke(dim.width * 0.05f));
-        //g.fillRect(0, 0, (int) (dim.width * 0.1f), dim.height);
-        g.drawLine(0, -dim.height, 0, 0);  //pointing north in local space always
+        // g.fillRect(0, 0, (int) (dim.width * 0.1f), dim.height);
+        g.drawLine(0, -dim.height, 0, 0); // pointing north in local space always
     }
     @Override
     public String toString() {

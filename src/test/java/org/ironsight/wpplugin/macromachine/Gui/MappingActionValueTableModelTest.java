@@ -11,7 +11,8 @@ import javax.swing.event.TableModelEvent;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class MappingActionValueTableModelTest {
+class MappingActionValueTableModelTest
+{
 
     @Test
     void rebuildDataWithAction() {
@@ -20,19 +21,18 @@ class MappingActionValueTableModelTest {
         MappingAction action = MappingAction.getNewEmptyAction()
                 .withName("test")
                 .withDescription("test")
-                .withNewPoints(new MappingPoint[]{new MappingPoint(1, 2),
-                        new MappingPoint(5, 6),
-                        new MappingPoint(9, -1)})
+                .withNewPoints(
+                        new MappingPoint[]{new MappingPoint(1, 2), new MappingPoint(5, 6), new MappingPoint(9, -1)})
                 .withInput(new TerrainHeightIO(0, 255))
                 .withOutput(new AnnotationSetter());
         model.rebuildModelFromAction(action);
         assertEquals(action, model.constructMapping());
 
-        for (MappingPoint mp: action.getMappingPoints()) {
+        for (MappingPoint mp : action.getMappingPoints()) {
             int row = mp.input;
             assertTrue(model.isMappingPoint(row));
-            assertTrue(model.isCellEditable(row,0));
-            assertTrue(model.isCellEditable(row,1));
+            assertTrue(model.isCellEditable(row, 0));
+            assertTrue(model.isCellEditable(row, 1));
 
         }
     }
@@ -51,9 +51,8 @@ class MappingActionValueTableModelTest {
         MappingAction action = MappingAction.getNewEmptyAction()
                 .withName("test")
                 .withDescription("test")
-                .withNewPoints(new MappingPoint[]{new MappingPoint(1, 2),
-                        new MappingPoint(5, 6),
-                        new MappingPoint(9, -1)})
+                .withNewPoints(
+                        new MappingPoint[]{new MappingPoint(1, 2), new MappingPoint(5, 6), new MappingPoint(9, -1)})
                 .withInput(new TerrainHeightIO(0, 255))
                 .withOutput(new AnnotationSetter());
         model.rebuildModelFromAction(action);
@@ -73,9 +72,8 @@ class MappingActionValueTableModelTest {
         MappingAction action = MappingAction.getNewEmptyAction()
                 .withName("test")
                 .withDescription("test")
-                .withNewPoints(new MappingPoint[]{new MappingPoint(1, 2),
-                        new MappingPoint(5, 6),
-                        new MappingPoint(9, -1)})
+                .withNewPoints(
+                        new MappingPoint[]{new MappingPoint(1, 2), new MappingPoint(5, 6), new MappingPoint(9, -1)})
                 .withInput(new TerrainHeightIO(0, 255))
                 .withOutput(new AnnotationSetter());
         model.rebuildModelFromAction(action);
@@ -152,35 +150,35 @@ class MappingActionValueTableModelTest {
                 updatedAction[0] = model.constructMapping();
             }
 
-
         });
-        assertEquals(0,headerChangedCalls[0]);
+        assertEquals(0, headerChangedCalls[0]);
 
         model.rebuildModelFromAction(action);
-        assertEquals(1,headerChangedCalls[0], "model must notify listener that header changed.");
+        assertEquals(1, headerChangedCalls[0], "model must notify listener that header changed.");
 
         assertEquals(256, model.getRowCount());
-        assertEquals(new MappingPointValue(17,action.getInput()), model.getValueAt(17,0),"mapping point at input=17");
+        assertEquals(new MappingPointValue(17, action.getInput()), model.getValueAt(17, 0),
+                "mapping point at input=17");
 
+        // change mapping point, edit input
+        model.setValueAt(new MappingPointValue(3, action.getInput()), 17, 0);
+        assertEquals(new MappingPointValue(3, action.getInput()), model.getValueAt(3, 0),
+                "value was inserted but it " + "lives at a different index now");
+        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3, 18)}), model.constructMapping(),
+                "the model " + "constructed the correct action with the new point.");
+        assertTrue(model.isCellEditable(3, 0), "its a mapping point -> editable");
+        assertTrue(model.isCellEditable(3, 1), "its a mapping point -> editable");
 
-        //change mapping point, edit input
-        model.setValueAt(new MappingPointValue(3,action.getInput()),17,0);
-        assertEquals(new MappingPointValue(3,action.getInput()), model.getValueAt(3,0),"value was inserted but it " +
-                "lives at a different index now");
-        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.constructMapping(),"the model " +
-                        "constructed the correct action with the new point.");
-        assertTrue(model.isCellEditable(3,0),"its a mapping point -> editable");
-        assertTrue(model.isCellEditable(3,1),"its a mapping point -> editable");
+        // set same value again
+        model.setValueAt(new MappingPointValue(3, action.getInput()), 0, 0);
+        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3, 18)}), model.constructMapping());
 
-        //set same value again
-        model.setValueAt(new MappingPointValue(3,action.getInput()),0,0);
-        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,18)}),model.constructMapping());
-
-        //edit mapping point in output column from (3,18) to (3,9)
-        assertTrue(model.isCellEditable(3,1));
-        model.setValueAt(new MappingPointValue(9,action.getOutput()),3,1);
-        assertEquals(new MappingPointValue(9,action.getOutput()), model.getValueAt(3,1),"value was inserted at index");
-        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3,9)}),model.constructMapping());
+        // edit mapping point in output column from (3,18) to (3,9)
+        assertTrue(model.isCellEditable(3, 1));
+        model.setValueAt(new MappingPointValue(9, action.getOutput()), 3, 1);
+        assertEquals(new MappingPointValue(9, action.getOutput()), model.getValueAt(3, 1),
+                "value was inserted at index");
+        assertEquals(action.withNewPoints(new MappingPoint[]{new MappingPoint(3, 9)}), model.constructMapping());
     }
 
     @Test
@@ -213,43 +211,44 @@ class MappingActionValueTableModelTest {
         });
 
         // point1
-        assertEquals(new MappingPointValue(point1.input,action.getInput()), model.getValueAt(point1.input,0));
-        assertEquals(new MappingPointValue(point1.output,action.getOutput()), model.getValueAt(point1.input,1));
+        assertEquals(new MappingPointValue(point1.input, action.getInput()), model.getValueAt(point1.input, 0));
+        assertEquals(new MappingPointValue(point1.output, action.getOutput()), model.getValueAt(point1.input, 1));
 
         // point2
-        assertEquals(new MappingPointValue(point2.input,action.getInput()), model.getValueAt(point2.input,0));
-        assertEquals(new MappingPointValue(point2.output,action.getOutput()), model.getValueAt(point2.input,1));
+        assertEquals(new MappingPointValue(point2.input, action.getInput()), model.getValueAt(point2.input, 0));
+        assertEquals(new MappingPointValue(point2.output, action.getOutput()), model.getValueAt(point2.input, 1));
 
         // point3
-        assertEquals(new MappingPointValue(point3.input,action.getInput()), model.getValueAt(point3.input,0));
-        assertEquals(new MappingPointValue(point3.output,action.getOutput()), model.getValueAt(point3.input,1));
+        assertEquals(new MappingPointValue(point3.input, action.getInput()), model.getValueAt(point3.input, 0));
+        assertEquals(new MappingPointValue(point3.output, action.getOutput()), model.getValueAt(point3.input, 1));
 
-    // single point change: modify output of point1
+        // single point change: modify output of point1
 
-        model.setValuesAt(new MappingPointValue(point1.output + 5,action.getInput()), new int[]{point1.input},1);
-        assertEquals(new MappingPointValue(point1.input,action.getInput()), model.getValueAt(point1.input,0));
-        assertEquals(new MappingPointValue(point1.output + 5,action.getOutput()), model.getValueAt(point1.input,1));
+        model.setValuesAt(new MappingPointValue(point1.output + 5, action.getInput()), new int[]{point1.input}, 1);
+        assertEquals(new MappingPointValue(point1.input, action.getInput()), model.getValueAt(point1.input, 0));
+        assertEquals(new MappingPointValue(point1.output + 5, action.getOutput()), model.getValueAt(point1.input, 1));
         point1 = new MappingPoint(point1.input, point1.output + 5);
 
-    // attempt change interpolated point: (impossible bc can only edit control points)
+        // attempt change interpolated point: (impossible bc can only edit control
+        // points)
         int row = 4; // interpolated row
-        model.setValuesAt(new MappingPointValue(137,action.getInput()), new int[]{row}
-                ,1);
-        // value didnt change, input was ignored. point1 as closest controlpoint defines output value
-        assertEquals(new MappingPointValue(row,action.getInput()), model.getValueAt(row,0));
-        assertEquals(new MappingPointValue(point1.output,action.getOutput()), model.getValueAt(row,1));
+        model.setValuesAt(new MappingPointValue(137, action.getInput()), new int[]{row}, 1);
+        // value didnt change, input was ignored. point1 as closest controlpoint defines
+        // output value
+        assertEquals(new MappingPointValue(row, action.getInput()), model.getValueAt(row, 0));
+        assertEquals(new MappingPointValue(point1.output, action.getOutput()), model.getValueAt(row, 1));
 
-    // change many control points at once, output modified
-        model.setValuesAt(new MappingPointValue(point1.output + 5,action.getInput()), new int[]{point1.input,
-                point2.input, point3.input},1);
-        assertEquals(new MappingPointValue(point1.input,action.getInput()), model.getValueAt(point1.input,0));
-        assertEquals(new MappingPointValue(point1.output + 5,action.getOutput()), model.getValueAt(point1.input,1));
-        //test point 2
-        assertEquals(new MappingPointValue(point2.input,action.getInput()), model.getValueAt(point2.input,0));
-        assertEquals(new MappingPointValue(point1.output + 5,action.getOutput()), model.getValueAt(point2.input,1));
+        // change many control points at once, output modified
+        model.setValuesAt(new MappingPointValue(point1.output + 5, action.getInput()),
+                new int[]{point1.input, point2.input, point3.input}, 1);
+        assertEquals(new MappingPointValue(point1.input, action.getInput()), model.getValueAt(point1.input, 0));
+        assertEquals(new MappingPointValue(point1.output + 5, action.getOutput()), model.getValueAt(point1.input, 1));
+        // test point 2
+        assertEquals(new MappingPointValue(point2.input, action.getInput()), model.getValueAt(point2.input, 0));
+        assertEquals(new MappingPointValue(point1.output + 5, action.getOutput()), model.getValueAt(point2.input, 1));
         // test point 3
-        assertEquals(new MappingPointValue(point3.input,action.getInput()), model.getValueAt(point3.input,0));
-        assertEquals(new MappingPointValue(point1.output + 5,action.getOutput()), model.getValueAt(point3.input,1));
+        assertEquals(new MappingPointValue(point3.input, action.getInput()), model.getValueAt(point3.input, 0));
+        assertEquals(new MappingPointValue(point1.output + 5, action.getOutput()), model.getValueAt(point3.input, 1));
 
         assertTrue(model.isMappingPoint(point1.input));
         assertTrue(model.isMappingPoint(point2.input));
@@ -262,19 +261,19 @@ class MappingActionValueTableModelTest {
         for (int i = 0; i < allIndices.length; i++)
             allIndices[i] = i;
 
-        model.setValuesAt(new MappingPointValue(point1.output, action.getOutput()), allIndices,1);
+        model.setValuesAt(new MappingPointValue(point1.output, action.getOutput()), allIndices, 1);
 
         // point1
-        assertEquals(new MappingPointValue(point1.input,action.getInput()), model.getValueAt(point1.input,0));
-        assertEquals(new MappingPointValue(point1.output,action.getOutput()), model.getValueAt(point1.input,1));
+        assertEquals(new MappingPointValue(point1.input, action.getInput()), model.getValueAt(point1.input, 0));
+        assertEquals(new MappingPointValue(point1.output, action.getOutput()), model.getValueAt(point1.input, 1));
 
         // point2
-        assertEquals(new MappingPointValue(point2.input,action.getInput()), model.getValueAt(point2.input,0));
-        assertEquals(new MappingPointValue(point1.output,action.getOutput()), model.getValueAt(point2.input,1));
+        assertEquals(new MappingPointValue(point2.input, action.getInput()), model.getValueAt(point2.input, 0));
+        assertEquals(new MappingPointValue(point1.output, action.getOutput()), model.getValueAt(point2.input, 1));
 
         // point3
-        assertEquals(new MappingPointValue(point3.input,action.getInput()), model.getValueAt(point3.input,0));
-        assertEquals(new MappingPointValue(point1.output,action.getOutput()), model.getValueAt(point3.input,1));
+        assertEquals(new MappingPointValue(point3.input, action.getInput()), model.getValueAt(point3.input, 0));
+        assertEquals(new MappingPointValue(point1.output, action.getOutput()), model.getValueAt(point3.input, 1));
 
         assertTrue(model.isMappingPoint(point1.input));
         assertTrue(model.isMappingPoint(point2.input));

@@ -19,35 +19,36 @@ import static java.lang.Math.*;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
 
-public class PathToolBackend {
+public class PathToolBackend
+{
 
-    static class PathResult {
+    static class PathResult
+    {
         public final List<Point4f> path;
-        public final  HashMap<Point4f,Integer> handlesToPathIndex;
+        public final HashMap<Point4f, Integer> handlesToPathIndex;
 
-        PathResult(List<Point4f> path, HashMap<Point4f,Integer> handlesToPathIndex) {
+        PathResult(List<Point4f> path, HashMap<Point4f, Integer> handlesToPathIndex) {
             this.path = path;
             this.handlesToPathIndex = handlesToPathIndex;
         }
     }
     static PathResult getPathFromHandles(List<Point4f> handles, float handleStrength) {
         var api = RiverTool.create();
-        var handlesData = handles.stream().map(p -> new float[]{p.x, p.y, p.z, p.w, handleStrength}).map(RiverToolAPI.PositionInformation::new).toList();
-        PointType type = new PointType(
-                new RiverHandleInformation.RiverInformation[]{
-                        new RiverHandleInformation.RiverInformation(0, "POINT_HEIGHT", "point height absolute", -10000, 10000),
-                        new RiverHandleInformation.RiverInformation(1, "BRUSH_RADIUS", "radius", 0, 10000),
-                },
-                2
-        );
+        var handlesData = handles.stream()
+                .map(p -> new float[]{p.x, p.y, p.z, p.w, handleStrength})
+                .map(RiverToolAPI.PositionInformation::new)
+                .toList();
+        PointType type = new PointType(new RiverHandleInformation.RiverInformation[]{
+                new RiverHandleInformation.RiverInformation(0, "POINT_HEIGHT", "point height absolute", -10000, 10000),
+                new RiverHandleInformation.RiverInformation(1, "BRUSH_RADIUS", "radius", 0, 10000),}, 2);
         type.handleStrengthIndex = 4;
 
         var path = api.handlesToConnectedBezierPath(handlesData, type);
         var curve = path.stream().map(p -> p.data).map(arr -> new Point4f(arr[0], arr[1], arr[2], arr[3])).toList();
         var handlesToPathIndex = new HashMap<Point4f, Integer>(handles.size());
         for (int curveIdx = 0, handleIdx = 0; curveIdx < curve.size() && handleIdx < handles.size(); curveIdx++) {
-            var curvePoint = new Point2f(curve.get(curveIdx).x,curve.get(curveIdx).y);
-            var handlePoint = new Point2f(handles.get(handleIdx).x,handles.get(handleIdx).y);
+            var curvePoint = new Point2f(curve.get(curveIdx).x, curve.get(curveIdx).y);
+            var handlePoint = new Point2f(handles.get(handleIdx).x, handles.get(handleIdx).y);
             if (curvePoint.equals(handlePoint)) {
                 handlesToPathIndex.put(handles.get(handleIdx), curveIdx);
                 handleIdx++;
@@ -119,12 +120,14 @@ public class PathToolBackend {
     }
 
     static void writePaintDataToDimension(FloatTile in, Dimension out, Paint paint) {
-        if (in == null || out == null || paint == null) return;
+        if (in == null || out == null || paint == null)
+            return;
         int tileX = in.tilePosX << TILE_SIZE_BITS;
         int tileY = in.tilePosY << TILE_SIZE_BITS;
         for (int xx = 0; xx < TILE_SIZE; xx++)
             for (int yy = 0; yy < TILE_SIZE; yy++) {
-                if (in.getValueAt(xx, yy) == 1) paint.applyPixel(out, xx + tileX, yy + tileY);
+                if (in.getValueAt(xx, yy) == 1)
+                    paint.applyPixel(out, xx + tileX, yy + tileY);
             }
     }
 
@@ -144,7 +147,7 @@ public class PathToolBackend {
 
     static void forceRadiusAtLeast(List<Point4f> path, float minRadius) {
         for (Point4f point : path) {
-            point.w = Math.max(point.w,minRadius);
+            point.w = Math.max(point.w, minRadius);
         }
     }
 
@@ -192,17 +195,21 @@ public class PathToolBackend {
     }
 
     /**
-     * collect all points whos radius will have an impact on the area defiend by start and end
+     * collect all points whos radius will have an impact on the area defiend by
+     * start and end
      *
      * @param start
      * @param end
      * @return
      */
-    protected static ArrayList<Point4f> getSubPathFor(Point2i start, Point2i end, List<Point4f> path, float radiusMultiplier) {
+    protected static ArrayList<Point4f> getSubPathFor(Point2i start, Point2i end, List<Point4f> path,
+            float radiusMultiplier) {
         ArrayList<Point4f> subPath = new ArrayList<>();
         for (var pathPoint : path) {
             int radius = (int) Math.ceil(pathPoint.w * radiusMultiplier);
-            if (contains(pathPoint, new Point2i(start.x - radius, start.y - radius), new Point2i(end.x + radius, end.y + radius))) subPath.add(pathPoint);
+            if (contains(pathPoint, new Point2i(start.x - radius, start.y - radius),
+                    new Point2i(end.x + radius, end.y + radius)))
+                subPath.add(pathPoint);
         }
         return subPath;
     }
@@ -211,10 +218,12 @@ public class PathToolBackend {
         return query.x <= end.x && query.y <= end.y && query.x >= start.x && query.y >= start.y;
     }
 
-    protected static FloatTile applyToTile(FloatTile heightInputTile, FloatTile paintOutput, Point3i tilePos, CrossSectionShape filterCrossSection, ArrayList<Point4f> subPath,
-                                           float transitionMultiplier) {
-        if (heightInputTile == null) return null;
-        if (subPath.isEmpty()) return null;
+    protected static FloatTile applyToTile(FloatTile heightInputTile, FloatTile paintOutput, Point3i tilePos,
+            CrossSectionShape filterCrossSection, ArrayList<Point4f> subPath, float transitionMultiplier) {
+        if (heightInputTile == null)
+            return null;
+        if (subPath.isEmpty())
+            return null;
 
         var ext = PathToolBackend.getMinMaxPos(subPath);
         QuadTree tree = new QuadTree(ext[0].x, ext[0].y, ext[1].x, ext[1].y);
@@ -236,14 +245,16 @@ public class PathToolBackend {
                 var query = new Point2i((tilePos.x << TILE_SIZE_BITS) + xx, (tilePos.y << TILE_SIZE_BITS) + yy);
                 var closestPos = tree.getClosest(query);
                 var closest = posToData.get(closestPos);
-                var distance = closest == null ? Float.MAX_VALUE : Math.sqrt(xyDistSq(closest, new Point4f(query.x, query.y, 0, 0)));
+                var distance = closest == null
+                        ? Float.MAX_VALUE
+                        : Math.sqrt(xyDistSq(closest, new Point4f(query.x, query.y, 0, 0)));
 
                 // calculate height based on closest point and filter
                 float originalHeight = heightInputTile.getValueAt(xx, yy);
                 float outHeight;
                 float filterStrength;
                 if (closest == null || distance > closest.w * transitionMultiplier) {
-                    //outside transition zone
+                    // outside transition zone
                     outHeight = originalHeight;
                     filterStrength = 0;
                 } else if (distance <= closest.w) {
@@ -251,8 +262,9 @@ public class PathToolBackend {
                     outHeight = closest.z;
                     filterStrength = 1;
                 } else {
-                    //transition with terrain
-                    filterStrength = filterStrengthFor((float) distance, closest.w, transitionMultiplier, filterCrossSection);
+                    // transition with terrain
+                    filterStrength = filterStrengthFor((float) distance, closest.w, transitionMultiplier,
+                            filterCrossSection);
                     outHeight = filterStrength * closest.z + (1 - filterStrength) * originalHeight;
                 }
                 paintOutput.setValueAt(xx, yy, filterStrength);
@@ -261,8 +273,10 @@ public class PathToolBackend {
         return outputTile;
     }
 
-    protected static float filterStrengthFor(float distance, float maxDistance, float transitionMultiplier, CrossSectionShape filterCrossSection) {
-        if (distance < maxDistance) return 1;
+    protected static float filterStrengthFor(float distance, float maxDistance, float transitionMultiplier,
+            CrossSectionShape filterCrossSection) {
+        if (distance < maxDistance)
+            return 1;
         float baseMaxDist = maxDistance * transitionMultiplier - maxDistance;
         float thisDist = distance - maxDistance;
         float distanceT = 1 - Math.min(1, Math.max(0, (float) (thisDist / baseMaxDist)));

@@ -7,7 +7,6 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.exporting.MinecraftWorld;
 import org.pepsoft.worldpainter.heightMaps.ConstantHeightMap;
-import org.pepsoft.worldpainter.layers.CustomLayer;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
 import org.pepsoft.worldpainter.themes.SimpleTheme;
@@ -16,7 +15,6 @@ import org.pepsoft.worldpainter.themes.Theme;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -25,7 +23,8 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Dimension.Anchor.NORMAL_DETAIL;
 import static org.pepsoft.worldpainter.Terrain.GRASS;
 
-public final class TestData {
+public final class TestData
+{
     public static final Platform PLATFORM = DefaultPlugin.JAVA_ANVIL_1_19;
     public static final int MIN_HEIGHT = PLATFORM.minZ;
     public static final int MAX_HEIGHT = PLATFORM.standardMaxHeight;
@@ -34,24 +33,21 @@ public final class TestData {
     public static final long SEED = 0L;
 
     public static TileFactory createTileFactory(int terrainHeight) {
-        return new HeightMapTileFactory(SEED,
-                new ConstantHeightMap(terrainHeight),
-                MIN_HEIGHT,
-                MAX_HEIGHT,
-                false,
+        return new HeightMapTileFactory(SEED, new ConstantHeightMap(terrainHeight), MIN_HEIGHT, MAX_HEIGHT, false,
                 THEME);
     }
 
     /**
-     * @param area          area in blocks, must be aligned to TILE_SIZE modulo
+     * @param area
+     *            area in blocks, must be aligned to TILE_SIZE modulo
      * @param terrainHeight
      * @return
      */
     public static Dimension createDimension(Rectangle area, int terrainHeight) {
         final TileFactory tileFactory = createTileFactory(terrainHeight);
         final Dimension dimension = new Dimension(WORLD, "Surface", SEED, tileFactory, NORMAL_DETAIL);
-        final int tileX1 = area.x / TILE_SIZE, tileX2 = (area.x + area.width - 1) / TILE_SIZE, tileY1 =
-                area.y / TILE_SIZE, tileY2 = (area.y + area.height - 1) / TILE_SIZE;
+        final int tileX1 = area.x / TILE_SIZE, tileX2 = (area.x + area.width - 1) / TILE_SIZE,
+                tileY1 = area.y / TILE_SIZE, tileY2 = (area.y + area.height - 1) / TILE_SIZE;
         for (int tileX = tileX1; tileX <= tileX2; tileX++) {
             for (int tileY = tileY1; tileY <= tileY2; tileY++) {
                 dimension.addTile(tileFactory.createTile(tileX, tileY));
@@ -66,7 +62,7 @@ public final class TestData {
             @Override
             public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
                 if (!existsLayerWithId(layerId))
-                    layerNotFoundError.accept( layerId);
+                    layerNotFoundError.accept(layerId);
                 return id_to_layer.get(layerId);
             }
 
@@ -77,7 +73,7 @@ public final class TestData {
 
             @Override
             public void addLayer(Layer layer) {
-                id_to_layer.put(layer.getId(),layer);
+                id_to_layer.put(layer.getId(), layer);
             }
 
             @Override
@@ -88,8 +84,10 @@ public final class TestData {
     }
 
     /**
-     * Create an in-memory {@link MinecraftWorld} with the specified {@code area} and filled with blocks up to and including {@code terrainHeight}, consisting of one layer of bedrock, up to
-     * 63 layers of deepslate, as many layers of stone as required, three layers of dirt and one layer of grass block.
+     * Create an in-memory {@link MinecraftWorld} with the specified {@code area}
+     * and filled with blocks up to and including {@code terrainHeight}, consisting
+     * of one layer of bedrock, up to 63 layers of deepslate, as many layers of
+     * stone as required, three layers of dirt and one layer of grass block.
      */
     public static MinecraftWorld createMinecraftWorld(Rectangle area, int terrainHeight, Material terrainMaterial) {
         final Box volume = new Box(area.x, area.width, area.y, area.height, MIN_HEIGHT, MAX_HEIGHT);

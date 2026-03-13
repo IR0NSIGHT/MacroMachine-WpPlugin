@@ -1,14 +1,13 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.StonePaletteApplicator;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
 
-public class MappingValuePreviewPanel extends JPanel {
+public class MappingValuePreviewPanel extends JPanel
+{
     private IMappingValue mappingValue;
     private int value;
 
@@ -33,7 +32,8 @@ public class MappingValuePreviewPanel extends JPanel {
     }
 
     public void setValue(int value) {
-        if (mappingValue != null) this.value = value;
+        if (mappingValue != null)
+            this.value = value;
     }
 
     @Override

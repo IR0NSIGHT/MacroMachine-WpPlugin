@@ -11,7 +11,8 @@ import java.util.stream.IntStream;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
-public class ShadowMap {
+public class ShadowMap
+{
     public static TileContainer calculateShadowMap(Rectangle extent, TerrainHeightIO heightIO, Dimension dim) {
         TileContainer shadowmap = new TileContainer(extent, 0);
         shadowmap.addAsValues(heightIO, dim, false);
@@ -31,26 +32,25 @@ public class ShadowMap {
     }
 
     public static TileContainer expandBinaryMask(BinaryLayerIO input, Dimension dimension, Rectangle extent,
-                                                 boolean invert) {
+            boolean invert) {
         TileContainer container = new TileContainer(extent, 0);
         container.addAsValues(input, dimension, invert);
         return expandBinaryMask(container, 1);
     }
 
-    public static TileContainer expandBinaryMask(TileContainer container,
-                                                 int incrementPerStep) {
-        IntStream.iterate(container.getMinYPos(), i -> i < container.getMaxYPos(), i->i+1).parallel().forEach(y -> {
-                //row by row
-                int[] row = container.getValueRow(y);
-                row = replaceValues(row, 0xFFFF, 0, false); // 1 -> 1, 0 -> 0xFFFF
-                row = replaceValues(row, 0, 0xFFFF, true); // 0xFFFF -> 0xFFFF, else -> 0
-                row = expandBinaryLinear(row, incrementPerStep, 0, 1);
-                row = expandBinaryLinear(row, incrementPerStep, row.length - 1, -1);
-                container.setValueRow(y, row);
+    public static TileContainer expandBinaryMask(TileContainer container, int incrementPerStep) {
+        IntStream.iterate(container.getMinYPos(), i -> i < container.getMaxYPos(), i -> i + 1).parallel().forEach(y -> {
+            // row by row
+            int[] row = container.getValueRow(y);
+            row = replaceValues(row, 0xFFFF, 0, false); // 1 -> 1, 0 -> 0xFFFF
+            row = replaceValues(row, 0, 0xFFFF, true); // 0xFFFF -> 0xFFFF, else -> 0
+            row = expandBinaryLinear(row, incrementPerStep, 0, 1);
+            row = expandBinaryLinear(row, incrementPerStep, row.length - 1, -1);
+            container.setValueRow(y, row);
         });
 
-        IntStream.iterate(container.getMinXPos(), i -> i < container.getMaxXPos(), i->i+1).parallel().forEach(x -> {
-            //row by row
+        IntStream.iterate(container.getMinXPos(), i -> i < container.getMaxXPos(), i -> i + 1).parallel().forEach(x -> {
+            // row by row
             int[] columnXDist = container.getValueColumn(x); // consists of set values 0 .. x and unset values 0xFFFF
             int[] distances = expandBinaryLinearColumn(columnXDist);
             container.setValueColumn(distances, x);
@@ -63,7 +63,8 @@ public class ShadowMap {
      *
      * @param row
      * @param replacement
-     * @param invert      set if value[i] != orginal
+     * @param invert
+     *            set if value[i] != orginal
      * @return
      */
     public static int[] replaceValues(int[] row, int replacement, int original, boolean invert) {
@@ -77,7 +78,7 @@ public class ShadowMap {
     public static int[] distanceFrom2Arrays(int[] xDistance, int[] yDistance) {
         int[] dist = new int[xDistance.length];
         for (int i = 0; i < dist.length; i++) {
-            dist[i] = (int)Math.round(Math.sqrt(xDistance[i]*xDistance[i]+yDistance[i]*yDistance[i]));
+            dist[i] = (int) Math.round(Math.sqrt(xDistance[i] * xDistance[i] + yDistance[i] * yDistance[i]));
         }
         return dist;
     }
@@ -100,33 +101,35 @@ public class ShadowMap {
         int[] refPointIndices = new int[horizontalDist.length];
         {
             int refPointIdx = 0;
-            for (int i = 0; i < horizontalDist.length && i >= 0; i ++) {
+            for (int i = 0; i < horizontalDist.length && i >= 0; i++) {
                 if (horizontalDist[i] != 0xFFFF) {
-                    //point is set
+                    // point is set
                     refPointIndices[refPointIdx++] = i;
                 }
             }
-            refPointIndices = Arrays.copyOf(refPointIndices,refPointIdx);
+            refPointIndices = Arrays.copyOf(refPointIndices, refPointIdx);
         }
 
-        // iterate all positions in array, find closest point using refPointIndices and set distance to this point
+        // iterate all positions in array, find closest point using refPointIndices and
+        // set distance to this point
         int[] dist = new int[horizontalDist.length];
-        for (int i = 0; i < dist.length; i ++) {
+        for (int i = 0; i < dist.length; i++) {
             int distSq = Integer.MAX_VALUE;
             for (int j = 0; j < refPointIndices.length; j++) {
-                int distVert = i-refPointIndices[j];
+                int distVert = i - refPointIndices[j];
                 int distHoriz = horizontalDist[refPointIndices[j]];
-                int distSqRefPoint = distVert*distVert + distHoriz*distHoriz;
+                int distSqRefPoint = distVert * distVert + distHoriz * distHoriz;
                 if (distSq > distSqRefPoint)
                     distSq = distSqRefPoint;
             }
-            dist[i] = (int)Math.round(Math.sqrt(distSq));
+            dist[i] = (int) Math.round(Math.sqrt(distSq));
         }
         return dist;
     }
 
     /**
      * find the first and last index to NOT be marker
+     *
      * @param arr
      * @return
      */
@@ -139,13 +142,13 @@ public class ShadowMap {
                 break;
             }
         }
-        for (int i = arr.length -1; i >= 0; i--) {
+        for (int i = arr.length - 1; i >= 0; i--) {
             if (arr[i] != marker && last == -1) {
                 last = i;
                 break;
             }
         }
-        return new int[]{first,last};
+        return new int[]{first, last};
     }
 
     public static int[] expandBinaryMapped(int[] row, int[] map, int start, int dir) {

@@ -6,7 +6,8 @@ import org.pepsoft.worldpainter.Dimension;
 
 import java.util.List;
 
-public class DummyCallback implements ApplyActionCallback{
+public class DummyCallback implements ApplyActionCallback
+{
     @Override
     public void setProgressOfAction(int percent) {
 

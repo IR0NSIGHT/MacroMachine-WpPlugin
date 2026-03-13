@@ -2,7 +2,8 @@ package org.ironsight.wpplugin.rivertool;
 
 import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 
-public class HandleAndIdcs {
+public class HandleAndIdcs
+{
     public final float[] positions;
     public final int[] idcs;
     public final float[] segmentLengths;
@@ -31,8 +32,9 @@ public class HandleAndIdcs {
         float[] newHandleStrengths = ArrayUtility.removePositions(struct.handleStrengths, removeMarkers);
         HandleAndIdcs out = new HandleAndIdcs(newPositions, newHandleToCurve, newSegmentLengths, newHandleStrengths);
 
-        //postcondition
-        assert !ArrayUtility.linearSearch(out.positions, RiverHandleInformation.INHERIT_VALUE) : "array still contains INHERIT values";
+        // postcondition
+        assert !ArrayUtility.linearSearch(out.positions, RiverHandleInformation.INHERIT_VALUE)
+                : "array still contains INHERIT values";
         assert out.positions.length <= struct.positions.length;
         assert !ArrayUtility.linearSearch(out.segmentLengths, 0) : "segments can never be zero length";
         return out;

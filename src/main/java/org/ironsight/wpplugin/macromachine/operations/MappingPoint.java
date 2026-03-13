@@ -3,7 +3,8 @@ package org.ironsight.wpplugin.macromachine.operations;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class MappingPoint implements Serializable {
+public class MappingPoint implements Serializable
+{
     public final int input;
     public final int output;
 
@@ -19,8 +20,10 @@ public class MappingPoint implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         MappingPoint that = (MappingPoint) o;
         return input == that.input && output == that.output;
     }

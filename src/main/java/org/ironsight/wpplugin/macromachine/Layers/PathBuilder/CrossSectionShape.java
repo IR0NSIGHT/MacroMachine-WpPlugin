@@ -1,9 +1,11 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
 /**
- * implementation of a 1d function f(t) to construct a filter strength for t=distance to something must be continuous, can NOT be discrete
+ * implementation of a 1d function f(t) to construct a filter strength for
+ * t=distance to something must be continuous, can NOT be discrete
  */
-public abstract class CrossSectionShape {
+public abstract class CrossSectionShape
+{
     private final String name;
     private final String description;
 
@@ -21,7 +23,8 @@ public abstract class CrossSectionShape {
     }
 
     /**
-     * @param t in range [0,1]
+     * @param t
+     *            in range [0,1]
      * @return strength at t
      */
     public float getStrengthAt(float t) {
@@ -30,7 +33,8 @@ public abstract class CrossSectionShape {
 
     /**
      * @param n
-     * @return array with values of function where arr[0] = f(0) and arr[arr.length-1] = f(1)
+     * @return array with values of function where arr[0] = f(0) and
+     *         arr[arr.length-1] = f(1)
      */
     public final float[] asArray(int n) {
         float[] values = new float[n];

@@ -8,22 +8,24 @@ import java.util.HashSet;
 import java.util.UUID;
 
 /**
- * this policy will filter out everything but a given macro and all its dependencies, including nested macros.
+ * this policy will filter out everything but a given macro and all its
+ * dependencies, including nested macros.
  */
-public class MacroExportPolicy extends ImportExportPolicy {
+public class MacroExportPolicy extends ImportExportPolicy
+{
     private HashSet<UUID> requiredIds = new HashSet<>();
     public MacroExportPolicy(Macro macro, MacroContainer container) {
         addMacroAndChildren(macro, container);
     }
 
-    private void addMacroAndChildren(Macro macro,MacroContainer container) {
+    private void addMacroAndChildren(Macro macro, MacroContainer container) {
         requiredIds.add(macro.getUid());
-        for (UUID childId: macro.getExecutionUUIDs()) {
+        for (UUID childId : macro.getExecutionUUIDs()) {
             if (container.queryContains(childId))
-                //macro
-                addMacroAndChildren(container.queryById(childId),container);
+                // macro
+                addMacroAndChildren(container.queryById(childId), container);
             else {
-                //action
+                // action
                 requiredIds.add(childId);
             }
         }

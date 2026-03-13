@@ -6,36 +6,15 @@ import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
 
 public enum ProviderType {
-    HEIGHT,
-    SLOPE,
-    ANNOTATION,
-    BINARY_LAYER,
-    BINARY_SPRAYPAINT,
-    BLOCK_DIRECTION,
-    INTERMEDIATE,
-    //action filter
-    INTERMEDIATE_SELECTION,
-    NIBBLE_LAYER,
-    SELECTION,
-    STONE_PALETTE,
-    TERRAIN,
-    TEST,
-    VANILLA_BIOME,
-    WATER_DEPTH,
-    WATER_HEIGHT,
-    ALWAYS,
-    DISTANCE_TO_EDGE,
-    PERLIN_NOISE,
-    SHADOW,
-    VORONOI_NOISE,
-    RANDOM_NOISE
-    ;
+    HEIGHT, SLOPE, ANNOTATION, BINARY_LAYER, BINARY_SPRAYPAINT, BLOCK_DIRECTION, INTERMEDIATE,
+    // action filter
+    INTERMEDIATE_SELECTION, NIBBLE_LAYER, SELECTION, STONE_PALETTE, TERRAIN, TEST, VANILLA_BIOME, WATER_DEPTH, WATER_HEIGHT, ALWAYS, DISTANCE_TO_EDGE, PERLIN_NOISE, SHADOW, VORONOI_NOISE, RANDOM_NOISE;
 
     public static IMappingValue fromType(Object[] data, ProviderType type) {
         /**
-         * take save data, compare to default savedata.
-         * only use it if it has the correct type
-         * keep default entries if data item could not be used/was not present
+         * take save data, compare to default savedata. only use it if it has the
+         * correct type keep default entries if data item could not be used/was not
+         * present
          */
         Object[] dataSafe = ProviderType.fromTypeDefault(type).getSaveData();
         for (int i = 0; i < dataSafe.length; i++) {
@@ -46,11 +25,10 @@ public enum ProviderType {
                 Object dataDef = dataSafe[i];
                 if (dataObj.getClass().equals(dataDef.getClass()))
                     dataSafe[i] = dataObj;
-            } catch (Exception ignored){
+            } catch (Exception ignored) {
                 // System.err.println("exception when parsing save data obj:" + ignored);
-            };
+            } ;
         }
-
 
         IMappingValue newV = fromTypeDefault(type).instantiateFrom(dataSafe);
         assert newV.getProviderType() == type;
@@ -59,51 +37,51 @@ public enum ProviderType {
 
     public static IMappingValue fromTypeDefault(ProviderType type) {
         switch (type) {
-            case TEST:
+            case TEST :
                 return new TestInputOutput();
-            case SLOPE:
+            case SLOPE :
                 return new SlopeProvider();
-            case HEIGHT:
-                return new TerrainHeightIO(-64,319);
-            case TERRAIN:
+            case HEIGHT :
+                return new TerrainHeightIO(-64, 319);
+            case TERRAIN :
                 return new TerrainProvider();
-            case WATER_DEPTH:
+            case WATER_DEPTH :
                 return new WaterDepthProvider();
-            case INTERMEDIATE:
+            case INTERMEDIATE :
                 return new IntermediateValueIO();
-            case STONE_PALETTE:
+            case STONE_PALETTE :
                 return new StonePaletteApplicator();
-            case VANILLA_BIOME:
+            case VANILLA_BIOME :
                 return new VanillaBiomeProvider();
-            case BLOCK_DIRECTION:
+            case BLOCK_DIRECTION :
                 return new BlockFacingDirectionIO();
-            case SELECTION:
+            case SELECTION :
                 return new SelectionIO();
-            case ANNOTATION:
+            case ANNOTATION :
                 return new AnnotationSetter();
-            case WATER_HEIGHT:
-                return new WaterHeightAbsoluteIO(-64,319);
-            case BINARY_SPRAYPAINT:
+            case WATER_HEIGHT :
+                return new WaterHeightAbsoluteIO(-64, 319);
+            case BINARY_SPRAYPAINT :
                 return new BitLayerBinarySpraypaintApplicator(Frost.INSTANCE, false);
-            case BINARY_LAYER:
-                return new BinaryLayerIO(Frost.INSTANCE,false);
-            case NIBBLE_LAYER:
+            case BINARY_LAYER :
+                return new BinaryLayerIO(Frost.INSTANCE, false);
+            case NIBBLE_LAYER :
                 return new NibbleLayerSetter(PineForest.INSTANCE, false);
-            case INTERMEDIATE_SELECTION:
+            case INTERMEDIATE_SELECTION :
                 return ActionFilterIO.instance;
-            case ALWAYS:
+            case ALWAYS :
                 return AlwaysIO.instance;
-            case DISTANCE_TO_EDGE:
-                return new DistanceToLayerEdgeGetter(false, MacroSelectionLayer.INSTANCE,100);
-            case PERLIN_NOISE:
-                return new PerlinNoiseIO(1,1, 42069,5);
-            case SHADOW:
+            case DISTANCE_TO_EDGE :
+                return new DistanceToLayerEdgeGetter(false, MacroSelectionLayer.INSTANCE, 100);
+            case PERLIN_NOISE :
+                return new PerlinNoiseIO(1, 1, 42069, 5);
+            case SHADOW :
                 return new ShadowMapIO();
-            case VORONOI_NOISE:
-                return new VoronoiIO(0,100,987654321,5,100);
-            case RANDOM_NOISE:
-                return new RandomNoise(674930,1/10000f);
-            default:
+            case VORONOI_NOISE :
+                return new VoronoiIO(0, 100, 987654321, 5, 100);
+            case RANDOM_NOISE :
+                return new RandomNoise(674930, 1 / 10000f);
+            default :
                 throw new IllegalArgumentException(
                         "not implemented: can not instantiate providers that need extra " + "information");
 

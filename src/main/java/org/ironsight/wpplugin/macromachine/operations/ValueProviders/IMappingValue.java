@@ -1,12 +1,12 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 
 import java.awt.*;
 
-public interface IMappingValue extends IDisplayUnit {
+public interface IMappingValue extends IDisplayUnit
+{
     static int sanitizeValue(int value, IMappingValue getterSetter) { // FIXME only call thi
         return Math.max(Math.min(value, getterSetter.getMaxValue()), getterSetter.getMinValue());
     }
@@ -18,7 +18,7 @@ public interface IMappingValue extends IDisplayUnit {
     static MappingPoint[] getAllPointsForDiscreteIO(IPositionValueSetter mappingValue, int outputValue) {
         MappingPoint[] arr = new MappingPoint[mappingValue.getAllOutputValues().length];
         for (int i = 0; i < arr.length; i++) {
-            arr[i] = new MappingPoint(i,outputValue);
+            arr[i] = new MappingPoint(i, outputValue);
         }
         return arr;
     }
@@ -30,9 +30,10 @@ public interface IMappingValue extends IDisplayUnit {
     }
 
     /**
-     * virtual values dont exist in the "real world", the dimension. f.e. actionfilter or intermediate values are
-     * virtual
-     * height slope and waterheight are real values from the world.
+     * virtual values dont exist in the "real world", the dimension. f.e.
+     * actionfilter or intermediate values are virtual height slope and waterheight
+     * are real values from the world.
+     *
      * @return
      */
     boolean isVirtual();
@@ -50,7 +51,8 @@ public interface IMappingValue extends IDisplayUnit {
     String valueToString(int value);
 
     /**
-     * if the output layer can be smoothly interpolated or only knows discrete values
+     * if the output layer can be smoothly interpolated or only knows discrete
+     * values
      *
      * @return
      */

@@ -8,7 +8,8 @@ import org.pepsoft.worldpainter.layers.Layer;
 import java.awt.*;
 import java.util.Arrays;
 
-public class AnnotationSetter implements IPositionValueGetter, IPositionValueSetter, ILayerGetter {
+public class AnnotationSetter implements IPositionValueGetter, IPositionValueSetter, ILayerGetter
+{
     public static final int ANNOTATION_ABSENT = 0;
     public static final int ANNOTATION_WHITE = 1;
     public static final int ANNOTATION_ORANGE = 2;
@@ -25,34 +26,26 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     public static final int ANNOTATION_GREEN = 13;
     public static final int ANNOTATION_RED = 14;
     public static final int ANNOTATION_BLACK = 15;
-    private static final Color[] COLORS =
-            new Color[]{Color.WHITE, Color.WHITE, Color.ORANGE, Color.MAGENTA, new Color(107, 177, 255),   //LIGHT BLUE
-                    Color.YELLOW, new Color(34, 153, 84), //LIME
-                    Color.pink, Color.lightGray, Color.cyan, new Color(128, 0, 128), //purple
-                    Color.BLUE, new Color(165, 42, 42), // brown
-                    Color.GREEN, Color.RED, Color.BLACK};
+    private static final Color[] COLORS = new Color[]{Color.WHITE, Color.WHITE, Color.ORANGE, Color.MAGENTA,
+            new Color(107, 177, 255), // LIGHT BLUE
+            Color.YELLOW, new Color(34, 153, 84), // LIME
+            Color.pink, Color.lightGray, Color.cyan, new Color(128, 0, 128), // purple
+            Color.BLUE, new Color(165, 42, 42), // brown
+            Color.GREEN, Color.RED, Color.BLACK};
     private static AnnotationSetter instance;
     public static final int IGNORE_OUTPUT = -1;
-    private final int[] OUTPUT_VALUES = new int[]{
-            IGNORE_OUTPUT,
-            ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE, ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK, ANNOTATION_LIGHT_GREY,
-            ANNOTATION_CYAN, ANNOTATION_PURPLE, ANNOTATION_BLUE,
-            ANNOTATION_BROWN,
-            ANNOTATION_GREEN,
-            ANNOTATION_RED,
-            ANNOTATION_BLACK
-    };
-    private final int[] INPUT_VALUES = new int[]{
-            ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE, ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK, ANNOTATION_LIGHT_GREY,
-            ANNOTATION_CYAN, ANNOTATION_PURPLE, ANNOTATION_BLUE,
-            ANNOTATION_BROWN,
-            ANNOTATION_GREEN,
-            ANNOTATION_RED,
-            ANNOTATION_BLACK
-    };
+    private final int[] OUTPUT_VALUES = new int[]{IGNORE_OUTPUT, ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE,
+            ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK,
+            ANNOTATION_LIGHT_GREY, ANNOTATION_CYAN, ANNOTATION_PURPLE, ANNOTATION_BLUE, ANNOTATION_BROWN,
+            ANNOTATION_GREEN, ANNOTATION_RED, ANNOTATION_BLACK};
+    private final int[] INPUT_VALUES = new int[]{ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE,
+            ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK,
+            ANNOTATION_LIGHT_GREY, ANNOTATION_CYAN, ANNOTATION_PURPLE, ANNOTATION_BLUE, ANNOTATION_BROWN,
+            ANNOTATION_GREEN, ANNOTATION_RED, ANNOTATION_BLACK};
 
     private static AnnotationSetter getInstance() {
-        if (instance == null) instance = new AnnotationSetter();
+        if (instance == null)
+            instance = new AnnotationSetter();
         return instance;
     }
 
@@ -75,7 +68,6 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     public int getMinValue() {
         return 0;
     }
-
 
     @Override
     public int[] getAllInputValues() {
@@ -101,7 +93,8 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     public String valueToString(int value) {
         if (value == IGNORE_OUTPUT)
             return "Skip";
-        if (value == ANNOTATION_ABSENT) return "No annotation";
+        if (value == ANNOTATION_ABSENT)
+            return "No annotation";
         try {
             String name = Annotations.getColourName(value);
             return name;
