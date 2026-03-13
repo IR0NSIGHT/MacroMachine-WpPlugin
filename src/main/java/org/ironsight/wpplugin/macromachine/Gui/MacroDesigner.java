@@ -578,7 +578,7 @@ public class MacroDesigner extends JPanel {
                 .collect(Collectors.toCollection(HashSet::new)));
 
         JDialog dialog =
-                new DisplayUnitPickerDialog(macrosAndActions, this::onPickerSelection, new ArrayList<>(defaultActions),
+                new DisplayUnitPickerDialog(macrosAndActions, this::onPickerSelection, new ArrayList<>(defaultActions), false,
                         this, macroFilter, defaultFilter, customActionsFilter);
         dialog.setModal(true);
         dialog.setVisible(true);

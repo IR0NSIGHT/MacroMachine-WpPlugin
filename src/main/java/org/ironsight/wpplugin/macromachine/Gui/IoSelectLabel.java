@@ -14,10 +14,17 @@ import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.D
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.SELECTED_BACKGROUND;
 
 public class IoSelectLabel extends JPanel {
-    private DisplayUnitRenderer renderer = new DisplayUnitRenderer(f->true);
-    private IMappingValue selected;
     private final IMappingValueProvider provider;
+    private DisplayUnitRenderer renderer = new DisplayUnitRenderer(f -> true);
+    private IMappingValue selected;
     private Consumer<IMappingValue> onChangeCallback;
+
+    /**
+     * component to display currently selected input or output (getter/setter) and select-editor on click
+     *
+     * @param onChangeCallback
+     * @param provider
+     */
     public IoSelectLabel(Consumer<IMappingValue> onChangeCallback, IMappingValueProvider provider) {
         this.provider = provider;
         this.onChangeCallback = onChangeCallback;
@@ -29,15 +36,17 @@ public class IoSelectLabel extends JPanel {
     }
 
     private void showPickingDialog() {
-        new DisplayUnitPickerDialog(new ArrayList<IDisplayUnit>(provider.getItems()),this::onPickerSubmit,
-                Collections.emptyList(),
+        new DisplayUnitPickerDialog(new ArrayList<IDisplayUnit>(provider.getItems()), this::onPickerSubmit,
+                Collections.emptyList(), true,
                 this).setVisible(true);
 
     }
+
     private void onPickerSubmit(IDisplayUnit selected) {
-        SetSelected((IMappingValue)selected);
+        SetSelected((IMappingValue) selected);
         onChangeCallback.accept(((IMappingValue) selected).instantiateFrom(((IMappingValue) selected).getSaveData()));  //return clone
     }
+
     private void addClickListener(JPanel panel) {
         panel.addMouseListener(new MouseAdapter() {
             @Override

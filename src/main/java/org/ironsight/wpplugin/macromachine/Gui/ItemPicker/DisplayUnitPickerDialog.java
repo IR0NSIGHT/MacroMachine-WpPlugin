@@ -25,16 +25,27 @@ import static org.ironsight.wpplugin.macromachine.Gui.MacroDesigner.getDefaultFi
 public class DisplayUnitPickerDialog extends JDialog {
 
     private final DisplayValueRowFilter rowFilter = new DisplayValueRowFilter();
-    private HashSet<PickerFilterOption> activeFilters = new HashSet<>();
-    private TableRowSorter<TableModel> rowSorter;
     private final Consumer<IDisplayUnit> onSubmit;
-    public DisplayUnitPickerDialog(ArrayList<IDisplayUnit> layerMappings,
-                                   Consumer<IDisplayUnit> onSubmit,
-                                   Collection<IDisplayUnit> topActions,
-                                   Component parent, PickerFilterOption... filters) {
+    private final boolean singleSelect;
+    private final HashSet<PickerFilterOption> activeFilters = new HashSet<>();
+    private TableRowSorter<TableModel> rowSorter;
+    private JTable table;
+    private JTextField searchField;
+
+    /**
+     * @param layerMappings
+     * @param onSubmit
+     * @param topActions
+     * @param singleSelect  close automatically after first submit
+     * @param parent
+     * @param filters
+     */
+    public DisplayUnitPickerDialog(ArrayList<IDisplayUnit> layerMappings, Consumer<IDisplayUnit> onSubmit, Collection<IDisplayUnit> topActions, boolean singleSelect, Component parent,
+                                   PickerFilterOption... filters) {
         super();
         this.setLayout(new BorderLayout());
         this.onSubmit = onSubmit;
+        this.singleSelect = singleSelect;
         init(layerMappings, onSubmit, topActions);
         initFilters(filters);
         setupKeyActions();
@@ -47,9 +58,71 @@ public class DisplayUnitPickerDialog extends JDialog {
         }
 
         tableSelectFirstRow();
-        SwingUtilities.invokeLater(() ->
-            searchField.requestFocus()
-        );
+        SwingUtilities.invokeLater(() -> searchField.requestFocus());
+    }
+
+    public static void main(String[] args) {
+        // CUSTOM ACTIONS
+        MappingActionContainer container = new MappingActionContainer(null);
+        for (int i = 0; i < 20; i++) MappingActionContainer.addDefaultMappings(container);
+
+        // MACROS
+        ArrayList<Macro> macros = new ArrayList<>(5);
+        for (int i = 0; i < 5; i++) {
+            macros.add(new Macro("Macro_" + i, "", new UUID[0], UUID.randomUUID(), new boolean[0]));
+        }
+
+        // DEFAULT ACTIONS
+        Collection<MappingAction> defaultMappings = getDefaultFiltersAndEmptyAction();
+        Collection<UUID> defaultUUIDs = new ArrayList<>();
+        defaultMappings.stream().forEach(m -> defaultUUIDs.add(m.getUid()));
+
+        // SELECT ALL
+        ArrayList<IDisplayUnit> allItems = new ArrayList<>();
+        allItems.addAll(container.queryAll());
+        allItems.addAll(macros);
+        allItems.addAll(defaultMappings);
+
+
+        JFrame frame = new JFrame("Select Layer Mapping");
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setVisible(true);
+
+        PickerFilterOption showMacrosFilter = new PickerFilterOption("macros", "show macros") {
+            @Override
+            public boolean block(Object item) {
+                return item instanceof Macro;
+            }
+        };
+
+
+        PickerFilterOption showActions = new PickerFilterOption("defaults", "show default actions") {
+            final Set<UUID> matchingIds = defaultMappings.stream().map(MappingAction::getUid).collect(Collectors.toCollection(HashSet::new));
+
+            @Override
+            public boolean block(Object item) {
+                return item instanceof MappingAction && matchingIds.contains(((MappingAction) item).getUid());
+            }
+        };
+
+        PickerFilterOption showCustom = new PickerFilterOption("custom", "show user created actions") {
+            final Set<UUID> matchingIds = container.queryAll().stream().map(MappingAction::getUid).collect(Collectors.toCollection(HashSet::new));
+
+            @Override
+            public boolean block(Object item) {
+                return item instanceof MappingAction && matchingIds.contains(((MappingAction) item).getUid());
+            }
+        };
+
+        showMacrosFilter.setActive(true);
+        showActions.setActive(true);
+        showCustom.setActive(true);
+
+        Dialog dlg = new DisplayUnitPickerDialog(allItems, System.out::println, Collections.singleton(MappingAction.getNewEmptyAction()), false, frame, showMacrosFilter, showActions,
+                showCustom);
+
+
+        dlg.setVisible(true);
     }
 
     private void setupKeyActions() {
@@ -111,81 +184,12 @@ public class DisplayUnitPickerDialog extends JDialog {
                 if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
                     int row = table.rowAtPoint(e.getPoint());
                     if (row >= 0) {
-                        table.setRowSelectionInterval(row,row);
+                        table.setRowSelectionInterval(row, row);
                         onSubmitSelected(); // your method
                     }
                 }
             }
         });
-    }
-
-    public static void main(String[] args) {
-        // CUSTOM ACTIONS
-        MappingActionContainer container = new MappingActionContainer(null);
-        for (int i = 0; i < 20; i++) MappingActionContainer.addDefaultMappings(container);
-
-        // MACROS
-        ArrayList<Macro> macros = new ArrayList<>(5);
-        for (int i = 0; i < 5; i++) {
-            macros.add(new Macro("Macro_" + i, "", new UUID[0], UUID.randomUUID(), new boolean[0]));
-        }
-
-        // DEFAULT ACTIONS
-        Collection<MappingAction> defaultMappings = getDefaultFiltersAndEmptyAction();
-        Collection<UUID> defaultUUIDs = new ArrayList<>();
-        defaultMappings.stream().forEach(m -> defaultUUIDs.add(((MappingAction) m).getUid()));
-
-        // SELECT ALL
-        ArrayList<IDisplayUnit> allItems = new ArrayList<>();
-        allItems.addAll(container.queryAll());
-        allItems.addAll(macros);
-        allItems.addAll(defaultMappings);
-
-
-        JFrame frame = new JFrame("Select Layer Mapping");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setVisible(true);
-
-        PickerFilterOption showMacrosFilter = new PickerFilterOption("macros", "show macros") {
-            @Override
-            public boolean block(Object item) {
-                return item instanceof Macro;
-            }
-        };
-
-
-        PickerFilterOption showActions = new PickerFilterOption("defaults", "show default actions") {
-            Set<UUID> matchingIds = defaultMappings.stream()
-                    .map(MappingAction::getUid)
-                    .collect(Collectors.toCollection(HashSet::new));
-
-            @Override
-            public boolean block(Object item) {
-                return item instanceof MappingAction && matchingIds.contains(((MappingAction) item).getUid());
-            }
-        };
-
-        PickerFilterOption showCustom = new PickerFilterOption("custom","show user created actions") {
-            Set<UUID> matchingIds = container.queryAll().stream()
-                    .map(MappingAction::getUid)
-                    .collect(Collectors.toCollection(HashSet::new));
-            @Override
-            public boolean block(Object item) {
-                return item instanceof MappingAction && matchingIds.contains(((MappingAction) item).getUid());
-            }
-        };
-
-        showMacrosFilter.setActive(true);
-        showActions.setActive(true);
-        showCustom.setActive(true);
-
-        Dialog dlg = new DisplayUnitPickerDialog(allItems,
-                System.out::println,
-                Collections.singleton(MappingAction.getNewEmptyAction()),
-                frame, showMacrosFilter, showActions, showCustom);
-
-
-        dlg.setVisible(true);
     }
 
     private void addFilter(PickerFilterOption filter) {
@@ -222,11 +226,7 @@ public class DisplayUnitPickerDialog extends JDialog {
         this.add(filterCheckboxes, BorderLayout.NORTH);
     }
 
-    private JTable table;
-    private JTextField searchField;
-    private void init(ArrayList<IDisplayUnit> items,
-                      Consumer<IDisplayUnit> onSubmit,
-                      Collection<IDisplayUnit> specialTopAction) {
+    private void init(ArrayList<IDisplayUnit> items, Consumer<IDisplayUnit> onSubmit, Collection<IDisplayUnit> specialTopAction) {
 
         DefaultTableModel tableModel = createTableModel(items, specialTopAction);
         table = createTable(tableModel);
@@ -260,8 +260,7 @@ public class DisplayUnitPickerDialog extends JDialog {
         SwingUtilities.invokeLater(searchField::requestFocus);
     }
 
-    private DefaultTableModel createTableModel(ArrayList<IDisplayUnit> items,
-                                               Collection<IDisplayUnit> topActions) {
+    private DefaultTableModel createTableModel(ArrayList<IDisplayUnit> items, Collection<IDisplayUnit> topActions) {
         int rowCount = items.size() + (topActions != null ? topActions.size() : 0);
         DefaultTableModel model = new DefaultTableModel(new Object[rowCount][1], new String[]{"Items"}) {
             @Override
@@ -290,8 +289,7 @@ public class DisplayUnitPickerDialog extends JDialog {
     }
 
     private void resizeRowHeights(JTable table) {
-        if (table.getRowCount() < 1)
-            return;
+        if (table.getRowCount() < 1) return;
         TableCellRenderer renderer = table.getCellRenderer(0, 0);
         Component comp = table.prepareRenderer(renderer, 0, 0);
         int height = comp.getPreferredSize().height;
@@ -304,6 +302,7 @@ public class DisplayUnitPickerDialog extends JDialog {
         if (selectedRow >= 0) {
             IDisplayUnit selected = (IDisplayUnit) table.getValueAt(selectedRow, 0);
             this.onSubmit.accept(selected);
+            if (singleSelect) this.dispose();
         }
     }
 
@@ -335,8 +334,7 @@ public class DisplayUnitPickerDialog extends JDialog {
     }
 
     private void tableSelectFirstRow() {
-        if (table.getRowCount() > 0)
-            table.setRowSelectionInterval(0,0); // select first item after search changed
+        if (table.getRowCount() > 0) table.setRowSelectionInterval(0, 0); // select first item after search changed
     }
 
     private JPanel createSearchPanel(JTextField searchField) {
