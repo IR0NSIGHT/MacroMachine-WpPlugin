@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui.ItemPicker;
 
-import org.ironsight.wpplugin.macromachine.Gui.DisplayUnitRenderer;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
@@ -19,7 +19,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel.header1Font;
 import static org.ironsight.wpplugin.macromachine.Gui.MacroDesigner.getDefaultFiltersAndEmptyAction;
 
 public class DisplayUnitPickerDialog extends JDialog

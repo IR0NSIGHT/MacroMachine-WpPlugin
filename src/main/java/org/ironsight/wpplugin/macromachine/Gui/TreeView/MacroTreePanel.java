@@ -1,5 +1,6 @@
-package org.ironsight.wpplugin.macromachine.Gui;
+package org.ironsight.wpplugin.macromachine.Gui.TreeView;
 
+import org.ironsight.wpplugin.macromachine.Gui.*;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointButtonPanel;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointListener;
@@ -46,7 +47,7 @@ public class MacroTreePanel extends JPanel
     private JButton toggleButton;
     private boolean collapsed = false;
 
-    MacroTreePanel(MacroContainer container, MappingActionContainer mappingContainer, MacroApplicator applyToMap,
+    public MacroTreePanel(MacroContainer container, MappingActionContainer mappingContainer, MacroApplicator applyToMap,
             ISelectItemCallback onSelectAction) {
         this.applyToMap = applyToMap;
         this.macroContainer = container;

@@ -26,6 +26,15 @@ public class MappingActionContainer extends AbstractOperationContainer<MappingAc
         super(MappingAction.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultActions.json");
     }
 
+    private MappingActionContainer(MappingActionContainer container) {
+        super(container);
+    }
+
+    @Override
+    public synchronized MappingActionContainer copy() {
+        return new MappingActionContainer(this);
+    };
+
     public static MappingActionContainer getInstance() {
         return INSTANCE;
     }

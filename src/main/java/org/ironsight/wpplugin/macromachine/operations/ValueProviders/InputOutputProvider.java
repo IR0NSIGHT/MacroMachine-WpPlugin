@@ -21,8 +21,10 @@ public class InputOutputProvider
     public final ArrayList<IMappingValue> setters = new ArrayList<>();
     private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
     public ArrayList<IMappingValue> getters = new ArrayList<>();
-    HashSet<Layer> layers = new HashSet<>();
-    HashSet<String> layerIds = new HashSet<>();
+    private HashSet<Layer> layers = new HashSet<>();
+    private HashSet<String> layerIds = new HashSet<>();
+    private HashMap<String, Layer> layers_by_id = new HashMap<>();
+
     private AllowedLayerSettings inputSettings = new AllowedLayerSettings(true, true, true, true);
     private AllowedLayerSettings outputSettings = new AllowedLayerSettings(true, true, true, true);
     private Dimension dimension = null;
@@ -31,20 +33,24 @@ public class InputOutputProvider
         updateFrom(null);
     }
 
-    @Override
-    public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
-        for (Layer l : getLayers())
-            if (l.getId().equals(layerId))
-                return l;
-        layerNotFoundError.accept("could not find layer with id=" + layerId);
-        return null;
+    public synchronized Map<String, Layer> getLayersById() {
+        return layers_by_id;
     }
 
-    void subscribe(Runnable runnable) {
+    @Override
+    public synchronized Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
+        var map = getLayersById();
+        var found = map.getOrDefault(layerId, null);
+        if (found == null)
+            layerNotFoundError.accept("could not find layer with id=" + layerId);
+        return found;
+    }
+
+    synchronized void subscribe(Runnable runnable) {
         genericNotifies.add(runnable);
     }
 
-    public IMappingValueProvider asInputProvider() {
+    public synchronized IMappingValueProvider asInputProvider() {
         return new IMappingValueProvider() {
             @Override
             public Collection<IMappingValue> getItems() {
@@ -63,7 +69,7 @@ public class InputOutputProvider
         };
     }
 
-    public IMappingValueProvider asOutputProvider() {
+    public synchronized IMappingValueProvider asOutputProvider() {
         return new IMappingValueProvider() {
             @Override
             public Collection<IMappingValue> getItems() {
@@ -82,11 +88,12 @@ public class InputOutputProvider
         };
     }
 
-    public void updateFrom(Dimension dimension) {
+    public synchronized void updateFrom(Dimension dimension) {
         this.dimension = dimension;
         setters.clear();
         getters.clear();
 
+        updateLayersFromAPI();
         Iterable<Layer> layers = getLayers();
         for (Layer l : layers) {
             if (l instanceof CustomLayer)
@@ -171,7 +178,7 @@ public class InputOutputProvider
     }
 
     @Override
-    public Collection<IMappingValue> getItems() {
+    public synchronized Collection<IMappingValue> getItems() {
         ArrayList out = new ArrayList<>();
         out.addAll(getters);
         out.addAll(setters);
@@ -179,27 +186,20 @@ public class InputOutputProvider
     }
 
     @Override
-    public void subscribeToUpdates(Runnable r) {
+    public synchronized void subscribeToUpdates(Runnable r) {
         subscribe(r);
     }
 
     @Override
-    public boolean existsItem(Object item) {
+    public synchronized boolean existsItem(Object item) {
         return getItems().contains(item);
     }
 
-    private Dimension getDimension() {
+    private synchronized Dimension getDimension() {
         return dimension;
     }
 
-    /**
-     * gets layers from worldpainter API, each layer is the one loaded currently
-     * inside worldpainter, not some outdated instance.
-     *
-     * @return
-     */
-    @Override
-    public List<Layer> getLayers() {
+    public synchronized void updateLayersFromAPI() {
         LinkedList<Layer> layers = new LinkedList<>();
         if (getDimension() != null) {
             layers.addAll(LayerManager.getInstance().getLayers()); // vanilla layers
@@ -212,22 +212,33 @@ public class InputOutputProvider
                     .collect(Collectors.toCollection(ArrayList::new)));
         }
         layers.add(Annotations.INSTANCE); // hardcoded bc not part by default
-        for (Layer l : layers) {
-            this.layers.remove(l); // remove existing layer, to re-add with updated instance
+
+        for (Layer layer : layers) {
+            this.layers.add(layer);
+            this.layers_by_id.put(layer.getId(), layer);
+            this.layerIds.add(layer.getId());
         }
-        this.layers.addAll(layers);
-        for (Layer l : layers) {
-            layerIds.add(l.getId());
-        }
+        notifyListeners();
+    }
+
+    /**
+     * gets layers from worldpainter API, each layer is the one loaded currently
+     * inside worldpainter, not some outdated instance.
+     *
+     * @return
+     */
+    @Override
+    public synchronized List<Layer> getLayers() {
         return new ArrayList<>(this.layers);
     }
 
     @Override
-    public void addLayer(Layer layer) {
+    public synchronized void addLayer(Layer layer) {
         if (layer == null)
             return;
         this.layers.add(layer);
         this.layerIds.add(layer.getId());
+        this.layers_by_id.put(layer.getId(), layer);
 
         // add layer to worldpainter API
         var controller = new CustomLayerControllerWrapper();
@@ -237,7 +248,7 @@ public class InputOutputProvider
     }
 
     @Override
-    public boolean existsLayerWithId(String layerId) {
+    public synchronized boolean existsLayerWithId(String layerId) {
         return this.layerIds.contains(layerId);
     }
 

@@ -141,7 +141,7 @@ class LayerMappingContainerTest
                 System.getProperty("user.dir") + "/TestActions" + ".json");
 
         MappingAction mapping = container.addMapping();
-        container.subscribeToMapping(mapping.getUid(), runnable);
+        container.subscribeToMapping(mapping.getUid(), runnable); // FIXME this is obsolete, remove
 
         assertEquals(0, ran[0]);
         container.updateMapping(mapping.withNewPoints(new MappingPoint[]{new MappingPoint(1, 2)}), f -> {

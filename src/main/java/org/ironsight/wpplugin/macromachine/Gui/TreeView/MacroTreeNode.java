@@ -1,5 +1,6 @@
-package org.ironsight.wpplugin.macromachine.Gui;
+package org.ironsight.wpplugin.macromachine.Gui.TreeView;
 
+import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
@@ -12,10 +13,10 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
-class MacroTreeNode implements TreeNode
+public class MacroTreeNode implements TreeNode
 {
-    final Object payload;
-    GlobalActionPanel.SELECTION_TPYE payloadType;
+    public final Object payload;
+    public GlobalActionPanel.SELECTION_TPYE payloadType;
 
     public MacroTreeNode[] getChildren() {
         return children;
