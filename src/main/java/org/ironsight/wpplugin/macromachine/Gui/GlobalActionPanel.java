@@ -257,8 +257,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
         MacroContainer macroContainer = MacroContainer.getInstance();
         MappingActionContainer actionContainer = MappingActionContainer.getInstance();
 
-        //  macroContainer.subscribe(() -> SwingUtilities.invokeLater(this::onUpdate));
-        //  actionContainer.subscribe(() -> SwingUtilities.invokeLater(this::onUpdate));
+        // macroContainer.subscribe(() -> SwingUtilities.invokeLater(this::onUpdate));
+        // actionContainer.subscribe(() -> SwingUtilities.invokeLater(this::onUpdate));
 
         this.setLayout(new BorderLayout());
         macroTreePanel = new MacroTreePanel(MacroContainer.getInstance(), MappingActionContainer.getInstance(),
