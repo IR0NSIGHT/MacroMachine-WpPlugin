@@ -33,7 +33,20 @@ public class RangeTableEditor extends LayerMappingPanel
         { // prepare main body components
             { // table
                 model = new RangeTableModel();
-                table = new JTable(model);
+                table = new JTable(model) {
+                    @Override
+                    public String getToolTipText(MouseEvent e) {
+                        Point p = e.getPoint();
+                        int row = rowAtPoint(p);
+                        int col = columnAtPoint(p);
+
+                        if (row == -1 || col == -1) {
+                            return null;
+                        }
+
+                        return getToolTipForRow(row);
+                    }
+                };
                 table.setDefaultEditor(MappingPointValue.class, new MappingPointCellEditor(new int[]{0, 1}));
                 table.setDefaultRenderer(MappingPointValue.class, new MappingPointCellRenderer());
                 scrollPane = new JScrollPane();
@@ -76,6 +89,33 @@ public class RangeTableEditor extends LayerMappingPanel
         }
 
         initTableListener();
+    }
+
+    public static String Explain(MappingPointValue inputStart, MappingPointValue inputEnd, MappingPointValue output, ActionType actionType) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Where ")
+                .append(inputStart.mappingValue.getName())
+                .append(" is between ")
+                .append(inputStart.mappingValue.valueToString(inputStart.numericValue))
+                .append(" and ")
+                .append(inputStart.mappingValue.valueToString(inputEnd.numericValue))
+                .append(", ");
+        if (output.mappingValue instanceof IPositionValueSetter setter && setter.isIgnoreValue(output.numericValue)) {
+            builder.append(" do nothing.");
+        } else {
+            builder.append(actionType.getExplanationFor(output)).append(".");
+        }
+
+        return builder.toString();
+    }
+
+    private String getToolTipForRow(int row) {
+        if (model.getValueAt(row, 0) instanceof MappingPointValue inputStart &&
+                model.getValueAt(row, 1) instanceof MappingPointValue inputEnd
+                && model.getValueAt(row, 2) instanceof MappingPointValue output) {
+            return Explain(inputStart, inputEnd, output, mapping.getActionType());
+        }
+        return "";
     }
 
     public static void main(String[] args) {

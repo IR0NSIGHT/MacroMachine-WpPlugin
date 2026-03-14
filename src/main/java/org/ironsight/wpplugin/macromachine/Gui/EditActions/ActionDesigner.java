@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
+import org.ironsight.wpplugin.macromachine.Gui.EditActions.RangeEditor.RangeTableEditor;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.layers.PineForest;
@@ -20,6 +21,7 @@ public class ActionDesigner extends LayerMappingPanel
     private BlockingSelectionModel selectionModel;
     private final Consumer<MappingAction> onSubmit;
     private MappingGridPanel gridPanel;
+    private RangeTableEditor rangeTableEditor;
     private MappingTextTable table;
     private LayerMappingTopPanel topBar;
 
@@ -44,10 +46,21 @@ public class ActionDesigner extends LayerMappingPanel
 
     @Override
     protected void updateComponents() {
-        gridPanel.setVisible(!mapping.input.isDiscrete());
+        MappingAction action = mapping;
+        boolean isRangeTableAction = !action.getInput().isDiscrete() && action.getOutput().isDiscrete();
+
+        // set visibility for the specific editor we want
+        gridPanel.setVisible(!isRangeTableAction && !mapping.input.isDiscrete());
+        table.setVisible(!isRangeTableAction);
+        rangeTableEditor.setVisible(isRangeTableAction);
+
+        // update editors with values
         gridPanel.setMapping(mapping);
+        rangeTableEditor.setMapping(mapping);
         model.rebuildModelFromAction(mapping);
         topBar.setMapping(mapping);
+
+        this.invalidate();
         this.repaint();
     }
 
@@ -97,7 +110,12 @@ public class ActionDesigner extends LayerMappingPanel
         gridPanel = new MappingGridPanel(selectionModel);
         assert model != null;
         assert selectionModel != null;
+        JPanel tablePanel = new JPanel();
         table = new MappingTextTable(model, selectionModel);
+        tablePanel.add(table);
+
+        rangeTableEditor = new RangeTableEditor(onSubmit);
+        tablePanel.add(rangeTableEditor);
 
         model.addTableModelListener(l -> {
             if (l.getType() == TableModelEvent.DELETE)
@@ -134,7 +152,7 @@ public class ActionDesigner extends LayerMappingPanel
                 + "Change a point by dragging it or selecting different values in the table."));
 
         this.add(topBar, BorderLayout.NORTH);
-        this.add(table, BorderLayout.EAST);
+        this.add(tablePanel, BorderLayout.EAST);
         this.add(buttonPanel, BorderLayout.SOUTH);
         this.add(gridPanel, BorderLayout.CENTER);
     }
