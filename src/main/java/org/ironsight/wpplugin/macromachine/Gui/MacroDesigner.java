@@ -406,6 +406,9 @@ public class MacroDesigner extends JPanel
                         popupMenu.show(table, e.getX(), e.getY());
                     }
                 }
+                if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
+                    onEditItem(); // Double click to edit
+                }
             }
         });
 
