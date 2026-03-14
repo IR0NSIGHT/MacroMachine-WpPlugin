@@ -366,4 +366,11 @@ public class Macro implements SaveableAction
     public UUID getUid() {
         return uid;
     }
+
+    @Override
+    public String toString() {
+        return "Macro{" + "executionUUIDs=" + Arrays.toString(executionUUIDs) + ", activeActions="
+                + Arrays.toString(activeActions) + ", name='" + name + '\'' + ", description='" + description + '\''
+                + ", uid=" + uid + ", isActive=" + isActive + '}';
+    }
 }
