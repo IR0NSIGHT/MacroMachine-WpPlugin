@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.macromachine.Gui;
+package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;

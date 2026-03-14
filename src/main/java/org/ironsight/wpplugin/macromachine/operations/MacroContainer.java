@@ -19,6 +19,15 @@ public class MacroContainer extends AbstractOperationContainer<Macro>
         super(Macro.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultMacros.json");
     }
 
+    private MacroContainer(MacroContainer container) {
+        super(container);
+    }
+
+    @Override
+    public synchronized MacroContainer copy() {
+        return new MacroContainer(this);
+    };
+
     public static void SetInstance(MacroContainer container) {
         assert instance == null;
         instance = container;

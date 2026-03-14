@@ -1,6 +1,10 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.ironsight.wpplugin.macromachine.Gui.EditActions.ActionDesigner;
+import org.ironsight.wpplugin.macromachine.Gui.EditActions.InputOutputEditor;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.MacroTreePanel;
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
+import org.ironsight.wpplugin.macromachine.SaveAllWorker;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
@@ -78,11 +82,12 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
                 s -> ErrorPopUpString("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s),
                 InputOutputProvider.INSTANCE);
 
-        Runnable saveEverything = () -> ContainerIO.exportToFile(MappingActionContainer.getInstance(),
-                MacroContainer.getInstance(), saveFile, new ImportExportPolicy(), System.err::println,
-                InputOutputProvider.INSTANCE);
-        MappingActionContainer.getInstance().subscribe(saveEverything);
-        MacroContainer.getInstance().subscribe(saveEverything);
+        SaveAllWorker fileWriter = new SaveAllWorker(MacroContainer.getInstance(), MappingActionContainer.getInstance(),
+                saveFile);
+        fileWriter.start();
+
+        MappingActionContainer.getInstance().subscribe(fileWriter::flagForSave);
+        MacroContainer.getInstance().subscribe(fileWriter::flagForSave);
         InputOutputProvider.INSTANCE.updateFrom(null);
         // Create and show a JFrame
         JFrame frame = new JFrame("Main Window");
@@ -364,7 +369,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
 
     }
 
-    enum SELECTION_TPYE {
+    public enum SELECTION_TPYE {
         MACRO, ACTION, INPUT, OUTPUT, INVALID, NONE
     }
 

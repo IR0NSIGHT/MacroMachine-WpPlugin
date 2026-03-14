@@ -44,11 +44,6 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
         }
         shift = min;
         multi = (max - min);
-
-        if (imagesByValue == null) {
-            imagesByValue = new BufferedImage[0];
-            imagesByValue = getImagesForValues();
-        }
     }
 
     @Override
@@ -151,6 +146,10 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         int point = (int) Math.round(100f * (value - getMinValue()) / getMaxValue());
+        if (imagesByValue == null) {
+            imagesByValue = new BufferedImage[0];
+            imagesByValue = getImagesForValues();
+        }
         BufferedImage img = imagesByValue[point];
         g.drawImage(img, 0, 0, dim.width, dim.height, null);
     }

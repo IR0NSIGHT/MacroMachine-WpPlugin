@@ -6,10 +6,10 @@ import java.net.URL;
 
 public class IconManager
 {
-    enum Icon {
+    public enum Icon {
         MACRO("/icons/macro.png"), ACTION("/icons/action.png"), INPUT("/icons/input.png"), OUTPUT(
                 "/icons/output.png"), PARAM("/icons/param.png"), INVALID("/icons/invalid.png");
-        private Icon(String resourcePath) {
+        Icon(String resourcePath) {
             this.resourcePath = resourcePath;
         }
         ImageIcon icon;

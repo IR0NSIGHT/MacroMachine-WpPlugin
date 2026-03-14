@@ -1,7 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.FileIO;
 
-import org.ironsight.wpplugin.macromachine.Gui.MacroTreePanel;
-import org.ironsight.wpplugin.macromachine.Gui.DisplayUnitRenderer;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.MacroTreePanel;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;

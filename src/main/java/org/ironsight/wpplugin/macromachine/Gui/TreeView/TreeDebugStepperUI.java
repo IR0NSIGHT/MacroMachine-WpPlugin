@@ -1,5 +1,6 @@
-package org.ironsight.wpplugin.macromachine.Gui;
+package org.ironsight.wpplugin.macromachine.Gui.TreeView;
 
+import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointListener;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;

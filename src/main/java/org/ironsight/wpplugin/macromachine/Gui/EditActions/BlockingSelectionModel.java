@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.macromachine.Gui;
+package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
 import javax.swing.*;
 

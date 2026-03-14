@@ -1,7 +1,10 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel;
 import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.DisplayUnitPickerDialog;
 import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.PickerFilterOption;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.MacroTreePanel;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
@@ -497,9 +500,8 @@ public class MacroDesigner extends JPanel
             selected = ((MappingAction) selected).deepCopy();
         ArrayList<Integer> newSelection = new ArrayList<>();
         Macro newMacro = Macro.insertSaveableActionToList(macro.clone(), (SaveableAction) selected,
-                () -> actionContainer.addMapping(),
-                a -> actionContainer.updateMapping(a, GlobalActionPanel::ErrorPopUpString), table.getSelectedRows(),
-                newSelection);
+                actionContainer::addMapping, a -> actionContainer.updateMapping(a, GlobalActionPanel::ErrorPopUpString),
+                table.getSelectedRows(), newSelection);
         setMacro(newMacro, true);
         assert getMacro().equals(newMacro)
                 : "macro was added an action, but action is not " + "present after gui update";

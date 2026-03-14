@@ -1,4 +1,4 @@
-package org.ironsight.wpplugin.macromachine.Gui;
+package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
 import org.ironsight.wpplugin.macromachine.operations.ActionType;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
@@ -21,8 +21,8 @@ import java.util.function.Function;
 
 import static java.awt.Image.SCALE_FAST;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
-import static org.ironsight.wpplugin.macromachine.Gui.MappingActionValueTableModel.INPUT_COLUMN_IDX;
-import static org.ironsight.wpplugin.macromachine.Gui.MappingActionValueTableModel.OUTPUT_COLUMN_IDX;
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.INPUT_COLUMN_IDX;
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.OUTPUT_COLUMN_IDX;
 
 public class MappingTextTable extends JPanel
 {

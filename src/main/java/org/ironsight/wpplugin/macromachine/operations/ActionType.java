@@ -1,6 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import org.ironsight.wpplugin.macromachine.Gui.MappingPointValue;
+import org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingPointValue;
 
 /**
  * defines how a MappingAction influences its output. SET: overwrite value, dont

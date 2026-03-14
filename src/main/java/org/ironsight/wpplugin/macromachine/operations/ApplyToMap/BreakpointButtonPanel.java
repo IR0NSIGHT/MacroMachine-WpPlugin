@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
 import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_FOREGROUND;
-import static org.ironsight.wpplugin.macromachine.Gui.LayerMappingTopPanel.header1Font;
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel.header1Font;
 
 public class BreakpointButtonPanel extends JPanel implements DebugUserInterface
 {

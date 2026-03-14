@@ -1,5 +1,6 @@
-package org.ironsight.wpplugin.macromachine.Gui;
+package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
 import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.DisplayUnitPickerDialog;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 

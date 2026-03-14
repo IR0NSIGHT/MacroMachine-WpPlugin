@@ -24,6 +24,23 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
     private final String defaultFileResourcePath;
     private String filePath;
 
+    /**
+     * copy constructor
+     *
+     * @param source
+     */
+    protected AbstractOperationContainer(AbstractOperationContainer source) {
+        type = source.type;
+        defaultFileResourcePath = source.defaultFileResourcePath;
+        mappings.putAll(source.mappings);
+        filePath = source.filePath;
+    }
+
+    public synchronized AbstractOperationContainer<T> copy() {
+        assert false;
+        return null;
+    };
+
     protected AbstractOperationContainer(Class<T> type, String filePath, String defaultFileResourcePath) {
         this.type = type;
         this.filePath = filePath;
@@ -83,23 +100,23 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
         }
     }
 
-    public String getFilePath() {
+    public synchronized String getFilePath() {
         return filePath;
     }
 
-    public void setFilePath(String filePath) {
+    public synchronized void setFilePath(String filePath) {
         this.filePath = filePath;
     }
 
-    public void updateMapping(T mapping, Consumer<String> onError) {
+    public synchronized void updateMapping(T mapping, Consumer<String> onError) {
         updateMapping(onError, mapping);
     }
 
-    public T queryById(UUID uid) {
+    public synchronized T queryById(UUID uid) {
         return mappings.get(uid);
     }
 
-    public boolean queryContains(UUID uuid) {
+    public synchronized boolean queryContains(UUID uuid) {
         return mappings.containsKey(uuid);
     }
 
@@ -113,7 +130,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
             }
     }
 
-    public void deleteMapping(UUID... uid) {
+    public synchronized void deleteMapping(UUID... uid) {
         LinkedList<UUID> list = new LinkedList<>();
         for (UUID u : uid) {
             T removed = mappings.remove(u);
@@ -124,7 +141,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
         notify(list.toArray(new UUID[0]));
     }
 
-    public void updateMapping(Consumer<String> onError, T... items) {
+    public synchronized void updateMapping(Consumer<String> onError, T... items) {
         UUID[] uids = new UUID[items.length];
         int idx = 0;
         for (T mapping : items) {
@@ -143,11 +160,11 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
         notify(Arrays.copyOf(uids, idx));
     }
 
-    protected UUID getUUID() {
+    protected synchronized UUID getUUID() {
         return UUID.randomUUID();
     }
 
-    public T addMapping(UUID uuid) {
+    public synchronized T addMapping(UUID uuid) {
         T newMap = getNewAction(uuid);
         mappings.put(newMap.getUid(), newMap);
 
@@ -155,15 +172,15 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
         return newMap;
     }
 
-    public T addMapping() {
+    public synchronized T addMapping() {
         T newMap = getNewAction();
         mappings.put(newMap.getUid(), newMap);
 
-        notify(newMap.getUid());
+        notify(newMap.getUid()); // FIXME push this to graphics thread?
         return newMap;
     }
 
-    public T addMapping(T item) {
+    public synchronized T addMapping(T item) {
         if (item.getUid() == null) {
             assert false : " items HAVE to have a UUID";
             return item;
@@ -173,36 +190,40 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
         return item;
     }
 
-    protected abstract T getNewAction();
+    protected synchronized T getNewAction() {
+        return null;
+    };
 
-    protected abstract T getNewAction(UUID uuid);
+    protected synchronized T getNewAction(UUID uuid) {
+        return null;
+    };
 
-    public void subscribe(Runnable runnable) {
+    public synchronized void subscribe(Runnable runnable) {
         genericNotifies.add(runnable);
     }
 
-    public void unsubscribe(Runnable runnable) {
+    public synchronized void unsubscribe(Runnable runnable) {
         genericNotifies.remove(runnable);
     }
 
-    public void subscribeToMapping(UUID uid, Runnable runnable) {
+    public synchronized void subscribeToMapping(UUID uid, Runnable runnable) {
         ArrayList<Runnable> listeners = uidNotifies.getOrDefault(uid, new ArrayList<>());
         listeners.add(runnable);
         uidNotifies.put(uid, listeners);
     }
 
-    public void unsubscribeToMapping(UUID uid, Runnable runnable) {
+    public synchronized void unsubscribeToMapping(UUID uid, Runnable runnable) {
         ArrayList<Runnable> listeners = uidNotifies.getOrDefault(uid, null);
         if (listeners != null)
             listeners.remove(runnable);
     }
 
-    public ArrayList<T> queryAll() {
+    public synchronized ArrayList<T> queryAll() {
         ArrayList<T> list = new ArrayList<>(mappings.values());
         return list;
     }
 
-    public void readFromFile() {
+    public synchronized void readFromFile() {
         if (suppressFileWriting)
             return;
         try {
@@ -219,14 +240,15 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
         }
     }
 
-    protected abstract void fromSaveObject(String jsonString) throws JsonProcessingException;
+    protected synchronized void fromSaveObject(String jsonString) throws JsonProcessingException {
+    };
 
-    protected void putMapping(T mapping) {
+    protected synchronized void putMapping(T mapping) {
         assert !mappings.containsKey(mapping.getUid());
         mappings.put(mapping.getUid(), mapping);
     }
 
-    public void writeToFile() {
+    public synchronized void writeToFile() {
         if (suppressFileWriting)
             return;
 
@@ -246,5 +268,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
         }
     }
 
-    protected abstract <T extends Serializable> T toSaveObject();
+    protected synchronized <T extends Serializable> T toSaveObject() {
+        return null;
+    };
 }
