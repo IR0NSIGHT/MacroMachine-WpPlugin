@@ -221,7 +221,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
 
         switch (selectionType) {
             case MACRO :
-                macroDesigner.setMacro(macro, true);
+                macroDesigner.onUserSelectedMacro(macro);
                 layout.show(editorPanel, MACRO_DESIGNER);
                 macroTreePanel.selectItemInTree(macro);
                 break;
@@ -255,10 +255,10 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
 
     private void init() {
         MacroContainer macroContainer = MacroContainer.getInstance();
-        macroContainer.subscribe(this::onUpdate);
-
         MappingActionContainer actionContainer = MappingActionContainer.getInstance();
-        actionContainer.subscribe(this::onUpdate);
+
+        //  macroContainer.subscribe(() -> SwingUtilities.invokeLater(this::onUpdate));
+        //  actionContainer.subscribe(() -> SwingUtilities.invokeLater(this::onUpdate));
 
         this.setLayout(new BorderLayout());
         macroTreePanel = new MacroTreePanel(MacroContainer.getInstance(), MappingActionContainer.getInstance(),
