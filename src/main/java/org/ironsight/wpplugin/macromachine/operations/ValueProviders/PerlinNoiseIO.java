@@ -4,6 +4,7 @@ import com.kenperlin.ImprovedNoise;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
@@ -143,12 +144,29 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
         return images;
     }
     private static BufferedImage[] imagesByValue;
+
+    boolean isGenerating = false;
+    private void generateImageTask() {
+        if (isGenerating)
+            return;
+        isGenerating = true;
+        new Thread(() -> {
+            var image = getImagesForValues();
+
+            SwingUtilities.invokeLater(() -> {
+                imagesByValue = image;
+            });
+
+        }).start();
+    }
+
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
         int point = (int) Math.round(100f * (value - getMinValue()) / getMaxValue());
+
         if (imagesByValue == null) {
-            imagesByValue = new BufferedImage[0];
-            imagesByValue = getImagesForValues();
+            generateImageTask();
+            return;
         }
         BufferedImage img = imagesByValue[point];
         g.drawImage(img, 0, 0, dim.width, dim.height, null);
