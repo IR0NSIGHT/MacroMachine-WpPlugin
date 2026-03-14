@@ -13,7 +13,6 @@ import org.pepsoft.worldpainter.operations.PaintOperation;
 import org.pepsoft.worldpainter.painting.Paint;
 
 import javax.swing.*;
-import javax.vecmath.Point2f;
 import javax.vecmath.Point3i;
 import javax.vecmath.Point4f;
 import java.awt.*;
@@ -341,17 +340,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
         Dimension dimension = getDimension();
         if (lastPosition != null) {
-            // limit slope if necessary by adjusting thisPos.z
-            if (slopeLimit != 0) {
-                float distanceBetweenPositions = new Point2f(thisPosition.x, thisPosition.y)
-                        .distance(new Point2f(lastPosition.x, lastPosition.y));
-                float slopeMax = distanceBetweenPositions * slopeLimit / 16f;
-                if (thisPosition.z < lastPosition.z)
-                    thisPosition.z = Math.max(thisPosition.z, lastPosition.z - slopeMax);
-                else if (thisPosition.z > lastPosition.z)
-                    thisPosition.z = Math.min(thisPosition.z, lastPosition.z + slopeMax);
-            }
-
             // get new path section and append it
             var pathRes = getPathFromHandles(pathHandles, handleStrength);
 
@@ -365,7 +353,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
             // cut off last segment that will change on next click anyways
             Point4f secondLastHandle = pathHandles.get(pathHandles.size() - 2);
-            var path = pathRes.path.subList(0,
+            final var path = pathRes.path.subList(0,
                     pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
 
             // changed segment: thirdlast to secondLast handle
@@ -381,6 +369,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 PathToolBackend.forcePathOnlyDownhill(path);
             if (fixHeightTo)
                 PathToolBackend.forcePathToHeight(path, getFixHeight());
+
+            if (slopeLimit != 0)
+                PathToolBackend.enforceSlopeLimit(path, slopeLimit);
+
             forceRadiusAtLeast(path, .5f); // always at least 1 thick
 
             // collect tiles where the newly added path section passed through
@@ -414,6 +406,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                         TILE_SIZE + ((tilePos.y) << TILE_SIZE_BITS));
                 var paintOutput = new FloatTile(tilePos);
                 paintOutputMap.put(tilePos, paintOutput);
+
                 return PathToolBackend.applyToTile(cachedTiles.get(tilePos), paintOutput, tilePos, brushProfile,
                         PathToolBackend.getSubPathFor(tileAreaStart, tileAreaEnd, path, transitionMultiplier),
                         getTransitionMultiplier());
