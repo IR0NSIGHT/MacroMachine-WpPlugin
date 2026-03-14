@@ -338,8 +338,8 @@ public class MacroTreePanel extends JPanel
 
     private void init() {
         contentPanel = new JPanel();
-        macroContainer.subscribe(this::update);
-        mappingContainer.subscribe(this::update);
+        macroContainer.subscribe(() -> SwingUtilities.invokeLater(this::update));
+        mappingContainer.subscribe(() -> SwingUtilities.invokeLater(this::update));
         contentPanel.setLayout(new BorderLayout());
 
         // Create a search field
@@ -618,7 +618,6 @@ public class MacroTreePanel extends JPanel
 
     private void onItemInTreeSelected(SaveableAction item, GlobalActionPanel.SELECTION_TPYE type) {
         onSelectAction.onSelect(item, type);
-        System.out.println(tree.getSelectionPath());
     }
 
     private void onApply(boolean isDebug) {

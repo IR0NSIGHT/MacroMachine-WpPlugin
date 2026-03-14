@@ -142,6 +142,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
     }
 
     public synchronized void updateMapping(Consumer<String> onError, T... items) {
+        System.out.println(" UPDATE ITEMS " + Arrays.toString(items));
         UUID[] uids = new UUID[items.length];
         int idx = 0;
         for (T mapping : items) {
@@ -165,22 +166,21 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
     }
 
     public synchronized T addMapping(UUID uuid) {
-        T newMap = getNewAction(uuid);
-        mappings.put(newMap.getUid(), newMap);
+        T newMap;
+        if (uuid != null)
+            newMap = getNewAction(uuid);
+        else
+            newMap = getNewAction();
 
-        notify(newMap.getUid());
-        return newMap;
+        return addMapping(newMap);
     }
 
     public synchronized T addMapping() {
-        T newMap = getNewAction();
-        mappings.put(newMap.getUid(), newMap);
-
-        notify(newMap.getUid()); // FIXME push this to graphics thread?
-        return newMap;
+        return addMapping((UUID) null);
     }
 
     public synchronized T addMapping(T item) {
+        System.out.println("ADD ITEM " + item);
         if (item.getUid() == null) {
             assert false : " items HAVE to have a UUID";
             return item;

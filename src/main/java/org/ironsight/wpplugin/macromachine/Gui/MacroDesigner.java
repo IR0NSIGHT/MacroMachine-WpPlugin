@@ -273,6 +273,7 @@ public class MacroDesigner extends JPanel
             UUID original = macroCopy.getExecutionUUIDs()[row];
             if (!actionContainer.queryContains(original))
                 return original; // its not a mapping and doesnt need cloning.
+            // we need to clone each action, because the user could leave early, which would result in the actions being used by 2 macros.
             MappingAction clone = actionContainer.addMapping().withValuesFrom(actionContainer.queryById(original));
             actionContainer.updateMapping(clone, GlobalActionPanel::ErrorPopUpString);
             return clone.getUid(); // clone action and return clones UUID
@@ -309,6 +310,11 @@ public class MacroDesigner extends JPanel
             active[i++] = a;
         Macro updatedSelf = macroCopy.withUUIDs(remainingUUIDs.toArray(UUID[]::new), active);
         setMacro(updatedSelf, true);
+    }
+
+    public void onUserSelectedMacro(Macro macro) {
+        if (getMacro() == null || getMacro().getUid() != macro.getUid()) // accept change
+            setMacro(macro,false);
     }
 
     private void onToggleEnableItem(int row, JButton button) {
@@ -620,7 +626,7 @@ public class MacroDesigner extends JPanel
 
     private void updateComponents() {
         final Macro macro = getMacro();
-
+        System.out.println(" UPDATE MACRO IN DESIGNER");
         name.setText(macro.getName());
         description.setText(macro.getDescription());
 
