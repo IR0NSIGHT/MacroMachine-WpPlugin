@@ -20,9 +20,9 @@ public class MappingPointCellEditor implements TableCellEditor
 {
     private final JComboBox<MappingPointValue> dropdown = new JComboBox<>();
     private final ArrayList<CellEditorListener> listeners = new ArrayList<>();
-    private final int inputColumn;
-    public MappingPointCellEditor(int inputRow) {
-        this.inputColumn = inputRow;
+    private final int[] inputColumns;
+    public MappingPointCellEditor(int[] inputColumns) {
+        this.inputColumns = inputColumns;
         dropdown.setRenderer(new MappingPointCellRenderer());
     }
 
@@ -82,6 +82,14 @@ public class MappingPointCellEditor implements TableCellEditor
         listeners.remove(l);
     }
 
+    private boolean isInputColumn(int column) {
+        for (int c : inputColumns) {
+            if (c == column)
+                return true;
+        }
+        return false;
+    }
+
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int viewRow,
             int viewColumn) {
@@ -96,9 +104,11 @@ public class MappingPointCellEditor implements TableCellEditor
             java.util.List<MappingPointValue> arr;
             int modelColumn = table.convertColumnIndexToModel(viewColumn);
             int[] values;
-            if (inputColumn == modelColumn && mappingValue instanceof IPositionValueGetter getter) {
+
+            boolean isInputColumn = isInputColumn(modelColumn);
+            if (isInputColumn && mappingValue instanceof IPositionValueGetter getter) {
                 values = getter.getAllInputValues();
-            } else if (inputColumn != modelColumn && mappingValue instanceof IPositionValueSetter setter) {
+            } else if (!isInputColumn && mappingValue instanceof IPositionValueSetter setter) {
                 values = setter.getAllOutputValues();
             } else {
                 assert false;

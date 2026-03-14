@@ -322,7 +322,7 @@ public class MappingTextTable extends JPanel
         MappingPointCellRenderer cellRenderer = new MappingPointCellRenderer();
         numberTable.setDefaultRenderer(MappingPointValue.class, cellRenderer);
         numberTable.setRowHeight(cellRenderer.getPreferredHeight());
-        numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor(INPUT_COLUMN_IDX));
+        numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor(new int[]{INPUT_COLUMN_IDX}));
         scrollPane = new JScrollPane(numberTable);
         this.add(scrollPane, BorderLayout.CENTER);
         JPanel buttons = new JPanel();
