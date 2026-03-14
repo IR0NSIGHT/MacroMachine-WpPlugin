@@ -425,9 +425,11 @@ public class MacroDesigner extends JPanel
             @Override
             public void mouseReleased(MouseEvent e) {
                 super.mouseReleased(e);
-                // Show the popup menu
-                JPopupMenu popupMenu = createPopupMenu(-1, table.getSelectedRows());
-                popupMenu.show(table, e.getX(), e.getY());
+                if (e.isPopupTrigger() || SwingUtilities.isRightMouseButton(e)) {
+                    // Show the popup menu
+                    JPopupMenu popupMenu = createPopupMenu(-1, table.getSelectedRows());
+                    popupMenu.show(table, e.getX(), e.getY());
+                }
             }
         });
 
