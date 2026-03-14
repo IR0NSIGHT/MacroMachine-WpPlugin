@@ -32,10 +32,12 @@ public class MacroDesigner extends JPanel
     UUIDFilterOptions customActionsFilter = new UUIDFilterOptions("custom", "show user created actions");
     UUIDFilterOptions defaultFilter = new UUIDFilterOptions("defaults", "show default actions");
     private Macro macro;
+    private Macro getMacro() {
+        return macro == null ? null : macro.clone();
+    }
     private JTextField name;
     private JTextArea description;
     private JTable table;
-    private JButton addButton, removeButton, moveUpButton, moveDownButton;
     private JScrollPane scrollPane;
     private boolean isUpdating;
     private int[] selectedRows = new int[0];
@@ -203,7 +205,7 @@ public class MacroDesigner extends JPanel
 
         {
             JButton toggleActiveButton = new JButton();
-            toggleActiveButton.setText(row < 0 || macro.getActiveActions()[row] ? "disable" : "enable");
+            toggleActiveButton.setText(row < 0 || getMacro().getActiveActions()[row] ? "disable" : "enable");
             toggleActiveButton.setToolTipText("disabled items will be skipped when the macro is executed.");
             toggleActiveButton.addActionListener(e -> onToggleEnableItem(row, toggleActiveButton));
             menu.add(toggleActiveButton);
@@ -263,8 +265,9 @@ public class MacroDesigner extends JPanel
             return;
         }
 
+        final Macro macroCopy = getMacro();
         UUID[] selectedUUIDs = Arrays.stream(selectedRows).mapToObj(row -> {
-            UUID original = macro.getExecutionUUIDs()[row];
+            UUID original = macroCopy.getExecutionUUIDs()[row];
             if (!actionContainer.queryContains(original))
                 return original; // its not a mapping and doesnt need cloning.
             MappingAction clone = actionContainer.addMapping().withValuesFrom(actionContainer.queryById(original));
@@ -278,8 +281,8 @@ public class MacroDesigner extends JPanel
         ArrayList<UUID> remainingUUIDs = new ArrayList<>();
         ArrayList<Boolean> activeItems = new ArrayList<>();
         {
-            remainingUUIDs.addAll(Arrays.asList(macro.getExecutionUUIDs()));
-            for (boolean active : macro.getActiveActions())
+            remainingUUIDs.addAll(Arrays.asList(macroCopy.getExecutionUUIDs()));
+            for (boolean active : macroCopy.getActiveActions())
                 activeItems.add(active);
             HashSet<Integer> removedRows = new HashSet<>();
             for (int row : selectedRows) {
@@ -301,18 +304,19 @@ public class MacroDesigner extends JPanel
         int i = 0;
         for (boolean a : activeItems)
             active[i++] = a;
-        Macro updatedSelf = macro.withUUIDs(remainingUUIDs.toArray(UUID[]::new), active);
+        Macro updatedSelf = macroCopy.withUUIDs(remainingUUIDs.toArray(UUID[]::new), active);
         setMacro(updatedSelf, true);
     }
 
     private void onToggleEnableItem(int row, JButton button) {
+        final Macro macro = getMacro();
         boolean isTargetRowActive = macro.getActiveActions()[row];
         boolean[] activeState = macro.getActiveActions();
         for (int idx : selectedRows) {
             activeState[idx] = !isTargetRowActive;
         }
-        Macro m = macro.withUUIDs(macro.getExecutionUUIDs(), activeState);
-        setMacro(m, true);
+        Macro newMacro = macro.withUUIDs(macro.getExecutionUUIDs(), activeState);
+        setMacro(newMacro, true);
         button.setText(!isTargetRowActive ? "disable" : "enable");
     }
     private void onSave() {
@@ -340,6 +344,7 @@ public class MacroDesigner extends JPanel
 
     private void init() {
         this.setLayout(new BorderLayout());
+        final Macro macro = getMacro();
 
         name = new JTextField("Name goes here");
         name.setEditable(true);
@@ -347,7 +352,7 @@ public class MacroDesigner extends JPanel
         name.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override
             public void focusLost(java.awt.event.FocusEvent e) {
-                setMacro(macro.withName(name.getText()), false);
+                setMacro(getMacro().withName(name.getText()), false);
             }
         });
 
@@ -357,7 +362,7 @@ public class MacroDesigner extends JPanel
         description.addFocusListener(new java.awt.event.FocusAdapter() {
             @Override
             public void focusLost(java.awt.event.FocusEvent e) {
-                setMacro(macro.withDescription(description.getText()), false);
+                setMacro(getMacro().withDescription(description.getText()), false);
             }
         });
 
@@ -484,7 +489,7 @@ public class MacroDesigner extends JPanel
     }
 
     private void onPickerSelection(IDisplayUnit selected) {
-        Macro macro = this.macro;
+        final Macro macro = getMacro();
         if (selected instanceof MappingAction)
             selected = ((MappingAction) selected).deepCopy();
         ArrayList<Integer> newSelection = new ArrayList<>();
@@ -493,7 +498,7 @@ public class MacroDesigner extends JPanel
                 a -> actionContainer.updateMapping(a, GlobalActionPanel::ErrorPopUpString), table.getSelectedRows(),
                 newSelection);
         setMacro(newMacro, true);
-        assert this.macro.equals(newMacro)
+        assert getMacro().equals(newMacro)
                 : "macro was added an action, but action is not " + "present after gui update";
         table.clearSelection();
         for (int row : newSelection) {
@@ -546,6 +551,7 @@ public class MacroDesigner extends JPanel
     }
 
     private void onMoveUpMapping() {
+        final Macro macro = getMacro();
         int[] selected = table.getSelectedRows();
         if (selected.length == 0)
             return;
@@ -571,6 +577,7 @@ public class MacroDesigner extends JPanel
     }
 
     private void onMoveDownMapping() {
+        final Macro macro = getMacro();
         if (table.getSelectedRows().length == 0)
             return;
         int anchorRow = table.getSelectedRows()[table.getSelectedRows().length - 1];
@@ -589,7 +596,7 @@ public class MacroDesigner extends JPanel
         for (int row : this.table.getSelectedRows()) {
             toBeRemoved.add(row);
         }
-        Macro macro = this.macro;
+        Macro macro = getMacro();
         for (int i = macro.executionUUIDs.length - 1; i >= 0; i--) {
             if (!toBeRemoved.contains(i))
                 continue;
@@ -607,6 +614,8 @@ public class MacroDesigner extends JPanel
     }
 
     private void updateComponents() {
+        final Macro macro = getMacro();
+
         name.setText(macro.getName());
         description.setText(macro.getDescription());
 
@@ -646,15 +655,16 @@ public class MacroDesigner extends JPanel
         repaint();
     }
 
-    public void setMacro(Macro macro, boolean forceUpdate) {
-        assert macro != null;
-        if (!forceUpdate && this.macro != null && this.macro.equals(macro))
+    public void setMacro(Macro newMacro, boolean forceUpdate) {
+        assert newMacro != null;
+        if (!forceUpdate && this.macro != null && this.macro.equals(newMacro))
             return; // dont update if nothing changed
         isUpdating = true;
 
-        this.macro = macro;
+        this.macro = newMacro;
         updateComponents();
         isUpdating = false;
+        System.out.println("Set macro to " + newMacro);
     }
 
     private class UUIDFilterOptions extends PickerFilterOption
