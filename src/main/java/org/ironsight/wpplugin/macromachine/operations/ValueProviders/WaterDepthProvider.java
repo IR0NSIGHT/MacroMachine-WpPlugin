@@ -14,13 +14,12 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     private final static Color LAND_GREEN = new Color(43, 157, 0);
     private final static Color SHORE_BLUE = new Color(159, 181, 255);
     private final static Color DEEP_BLUE = new Color(0, 46, 171);
-    private final int IGNORE = Integer.MAX_VALUE;
     private final int[] outputValues;
     private final int[] inputValues;
 
     public WaterDepthProvider() {
         outputValues = IntStream.range(getMinValue() - 1, getMaxValue() + 1).toArray();
-        outputValues[0] = IGNORE;
+        outputValues[0] = IGNORE_VALUE;
         inputValues = IntStream.range(getMinValue(), getMaxValue() + 1).toArray();
     }
 
@@ -34,7 +33,7 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
 
     @Override
     public boolean isIgnoreValue(int value) {
-        return value == IGNORE;
+        return value == IGNORE_VALUE;
     }
 
     @Override
@@ -106,7 +105,7 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
 
     @Override
     public String valueToString(int value) {
-        if (value == IGNORE)
+        if (isIgnoreValue(value))
             return "Skip";
         if (value == 0)
             return "Land (0)";

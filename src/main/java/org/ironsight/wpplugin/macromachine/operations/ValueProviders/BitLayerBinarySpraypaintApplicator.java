@@ -38,7 +38,6 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         this.isCustom = isCustom;
     }
 
-    private final int IGNORE_VALUE = -1;
     private final int[] outputValues = IntStream.range(IGNORE_VALUE, getMaxValue() + 1).toArray();
     @Override
     public int[] getAllOutputValues() {

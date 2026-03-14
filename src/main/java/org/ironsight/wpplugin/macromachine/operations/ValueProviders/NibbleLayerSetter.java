@@ -77,7 +77,6 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         dim.setLayerValueAt(layer, x, y, value);
     }
 
-    public final int IGNORE_VALUE = Integer.MIN_VALUE;
     private final int[] outputValues = new int[]{IGNORE_VALUE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
     private final int[] inputValues = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
 

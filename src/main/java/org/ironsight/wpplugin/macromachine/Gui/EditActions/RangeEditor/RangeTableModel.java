@@ -120,10 +120,12 @@ public class RangeTableModel extends DefaultTableModel
         var newRanges = calculateRanges(action).stream()
                 .map(startEnd -> fromValues(startEnd.x, startEnd.y, action.map((int) Math.round(startEnd.y))))
                 .sorted(Comparator.comparing(ValueRange::start))
+                .filter(r -> !action.getOutput().isIgnoreValue(r.value.numericValue))
                 .toList();
 
         this.ranges.clear();
         this.ranges.addAll(newRanges);
+        enforceDataValidation();
         // fire model events to notify about changed layout
         fireTableDataChanged();
     }
@@ -252,7 +254,7 @@ public class RangeTableModel extends DefaultTableModel
     public MappingAction constructAction() {
         var validatedRanges = validateRanges(ranges, action.getInput());
         var missingIntervals = calculatedMissingIntervals(action.getInput().getMinValue(),
-                action.getInput().getMaxValue(), validatedRanges, Integer.MAX_VALUE, action.getInput(),
+                action.getInput().getMaxValue(), validatedRanges, IPositionValueSetter.IGNORE_VALUE, action.getInput(),
                 action.getOutput());
         validatedRanges.addAll(missingIntervals);
         validatedRanges.sort(Comparator.comparing(range -> range.start().numericValue));

@@ -33,8 +33,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
             Color.BLUE, new Color(165, 42, 42), // brown
             Color.GREEN, Color.RED, Color.BLACK};
     private static AnnotationSetter instance;
-    public static final int IGNORE_OUTPUT = -1;
-    private final int[] OUTPUT_VALUES = new int[]{IGNORE_OUTPUT, ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE,
+    private final int[] OUTPUT_VALUES = new int[]{IGNORE_VALUE, ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE,
             ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK,
             ANNOTATION_LIGHT_GREY, ANNOTATION_CYAN, ANNOTATION_PURPLE, ANNOTATION_BLUE, ANNOTATION_BROWN,
             ANNOTATION_GREEN, ANNOTATION_RED, ANNOTATION_BLACK};
@@ -91,7 +90,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public String valueToString(int value) {
-        if (value == IGNORE_OUTPUT)
+        if (value == IGNORE_VALUE)
             return "Skip";
         if (value == ANNOTATION_ABSENT)
             return "No annotation";
@@ -160,7 +159,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public boolean isIgnoreValue(int value) {
-        return value == IGNORE_OUTPUT;
+        return value == IGNORE_VALUE;
     }
 
     @Override

@@ -10,7 +10,6 @@ import java.util.Arrays;
 public class StonePaletteApplicator implements IPositionValueSetter
 {
     private final Terrain[] materials;
-    private final int IGNORE_VALUE = Integer.MIN_VALUE;
     private final int[] values = new int[]{IGNORE_VALUE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}; // index in stone palette
     Color[] colors = new Color[]{
             // Terrain.GRASS (Grass Block)

@@ -176,14 +176,17 @@ public class MappingAction implements SaveableAction
         int previousOutput = mapping.map(mapping.input.getMinValue());
         int previousInput = mapping.input.getMinValue();
         for (int i = mapping.input.getMinValue(); i <= mapping.input.getMaxValue(); i++) {
-            if (i == mapping.input.getMaxValue()) {
-                ranges.add(new Point2d(previousInput, i));
-            }
             if (mapping.map(i) != previousOutput) {
                 ranges.add(new Point2d(previousInput, i - 1));
                 previousOutput = mapping.map(i);
                 previousInput = i;
             }
+        }
+        if (!ranges.isEmpty() && ranges.getLast().y != mapping.getInput().getMaxValue()) {
+            ranges.add(new Point2d(ranges.getLast().y + 1, mapping.getInput().getMaxValue()));
+        }
+        if (ranges.isEmpty()) {
+            ranges.add(new Point2d(mapping.getInput().getMinValue(), mapping.getInput().getMaxValue()));
         }
         return ranges;
     }

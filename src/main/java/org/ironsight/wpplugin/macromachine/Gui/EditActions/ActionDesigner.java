@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
 
 public class ActionDesigner extends LayerMappingPanel
 {
@@ -27,7 +28,10 @@ public class ActionDesigner extends LayerMappingPanel
 
     public ActionDesigner(Consumer<MappingAction> onSubmit) {
         super();
+        assert onSubmit != null;
         this.onSubmit = onSubmit;
+
+        initialize();
 
         // ADD CTRL S FOR SAVING
         KeyStroke ctrlS = KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK);
@@ -69,13 +73,13 @@ public class ActionDesigner extends LayerMappingPanel
         LayerMappingPanel lmp = new ActionDesigner(System.out::println);
         MappingAction ma = new MappingAction(new PerlinNoiseIO(10, 10, 12345, 3), new AnnotationSetter(),
                 new MappingPoint[]{new MappingPoint(3, AnnotationSetter.ANNOTATION_BLUE),
-                        new MappingPoint(10, AnnotationSetter.IGNORE_OUTPUT)},
+                        new MappingPoint(10, IGNORE_VALUE)},
                 ActionType.SET, "Blue annotation perlin blobs", "Create perlin islands with annotation blue",
                 UUID.randomUUID());
 
         var setter = new NibbleLayerSetter(PineForest.INSTANCE, false);
         var OceanHeight = new MappingAction(new TerrainHeightIO(-64, 312), setter,
-                new MappingPoint[]{new MappingPoint(0 /* ocean */, 31), new MappingPoint(1, setter.IGNORE_VALUE)},
+                new MappingPoint[]{new MappingPoint(0 /* ocean */, 31), new MappingPoint(1, IGNORE_VALUE)},
                 ActionType.LIMIT_TO, "No pines in the ocean", "xx", UUID.randomUUID());
 
         lmp.setMapping(ma);

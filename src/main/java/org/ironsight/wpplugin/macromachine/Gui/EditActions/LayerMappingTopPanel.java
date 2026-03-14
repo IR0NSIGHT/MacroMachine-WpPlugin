@@ -32,6 +32,7 @@ public class LayerMappingTopPanel extends LayerMappingPanel
 
     public LayerMappingTopPanel() {
         super();
+        initialize();
     }
 
     @Override

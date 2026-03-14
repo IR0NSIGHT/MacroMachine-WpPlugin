@@ -34,7 +34,7 @@ public class MappingGridPanel extends LayerMappingPanel implements MouseListener
 
     public MappingGridPanel(BlockingSelectionModel selectionModel) {
         this.selectionModel = selectionModel;
-        initComponents();
+        initialize();
 
         this.selectionModel.addListSelectionListener(l -> {
             if (l.getValueIsAdjusting())

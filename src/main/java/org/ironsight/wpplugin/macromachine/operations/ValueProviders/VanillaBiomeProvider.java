@@ -17,6 +17,8 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     public VanillaBiomeProvider() {
         biomes = Minecraft1_21Biomes.BIOME_NAMES.clone();
+        outputValues = IntStream.range(-1, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
+        outputValues[0] = IGNORE_VALUE;
     }
     @Override
     public String getToolTipText() {
@@ -118,9 +120,8 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
         dim.setLayerValueAt(Biome.INSTANCE, x, y, value);
     }
 
-    private final int IGNORE_VALUE = -1;
     private final int[] inputValues = IntStream.range(0, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
-    private final int[] outputValues = IntStream.range(-1, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
+    private final int[] outputValues;
 
     @Override
     public int[] getAllInputValues() {

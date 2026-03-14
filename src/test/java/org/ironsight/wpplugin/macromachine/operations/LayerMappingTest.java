@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.ironsight.wpplugin.macromachine.threeDRendering.TestData;
@@ -14,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 
@@ -146,12 +148,11 @@ class LayerMappingTest
         { // action with interpolateable output with IGNROE output
             MappingAction mapper = new MappingAction(new TerrainHeightIO(-5, 10), new WaterHeightAbsoluteIO(0, 20),
                     new MappingPoint[]{new MappingPoint(-3, 3), new MappingPoint(5, 11),
-                            new MappingPoint(9, WaterHeightAbsoluteIO.IGNORE)
+                            new MappingPoint(9, IGNORE_VALUE)
 
                     }, ActionType.SET, "", "", UUID.randomUUID());
             var mappedValues = Arrays.stream(mapper.input.getAllInputValues()).map(mapper::map).toArray();
-            var expectedValues = new int[]{3, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 11, 11, WaterHeightAbsoluteIO.IGNORE,
-                    WaterHeightAbsoluteIO.IGNORE};
+            var expectedValues = new int[]{3, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 11, 11, IGNORE_VALUE, IGNORE_VALUE};
             assertArrayEquals(expectedValues, mappedValues, "mapping was incorrect");
         }
     }
@@ -185,6 +186,21 @@ class LayerMappingTest
 
     @Test
     void calculateRanges() {
+        {
+            MappingPoint[] points = new MappingPoint[]{new MappingPoint(0, IGNORE_VALUE), new MappingPoint(1, 1),
+                    new MappingPoint(2, 1), new MappingPoint(3, IGNORE_VALUE)};
+            MappingAction action = new MappingAction(
+                    new DistanceToLayerEdgeGetter(false, MacroSelectionLayer.INSTANCE, 3), new SelectionIO(), points,
+                    ActionType.SET, "test", "test", UUID.randomUUID());
+            List<Point2d> ranges = MappingAction.calculateRanges(action);
+            // ranges are: 0,1-2,3
+            assertEquals(3, ranges.size());
+            assertEquals(new Point2d(0, 0), ranges.get(0));
+            assertEquals(new Point2d(1, 2), ranges.get(1));
+            assertEquals(new Point2d(3, 3), ranges.get(2));
+
+        }
+
         {
             MappingAction mapper = new MappingAction(new TestInputOutput(), // -5 .. 1000
                     new AnnotationSetter(), new MappingPoint[]{}, ActionType.SET, "", "", UUID.randomUUID());

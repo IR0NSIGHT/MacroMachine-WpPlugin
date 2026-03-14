@@ -19,6 +19,8 @@ import java.util.Arrays;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
+
 public class RangeTableEditor extends LayerMappingPanel
 {
     private final Consumer<MappingAction> onSubmit;
@@ -28,7 +30,10 @@ public class RangeTableEditor extends LayerMappingPanel
     private final JScrollPane scrollPane;
 
     public RangeTableEditor(Consumer<MappingAction> onSubmit) {
+        assert onSubmit != null;
         this.onSubmit = onSubmit;
+        initialize();
+
         this.setLayout(new BorderLayout());
         { // prepare main body components
             { // table
@@ -91,7 +96,8 @@ public class RangeTableEditor extends LayerMappingPanel
         initTableListener();
     }
 
-    public static String Explain(MappingPointValue inputStart, MappingPointValue inputEnd, MappingPointValue output, ActionType actionType) {
+    public static String Explain(MappingPointValue inputStart, MappingPointValue inputEnd, MappingPointValue output,
+            ActionType actionType) {
         StringBuilder builder = new StringBuilder();
         builder.append("Where ")
                 .append(inputStart.mappingValue.getName())
@@ -110,8 +116,8 @@ public class RangeTableEditor extends LayerMappingPanel
     }
 
     private String getToolTipForRow(int row) {
-        if (model.getValueAt(row, 0) instanceof MappingPointValue inputStart &&
-                model.getValueAt(row, 1) instanceof MappingPointValue inputEnd
+        if (model.getValueAt(row, 0) instanceof MappingPointValue inputStart
+                && model.getValueAt(row, 1) instanceof MappingPointValue inputEnd
                 && model.getValueAt(row, 2) instanceof MappingPointValue output) {
             return Explain(inputStart, inputEnd, output, mapping.getActionType());
         }
@@ -123,13 +129,13 @@ public class RangeTableEditor extends LayerMappingPanel
         LayerMappingPanel lmp = new RangeTableEditor(System.out::println);
         MappingAction ma = new MappingAction(new PerlinNoiseIO(10, 10, 12345, 3), new AnnotationSetter(),
                 new MappingPoint[]{new MappingPoint(3, AnnotationSetter.ANNOTATION_BLUE),
-                        new MappingPoint(10, AnnotationSetter.IGNORE_OUTPUT)},
+                        new MappingPoint(10, IGNORE_VALUE)},
                 ActionType.SET, "Blue annotation perlin blobs", "Create perlin islands with annotation blue",
                 UUID.randomUUID());
 
         var setter = new NibbleLayerSetter(PineForest.INSTANCE, false);
         var HeightForest = new MappingAction(new TerrainHeightIO(-64, 312), setter,
-                new MappingPoint[]{new MappingPoint(0 /* ocean */, 31), new MappingPoint(1, setter.IGNORE_VALUE)},
+                new MappingPoint[]{new MappingPoint(0 /* ocean */, 31), new MappingPoint(1, IGNORE_VALUE)},
                 ActionType.LIMIT_TO, "No pines in the ocean", "xx", UUID.randomUUID());
 
         var SlopeTerrain = new MappingAction(new SlopeProvider(), new TerrainProvider(),
@@ -158,7 +164,12 @@ public class RangeTableEditor extends LayerMappingPanel
 
     private void onSubmit() {
         model.enforceDataValidation();
-        this.onSubmit.accept(model.constructAction());
+        if (onSubmit != null) {
+            this.onSubmit.accept(model.constructAction());
+        } else {
+            assert false : "not supposed to be null";
+        }
+
     }
 
     @Override
