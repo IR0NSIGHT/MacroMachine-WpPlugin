@@ -5,11 +5,38 @@ import org.junit.jupiter.api.Test;
 import javax.vecmath.Point4f;
 
 import java.util.ArrayList;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class PathToolBackendTest
 {
+    @Test
+    void enforceSlopeLimit() {
+        { // negative slope
+            var path = new ArrayList<>(IntStream.range(0, 100).mapToObj(i -> new Point4f(1, 2, -i, 4)).toList());
+            var enforced = PathToolBackend.enforceSlopeLimit(path, 4);
+            for (int i = 0; i < enforced.size(); i++) {
+                assertEquals(i * -0.25f, enforced.get(i).z, 0.00001f);
+            }
+        }
+
+        { // positive slope
+            var path = new ArrayList<>(IntStream.range(0, 100).mapToObj(i -> new Point4f(1, 2, i, 4)).toList());
+            var enforced = PathToolBackend.enforceSlopeLimit(path, 4);
+            for (int i = 0; i < enforced.size(); i++) {
+                assertEquals(i * 0.25f, enforced.get(i).z, 0.00001f);
+            }
+        }
+
+        { // untouched slope
+            var path = new ArrayList<>(IntStream.range(0, 100).mapToObj(i -> new Point4f(1, 2, i, 4)).toList());
+            var enforced = PathToolBackend.enforceSlopeLimit(path, 200);
+            for (int i = 0; i < enforced.size(); i++) {
+                assertEquals(i, enforced.get(i).z, 0.00001f);
+            }
+        }
+    }
 
     @Test
     void plotPathBetween() {

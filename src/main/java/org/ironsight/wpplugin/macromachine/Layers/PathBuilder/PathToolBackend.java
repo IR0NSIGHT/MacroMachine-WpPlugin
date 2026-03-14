@@ -150,7 +150,30 @@ public class PathToolBackend
             point.w = Math.max(point.w, minRadius);
         }
     }
+    public static List<Point4f> enforceSlopeLimit(List<Point4f> path, float slopeLimit) {
+        if (slopeLimit == 0 || path.isEmpty()) {
+            return path;
+        }
 
+        float maxDelta = slopeLimit / 16f;
+        float previousZ = path.get(0).z;
+
+        for (int i = 0; i < path.size(); i++) {
+            Point4f pos = path.get(i);
+            float z = pos.z;
+
+            // Clamp the z difference to maxDelta
+            if (Math.abs(z - previousZ) > maxDelta) {
+                z = previousZ + Math.copySign(maxDelta, z - previousZ);
+            }
+
+            // Mutate the existing Point4f in the list
+            path.set(i, new Point4f(pos.x, pos.y, z, pos.w));
+            previousZ = z;
+        }
+
+        return path;
+    }
     static Set<Point3i> collectTilesAroundPath(Collection<Point4f> path, float radiusMultiplier) {
         HashSet<Point3i> tilePositions = new HashSet<>(path.size() / TILE_SIZE);
         for (Point4f pathPoint : path) {
