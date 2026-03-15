@@ -248,6 +248,7 @@ public class RangeTableModel extends DefaultTableModel
         var newRanges = validateRanges(ranges, action.getInput());
         ranges.clear();
         ranges.addAll(newRanges);
+        updateValidationData();
         fireTableDataChanged();
     }
 

@@ -89,7 +89,11 @@ public class ActionDesigner extends LayerMappingPanel
     }
 
     private void onSave() {
-        onSubmit.accept(model.constructMapping());
+        if (rangeTableEditor.isVisible()) {
+            onSubmit.accept(rangeTableEditor.validateAndBuildAction());
+        } else {
+            onSubmit.accept(model.constructMapping());
+        }
     }
 
     @Override
@@ -118,7 +122,7 @@ public class ActionDesigner extends LayerMappingPanel
         table = new MappingTextTable(model, selectionModel);
         tablePanel.add(table);
 
-        rangeTableEditor = new RangeTableEditor(onSubmit);
+        rangeTableEditor = new RangeTableEditor();
         tablePanel.add(rangeTableEditor);
 
         model.addTableModelListener(l -> {

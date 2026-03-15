@@ -16,25 +16,18 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.EventObject;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
 
 public class RangeTableEditor extends LayerMappingPanel
 {
-    private final Consumer<MappingAction> onSubmit;
     private final RangeTableModel model;
     private final JPopupMenu rightClickMenu;
     private final JTable table;
     private final JScrollPane scrollPane;
     private final ValuePreviewWindow previewWindow;
-    private void setEnablePreviewWindow(boolean enable) {
 
-    }
-
-    public RangeTableEditor(Consumer<MappingAction> onSubmit) {
-        assert onSubmit != null;
-        this.onSubmit = onSubmit;
+    public RangeTableEditor() {
         initialize();
 
         this.setLayout(new BorderLayout());
@@ -92,11 +85,6 @@ public class RangeTableEditor extends LayerMappingPanel
                         "will update the table to ensure that ranges do not overlap and contain only legal values.");
                 validate.addActionListener(a -> model.enforceDataValidation());
                 buttons.add(validate);
-
-                JButton submit = new JButton("submit");
-                submit.setToolTipText("validate data and submit");
-                submit.addActionListener(e -> onSubmit());
-                buttons.add(submit);
 
                 {
                     JCheckBox showPreviewWindow = new JCheckBox("Preview Window");
@@ -157,7 +145,7 @@ public class RangeTableEditor extends LayerMappingPanel
 
     public static void main(String[] args) {
         JFrame frame = new JFrame();
-        LayerMappingPanel lmp = new RangeTableEditor(System.out::println);
+        LayerMappingPanel lmp = new RangeTableEditor();
         MappingAction ma = new MappingAction(new PerlinNoiseIO(10, 10, 12345, 3), new AnnotationSetter(),
                 new MappingPoint[]{new MappingPoint(3, AnnotationSetter.ANNOTATION_BLUE),
                         new MappingPoint(10, IGNORE_VALUE)},
@@ -193,14 +181,9 @@ public class RangeTableEditor extends LayerMappingPanel
         model.addRows(getSelectedModelRows());
     }
 
-    private void onSubmit() {
+    public MappingAction validateAndBuildAction() {
         model.enforceDataValidation();
-        if (onSubmit != null) {
-            this.onSubmit.accept(model.constructAction());
-        } else {
-            assert false : "not supposed to be null";
-        }
-
+        return model.constructAction();
     }
 
     @Override
