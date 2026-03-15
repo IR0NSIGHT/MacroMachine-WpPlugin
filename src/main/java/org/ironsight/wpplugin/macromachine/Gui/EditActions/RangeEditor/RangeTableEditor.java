@@ -1,9 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions.RangeEditor;
 
-import org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingPanel;
-import org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingPointCellEditor;
-import org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingPointCellRenderer;
-import org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingPointValue;
+import org.ironsight.wpplugin.macromachine.Gui.EditActions.*;
 import org.ironsight.wpplugin.macromachine.operations.ActionType;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
@@ -28,6 +25,10 @@ public class RangeTableEditor extends LayerMappingPanel
     private final JPopupMenu rightClickMenu;
     private final JTable table;
     private final JScrollPane scrollPane;
+    private final ValuePreviewWindow previewWindow;
+    private void setEnablePreviewWindow(boolean enable) {
+
+    }
 
     public RangeTableEditor(Consumer<MappingAction> onSubmit) {
         assert onSubmit != null;
@@ -53,11 +54,17 @@ public class RangeTableEditor extends LayerMappingPanel
                     }
                 };
                 table.setDefaultEditor(MappingPointValue.class, new MappingPointCellEditor(new int[]{0, 1}));
-                table.setDefaultRenderer(MappingPointValue.class, new MappingPointCellRenderer());
+                var cellRenderer = new MappingPointCellRenderer();
+                table.setDefaultRenderer(MappingPointValue.class, cellRenderer);
+                table.setRowHeight(cellRenderer.getPreferredHeight());
+
                 scrollPane = new JScrollPane();
                 scrollPane.setViewportView(table);
 
                 this.add(scrollPane, BorderLayout.CENTER);
+            }
+            {   // preview window
+                previewWindow = new ValuePreviewWindow(table);
             }
             { // buttons
                 JPanel buttons = new JPanel();
@@ -74,6 +81,13 @@ public class RangeTableEditor extends LayerMappingPanel
                 submit.addActionListener(e -> onSubmit());
                 buttons.add(submit);
 
+                {
+                    JCheckBox showPreviewWindow = new JCheckBox("Preview Window");
+                    showPreviewWindow.setToolTipText("Show preview window when hovering over values in the table");
+                    showPreviewWindow.setSelected(false);
+                    showPreviewWindow.addActionListener(previewWindow);
+                    buttons.add(showPreviewWindow);
+                }
             }
             { // right click menu
                 rightClickMenu = new JPopupMenu();

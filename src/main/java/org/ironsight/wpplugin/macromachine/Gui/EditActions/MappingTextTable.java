@@ -14,13 +14,10 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 
-import static java.awt.Image.SCALE_FAST;
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.INPUT_COLUMN_IDX;
 import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.OUTPUT_COLUMN_IDX;
 
@@ -230,9 +227,7 @@ public class MappingTextTable extends JPanel
             }
         }));
 
-        numberTable.addMouseListener(previeWindow);
-        numberTable.addMouseMotionListener(previeWindow);
-        scrollPane.addMouseWheelListener(previeWindow);
+        // FIXME needed? scrollPane.addMouseWheelListener(previeWindow);
         scrollPane.addMouseListener(rightClickListener);
     }
 
@@ -303,7 +298,7 @@ public class MappingTextTable extends JPanel
     }
 
     protected void initComponents() {
-        previeWindow = new ValuePreviewWindow();
+        previeWindow = new ValuePreviewWindow(this.numberTable);
 
         this.setLayout(new BorderLayout());
         Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
@@ -348,79 +343,4 @@ public class MappingTextTable extends JPanel
 
     }
 
-    private class ValuePreviewWindow extends MouseAdapter implements ActionListener
-    {
-        JWindow previewWindow;
-        JLabel previewLabel;
-        private int row, col;
-        private boolean allowWindow = false;
-
-        public ValuePreviewWindow() {
-            previewWindow = new JWindow();
-            previewLabel = new JLabel();
-            previewLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-            previewWindow.add(previewLabel);
-            previewWindow.setSize(200, 200); // Size of enlarged image
-        }
-
-        void setMouseOver(Point p) {
-            int row = numberTable.rowAtPoint(p);
-            int col = numberTable.columnAtPoint(p);
-            if (this.row == row && this.col == col)
-                return;
-
-            this.row = row;
-            this.col = col;
-            if (row >= 0 && (col == 1 || col == 0)) {
-                Object cell = numberTable.getValueAt(row, col);
-                if (!(cell instanceof MappingPointValue))
-                    return;
-
-                // Scale the image (larger)
-                BufferedImage scaledImage = new BufferedImage(100, 100, TYPE_INT_RGB);
-                MappingPointValue mpv = (MappingPointValue) cell;
-                mpv.mappingValue.paint(scaledImage.getGraphics(), mpv.numericValue,
-                        new Dimension(scaledImage.getWidth(), scaledImage.getHeight()));
-
-                previewLabel.setIcon(new ImageIcon(scaledImage.getScaledInstance(previewWindow.getWidth(),
-                        previewWindow.getHeight(), SCALE_FAST)));
-
-                // Position the window near the mouse
-                Point locationOnScreen = numberTable.getLocationOnScreen();
-                previewWindow.setLocation(locationOnScreen.x + (int) p.getX() + 15,
-                        locationOnScreen.y + (int) p.getY() + 15);
-                previewWindow.setVisible(allowWindow);
-            }
-        }
-
-        @Override
-        public void mouseWheelMoved(MouseWheelEvent e) {
-            Point tablePoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), numberTable);
-            setMouseOver(tablePoint);
-        }
-
-        @Override
-        public void mouseEntered(MouseEvent e) {
-            row = -1;
-            col = -1;
-            previewWindow.setVisible(allowWindow);
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-            row = -1;
-            col = -1;
-            previewWindow.setVisible(false);
-        }
-
-        @Override
-        public void mouseMoved(MouseEvent e) {
-            setMouseOver(e.getPoint());
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            allowWindow = showPreviewWindow.isSelected();
-        }
-    }
 }
