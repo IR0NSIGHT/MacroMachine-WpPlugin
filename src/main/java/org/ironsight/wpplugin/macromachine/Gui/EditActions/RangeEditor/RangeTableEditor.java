@@ -9,10 +9,12 @@ import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.layers.PineForest;
 
 import javax.swing.*;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
+import java.util.EventObject;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -41,6 +43,16 @@ public class RangeTableEditor extends LayerMappingPanel
                 model = new RangeTableModel();
                 table = new JTable(model) {
                     @Override
+                    public boolean editCellAt(int row, int column, EventObject e) {
+                        // first click -> select
+                        if (!table.isCellSelected(row, column)) {
+                            SwingUtilities.invokeLater(() -> table.addRowSelectionInterval(row, row));
+                            return false;
+                        }
+                        return super.editCellAt(row, column, e);
+                    }
+
+                    @Override
                     public String getToolTipText(MouseEvent e) {
                         Point p = e.getPoint();
                         int row = rowAtPoint(p);
@@ -62,6 +74,11 @@ public class RangeTableEditor extends LayerMappingPanel
                 scrollPane.setViewportView(table);
 
                 this.add(scrollPane, BorderLayout.CENTER);
+            }
+            {
+                var sorter = new TableRowSorter<>(table.getModel());
+                sorter.setSortsOnUpdates(true);
+                table.setRowSorter(sorter);
             }
             {   // preview window
                 previewWindow = new ValuePreviewWindow(table);
