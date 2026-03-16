@@ -8,7 +8,8 @@ import java.awt.image.BufferedImage;
 import static java.awt.Image.SCALE_FAST;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
-public class ValuePreviewWindow extends MouseAdapter implements ActionListener{
+public class ValuePreviewWindow extends MouseAdapter implements ActionListener
+{
     private final JTable table;
     JWindow previewWindow;
     JLabel previewLabel;
@@ -48,8 +49,8 @@ public class ValuePreviewWindow extends MouseAdapter implements ActionListener{
             mpv.mappingValue.paint(scaledImage.getGraphics(), mpv.numericValue,
                     new Dimension(scaledImage.getWidth(), scaledImage.getHeight()));
 
-            previewLabel.setIcon(new ImageIcon(scaledImage.getScaledInstance(previewWindow.getWidth(),
-                    previewWindow.getHeight(), SCALE_FAST)));
+            previewLabel.setIcon(new ImageIcon(
+                    scaledImage.getScaledInstance(previewWindow.getWidth(), previewWindow.getHeight(), SCALE_FAST)));
 
             // Position the window near the mouse
             Point locationOnScreen = table.getLocationOnScreen();

@@ -73,7 +73,7 @@ public class RangeTableEditor extends LayerMappingPanel
                 sorter.setSortsOnUpdates(true);
                 table.setRowSorter(sorter);
             }
-            {   // preview window
+            { // preview window
                 previewWindow = new ValuePreviewWindow(table);
             }
             { // buttons
