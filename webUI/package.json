@@ -1,0 +1,53 @@
+{
+  "name": "y",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint src --ext js,jsx,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview",
+    "build-storybook": "storybook build",
+    "storybook": "storybook dev -p 6006"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.9",
+    "@mui/material": "^7.3.9",
+    "echarts": "^6.0.0",
+    "echarts-for-react": "^3.0.6",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@chromatic-com/storybook": "^5.0.2",
+    "@storybook/addon-a11y": "^10.3.3",
+    "@storybook/addon-docs": "10.3.3",
+    "@storybook/addon-links": "^10.3.3",
+    "@storybook/addon-onboarding": "^10.3.3",
+    "@storybook/addon-vitest": "^10.3.3",
+    "@storybook/builder-vite": "^10.3.3",
+    "@storybook/react": "^10.3.3",
+    "@storybook/react-vite": "^10.3.3",
+    "@storybook/testing-library": "^0.2.2",
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.0.1",
+    "@vitest/browser-playwright": "^4.1.1",
+    "@vitest/coverage-v8": "^4.1.1",
+    "babel-loader": "^8.4.1",
+    "eslint": "^8.44.0",
+    "eslint-plugin-react": "^7.32.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.1",
+    "eslint-plugin-storybook": "^10.3.3",
+    "playwright": "^1.58.2",
+    "storybook": "^10.3.3",
+    "typescript": "^6.0.2",
+    "vite": "^4.4.0",
+    "vitest": "^4.1.1"
+  }
+}
