@@ -9,7 +9,7 @@ public class MappingPointValue implements Comparable<MappingPointValue>
 {
     public IMappingValue mappingValue;
     public int numericValue;
-
+    public boolean illegal = false;
     public MappingPointValue(int numericValue, IMappingValue mappingValue) { // TODO make constructors forgetter OR
                                                                              // setter to diffferentiate context?
         this.numericValue = numericValue;

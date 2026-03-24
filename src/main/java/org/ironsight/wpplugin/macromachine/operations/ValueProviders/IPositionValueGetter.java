@@ -8,4 +8,8 @@ public interface IPositionValueGetter extends IDisplayUnit, Serializable, IMappi
 {
     int getValueAt(Dimension dim, int x, int y);
     int[] getAllInputValues();
+
+    static boolean isLegalInput(IPositionValueGetter getter, int value) {
+        return (getter.getMinValue() <= value && value <= getter.getMaxValue());
+    }
 }

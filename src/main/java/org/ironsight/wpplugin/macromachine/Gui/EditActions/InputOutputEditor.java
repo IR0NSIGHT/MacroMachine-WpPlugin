@@ -42,6 +42,7 @@ public class InputOutputEditor extends LayerMappingPanel
     private KeyValueTableModel tableModel;
     public InputOutputEditor(Consumer<MappingAction> onChanged) {
         this.onChanged = onChanged;
+        initialize();
     }
 
     private void onValueChanged(int[] newValues) {

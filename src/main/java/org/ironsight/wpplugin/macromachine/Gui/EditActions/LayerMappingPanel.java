@@ -16,6 +16,10 @@ public abstract class LayerMappingPanel extends JPanel
     };
 
     public LayerMappingPanel() {
+
+    }
+
+    protected final void initialize() {
         allowEvents = false;
         initComponents();
         allowEvents = true;

@@ -11,4 +11,9 @@ public interface IPositionValueSetter extends IDisplayUnit, Serializable, IMappi
     boolean isIgnoreValue(int value);
 
     int[] getAllOutputValues();
+    static boolean isLegalOutput(IPositionValueSetter setter, int value) {
+        return setter.isIgnoreValue(value) || (setter.getMinValue() <= value && value <= setter.getMaxValue());
+    }
+
+    public static final int IGNORE_VALUE = Integer.MAX_VALUE;
 }

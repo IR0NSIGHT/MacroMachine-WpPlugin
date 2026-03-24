@@ -314,8 +314,9 @@ public class MacroDesigner extends JPanel
     }
 
     public void onUserSelectedMacro(Macro macro) {
-        if (getMacro() == null || getMacro().getUid() != macro.getUid()) // accept change
-            setMacro(macro, false);
+        // if (getMacro() == null || getMacro().getUid() != macro.getUid()) // accept
+        // change
+        setMacro(macro, false);
     }
 
     private void onToggleEnableItem(int row, JButton button) {
