@@ -13,7 +13,6 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionValueSetter, EditableIO
 {
     private final int min, max;
-    public static final int IGNORE = Integer.MAX_VALUE;
     private final int[] outputValues;
     private final int[] inputValues;
 
@@ -21,13 +20,13 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
         this.min = min;
         this.max = max;
         outputValues = IntStream.range(min - 1, max + 1).toArray();
-        outputValues[0] = IGNORE;
+        outputValues[0] = IGNORE_VALUE;
         inputValues = IntStream.range(min, max + 1).toArray();
     }
 
     @Override
     public boolean isIgnoreValue(int value) {
-        return value == IGNORE;
+        return value == IGNORE_VALUE;
     }
 
     @Override
@@ -86,7 +85,7 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
 
     @Override
     public String valueToString(int value) {
-        if (value == IGNORE)
+        if (value == IGNORE_VALUE)
             return "Skip";
         return Integer.toString(value);
     }

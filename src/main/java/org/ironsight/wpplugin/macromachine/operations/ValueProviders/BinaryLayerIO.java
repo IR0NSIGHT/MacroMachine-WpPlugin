@@ -30,7 +30,6 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         this.isCustom = isCustom;
     }
 
-    private final int IGNORE_VALUE = Integer.MIN_VALUE;
     private final int[] outputValues = new int[]{IGNORE_VALUE, 0, 1};
     @Override
     public int[] getAllInputValues() {

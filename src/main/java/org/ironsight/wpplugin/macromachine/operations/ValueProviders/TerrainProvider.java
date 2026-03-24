@@ -14,12 +14,11 @@ import java.util.stream.IntStream;
 public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter
 {
     private static final ColourScheme colorScheme = new HardcodedColourScheme();
-    private final int IGNORE = Integer.MAX_VALUE;
     private final int[] outputValues;
     private final int[] inputValues;
     public TerrainProvider() {
         outputValues = IntStream.range(-1, Terrain.values().length).toArray();
-        outputValues[0] = IGNORE;
+        outputValues[0] = IGNORE_VALUE;
         inputValues = IntStream.range(0, Terrain.values().length).toArray();
     }
 
@@ -83,7 +82,7 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public boolean isIgnoreValue(int value) {
-        return value == IGNORE;
+        return value == IGNORE_VALUE;
     }
 
     @Override
@@ -113,7 +112,7 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public String valueToString(int value) {
-        if (value == IGNORE)
+        if (value == IGNORE_VALUE)
             return "skip";
         return Terrain.values()[value].getName();
     }

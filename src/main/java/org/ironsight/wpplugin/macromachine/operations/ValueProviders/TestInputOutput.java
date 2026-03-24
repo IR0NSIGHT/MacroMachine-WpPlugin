@@ -10,13 +10,12 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
 {
     public TestInputOutput() {
         values = IntStream.range(getMinValue() - 1, getMaxValue() + 1).toArray();
-        values[0] = IGNORE;
+        values[0] = IGNORE_VALUE;
     }
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
 
     }
-    private final int IGNORE = Integer.MAX_VALUE;
     @Override
     public boolean isIgnoreValue(int value) {
         return value == Integer.MAX_VALUE;

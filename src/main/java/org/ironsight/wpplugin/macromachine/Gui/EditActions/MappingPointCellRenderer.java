@@ -1,5 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
+import org.ironsight.wpplugin.macromachine.Gui.EditActions.RangeEditor.RangeTableModel;
 import org.ironsight.wpplugin.macromachine.Gui.MappingValuePreviewPanel;
 
 import javax.swing.*;
@@ -51,15 +52,24 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
             textLabel.setForeground(INTERPOLATED_FOREGROUND);
             textLabel.setBackground(INTERPOLATED_BACKGROUND);
         }
+
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-            int row, int column) {
+            int viewRow, int viewColumn) {
         assert value != null;
         assert value instanceof MappingPointValue;
-        updateTo((MappingPointValue) value, table.isCellEditable(row, column), isSelected);
-
+        updateTo((MappingPointValue) value, table.isCellEditable(viewRow, viewColumn), isSelected);
+        if (table.getModel() instanceof RangeTableModel rtm) {
+            int modelRow = table.convertRowIndexToModel(viewRow);
+            int modelColumn = table.convertColumnIndexToModel(viewColumn);
+            if (rtm.isCellIllegalValue(modelRow, modelColumn)) {
+                panel.setBorder(BorderFactory.createLineBorder(Color.RED));
+            } else {
+                panel.setBorder(BorderFactory.createEmptyBorder());
+            }
+        }
         return panel;
     }
 

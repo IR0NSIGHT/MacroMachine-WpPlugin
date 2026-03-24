@@ -170,7 +170,6 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
         return 0;
     }
 
-    private final int IGNORE_VALUE = Integer.MIN_VALUE;
     @Override
     public int[] getAllInputValues() {
         return new int[]{BLOCK_VALUE, PASS_VALUE};
