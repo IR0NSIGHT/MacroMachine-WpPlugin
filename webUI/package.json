@@ -18,8 +18,10 @@
     "@mui/material": "^7.3.9",
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.6",
+    "plotly.js": "^3.4.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-plotly.js": "^2.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
