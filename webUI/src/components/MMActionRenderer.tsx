@@ -12,8 +12,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
 import { MMAction } from '../types/MMAction'
-import InputProvider from './InputProvider'
-import OutputProvider from './OutputProvider'
+import InputOutputDisplay from './InputProvider'
 import PointMapper from './PointMapper'
 
 interface MMActionRendererProps {
@@ -98,20 +97,22 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
 
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <InputProvider inputId={action.inputId} inputData={action.inputData} />
+              <InputOutputDisplay input={action.input}/>
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <OutputProvider outputId={action.outputId} outputData={action.outputData} />
+              <InputOutputDisplay input={action.output}/>
             </Box>
           </Stack>
 
           <Box>
             <PointMapper
-              inputPoints={action.inputPoints}
-              outputPoints={action.outputPoints}
-              title="Input → Output Mapping"
-              height={350}
+              xData={action.inputPoints}
+              yData={action.outputPoints}
+              input={action.input}
+              output={action.output}
+              title={action.name}
+              interpolation={!action.input.discrete && !action.output.discrete}
             />
           </Box>
         </Stack>

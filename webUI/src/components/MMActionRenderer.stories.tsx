@@ -1,19 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import MMActionRenderer from './MMActionRenderer'
-import { MMAction } from '../types/MMAction'
-
-const sampleAction: MMAction = {
-  inputId: 'ALWAYS',
-  inputData: [],
-  outputId: 'TERRAIN',
-  outputData: [],
-  actionType: 'SET',
-  inputPoints: [0],
-  outputPoints: [9],
-  name: 'apply snow',
-  description: 'description of the action',
-  uid: 'f5e02009-97ae-4955-a521-92639642c71b',
-}
+import { raiseYonCyan, slopeToForest } from '../mock/dummyActions'
 
 const meta: Meta<typeof MMActionRenderer> = {
   title: 'Components/MMActionRenderer',
@@ -26,14 +13,20 @@ type Story = StoryObj<typeof MMActionRenderer>
 
 export const Default: Story = {
   args: {
-    action: sampleAction,
+    action: raiseYonCyan,
   },
+}
+
+export const SlopeToForest: Story = {
+  args: {
+    action: slopeToForest
+  }
 }
 
 export const Increment: Story = {
   args: {
     action: {
-      ...sampleAction,
+      ...raiseYonCyan,
       actionType: 'INCREMENT',
       inputPoints: [0, 13],
       outputPoints: [8, 0],

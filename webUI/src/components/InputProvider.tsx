@@ -4,14 +4,14 @@ import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Chip from '@mui/material/Chip'
 import { PROVIDER_DESCRIPTIONS } from '../types/ProviderType'
+import { InputOutput } from '@/types'
 
 interface InputProviderProps {
-  inputId: string
-  inputData: unknown[]
+  input: InputOutput
 }
 
-export default function InputProvider({ inputId, inputData }: InputProviderProps) {
-  const displayName = inputId || 'UNKNOWN'
+export default function InputOutputDisplay({ input }: InputProviderProps) {
+  const displayName = input.displayName || 'UNKNOWN'
   const description = PROVIDER_DESCRIPTIONS[displayName] || 'Custom provider'
 
   return (
@@ -26,13 +26,13 @@ export default function InputProvider({ inputId, inputData }: InputProviderProps
         <Typography variant="caption" color="text.secondary">
           {description}
         </Typography>
-        {inputData && inputData.length > 0 && (
+        {input.parameters && input.parameters.length > 0 && (
           <Box>
             <Typography variant="caption" component="div" color="text.secondary">
               <strong>Data:</strong>
             </Typography>
             <Typography variant="caption" component="code" sx={{ display: 'block', wordBreak: 'break-all' }}>
-              {JSON.stringify(inputData)}
+              {JSON.stringify(input.parameters)}
             </Typography>
           </Box>
         )}

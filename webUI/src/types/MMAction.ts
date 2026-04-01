@@ -1,8 +1,8 @@
+import { InputOutput } from "@/types"
+
 export interface MMAction {
-  inputId: string
-  inputData: unknown[]
-  outputId: string
-  outputData: unknown[]
+  input: InputOutput
+  output: InputOutput
   actionType: string
   inputPoints: number[]
   outputPoints: number[]

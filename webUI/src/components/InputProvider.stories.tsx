@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import InputProvider from './InputProvider'
+import InputOutputDisplay from './InputProvider'
 
-const meta: Meta<typeof InputProvider> = {
+const meta: Meta<typeof InputOutputDisplay> = {
   title: 'Components/InputProvider',
-  component: InputProvider,
+  component: InputOutputDisplay,
 }
 
 export default meta
 
-type Story = StoryObj<typeof InputProvider>
+type Story = StoryObj<typeof InputOutputDisplay>
 
 export const Always: Story = {
   args: {
