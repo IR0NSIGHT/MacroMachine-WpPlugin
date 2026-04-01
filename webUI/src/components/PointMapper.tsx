@@ -20,6 +20,7 @@ export default function PointMapper({
   height = 400,
 }: PointMapperProps) {
   const points = inputPoints.slice(0, Math.min(inputPoints.length, outputPoints.length))
+  const outputSliced = outputPoints.slice(0, points.length)
 
   if (points.length === 0) {
     return (
@@ -28,6 +29,19 @@ export default function PointMapper({
       </Paper>
     )
   }
+
+  // Calculate ranges for grid determination
+  const xMin = Math.min(...points)
+  const xMax = Math.max(...points)
+  const yMin = Math.min(...outputSliced)
+  const yMax = Math.max(...outputSliced)
+
+  const xRange = xMax - xMin
+  const yRange = yMax - yMin
+
+  // Determine grid intervals: 1 for ranges <= 16, else 10
+  const xDtick = xRange <= 16 ? 1 : 10
+  const yDtick = yRange <= 16 ? 1 : 10
 
   return (
     <Paper variant="outlined" sx={{ width, p: 2 }}>
@@ -40,16 +54,16 @@ export default function PointMapper({
             data={[
               {
                 x: points,
-                y: outputPoints.slice(0, points.length),
+                y: outputSliced,
                 type: 'scatter',
-                mode: 'markers',
-                marker: { size: 8 },
+                mode: 'lines+markers',
+                line: { width: 2 },
               },
             ]}
             layout={{
               title,
-              xaxis: { title: 'Input' },
-              yaxis: { title: 'Output' },
+              xaxis: { title: 'Input', dtick: xDtick },
+              yaxis: { title: 'Output', dtick: yDtick },
               margin: { l: 50, r: 20, t: 50, b: 50 },
               showlegend: false,
             }}
