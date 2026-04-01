@@ -14,13 +14,18 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionVa
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.ironsight.wpplugin.macromachine.threeDRendering.SurfaceObject;
+import org.ironsight.wpplugin.macromachine.WebUIServer;
+import org.ironsight.wpplugin.macromachine.Gui.WebUIViewPanel;
 import org.pepsoft.worldpainter.dynmap.DynmapPreviewer;
 import org.pepsoft.worldpainter.objects.WPObject;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.LocalDateTime;
@@ -43,7 +48,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     public static final String INPUT_OUTPUT_DESIGNER = "inputoutputdesigner";
     static final int MAX_LOG_LINES = 2000;
     static JTextArea logPanel;
-    private static DynmapPreviewer previewer = new DynmapPreviewer();
+    private static DynmapPreviewer previewer = null;
     private static GlobalActionPanel INSTANCE;
     private static WPObject surfaceObject = new SurfaceObject();
     MacroTreePanel macroTreePanel;
@@ -71,6 +76,15 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     }
 
     public static void main(String[] args) {
+        // Start web UI server
+        WebUIServer server = new WebUIServer();
+        try {
+            server.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
         File saveFile = new File("./plugins/macroMachine/mySavefile.macro");
 
         MacroContainer.SetInstance(new MacroContainer("./src/main/resources/DefaultMacros.json"));
@@ -117,6 +131,14 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
             return Collections.emptyList();
         });
         diag.setVisible(true);
+
+        // Stop server on close
+        diag.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                server.stop();
+            }
+        });
     }
 
     /**
@@ -186,6 +208,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     }
 
     private static DynmapPreviewer getPreviewer() {
+        if (previewer == null)
+            previewer = new DynmapPreviewer();
         return previewer;
     }
 
@@ -292,15 +316,17 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
 
         tabbedPane.add("log", logPanel);
 
-        previewer.setInclination(30);
-        previewer.setObject(new SurfaceObject()/* empty dummy */, null);
-        tabbedPane.add("3d", previewer);
+        //previewer.setInclination(30);
+        //previewer.setObject(new SurfaceObject()/* empty dummy */, null);
+        // tabbedPane.add("3d", previewer);
 
-        previewer.addHierarchyListener(e -> {
+        tabbedPane.addTab("Web UI", new WebUIViewPanel());
+
+        /*previewer.addHierarchyListener(e -> {
             if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing() && rerender3d) {
                 SwingUtilities.invokeLater(() -> doRender3d());
             }
-        });
+        }); */
 
         this.add(macroTreePanel, BorderLayout.WEST);
 
