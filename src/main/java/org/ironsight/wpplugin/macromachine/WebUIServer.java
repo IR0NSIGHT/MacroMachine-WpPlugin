@@ -35,9 +35,9 @@ public class WebUIServer {
             }
         });
 
-        server.createContext("/actions", exchange -> {
+        server.createContext("/action", exchange -> {
             if ("GET".equals(exchange.getRequestMethod())) {
-                String response = "[{\"id\":1,\"name\":\"Sample Action\",\"type\":\"apply\"}]";
+                String response = "{\"inputId\":\"ALWAYS\",\"inputData\":[],\"outputId\":\"TERRAIN\",\"outputData\":[],\"actionType\":\"SET\",\"inputPoints\":[0],\"outputPoints\":[9],\"name\":\"apply snow\",\"description\":\"description of the action\",\"uid\":\"f5e02009-97ae-4955-a521-92639642c71b\"}";
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 exchange.sendResponseHeaders(200, response.length());
                 try (OutputStream os = exchange.getResponseBody()) {
