@@ -14,6 +14,7 @@ import CancelIcon from '@mui/icons-material/Cancel'
 import { MMAction } from '../types/MMAction'
 import InputOutputDisplay from './InputProvider'
 import PointMapper from './PointMapper'
+import { MappingPoint } from '@/types/MappingPoint'
 
 interface MMActionRendererProps {
   action: MMAction
@@ -21,9 +22,10 @@ interface MMActionRendererProps {
 }
 
 export default function MMActionRenderer({ action, onUpdate }: MMActionRendererProps) {
+  const [draftAction, setDraftAction] = useState<MMAction>(action)
   const [isEditing, setIsEditing] = useState(false)
-  const [name, setName] = useState(action.name)
-  const [description, setDescription] = useState(action.description)
+  const [name, setName] = useState(draftAction.name)
+  const [description, setDescription] = useState(draftAction.description)
 
   const handleEdit = () => {
     setIsEditing(true)
@@ -36,8 +38,8 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   }
 
   const handleCancel = () => {
-    setName(action.name)
-    setDescription(action.description)
+    setName(draftAction.name)
+    setDescription(draftAction.description)
     setIsEditing(false)
   }
 
@@ -49,7 +51,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
       fullWidth
     />
   ) : (
-    action.name
+    draftAction.name
   )
 
   const action_subheader = isEditing ? (
@@ -62,8 +64,30 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
       rows={2}
     />
   ) : (
-    action.description
+    draftAction.description
   )
+
+  const updatePoint = (oldP: MappingPoint, newP: MappingPoint): void => {
+    // implement mutation to action, no submit yet
+    setDraftAction((prev) => {
+      const inputPoints = prev.inputPoints.map((p) => (p === oldP.x ? newP.x : p))
+      const outputPoints = prev.outputPoints.map((p) => (p === oldP.y ? newP.y : p))
+      return { ...prev, inputPoints, outputPoints }
+    })
+  }
+
+  const addPoint = (newP: MappingPoint): void => {
+    // implement mutation to action, no submit yet
+    setDraftAction((prev) => {
+      return {
+        ...prev,
+        inputPoints: [...prev.inputPoints, newP.x],
+        outputPoints: [...prev.outputPoints, newP.y],
+      }
+    })
+
+  }
+
 
   return (
     <Card sx={{ mb: 2 }}>
@@ -92,28 +116,29 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
         <Stack spacing={2}>
           <Box>
             <Typography variant="subtitle2">Action Type</Typography>
-            <Chip label={action.actionType} size="small" color="primary" />
+            <Chip label={draftAction.actionType} size="small" color="primary" />
           </Box>
 
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <InputOutputDisplay input={action.input}/>
+              <InputOutputDisplay input={draftAction.input} />
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <InputOutputDisplay input={action.output}/>
+              <InputOutputDisplay input={draftAction.output} />
             </Box>
           </Stack>
 
           <Box>
             <PointMapper
-              xData={action.inputPoints}
-              yData={action.outputPoints}
-              input={action.input}
-              output={action.output}
-              title={action.name}
-              interpolation={!action.input.discrete && !action.output.discrete}
-            />
+              xData={draftAction.inputPoints}
+              yData={draftAction.outputPoints}
+              input={draftAction.input}
+              output={draftAction.output}
+              title={draftAction.name}
+              interpolation={!draftAction.input.discrete && !draftAction.output.discrete}
+              changePoint={updatePoint}
+              addPoint={addPoint} />
           </Box>
         </Stack>
       </CardContent>

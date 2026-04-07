@@ -1,5 +1,5 @@
 export interface NamedValue {
-  value: number
+  numericValue: number
   displayName: string
 }
 

@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import PointMapper from './PointMapper'
-import { InputOutput } from '../types'
 import { heightIO, annotationsIO, waterdepthIO, terrainIO } from '../mock/dummyIOs'
 
 const generateRandomValues = (count: number, min: number = 0, max: number = 100): number[] => {
@@ -11,26 +10,6 @@ const generateRandomValues = (count: number, min: number = 0, max: number = 100)
     return values
 }
 
-const getRandomPointCount = (): number => {
-    return Math.floor(Math.random() * (300 - 15 + 1)) + 15
-}
-
-// Helper to create a simple InputOutput from min/max
-const createSimpleIO = (min: number, max: number, unitName: string): InputOutput => ({
-    displayName: "SimpleIO",
-    min,
-    max,
-    ignoreValue: -999,
-    values: Array.from({ length: max - min + 1 }, (_, i) => ({
-        value: min + i,
-        displayName: `${unitName} ${min + i}`,
-    })),
-    description: '',
-    discrete: false,
-    uid: '',
-    parameters: []
-})
-
 const meta: Meta<typeof PointMapper> = {
     title: 'Components/PointMapper',
     component: PointMapper,
@@ -40,35 +19,16 @@ export default meta
 
 type Story = StoryObj<typeof PointMapper>
 
-const countLinear = getRandomPointCount()
-const inputLinear = generateRandomValues(countLinear, 0, 256).sort((a, b) => a - b)
-const outputLinear = inputLinear
-const linear0to256IO: InputOutput = createSimpleIO(0, 256, 'Level')
-
-const singleInput = generateRandomValues(1, 0, 100)[0]
-const singleOutput = generateRandomValues(1, 0, 100)[0]
-export const SinglePoint: Story = {
-    args: {
-        xData: [singleInput],
-        yData: [singleOutput],
-        input: createSimpleIO(0, 100, 'Input'),
-        output: createSimpleIO(0, 100, 'Output'),
-        title: 'Single Point',
-        interpolation: false, // Added explicitly
-    },
-}
-
 export const Empty: Story = {
     args: {
         xData: [],
         yData: [],
-        input: createSimpleIO(0, 256, 'Input'),
-        output: createSimpleIO(0, 256, 'Output'),
+        input: annotationsIO,
+        output: heightIO,
         title: 'Empty Mapping',
         interpolation: false, // Added explicitly
     },
 }
-
 
 export const Annotation_Height: Story = {
     args: {
