@@ -54,8 +54,7 @@ export default function PointMapper({
   const yRange = yMax - yMin
 
   // Determine grid intervals: 1 for ranges <= 16, else 10
-  const xDtick = Math.max(xRange <= 16 ? 1 : 10, yRange <= 16 ? 1 : 10
-  )
+  const xDtick = Math.max(xRange <= 16 ? 1 : 10, yRange <= 16 ? 1 : 10)
   const yDtick = xDtick
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>

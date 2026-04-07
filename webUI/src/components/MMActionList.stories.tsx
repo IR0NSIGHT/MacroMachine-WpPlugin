@@ -1,13 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react'
 import MMActionList from './MMActionList'
 import { MMAction } from '../types/MMAction'
+import { alwaysIO, annotationsIO, slopeIO, terrainIO, waterdepthIO } from '../mock/dummyIOs'
 
 const sampleActions: MMAction[] = [
   {
-    inputId: 'ALWAYS',
-    inputData: [],
-    outputId: 'TERRAIN',
-    outputData: [],
+    input: alwaysIO,
+    output: terrainIO,
     actionType: 'SET',
     inputPoints: [0],
     outputPoints: [9],
@@ -16,10 +15,8 @@ const sampleActions: MMAction[] = [
     uid: 'f5e02009-97ae-4955-a521-92639642c71b',
   },
   {
-    inputId: 'SLOPE',
-    inputData: [],
-    outputId: 'TERRAIN',
-    outputData: [],
+    input: slopeIO,
+    output: terrainIO,
     actionType: 'SET',
     inputPoints: [30, 90],
     outputPoints: [21, 75],
@@ -28,10 +25,8 @@ const sampleActions: MMAction[] = [
     uid: '4d006c6d-93f6-4326-81fe-60446dad53eb',
   },
   {
-    inputId: 'WATER_DEPTH',
-    inputData: [],
-    outputId: 'NIBBLE_LAYER',
-    outputData: ['Heatmap', 'org.ironsight.wpplugin.macropainter.heatmaplayer', false],
+    input: waterdepthIO,
+    output: annotationsIO,
     actionType: 'INCREMENT',
     inputPoints: [0, 13],
     outputPoints: [8, 0],

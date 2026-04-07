@@ -54,6 +54,7 @@ export const SinglePoint: Story = {
         input: createSimpleIO(0, 100, 'Input'),
         output: createSimpleIO(0, 100, 'Output'),
         title: 'Single Point',
+        interpolation: false, // Added explicitly
     },
 }
 
@@ -64,6 +65,7 @@ export const Empty: Story = {
         input: createSimpleIO(0, 256, 'Input'),
         output: createSimpleIO(0, 256, 'Output'),
         title: 'Empty Mapping',
+        interpolation: false, // Added explicitly
     },
 }
 
@@ -75,6 +77,7 @@ export const Annotation_Height: Story = {
         input: annotationsIO,
         output: heightIO,
         title: 'annotations to height mapping',
+        interpolation: false, // Added explicitly
     },
 }
 
