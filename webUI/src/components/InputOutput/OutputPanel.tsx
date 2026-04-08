@@ -3,14 +3,14 @@ import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Chip from '@mui/material/Chip'
-import { PROVIDER_DESCRIPTIONS } from '../types/ProviderType'
+import { PROVIDER_DESCRIPTIONS } from '../../types/ProviderType'
 
 interface OutputProviderProps {
   outputId: string
   outputData: unknown[]
 }
 
-export default function OutputProvider({ outputId, outputData }: OutputProviderProps) {
+export default function OutputPanel({ outputId, outputData }: OutputProviderProps) {
   const displayName = outputId || 'UNKNOWN'
   const description = PROVIDER_DESCRIPTIONS[displayName] || 'Custom provider'
 

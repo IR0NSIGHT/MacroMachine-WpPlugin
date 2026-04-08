@@ -3,8 +3,8 @@ import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Chip from '@mui/material/Chip'
-import { PROVIDER_DESCRIPTIONS } from '../types/ProviderType'
-import { InputOutput } from '@/types'
+import { PROVIDER_DESCRIPTIONS } from '../../types/ProviderType'
+import { InputOutput } from '@/types/InputOutput'
 
 interface InputProviderProps {
   input: InputOutput

@@ -1,4 +1,4 @@
-import { InputOutput } from '@/types';
+import { InputOutput } from '@/types/InputOutput';
 
 // Minecraft height IO: -64 to 320
 export const heightIO: InputOutput = {
@@ -10,7 +10,7 @@ export const heightIO: InputOutput = {
         displayName: `y=${-64 + i}`,
     })),
     discrete: false,
-    displayName: '',
+    displayName: 'Terrain Height (Y)',
     description: '',
     uid: '',
     parameters: []
@@ -204,6 +204,47 @@ export const slopeIO: InputOutput = {
     uid: '',
     parameters: []
 }
+export const perlinNoiseIO: InputOutput = {
+  displayName: "Perlin Noise",
+  description: "Perlin Noise Generator",
+
+  min: 0,
+  max: 100, // mock amplitude default
+
+  ignoreValue: -1, // not present in Java, so we define a safe default
+
+  discrete: false,
+
+  uid: "perlin_noise",
+
+  values: Array.from({ length: 101 }, (_, i) => ({
+    numericValue: i,
+    displayName: i.toString()
+  })),
+
+  parameters: [
+    {
+      name: "scale",
+      type: "number",
+      value: 5,
+    },
+    {
+      name: "amplitude",
+      type: "number",
+      value: 100,
+    },
+    {
+      name: "octaves",
+      type: "number",
+      value: 4,
+    },
+    {
+      name: "seed",
+      type: "number",
+      value: 4206973845,
+    }
+  ]
+};
 
 export const forestIO: InputOutput = {
     displayName: "Deciduous",

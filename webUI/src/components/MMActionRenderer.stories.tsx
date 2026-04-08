@@ -1,9 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import MMActionRenderer from './MMActionRenderer'
 import { raiseYonCyan, slopeToForest } from '../mock/dummyActions'
 
 const meta: Meta<typeof MMActionRenderer> = {
-  title: 'Components/MMActionRenderer',
+ 
   component: MMActionRenderer,
 }
 
@@ -27,7 +27,7 @@ export const Increment: Story = {
   args: {
     action: {
       ...raiseYonCyan,
-      actionType: 'INCREMENT',
+      actionType: "increment",
       inputPoints: [0, 13],
       outputPoints: [8, 0],
       name: 'Set: prefer shallow water',

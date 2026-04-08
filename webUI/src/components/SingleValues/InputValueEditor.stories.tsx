@@ -1,17 +1,16 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { useState } from 'react'
-import { InputDropdownSelector } from './InputSelector'
-import { InputOutput, NamedValue } from '../types'
-import { annotationsIO, biomesIO } from '../mock/dummyIOs'
+import { InputValueEditor } from './InputValueEditor'
+import { NamedValue } from '../../types/InputOutput'
+import { annotationsIO, biomesIO } from '../../mock/dummyIOs'
 
-const meta: Meta<typeof InputDropdownSelector> = {
-  title: 'Components/InputDropdownSelector',
-  component: InputDropdownSelector,
+const meta: Meta<typeof InputValueEditor> = {
+  component: InputValueEditor,
 }
 
 export default meta
 
-type Story = StoryObj<typeof InputDropdownSelector>
+type Story = StoryObj<typeof InputValueEditor>
 
 export const Annotations: Story = {
   render: () => {
@@ -21,8 +20,9 @@ export const Annotations: Story = {
     })
 
     return (
-      <InputDropdownSelector
-        value={value}
+      <InputValueEditor
+        label="Input"
+        value={value.numericValue}
         input={annotationsIO}
         onChange={setValue}
       />
@@ -38,8 +38,9 @@ export const Biomes: Story = {
     })
 
     return (
-      <InputDropdownSelector
-        value={value}
+      <InputValueEditor
+        label="Input"
+        value={value.numericValue}
         input={biomesIO}
         onChange={setValue}
       />

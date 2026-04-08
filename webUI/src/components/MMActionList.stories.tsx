@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/react'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import MMActionList from './MMActionList'
 import { MMAction } from '../types/MMAction'
 import { alwaysIO, annotationsIO, slopeIO, terrainIO, waterdepthIO } from '../mock/dummyIOs'
@@ -7,7 +7,7 @@ const sampleActions: MMAction[] = [
   {
     input: alwaysIO,
     output: terrainIO,
-    actionType: 'SET',
+    actionType: "set",
     inputPoints: [0],
     outputPoints: [9],
     name: 'apply snow',
@@ -17,7 +17,7 @@ const sampleActions: MMAction[] = [
   {
     input: slopeIO,
     output: terrainIO,
-    actionType: 'SET',
+    actionType: 'set',
     inputPoints: [30, 90],
     outputPoints: [21, 75],
     name: 'Paint by slope',
@@ -27,7 +27,7 @@ const sampleActions: MMAction[] = [
   {
     input: waterdepthIO,
     output: annotationsIO,
-    actionType: 'INCREMENT',
+    actionType: 'increment',
     inputPoints: [0, 13],
     outputPoints: [8, 0],
     name: 'Set: prefer shallow water',
@@ -37,7 +37,7 @@ const sampleActions: MMAction[] = [
 ]
 
 const meta: Meta<typeof MMActionList> = {
-  title: 'Components/MMActionList',
+ 
   component: MMActionList,
 }
 

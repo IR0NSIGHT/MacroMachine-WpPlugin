@@ -12,8 +12,8 @@ import EditIcon from '@mui/icons-material/Edit'
 import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
 import { MMAction } from '../types/MMAction'
-import InputOutputDisplay from './InputProvider'
-import PointMapper from './PointMapper'
+import InputOutputDisplay from './InputOutput/InputProvider'
+import PointScatterPlot from './PointScatterPlot'
 import { MappingPoint } from '@/types/MappingPoint'
 
 interface MMActionRendererProps {
@@ -130,13 +130,14 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
           </Stack>
 
           <Box>
-            <PointMapper
+            <PointScatterPlot
               xData={draftAction.inputPoints}
               yData={draftAction.outputPoints}
               input={draftAction.input}
               output={draftAction.output}
               title={draftAction.name}
               interpolation={!draftAction.input.discrete && !draftAction.output.discrete}
+              type={draftAction.actionType}
               changePoint={updatePoint}
               addPoint={addPoint} />
           </Box>

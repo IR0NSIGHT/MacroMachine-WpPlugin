@@ -1,7 +1,7 @@
-import { InputOutput, NamedValue } from "@/types"
+import { InputOutput, NamedValue } from "@/types/InputOutput"
 import { TextField } from "@mui/material"
 
-export const InputDropdownSelector = (props: { label: string, value: number, input: InputOutput, onChange: (newInput: NamedValue) => void }) => {
+export const InputValueEditor = (props: { label: string, value: number, input: InputOutput, onChange: (newInput: NamedValue) => void }) => {
     return (<TextField
         label={props.label}
         select

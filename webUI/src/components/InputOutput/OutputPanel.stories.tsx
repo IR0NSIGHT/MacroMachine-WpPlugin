@@ -1,14 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/react'
-import OutputProvider from './OutputProvider'
+import type { Meta, StoryObj } from '@storybook/react-vite'
+import OutputPanel from './OutputPanel'
 
-const meta: Meta<typeof OutputProvider> = {
-  title: 'Components/OutputProvider',
-  component: OutputProvider,
+const meta: Meta<typeof OutputPanel> = {
+ 
+  component: OutputPanel,
 }
 
 export default meta
 
-type Story = StoryObj<typeof OutputProvider>
+type Story = StoryObj<typeof OutputPanel>
 
 export const Terrain: Story = {
   args: {

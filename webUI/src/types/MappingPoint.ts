@@ -1,4 +1,4 @@
-import { InputOutput } from "../types"
+import { InputOutput } from "./InputOutput"
 
 export interface MappingPoint {
     x: number

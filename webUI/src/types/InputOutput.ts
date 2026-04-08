@@ -3,6 +3,13 @@ export interface NamedValue {
   displayName: string
 }
 
+export interface ioParameter {
+  name: string
+  type: 'string' | 'number' | 'boolean' | 'select'
+  options?: string[] | number[] | boolean[]
+  value: string | number | boolean
+}
+
 export interface InputOutput {
   displayName: string
   description: string
@@ -12,5 +19,5 @@ export interface InputOutput {
   values: NamedValue[]
   discrete: boolean
   uid: string
-  parameters: (string|number|number[])[]
+  parameters: ioParameter[]
 }

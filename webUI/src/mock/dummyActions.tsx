@@ -4,7 +4,7 @@ import { annotationsIO, forestIO, heightIO, slopeIO } from "./dummyIOs";
 export const raiseYonCyan: MMAction = {
   input: annotationsIO,
   output: heightIO,
-  actionType: 'SET',
+  actionType: "increment",
   inputPoints:[0,10],
   outputPoints: [3, 10],
   name: 'raise on cyan',
@@ -15,7 +15,7 @@ export const raiseYonCyan: MMAction = {
 export const slopeToForest: MMAction = {
   input: slopeIO,
   output: forestIO,
-  actionType: 'SET',
+  actionType: "set",
   inputPoints:[0,45,70],
   outputPoints: [15,7, 0],
   name: 'slope defines forest strength',

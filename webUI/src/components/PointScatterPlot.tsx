@@ -3,38 +3,36 @@ import Paper from '@mui/material/Paper'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
-import { MappingPointEditor } from './MappingPointEditor'
+import { MappingPointEditor } from './SingleValues/MappingPointEditor'
 import Button from '@mui/material/Button'
 import { useState } from 'react'
-import { InputOutput } from '../types'
+import { InputOutput } from '../types/InputOutput'
 import { MappingPoint } from '../types/MappingPoint'
+import { ActionType } from '@/types/MMAction'
 
-interface Point {
-  x: number
-  y: number
-}
-
-interface PointMapperProps {
+export interface PointScatterPlotProps {
   xData: number[]
   yData: number[]
   input: InputOutput
   output: InputOutput
   title: string
   interpolation: boolean
+  type: ActionType,
   changePoint: (oldP: MappingPoint, newP: MappingPoint) => void
   addPoint: (newP: MappingPoint) => void
 }
 
-export default function PointMapper({
+export default function PointScatterPlot({
   xData,
   yData,
   input,
   output,
   title = 'Input to Output Mapping',
   interpolation = false,
+  type,
   changePoint,
   addPoint,
-}: PointMapperProps) {
+}: PointScatterPlotProps) {
   const points = xData.slice(0, Math.min(xData.length, yData.length))
   const outputSliced = yData.slice(0, points.length)
 
@@ -56,7 +54,6 @@ export default function PointMapper({
         <Typography color="textSecondary">No points to display</Typography>
         <Button
           onClick={() => {
-            setIsNew(true)
             setSelectedPoint(null)
             setEditingPoint(true)
           }}
@@ -157,6 +154,7 @@ export default function PointMapper({
           addPoint(newP)
           setEditingPoint(false)
         }}
+        type={type}
       />
 
     </Paper>
