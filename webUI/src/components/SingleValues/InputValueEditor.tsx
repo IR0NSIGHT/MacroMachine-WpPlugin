@@ -2,52 +2,39 @@ import { InputOutput, NamedValue } from "@/types/InputOutput";
 import { MenuItem, TextField } from "@mui/material";
 
 export const InputValueEditor = (props: { 
-    open?: boolean, 
     includeIgnore: boolean, 
     label: string, 
     value: number, 
     input: InputOutput, 
     onChange: (newInput: NamedValue) => void 
 }) => {
-    const { open = false, includeIgnore, label, value, input, onChange } = props;
-    
+    const { includeIgnore, label, value, input, onChange } = props;
+
     const isIgnore = (val: number) => val === input.ignoreValue;
-    const filter = includeIgnore ? (v: NamedValue) => true : (v: NamedValue) => !isIgnore(v.numericValue);
-    const sort = input.discrete 
-        ? (a: NamedValue, b: NamedValue) => a.displayName.localeCompare(b.displayName)
-        : (a: NamedValue, b: NamedValue) => a.numericValue - b.numericValue;
+    const filter = includeIgnore
+        ? () => true
+        : (v: NamedValue) => !isIgnore(v.numericValue);
     
-    const values = input.values.filter(filter);
-    const labelText = label + ": " + input.displayName;
+    const sortedValues = input.values
+        .filter(filter)
+        .sort(input.discrete 
+            ? (a, b) => a.displayName.localeCompare(b.displayName)
+            : (a, b) => a.numericValue - b.numericValue
+        );
 
     return (
         <TextField
-            label={labelText}
             select
+            fullWidth
+            label={`${label}: ${input.displayName}`}
             value={value}
-            onChange={(e) =>
-                onChange(values.find((v) => v.numericValue === Number(e.target.value))!)
-            }
-            sx={{
-                minWidth: `${labelText.length}ch`, // roughly match the label length
-                maxWidth: '100%',                   // optional, prevent overflow
+            onChange={(e) => {
+                const selected = sortedValues.find(v => v.numericValue === Number(e.target.value));
+                if (selected) onChange(selected);
             }}
-            slotProps={{
-                select: {
-                    native: false,
-                    open,
-                    MenuProps: {
-                        PaperProps: {
-                            style: {
-                                minWidth: 'auto',
-                                width: 'max-content', // dropdown fits content
-                            }
-                        }
-                    },
-                }
-            }}
+            margin="normal"
         >
-            {values.sort(sort).map((option) => (
+            {sortedValues.map(option => (
                 <MenuItem key={option.numericValue} value={option.numericValue}>
                     {isIgnore(option.numericValue) ? `[Ignore]` : option.displayName}
                 </MenuItem>
