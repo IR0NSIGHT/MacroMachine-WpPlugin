@@ -12,7 +12,7 @@ export default meta
 
 type Story = StoryObj<typeof InputValueEditor>
 
-export const Annotations: Story = {
+export const InputAnnotations: Story = {
   render: () => {
     const [value, setValue] = useState<NamedValue>({
       numericValue: 1,
@@ -21,16 +21,18 @@ export const Annotations: Story = {
 
     return (
       <InputValueEditor
+        includeIgnore={false}
         label="Input"
         value={value.numericValue}
         input={annotationsIO}
         onChange={setValue}
+         open={true}
       />
     )
   },
 }
 
-export const Biomes: Story = {
+export const InputBiome: Story = {
   render: () => {
     const [value, setValue] = useState<NamedValue>({
       numericValue: 1,
@@ -39,11 +41,34 @@ export const Biomes: Story = {
 
     return (
       <InputValueEditor
+        includeIgnore={false}
         label="Input"
         value={value.numericValue}
         input={biomesIO}
         onChange={setValue}
+         open={true}
       />
     )
   },
 }
+
+
+export const OutputBiome: Story = {
+  render: () => {
+    const [value, setValue] = useState<NamedValue>(biomesIO.values.find(v => v.numericValue === biomesIO.ignoreValue)!)
+
+    return (
+      <InputValueEditor
+        includeIgnore={true}
+        label="Output"
+        value={value.numericValue}
+        input={biomesIO}
+        onChange={setValue}
+        open={true}
+      />
+    )
+  },
+}
+
+
+

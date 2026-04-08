@@ -8,7 +8,7 @@ export const heightIO: InputOutput = {
     values: Array.from({ length: 385 }, (_, i) => ({
         numericValue: -64 + i,
         displayName: `y=${-64 + i}`,
-    })),
+    })).concat([{ numericValue: -999, displayName: '[Ignore]' }]),
     discrete: false,
     displayName: 'Terrain Height (Y)',
     description: '',
@@ -38,7 +38,7 @@ export const waterdepthIO: InputOutput = {
     values: Array.from({ length: 31 }, (_, i) => ({
         numericValue: i,
         displayName: `depth ${i}`,
-    })),
+    })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
     discrete: false,
     displayName: '',
     description: '',
@@ -74,7 +74,7 @@ export const annotationsIO: InputOutput = {
     values: Array.from({ length: 16 }, (_, i) => ({
         numericValue: i,
         displayName: annotationNames[i],
-    })),
+    })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
     discrete: true,
     description: '',
     uid: '',
@@ -91,6 +91,7 @@ export const biomesIO: InputOutput = {
   uid: 'biomes',
   parameters: [],
   values: [
+    { numericValue: -1, displayName: '[Ignore]' },
     { numericValue: 0, displayName: "Ocean" },
     { numericValue: 1, displayName: "Plains" },
     { numericValue: 2, displayName: "Desert" },
@@ -198,7 +199,7 @@ export const slopeIO: InputOutput = {
     values: Array.from({ length: 90 }, (_, i) => ({
         numericValue: i,
         displayName: i+"°",
-    })),
+    })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
     discrete: false,
     description: '',
     uid: '',
@@ -220,7 +221,7 @@ export const perlinNoiseIO: InputOutput = {
   values: Array.from({ length: 101 }, (_, i) => ({
     numericValue: i,
     displayName: i.toString()
-  })),
+  })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
 
   parameters: [
     {
@@ -254,7 +255,7 @@ export const forestIO: InputOutput = {
     values: Array.from({ length: 15 }, (_, i) => ({
         numericValue: i,
         displayName: "lvl="+i,
-    })),
+    })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
     discrete: false,
     description: '',
     uid: '',
@@ -302,7 +303,7 @@ export const terrainIO: InputOutput = {
   values: Array.from({ length: 30 }, (_, i) => ({
     numericValue: i,
     displayName: terrainNames[i],
-  })),
+  })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
   discrete: true,
   description: 'Common Minecraft terrain and block types',
   uid: '',

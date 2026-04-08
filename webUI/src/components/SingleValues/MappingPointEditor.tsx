@@ -14,15 +14,8 @@ export const MappingPointEditor = (props: { editorActive: boolean, isNew: boolea
             <DialogTitle>{isNew ? 'Add Point' : 'Edit Point'}</DialogTitle>
             <DialogContent sx={{ display: 'flex', gap: 2, mt: 1 }}>
                 <div>
-                    <div>
-                        <div>for all points where {props.oldPoint.input.displayName /* annotations */} is </div>
-                        <InputValueEditor label="input" value={draft.x} input={props.oldPoint.input} onChange={newP => setDraft({ ...draft, x: newP.numericValue })}></InputValueEditor>
-                    </div>
-                    <br />
-                    <div>
-                        {thenDoThis}
-                        <InputValueEditor label="output" value={draft.y} input={props.oldPoint.output} onChange={newP => setDraft({ ...draft, y: newP.numericValue })}></InputValueEditor>
-                    </div>
+                    <InputValueEditor includeIgnore={false} label="input" value={draft.x} input={props.oldPoint.input} onChange={newP => setDraft({ ...draft, x: newP.numericValue })}></InputValueEditor>
+                    <InputValueEditor includeIgnore={true} label="output" value={draft.y} input={props.oldPoint.output} onChange={newP => setDraft({ ...draft, y: newP.numericValue })}></InputValueEditor>
                 </div>
             </DialogContent>
             <DialogActions>
