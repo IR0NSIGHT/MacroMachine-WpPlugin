@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import RangeValueAxisEditor from "./RangeEditor";
+import { slopeIO, terrainIO } from "@/mock/dummyIOs";
 
 const meta: Meta<typeof RangeValueAxisEditor> = {
   title: "Components/RangeValueAxisEditor",
@@ -14,12 +15,6 @@ const meta: Meta<typeof RangeValueAxisEditor> = {
       ],
     },
   },
-  argTypes: {
-    min: { control: "number" },
-    max: { control: "number" },
-    allowedValues: { control: "object" },
-    height: { control: "number" },
-  },
 };
 
 export default meta;
@@ -28,59 +23,44 @@ type Story = StoryObj<typeof RangeValueAxisEditor>;
 
 export const Default: Story = {
   args: {
-    min: 0,
-    max: 100,
-    height: 90,
-    allowedValues: ["low", "medium", "high"],
-  },
-};
+    input: slopeIO,
+    output: terrainIO,
+    initialSegments: [{
+      "id": "1",
+      "start": 0,
+      "end": 30,
 
-export const TemperatureScale: Story = {
-  args: {
-    min: -20,
-    max: 40,
-    height: 90,
-    allowedValues: ["cold", "cool", "warm", "hot"],
-  },
-};
+      "value": {
+        "numericValue": 0,
+        "displayName": "Air"
+      }
+    }, {
+      "id": "2",
+      "start": 32,
+      "end": 45,
 
-export const FinancialRiskBands: Story = {
-  args: {
-    min: 0,
-    max: 1,
-    height: 90,
-    allowedValues: ["safe", "moderate", "risky", "critical"],
-    initialSegments: [
-      { id: "1", start: 0, end: 0.25, value: "safe" },
-      { id: "2", start: 0.25, end: 0.5, value: "moderate" },
-      { id: "3", start: 0.5, end: 0.75, value: "risky" },
-      { id: "4", start: 0.75, end: 1, value: "critical" },
-    ],
-  },
-};
+      "value": {
+        "numericValue": 1,
+        "displayName": "Stone"
+      }
+    }, {
+      "id": "3",
+      "start": 45,
+      "end": 60,
 
-export const DenseRange: Story = {
-  args: {
-    min: 0,
-    max: 1000,
-    height: 90,
-    allowedValues: ["A", "B", "C", "D", "E", "F"],
-  },
-};
+      "value": {
+        "numericValue": 2,
+        "displayName": "Grass Block"
+      }
+    }, {
+      "id": "4",
+      "start": 60,
+      "end": 90,
 
-export const WideInteractiveDemo: Story = {
-  args: {
-    min: 0,
-    max: 100,
-    height: 120,
-    allowedValues: ["low", "medium", "high"],
-  },
-  parameters: {
-    docs: {
-      description: {
-        story:
-          "Click anywhere on the axis to split segments. Click a segment to change its value. Drag handles to resize segments.",
-      },
-    },
+      "value": {
+        "numericValue": 3,
+        "displayName": "Dirt"
+      }
+    }],
   },
 };
