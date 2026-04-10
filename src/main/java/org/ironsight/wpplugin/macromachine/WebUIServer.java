@@ -3,12 +3,21 @@ package org.ironsight.wpplugin.macromachine;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
+import org.ironsight.wpplugin.macromachine.REST.MMActionBuilder;
+import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static org.ironsight.wpplugin.macromachine.REST.IOMapper.toInputOutputJson;
 
 public class WebUIServer {
     private static final int PORT = 8080;
@@ -37,12 +46,41 @@ public class WebUIServer {
 
         server.createContext("/action", exchange -> {
             if ("GET".equals(exchange.getRequestMethod())) {
-                String response = "{\"inputId\":\"ALWAYS\",\"inputData\":[],\"outputId\":\"TERRAIN\",\"outputData\":[],\"actionType\":\"SET\",\"inputPoints\":[0],\"outputPoints\":[9],\"name\":\"apply snow\",\"description\":\"description of the action\",\"uid\":\"f5e02009-97ae-4955-a521-92639642c71b\"}";
-                exchange.getResponseHeaders().set("Content-Type", "application/json");
-                exchange.sendResponseHeaders(200, response.length());
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes());
+                final var actions = MappingActionContainer.getInstance().queryAll();
+
+                if (actions.isEmpty()) {
+                    exchange.sendResponseHeaders(204, -1);
+                    return;
                 }
+
+                var action = actions.get(0);
+
+                try {
+                    String response = MMActionBuilder.buildMMActionJson(
+                            action.getName(),
+                            action.getDescription(),
+                            action.getUid().toString(),
+                            action.getActionType().displayName,
+                            toInputOutputJson(action.getInput()),
+                            toInputOutputJson(action.getOutput()),
+                            Arrays.stream(action.getMappingPoints()).map(p -> p.input).toList(),
+                            Arrays.stream(action.getMappingPoints()).map(p -> p.output).toList()
+                    );
+
+                    byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+
+                    exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+                    exchange.sendResponseHeaders(200, bytes.length);
+
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(bytes);
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    exchange.sendResponseHeaders(500, -1);
+                }
+
             } else {
                 exchange.sendResponseHeaders(405, -1);
             }

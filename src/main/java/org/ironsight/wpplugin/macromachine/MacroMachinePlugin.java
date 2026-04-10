@@ -46,16 +46,6 @@ public class MacroMachinePlugin extends AbstractPlugin
             CustomLayerProvider,
             LayerEditorProvider
 {
-    private static WebUIServer webUIServer;
-
-    static {
-        webUIServer = new WebUIServer();
-        try {
-            webUIServer.start();
-        } catch (IOException e) {
-            System.err.println("Failed to start WebUI Server: " + e.getMessage());
-        }
-    }
 
     public WorldPainterView view;
 
