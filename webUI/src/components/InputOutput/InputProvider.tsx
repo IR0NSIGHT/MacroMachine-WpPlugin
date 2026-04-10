@@ -14,7 +14,6 @@ interface InputProviderProps {
 export default function InputOutputDisplay({ inputOutput, type }: InputProviderProps) {
   const displayName = inputOutput.displayName || 'UNKNOWN'
   const description = PROVIDER_DESCRIPTIONS[displayName] || 'Custom provider'
-  const values = inputOutput.parameters.map(param => `${param.name}: ${param.value}`);
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
       <Stack spacing={1}>
