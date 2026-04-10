@@ -17,6 +17,14 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src') // ✅ maps @ -> src/
     }
   },
+  server: {
+    proxy: {
+      '/action': {
+        target: 'http://localhost:8080', // your backend
+        changeOrigin: true,
+      }
+    }
+  },
   test: {
     projects: [{
       extends: true,
