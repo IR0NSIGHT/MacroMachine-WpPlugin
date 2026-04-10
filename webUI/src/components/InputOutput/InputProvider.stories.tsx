@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import InputOutputDisplay from './InputProvider'
-import { alwaysIO, forestIO, perlinNoiseIO, slopeIO } from '@/mock/dummyIOs'
+import { alwaysIO, forestIO, heightIO, perlinNoiseIO, slopeIO } from '@/mock/dummyIOs'
 
 const meta: Meta<typeof InputOutputDisplay> = {
  
@@ -11,26 +11,37 @@ export default meta
 
 type Story = StoryObj<typeof InputOutputDisplay>
 
-export const Always: Story = {
+export const AlwaysInput: Story = {
   args: {
-    input: alwaysIO
+    inputOutput: alwaysIO,
+    type: 'input',
   },
 }
 
-export const Slope: Story = {
+export const SlopeInput: Story = {
   args: {
-    input: slopeIO
+    inputOutput: slopeIO,
+    type: 'input',
   },
 }
 
-export const PerlinNoise: Story = {
+export const PerlinNoiseInput: Story = {
   args: {
-    input: perlinNoiseIO
+    inputOutput: perlinNoiseIO,
+    type: 'input',
   },
 }
 
-export const NibbleLayer: Story = {
+export const DeciduousOutput: Story = {
   args: {
-    input: forestIO,
+    inputOutput: forestIO,
+    type: 'output',
+  },
+}
+
+export const HeightOutput: Story = {
+  args: {
+    inputOutput: heightIO,
+    type: 'output',
   },
 }

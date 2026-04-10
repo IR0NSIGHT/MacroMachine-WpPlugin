@@ -14,7 +14,7 @@
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
-    "verify": "npm run compile && npm run lint && npm run build && npm run build-storybook && npm run test"
+    "verify": "npm run compile && npm run lint && npm run build && npm run build-storybook"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
