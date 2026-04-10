@@ -121,11 +121,11 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
 
           <Stack direction="row" spacing={2}>
             <Box sx={{ flex: 1 }}>
-              <InputOutputDisplay inputOutput={draftAction.input} />
+              <InputOutputDisplay inputOutput={draftAction.input} type='input' />
             </Box>
 
             <Box sx={{ flex: 1 }}>
-              <InputOutputDisplay inputOutput={draftAction.output} />
+              <InputOutputDisplay inputOutput={draftAction.output} type='output' />
             </Box>
           </Stack>
 
