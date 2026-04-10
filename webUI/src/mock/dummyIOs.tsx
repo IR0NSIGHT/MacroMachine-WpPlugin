@@ -13,7 +13,10 @@ export const heightIO: InputOutput = {
     displayName: 'Terrain Height (Y)',
     description: '',
     uid: '',
-    parameters: []
+    parameters: [
+      { name: "min", type: "number", value: -64 },
+      { name: "max", type: "number", value: 320 },
+    ]
 };
 
 export const alwaysIO: InputOutput = {

@@ -11,7 +11,7 @@ interface InputProviderProps {
   type: 'input' | 'output'
 }
 
-export default function InputOutputDisplay({ inputOutput, type  }: InputProviderProps) {
+export default function InputOutputDisplay({ inputOutput, type }: InputProviderProps) {
   const displayName = inputOutput.displayName || 'UNKNOWN'
   const description = PROVIDER_DESCRIPTIONS[displayName] || 'Custom provider'
   const values = inputOutput.parameters.map(param => `${param.name}: ${param.value}`);
@@ -20,7 +20,7 @@ export default function InputOutputDisplay({ inputOutput, type  }: InputProvider
       <Stack spacing={1}>
         <Box>
           <Typography variant="subtitle2" color="primary" gutterBottom>
-            { type === 'input' ? 'Input Provider' : 'Output Provider' }
+            {type === 'input' ? 'Input Provider' : 'Output Provider'}
           </Typography>
           <Chip label={displayName} size="small" color="primary" variant="outlined" />
         </Box>
@@ -32,9 +32,19 @@ export default function InputOutputDisplay({ inputOutput, type  }: InputProvider
             <Typography variant="caption" component="div" color="text.secondary">
               <strong>Data:</strong>
             </Typography>
-            <Typography variant="caption" component="code" sx={{ display: 'block', wordBreak: 'break-all' }}>
-              {JSON.stringify(inputOutput.parameters)}
-            </Typography>
+
+            <Box component="ul" sx={{ pl: 2, m: 0 }}>
+              {inputOutput.parameters.map((param) => (
+                <Typography
+                  key={param.name}
+                  component="li"
+                  variant="caption"
+                  sx={{ fontFamily: 'monospace' }}
+                >
+                  {param.name}: {param.value}
+                </Typography>
+              ))}
+            </Box>
           </Box>
         )}
       </Stack>
