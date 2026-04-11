@@ -1,15 +1,9 @@
 import React, { useMemo, useRef, useState } from "react";
 import { Menu } from "@mui/material";
 import { InputOutput, NamedValue } from "@/types/InputOutput";
-import { InputValueEditor } from "./SingleValues/InputValueEditor";
-import { start } from "@storybook/builder-vite";
+import { InputValueEditor } from "../SingleValues/InputValueEditor";
+import { Segment, splitAt } from "./Segment";
 
-type Segment = {
-    id: string;
-    start: number;
-    end: number;
-    value: NamedValue;
-};
 
 const SegmentBody = ({
     segment,
@@ -61,17 +55,13 @@ type Props = {
     height?: number;
 };
 
-function clamp(n: number, min: number, max: number) {
-    return Math.max(min, Math.min(max, n));
-}
+
 
 function uid() {
     return Math.random().toString(36).slice(2);
 }
 
-function toPercent(v: number, min: number, max: number) {
-    return ((v - min) / (max - min)) * 100;
-}
+
 
 export default function RangeValueAxisEditor({
     input,
@@ -129,31 +119,7 @@ export default function RangeValueAxisEditor({
         const ratio = x / rect.width;
         const value = min + ratio * (max - min);
 
-        setSegments((prev) => {
-            const idx = prev.findIndex((s) => value >= s.start && value <= s.end);
-            if (idx === -1) return prev;
-
-            const seg = prev[idx];
-            if (value === seg.start || value === seg.end) return prev;
-
-            const left: Segment = {
-                id: uid(),
-                start: seg.start,
-                end: value,
-                value: seg.value,
-            };
-
-            const right: Segment = {
-                id: uid(),
-                start: value,
-                end: seg.end,
-                value: seg.value,
-            };
-
-            const copy = [...prev];
-            copy.splice(idx, 1, left, right);
-            return copy;
-        });
+        setSegments((prev) => splitAt(prev, value));
     };
 
     // -------------------------
@@ -223,16 +189,6 @@ export default function RangeValueAxisEditor({
 
         window.addEventListener("pointermove", onPointerMove);
         window.addEventListener("pointerup", onPointerUp);
-    };
-
-    const validateSegment = (segment: Segment): Segment => {
-        const validatedStart = clamp(segment.start, min, max);
-        const validatedEnd = clamp(segment.end, min, max);
-        return {
-            ...segment,
-            start: Math.min(validatedStart, validatedEnd),
-            end: Math.max(validatedStart, validatedEnd),
-        };
     };
 
     const onPointerMove = (e: PointerEvent) => {
