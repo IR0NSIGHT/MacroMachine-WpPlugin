@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import RangeValueAxisEditor from "./RangeEditor";
 import { slopeIO, terrainIO } from "@/mock/dummyIOs";
 
@@ -36,7 +36,7 @@ export const Default: Story = {
       }
     }, {
       "id": "2",
-      "start": 32,
+      "start": 31,
       "end": 45,
 
       "value": {
@@ -45,7 +45,7 @@ export const Default: Story = {
       }
     }, {
       "id": "3",
-      "start": 45,
+      "start": 46,
       "end": 60,
 
       "value": {
@@ -54,7 +54,7 @@ export const Default: Story = {
       }
     }, {
       "id": "4",
-      "start": 60,
+      "start": 61,
       "end": 90,
 
       "value": {

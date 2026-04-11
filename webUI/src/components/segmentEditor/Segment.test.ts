@@ -10,8 +10,55 @@ describe("segment splitting", () => {
         const newSegments = splitAt(segments, 5);
         expect(newSegments).toEqual([
             { id: "1", start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
-            { id: "1-2", start: 5, end: 10, value: { displayName: "A", numericValue: 3 } },
+            { id: "1-2", start: 6, end: 10, value: { displayName: "A", numericValue: 3 } },
         ]);
+        expect(areSegmentsValid(newSegments, 0, 10)).toBe(true);
+    });
+
+    it("does not split at the border of a segment", () => {
+        const segments: Segments = [
+            { id: "1", start: 0, end: 10, value: { displayName: "A", numericValue: 3 } },
+        ];
+        const newSegments = splitAt(segments, 0);
+        expect(newSegments).toEqual(segments);
+        const newSegments2 = splitAt(segments, 10);
+        expect(newSegments2).toEqual(segments);
+    });
+
+    it("does not split segments that are to small", () => {
+        {
+            const segmentsOneWide: Segments = [
+                { id: "1", start: 0, end: 1, value: { displayName: "A", numericValue: 3 } },
+            ];
+            expect(areSegmentsValid(segmentsOneWide, 0, 1)).toBe(true);
+            const newSegments = splitAt(segmentsOneWide, 0);
+            expect(newSegments).toEqual(segmentsOneWide);
+            const newSegments2 = splitAt(segmentsOneWide, 1);
+            expect(newSegments2).toEqual(segmentsOneWide);
+        }
+
+        {
+            const segmentsTwoWide: Segments = [
+                { id: "1", start: 0, end: 2, value: { displayName: "A", numericValue: 3 } },
+            ];
+            expect(areSegmentsValid(segmentsTwoWide, 0, 2)).toBe(true);
+            const newSegments3 = splitAt(segmentsTwoWide, 0);
+            expect(newSegments3).toEqual(segmentsTwoWide);
+            const newSegments4 = splitAt(segmentsTwoWide, 1);
+            expect(newSegments4).toEqual(segmentsTwoWide);
+        }
+    });
+
+    it("does split minimal size segment correctly", () => {
+        const segments: Segments = [
+            { id: "1", start: 0, end: 3, value: { displayName: "A", numericValue: 3 } },
+        ];
+        const newSegments = splitAt(segments, 1);
+        expect(newSegments).toEqual([
+            { id: "1", start: 0, end: 1, value: { displayName: "A", numericValue: 3 } },
+            { id: "1-2", start: 2, end: 3, value: { displayName: "A", numericValue: 3 } },
+        ]);
+        expect(areSegmentsValid(newSegments, 0, 3)).toBe(true);
     });
 
     it("does not split if position is outside the segment", () => {
@@ -28,16 +75,18 @@ describe("segment splitting", () => {
     it("splits multiple segments correctly", () => {
         const segments: Segments = [
             { id: "1", start: 0, end: 10, value: { displayName: "A", numericValue: 3 } },
-            { id: "2", start: 10, end: 20, value: { displayName: "B", numericValue: 5 } },
-            { id: "3", start: 20, end: 30, value: { displayName: "C", numericValue: 7 } },
+            { id: "2", start: 11, end: 20, value: { displayName: "B", numericValue: 5 } },
+            { id: "3", start: 21, end: 30, value: { displayName: "C", numericValue: 7 } },
         ];
+        expect(areSegmentsValid(segments, 0, 30)).toBe(true);
         const newSegments = splitAt(segments, 15);
         expect(newSegments).toEqual([
             { id: "1", start: 0, end: 10, value: { displayName: "A", numericValue: 3 } },
-            { id: "2", start: 10, end: 15, value: { displayName: "B", numericValue: 5 } },
-            { id: "2-2", start: 15, end: 20, value: { displayName: "B", numericValue: 5 } },
-            { id: "3", start: 20, end: 30, value: { displayName: "C", numericValue: 7 } },
+            { id: "2", start: 11, end: 15, value: { displayName: "B", numericValue: 5 } },
+            { id: "2-2", start: 16, end: 20, value: { displayName: "B", numericValue: 5 } },
+            { id: "3", start: 21, end: 30, value: { displayName: "C", numericValue: 7 } },
         ]);
+        expect(areSegmentsValid(newSegments, 0, 30)).toBe(true);
     });
 });
 
@@ -50,27 +99,35 @@ describe("segment merging", () => {
         ];
         const newSegments = mergeSegments(segments, 5);
         expect(newSegments).toEqual(segments);
+        expect(areSegmentsValid(newSegments, 0, 15)).toBe(true);
     });
 
     it("does not merge if value is not a border between segments", () => {
         const segments: Segments = [
             { id: "1", start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
-            { id: "2", start: 5, end: 10, value: { displayName: "B", numericValue: 5 } },
+            { id: "2", start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
         ];
+        expect(areSegmentsValid(segments, 0, 10)).toBe(true);
+
         const newSegments = mergeSegments(segments, 4);
         expect(newSegments).toEqual(segments);
+        expect(areSegmentsValid(newSegments, 0, 10)).toBe(true);
         const newSegments2 = mergeSegments(segments, 5);
         expect(newSegments2).toEqual(segments);
+        expect(areSegmentsValid(newSegments2, 0, 10)).toBe(true);
+
     });
 
     it("does not merge in a way that the whole range would shrink", () => {
         const segments: Segments = [
             { id: "1", start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
-            { id: "2", start: 5, end: 10, value: { displayName: "B", numericValue: 5 } },
+            { id: "2", start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
         ];
+        expect(areSegmentsValid(segments, 0, 10)).toBe(true);
         // try to merge away the first segment by merging at the start of the range
         const newSegments = mergeSegments(segments, 0);
         expect(newSegments).toEqual(segments);
+        expect(areSegmentsValid(newSegments, 0, 10)).toBe(true);
     });
 });
 
@@ -101,9 +158,15 @@ describe("segment validation", () => {
         const segments: Segments = [
             { id: "1", start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
             { id: "2", start: 4, end: 10, value: { displayName: "B", numericValue: 5 } },
-            { id: "3", start: 10, end: 15, value: { displayName: "C", numericValue: 7 } },
+            { id: "3", start: 11, end: 15, value: { displayName: "C", numericValue: 7 } },
         ];
         expect(areSegmentsValid(segments, 0, 10)).toBe(false);
+
+        const segments2: Segments = [
+            { id: "1", start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
+            { id: "2", start: 5, end: 10, value: { displayName: "B", numericValue: 5 } },
+        ];
+        expect(areSegmentsValid(segments2, 0, 10)).toBe(false);
     });
 
     it("validates that segments have start <= end", () => {
@@ -124,7 +187,7 @@ describe("segment validation", () => {
     it("validates correct segments", () => {
         const segments: Segments = [
             { id: "1", start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
-            { id: "2", start: 5, end: 10, value: { displayName: "B", numericValue: 5 } },
+            { id: "2", start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
         ];
         expect(areSegmentsValid(segments, 0, 10)).toBe(true);
     });
@@ -146,11 +209,35 @@ describe("segment shifting", () => {
 
         const shrinkLeft = shiftSegment(segments, "1", 11, 15);
         expect(shrinkLeft).toEqual(segments);
-        
+
         const shrinkRight = shiftSegment(segments, "1", 10, 14);
-        expect(shrinkRight).toEqual(segments);  
+        expect(shrinkRight).toEqual(segments);
 
         const shrinkBoth = shiftSegment(segments, "1", 11, 14);
         expect(shrinkBoth).toEqual(segments);
+    });
+
+    it("does not create holes in the range, adjusts neighbours", () => {
+        const segments: Segments = [
+            { id: "1", start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
+            { id: "2", start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
+        ];
+        const shift = shiftSegment(segments, "1", 0, 2);
+        expect(shift).toEqual([
+            { id: "1", start: 0, end: 2, value: { displayName: "A", numericValue: 3 } },
+            { id: "2", start: 3, end: 10, value: { displayName: "B", numericValue: 5 } },
+        ]);
+    });
+
+    it("does not allow shifting so that a segment has a width of 0 or less", () => {
+        const segments: Segments = [
+            { id: "1", start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
+            { id: "2", start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
+        ];
+        const shift = shiftSegment(segments, "1", 0, 0);
+        expect(shift).toEqual([
+            { id: "1", start: 0, end: 1, value: { displayName: "A", numericValue: 3 } },
+            { id: "2", start: 2, end: 10, value: { displayName: "B", numericValue: 5 } }
+        ]); // segment 1 would have width 0, so shift is not applied
     });
 });

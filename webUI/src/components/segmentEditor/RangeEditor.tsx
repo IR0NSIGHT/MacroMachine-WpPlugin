@@ -1,8 +1,9 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { Menu } from "@mui/material";
 import { InputOutput, NamedValue } from "@/types/InputOutput";
 import { InputValueEditor } from "../SingleValues/InputValueEditor";
-import { Segment, splitAt } from "./Segment";
+import { Segment, splitAt, Interval, shiftSegment } from "./Segment";
+import { clamp, toPercent } from "@/util";
 
 
 const SegmentBody = ({
@@ -19,7 +20,7 @@ const SegmentBody = ({
         event: React.MouseEvent<SVGRectElement>
     ) => void;
 }) => {
-    const width = Math.max(0, right - left);
+    const width = Math.max(0, (right ) - (left )); // add small tolerance to prevent negative widths due to rounding
 
     return (
         <g>
@@ -31,7 +32,9 @@ const SegmentBody = ({
                 fill={"#4f8cff"}
                 rx={6}
                 style={{ cursor: "pointer" }}
-                onClick={(e) => onSegmentClick(segment.id, e)}
+                onClick={(e) => {
+                    console.log("Clicked segment body", segment.id);
+                    onSegmentClick(segment.id, e)}}
             />
 
             <text
@@ -52,10 +55,7 @@ type Props = {
     input: InputOutput;
     output: InputOutput;
     initialSegments: Segment[];
-    height?: number;
 };
-
-
 
 function uid() {
     return Math.random().toString(36).slice(2);
@@ -67,15 +67,15 @@ export default function RangeValueAxisEditor({
     input,
     output,
     initialSegments,
-    height = 90,
 }: Props) {
-    const min = input.min;
-    const max = input.max;
+    const interval: Interval = { start: input.min, end: input.max };
     const allowedValues = input.values;
+
+    const getActiveSegment: () => Segment | undefined = () => segments.find(s => s.id === activeSegmentId);
 
     const [segments, setSegments] = useState<Segment[]>(
         initialSegments ?? [
-            { id: uid(), start: min, end: max, value: allowedValues[0] },
+            { id: uid(), start: interval.start, end: interval.end, value: allowedValues[0] },
         ]
     );
 
@@ -96,15 +96,19 @@ export default function RangeValueAxisEditor({
 
     const updateCurrentSegmentEnd = (value: NamedValue) => {
         if (!activeSegmentId) return;
-        setSegmentEnd(activeSegmentId, value.numericValue);
+        const currentSegment = segments.find(s => s.id === activeSegmentId);
+        if (!currentSegment) return;
+        shiftSegment(segments, currentSegment.id, currentSegment.start, value.numericValue);
         setMenuAnchor(null);
         setEditInput(false);
     };
 
-    const handleSegmentClick = (segmentId: string, event?: React.MouseEvent<SVGRectElement>) => {
+    const selectSegment = (segmentId: string, event?: React.MouseEvent<SVGRectElement>) => {
+       
         setActiveSegmentId(segmentId);
         setMenuAnchor(event?.currentTarget as any);
         event?.stopPropagation();
+         console.log("Selected segment", segmentId, getActiveSegment());
     }
 
 
@@ -117,7 +121,7 @@ export default function RangeValueAxisEditor({
         const rect = containerRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const ratio = x / rect.width;
-        const value = min + ratio * (max - min);
+        const value = interval.start + ratio * (interval.end - interval.start);
 
         setSegments((prev) => splitAt(prev, value));
     };
@@ -128,39 +132,6 @@ export default function RangeValueAxisEditor({
     const setSegmentOutputValue = (id: string, value: NamedValue) => {
         setSegments((prev) =>
             prev.map((s) => (s.id === id ? { ...s, value } : s))
-        );
-    };
-
-    const setSegmentEnd = (id: string, newEnd: number) => {
-        const currentSegIdx = segments.findIndex((s) => s.id === id);
-        const leftBorderValue = currentSegIdx === 0 ? min : {
-            ...segments[currentSegIdx - 1],
-        }.end;
-        const rightBorderValue = currentSegIdx >= segments.length - 2 ? max : {
-            ...segments[currentSegIdx + 2],
-        }.start;
-
-        newEnd = clamp(newEnd, leftBorderValue + 1, rightBorderValue - 1);
-
-        const currentSeg: Segment = validateSegment({
-            ...segments.find((s) => s.id === id)!,
-            end: newEnd,
-        });
-        if (!currentSeg) return;
-        if (currentSegIdx === -1) return;
-        const nextRightSeg: Segment = validateSegment({
-            ...segments[currentSegIdx + 1],
-            start: currentSeg.end,
-        });
-
-
-
-        setSegments((prev) =>
-            prev.map((s) => {
-                if (s.id === currentSeg.id) return currentSeg;
-                if (s.id === nextRightSeg.id) return nextRightSeg;
-                return s;
-            })
         );
     };
 
@@ -187,40 +158,28 @@ export default function RangeValueAxisEditor({
             initialEnd: seg.end,
         };
 
-        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointermove", onDragSegmentEnd);
         window.addEventListener("pointerup", onPointerUp);
     };
 
-    const onPointerMove = (e: PointerEvent) => {
+    const onDragSegmentEnd = (e: PointerEvent) => {
         const drag = dragState.current;
         if (!drag || !containerRef.current) return;
 
         const rect = containerRef.current.getBoundingClientRect();
         const dx = e.clientX - drag.startX;
-        const deltaValue = (dx / rect.width) * (max - min);
+        const deltaValue = (dx / rect.width) * (interval.end - interval.start);
 
         // dragging always changes the END of the current segment
-        const newEnd = clamp(drag.initialEnd + deltaValue, min, max);
-        setSegmentEnd(drag.id, newEnd);
+        const newEnd = clamp(drag.initialEnd + deltaValue, interval.start, interval.end);
+        setSegments((prev) => shiftSegment(prev, drag.id, drag.initialStart, newEnd));
     };
 
     const onPointerUp = () => {
         dragState.current = null;
-        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("pointermove", onDragSegmentEnd);
         window.removeEventListener("pointerup", onPointerUp);
     };
-
-    // -------------------------
-    // COLORS
-    // -------------------------
-    const colorMap: Record<string, string> = useMemo(() => {
-        const colors = ["#4f8cff", "#22c55e", "#f97316", "#ef4444", "#a855f7"];
-        const map: Record<string, string> = {};
-        allowedValues.forEach((v, i) => {
-            map[v.numericValue] = colors[i % colors.length];
-        });
-        return map;
-    }, [allowedValues]);
 
     return (
         <div
@@ -237,22 +196,21 @@ export default function RangeValueAxisEditor({
             {/* =========================
           SEGMENTS (TOP LAYER)
       ========================= */}
-            <svg width="100%" height={height - 30}>
+            <svg width="100%" height={60}>
+                {/* SEGMENT BODIES */}
                 {segments.map((s) => {
-                    const left = toPercent(s.start, min, max);
-                    const right = toPercent(s.end, min, max);
+                    const left = toPercent(s.start, interval.start, interval.end);
+                    const right = toPercent(s.end, interval.start, interval.end);
 
                     return (
-                        <SegmentBody key={s.id} segment={s} left={left} right={right} onSegmentClick={handleSegmentClick} />
+                        <SegmentBody key={s.id} segment={s} left={left} right={right} onSegmentClick={selectSegment} />
                     );
                 })}
-                {/* SEGMENTS LAYER */}
 
-
-                {/* HANDLES LAYER (always on top) */}
+                {/* SEGMENT HANDLES (always on top) */}
                 <g>
                     {segments.map((segment) => {
-                        const endPercent = toPercent(segment.end, min, max);
+                        const endPercent = toPercent(segment.end + 0.5, interval.start, interval.end);
 
                         // convert percent → actual positioning via SVG percent offset
                         // we subtract half handle width in *pixels*, so we need a stable transform approach
@@ -268,7 +226,6 @@ export default function RangeValueAxisEditor({
                                 rx={3}
                                 style={{
                                     cursor: "ew-resize",
-                                    pointerEvents: "all",
                                     transform: "translateX(-3px)", // 👈 centers the 6px handle
                                 }}
                                 onPointerDown={(e) => onHandlePointerDown(e, segment.id)}
@@ -323,16 +280,16 @@ export default function RangeValueAxisEditor({
                 open={editOutput}
                 onClose={() => setMenuAnchor(null)}
             >
-                <InputValueEditor includeIgnore={true} label={"Output"} value={segments.find((s) => s.id === activeSegmentId)?.value?.numericValue ?? 0} input={output} onChange={updateCurrentSegmentOutput} />
+                <InputValueEditor includeIgnore={true} label={"Output"} value={getActiveSegment()?.value?.numericValue ?? output.min} input={output} onChange={updateCurrentSegmentOutput} />
             </Menu>
 
-            {/* SELECT MAX VALUE (input) FOR RANGE */}
+            {/* SELECT INTERVAL END (input) FOR RANGE */}
             <Menu
                 anchorEl={menuAnchor}
-                open={editInput}    
+                open={editInput}
                 onClose={() => setMenuAnchor(null)}
             >
-                <InputValueEditor includeIgnore={false} label={"Input"} value={segments.find((s) => s.id === activeSegmentId)?.end ?? 0} input={input} onChange={updateCurrentSegmentEnd} />
+                <InputValueEditor includeIgnore={false} label={"Input"} value={getActiveSegment()?.end ?? input.max} input={input} onChange={updateCurrentSegmentEnd} />
             </Menu>
         </div>
     );
