@@ -34,7 +34,6 @@ export const InputValueEditor = (props: {
       <InputLabel>{`${label}: ${input.displayName}`}</InputLabel>
 
       <Select
-        open={open}
         value={value}
         label={`${label}: ${input.displayName}`}
         onChange={(e) => {

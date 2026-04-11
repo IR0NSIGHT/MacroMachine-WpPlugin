@@ -15,6 +15,7 @@ export type Interval = {
 export type Segments = Segment[];
 
 export const splitAt = (segments: Segments, position: number): Segments => {
+    position = Math.round(position);
     const newSegments: Segments = [];
     const segmentToBeSplit = segments.find(s => s.start < position && s.end > position);
     if (!segmentToBeSplit) {
@@ -61,6 +62,9 @@ export const shiftSegment = (segments: Segments, segmentId: string, newStart: nu
     const range: Interval = { start: Math.min(...segments.map(s => s.start)), end: Math.max(...segments.map(s => s.end)) };
     //assert(areSegmentsValid(segments, segments[0].start, segments[segments.length - 1].end), "Invalid segments before shifting");
 
+    newStart = Math.round(newStart);
+    newEnd = Math.round(newEnd);
+
     const segment = segments.find(s => s.id === segmentId);
     if (!segment) {
         return segments;
@@ -70,7 +74,7 @@ export const shiftSegment = (segments: Segments, segmentId: string, newStart: nu
         newEnd = newStart + 1; // ensure segment has width of at least 1
     }
     // make sure newStart and newEnd are within the global range of segments
-    newStart = Math.max(range.start, Math.min(range.end, newStart));
+    newStart =  Math.max(range.start, Math.min(range.end, newStart));
     newEnd = Math.max(range.start, Math.min(range.end, newEnd));
 
 

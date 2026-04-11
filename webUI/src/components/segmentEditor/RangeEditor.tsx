@@ -20,7 +20,7 @@ const SegmentBody = ({
         event: React.MouseEvent<SVGRectElement>
     ) => void;
 }) => {
-    const width = Math.max(0, (right ) - (left )); // add small tolerance to prevent negative widths due to rounding
+    const width = Math.max(0, (right) - (left)); // add small tolerance to prevent negative widths due to rounding
 
     return (
         <g>
@@ -34,7 +34,8 @@ const SegmentBody = ({
                 style={{ cursor: "pointer" }}
                 onClick={(e) => {
                     console.log("Clicked segment body", segment.id);
-                    onSegmentClick(segment.id, e)}}
+                    onSegmentClick(segment.id, e)
+                }}
             />
 
             <text
@@ -71,7 +72,11 @@ export default function RangeValueAxisEditor({
     const interval: Interval = { start: input.min, end: input.max };
     const allowedValues = input.values;
 
-    const getActiveSegment: () => Segment | undefined = () => segments.find(s => s.id === activeSegmentId);
+    const getActiveSegment: () => Segment | undefined = () => {
+        const selectedSeg = segments.find(s => s.id === menuState.segmentId);
+        console.log("Getting active segment for id", menuState.segmentId, "found", selectedSeg);
+        return selectedSeg;
+    };
 
     const [segments, setSegments] = useState<Segment[]>(
         initialSegments ?? [
@@ -79,10 +84,16 @@ export default function RangeValueAxisEditor({
         ]
     );
 
-    const [editOutput, setEditOutput] = useState<boolean>(false);
-    const [editInput, setEditInput] = useState<boolean>(false);
+    const [menuState, setMenuState] = useState<{
+        type: "output" | "input" | null;
+        anchor: HTMLElement | null;
+        segmentId: string | null;
+    }>({
+        type: null,
+        anchor: null,
+        segmentId: null,
+    });
 
-    const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
     const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -104,11 +115,13 @@ export default function RangeValueAxisEditor({
     };
 
     const selectSegment = (segmentId: string, event?: React.MouseEvent<SVGRectElement>) => {
-       
-        setActiveSegmentId(segmentId);
-        setMenuAnchor(event?.currentTarget as any);
+        setMenuState({
+            type: "output",
+            anchor: event?.currentTarget as any ?? null,
+            segmentId,
+        });
         event?.stopPropagation();
-         console.log("Selected segment", segmentId, getActiveSegment());
+        console.log("Selected segment", segmentId, getActiveSegment());
     }
 
 
@@ -180,7 +193,13 @@ export default function RangeValueAxisEditor({
         window.removeEventListener("pointermove", onDragSegmentEnd);
         window.removeEventListener("pointerup", onPointerUp);
     };
-
+    const closeMenu = () => {
+        setMenuState({
+            type: null,
+            anchor: null,
+            segmentId: null,
+        });
+    };
     return (
         <div
             ref={containerRef}
@@ -216,25 +235,43 @@ export default function RangeValueAxisEditor({
                         // we subtract half handle width in *pixels*, so we need a stable transform approach
 
                         return (
-                            <rect
-                                key={segment.id}
-                                x={`${endPercent}%`}
-                                y={14}
-                                width={6}
-                                height={28}
-                                fill="#e5e7eb"
-                                rx={3}
-                                style={{
-                                    cursor: "ew-resize",
-                                    transform: "translateX(-3px)", // 👈 centers the 6px handle
-                                }}
-                                onPointerDown={(e) => onHandlePointerDown(e, segment.id)}
-                                onDoubleClick={(e) => {
-                                    setActiveSegmentId(segment.id);
-                                    setMenuAnchor(e.currentTarget as any);
-                                    setEditInput(true);
-                                }}
-                            />
+                            <g key={segment.start}>
+                                <text
+                                    x={`${endPercent}%`}
+                                    y={10} // position above handle
+                                    textAnchor="middle"
+                                    fontSize={10}
+                                    fill="white"
+                                    style={{ pointerEvents: "none" }} // important: don't block clicks
+                                >
+                                    {
+                                        input.values.find((v) => v.numericValue === segment.end)
+                                            ?.displayName ?? "?"
+                                    }
+                                </text>
+
+                                <rect
+                                    x={`${endPercent}%`}
+                                    y={14}
+                                    width={6}
+                                    height={28}
+                                    fill="#e5e7eb"
+                                    rx={3}
+                                    style={{
+                                        cursor: "ew-resize",
+                                        transform: "translateX(-3px)",
+                                    }}
+                                    onPointerDown={(e) => onHandlePointerDown(e, segment.id)}
+                                    onDoubleClick={(e) => {
+                                        setMenuState({
+                                            type: "input",
+                                            anchor: e.currentTarget as any,
+                                            segmentId: segment.id,
+                                        });
+                                    }}
+                                />
+                            </g>
+
                         );
                     })}
                 </g>
@@ -276,18 +313,18 @@ export default function RangeValueAxisEditor({
 
             {/* SELECT OUTPUT FOR RANGE */}
             <Menu
-                anchorEl={menuAnchor}
-                open={editOutput}
-                onClose={() => setMenuAnchor(null)}
+                anchorEl={menuState.anchor}
+                open={menuState.type === "output"}
+                onClose={closeMenu}
             >
                 <InputValueEditor includeIgnore={true} label={"Output"} value={getActiveSegment()?.value?.numericValue ?? output.min} input={output} onChange={updateCurrentSegmentOutput} />
             </Menu>
 
             {/* SELECT INTERVAL END (input) FOR RANGE */}
             <Menu
-                anchorEl={menuAnchor}
-                open={editInput}
-                onClose={() => setMenuAnchor(null)}
+                anchorEl={menuState.anchor}
+                open={menuState.type === "input"}
+                onClose={closeMenu}
             >
                 <InputValueEditor includeIgnore={false} label={"Input"} value={getActiveSegment()?.end ?? input.max} input={input} onChange={updateCurrentSegmentEnd} />
             </Menu>
