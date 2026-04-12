@@ -63,7 +63,7 @@ const SegmentBody = ({
                 fill="white"
                 pointerEvents="none"
             >
-                {segment.value.displayName}
+                {segment.value?.displayName ?? "undefined value"}
             </text>
 
             {/* RIGHT label (segment end) */}
@@ -244,6 +244,8 @@ export default function RangeValueAxisEditor({
 
     const intervalSize = interval.end - interval.start + 1;
     const xAxisSplitEvery = Math.round(intervalSize / 10);
+
+    console.log("render ranges: ", segments)
 
     return (
         <div
