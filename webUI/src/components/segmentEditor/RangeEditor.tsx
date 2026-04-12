@@ -85,10 +85,19 @@ export default function RangeValueAxisEditor({
     );
 
     const [menuState, setMenuState] = useState<{
+        mouse: { x: number; y: number } | null;
         type: "output" | "input" | null;
         anchor: HTMLElement | null;
         currentSegmentStart: number | null;
     }>({
+        mouse: null,
+        type: null,
+        anchor: null,
+        currentSegmentStart: null,
+    });
+
+    const setMenuStateNull = () => setMenuState({
+        mouse: null,
         type: null,
         anchor: null,
         currentSegmentStart: null,
@@ -100,11 +109,7 @@ export default function RangeValueAxisEditor({
         console.log("Updating segment output value for segment", menuState.currentSegmentStart, "to", value, "menuzState", menuState);
         if (menuState.currentSegmentStart === null) return;
         setSegmentOutputValue(menuState.currentSegmentStart, value);
-        setMenuState({
-            type: null,
-            anchor: null,
-            currentSegmentStart: null,
-        });
+        setMenuStateNull();
     };
 
     const updateCurrentSegmentEnd = (value: NamedValue) => {
@@ -112,15 +117,12 @@ export default function RangeValueAxisEditor({
         const currentSegment = segments.find(s => s.start === menuState.currentSegmentStart);
         if (!currentSegment) return;
         shiftSegment(segments, currentSegment.start, currentSegment.start, value.numericValue);
-        setMenuState({
-            type: null,
-            anchor: null,
-            currentSegmentStart: null,
-        });
+        setMenuStateNull();
     };
 
     const selectSegment = (segmentStart: number, event?: React.MouseEvent<SVGRectElement>) => {
         setMenuState({
+            mouse: event ? { x: event.clientX, y: event.clientY } : null,
             type: "output",
             anchor: event?.currentTarget as any ?? null,
             currentSegmentStart: segmentStart,
@@ -157,11 +159,7 @@ export default function RangeValueAxisEditor({
     const onDeleteCurrentSegment =
         () => {
             setSegments(mergeSegments(segments, getActiveSegment()?.end ?? -1));
-            setMenuState({
-                type: null,
-                anchor: null,
-                currentSegmentStart: null,
-            });
+            setMenuStateNull();
         }
 
 
@@ -209,11 +207,7 @@ export default function RangeValueAxisEditor({
         window.removeEventListener("pointerup", onPointerUp);
     };
     const closeMenu = () => {
-        setMenuState({
-            type: null,
-            anchor: null,
-            currentSegmentStart: null,
-        });
+        setMenuStateNull();
     };
     return (
         <div
@@ -279,6 +273,7 @@ export default function RangeValueAxisEditor({
                                     onPointerDown={(e) => onHandlePointerDown(e, segment.start)}
                                     onDoubleClick={(e) => {
                                         setMenuState({
+                                            mouse: e ? { x: e.clientX, y: e.clientY } : null,
                                             type: "input",
                                             anchor: e.currentTarget as any,
                                             currentSegmentStart: segment.start,
@@ -328,20 +323,30 @@ export default function RangeValueAxisEditor({
 
             {/* SELECT OUTPUT FOR RANGE */}
             <Menu
-                anchorEl={menuState.anchor}
+                anchorReference="anchorPosition"
+                anchorPosition={
+                    menuState.mouse
+                        ? { top: menuState.mouse.y, left: menuState.mouse.x }
+                        : undefined
+                }
                 open={menuState.type === "output"}
                 onClose={closeMenu}
             >
                 <div className="card">
                     <InputValueEditor includeIgnore={true} label={"Output"} value={getActiveSegment()?.value?.numericValue ?? output.min} input={output} onChange={updateCurrentSegmentOutput} />
-                    {segments.length > 1 && <DeleteButton onClick={ onDeleteCurrentSegment } />}
+                    {segments.length > 1 && <DeleteButton onClick={onDeleteCurrentSegment} />}
                 </div>
 
             </Menu>
 
             {/* SELECT INTERVAL END (input) FOR RANGE */}
             <Menu
-                anchorEl={menuState.anchor}
+                anchorReference="anchorPosition"
+                anchorPosition={
+                    menuState.mouse
+                        ? { top: menuState.mouse.y, left: menuState.mouse.x }
+                        : undefined
+                }
                 open={menuState.type === "input"}
                 onClose={closeMenu}
             >
