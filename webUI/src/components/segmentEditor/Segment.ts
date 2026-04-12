@@ -1,4 +1,5 @@
 import { NamedValue } from "@/types/InputOutput";
+import { MMAction } from "@/types/MMAction";
 
 export type Segment = {
     start: number;
@@ -12,6 +13,56 @@ export type Interval = {
 };
 
 export type Segments = Segment[];
+
+export function buildSegmentsFromAction(action: MMAction): Segments {
+    // require: every input is mapped
+
+    const inputValues = action.input.values;
+    const outputValues = action.output.values;
+
+    if (!inputValues.length || !outputValues.length) return [];
+
+    const segments: Segments = [];
+
+    let startIndex = 0;
+    let currentSegment = {
+        start: action.input.min,
+        end: action.input.min,
+        value: action.output.values.find(v => v.numericValue == action.outputPoints[0])!,
+    }
+
+    type Mapping = {
+        input: number;
+        output: number;
+    }
+    const mappings: Mapping[] = action.inputPoints.map((v, i) => {
+        return {
+            input: v,
+            output: action.outputPoints[i]
+        }
+    })
+
+    let previousMapping: undefined | Mapping = undefined;
+    mappings.forEach(mapping => {
+        if (previousMapping && previousMapping.output !== mapping.output) {
+            // output changed -> a new segment starts
+            segments.push(currentSegment);
+            currentSegment = {
+                start: mapping.input,
+                end: mapping.input,
+                value:  action.output.values.find(v => v.numericValue == previousMapping?.output)!,
+            }
+        } else{
+            currentSegment = { ...currentSegment, end: mapping.input } // grow segment by one
+        }
+
+        previousMapping = mapping;
+    })
+
+    segments.push(currentSegment);
+    
+    return segments;
+}
 
 export const splitAt = (segments: Segments, position: number): Segments => {
     position = Math.round(position);
@@ -36,7 +87,7 @@ export const splitAt = (segments: Segments, position: number): Segments => {
             newSegments.push(segment);
         }
     }
-//    assert(areSegmentsValid(newSegments, segments[0].start, segments[segments.length - 1].end), "Invalid segments after splitting");
+    //    assert(areSegmentsValid(newSegments, segments[0].start, segments[segments.length - 1].end), "Invalid segments after splitting");
     return newSegments;
 };
 
@@ -55,7 +106,7 @@ export const mergeSegments = (segments: Segments, position: number): Segments =>
         value: targetSegment.value,
     };
     const newSegments = segments.filter(s => s.start !== targetSegment.start && s.start !== neighbourToEat.start).concat(mergedSegment).sort((a, b) => a.start - b.start);
-//    assert(areSegmentsValid(newSegments, segments[0].start, segments[segments.length - 1].end), "Invalid segments after merging");  
+    //    assert(areSegmentsValid(newSegments, segments[0].start, segments[segments.length - 1].end), "Invalid segments after merging");  
     return newSegments;
 };
 
@@ -75,13 +126,13 @@ export const shiftSegment = (segments: Segments, oldSegmentStart: number, newSta
         newEnd = newStart + 1; // ensure segment has width of at least 1
     }
     // make sure newStart and newEnd are within the global range of segments
-    newStart =  Math.max(range.start, Math.min(range.end, newStart));
+    newStart = Math.max(range.start, Math.min(range.end, newStart));
     newEnd = Math.max(range.start, Math.min(range.end, newEnd));
 
 
     const segmentIdx = segments.findIndex(s => s.start === oldSegmentStart);
     if (segmentIdx !== 0) { // clamp to left border: avoid eating up left neighbour
-        newStart = Math.max(newStart, segments[segmentIdx - 1].start + 2); 
+        newStart = Math.max(newStart, segments[segmentIdx - 1].start + 2);
     }
     if (segmentIdx !== segments.length - 1) { // clamp to right border
         newEnd = Math.min(newEnd, segments[segmentIdx + 1].end - 2);
@@ -100,10 +151,10 @@ export const shiftSegment = (segments: Segments, oldSegmentStart: number, newSta
     const leftNeighbour = segments.find(s => s.end === segment.start - 1);
     const rightNeighbour = segments.find(s => s.start === segment.end + 1);
     const newSegments = segments.filter(s => s.start !== oldSegmentStart && s.start !== leftNeighbour?.start && s.start !== rightNeighbour?.start)
-    .concat(shiftedSegment)
-    .concat(leftNeighbour ? { ...leftNeighbour, end: shiftedSegment.start - 1 } : [])
-    .concat(rightNeighbour ? { ...rightNeighbour, start: shiftedSegment.end + 1 } : [])
-    .sort((a, b) => a.start - b.start);
+        .concat(shiftedSegment)
+        .concat(leftNeighbour ? { ...leftNeighbour, end: shiftedSegment.start - 1 } : [])
+        .concat(rightNeighbour ? { ...rightNeighbour, start: shiftedSegment.end + 1 } : [])
+        .sort((a, b) => a.start - b.start);
     if (!areSegmentsValid(newSegments, range.start, range.end)) {
         console.error("Invalid segments after shifting:", newSegments);
         return segments; // return original segments if new segments are invalid
@@ -138,7 +189,7 @@ export const areSegmentsValid = (segments: Segments, start: number, end: number)
 };
 
 const isRangeFilled = (segments: Segments, start: number, end: number): boolean => {
-        if (segments.length === 0) {
+    if (segments.length === 0) {
         return false;
     }
     const globalMin = Math.min(...segments.map(s => s.start));

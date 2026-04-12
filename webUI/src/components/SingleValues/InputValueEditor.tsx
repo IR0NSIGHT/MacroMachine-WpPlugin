@@ -14,7 +14,7 @@ export const InputValueEditor = (props: {
   input: InputOutput;
   onChange: (newInput: NamedValue) => void;
 }) => {
-  const { open = false, includeIgnore, label, value, input, onChange } = props;
+  const { includeIgnore, label, value, input, onChange } = props;
 
   const isIgnore = (val: number) => val === input.ignoreValue;
 

@@ -15,6 +15,8 @@ import { MMAction } from '../types/MMAction'
 import InputOutputDisplay from './InputOutput/InputProvider'
 import PointScatterPlot from './PointScatterPlot'
 import { MappingPoint } from '@/types/MappingPoint'
+import RangeEditor from './segmentEditor/RangeEditor'
+import { buildSegmentsFromAction } from './segmentEditor/Segment'
 
 interface MMActionRendererProps {
   action: MMAction
@@ -130,16 +132,25 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
           </Stack>
 
           <Box>
-            <PointScatterPlot
-              xData={draftAction.inputPoints}
-              yData={draftAction.outputPoints}
-              input={draftAction.input}
-              output={draftAction.output}
-              title={draftAction.name}
-              interpolation={!draftAction.input.discrete && !draftAction.output.discrete}
-              type={draftAction.actionType}
-              changePoint={updatePoint}
-              addPoint={addPoint} />
+            {
+              (!draftAction.input.discrete || !draftAction.output.discrete) && <PointScatterPlot
+                xData={draftAction.inputPoints}
+                yData={draftAction.outputPoints}
+                input={draftAction.input}
+                output={draftAction.output}
+                title={draftAction.name}
+                interpolation={!draftAction.input.discrete && !draftAction.output.discrete}
+                type={draftAction.actionType}
+                changePoint={updatePoint}
+                addPoint={addPoint} />
+            }
+            {
+              (!draftAction.input.discrete || draftAction.output.discrete) && 
+              <RangeEditor input={ draftAction.input} output={ draftAction.output} initialSegments={buildSegmentsFromAction(draftAction)}>
+                
+              </RangeEditor>
+            }
+
           </Box>
         </Stack>
       </CardContent>

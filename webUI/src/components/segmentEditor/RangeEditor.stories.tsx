@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import RangeValueAxisEditor from "./RangeEditor";
-import { annotationsIO, forestIO, heightIO, slopeIO, terrainIO } from "@/mock/dummyIOs";
+import { forestIO, heightIO, slopeIO, terrainIO } from "@/mock/dummyIOs";
 
 const meta: Meta<typeof RangeValueAxisEditor> = {
   title: "Components/RangeValueAxisEditor",

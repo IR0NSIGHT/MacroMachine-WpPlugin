@@ -1,6 +1,8 @@
 // src/utils/sum.test.ts
 import { describe, it, expect } from "vitest";
-import { Segments, splitAt, mergeSegments, areSegmentsValid, shiftSegment } from "./Segment";
+import { Segments, splitAt, mergeSegments, areSegmentsValid, shiftSegment, buildSegmentsFromAction } from "./Segment";
+import { MMAction } from "@/types/MMAction";
+import { annotationsIO, forestIO, heightIO } from "@/mock/dummyIOs";
 
 describe("segment splitting", () => {
     it("splits a single segment at a given position", () => {
@@ -251,3 +253,42 @@ describe("segment shifting", () => {
         ]); // segment 1 would have width 0, so shift is not applied
     });
 });
+
+describe("convert action to segments", () => {
+    it("can convert fully define input points that have a single output", () => {
+        {
+            const outputMagenta = annotationsIO.values[3];
+            const action: MMAction = {
+                name: "Test Action",
+                description: "This is a test action",
+                uid: "test-action",
+                input: forestIO,
+                output: annotationsIO,
+                actionType: "increment",
+                inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
+                outputPoints: forestIO.values.map(_ => outputMagenta.numericValue),
+            }
+            const segments = buildSegmentsFromAction(action);
+            expect(segments).toEqual([
+                { start: 0, end: 15, value: outputMagenta }
+            ])
+        }
+        {
+            const outputMagenta = annotationsIO.values[3];
+            const action: MMAction = {
+                name: "Test Action",
+                description: "This is a test action",
+                uid: "test-action",
+                input: heightIO,
+                output: annotationsIO,
+                actionType: "increment",
+                inputPoints: heightIO.values.filter(v => v.numericValue !== heightIO.ignoreValue).map(v => v.numericValue),
+                outputPoints: heightIO.values.map(_ => outputMagenta.numericValue),
+            }
+            const segments = buildSegmentsFromAction(action);
+            expect(segments).toEqual([
+                { start: heightIO.min, end: heightIO.max, value: outputMagenta }
+            ])
+        }
+    })
+});   
