@@ -97,7 +97,7 @@ export default function RangeValueAxisEditor({
     output,
     initialSegments,
 }: Props) {
-    const interval: Interval = { start: input.min, end: input.max };
+    const interval: Interval = { start: input.min, end: input.max,  };
     const allowedValues = input.values;
 
     const getActiveSegment: () => Segment | undefined = () => {
@@ -241,6 +241,10 @@ export default function RangeValueAxisEditor({
     const closeMenu = () => {
         setMenuStateNull();
     };
+
+    const intervalSize = interval.end - interval.start + 1;
+    const xAxisSplitEvery = Math.round(intervalSize / 10);
+
     return (
         <div
             ref={containerRef}
@@ -338,7 +342,7 @@ export default function RangeValueAxisEditor({
                     }}
                 />
                 {input.values
-                    .filter(v => v.numericValue % 5 == 0)
+                    .filter(v => v.numericValue % xAxisSplitEvery == 0)
                     .map((value) => {
                         const leftPercent = toPercent(value.numericValue, interval.start, interval.end);
                         // convert percent → actual positioning via SVG percent offset

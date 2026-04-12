@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import RangeValueAxisEditor from "./RangeEditor";
-import { slopeIO, terrainIO } from "@/mock/dummyIOs";
+import { annotationsIO, forestIO, heightIO, slopeIO, terrainIO } from "@/mock/dummyIOs";
 
 const meta: Meta<typeof RangeValueAxisEditor> = {
   title: "Components/RangeValueAxisEditor",
@@ -58,5 +58,79 @@ export const Default: Story = {
         "displayName": "Dirt"
       }
     }],
+  },
+};
+
+export const SingleSegment: Story = {
+  args: {
+    input: slopeIO,
+    output: terrainIO,
+    initialSegments: [{
+      "start": 0,
+      "end": 90,
+
+      "value": {
+        "numericValue": 1,
+        "displayName": "Stone"
+      }
+    }],
+  },
+};
+
+export const ManyXValues: Story = {
+  args: {
+    input: heightIO,
+    output: terrainIO,
+    initialSegments: [{
+      "start": heightIO.min,
+      "end": 125,
+
+      "value": {
+        "numericValue": 1,
+        "displayName": "Stone"
+      }
+    }, {
+      "start": 126,
+      "end": 127,
+
+      "value": {
+        "numericValue": 0,
+        "displayName": "Air"
+      }
+    }, {
+      "start": 128,
+      "end": heightIO.max,
+
+      "value": {
+        "numericValue": 2,
+        "displayName": "Grass Block"
+      }
+    }],
+  },
+};
+
+export const FewXValues: Story = {
+  args: {
+    input: forestIO,
+    output: terrainIO,
+    initialSegments: [{
+      "start": 0,
+      "end": 8,
+
+      "value": {
+        "numericValue": 1,
+        "displayName": "Stone"
+      }
+    },
+    {
+      "start": 9,
+      "end": 15,
+
+      "value": {
+        "numericValue": 1,
+        "displayName": "Stone"
+      }
+    }
+    ],
   },
 };

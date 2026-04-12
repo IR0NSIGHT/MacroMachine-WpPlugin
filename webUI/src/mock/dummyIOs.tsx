@@ -255,7 +255,7 @@ export const forestIO: InputOutput = {
     min: 0,
     max: 15,
     ignoreValue: -1,
-    values: Array.from({ length: 15 }, (_, i) => ({
+    values: Array.from({ length: 16 }, (_, i) => ({
         numericValue: i,
         displayName: "lvl="+i,
     })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
