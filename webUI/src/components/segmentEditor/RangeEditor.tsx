@@ -5,25 +5,32 @@ import { InputValueEditor } from "../SingleValues/InputValueEditor";
 import { Segment, splitAt, Interval, shiftSegment, mergeSegments } from "./Segment";
 import { clamp, toPercent } from "@/util";
 import { DeleteButton } from "./DeleteButton";
-
 const SegmentBody = ({
     segment,
     left,
     right,
+    input,
     onSegmentClick,
 }: {
     segment: Segment;
     left: number;
     right: number;
+    input: InputOutput;
     onSegmentClick: (
         segmentStart: number,
         event: React.MouseEvent<SVGRectElement>
     ) => void;
 }) => {
-    const width = Math.max(0, (right) - (left)); // add small tolerance to prevent negative widths due to rounding
+    const width = Math.max(0, right - left);
+
+    const getDisplayName = (numericValue: number) => {
+        const value = input.values.find(v => v.numericValue === numericValue);
+        return value ? value.displayName : "?";
+    };
 
     return (
         <g>
+            {/* Segment background */}
             <rect
                 x={`${left}%`}
                 y={10}
@@ -32,12 +39,22 @@ const SegmentBody = ({
                 fill={"#4f8cff"}
                 rx={6}
                 style={{ cursor: "pointer" }}
-                onClick={(e) => {
-                    console.log("Clicked segment body", segment.start);
-                    onSegmentClick(segment.start, e)
-                }}
+                onClick={(e) => onSegmentClick(segment.start, e)}
             />
 
+            {/* LEFT label (segment start) */}
+            <text
+                x={`${left}%`}
+                y={32}
+                textAnchor="start"
+                fontSize={12}
+                fill="white"
+                pointerEvents="none"
+            >
+                {getDisplayName(segment.start)}
+            </text>
+
+            {/* CENTER label (display name) */}
             <text
                 x={`${left + width / 2}%`}
                 y={32}
@@ -48,10 +65,21 @@ const SegmentBody = ({
             >
                 {segment.value.displayName}
             </text>
+
+            {/* RIGHT label (segment end) */}
+            <text
+                x={`${left + width}%`}
+                y={32}
+                textAnchor="end"
+                fontSize={12}
+                fill="white"
+                pointerEvents="none"
+            >
+                {getDisplayName(segment.end)}
+            </text>
         </g>
     );
 };
-
 type Props = {
     input: InputOutput;
     output: InputOutput;
@@ -231,7 +259,7 @@ export default function RangeValueAxisEditor({
                     const right = toPercent(s.end, interval.start, interval.end);
 
                     return (
-                        <SegmentBody key={s.start} segment={s} left={left} right={right} onSegmentClick={selectSegment} />
+                        <SegmentBody key={s.start} segment={s} left={left} right={right} input={input} onSegmentClick={selectSegment} />
                     );
                 })}
 
@@ -245,20 +273,6 @@ export default function RangeValueAxisEditor({
 
                         return (
                             <g key={segment.start}>
-                                <text
-                                    x={`${endPercent}%`}
-                                    y={10} // position above handle
-                                    textAnchor="middle"
-                                    fontSize={10}
-                                    fill="white"
-                                    style={{ pointerEvents: "none" }} // important: don't block clicks
-                                >
-                                    {
-                                        input.values.find((v) => v.numericValue === segment.end)
-                                            ?.displayName ?? "?"
-                                    }
-                                </text>
-
                                 <rect
                                     x={`${endPercent}%`}
                                     y={14}

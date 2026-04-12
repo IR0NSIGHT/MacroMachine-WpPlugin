@@ -199,7 +199,7 @@ export const slopeIO: InputOutput = {
     min: 0,
     max: 90,
     ignoreValue: -1,
-    values: Array.from({ length: 90 }, (_, i) => ({
+    values: Array.from({ length: 91 }, (_, i) => ({
         numericValue: i,
         displayName: i+"°",
     })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
