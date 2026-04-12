@@ -1,10 +1,10 @@
 import React, { useRef, useState } from "react";
-import { Menu } from "@mui/material";
+import { Button, Menu } from "@mui/material";
 import { InputOutput, NamedValue } from "@/types/InputOutput";
 import { InputValueEditor } from "../SingleValues/InputValueEditor";
 import { Segment, splitAt, Interval, shiftSegment, mergeSegments } from "./Segment";
 import { clamp, toPercent } from "@/util";
-
+import { DeleteButton } from "./DeleteButton";
 
 const SegmentBody = ({
     segment,
@@ -154,6 +154,17 @@ export default function RangeValueAxisEditor({
         );
     };
 
+    const onDeleteCurrentSegment =
+        () => {
+            setSegments(mergeSegments(segments, getActiveSegment()?.end ?? -1));
+            setMenuState({
+                type: null,
+                anchor: null,
+                currentSegmentStart: null,
+            });
+        }
+
+
     // -------------------------
     // DRAG RESIZE
     // -------------------------
@@ -240,22 +251,6 @@ export default function RangeValueAxisEditor({
 
                         return (
                             <g key={segment.start}>
-                                {/* DELETE BUTTON */}
-                                <text
-                                    x={`${endPercent}%`}
-                                    y={50}
-                                    textAnchor="middle"
-                                    fontSize={12}
-                                    fill="red"
-                                    style={{ cursor: "pointer", userSelect: "none" }}
-                                    onClick={(e) => {
-                                        console.log("Deleting segment", segment.start);
-                                        setSegments(mergeSegments(segments, segment.end)); 
-                                        e.stopPropagation();                                       ;
-                                    }}
-                                >
-                                    ✕
-                                </text>
                                 <text
                                     x={`${endPercent}%`}
                                     y={10} // position above handle
@@ -337,7 +332,10 @@ export default function RangeValueAxisEditor({
                 open={menuState.type === "output"}
                 onClose={closeMenu}
             >
-                <InputValueEditor includeIgnore={true} label={"Output"} value={getActiveSegment()?.value?.numericValue ?? output.min} input={output} onChange={updateCurrentSegmentOutput} />
+                <div className="card">
+                    <InputValueEditor includeIgnore={true} label={"Output"} value={getActiveSegment()?.value?.numericValue ?? output.min} input={output} onChange={updateCurrentSegmentOutput} />
+                    {segments.length > 1 && <DeleteButton onClick={ onDeleteCurrentSegment } />}
+                </div>
 
             </Menu>
 
@@ -347,7 +345,9 @@ export default function RangeValueAxisEditor({
                 open={menuState.type === "input"}
                 onClose={closeMenu}
             >
-                <InputValueEditor includeIgnore={false} label={"Input"} value={getActiveSegment()?.end ?? input.max} input={input} onChange={updateCurrentSegmentEnd} />
+                <div className="card">
+                    <InputValueEditor includeIgnore={false} label={"Input"} value={getActiveSegment()?.end ?? input.max} input={input} onChange={updateCurrentSegmentEnd} />
+                </div>
             </Menu>
         </div>
     );

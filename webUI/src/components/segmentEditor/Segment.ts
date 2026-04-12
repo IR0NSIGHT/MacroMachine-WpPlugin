@@ -107,7 +107,7 @@ export const shiftSegment = (segments: Segments, oldSegmentStart: number, newSta
     if (!areSegmentsValid(newSegments, range.start, range.end)) {
         console.error("Invalid segments after shifting:", newSegments);
         return segments; // return original segments if new segments are invalid
-    };
+    }
     return newSegments;
 };
 
