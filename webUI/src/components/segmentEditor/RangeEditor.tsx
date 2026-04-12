@@ -301,7 +301,7 @@ export default function RangeValueAxisEditor({
 
                     // striped black/white axis
                     background:
-                        "repeating-linear-gradient(45deg, #000 0px, #000 6px, #fff 6px, #fff 12px)",
+                        "rgb(210, 210, 210) ",
 
                     border: "1px solid rgba(255,255,255,0.15)",
                     position: "relative",
@@ -319,6 +319,27 @@ export default function RangeValueAxisEditor({
                         transform: "translateY(-50%)",
                     }}
                 />
+                {input.values
+                    .filter(v => v.numericValue % 5 == 0)
+                    .map((value) => {
+                        const leftPercent = toPercent(value.numericValue, interval.start, interval.end);
+                        // convert percent → actual positioning via SVG percent offset
+                        return (
+                            <span
+                                key={value.numericValue}
+                                style={{
+                                    position: "absolute",
+                                    left: `${leftPercent}%`,
+                                    top: 0,
+                                    transform: "translateX(-50%)",
+                                    fontSize: 10,
+                                    pointerEvents: "none",
+                                }}
+                            >
+                                {value.displayName}
+                            </span>
+                        );
+                    })}
             </div>
 
             {/* SELECT OUTPUT FOR RANGE */}
