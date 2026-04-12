@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import { Segments, splitAt, mergeSegments, areSegmentsValid, shiftSegment, buildSegmentsFromAction } from "./Segment";
 import { MMAction } from "@/types/MMAction";
-import { annotationsIO, forestIO, heightIO } from "@/mock/dummyIOs";
+import { alwaysIO, annotationsIO, forestIO, heightIO } from "@/mock/dummyIOs";
 
 describe("segment splitting", () => {
     it("splits a single segment at a given position", () => {
@@ -255,6 +255,69 @@ describe("segment shifting", () => {
 });
 
 describe("convert action to segments", () => {
+
+
+    it("can convert actions with multiple output groups/ranges", () => {
+        {
+            const action: MMAction = {
+                name: "Test Action",
+                description: "This is a test action",
+                uid: "test-action",
+                input: forestIO,
+                output: annotationsIO,
+                actionType: "increment",
+                inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
+                outputPoints: [4, 4, 4, 4,   3, 3, 3, 3,    15, 15, 15, 15,    15, 15, 15, 15],
+            }
+            const segments = buildSegmentsFromAction(action);
+            expect(segments).toEqual([
+                { start: 0, end: 3, value: annotationsIO.values.find(v => v.numericValue == 4) },
+                { start: 4, end: 7, value: annotationsIO.values.find(v => v.numericValue == 3) },
+                { start: 8, end: 15, value: annotationsIO.values.find(v => v.numericValue == 15) },
+            ])
+        }
+
+        {
+            const action: MMAction = {
+                name: "Test Action",
+                description: "This is a test action",
+                uid: "test-action",
+                input: forestIO,
+                output: annotationsIO,
+                actionType: "increment",
+                inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
+                outputPoints: [4, 4, 4, 4, 3, 5, 4, 4, 7, 7, 7, 7, 0, 0, 0, 15],
+            }
+            const segments = buildSegmentsFromAction(action);
+            expect(segments).toEqual([
+                { start: 0, end: 3, value: annotationsIO.values.find(v => v.numericValue == 4) },
+                { start: 4, end: 4, value: annotationsIO.values.find(v => v.numericValue == 3) },
+                { start: 5, end: 5, value: annotationsIO.values.find(v => v.numericValue == 5) },
+                { start: 6, end: 7, value: annotationsIO.values.find(v => v.numericValue == 4) },
+                { start: 8, end: 11, value: annotationsIO.values.find(v => v.numericValue == 7) },
+                { start: 12, end: 14, value: annotationsIO.values.find(v => v.numericValue == 0) },
+                { start: 15, end: 15, value: annotationsIO.values.find(v => v.numericValue == 15) },
+            ])
+        }
+
+        {
+            const action: MMAction = {
+                name: "Test Action",
+                description: "This is a test action",
+                uid: "test-action",
+                input: alwaysIO,
+                output: annotationsIO,
+                actionType: "increment",
+                inputPoints: [ 0 ],
+                outputPoints: [4],
+            }
+            const segments = buildSegmentsFromAction(action);
+            expect(segments).toEqual([
+                { start: 0, end: 0, value: annotationsIO.values.find(v => v.numericValue == 4) },
+            ])
+        }
+    })
+
     it("can convert fully define input points that have a single output", () => {
         {
             const outputMagenta = annotationsIO.values[3];

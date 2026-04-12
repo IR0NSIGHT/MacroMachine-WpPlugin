@@ -24,7 +24,6 @@ export function buildSegmentsFromAction(action: MMAction): Segments {
 
     const segments: Segments = [];
 
-    let startIndex = 0;
     let currentSegment = {
         start: action.input.min,
         end: action.input.min,
@@ -50,7 +49,7 @@ export function buildSegmentsFromAction(action: MMAction): Segments {
             currentSegment = {
                 start: mapping.input,
                 end: mapping.input,
-                value:  action.output.values.find(v => v.numericValue == previousMapping?.output)!,
+                value:  action.output.values.find(v => v.numericValue == mapping.output)!,
             }
         } else{
             currentSegment = { ...currentSegment, end: mapping.input } // grow segment by one
@@ -60,7 +59,7 @@ export function buildSegmentsFromAction(action: MMAction): Segments {
     })
 
     segments.push(currentSegment);
-    
+
     return segments;
 }
 
