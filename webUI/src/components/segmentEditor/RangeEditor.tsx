@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { Button, Menu } from "@mui/material";
+import { Menu } from "@mui/material";
 import { InputOutput, NamedValue } from "@/types/InputOutput";
 import { InputValueEditor } from "../SingleValues/InputValueEditor";
 import { Segment, splitAt, Interval, shiftSegment, mergeSegments } from "./Segment";
@@ -159,6 +159,10 @@ export default function RangeValueAxisEditor({
         console.log("Selected segment", segmentStart, getActiveSegment());
     }
 
+    const getDisplayName = (numericValue?: number) => {
+        const value = input.values.find(v => v.numericValue === numericValue);
+        return value ? value.displayName : "?";
+    };
 
     // -------------------------
     // SPLIT (NOW ONLY FROM AXIS)
@@ -366,8 +370,21 @@ export default function RangeValueAxisEditor({
                 }
                 open={menuState.type === "output"}
                 onClose={closeMenu}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            minWidth: 260,
+                            maxWidth: 400,
+                            minHeight: 120,
+                            p: 2,
+                        },
+                    },
+                }}
             >
                 <div className="card">
+                    <div>
+                        For all blocks where { input.displayName } is between {getDisplayName(getActiveSegment()?.start)} and {getDisplayName(getActiveSegment()?.end)}, set { output.displayName } to
+                    </div>
                     <InputValueEditor includeIgnore={true} label={"Output"} value={getActiveSegment()?.value?.numericValue ?? output.min} input={output} onChange={updateCurrentSegmentOutput} />
                     {segments.length > 1 && <DeleteButton onClick={onDeleteCurrentSegment} />}
                 </div>
@@ -384,6 +401,16 @@ export default function RangeValueAxisEditor({
                 }
                 open={menuState.type === "input"}
                 onClose={closeMenu}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            minWidth: 260,
+                            maxWidth: 400,
+                            minHeight: 120,
+                            p: 2,
+                        },
+                    },
+                }}
             >
                 <div className="card">
                     <InputValueEditor includeIgnore={false} label={"Input"} value={getActiveSegment()?.end ?? input.max} input={input} onChange={updateCurrentSegmentEnd} />
