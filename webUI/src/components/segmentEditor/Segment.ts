@@ -1,7 +1,6 @@
 import { NamedValue } from "@/types/InputOutput";
 
 export type Segment = {
-    id: string;
     start: number;
     end: number;
     value: NamedValue;
@@ -31,7 +30,7 @@ export const splitAt = (segments: Segments, position: number): Segments => {
         if (position > segment.start && position < segment.end) {
             newSegments.push(
                 { ...segment, end: position },
-                { ...segment, id: `${segment.id}-2`, start: position + 1 },
+                { ...segment, start: position + 1 },
             );
         } else {
             newSegments.push(segment);
@@ -42,30 +41,32 @@ export const splitAt = (segments: Segments, position: number): Segments => {
 };
 
 export const mergeSegments = (segments: Segments, position: number): Segments => {
-    const segment1 = segments.find(s => s.start === position || s.end === position);
-    const segment2 = segments.find(s => s.start === position || s.end === position);
-    if (!segment1 || !segment2) {
+    const targetSegment = segments.find(s => s.start === position || s.end === position);
+    if (!targetSegment) {
+        return segments;
+    }
+    const neighbourToEat = segments.find(s => s.start === targetSegment.end + 1 || s.end === targetSegment.start - 1);
+    if (!neighbourToEat) {
         return segments;
     }
     const mergedSegment: Segment = {
-        id: segment1.id,
-        start: Math.min(segment1.start, segment2.start),
-        end: Math.max(segment1.end, segment2.end),
-        value: segment1.value,
+        start: Math.min(targetSegment.start, neighbourToEat.start),
+        end: Math.max(targetSegment.end, neighbourToEat.end),
+        value: targetSegment.value,
     };
-    const newSegments = segments.filter(s => s.id !== segment1.id && s.id !== segment2.id).concat(mergedSegment).sort((a, b) => a.start - b.start);
+    const newSegments = segments.filter(s => s.start !== targetSegment.start && s.start !== neighbourToEat.start).concat(mergedSegment).sort((a, b) => a.start - b.start);
 //    assert(areSegmentsValid(newSegments, segments[0].start, segments[segments.length - 1].end), "Invalid segments after merging");  
     return newSegments;
 };
 
-export const shiftSegment = (segments: Segments, segmentId: string, newStart: number, newEnd: number): Segments => {
+export const shiftSegment = (segments: Segments, oldSegmentStart: number, newStart: number, newEnd: number): Segments => {
     const range: Interval = { start: Math.min(...segments.map(s => s.start)), end: Math.max(...segments.map(s => s.end)) };
     //assert(areSegmentsValid(segments, segments[0].start, segments[segments.length - 1].end), "Invalid segments before shifting");
 
     newStart = Math.round(newStart);
     newEnd = Math.round(newEnd);
 
-    const segment = segments.find(s => s.id === segmentId);
+    const segment = segments.find(s => s.start === oldSegmentStart);
     if (!segment) {
         return segments;
     }
@@ -78,7 +79,7 @@ export const shiftSegment = (segments: Segments, segmentId: string, newStart: nu
     newEnd = Math.max(range.start, Math.min(range.end, newEnd));
 
 
-    const segmentIdx = segments.findIndex(s => s.id === segmentId);
+    const segmentIdx = segments.findIndex(s => s.start === oldSegmentStart);
     if (segmentIdx !== 0) { // clamp to left border: avoid eating up left neighbour
         newStart = Math.max(newStart, segments[segmentIdx - 1].start + 2); 
     }
@@ -98,7 +99,7 @@ export const shiftSegment = (segments: Segments, segmentId: string, newStart: nu
     };
     const leftNeighbour = segments.find(s => s.end === segment.start - 1);
     const rightNeighbour = segments.find(s => s.start === segment.end + 1);
-    const newSegments = segments.filter(s => s.id !== segmentId && s.id !== leftNeighbour?.id && s.id !== rightNeighbour?.id)
+    const newSegments = segments.filter(s => s.start !== oldSegmentStart && s.start !== leftNeighbour?.start && s.start !== rightNeighbour?.start)
     .concat(shiftedSegment)
     .concat(leftNeighbour ? { ...leftNeighbour, end: shiftedSegment.start - 1 } : [])
     .concat(rightNeighbour ? { ...rightNeighbour, start: shiftedSegment.end + 1 } : [])

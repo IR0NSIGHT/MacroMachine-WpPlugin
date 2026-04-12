@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { Menu } from "@mui/material";
 import { InputOutput, NamedValue } from "@/types/InputOutput";
 import { InputValueEditor } from "../SingleValues/InputValueEditor";
-import { Segment, splitAt, Interval, shiftSegment } from "./Segment";
+import { Segment, splitAt, Interval, shiftSegment, mergeSegments } from "./Segment";
 import { clamp, toPercent } from "@/util";
 
 
@@ -16,7 +16,7 @@ const SegmentBody = ({
     left: number;
     right: number;
     onSegmentClick: (
-        segmentId: string,
+        segmentStart: number,
         event: React.MouseEvent<SVGRectElement>
     ) => void;
 }) => {
@@ -33,8 +33,8 @@ const SegmentBody = ({
                 rx={6}
                 style={{ cursor: "pointer" }}
                 onClick={(e) => {
-                    console.log("Clicked segment body", segment.id);
-                    onSegmentClick(segment.id, e)
+                    console.log("Clicked segment body", segment.start);
+                    onSegmentClick(segment.start, e)
                 }}
             />
 
@@ -73,8 +73,8 @@ export default function RangeValueAxisEditor({
     const allowedValues = input.values;
 
     const getActiveSegment: () => Segment | undefined = () => {
-        const selectedSeg = segments.find(s => s.id === menuState.segmentId);
-        console.log("Getting active segment for id", menuState.segmentId, "found", selectedSeg);
+        const selectedSeg = segments.find(s => s.start === menuState.currentSegmentStart);
+        console.log("Getting active segment for id", menuState.currentSegmentStart, "found", selectedSeg);
         return selectedSeg;
     };
 
@@ -87,41 +87,46 @@ export default function RangeValueAxisEditor({
     const [menuState, setMenuState] = useState<{
         type: "output" | "input" | null;
         anchor: HTMLElement | null;
-        segmentId: string | null;
+        currentSegmentStart: number | null;
     }>({
         type: null,
         anchor: null,
-        segmentId: null,
+        currentSegmentStart: null,
     });
-
-    const [activeSegmentId, setActiveSegmentId] = useState<string | null>(null);
 
     const containerRef = useRef<HTMLDivElement | null>(null);
 
     const updateCurrentSegmentOutput = (value: NamedValue) => {
-        if (!activeSegmentId) return;
-        setSegmentOutputValue(activeSegmentId, value);
-        setMenuAnchor(null);
-        setEditOutput(false);
+        console.log("Updating segment output value for segment", menuState.currentSegmentStart, "to", value, "menuzState", menuState);
+        if (menuState.currentSegmentStart === null) return;
+        setSegmentOutputValue(menuState.currentSegmentStart, value);
+        setMenuState({
+            type: null,
+            anchor: null,
+            currentSegmentStart: null,
+        });
     };
 
     const updateCurrentSegmentEnd = (value: NamedValue) => {
-        if (!activeSegmentId) return;
-        const currentSegment = segments.find(s => s.id === activeSegmentId);
+        if (null === menuState.currentSegmentStart) return;
+        const currentSegment = segments.find(s => s.start === menuState.currentSegmentStart);
         if (!currentSegment) return;
-        shiftSegment(segments, currentSegment.id, currentSegment.start, value.numericValue);
-        setMenuAnchor(null);
-        setEditInput(false);
+        shiftSegment(segments, currentSegment.start, currentSegment.start, value.numericValue);
+        setMenuState({
+            type: null,
+            anchor: null,
+            currentSegmentStart: null,
+        });
     };
 
-    const selectSegment = (segmentId: string, event?: React.MouseEvent<SVGRectElement>) => {
+    const selectSegment = (segmentStart: number, event?: React.MouseEvent<SVGRectElement>) => {
         setMenuState({
             type: "output",
             anchor: event?.currentTarget as any ?? null,
-            segmentId,
+            currentSegmentStart: segmentStart,
         });
         event?.stopPropagation();
-        console.log("Selected segment", segmentId, getActiveSegment());
+        console.log("Selected segment", segmentStart, getActiveSegment());
     }
 
 
@@ -142,9 +147,10 @@ export default function RangeValueAxisEditor({
     // -------------------------
     // VALUE CHANGE
     // -------------------------
-    const setSegmentOutputValue = (id: string, value: NamedValue) => {
+    const setSegmentOutputValue = (segmentStart: number, value: NamedValue) => {
+        console.log("Setting segment output value for segment", segmentStart, "to", value);
         setSegments((prev) =>
-            prev.map((s) => (s.id === id ? { ...s, value } : s))
+            prev.map((s) => (s.start === segmentStart ? { ...s, value } : s))
         );
     };
 
@@ -152,20 +158,18 @@ export default function RangeValueAxisEditor({
     // DRAG RESIZE
     // -------------------------
     const dragState = useRef<{
-        id: string;
         startX: number;
         initialStart: number;
         initialEnd: number;
     } | null>(null);
 
-    const onHandlePointerDown = (e: React.PointerEvent, id: string) => {
+    const onHandlePointerDown = (e: React.PointerEvent, start: number) => {
         e.stopPropagation();
 
-        const seg = segments.find((s) => s.id === id);
+        const seg = segments.find((s) => s.start === start);
         if (!seg) return;
 
         dragState.current = {
-            id,
             startX: e.clientX,
             initialStart: seg.start,
             initialEnd: seg.end,
@@ -185,7 +189,7 @@ export default function RangeValueAxisEditor({
 
         // dragging always changes the END of the current segment
         const newEnd = clamp(drag.initialEnd + deltaValue, interval.start, interval.end);
-        setSegments((prev) => shiftSegment(prev, drag.id, drag.initialStart, newEnd));
+        setSegments((prev) => shiftSegment(prev, drag.initialStart, drag.initialStart, newEnd));
     };
 
     const onPointerUp = () => {
@@ -197,7 +201,7 @@ export default function RangeValueAxisEditor({
         setMenuState({
             type: null,
             anchor: null,
-            segmentId: null,
+            currentSegmentStart: null,
         });
     };
     return (
@@ -222,7 +226,7 @@ export default function RangeValueAxisEditor({
                     const right = toPercent(s.end, interval.start, interval.end);
 
                     return (
-                        <SegmentBody key={s.id} segment={s} left={left} right={right} onSegmentClick={selectSegment} />
+                        <SegmentBody key={s.start} segment={s} left={left} right={right} onSegmentClick={selectSegment} />
                     );
                 })}
 
@@ -236,6 +240,22 @@ export default function RangeValueAxisEditor({
 
                         return (
                             <g key={segment.start}>
+                                {/* DELETE BUTTON */}
+                                <text
+                                    x={`${endPercent}%`}
+                                    y={50}
+                                    textAnchor="middle"
+                                    fontSize={12}
+                                    fill="red"
+                                    style={{ cursor: "pointer", userSelect: "none" }}
+                                    onClick={(e) => {
+                                        console.log("Deleting segment", segment.start);
+                                        setSegments(mergeSegments(segments, segment.end)); 
+                                        e.stopPropagation();                                       ;
+                                    }}
+                                >
+                                    ✕
+                                </text>
                                 <text
                                     x={`${endPercent}%`}
                                     y={10} // position above handle
@@ -261,12 +281,12 @@ export default function RangeValueAxisEditor({
                                         cursor: "ew-resize",
                                         transform: "translateX(-3px)",
                                     }}
-                                    onPointerDown={(e) => onHandlePointerDown(e, segment.id)}
+                                    onPointerDown={(e) => onHandlePointerDown(e, segment.start)}
                                     onDoubleClick={(e) => {
                                         setMenuState({
                                             type: "input",
                                             anchor: e.currentTarget as any,
-                                            segmentId: segment.id,
+                                            currentSegmentStart: segment.start,
                                         });
                                     }}
                                 />
@@ -318,6 +338,7 @@ export default function RangeValueAxisEditor({
                 onClose={closeMenu}
             >
                 <InputValueEditor includeIgnore={true} label={"Output"} value={getActiveSegment()?.value?.numericValue ?? output.min} input={output} onChange={updateCurrentSegmentOutput} />
+
             </Menu>
 
             {/* SELECT INTERVAL END (input) FOR RANGE */}

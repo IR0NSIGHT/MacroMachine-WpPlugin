@@ -26,7 +26,6 @@ export const Default: Story = {
     input: slopeIO,
     output: terrainIO,
     initialSegments: [{
-      "id": "1",
       "start": 0,
       "end": 30,
 
@@ -35,7 +34,6 @@ export const Default: Story = {
         "displayName": "Air"
       }
     }, {
-      "id": "2",
       "start": 31,
       "end": 45,
 
@@ -44,7 +42,6 @@ export const Default: Story = {
         "displayName": "Stone"
       }
     }, {
-      "id": "3",
       "start": 46,
       "end": 60,
 
@@ -53,7 +50,6 @@ export const Default: Story = {
         "displayName": "Grass Block"
       }
     }, {
-      "id": "4",
       "start": 61,
       "end": 90,
 
