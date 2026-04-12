@@ -20,11 +20,15 @@ module.exports = {
   rules: {
 
     // this rule is broken for typescript, disable base rule and enable typescript version
-    'no-unused-vars': 'off', 
-    '@typescript-eslint/no-unused-vars': ['error'], 
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': ['error', {
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_'
+    }],
 
     'react-refresh/only-export-components': ['warn', {
       allowConstantExport: true
     }]
+
   }
 };
