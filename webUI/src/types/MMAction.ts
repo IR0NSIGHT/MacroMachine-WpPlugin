@@ -1,4 +1,4 @@
-import {InputOutput, isInputOutput, validateInputOutput} from "@/types/InputOutput"
+import { InputOutput, isInputOutput, validateInputOutput } from "@/types/InputOutput"
 
 export type ActionType =
     | "increment"
@@ -35,21 +35,102 @@ export interface MMAction {
 }
 
 
-export function isMMAction(value: any): value is MMAction {
-  return (
-      value &&
-      typeof value === "object" &&
-      isInputOutput(value.input) &&
-      isInputOutput(value.output) &&
-      isActionType(value.actionType) &&
-      Array.isArray(value.inputPoints) &&
-      value.inputPoints.every((n: any) => typeof n === "number") &&
-      Array.isArray(value.outputPoints) &&
-      value.outputPoints.every((n: any) => typeof n === "number") &&
-      typeof value.name === "string" &&
-      typeof value.description === "string" &&
-      typeof value.uid === "string"
-  )
+export function isMMAction(value: unknown): value is MMAction {
+    return (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value) &&
+        isInputOutput((value as any).input) &&
+        isInputOutput((value as any).output) &&
+        isActionType((value as any).actionType) &&
+        Array.isArray((value as any).inputPoints) &&
+        (value as any).inputPoints.every((n: unknown) => typeof n === "number") &&
+        Array.isArray((value as any).outputPoints) &&
+        (value as any).outputPoints.every((n: unknown) => typeof n === "number") &&
+        typeof (value as any).name === "string" &&
+        typeof (value as any).description === "string" &&
+        typeof (value as any).uid === "string"
+    );
+}
+
+type ValidationResult = {
+    valid: boolean;
+    reason?: string;
+    details?: unknown;
+};
+
+const isValidInput = (
+    inputs: number[],
+    input: InputOutput
+): ValidationResult => {
+    console.log("compare input:", inputs, input.values)
+    const trueInputValueLen = inputs.filter(v => v != input.ignoreValue).length;
+    if (trueInputValueLen !== input.values.filter(v => v.numericValue != input.ignoreValue).length) {
+        return {
+            valid: false,
+            reason: "LENGTH_MISMATCH",
+            details: {
+                expected: inputs.length,
+                actual: input.values.length,
+            },
+        };
+    }
+
+    for (let i = 0; i < inputs.length; i++) {
+        if (inputs[i] !== input.values[i].numericValue) {
+            return {
+                valid: false,
+                reason: "VALUE_MISMATCH",
+                details: {
+                    index: i,
+                    expected: inputs[i],
+                    actual: input.values[i].numericValue,
+                },
+            };
+        }
+    }
+
+    return { valid: true };
+};
+
+const isValidOutput = (
+    outputs: number[],
+    output: InputOutput
+): ValidationResult => {
+    const superSet = new Set(output.values.map(v => v.numericValue));
+    const illegalValues = outputs.filter(v => !superSet.has(v));
+
+    if (illegalValues.length > 0) {
+        return {
+            valid: false,
+            reason: "SET_MISMATCH",
+            details: {
+                missing: illegalValues,
+            },
+        };
+    }
+
+    return { valid: true };
+};
+
+export const isValidAction = (action: MMAction): boolean => {
+    if (!isMMAction(action)) {
+        console.log(action,"not of type action");
+        return false;
+    }
+    const inputValidation = isValidInput(action.inputPoints, action.input);
+    if (!inputValidation.valid) {
+        console.log(action, "invalid inputs", inputValidation)
+        return false;
+    }
+    const outputValidation = isValidOutput(action.outputPoints, action.output);
+
+    if (!outputValidation.valid) {
+        console.log(action, "invalid outputs", outputValidation)
+        return false;
+    }
+
+    return true;
 }
 
 export function assertMMAction(value: any): asserts value is MMAction {

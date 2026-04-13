@@ -11,12 +11,14 @@ import IconButton from '@mui/material/IconButton'
 import EditIcon from '@mui/icons-material/Edit'
 import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
-import { MMAction } from '../types/MMAction'
+import { isValidAction, MMAction } from '../types/MMAction'
 import InputOutputDisplay from './InputOutput/InputProvider'
 import PointScatterPlot from './PointScatterPlot'
 import { MappingPoint } from '@/types/MappingPoint'
 import RangeEditor from './segmentEditor/RangeEditor'
 import { buildSegmentsFromAction, mappingsFromSegments, Segment } from './segmentEditor/Segment'
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
+import isEqual from 'lodash/isEqual';
 
 interface MMActionRendererProps {
   action: MMAction
@@ -24,6 +26,11 @@ interface MMActionRendererProps {
 }
 
 export default function MMActionRenderer({ action, onUpdate }: MMActionRendererProps) {
+
+  if (!isValidAction(action)) {
+    throw new Error("Invalid action, can not render");
+  }
+
   const [draftAction, setDraftAction] = useState<MMAction>(action)
   const [draftSegments, setDrafSegments] = useState<Segment[]>(buildSegmentsFromAction(action))
   const [isEditing, setIsEditing] = useState(false)
@@ -32,7 +39,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   useEffect(() => {
     console.log("draftAction State changed:", draftAction);
   }, [draftAction]);
-  
+
   const handleEdit = () => {
     setIsEditing(true)
   }
@@ -106,6 +113,27 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     setDrafSegments(segments); // we need to keep segments separately, because transforming to action and back might merge adjacent segmetns with same output value
   };
 
+
+
+  const segmentsDiffer =
+    isRangeEditor &&
+    !isEqual(draftSegments, buildSegmentsFromAction(action));
+
+  const actionDiffers = !isEqual(action, draftAction);
+  if (segmentsDiffer) {
+    console.log("Segments differ!"); // Debug log
+    console.log("Draft Segments:", draftSegments);
+    console.log("Action Segments:", buildSegmentsFromAction(action));
+  } else {
+    console.log("Segments are equal.");
+  }
+
+  if (actionDiffers) {
+    console.log("action differs!", action, draftAction);
+  } else {
+    console.log("Action is same")
+  }
+
   return (
     <Card sx={{ mb: 2 }}>
       <CardHeader
@@ -145,6 +173,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
               <InputOutputDisplay inputOutput={draftAction.output} type='output' />
             </Box>
           </Stack>
+          {(segmentsDiffer || actionDiffers) && <EditOutlinedIcon color="warning" />}
 
           <Box>
             {

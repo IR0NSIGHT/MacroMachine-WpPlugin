@@ -19,7 +19,7 @@ const sampleActions: MMAction[] = [
     output: terrainIO,
     actionType: 'set',
     inputPoints: slopeIO.values.filter(v => v.numericValue !== slopeIO.ignoreValue).map(v => v.numericValue),
-    outputPoints: slopeIO.values.map(v => v.numericValue < 45 ? 21 : 75 ),
+    outputPoints: slopeIO.values.map(v => v.numericValue < 45 ? 21 : 3 ),
     name: 'Paint by slope',
     description: 'Paint terrain based on slope angle',
     uid: '4d006c6d-93f6-4326-81fe-60446dad53eb',
