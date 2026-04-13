@@ -40,7 +40,7 @@ export const waterdepthIO: InputOutput = {
     ignoreValue: -1,
     values: Array.from({ length: 31 }, (_, i) => ({
         numericValue: i,
-        displayName: `${i} below waterlevel`,
+        displayName: `${i} deep`,
     })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
     discrete: false,
     displayName: 'Water Depth',

@@ -1,6 +1,6 @@
 // src/utils/sum.test.ts
 import { describe, it, expect } from "vitest";
-import { Segments, splitAt, mergeSegments, areSegmentsValid, shiftSegment, buildSegmentsFromAction } from "./Segment";
+import { Segments, splitAt, mergeSegments, areSegmentsValid, shiftSegment, buildSegmentsFromAction, Segment, mappingsFromSegments } from "./Segment";
 import { MMAction } from "@/types/MMAction";
 import { alwaysIO, annotationsIO, forestIO, heightIO } from "@/mock/dummyIOs";
 
@@ -267,7 +267,7 @@ describe("convert action to segments", () => {
                 output: annotationsIO,
                 actionType: "increment",
                 inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
-                outputPoints: [4, 4, 4, 4,   3, 3, 3, 3,    15, 15, 15, 15,    15, 15, 15, 15],
+                outputPoints: [4, 4, 4, 4, 3, 3, 3, 3, 15, 15, 15, 15, 15, 15, 15, 15],
             }
             const segments = buildSegmentsFromAction(action);
             expect(segments).toEqual([
@@ -308,7 +308,7 @@ describe("convert action to segments", () => {
                 input: alwaysIO,
                 output: annotationsIO,
                 actionType: "increment",
-                inputPoints: [ 0 ],
+                inputPoints: [0],
                 outputPoints: [4],
             }
             const segments = buildSegmentsFromAction(action);
@@ -354,4 +354,21 @@ describe("convert action to segments", () => {
             ])
         }
     })
-});   
+});
+
+describe("convert segemnts into mapping lists for use in action", () => {
+    it("can convert single segment list", () => {
+        const segment: Segment = { start: -4, end: 3, value: { displayName: "hello", numericValue: 72 } }
+        const mappings = mappingsFromSegments([segment]);
+        expect(mappings).toEqual({ inputs: [-4, -3, -2, -1, 0, 1, 2, 3], outputs: [72, 72, 72, 72, 72, 72, 72, 72] })
+    })
+    it("can convert multi segment list", () => {
+        const mappings = mappingsFromSegments([
+            { start: -4, end: -2, value: { displayName: "hello", numericValue: 72 } },
+            { start: -1, end: 3, value: { displayName: "hello", numericValue: -15 } },
+            { start: 4, end: 4, value: { displayName: "hello", numericValue: 73 } },
+            { start: 5, end: 10, value: { displayName: "hello", numericValue: 1 } }
+        ]);
+        expect(mappings).toEqual({ inputs: [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], outputs: [72, 72, 72, -15, -15, -15, -15, -15, 73, 1, 1, 1, 1, 1, 1] })
+    })
+})

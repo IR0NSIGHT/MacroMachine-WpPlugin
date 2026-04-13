@@ -83,22 +83,17 @@ const SegmentBody = ({
 type Props = {
     input: InputOutput;
     output: InputOutput;
-    initialSegments: Segment[];
+    segments: Segment[];
+    setSegments: (newSegs: Segment[]) => void;
 };
-
-function uid() {
-    return Math.random().toString(36).slice(2);
-}
-
-
 
 export default function RangeValueAxisEditor({
     input,
     output,
-    initialSegments,
+    segments,
+    setSegments
 }: Props) {
     const interval: Interval = { start: input.min, end: input.max,  };
-    const allowedValues = input.values;
 
     const getActiveSegment: () => Segment | undefined = () => {
         const selectedSeg = segments.find(s => s.start === menuState.currentSegmentStart);
@@ -106,11 +101,7 @@ export default function RangeValueAxisEditor({
         return selectedSeg;
     };
 
-    const [segments, setSegments] = useState<Segment[]>(
-        initialSegments ?? [
-            { id: uid(), start: interval.start, end: interval.end, value: allowedValues[0] },
-        ]
-    );
+
 
     const [menuState, setMenuState] = useState<{
         mouse: { x: number; y: number } | null;
@@ -175,7 +166,7 @@ export default function RangeValueAxisEditor({
         const ratio = x / rect.width;
         const value = interval.start + ratio * (interval.end - interval.start);
 
-        setSegments((prev) => splitAt(prev, value));
+        setSegments(splitAt(segments, value));
     };
 
     // -------------------------
@@ -183,8 +174,8 @@ export default function RangeValueAxisEditor({
     // -------------------------
     const setSegmentOutputValue = (segmentStart: number, value: NamedValue) => {
         console.log("Setting segment output value for segment", segmentStart, "to", value);
-        setSegments((prev) =>
-            prev.map((s) => (s.start === segmentStart ? { ...s, value } : s))
+        setSegments(
+            segments.map((s) => (s.start === segmentStart ? { ...s, value } : s))
         );
     };
 
@@ -230,7 +221,7 @@ export default function RangeValueAxisEditor({
 
         // dragging always changes the END of the current segment
         const newEnd = clamp(drag.initialEnd + deltaValue, interval.start, interval.end);
-        setSegments((prev) => shiftSegment(prev, drag.initialStart, drag.initialStart, newEnd));
+        setSegments(shiftSegment(segments, drag.initialStart, drag.initialStart, newEnd));
     };
 
     const onPointerUp = () => {

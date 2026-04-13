@@ -16,7 +16,7 @@ import InputOutputDisplay from './InputOutput/InputProvider'
 import PointScatterPlot from './PointScatterPlot'
 import { MappingPoint } from '@/types/MappingPoint'
 import RangeEditor from './segmentEditor/RangeEditor'
-import { buildSegmentsFromAction } from './segmentEditor/Segment'
+import { buildSegmentsFromAction, mappingsFromSegments, Segment } from './segmentEditor/Segment'
 
 interface MMActionRendererProps {
   action: MMAction
@@ -89,8 +89,16 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     })
 
   }
+  const isRangeEditor = !draftAction.input.discrete && draftAction.output.discrete;
 
-
+  const updateActionFromSegments = (segments: Segment[]): void => {
+    const { inputs, outputs } = mappingsFromSegments(segments);
+    setDraftAction((prev) => ({
+      ...prev,
+      inputPoints: inputs,
+      outputPoints: outputs
+    }));
+  };
   return (
     <Card sx={{ mb: 2 }}>
       <CardHeader
@@ -133,7 +141,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
 
           <Box>
             {
-              (!draftAction.input.discrete || !draftAction.output.discrete) && <PointScatterPlot
+              (!isRangeEditor) && <PointScatterPlot
                 xData={draftAction.inputPoints}
                 yData={draftAction.outputPoints}
                 input={draftAction.input}
@@ -145,10 +153,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
                 addPoint={addPoint} />
             }
             {
-              (!draftAction.input.discrete || draftAction.output.discrete) && 
-              <RangeEditor input={ draftAction.input} output={ draftAction.output} initialSegments={buildSegmentsFromAction(draftAction)}>
-                
-              </RangeEditor>
+              (isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={buildSegmentsFromAction(draftAction)} setSegments={updateActionFromSegments} />
             }
 
           </Box>

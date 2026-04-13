@@ -1,10 +1,20 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import RangeValueAxisEditor from "./RangeEditor";
 import { forestIO, heightIO, slopeIO, terrainIO } from "@/mock/dummyIOs";
+import { Segment } from './Segment';
+import { InputOutput } from '@/types/InputOutput';
+import { useState } from 'react';
 
-const meta: Meta<typeof RangeValueAxisEditor> = {
+const WrappeEditor = (props: { input: InputOutput, output: InputOutput, initialSegments: Segment[] }) => {
+  const [segments, setSegments] = useState<Segment[]>(props.initialSegments);
+  return (
+    <RangeValueAxisEditor input={props.input} output={props.output} segments={segments} setSegments={setSegments} ></RangeValueAxisEditor>
+  )
+}
+
+const meta: Meta<typeof WrappeEditor> = {
   title: "Components/RangeValueAxisEditor",
-  component: RangeValueAxisEditor,
+  component: WrappeEditor,
   parameters: {
     layout: "padded",
     backgrounds: {
@@ -19,7 +29,7 @@ const meta: Meta<typeof RangeValueAxisEditor> = {
 
 export default meta;
 
-type Story = StoryObj<typeof RangeValueAxisEditor>;
+type Story = StoryObj<typeof WrappeEditor>;
 
 export const Default: Story = {
   args: {

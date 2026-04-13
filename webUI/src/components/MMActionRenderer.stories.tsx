@@ -2,9 +2,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import MMActionRenderer from './MMActionRenderer'
 import { raiseYonCyan, slopeToForest } from '../mock/dummyActions'
 import { forestIO, annotationsIO, heightIO } from '@/mock/dummyIOs'
-import { MMAction } from '@/types/MMAction'
-import { expect } from 'vitest'
-import { buildSegmentsFromAction } from './segmentEditor/Segment'
 
 const meta: Meta<typeof MMActionRenderer> = {
 

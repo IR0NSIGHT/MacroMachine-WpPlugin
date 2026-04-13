@@ -49,9 +49,9 @@ export function buildSegmentsFromAction(action: MMAction): Segments {
             currentSegment = {
                 start: mapping.input,
                 end: mapping.input,
-                value:  action.output.values.find(v => v.numericValue == mapping.output)!,
+                value: action.output.values.find(v => v.numericValue == mapping.output)!,
             }
-        } else{
+        } else {
             currentSegment = { ...currentSegment, end: mapping.input } // grow segment by one
         }
 
@@ -202,3 +202,17 @@ const isRangeFilled = (segments: Segments, start: number, end: number): boolean 
 const isSegmentValid = (segment: Segment): boolean => {
     return segment.start <= segment.end;
 };
+
+export const mappingsFromSegments = (segments: Segments): { inputs: number[], outputs: number[] } => {
+    const inputs: number[] = [];
+    const outputs: number[] = [];
+    segments.forEach( seg => {
+        for( let val = seg.start; val <= seg.end; val++) {
+            inputs.push(val);
+            outputs.push(seg.value.numericValue);
+        }
+    })
+
+
+    return { inputs: inputs, outputs: outputs }
+}
