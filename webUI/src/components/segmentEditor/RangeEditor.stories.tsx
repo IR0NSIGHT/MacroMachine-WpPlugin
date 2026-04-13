@@ -8,7 +8,7 @@ import { useState } from 'react';
 const WrappeEditor = (props: { input: InputOutput, output: InputOutput, initialSegments: Segment[] }) => {
   const [segments, setSegments] = useState<Segment[]>(props.initialSegments);
   return (
-    <RangeValueAxisEditor input={props.input} output={props.output} segments={segments} setSegments={setSegments} ></RangeValueAxisEditor>
+    <RangeValueAxisEditor input={props.input} output={props.output} segments={segments} setSegments={(xs) => { console.log("set segmetns:", xs); setSegments(xs) }} ></RangeValueAxisEditor>
   )
 }
 

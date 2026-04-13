@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import MMActionRenderer from './MMActionRenderer'
 import { raiseYonCyan, slopeToForest } from '../mock/dummyActions'
-import { forestIO, annotationsIO, heightIO } from '@/mock/dummyIOs'
+import { forestIO, annotationsIO, heightIO, slopeIO, terrainIO } from '@/mock/dummyIOs'
 
 const meta: Meta<typeof MMActionRenderer> = {
 
@@ -54,7 +54,7 @@ export const SimpleContinuousToDiscrete: Story = {
   },
 }
 
-export const HeightToAnnotation: Story = {
+export const ManyRanges: Story = {
   args: {
     action: {
       name: "Test Action",
@@ -65,6 +65,22 @@ export const HeightToAnnotation: Story = {
       actionType: "increment",
       inputPoints: heightIO.values.filter(v => v.numericValue !== heightIO.ignoreValue).map(v => v.numericValue),
       outputPoints: heightIO.values.map(v => Math.round(Math.abs(v.numericValue) / 20) % 15),
+    },
+  },
+}
+
+
+export const SomeRanges: Story = {
+  args: {
+    action: {
+      name: "Test Action",
+      description: "This is a test action",
+      uid: "test-action",
+      input: slopeIO,
+      output: terrainIO,
+      actionType: "increment",
+      inputPoints: slopeIO.values.filter(v => v.numericValue !== slopeIO.ignoreValue).map(v => v.numericValue),
+      outputPoints: slopeIO.values.map(v => Math.round(Math.abs(v.numericValue) / 30) % 15),
     },
   },
 }

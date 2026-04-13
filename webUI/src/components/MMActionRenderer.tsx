@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
@@ -25,10 +25,14 @@ interface MMActionRendererProps {
 
 export default function MMActionRenderer({ action, onUpdate }: MMActionRendererProps) {
   const [draftAction, setDraftAction] = useState<MMAction>(action)
+  const [draftSegments, setDrafSegments] = useState<Segment[]>(buildSegmentsFromAction(action))
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(draftAction.name)
   const [description, setDescription] = useState(draftAction.description)
-
+  useEffect(() => {
+    console.log("draftAction State changed:", draftAction);
+  }, [draftAction]);
+  
   const handleEdit = () => {
     setIsEditing(true)
   }
@@ -85,20 +89,23 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
         ...prev,
         inputPoints: [...prev.inputPoints, newP.x],
         outputPoints: [...prev.outputPoints, newP.y],
-      }
+      };
     })
 
   }
   const isRangeEditor = !draftAction.input.discrete && draftAction.output.discrete;
 
   const updateActionFromSegments = (segments: Segment[]): void => {
+    console.log("update action from segmetns:", segments);
     const { inputs, outputs } = mappingsFromSegments(segments);
     setDraftAction((prev) => ({
       ...prev,
       inputPoints: inputs,
       outputPoints: outputs
     }));
+    setDrafSegments(segments); // we need to keep segments separately, because transforming to action and back might merge adjacent segmetns with same output value
   };
+
   return (
     <Card sx={{ mb: 2 }}>
       <CardHeader
@@ -153,7 +160,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
                 addPoint={addPoint} />
             }
             {
-              (isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={buildSegmentsFromAction(draftAction)} setSegments={updateActionFromSegments} />
+              (isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={draftSegments} setSegments={updateActionFromSegments} />
             }
 
           </Box>
