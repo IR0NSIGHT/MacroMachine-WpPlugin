@@ -53,16 +53,17 @@ export function isMMAction(value: unknown): value is MMAction {
     );
 }
 
-type ValidationResult = {
-    valid: boolean;
-    reason?: string;
-    details?: unknown;
+export type ValidationResult<T> = {
+  valid: boolean;
+  value?: T;
+  reason?: string;
+  details?: unknown;
 };
 
 const isValidInput = (
     inputs: number[],
     input: InputOutput
-): ValidationResult => {
+): ValidationResult<InputOutput> => {
     console.log("compare input:", inputs, input.values)
     const trueInputValueLen = inputs.filter(v => v != input.ignoreValue).length;
     if (trueInputValueLen !== input.values.filter(v => v.numericValue != input.ignoreValue).length) {
@@ -96,7 +97,7 @@ const isValidInput = (
 const isValidOutput = (
     outputs: number[],
     output: InputOutput
-): ValidationResult => {
+): ValidationResult<InputOutput> => {
     const superSet = new Set(output.values.map(v => v.numericValue));
     const illegalValues = outputs.filter(v => !superSet.has(v));
 

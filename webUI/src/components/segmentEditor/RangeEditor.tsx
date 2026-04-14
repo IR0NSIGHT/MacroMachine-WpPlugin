@@ -1,10 +1,49 @@
 import React, { useRef, useState } from "react";
-import { Menu } from "@mui/material";
+import { Box, Menu, styled } from "@mui/material";
 import { InputOutput, NamedValue } from "@/types/InputOutput";
 import { InputValueEditor } from "../SingleValues/InputValueEditor";
 import { Segment, splitAt, Interval, shiftSegment, mergeSegments } from "./Segment";
 import { clamp, toPercent } from "@/util";
 import { DeleteButton } from "./DeleteButton";
+
+
+const Root = styled(Box)(({ theme }) => ({
+    width: "100%",
+    padding: theme.spacing(1.5),
+    borderRadius: theme.shape.borderRadius,
+    backgroundColor: theme.palette.background.paper,
+    border: `1px solid ${theme.palette.divider}`,
+    userSelect: "none",
+}));
+
+const Axis = styled(Box)(({ theme }) => ({
+    height: 18,
+    marginTop: theme.spacing(1),
+    borderRadius: theme.shape.borderRadius,
+    cursor: "pointer",
+    backgroundColor: theme.palette.grey[300],
+    border: `1px solid ${theme.palette.divider}`,
+    position: "relative",
+}));
+
+const AxisCenterLine = styled(Box)(({ theme }) => ({
+    position: "absolute",
+    top: "50%",
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: theme.palette.text.disabled,
+    transform: "translateY(-50%)",
+}));
+
+const AxisLabel = styled(Box)(() => ({
+    position: "absolute",
+    top: 0,
+    transform: "translateX(-50%)",
+    fontSize: 10,
+    pointerEvents: "none",
+}));
+
 const SegmentBody = ({
     segment,
     left,
@@ -93,7 +132,7 @@ export default function RangeValueAxisEditor({
     segments,
     setSegments
 }: Props) {
-    const interval: Interval = { start: input.min, end: input.max,  };
+    const interval: Interval = { start: input.min, end: input.max, };
 
     const getActiveSegment: () => Segment | undefined = () => {
         const selectedSeg = segments.find(s => s.start === menuState.currentSegmentStart);
@@ -239,38 +278,35 @@ export default function RangeValueAxisEditor({
     console.log("render ranges: ", segments)
 
     return (
-        <div
-            ref={containerRef}
-            style={{
-                width: "100%",
-                padding: 12,
-                borderRadius: 12,
-                background: "#0b0f17",
-                border: "1px solid #1f2937",
-                userSelect: "none",
-            }}
-        >
+        <Root ref={containerRef}>
             {/* =========================
           SEGMENTS (TOP LAYER)
       ========================= */}
             <svg width="100%" height={60}>
-                {/* SEGMENT BODIES */}
                 {segments.map((s) => {
                     const left = toPercent(s.start, interval.start, interval.end);
                     const right = toPercent(s.end, interval.start, interval.end);
 
                     return (
-                        <SegmentBody key={s.start} segment={s} left={left} right={right} input={input} onSegmentClick={selectSegment} />
+                        <SegmentBody
+                            key={s.start}
+                            segment={s}
+                            left={left}
+                            right={right}
+                            input={input}
+                            onSegmentClick={selectSegment}
+                        />
                     );
                 })}
 
-                {/* SEGMENT HANDLES (always on top) */}
+                {/* HANDLES */}
                 <g>
                     {segments.map((segment) => {
-                        const endPercent = toPercent(segment.end + 0.5, interval.start, interval.end);
-
-                        // convert percent → actual positioning via SVG percent offset
-                        // we subtract half handle width in *pixels*, so we need a stable transform approach
+                        const endPercent = toPercent(
+                            segment.end + 0.5,
+                            interval.start,
+                            interval.end
+                        );
 
                         return (
                             <g key={segment.start}>
@@ -279,85 +315,59 @@ export default function RangeValueAxisEditor({
                                     y={14}
                                     width={6}
                                     height={28}
-                                    fill="#e5e7eb"
                                     rx={3}
+                                    fill="currentColor"
                                     style={{
                                         cursor: "ew-resize",
                                         transform: "translateX(-3px)",
                                     }}
-                                    onPointerDown={(e) => onHandlePointerDown(e, segment.start)}
+                                    onPointerDown={(e) =>
+                                        onHandlePointerDown(e, segment.start)
+                                    }
                                     onDoubleClick={(e) => {
                                         setMenuState({
-                                            mouse: e ? { x: e.clientX, y: e.clientY } : null,
+                                            mouse: { x: e.clientX, y: e.clientY },
                                             type: "input",
-                                            anchor: e.currentTarget as any,
+                                            anchor: null,
                                             currentSegmentStart: segment.start,
                                         });
                                     }}
                                 />
                             </g>
-
                         );
                     })}
                 </g>
             </svg>
 
             {/* =========================
-          STRIPED AXIS (BOTTOM)
-          CLICK TO SPLIT
+          AXIS
       ========================= */}
-            <div
-                onClick={handleAxisClick}
-                style={{
-                    height: 18,
-                    marginTop: 8,
-                    borderRadius: 6,
-                    cursor: "pointer",
+            <Axis onClick={handleAxisClick}>
+                <AxisCenterLine />
 
-                    // striped black/white axis
-                    background:
-                        "rgb(210, 210, 210) ",
-
-                    border: "1px solid rgba(255,255,255,0.15)",
-                    position: "relative",
-                }}
-            >
-                {/* subtle center line */}
-                <div
-                    style={{
-                        position: "absolute",
-                        top: "50%",
-                        left: 0,
-                        right: 0,
-                        height: 1,
-                        background: "rgba(0,0,0,0.4)",
-                        transform: "translateY(-50%)",
-                    }}
-                />
                 {input.values
-                    .filter(v => v.numericValue % xAxisSplitEvery == 0)
+                    .filter((v) => v.numericValue % xAxisSplitEvery === 0)
                     .map((value) => {
-                        const leftPercent = toPercent(value.numericValue, interval.start, interval.end);
-                        // convert percent → actual positioning via SVG percent offset
+                        const leftPercent = toPercent(
+                            value.numericValue,
+                            interval.start,
+                            interval.end
+                        );
+
                         return (
-                            <span
+                            <AxisLabel
                                 key={value.numericValue}
-                                style={{
-                                    position: "absolute",
-                                    left: `${leftPercent}%`,
-                                    top: 0,
-                                    transform: "translateX(-50%)",
-                                    fontSize: 10,
-                                    pointerEvents: "none",
-                                }}
+                                sx={{ left: `${leftPercent}%` }}
                             >
                                 {value.displayName}
-                            </span>
+                            </AxisLabel>
                         );
                     })}
-            </div>
+            </Axis>
 
-            {/* SELECT OUTPUT FOR RANGE */}
+            {/* =========================
+          OUTPUT MENU
+      ========================= */}
             <Menu
                 anchorReference="anchorPosition"
                 anchorPosition={
@@ -378,17 +388,33 @@ export default function RangeValueAxisEditor({
                     },
                 }}
             >
-                <div className="card">
-                    <div>
-                        For all blocks where { input.displayName } is between {getDisplayName(getActiveSegment()?.start)} and {getDisplayName(getActiveSegment()?.end)}, set { output.displayName } to
-                    </div>
-                    <InputValueEditor includeIgnore={true} label={"Output"} value={getActiveSegment()?.value?.numericValue ?? output.min} input={output} onChange={updateCurrentSegmentOutput} />
-                    {segments.length > 1 && <DeleteButton onClick={onDeleteCurrentSegment} />}
-                </div>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                    <Box>
+                        For all blocks where {input.displayName} is between{" "}
+                        {getDisplayName(getActiveSegment()?.start)} and{" "}
+                        {getDisplayName(getActiveSegment()?.end)}, set{" "}
+                        {output.displayName} to
+                    </Box>
 
+                    <InputValueEditor
+                        includeIgnore
+                        label="Output"
+                        value={
+                            getActiveSegment()?.value?.numericValue ?? output.min
+                        }
+                        input={output}
+                        onChange={updateCurrentSegmentOutput}
+                    />
+
+                    {segments.length > 1 && (
+                        <DeleteButton onClick={onDeleteCurrentSegment} />
+                    )}
+                </Box>
             </Menu>
 
-            {/* SELECT INTERVAL END (input) FOR RANGE */}
+            {/* =========================
+          INPUT MENU
+      ========================= */}
             <Menu
                 anchorReference="anchorPosition"
                 anchorPosition={
@@ -409,10 +435,16 @@ export default function RangeValueAxisEditor({
                     },
                 }}
             >
-                <div className="card">
-                    <InputValueEditor includeIgnore={false} label={"Input"} value={getActiveSegment()?.end ?? input.max} input={input} onChange={updateCurrentSegmentEnd} />
-                </div>
+                <Box>
+                    <InputValueEditor
+                        includeIgnore={false}
+                        label="Input"
+                        value={getActiveSegment()?.end ?? input.max}
+                        input={input}
+                        onChange={updateCurrentSegmentEnd}
+                    />
+                </Box>
             </Menu>
-        </div>
+        </Root>
     );
 }

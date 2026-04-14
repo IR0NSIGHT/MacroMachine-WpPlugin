@@ -1,48 +1,31 @@
-import {useState, useEffect} from 'react'
+import { useState } from 'react'
 import Container from '@mui/material/Container'
 import Typography from '@mui/material/Typography'
 import CircularProgress from '@mui/material/CircularProgress'
-import Alert from '@mui/material/Alert'
-import MMActionRenderer from './components/MMActionRenderer'
-import {assertMMAction, MMAction} from './types/MMAction'
 import './App.css'
-import DebugPanel from "@/components/DebugPanel";
+import MMActionList from './components/MMActionList'
+import { useMacroSystem } from './API/api'
+import { UUID } from './types/MMacro'
+import { MacroSelector } from './MacroSelector'
 
 function App() {
-    const [action, setAction] = useState<MMAction | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-
-    useEffect(() => {
-        fetch('/action')
-            .then((res) => {
-                if (!res.ok) throw new Error(`HTTP ${res.status}`)
-                return res.json()
-            })
-        fetch('/action')
-            .then(res => res.json())
-            .then(data => {
-                assertMMAction(data)
-                setAction(data)
-            })
-            .catch((err) => {
-                setError(err.message)
-                setAction(null)
-            })
-            .finally(() => setLoading(false))
-    }, [])
-
+    const [selectedMacroUUID, setSelected] = useState<UUID>("");
+    const { macros: macroList, actions, loading } = useMacroSystem(selectedMacroUUID);
     return (
-        <Container sx={{py: 4}}>
-                <Typography variant="h4" component="h1" gutterBottom>
-                    MacroMachine Web UI
-                </Typography>
+        <Container sx={{ py: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+                MacroMachine Web UI
+            </Typography>
 
-                {loading && <CircularProgress/>}
-                {error && <Alert severity="error">Failed to load action: {error}</Alert>}
-                <DebugPanel/>
+            {loading && <CircularProgress />}
 
-                {action && !loading && !error && <MMActionRenderer action={action}/>}
+
+            {!loading &&
+                <div>
+                    <MacroSelector macros={macroList} selectedMacroId={selectedMacroUUID} onChange={setSelected} />
+                    <MMActionList actions={actions} />
+                </div>
+            }
             <pre
                 style={{
                     textAlign: "left",
@@ -52,7 +35,8 @@ function App() {
 
                 }}
             >
-                {JSON.stringify(action, null, 3)}
+                {JSON.stringify(macroList, null, 3)}
+                {JSON.stringify(actions, null, 3)}
             </pre>
         </Container>
     )
