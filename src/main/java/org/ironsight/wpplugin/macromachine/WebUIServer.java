@@ -186,8 +186,12 @@ public class WebUIServer {
                     actionID = UUID.fromString(uuidParam);
                 } catch (IllegalArgumentException ex) {
                     exchange.sendResponseHeaders(404, -1);
+                    return;
                 }
-
+                if (!MappingActionContainer.getInstance().queryContains(actionID)) {
+                    exchange.sendResponseHeaders(404, -1);
+                    return;
+                }
                 var action = MappingActionContainer.getInstance().queryById(actionID);
 
                 try {
@@ -196,8 +200,8 @@ public class WebUIServer {
                             action.getDescription(),
                             action.getUid().toString(),
                             action.getActionType().displayName,
-                            toInputOutputJson(action.getInput()),
-                            toInputOutputJson(action.getOutput()),
+                            toInputOutputJson(action.getInput(), true),
+                            toInputOutputJson(action.getOutput(), false),
                             Arrays.stream(action.getInput().getAllInputValues()).boxed().toList(),
                             Arrays.stream(action.getInput().getAllInputValues()).map(action::map).boxed().toList()
                     );
@@ -210,6 +214,7 @@ public class WebUIServer {
                     try (OutputStream os = exchange.getResponseBody()) {
                         os.write(bytes);
                     }
+                    System.out.println("sending action GET query: \n" + response);
 
                 } catch (Exception e) {
                     e.printStackTrace();

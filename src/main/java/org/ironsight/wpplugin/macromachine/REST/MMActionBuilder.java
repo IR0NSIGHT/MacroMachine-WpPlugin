@@ -30,6 +30,6 @@ public class MMActionBuilder {
         action.put("inputPoints", inputPoints);
         action.put("outputPoints", outputPoints);
 
-        return mapper.writeValueAsString(action);
+        return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(action);
     }
 }

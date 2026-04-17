@@ -20,25 +20,25 @@ export const MappingPointEditor = (props: {
     let typeConjugated: string;
 
     switch (props.type) {
-        case "increment":
+        case "increments":
             typeConjugated = "incremented by";
             break;
-        case "subtract":
+        case "subtracts":
             typeConjugated = "decreased by";
             break;
-        case "multiply":
+        case "multiplies":
             typeConjugated = "multiplied by";
             break;
-        case "divide":
+        case "divides":
             typeConjugated = "divided by";
             break;
-        case "set":
+        case "sets":
             typeConjugated = "set to";
             break;
-        case "limit":
+        case "limits":
             typeConjugated = "limited to";
             break;
-        case "set minimum":
+        case "sets minimum":
             typeConjugated = "set to minimum of";
             break;
         default:

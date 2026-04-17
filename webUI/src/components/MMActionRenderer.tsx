@@ -26,9 +26,9 @@ interface MMActionRendererProps {
 }
 
 export default function MMActionRenderer({ action, onUpdate }: MMActionRendererProps) {
-
-  if (!isValidAction(action)) {
-    throw new Error("Invalid action, can not render");
+  const dataValidation = isValidAction(action)
+  if (!dataValidation.valid) {
+    throw new Error("Invalid action"+ (action.name ?? "unknown action") +" , can not render: " + JSON.stringify(dataValidation, null, 3));
   }
 
   const [draftAction, setDraftAction] = useState<MMAction>(action)

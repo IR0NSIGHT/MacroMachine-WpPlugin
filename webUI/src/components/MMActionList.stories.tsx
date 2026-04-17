@@ -7,7 +7,7 @@ const sampleActions: MMAction[] = [
   {
     input: alwaysIO,
     output: terrainIO,
-    actionType: "set",
+    actionType: "sets",
     inputPoints: [0],
     outputPoints: [9],
     name: 'apply snow',
@@ -17,7 +17,7 @@ const sampleActions: MMAction[] = [
   {
     input: slopeIO,
     output: terrainIO,
-    actionType: 'set',
+    actionType: 'sets',
     inputPoints: slopeIO.values.filter(v => v.numericValue !== slopeIO.ignoreValue).map(v => v.numericValue),
     outputPoints: slopeIO.values.map(v => v.numericValue < 45 ? 21 : 3 ),
     name: 'Paint by slope',
@@ -27,7 +27,7 @@ const sampleActions: MMAction[] = [
   {
     input: waterdepthIO,
     output: annotationsIO,
-    actionType: 'increment',
+    actionType: 'increments',
     inputPoints: waterdepthIO.values.filter(v => v.numericValue !== waterdepthIO.ignoreValue).map(v => v.numericValue), // [0, 13] -> [8, 0]
     outputPoints: waterdepthIO.values.filter(v => v.numericValue !== waterdepthIO.ignoreValue).map(v => v.numericValue  < 13 ? 8 : 0),
     name: 'Set: prefer shallow water',

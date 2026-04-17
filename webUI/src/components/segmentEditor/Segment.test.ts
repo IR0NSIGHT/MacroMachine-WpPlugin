@@ -265,7 +265,7 @@ describe("convert action to segments", () => {
                 uid: "test-action",
                 input: forestIO,
                 output: annotationsIO,
-                actionType: "increment",
+                actionType: "increments",
                 inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
                 outputPoints: [4, 4, 4, 4, 3, 3, 3, 3, 15, 15, 15, 15, 15, 15, 15, 15],
             }
@@ -284,7 +284,7 @@ describe("convert action to segments", () => {
                 uid: "test-action",
                 input: forestIO,
                 output: annotationsIO,
-                actionType: "increment",
+                actionType: "increments",
                 inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
                 outputPoints: [4, 4, 4, 4, 3, 5, 4, 4, 7, 7, 7, 7, 0, 0, 0, 15],
             }
@@ -307,7 +307,7 @@ describe("convert action to segments", () => {
                 uid: "test-action",
                 input: alwaysIO,
                 output: annotationsIO,
-                actionType: "increment",
+                actionType: "increments",
                 inputPoints: [0],
                 outputPoints: [4],
             }
@@ -327,7 +327,7 @@ describe("convert action to segments", () => {
                 uid: "test-action",
                 input: forestIO,
                 output: annotationsIO,
-                actionType: "increment",
+                actionType: "increments",
                 inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
                 outputPoints: forestIO.values.map(_ => outputMagenta.numericValue),
             }
@@ -344,7 +344,7 @@ describe("convert action to segments", () => {
                 uid: "test-action",
                 input: heightIO,
                 output: annotationsIO,
-                actionType: "increment",
+                actionType: "increments",
                 inputPoints: heightIO.values.filter(v => v.numericValue !== heightIO.ignoreValue).map(v => v.numericValue),
                 outputPoints: heightIO.values.map(_ => outputMagenta.numericValue),
             }

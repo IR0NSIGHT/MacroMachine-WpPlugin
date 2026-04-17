@@ -1,22 +1,25 @@
 import { InputOutput, isInputOutput, validateInputOutput } from "@/types/InputOutput"
 
 export type ActionType =
-    | "increment"
-    | "subtract"
-    | "multiply"
-    | "divide"
-    | "set"
-    | "limit"
-    | "set minimum";
+    | "increments"
+    | "subtracts"
+    | "multiplies"
+    | "divides"
+    | "sets"
+    | "limits"
+    | "sets minimum";
+
+    //INCREMENT("increments"), DECREMENT("subtracts"), MULTIPLY("multiplies"), DIVIDE("divides"), SET("sets"), LIMIT_TO(
+    //        "limits"), AT_LEAST("sets minimum");
 
 export const ACTION_TYPES: ActionType[] = [
-    "increment",
-    "subtract",
-    "multiply",
-    "divide",
-    "set",
-    "limit",
-    "set minimum",
+    "increments",
+    "subtracts",
+    "multiplies",
+    "divides",
+    "sets",
+    "limits",
+    "sets minimum",
 ]
 
 export function isActionType(value: any): value is ActionType {
@@ -53,11 +56,116 @@ export function isMMAction(value: unknown): value is MMAction {
     );
 }
 
+export function validateMMActionType(value: MMAction): ValidationResult<MMAction> {
+    if (value === null || typeof value !== "object" || Array.isArray(value)) {
+        return {
+            valid: false,
+            reason: "Value must be a non-null object",
+            details: value,
+        };
+    }
+
+    const v = value as any;
+
+    // input
+    if (!isInputOutput(v.input)) {
+        return {
+            valid: false,
+            reason: "Invalid 'input' field",
+            details: v.input,
+        };
+    }
+
+    // output
+    if (!isInputOutput(v.output)) {
+        return {
+            valid: false,
+            reason: "Invalid 'output' field",
+            details: v.output,
+        };
+    }
+
+    // actionType
+    if (!isActionType(v.actionType)) {
+        return {
+            valid: false,
+            reason: "Invalid 'actionType'",
+            details: v.actionType,
+        };
+    }
+
+    // inputPoints
+    if (!Array.isArray(v.inputPoints)) {
+        return {
+            valid: false,
+            reason: "'inputPoints' must be an array",
+            details: v.inputPoints,
+        };
+    }
+
+    if (!v.inputPoints.every((n: unknown) => typeof n === "number")) {
+        return {
+            valid: false,
+            reason: "'inputPoints' must contain only numbers",
+            details: v.inputPoints,
+        };
+    }
+
+    // outputPoints
+    if (!Array.isArray(v.outputPoints)) {
+        return {
+            valid: false,
+            reason: "'outputPoints' must be an array",
+            details: v.outputPoints,
+        };
+    }
+
+    if (!v.outputPoints.every((n: unknown) => typeof n === "number")) {
+        return {
+            valid: false,
+            reason: "'outputPoints' must contain only numbers",
+            details: v.outputPoints,
+        };
+    }
+
+    // name
+    if (typeof v.name !== "string") {
+        return {
+            valid: false,
+            reason: "'name' must be a string",
+            details: v.name,
+        };
+    }
+
+    // description
+    if (typeof v.description !== "string") {
+        return {
+            valid: false,
+            reason: "'description' must be a string",
+            details: v.description,
+        };
+    }
+
+    // uid
+    if (typeof v.uid !== "string") {
+        return {
+            valid: false,
+            reason: "'uid' must be a string",
+            details: v.uid,
+        };
+    }
+
+    return {
+        valid: true,
+        value: v as MMAction,
+    };
+}
+
 export type ValidationResult<T> = {
-  valid: boolean;
-  value?: T;
-  reason?: string;
-  details?: unknown;
+    valid: boolean;
+    value?: T;
+    reason?: string;
+    details?: unknown;
 };
 
 const isValidInput = (
@@ -69,10 +177,12 @@ const isValidInput = (
     if (trueInputValueLen !== input.values.filter(v => v.numericValue != input.ignoreValue).length) {
         return {
             valid: false,
-            reason: "LENGTH_MISMATCH",
+            reason: "INPUT_LENGTH_MISMATCH",
             details: {
-                expected: inputs.length,
-                actual: input.values.length,
+                expectedAmountOfInputNumbers: inputs.length,
+                amountInputProviderValues: input.values.length,
+                inputNumbers: inputs,
+                inputProviderValues: input.values
             },
         };
     }
@@ -114,24 +224,23 @@ const isValidOutput = (
     return { valid: true };
 };
 
-export const isValidAction = (action: MMAction): boolean => {
-    if (!isMMAction(action)) {
-        console.log(action,"not of type action");
-        return false;
+export const isValidAction = (action: MMAction): ValidationResult<any> => {
+    const typeValidation = validateMMActionType(action);
+    if (!typeValidation.valid) {
+        return typeValidation
     }
+
     const inputValidation = isValidInput(action.inputPoints, action.input);
     if (!inputValidation.valid) {
-        console.log(action, "invalid inputs", inputValidation)
-        return false;
+        return inputValidation;
     }
+
     const outputValidation = isValidOutput(action.outputPoints, action.output);
-
     if (!outputValidation.valid) {
-        console.log(action, "invalid outputs", outputValidation)
-        return false;
+        return outputValidation;
     }
 
-    return true;
+    return { valid: true };
 }
 
 export function assertMMAction(value: any): asserts value is MMAction {

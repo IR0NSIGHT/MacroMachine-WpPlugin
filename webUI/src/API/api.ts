@@ -1,5 +1,5 @@
-import { Macro, UUID, validateMacro } from "@/types/MMacro";
-import { isValidAction, MMAction } from "@/types/MMAction";
+import { Macro, UUID } from "@/types/MMacro";
+import { MMAction } from "@/types/MMAction";
 import { useState, useEffect } from "react";
 
 const API_BASE = "http://localhost:8080";

@@ -2,6 +2,8 @@ package org.ironsight.wpplugin.macromachine.REST;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 import java.util.*;
 
@@ -9,7 +11,7 @@ public class IOMapper {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public static Map<String, Object> toInputOutputJson(IMappingValue io) throws Exception {
+    public static Map<String, Object> toInputOutputJson(IMappingValue io, boolean asInput) throws Exception {
         Map<String, Object> root = new HashMap<>();
 
         root.put("displayName", io.getProviderType().toString());
@@ -22,7 +24,8 @@ public class IOMapper {
 
         // values
         List<Map<String, Object>> valuesList = new ArrayList<>();
-        for (int v : io.getAllPossibleValues()) {
+        int[] values = asInput ? ((IPositionValueGetter)io).getAllInputValues() :  ((IPositionValueSetter)io).getAllOutputValues();
+        for (int v : values) {
             Map<String, Object> val = new HashMap<>();
             val.put("numericValue", v);
             val.put("displayName", io.valueToString(v));

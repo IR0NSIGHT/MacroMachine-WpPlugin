@@ -27,7 +27,7 @@ const MappingPointEditorWrapper = (props: { oldPoint: MappingPoint }) => {
       onClose={() => setEditorActive(false)}
       updatePoint={updatePoint}
       addPoint={addPoint}
-      type="increment"
+      type="increments"
     />
   );
 };
