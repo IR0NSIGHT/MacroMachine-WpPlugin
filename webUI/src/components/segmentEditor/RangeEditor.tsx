@@ -1,11 +1,11 @@
 import React, { useRef, useState } from "react";
 import { Box, Menu, styled } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { InputOutput, NamedValue } from "@/types/InputOutput";
 import { InputValueEditor } from "../SingleValues/InputValueEditor";
 import { Segment, splitAt, Interval, shiftSegment, mergeSegments } from "./Segment";
 import { clamp, toPercent } from "@/util";
 import { DeleteButton } from "./DeleteButton";
-
 
 const Root = styled(Box)(({ theme }) => ({
     width: "100%",
@@ -21,7 +21,7 @@ const Axis = styled(Box)(({ theme }) => ({
     marginTop: theme.spacing(1),
     borderRadius: theme.shape.borderRadius,
     cursor: "pointer",
-    backgroundColor: theme.palette.grey[300],
+    backgroundColor: theme.palette.action.hover,
     border: `1px solid ${theme.palette.divider}`,
     position: "relative",
 }));
@@ -36,11 +36,12 @@ const AxisCenterLine = styled(Box)(({ theme }) => ({
     transform: "translateY(-50%)",
 }));
 
-const AxisLabel = styled(Box)(() => ({
+const AxisLabel = styled(Box)(({ theme }) => ({
     position: "absolute",
     top: 0,
     transform: "translateX(-50%)",
-    fontSize: 10,
+    fontSize: theme.typography.caption.fontSize,
+    color: theme.palette.text.secondary,
     pointerEvents: "none",
 }));
 
@@ -60,6 +61,7 @@ const SegmentBody = ({
         event: React.MouseEvent<SVGRectElement>
     ) => void;
 }) => {
+    const theme = useTheme();
     const width = Math.max(0, right - left);
 
     const getDisplayName = (numericValue: number) => {
@@ -69,49 +71,45 @@ const SegmentBody = ({
 
     return (
         <g>
-            {/* Segment background */}
             <rect
                 x={`${left}%`}
                 y={10}
                 width={`${width}%`}
                 height={36}
-                fill={"#4f8cff"}
+                fill={theme.palette.primary.main}
                 rx={6}
                 style={{ cursor: "pointer" }}
                 onClick={(e) => onSegmentClick(segment.start, e)}
             />
 
-            {/* LEFT label (segment start) */}
             <text
                 x={`${left}%`}
                 y={32}
                 textAnchor="start"
                 fontSize={12}
-                fill="white"
+                fill={theme.palette.primary.contrastText}
                 pointerEvents="none"
             >
                 {getDisplayName(segment.start)}
             </text>
 
-            {/* CENTER label (display name) */}
             <text
                 x={`${left + width / 2}%`}
                 y={32}
                 textAnchor="middle"
                 fontSize={12}
-                fill="white"
+                fill={theme.palette.primary.contrastText}
                 pointerEvents="none"
             >
                 {segment.value?.displayName ?? "undefined value"}
             </text>
 
-            {/* RIGHT label (segment end) */}
             <text
                 x={`${left + width}%`}
                 y={32}
                 textAnchor="end"
                 fontSize={12}
-                fill="white"
+                fill={theme.palette.primary.contrastText}
                 pointerEvents="none"
             >
                 {getDisplayName(segment.end)}
@@ -140,7 +138,7 @@ export default function RangeValueAxisEditor({
         return selectedSeg;
     };
 
-
+    const theme = useTheme();
 
     const [menuState, setMenuState] = useState<{
         mouse: { x: number; y: number } | null;
@@ -174,7 +172,7 @@ export default function RangeValueAxisEditor({
         if (null === menuState.currentSegmentStart) return;
         const currentSegment = segments.find(s => s.start === menuState.currentSegmentStart);
         if (!currentSegment) return;
-        shiftSegment(segments, currentSegment.start, currentSegment.start, value.numericValue);
+        setSegments(shiftSegment(segments, currentSegment.start, currentSegment.start, value.numericValue));
         setMenuStateNull();
     };
 
@@ -309,31 +307,30 @@ export default function RangeValueAxisEditor({
                         );
 
                         return (
-                            <g key={segment.start}>
-                                <rect
-                                    x={`${endPercent}%`}
-                                    y={14}
-                                    width={6}
-                                    height={28}
-                                    rx={3}
-                                    fill="currentColor"
-                                    style={{
-                                        cursor: "ew-resize",
-                                        transform: "translateX(-3px)",
-                                    }}
-                                    onPointerDown={(e) =>
-                                        onHandlePointerDown(e, segment.start)
-                                    }
-                                    onDoubleClick={(e) => {
-                                        setMenuState({
-                                            mouse: { x: e.clientX, y: e.clientY },
-                                            type: "input",
-                                            anchor: null,
-                                            currentSegmentStart: segment.start,
-                                        });
-                                    }}
-                                />
-                            </g>
+                            <rect
+                                key={segment.start}
+                                x={`${endPercent}%`}
+                                y={14}
+                                width={6}
+                                height={28}
+                                rx={3}
+                                fill="currentColor"
+                                style={{
+                                    cursor: "ew-resize",
+                                    transform: "translateX(-3px)",
+                                }}
+                                onPointerDown={(e) =>
+                                    onHandlePointerDown(e, segment.start)
+                                }
+                                onDoubleClick={(e) => {
+                                    setMenuState({
+                                        mouse: { x: e.clientX, y: e.clientY },
+                                        type: "input",
+                                        anchor: null,
+                                        currentSegmentStart: segment.start,
+                                    });
+                                }}
+                            />
                         );
                     })}
                 </g>
@@ -384,12 +381,19 @@ export default function RangeValueAxisEditor({
                             maxWidth: 400,
                             minHeight: 120,
                             p: 2,
+                            bgcolor: "background.paper",
                         },
                     },
                 }}
             >
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <Box>
+                <Box
+                    sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 2,
+                    }}
+                >
+                    <Box sx={{ typography: "body2", color: "text.secondary" }}>
                         For all blocks where {input.displayName} is between{" "}
                         {getDisplayName(getActiveSegment()?.start)} and{" "}
                         {getDisplayName(getActiveSegment()?.end)}, set{" "}
@@ -407,7 +411,9 @@ export default function RangeValueAxisEditor({
                     />
 
                     {segments.length > 1 && (
-                        <DeleteButton onClick={onDeleteCurrentSegment} />
+                        <Box sx={{ pt: 1 }}>
+                            <DeleteButton onClick={onDeleteCurrentSegment} />
+                        </Box>
                     )}
                 </Box>
             </Menu>
@@ -431,11 +437,12 @@ export default function RangeValueAxisEditor({
                             maxWidth: 400,
                             minHeight: 120,
                             p: 2,
+                            bgcolor: "background.paper",
                         },
                     },
                 }}
             >
-                <Box>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     <InputValueEditor
                         includeIgnore={false}
                         label="Input"
