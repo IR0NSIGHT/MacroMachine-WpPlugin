@@ -9,6 +9,9 @@ import { useState } from 'react'
 import { InputOutput } from '../types/InputOutput'
 import { MappingPoint } from '../types/MappingPoint'
 import { ActionType } from '@/types/MMAction'
+import { useTheme } from '@mui/material/styles'
+
+
 
 export interface PointScatterPlotProps {
   xData: number[]
@@ -33,6 +36,8 @@ export default function PointScatterPlot({
   changePoint,
   addPoint,
 }: PointScatterPlotProps) {
+  const theme = useTheme()
+
   const points = xData.slice(0, Math.min(xData.length, yData.length))
   const outputSliced = yData.slice(0, points.length)
 
@@ -106,21 +111,57 @@ export default function PointScatterPlot({
               },
             ]}
             layout={{
-              title,
+              title: {
+                text: title,
+                font: {
+                  family: theme.typography.fontFamily,
+                  color: theme.palette.text.primary,
+                },
+              },
+              paper_bgcolor: 'transparent',
+              plot_bgcolor: 'transparent',
+
+              font: {
+                family: theme.typography.fontFamily,
+                color: theme.palette.text.primary,
+              },
+
               xaxis: input.discrete
                 ? {
-                  title: 'Input',
+                  title: {
+                    text: 'Input',
+                    font: { color: theme.palette.text.secondary },
+                  },
                   tickvals: input.values.map((v) => v.numericValue),
                   ticktext: input.values.map((v) => v.displayName),
                 }
-                : { title: 'Input', dtick: xDtick },
+                : {
+                  title: {
+                    text: 'Input',
+                    font: { color: theme.palette.text.secondary },
+                  },
+                  dtick: xDtick,
+                  gridcolor: theme.palette.divider,
+                },
+
               yaxis: output.discrete
                 ? {
-                  title: 'Output',
+                  title: {
+                    text: 'Output',
+                    font: { color: theme.palette.text.secondary },
+                  },
                   tickvals: output.values.map((v) => v.numericValue),
                   ticktext: output.values.map((v) => v.displayName),
                 }
-                : { title: 'Output', dtick: yDtick },
+                : {
+                  title: {
+                    text: 'Output',
+                    font: { color: theme.palette.text.secondary },
+                  },
+                  dtick: yDtick,
+                  gridcolor: theme.palette.divider,
+                },
+
               margin: { l: 50, r: 20, t: 50, b: 50 },
               showlegend: false,
             }}
@@ -138,7 +179,7 @@ export default function PointScatterPlot({
       </Stack>
       <MappingPointEditor
         key={selectedPoint ? `${selectedPoint.x}-${selectedPoint.y}` : 'new-point-editor'}
-        isNew={ selectedPoint === null }
+        isNew={selectedPoint === null}
         editorActive={editingPoint}
         onClose={() => {
           setSelectedPoint(null)
