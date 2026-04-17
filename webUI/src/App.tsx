@@ -7,6 +7,7 @@ import MMActionList from './components/MMActionList'
 import { useMacroSystem } from './API/api'
 import { UUID } from './types/MMacro'
 import { MacroSelector } from './MacroSelector'
+import '@fontsource/ubuntu';
 
 function App() {
     const [selectedMacroUUID, setSelected] = useState<UUID>("");
