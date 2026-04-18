@@ -19,6 +19,7 @@ import RangeEditor from './segmentEditor/RangeEditor'
 import { buildSegmentsFromAction, mappingsFromSegments, Segment } from './segmentEditor/Segment'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import isEqual from 'lodash/isEqual';
+import { MappingPointTable } from './MappingPointTable'
 
 interface MMActionRendererProps {
   action: MMAction
@@ -28,7 +29,7 @@ interface MMActionRendererProps {
 export default function MMActionRenderer({ action, onUpdate }: MMActionRendererProps) {
   const dataValidation = isValidAction(action)
   if (!dataValidation.valid) {
-    throw new Error("Invalid action"+ (action.name ?? "unknown action") +" , can not render: " + JSON.stringify(dataValidation, null, 3));
+    throw new Error("Invalid action" + (action.name ?? "unknown action") + " , can not render: " + JSON.stringify(dataValidation, null, 3));
   }
 
   const [draftAction, setDraftAction] = useState<MMAction>(action)
@@ -100,8 +101,10 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     })
 
   }
-  const isRangeEditor = !draftAction.input.discrete && draftAction.output.discrete;
-
+  const isTableEditor = draftAction.input.discrete;
+  const isRangeEditor = !isTableEditor && draftAction.output.discrete;
+  const isGridEditor = !isRangeEditor && !isTableEditor;
+  
   const updateActionFromSegments = (segments: Segment[]): void => {
     console.log("update action from segmetns:", segments);
     const { inputs, outputs } = mappingsFromSegments(segments);
@@ -120,19 +123,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     !isEqual(draftSegments, buildSegmentsFromAction(action));
 
   const actionDiffers = !isEqual(action, draftAction);
-  if (segmentsDiffer) {
-    console.log("Segments differ!"); // Debug log
-    console.log("Draft Segments:", draftSegments);
-    console.log("Action Segments:", buildSegmentsFromAction(action));
-  } else {
-    console.log("Segments are equal.");
-  }
 
-  if (actionDiffers) {
-    console.log("action differs!", action, draftAction);
-  } else {
-    console.log("Action is same")
-  }
 
   return (
     <Card sx={{ mb: 2 }}>
@@ -177,7 +168,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
 
           <Box>
             {
-              (!isRangeEditor) && <PointScatterPlot
+              (isGridEditor) && <PointScatterPlot
                 xData={draftAction.inputPoints}
                 yData={draftAction.outputPoints}
                 input={draftAction.input}
@@ -191,6 +182,11 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
             {
               (isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={draftSegments} setSegments={updateActionFromSegments} />
             }
+            {
+              isTableEditor && <MappingPointTable
+                points={toMappingPointList(draftAction)}
+                setPoints={points => { const { inputPoints, outputPoints } = toNumericValueList(points); setDraftAction(prev => ({ ...prev, inputPoints: inputPoints, outputPoints: outputPoints })) }} />
+            }
 
           </Box>
         </Stack>
@@ -199,3 +195,14 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   )
 }
 
+const toMappingPointList = (action: MMAction): MappingPoint[] => {
+  // action.inputPoints and outputPoints is a complete set of mappings, bijektiv
+  return action.inputPoints.map((inputX, i) => ({ x: inputX, y: action.outputPoints[i], input: action.input, output: action.output }))
+}
+
+const toNumericValueList = (mappingpoints: MappingPoint[]): { inputPoints: number[], outputPoints: number[] } => {
+  return ({
+    inputPoints: mappingpoints.map(p => p.x),
+    outputPoints: mappingpoints.map(p => p.y)
+  })
+}

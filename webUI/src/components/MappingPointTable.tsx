@@ -37,7 +37,7 @@ const getDisplayNameOutput = (point: MappingPoint) => {
 export const MappingPointTable = ({ points, setPoints }: Props) => {
     const theme = useTheme();
     const [search, setSearch] = useState("");
-    const [hideIgnoreValues, setHideIgnoreValues] = useState(false);
+    const [hideIgnoreValues, setHideIgnoreValues] = useState(true);
     const [editingCell, setEditingCell] = useState<{ id: string, field: 'x' | 'y', anchor: HTMLElement | null } | null>(null);
 
     const [sortKey, setSortKey] = useState<'input' | 'output'>(points[0].input.discrete ? 'output' : 'input'); // discrete inputs care about output first, continuous inputs care about input first

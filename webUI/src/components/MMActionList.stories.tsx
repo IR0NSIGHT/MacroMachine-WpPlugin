@@ -9,9 +9,9 @@ const sampleActions: MMAction[] = [
     output: terrainIO,
     actionType: "sets",
     inputPoints: [0],
-    outputPoints: [9],
-    name: 'apply snow',
-    description: 'Apply snow to all terrain',
+    outputPoints: [2],
+    name: 'apply grass',
+    description: 'Apply grass-terrain everywhere',
     uid: 'f5e02009-97ae-4955-a521-92639642c71b',
   },
   {
