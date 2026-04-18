@@ -6,6 +6,14 @@ import { theme } from "../src/theme";
 import '@fontsource/ubuntu';
 
 const preview: Preview = {
+  async beforeAll() {
+    if (typeof window !== "undefined") {
+      const { worker } = await import("../src/mocks/browser");
+      await worker.start({
+        onUnhandledRequest: "bypass",
+      });
+    }
+  },
   decorators: [
     (Story) => (
       <StyledEngineProvider injectFirst>

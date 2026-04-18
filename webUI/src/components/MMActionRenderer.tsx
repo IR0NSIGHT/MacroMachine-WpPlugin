@@ -2,17 +2,14 @@ import { useEffect, useState } from 'react'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
-import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
-import Chip from '@mui/material/Chip'
 import TextField from '@mui/material/TextField'
 import IconButton from '@mui/material/IconButton'
 import EditIcon from '@mui/icons-material/Edit'
 import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
 import { ACTION_TYPES, isValidAction, MMAction } from '../types/MMAction'
-import InputOutputDisplay from './InputOutput/InputProvider'
 import PointScatterPlot from './PointScatterPlot'
 import { MappingPoint } from '@/types/MappingPoint'
 import RangeEditor from './segmentEditor/RangeEditor'
@@ -171,7 +168,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
               <Select
                 value={draftAction.actionType}
                 onChange={e => setDraftAction({ ...draftAction, actionType: allActionTypes.find(type => type == e.target.value) ?? draftAction.actionType })}>
-                {allActionTypes.map(t => (<MenuItem value={t}>
+                {allActionTypes.map(t => (<MenuItem key={t} value={t}>
                   <em>{t}</em>
                 </MenuItem>))}
               </Select>

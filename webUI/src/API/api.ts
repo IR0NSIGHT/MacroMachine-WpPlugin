@@ -2,7 +2,7 @@ import { Macro, UUID } from "@/types/MMacro";
 import { MMAction } from "@/types/MMAction";
 import { useState, useEffect } from "react";
 
-const API_BASE = "http://localhost:8080";
+export const API_BASE = "http://localhost:8080";
 
 async function safeJsonFetch<T>(url: string): Promise<T> {
   const res = await fetch(url);

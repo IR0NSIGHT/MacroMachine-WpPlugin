@@ -196,7 +196,7 @@ export const MappingPointTable = ({ points, setPoints }: Props) => {
             </TableContainer>
 
             <ButtonGroup variant="contained" sx={{ mt: 2 }}>
-                <Button onClick={(e) => { setPoints(points.map(p => ({ ...p, y: p.output.ignoreValue }))) }}>Reset</Button>
+                <Button onClick={(_) => { setPoints(points.map(p => ({ ...p, y: p.output.ignoreValue }))) }}>Reset</Button>
             </ButtonGroup>
         </div>
     );

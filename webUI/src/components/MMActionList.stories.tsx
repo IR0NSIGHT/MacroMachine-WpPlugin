@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import MMActionList from './MMActionList'
 import { MMAction } from '../types/MMAction'
-import { alwaysIO, annotationsIO, slopeIO, terrainIO, waterdepthIO } from '../mock/dummyIOs'
 import { grassEverywhere as grassEverywhereAction, raiseYonCyan as raiseYonCyanAction, slopeToForest as slopeToForestAction } from '@/mock/dummyActions'
 
 const sampleActions: MMAction[] = [
