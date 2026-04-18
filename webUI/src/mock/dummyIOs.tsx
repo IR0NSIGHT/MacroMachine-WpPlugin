@@ -54,8 +54,8 @@ export const filterIO: InputOutput = {
     max: 30,
     ignoreValue: -1,
     values: [
-        { numericValue: 0, displayName: 'Pass' },
-        { numericValue: 1, displayName: 'Block' },
+        { numericValue: 1, displayName: 'Pass' },
+        { numericValue: 0, displayName: 'Block' },
         { numericValue: -1, displayName: '[Ignore]' },
     ],
     discrete: true,

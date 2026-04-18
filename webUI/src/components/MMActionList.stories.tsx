@@ -2,42 +2,16 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import MMActionList from './MMActionList'
 import { MMAction } from '../types/MMAction'
 import { alwaysIO, annotationsIO, slopeIO, terrainIO, waterdepthIO } from '../mock/dummyIOs'
+import { grassEverywhere as grassEverywhereAction, raiseYonCyan as raiseYonCyanAction, slopeToForest as slopeToForestAction } from '@/mock/dummyActions'
 
 const sampleActions: MMAction[] = [
-  {
-    input: alwaysIO,
-    output: terrainIO,
-    actionType: "sets",
-    inputPoints: [0],
-    outputPoints: [2],
-    name: 'apply grass',
-    description: 'Apply grass-terrain everywhere',
-    uid: 'f5e02009-97ae-4955-a521-92639642c71b',
-  },
-  {
-    input: slopeIO,
-    output: terrainIO,
-    actionType: 'sets',
-    inputPoints: slopeIO.values.filter(v => v.numericValue !== slopeIO.ignoreValue).map(v => v.numericValue),
-    outputPoints: slopeIO.values.map(v => v.numericValue < 45 ? 21 : 3 ),
-    name: 'Paint by slope',
-    description: 'Paint terrain based on slope angle',
-    uid: '4d006c6d-93f6-4326-81fe-60446dad53eb',
-  },
-  {
-    input: waterdepthIO,
-    output: annotationsIO,
-    actionType: 'increments',
-    inputPoints: waterdepthIO.values.filter(v => v.numericValue !== waterdepthIO.ignoreValue).map(v => v.numericValue), // [0, 13] -> [8, 0]
-    outputPoints: waterdepthIO.values.filter(v => v.numericValue !== waterdepthIO.ignoreValue).map(v => v.numericValue  < 13 ? 8 : 0),
-    name: 'Set: prefer shallow water',
-    description: 'Increment heatmap based on water depth',
-    uid: '8865142f-ab9d-4d27-9afd-197fa5cb214e',
-  },
+  grassEverywhereAction,
+  slopeToForestAction,
+  raiseYonCyanAction,
 ]
 
 const meta: Meta<typeof MMActionList> = {
- 
+
   component: MMActionList,
 }
 
