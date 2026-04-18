@@ -7,10 +7,10 @@ export const heightIO: InputOutput = {
     ignoreValue: -999,
     values: Array.from({ length: 385 }, (_, i) => ({
         numericValue: -64 + i,
-        displayName: `y=${-64 + i}`,
+        displayName: `${-64 + i} y`,
     })).concat([{ numericValue: -999, displayName: '[Ignore]' }]),
     discrete: false,
-    displayName: 'Terrain Height (Y)',
+    displayName: 'Height',
     description: '',
     uid: '',
     parameters: [
@@ -45,6 +45,22 @@ export const waterdepthIO: InputOutput = {
     discrete: false,
     displayName: 'Water Depth',
     description: '',
+    uid: '',
+    parameters: []
+}
+
+export const filterIO: InputOutput = {
+    min: 0,
+    max: 30,
+    ignoreValue: -1,
+    values: [
+        { numericValue: 0, displayName: 'Pass' },
+        { numericValue: 1, displayName: 'Block' },
+        { numericValue: -1, displayName: '[Ignore]' },
+    ],
+    discrete: true,
+    displayName: 'Filter',
+    description: 'Only blocks that pass the filter will be inspected by later actions.',
     uid: '',
     parameters: []
 }

@@ -1,10 +1,23 @@
 import { MappingPoint } from "@/types/MappingPoint";
-import { ButtonGroup, Button, useTheme, TextField, Theme } from "@mui/material";
-import { DataGrid, GridColDef, GridRenderEditCellParams, GridRowModel, GridToolbar } from '@mui/x-data-grid';
-import { useState } from "react";
+import {
+    ButtonGroup,
+    Button,
+    useTheme,
+    TextField,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    Checkbox,
+    FormControlLabel,
+    TableSortLabel
+} from "@mui/material";
+import { useMemo, useState } from "react";
 import { InputValueMenu } from "./SingleValues/InputValueEditor";
 import { NamedValue } from "@/types/InputOutput";
-
 
 type Props = {
     points: MappingPoint[],
@@ -21,139 +34,170 @@ const getDisplayNameOutput = (point: MappingPoint) => {
     return value ? value.displayName : point.y + "?";
 };
 
-const cellSystem = (theme: Theme) => {
-    const renderCellInput = (params: any) => {
-        return (
-            <text
-                fill={theme.palette.primary.contrastText}
-                pointerEvents="none"
-            >
-                {params.row.inputDisplay}
-            </text>
-        )
-    }
-
-    const renderCellOutput = (params: any) => {
-        return (
-            <text
-                fill={theme.palette.primary.contrastText}
-                pointerEvents="none"
-            >
-                {params.row.outputDisplay}
-            </text>
-        )
-    }
-
-
-    const inputCellEditor = (params: GridRenderEditCellParams) => {
-        const onSelect = (val: NamedValue) => {
-            params.api.setEditCellValue({
-                id: params.id,
-                field: params.field,
-                value: val.numericValue,
-            });
-
-            // close edit mode after selection
-            params.api.stopCellEditMode({
-                id: params.id,
-                field: params.field,
-            });
-        };
-
-        const isInput = params.field == "x";
-        const inputOutput = isInput ? params.row.input : params.row.output;
-        return (
-            <InputValueMenu
-                input={inputOutput}
-                sortedValues={inputOutput.values}
-                onSelect={onSelect}
-                anchorEl={params.api.getCellElement(params.id, params.field)}
-                open={true}
-                onClose={() =>
-                    params.api.stopCellEditMode({
-                        id: params.id,
-                        field: params.field,
-                    })
-                }
-            />
-        );
-    };
-    return {
-        renderCellInput: renderCellInput,
-        renderCellOutput: renderCellOutput,
-        inputCellEditor: inputCellEditor
-    }
-}
-
-const paginationModel = { page: 0, pageSize: 5 };
-
-
-
 export const MappingPointTable = ({ points, setPoints }: Props) => {
     const theme = useTheme();
-    const { renderCellInput, renderCellOutput, inputCellEditor } = cellSystem(theme);
-    const columns: GridColDef[] = [
-        { field: 'x', headerName: 'input', width: 200, editable: true, renderCell: renderCellInput, renderEditCell: inputCellEditor, },
-        { field: 'y', headerName: 'output', width: 200, editable: true, renderCell: renderCellOutput, renderEditCell: inputCellEditor },
-    ];
-
-    const rows = points.map(p => ({ ...p, id: "row_" + p.x, inputDisplay: getDisplayNameInput(p), outputDisplay: getDisplayNameOutput(p) }));
     const [search, setSearch] = useState("");
+    const [hideIgnoreValues, setHideIgnoreValues] = useState(false);
+    const [editingCell, setEditingCell] = useState<{ id: string, field: 'x' | 'y', anchor: HTMLElement | null } | null>(null);
+
+    const [sortKey, setSortKey] = useState<'input' | 'output'>(points[0].input.discrete ? 'output' : 'input'); // discrete inputs care about output first, continuous inputs care about input first
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(points[0].input.discrete ? 'desc' : 'asc'); //ignore values are the first in asc
+
+    const handleSort = (key: 'input' | 'output') => {
+        if (sortKey === key) {
+            setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortKey(key);
+            setSortDirection('asc');
+        }
+    };
+
+    const rows = useMemo(() => {
+        const mapped = points.map(p => ({
+            ...p,
+            id: "row_" + p.x,
+            inputDisplay: getDisplayNameInput(p),
+            outputDisplay: getDisplayNameOutput(p)
+        }));
+
+        const sorted = mapped.sort((a, b) => {
+            const aPrimary = sortKey === 'input' ? a.inputDisplay : a.outputDisplay;
+            const bPrimary = sortKey === 'input' ? b.inputDisplay : b.outputDisplay;
+
+            const primaryCompare = aPrimary.localeCompare(bPrimary);
+
+            if (primaryCompare !== 0) {
+                return sortDirection === 'asc' ? primaryCompare : -primaryCompare;
+            }
+
+            // tie-breaker (secondary sort)
+            const aSecondary = sortKey === 'input' ? a.outputDisplay : a.inputDisplay;
+            const bSecondary = sortKey === 'input' ? b.outputDisplay : b.inputDisplay;
+
+            const secondaryCompare = aSecondary.localeCompare(bSecondary);
+
+            return sortDirection === 'asc' ? secondaryCompare : -secondaryCompare;
+        });
+
+        return sorted;
+    }, [points, sortKey, sortDirection]);
 
     const updatePoints = (updateValue: MappingPoint) => {
-        const updated = points.map(point => point.x == updateValue.x ? { ...updateValue, id: "row_" + updateValue.x } : { ...point });
+        const updated = points.map(point =>
+            point.x === updateValue.x ? { ...updateValue } : { ...point }
+        );
         setPoints(updated);
-    }
+    };
 
-    console.log("update table with rows:", rows);
-    const filteredRows = rows.filter((row) =>
-        Object.values(row).some((value) =>
-            String(value).toLowerCase().includes(search.toLowerCase())
+    const filteredRows = rows
+        .filter((row) =>
+            Object.values(row).some((value) =>
+                String(value).toLowerCase().includes(search.toLowerCase())
+            )
         )
-    );
+        .filter((row) =>
+            hideIgnoreValues ? row.y !== row.output.ignoreValue : true
+        );
+
+    const handleSelect = (row: any, field: 'x' | 'y', val: NamedValue) => {
+        const updatedRow = {
+            ...row,
+            [field]: val.numericValue
+        };
+        updatePoints(updatedRow);
+        setEditingCell(null);
+    };
+
     const usePaginationAndSearch = points.length > 5;
 
-    return (<div>
-        {usePaginationAndSearch && <TextField
-            label="Search"
-            size="small"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-        />}
-        <DataGrid
-            rows={filteredRows}
-            getRowId={(row) => row.id}
-            columns={columns}
-            slots={{ toolbar: GridToolbar }}
-            initialState={
-                usePaginationAndSearch
-                    ? {
-                        pagination: { paginationModel },
-                        sorting: {
-                            sortModel: [{ field: 'x', sort: 'asc' }, { field: 'y', sort: 'asc' }],
-                        },
-                    }
-                    : {
-                        sorting: {
-                            sortModel: [{ field: 'x', sort: 'asc' }, { field: 'y', sort: 'asc' }],
-                        },
-                    }}
-            pageSizeOptions={[5, 10]}
-            checkboxSelection
-            sx={{ border: 0 }}
-            editMode="cell"
-            processRowUpdate={(newRow: GridRowModel) => {
-                updatePoints(newRow as MappingPoint);
-                return newRow;
-            }}
-            onProcessRowUpdateError={(err) => {
-                console.error(err);
-            }}
-        />
-        <ButtonGroup variant="contained" aria-label="Basic button group">
-            <Button>Clear</Button>
-            <Button>Add</Button>
-            <Button>Three</Button>
-        </ButtonGroup>
-    </div>)
-}
+    return (
+        <div>
+            {usePaginationAndSearch && (
+                <TextField
+                    label="Search"
+                    size="small"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    sx={{ mb: 2 }}
+                />
+            )}
+
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked={hideIgnoreValues}
+                        onChange={(e) => setHideIgnoreValues(e.target.checked)}
+                    />
+                }
+                label="Hide ignore values"
+            />
+
+            <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>
+                                <TableSortLabel
+                                    active={sortKey === 'input'}
+                                    direction={sortKey === 'input' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('input')}
+                                >
+                                    Input
+                                </TableSortLabel>
+                            </TableCell>
+
+                            <TableCell>
+                                <TableSortLabel
+                                    active={sortKey === 'output'}
+                                    direction={sortKey === 'output' ? sortDirection : 'asc'}
+                                    onClick={() => handleSort('output')}
+                                >
+                                    Output
+                                </TableSortLabel>
+                            </TableCell>
+                        </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                        {filteredRows.map((row) => (
+                            <TableRow key={row.id}>
+                                <TableCell
+                                    onClick={(e) =>
+                                        setEditingCell({ id: row.id, field: 'x', anchor: e.currentTarget })
+                                    }
+                                    sx={{ cursor: 'pointer', color: theme.palette.primary.contrastText }}
+                                >
+                                    {row.inputDisplay}
+                                </TableCell>
+
+                                <TableCell
+                                    onClick={(e) =>
+                                        setEditingCell({ id: row.id, field: 'y', anchor: e.currentTarget })
+                                    }
+                                    sx={{ cursor: 'pointer', color: theme.palette.primary.contrastText }}
+                                >
+                                    {row.outputDisplay}
+                                </TableCell>
+
+                                {editingCell?.id === row.id && (
+                                    <InputValueMenu
+                                        input={editingCell.field === 'x' ? row.input : row.output}
+                                        sortedValues={(editingCell.field === 'x' ? row.input : row.output).values}
+                                        anchorEl={editingCell.anchor}
+                                        open={true}
+                                        onClose={() => setEditingCell(null)}
+                                        onSelect={(val) => handleSelect(row, editingCell.field, val)}
+                                    />
+                                )}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+
+            <ButtonGroup variant="contained" sx={{ mt: 2 }}>
+                <Button onClick={(e) => { setPoints(points.map(p => ({ ...p, y: p.output.ignoreValue }))) }}>Reset</Button>
+            </ButtonGroup>
+        </div>
+    );
+};
