@@ -138,8 +138,6 @@ export default function RangeValueAxisEditor({
         return selectedSeg;
     };
 
-    const theme = useTheme();
-
     const [menuState, setMenuState] = useState<{
         mouse: { x: number; y: number } | null;
         type: "output" | "input" | null;
