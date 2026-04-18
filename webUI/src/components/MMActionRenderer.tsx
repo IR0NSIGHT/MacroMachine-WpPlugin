@@ -11,7 +11,7 @@ import IconButton from '@mui/material/IconButton'
 import EditIcon from '@mui/icons-material/Edit'
 import SaveIcon from '@mui/icons-material/Save'
 import CancelIcon from '@mui/icons-material/Cancel'
-import { isValidAction, MMAction } from '../types/MMAction'
+import { ACTION_TYPES, isValidAction, MMAction } from '../types/MMAction'
 import InputOutputDisplay from './InputOutput/InputProvider'
 import PointScatterPlot from './PointScatterPlot'
 import { MappingPoint } from '@/types/MappingPoint'
@@ -20,6 +20,7 @@ import { buildSegmentsFromAction, mappingsFromSegments, Segment } from './segmen
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import isEqual from 'lodash/isEqual';
 import { MappingPointTable } from './MappingPointTable'
+import { FormControl, InputLabel, Select, MenuItem } from '@mui/material'
 
 interface MMActionRendererProps {
   action: MMAction
@@ -104,7 +105,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const isTableEditor = draftAction.input.discrete;
   const isRangeEditor = !isTableEditor && draftAction.output.discrete;
   const isGridEditor = !isRangeEditor && !isTableEditor;
-  
+
   const updateActionFromSegments = (segments: Segment[]): void => {
     console.log("update action from segmetns:", segments);
     const { inputs, outputs } = mappingsFromSegments(segments);
@@ -124,6 +125,9 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
 
   const actionDiffers = !isEqual(action, draftAction);
 
+  const allInputs = [draftAction.input];
+  const allOutputs = [draftAction.output];
+  const allActionTypes = ACTION_TYPES;
 
   return (
     <Card sx={{ mb: 2 }}>
@@ -150,19 +154,39 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
       />
       <CardContent>
         <Stack spacing={2}>
-          <Box>
-            <Typography variant="subtitle2">Action Type</Typography>
-            <Chip label={draftAction.actionType} size="small" color="primary" />
-          </Box>
-
           <Stack direction="row" spacing={2}>
-            <Box sx={{ flex: 1 }}>
-              <InputOutputDisplay inputOutput={draftAction.input} type='input' />
-            </Box>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Input</InputLabel>
+              <Select
+                value={draftAction.input.uid}
+                onChange={e => setDraftAction({ ...draftAction, input: allInputs.find(io => io.uid == e.target.value) ?? draftAction.input })}>
+                <MenuItem key={draftAction.input.uid} value={draftAction.input.uid}>
+                  <em>{draftAction.input.displayName}</em>
+                </MenuItem>
+              </Select>
+            </FormControl>
 
-            <Box sx={{ flex: 1 }}>
-              <InputOutputDisplay inputOutput={draftAction.output} type='output' />
-            </Box>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Type</InputLabel>
+              <Select
+                value={draftAction.actionType}
+                onChange={e => setDraftAction({ ...draftAction, actionType: allActionTypes.find(type => type == e.target.value) ?? draftAction.actionType })}>
+                {allActionTypes.map(t => (<MenuItem value={t}>
+                  <em>{t}</em>
+                </MenuItem>))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" fullWidth>
+              <InputLabel>Output</InputLabel>
+              <Select
+                value={draftAction.output.uid}
+                onChange={e => setDraftAction({ ...draftAction, output: allOutputs.find(io => io.uid == e.target.value) ?? draftAction.output })}>
+                <MenuItem value={draftAction.output.uid}>
+                  <em>{draftAction.output.displayName}</em>
+                </MenuItem>
+              </Select>
+            </FormControl>
           </Stack>
           {(segmentsDiffer || actionDiffers) && <EditOutlinedIcon color="warning" />}
 

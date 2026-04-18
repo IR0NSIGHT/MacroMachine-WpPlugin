@@ -12,7 +12,7 @@ export const heightIO: InputOutput = {
     discrete: false,
     displayName: 'Height',
     description: '',
-    uid: '',
+    uid: 'heightIO',
     parameters: [
       { name: "min", type: "number", value: -64 },
       { name: "max", type: "number", value: 320 },
@@ -29,7 +29,7 @@ export const alwaysIO: InputOutput = {
     discrete: true,
     displayName: 'Always',
     description: '',
-    uid: '',
+    uid: 'alwaysIO',
     parameters: []
 };
 
@@ -45,7 +45,7 @@ export const waterdepthIO: InputOutput = {
     discrete: false,
     displayName: 'Water Depth',
     description: '',
-    uid: '',
+    uid: 'waterdepthIO',
     parameters: []
 }
 
@@ -61,7 +61,7 @@ export const filterIO: InputOutput = {
     discrete: true,
     displayName: 'Filter',
     description: 'Only blocks that pass the filter will be inspected by later actions.',
-    uid: '',
+    uid: 'filterIO',
     parameters: []
 }
 
@@ -96,7 +96,7 @@ export const annotationsIO: InputOutput = {
     })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
     discrete: true,
     description: '',
-    uid: '',
+    uid: 'annotationsIO',
     parameters: []
 }
 
@@ -107,7 +107,7 @@ export const biomesIO: InputOutput = {
   ignoreValue: -1,
   discrete: true,
   description: 'Minecraft 1.21 biomes',
-  uid: 'biomes',
+  uid: 'biomesIO',
   parameters: [],
   values: [
     { numericValue: -1, displayName: '[Ignore]' },
@@ -221,7 +221,7 @@ export const slopeIO: InputOutput = {
     })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
     discrete: false,
     description: '',
-    uid: '',
+    uid: 'slopeIO',
     parameters: []
 }
 export const perlinNoiseIO: InputOutput = {
@@ -277,7 +277,7 @@ export const forestIO: InputOutput = {
     })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
     discrete: false,
     description: '',
-    uid: '',
+    uid: 'forestIO',
     parameters: []
 }
 
@@ -325,6 +325,6 @@ export const terrainIO: InputOutput = {
   })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
   discrete: true,
   description: 'Common Minecraft terrain and block types',
-  uid: '',
+  uid: 'terrainIO',
   parameters: [],
 }
