@@ -86,9 +86,9 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const handleResetAction = () => { setDraftAction(action); setDrafSegments(buildSegmentsFromAction(action)); };
   const handleSaveAction = () => { if (onUpdate) onUpdate(draftAction) };
 
-  const actionTitleComp = (<EditableText value={draftAction.name} onChange={(val) => setDraftAction((prev) => ({ ...prev, name: val }))} variant='h5' placeholder='Name' label=""/>);
+  const actionTitleComp = (<EditableText value={draftAction.name} onChange={(val) => setDraftAction((prev) => ({ ...prev, name: val }))} variant='h5' placeholder='Name' label="Name"/>);
   const actionDescriptionComp =
-    <EditableText value={draftAction.description} onChange={(val) => setDraftAction((prev) => ({ ...prev, description: val }))} placeholder='Description' label="" />
+    <EditableText value={draftAction.description} onChange={(val) => setDraftAction((prev) => ({ ...prev, description: val }))} placeholder='Description' label="Description" />
 
   const switchViewModeButton =
     (!isTableEditor && <IconButton size="small" onClick={() => { setShowTable(prev => !prev); }} color="primary">

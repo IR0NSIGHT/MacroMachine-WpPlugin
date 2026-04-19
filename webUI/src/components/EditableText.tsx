@@ -1,10 +1,11 @@
 import TextField from "@mui/material/TextField";
+import Box from "@mui/material/Box";
 import { TypographyVariants, useTheme } from "@mui/material/styles";
 
 type EditableTextProps = {
     value: string;
     onChange: (value: string) => void;
-    variant?: keyof TypographyVariants; // "h5", "body1", etc.
+    variant?: keyof TypographyVariants;
     placeholder?: string;
     label: string;
 };
@@ -16,39 +17,71 @@ export function EditableText({
     placeholder = "Untitled",
     label
 }: EditableTextProps) {
-    const isEmpty = !value;
     const theme = useTheme();
+
     return (
-        <TextField
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            variant="outlined"
-            fullWidth
-            placeholder={placeholder}
-            slotProps={{
-                input: {
-                    disableUnderline: true,
-                    sx: (theme) => ({
-                        ...(theme.typography[variant] as React.CSSProperties),
-                        fontStyle: value ? "normal" : "italic",
-                        color: value
-                            ? theme.palette.text.primary
-                            : theme.palette.text.secondary,
+        <Box
+            sx={{
+                position: "relative",
 
-                        "& input::placeholder": {
-                            color: theme.palette.text.disabled,
-                            opacity: 1,
-                        },
+                "&:hover .label": {
+                    opacity: 1,
+                },
 
-                        // 🧼 remove default visible border
-                        "& fieldset": {
-                            borderColor: "transparent",
-                            transition: "border-color 120ms ease",
-                        },
-
-                    })
+                "&:focus-within .label": {
+                    opacity: 1,
+                    color: theme.palette.primary.main,
                 },
             }}
-        />
+        >
+            {/* label */}
+            <Box
+                className="label"
+                sx={(theme) => ({
+                    position: "absolute",
+                    top: -10,
+                    left: 8,
+                    fontSize: 12,
+                    color: theme.palette.text.secondary,
+                    opacity: 0,
+                    transition: "opacity 120ms ease, color 120ms ease",
+                    pointerEvents: "none",
+                })}
+            >
+                {label}
+            </Box>
+
+            <TextField
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                variant="outlined"
+                fullWidth
+                placeholder={placeholder}
+                slotProps={{
+                    input: {
+                        disableUnderline: true,
+                        sx: (theme) => ({
+                            ...(theme.typography[variant] as React.CSSProperties),
+
+                            fontStyle: value ? "normal" : "italic",
+
+                            color: value
+                                ? theme.palette.text.primary
+                                : theme.palette.text.secondary,
+
+                            "& input::placeholder": {
+                                color: theme.palette.text.disabled,
+                                opacity: 1,
+                            },
+
+                            "& fieldset": {
+                                borderColor: "transparent",
+                                transition: "border-color 120ms ease",
+                            },
+                        }),
+                    },
+                }}
+            />
+        </Box>
     );
 }
