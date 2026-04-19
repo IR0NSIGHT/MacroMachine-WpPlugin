@@ -61,23 +61,41 @@ export const MappingPointTable = ({ points, setPoints }: Props) => {
             outputDisplay: getDisplayNameOutput(p)
         }));
 
-        const sorted = mapped.sort((a, b) => {
-            const aPrimary = sortKey === 'input' ? a.inputDisplay : a.outputDisplay;
-            const bPrimary = sortKey === 'input' ? b.inputDisplay : b.outputDisplay;
+        const getValue = (item, type: "input" | "output") => {
+            const field = type === "input" ? item.input : item.output;
 
-            const primaryCompare = aPrimary.localeCompare(bPrimary);
+            return field.discrete
+                ? (type === "input" ? item.inputDisplay : item.outputDisplay)
+                : (type === "input" ? item.x : item.y);
+        };
+
+        const compareValues = (aVal, bVal) => {
+            if (typeof aVal === "number" && typeof bVal === "number") {
+                return aVal - bVal;
+            }
+            return String(aVal).localeCompare(String(bVal));
+        };
+
+        const sorted = [...mapped].sort((a, b) => {
+            const aPrimary = getValue(a, sortKey);
+            const bPrimary = getValue(b, sortKey);
+
+            const primaryCompare = compareValues(aPrimary, bPrimary);
 
             if (primaryCompare !== 0) {
-                return sortDirection === 'asc' ? primaryCompare : -primaryCompare;
+                return sortDirection === "asc" ? primaryCompare : -primaryCompare;
             }
 
-            // tie-breaker (secondary sort)
-            const aSecondary = sortKey === 'input' ? a.outputDisplay : a.inputDisplay;
-            const bSecondary = sortKey === 'input' ? b.outputDisplay : b.inputDisplay;
+            const secondaryKey = sortKey === "input" ? "output" : "input";
 
-            const secondaryCompare = aSecondary.localeCompare(bSecondary);
+            const aSecondary = getValue(a, secondaryKey);
+            const bSecondary = getValue(b, secondaryKey);
 
-            return sortDirection === 'asc' ? secondaryCompare : -secondaryCompare;
+            const secondaryCompare = compareValues(aSecondary, bSecondary);
+
+            return sortDirection === "asc"
+                ? secondaryCompare
+                : -secondaryCompare;
         });
 
         return sorted;
