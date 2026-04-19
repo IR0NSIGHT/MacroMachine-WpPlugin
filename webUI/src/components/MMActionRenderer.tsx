@@ -86,9 +86,9 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const handleResetAction = () => { setDraftAction(action); setDrafSegments(buildSegmentsFromAction(action)); };
   const handleSaveAction = () => { if (onUpdate) onUpdate(draftAction) };
 
-  const actionTitleComp = (<EditableText value={draftAction.name} onChange={(val) => setDraftAction((prev) => ({ ...prev, name: val }))} variant='h5' placeholder='Name' label="Name"/>);
+  const actionTitleComp = (<EditableText value={draftAction.name} onChange={(val) => setDraftAction((prev) => ({ ...prev, name: val }))} variant='h5' placeholder='Name' label="Name" />);
   const actionDescriptionComp =
-    <EditableText value={draftAction.description} onChange={(val) => setDraftAction((prev) => ({ ...prev, description: val }))} placeholder='Description' label="Description" />
+    <EditableText value={draftAction.description} onChange={(val) => setDraftAction((prev) => ({ ...prev, description: val }))} variant="body1" placeholder='Description' label="Description" />
 
   const switchViewModeButton =
     (!isTableEditor && <IconButton size="small" onClick={() => { setShowTable(prev => !prev); }} color="primary">
@@ -170,12 +170,12 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
 
         <ButtonGroup sx={{ ml: 'auto' }}>
           {(segmentsDiffer || actionDiffers) && (
-            <IconButton size="small" onClick={handleResetAction} color="primary"> 
+            <IconButton size="small" onClick={handleResetAction} color="primary">
               <RestartAltIcon />
             </IconButton>
           )}
-          {(segmentsDiffer || actionDiffers) && ( 
-            <IconButton size="small" onClick={handleSaveAction} color="primary"> 
+          {(segmentsDiffer || actionDiffers) && (
+            <IconButton size="small" onClick={handleSaveAction} color="primary">
               <SaveIcon />
             </IconButton>
           )}
@@ -189,15 +189,14 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
           {outputControl}
         </Stack>
 
-        {showHideValuesButton}
+        <Stack direction="row" alignItems="center" sx={{ py: 1 }}>
+          {showValues && switchViewModeButton}
 
-        {showValues && (
-          <>
-            <Divider />
-            {switchViewModeButton}
-            <Box sx={{ mt: 2 }}>{dataViewComponent}</Box>
-          </>
-        )}
+          <Box sx={{ ml: "auto" }}>
+            {showHideValuesButton}
+          </Box>
+        </Stack>
+        {showValues && dataViewComponent}
       </Stack>
     </Paper>
   )
