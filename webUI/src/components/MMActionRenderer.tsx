@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import CardHeader from '@mui/material/CardHeader'
@@ -14,10 +14,13 @@ import RangeEditor from './segmentEditor/RangeEditor'
 import { buildSegmentsFromAction, mappingsFromSegments, Segment } from './segmentEditor/Segment'
 import isEqual from 'lodash/isEqual';
 import { MappingPointTable } from './MappingPointTable'
-import { FormControl, InputLabel, Select, MenuItem, useTheme, Divider } from '@mui/material'
+import { FormControl, InputLabel, Select, MenuItem, Divider } from '@mui/material'
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import TimelineIcon from '@mui/icons-material/Timeline';
+import TableChartIcon from '@mui/icons-material/TableChart';
+import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 
 interface MMActionRendererProps {
   action: MMAction
@@ -32,33 +35,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const [draftAction, setDraftAction] = useState<MMAction>(action)
   const [draftSegments, setDrafSegments] = useState<Segment[]>(buildSegmentsFromAction(action))
   const [showValues, setShowValues] = useState<boolean>(false);
-
-
-  const actionTitleComp = (
-    <TextField
-      label="Name"
-      size="small"
-      value={draftAction.name}
-      onChange={(e) =>
-        setDraftAction((prev) => ({ ...prev, name: e.target.value }))
-      }
-      fullWidth
-    />
-
-  )
-
-  const actionDescriptionComp =
-
-    <TextField
-      label="Description"
-      size="small"
-      value={draftAction.description}
-      onChange={(e) => setDraftAction((prev) => ({ ...prev, description: e.target.value }))}
-      fullWidth
-      multiline
-      rows={2}
-    />
-
+  const [showTable, setShowTable] = useState<boolean>(false);
 
   const updatePoint = (oldP: MappingPoint, newP: MappingPoint): void => {
     // implement mutation to action, no submit yet
@@ -110,8 +87,69 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const handleResetAction = () => { setDraftAction(action); setDrafSegments(buildSegmentsFromAction(action)); };
   const handleSaveAction = () => { if (onUpdate) onUpdate(draftAction) };
 
+  const actionTitleComp = (
+    <TextField
+      label="Name"
+      size="small"
+      value={draftAction.name}
+      onChange={(e) =>
+        setDraftAction((prev) => ({ ...prev, name: e.target.value }))
+      }
+    />
+
+  )
+
+  const actionDescriptionComp =
+    <TextField
+      label="Description"
+      size="small"
+      value={draftAction.description}
+      onChange={(e) => setDraftAction((prev) => ({ ...prev, description: e.target.value }))}
+      multiline
+      rows={2}
+    />
+
+  const switchViewModeButton =
+    (!isTableEditor && <IconButton size="small" onClick={() => { setShowTable(prev => !prev); }} color="primary">
+      {!showTable && <TableChartIcon /> /** switch to table view */}
+      {showTable && isGridEditor && <TimelineIcon /> /** switch to grid view */}
+      {showTable && isRangeEditor && <ViewColumnIcon /> /** switch to grid view */}
+    </IconButton>)
+
+
+  const dataViewComponent = (
+    <>
+      {
+        (!showTable && isGridEditor) && <PointScatterPlot
+          xData={draftAction.inputPoints}
+          yData={draftAction.outputPoints}
+          input={draftAction.input}
+          output={draftAction.output}
+          title={draftAction.name}
+          interpolation={!draftAction.input.discrete && !draftAction.output.discrete}
+          type={draftAction.actionType}
+          changePoint={updatePoint}
+          addPoint={addPoint} />
+      }{
+        (!showTable && isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={draftSegments} setSegments={updateActionFromSegments} />
+      }
+      {
+        (showTable || isTableEditor) && <MappingPointTable
+          points={toMappingPointList(draftAction)}
+          setPoints={points => { const { inputPoints, outputPoints } = toNumericValueList(points); setDraftAction(prev => ({ ...prev, inputPoints: inputPoints, outputPoints: outputPoints })) }} />
+      }
+    </>
+  )
+
+  const showHideValuesButton = (
+    <IconButton size="small" onClick={() => { setShowValues(prev => !prev); }} color="primary">
+      {!showValues && <ExpandMoreIcon />}
+      {showValues && <ExpandLessIcon />}
+    </IconButton>
+  )
+
   return (
-    <Card sx={{ mb: 2 }}>
+    <Card sx={{ mb: 2 }} key={ draftAction.uid } variant="outlined">
       <CardHeader
         title={actionTitleComp}
         subheader={actionDescriptionComp}
@@ -160,36 +198,15 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
               </Select>
             </FormControl>
           </Stack>
-          {<IconButton size="small" onClick={ () => {setShowValues(prev => !prev);} } color="primary">
-            {!showValues && <ExpandMoreIcon />}
-            {showValues && <ExpandLessIcon />}
-            </IconButton>}
+          {showHideValuesButton}
           {showValues && <div>
             <Divider />
+            {switchViewModeButton}
             <Box>
-              {
-                (isGridEditor) && <PointScatterPlot
-                  xData={draftAction.inputPoints}
-                  yData={draftAction.outputPoints}
-                  input={draftAction.input}
-                  output={draftAction.output}
-                  title={draftAction.name}
-                  interpolation={!draftAction.input.discrete && !draftAction.output.discrete}
-                  type={draftAction.actionType}
-                  changePoint={updatePoint}
-                  addPoint={addPoint} />
-              }
-              {
-                (isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={draftSegments} setSegments={updateActionFromSegments} />
-              }
-              {
-                isTableEditor && <MappingPointTable
-                  points={toMappingPointList(draftAction)}
-                  setPoints={points => { const { inputPoints, outputPoints } = toNumericValueList(points); setDraftAction(prev => ({ ...prev, inputPoints: inputPoints, outputPoints: outputPoints })) }} />
-              }
+              {dataViewComponent}
             </Box>
           </div>}
-  
+
         </Stack>
       </CardContent>
     </Card>
