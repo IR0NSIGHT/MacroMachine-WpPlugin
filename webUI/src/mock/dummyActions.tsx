@@ -14,7 +14,7 @@ export const raiseYonCyan: MMAction = {
   outputPoints: inputValues(annotationsIO).map(v => v.numericValue == 9 /**cyan*/ ? 3 : heightIO.ignoreValue),
   name: 'raise on cyan',
   description: '',
-  uid: 'f5e02009-97ae-4955-a521-92639642c71b',
+  uid: 'f5e02009-97ae-1213-a521-92123132c71b',
 }
 
 export const slopeToForest: MMAction = {
@@ -25,7 +25,7 @@ export const slopeToForest: MMAction = {
   outputPoints: inputValues(slopeIO).map(v => v.numericValue < 60 ? v.numericValue < 30 ? 15 : 8 : 2),
   name: 'no forest on cliffs',
   description: '',
-  uid: 'f5e02009-97ae-4955-a521-92639642c71b',
+  uid: 'f5e02009-97ae-1011-a521-921232c71b',
 }
 
 export const grassEverywhere: MMAction = {
@@ -36,7 +36,7 @@ export const grassEverywhere: MMAction = {
   outputPoints: [2],
   name: 'apply grass',
   description: 'Apply grass-terrain everywhere',
-  uid: 'f5e02009-97ae-4955-a521-92639642c71b',
+  uid: 'f5e02009-97ae-789-a521-125152c71b',
 }
 
 export const onlyOnLand: MMAction = {
@@ -47,7 +47,7 @@ export const onlyOnLand: MMAction = {
   outputPoints: inputValues(waterdepthIO).map(p => p.numericValue != 0 ? 0  /*block */: -1 /** ignore */ ),
   name: 'only on land',
   description: 'filter',
-  uid: 'f5e02009-97ae-4955-a521-92639642c71b',
+  uid: 'f5e02009-97ae-123-a521-92639642c71b',
 }
 
 export const onlyOnCyan: MMAction = {
@@ -58,5 +58,5 @@ export const onlyOnCyan: MMAction = {
   outputPoints: inputValues(annotationsIO).map(p => p.numericValue != 9 /*cyan */ ? 0  /*block */: -1 /** ignore */ ),
   name: 'only on cyan',
   description: 'filter',
-  uid: 'f5e02009-97ae-4955-a521-92639642c71b',
+  uid: 'f5e02009-97ae-456-a521-91231232c71b',
 }
