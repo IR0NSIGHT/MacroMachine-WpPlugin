@@ -14,13 +14,14 @@ import RangeEditor from './segmentEditor/RangeEditor'
 import { buildSegmentsFromAction, mappingsFromSegments, Segment } from './segmentEditor/Segment'
 import isEqual from 'lodash/isEqual';
 import { MappingPointTable } from './MappingPointTable'
-import { FormControl, InputLabel, Select, MenuItem, Divider } from '@mui/material'
+import { FormControl, InputLabel, Select, MenuItem, Divider, Paper, ButtonGroup } from '@mui/material'
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import TimelineIcon from '@mui/icons-material/Timeline';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
+import { EditableText } from './EditableText'
 
 interface MMActionRendererProps {
   action: MMAction
@@ -72,8 +73,6 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     setDrafSegments(segments); // we need to keep segments separately, because transforming to action and back might merge adjacent segmetns with same output value
   };
 
-
-
   const segmentsDiffer =
     isRangeEditor &&
     !isEqual(draftSegments, buildSegmentsFromAction(action));
@@ -87,27 +86,9 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const handleResetAction = () => { setDraftAction(action); setDrafSegments(buildSegmentsFromAction(action)); };
   const handleSaveAction = () => { if (onUpdate) onUpdate(draftAction) };
 
-  const actionTitleComp = (
-    <TextField
-      label="Name"
-      size="small"
-      value={draftAction.name}
-      onChange={(e) =>
-        setDraftAction((prev) => ({ ...prev, name: e.target.value }))
-      }
-    />
-
-  )
-
+  const actionTitleComp = (<EditableText value={draftAction.name} onChange={(val) => setDraftAction((prev) => ({ ...prev, name: val }))} variant='h5' placeholder='Name' label=""/>);
   const actionDescriptionComp =
-    <TextField
-      label="Description"
-      size="small"
-      value={draftAction.description}
-      onChange={(e) => setDraftAction((prev) => ({ ...prev, description: e.target.value }))}
-      multiline
-      rows={2}
-    />
+    <EditableText value={draftAction.description} onChange={(val) => setDraftAction((prev) => ({ ...prev, description: val }))} placeholder='Description' label="" />
 
   const switchViewModeButton =
     (!isTableEditor && <IconButton size="small" onClick={() => { setShowTable(prev => !prev); }} color="primary">
@@ -148,68 +129,77 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     </IconButton>
   )
 
+  const inputControl = (<FormControl size="small" fullWidth>
+    <InputLabel>Input</InputLabel>
+    <Select
+      value={draftAction.input.uid}
+      onChange={e => setDraftAction({ ...draftAction, input: allInputs.find(io => io.uid == e.target.value) ?? draftAction.input })}>
+      <MenuItem key={draftAction.input.uid} value={draftAction.input.uid}>
+        <em>{draftAction.input.displayName}</em>
+      </MenuItem>
+    </Select>
+  </FormControl>);
+
+  const actionTypeControl = (<FormControl size="small" fullWidth>
+    <InputLabel>Type</InputLabel>
+    <Select
+      value={draftAction.actionType}
+      onChange={e => setDraftAction({ ...draftAction, actionType: allActionTypes.find(type => type == e.target.value) ?? draftAction.actionType })}>
+      {allActionTypes.map(t => (<MenuItem key={t} value={t}>
+        <em>{t}</em>
+      </MenuItem>))}
+    </Select>
+  </FormControl>)
+
+  const outputControl = (<FormControl size="small" fullWidth>
+    <InputLabel>Output</InputLabel>
+    <Select
+      value={draftAction.output.uid}
+      onChange={e => setDraftAction({ ...draftAction, output: allOutputs.find(io => io.uid == e.target.value) ?? draftAction.output })}>
+      <MenuItem value={draftAction.output.uid}>
+        <em>{draftAction.output.displayName}</em>
+      </MenuItem>
+    </Select>
+  </FormControl>)
+
   return (
-    <Card sx={{ mb: 2 }} key={ draftAction.uid } variant="outlined">
-      <CardHeader
-        title={actionTitleComp}
-        subheader={actionDescriptionComp}
-        action={
-          <Stack direction="row" spacing={0.5}>
-            {(segmentsDiffer || actionDiffers) && <IconButton size="small" onClick={handleResetAction} color="primary"><RestartAltIcon /></IconButton>}
-            {(segmentsDiffer || actionDiffers) && <IconButton size="small" onClick={handleSaveAction} color="primary"><SaveIcon /></IconButton>}
-          </Stack>
-        }
-        sx={{ pb: 1 }}
-      />
+    <Paper sx={{ mb: 2, p: 2 }} variant="outlined">
+      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+        {actionTitleComp}
+        {actionDescriptionComp}
 
-      <CardContent>
-        <Stack spacing={2}>
-          <Stack direction="row" spacing={2}>
-            <FormControl size="small" fullWidth>
-              <InputLabel>Input</InputLabel>
-              <Select
-                value={draftAction.input.uid}
-                onChange={e => setDraftAction({ ...draftAction, input: allInputs.find(io => io.uid == e.target.value) ?? draftAction.input })}>
-                <MenuItem key={draftAction.input.uid} value={draftAction.input.uid}>
-                  <em>{draftAction.input.displayName}</em>
-                </MenuItem>
-              </Select>
-            </FormControl>
+        <ButtonGroup sx={{ ml: 'auto' }}>
+          {(segmentsDiffer || actionDiffers) && (
+            <IconButton size="small" onClick={handleResetAction} color="primary"> 
+              <RestartAltIcon />
+            </IconButton>
+          )}
+          {(segmentsDiffer || actionDiffers) && ( 
+            <IconButton size="small" onClick={handleSaveAction} color="primary"> 
+              <SaveIcon />
+            </IconButton>
+          )}
+        </ButtonGroup>
+      </Stack>
 
-            <FormControl size="small" fullWidth>
-              <InputLabel>Type</InputLabel>
-              <Select
-                value={draftAction.actionType}
-                onChange={e => setDraftAction({ ...draftAction, actionType: allActionTypes.find(type => type == e.target.value) ?? draftAction.actionType })}>
-                {allActionTypes.map(t => (<MenuItem key={t} value={t}>
-                  <em>{t}</em>
-                </MenuItem>))}
-              </Select>
-            </FormControl>
+      <Stack spacing={2}>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ py: 1 }}>
+          {inputControl}
+          {actionTypeControl}
+          {outputControl}
+        </Stack>
 
-            <FormControl size="small" fullWidth>
-              <InputLabel>Output</InputLabel>
-              <Select
-                value={draftAction.output.uid}
-                onChange={e => setDraftAction({ ...draftAction, output: allOutputs.find(io => io.uid == e.target.value) ?? draftAction.output })}>
-                <MenuItem value={draftAction.output.uid}>
-                  <em>{draftAction.output.displayName}</em>
-                </MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-          {showHideValuesButton}
-          {showValues && <div>
+        {showHideValuesButton}
+
+        {showValues && (
+          <>
             <Divider />
             {switchViewModeButton}
-            <Box>
-              {dataViewComponent}
-            </Box>
-          </div>}
-
-        </Stack>
-      </CardContent>
-    </Card>
+            <Box sx={{ mt: 2 }}>{dataViewComponent}</Box>
+          </>
+        )}
+      </Stack>
+    </Paper>
   )
 }
 

@@ -17,8 +17,8 @@ export const theme = createTheme({
     divider: 'rgba(26,26,26,0.13)',
     text: {
       primary: '#e2e2e2',
-      secondary: 'rgba(255,255,255,0.69)',
-      disabled: 'rgba(255,255,255,0.5)',
+      secondary: 'rgba(255,255,255,0.6)',
+      disabled: 'rgba(255,255,255,0.4)',
       //hint: 'rgba(255,255,255,0.5)',
     },
     background: {
