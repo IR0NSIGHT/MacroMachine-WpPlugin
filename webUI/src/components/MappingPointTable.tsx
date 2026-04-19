@@ -13,7 +13,8 @@ import {
     Paper,
     Checkbox,
     FormControlLabel,
-    TableSortLabel
+    TableSortLabel,
+    Stack
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import { InputValueMenu } from "./SingleValues/InputValueEditor";
@@ -111,28 +112,31 @@ export const MappingPointTable = ({ points, setPoints }: Props) => {
     const usePaginationAndSearch = points.length > 5;
 
     return (
-        <div>
-            {usePaginationAndSearch && (
-                <TextField
-                    label="Search"
-                    size="small"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    sx={{ mb: 2 }}
-                />
-            )}
-
-            <FormControlLabel
-                control={
-                    <Checkbox
-                        checked={hideIgnoreValues}
-                        onChange={(e) => setHideIgnoreValues(e.target.checked)}
+        <Paper variant="outlined" sx={{ p: 2 }}>
+            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+                {usePaginationAndSearch && (
+                    <TextField
+                        label="Search"
+                        size="small"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        sx={{ mb: 2 }}
                     />
-                }
-                label="Hide ignore values"
-            />
+                )}
 
-            <TableContainer component={Paper}>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={hideIgnoreValues}
+                            onChange={(e) => setHideIgnoreValues(e.target.checked)}
+                        />
+                    }
+                    label="Hide ignore values"
+                />
+            </Stack>
+
+
+            <TableContainer>
                 <Table>
                     <TableHead>
                         <TableRow>
@@ -194,10 +198,6 @@ export const MappingPointTable = ({ points, setPoints }: Props) => {
                     </TableBody>
                 </Table>
             </TableContainer>
-
-            <ButtonGroup variant="contained" sx={{ mt: 2 }}>
-                <Button onClick={(_) => { setPoints(points.map(p => ({ ...p, y: p.output.ignoreValue }))) }}>Reset</Button>
-            </ButtonGroup>
-        </div>
+        </Paper>
     );
 };
