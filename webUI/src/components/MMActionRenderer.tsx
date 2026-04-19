@@ -6,19 +6,16 @@ import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import TextField from '@mui/material/TextField'
 import IconButton from '@mui/material/IconButton'
-import EditIcon from '@mui/icons-material/Edit'
 import SaveIcon from '@mui/icons-material/Save'
-import CancelIcon from '@mui/icons-material/Cancel'
 import { ACTION_TYPES, isValidAction, MMAction } from '../types/MMAction'
 import PointScatterPlot from './PointScatterPlot'
 import { MappingPoint } from '@/types/MappingPoint'
 import RangeEditor from './segmentEditor/RangeEditor'
 import { buildSegmentsFromAction, mappingsFromSegments, Segment } from './segmentEditor/Segment'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import isEqual from 'lodash/isEqual';
 import { MappingPointTable } from './MappingPointTable'
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material'
-
+import { FormControl, InputLabel, Select, MenuItem, useTheme } from '@mui/material'
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 interface MMActionRendererProps {
   action: MMAction
   onUpdate?: (updated: MMAction) => void
@@ -30,54 +27,32 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     throw new Error("Invalid action" + (action.name ?? "unknown action") + " , can not render: " + JSON.stringify(dataValidation, null, 3));
   }
 
+  const theme = useTheme();
   const [draftAction, setDraftAction] = useState<MMAction>(action)
   const [draftSegments, setDrafSegments] = useState<Segment[]>(buildSegmentsFromAction(action))
-  const [isEditing, setIsEditing] = useState(false)
-  const [name, setName] = useState(draftAction.name)
-  const [description, setDescription] = useState(draftAction.description)
   useEffect(() => {
     console.log("draftAction State changed:", draftAction);
   }, [draftAction]);
 
-  const handleEdit = () => {
-    setIsEditing(true)
-  }
-
-  const handleSave = () => {
-    const updated = { ...action, name, description }
-    if (onUpdate) onUpdate(updated)
-    setIsEditing(false)
-  }
-
-  const handleCancel = () => {
-    setName(draftAction.name)
-    setDescription(draftAction.description)
-    setIsEditing(false)
-  }
-
-  const action_title = isEditing ? (
+  const actionTitleComp = (
     <TextField
       size="small"
-      value={name}
-      onChange={(e) => setName(e.target.value)}
+      value={draftAction.name}
+      onChange={(e) => setDraftAction((prev) => ({ ...prev, name: e.target.value }))}
       fullWidth
     />
-  ) : (
-    draftAction.name
   )
 
-  const action_subheader = isEditing ? (
+  const actionDescriptionComp =
     <TextField
       size="small"
-      value={description}
-      onChange={(e) => setDescription(e.target.value)}
+      value={draftAction.description}
+      onChange={(e) => setDraftAction((prev) => ({ ...prev, description: e.target.value }))}
       fullWidth
       multiline
       rows={2}
     />
-  ) : (
-    draftAction.description
-  )
+
 
   const updatePoint = (oldP: MappingPoint, newP: MappingPoint): void => {
     // implement mutation to action, no submit yet
@@ -126,29 +101,23 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const allOutputs = [draftAction.output];
   const allActionTypes = ACTION_TYPES;
 
+  const handleResetAction = () => { setDraftAction(action); setDrafSegments(buildSegmentsFromAction(action)); };
+  const handleSaveAction = () => { if (onUpdate) onUpdate(draftAction) };
+
   return (
     <Card sx={{ mb: 2 }}>
       <CardHeader
-        title={action_title}
-        subheader={action_subheader}
+        title={actionTitleComp}
+        subheader={actionDescriptionComp}
         action={
-          isEditing ? (
-            <Stack direction="row" spacing={0.5}>
-              <IconButton size="small" onClick={handleSave} color="success">
-                <SaveIcon />
-              </IconButton>
-              <IconButton size="small" onClick={handleCancel} color="error">
-                <CancelIcon />
-              </IconButton>
-            </Stack>
-          ) : (
-            <IconButton size="small" onClick={handleEdit}>
-              <EditIcon />
-            </IconButton>
-          )
+          <Stack direction="row" spacing={0.5}>
+            {(segmentsDiffer || actionDiffers) && <IconButton size="small" onClick={handleResetAction} color="primary"><RestartAltIcon /></IconButton>}
+            {(segmentsDiffer || actionDiffers) && <IconButton size="small" onClick={handleSaveAction} color="primary"><SaveIcon /></IconButton>}
+          </Stack>
         }
         sx={{ pb: 1 }}
       />
+
       <CardContent>
         <Stack spacing={2}>
           <Stack direction="row" spacing={2}>
@@ -185,7 +154,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
               </Select>
             </FormControl>
           </Stack>
-          {(segmentsDiffer || actionDiffers) && <EditOutlinedIcon color="warning" />}
+
 
           <Box>
             {
