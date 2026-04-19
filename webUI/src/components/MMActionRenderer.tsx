@@ -14,8 +14,11 @@ import RangeEditor from './segmentEditor/RangeEditor'
 import { buildSegmentsFromAction, mappingsFromSegments, Segment } from './segmentEditor/Segment'
 import isEqual from 'lodash/isEqual';
 import { MappingPointTable } from './MappingPointTable'
-import { FormControl, InputLabel, Select, MenuItem, useTheme } from '@mui/material'
+import { FormControl, InputLabel, Select, MenuItem, useTheme, Divider } from '@mui/material'
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+
 interface MMActionRendererProps {
   action: MMAction
   onUpdate?: (updated: MMAction) => void
@@ -26,25 +29,28 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   if (!dataValidation.valid) {
     throw new Error("Invalid action" + (action.name ?? "unknown action") + " , can not render: " + JSON.stringify(dataValidation, null, 3));
   }
-
-  const theme = useTheme();
   const [draftAction, setDraftAction] = useState<MMAction>(action)
   const [draftSegments, setDrafSegments] = useState<Segment[]>(buildSegmentsFromAction(action))
-  useEffect(() => {
-    console.log("draftAction State changed:", draftAction);
-  }, [draftAction]);
+  const [showValues, setShowValues] = useState<boolean>(false);
+
 
   const actionTitleComp = (
     <TextField
+      label="Name"
       size="small"
       value={draftAction.name}
-      onChange={(e) => setDraftAction((prev) => ({ ...prev, name: e.target.value }))}
+      onChange={(e) =>
+        setDraftAction((prev) => ({ ...prev, name: e.target.value }))
+      }
       fullWidth
     />
+
   )
 
   const actionDescriptionComp =
+
     <TextField
+      label="Description"
       size="small"
       value={draftAction.description}
       onChange={(e) => setDraftAction((prev) => ({ ...prev, description: e.target.value }))}
@@ -154,31 +160,36 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
               </Select>
             </FormControl>
           </Stack>
-
-
-          <Box>
-            {
-              (isGridEditor) && <PointScatterPlot
-                xData={draftAction.inputPoints}
-                yData={draftAction.outputPoints}
-                input={draftAction.input}
-                output={draftAction.output}
-                title={draftAction.name}
-                interpolation={!draftAction.input.discrete && !draftAction.output.discrete}
-                type={draftAction.actionType}
-                changePoint={updatePoint}
-                addPoint={addPoint} />
-            }
-            {
-              (isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={draftSegments} setSegments={updateActionFromSegments} />
-            }
-            {
-              isTableEditor && <MappingPointTable
-                points={toMappingPointList(draftAction)}
-                setPoints={points => { const { inputPoints, outputPoints } = toNumericValueList(points); setDraftAction(prev => ({ ...prev, inputPoints: inputPoints, outputPoints: outputPoints })) }} />
-            }
-
-          </Box>
+          {<IconButton size="small" onClick={ () => {setShowValues(prev => !prev);} } color="primary">
+            {!showValues && <ExpandMoreIcon />}
+            {showValues && <ExpandLessIcon />}
+            </IconButton>}
+          {showValues && <div>
+            <Divider />
+            <Box>
+              {
+                (isGridEditor) && <PointScatterPlot
+                  xData={draftAction.inputPoints}
+                  yData={draftAction.outputPoints}
+                  input={draftAction.input}
+                  output={draftAction.output}
+                  title={draftAction.name}
+                  interpolation={!draftAction.input.discrete && !draftAction.output.discrete}
+                  type={draftAction.actionType}
+                  changePoint={updatePoint}
+                  addPoint={addPoint} />
+              }
+              {
+                (isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={draftSegments} setSegments={updateActionFromSegments} />
+              }
+              {
+                isTableEditor && <MappingPointTable
+                  points={toMappingPointList(draftAction)}
+                  setPoints={points => { const { inputPoints, outputPoints } = toNumericValueList(points); setDraftAction(prev => ({ ...prev, inputPoints: inputPoints, outputPoints: outputPoints })) }} />
+              }
+            </Box>
+          </div>}
+  
         </Stack>
       </CardContent>
     </Card>
