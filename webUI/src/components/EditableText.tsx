@@ -13,24 +13,18 @@ type EditableTextProps = {
     label: string;
 };
 
-export const EditableSelect = ({ draftAction: action, setDraftAction: setAction, allInputs }: { draftAction: MMAction, setDraftAction: (action: MMAction) => void, allInputs: InputOutput[] }) => {
-    const label = "ActionType";
-    const value = "sets";
-    const placeholder = "unknown";
-    const onChange = console.log;
-
-    const theme = useTheme();
+export const EditableSelect = ({ input, setInput, allInputs, label }: { input: InputOutput, setInput: (action: InputOutput) => void, allInputs: InputOutput[], label: string }) => {
     return (
         <FormControl size="small" fullWidth>
             <InputLabel sx={(theme) => ({
                 backgroundColor: theme.palette.background.paper,
                 px: 0.5, // small horizontal padding so text doesn't touch edges
-            })}>Input</InputLabel>
+            })}>{label}</InputLabel>
             <Select
-                value={action.input.uid}
-                onChange={e => setAction({ ...action, input: allInputs.find(io => io.uid == e.target.value) ?? action.input })}>
-                <MenuItem key={action.input.uid} value={action.input.uid}>
-                    {action.input.displayName}
+                value={input.uid}
+                onChange={e => setInput(allInputs.find(io => io.uid == e.target.value) ?? input)}>
+                <MenuItem key={input.uid} value={input.uid}>
+                    {input.displayName}
                 </MenuItem>
             </Select>
         </FormControl>)

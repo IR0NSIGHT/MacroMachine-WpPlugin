@@ -129,7 +129,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     </IconButton>
   )
 
-  const inputControl = (<EditableSelect draftAction={draftAction} setDraftAction={setDraftAction} allInputs={allInputs} />);
+  const inputControl = (<EditableSelect input={draftAction.input} setInput={io => setDraftAction(prev => ({ ...prev, input: io }))} allInputs={allInputs} label="Input" />);
 
   const actionTypeControl = (
     <FormControl size="small" fullWidth variant="standard">
@@ -165,16 +165,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     </FormControl>
   );
 
-  const outputControl = (<FormControl size="small" fullWidth>
-    <InputLabel>Output</InputLabel>
-    <Select
-      value={draftAction.output.uid}
-      onChange={e => setDraftAction({ ...draftAction, output: allOutputs.find(io => io.uid == e.target.value) ?? draftAction.output })}>
-      <MenuItem value={draftAction.output.uid}>
-        {draftAction.output.displayName}
-      </MenuItem>
-    </Select>
-  </FormControl>)
+  const outputControl = (<EditableSelect input={draftAction.output} setInput={io => setDraftAction(prev => ({ ...prev, output: io }))} allInputs={allOutputs} label="Output" />)
 
   return (
     <Paper sx={{ mb: 2, p: 2 }} variant="outlined">
