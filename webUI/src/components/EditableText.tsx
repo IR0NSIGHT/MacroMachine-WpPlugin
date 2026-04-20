@@ -2,8 +2,6 @@ import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import { TypographyVariants, useTheme } from "@mui/material/styles";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
-import { MMAction } from "@/types/MMAction";
-import { InputOutput } from "@/types/InputOutput";
 
 type EditableTextProps = {
     value: string;
@@ -12,22 +10,48 @@ type EditableTextProps = {
     placeholder?: string;
     label: string;
 };
+type UidItem = { uid: string; displayName: string };
 
-export const EditableSelect = ({ input, setInput, allInputs, label }: { input: InputOutput, setInput: (action: InputOutput) => void, allInputs: InputOutput[], label: string }) => {
+type EditableSelectProps<T extends UidItem> = {
+    value: T;
+    setValue: (value: T) => void;
+    options: T[];
+    label: string;
+};
+
+export function EditableSelect<T extends UidItem>({
+    value,
+    setValue,
+    options,
+    label,
+}: EditableSelectProps<T>) {
     return (
         <FormControl size="small" fullWidth>
-            <InputLabel sx={(theme) => ({
-                backgroundColor: theme.palette.background.paper,
-                px: 0.5, // small horizontal padding so text doesn't touch edges
-            })}>{label}</InputLabel>
+            <InputLabel
+                sx={(theme) => ({
+                    backgroundColor: theme.palette.background.paper,
+                    px: 0.5,
+                })}
+            >
+                {label}
+            </InputLabel>
+
             <Select
-                value={input.uid}
-                onChange={e => setInput(allInputs.find(io => io.uid == e.target.value) ?? input)}>
-                <MenuItem key={input.uid} value={input.uid}>
-                    {input.displayName}
-                </MenuItem>
+                value={value.uid}
+                onChange={(e) =>
+                    setValue(
+                        options.find((option) => option.uid === e.target.value) ?? value
+                    )
+                }
+            >
+                {options.map((option) => (
+                    <MenuItem key={option.uid} value={option.uid}>
+                        {option.displayName}
+                    </MenuItem>
+                ))}
             </Select>
-        </FormControl>)
+        </FormControl>
+    );
 }
 
 export function EditableText({
@@ -84,7 +108,7 @@ export function EditableText({
                     input: {
                         disableUnderline: true,
                         sx: (theme) => ({
-                            ...(theme.typography[variant] as React.CSSProperties),
+                            ...(theme.typography[variant] as any),
 
                             fontStyle: value ? "normal" : "italic",
 

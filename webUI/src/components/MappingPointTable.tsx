@@ -1,7 +1,5 @@
 import { MappingPoint } from "@/types/MappingPoint";
 import {
-    ButtonGroup,
-    Button,
     useTheme,
     TextField,
     Table,
@@ -61,7 +59,7 @@ export const MappingPointTable = ({ points, setPoints }: Props) => {
             outputDisplay: getDisplayNameOutput(p)
         }));
 
-        const getValue = (item, type: "input" | "output") => {
+        const getValue = (item: any, type: "input" | "output") => {
             const field = type === "input" ? item.input : item.output;
 
             return field.discrete
@@ -69,7 +67,7 @@ export const MappingPointTable = ({ points, setPoints }: Props) => {
                 : (type === "input" ? item.x : item.y);
         };
 
-        const compareValues = (aVal, bVal) => {
+        const compareValues = (aVal: any, bVal: any) => {
             if (typeof aVal === "number" && typeof bVal === "number") {
                 return aVal - bVal;
             }

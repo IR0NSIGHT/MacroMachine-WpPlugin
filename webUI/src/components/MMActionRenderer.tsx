@@ -1,20 +1,16 @@
 import { useState } from 'react'
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import CardHeader from '@mui/material/CardHeader'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
-import TextField from '@mui/material/TextField'
 import IconButton from '@mui/material/IconButton'
 import SaveIcon from '@mui/icons-material/Save'
-import { ACTION_TYPES, isValidAction, MMAction } from '../types/MMAction'
+import { ACTION_TYPES, ActionType, isValidAction, MMAction } from '../types/MMAction'
 import PointScatterPlot from './PointScatterPlot'
 import { MappingPoint } from '@/types/MappingPoint'
 import RangeEditor from './segmentEditor/RangeEditor'
 import { buildSegmentsFromAction, mappingsFromSegments, Segment } from './segmentEditor/Segment'
 import isEqual from 'lodash/isEqual';
 import { MappingPointTable } from './MappingPointTable'
-import { FormControl, InputLabel, Select, MenuItem, Divider, Paper, ButtonGroup } from '@mui/material'
+import { Paper, ButtonGroup } from '@mui/material'
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
@@ -22,6 +18,7 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import { EditableSelect, EditableText } from './EditableText'
+import { InputOutput } from '@/types/InputOutput'
 
 interface MMActionRendererProps {
   action: MMAction
@@ -81,7 +78,6 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
 
   const allInputs = [draftAction.input];
   const allOutputs = [draftAction.output];
-  const allActionTypes = ACTION_TYPES;
 
   const handleResetAction = () => { setDraftAction(action); setDrafSegments(buildSegmentsFromAction(action)); };
   const handleSaveAction = () => { if (onUpdate) onUpdate(draftAction) };
@@ -129,43 +125,26 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     </IconButton>
   )
 
-  const inputControl = (<EditableSelect input={draftAction.input} setInput={io => setDraftAction(prev => ({ ...prev, input: io }))} allInputs={allInputs} label="Input" />);
-
+  const inputControl = (<EditableSelect<InputOutput> value={draftAction.input} setValue={io => setDraftAction(prev => ({ ...prev, input: io }))} options={allInputs} label="Input" />);
+  const ACTION_TYPE_ITEMS = ACTION_TYPES.map((t) => ({
+    uid: t,
+    displayName: t,
+  }));
   const actionTypeControl = (
-    <FormControl size="small" fullWidth variant="standard">
-      <InputLabel shrink>Type</InputLabel>
-
-      <Select
-        value={draftAction.actionType}
-        onChange={(e) =>
-          setDraftAction({
-            ...draftAction,
-            actionType:
-              allActionTypes.find((type) => type === e.target.value) ??
-              draftAction.actionType,
-          })
-        }
-        disableUnderline
-        sx={(theme) => ({
-          "&:before, &:after": {
-            borderBottom: "none",
-          },
-
-          "&:hover": {
-            backgroundColor: theme.palette.action.hover,
-          },
-        })}
-      >
-        {allActionTypes.map((t) => (
-          <MenuItem key={t} value={t}>
-            {t}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
+    <EditableSelect
+      value={{ uid: draftAction.actionType, displayName: draftAction.actionType }}
+      setValue={(item) =>
+        setDraftAction((prev) => ({
+          ...prev,
+          actionType: item.uid as ActionType,
+        }))
+      }
+      options={ACTION_TYPE_ITEMS}
+      label="Type"
+    />
   );
 
-  const outputControl = (<EditableSelect input={draftAction.output} setInput={io => setDraftAction(prev => ({ ...prev, output: io }))} allInputs={allOutputs} label="Output" />)
+  const outputControl = (<EditableSelect value={draftAction.output} setValue={io => setDraftAction(prev => ({ ...prev, output: io }))} options={allOutputs} label="Output" />)
 
   return (
     <Paper sx={{ mb: 2, p: 2 }} variant="outlined">
