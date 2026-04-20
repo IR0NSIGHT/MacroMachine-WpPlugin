@@ -21,7 +21,7 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import TimelineIcon from '@mui/icons-material/Timeline';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
-import { EditableText } from './EditableText'
+import { EditableSelect, EditableText } from './EditableText'
 
 interface MMActionRendererProps {
   action: MMAction
@@ -129,27 +129,41 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     </IconButton>
   )
 
-  const inputControl = (<FormControl size="small" fullWidth>
-    <InputLabel>Input</InputLabel>
-    <Select
-      value={draftAction.input.uid}
-      onChange={e => setDraftAction({ ...draftAction, input: allInputs.find(io => io.uid == e.target.value) ?? draftAction.input })}>
-      <MenuItem key={draftAction.input.uid} value={draftAction.input.uid}>
-        <em>{draftAction.input.displayName}</em>
-      </MenuItem>
-    </Select>
-  </FormControl>);
+  const inputControl = (<EditableSelect draftAction={draftAction} setDraftAction={setDraftAction} allInputs={allInputs} />);
 
-  const actionTypeControl = (<FormControl size="small" fullWidth>
-    <InputLabel>Type</InputLabel>
-    <Select
-      value={draftAction.actionType}
-      onChange={e => setDraftAction({ ...draftAction, actionType: allActionTypes.find(type => type == e.target.value) ?? draftAction.actionType })}>
-      {allActionTypes.map(t => (<MenuItem key={t} value={t}>
-        <em>{t}</em>
-      </MenuItem>))}
-    </Select>
-  </FormControl>)
+  const actionTypeControl = (
+    <FormControl size="small" fullWidth variant="standard">
+      <InputLabel shrink>Type</InputLabel>
+
+      <Select
+        value={draftAction.actionType}
+        onChange={(e) =>
+          setDraftAction({
+            ...draftAction,
+            actionType:
+              allActionTypes.find((type) => type === e.target.value) ??
+              draftAction.actionType,
+          })
+        }
+        disableUnderline
+        sx={(theme) => ({
+          "&:before, &:after": {
+            borderBottom: "none",
+          },
+
+          "&:hover": {
+            backgroundColor: theme.palette.action.hover,
+          },
+        })}
+      >
+        {allActionTypes.map((t) => (
+          <MenuItem key={t} value={t}>
+            {t}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
 
   const outputControl = (<FormControl size="small" fullWidth>
     <InputLabel>Output</InputLabel>
@@ -157,7 +171,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
       value={draftAction.output.uid}
       onChange={e => setDraftAction({ ...draftAction, output: allOutputs.find(io => io.uid == e.target.value) ?? draftAction.output })}>
       <MenuItem value={draftAction.output.uid}>
-        <em>{draftAction.output.displayName}</em>
+        {draftAction.output.displayName}
       </MenuItem>
     </Select>
   </FormControl>)
