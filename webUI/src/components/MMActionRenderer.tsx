@@ -38,9 +38,9 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const updatePoint = (oldP: MappingPoint, newP: MappingPoint): void => {
     // implement mutation to action, no submit yet
     setDraftAction((prev) => {
-      const inputPoints = prev.inputPoints.map((p) => (p === oldP.x ? newP.x : p))
-      const outputPoints = prev.outputPoints.map((p) => (p === oldP.y ? newP.y : p))
-      return { ...prev, inputPoints, outputPoints }
+      const inputPoints = prev.mappedInputs.map((p) => (p === oldP.x ? newP.x : p))
+      const outputPoints = prev.mappedOutputs.map((p) => (p === oldP.y ? newP.y : p))
+      return { ...prev, mappedInputs: inputPoints, mappedOutputs: outputPoints }
     })
   }
 
@@ -49,8 +49,8 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     setDraftAction((prev) => {
       return {
         ...prev,
-        inputPoints: [...prev.inputPoints, newP.x],
-        outputPoints: [...prev.outputPoints, newP.y],
+        mappedInputs: [...prev.mappedInputs, newP.x],
+        mappedOutputs: [...prev.mappedOutputs, newP.y],
       };
     })
 
@@ -64,8 +64,8 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     const { inputs, outputs } = mappingsFromSegments(segments);
     setDraftAction((prev) => ({
       ...prev,
-      inputPoints: inputs,
-      outputPoints: outputs
+      mappedInputs: inputs,
+      mappedOutputs: outputs
     }));
     setDrafSegments(segments); // we need to keep segments separately, because transforming to action and back might merge adjacent segmetns with same output value
   };
@@ -98,8 +98,8 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     <>
       {
         (!showTable && isGridEditor) && <PointScatterPlot
-          xData={draftAction.inputPoints}
-          yData={draftAction.outputPoints}
+          xData={draftAction.mappedInputs}
+          yData={draftAction.mappedOutputs}
           input={draftAction.input}
           output={draftAction.output}
           title={draftAction.name}
@@ -113,7 +113,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
       {
         (showTable || isTableEditor) && <MappingPointTable
           points={toMappingPointList(draftAction)}
-          setPoints={points => { const { inputPoints, outputPoints } = toNumericValueList(points); setDraftAction(prev => ({ ...prev, inputPoints: inputPoints, outputPoints: outputPoints })) }} />
+          setPoints={points => { const { inputPoints, outputPoints } = toNumericValueList(points); setDraftAction(prev => ({ ...prev, mappedInputs: inputPoints, mappedOutputs: outputPoints })) }} />
       }
     </>
   )
@@ -188,7 +188,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
 
 const toMappingPointList = (action: MMAction): MappingPoint[] => {
   // action.inputPoints and outputPoints is a complete set of mappings, bijektiv
-  return action.inputPoints.map((inputX, i) => ({ x: inputX, y: action.outputPoints[i], input: action.input, output: action.output }))
+  return action.mappedInputs.map((inputX, i) => ({ x: inputX, y: action.mappedOutputs[i], input: action.input, output: action.output }))
 }
 
 const toNumericValueList = (mappingpoints: MappingPoint[]): { inputPoints: number[], outputPoints: number[] } => {

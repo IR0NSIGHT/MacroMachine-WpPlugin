@@ -27,17 +27,17 @@ export function buildSegmentsFromAction(action: MMAction): Segments {
     let currentSegment = {
         start: action.input.min,
         end: action.input.min,
-        value: action.output.values.find(v => v.numericValue == action.outputPoints[0])!,
+        value: action.output.values.find(v => v.numericValue == action.mappedOutputs[0])!,
     }
 
     type Mapping = {
         input: number;
         output: number;
     }
-    const mappings: Mapping[] = action.inputPoints.map((v, i) => {
+    const mappings: Mapping[] = action.mappedInputs.map((v, i) => {
         return {
             input: v,
-            output: action.outputPoints[i]
+            output: action.mappedOutputs[i]
         }
     })
 

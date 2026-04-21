@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import MMActionRenderer from './MMActionRenderer'
-import { onlyOnCyan as onlyOnCyanFilterAction, onlyOnLand as onlyOnLandFilterAction, raiseYonCyan, slopeToForest } from '../mock/dummyActions'
-import { forestIO, annotationsIO, heightIO, slopeIO, terrainIO } from '@/mock/dummyIOs'
+import { onlyOnCyan as onlyOnCyanFilterAction, onlyOnLand as onlyOnLandFilterAction, raiseYonCyan, slopeToForest, slopeToTerrain } from '../mock/dummyActions'
 
 const meta: Meta<typeof MMActionRenderer> = {
 
@@ -24,51 +23,10 @@ export const SlopeToForest: Story = {
   }
 }
 
-const outputMagenta = annotationsIO.values[3];
-export const SimpleContinuousToDiscrete: Story = {
-  args: {
-    action: {
-      name: "Test Action",
-      description: "This is a test action",
-      uid: "test-action",
-      input: forestIO,
-      output: annotationsIO,
-      actionType: "increments",
-      inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
-      outputPoints: forestIO.values.map(_ => outputMagenta.numericValue),
-    },
-  },
-}
-
-export const ManyRanges: Story = {
-  args: {
-    action: {
-      name: "Test Action",
-      description: "This is a test action",
-      uid: "test-action",
-      input: heightIO,
-      output: annotationsIO,
-      actionType: "increments",
-      inputPoints: heightIO.values.filter(v => v.numericValue !== heightIO.ignoreValue).map(v => v.numericValue),
-      outputPoints: heightIO.values.map(v => Math.round(Math.abs(v.numericValue) / 20) % 15),
-    },
-  },
-}
-
-
-export const SomeRanges: Story = {
-  args: {
-    action: {
-      name: "Test Action",
-      description: "This is a test action",
-      uid: "test-action",
-      input: slopeIO,
-      output: terrainIO,
-      actionType: "increments",
-      inputPoints: slopeIO.values.filter(v => v.numericValue !== slopeIO.ignoreValue).map(v => v.numericValue),
-      outputPoints: slopeIO.values.map(v => Math.round(Math.abs(v.numericValue) / 30) % 15),
-    },
-  },
+export const DefaultRange: Story = {
+  args : {
+    action: slopeToTerrain
+  }
 }
 
 export const RangeFilter: Story = {

@@ -9,8 +9,8 @@ export type ActionType =
     | "limits"
     | "sets minimum";
 
-    //INCREMENT("increments"), DECREMENT("subtracts"), MULTIPLY("multiplies"), DIVIDE("divides"), SET("sets"), LIMIT_TO(
-    //        "limits"), AT_LEAST("sets minimum");
+//INCREMENT("increments"), DECREMENT("subtracts"), MULTIPLY("multiplies"), DIVIDE("divides"), SET("sets"), LIMIT_TO(
+//        "limits"), AT_LEAST("sets minimum");
 
 export const ACTION_TYPES: ActionType[] = [
     "increments",
@@ -26,33 +26,46 @@ export function isActionType(value: any): value is ActionType {
     return ACTION_TYPES.includes(value)
 }
 
+export type MappingPointDTO = { x: number, y: number };
+/**
+ * DTO that is sent by the backend.
+ */
 export interface MMAction {
     input: InputOutput
     output: InputOutput
     actionType: ActionType
-    inputPoints: number[]
-    outputPoints: number[]
+    mappedInputs: number[]
+    mappedOutputs: number[]
+    mappingPoints: MappingPointDTO[]
     name: string
     description: string
     uid: string
 }
 
+/**
+ * request recalculated action from backend using given mappingpoints.
+ */
+export const fetchActionWithPoints = (action: MMAction, _mappingPoints: MappingPointDTO[]): MMAction => {
+    return action;
+}
+
 
 export function isMMAction(value: unknown): value is MMAction {
+    const action = value as MMAction;
     return (
-        value !== null &&
-        typeof value === "object" &&
-        !Array.isArray(value) &&
-        isInputOutput((value as any).input) &&
-        isInputOutput((value as any).output) &&
-        isActionType((value as any).actionType) &&
-        Array.isArray((value as any).inputPoints) &&
-        (value as any).inputPoints.every((n: unknown) => typeof n === "number") &&
-        Array.isArray((value as any).outputPoints) &&
-        (value as any).outputPoints.every((n: unknown) => typeof n === "number") &&
-        typeof (value as any).name === "string" &&
-        typeof (value as any).description === "string" &&
-        typeof (value as any).uid === "string"
+        action !== null &&
+        typeof action === "object" &&
+        !Array.isArray(action) &&
+        isInputOutput(action.input) &&
+        isInputOutput(action.output) &&
+        isActionType(action.actionType) &&
+        Array.isArray(action.mappedInputs) &&
+        action.mappedInputs.every((n: unknown) => typeof n === "number") &&
+        Array.isArray(action.mappedOutputs) &&
+        action.mappedOutputs.every((n: unknown) => typeof n === "number") &&
+        typeof action.name === "string" &&
+        typeof action.description === "string" &&
+        typeof action.uid === "string"
     );
 }
 
@@ -65,99 +78,97 @@ export function validateMMActionType(value: MMAction): ValidationResult<MMAction
         };
     }
 
-    const v = value as any;
-
     // input
-    if (!isInputOutput(v.input)) {
+    if (!isInputOutput(value.input)) {
         return {
             valid: false,
             reason: "Invalid 'input' field",
-            details: v.input,
+            details: value.input,
         };
     }
 
     // output
-    if (!isInputOutput(v.output)) {
+    if (!isInputOutput(value.output)) {
         return {
             valid: false,
             reason: "Invalid 'output' field",
-            details: v.output,
+            details: value.output,
         };
     }
 
     // actionType
-    if (!isActionType(v.actionType)) {
+    if (!isActionType(value.actionType)) {
         return {
             valid: false,
             reason: "Invalid 'actionType'",
-            details: v.actionType,
+            details: value.actionType,
         };
     }
 
     // inputPoints
-    if (!Array.isArray(v.inputPoints)) {
+    if (!Array.isArray(value.mappedInputs)) {
         return {
             valid: false,
-            reason: "'inputPoints' must be an array",
-            details: v.inputPoints,
+            reason: "'mappedInputs' must be an array",
+            details: value.mappedInputs,
         };
     }
 
-    if (!v.inputPoints.every((n: unknown) => typeof n === "number")) {
+    if (!value.mappedInputs.every((n: unknown) => typeof n === "number")) {
         return {
             valid: false,
-            reason: "'inputPoints' must contain only numbers",
-            details: v.inputPoints,
+            reason: "'mappedInputs' must contain only numbers",
+            details: value.mappedInputs,
         };
     }
 
     // outputPoints
-    if (!Array.isArray(v.outputPoints)) {
+    if (!Array.isArray(value.mappedOutputs)) {
         return {
             valid: false,
-            reason: "'outputPoints' must be an array",
-            details: v.outputPoints,
+            reason: "'mappedOutputs' must be an array",
+            details: value.mappedOutputs,
         };
     }
 
-    if (!v.outputPoints.every((n: unknown) => typeof n === "number")) {
+    if (!value.mappedOutputs.every((n: unknown) => typeof n === "number")) {
         return {
             valid: false,
-            reason: "'outputPoints' must contain only numbers",
-            details: v.outputPoints,
+            reason: "'mappedOutputs' must contain only numbers",
+            details: value.mappedOutputs,
         };
     }
 
     // name
-    if (typeof v.name !== "string") {
+    if (typeof value.name !== "string") {
         return {
             valid: false,
             reason: "'name' must be a string",
-            details: v.name,
+            details: value.name,
         };
     }
 
     // description
-    if (typeof v.description !== "string") {
+    if (typeof value.description !== "string") {
         return {
             valid: false,
             reason: "'description' must be a string",
-            details: v.description,
+            details: value.description,
         };
     }
 
     // uid
-    if (typeof v.uid !== "string") {
+    if (typeof value.uid !== "string") {
         return {
             valid: false,
             reason: "'uid' must be a string",
-            details: v.uid,
+            details: value.uid,
         };
     }
 
     return {
         valid: true,
-        value: v as MMAction,
+        value: value as any as MMAction,
     };
 }
 
@@ -214,7 +225,7 @@ const isValidOutput = (
     if (illegalValues.length > 0) {
         return {
             valid: false,
-            reason: "SET_MISMATCH",
+            reason: "output SET_MISMATCH: output provider does not know these values: ",
             details: {
                 missing: illegalValues,
             },
@@ -230,12 +241,12 @@ export const isValidAction = (action: MMAction): ValidationResult<any> => {
         return typeValidation
     }
 
-    const inputValidation = isValidInput(action.inputPoints, action.input);
+    const inputValidation = isValidInput(action.mappedInputs, action.input);
     if (!inputValidation.valid) {
         return inputValidation;
     }
 
-    const outputValidation = isValidOutput(action.outputPoints, action.output);
+    const outputValidation = isValidOutput(action.mappedOutputs, action.output);
     if (!outputValidation.valid) {
         return outputValidation;
     }
@@ -287,9 +298,9 @@ export function assertMMAction(value: any): asserts value is MMAction {
     path.pop()
 
     // inputPoints
-    path.push("inputPoints")
-    if (!Array.isArray(value.inputPoints)) fail("expected array")
-    if (!value.inputPoints.every((n: any) => typeof n === "number")) {
+    path.push("mappedInputs")
+    if (!Array.isArray(value.mappedInputs)) fail("expected array")
+    if (!value.mappedInputs.every((n: any) => typeof n === "number")) {
         fail("must be number[]")
     }
     path.pop()

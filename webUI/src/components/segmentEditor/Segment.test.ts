@@ -266,8 +266,10 @@ describe("convert action to segments", () => {
                 input: forestIO,
                 output: annotationsIO,
                 actionType: "increments",
-                inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
-                outputPoints: [4, 4, 4, 4, 3, 3, 3, 3, 15, 15, 15, 15, 15, 15, 15, 15],
+                mappedInputs: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
+                mappedOutputs: [4, 4, 4, 4, 3, 3, 3, 3, 15, 15, 15, 15, 15, 15, 15, 15],
+                mappingPoints: [{ x: 3, y: 4 },{ x: 4, y: 3 },{ x: 8, y: 15 },] // FIXME
+
             }
             const segments = buildSegmentsFromAction(action);
             expect(segments).toEqual([
@@ -285,8 +287,10 @@ describe("convert action to segments", () => {
                 input: forestIO,
                 output: annotationsIO,
                 actionType: "increments",
-                inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
-                outputPoints: [4, 4, 4, 4, 3, 5, 4, 4, 7, 7, 7, 7, 0, 0, 0, 15],
+                mappedInputs: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
+                mappedOutputs: [4, 4, 4, 4, 3, 5, 4, 4, 7, 7, 7, 7, 0, 0, 0, 15],
+                mappingPoints: [{ x: 0, y: 4 }, { x: 4, y: 3 }, { x: 5, y: 5 }, { x: 7, y: 4 }, { x: 8, y: 7 }, { x: 12, y: 0 }, { x: 15, y: 15 },] // FIXME
+
             }
             const segments = buildSegmentsFromAction(action);
             expect(segments).toEqual([
@@ -308,8 +312,10 @@ describe("convert action to segments", () => {
                 input: alwaysIO,
                 output: annotationsIO,
                 actionType: "increments",
-                inputPoints: [0],
-                outputPoints: [4],
+                mappedInputs: [0],
+                mappedOutputs: [4],
+                mappingPoints: [{ x: 0, y: 4 }] // FIXME
+
             }
             const segments = buildSegmentsFromAction(action);
             expect(segments).toEqual([
@@ -328,8 +334,10 @@ describe("convert action to segments", () => {
                 input: forestIO,
                 output: annotationsIO,
                 actionType: "increments",
-                inputPoints: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
-                outputPoints: forestIO.values.map(_ => outputMagenta.numericValue),
+                mappedInputs: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
+                mappedOutputs: forestIO.values.map(_ => outputMagenta.numericValue),
+                mappingPoints: [] // FIXME
+
             }
             const segments = buildSegmentsFromAction(action);
             expect(segments).toEqual([
@@ -345,8 +353,9 @@ describe("convert action to segments", () => {
                 input: heightIO,
                 output: annotationsIO,
                 actionType: "increments",
-                inputPoints: heightIO.values.filter(v => v.numericValue !== heightIO.ignoreValue).map(v => v.numericValue),
-                outputPoints: heightIO.values.map(_ => outputMagenta.numericValue),
+                mappedInputs: heightIO.values.filter(v => v.numericValue !== heightIO.ignoreValue).map(v => v.numericValue),
+                mappedOutputs: heightIO.values.map(_ => outputMagenta.numericValue),
+                mappingPoints: [] // FIXME
             }
             const segments = buildSegmentsFromAction(action);
             expect(segments).toEqual([
