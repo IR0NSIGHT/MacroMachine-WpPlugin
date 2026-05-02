@@ -14,8 +14,8 @@ public class IOMapper {
     public static Map<String, Object> toInputOutputJson(IMappingValue io, boolean asInput) {
         Map<String, Object> root = new HashMap<>();
 
-        root.put("displayName", io.getProviderType().toString());
-        root.put("description", io.getProviderType().toString());
+        root.put("displayName", io.getName());
+        root.put("description", io.getDescription());
         root.put("min", io.getMinValue());
         root.put("max", io.getMaxValue());
         root.put("ignoreValue", -1);

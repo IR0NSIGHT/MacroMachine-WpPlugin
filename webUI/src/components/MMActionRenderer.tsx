@@ -32,12 +32,16 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const [showTable, setShowTable] = useState<boolean>(false);
 
   const updatePoint = (oldP: MappingPoint, newP: MappingPoint): void => {
-    // implement mutation to action, no submit yet
-    setDraftAction((prev) => {
-      const inputPoints = prev.mappedInputs.map((p) => (p === oldP.x ? newP.x : p))
-      const outputPoints = prev.mappedOutputs.map((p) => (p === oldP.y ? newP.y : p))
-      return { ...prev, mappedInputs: inputPoints, mappedOutputs: outputPoints }
-    })
+    const updatedPoints = draftAction.mappingPoints.map(p => (p.x === oldP.x && p.y === oldP.y) ? { x: newP.x, y: newP.y } : p);
+    fetchActionWithPoints(draftAction.uid, updatedPoints).then(updatedAction => {
+      console.log("got updated action from backend:", updatedAction);
+      setDraftAction((prev) => ({
+        ...prev,
+        mappingPoints: updatedAction.mappingPoints,
+        mappedInputs: updatedAction.mappedInputs,
+        mappedOutputs: updatedAction.mappedOutputs
+      }));
+    });
   }
 
   const addPoint = (newP: MappingPoint): void => {
@@ -188,6 +192,7 @@ const toMappingPointList = (action: MMAction): MappingPoint[] => {
 }
 
 const toNumericValueList = (mappingpoints: MappingPoint[]): { inputPoints: number[], outputPoints: number[] } => {
+  console.log("converting mapping points to numeric value lists:", mappingpoints);
   return ({
     inputPoints: mappingpoints.map(p => p.x),
     outputPoints: mappingpoints.map(p => p.y)

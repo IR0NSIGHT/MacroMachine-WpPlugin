@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import { useMemo, useState } from "react";
 import { InputValueMenu } from "./SingleValues/InputValueEditor";
-import { NamedValue } from "@/types/InputOutput";
+import { isInputOutput, NamedValue } from "@/types/InputOutput";
 
 type Props = {
     points: MappingPoint[],
@@ -34,6 +34,13 @@ const getDisplayNameOutput = (point: MappingPoint) => {
 };
 
 export const MappingPointTable = ({ points, setPoints }: Props) => {
+    console.log("rendering MappingPointTable with points:", points);
+    if (points.some(p => !isInputOutput(p.input) || !isInputOutput(p.output))) {
+        return <div>Invalid data: {JSON.stringify(points.filter(p => !isInputOutput(p.input) || !isInputOutput(p.output)))} points</div>;
+    } else{
+        console.log("all points are valid InputOutput:", points);
+    }
+
     const theme = useTheme();
     const [search, setSearch] = useState("");
     const [hideIgnoreValues, setHideIgnoreValues] = useState(true);
@@ -98,7 +105,7 @@ export const MappingPointTable = ({ points, setPoints }: Props) => {
 
         return sorted;
     }, [points, sortKey, sortDirection]);
-
+    console.log(rows);
     const updatePoints = (updateValue: MappingPoint) => {
         const updated = points.map(point =>
             point.x === updateValue.x ? { ...updateValue } : { ...point }

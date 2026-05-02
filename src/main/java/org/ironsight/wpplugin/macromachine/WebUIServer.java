@@ -26,6 +26,10 @@ public class WebUIServer {
     private HttpServer server;
 
     private void handleMacroList(HttpExchange exchange) throws IOException {
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+
         if ("GET".equals(exchange.getRequestMethod())) {
             try {
                 final var macros = MacroContainer.getInstance().queryAll();
@@ -62,6 +66,9 @@ public class WebUIServer {
     }
 
     private void handleMacro(HttpExchange exchange) throws IOException {
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
 
         if ("GET".equals(exchange.getRequestMethod())) {
 
@@ -221,6 +228,10 @@ public class WebUIServer {
     }
 
     private void handleAction(HttpExchange exchange) throws IOException {
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+
         if ("GET".equals(exchange.getRequestMethod())) {
             var action = getActionFromQuery(exchange);
             if (action == null)
