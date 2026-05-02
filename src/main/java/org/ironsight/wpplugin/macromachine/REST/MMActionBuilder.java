@@ -1,14 +1,31 @@
 package org.ironsight.wpplugin.macromachine.REST;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 
 import java.util.*;
+
+import static org.ironsight.wpplugin.macromachine.REST.IOMapper.toInputOutputJson;
 
 public class MMActionBuilder {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public static String buildMMActionJson(
+    public static String buildMMActionJson(MappingAction action) throws JsonProcessingException {
+        return buildMMActionJson(
+                action.getName(),
+                action.getDescription(),
+                action.getUid().toString(),
+                action.getActionType().displayName,
+                toInputOutputJson(action.getInput(), true),
+                toInputOutputJson(action.getOutput(), false),
+                Arrays.stream(action.getInput().getAllInputValues()).boxed().toList(),
+                Arrays.stream(action.getInput().getAllInputValues()).map(action::map).boxed().toList()
+        );
+    }
+
+    private static String buildMMActionJson(
             String name,
             String description,
             String uid,
@@ -17,7 +34,7 @@ public class MMActionBuilder {
             Map<String,Object> output,
             List<Integer> inputPoints,
             List<Integer> outputPoints
-    ) throws Exception {
+    ) throws JsonProcessingException {
 
         Map<String, Object> action = new HashMap<>();
 

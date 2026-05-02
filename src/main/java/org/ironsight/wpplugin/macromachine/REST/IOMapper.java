@@ -11,7 +11,7 @@ public class IOMapper {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    public static Map<String, Object> toInputOutputJson(IMappingValue io, boolean asInput) throws Exception {
+    public static Map<String, Object> toInputOutputJson(IMappingValue io, boolean asInput) {
         Map<String, Object> root = new HashMap<>();
 
         root.put("displayName", io.getProviderType().toString());

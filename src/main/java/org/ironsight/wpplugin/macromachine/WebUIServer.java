@@ -1,167 +1,87 @@
 package org.ironsight.wpplugin.macromachine;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import org.ironsight.wpplugin.macromachine.REST.MMActionBuilder;
 import org.ironsight.wpplugin.macromachine.REST.MacroBuilder;
-import org.ironsight.wpplugin.macromachine.operations.Macro;
-import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
-import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
+import org.ironsight.wpplugin.macromachine.operations.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.ironsight.wpplugin.macromachine.REST.IOMapper.toInputOutputJson;
 
 public class WebUIServer {
     private static final int PORT = 8080;
-    private HttpServer server;
     private static final ObjectMapper mapper = new ObjectMapper();
-    public void start() throws IOException {
-        server = HttpServer.create(new InetSocketAddress(PORT), 0);
-        Path webuiPath = Paths.get("target/webui-dist");
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private HttpServer server;
 
-        // Serve static files
-        server.createContext("/", new StaticFileHandler(webuiPath));
+    private void handleMacroList(HttpExchange exchange) throws IOException {
+        if ("GET".equals(exchange.getRequestMethod())) {
+            try {
+                final var macros = MacroContainer.getInstance().queryAll();
 
-        server.createContext("/macroList", exchange -> {
-            if ("GET".equals(exchange.getRequestMethod())) {
-
-                try {
-                    final var macros = MacroContainer.getInstance().queryAll();
-
-                    if (macros.isEmpty()) {
-                        exchange.sendResponseHeaders(204, -1);
-                        return;
-                    }
-
-                    // ✅ ONLY UUIDs
-                    List<String> responseList = macros.stream()
-                            .map(macro -> macro.getUid().toString())
-                            .toList();
-
-                    String response = mapper.writeValueAsString(responseList);
-                    byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-
-                    exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
-                    exchange.sendResponseHeaders(200, bytes.length);
-
-                    try (OutputStream os = exchange.getResponseBody()) {
-                        os.write(bytes);
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    exchange.sendResponseHeaders(500, -1);
-                }
-
-            } else {
-                exchange.sendResponseHeaders(405, -1);
-            }
-        });
-
-        server.createContext("/macro", exchange -> {
-            if ("GET".equals(exchange.getRequestMethod())) {
-
-                try {
-                    final var macros = MacroContainer.getInstance().queryAll();
-
-                    if (macros.isEmpty()) {
-                        exchange.sendResponseHeaders(204, -1);
-                        return;
-                    }
-
-                    // ✅ read UUID query param
-                    var query = exchange.getRequestURI().getQuery();
-                    String uuidParam = null;
-
-                    if (query != null && query.contains("uuid=")) {
-                        uuidParam = query.split("uuid=")[1].split("&")[0];
-                    }
-
-                    // ❌ missing uuid
-                    if (uuidParam == null) {
-                        String response = """
-                        {
-                          "error": "MISSING_UUID",
-                          "message": "Query parameter 'uuid' is required"
-                        }
-                        """;
-
-                        byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-
-                        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
-                        exchange.sendResponseHeaders(400, bytes.length);
-
-                        try (OutputStream os = exchange.getResponseBody()) {
-                            os.write(bytes);
-                        }
-                        return;
-                    }
-
-                    UUID macroID;
-
-                    try {
-                        macroID = UUID.fromString(uuidParam);
-                    } catch (IllegalArgumentException ex) {
-                        exchange.sendResponseHeaders(404, -1);
-                        return;
-                    }
-
-                    // ✅ fetch directly from container (same as action style)
-                    var macro = MacroContainer.getInstance().queryById(macroID);
-
-                    if (macro == null) {
-                        exchange.sendResponseHeaders(404, -1);
-                        return;
-                    }
-
-                    String response = MacroBuilder.buildMacroJson(macro);
-                    byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-
-                    exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
-                    exchange.sendResponseHeaders(200, bytes.length);
-
-                    try (OutputStream os = exchange.getResponseBody()) {
-                        os.write(bytes);
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    exchange.sendResponseHeaders(500, -1);
-                }
-
-            } else {
-                exchange.sendResponseHeaders(405, -1);
-            }
-        });
-
-        server.createContext("/action", exchange -> {
-            if ("GET".equals(exchange.getRequestMethod())) {
-
-                final var actions = MappingActionContainer.getInstance().queryAll();
-
-                if (actions.isEmpty()) {
+                if (macros.isEmpty()) {
                     exchange.sendResponseHeaders(204, -1);
                     return;
                 }
 
-                // ✅ NEW: read UUID query param
+                // ✅ ONLY UUIDs
+                List<String> responseList = macros.stream()
+                        .map(macro -> macro.getUid().toString())
+                        .toList();
+
+                String response = mapper.writeValueAsString(responseList);
+                byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+
+                exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+                exchange.sendResponseHeaders(200, bytes.length);
+
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(bytes);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                exchange.sendResponseHeaders(500, -1);
+            }
+
+        } else {
+            exchange.sendResponseHeaders(405, -1);
+        }
+
+    }
+
+    private void handleMacro(HttpExchange exchange) throws IOException {
+
+        if ("GET".equals(exchange.getRequestMethod())) {
+
+            try {
+                final var macros = MacroContainer.getInstance().queryAll();
+
+                if (macros.isEmpty()) {
+                    exchange.sendResponseHeaders(204, -1);
+                    return;
+                }
+
+                // ✅ read UUID query param
                 var query = exchange.getRequestURI().getQuery();
                 String uuidParam = null;
+
                 if (query != null && query.contains("uuid=")) {
                     uuidParam = query.split("uuid=")[1].split("&")[0];
                 }
 
+                // ❌ missing uuid
                 if (uuidParam == null) {
                     String response = """
                             {
@@ -181,50 +101,169 @@ public class WebUIServer {
                     return;
                 }
 
-                UUID actionID = null;
+                UUID macroID;
+
                 try {
-                    actionID = UUID.fromString(uuidParam);
+                    macroID = UUID.fromString(uuidParam);
                 } catch (IllegalArgumentException ex) {
                     exchange.sendResponseHeaders(404, -1);
                     return;
                 }
-                if (!MappingActionContainer.getInstance().queryContains(actionID)) {
+
+                // ✅ fetch directly from container (same as action style)
+                var macro = MacroContainer.getInstance().queryById(macroID);
+
+                if (macro == null) {
                     exchange.sendResponseHeaders(404, -1);
                     return;
                 }
-                var action = MappingActionContainer.getInstance().queryById(actionID);
 
-                try {
-                    String response = MMActionBuilder.buildMMActionJson(
-                            action.getName(),
-                            action.getDescription(),
-                            action.getUid().toString(),
-                            action.getActionType().displayName,
-                            toInputOutputJson(action.getInput(), true),
-                            toInputOutputJson(action.getOutput(), false),
-                            Arrays.stream(action.getInput().getAllInputValues()).boxed().toList(),
-                            Arrays.stream(action.getInput().getAllInputValues()).map(action::map).boxed().toList()
-                    );
+                String response = MacroBuilder.buildMacroJson(macro);
+                byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
 
-                    byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+                exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+                exchange.sendResponseHeaders(200, bytes.length);
 
-                    exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
-                    exchange.sendResponseHeaders(200, bytes.length);
-
-                    try (OutputStream os = exchange.getResponseBody()) {
-                        os.write(bytes);
-                    }
-                    System.out.println("sending action GET query: \n" + response);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    exchange.sendResponseHeaders(500, -1);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(bytes);
                 }
 
-            } else {
-                exchange.sendResponseHeaders(405, -1);
+            } catch (Exception e) {
+                e.printStackTrace();
+                exchange.sendResponseHeaders(500, -1);
             }
-        });
+
+        } else {
+            exchange.sendResponseHeaders(405, -1);
+        }
+
+    }
+
+    private MappingAction getActionFromQuery(HttpExchange exchange) throws IOException {
+        final var actions = MappingActionContainer.getInstance().queryAll();
+
+        if (actions.isEmpty()) {
+            exchange.sendResponseHeaders(204, -1);
+            return null;
+        }
+
+        // ✅ NEW: read UUID query param
+        var query = exchange.getRequestURI().getQuery();
+        String uuidParam = null;
+        if (query != null && query.contains("uuid=")) {
+            uuidParam = query.split("uuid=")[1].split("&")[0];
+        }
+
+        if (uuidParam == null) {
+            String response = """
+                    {
+                      "error": "MISSING_UUID",
+                      "message": "Query parameter 'uuid' is required"
+                    }
+                    """;
+
+            byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+
+            exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+            exchange.sendResponseHeaders(400, bytes.length);
+
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(bytes);
+            }
+            return null;
+        }
+
+        UUID actionID = null;
+        try {
+            actionID = UUID.fromString(uuidParam);
+        } catch (IllegalArgumentException ex) {
+            exchange.sendResponseHeaders(404, -1);
+            return null;
+        }
+        if (!MappingActionContainer.getInstance().queryContains(actionID)) {
+            exchange.sendResponseHeaders(404, -1);
+            return null;
+        }
+        var action = MappingActionContainer.getInstance().queryById(actionID);
+        return action;
+    }
+
+    private MappingPoint[] getRequestedPoints(HttpExchange exchange) {
+        String query = exchange.getRequestURI().getQuery();
+        if (query == null || query.isEmpty()) {
+            return null; // or throw if required
+        }
+
+        String pointsParam = null;
+
+        for (String pair : query.split("&")) {
+            String[] keyValue = pair.split("=", 2);
+            if (keyValue.length == 2 && "points".equals(keyValue[0])) {
+                pointsParam = keyValue[1];
+                break;
+            }
+        }
+
+        if (pointsParam == null) {
+            return null; // or throw if required
+        }
+
+        try {
+            // Decode URL-encoded JSON
+            String decodedJson = URLDecoder.decode(pointsParam, StandardCharsets.UTF_8);
+
+            // Convert JSON -> MappingPoint[]
+            return objectMapper.readValue(decodedJson, MappingPoint[].class);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse 'points' query parameter", e);
+        }
+    }
+
+    private void handleAction(HttpExchange exchange) throws IOException {
+        if ("GET".equals(exchange.getRequestMethod())) {
+            var action = getActionFromQuery(exchange);
+            if (action == null)
+                return; // already handled internally
+            var requestedPoints = getRequestedPoints(exchange);
+            if (requestedPoints != null)
+                action = action.withNewPoints(requestedPoints);
+
+            try {
+                String response = MMActionBuilder.buildMMActionJson(action);
+
+                byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+
+                exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+                exchange.sendResponseHeaders(200, bytes.length);
+
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(bytes);
+                }
+                System.out.println("sending action GET query: \n" + response);
+
+            } catch (JsonProcessingException e) {
+                e.printStackTrace();
+                exchange.sendResponseHeaders(500, -1);
+            }
+
+        } else {
+            exchange.sendResponseHeaders(405, -1);
+        }
+    }
+
+    public void start() throws IOException {
+        server = HttpServer.create(new InetSocketAddress(PORT), 0);
+        Path webuiPath = Paths.get("target/webui-dist");
+
+        // Serve static files
+        server.createContext("/", new StaticFileHandler(webuiPath));
+
+        server.createContext("/macroList", this::handleMacroList);
+
+        server.createContext("/macro", this::handleMacro);
+
+        server.createContext("/action", this::handleAction);
 
         server.setExecutor(null);
         server.start();
