@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.REST;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
+import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 
 import java.util.*;
 
@@ -21,8 +22,14 @@ public class MMActionBuilder {
                 toInputOutputJson(action.getInput(), true),
                 toInputOutputJson(action.getOutput(), false),
                 Arrays.stream(action.getInput().getAllInputValues()).boxed().toList(),
-                Arrays.stream(action.getInput().getAllInputValues()).map(action::map).boxed().toList()
+                Arrays.stream(action.getInput().getAllInputValues()).map(action::map).boxed().toList(),
+                action.getMappingPoints()
         );
+    }
+
+    public String toJson(MappingPoint[] points) throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(points);
     }
 
     private static String buildMMActionJson(
@@ -33,7 +40,8 @@ public class MMActionBuilder {
             Map<String,Object> input,
             Map<String,Object> output,
             List<Integer> inputPoints,
-            List<Integer> outputPoints
+            List<Integer> outputPoints,
+            MappingPoint[] mappingPoints
     ) throws JsonProcessingException {
 
         Map<String, Object> action = new HashMap<>();
@@ -44,9 +52,9 @@ public class MMActionBuilder {
         action.put("actionType", actionType);
         action.put("input", input);
         action.put("output", output);
-        action.put("inputPoints", inputPoints);
-        action.put("outputPoints", outputPoints);
-
+        action.put("mappedInputs", inputPoints);
+        action.put("mappedOutputs", outputPoints);
+        action.put("mappingPoints", mappingPoints);
         return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(action);
     }
 }

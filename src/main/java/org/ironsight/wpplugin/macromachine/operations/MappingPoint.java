@@ -6,7 +6,9 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class MappingPoint implements Serializable {
+    @JsonProperty("x")
     public final int input;
+    @JsonProperty("y")
     public final int output;
 
     public MappingPoint(@JsonProperty("x") int input, @JsonProperty("y") int output) {
