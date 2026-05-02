@@ -4,7 +4,9 @@
 3. mutate actions
     - [] GUI in frontend
         - [] get new mapping for changed mapping points from backend
-    - [] post to backendbackend 
+            - [x] backend can handle get request
+            - [] frontend can use query
+    - [] post to backend
 4. mutate macros
     - [] GUI in frontend
     - [] post to backend

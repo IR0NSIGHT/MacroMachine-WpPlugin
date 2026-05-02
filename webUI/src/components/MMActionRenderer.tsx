@@ -7,7 +7,7 @@ import { ACTION_TYPES, ActionType, isValidAction, MMAction } from '../types/MMAc
 import PointScatterPlot from './PointScatterPlot'
 import { MappingPoint } from '@/types/MappingPoint'
 import RangeEditor from './segmentEditor/RangeEditor'
-import { buildSegmentsFromAction, mappingsFromSegments, Segment } from './segmentEditor/Segment'
+import { buildSegmentsFromAction, getMappingPointArrayFromSegments, Segment } from './segmentEditor/Segment'
 import isEqual from 'lodash/isEqual';
 import { MappingPointTable } from './MappingPointTable'
 import { Paper, ButtonGroup } from '@mui/material'
@@ -19,6 +19,7 @@ import TableChartIcon from '@mui/icons-material/TableChart';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import { EditableSelect, EditableText } from './EditableText'
 import { InputOutput } from '@/types/InputOutput'
+import { fetchActionWithPoints } from '@/API/api'
 
 interface MMActionRendererProps {
   action: MMAction
@@ -26,12 +27,7 @@ interface MMActionRendererProps {
 }
 
 export default function MMActionRenderer({ action, onUpdate }: MMActionRendererProps) {
-  const dataValidation = isValidAction(action)
-  if (!dataValidation.valid) {
-    throw new Error("Invalid action" + (action.name ?? "unknown action") + " , can not render: " + JSON.stringify(dataValidation, null, 3));
-  }
   const [draftAction, setDraftAction] = useState<MMAction>(action)
-  const [draftSegments, setDrafSegments] = useState<Segment[]>(buildSegmentsFromAction(action))
   const [showValues, setShowValues] = useState<boolean>(false);
   const [showTable, setShowTable] = useState<boolean>(false);
 
@@ -61,25 +57,25 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
 
   const updateActionFromSegments = (segments: Segment[]): void => {
     console.log("update action from segmetns:", segments);
-    const { inputs, outputs } = mappingsFromSegments(segments);
-    setDraftAction((prev) => ({
-      ...prev,
-      mappedInputs: inputs,
-      mappedOutputs: outputs
-    }));
-    setDrafSegments(segments); // we need to keep segments separately, because transforming to action and back might merge adjacent segmetns with same output value
+    const mappingPoints = getMappingPointArrayFromSegments(segments);
+    console.log("got mapping points from segments:", mappingPoints);
+    fetchActionWithPoints(draftAction.uid, mappingPoints).then(updatedAction => {
+      console.log("got updated action from backend:", updatedAction);
+      setDraftAction((prev) => ({
+        ...prev,
+        mappingPoints: updatedAction.mappingPoints,
+        mappedInputs: updatedAction.mappedInputs,
+        mappedOutputs: updatedAction.mappedOutputs
+      }));
+    });
   };
-
-  const segmentsDiffer =
-    isRangeEditor &&
-    !isEqual(draftSegments, buildSegmentsFromAction(action));
 
   const actionDiffers = !isEqual(action, draftAction);
 
   const allInputs = [draftAction.input];
   const allOutputs = [draftAction.output];
 
-  const handleResetAction = () => { setDraftAction(action); setDrafSegments(buildSegmentsFromAction(action)); };
+  const handleResetAction = () => { setDraftAction(action); };
   const handleSaveAction = () => { if (onUpdate) onUpdate(draftAction) };
 
   const actionTitleComp = (<EditableText value={draftAction.name} onChange={(val) => setDraftAction((prev) => ({ ...prev, name: val }))} variant='h5' placeholder='Name' label="Name" />);
@@ -108,7 +104,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
           changePoint={updatePoint}
           addPoint={addPoint} />
       }{
-        (!showTable && isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={draftSegments} setSegments={updateActionFromSegments} />
+        (!showTable && isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={buildSegmentsFromAction(draftAction)} setSegments={updateActionFromSegments} />
       }
       {
         (showTable || isTableEditor) && <MappingPointTable
@@ -153,12 +149,12 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
         {actionDescriptionComp}
 
         <ButtonGroup sx={{ ml: 'auto' }}>
-          {(segmentsDiffer || actionDiffers) && (
+          {(actionDiffers) && (
             <IconButton size="small" onClick={handleResetAction} color="primary">
               <RestartAltIcon />
             </IconButton>
           )}
-          {(segmentsDiffer || actionDiffers) && (
+          {(actionDiffers) && (
             <IconButton size="small" onClick={handleSaveAction} color="primary">
               <SaveIcon />
             </IconButton>

@@ -42,12 +42,7 @@ export interface MMAction {
     uid: string
 }
 
-/**
- * request recalculated action from backend using given mappingpoints.
- */
-export const fetchActionWithPoints = (action: MMAction, _mappingPoints: MappingPointDTO[]): MMAction => {
-    return action;
-}
+
 
 
 export function isMMAction(value: unknown): value is MMAction {

@@ -1,5 +1,5 @@
 import { NamedValue } from "@/types/InputOutput";
-import { MMAction } from "@/types/MMAction";
+import { MappingPointDTO, MMAction } from "@/types/MMAction";
 
 export type Segment = {
     start: number;
@@ -216,3 +216,11 @@ export const mappingsFromSegments = (segments: Segments): { inputs: number[], ou
 
     return { inputs: inputs, outputs: outputs }
 }
+
+export const getMappingPointArrayFromSegments = (segments: Segments): MappingPointDTO[] => {
+    const mappingPoints: MappingPointDTO[] = [];
+    segments.forEach(seg => {
+        mappingPoints.push({ x: seg.end, y: seg.value.numericValue });
+    })
+    return mappingPoints;
+}   

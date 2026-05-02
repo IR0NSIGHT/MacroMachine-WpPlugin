@@ -1,5 +1,5 @@
 import { Macro, UUID } from "@/types/MMacro";
-import { MMAction } from "@/types/MMAction";
+import { MappingPointDTO, MMAction } from "@/types/MMAction";
 import { useState, useEffect } from "react";
 
 export const API_BASE = "http://localhost:8080";
@@ -10,6 +10,7 @@ async function safeJsonFetch<T>(url: string): Promise<T> {
   const text = await res.text();
 
   if (!res.ok) {
+    console.error(`Error fetching ${url}:`, text);
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
 
@@ -31,6 +32,15 @@ export async function fetchMacro(uuid: string) {
 async function fetchAction(uuid: string) {
   return safeJsonFetch<MMAction>(`${API_BASE}/action?uuid=${uuid}`);
 }
+
+/**
+ * request recalculated action from backend using given mappingpoints.
+ */
+export const fetchActionWithPoints = (uuid: string, _mappingPoints: MappingPointDTO[]): Promise<MMAction> => {
+  console.log("fetching action with points:", uuid, _mappingPoints);
+  return safeJsonFetch<MMAction>(`${API_BASE}/action?uuid=${uuid}&points=${encodeURIComponent(JSON.stringify(_mappingPoints))}`);
+}
+
 
 export function useMacroSystem(selectedMacroUuid?: string) {
   const [macroUuids, setMacroUuids] = useState<UUID[]>([]);
