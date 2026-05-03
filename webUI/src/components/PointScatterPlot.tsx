@@ -56,17 +56,17 @@ export default function PointScatterPlot({
   const [selectedPoint, setSelectedPoint] = useState<MappingPoint | null>(null)
 
   const [showInterpolationLine, setShowInterpolationLine] = useState<boolean>(true)
+  const [showInterpolatedValues, setShowInterpolatedValues] = useState<boolean>(true)
 
   const inputLabelMap = new Map(input.values.map((item) => [item.numericValue, item.displayName]))
   const outputLabelMap = new Map(output.values.map((item) => [item.numericValue, item.displayName]))
 
-  const getDisplayLabel = ({x,y}:{x: number, y: number}) => {
+  const getDisplayLabel = ({ x, y }: { x: number, y: number }) => {
     const inputLabel = inputLabelMap.get(x)
     const outputLabel = outputLabelMap.get(y)
     return `${input.displayName}=${inputLabel || x} ${type} ${output.displayName}=${outputLabel || y}`
   }
 
-  console.log(xData.length + yData.length)  // FIXME: only so eslint wont complain
   const xMin = input.min
   const xMax = input.max
   const yMin = output.min
@@ -78,12 +78,10 @@ export default function PointScatterPlot({
   const xDtick = getGridSpacingForRange(input.max - input.min)
   const yDtick = getGridSpacingForRange(output.max - output.min)
 
-  console.log("xDtick:", xDtick, "yDtick:", yDtick);
-
   const yLabels = output.values.filter(y => y.numericValue % yDtick === 0);
   const xLabels = input.values.filter(x => x.numericValue % xDtick === 0);
 
-  const zip = (xs: number[], ys: number[]): {x:number, y:number}[] => {
+  const zip = (xs: number[], ys: number[]): { x: number, y: number }[] => {
     return xs.map((x, i) => ({ x, y: ys[i] }));
   };
   const controlPointData = {
@@ -119,7 +117,7 @@ export default function PointScatterPlot({
   const completeMappingData = {
     x: xDataFiltered,
     y: yDataFiltered,
-    text: zip(xDataFiltered,yDataFiltered).map(getDisplayLabel),
+    text: zip(xDataFiltered, yDataFiltered).map(getDisplayLabel),
     hovertemplate: '%{text}<extra></extra>',
 
     type: 'scatter',
@@ -131,6 +129,9 @@ export default function PointScatterPlot({
     }
   };
 
+  const allDataSets = [];
+  if (showInterpolatedValues) allDataSets.push(completeMappingData);
+  allDataSets.push(controlPointData);
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
       <Stack spacing={1}>
@@ -152,15 +153,21 @@ export default function PointScatterPlot({
           }
           label="Show interpolation line"
         />
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showInterpolatedValues}
+              onChange={(e) => setShowInterpolatedValues(e.target.checked)}
+            />
+          }
+          label="Show interpolated values"
+        />
         <Box sx={{ width: '100%' }}>
           <Plot
             config={{
               doubleClick: "reset",
             }}
-            data={[
-              completeMappingData,
-              controlPointData
-            ]}
+            data={allDataSets}
             layout={{
               paper_bgcolor: 'transparent',
               plot_bgcolor: 'transparent',
