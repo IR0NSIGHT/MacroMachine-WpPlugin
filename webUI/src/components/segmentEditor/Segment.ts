@@ -15,51 +15,25 @@ export type Interval = {
 export type Segments = Segment[];
 
 export function buildSegmentsFromAction(action: MMAction): Segments {
-    // require: every input is mapped
-
-    const inputValues = action.input.values;
-    const outputValues = action.output.values;
-
-    if (!inputValues.length || !outputValues.length) return [];
+    var mappingPoints = [...action.mappingPoints].sort((a, b) => a.x - b.x);
+    if (mappingPoints.length === 0) {
+        mappingPoints.unshift({ x: action.input.min, y: action.output.ignoreValue });
+    }
 
     const segments: Segments = [];
-
-    let currentSegment = {
-        start: action.input.min,
-        end: action.input.min,
-        value: action.output.values.find(v => v.numericValue == action.mappedOutputs[0])!,
-    }
-
-    type Mapping = {
-        input: number;
-        output: number;
-    }
-    const mappings: Mapping[] = action.mappedInputs.map((v, i) => {
-        return {
-            input: v,
-            output: action.mappedOutputs[i]
+    for (let i = 0; i < mappingPoints.length; i++) {
+        const mappingPoint = mappingPoints[i];
+        const rangeEnd = i !== mappingPoints.length - 1 ? mappingPoints[i + 1].x -1 :  action.input.max ;
+        
+        console.log("idx",i,"range",mappingPoint.x,rangeEnd);
+        const segment = {
+            start: i !== 0 ? mappingPoint.x : action.input.min, // first segment always starts at range min
+            end: rangeEnd,
+            value: action.output.values.find(v => v.numericValue == mappingPoint.y)!,
         }
-    })
-
-    let previousMapping: undefined | Mapping = undefined;
-    mappings.forEach(mapping => {
-        if (previousMapping && previousMapping.output !== mapping.output) {
-            // output changed -> a new segment starts
-            segments.push(currentSegment);
-            currentSegment = {
-                start: mapping.input,
-                end: mapping.input,
-                value: action.output.values.find(v => v.numericValue == mapping.output)!,
-            }
-        } else {
-            currentSegment = { ...currentSegment, end: mapping.input } // grow segment by one
-        }
-
-        previousMapping = mapping;
-    })
-
-    segments.push(currentSegment);
-
+        segments.push(segment);
+    }
+    console.log("built segments from action:", action, segments);
     return segments;
 }
 
@@ -206,8 +180,8 @@ const isSegmentValid = (segment: Segment): boolean => {
 export const mappingsFromSegments = (segments: Segments): { inputs: number[], outputs: number[] } => {
     const inputs: number[] = [];
     const outputs: number[] = [];
-    segments.forEach( seg => {
-        for( let val = seg.start; val <= seg.end; val++) {
+    segments.forEach(seg => {
+        for (let val = seg.start; val <= seg.end; val++) {
             inputs.push(val);
             outputs.push(seg.value.numericValue);
         }
@@ -219,8 +193,9 @@ export const mappingsFromSegments = (segments: Segments): { inputs: number[], ou
 
 export const getMappingPointArrayFromSegments = (segments: Segments): MappingPointDTO[] => {
     const mappingPoints: MappingPointDTO[] = [];
-    segments.forEach(seg => {
+    segments.slice(0,segments.length-1).forEach(seg => {
         mappingPoints.push({ x: seg.end, y: seg.value.numericValue });
     })
+    console.log("turn segemtns into points:", segments, mappingPoints);
     return mappingPoints;
 }   

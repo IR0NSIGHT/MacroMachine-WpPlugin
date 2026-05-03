@@ -296,8 +296,8 @@ describe("convert action to segments", () => {
             expect(segments).toEqual([
                 { start: 0, end: 3, value: annotationsIO.values.find(v => v.numericValue == 4) },
                 { start: 4, end: 4, value: annotationsIO.values.find(v => v.numericValue == 3) },
-                { start: 5, end: 5, value: annotationsIO.values.find(v => v.numericValue == 5) },
-                { start: 6, end: 7, value: annotationsIO.values.find(v => v.numericValue == 4) },
+                { start: 5, end: 6, value: annotationsIO.values.find(v => v.numericValue == 5) },
+                { start: 7, end: 7, value: annotationsIO.values.find(v => v.numericValue == 4) },
                 { start: 8, end: 11, value: annotationsIO.values.find(v => v.numericValue == 7) },
                 { start: 12, end: 14, value: annotationsIO.values.find(v => v.numericValue == 0) },
                 { start: 15, end: 15, value: annotationsIO.values.find(v => v.numericValue == 15) },
@@ -334,9 +334,9 @@ describe("convert action to segments", () => {
                 input: forestIO,
                 output: annotationsIO,
                 actionType: "increments",
-                mappedInputs: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
-                mappedOutputs: forestIO.values.map(_ => outputMagenta.numericValue),
-                mappingPoints: [] // FIXME
+                mappedInputs: [/** irrelephant */],
+                mappedOutputs: [/** irrelephant */],
+                mappingPoints: [{ x: 7, y: outputMagenta.numericValue }]
 
             }
             const segments = buildSegmentsFromAction(action);
@@ -353,9 +353,9 @@ describe("convert action to segments", () => {
                 input: heightIO,
                 output: annotationsIO,
                 actionType: "increments",
-                mappedInputs: heightIO.values.filter(v => v.numericValue !== heightIO.ignoreValue).map(v => v.numericValue),
-                mappedOutputs: heightIO.values.map(_ => outputMagenta.numericValue),
-                mappingPoints: [] // FIXME
+                mappedInputs: [/** irrelephant */],
+                mappedOutputs:[/** irrelephant */],
+                mappingPoints: [{ x : Math.round((heightIO.min + heightIO.max)/2), y: outputMagenta.numericValue }]
             }
             const segments = buildSegmentsFromAction(action);
             expect(segments).toEqual([
