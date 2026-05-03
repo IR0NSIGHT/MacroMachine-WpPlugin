@@ -10,6 +10,7 @@ import { InputOutput } from '../types/InputOutput'
 import { MappingPoint } from '../types/MappingPoint'
 import { ActionType, MappingPointDTO } from '@/types/MMAction'
 import { useTheme } from '@mui/material/styles'
+import { Checkbox, FormControlLabel } from '@mui/material'
 
 
 
@@ -26,6 +27,14 @@ export interface PointScatterPlotProps {
   addPoint: (newP: MappingPoint) => void
 }
 
+const getGridSpacingForRange = (range: number) => {
+  if (range <= 16) return 1
+  if (range <= 100) return 10
+  if (range <= 700) return 50
+  if (range <= 1600) return 100
+  return Math.pow(10, Math.floor(Math.log10(range)) - 1)
+}
+
 export default function PointScatterPlot({
   xData,
   yData,
@@ -40,39 +49,91 @@ export default function PointScatterPlot({
 }: PointScatterPlotProps) {
   const theme = useTheme()
 
-  const points = mappingPoints.map(p => p.x)
+  const mappingPointXs = mappingPoints.map(p => p.x)
   const outputSliced = mappingPoints.map(p => p.y)
 
   const [editingPoint, setEditingPoint] = useState<boolean>(false)
   const [selectedPoint, setSelectedPoint] = useState<MappingPoint | null>(null)
 
+  const [showInterpolationLine, setShowInterpolationLine] = useState<boolean>(true)
+
   const inputLabelMap = new Map(input.values.map((item) => [item.numericValue, item.displayName]))
   const outputLabelMap = new Map(output.values.map((item) => [item.numericValue, item.displayName]))
 
-  const customText = points.map((x, idx) => {
+  const getDisplayLabel = ({x,y}:{x: number, y: number}) => {
     const inputLabel = inputLabelMap.get(x)
-    const outputLabel = outputLabelMap.get(outputSliced[idx])
-    return `${inputLabel || x} → ${outputLabel || outputSliced[idx]}`
-  })
-  console.log(xData.length + yData.length)  // FIXME: only so eslint wont complain
-  const xMin = Math.min(...points)
-  const xMax = Math.max(...points)
-  const yMin = Math.min(...outputSliced)
-  const yMax = Math.max(...outputSliced)
+    const outputLabel = outputLabelMap.get(y)
+    return `${input.displayName}=${inputLabel || x} ${type} ${output.displayName}=${outputLabel || y}`
+  }
 
+  console.log(xData.length + yData.length)  // FIXME: only so eslint wont complain
+  const xMin = input.min
+  const xMax = input.max
+  const yMin = output.min
+  const yMax = output.max
   const xRange = xMax - xMin
   const yRange = yMax - yMin
+  const rangePaddingPercent = 0.05;
 
-  const xDtick = Math.max(xRange <= 16 ? 1 : 10, yRange <= 16 ? 1 : 10)
-  const yDtick = xDtick
+  const xDtick = getGridSpacingForRange(input.max - input.min)
+  const yDtick = getGridSpacingForRange(output.max - output.min)
+
+  console.log("xDtick:", xDtick, "yDtick:", yDtick);
+
+  const yLabels = output.values.filter(y => y.numericValue % yDtick === 0);
+  const xLabels = input.values.filter(x => x.numericValue % xDtick === 0);
+
+  const zip = (xs: number[], ys: number[]): {x:number, y:number}[] => {
+    return xs.map((x, i) => ({ x, y: ys[i] }));
+  };
+  const controlPointData = {
+    name: "ControlPoints",
+    x: mappingPointXs,
+    y: outputSliced,
+    text: zip(mappingPointXs, outputSliced).map(getDisplayLabel),
+    hovertemplate: '%{text}<extra></extra>',
+
+    type: 'scatter',
+    mode: showInterpolationLine ? 'lines+markers' : 'markers',
+
+    line: {
+      color: theme.palette.primary.light,
+      width: 3,
+      shape: "linear",
+    },
+
+    marker: {
+      size: 16,
+      color: theme.palette.primary.main,
+    }
+  };
+
+
+  const mappingPointXsSet = new Set(mappingPointXs);
+  const mappingPointIndices = xData.map((v, idx) => ({ x: v, idx: idx })).filter(input => !mappingPointXsSet.has(input.x)).map(p => p.idx);
+
+  const nonMappingPointIdxSet = new Set(mappingPointIndices);
+  const filterForNonControlPoints = (_v: any, idx: number) => nonMappingPointIdxSet.has(idx);
+  const xDataFiltered = xData.filter(filterForNonControlPoints);
+  const yDataFiltered = yData.filter(filterForNonControlPoints);
+  const completeMappingData = {
+    x: xDataFiltered,
+    y: yDataFiltered,
+    text: zip(xDataFiltered,yDataFiltered).map(getDisplayLabel),
+    hovertemplate: '%{text}<extra></extra>',
+
+    type: 'scatter',
+    mode: 'markers',
+
+    marker: {
+      size: 6,
+      color: theme.palette.text.disabled,
+    }
+  };
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
       <Stack spacing={1}>
-        <Typography variant="caption" color="textSecondary">
-          Points: {points.length}
-        </Typography>
-
         <Button
           size="small"
           onClick={() => {
@@ -82,28 +143,25 @@ export default function PointScatterPlot({
         >
           Add Point
         </Button>
-
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={showInterpolationLine}
+              onChange={(e) => setShowInterpolationLine(e.target.checked)}
+            />
+          }
+          label="Show interpolation line"
+        />
         <Box sx={{ width: '100%' }}>
           <Plot
+            config={{
+              doubleClick: "reset",
+            }}
             data={[
-              {
-                x: points,
-                y: outputSliced,
-                text: customText,
-                type: 'scatter',
-                mode: interpolation ? 'lines+markers' : 'markers',
-                line: { width: 2 },
-                hovertemplate: '%{text}<extra></extra>',
-              },
+              completeMappingData,
+              controlPointData
             ]}
             layout={{
-              title: {
-                text: title,
-                font: {
-                  family: theme.typography.fontFamily,
-                  color: theme.palette.text.primary,
-                },
-              },
               paper_bgcolor: 'transparent',
               plot_bgcolor: 'transparent',
 
@@ -112,41 +170,44 @@ export default function PointScatterPlot({
                 color: theme.palette.text.primary,
               },
 
-              xaxis: input.discrete
-                ? {
-                  title: {
-                    text: 'Input',
-                    font: { color: theme.palette.text.secondary },
-                  },
-                  tickvals: input.values.map((v) => v.numericValue),
-                  ticktext: input.values.map((v) => v.displayName),
-                }
-                : {
-                  title: {
-                    text: 'Input',
-                    font: { color: theme.palette.text.secondary },
-                  },
-                  dtick: xDtick,
-                  gridcolor: theme.palette.divider,
+              uirevision: "static", // preserve zoom and pan on data update
+              xaxis: {
+                title: {
+                  text: 'Input: ' + input.displayName,
+                  font: { color: theme.palette.text.secondary },
                 },
+                tickvals: xLabels.map(v => v.numericValue),
+                ticktext: xLabels.map(v => v.displayName),
 
-              yaxis: output.discrete
-                ? {
-                  title: {
-                    text: 'Output',
-                    font: { color: theme.palette.text.secondary },
-                  },
-                  tickvals: output.values.map((v) => v.numericValue),
-                  ticktext: output.values.map((v) => v.displayName),
-                }
-                : {
-                  title: {
-                    text: 'Output',
-                    font: { color: theme.palette.text.secondary },
-                  },
-                  dtick: yDtick,
-                  gridcolor: theme.palette.divider,
+                showgrid: true,
+                gridcolor: theme.palette.text.disabled,
+                gridwidth: 1,
+                zeroline: true,
+                zerolinecolor: theme.palette.text.secondary,
+
+                range: [xMin - rangePaddingPercent * xRange, xMax + rangePaddingPercent * xRange],
+                constrain: "range",
+                autorange: false,
+              },
+
+              yaxis: {
+                title: {
+                  text: 'Output: ' + output.displayName,
+                  font: { color: theme.palette.text.secondary },
                 },
+                tickvals: yLabels.map(v => v.numericValue),
+                ticktext: yLabels.map(v => v.displayName),
+
+                showgrid: true,
+                gridcolor: theme.palette.text.disabled,
+                gridwidth: 1,
+                zeroline: true,
+                zerolinecolor: theme.palette.text.secondary,
+
+                range: [yMin - rangePaddingPercent * yRange, yMax + rangePaddingPercent * yRange],
+                constrain: "range",
+                autorange: false,
+              },
 
               margin: { l: 50, r: 20, t: 50, b: 50 },
               showlegend: false,
@@ -155,6 +216,11 @@ export default function PointScatterPlot({
             onClick={(event: any) => {
               const pt = event.points?.[0]
               if (!pt) return
+
+              if (pt.data.name !== controlPointData.name) return;
+
+              setSelectedPoint(pt);
+
 
               const oldP = { x: pt.x, input: input, y: pt.y, output: output }
               setSelectedPoint(oldP)
