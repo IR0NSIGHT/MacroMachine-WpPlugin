@@ -348,7 +348,7 @@ describe("convert action to segments", () => {
             const outputMagenta = annotationsIO.values[3];
             const action: MMAction = {
                 name: "Test Action",
-                description: "This is a test action",
+                description: "This is a test action xx",
                 uid: "test-action",
                 input: heightIO,
                 output: annotationsIO,

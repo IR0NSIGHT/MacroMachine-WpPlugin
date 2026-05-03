@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "build-storybook": "storybook build",
     "storybook": "storybook dev -p 6006",
-    "compile": "tsc --noEmit",
+    "compile": "tsc",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
