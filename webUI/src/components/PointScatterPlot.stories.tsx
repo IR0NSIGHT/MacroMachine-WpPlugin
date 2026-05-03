@@ -53,8 +53,8 @@ export const Empty: Story = {
     yData: [],
     input: annotationsIO,
     output: heightIO,
-    title: 'Empty Mapping',
-    interpolation: false,
+     
+     
   },
 };
 
@@ -65,8 +65,8 @@ export const Annotation_Height: Story = {
     yData: [0, 1, 2, 3, 4, 5],
     input: annotationsIO,
     output: heightIO,
-    title: 'Annotations → Height',
-    interpolation: false,
+     
+     
   },
 };
 
@@ -79,8 +79,8 @@ export const Height_Annotations: Story = {
     yData: output30,
     input: heightIO,
     output: annotationsIO,
-    title: '7 Random Data Points',
-    interpolation: false,
+     
+     
   },
 };
 
@@ -91,8 +91,8 @@ export const HeightToTerrain: Story = {
     yData: generateRandomValues(256, terrainIO.min, terrainIO.max),
     input: heightIO,
     output: terrainIO,
-    title: '256 Random Data Points',
-    interpolation: false,
+     
+     
   },
 };
 
@@ -105,7 +105,7 @@ export const HeightToWaterdepth: Story = {
     yData: output256,
     input: heightIO,
     output: waterdepthIO,
-    title: '30 Random Points → Waterdepth',
-    interpolation: true,
+     
+     
   },
 };

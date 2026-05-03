@@ -18,7 +18,7 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import { EditableSelect, EditableText } from './EditableText'
-import { InputOutput, isIgnoreValue } from '@/types/InputOutput'
+import { InputOutput } from '@/types/InputOutput'
 import { fetchActionWithPoints } from '@/API/api'
 
 interface MMActionRendererProps {
@@ -32,7 +32,9 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const [showTable, setShowTable] = useState<boolean>(false);
 
   const updatePoint = (oldP: MappingPoint, newP: MappingPoint): void => {
-    const updatedPoints = draftAction.mappingPoints.map(p => (p.x === oldP.x && p.y === oldP.y) ? { x: newP.x, y: newP.y } : p).filter(p => !isIgnoreValue(action.output, p.y));;
+    const updatedPoints = draftAction.mappingPoints
+      .map(p => (p.x === oldP.x && p.y === oldP.y) ? { x: newP.x, y: newP.y } : p)
+      .sort((a, b) => a.x - b.x);
     fetchActionWithPoints(draftAction.uid, updatedPoints).then(updatedAction => {
       setDraftAction((prev) => ({
         ...prev,
@@ -44,7 +46,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   }
 
   const addPoint = (newP: MappingPoint): void => {
-    const updatedPoints = draftAction.mappingPoints.concat([{ x: newP.x, y: newP.y }]).filter(p => !isIgnoreValue(action.output, p.y)).sort((a, b) => a.x - b.x);
+    const updatedPoints = draftAction.mappingPoints.concat([{ x: newP.x, y: newP.y }]);
     fetchActionWithPoints(draftAction.uid, updatedPoints).then(updatedAction => {
       setDraftAction((prev) => ({
         ...prev,
@@ -99,8 +101,6 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
           mappingPoints={draftAction.mappingPoints}
           input={draftAction.input}
           output={draftAction.output}
-          title={draftAction.name}
-          interpolation={!draftAction.input.discrete && !draftAction.output.discrete}
           type={draftAction.actionType}
           changePoint={updatePoint}
           addPoint={addPoint} />

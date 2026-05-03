@@ -1,7 +1,6 @@
 import Plot from 'react-plotly.js'
 import Paper from '@mui/material/Paper'
 import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import { MappingPointEditor } from './SingleValues/MappingPointEditor'
 import Button from '@mui/material/Button'
@@ -20,8 +19,6 @@ export interface PointScatterPlotProps {
   mappingPoints: MappingPointDTO[]
   input: InputOutput
   output: InputOutput
-  title: string
-  interpolation: boolean
   type: ActionType,
   changePoint: (oldP: MappingPoint, newP: MappingPoint) => void
   addPoint: (newP: MappingPoint) => void
@@ -41,8 +38,6 @@ export default function PointScatterPlot({
   mappingPoints,
   input,
   output,
-  title = 'Input to Output Mapping',
-  interpolation = false,
   type,
   changePoint,
   addPoint,
@@ -51,7 +46,7 @@ export default function PointScatterPlot({
 
   const mappingPointXs = mappingPoints.map(p => p.x)
   const outputSliced = mappingPoints.map(p => p.y)
-
+  //FIXME: display points with output=ignore somehow in the graph
   const [editingPoint, setEditingPoint] = useState<boolean>(false)
   const [selectedPoint, setSelectedPoint] = useState<MappingPoint | null>(null)
 
