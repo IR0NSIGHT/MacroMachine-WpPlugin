@@ -5,6 +5,16 @@ import { MMAction } from "@/types/MMAction";
 import { alwaysIO, annotationsIO, forestIO, heightIO } from "@/mock/dummyIOs";
 
 describe("segment splitting", () => {
+    it ("will not split at the border of an existing segment", () => {
+        const segments: Segments = [
+            { start: 0, end: 10, value: { displayName: "A", numericValue: 3 } },
+            { start: 11, end: 20, value: { displayName: "B", numericValue: 4 } },
+        ];
+        const newSegments = splitAt(segments, 10);
+        expect(newSegments).toEqual(segments);
+        expect(areSegmentsValid(newSegments, 0, 20)).toBe(true);
+    })
+
     it("splits a single segment at a given position", () => {
         const segments: Segments = [
             { start: 0, end: 10, value: { displayName: "A", numericValue: 3 } },
@@ -116,7 +126,16 @@ describe("segment merging", () => {
             expect(areSegmentsValid(rightEatsLeft, 0, 15)).toBe(true);
         }
     });
+    it("does not merge out-ouf-bounds positions",()=>{
+        const segments: Segments = [
+            { start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
+            { start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
+        ];
+        expect(areSegmentsValid(segments, 0, 10)).toBe(true);
 
+        const newSegments = mergeSegments(segments, 400);
+        expect(newSegments).toEqual(segments);
+    })
     it("does not merge if value is not a border between segments", () => {
         const segments: Segments = [
             { start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
@@ -255,7 +274,23 @@ describe("segment shifting", () => {
 });
 
 describe("convert action to segments", () => {
-
+    it("can handle empty mappingpoint array", () => {
+        const action: MMAction = {
+            name: "Test Action",
+            description: "This is a test action",
+            uid: "test-action",
+            input: forestIO,
+            output: annotationsIO,
+            actionType: "increments",
+            mappedInputs: [/** irrelephant */],
+            mappedOutputs: [/** irrelephant */],
+            mappingPoints: []
+        }
+        const segments = buildSegmentsFromAction(action);
+        expect(segments).toEqual([
+            { start: forestIO.min, end: forestIO.max, value: annotationsIO.values.find(v => v.numericValue == annotationsIO.ignoreValue) },
+        ])
+    })
 
     it("can convert actions with multiple output groups/ranges", () => {
         {
@@ -268,7 +303,7 @@ describe("convert action to segments", () => {
                 actionType: "increments",
                 mappedInputs: forestIO.values.filter(v => v.numericValue !== forestIO.ignoreValue).map(v => v.numericValue),
                 mappedOutputs: [4, 4, 4, 4, 3, 3, 3, 3, 15, 15, 15, 15, 15, 15, 15, 15],
-                mappingPoints: [{ x: 3, y: 4 },{ x: 4, y: 3 },{ x: 8, y: 15 },] // FIXME
+                mappingPoints: [{ x: 3, y: 4 }, { x: 4, y: 3 }, { x: 8, y: 15 },] // FIXME
 
             }
             const segments = buildSegmentsFromAction(action);
@@ -354,8 +389,8 @@ describe("convert action to segments", () => {
                 output: annotationsIO,
                 actionType: "increments",
                 mappedInputs: [/** irrelephant */],
-                mappedOutputs:[/** irrelephant */],
-                mappingPoints: [{ x : Math.round((heightIO.min + heightIO.max)/2), y: outputMagenta.numericValue }]
+                mappedOutputs: [/** irrelephant */],
+                mappingPoints: [{ x: Math.round((heightIO.min + heightIO.max) / 2), y: outputMagenta.numericValue }]
             }
             const segments = buildSegmentsFromAction(action);
             expect(segments).toEqual([

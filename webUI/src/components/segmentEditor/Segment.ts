@@ -44,9 +44,6 @@ export const splitAt = (segments: Segments, position: number): Segments => {
     if (!segmentToBeSplit) {
         return segments;
     }
-    if (segmentToBeSplit.start === position || segmentToBeSplit.end === position) {
-        return segments; // don't split if position is at the border of a segment
-    }
     if (segmentToBeSplit.end - segmentToBeSplit.start <= 2) { // smallest split is 0-1 and 1-2, so segment has to be at least 3 wide to be split
         return segments; // don't split if segment is too small to be split
     }
