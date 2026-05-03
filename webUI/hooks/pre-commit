@@ -1,3 +1,3 @@
 #!/bin/sh
-npm test -- --run
-npm run verify
+npm test -- --run || exit 1
+npm run verify || exit 1
