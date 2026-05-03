@@ -34,7 +34,6 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const updatePoint = (oldP: MappingPoint, newP: MappingPoint): void => {
     const updatedPoints = draftAction.mappingPoints.map(p => (p.x === oldP.x && p.y === oldP.y) ? { x: newP.x, y: newP.y } : p).filter(p => !isIgnoreValue(action.output, p.y));;
     fetchActionWithPoints(draftAction.uid, updatedPoints).then(updatedAction => {
-      console.log("got updated action from backend:", updatedAction);
       setDraftAction((prev) => ({
         ...prev,
         mappingPoints: updatedAction.mappingPoints,
@@ -45,26 +44,23 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   }
 
   const addPoint = (newP: MappingPoint): void => {
-    // implement mutation to action, no submit yet
-    setDraftAction((prev) => {
-      return {
+    const updatedPoints = draftAction.mappingPoints.concat([{ x: newP.x, y: newP.y }]).filter(p => !isIgnoreValue(action.output, p.y)).sort((a, b) => a.x - b.x);
+    fetchActionWithPoints(draftAction.uid, updatedPoints).then(updatedAction => {
+      setDraftAction((prev) => ({
         ...prev,
-        mappedInputs: [...prev.mappedInputs, newP.x],
-        mappedOutputs: [...prev.mappedOutputs, newP.y],
-      };
-    })
-
+        mappingPoints: updatedAction.mappingPoints,
+        mappedInputs: updatedAction.mappedInputs,
+        mappedOutputs: updatedAction.mappedOutputs
+      }));
+    });
   }
   const isTableEditor = draftAction.input.discrete;
   const isRangeEditor = !isTableEditor && draftAction.output.discrete;
   const isGridEditor = !isRangeEditor && !isTableEditor;
 
   const updateActionFromSegments = (segments: Segment[]): void => {
-    console.log("update action from segmetns:", segments);
     const mappingPoints = getMappingPointArrayFromSegments(segments);
-    console.log("got mapping points from segments:", mappingPoints);
     fetchActionWithPoints(draftAction.uid, mappingPoints).then(updatedAction => {
-      console.log("got updated action from backend:", updatedAction);
       setDraftAction((prev) => ({
         ...prev,
         mappingPoints: updatedAction.mappingPoints,
@@ -197,7 +193,7 @@ const toFullSetMappingPointList = (action: MMAction): MappingPoint[] => {
   }))
 
   // then replace with actual mappings where they exist
-  return allValuesAsIgnore.map(p => { 
+  return allValuesAsIgnore.map(p => {
     const mappingPoint = action.mappingPoints.find((mappingPoint) => mappingPoint.x === p.x);
     if (mappingPoint === undefined) {
       return p; // no mapping for this input value, treat as ignore
@@ -210,11 +206,10 @@ const toFullSetMappingPointList = (action: MMAction): MappingPoint[] => {
     }
   });
 
-  
+
 }
 
 const toNumericValueList = (mappingpoints: MappingPoint[]): { inputPoints: number[], outputPoints: number[] } => {
-  console.log("converting mapping points to numeric value lists:", mappingpoints);
   return ({
     inputPoints: mappingpoints.map(p => p.x),
     outputPoints: mappingpoints.map(p => p.y)

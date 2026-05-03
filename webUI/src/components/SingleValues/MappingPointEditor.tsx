@@ -13,7 +13,6 @@ export const MappingPointEditor = (props: {
     updatePoint: (oldPoint: MappingPoint, newPoint: MappingPoint) => void,
     addPoint: (point: MappingPoint) => void
 }) => {
-    const isNew = props.oldPoint === null;
     const [draft, setDraft] = useState<MappingPoint>(
         props.oldPoint ?? { x: 0, y: 0, input: null!, output: null! } // placeholder for new points
     );
@@ -46,7 +45,7 @@ export const MappingPointEditor = (props: {
     }
     return (
         <Dialog open={props.editorActive} onClose={props.onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>{isNew ? 'Add Point' : 'Edit Point'}</DialogTitle>
+            <DialogTitle>{props.isNew ? 'Add Point' : 'Edit Point'}</DialogTitle>
             <DialogContent
                 sx={{
                     display: 'flex',
@@ -84,7 +83,7 @@ export const MappingPointEditor = (props: {
                 <Button
                     variant="contained"
                     onClick={() => {
-                        if (isNew) props.addPoint(draft);
+                        if (props.isNew) props.addPoint(draft);
                         else props.updatePoint(props.oldPoint!, draft);
                     }}
                 >
