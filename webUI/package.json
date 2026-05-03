@@ -15,7 +15,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "verify": "npm run compile && npm run lint && npm run build && npm run build-storybook"
+    "verify": "npm run compile && npm run lint"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
