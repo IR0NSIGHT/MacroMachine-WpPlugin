@@ -25,7 +25,6 @@ export function buildSegmentsFromAction(action: MMAction): Segments {
         const mappingPoint = mappingPoints[i];
         const rangeEnd = i !== mappingPoints.length - 1 ? mappingPoints[i + 1].x -1 :  action.input.max ;
         
-        console.log("idx",i,"range",mappingPoint.x,rangeEnd);
         const segment = {
             start: i !== 0 ? mappingPoint.x : action.input.min, // first segment always starts at range min
             end: rangeEnd,
@@ -33,7 +32,6 @@ export function buildSegmentsFromAction(action: MMAction): Segments {
         }
         segments.push(segment);
     }
-    console.log("built segments from action:", action, segments);
     return segments;
 }
 
@@ -66,7 +64,7 @@ export const mergeSegments = (segments: Segments, position: number): Segments =>
     if (!targetSegment) {
         return segments;
     }
-    const neighbourToEat = segments.find(s => s.start === targetSegment.end + 1 || s.end === targetSegment.start - 1);
+    const neighbourToEat = segments.find(s => s.start === position + 1 || s.end === position - 1);
     if (!neighbourToEat) {
         return segments;
     }
@@ -125,10 +123,6 @@ export const shiftSegment = (segments: Segments, oldSegmentStart: number, newSta
         .concat(leftNeighbour ? { ...leftNeighbour, end: shiftedSegment.start - 1 } : [])
         .concat(rightNeighbour ? { ...rightNeighbour, start: shiftedSegment.end + 1 } : [])
         .sort((a, b) => a.start - b.start);
-    if (!areSegmentsValid(newSegments, range.start, range.end)) {
-        console.error("Invalid segments after shifting:", newSegments);
-        return segments; // return original segments if new segments are invalid
-    }
     return newSegments;
 };
 
@@ -146,11 +140,9 @@ export const areSegmentsValid = (segments: Segments, start: number, end: number)
     let previousSegment: Segment | undefined = undefined;
     for (const segment of segments) {
         if (!isSegmentValid(segment)) {
-            console.error("Invalid segment:", segment);
             return false;
         }
         if (previousSegment && segment.start !== previousSegment.end + 1) {
-            console.error("Segments have a hole between them:", previousSegment, segment);
             return false;
         }
         previousSegment = segment;
@@ -174,25 +166,13 @@ const isSegmentValid = (segment: Segment): boolean => {
     return segment.start <= segment.end;
 };
 
-export const mappingsFromSegments = (segments: Segments): { inputs: number[], outputs: number[] } => {
-    const inputs: number[] = [];
-    const outputs: number[] = [];
-    segments.forEach(seg => {
-        for (let val = seg.start; val <= seg.end; val++) {
-            inputs.push(val);
-            outputs.push(seg.value.numericValue);
-        }
-    })
-
-
-    return { inputs: inputs, outputs: outputs }
-}
-
 export const getMappingPointArrayFromSegments = (segments: Segments): MappingPointDTO[] => {
     const mappingPoints: MappingPointDTO[] = [];
-    segments.slice(0,segments.length-1).forEach(seg => {
+    if (segments.length === 0) {
+        return [];
+    }
+    segments.forEach(seg => {
         mappingPoints.push({ x: seg.end, y: seg.value.numericValue });
     })
-    console.log("turn segemtns into points:", segments, mappingPoints);
     return mappingPoints;
 }   

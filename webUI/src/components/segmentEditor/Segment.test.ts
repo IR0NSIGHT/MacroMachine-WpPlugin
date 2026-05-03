@@ -1,11 +1,11 @@
 // src/utils/sum.test.ts
 import { describe, it, expect } from "vitest";
-import { Segments, splitAt, mergeSegments, areSegmentsValid, shiftSegment, buildSegmentsFromAction, Segment, mappingsFromSegments } from "./Segment";
-import { MMAction } from "@/types/MMAction";
+import { Segments, splitAt, mergeSegments, areSegmentsValid, shiftSegment, buildSegmentsFromAction, Segment, mappingsFromSegments, getMappingPointArrayFromSegments } from "./Segment";
+import { MappingPointDTO, MMAction } from "@/types/MMAction";
 import { alwaysIO, annotationsIO, forestIO, heightIO } from "@/mock/dummyIOs";
 
 describe("segment splitting", () => {
-    it ("will not split at the border of an existing segment", () => {
+    it("will not split at the border of an existing segment", () => {
         const segments: Segments = [
             { start: 0, end: 10, value: { displayName: "A", numericValue: 3 } },
             { start: 11, end: 20, value: { displayName: "B", numericValue: 4 } },
@@ -126,7 +126,7 @@ describe("segment merging", () => {
             expect(areSegmentsValid(rightEatsLeft, 0, 15)).toBe(true);
         }
     });
-    it("does not merge out-ouf-bounds positions",()=>{
+    it("does not merge out-ouf-bounds positions", () => {
         const segments: Segments = [
             { start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
             { start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
@@ -134,6 +134,16 @@ describe("segment merging", () => {
         expect(areSegmentsValid(segments, 0, 10)).toBe(true);
 
         const newSegments = mergeSegments(segments, 400);
+        expect(newSegments).toEqual(segments);
+    })
+    it("does not merge if there is no right neighbour", () => {
+        const segments: Segments = [
+            { start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
+            { start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
+        ];
+        expect(areSegmentsValid(segments, 0, 10)).toBe(true);
+
+        const newSegments = mergeSegments(segments, 10);
         expect(newSegments).toEqual(segments);
     })
     it("does not merge if value is not a border between segments", () => {
@@ -156,7 +166,8 @@ describe("segment merging", () => {
         // try to merge away the first segment by merging at the start of the range
         const newSegments = mergeSegments(segments, 0);
         expect(newSegments).toEqual([
-            { start: 0, end: 10, value: { displayName: "A", numericValue: 3 } },
+            { start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
+            { start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
         ]);
         expect(areSegmentsValid(newSegments, 0, 10)).toBe(true);
     });
@@ -269,6 +280,18 @@ describe("segment shifting", () => {
         expect(shift).toEqual([
             { start: 0, end: 1, value: { displayName: "A", numericValue: 3 } },
             { start: 2, end: 10, value: { displayName: "B", numericValue: 5 } }
+        ]); // segment 1 would have width 0, so shift is not applied
+    });
+
+    it("does not shift if value is not a segment border", () => {
+        const segments: Segments = [
+            { start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
+            { start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
+        ];
+        const shift = shiftSegment(segments, 3, 0, 0);
+        expect(shift).toEqual([
+            { start: 0, end: 5, value: { displayName: "A", numericValue: 3 } },
+            { start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
         ]); // segment 1 would have width 0, so shift is not applied
     });
 });
@@ -400,19 +423,46 @@ describe("convert action to segments", () => {
     })
 });
 
-describe("convert segemnts into mapping lists for use in action", () => {
+describe("convert segments into mappingpoint[]", () => {
+    it("can handle empty list", () => {
+        const mappings = getMappingPointArrayFromSegments([]);
+        expect(mappings).toEqual([])
+    });
     it("can convert single segment list", () => {
         const segment: Segment = { start: -4, end: 3, value: { displayName: "hello", numericValue: 72 } }
-        const mappings = mappingsFromSegments([segment]);
-        expect(mappings).toEqual({ inputs: [-4, -3, -2, -1, 0, 1, 2, 3], outputs: [72, 72, 72, 72, 72, 72, 72, 72] })
+        const mappings = getMappingPointArrayFromSegments([segment]);
+        const expectedMappingPoints: MappingPointDTO[] = [{ x: 3, y: 72 }];
+        expect(mappings).toEqual(expectedMappingPoints)
     })
     it("can convert multi segment list", () => {
-        const mappings = mappingsFromSegments([
+        const mappings = getMappingPointArrayFromSegments([
             { start: -4, end: -2, value: { displayName: "hello", numericValue: 72 } },
             { start: -1, end: 3, value: { displayName: "hello", numericValue: -15 } },
             { start: 4, end: 4, value: { displayName: "hello", numericValue: 73 } },
             { start: 5, end: 10, value: { displayName: "hello", numericValue: 1 } }
         ]);
-        expect(mappings).toEqual({ inputs: [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], outputs: [72, 72, 72, -15, -15, -15, -15, -15, 73, 1, 1, 1, 1, 1, 1] })
+        const expectedMappingPoints: MappingPointDTO[] = [
+            { x: -2, y: 72 },
+            { x: 3, y: -15 },
+            { x: 4, y: 73 },
+            { x: 10, y: 1 },
+        ];
+        expect(mappings).toEqual(expectedMappingPoints)
+    })
+})
+
+describe("test if segment[] is valid", () => {
+    it("will reject empty list", () => {
+        expect(areSegmentsValid([], 0, 10)).toBeFalsy();
+    })
+    it("will accept list with single legal segment", () => {
+        expect(areSegmentsValid([{ start: 0, end: 10, value: { displayName: "hello", numericValue: 72 } }], 0, 10)).toBeTruthy();
+    })
+    it("will reject list with single illegal segment", () => {
+        expect(areSegmentsValid([
+            { start: 0, end: 5, value: { displayName: "hello", numericValue: 72 } },
+            { start: 7, end: 6, value: { displayName: "hello", numericValue: 72 } },// illegal start/end
+            { start: 8, end: 10, value: { displayName: "hello", numericValue: 72 } }
+        ], 0, 10)).toBeFalsy();
     })
 })
