@@ -125,7 +125,7 @@ export default function PointScatterPlot({
 
     marker: {
       size: 6,
-      color: theme.palette.text.disabled,
+      color: theme.palette.text.primary,
     }
   };
 
@@ -190,7 +190,7 @@ export default function PointScatterPlot({
                 gridcolor: theme.palette.text.disabled,
                 gridwidth: 1,
                 zeroline: true,
-                zerolinecolor: theme.palette.text.secondary,
+                zerolinecolor: theme.palette.secondary.main,
 
                 range: [xMin - rangePaddingPercent * xRange, xMax + rangePaddingPercent * xRange],
                 constrain: "range",
@@ -209,7 +209,7 @@ export default function PointScatterPlot({
                 gridcolor: theme.palette.text.disabled,
                 gridwidth: 1,
                 zeroline: true,
-                zerolinecolor: theme.palette.text.secondary,
+                zerolinecolor: theme.palette.secondary.main,
 
                 range: [yMin - rangePaddingPercent * yRange, yMax + rangePaddingPercent * yRange],
                 constrain: "range",
