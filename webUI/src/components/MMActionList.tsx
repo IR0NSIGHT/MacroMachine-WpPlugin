@@ -17,7 +17,7 @@ export default function MMActionList({ actions, title = 'Actions' }: MMActionLis
       </Typography>
     )
   }
-
+  console.log("action list:",JSON.stringify(actions, null, 3))
   return (
     <Container maxWidth="lg" sx={{ py: 2 }}>
       {title && (
@@ -30,6 +30,17 @@ export default function MMActionList({ actions, title = 'Actions' }: MMActionLis
           <MMActionRenderer key={action.uid} action={action} />
         ))}
       </Stack>
+      <pre
+        style={{
+          textAlign: "left",
+          fontFamily: 'monospace',
+          padding: 12,
+          borderRadius: 6,
+
+        }}
+      >
+        {JSON.stringify(actions, null, 1)}
+      </pre>
     </Container>
   )
 }

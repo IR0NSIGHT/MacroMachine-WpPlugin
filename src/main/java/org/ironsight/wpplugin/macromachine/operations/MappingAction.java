@@ -376,7 +376,7 @@ public class MappingAction implements SaveableAction
     }
 
     public MappingAction withNewPoints(MappingPoint[] mappingPoints) {
-        mappingPoints = Arrays.stream(mappingPoints).map(this::sanitize).toArray(MappingPoint[]::new);
+        mappingPoints = Arrays.stream(mappingPoints).map(this::sanitize).filter(p -> !this.output.isIgnoreValue(p.output)).toArray(MappingPoint[]::new);
 
         TreeSet<MappingPoint> newPoints = new TreeSet<>(Comparator.comparingInt(o -> o.input));
         newPoints.addAll(Arrays.asList(mappingPoints));

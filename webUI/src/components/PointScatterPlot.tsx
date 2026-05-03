@@ -8,7 +8,7 @@ import Button from '@mui/material/Button'
 import { useState } from 'react'
 import { InputOutput } from '../types/InputOutput'
 import { MappingPoint } from '../types/MappingPoint'
-import { ActionType } from '@/types/MMAction'
+import { ActionType, MappingPointDTO } from '@/types/MMAction'
 import { useTheme } from '@mui/material/styles'
 
 
@@ -16,6 +16,7 @@ import { useTheme } from '@mui/material/styles'
 export interface PointScatterPlotProps {
   xData: number[]
   yData: number[]
+  mappingPoints: MappingPointDTO[]
   input: InputOutput
   output: InputOutput
   title: string
@@ -28,6 +29,7 @@ export interface PointScatterPlotProps {
 export default function PointScatterPlot({
   xData,
   yData,
+  mappingPoints,
   input,
   output,
   title = 'Input to Output Mapping',
@@ -38,8 +40,8 @@ export default function PointScatterPlot({
 }: PointScatterPlotProps) {
   const theme = useTheme()
 
-  const points = xData.slice(0, Math.min(xData.length, yData.length))
-  const outputSliced = yData.slice(0, points.length)
+  const points = mappingPoints.map(p => p.x)
+  const outputSliced = mappingPoints.map(p => p.y)
 
   const [editingPoint, setEditingPoint] = useState<boolean>(false)
   const [selectedPoint, setSelectedPoint] = useState<MappingPoint | null>(null)
@@ -52,23 +54,7 @@ export default function PointScatterPlot({
     const outputLabel = outputLabelMap.get(outputSliced[idx])
     return `${inputLabel || x} → ${outputLabel || outputSliced[idx]}`
   })
-
-  if (points.length === 0) {
-    return (
-      <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-        <Typography color="textSecondary">No points to display</Typography>
-        <Button
-          onClick={() => {
-            setSelectedPoint(null)
-            setEditingPoint(true)
-          }}
-        >
-          Add Point
-        </Button>
-      </Paper>
-    )
-  }
-
+  console.log(xData.length + yData.length)  // FIXME: only so eslint wont complain
   const xMin = Math.min(...points)
   const xMax = Math.max(...points)
   const yMin = Math.min(...outputSliced)

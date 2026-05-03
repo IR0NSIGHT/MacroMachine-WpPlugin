@@ -3,7 +3,7 @@ import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import IconButton from '@mui/material/IconButton'
 import SaveIcon from '@mui/icons-material/Save'
-import { ACTION_TYPES, ActionType, isValidAction, MMAction } from '../types/MMAction'
+import { ACTION_TYPES, ActionType, MMAction } from '../types/MMAction'
 import PointScatterPlot from './PointScatterPlot'
 import { MappingPoint } from '@/types/MappingPoint'
 import RangeEditor from './segmentEditor/RangeEditor'
@@ -18,7 +18,7 @@ import TimelineIcon from '@mui/icons-material/Timeline';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import { EditableSelect, EditableText } from './EditableText'
-import { InputOutput } from '@/types/InputOutput'
+import { InputOutput, isIgnoreValue } from '@/types/InputOutput'
 import { fetchActionWithPoints } from '@/API/api'
 
 interface MMActionRendererProps {
@@ -28,11 +28,11 @@ interface MMActionRendererProps {
 
 export default function MMActionRenderer({ action, onUpdate }: MMActionRendererProps) {
   const [draftAction, setDraftAction] = useState<MMAction>(action)
-  const [showValues, setShowValues] = useState<boolean>(false);
+  const [showValues, setShowValues] = useState<boolean>(true);
   const [showTable, setShowTable] = useState<boolean>(false);
 
   const updatePoint = (oldP: MappingPoint, newP: MappingPoint): void => {
-    const updatedPoints = draftAction.mappingPoints.map(p => (p.x === oldP.x && p.y === oldP.y) ? { x: newP.x, y: newP.y } : p);
+    const updatedPoints = draftAction.mappingPoints.map(p => (p.x === oldP.x && p.y === oldP.y) ? { x: newP.x, y: newP.y } : p).filter(p => !isIgnoreValue(action.output, p.y));;
     fetchActionWithPoints(draftAction.uid, updatedPoints).then(updatedAction => {
       console.log("got updated action from backend:", updatedAction);
       setDraftAction((prev) => ({
@@ -100,6 +100,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
         (!showTable && isGridEditor) && <PointScatterPlot
           xData={draftAction.mappedInputs}
           yData={draftAction.mappedOutputs}
+          mappingPoints={draftAction.mappingPoints}
           input={draftAction.input}
           output={draftAction.output}
           title={draftAction.name}
@@ -112,7 +113,7 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
       }
       {
         (showTable || isTableEditor) && <MappingPointTable
-          points={toMappingPointList(draftAction)}
+          points={toFullSetMappingPointList(draftAction)}
           setPoints={points => { const { inputPoints, outputPoints } = toNumericValueList(points); setDraftAction(prev => ({ ...prev, mappedInputs: inputPoints, mappedOutputs: outputPoints })) }} />
       }
     </>
@@ -186,9 +187,30 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   )
 }
 
-const toMappingPointList = (action: MMAction): MappingPoint[] => {
-  // action.inputPoints and outputPoints is a complete set of mappings, bijektiv
-  return action.mappedInputs.map((inputX, i) => ({ x: inputX, y: action.mappedOutputs[i], input: action.input, output: action.output }))
+const toFullSetMappingPointList = (action: MMAction): MappingPoint[] => {
+  // as a base, create INGORE for all possible inputs
+  const allValuesAsIgnore: MappingPoint[] = action.mappedInputs.map(inputV => ({
+    x: inputV,
+    y: action.output.ignoreValue,
+    input: action.input,
+    output: action.output
+  }))
+
+  // then replace with actual mappings where they exist
+  return allValuesAsIgnore.map(p => { 
+    const mappingPoint = action.mappingPoints.find((mappingPoint) => mappingPoint.x === p.x);
+    if (mappingPoint === undefined) {
+      return p; // no mapping for this input value, treat as ignore
+    }
+    return {
+      x: p.x,
+      y: mappingPoint.y,
+      input: action.input,
+      output: action.output
+    }
+  });
+
+  
 }
 
 const toNumericValueList = (mappingpoints: MappingPoint[]): { inputPoints: number[], outputPoints: number[] } => {

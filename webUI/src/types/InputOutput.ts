@@ -44,6 +44,14 @@ export interface InputOutput {
     parameters: ioParameter[]
 }
 
+export const inputValues = (io: InputOutput): NamedValue[] => {
+    return io.values.filter(v => v.numericValue !== io.ignoreValue)
+}
+
+export const isIgnoreValue = (io: InputOutput, val: number): boolean => {
+    return val === io.ignoreValue
+}
+
 export function isInputOutput(value: any): value is InputOutput {
     return (
         value &&

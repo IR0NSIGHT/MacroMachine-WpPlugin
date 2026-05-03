@@ -2,6 +2,7 @@
 import { raiseYonCyan, slopeToForest, grassEverywhere, onlyOnLand, onlyOnCyan } from "@/mock/dummyActions";
 import { Macro, UUID } from "@/types/MMacro";
 import { MMAction } from "@/types/MMAction";
+import Test_Macro from "@/mock/Test_Macro.json";
 
 export const macroList: UUID[] = [
     "macro-1",
@@ -25,7 +26,12 @@ export const macros: Record<string, Macro> = {
     }
 };
 
-const actionList = [raiseYonCyan, slopeToForest, grassEverywhere, onlyOnLand, onlyOnCyan];
+
+
+const actionList: MMAction[] = [raiseYonCyan, slopeToForest, grassEverywhere, onlyOnLand, onlyOnCyan,
+    Test_Macro[0] as MMAction, Test_Macro[1] as MMAction];
+
+console.log(Test_Macro[0])
 
 export const actions: Record<string, MMAction> =
     Object.fromEntries(actionList.map(a => [a.uid, a]));

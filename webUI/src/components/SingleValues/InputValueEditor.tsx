@@ -89,6 +89,8 @@ export const InputValueEditor = (props: {
 }) => {
   const { includeIgnore, label, value, input, onChange } = props;
 
+  const valueIsAllowed = input.values.some(v => v.numericValue === props.value);
+
   const isIgnore = (val: number) => val === input.ignoreValue;
 
   const filter = includeIgnore
@@ -105,7 +107,10 @@ export const InputValueEditor = (props: {
   return (
     <FormControl fullWidth margin="normal">
       <InputLabel>{`${label}: ${input.displayName}`}</InputLabel>
-      <InputValueSelect value={value} input={input} sortedValues={sortedValues} onSelect={onChange} label={label} />
+      { !valueIsAllowed && <div style={{ color: 'red' }}>Current value {value} is not in allowed values!</div> }
+      {valueIsAllowed && (
+        <InputValueSelect value={value} input={input} sortedValues={sortedValues} onSelect={onChange} label={label} />
+      )}
     </FormControl>
   );
 };

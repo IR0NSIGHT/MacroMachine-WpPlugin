@@ -36,7 +36,7 @@ const getDisplayNameOutput = (point: MappingPoint) => {
 export const MappingPointTable = ({ points, setPoints }: Props) => {
     console.log("rendering MappingPointTable with points:", points);
     if (points.some(p => !isInputOutput(p.input) || !isInputOutput(p.output))) {
-        return <div>Invalid data: {JSON.stringify(points.filter(p => !isInputOutput(p.input) || !isInputOutput(p.output)))} points</div>;
+        console.error("Invalid data:", JSON.stringify(points.filter(p => !isInputOutput(p.input) || !isInputOutput(p.output))));
     } else{
         console.log("all points are valid InputOutput:", points);
     }
