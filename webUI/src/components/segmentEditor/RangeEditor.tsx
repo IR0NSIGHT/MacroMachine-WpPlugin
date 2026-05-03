@@ -130,12 +130,10 @@ export default function RangeValueAxisEditor({
     segments,
     setSegments
 }: Props) {
-    console.log("range editor segments:",segments);
     const interval: Interval = { start: input.min, end: input.max, };
 
     const getActiveSegment: () => Segment | undefined = () => {
         const selectedSeg = segments.find(s => s.start === menuState.currentSegmentStart);
-        console.log("Getting active segment for id", menuState.currentSegmentStart, "found", selectedSeg);
         return selectedSeg;
     };
 

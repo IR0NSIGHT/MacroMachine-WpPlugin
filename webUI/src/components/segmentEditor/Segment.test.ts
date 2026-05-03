@@ -1,6 +1,6 @@
 // src/utils/sum.test.ts
 import { describe, it, expect } from "vitest";
-import { Segments, splitAt, mergeSegments, areSegmentsValid, shiftSegment, buildSegmentsFromAction, Segment, mappingsFromSegments, getMappingPointArrayFromSegments } from "./Segment";
+import { Segments, splitAt, mergeSegments, areSegmentsValid, shiftSegment, buildSegmentsFromAction, Segment, getMappingPointArrayFromSegments } from "./Segment";
 import { MappingPointDTO, MMAction } from "@/types/MMAction";
 import { alwaysIO, annotationsIO, forestIO, heightIO } from "@/mock/dummyIOs";
 
@@ -294,6 +294,18 @@ describe("segment shifting", () => {
             { start: 6, end: 10, value: { displayName: "B", numericValue: 5 } },
         ]); // segment 1 would have width 0, so shift is not applied
     });
+
+    it("can shift a simple filteraction segment range", () => {
+        const segments = [
+            { "start": 0, "end": 0, "value": { "displayName": "BLOCK (0)", "numericValue": 0 } },
+            { "start": 1, "end": 100, "value": { "displayName": "PASS (1)", "numericValue": 1 } }
+        ]
+        const newSegments = shiftSegment(segments, 0, 0, 5);
+        expect(newSegments).toEqual([
+            { "start": 0, "end": 5, "value": { "displayName": "BLOCK (0)", "numericValue": 0 } },
+            { "start": 6, "end": 100, "value": { "displayName": "PASS (1)", "numericValue": 1 } }
+        ]);
+    })
 });
 
 describe("convert action to segments", () => {
@@ -420,6 +432,369 @@ describe("convert action to segments", () => {
                 { start: heightIO.min, end: heightIO.max, value: outputMagenta }
             ])
         }
+    })
+
+    it("correctly converts a real action (regression test)", () => {
+        const action: MMAction = {
+            "output": {
+                "discrete": true,
+                "uid": "2130196964",
+                "ignoreValue": 2147483647,
+                "min": 0,
+                "max": 1,
+                "displayName": "Action Filter",
+                "values": [{
+                    "displayName": "Skip",
+                    "numericValue": 2147483647
+                }, {
+                    "displayName": "BLOCK (0)",
+                    "numericValue": 0
+                }, {
+                    "displayName": "PASS (1)",
+                    "numericValue": 1
+                }],
+                "description": "only blocks that pass this filter will be used in following actions.",
+                "parameters": []
+            },
+            "uid": "168093c4-3b5d-49f9-9fc6-8941a434e681",
+            "actionType": "sets",
+            "input": {
+                "discrete": false,
+                "uid": "1927540175",
+                "ignoreValue": 2147483647,
+                "min": 0,
+                "max": 100,
+                "displayName": "Water Depth",
+                "values": [{
+                    "displayName": "Land (0)",
+                    "numericValue": 0
+                }, {
+                    "displayName": "1 deep",
+                    "numericValue": 1
+                }, {
+                    "displayName": "2 deep",
+                    "numericValue": 2
+                }, {
+                    "displayName": "3 deep",
+                    "numericValue": 3
+                }, {
+                    "displayName": "4 deep",
+                    "numericValue": 4
+                }, {
+                    "displayName": "5 deep",
+                    "numericValue": 5
+                }, {
+                    "displayName": "6 deep",
+                    "numericValue": 6
+                }, {
+                    "displayName": "7 deep",
+                    "numericValue": 7
+                }, {
+                    "displayName": "8 deep",
+                    "numericValue": 8
+                }, {
+                    "displayName": "9 deep",
+                    "numericValue": 9
+                }, {
+                    "displayName": "10 deep",
+                    "numericValue": 10
+                }, {
+                    "displayName": "11 deep",
+                    "numericValue": 11
+                }, {
+                    "displayName": "12 deep",
+                    "numericValue": 12
+                }, {
+                    "displayName": "13 deep",
+                    "numericValue": 13
+                }, {
+                    "displayName": "14 deep",
+                    "numericValue": 14
+                }, {
+                    "displayName": "15 deep",
+                    "numericValue": 15
+                }, {
+                    "displayName": "16 deep",
+                    "numericValue": 16
+                }, {
+                    "displayName": "17 deep",
+                    "numericValue": 17
+                }, {
+                    "displayName": "18 deep",
+                    "numericValue": 18
+                }, {
+                    "displayName": "19 deep",
+                    "numericValue": 19
+                }, {
+                    "displayName": "20 deep",
+                    "numericValue": 20
+                }, {
+                    "displayName": "21 deep",
+                    "numericValue": 21
+                }, {
+                    "displayName": "22 deep",
+                    "numericValue": 22
+                }, {
+                    "displayName": "23 deep",
+                    "numericValue": 23
+                }, {
+                    "displayName": "24 deep",
+                    "numericValue": 24
+                }, {
+                    "displayName": "25 deep",
+                    "numericValue": 25
+                }, {
+                    "displayName": "26 deep",
+                    "numericValue": 26
+                }, {
+                    "displayName": "27 deep",
+                    "numericValue": 27
+                }, {
+                    "displayName": "28 deep",
+                    "numericValue": 28
+                }, {
+                    "displayName": "29 deep",
+                    "numericValue": 29
+                }, {
+                    "displayName": "30 deep",
+                    "numericValue": 30
+                }, {
+                    "displayName": "31 deep",
+                    "numericValue": 31
+                }, {
+                    "displayName": "32 deep",
+                    "numericValue": 32
+                }, {
+                    "displayName": "33 deep",
+                    "numericValue": 33
+                }, {
+                    "displayName": "34 deep",
+                    "numericValue": 34
+                }, {
+                    "displayName": "35 deep",
+                    "numericValue": 35
+                }, {
+                    "displayName": "36 deep",
+                    "numericValue": 36
+                }, {
+                    "displayName": "37 deep",
+                    "numericValue": 37
+                }, {
+                    "displayName": "38 deep",
+                    "numericValue": 38
+                }, {
+                    "displayName": "39 deep",
+                    "numericValue": 39
+                }, {
+                    "displayName": "40 deep",
+                    "numericValue": 40
+                }, {
+                    "displayName": "41 deep",
+                    "numericValue": 41
+                }, {
+                    "displayName": "42 deep",
+                    "numericValue": 42
+                }, {
+                    "displayName": "43 deep",
+                    "numericValue": 43
+                }, {
+                    "displayName": "44 deep",
+                    "numericValue": 44
+                }, {
+                    "displayName": "45 deep",
+                    "numericValue": 45
+                }, {
+                    "displayName": "46 deep",
+                    "numericValue": 46
+                }, {
+                    "displayName": "47 deep",
+                    "numericValue": 47
+                }, {
+                    "displayName": "48 deep",
+                    "numericValue": 48
+                }, {
+                    "displayName": "49 deep",
+                    "numericValue": 49
+                }, {
+                    "displayName": "50 deep",
+                    "numericValue": 50
+                }, {
+                    "displayName": "51 deep",
+                    "numericValue": 51
+                }, {
+                    "displayName": "52 deep",
+                    "numericValue": 52
+                }, {
+                    "displayName": "53 deep",
+                    "numericValue": 53
+                }, {
+                    "displayName": "54 deep",
+                    "numericValue": 54
+                }, {
+                    "displayName": "55 deep",
+                    "numericValue": 55
+                }, {
+                    "displayName": "56 deep",
+                    "numericValue": 56
+                }, {
+                    "displayName": "57 deep",
+                    "numericValue": 57
+                }, {
+                    "displayName": "58 deep",
+                    "numericValue": 58
+                }, {
+                    "displayName": "59 deep",
+                    "numericValue": 59
+                }, {
+                    "displayName": "60 deep",
+                    "numericValue": 60
+                }, {
+                    "displayName": "61 deep",
+                    "numericValue": 61
+                }, {
+                    "displayName": "62 deep",
+                    "numericValue": 62
+                }, {
+                    "displayName": "63 deep",
+                    "numericValue": 63
+                }, {
+                    "displayName": "64 deep",
+                    "numericValue": 64
+                }, {
+                    "displayName": "65 deep",
+                    "numericValue": 65
+                }, {
+                    "displayName": "66 deep",
+                    "numericValue": 66
+                }, {
+                    "displayName": "67 deep",
+                    "numericValue": 67
+                }, {
+                    "displayName": "68 deep",
+                    "numericValue": 68
+                }, {
+                    "displayName": "69 deep",
+                    "numericValue": 69
+                }, {
+                    "displayName": "70 deep",
+                    "numericValue": 70
+                }, {
+                    "displayName": "71 deep",
+                    "numericValue": 71
+                }, {
+                    "displayName": "72 deep",
+                    "numericValue": 72
+                }, {
+                    "displayName": "73 deep",
+                    "numericValue": 73
+                }, {
+                    "displayName": "74 deep",
+                    "numericValue": 74
+                }, {
+                    "displayName": "75 deep",
+                    "numericValue": 75
+                }, {
+                    "displayName": "76 deep",
+                    "numericValue": 76
+                }, {
+                    "displayName": "77 deep",
+                    "numericValue": 77
+                }, {
+                    "displayName": "78 deep",
+                    "numericValue": 78
+                }, {
+                    "displayName": "79 deep",
+                    "numericValue": 79
+                }, {
+                    "displayName": "80 deep",
+                    "numericValue": 80
+                }, {
+                    "displayName": "81 deep",
+                    "numericValue": 81
+                }, {
+                    "displayName": "82 deep",
+                    "numericValue": 82
+                }, {
+                    "displayName": "83 deep",
+                    "numericValue": 83
+                }, {
+                    "displayName": "84 deep",
+                    "numericValue": 84
+                }, {
+                    "displayName": "85 deep",
+                    "numericValue": 85
+                }, {
+                    "displayName": "86 deep",
+                    "numericValue": 86
+                }, {
+                    "displayName": "87 deep",
+                    "numericValue": 87
+                }, {
+                    "displayName": "88 deep",
+                    "numericValue": 88
+                }, {
+                    "displayName": "89 deep",
+                    "numericValue": 89
+                }, {
+                    "displayName": "90 deep",
+                    "numericValue": 90
+                }, {
+                    "displayName": "91 deep",
+                    "numericValue": 91
+                }, {
+                    "displayName": "92 deep",
+                    "numericValue": 92
+                }, {
+                    "displayName": "93 deep",
+                    "numericValue": 93
+                }, {
+                    "displayName": "94 deep",
+                    "numericValue": 94
+                }, {
+                    "displayName": "95 deep",
+                    "numericValue": 95
+                }, {
+                    "displayName": "96 deep",
+                    "numericValue": 96
+                }, {
+                    "displayName": "97 deep",
+                    "numericValue": 97
+                }, {
+                    "displayName": "98 deep",
+                    "numericValue": 98
+                }, {
+                    "displayName": "99 deep",
+                    "numericValue": 99
+                }, {
+                    "displayName": "100 deep",
+                    "numericValue": 100
+                }],
+                "description": "depth of water. if used as output, it only changes terrain height, not water level!",
+                "parameters": []
+            },
+            "mappedOutputs": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            "name": "Filter: Only On Water",
+            "description": "Default filter: block all blocks that are not below waterlevel",
+            "mappedInputs": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100],
+            "mappingPoints": [{
+                "x": 0,
+                "y": 0
+            }, {
+                "x": 50,
+                "y": 0
+            }, {
+                "x": 51,
+                "y": 1
+            }, {
+                "x": 100,
+                "y": 1
+            }]
+        }
+        const segments = buildSegmentsFromAction(action);
+        expect(segments).toEqual([
+            { start: 0, end: 50, value: { "displayName": "BLOCK (0)", "numericValue": 0 } },
+            { start: 51, end: 100, value: { "displayName": "PASS (1)", "numericValue": 1 } }
+        ])
     })
 });
 

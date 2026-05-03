@@ -19,7 +19,20 @@ export function buildSegmentsFromAction(action: MMAction): Segments {
     if (mappingPoints.length === 0) {
         mappingPoints.unshift({ x: action.input.min, y: action.output.ignoreValue });
     }
+    if (mappingPoints.length >= 2) {
+        const firstPoint = mappingPoints[0];
+        const secondPoint = mappingPoints[1];
+        
+        const lastPoint = mappingPoints[mappingPoints.length - 1];
+        const secondLastPoint = mappingPoints[mappingPoints.length -2];
 
+        if (firstPoint.y === secondPoint.y) {
+            mappingPoints.shift(); // if first two points have same y value, first point is redundant and can be removed
+        }
+        if (lastPoint.y === secondLastPoint.y) {
+            mappingPoints.pop(); // if last two points have same y value, last point is redundant and can be removed
+        }
+    }
     const segments: Segments = [];
     for (let i = 0; i < mappingPoints.length; i++) {
         const mappingPoint = mappingPoints[i];
