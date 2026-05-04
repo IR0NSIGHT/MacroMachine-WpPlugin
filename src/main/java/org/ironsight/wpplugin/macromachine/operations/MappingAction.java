@@ -1,5 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.ironsight.wpplugin.macromachine.REST.MMActionBuilder;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Dimension;
@@ -9,17 +11,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.range;
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
 
 /**
- * this class represents a single global-operation. it can be applied to the map
- * each Actions has an input (f.e. terrain height) and an output (f.e.
- * annotation) the MappingPoints define which input value is mapped to which
- * output value f.e. ranges 62H to 85H -> Annotation.WHITE Actions modifiy the
- * output value, they can either Set the value (easiest) or do math. this is
+ * this class represents a single global-operation. it can be applied to the map each Actions has an input (f.e. terrain height) and an output (f.e. annotation) the MappingPoints define
+ * which input value is mapped to which output value f.e. ranges 62H to 85H -> Annotation.WHITE Actions modifiy the output value, they can either Set the value (easiest) or do math. this is
  * decided by the action Type
  */
-public class MappingAction implements SaveableAction
-{
+public class MappingAction implements SaveableAction {
     public final IPositionValueGetter input;
     public final IPositionValueSetter output;
     public final ActionType actionType;
@@ -33,7 +33,7 @@ public class MappingAction implements SaveableAction
     private boolean isActive;
 
     public MappingAction(IPositionValueGetter input, IPositionValueSetter output, MappingPoint[] mappingPoints,
-            ActionType type, String name, String description, UUID uid) {
+                         ActionType type, String name, String description, UUID uid) {
         assert name != null;
         assert description != null;
         assert input != null;
@@ -51,7 +51,7 @@ public class MappingAction implements SaveableAction
 
         HashSet<Integer> seenInputValues = new HashSet<>();
         // filter out illegal mapping points (user might have edited save file)
-        mappingPoints = Arrays.stream(mappingPoints)
+        mappingPoints = fixMappingPoints(input.getMinValue(), input.getMaxValue(), Arrays.stream(mappingPoints)
                 .filter(p -> sanitizeInput(p.input) == p.input) // input points
                 .map(p -> new MappingPoint(p.input, sanitizeOutput(p.output)))
                 .filter(p -> { // only unique inputs.
@@ -59,7 +59,7 @@ public class MappingAction implements SaveableAction
                     seenInputValues.add(p.input);
                     return !alreadyExists;
                 })
-                .toArray(MappingPoint[]::new);
+                .toArray(MappingPoint[]::new), IPositionValueSetter.getIgnoreValue(output));
 
         assert Arrays.stream(mappingPoints).noneMatch(p -> sanitizeInput(p.input) != p.input)
                 : "mapping points " + "contain illegal input values";
@@ -75,8 +75,11 @@ public class MappingAction implements SaveableAction
 
         if (output.isDiscrete()) { // DO NOT INTERPOLATE OUTPUT
             mappings = new int[input.getMaxValue() + 1 - input.getMinValue()];
-            if (this.mappingPoints.length == 0)
+            if (this.mappingPoints.length == 0) {
+                Arrays.fill(mappings, IPositionValueSetter.getIgnoreValue(output));
                 return;
+            }
+
             int j = -1;
             for (int i : input.getAllInputValues()) {
                 if (input instanceof IPositionValueSetter setter && setter.isIgnoreValue(i))
@@ -96,8 +99,58 @@ public class MappingAction implements SaveableAction
 
     }
 
+    private static MappingPoint[] fixMappingPoints(int inputMin, int inputMax, MappingPoint[] mappingPoints, int outputIgnore) {
+        ArrayList<MappingPoint> outList = new ArrayList<>(mappingPoints.length);
+        if (mappingPoints.length == 0) {
+            // no mapping points
+            if (inputMin == inputMax)
+                return new MappingPoint[]{new MappingPoint(inputMin, outputIgnore)};
+            else {
+                // a proper range defined by 2 mappingpoints
+                return new MappingPoint[]{
+                        new MappingPoint(inputMin, outputIgnore),
+                        new MappingPoint(inputMax, outputIgnore)
+                };
+            }
+        }
+
+        // some points exist already
+        if (mappingPoints[0].input != inputMin) {
+            outList.add(new MappingPoint(inputMin, mappingPoints[0].output)); // rule: first point must ALWAYS be at inputMin
+        }
+        for (MappingPoint old : mappingPoints) {
+            outList.add(new MappingPoint(old.input, old.output));
+        }
+        if (mappingPoints[mappingPoints.length - 1].input != inputMax) {
+            outList.add(new MappingPoint(inputMax, mappingPoints[mappingPoints.length - 1].output)); // rule: last point must ALWAYS be at inputMax
+        }
+        return outList.toArray(MappingPoint[]::new);
+    }
+
+    public static void main(String[] args) throws JsonProcessingException {
+        var action = new MappingAction(
+                new SlopeProvider(),
+                new AnnotationSetter(),
+                new MappingPoint[]{
+                        new MappingPoint(1, IGNORE_VALUE),
+                        new MappingPoint(3, 1),
+                        new MappingPoint(6, 1),
+                        new MappingPoint(8, 1),
+                        new MappingPoint(9, IGNORE_VALUE),
+                },
+                ActionType.SET,
+                "test", "descr", UUID.randomUUID()
+        );
+        String str = MMActionBuilder.buildMMActionJson(action);
+        for (var input : action.getInput().getAllInputValues())
+            System.out.println(input + " -> " + action.map(input));
+        for (var range : MappingAction.calculateRanges(action)) {
+            System.out.println("range: [" + range.x + ", " + range.y + "] -> " + action.output.valueToString(action.map((int) Math.round(range.x))));
+        }
+    }
+
     public static int[] generateInterpolatedOutput(MappingPoint[] mappingPoints, IPositionValueGetter getter,
-            IPositionValueSetter setter) {
+                                                   IPositionValueSetter setter) {
         int[] mappings = new int[getter.getAllInputValues().length];
         Arrays.fill(mappings, setter.getMinValue());
 
@@ -241,7 +294,8 @@ public class MappingAction implements SaveableAction
                     rangeLength++;
                 allowPreviousValue = allowThisValue;
             }
-            valuesString = String.join(", ", ranges);;
+            valuesString = String.join(", ", ranges);
+            ;
         }
         summary.append(": ").append(valuesString);
         return summary.toString();
@@ -432,28 +486,28 @@ public class MappingAction implements SaveableAction
                 : 0;
         int outputValue;
         switch (actionType) {
-            case SET :
+            case SET:
                 outputValue = modifier;
                 break;
-            case DIVIDE :
+            case DIVIDE:
                 outputValue = Math.round(1f * existingValue / modifier);
                 break;
-            case MULTIPLY :
+            case MULTIPLY:
                 outputValue = existingValue * modifier;
                 break;
-            case DECREMENT :
+            case DECREMENT:
                 outputValue = existingValue - modifier;
                 break;
-            case INCREMENT :
+            case INCREMENT:
                 outputValue = existingValue + modifier;
                 break;
-            case LIMIT_TO :
+            case LIMIT_TO:
                 outputValue = Math.min(existingValue, modifier);
                 break;
-            case AT_LEAST :
+            case AT_LEAST:
                 outputValue = Math.max(existingValue, modifier);
                 break;
-            default :
+            default:
                 throw new EnumConstantNotPresentException(ActionType.class, actionType.displayName);
         }
         output.setValueAt(dim, x, y, this.sanitizeOutput(outputValue));
