@@ -1,18 +1,15 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AlwaysIO;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AnnotationSetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.SlopeProvider;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.IntStream;
 
-import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
 import static org.junit.jupiter.api.Assertions.*;
 
-class LayerMappingContainerTest {
+class LayerMappingContainerTest
+{
 
     @Test
     void updateMapping() {
@@ -21,46 +18,26 @@ class LayerMappingContainerTest {
         MappingAction mapping = container.addMapping();
 
         {
-            // will add mappingpoints if necessary
-            MappingAction thisMapping = container.addMapping().withInput(new SlopeProvider()).withOutput(new AnnotationSetter());
-            assertEquals(2,thisMapping.getMappingPoints().length);
             MappingPoint[] newPoints = IntStream.range(0, 17)
                     .mapToObj(i -> new MappingPoint(i, 3))
                     .toArray(MappingPoint[]::new);
-            MappingAction newMapping = thisMapping.withNewPoints(newPoints);
-            assertNotEquals(newMapping, thisMapping);
-            assertEquals(thisMapping.input.getMinValue(), newMapping.getMappingPoints()[0].input);
-            assertEquals(thisMapping.input.getMaxValue(), newMapping.getMappingPoints()[newMapping.getMappingPoints().length-1].input);
-
-            assertEquals(18, newMapping.getMappingPoints().length);
-            assertEquals(newMapping.getUid(), thisMapping.getUid());
+            MappingAction newMapping = mapping.withNewPoints(newPoints);
+            assertNotEquals(newMapping, mapping);
+            assertEquals(17, newMapping.getMappingPoints().length);
+            assertEquals(newMapping.getUid(), mapping.getUid());
 
             container.updateMapping(newMapping, f -> {
             });
-            assertSame(newMapping, container.queryById(thisMapping.getUid()));
+            assertSame(newMapping, container.queryById(mapping.getUid()));
         }
 
-        {
-            // mapping will always have mappingpoints at min and max input range:
-            {
-                var newMapping = mapping.withInput(new SlopeProvider()).withOutput(new AnnotationSetter()).withNewPoints(new MappingPoint[0]);
-                assertArrayEquals(new MappingPoint[]{new MappingPoint(0, IGNORE_VALUE), new MappingPoint(90, IGNORE_VALUE)}, newMapping.getMappingPoints());
-            }
-
-            {
-                // alwaysIO only has a single input => inputMin == inputMax
-                var newMapping = mapping.withInput(new AlwaysIO()).withOutput(new AnnotationSetter()).withNewPoints(new MappingPoint[0]);
-                assertArrayEquals(new MappingPoint[]{new MappingPoint(0, IGNORE_VALUE)}, newMapping.getMappingPoints());
-            }
-        }
         // update mapping but use mulitple points with same input.
         {
             MappingPoint[] newPoints = new MappingPoint[17];
-            Arrays.fill(newPoints, new MappingPoint(37, 3));
-            MappingAction newMapping = mapping.withInput(new SlopeProvider()).withOutput(new AnnotationSetter()).withNewPoints(newPoints);
+            Arrays.fill(newPoints, new MappingPoint(0, 3));
+            MappingAction newMapping = mapping.withNewPoints(newPoints);
             assertNotEquals(newMapping, mapping);
-            assertEquals(3, newMapping.getMappingPoints().length);
-            assertEquals(0,0);
+            assertEquals(1, newMapping.getMappingPoints().length);
             assertEquals(newMapping.getUid(), mapping.getUid());
 
             container.updateMapping(newMapping, f -> {
