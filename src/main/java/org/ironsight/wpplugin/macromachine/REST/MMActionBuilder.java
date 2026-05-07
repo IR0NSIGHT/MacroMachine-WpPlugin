@@ -9,22 +9,18 @@ import java.util.*;
 
 import static org.ironsight.wpplugin.macromachine.REST.IOMapper.toInputOutputJson;
 
-public class MMActionBuilder {
+public class MMActionBuilder
+{
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static String buildMMActionJson(MappingAction action) throws JsonProcessingException {
-        return buildMMActionJson(
-                action.getName(),
-                action.getDescription(),
-                action.getUid().toString(),
-                action.getActionType().displayName,
-                toInputOutputJson(action.getInput(), true),
+        return buildMMActionJson(action.getName(), action.getDescription(), action.getUid().toString(),
+                action.getActionType().displayName, toInputOutputJson(action.getInput(), true),
                 toInputOutputJson(action.getOutput(), false),
                 Arrays.stream(action.getInput().getAllInputValues()).boxed().toList(),
                 Arrays.stream(action.getInput().getAllInputValues()).map(action::map).boxed().toList(),
-                action.getMappingPoints()
-        );
+                action.getMappingPoints());
     }
 
     public String toJson(MappingPoint[] points) throws Exception {
@@ -32,17 +28,9 @@ public class MMActionBuilder {
         return mapper.writeValueAsString(points);
     }
 
-    private static String buildMMActionJson(
-            String name,
-            String description,
-            String uid,
-            String actionType,
-            Map<String,Object> input,
-            Map<String,Object> output,
-            List<Integer> inputPoints,
-            List<Integer> outputPoints,
-            MappingPoint[] mappingPoints
-    ) throws JsonProcessingException {
+    private static String buildMMActionJson(String name, String description, String uid, String actionType,
+            Map<String, Object> input, Map<String, Object> output, List<Integer> inputPoints,
+            List<Integer> outputPoints, MappingPoint[] mappingPoints) throws JsonProcessingException {
 
         Map<String, Object> action = new HashMap<>();
 

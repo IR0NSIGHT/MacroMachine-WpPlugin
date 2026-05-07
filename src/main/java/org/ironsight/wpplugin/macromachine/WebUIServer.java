@@ -19,7 +19,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class WebUIServer {
+public class WebUIServer
+{
     private static final int PORT = 8080;
     private static final ObjectMapper mapper = new ObjectMapper();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -40,9 +41,7 @@ public class WebUIServer {
                 }
 
                 // ✅ ONLY UUIDs
-                List<String> responseList = macros.stream()
-                        .map(macro -> macro.getUid().toString())
-                        .toList();
+                List<String> responseList = macros.stream().map(macro -> macro.getUid().toString()).toList();
 
                 String response = mapper.writeValueAsString(responseList);
                 byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
@@ -288,7 +287,8 @@ public class WebUIServer {
         }
     }
 
-    static class StaticFileHandler implements HttpHandler {
+    static class StaticFileHandler implements HttpHandler
+    {
         private final Path rootPath;
 
         public StaticFileHandler(Path rootPath) {
@@ -317,9 +317,12 @@ public class WebUIServer {
 
         private String getContentType(Path path) {
             String fileName = path.getFileName().toString();
-            if (fileName.endsWith(".html")) return "text/html";
-            if (fileName.endsWith(".css")) return "text/css";
-            if (fileName.endsWith(".js")) return "application/javascript";
+            if (fileName.endsWith(".html"))
+                return "text/html";
+            if (fileName.endsWith(".css"))
+                return "text/css";
+            if (fileName.endsWith(".js"))
+                return "application/javascript";
             return "application/octet-stream";
         }
     }

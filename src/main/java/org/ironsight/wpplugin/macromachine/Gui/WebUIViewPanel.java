@@ -7,7 +7,8 @@ import javafx.scene.web.WebView;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 
-public class WebUIViewPanel extends JPanel {
+public class WebUIViewPanel extends JPanel
+{
     private JFXPanel jfxPanel;
     private WebView webView;
 

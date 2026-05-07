@@ -16,7 +16,6 @@ import org.pepsoft.worldpainter.layers.LayerEditor;
 import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 

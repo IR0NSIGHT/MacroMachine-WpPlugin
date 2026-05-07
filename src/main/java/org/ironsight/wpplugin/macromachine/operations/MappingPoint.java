@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class MappingPoint implements Serializable {
+public class MappingPoint implements Serializable
+{
     @JsonProperty("x")
     public final int input;
     @JsonProperty("y")

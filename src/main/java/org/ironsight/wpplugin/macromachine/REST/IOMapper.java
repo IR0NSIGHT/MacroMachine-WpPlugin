@@ -9,7 +9,8 @@ import java.util.*;
 
 import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
 
-public class IOMapper {
+public class IOMapper
+{
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -26,7 +27,9 @@ public class IOMapper {
 
         // values
         List<Map<String, Object>> valuesList = new ArrayList<>();
-        int[] values = asInput ? ((IPositionValueGetter) io).getAllInputValues() : ((IPositionValueSetter) io).getAllOutputValues();
+        int[] values = asInput
+                ? ((IPositionValueGetter) io).getAllInputValues()
+                : ((IPositionValueSetter) io).getAllOutputValues();
         for (int v : values) {
             Map<String, Object> val = new HashMap<>();
             val.put("numericValue", v);
@@ -50,7 +53,6 @@ public class IOMapper {
             root.put("ignoreValue", ignore);
         } else
             root.put("ignoreValue", IGNORE_VALUE);
-
 
         return root;
     }

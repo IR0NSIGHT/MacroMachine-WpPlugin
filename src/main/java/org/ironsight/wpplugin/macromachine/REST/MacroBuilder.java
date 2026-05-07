@@ -5,7 +5,8 @@ import org.ironsight.wpplugin.macromachine.operations.Macro;
 
 import java.util.*;
 
-public class MacroBuilder {
+public class MacroBuilder
+{
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -18,12 +19,7 @@ public class MacroBuilder {
         result.put("uid", macro.getUid().toString());
 
         // UUID[] → List<String>
-        result.put(
-                "executionUUIDs",
-                Arrays.stream(macro.getExecutionUUIDs())
-                        .map(UUID::toString)
-                        .toList()
-        );
+        result.put("executionUUIDs", Arrays.stream(macro.getExecutionUUIDs()).map(UUID::toString).toList());
 
         // boolean[]
         List<Boolean> activeActions = new ArrayList<>();
