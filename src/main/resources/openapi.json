@@ -1,0 +1,362 @@
+{
+  "openapi" : "3.0.1",
+  "paths" : {
+    "/actions" : {
+      "get" : {
+        "operationId" : "getAll",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ActionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "create",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ActionDTO"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ActionDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actions/{id}" : {
+      "get" : {
+        "operationId" : "get",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ActionDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "delete",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : { }
+            }
+          }
+        }
+      }
+    },
+    "/docs" : {
+      "get" : {
+        "operationId" : "getDocs",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "text/html" : { }
+            }
+          }
+        }
+      }
+    },
+    "/macros" : {
+      "get" : {
+        "operationId" : "getAll_1",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MacroDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "create_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MacroDTO"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MacroDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/macros/{id}" : {
+      "get" : {
+        "operationId" : "get_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MacroDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "delete_1",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : { }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "ActionDTO" : {
+        "type" : "object",
+        "properties" : {
+          "input" : {
+            "$ref" : "#/components/schemas/InputOutputDTO"
+          },
+          "output" : {
+            "$ref" : "#/components/schemas/InputOutputDTO"
+          },
+          "actionType" : {
+            "type" : "string",
+            "description" : "Type of action",
+            "enum" : [ "increments", "subtracts", "multiplies", "divides", "sets", "limits", "sets minimum" ]
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Human readable name"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Description of the action"
+          },
+          "uid" : {
+            "type" : "string",
+            "description" : "Unique identifier",
+            "format" : "uuid"
+          },
+          "mappingPointsX" : {
+            "type" : "array",
+            "description" : "numeric input values for the mapping points",
+            "items" : {
+              "type" : "integer",
+              "description" : "numeric input values for the mapping points",
+              "format" : "int32"
+            }
+          },
+          "mappingPointsY" : {
+            "type" : "array",
+            "description" : "numeric output values for the mapping points",
+            "items" : {
+              "type" : "integer",
+              "description" : "numeric output values for the mapping points",
+              "format" : "int32"
+            }
+          },
+          "mappedOutputs" : {
+            "type" : "array",
+            "description" : "actual numeric output values for all inputs",
+            "items" : {
+              "type" : "integer",
+              "description" : "actual numeric output values for all inputs",
+              "format" : "int32"
+            }
+          },
+          "mappedInputs" : {
+            "type" : "array",
+            "writeOnly" : true,
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        },
+        "description" : "Represents an executable mapping action, that reads one inputtype from the map and based on that writes output values to the map."
+      },
+      "InputOutputDTO" : {
+        "required" : [ "displayName" ],
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string",
+            "description" : "Human readable macro name",
+            "example" : "Terrain Height"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Detailed description of the provider",
+            "example" : "Controls the generated terrain elevation"
+          },
+          "min" : {
+            "type" : "integer",
+            "description" : "Minimum supported value",
+            "format" : "int32",
+            "example" : 0
+          },
+          "max" : {
+            "type" : "integer",
+            "description" : "Maximum supported value",
+            "format" : "int32",
+            "example" : 255
+          },
+          "ignoreValue" : {
+            "type" : "integer",
+            "description" : "Value that should be ignored or treated as unset",
+            "format" : "int32",
+            "example" : -1
+          },
+          "valueDisplayNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "description" : "Display names for discrete values",
+              "example" : "Blue"
+            }
+          },
+          "discrete" : {
+            "type" : "boolean",
+            "description" : "Whether the values are discrete instead of continuous (colors are discrete, forest strength % is continuous)",
+            "example" : true
+          },
+          "type" : {
+            "type" : "string",
+            "description" : "Provider type",
+            "enum" : [ "HEIGHT", "SLOPE", "ANNOTATION", "BINARY_LAYER", "BINARY_SPRAYPAINT", "BLOCK_DIRECTION", "INTERMEDIATE", "INTERMEDIATE_SELECTION", "NIBBLE_LAYER", "SELECTION", "STONE_PALETTE", "TERRAIN", "TEST", "VANILLA_BIOME", "WATER_DEPTH", "WATER_HEIGHT", "ALWAYS", "DISTANCE_TO_EDGE", "PERLIN_NOISE", "SHADOW", "VORONOI_NOISE", "RANDOM_NOISE" ]
+          }
+        },
+        "description" : "Describes an input/output provider configuration"
+      },
+      "MacroDTO" : {
+        "type" : "object",
+        "properties" : {
+          "executionUUIDs" : {
+            "type" : "array",
+            "description" : "UUIDs of executions associated with this macro. can be of a macro or an action",
+            "example" : [ "550e8400-e29b-41d4-a716-446655440000" ],
+            "items" : {
+              "type" : "string",
+              "description" : "UUIDs of executions associated with this macro. can be of a macro or an action",
+              "format" : "uuid"
+            }
+          },
+          "activeActions" : {
+            "type" : "array",
+            "description" : "Flags indicating whether each action is active",
+            "example" : [ true, false, true ],
+            "items" : {
+              "type" : "boolean",
+              "description" : "Flags indicating whether each action is active",
+              "example" : false
+            }
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Human readable macro name",
+            "example" : "Morning Routine"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Detailed description of the macro",
+            "example" : "Runs all startup automation tasks"
+          },
+          "uid" : {
+            "type" : "string",
+            "description" : "Unique identifier of the macro",
+            "format" : "uuid",
+            "example" : "550e8400-e29b-41d4-a716-446655440000"
+          }
+        },
+        "description" : "Represents a macro configuration and execution state"
+      }
+    }
+  }
+}

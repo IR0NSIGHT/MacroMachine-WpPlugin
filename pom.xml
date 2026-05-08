@@ -62,6 +62,41 @@
         </resources>
         <plugins>
             <plugin>
+                <groupId>io.swagger.core.v3</groupId>
+                <artifactId>swagger-maven-plugin-jakarta</artifactId>
+                <version>2.2.22</version>
+
+                <configuration>
+                    <resourcePackages>
+                        <package>org.ironsight.wpplugin.macromachine.REST.Resources</package>
+                    </resourcePackages>
+
+                    <outputFileName>openapi</outputFileName>
+                    <outputPath>${project.basedir}/src/main/resources</outputPath>
+
+                    <outputFormats>JSON,YAML</outputFormats>
+
+                    <prettyPrint>true</prettyPrint>
+
+                    <openAPI>
+                        <info>
+                            <title>Macro Machine API</title>
+                            <version>${project.version}</version>
+                            <description>Macro Machine REST API</description>
+                        </info>
+                    </openAPI>
+                </configuration>
+
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>resolve</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
@@ -82,9 +117,9 @@
                             <version>4.26</version>
                             <file>${project.basedir}/formatter.xml</file>
                         </eclipse>
-                        <removeUnusedImports />
-                        <trimTrailingWhitespace />
-                        <endWithNewline />
+                        <removeUnusedImports/>
+                        <trimTrailingWhitespace/>
+                        <endWithNewline/>
                     </java>
                 </configuration>
                 <executions>
@@ -279,7 +314,8 @@
                                 <argument>-classpath</argument>
                                 <classpath/>
                                 <!-- Uncomment this to enable debugging. Change suspend=n to suspend=y if you want to debug plugin loading or initialisation: -->
-                                <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005</argument>
+                                <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
+                                </argument>
                                 <argLine>-ea</argLine>
                                 <argLine>-Dsun.awt.disablegrab=true</argLine>
                                 <!-- These exports are needed from Java 9+ to make the JIDE GUI framework work: -->
