@@ -8,8 +8,6 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
 import org.ironsight.wpplugin.macromachine.REST.DTOs.MacroDTO;
-import org.ironsight.wpplugin.macromachine.REST.Resources.MacroResource;
-import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.junit.jupiter.api.*;
 
@@ -20,15 +18,14 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class MacroResourceTest extends JerseyTest {
+public class MacroResourceTest extends JerseyTest
+{
 
     private static UUID createdId;
 
     @Override
     protected Application configure() {
-        return new ResourceConfig()
-                .register(MacroResource.class)
-                .register(JacksonFeature.class);
+        return new ResourceConfig().register(MacroResource.class).register(JacksonFeature.class);
     }
     @BeforeAll
     void setupOnce() {
@@ -39,17 +36,10 @@ public class MacroResourceTest extends JerseyTest {
     @Test
     @Order(1)
     void testCreateMacro() {
-        MacroDTO dto = new MacroDTO(
-                new UUID[]{UUID.randomUUID()},
-                new boolean[]{true},
-                "Test Macro",
-                "Test Description",
-                UUID.randomUUID()
-        );
+        MacroDTO dto = new MacroDTO(new UUID[]{UUID.randomUUID()}, new boolean[]{true}, "Test Macro",
+                "Test Description", UUID.randomUUID());
 
-        Response response = target("/macros")
-                .request()
-                .post(Entity.entity(dto, MediaType.APPLICATION_JSON));
+        Response response = target("/macros").request().post(Entity.entity(dto, MediaType.APPLICATION_JSON));
 
         assertEquals(200, response.getStatus());
 
@@ -63,9 +53,7 @@ public class MacroResourceTest extends JerseyTest {
     @Test
     @Order(2)
     void testGetAll() {
-        Response response = target("/macros")
-                .request()
-                .get();
+        Response response = target("/macros").request().get();
 
         assertEquals(200, response.getStatus());
 
@@ -79,9 +67,7 @@ public class MacroResourceTest extends JerseyTest {
     void testGetById() {
         assumeTrue(createdId != null);
 
-        Response response = target("/macros/" + createdId)
-                .request()
-                .get();
+        Response response = target("/macros/" + createdId).request().get();
 
         assertEquals(200, response.getStatus());
 
@@ -95,9 +81,7 @@ public class MacroResourceTest extends JerseyTest {
     void testDelete() {
         assumeTrue(createdId != null);
 
-        Response response = target("/macros/" + createdId)
-                .request()
-                .delete();
+        Response response = target("/macros/" + createdId).request().delete();
 
         assertTrue(response.getStatus() == 200 || response.getStatus() == 204);
     }
@@ -107,9 +91,7 @@ public class MacroResourceTest extends JerseyTest {
     void testGetNotFound() {
         UUID random = UUID.randomUUID();
 
-        Response response = target("/macros/" + random)
-                .request()
-                .get();
+        Response response = target("/macros/" + random).request().get();
 
         assertEquals(404, response.getStatus());
     }

@@ -180,7 +180,6 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
     }
 
     public synchronized T addMapping(T item) {
-        System.out.println("ADD ITEM " + item);
         if (item.getUid() == null) {
             assert false : " items HAVE to have a UUID";
             return item;

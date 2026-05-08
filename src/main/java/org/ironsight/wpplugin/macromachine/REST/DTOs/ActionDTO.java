@@ -8,6 +8,7 @@ import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 
 @Schema(description = "Represents an executable mapping action, that reads one inputtype from the map and based on that writes output values to the map.")
@@ -44,16 +45,13 @@ public class ActionDTO
     @Schema(description = "actual numeric output values for all inputs")
     private final int[] mappedOutputs;
 
-    @Schema(description = "flag indicating if action is enabled. disabled maps will be skipped upon application")
-    private final boolean isActive;
-
     public ActionDTO(MappingAction action) {
         this(InputOutputDTO.fromInputGetter(action.getInput()), InputOutputDTO.fromOutputSetter(action.getOutput()),
                 action.getActionType(), action.getName(), action.getDescription(), action.getUid(),
                 Arrays.stream(action.getMappingPoints()).mapToInt(p -> p.input).toArray(),
                 Arrays.stream(action.getMappingPoints()).mapToInt(p -> p.output).toArray(),
                 Arrays.stream(action.getInput().getAllInputValues()).map(action::map).toArray(),
-                Arrays.stream(action.getInput().getAllInputValues()).toArray(), action.isActive());
+                Arrays.stream(action.getInput().getAllInputValues()).toArray());
     }
 
     @JsonCreator
@@ -61,8 +59,7 @@ public class ActionDTO
             @JsonProperty("actionType") ActionType actionType, @JsonProperty("name") String name,
             @JsonProperty("description") String description, @JsonProperty("uid") UUID uid,
             @JsonProperty("mappingPointsX") int[] mappingPointsX, @JsonProperty("mappingPointsY") int[] mappingPointsY,
-            @JsonProperty("mappedOutputs") int[] mappedOutputs, @JsonProperty("mappedInputs") int[] mappedInputs,
-            @JsonProperty("isActive") boolean isActive) {
+            @JsonProperty("mappedOutputs") int[] mappedOutputs, @JsonProperty("mappedInputs") int[] mappedInputs) {
         this.input = input;
         this.output = output;
         this.actionType = actionType;
@@ -73,7 +70,34 @@ public class ActionDTO
         this.mappingPointsY = mappingPointsY;
         this.mappedOutputs = mappedOutputs;
         this.mappedInputs = mappedInputs;
-        this.isActive = isActive;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        ActionDTO actionDTO = (ActionDTO) o;
+        return Objects.equals(getInput(), actionDTO.getInput())
+                && Objects.equals(getOutput(), actionDTO.getOutput()) && getActionType() == actionDTO.getActionType()
+                && Objects.equals(getName(), actionDTO.getName())
+                && Objects.equals(getDescription(), actionDTO.getDescription())
+                && Objects.equals(getUid(), actionDTO.getUid())
+                && Arrays.equals(getMappingPointsX(), actionDTO.getMappingPointsX())
+                && Arrays.equals(getMappingPointsY(), actionDTO.getMappingPointsY())
+                && Arrays.equals(mappedInputs, actionDTO.mappedInputs)
+                && Arrays.equals(getMappedOutputs(), actionDTO.getMappedOutputs());
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(getInput(), getOutput(), getActionType(), getName(), getDescription(), getUid());
+        result = 31 * result + Arrays.hashCode(getMappingPointsX());
+        result = 31 * result + Arrays.hashCode(getMappingPointsY());
+        result = 31 * result + Arrays.hashCode(mappedInputs);
+        result = 31 * result + Arrays.hashCode(getMappedOutputs());
+        return result;
     }
 
     @JsonProperty
@@ -121,11 +145,6 @@ public class ActionDTO
         return mappedOutputs;
     }
 
-    @JsonProperty
-    public boolean isActive() {
-        return isActive;
-    }
-
     public MappingAction toAction() {
         MappingPoint[] mappingPoints = new MappingPoint[this.mappingPointsX.length];
         for (int i = 0; i < this.mappingPointsX.length && i < this.mappingPointsY.length; i++) {
@@ -133,5 +152,21 @@ public class ActionDTO
         }
         return new MappingAction(input.toGetter(), output.toSetter(), mappingPoints, actionType, name, description,
                 uid);
+    }
+
+    @Override
+    public String toString() {
+        return "ActionDTO{" +
+                "input=" + input +
+                ", output=" + output +
+                ", actionType=" + actionType +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", uid=" + uid +
+                ", mappingPointsX=" + Arrays.toString(mappingPointsX) +
+                ", mappingPointsY=" + Arrays.toString(mappingPointsY) +
+                ", mappedInputs=" + Arrays.toString(mappedInputs) +
+                ", mappedOutputs=" + Arrays.toString(mappedOutputs) +
+                '}';
     }
 }

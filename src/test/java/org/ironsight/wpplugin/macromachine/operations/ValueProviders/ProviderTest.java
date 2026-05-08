@@ -98,10 +98,8 @@ public class ProviderTest
     void AllProvidersCanStringifyValues() {
         for (ProviderType type : ProviderType.values()) {
             IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
-            System.out.println(ioInstance.getName() + " #############");
             for (int value : ioInstance.getAllPossibleValues()) {
                 String valueString = ioInstance.valueToString(value);
-                System.out.println(value + " -> " + valueString);
             }
         }
     }

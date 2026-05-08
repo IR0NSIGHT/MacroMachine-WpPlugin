@@ -76,7 +76,6 @@ class LayerMappingContainerTest
     void saveLoad() {
         MappingActionContainer container = new MappingActionContainer(
                 System.getProperty("user.dir") + "/TestActions" + ".json");
-        MappingActionContainer.SetInstance(container);
         MappingAction saved = container.addMapping().withName("hello i am a test mapping");
         container.updateMapping(saved, f -> {
         });
