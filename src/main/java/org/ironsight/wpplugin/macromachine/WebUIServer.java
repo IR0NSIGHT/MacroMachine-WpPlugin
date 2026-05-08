@@ -6,7 +6,6 @@ import org.ironsight.wpplugin.macromachine.REST.MacroApplication;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
