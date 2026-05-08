@@ -20,25 +20,25 @@ public class InputOutputDTO
     @Schema(description = "Human readable macro name", example = "Terrain Height", requiredMode = Schema.RequiredMode.REQUIRED)
     private final String displayName;
 
-    @Schema(description = "Detailed description of the provider", example = "Controls the generated terrain elevation")
+    @Schema(description = "Detailed description of the provider", example = "Controls the generated terrain elevation", requiredMode = Schema.RequiredMode.REQUIRED)
     private final String description;
 
-    @Schema(description = "Minimum supported value", example = "0")
+    @Schema(description = "Minimum supported value", example = "0", requiredMode = Schema.RequiredMode.REQUIRED)
     private final int min;
 
-    @Schema(description = "Maximum supported value", example = "255")
+    @Schema(description = "Maximum supported value", example = "255", requiredMode = Schema.RequiredMode.REQUIRED)
     private final int max;
 
-    @Schema(description = "Value that should be ignored or treated as unset", example = "-1")
+    @Schema(description = "Value that should be ignored or treated as unset", example = "-1", requiredMode = Schema.RequiredMode.REQUIRED)
     private final int ignoreValue;
 
-    @ArraySchema(schema = @Schema(description = "Display names for discrete values", example = "Blue"))
+    @ArraySchema(schema = @Schema(description = "Display names for discrete values", example = "Blue", requiredMode = Schema.RequiredMode.REQUIRED))
     private final String[] valueDisplayNames;
 
-    @Schema(description = "Whether the values are discrete instead of continuous (colors are discrete, forest strength % is continuous)", example = "true")
+    @Schema(description = "Whether the values are discrete instead of continuous (colors are discrete, forest strength % is continuous)", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
     private final boolean discrete;
 
-    @Schema(description = "Provider type", implementation = ProviderType.class)
+    @Schema(description = "Provider type", implementation = ProviderType.class, requiredMode = Schema.RequiredMode.REQUIRED)
     private final ProviderType type;
 
     @JsonCreator

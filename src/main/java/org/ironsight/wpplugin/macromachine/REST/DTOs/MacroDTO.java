@@ -10,19 +10,19 @@ import java.util.UUID;
 @Schema(description = "Represents a macro configuration and execution state")
 public class MacroDTO
 {
-    @Schema(description = "UUIDs of executions associated with this macro. can be of a macro or an action", example = "[\"550e8400-e29b-41d4-a716-446655440000\"]")
+    @Schema(description = "UUIDs of executions associated with this macro. can be of a macro or an action", example = "[\"550e8400-e29b-41d4-a716-446655440000\"]", requiredMode = Schema.RequiredMode.REQUIRED)
     public final UUID[] executionUUIDs;
 
-    @Schema(description = "Flags indicating whether each action is active", example = "[true, false, true]")
+    @Schema(description = "Flags indicating whether each action is active", example = "[true, false, true]", requiredMode = Schema.RequiredMode.REQUIRED)
     private final boolean[] activeActions;
 
-    @Schema(description = "Human readable macro name", example = "Morning Routine")
+    @Schema(description = "Human readable macro name", example = "Morning Routine", requiredMode = Schema.RequiredMode.REQUIRED)
     private final String name;
 
-    @Schema(description = "Detailed description of the macro", example = "Runs all startup automation tasks")
+    @Schema(description = "Detailed description of the macro", example = "Runs all startup automation tasks", requiredMode = Schema.RequiredMode.REQUIRED)
     private final String description;
 
-    @Schema(description = "Unique identifier of the macro", example = "550e8400-e29b-41d4-a716-446655440000")
+    @Schema(description = "Unique identifier of the macro", example = "550e8400-e29b-41d4-a716-446655440000", requiredMode = Schema.RequiredMode.REQUIRED)
     private final UUID uid;
 
     @JsonCreator

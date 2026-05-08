@@ -198,6 +198,7 @@
   "components" : {
     "schemas" : {
       "ActionDTO" : {
+        "required" : [ "actionType", "description", "input", "mappedOutputs", "mappingPointsX", "mappingPointsY", "name", "output", "uid" ],
         "type" : "object",
         "properties" : {
           "input" : {
@@ -263,7 +264,7 @@
         "description" : "Represents an executable mapping action, that reads one inputtype from the map and based on that writes output values to the map."
       },
       "InputOutputDTO" : {
-        "required" : [ "displayName" ],
+        "required" : [ "description", "discrete", "displayName", "ignoreValue", "max", "min", "type", "valueDisplayNames" ],
         "type" : "object",
         "properties" : {
           "displayName" : {
@@ -316,6 +317,7 @@
         "description" : "Describes an input/output provider configuration"
       },
       "MacroDTO" : {
+        "required" : [ "activeActions", "description", "executionUUIDs", "name", "uid" ],
         "type" : "object",
         "properties" : {
           "executionUUIDs" : {

@@ -15,34 +15,34 @@ import java.util.UUID;
 public class ActionDTO
 {
 
-    @Schema(description = "Input")
+    @Schema(description = "Input", requiredMode = Schema.RequiredMode.REQUIRED)
     private final InputOutputDTO input;
 
-    @Schema(description = "Output")
+    @Schema(description = "Output", requiredMode = Schema.RequiredMode.REQUIRED)
     private final InputOutputDTO output;
 
-    @Schema(description = "Type of action")
+    @Schema(description = "Type of action", requiredMode = Schema.RequiredMode.REQUIRED)
     private final ActionType actionType;
 
-    @Schema(description = "Human readable name")
+    @Schema(description = "Human readable name", requiredMode = Schema.RequiredMode.REQUIRED)
     private final String name;
 
-    @Schema(description = "Description of the action")
+    @Schema(description = "Description of the action", requiredMode = Schema.RequiredMode.REQUIRED)
     private final String description;
 
-    @Schema(description = "Unique identifier")
+    @Schema(description = "Unique identifier", requiredMode = Schema.RequiredMode.REQUIRED)
     private final UUID uid;
 
-    @Schema(description = "numeric input values for the mapping points")
+    @Schema(description = "numeric input values for the mapping points", requiredMode = Schema.RequiredMode.REQUIRED)
     private final int[] mappingPointsX;
 
-    @Schema(description = "numeric output values for the mapping points")
+    @Schema(description = "numeric output values for the mapping points", requiredMode = Schema.RequiredMode.REQUIRED)
     private final int[] mappingPointsY;
 
-    @Schema(description = "actual numeric input values for all inputs")
+    @Schema(description = "actual numeric input values for all inputs", requiredMode = Schema.RequiredMode.REQUIRED)
     private final int[] mappedInputs;
 
-    @Schema(description = "actual numeric output values for all inputs")
+    @Schema(description = "actual numeric output values for all inputs", requiredMode = Schema.RequiredMode.REQUIRED)
     private final int[] mappedOutputs;
 
     public ActionDTO(MappingAction action) {
