@@ -1,3 +1,8 @@
 #!/bin/sh
+if ! git diff --cached --name-only | grep -q '^src'; then
+    echo "No frontend files changed, skipping"
+    exit 0
+fi
+
 npm test -- --run || exit 1
 npm run verify || exit 1
