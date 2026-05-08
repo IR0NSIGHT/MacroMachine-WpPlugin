@@ -79,9 +79,8 @@ public class ActionDTO
         if (o == null || getClass() != o.getClass())
             return false;
         ActionDTO actionDTO = (ActionDTO) o;
-        return Objects.equals(getInput(), actionDTO.getInput())
-                && Objects.equals(getOutput(), actionDTO.getOutput()) && getActionType() == actionDTO.getActionType()
-                && Objects.equals(getName(), actionDTO.getName())
+        return Objects.equals(getInput(), actionDTO.getInput()) && Objects.equals(getOutput(), actionDTO.getOutput())
+                && getActionType() == actionDTO.getActionType() && Objects.equals(getName(), actionDTO.getName())
                 && Objects.equals(getDescription(), actionDTO.getDescription())
                 && Objects.equals(getUid(), actionDTO.getUid())
                 && Arrays.equals(getMappingPointsX(), actionDTO.getMappingPointsX())
@@ -156,17 +155,10 @@ public class ActionDTO
 
     @Override
     public String toString() {
-        return "ActionDTO{" +
-                "input=" + input +
-                ", output=" + output +
-                ", actionType=" + actionType +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", uid=" + uid +
-                ", mappingPointsX=" + Arrays.toString(mappingPointsX) +
-                ", mappingPointsY=" + Arrays.toString(mappingPointsY) +
-                ", mappedInputs=" + Arrays.toString(mappedInputs) +
-                ", mappedOutputs=" + Arrays.toString(mappedOutputs) +
-                '}';
+        return "ActionDTO{" + "input=" + input + ", output=" + output + ", actionType=" + actionType + ", name='" + name
+                + '\'' + ", description='" + description + '\'' + ", uid=" + uid + ", mappingPointsX="
+                + Arrays.toString(mappingPointsX) + ", mappingPointsY=" + Arrays.toString(mappingPointsY)
+                + ", mappedInputs=" + Arrays.toString(mappedInputs) + ", mappedOutputs="
+                + Arrays.toString(mappedOutputs) + '}';
     }
 }

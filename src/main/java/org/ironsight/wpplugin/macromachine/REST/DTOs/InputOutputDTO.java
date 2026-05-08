@@ -122,32 +122,29 @@ public class InputOutputDTO
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         InputOutputDTO that = (InputOutputDTO) o;
-        return getMin() == that.getMin() && getMax() == that.getMax() && getIgnoreValue() == that.getIgnoreValue() && isDiscrete() == that.isDiscrete() &&
-                Objects.equals(getDisplayName(), that.getDisplayName()) && Objects.equals(getDescription(), that.getDescription()) &&
-                Arrays.equals(getValueDisplayNames(), that.getValueDisplayNames()) && getType() == that.getType();
+        return getMin() == that.getMin() && getMax() == that.getMax() && getIgnoreValue() == that.getIgnoreValue()
+                && isDiscrete() == that.isDiscrete() && Objects.equals(getDisplayName(), that.getDisplayName())
+                && Objects.equals(getDescription(), that.getDescription())
+                && Arrays.equals(getValueDisplayNames(), that.getValueDisplayNames()) && getType() == that.getType();
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(getDisplayName(), getDescription(), getMin(), getMax(), getIgnoreValue(), isDiscrete(), getType());
+        int result = Objects.hash(getDisplayName(), getDescription(), getMin(), getMax(), getIgnoreValue(),
+                isDiscrete(), getType());
         result = 31 * result + Arrays.hashCode(getValueDisplayNames());
         return result;
     }
 
     @Override
     public String toString() {
-        return "InputOutputDTO{" +
-                "displayName='" + displayName + '\'' +
-                ", description='" + description + '\'' +
-                ", min=" + min +
-                ", max=" + max +
-                ", ignoreValue=" + ignoreValue +
-                ", valueDisplayNames=" + Arrays.toString(valueDisplayNames) +
-                ", discrete=" + discrete +
-                ", type=" + type +
-                '}';
+        return "InputOutputDTO{" + "displayName='" + displayName + '\'' + ", description='" + description + '\''
+                + ", min=" + min + ", max=" + max + ", ignoreValue=" + ignoreValue + ", valueDisplayNames="
+                + Arrays.toString(valueDisplayNames) + ", discrete=" + discrete + ", type=" + type + '}';
     }
 }

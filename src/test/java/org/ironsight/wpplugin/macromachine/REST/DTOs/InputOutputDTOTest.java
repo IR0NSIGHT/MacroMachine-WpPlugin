@@ -8,18 +8,17 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class InputOutputDTOTest {
+class InputOutputDTOTest
+{
 
     @Test
     public void fromOutputSetter() {
         var setter = new AnnotationSetter();
         var dto = InputOutputDTO.fromOutputSetter(new AnnotationSetter());
-        var expected = new InputOutputDTO(setter.getName(),
-                setter.getDescription(),
-                setter.getMinValue(),
-                setter.getMaxValue(),
-                IPositionValueSetter.getIgnoreValue(setter),
-                Arrays.stream(setter.getAllOutputValues()).mapToObj(setter::valueToString).toArray(String[]::new), setter.isDiscrete(), setter.getProviderType());
+        var expected = new InputOutputDTO(setter.getName(), setter.getDescription(), setter.getMinValue(),
+                setter.getMaxValue(), IPositionValueSetter.getIgnoreValue(setter),
+                Arrays.stream(setter.getAllOutputValues()).mapToObj(setter::valueToString).toArray(String[]::new),
+                setter.isDiscrete(), setter.getProviderType());
         assertEquals(expected, dto);
     }
 
@@ -27,12 +26,10 @@ class InputOutputDTOTest {
     public void fromInputSetter() {
         var setter = new AnnotationSetter();
         var dto = InputOutputDTO.fromInputGetter(new AnnotationSetter());
-        var expected = new InputOutputDTO(setter.getName(),
-                setter.getDescription(),
-                setter.getMinValue(),
-                setter.getMaxValue(),
-                IPositionValueSetter.getIgnoreValue(setter),
-                Arrays.stream(setter.getAllInputValues()).mapToObj(setter::valueToString).toArray(String[]::new), setter.isDiscrete(), setter.getProviderType());
+        var expected = new InputOutputDTO(setter.getName(), setter.getDescription(), setter.getMinValue(),
+                setter.getMaxValue(), IPositionValueSetter.getIgnoreValue(setter),
+                Arrays.stream(setter.getAllInputValues()).mapToObj(setter::valueToString).toArray(String[]::new),
+                setter.isDiscrete(), setter.getProviderType());
         assertEquals(expected, dto);
     }
 
