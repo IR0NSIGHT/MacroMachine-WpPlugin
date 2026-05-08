@@ -12,4 +12,5 @@ public interface IPositionValueGetter extends IDisplayUnit, Serializable, IMappi
     static boolean isLegalInput(IPositionValueGetter getter, int value) {
         return (getter.getMinValue() <= value && value <= getter.getMaxValue());
     }
+
 }

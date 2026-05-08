@@ -41,13 +41,13 @@ public class MacroResource
             throw new InternalServerErrorException(err.toString());
         }
 
-        return new MacroDTO(macro);
+        return dto;
     }
 
     @DELETE
     @Path("/{id}")
     public void delete(@PathParam("id") UUID id) {
-        if (macroContainer.queryContains(id))
+        if (!macroContainer.queryContains(id))
             throw new NotFoundException("Macro not found for uuid=: " + id);
         macroContainer.deleteMapping(id);
     }

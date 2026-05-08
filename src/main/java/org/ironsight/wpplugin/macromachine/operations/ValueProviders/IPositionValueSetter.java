@@ -16,4 +16,16 @@ public interface IPositionValueSetter extends IDisplayUnit, Serializable, IMappi
     }
 
     public static final int IGNORE_VALUE = Integer.MAX_VALUE;
+
+    static int getIgnoreValue(IPositionValueSetter setter) {
+        if (setter.isIgnoreValue(IGNORE_VALUE))
+            return IGNORE_VALUE;
+        for (int v : setter.getAllOutputValues()) {
+            if (setter.isIgnoreValue(v)) {
+                return v;
+            }
+        }
+        assert false : "this setter has no known ignore value??";
+        return IGNORE_VALUE;
+    }
 }

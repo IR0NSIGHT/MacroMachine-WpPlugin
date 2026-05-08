@@ -153,7 +153,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
 
             // filter for identity
             if (!mappings.containsKey(mapping.getUid()) || queryById(mapping.getUid()).equals(mapping)) {
-                mapping.getUid();
+                mapping.getUid(); // FIXME whats going on here??
             }
             mappings.put(mapping.getUid(), mapping);
             uids[idx++] = mapping.getUid();

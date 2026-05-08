@@ -1,6 +1,8 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
@@ -16,45 +18,49 @@ import java.util.stream.Collectors;
 import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO.getUsedLayers;
 
 /**
- * this class is a collection of MappingActions the action are ordered and
- * executed in this order a macro can be executed and will apply each of its
- * nested action to the map macros can container Actions or other Macros
- * (nesting) recursion is technically possible but not allowed because there is
- * no way to detect infinite recursion.
+ * this class is a collection of MappingActions the action are ordered and executed in this order a macro can be executed and will apply each of its nested action to the map macros can
+ * container Actions or other Macros (nesting) recursion is technically possible but not allowed because there is no way to detect infinite recursion.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Macro implements SaveableAction
-{
+public class Macro implements SaveableAction {
     // ordered list of layermappings
     public final UUID[] executionUUIDs;
     private final boolean[] activeActions;
     private final String name;
     private final String description;
     private final UUID uid;
-    public Macro(String name, String description, UUID[] ids, UUID id, boolean[] activeActions) {
+    // only for gui purposes, not part of the actual data. only use this flag if you
+    // set it yourself
+    private boolean isActive;
+
+    @JsonCreator
+    public Macro(
+            @JsonProperty("name") String name,
+            @JsonProperty("description") String description,
+            @JsonProperty("executionUUIDs") UUID[] executionUUIDs,
+            @JsonProperty("uid") UUID uid,
+            @JsonProperty("activeActions") boolean[] activeActions
+    ) {
         this.name = name;
         this.description = description;
-        this.uid = id;
-        executionUUIDs = ids;
-        this.activeActions = activeActions;
+        this.uid = uid;
+        this.executionUUIDs = executionUUIDs;
+        this.activeActions = activeActions == null ? new boolean[executionUUIDs.length] : activeActions;
+        if (activeActions == null)
+            Arrays.fill(this.activeActions, true);
     }
 
     /**
      * @param macro
-     * @param item
-     *            action or macro to insert
-     * @param createNewAction
-     *            getter to clone action if necessary
-     * @param targetRows
-     *            insert item at each of those rows
-     * @param outNewSelection
-     *            output array with indices of row selection. old rows stay
-     *            selected.
+     * @param item            action or macro to insert
+     * @param createNewAction getter to clone action if necessary
+     * @param targetRows      insert item at each of those rows
+     * @param outNewSelection output array with indices of row selection. old rows stay selected.
      * @return new macro
      */
     public static Macro insertSaveableActionToList(Macro macro, SaveableAction item,
-            Supplier<MappingAction> createNewAction, Consumer<MappingAction> updateAction, int[] targetRows,
-            ArrayList<Integer> outNewSelection) {
+                                                   Supplier<MappingAction> createNewAction, Consumer<MappingAction> updateAction, int[] targetRows,
+                                                   ArrayList<Integer> outNewSelection) {
         if (targetRows.length == 0) {
             targetRows = new int[]{macro.getExecutionUUIDs().length - 1};
         }
@@ -92,7 +98,7 @@ public class Macro implements SaveableAction
     }
 
     public static List<MappingAction> macroToFlatActions(Macro macro, MacroContainer macroContainer,
-            MappingActionContainer actionContainer) {
+                                                         MappingActionContainer actionContainer) {
         List<UUID> steps = macro.collectActions(new LinkedList<>(), macroContainer, actionContainer);
         List<MappingAction> executionSteps = steps.stream()
                 .map(actionContainer::queryById)
@@ -101,7 +107,7 @@ public class Macro implements SaveableAction
     }
 
     public static Collection<ExecutionStatistic> applyMacroToDimension(ApplyAction.ApplicationContext context,
-            Macro macro, ApplyActionCallback callback) {
+                                                                       Macro macro, ApplyActionCallback callback) {
         assert context != null;
 
         Dimension dim = context.dimension;
@@ -169,6 +175,30 @@ public class Macro implements SaveableAction
         return statistics;
     }
 
+    public static boolean[] deleteAt(boolean[] arr, int idx) {
+        if (arr == null || idx < 0 || idx >= arr.length) {
+            throw new IllegalArgumentException("Invalid index or array is null");
+        }
+
+        boolean[] newArray = new boolean[arr.length - 1];
+        System.arraycopy(arr, 0, newArray, 0, idx);
+        System.arraycopy(arr, idx + 1, newArray, idx, arr.length - idx - 1);
+
+        return newArray;
+    }
+
+    public static UUID[] deleteAt(UUID[] arr, int idx) {
+        if (arr == null || idx < 0 || idx >= arr.length) {
+            throw new IllegalArgumentException("Invalid index or array is null");
+        }
+
+        UUID[] newArray = new UUID[arr.length - 1];
+        System.arraycopy(arr, 0, newArray, 0, idx);
+        System.arraycopy(arr, idx + 1, newArray, idx, arr.length - idx - 1);
+
+        return newArray;
+    }
+
     public boolean[] getActiveActions() {
         return activeActions.clone();
     }
@@ -182,10 +212,6 @@ public class Macro implements SaveableAction
     public void setActive(boolean active) {
         isActive = active;
     }
-
-    // only for gui purposes, not part of the actual data. only use this flag if you
-    // set it yourself
-    private boolean isActive;
 
     @Override
     public String getToolTipText() {
@@ -233,29 +259,6 @@ public class Macro implements SaveableAction
 
     public Macro withUUID(UUID selfId) {
         return new Macro(name, description, executionUUIDs.clone(), selfId, activeActions.clone());
-    }
-    public static boolean[] deleteAt(boolean[] arr, int idx) {
-        if (arr == null || idx < 0 || idx >= arr.length) {
-            throw new IllegalArgumentException("Invalid index or array is null");
-        }
-
-        boolean[] newArray = new boolean[arr.length - 1];
-        System.arraycopy(arr, 0, newArray, 0, idx);
-        System.arraycopy(arr, idx + 1, newArray, idx, arr.length - idx - 1);
-
-        return newArray;
-    }
-
-    public static UUID[] deleteAt(UUID[] arr, int idx) {
-        if (arr == null || idx < 0 || idx >= arr.length) {
-            throw new IllegalArgumentException("Invalid index or array is null");
-        }
-
-        UUID[] newArray = new UUID[arr.length - 1];
-        System.arraycopy(arr, 0, newArray, 0, idx);
-        System.arraycopy(arr, idx + 1, newArray, idx, arr.length - idx - 1);
-
-        return newArray;
     }
 
     public Macro withRemovedItem(int itemIdx) {
@@ -317,7 +320,7 @@ public class Macro implements SaveableAction
     }
 
     public List<UUID> collectActions(List<UUID> actionList, MacroContainer macroContainer,
-            MappingActionContainer actionContainer) {
+                                     MappingActionContainer actionContainer) {
         int idx = 0;
         for (UUID id : this.executionUUIDs) {
             SaveableAction action = macroContainer.queryById(id);
