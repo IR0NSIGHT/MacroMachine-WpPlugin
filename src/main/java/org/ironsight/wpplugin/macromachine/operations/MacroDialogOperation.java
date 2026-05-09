@@ -2,6 +2,9 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.Layers.CustomLayerControllerWrapper;
+import org.ironsight.wpplugin.macromachine.REST.DTOs.ExecutionStateDTO;
+import org.ironsight.wpplugin.macromachine.REST.DTOs.ExecutionStatus;
+import org.ironsight.wpplugin.macromachine.REST.DTOs.ExecutionStepDTO;
 import org.ironsight.wpplugin.macromachine.WebUIServer;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
@@ -9,19 +12,24 @@ import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
+import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 
-public class MacroDialogOperation extends AbstractBrushOperation implements MacroApplicator
-{
+public class MacroDialogOperation extends AbstractBrushOperation  {
     private static final String NAME = "Macro Operation";
     private static final String DESCRIPTION = "Create complex reusable global operations to automate your workflow.";
+    private MacroConcurrentApplicator applicator;
 
     public MacroDialogOperation() {
         super(NAME, DESCRIPTION, "macrooperation"); // one shot op
@@ -29,8 +37,13 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
 
         MacroContainer.SetInstance(new MacroContainer(null));
         MacroContainer macros = MacroContainer.getInstance();
-        MappingActionContainer.SetInstance(new MappingActionContainer(null));
-        WebUIServer server = new WebUIServer();
+        MappingActionContainer actions = new MappingActionContainer(null);
+        MappingActionContainer.SetInstance(actions);
+
+        applicator = new MacroConcurrentApplicator(macros, actions, this::getDimension);
+        applicator.start();
+
+        WebUIServer server = new WebUIServer(applicator, MappingActionContainer.getInstance(), macros);
         try {
             server.start();
         } catch (IOException e) {
@@ -53,10 +66,12 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
         MacroContainer.getInstance().subscribe(saveEverything);
     }
 
+
+
     public void openDialog() {
         try {
             InputOutputProvider.INSTANCE.updateFrom(getDimension());
-            JFrame dialog = createDialog(null, this);
+            JFrame dialog = createDialog(null, applicator);
             dialog.toFront(); // Bring it to the front
             dialog.requestFocusInWindow();
             dialog.setVisible(true);
@@ -65,14 +80,8 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
         }
     }
 
-    @Override
-    public Collection<ExecutionStatistic> applyLayerAction(Macro macro, ApplyActionCallback callback) {
-        ApplyAction.ApplicationContext context = new ApplyAction.ApplicationContext(getDimension(),
-                MacroContainer.getInstance(), MappingActionContainer.getInstance(), InputOutputProvider.INSTANCE,
-                new CustomLayerControllerWrapper(), ActionFilterIO.instance);
 
-        return Macro.applyMacroToDimension(context, macro, callback);
-    }
+
 
     @Override
     protected void activate() {

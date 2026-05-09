@@ -635,7 +635,6 @@ public class MacroTreePanel extends JPanel
         macroIsCurrentlyExecuting = true;
         GlobalActionPanel.logMessage("Start execution");
 
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
 
         // Submit a task to the ExecutorService
         final MacroTreePanel panel = this;
@@ -660,6 +659,7 @@ public class MacroTreePanel extends JPanel
 
         treeStepper = new TreeDebugStepperUI((MacroTreeNode) selected.getLastPathComponent(), macroContainer,
                 this.mappingContainer, this::setStepperToPath);
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
         executorService.submit(() -> {
             applyToMap.applyLayerAction(executingMacro, macroExecutionCallback);
             SwingUtilities.invokeLater(() -> {

@@ -104,6 +104,23 @@
         }
       }
     },
+    "/execution/state" : {
+      "get" : {
+        "operationId" : "getCurrentState",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExecutionStateDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/execution/queue" : {
       "get" : {
         "operationId" : "getQueue",
@@ -138,58 +155,6 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/ExecutionQueueDTO"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete" : {
-        "operationId" : "clearQueue",
-        "responses" : {
-          "default" : {
-            "description" : "default response",
-            "content" : {
-              "application/json" : { }
-            }
-          }
-        }
-      }
-    },
-    "/execution/state" : {
-      "get" : {
-        "operationId" : "getCurrentState",
-        "responses" : {
-          "default" : {
-            "description" : "default response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ExecutionStateDTO"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "operationId" : "updateQueue_1",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ExecutionStateDTO"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "description" : "default response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ExecutionStateDTO"
                 }
               }
             }
@@ -435,7 +400,7 @@
           "status" : {
             "type" : "string",
             "description" : "state of the execution",
-            "enum" : [ "IDLE", "RUNNING", "PAUSED", "COMPLETED", "FAILED" ]
+            "enum" : [ "IDLE", "RUNNING", "PAUSED", "COMPLETED", "FAILED", "ABORTING" ]
           }
         },
         "description" : "Represents the application's execution state"
