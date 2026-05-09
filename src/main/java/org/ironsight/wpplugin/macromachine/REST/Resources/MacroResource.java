@@ -1,5 +1,10 @@
 package org.ironsight.wpplugin.macromachine.REST.Resources;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.ironsight.wpplugin.macromachine.REST.DTOs.MacroDTO;
@@ -18,6 +23,8 @@ public class MacroResource
     private MacroContainer macroContainer = MacroContainer.getInstance();
 
     @GET
+    @Operation(summary = "Get all macros")
+    @ApiResponse(responseCode = "200", description = "List of macros", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = MacroDTO.class))))
     public List<MacroDTO> getAll() {
         return macroContainer.queryAll().stream().map(MacroDTO::new).collect(Collectors.toList());
     }

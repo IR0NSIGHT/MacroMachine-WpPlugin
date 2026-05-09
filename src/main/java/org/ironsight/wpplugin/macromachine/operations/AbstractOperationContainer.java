@@ -232,7 +232,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
             lines = Files.readAllLines(Paths.get(filePath), StandardCharsets.UTF_8);
             String jsonString = String.join("", lines);
             fromSaveObject(jsonString);
-        } catch (NoSuchFileException | FileNotFoundException e) {
+        } catch (NoSuchFileException | FileNotFoundException | AccessDeniedException e) {
             GlobalActionPanel.ErrorPopUp(e);
         } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);

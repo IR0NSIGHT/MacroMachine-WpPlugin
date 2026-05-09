@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.Layers.CustomLayerControllerWrapper;
+import org.ironsight.wpplugin.macromachine.WebUIServer;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
@@ -12,6 +13,7 @@ import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
@@ -28,6 +30,14 @@ public class MacroDialogOperation extends AbstractBrushOperation implements Macr
         MacroContainer.SetInstance(new MacroContainer(null));
         MacroContainer macros = MacroContainer.getInstance();
         MappingActionContainer.SetInstance(new MappingActionContainer(null));
+        WebUIServer server = new WebUIServer();
+        try {
+            server.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
         ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(),

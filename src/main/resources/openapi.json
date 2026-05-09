@@ -104,12 +104,106 @@
         }
       }
     },
-    "/macros" : {
+    "/execution/queue" : {
       "get" : {
-        "operationId" : "getAll_1",
+        "operationId" : "getQueue",
         "responses" : {
           "default" : {
             "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExecutionQueueDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "updateQueue",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExecutionQueueDTO"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExecutionQueueDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "clearQueue",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : { }
+            }
+          }
+        }
+      }
+    },
+    "/execution/state" : {
+      "get" : {
+        "operationId" : "getCurrentState",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExecutionStateDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "updateQueue_1",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExecutionStateDTO"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExecutionStateDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/macros" : {
+      "get" : {
+        "summary" : "Get all macros",
+        "operationId" : "getAll_1",
+        "responses" : {
+          "200" : {
+            "description" : "List of macros",
             "content" : {
               "application/json" : {
                 "schema" : {
@@ -316,6 +410,80 @@
         },
         "description" : "Describes an input/output provider configuration"
       },
+      "ExecutionStateDTO" : {
+        "required" : [ "currentStepIndex", "executionId", "status", "steps" ],
+        "type" : "object",
+        "properties" : {
+          "executionId" : {
+            "type" : "string",
+            "description" : "ID of the currently executing macro",
+            "format" : "uuid"
+          },
+          "steps" : {
+            "type" : "array",
+            "description" : "Ordered execution steps for the current execution",
+            "items" : {
+              "$ref" : "#/components/schemas/ExecutionStepDTO"
+            }
+          },
+          "currentStepIndex" : {
+            "type" : "integer",
+            "description" : "Zero-based index of the currently active step",
+            "format" : "int32",
+            "example" : 0
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "state of the execution",
+            "enum" : [ "IDLE", "RUNNING", "PAUSED", "COMPLETED", "FAILED" ]
+          }
+        },
+        "description" : "Represents the application's execution state"
+      },
+      "ExecutionStepDTO" : {
+        "required" : [ "actionId", "breakpoint", "percentComplete" ],
+        "type" : "object",
+        "properties" : {
+          "actionId" : {
+            "type" : "string",
+            "description" : "Unique identifier of the action executed in this step",
+            "format" : "uuid",
+            "example" : "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "breakpoint" : {
+            "type" : "boolean",
+            "description" : "Whether execution should pause before this step is executed",
+            "example" : false
+          },
+          "percentComplete" : {
+            "maximum" : 100.0,
+            "exclusiveMaximum" : false,
+            "minimum" : 0.0,
+            "exclusiveMinimum" : false,
+            "type" : "number",
+            "description" : "Completion percentage of this step, from 0 to 100",
+            "format" : "float",
+            "example" : 42.5
+          }
+        },
+        "description" : "Represents a single action step within a macro execution"
+      },
+      "ExecutionQueueDTO" : {
+        "required" : [ "queuedMacroIds" ],
+        "type" : "object",
+        "properties" : {
+          "queuedMacroIds" : {
+            "type" : "array",
+            "description" : "Ordered list of macro IDs to enqueue",
+            "items" : {
+              "type" : "string",
+              "description" : "Ordered list of macro IDs to enqueue",
+              "format" : "uuid"
+            }
+          }
+        },
+        "description" : "Request to enqueue macros for execution"
+      },
       "MacroDTO" : {
         "required" : [ "activeActions", "description", "executionUUIDs", "name", "uid" ],
         "type" : "object",
@@ -357,7 +525,7 @@
             "example" : "550e8400-e29b-41d4-a716-446655440000"
           }
         },
-        "description" : "Represents a macro configuration and execution state"
+        "description" : "Represents a macro: collection of macros and actions"
       }
     }
   }

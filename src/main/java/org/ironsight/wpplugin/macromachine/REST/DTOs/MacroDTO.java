@@ -7,7 +7,7 @@ import org.ironsight.wpplugin.macromachine.operations.Macro;
 
 import java.util.UUID;
 
-@Schema(description = "Represents a macro configuration and execution state")
+@Schema(description = "Represents a macro: collection of macros and actions")
 public class MacroDTO
 {
     @Schema(description = "UUIDs of executions associated with this macro. can be of a macro or an action", example = "[\"550e8400-e29b-41d4-a716-446655440000\"]", requiredMode = Schema.RequiredMode.REQUIRED)
