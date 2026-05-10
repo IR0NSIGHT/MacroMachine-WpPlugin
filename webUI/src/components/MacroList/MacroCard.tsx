@@ -11,10 +11,21 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 type MacroDTO = components["schemas"]["MacroDTO"];
 type executionState = components["schemas"]["ExecutionStateDTO"];
-export default function MacroCard(props: { macro: MacroDTO; execution?: executionState, onRequestExecution: (isDebug: boolean) => void }) {
-  const { macro, execution } = props;
+export default function MacroCard(props: {
+  macro: MacroDTO;
+  execution?: executionState;
+  onRequestExecution: (isDebug: boolean) => void;
+  imageURL?: string;
+}) {
+  const { macro, execution, imageURL } = props;
   const isMacroRunning = execution?.executionId == macro.uid;
-  const percentage = execution?.currentStepIndex !== undefined && execution?.steps && execution.steps.length !== 0 ? ((execution.currentStepIndex + execution.steps[execution.currentStepIndex].percentComplete / 100) / execution.steps.length) * 100 : 0;
+  const percentage =
+    execution?.currentStepIndex !== undefined && execution?.steps && execution.steps.length !== 0
+      ? ((execution.currentStepIndex +
+          execution.steps[execution.currentStepIndex].percentComplete / 100) /
+          execution.steps.length) *
+        100
+      : 0;
   return (
     <Card
       sx={{
@@ -32,15 +43,18 @@ export default function MacroCard(props: { macro: MacroDTO; execution?: executio
     >
       <CardActionArea
         disabled={isMacroRunning}
-        onClick={()=>props.onRequestExecution(false)}
+        onClick={() => props.onRequestExecution(false)}
         sx={{
           filter: isMacroRunning ? "blur(1.5px)" : "none",
         }}
+        title="run macro"
       >
         <CardMedia
           sx={{ height: 140 }}
-          image="https://worldpainter-blog.com/wp-content/uploads/2024/11/dannypan_2024-10-13-16-53_15stars_2.png"
-          title="macro image"
+          image={
+            imageURL ||
+            "https://worldpainter-blog.com/wp-content/uploads/2024/11/dannypan_2024-10-13-16-53_15stars_2.png"
+          }
         />
 
         <CardContent>
@@ -114,9 +128,7 @@ export default function MacroCard(props: { macro: MacroDTO; execution?: executio
                 height: "100%",
               }}
             >
-              <Typography variant="caption">
-                {Math.round(percentage)}%
-              </Typography>
+              <Typography variant="caption">{Math.round(percentage)}%</Typography>
             </Box>
           </Box>
         </Box>

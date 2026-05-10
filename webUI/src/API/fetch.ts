@@ -2,7 +2,8 @@ import type { paths, components } from "../generated/api-types";
 import { API_BASE } from "./api";
 
 type GetMacrosResponse = paths["/macros"]["get"]["responses"]["200"]["content"]["application/json"];
-type GetActionsResponse = paths["/actions"]["get"]["responses"]["default"]["content"]["application/json"];
+type GetActionsResponse =
+  paths["/actions"]["get"]["responses"]["default"]["content"]["application/json"];
 
 export async function fetchMacros(): Promise<GetMacrosResponse> {
   const response = await fetch(`${API_BASE}/api/macros`);
@@ -74,4 +75,3 @@ export async function fetchExecutionState(): Promise<components["schemas"]["Exec
 
   return await response.json();
 }
-

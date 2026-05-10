@@ -16,7 +16,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "verify": "npm run compile && npm run lint",
+    "verify": "npm run fmt:check && npm run lint && npm run compile",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check"
   },

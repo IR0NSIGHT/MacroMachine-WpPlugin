@@ -74,7 +74,7 @@ export const RunningMacro: Story = {
           actionId: "8526cdb2-bb3c-4ce3-b6b7-9eeeb5ce2bef",
           breakpoint: true,
           percentComplete: 45,
-        }
+        },
       ],
       currentStepIndex: 1,
       status: "RUNNING",
