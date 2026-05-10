@@ -64,15 +64,18 @@ public class MacroConcurrentApplicator implements MacroApplicator {
     }
 
     private void runExecutionQueue() {
+        assert getCurrentState().status().equals(ExecutionStatus.IDLE) :"why are we idle running when the status is" + getCurrentState().status();
         System.out.println("queue:" + queue);
         if (queue.isEmpty())
             return;
         var nextUID = queue.poll();
         var next = MacroContainer.getInstance().queryById(nextUID);
         if (next != null) {
+            updateState(new ExecutionStateDTO(nextUID, List.of(), 0, ExecutionStatus.RUNNING));
             System.out.println("Execute macro: " + next.getName() + "("+next.getUid()+")");
             System.out.println("Queue:" + queue.size());
             applyMacroSync(next);
+            updateState(new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE));
         }
         else {
             GlobalActionPanel.logMessage("error: can not execute macro, doesnt exist: " + nextUID);
@@ -157,7 +160,7 @@ public class MacroConcurrentApplicator implements MacroApplicator {
 
             @Override
             public void afterEverything() {
-                updateState(new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE));
+                updateState(new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.COMPLETED));
             }
         };
 

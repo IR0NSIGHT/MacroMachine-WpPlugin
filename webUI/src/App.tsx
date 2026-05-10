@@ -1,4 +1,4 @@
-import { PropsWithChildren, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import "@fontsource/ubuntu";
 import { components } from "./generated/api-types";
@@ -9,9 +9,10 @@ import {
   fetchMacros,
   postQueueMacros,
 } from "./API/fetch";
-import { Box, Grid } from "@mui/material";
+import { Box, FormControlLabel, Grid, Switch } from "@mui/material";
 import Item from "@mui/material/Grid";
 import MacroCard from "./components/MacroList/MacroCard";
+import { PrimarySearchAppBar } from "./components/AppBar";
 
 type MacroDTO = components["schemas"]["MacroDTO"];
 type ActionDTO = components["schemas"]["ActionDTO"];
@@ -50,181 +51,104 @@ const imageURLs = [
 ];
 
 type ExecutionStateDTO = components["schemas"]["ExecutionStateDTO"];
-export function MacroGrid() {
+export function MacroGrid({
+  macros,
+  actions,
+  executionState,
+}: {
+  macros: MacroDTO[];
+  actions: ActionDTO[];
+  executionState: ExecutionStateDTO;
+}) {
+  const uuidToMacro = new Map<string, MacroDTO>();
+  const uuidToAction = new Map<string, ActionDTO>();
+  macros.forEach((macro) => uuidToMacro.set(macro.uid, macro)); //FIXME useMemo ? or sth?
+  actions.forEach((action) => uuidToAction.set(action.uid, action));
+
+  return (
+    <div>
+      <FormControlLabel control={<Switch defaultChecked />} label="Hide nested macros" />
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0, // 🔴 CRITICAL
+          overflowY: "auto",
+          p: 2,
+        }}
+      >
+        <Grid container spacing={1}>
+          {macros.map((macro, idx) => (
+            <Grid key={macro.uid} size={4}>
+              <Item>
+                <MacroCard
+                  macro={macro}
+                  execution={executionState}
+                  imageURL={imageURLs[idx % imageURLs.length]}
+                  onRequestExecution={() =>
+                    postQueueMacros([macro.uid]).then(console.log).catch(console.error)
+                  }
+                />
+              </Item>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+    </div>
+  );
+}
+
+export default function App() {
+  const [search, setSearch] = useState("");
+
   const [macros, setMacros] = useState<MacroDTO[]>([]);
   const [actions, setActions] = useState<ActionDTO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [queue, setQueue] = useState<string[]>([]);
   const [executionState, setExecutionState] = useState<ExecutionStateDTO>({
     executionId: "",
     steps: [],
     currentStepIndex: 0,
     status: "IDLE",
   });
-  const uuidToMacro = new Map<string, MacroDTO>();
-  const uuidToAction = new Map<string, ActionDTO>();
-  macros.forEach((macro) => uuidToMacro.set(macro.uid, macro)); //FIXME useMemo ? or sth?
-  actions.forEach((action) => uuidToAction.set(action.uid, action));
+  const [_queue, setQueue] = useState<string[]>([]);
+  const [connectionLost, setConnectionLost] = useState(false);
+
   useEffect(() => {
     const interval = setInterval(async () => {
-      try {
-        await fetchExecutionQueue()
-          .then((r) => setQueue(r.queuedMacroIds))
-          .catch(console.error);
-        await fetchExecutionState().then(setExecutionState).catch(console.error);
-        await fetchActions().then(setActions).catch(console.error);
-        console.log(queue);
-      } catch (err) {
-        console.error(err);
-      }
-    }, 100);
+      await fetchExecutionQueue()
+        .then((r) => setQueue(r.queuedMacroIds))
+        .catch(() => setConnectionLost(true));
+      await fetchExecutionState()
+        .then(setExecutionState)
+        .catch(() => setConnectionLost(true));
+      await fetchActions()
+        .then(setActions)
+        .catch(() => setConnectionLost(true));
+      await fetchMacros()
+        .then((list) => setMacros(list.sort((a, b) => a.name.localeCompare(b.name))))
+        .catch(() => setConnectionLost(true));
+    }, 300);
 
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    fetchMacros()
-      .then((list) => setMacros(list.sort((a, b) => a.name.localeCompare(b.name))))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <Box
-      sx={{
-        flex: 1,
-        minHeight: 0, // 🔴 CRITICAL
-        overflowY: "auto",
-        p: 2,
-      }}
-    >
-      <Grid container spacing={1}>
-        {macros.map((macro, idx) => (
-          <Grid key={macro.uid} size={4}>
-            <Item>
-              <MacroCard
-                macro={macro}
-                execution={executionState}
-                imageURL={imageURLs[idx % imageURLs.length]}
-                onRequestExecution={() =>
-                  postQueueMacros([macro.uid]).then(console.log).catch(console.error)
-                }
-              />
-            </Item>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
+  const centerContent = (
+    <div>
+      {connectionLost && <div style={{ color: "red" }}>No connection to backend.</div>}
+      {!connectionLost && (
+        <MacroGrid
+          macros={macros.filter(
+            (macro) => search == "" || macro.name.toLowerCase().includes(search.toLowerCase()),
+          )}
+          actions={actions}
+          executionState={executionState}
+        />
+      )}
+    </div>
   );
-}
 
-export default function AppShell({ children }: PropsWithChildren) {
   return (
-    <Box
-      sx={{
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden", // prevents body scroll leak
-      }}
-    >
-      {/* ================= TOP BAR ================= */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          height: 64,
-          display: "flex",
-          alignItems: "center",
-          px: 2,
-          borderBottom: 1,
-          borderColor: "divider",
-        }}
-      >
-        Top Bar
-      </Box>
-
-      {/* ================= MAIN AREA ================= */}
-      <Box
-        sx={{
-          flex: 1,
-          minHeight: 0, // 🔴 CRITICAL (allows scrolling children)
-          display: "flex",
-        }}
-      >
-        {/* ===== SIDEBAR ===== */}
-        <Box
-          sx={{
-            width: 260,
-            flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            borderRight: 1,
-            borderColor: "divider",
-          }}
-        >
-          <Box sx={{ p: 2, flexShrink: 0 }}>Sidebar top</Box>
-
-          <Box
-            sx={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: "auto",
-              p: 2,
-            }}
-          >
-            Sidebar scroll content
-          </Box>
-
-          <Box sx={{ p: 2, flexShrink: 0 }}>Sidebar bottom</Box>
-        </Box>
-
-        {/* ===== MAIN CONTENT AREA ===== */}
-        <Box
-          sx={{
-            flex: 1,
-            minHeight: 0,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {/* inner top (optional) */}
-          <Box sx={{ p: 2, flexShrink: 0 }}>Inner Top</Box>
-
-          {/* SCROLLABLE CONTENT (THIS IS YOUR APP) */}
-          <Box
-            sx={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: "auto",
-              p: 2,
-            }}
-          >
-            {children}
-          </Box>
-
-          {/* inner bottom (optional) */}
-          <Box sx={{ p: 2, flexShrink: 0 }}>Inner Bottom</Box>
-        </Box>
-      </Box>
-
-      {/* ================= BOTTOM BAR ================= */}
-      <Box
-        sx={{
-          flexShrink: 0,
-          height: 56,
-          display: "flex",
-          alignItems: "center",
-          px: 2,
-          borderTop: 1,
-          borderColor: "divider",
-        }}
-      >
-        Bottom Bar
-      </Box>
-    </Box>
+    <div>
+      <PrimarySearchAppBar search={search} onSearchChange={setSearch} />
+      {centerContent}
+    </div>
   );
 }
