@@ -6,7 +6,7 @@ type InputValueSelectProps = {
   input: InputOutput;
   sortedValues: NamedValue[];
   onSelect: (newInput: NamedValue) => void;
-  label: String;
+  label: string;
 };
 
 export const InputValueMenu = ({

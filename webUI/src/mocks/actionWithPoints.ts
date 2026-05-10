@@ -10,7 +10,7 @@ function generateMappings(
   let mappings: number[];
 
   if (output.discrete) {
-    mappings = new Array(input.max + 1 - input.min);
+    mappings = Array.from({ length: input.max + 1 - input.min }, () => 0);
 
     if (mappingPoints.length === 0) return mappings;
 
@@ -44,7 +44,7 @@ function generateInterpolatedOutput(
   getter: InputOutput,
   setter: InputOutput,
 ): number[] {
-  const mappings = new Array(getter.values.length).fill(setter.min);
+  const mappings = Array.from({ length: getter.values.length }, () => setter.min);
 
   if (mappingPoints.length === 0) return mappings;
 
