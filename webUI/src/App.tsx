@@ -24,7 +24,6 @@ function MacroList() {
         currentStepIndex: 0,
         status: "IDLE"
     });
-    console.log(queue, executionState);
     const uuidToMacro = new Map<string, MacroDTO>();
     const uuidToAction = new Map<string, ActionDTO>();
     macros.forEach((macro) => uuidToMacro.set(macro.uid, macro)); //FIXME useMemo ? or sth?
@@ -35,7 +34,7 @@ function MacroList() {
                 await fetchExecutionQueue().then(r => setQueue(r.queuedMacroIds)).catch(console.error);
                 await fetchExecutionState().then(setExecutionState).catch(console.error);
                 await fetchActions().then(setActions).catch(console.error);
-
+                console.log(queue)
 
 
             } catch (err) {
@@ -57,56 +56,78 @@ function MacroList() {
         return <div>Loading...</div>;
     }
 
-    return (
-        <Box
-            sx={{
-                display: "flex",
-                flexDirection: "column",
-                height: "100vh",
-            }}
-        >
-            {/* TOP */}
-            <Box sx={{ p: 2 }}>
-                some text top
-            </Box>
-            {/* SCROLLABLE MIDDLE */}
-            <Box
-                sx={{
-                    flex: 1,
-                    minHeight: 0,
-                    overflowY: "auto",
-                    p: 2,
-                }}
-            >
-                <Grid container spacing={1}>
-                    {macros.map((macro) => (
-                        <Grid key={macro.uid} size={4}>
-                            <Item>
-                                <MacroCard macro={macro} execution={executionState} onRequestExecution={() => postQueueMacros([macro.uid]).then(console.log).catch(console.error)} />
+     return (
+    <Box
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0,     // 🔴 CRITICAL
+      }}
+    >
+      {/* TOP */}
+      <Box sx={{ p: 2, flexShrink: 0 }}>
+        some text top
+      </Box>
 
-                            </Item>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Box>
-            {/* BOTTOM */}
-            <Box sx={{ p: 2 }}>
-                some text bottom
-            </Box>
-        </Box >
-    );
+      {/* SCROLL AREA ONLY */}
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,        // 🔴 CRITICAL
+          overflowY: "auto",
+          p: 2,
+        }}
+      >
+        <Grid container spacing={1}>
+          {macros.map((macro) => (
+            <Grid key={macro.uid} size={4}>
+              <Item>
+                <MacroCard
+                  macro={macro}
+                  execution={executionState}
+                  onRequestExecution={() =>
+                    postQueueMacros([macro.uid])
+                      .then(console.log)
+                      .catch(console.error)
+                  }
+                />
+              </Item>
+            </Grid>
+          ))}
+        </Grid>
+      </Box>
+
+      {/* BOTTOM */}
+      <Box sx={{ p: 2, flexShrink: 0 }}>
+        some text bottom
+      </Box>
+    </Box>
+  );
 }
 
 function App() {
-    return (
-        <Container sx={{ py: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-                MacroMachine Web UI
-            </Typography>
+  return (
+    <Container
+      disableGutters
+      sx={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* HEADER */}
+      <Typography variant="h4" component="h1" sx={{ p: 2, flexShrink: 0 }}>
+        MacroMachine Web UI
+      </Typography>
 
-            <MacroList />
-        </Container>
-    );
+      {/* IMPORTANT: flex child constraint */}
+      <Box sx={{ flex: 1, minHeight: 0 }}>
+        <MacroList />
+      </Box>
+    </Container>
+  );
 }
 
 export default App;
