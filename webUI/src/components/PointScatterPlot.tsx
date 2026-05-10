@@ -1,36 +1,34 @@
-import Plot from 'react-plotly.js'
-import Paper from '@mui/material/Paper'
-import Box from '@mui/material/Box'
-import Stack from '@mui/material/Stack'
-import { MappingPointEditor } from './SingleValues/MappingPointEditor'
-import Button from '@mui/material/Button'
-import { useState } from 'react'
-import { InputOutput } from '../types/InputOutput'
-import { MappingPoint } from '../types/MappingPoint'
-import { ActionType, MappingPointDTO } from '@/types/MMAction'
-import { useTheme } from '@mui/material/styles'
-import { Checkbox, FormControlLabel } from '@mui/material'
-
-
+import Plot from "react-plotly.js";
+import Paper from "@mui/material/Paper";
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import { MappingPointEditor } from "./SingleValues/MappingPointEditor";
+import Button from "@mui/material/Button";
+import { useState } from "react";
+import { InputOutput } from "../types/InputOutput";
+import { MappingPoint } from "../types/MappingPoint";
+import { ActionType, MappingPointDTO } from "@/types/MMAction";
+import { useTheme } from "@mui/material/styles";
+import { Checkbox, FormControlLabel } from "@mui/material";
 
 export interface PointScatterPlotProps {
-  xData: number[]
-  yData: number[]
-  mappingPoints: MappingPointDTO[]
-  input: InputOutput
-  output: InputOutput
-  type: ActionType,
-  changePoint: (oldP: MappingPoint, newP: MappingPoint) => void
-  addPoint: (newP: MappingPoint) => void
+  xData: number[];
+  yData: number[];
+  mappingPoints: MappingPointDTO[];
+  input: InputOutput;
+  output: InputOutput;
+  type: ActionType;
+  changePoint: (oldP: MappingPoint, newP: MappingPoint) => void;
+  addPoint: (newP: MappingPoint) => void;
 }
 
 const getGridSpacingForRange = (range: number) => {
-  if (range <= 16) return 1
-  if (range <= 100) return 10
-  if (range <= 700) return 50
-  if (range <= 1600) return 100
-  return Math.pow(10, Math.floor(Math.log10(range)) - 1)
-}
+  if (range <= 16) return 1;
+  if (range <= 100) return 10;
+  if (range <= 700) return 50;
+  if (range <= 1600) return 100;
+  return Math.pow(10, Math.floor(Math.log10(range)) - 1);
+};
 
 export default function PointScatterPlot({
   xData,
@@ -42,41 +40,43 @@ export default function PointScatterPlot({
   changePoint,
   addPoint,
 }: PointScatterPlotProps) {
-  const theme = useTheme()
+  const theme = useTheme();
 
-  const mappingPointXs = mappingPoints.map(p => p.x)
-  const outputSliced = mappingPoints.map(p => p.y)
+  const mappingPointXs = mappingPoints.map((p) => p.x);
+  const outputSliced = mappingPoints.map((p) => p.y);
   //FIXME: display points with output=ignore somehow in the graph
-  const [editingPoint, setEditingPoint] = useState<boolean>(false)
-  const [selectedPoint, setSelectedPoint] = useState<MappingPoint | null>(null)
+  const [editingPoint, setEditingPoint] = useState<boolean>(false);
+  const [selectedPoint, setSelectedPoint] = useState<MappingPoint | null>(null);
 
-  const [showInterpolationLine, setShowInterpolationLine] = useState<boolean>(true)
-  const [showInterpolatedValues, setShowInterpolatedValues] = useState<boolean>(true)
+  const [showInterpolationLine, setShowInterpolationLine] = useState<boolean>(true);
+  const [showInterpolatedValues, setShowInterpolatedValues] = useState<boolean>(true);
 
-  const inputLabelMap = new Map(input.values.map((item) => [item.numericValue, item.displayName]))
-  const outputLabelMap = new Map(output.values.map((item) => [item.numericValue, item.displayName]))
+  const inputLabelMap = new Map(input.values.map((item) => [item.numericValue, item.displayName]));
+  const outputLabelMap = new Map(
+    output.values.map((item) => [item.numericValue, item.displayName]),
+  );
 
-  const getDisplayLabel = ({ x, y }: { x: number, y: number }) => {
-    const inputLabel = inputLabelMap.get(x)
-    const outputLabel = outputLabelMap.get(y)
-    return `${input.displayName}=${inputLabel || x} ${type} ${output.displayName}=${outputLabel || y}`
-  }
+  const getDisplayLabel = ({ x, y }: { x: number; y: number }) => {
+    const inputLabel = inputLabelMap.get(x);
+    const outputLabel = outputLabelMap.get(y);
+    return `${input.displayName}=${inputLabel || x} ${type} ${output.displayName}=${outputLabel || y}`;
+  };
 
-  const xMin = input.min
-  const xMax = input.max
-  const yMin = output.min
-  const yMax = output.max
-  const xRange = xMax - xMin
-  const yRange = yMax - yMin
+  const xMin = input.min;
+  const xMax = input.max;
+  const yMin = output.min;
+  const yMax = output.max;
+  const xRange = xMax - xMin;
+  const yRange = yMax - yMin;
   const rangePaddingPercent = 0.05;
 
-  const xDtick = getGridSpacingForRange(input.max - input.min)
-  const yDtick = getGridSpacingForRange(output.max - output.min)
+  const xDtick = getGridSpacingForRange(input.max - input.min);
+  const yDtick = getGridSpacingForRange(output.max - output.min);
 
-  const yLabels = output.values.filter(y => y.numericValue % yDtick === 0);
-  const xLabels = input.values.filter(x => x.numericValue % xDtick === 0);
+  const yLabels = output.values.filter((y) => y.numericValue % yDtick === 0);
+  const xLabels = input.values.filter((x) => x.numericValue % xDtick === 0);
 
-  const zip = (xs: number[], ys: number[]): { x: number, y: number }[] => {
+  const zip = (xs: number[], ys: number[]): { x: number; y: number }[] => {
     return xs.map((x, i) => ({ x, y: ys[i] }));
   };
   const controlPointData = {
@@ -84,10 +84,10 @@ export default function PointScatterPlot({
     x: mappingPointXs,
     y: outputSliced,
     text: zip(mappingPointXs, outputSliced).map(getDisplayLabel),
-    hovertemplate: '%{text}<extra></extra>',
+    hovertemplate: "%{text}<extra></extra>",
 
-    type: 'scatter',
-    mode: showInterpolationLine ? 'lines+markers' : 'markers',
+    type: "scatter",
+    mode: showInterpolationLine ? "lines+markers" : "markers",
 
     line: {
       color: theme.palette.primary.light,
@@ -98,12 +98,14 @@ export default function PointScatterPlot({
     marker: {
       size: 16,
       color: theme.palette.primary.main,
-    }
+    },
   };
 
-
   const mappingPointXsSet = new Set(mappingPointXs);
-  const mappingPointIndices = xData.map((v, idx) => ({ x: v, idx: idx })).filter(input => !mappingPointXsSet.has(input.x)).map(p => p.idx);
+  const mappingPointIndices = xData
+    .map((v, idx) => ({ x: v, idx: idx }))
+    .filter((input) => !mappingPointXsSet.has(input.x))
+    .map((p) => p.idx);
 
   const nonMappingPointIdxSet = new Set(mappingPointIndices);
   const filterForNonControlPoints = (_v: any, idx: number) => nonMappingPointIdxSet.has(idx);
@@ -113,15 +115,15 @@ export default function PointScatterPlot({
     x: xDataFiltered,
     y: yDataFiltered,
     text: zip(xDataFiltered, yDataFiltered).map(getDisplayLabel),
-    hovertemplate: '%{text}<extra></extra>',
+    hovertemplate: "%{text}<extra></extra>",
 
-    type: 'scatter',
-    mode: 'markers',
+    type: "scatter",
+    mode: "markers",
 
     marker: {
       size: 6,
       color: theme.palette.text.primary,
-    }
+    },
   };
 
   const allDataSets = [];
@@ -133,8 +135,8 @@ export default function PointScatterPlot({
         <Button
           size="small"
           onClick={() => {
-            setSelectedPoint(null)
-            setEditingPoint(true)
+            setSelectedPoint(null);
+            setEditingPoint(true);
           }}
         >
           Add Point
@@ -157,15 +159,15 @@ export default function PointScatterPlot({
           }
           label="Show interpolated values"
         />
-        <Box sx={{ width: '100%' }}>
+        <Box sx={{ width: "100%" }}>
           <Plot
             config={{
               doubleClick: "reset",
             }}
             data={allDataSets}
             layout={{
-              paper_bgcolor: 'transparent',
-              plot_bgcolor: 'transparent',
+              paper_bgcolor: "transparent",
+              plot_bgcolor: "transparent",
 
               font: {
                 family: theme.typography.fontFamily,
@@ -175,11 +177,11 @@ export default function PointScatterPlot({
               uirevision: "static", // preserve zoom and pan on data update
               xaxis: {
                 title: {
-                  text: 'Input: ' + input.displayName,
+                  text: "Input: " + input.displayName,
                   font: { color: theme.palette.text.secondary },
                 },
-                tickvals: xLabels.map(v => v.numericValue),
-                ticktext: xLabels.map(v => v.displayName),
+                tickvals: xLabels.map((v) => v.numericValue),
+                ticktext: xLabels.map((v) => v.displayName),
 
                 showgrid: true,
                 gridcolor: theme.palette.text.disabled,
@@ -194,11 +196,11 @@ export default function PointScatterPlot({
 
               yaxis: {
                 title: {
-                  text: 'Output: ' + output.displayName,
+                  text: "Output: " + output.displayName,
                   font: { color: theme.palette.text.secondary },
                 },
-                tickvals: yLabels.map(v => v.numericValue),
-                ticktext: yLabels.map(v => v.displayName),
+                tickvals: yLabels.map((v) => v.numericValue),
+                ticktext: yLabels.map((v) => v.displayName),
 
                 showgrid: true,
                 gridcolor: theme.palette.text.disabled,
@@ -214,44 +216,46 @@ export default function PointScatterPlot({
               margin: { l: 50, r: 20, t: 50, b: 50 },
               showlegend: false,
             }}
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: "100%", height: "100%" }}
             onClick={(event: any) => {
-              const pt = event.points?.[0]
-              if (!pt) return
+              const pt = event.points?.[0];
+              if (!pt) return;
 
               if (pt.data.name !== controlPointData.name) return;
 
               setSelectedPoint(pt);
 
-
-              const oldP = { x: pt.x, input: input, y: pt.y, output: output }
-              setSelectedPoint(oldP)
-              setEditingPoint(true)
+              const oldP = { x: pt.x, input: input, y: pt.y, output: output };
+              setSelectedPoint(oldP);
+              setEditingPoint(true);
             }}
           />
         </Box>
       </Stack>
       <MappingPointEditor
-        key={selectedPoint ? `${selectedPoint.x}-${selectedPoint.y}` : 'new-point-editor'}
+        key={selectedPoint ? `${selectedPoint.x}-${selectedPoint.y}` : "new-point-editor"}
         isNew={selectedPoint === null}
         editorActive={editingPoint}
         onClose={() => {
-          setSelectedPoint(null)
-          setEditingPoint(false)
+          setSelectedPoint(null);
+          setEditingPoint(false);
         }}
-        oldPoint={selectedPoint !== null ? selectedPoint : { x: input.min, input: input, y: output.min, output: output }}
+        oldPoint={
+          selectedPoint !== null
+            ? selectedPoint
+            : { x: input.min, input: input, y: output.min, output: output }
+        }
         updatePoint={(oldP, newP) => {
-          changePoint(oldP, newP)
-          setSelectedPoint(null)
-          setEditingPoint(false)
+          changePoint(oldP, newP);
+          setSelectedPoint(null);
+          setEditingPoint(false);
         }}
         addPoint={(newP) => {
-          addPoint(newP)
-          setEditingPoint(false)
+          addPoint(newP);
+          setEditingPoint(false);
         }}
         type={type}
       />
-
     </Paper>
-  )
+  );
 }

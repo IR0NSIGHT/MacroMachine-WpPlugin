@@ -1,10 +1,4 @@
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Menu,
-} from "@mui/material";
+import { FormControl, InputLabel, Select, MenuItem, Menu } from "@mui/material";
 import { InputOutput, NamedValue } from "@/types/InputOutput";
 
 type InputValueSelectProps = {
@@ -12,9 +6,8 @@ type InputValueSelectProps = {
   input: InputOutput;
   sortedValues: NamedValue[];
   onSelect: (newInput: NamedValue) => void;
-  label: String
-}
-
+  label: String;
+};
 
 export const InputValueMenu = ({
   input,
@@ -34,11 +27,7 @@ export const InputValueMenu = ({
   const isIgnore = (val: number) => val === input.ignoreValue;
 
   return (
-    <Menu
-      anchorEl={anchorEl}
-      open={open}
-      onClose={onClose}
-    >
+    <Menu anchorEl={anchorEl} open={open} onClose={onClose}>
       {sortedValues.map((option) => (
         <MenuItem
           key={option.numericValue}
@@ -47,36 +36,38 @@ export const InputValueMenu = ({
             onClose();
           }}
         >
-          {isIgnore(option.numericValue)
-            ? "[Ignore]"
-            : option.displayName}
+          {isIgnore(option.numericValue) ? "[Ignore]" : option.displayName}
         </MenuItem>
       ))}
     </Menu>
   );
 };
 
-export const InputValueSelect = ({ value, input, sortedValues, onSelect, label }: InputValueSelectProps) => {
+export const InputValueSelect = ({
+  value,
+  input,
+  sortedValues,
+  onSelect,
+  label,
+}: InputValueSelectProps) => {
   const isIgnore = (val: number) => val === input.ignoreValue;
 
-  return (<Select
-    value={value}
-    label={`${label}: ${input.displayName}`}
-    onChange={(e) => {
-      const selected = sortedValues.find(
-        (v) => v.numericValue === Number(e.target.value)
-      );
-      if (selected) onSelect(selected);
-    }}
-  >
-    {sortedValues.map((option) => (
-      <MenuItem key={option.numericValue} value={option.numericValue}>
-        {isIgnore(option.numericValue)
-          ? "[Ignore]"
-          : option.displayName}
-      </MenuItem>
-    ))}
-  </Select>)
+  return (
+    <Select
+      value={value}
+      label={`${label}: ${input.displayName}`}
+      onChange={(e) => {
+        const selected = sortedValues.find((v) => v.numericValue === Number(e.target.value));
+        if (selected) onSelect(selected);
+      }}
+    >
+      {sortedValues.map((option) => (
+        <MenuItem key={option.numericValue} value={option.numericValue}>
+          {isIgnore(option.numericValue) ? "[Ignore]" : option.displayName}
+        </MenuItem>
+      ))}
+    </Select>
+  );
 };
 
 export const InputValueEditor = (props: {
@@ -89,27 +80,34 @@ export const InputValueEditor = (props: {
 }) => {
   const { includeIgnore, label, value, input, onChange } = props;
 
-  const valueIsAllowed = input.values.some(v => v.numericValue === props.value);
+  const valueIsAllowed = input.values.some((v) => v.numericValue === props.value);
 
   const isIgnore = (val: number) => val === input.ignoreValue;
 
-  const filter = includeIgnore
-    ? () => true
-    : (v: NamedValue) => !isIgnore(v.numericValue);
+  const filter = includeIgnore ? () => true : (v: NamedValue) => !isIgnore(v.numericValue);
 
   const sortedValues = input.values
     .filter(filter)
-    .sort(input.discrete
-      ? (a, b) => a.displayName.localeCompare(b.displayName)
-      : (a, b) => a.numericValue - b.numericValue
+    .sort(
+      input.discrete
+        ? (a, b) => a.displayName.localeCompare(b.displayName)
+        : (a, b) => a.numericValue - b.numericValue,
     );
 
   return (
     <FormControl fullWidth margin="normal">
       <InputLabel>{`${label}: ${input.displayName}`}</InputLabel>
-      { !valueIsAllowed && <div style={{ color: 'red' }}>Current value {value} is not in allowed values!</div> }
+      {!valueIsAllowed && (
+        <div style={{ color: "red" }}>Current value {value} is not in allowed values!</div>
+      )}
       {valueIsAllowed && (
-        <InputValueSelect value={value} input={input} sortedValues={sortedValues} onSelect={onChange} label={label} />
+        <InputValueSelect
+          value={value}
+          input={input}
+          sortedValues={sortedValues}
+          onSelect={onChange}
+          label={label}
+        />
       )}
     </FormControl>
   );

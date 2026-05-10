@@ -1,11 +1,8 @@
-
-
 import { http, HttpResponse } from "msw";
 import { actions, macroList, macros } from "./db";
 import { API_BASE } from "@/API/api";
 import { MappingPointDTO } from "@/types/MMAction";
 import { withNewPoints } from "./actionWithPoints";
-
 
 export const handlers = [
   // ----------------------------
@@ -57,10 +54,7 @@ export const handlers = [
         mappingPoints = JSON.parse(decodeURIComponent(pointsParam));
       } catch (e) {
         console.error("Invalid points parameter in MSW withNewPoints:", pointsParam, e);
-        return HttpResponse.json(
-          { error: "Invalid points parameter" },
-          { status: 400 }
-        );
+        return HttpResponse.json({ error: "Invalid points parameter" }, { status: 400 });
       }
     }
 

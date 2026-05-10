@@ -1,11 +1,11 @@
 {
   "name": "y",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild" : "openapi-typescript ../src/main/resources/openapi.json -o src/generated/api-types.ts",
+    "prebuild": "openapi-typescript ../src/main/resources/openapi.json -o src/generated/api-types.ts",
     "build": "vite build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
     "preview": "vite preview",
@@ -16,7 +16,9 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest --watch",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "verify": "npm run compile && npm run lint"
+    "verify": "npm run compile && npm run lint",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -51,6 +53,7 @@
     "jsdom": "^29.0.2",
     "msw": "^2.13.4",
     "openapi-typescript": "^7.13.0",
+    "oxfmt": "^0.48.0",
     "storybook": "^10.3.5",
     "typescript": "^6.0.2",
     "vite": "^4.4.0",

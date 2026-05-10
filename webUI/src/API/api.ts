@@ -36,11 +36,15 @@ async function fetchAction(uuid: string) {
 /**
  * request recalculated action from backend using given mappingpoints.
  */
-export const fetchActionWithPoints = (uuid: string, _mappingPoints: MappingPointDTO[]): Promise<MMAction> => {
+export const fetchActionWithPoints = (
+  uuid: string,
+  _mappingPoints: MappingPointDTO[],
+): Promise<MMAction> => {
   console.log("fetching action with points:", uuid, _mappingPoints);
-  return safeJsonFetch<MMAction>(`${API_BASE}/action?uuid=${uuid}&points=${encodeURIComponent(JSON.stringify(_mappingPoints))}`);
-}
-
+  return safeJsonFetch<MMAction>(
+    `${API_BASE}/action?uuid=${uuid}&points=${encodeURIComponent(JSON.stringify(_mappingPoints))}`,
+  );
+};
 
 export function useMacroSystem(selectedMacroUuid?: string) {
   const [macroUuids, setMacroUuids] = useState<UUID[]>([]);
@@ -94,9 +98,9 @@ export function useMacroSystem(selectedMacroUuid?: string) {
       .then((results) => {
         const ok = results
           .filter((r): r is PromiseFulfilledResult<MMAction> => r.status === "fulfilled")
-          .map(r => r.value);
+          .map((r) => r.value);
 
-        const failed = results.filter(r => r.status === "rejected");
+        const failed = results.filter((r) => r.status === "rejected");
 
         if (failed.length > 0) {
           console.warn("Some actions failed:", failed);

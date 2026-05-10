@@ -6,7 +6,7 @@ const uuid = "602c96eb-27a1-4d73-9599-f2d96fc78c91";
 
 const mappingPoints = [
   { x: 1, y: 2 },
-  { x: 3, y: 4 }
+  { x: 3, y: 4 },
 ];
 
 async function test() {
@@ -25,7 +25,6 @@ async function test() {
     const data = await res.json();
     console.log("Response:");
     console.dir(data, { depth: null });
-
   } catch (err) {
     console.error("Error:", err);
   }

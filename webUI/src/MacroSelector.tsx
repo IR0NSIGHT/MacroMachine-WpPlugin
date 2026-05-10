@@ -1,12 +1,5 @@
-import {
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
-import { Macro } from './types/MMacro'
-
-
+import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { Macro } from "./types/MMacro";
 
 type Props = {
   macros: Macro[];
@@ -14,11 +7,7 @@ type Props = {
   onChange: (uid: string) => void;
 };
 
-export function MacroSelector({
-  macros,
-  selectedMacroId,
-  onChange,
-}: Props) {
+export function MacroSelector({ macros, selectedMacroId, onChange }: Props) {
   // 0 macros
   if (macros.length === 0) {
     return (

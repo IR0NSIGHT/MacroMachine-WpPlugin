@@ -1,12 +1,12 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
-import PointScatterPlot, { PointScatterPlotProps } from './PointScatterPlot';
-import { heightIO, annotationsIO, waterdepthIO, terrainIO } from '../mock/dummyIOs';
-import { MappingPoint } from '@/types/MappingPoint';
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useState } from "react";
+import PointScatterPlot, { PointScatterPlotProps } from "./PointScatterPlot";
+import { heightIO, annotationsIO, waterdepthIO, terrainIO } from "../mock/dummyIOs";
+import { MappingPoint } from "@/types/MappingPoint";
 
 const meta: Meta<typeof PointScatterPlot> = {
   component: PointScatterPlot,
-}
+};
 
 export default meta;
 
@@ -53,8 +53,6 @@ export const Empty: Story = {
     yData: [],
     input: annotationsIO,
     output: heightIO,
-     
-     
   },
 };
 
@@ -65,8 +63,6 @@ export const Annotation_Height: Story = {
     yData: [0, 1, 2, 3, 4, 5],
     input: annotationsIO,
     output: heightIO,
-     
-     
   },
 };
 
@@ -79,8 +75,6 @@ export const Height_Annotations: Story = {
     yData: output30,
     input: heightIO,
     output: annotationsIO,
-     
-     
   },
 };
 
@@ -91,8 +85,6 @@ export const HeightToTerrain: Story = {
     yData: generateRandomValues(256, terrainIO.min, terrainIO.max),
     input: heightIO,
     output: terrainIO,
-     
-     
   },
 };
 
@@ -105,7 +97,5 @@ export const HeightToWaterdepth: Story = {
     yData: output256,
     input: heightIO,
     output: waterdepthIO,
-     
-     
   },
 };

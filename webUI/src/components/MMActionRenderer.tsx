@@ -1,73 +1,77 @@
-import { useState } from 'react'
-import Stack from '@mui/material/Stack'
-import Box from '@mui/material/Box'
-import IconButton from '@mui/material/IconButton'
-import SaveIcon from '@mui/icons-material/Save'
-import { ACTION_TYPES, ActionType, MMAction } from '../types/MMAction'
-import PointScatterPlot from './PointScatterPlot'
-import { MappingPoint } from '@/types/MappingPoint'
-import RangeEditor from './segmentEditor/RangeEditor'
-import { buildSegmentsFromAction, getMappingPointArrayFromSegments, Segment } from './segmentEditor/Segment'
-import isEqual from 'lodash/isEqual';
-import { MappingPointTable } from './MappingPointTable'
-import { Paper, ButtonGroup } from '@mui/material'
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { useState } from "react";
+import Stack from "@mui/material/Stack";
+import Box from "@mui/material/Box";
+import IconButton from "@mui/material/IconButton";
+import SaveIcon from "@mui/icons-material/Save";
+import { ACTION_TYPES, ActionType, MMAction } from "../types/MMAction";
+import PointScatterPlot from "./PointScatterPlot";
+import { MappingPoint } from "@/types/MappingPoint";
+import RangeEditor from "./segmentEditor/RangeEditor";
+import {
+  buildSegmentsFromAction,
+  getMappingPointArrayFromSegments,
+  Segment,
+} from "./segmentEditor/Segment";
+import isEqual from "lodash/isEqual";
+import { MappingPointTable } from "./MappingPointTable";
+import { Paper, ButtonGroup } from "@mui/material";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import TimelineIcon from '@mui/icons-material/Timeline';
-import TableChartIcon from '@mui/icons-material/TableChart';
-import ViewColumnIcon from '@mui/icons-material/ViewColumn';
-import { EditableSelect, EditableText } from './EditableText'
-import { InputOutput } from '@/types/InputOutput'
-import { fetchActionWithPoints } from '@/API/api'
+import TimelineIcon from "@mui/icons-material/Timeline";
+import TableChartIcon from "@mui/icons-material/TableChart";
+import ViewColumnIcon from "@mui/icons-material/ViewColumn";
+import { EditableSelect, EditableText } from "./EditableText";
+import { InputOutput } from "@/types/InputOutput";
+import { fetchActionWithPoints } from "@/API/api";
 
 interface MMActionRendererProps {
-  action: MMAction
-  onUpdate?: (updated: MMAction) => void
+  action: MMAction;
+  onUpdate?: (updated: MMAction) => void;
 }
 
 export default function MMActionRenderer({ action, onUpdate }: MMActionRendererProps) {
-  const [draftAction, setDraftAction] = useState<MMAction>(action)
+  const [draftAction, setDraftAction] = useState<MMAction>(action);
   const [showValues, setShowValues] = useState<boolean>(true);
   const [showTable, setShowTable] = useState<boolean>(false);
 
   const updatePoint = (oldP: MappingPoint, newP: MappingPoint): void => {
     const updatedPoints = draftAction.mappingPoints
-      .map(p => (p.x === oldP.x && p.y === oldP.y) ? { x: newP.x, y: newP.y } : p)
+      .map((p) => (p.x === oldP.x && p.y === oldP.y ? { x: newP.x, y: newP.y } : p))
       .sort((a, b) => a.x - b.x);
-    fetchActionWithPoints(draftAction.uid, updatedPoints).then(updatedAction => {
+    fetchActionWithPoints(draftAction.uid, updatedPoints).then((updatedAction) => {
       setDraftAction((prev) => ({
         ...prev,
         mappingPoints: updatedAction.mappingPoints,
         mappedInputs: updatedAction.mappedInputs,
-        mappedOutputs: updatedAction.mappedOutputs
+        mappedOutputs: updatedAction.mappedOutputs,
       }));
     });
-  }
+  };
 
   const addPoint = (newP: MappingPoint): void => {
     const updatedPoints = draftAction.mappingPoints.concat([{ x: newP.x, y: newP.y }]);
-    fetchActionWithPoints(draftAction.uid, updatedPoints).then(updatedAction => {
+    fetchActionWithPoints(draftAction.uid, updatedPoints).then((updatedAction) => {
       setDraftAction((prev) => ({
         ...prev,
         mappingPoints: updatedAction.mappingPoints,
         mappedInputs: updatedAction.mappedInputs,
-        mappedOutputs: updatedAction.mappedOutputs
+        mappedOutputs: updatedAction.mappedOutputs,
       }));
     });
-  }
+  };
   const isTableEditor = draftAction.input.discrete;
   const isRangeEditor = !isTableEditor && draftAction.output.discrete;
   const isGridEditor = !isRangeEditor && !isTableEditor;
 
   const updateActionFromSegments = (segments: Segment[]): void => {
     const mappingPoints = getMappingPointArrayFromSegments(segments);
-    fetchActionWithPoints(draftAction.uid, mappingPoints).then(updatedAction => {
+    fetchActionWithPoints(draftAction.uid, mappingPoints).then((updatedAction) => {
       setDraftAction((prev) => ({
         ...prev,
         mappingPoints: updatedAction.mappingPoints,
         mappedInputs: updatedAction.mappedInputs,
-        mappedOutputs: updatedAction.mappedOutputs
+        mappedOutputs: updatedAction.mappedOutputs,
       }));
     });
   };
@@ -77,25 +81,50 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
   const allInputs = [draftAction.input];
   const allOutputs = [draftAction.output];
 
-  const handleResetAction = () => { setDraftAction(action); };
-  const handleSaveAction = () => { if (onUpdate) onUpdate(draftAction) };
+  const handleResetAction = () => {
+    setDraftAction(action);
+  };
+  const handleSaveAction = () => {
+    if (onUpdate) onUpdate(draftAction);
+  };
 
-  const actionTitleComp = (<EditableText value={draftAction.name} onChange={(val) => setDraftAction((prev) => ({ ...prev, name: val }))} variant='h5' placeholder='Name' label="Name" />);
-  const actionDescriptionComp =
-    <EditableText value={draftAction.description} onChange={(val) => setDraftAction((prev) => ({ ...prev, description: val }))} variant="body1" placeholder='Description' label="Description" />
+  const actionTitleComp = (
+    <EditableText
+      value={draftAction.name}
+      onChange={(val) => setDraftAction((prev) => ({ ...prev, name: val }))}
+      variant="h5"
+      placeholder="Name"
+      label="Name"
+    />
+  );
+  const actionDescriptionComp = (
+    <EditableText
+      value={draftAction.description}
+      onChange={(val) => setDraftAction((prev) => ({ ...prev, description: val }))}
+      variant="body1"
+      placeholder="Description"
+      label="Description"
+    />
+  );
 
-  const switchViewModeButton =
-    (!isTableEditor && <IconButton size="small" onClick={() => { setShowTable(prev => !prev); }} color="primary">
+  const switchViewModeButton = !isTableEditor && (
+    <IconButton
+      size="small"
+      onClick={() => {
+        setShowTable((prev) => !prev);
+      }}
+      color="primary"
+    >
       {!showTable && <TableChartIcon /> /** switch to table view */}
       {showTable && isGridEditor && <TimelineIcon /> /** switch to grid view */}
       {showTable && isRangeEditor && <ViewColumnIcon /> /** switch to grid view */}
-    </IconButton>)
-
+    </IconButton>
+  );
 
   const dataViewComponent = (
     <>
-      {
-        (!showTable && isGridEditor) && <PointScatterPlot
+      {!showTable && isGridEditor && (
+        <PointScatterPlot
           xData={draftAction.mappedInputs}
           yData={draftAction.mappedOutputs}
           mappingPoints={draftAction.mappingPoints}
@@ -103,26 +132,54 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
           output={draftAction.output}
           type={draftAction.actionType}
           changePoint={updatePoint}
-          addPoint={addPoint} />
-      }{
-        (!showTable && isRangeEditor) && <RangeEditor input={draftAction.input} output={draftAction.output} segments={buildSegmentsFromAction(draftAction)} setSegments={updateActionFromSegments} />
-      }
-      {
-        (showTable || isTableEditor) && <MappingPointTable
+          addPoint={addPoint}
+        />
+      )}
+      {!showTable && isRangeEditor && (
+        <RangeEditor
+          input={draftAction.input}
+          output={draftAction.output}
+          segments={buildSegmentsFromAction(draftAction)}
+          setSegments={updateActionFromSegments}
+        />
+      )}
+      {(showTable || isTableEditor) && (
+        <MappingPointTable
           points={toFullSetMappingPointList(draftAction)}
-          setPoints={points => { const { inputPoints, outputPoints } = toNumericValueList(points); setDraftAction(prev => ({ ...prev, mappedInputs: inputPoints, mappedOutputs: outputPoints })) }} />
-      }
+          setPoints={(points) => {
+            const { inputPoints, outputPoints } = toNumericValueList(points);
+            setDraftAction((prev) => ({
+              ...prev,
+              mappedInputs: inputPoints,
+              mappedOutputs: outputPoints,
+            }));
+          }}
+        />
+      )}
     </>
-  )
+  );
 
   const showHideValuesButton = (
-    <IconButton size="small" onClick={() => { setShowValues(prev => !prev); }} color="primary">
+    <IconButton
+      size="small"
+      onClick={() => {
+        setShowValues((prev) => !prev);
+      }}
+      color="primary"
+    >
       {!showValues && <ExpandMoreIcon />}
       {showValues && <ExpandLessIcon />}
     </IconButton>
-  )
+  );
 
-  const inputControl = (<EditableSelect<InputOutput> value={draftAction.input} setValue={io => setDraftAction(prev => ({ ...prev, input: io }))} options={allInputs} label="Input" />);
+  const inputControl = (
+    <EditableSelect<InputOutput>
+      value={draftAction.input}
+      setValue={(io) => setDraftAction((prev) => ({ ...prev, input: io }))}
+      options={allInputs}
+      label="Input"
+    />
+  );
   const ACTION_TYPE_ITEMS = ACTION_TYPES.map((t) => ({
     uid: t,
     displayName: t,
@@ -141,7 +198,14 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
     />
   );
 
-  const outputControl = (<EditableSelect value={draftAction.output} setValue={io => setDraftAction(prev => ({ ...prev, output: io }))} options={allOutputs} label="Output" />)
+  const outputControl = (
+    <EditableSelect
+      value={draftAction.output}
+      setValue={(io) => setDraftAction((prev) => ({ ...prev, output: io }))}
+      options={allOutputs}
+      label="Output"
+    />
+  );
 
   return (
     <Paper sx={{ mb: 2, p: 2 }} variant="outlined">
@@ -149,13 +213,13 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
         {actionTitleComp}
         {actionDescriptionComp}
 
-        <ButtonGroup sx={{ ml: 'auto' }}>
-          {(actionDiffers) && (
+        <ButtonGroup sx={{ ml: "auto" }}>
+          {actionDiffers && (
             <IconButton size="small" onClick={handleResetAction} color="primary">
               <RestartAltIcon />
             </IconButton>
           )}
-          {(actionDiffers) && (
+          {actionDiffers && (
             <IconButton size="small" onClick={handleSaveAction} color="primary">
               <SaveIcon />
             </IconButton>
@@ -173,27 +237,25 @@ export default function MMActionRenderer({ action, onUpdate }: MMActionRendererP
         <Stack direction="row" alignItems="center" sx={{ py: 1 }}>
           {showValues && switchViewModeButton}
 
-          <Box sx={{ ml: "auto" }}>
-            {showHideValuesButton}
-          </Box>
+          <Box sx={{ ml: "auto" }}>{showHideValuesButton}</Box>
         </Stack>
         {showValues && dataViewComponent}
       </Stack>
     </Paper>
-  )
+  );
 }
 
 const toFullSetMappingPointList = (action: MMAction): MappingPoint[] => {
   // as a base, create INGORE for all possible inputs
-  const allValuesAsIgnore: MappingPoint[] = action.mappedInputs.map(inputV => ({
+  const allValuesAsIgnore: MappingPoint[] = action.mappedInputs.map((inputV) => ({
     x: inputV,
     y: action.output.ignoreValue,
     input: action.input,
-    output: action.output
-  }))
+    output: action.output,
+  }));
 
   // then replace with actual mappings where they exist
-  return allValuesAsIgnore.map(p => {
+  return allValuesAsIgnore.map((p) => {
     const mappingPoint = action.mappingPoints.find((mappingPoint) => mappingPoint.x === p.x);
     if (mappingPoint === undefined) {
       return p; // no mapping for this input value, treat as ignore
@@ -202,16 +264,16 @@ const toFullSetMappingPointList = (action: MMAction): MappingPoint[] => {
       x: p.x,
       y: mappingPoint.y,
       input: action.input,
-      output: action.output
-    }
+      output: action.output,
+    };
   });
+};
 
-
-}
-
-const toNumericValueList = (mappingpoints: MappingPoint[]): { inputPoints: number[], outputPoints: number[] } => {
-  return ({
-    inputPoints: mappingpoints.map(p => p.x),
-    outputPoints: mappingpoints.map(p => p.y)
-  })
-}
+const toNumericValueList = (
+  mappingpoints: MappingPoint[],
+): { inputPoints: number[]; outputPoints: number[] } => {
+  return {
+    inputPoints: mappingpoints.map((p) => p.x),
+    outputPoints: mappingpoints.map((p) => p.y),
+  };
+};

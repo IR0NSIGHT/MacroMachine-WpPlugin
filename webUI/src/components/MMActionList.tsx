@@ -1,23 +1,19 @@
-import Container from '@mui/material/Container'
-import Typography from '@mui/material/Typography'
-import Stack from '@mui/material/Stack'
-import { MMAction } from '../types/MMAction'
-import MMActionRenderer from './MMActionRenderer'
+import Container from "@mui/material/Container";
+import Typography from "@mui/material/Typography";
+import Stack from "@mui/material/Stack";
+import { MMAction } from "../types/MMAction";
+import MMActionRenderer from "./MMActionRenderer";
 
 interface MMActionListProps {
-  actions: MMAction[]
-  title?: string
+  actions: MMAction[];
+  title?: string;
 }
 
-export default function MMActionList({ actions, title = 'Actions' }: MMActionListProps) {
+export default function MMActionList({ actions, title = "Actions" }: MMActionListProps) {
   if (!actions || actions.length === 0) {
-    return (
-      <Typography color="text.secondary">
-        No actions to display.
-      </Typography>
-    )
+    return <Typography color="text.secondary">No actions to display.</Typography>;
   }
-  console.log("action list:",JSON.stringify(actions, null, 3))
+  console.log("action list:", JSON.stringify(actions, null, 3));
   return (
     <Container maxWidth="lg" sx={{ py: 2 }}>
       {title && (
@@ -33,14 +29,13 @@ export default function MMActionList({ actions, title = 'Actions' }: MMActionLis
       <pre
         style={{
           textAlign: "left",
-          fontFamily: 'monospace',
+          fontFamily: "monospace",
           padding: 12,
           borderRadius: 6,
-
         }}
       >
         {JSON.stringify(actions, null, 1)}
       </pre>
     </Container>
-  )
+  );
 }

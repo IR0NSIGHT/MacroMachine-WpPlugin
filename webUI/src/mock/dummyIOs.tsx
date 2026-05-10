@@ -1,104 +1,102 @@
-import { InputOutput } from '@/types/InputOutput';
+import { InputOutput } from "@/types/InputOutput";
 
 // Minecraft height IO: -64 to 320
 export const heightIO: InputOutput = {
-    min: -64,
-    max: 320,
-    ignoreValue: -999,
-    values: Array.from({ length: 385 }, (_, i) => ({
-        numericValue: -64 + i,
-        displayName: `${-64 + i} y`,
-    })).concat([{ numericValue: -999, displayName: '[Ignore]' }]),
-    discrete: false,
-    displayName: 'Height',
-    description: '',
-    uid: 'heightIO',
-    parameters: [
-      { name: "min", type: "number", value: -64 },
-      { name: "max", type: "number", value: 320 },
-    ]
+  min: -64,
+  max: 320,
+  ignoreValue: -999,
+  values: Array.from({ length: 385 }, (_, i) => ({
+    numericValue: -64 + i,
+    displayName: `${-64 + i} y`,
+  })).concat([{ numericValue: -999, displayName: "[Ignore]" }]),
+  discrete: false,
+  displayName: "Height",
+  description: "",
+  uid: "heightIO",
+  parameters: [
+    { name: "min", type: "number", value: -64 },
+    { name: "max", type: "number", value: 320 },
+  ],
 };
 
 export const alwaysIO: InputOutput = {
-    min: 0,
-    max: 0,
-    ignoreValue: -999,
-    values: [
-        { numericValue: 0, displayName: 'Always' },
-    ],
-    discrete: true,
-    displayName: 'Always',
-    description: '',
-    uid: 'alwaysIO',
-    parameters: []
+  min: 0,
+  max: 0,
+  ignoreValue: -999,
+  values: [{ numericValue: 0, displayName: "Always" }],
+  discrete: true,
+  displayName: "Always",
+  description: "",
+  uid: "alwaysIO",
+  parameters: [],
 };
 
 // Water depth IO: 0 to 30
 export const waterdepthIO: InputOutput = {
-    min: 0,
-    max: 30,
-    ignoreValue: -1,
-    values: Array.from({ length: 31 }, (_, i) => ({
-        numericValue: i,
-        displayName: `${i} deep`,
-    })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
-    discrete: false,
-    displayName: 'Water Depth',
-    description: '',
-    uid: 'waterdepthIO',
-    parameters: []
-}
+  min: 0,
+  max: 30,
+  ignoreValue: -1,
+  values: Array.from({ length: 31 }, (_, i) => ({
+    numericValue: i,
+    displayName: `${i} deep`,
+  })).concat([{ numericValue: -1, displayName: "[Ignore]" }]),
+  discrete: false,
+  displayName: "Water Depth",
+  description: "",
+  uid: "waterdepthIO",
+  parameters: [],
+};
 
 export const filterIO: InputOutput = {
-    min: 0,
-    max: 30,
-    ignoreValue: -1,
-    values: [
-        { numericValue: 1, displayName: 'Pass' },
-        { numericValue: 0, displayName: 'Block' },
-        { numericValue: -1, displayName: '[Ignore]' },
-    ],
-    discrete: true,
-    displayName: 'Filter',
-    description: 'Only blocks that pass the filter will be inspected by later actions.',
-    uid: 'filterIO',
-    parameters: []
-}
+  min: 0,
+  max: 30,
+  ignoreValue: -1,
+  values: [
+    { numericValue: 1, displayName: "Pass" },
+    { numericValue: 0, displayName: "Block" },
+    { numericValue: -1, displayName: "[Ignore]" },
+  ],
+  discrete: true,
+  displayName: "Filter",
+  description: "Only blocks that pass the filter will be inspected by later actions.",
+  uid: "filterIO",
+  parameters: [],
+};
 
 // Annotations IO: 0-15 with annotation color names
 const annotationNames = [
-    'No annotation',
-    'White',
-    'Orange',
-    'Magenta',
-    'Light Blue',
-    'Yellow',
-    'Lime',
-    'Pink',
-    'Light Grey',
-    'Cyan',
-    'Purple',
-    'Blue',
-    'Brown',
-    'Green',
-    'Red',
-    'Black',
-]
+  "No annotation",
+  "White",
+  "Orange",
+  "Magenta",
+  "Light Blue",
+  "Yellow",
+  "Lime",
+  "Pink",
+  "Light Grey",
+  "Cyan",
+  "Purple",
+  "Blue",
+  "Brown",
+  "Green",
+  "Red",
+  "Black",
+];
 
 export const annotationsIO: InputOutput = {
-    displayName: "Annotations",
-    min: 0,
-    max: 15,
-    ignoreValue: -1,
-    values: Array.from({ length: 16 }, (_, i) => ({
-        numericValue: i,
-        displayName: annotationNames[i],
-    })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
-    discrete: true,
-    description: '',
-    uid: 'annotationsIO',
-    parameters: []
-}
+  displayName: "Annotations",
+  min: 0,
+  max: 15,
+  ignoreValue: -1,
+  values: Array.from({ length: 16 }, (_, i) => ({
+    numericValue: i,
+    displayName: annotationNames[i],
+  })).concat([{ numericValue: -1, displayName: "[Ignore]" }]),
+  discrete: true,
+  description: "",
+  uid: "annotationsIO",
+  parameters: [],
+};
 
 export const biomesIO: InputOutput = {
   displayName: "Biomes",
@@ -106,11 +104,11 @@ export const biomesIO: InputOutput = {
   max: 255,
   ignoreValue: -1,
   discrete: true,
-  description: 'Minecraft 1.21 biomes',
-  uid: 'biomesIO',
+  description: "Minecraft 1.21 biomes",
+  uid: "biomesIO",
   parameters: [],
   values: [
-    { numericValue: -1, displayName: '[Ignore]' },
+    { numericValue: -1, displayName: "[Ignore]" },
     { numericValue: 0, displayName: "Ocean" },
     { numericValue: 1, displayName: "Plains" },
     { numericValue: 2, displayName: "Desert" },
@@ -174,7 +172,7 @@ export const biomesIO: InputOutput = {
 
     // End
     { numericValue: 54, displayName: "End Highlands" },
-    { numericValue  : 55, displayName: "End Midlands" },
+    { numericValue: 55, displayName: "End Midlands" },
     { numericValue: 56, displayName: "Small End Islands" },
     { numericValue: 57, displayName: "End Barrens" },
 
@@ -208,22 +206,22 @@ export const biomesIO: InputOutput = {
     { numericValue: 117, displayName: "Modified Wooded Badlands Plateau" },
     { numericValue: 118, displayName: "Modified Badlands Plateau" },
   ],
-}
+};
 
 export const slopeIO: InputOutput = {
-    displayName: "Slope",
-    min: 0,
-    max: 90,
-    ignoreValue: -1,
-    values: Array.from({ length: 91 }, (_, i) => ({
-        numericValue: i,
-        displayName: i+"°",
-    })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
-    discrete: false,
-    description: '',
-    uid: 'slopeIO',
-    parameters: []
-}
+  displayName: "Slope",
+  min: 0,
+  max: 90,
+  ignoreValue: -1,
+  values: Array.from({ length: 91 }, (_, i) => ({
+    numericValue: i,
+    displayName: i + "°",
+  })).concat([{ numericValue: -1, displayName: "[Ignore]" }]),
+  discrete: false,
+  description: "",
+  uid: "slopeIO",
+  parameters: [],
+};
 export const perlinNoiseIO: InputOutput = {
   displayName: "Perlin Noise",
   description: "Perlin Noise Generator",
@@ -239,8 +237,8 @@ export const perlinNoiseIO: InputOutput = {
 
   values: Array.from({ length: 101 }, (_, i) => ({
     numericValue: i,
-    displayName: i.toString()
-  })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
+    displayName: i.toString(),
+  })).concat([{ numericValue: -1, displayName: "[Ignore]" }]),
 
   parameters: [
     {
@@ -262,57 +260,57 @@ export const perlinNoiseIO: InputOutput = {
       name: "seed",
       type: "number",
       value: 4206973845,
-    }
-  ]
+    },
+  ],
 };
 
 export const forestIO: InputOutput = {
-    displayName: "Deciduous",
-    min: 0,
-    max: 15,
-    ignoreValue: -1,
-    values: Array.from({ length: 16 }, (_, i) => ({
-        numericValue: i,
-        displayName: "lvl="+i,
-    })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
-    discrete: false,
-    description: '',
-    uid: 'forestIO',
-    parameters: []
-}
+  displayName: "Deciduous",
+  min: 0,
+  max: 15,
+  ignoreValue: -1,
+  values: Array.from({ length: 16 }, (_, i) => ({
+    numericValue: i,
+    displayName: "lvl=" + i,
+  })).concat([{ numericValue: -1, displayName: "[Ignore]" }]),
+  discrete: false,
+  description: "",
+  uid: "forestIO",
+  parameters: [],
+};
 
 const terrainNames = [
-  'Air',
-  'Stone',
-  'Grass Block',
-  'Dirt',
-  'Cobblestone',
-  'Bedrock',
-  'Sand',
-  'Gravel',
-  'Oak Planks',
-  'Spruce Planks',
-  'Birch Planks',
-  'Jungle Planks',
-  'Acacia Planks',
-  'Dark Oak Planks',
-  'Water',
-  'Lava',
-  'Coal Ore',
-  'Iron Ore',
-  'Gold Ore',
-  'Diamond Ore',
-  'Redstone Ore',
-  'Emerald Ore',
-  'Quartz Ore',
-  'Obsidian',
-  'Netherrack',
-  'End Stone',
-  'Snow Block',
-  'Ice',
-  'Clay',
-  'Bricks',
-]
+  "Air",
+  "Stone",
+  "Grass Block",
+  "Dirt",
+  "Cobblestone",
+  "Bedrock",
+  "Sand",
+  "Gravel",
+  "Oak Planks",
+  "Spruce Planks",
+  "Birch Planks",
+  "Jungle Planks",
+  "Acacia Planks",
+  "Dark Oak Planks",
+  "Water",
+  "Lava",
+  "Coal Ore",
+  "Iron Ore",
+  "Gold Ore",
+  "Diamond Ore",
+  "Redstone Ore",
+  "Emerald Ore",
+  "Quartz Ore",
+  "Obsidian",
+  "Netherrack",
+  "End Stone",
+  "Snow Block",
+  "Ice",
+  "Clay",
+  "Bricks",
+];
 
 export const terrainIO: InputOutput = {
   displayName: "Terrain Types",
@@ -322,9 +320,9 @@ export const terrainIO: InputOutput = {
   values: Array.from({ length: 30 }, (_, i) => ({
     numericValue: i,
     displayName: terrainNames[i],
-  })).concat([{ numericValue: -1, displayName: '[Ignore]' }]),
+  })).concat([{ numericValue: -1, displayName: "[Ignore]" }]),
   discrete: true,
-  description: 'Common Minecraft terrain and block types',
-  uid: 'terrainIO',
+  description: "Common Minecraft terrain and block types",
+  uid: "terrainIO",
   parameters: [],
-}
+};

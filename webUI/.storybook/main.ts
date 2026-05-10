@@ -3,8 +3,7 @@ const config = {
     name: "@storybook/react-vite",
   },
   stories: ["../src/**/*.stories.tsx"],
-  addons: [
-  ],
+  addons: [],
 };
 
 export default config;

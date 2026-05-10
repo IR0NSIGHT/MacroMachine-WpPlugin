@@ -3,7 +3,7 @@ import React from "react";
 import { ThemeProvider, CssBaseline, StyledEngineProvider } from "@mui/material";
 import { theme } from "../src/theme";
 // eslint-disable-next-line import/no-unassigned-import
-import '@fontsource/ubuntu';
+import "@fontsource/ubuntu";
 
 const preview: Preview = {
   async beforeAll() {
