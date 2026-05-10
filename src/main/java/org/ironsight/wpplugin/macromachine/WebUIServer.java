@@ -35,8 +35,14 @@ public class WebUIServer {
 
         Dimension dimension = createDimension(new Rectangle(0,0,256,256),256);
         var applicator = new MacroConcurrentApplicator(macros, actions, ()->dimension);
+
         applicator.queueMacro(macros.queryAll().get(0).getUid());
-        //applicator.start();
+        applicator.queueMacro(macros.queryAll().get(0).getUid());
+        applicator.queueMacro(macros.queryAll().get(0).getUid());
+        applicator.queueMacro(macros.queryAll().get(0).getUid());
+        applicator.queueMacro(macros.queryAll().get(0).getUid());
+
+        applicator.start();
 
         new WebUIServer(applicator, MappingActionContainer.getInstance(), MacroContainer.getInstance()).start();
 
@@ -46,7 +52,7 @@ public class WebUIServer {
     }
 
     public void start() throws IOException {
-        URI uri = URI.create("http://0.0.0.0:8080/");
+        URI uri = URI.create("http://127.0.0.1:8080/");
 
         server = GrizzlyHttpServerFactory.createHttpServer(uri, new MacroApplication(applicator, actions, macros));
 

@@ -70,7 +70,7 @@ public class ApplyAction
         tileY = Arrays.copyOf(tileY, tileArrIdx);
 
         if (tileX.length == 0 || tileY.length == 0)
-            return statistic;
+            return statistic;   //FIXME this will break the callback logic because it skips expected steps.
 
         if (action.getInput() instanceof ILimitedMapOperation)
             ((ILimitedMapOperation) action.getInput()).prepareRightBeforeRun(dim, tileX, tileY);
@@ -137,7 +137,6 @@ public class ApplyAction
             List<MappingAction> actions, ApplyActionCallback ui) {
         Dimension dim = context.dimension;
         ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
-        ui.setAllActionsBeforeRun(actions);
         for (MappingAction action : actions) {
             if (!dim.isEventsInhibited()) {
                 dim.setEventsInhibited(true);
@@ -163,7 +162,7 @@ public class ApplyAction
                 }
             }
         }
-        ui.afterEverything();
+
 
         return statistics;
     }

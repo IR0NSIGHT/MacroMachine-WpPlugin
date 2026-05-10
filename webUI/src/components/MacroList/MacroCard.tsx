@@ -7,29 +7,44 @@ import Typography from "@mui/material/Typography";
 import { CardActionArea, Box, CircularProgress, alpha } from "@mui/material";
 import { components } from "@/generated/api-types";
 import { theme } from "@/theme";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 type MacroDTO = components["schemas"]["MacroDTO"];
-type executionState = {
-  isRunning: boolean;
-  percentage: number;
-};
-export default function MacroCard(props: { macro: MacroDTO; execution?: executionState }) {
+type executionState = components["schemas"]["ExecutionStateDTO"];
+export default function MacroCard(props: { macro: MacroDTO; execution?: executionState, onRequestExecution: (isDebug: boolean) => void }) {
   const { macro, execution } = props;
-
+  const isMacroRunning = execution?.executionId == macro.uid;
+  const percentage = execution?.currentStepIndex !== undefined && execution?.steps && execution.steps.length !== 0 ? ((execution.currentStepIndex + execution.steps[execution.currentStepIndex].percentComplete / 100) / execution.steps.length) * 100 : 0;
   return (
-    <Card sx={{ maxWidth: 345, position: "relative" }}>
+    <Card
+      sx={{
+        maxWidth: 345,
+        position: "relative",
+
+        "&:hover .play-overlay": {
+          opacity: isMacroRunning ? 0 : 1,
+        },
+
+        "&:hover": {
+          cursor: isMacroRunning ? "default" : "pointer",
+        },
+      }}
+    >
       <CardActionArea
-        disabled={execution?.isRunning}
-        sx={{ filter: execution?.isRunning ? "blur(1.5px)" : "none" }}
+        disabled={isMacroRunning}
+        onClick={()=>props.onRequestExecution(false)}
+        sx={{
+          filter: isMacroRunning ? "blur(1.5px)" : "none",
+        }}
       >
         <CardMedia
           sx={{ height: 140 }}
-          image="https://media.istockphoto.com/id/1772777335/de/foto/moraine-lake-trail.webp?s=2048x2048&w=is&k=20&c=OSa46vyZC-c8zs_px8f9NL8mw5LJcyGih4DupS-w_tY="
+          image="https://worldpainter-blog.com/wp-content/uploads/2024/11/dannypan_2024-10-13-16-53_15stars_2.png"
           title="macro image"
         />
 
         <CardContent>
-          <Typography gutterBottom variant="h5" component="div">
+          <Typography gutterBottom variant="h5">
             {macro.name}
           </Typography>
 
@@ -40,15 +55,38 @@ export default function MacroCard(props: { macro: MacroDTO; execution?: executio
       </CardActionArea>
 
       <CardActions>
-        <Button size="small" disabled={execution?.isRunning}>
+        <Button size="small" disabled={isMacroRunning}>
           Share
         </Button>
-        <Button size="small" disabled={execution?.isRunning}>
+        <Button size="small" disabled={isMacroRunning}>
           Edit
         </Button>
       </CardActions>
 
-      {execution?.isRunning && (
+      {/* PLAY OVERLAY (hover hint) */}
+      <Box
+        className="play-overlay"
+        sx={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 56,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "rgba(0,0,0,0.25)",
+          opacity: 0,
+          transition: "opacity 150ms ease-in-out",
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      >
+        <PlayArrowIcon sx={{ fontSize: 64, color: "white" }} />
+      </Box>
+
+      {/* RUNNING OVERLAY (blocks everything) */}
+      {isMacroRunning && (
         <Box
           sx={{
             position: "absolute",
@@ -64,22 +102,20 @@ export default function MacroCard(props: { macro: MacroDTO; execution?: executio
           }}
         >
           <Box sx={{ position: "relative", display: "inline-flex" }}>
-            <CircularProgress variant="indeterminate" size={64} color="secondary" />
+            <CircularProgress size={64} color="secondary" />
 
             <Box
               sx={{
-                top: 0,
-                left: 0,
-                bottom: 0,
-                right: 0,
                 position: "absolute",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                width: "100%",
+                height: "100%",
               }}
             >
-              <Typography variant="caption" component="div" color="text.primary">
-                {execution?.percentage}%
+              <Typography variant="caption">
+                {Math.round(percentage)}%
               </Typography>
             </Box>
           </Box>

@@ -37,7 +37,7 @@ public class MacroConcurrentApplicator implements MacroApplicator {
         executor.scheduleAtFixedRate(
                 this::runExecutionQueue,
                 0,
-                200,
+                1000,
                 TimeUnit.MILLISECONDS
         );
     }
@@ -47,7 +47,7 @@ public class MacroConcurrentApplicator implements MacroApplicator {
         ApplyAction.ApplicationContext context = new ApplyAction.ApplicationContext(getDimension.get(),
                 macros, actions, InputOutputProvider.INSTANCE,
                 new CustomLayerControllerWrapper(), ActionFilterIO.instance); //FIXME lots of singletons with static access here
-
+        updateState(new ExecutionStateDTO(macro.getUid(),List.of(),0, ExecutionStatus.RUNNING));
         return Macro.applyMacroToDimension(context, macro, callback);
     }
 
@@ -58,17 +58,22 @@ public class MacroConcurrentApplicator implements MacroApplicator {
 
     @Override
     public void updateState(ExecutionStateDTO newState) {
-        System.out.println("UPDATE EXECUTION STATE FROM\n" + currentExecutionState + "\nto\n" + newState);
+        if (currentExecutionState.status() != newState.status())
+            System.out.println("UPDATE EXECUTION STATE TO:" + newState.status() + " for " + newState.executionId());
         this.currentExecutionState = newState;
     }
 
     private void runExecutionQueue() {
+        System.out.println("queue:" + queue);
         if (queue.isEmpty())
             return;
         var nextUID = queue.poll();
         var next = MacroContainer.getInstance().queryById(nextUID);
-        if (next != null)
+        if (next != null) {
+            System.out.println("Execute macro: " + next.getName() + "("+next.getUid()+")");
+            System.out.println("Queue:" + queue.size());
             applyMacroSync(next);
+        }
         else {
             GlobalActionPanel.logMessage("error: can not execute macro, doesnt exist: " + nextUID);
         }
@@ -123,7 +128,7 @@ public class MacroConcurrentApplicator implements MacroApplicator {
                 updateState(new ExecutionStateDTO(
                         currentState.executionId(),
                         currentState.steps(),
-                        currentState.currentStepIndex() + 1,
+                        Math.min(currentState.steps().size() - 1, currentState.currentStepIndex() + 1),
                         currentState.status()
                 ));
             }

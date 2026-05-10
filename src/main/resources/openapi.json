@@ -252,6 +252,19 @@
           }
         }
       }
+    },
+    "/" : {
+      "options" : {
+        "operationId" : "options",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "*/*" : { }
+            }
+          }
+        }
+      }
     }
   },
   "components" : {

@@ -1,6 +1,6 @@
 const fetch = global.fetch; // Node 18+ (no install needed)
 
-const API_BASE = "http://localhost:8080"; // adjust if needed
+const API_BASE = "http://127.0.0.1:8080"; // adjust if needed
 
 const uuid = "602c96eb-27a1-4d73-9599-f2d96fc78c91";
 

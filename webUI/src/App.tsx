@@ -4,83 +4,109 @@ import Typography from "@mui/material/Typography";
 import "./App.css";
 import "@fontsource/ubuntu";
 import { components } from "./generated/api-types";
-import { fetchExecutionQueue, fetchMacros, postQueueMacros } from "./API/fetch";
-import { Button, Grid } from "@mui/material";
+import { fetchActions, fetchExecutionQueue, fetchExecutionState, fetchMacros, postQueueMacros } from "./API/fetch";
+import { Box, Grid } from "@mui/material";
 import Item from "@mui/material/Grid";
 import MacroCard from "./components/MacroList/MacroCard";
 
 type MacroDTO = components["schemas"]["MacroDTO"];
+type ActionDTO = components["schemas"]["ActionDTO"];
 
+type ExecutionStateDTO = components["schemas"]["ExecutionStateDTO"];
 function MacroList() {
-  const [macros, setMacros] = useState<MacroDTO[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [queue, setQueue] = useState<string[]>([]);
+    const [macros, setMacros] = useState<MacroDTO[]>([]);
+    const [actions, setActions] = useState<ActionDTO[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [queue, setQueue] = useState<string[]>([]);
+    const [executionState, setExecutionState] = useState<ExecutionStateDTO>({
+        executionId: "",
+        steps: [],
+        currentStepIndex: 0,
+        status: "IDLE"
+    });
+    console.log(queue, executionState);
+    const uuidToMacro = new Map<string, MacroDTO>();
+    const uuidToAction = new Map<string, ActionDTO>();
+    macros.forEach((macro) => uuidToMacro.set(macro.uid, macro)); //FIXME useMemo ? or sth?
+    actions.forEach((action) => uuidToAction.set(action.uid, action));
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                await fetchExecutionQueue().then(r => setQueue(r.queuedMacroIds)).catch(console.error);
+                await fetchExecutionState().then(setExecutionState).catch(console.error);
+                await fetchActions().then(setActions).catch(console.error);
 
-  const uuidToMacro = new Map<string, MacroDTO>();
-  macros.forEach((macro) => uuidToMacro.set(macro.uid, macro));
 
-  // Poll every 200ms
-  setInterval(async () => {
-    try {
-      const queue = await fetchExecutionQueue();
-      setQueue(queue.queuedMacroIds);
-      console.log("Updated queue:", queue);
-    } catch (err) {
-      console.error(err);
+
+            } catch (err) {
+                console.error(err);
+            }
+        }, 100);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        fetchMacros()
+            .then((list) => setMacros(list.sort((a, b) => a.name.localeCompare(b.name))))
+            .catch(console.error)
+            .finally(() => setLoading(false));
+    }, []);
+
+    if (loading) {
+        return <div>Loading...</div>;
     }
-  }, 2000);
 
-  useEffect(() => {
-    fetchMacros()
-      .then((list) => setMacros(list.sort((a, b) => a.name.localeCompare(b.name))))
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    return (
+        <Box
+            sx={{
+                display: "flex",
+                flexDirection: "column",
+                height: "100vh",
+            }}
+        >
+            {/* TOP */}
+            <Box sx={{ p: 2 }}>
+                some text top
+            </Box>
+            {/* SCROLLABLE MIDDLE */}
+            <Box
+                sx={{
+                    flex: 1,
+                    minHeight: 0,
+                    overflowY: "auto",
+                    p: 2,
+                }}
+            >
+                <Grid container spacing={1}>
+                    {macros.map((macro) => (
+                        <Grid key={macro.uid} size={4}>
+                            <Item>
+                                <MacroCard macro={macro} execution={executionState} onRequestExecution={() => postQueueMacros([macro.uid]).then(console.log).catch(console.error)} />
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  return (
-    <div>
-      <div>
-        <h2>Execution Queue:</h2>
-        {queue
-          .map((uid) => uuidToMacro.get(uid))
-          .map((macro) => (
-            <div key={macro?.uid}>{macro?.name}</div>
-          ))}
-      </div>
-
-      <Grid container spacing={1}>
-        {macros.map((macro) => (
-          <Grid key={macro.uid} size={4}>
-            <Item>
-              <MacroCard macro={macro} execution={{ isRunning: false, percentage: 0 }} />
-              <Button
-                variant="contained"
-                onClick={() => postQueueMacros([macro.uid]).then(console.log).catch(console.error)}
-              >
-                Queue
-              </Button>
-            </Item>
-          </Grid>
-        ))}
-      </Grid>
-    </div>
-  );
+                            </Item>
+                        </Grid>
+                    ))}
+                </Grid>
+            </Box>
+            {/* BOTTOM */}
+            <Box sx={{ p: 2 }}>
+                some text bottom
+            </Box>
+        </Box >
+    );
 }
 
 function App() {
-  return (
-    <Container sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        MacroMachine Web UI
-      </Typography>
+    return (
+        <Container sx={{ py: 4 }}>
+            <Typography variant="h4" component="h1" gutterBottom>
+                MacroMachine Web UI
+            </Typography>
 
-      <MacroList />
-    </Container>
-  );
+            <MacroList />
+        </Container>
+    );
 }
 
 export default App;

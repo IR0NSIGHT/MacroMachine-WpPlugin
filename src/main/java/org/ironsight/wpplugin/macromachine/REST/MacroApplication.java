@@ -14,9 +14,13 @@ import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 @ApplicationPath("/api")
 public class MacroApplication extends ResourceConfig {
     public MacroApplication(MacroApplicator applicator, MappingActionContainer actions, MacroContainer macros) {
+        register(PreflightRequestFilter.class);
+        register(CorsFilter.class);
+
         register(MacroResource.class);
         register(ActionResource.class);
         register(new ExecutionResource(applicator, actions, macros));
+
         register(JacksonFeature.class);
         register(OpenApiResource.class);
     }

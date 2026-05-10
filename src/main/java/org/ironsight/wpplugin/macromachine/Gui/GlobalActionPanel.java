@@ -20,6 +20,7 @@ import org.pepsoft.worldpainter.objects.WPObject;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -294,17 +295,16 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
         tabbedPane.add("log", logPanel);
 
-        // previewer.setInclination(30);
-        // previewer.setObject(new SurfaceObject()/* empty dummy */, null);
-        // tabbedPane.add("3d", previewer);
+        getPreviewer().setInclination(30);
+        getPreviewer().setObject(new SurfaceObject()/* empty dummy */, null);
+        tabbedPane.add("3d", getPreviewer());
 
-        tabbedPane.addTab("Web UI", new WebUIViewPanel());
+         tabbedPane.addTab("Web UI", new WebUIViewPanel());
 
-        /*
-         * previewer.addHierarchyListener(e -> { if ((e.getChangeFlags() &
-         * HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing() && rerender3d) {
-         * SwingUtilities.invokeLater(() -> doRender3d()); } });
-         */
+         previewer.addHierarchyListener(e -> { if ((e.getChangeFlags() &
+         HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing() && rerender3d) {
+         SwingUtilities.invokeLater(() -> doRender3d()); } });
+
 
         this.add(macroTreePanel, BorderLayout.WEST);
 
