@@ -4,612 +4,575 @@
  */
 
 export interface paths {
-  "/actions": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getAll"];
+        put?: never;
+        post: operations["create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get: operations["getAll"];
-    put?: never;
-    post: operations["create"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/actions/{id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/actions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get"];
+        put?: never;
+        post?: never;
+        delete: operations["delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get: operations["get"];
-    put?: never;
-    post?: never;
-    delete: operations["delete"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/docs": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/docs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getDocs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get: operations["getDocs"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/execution/queue": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/execution/state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getCurrentState"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get: operations["getQueue"];
-    put?: never;
-    post: operations["updateQueue"];
-    delete: operations["clearQueue"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/execution/state": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/execution/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getQueue"];
+        put?: never;
+        post: operations["updateQueue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get: operations["getCurrentState"];
-    put?: never;
-    post: operations["updateQueue_1"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/macros": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/macros": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get all macros */
+        get: operations["getAll_1"];
+        put?: never;
+        post: operations["create_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get all macros */
-    get: operations["getAll_1"];
-    put?: never;
-    post: operations["create_1"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/macros/{id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/macros/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["get_1"];
+        put?: never;
+        post?: never;
+        delete: operations["delete_1"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get: operations["get_1"];
-    put?: never;
-    post?: never;
-    delete: operations["delete_1"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
+    "/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options: operations["options"];
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    /** @description Represents an executable mapping action, that reads one inputtype from the map and based on that writes output values to the map. */
-    ActionDTO: {
-      input: components["schemas"]["InputOutputDTO"];
-      output: components["schemas"]["InputOutputDTO"];
-      /**
-       * @description Type of action
-       * @enum {string}
-       */
-      actionType:
-        | "increments"
-        | "subtracts"
-        | "multiplies"
-        | "divides"
-        | "sets"
-        | "limits"
-        | "sets minimum";
-      /** @description Human readable name */
-      name: string;
-      /** @description Description of the action */
-      description: string;
-      /**
-       * Format: uuid
-       * @description Unique identifier
-       */
-      uid: string;
-      /** @description numeric input values for the mapping points */
-      mappingPointsX: number[];
-      /** @description numeric output values for the mapping points */
-      mappingPointsY: number[];
-      /** @description actual numeric output values for all inputs */
-      mappedOutputs: number[];
-      mappedInputs?: number[];
+    schemas: {
+        /** @description Represents an executable mapping action, that reads one inputtype from the map and based on that writes output values to the map. */
+        ActionDTO: {
+            input: components["schemas"]["InputOutputDTO"];
+            output: components["schemas"]["InputOutputDTO"];
+            /**
+             * @description Type of action
+             * @enum {string}
+             */
+            actionType: "increments" | "subtracts" | "multiplies" | "divides" | "sets" | "limits" | "sets minimum";
+            /** @description Human readable name */
+            name: string;
+            /** @description Description of the action */
+            description: string;
+            /**
+             * Format: uuid
+             * @description Unique identifier
+             */
+            uid: string;
+            /** @description numeric input values for the mapping points */
+            mappingPointsX: number[];
+            /** @description numeric output values for the mapping points */
+            mappingPointsY: number[];
+            /** @description actual numeric output values for all inputs */
+            mappedOutputs: number[];
+            mappedInputs?: number[];
+        };
+        /** @description Describes an input/output provider configuration */
+        InputOutputDTO: {
+            /**
+             * @description Human readable macro name
+             * @example Terrain Height
+             */
+            displayName: string;
+            /**
+             * @description Detailed description of the provider
+             * @example Controls the generated terrain elevation
+             */
+            description: string;
+            /**
+             * Format: int32
+             * @description Minimum supported value
+             * @example 0
+             */
+            min: number;
+            /**
+             * Format: int32
+             * @description Maximum supported value
+             * @example 255
+             */
+            max: number;
+            /**
+             * Format: int32
+             * @description Value that should be ignored or treated as unset
+             * @example -1
+             */
+            ignoreValue: number;
+            valueDisplayNames: string[];
+            /**
+             * @description Whether the values are discrete instead of continuous (colors are discrete, forest strength % is continuous)
+             * @example true
+             */
+            discrete: boolean;
+            /**
+             * @description Provider type
+             * @enum {string}
+             */
+            type: "HEIGHT" | "SLOPE" | "ANNOTATION" | "BINARY_LAYER" | "BINARY_SPRAYPAINT" | "BLOCK_DIRECTION" | "INTERMEDIATE" | "INTERMEDIATE_SELECTION" | "NIBBLE_LAYER" | "SELECTION" | "STONE_PALETTE" | "TERRAIN" | "TEST" | "VANILLA_BIOME" | "WATER_DEPTH" | "WATER_HEIGHT" | "ALWAYS" | "DISTANCE_TO_EDGE" | "PERLIN_NOISE" | "SHADOW" | "VORONOI_NOISE" | "RANDOM_NOISE";
+        };
+        /** @description Represents the application's execution state */
+        ExecutionStateDTO: {
+            /**
+             * Format: uuid
+             * @description ID of the currently executing macro
+             */
+            executionId: string;
+            /** @description Ordered execution steps for the current execution */
+            steps: components["schemas"]["ExecutionStepDTO"][];
+            /**
+             * Format: int32
+             * @description Zero-based index of the currently active step
+             * @example 0
+             */
+            currentStepIndex: number;
+            /**
+             * @description state of the execution
+             * @enum {string}
+             */
+            status: "IDLE" | "RUNNING" | "PAUSED" | "COMPLETED" | "FAILED" | "ABORTING";
+        };
+        /** @description Represents a single action step within a macro execution */
+        ExecutionStepDTO: {
+            /**
+             * Format: uuid
+             * @description Unique identifier of the action executed in this step
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            actionId: string;
+            /**
+             * @description Whether execution should pause before this step is executed
+             * @example false
+             */
+            breakpoint: boolean;
+            /**
+             * Format: float
+             * @description Completion percentage of this step, from 0 to 100
+             * @example 42.5
+             */
+            percentComplete: number;
+        };
+        /** @description Request to enqueue macros for execution */
+        ExecutionQueueDTO: {
+            /** @description Ordered list of macro IDs to enqueue */
+            queuedMacroIds: string[];
+        };
+        /** @description Represents a macro: collection of macros and actions */
+        MacroDTO: {
+            /**
+             * @description UUIDs of executions associated with this macro. can be of a macro or an action
+             * @example [
+             *       "550e8400-e29b-41d4-a716-446655440000"
+             *     ]
+             */
+            executionUUIDs: string[];
+            /**
+             * @description Flags indicating whether each action is active
+             * @example [
+             *       true,
+             *       false,
+             *       true
+             *     ]
+             */
+            activeActions: boolean[];
+            /**
+             * @description Human readable macro name
+             * @example Morning Routine
+             */
+            name: string;
+            /**
+             * @description Detailed description of the macro
+             * @example Runs all startup automation tasks
+             */
+            description: string;
+            /**
+             * Format: uuid
+             * @description Unique identifier of the macro
+             * @example 550e8400-e29b-41d4-a716-446655440000
+             */
+            uid: string;
+        };
     };
-    /** @description Describes an input/output provider configuration */
-    InputOutputDTO: {
-      /**
-       * @description Human readable macro name
-       * @example Terrain Height
-       */
-      displayName: string;
-      /**
-       * @description Detailed description of the provider
-       * @example Controls the generated terrain elevation
-       */
-      description: string;
-      /**
-       * Format: int32
-       * @description Minimum supported value
-       * @example 0
-       */
-      min: number;
-      /**
-       * Format: int32
-       * @description Maximum supported value
-       * @example 255
-       */
-      max: number;
-      /**
-       * Format: int32
-       * @description Value that should be ignored or treated as unset
-       * @example -1
-       */
-      ignoreValue: number;
-      valueDisplayNames: string[];
-      /**
-       * @description Whether the values are discrete instead of continuous (colors are discrete, forest strength % is continuous)
-       * @example true
-       */
-      discrete: boolean;
-      /**
-       * @description Provider type
-       * @enum {string}
-       */
-      type:
-        | "HEIGHT"
-        | "SLOPE"
-        | "ANNOTATION"
-        | "BINARY_LAYER"
-        | "BINARY_SPRAYPAINT"
-        | "BLOCK_DIRECTION"
-        | "INTERMEDIATE"
-        | "INTERMEDIATE_SELECTION"
-        | "NIBBLE_LAYER"
-        | "SELECTION"
-        | "STONE_PALETTE"
-        | "TERRAIN"
-        | "TEST"
-        | "VANILLA_BIOME"
-        | "WATER_DEPTH"
-        | "WATER_HEIGHT"
-        | "ALWAYS"
-        | "DISTANCE_TO_EDGE"
-        | "PERLIN_NOISE"
-        | "SHADOW"
-        | "VORONOI_NOISE"
-        | "RANDOM_NOISE";
-    };
-    /** @description Represents the application's execution state */
-    ExecutionStateDTO: {
-      /**
-       * Format: uuid
-       * @description ID of the currently executing macro
-       */
-      executionId: string;
-      /** @description Ordered execution steps for the current execution */
-      steps: components["schemas"]["ExecutionStepDTO"][];
-      /**
-       * Format: int32
-       * @description Zero-based index of the currently active step
-       * @example 0
-       */
-      currentStepIndex: number;
-      /**
-       * @description state of the execution
-       * @enum {string}
-       */
-      status: "IDLE" | "RUNNING" | "PAUSED" | "COMPLETED" | "FAILED";
-    };
-    /** @description Represents a single action step within a macro execution */
-    ExecutionStepDTO: {
-      /**
-       * Format: uuid
-       * @description Unique identifier of the action executed in this step
-       * @example 550e8400-e29b-41d4-a716-446655440000
-       */
-      actionId: string;
-      /**
-       * @description Whether execution should pause before this step is executed
-       * @example false
-       */
-      breakpoint: boolean;
-      /**
-       * Format: float
-       * @description Completion percentage of this step, from 0 to 100
-       * @example 42.5
-       */
-      percentComplete: number;
-    };
-    /** @description Request to enqueue macros for execution */
-    ExecutionQueueDTO: {
-      /** @description Ordered list of macro IDs to enqueue */
-      queuedMacroIds: string[];
-    };
-    /** @description Represents a macro: collection of macros and actions */
-    MacroDTO: {
-      /**
-       * @description UUIDs of executions associated with this macro. can be of a macro or an action
-       * @example [
-       *       "550e8400-e29b-41d4-a716-446655440000"
-       *     ]
-       */
-      executionUUIDs: string[];
-      /**
-       * @description Flags indicating whether each action is active
-       * @example [
-       *       true,
-       *       false,
-       *       true
-       *     ]
-       */
-      activeActions: boolean[];
-      /**
-       * @description Human readable macro name
-       * @example Morning Routine
-       */
-      name: string;
-      /**
-       * @description Detailed description of the macro
-       * @example Runs all startup automation tasks
-       */
-      description: string;
-      /**
-       * Format: uuid
-       * @description Unique identifier of the macro
-       * @example 550e8400-e29b-41d4-a716-446655440000
-       */
-      uid: string;
-    };
-  };
-  responses: never;
-  parameters: never;
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  getAll: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+    getAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["ActionDTO"][];
+        requestBody?: never;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionDTO"][];
+                };
+            };
         };
-      };
     };
-  };
-  create: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: {
-      content: {
-        "application/json": components["schemas"]["ActionDTO"];
-      };
-    };
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+    create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["ActionDTO"];
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ActionDTO"];
+            };
         };
-      };
-    };
-  };
-  get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionDTO"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["ActionDTO"];
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
         };
-      };
-    };
-  };
-  delete: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+        requestBody?: never;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActionDTO"];
+                };
+            };
         };
-        content: {
-          "application/json": unknown;
+    };
+    delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
         };
-      };
-    };
-  };
-  getDocs: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+        requestBody?: never;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
         };
-        content: {
-          "text/html": unknown;
+    };
+    getDocs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-      };
-    };
-  };
-  getQueue: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+        requestBody?: never;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/html": unknown;
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["ExecutionQueueDTO"];
+    };
+    getCurrentState: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-      };
-    };
-  };
-  updateQueue: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: {
-      content: {
-        "application/json": components["schemas"]["ExecutionQueueDTO"];
-      };
-    };
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+        requestBody?: never;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutionStateDTO"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["ExecutionQueueDTO"];
+    };
+    getQueue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-      };
-    };
-  };
-  clearQueue: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+        requestBody?: never;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutionQueueDTO"];
+                };
+            };
         };
-        content: {
-          "application/json": unknown;
+    };
+    updateQueue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-      };
-    };
-  };
-  getCurrentState: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ExecutionQueueDTO"];
+            };
         };
-        content: {
-          "application/json": components["schemas"]["ExecutionStateDTO"];
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutionQueueDTO"];
+                };
+            };
         };
-      };
     };
-  };
-  updateQueue_1: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: {
-      content: {
-        "application/json": components["schemas"]["ExecutionStateDTO"];
-      };
-    };
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+    getAll_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["ExecutionStateDTO"];
+        requestBody?: never;
+        responses: {
+            /** @description List of macros */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MacroDTO"][];
+                };
+            };
         };
-      };
     };
-  };
-  getAll_1: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description List of macros */
-      200: {
-        headers: {
-          [name: string]: unknown;
+    create_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["MacroDTO"][];
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MacroDTO"];
+            };
         };
-      };
-    };
-  };
-  create_1: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: {
-      content: {
-        "application/json": components["schemas"]["MacroDTO"];
-      };
-    };
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MacroDTO"];
+                };
+            };
         };
-        content: {
-          "application/json": components["schemas"]["MacroDTO"];
-        };
-      };
     };
-  };
-  get_1: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+    get_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": components["schemas"]["MacroDTO"];
+        requestBody?: never;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MacroDTO"];
+                };
+            };
         };
-      };
     };
-  };
-  delete_1: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
+    delete_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
         };
-        content: {
-          "application/json": unknown;
+        requestBody?: never;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
         };
-      };
     };
-  };
+    options: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description default response */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": unknown;
+                };
+            };
+        };
+    };
 }
