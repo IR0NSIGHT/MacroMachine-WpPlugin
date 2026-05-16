@@ -4,10 +4,13 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import { CardActionArea, Box, CircularProgress, alpha } from "@mui/material";
+import { CardActionArea, Box, CircularProgress, alpha, IconButton } from "@mui/material";
 import { components } from "@/generated/api-types";
 import { theme } from "@/theme";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ShareIcon from "@mui/icons-material/Share";
+import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 
 type MacroDTO = components["schemas"]["MacroDTO"];
 type executionState = components["schemas"]["ExecutionStateDTO"];
@@ -69,12 +72,15 @@ export default function MacroCard(props: {
       </CardActionArea>
 
       <CardActions>
-        <Button size="small" disabled={isMacroRunning}>
-          Share
-        </Button>
-        <Button size="small" disabled={isMacroRunning}>
-          Edit
-        </Button>
+        <IconButton size="small" disabled={isMacroRunning}>
+          <ShareIcon />
+        </IconButton>
+        <IconButton size="small" disabled={isMacroRunning}>
+          <EditIcon />
+        </IconButton>
+        <IconButton size="small" disabled={isMacroRunning}>
+          <VisibilityIcon />
+        </IconButton>
       </CardActions>
 
       {/* PLAY OVERLAY (hover hint) */}

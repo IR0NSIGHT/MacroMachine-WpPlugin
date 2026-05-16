@@ -1,4 +1,4 @@
-import type { components } from "../generated/api-types"; 
+import type { components } from "../generated/api-types";
 
 export type ActionDTO = components["schemas"]["ActionDTO"];
 export type MacroDTO = components["schemas"]["MacroDTO"];
