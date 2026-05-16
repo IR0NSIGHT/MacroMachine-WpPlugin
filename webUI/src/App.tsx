@@ -13,7 +13,7 @@ import { Box, FormControlLabel, Grid, Switch } from "@mui/material";
 import Item from "@mui/material/Grid";
 import MacroCard from "./components/MacroList/MacroCard";
 import { PrimarySearchAppBar } from "./components/AppBar";
-
+import { MacroDetailsDialog } from "./components/MacroList/MacroDetailsDialog";
 type MacroDTO = components["schemas"]["MacroDTO"];
 type ActionDTO = components["schemas"]["ActionDTO"];
 
@@ -60,10 +60,30 @@ export function MacroGrid({
   actions: ActionDTO[];
   executionState: ExecutionStateDTO;
 }) {
-  const uuidToMacro = new Map<string, MacroDTO>();
-  const uuidToAction = new Map<string, ActionDTO>();
-  macros.forEach((macro) => uuidToMacro.set(macro.uid, macro)); //FIXME useMemo ? or sth?
-  actions.forEach((action) => uuidToAction.set(action.uid, action));
+  const uuidToMacroOrAction = new Map<string, MacroDTO | ActionDTO>();
+  macros.forEach((macro) => uuidToMacroOrAction.set(macro.uid, macro)); //FIXME useMemo ? or sth?
+  actions.forEach((action) => uuidToMacroOrAction.set(action.uid, action));
+  const [viewedMacro, setViewedMacro] = useState<
+    (MacroDTO & { steps: (ActionDTO | MacroDTO)[] }) | null
+  >(null);
+
+  const onShare = (macro: MacroDTO) => {
+    console.log("USER WANTS TO SHARE THE MARCO", macro.name);
+  };
+
+  const onEdit = (macro: MacroDTO) => {
+    console.log("USER WANTS TO EDIT THE MARCO", macro.name);
+  };
+
+  const onView = (macro: MacroDTO) => {
+    const steps: (MacroDTO | ActionDTO)[] = macro.executionUUIDs.map(
+      (uid) => uuidToMacroOrAction.get(uid)!,
+    );
+    const macroWithSteps = { ...macro, steps: steps };
+    console.log("fat mamcro:", macroWithSteps);
+    console.log("actions:", uuidToMacroOrAction);
+    setViewedMacro(macroWithSteps);
+  };
 
   return (
     <div>
@@ -87,11 +107,20 @@ export function MacroGrid({
                   onRequestExecution={() =>
                     postQueueMacros([macro.uid]).then(console.log).catch(console.error)
                   }
+                  onView={() => onView(macro)}
+                  onShare={() => onShare(macro)}
+                  onEdit={() => onEdit(macro)}
                 />
               </Item>
             </Grid>
           ))}
         </Grid>
+
+        <MacroDetailsDialog
+          open={!!viewedMacro}
+          macro={viewedMacro}
+          onClose={() => setViewedMacro(null)}
+        />
       </Box>
     </div>
   );

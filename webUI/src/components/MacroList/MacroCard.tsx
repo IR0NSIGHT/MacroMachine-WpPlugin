@@ -2,7 +2,6 @@ import Card from "@mui/material/Card";
 import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
-import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { CardActionArea, Box, CircularProgress, alpha, IconButton } from "@mui/material";
 import { components } from "@/generated/api-types";
@@ -19,6 +18,9 @@ export default function MacroCard(props: {
   execution?: executionState;
   onRequestExecution: (isDebug: boolean) => void;
   imageURL?: string;
+  onView: () => void;
+  onEdit: () => void;
+  onShare: () => void;
 }) {
   const { macro, execution, imageURL } = props;
   const isMacroRunning = execution?.executionId == macro.uid;
@@ -72,13 +74,13 @@ export default function MacroCard(props: {
       </CardActionArea>
 
       <CardActions>
-        <IconButton size="small" disabled={isMacroRunning}>
+        <IconButton size="small" disabled={isMacroRunning} onClick={props.onShare}>
           <ShareIcon />
         </IconButton>
-        <IconButton size="small" disabled={isMacroRunning}>
+        <IconButton size="small" disabled={isMacroRunning} onClick={props.onEdit}>
           <EditIcon />
         </IconButton>
-        <IconButton size="small" disabled={isMacroRunning}>
+        <IconButton size="small" disabled={isMacroRunning} onClick={props.onView}>
           <VisibilityIcon />
         </IconButton>
       </CardActions>
