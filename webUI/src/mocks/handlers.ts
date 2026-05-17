@@ -12,9 +12,13 @@ import mock_queue from "./data/queue.json";
  */
 const actions: ActionDTO[] = mock_actions as ActionDTO[];
 const macros: MacroDTO[] = mock_macros;
-const executionState: ExecutionStateDTO = mock_state as any;
 
 let executionQueue: ExecutionQueueDTO = mock_queue;
+
+// Mutable execution state
+let executionState: ExecutionStateDTO = structuredClone(mock_state as any);
+
+let isProcessingQueue = false;
 
 export const handlers = [
   /**
@@ -112,7 +116,13 @@ export const handlers = [
   http.post("/api/execution/queue", async ({ request }) => {
     const body = (await request.json()) as ExecutionQueueDTO;
 
-    executionQueue = body;
+    executionQueue = {
+      ...executionQueue,
+      queuedMacroIds: executionQueue.queuedMacroIds.concat(body.queuedMacroIds),
+    };
+
+    // background processing
+    void processQueue();
 
     return HttpResponse.json(executionQueue);
   }),
@@ -184,3 +194,68 @@ export const handlers = [
     });
   }),
 ];
+
+async function processQueue() {
+  if (isProcessingQueue) {
+    return;
+  }
+
+  isProcessingQueue = true;
+
+  while (executionQueue.queuedMacroIds.length > 0) {
+    const macroId = executionQueue.queuedMacroIds.shift();
+
+    if (!macroId) {
+      continue;
+    }
+
+    const macro = macros.find((m) => m.uid === macroId);
+
+    if (!macro) {
+      continue;
+    }
+
+    const stepIds = macro.executionUUIDs;
+
+    executionState = {
+      executionId: macro.uid,
+      currentStepIndex: 0,
+      status: "RUNNING",
+      steps: stepIds.map((id) => ({
+        actionId: id,
+        breakpoint: false,
+        percentComplete: 0,
+      })),
+    };
+
+    // Simulate each step progressing
+    for (let stepIndex = 0; stepIndex < executionState.steps.length; stepIndex++) {
+      executionState.currentStepIndex = stepIndex;
+
+      for (let progress = 0; progress <= 100; progress += 5) {
+        executionState.steps[stepIndex].percentComplete = progress;
+
+        await delay(120);
+      }
+    }
+
+    executionState.status = "COMPLETED";
+
+    await delay(750);
+
+    executionState = {
+      executionId: "",
+      currentStepIndex: 0,
+      status: "IDLE",
+      steps: [],
+    };
+  }
+
+  isProcessingQueue = false;
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}

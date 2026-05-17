@@ -15,6 +15,8 @@ import AccountCircle from "@mui/icons-material/AccountCircle";
 import MailIcon from "@mui/icons-material/Mail";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
+import { ExecutionQueueDTO, ExecutionStateDTO } from "@/types/DTO";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -56,10 +58,24 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
+export const executionProgress = (execution?: ExecutionStateDTO): number => {
+  const percentage =
+    execution?.currentStepIndex !== undefined && execution?.steps && execution.steps.length !== 0
+      ? ((execution.currentStepIndex +
+          execution.steps[execution.currentStepIndex].percentComplete / 100) /
+          execution.steps.length) *
+        100
+      : 0;
+  return percentage;
+};
+
 export function PrimarySearchAppBar(props: {
   search: string;
   onSearchChange: (newValue: string) => void;
+  queue: ExecutionQueueDTO;
+  executionState: ExecutionStateDTO;
 }) {
+  console.log(props);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState<null | HTMLElement>(null);
 
@@ -185,6 +201,26 @@ export function PrimarySearchAppBar(props: {
               inputProps={{ "aria-label": "search" }}
             />
           </Search>
+          {props.executionState.status !== "IDLE" && (
+            <CircularProgress
+              key={-1}
+              enableTrackSlot
+              variant="determinate"
+              color="secondary"
+              value={100 - executionProgress(props.executionState)}
+              aria-label="Upload photos"
+            />
+          )}
+          {props.queue.queuedMacroIds.map((id, idx) => (
+            <CircularProgress
+              key={idx}
+              enableTrackSlot
+              variant="determinate"
+              color="secondary"
+              value={100}
+              aria-label="Upload photos"
+            />
+          ))}
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: { xs: "none", md: "flex" } }}>
             <IconButton size="large" aria-label="show 4 new mails" color="inherit">

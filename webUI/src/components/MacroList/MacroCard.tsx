@@ -10,7 +10,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ShareIcon from "@mui/icons-material/Share";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-
+import { executionProgress } from "../AppBar";
 type MacroDTO = components["schemas"]["MacroDTO"];
 type executionState = components["schemas"]["ExecutionStateDTO"];
 export default function MacroCard(props: {
@@ -24,13 +24,7 @@ export default function MacroCard(props: {
 }) {
   const { macro, execution, imageURL } = props;
   const isMacroRunning = execution?.executionId == macro.uid;
-  const percentage =
-    execution?.currentStepIndex !== undefined && execution?.steps && execution.steps.length !== 0
-      ? ((execution.currentStepIndex +
-          execution.steps[execution.currentStepIndex].percentComplete / 100) /
-          execution.steps.length) *
-        100
-      : 0;
+  const percentage = executionProgress(props.execution);
   return (
     <Card
       sx={{
@@ -124,8 +118,15 @@ export default function MacroCard(props: {
           }}
         >
           <Box sx={{ position: "relative", display: "inline-flex" }}>
-            <CircularProgress size={64} color="secondary" />
-
+            <CircularProgress
+              key={-1}
+              enableTrackSlot
+              variant="determinate"
+              color="secondary"
+              size={65}
+              value={100 - percentage}
+              aria-label="Upload photos"
+            />
             <Box
               sx={{
                 position: "absolute",

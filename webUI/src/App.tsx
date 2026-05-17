@@ -14,6 +14,7 @@ import Item from "@mui/material/Grid";
 import MacroCard from "./components/MacroList/MacroCard";
 import { PrimarySearchAppBar } from "./components/AppBar";
 import { MacroDetailsDialog } from "./components/MacroList/MacroDetailsDialog";
+import { ExecutionQueueDTO } from "./types/DTO";
 type MacroDTO = components["schemas"]["MacroDTO"];
 type ActionDTO = components["schemas"]["ActionDTO"];
 
@@ -137,13 +138,13 @@ export default function App() {
     currentStepIndex: 0,
     status: "IDLE",
   });
-  const [_queue, setQueue] = useState<string[]>([]);
+  const [_queue, setQueue] = useState<ExecutionQueueDTO>({ queuedMacroIds: [] });
   const [connectionLost, setConnectionLost] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(async () => {
       await fetchExecutionQueue()
-        .then((r) => setQueue(r.queuedMacroIds))
+        .then((r) => setQueue(r))
         .catch(() => setConnectionLost(true));
       await fetchExecutionState()
         .then(setExecutionState)
@@ -176,7 +177,12 @@ export default function App() {
 
   return (
     <div>
-      <PrimarySearchAppBar search={search} onSearchChange={setSearch} />
+      <PrimarySearchAppBar
+        search={search}
+        onSearchChange={setSearch}
+        queue={_queue}
+        executionState={executionState}
+      />
       {centerContent}
     </div>
   );
