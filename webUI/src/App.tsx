@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import "@fontsource/ubuntu";
-import { components } from "./generated/api-types";
 import {
   fetchActions,
   fetchExecutionQueue,
@@ -14,9 +13,8 @@ import Item from "@mui/material/Grid";
 import MacroCard from "./components/MacroList/MacroCard";
 import { PrimarySearchAppBar } from "./components/AppBar";
 import { MacroDetailsDialog } from "./components/MacroList/MacroDetailsDialog";
-import { ExecutionQueueDTO } from "./types/DTO";
-type MacroDTO = components["schemas"]["MacroDTO"];
-type ActionDTO = components["schemas"]["ActionDTO"];
+import { ExecutionQueueDTO, MacroDTO, ExecutionStateDTO, ActionDTO } from "./types/DTO";
+import { Tooltip } from "@mui/material";
 
 const imageURLs = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1600&auto=format&fit=crop",
@@ -51,7 +49,6 @@ const imageURLs = [
   "https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=1600&auto=format&fit=crop",
 ];
 
-type ExecutionStateDTO = components["schemas"]["ExecutionStateDTO"];
 export function MacroGrid({
   macros,
   actions,
@@ -61,12 +58,24 @@ export function MacroGrid({
   actions: ActionDTO[];
   executionState: ExecutionStateDTO;
 }) {
-  const uuidToMacroOrAction = new Map<string, MacroDTO | ActionDTO>();
-  macros.forEach((macro) => uuidToMacroOrAction.set(macro.uid, macro)); //FIXME useMemo ? or sth?
-  actions.forEach((action) => uuidToMacroOrAction.set(action.uid, action));
+  const [hideNested, setHideNested] = useState(false);
   const [viewedMacro, setViewedMacro] = useState<
     (MacroDTO & { steps: (ActionDTO | MacroDTO)[] }) | null
   >(null);
+
+  const macroSet = new Set<string>();
+  macros.forEach((m) => macroSet.add(m.uid));
+
+  const uuidToMacroOrAction = new Map<string, MacroDTO | ActionDTO>();
+  macros.forEach((macro) => uuidToMacroOrAction.set(macro.uid, macro)); //FIXME useMemo ? or sth?
+  actions.forEach((action) => uuidToMacroOrAction.set(action.uid, action));
+
+  const nestedMacroUIDs = new Set<string>();
+  macros.forEach((macro) =>
+    macro.executionUUIDs
+      .filter((uid) => macroSet.has(uid))
+      .forEach((uid) => nestedMacroUIDs.add(uid)),
+  ); //FIXME useMemo ? or sth?
 
   const onShare = (macro: MacroDTO) => {
     console.log("USER WANTS TO SHARE THE MARCO", macro.name);
@@ -86,9 +95,28 @@ export function MacroGrid({
     setViewedMacro(macroWithSteps);
   };
 
+  const filterHideNested = (macro: MacroDTO) => {
+    const isNested = nestedMacroUIDs.has(macro.uid);
+    return hideNested ? !isNested : true;
+  };
+  console.log(nestedMacroUIDs);
+
   return (
     <div>
-      <FormControlLabel control={<Switch defaultChecked />} label="Hide nested macros" />
+      <Tooltip title="Hide all macros, that are used by another macro.">
+        <FormControlLabel
+          control={
+            <Switch
+              checked={hideNested}
+              onChange={(event) => {
+                setHideNested(event.target.checked);
+              }}
+            />
+          }
+          label={"Hide " + nestedMacroUIDs.size + " nested macro(s)"}
+        />
+      </Tooltip>
+
       <Box
         sx={{
           flex: 1,
@@ -98,7 +126,7 @@ export function MacroGrid({
         }}
       >
         <Grid container spacing={1}>
-          {macros.map((macro, idx) => (
+          {macros.filter(filterHideNested).map((macro, idx) => (
             <Grid key={macro.uid} size={4}>
               <Item>
                 <MacroCard
