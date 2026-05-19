@@ -28,7 +28,6 @@ export default function MacroCard(props: {
   return (
     <Card
       sx={{
-        maxWidth: 345,
         position: "relative",
 
         "&:hover .play-overlay": {
@@ -38,6 +37,7 @@ export default function MacroCard(props: {
         "&:hover": {
           cursor: isMacroRunning ? "default" : "pointer",
         },
+        width: "100%",
       }}
     >
       <CardActionArea

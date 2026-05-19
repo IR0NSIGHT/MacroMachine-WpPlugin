@@ -102,7 +102,14 @@ export function MacroGrid({
   console.log(nestedMacroUIDs);
 
   return (
-    <div>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "95vh", // FIXME ugly hack to make the fucking flexbox work
+      }}
+      p={1}
+    >
       <Tooltip title="Hide all macros, that are used by another macro.">
         <FormControlLabel
           control={
@@ -116,18 +123,25 @@ export function MacroGrid({
           label={"Hide " + nestedMacroUIDs.size + " nested macro(s)"}
         />
       </Tooltip>
-
       <Box
         sx={{
           flex: 1,
-          minHeight: 0, // 🔴 CRITICAL
+          minHeight: 0,
           overflowY: "auto",
           p: 2,
         }}
       >
-        <Grid container spacing={1}>
+        <Grid container spacing={{ xs: 1, md: 4 }}>
           {macros.filter(filterHideNested).map((macro, idx) => (
-            <Grid key={macro.uid} size={4}>
+            <Grid
+              key={macro.uid}
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 4,
+                lg: 3,
+              }}
+            >
               <Item>
                 <MacroCard
                   macro={macro}
@@ -151,7 +165,7 @@ export function MacroGrid({
           onClose={() => setViewedMacro(null)}
         />
       </Box>
-    </div>
+    </Box>
   );
 }
 
@@ -166,7 +180,9 @@ export default function App() {
     currentStepIndex: 0,
     status: "IDLE",
   });
-  const [_queue, setQueue] = useState<ExecutionQueueDTO>({ queuedMacroIds: [] });
+  const [_queue, setQueue] = useState<ExecutionQueueDTO>({
+    queuedMacroIds: [],
+  });
   const [connectionLost, setConnectionLost] = useState(false);
 
   useEffect(() => {
@@ -188,30 +204,32 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  const centerContent = (
-    <div>
-      {connectionLost && <div style={{ color: "red" }}>No connection to backend.</div>}
-      {!connectionLost && (
-        <MacroGrid
-          macros={macros.filter(
-            (macro) => search == "" || macro.name.toLowerCase().includes(search.toLowerCase()),
-          )}
-          actions={actions}
-          executionState={executionState}
-        />
-      )}
-    </div>
-  );
-
   return (
-    <div>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+      }}
+    >
       <PrimarySearchAppBar
         search={search}
         onSearchChange={setSearch}
         queue={_queue}
         executionState={executionState}
       />
-      {centerContent}
-    </div>
+      <Box sx={{ flex: 1, minHeight: 0 }}>
+        {connectionLost && <div style={{ color: "red" }}>No connection to backend.</div>}
+        {!connectionLost && (
+          <MacroGrid
+            macros={macros.filter(
+              (macro) => search == "" || macro.name.toLowerCase().includes(search.toLowerCase()),
+            )}
+            actions={actions}
+            executionState={executionState}
+          />
+        )}
+      </Box>
+    </Box>
   );
 }
