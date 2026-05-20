@@ -1,14 +1,12 @@
 import { Dialog, DialogTitle, DialogContent, Typography, Stack, Chip } from "@mui/material";
 
-import { components } from "@/generated/api-types";
-import { ActionDTO, ActionType, InputDTO, isMacroDTO, OutputDTO } from "@/types/DTO";
-
-type MacroDTO = components["schemas"]["MacroDTO"];
+import { ActionDTO, ActionType, InputDTO, isMacroDTO, OutputDTO, MacroDTO } from "@/types/DTO";
 
 type Props = {
   open: boolean;
   macro: (MacroDTO & { steps: (MacroDTO | ActionDTO)[] }) | null;
   onClose: () => void;
+  onViewItem: (item: MacroDTO | ActionDTO) => void;
 };
 
 const toSentence = (input: InputDTO, type: ActionType, output: OutputDTO) => {
@@ -35,12 +33,20 @@ const toSentence = (input: InputDTO, type: ActionType, output: OutputDTO) => {
   return input.displayName + " " + does + " " + output.displayName;
 };
 
-const DetailsItem = ({ item, key }: { item: MacroDTO | ActionDTO; key: number }) => {
+const DetailsItem = ({
+  item,
+  key,
+  onClick,
+}: {
+  item: MacroDTO | ActionDTO;
+  key: number;
+  onClick: () => void;
+}) => {
   const details = isMacroDTO(item) ? "Macro" : toSentence(item.input, item.actionType, item.output);
-  return <Chip key={key} label={item.name + ": " + details} size="small" />;
+  return <Chip key={key} label={item.name + ": " + details} size="small" onClick={onClick} />;
 };
 
-export function MacroDetailsDialog({ open, macro, onClose }: Props) {
+export function MacroDetailsDialog({ open, macro, onClose, onViewItem }: Props) {
   if (!macro) return null;
 
   return (
@@ -60,8 +66,8 @@ export function MacroDetailsDialog({ open, macro, onClose }: Props) {
           <Typography variant="subtitle2">Steps</Typography>
 
           <Stack direction="column" spacing={1} flexWrap="wrap">
-            {macro.steps.map((actionDTP, idx) => (
-              <DetailsItem item={actionDTP} key={idx} />
+            {macro.steps.map((stepDTO, idx) => (
+              <DetailsItem item={stepDTO} key={idx} onClick={() => onViewItem(stepDTO)} />
             ))}
           </Stack>
         </Stack>

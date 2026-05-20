@@ -13,8 +13,15 @@ import Item from "@mui/material/Grid";
 import MacroCard from "./components/MacroList/MacroCard";
 import { PrimarySearchAppBar } from "./components/AppBar";
 import { MacroDetailsDialog } from "./components/MacroList/MacroDetailsDialog";
-import { ExecutionQueueDTO, MacroDTO, ExecutionStateDTO, ActionDTO } from "./types/DTO";
+import {
+  ExecutionQueueDTO,
+  MacroDTO,
+  ExecutionStateDTO,
+  ActionDTO,
+  isMacroDTO,
+} from "./types/DTO";
 import { Tooltip } from "@mui/material";
+import { ActionDetailsDialog } from "./components/MacroList/ActionDetailsDialog";
 
 const imageURLs = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1600&auto=format&fit=crop",
@@ -62,6 +69,7 @@ export function MacroGrid({
   const [viewedMacro, setViewedMacro] = useState<
     (MacroDTO & { steps: (ActionDTO | MacroDTO)[] }) | null
   >(null);
+  const [viewAction, setViewAction] = useState<ActionDTO | null>(null);
 
   const macroSet = new Set<string>();
   macros.forEach((m) => macroSet.add(m.uid));
@@ -148,7 +156,9 @@ export function MacroGrid({
                   execution={executionState}
                   imageURL={imageURLs[idx % imageURLs.length]}
                   onRequestExecution={() =>
-                    postQueueMacros([macro.uid]).then(console.log).catch(console.error)
+                    postQueueMacros([macro.uid])
+                      .then(console.log)
+                      .catch(console.error)
                   }
                   onView={() => onView(macro)}
                   onShare={() => onShare(macro)}
@@ -163,6 +173,19 @@ export function MacroGrid({
           open={!!viewedMacro}
           macro={viewedMacro}
           onClose={() => setViewedMacro(null)}
+          onViewItem={(item: MacroDTO | ActionDTO) => {
+            if (isMacroDTO(item)) {
+              onView(item);
+            } else {
+              setViewAction(item)
+            }
+          }}
+        />
+        <ActionDetailsDialog
+          open={!!viewAction}
+          action={viewAction}
+          onClose={() => setViewAction(null)}
+          onViewItem={() => {}}
         />
       </Box>
     </Box>
@@ -197,7 +220,9 @@ export default function App() {
         .then(setActions)
         .catch(() => setConnectionLost(true));
       await fetchMacros()
-        .then((list) => setMacros(list.sort((a, b) => a.name.localeCompare(b.name))))
+        .then((list) =>
+          setMacros(list.sort((a, b) => a.name.localeCompare(b.name))),
+        )
         .catch(() => setConnectionLost(true));
     }, 300);
 
@@ -219,11 +244,15 @@ export default function App() {
         executionState={executionState}
       />
       <Box sx={{ flex: 1, minHeight: 0 }}>
-        {connectionLost && <div style={{ color: "red" }}>No connection to backend.</div>}
+        {connectionLost && (
+          <div style={{ color: "red" }}>No connection to backend.</div>
+        )}
         {!connectionLost && (
           <MacroGrid
             macros={macros.filter(
-              (macro) => search == "" || macro.name.toLowerCase().includes(search.toLowerCase()),
+              (macro) =>
+                search == "" ||
+                macro.name.toLowerCase().includes(search.toLowerCase()),
             )}
             actions={actions}
             executionState={executionState}
