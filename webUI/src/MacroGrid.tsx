@@ -140,9 +140,7 @@ export function MacroGrid({
                   execution={executionState}
                   imageURL={imageURLs[idx % imageURLs.length]}
                   onRequestExecution={() =>
-                    postQueueMacros([macro.uid])
-                      .then(console.log)
-                      .catch(console.error)
+                    postQueueMacros([macro.uid]).then(console.log).catch(console.error)
                   }
                   onView={() => onView(macro)}
                   onShare={() => onShare(macro)}
@@ -161,7 +159,7 @@ export function MacroGrid({
             if (isMacroDTO(item)) {
               onView(item);
             } else {
-              setViewAction(item)
+              setViewAction(item);
             }
           }}
         />

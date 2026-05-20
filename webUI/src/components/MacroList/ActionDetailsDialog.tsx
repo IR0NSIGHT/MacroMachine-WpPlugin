@@ -1,13 +1,6 @@
 import { valueToString } from "@/features/InputOutput";
 import { MacroDTO, ActionDTO } from "@/types/DTO";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  Stack,
-  Typography,
-  Chip,
-} from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, Stack, Typography, Chip } from "@mui/material";
 
 type Props = {
   open: boolean;
@@ -16,12 +9,7 @@ type Props = {
   onViewItem: (item: MacroDTO | ActionDTO) => void;
 };
 
-export function ActionDetailsDialog({
-  open,
-  action: action,
-  onClose,
-  onViewItem,
-}: Props) {
+export function ActionDetailsDialog({ open, action, onClose }: Props) {
   if (!action) return null;
   const outputToString = valueToString(action.output);
   const inputToString = valueToString(action.input);
@@ -64,11 +52,7 @@ export function ActionDetailsDialog({
               const inputName = inputToString(inputNumericValue);
               const outputName = outputToString(outputNumericValue);
               return (
-                <Chip
-                  key={inputNumericValue}
-                  label={inputName + "->" + outputName}
-                  size="small"
-                />
+                <Chip key={inputNumericValue} label={inputName + "->" + outputName} size="small" />
               );
             })}
           </Stack>

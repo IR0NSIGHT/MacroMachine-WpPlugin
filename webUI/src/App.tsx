@@ -7,7 +7,11 @@ import {
   fetchExecutionState,
   fetchMacros,
 } from "./API/fetch";
-import { Box } from "@mui/material";
+import EditIcon from '@mui/icons-material/Edit';
+import ExploreIcon from '@mui/icons-material/Explore';
+import LayersIcon from '@mui/icons-material/Layers';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { Box, Tab, Tabs } from "@mui/material";
 import { PrimarySearchAppBar } from "./components/AppBar";
 import {
   ExecutionQueueDTO,
@@ -16,7 +20,6 @@ import {
   ActionDTO,
 } from "./types/DTO";
 import { MacroGrid } from "./MacroGrid";
-
 
 export default function App() {
   const [search, setSearch] = useState("");
@@ -33,6 +36,8 @@ export default function App() {
     queuedMacroIds: [],
   });
   const [connectionLost, setConnectionLost] = useState(false);
+
+  const [tab, setTab] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -69,21 +74,43 @@ export default function App() {
         queue={_queue}
         executionState={executionState}
       />
-      <Box sx={{ flex: 1, minHeight: 0 }}>
-        {connectionLost && (
-          <div style={{ color: "red" }}>No connection to backend.</div>
-        )}
-        {!connectionLost && (
-          <MacroGrid
-            macros={macros.filter(
-              (macro) =>
-                search == "" ||
-                macro.name.toLowerCase().includes(search.toLowerCase()),
-            )}
-            actions={actions}
-            executionState={executionState}
-          />
-        )}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+        }}
+      >
+        <Tabs
+          orientation="vertical"
+          value={tab}
+          onChange={(_, v) => setTab(v)}
+          sx={{
+            borderRight: 1,
+            borderColor: "divider",
+            minWidth: 180,
+          }}
+        >
+          <Tab icon={<ExploreIcon/>} label="Explorer" />
+          <Tab icon={<EditIcon/>} label="Editor" />
+          <Tab icon={<LayersIcon/>} label="Layer Manager" />
+          <Tab icon={<SettingsIcon/>} label="Settings" />
+        </Tabs>
+        <Box sx={{ flexGrow: 1 }}>
+          {connectionLost && (
+            <div style={{ color: "red" }}>No connection to backend.</div>
+          )}
+          {tab === 0 && !connectionLost && (
+            <MacroGrid
+              macros={macros.filter(
+                (macro) =>
+                  search == "" ||
+                  macro.name.toLowerCase().includes(search.toLowerCase()),
+              )}
+              actions={actions}
+              executionState={executionState}
+            />
+          )}
+        </Box>
       </Box>
     </Box>
   );
