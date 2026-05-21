@@ -1,13 +1,4 @@
-import {
-  Box,
-  ButtonGroup,
-  Divider,
-  FormControlLabel,
-  IconButton,
-  Paper,
-  Switch,
-  Typography,
-} from "@mui/material";
+import { Box, ButtonGroup, Divider, IconButton, Paper, Switch, Typography } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SaveIcon from "@mui/icons-material/Save";
 import { ActionDTO, MacroDTO } from "@/types/DTO";
@@ -27,7 +18,10 @@ type StepItemProps = {
 const StepItem = ({ item, setItem }: StepItemProps) => {
   return (
     <Box
+      key={item.uid}
       sx={{
+        display: "flex",
+        flexDirection: "row",
         "& .clear-btn": {
           color: "transparent",
         },
@@ -37,21 +31,14 @@ const StepItem = ({ item, setItem }: StepItemProps) => {
         },
       }}
     >
-      <FormControlLabel
-        control={
-          <Switch
-            checked={item.active}
-            onChange={(e) => {
-              setItem({ ...item, active: e.target.checked });
-            }}
-          />
-        }
-        label={
-          <Typography color={item.active ? "text.primary" : "text.disabled"}>
-            {item.name}
-          </Typography>
-        }
+      <Switch
+        checked={item.active}
+        onChange={(e) => {
+          setItem({ ...item, active: e.target.checked });
+        }}
       />
+
+      <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
       <IconButton size="small" disabled={false} onClick={() => setItem(null)} className="clear-btn">
         <ClearIcon />
       </IconButton>
@@ -61,15 +48,28 @@ const StepItem = ({ item, setItem }: StepItemProps) => {
 
 type StepItemType = ActionDTO & { active: boolean };
 
-const defaultFilters: StepItemType[] = (filters as ActionDTO[]).map((item) => ({
-  ...item,
-  active: true,
-}));
+const defaultFilters: StepItemType[] = (filters as ActionDTO[])
+  .map((item) => ({
+    ...item,
+    active: true,
+  }))
+  .filter((item) => item.name.startsWith("Filter: "));
 
 const defaultApplyActions: StepItemType[] = (applyActions as ActionDTO[]).map((item) => ({
   ...item,
   active: true,
 }));
+
+const sortInactiveLast = (a: StepItemType, b: StepItemType): number => {
+  if (a.active === b.active) {
+    return sortAlphabetical(a, b);
+  }
+  return Number(b.active) - Number(a.active);
+};
+
+const sortAlphabetical = (a: StepItemType, b: StepItemType): number => {
+  return a.name.localeCompare(b.name);
+};
 
 export const GlobalOperationDesigner = (props: Props) => {
   const [filters, setFilters] = useState<StepItemType[]>(defaultFilters);
@@ -86,12 +86,16 @@ export const GlobalOperationDesigner = (props: Props) => {
       setFilters((prev) => prev.map(mapper));
     }
   };
-  const updateApplyItem = (action: StepItemType, idx: number) => {
-    const mapper = (item: StepItemType, itemIdx: number) => {
-      if (idx === itemIdx) return action;
-      else return item;
-    };
-    setAppliers((prev) => prev.map(mapper));
+  const updateApplyItem = (action: StepItemType | null, idx: number) => {
+    if (action === null) {
+      setAppliers((prev) => prev.filter((p, i) => i !== idx));
+    } else {
+      const mapper = (item: StepItemType, itemIdx: number) => {
+        if (idx === itemIdx) return action;
+        else return item;
+      };
+      setAppliers((prev) => prev.map(mapper));
+    }
   };
 
   const filterDTOtoComponent = (action: StepItemType, idx: number) => {
@@ -136,12 +140,12 @@ export const GlobalOperationDesigner = (props: Props) => {
       >
         <Paper sx={{ p: 1, border: 1 }}>
           <Typography>If:</Typography>
-          {filters.map(filterDTOtoComponent)}
+          {filters.sort(sortInactiveLast).map(filterDTOtoComponent)}
         </Paper>
         <Divider orientation="vertical" flexItem />
         <Paper sx={{ p: 1, border: 1 }}>
           <Typography>Then:</Typography>
-          {appliers.map(applyDTOtoComponent)}
+          {appliers.sort(sortInactiveLast).map(applyDTOtoComponent)}
         </Paper>
       </Box>
     </Box>
