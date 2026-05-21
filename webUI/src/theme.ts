@@ -15,7 +15,7 @@ export const theme = createTheme({
       dark: "#8c188c",
       contrastText: "#ffffff",
     },
-    divider: "rgb(145, 145, 145)",
+    divider: "rgba(223, 223, 223, 1)",
     text: {
       primary: "#e2e2e2",
       secondary: "rgba(255,255,255,0.6)",

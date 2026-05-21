@@ -1,25 +1,16 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import "@fontsource/ubuntu";
-import {
-  fetchActions,
-  fetchExecutionQueue,
-  fetchExecutionState,
-  fetchMacros,
-} from "./API/fetch";
-import EditIcon from '@mui/icons-material/Edit';
-import ExploreIcon from '@mui/icons-material/Explore';
-import LayersIcon from '@mui/icons-material/Layers';
-import SettingsIcon from '@mui/icons-material/Settings';
+import { fetchActions, fetchExecutionQueue, fetchExecutionState, fetchMacros } from "./API/fetch";
+import EditIcon from "@mui/icons-material/Edit";
+import ExploreIcon from "@mui/icons-material/Explore";
+import LayersIcon from "@mui/icons-material/Layers";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { Box, Tab, Tabs } from "@mui/material";
 import { PrimarySearchAppBar } from "./components/AppBar";
-import {
-  ExecutionQueueDTO,
-  MacroDTO,
-  ExecutionStateDTO,
-  ActionDTO,
-} from "./types/DTO";
+import { ExecutionQueueDTO, MacroDTO, ExecutionStateDTO, ActionDTO } from "./types/DTO";
 import { MacroGrid } from "./MacroGrid";
+import { GlobalOperationDesigner } from "./components/GlobalOperationDesigner";
 
 export default function App() {
   const [search, setSearch] = useState("");
@@ -51,9 +42,7 @@ export default function App() {
         .then(setActions)
         .catch(() => setConnectionLost(true));
       await fetchMacros()
-        .then((list) =>
-          setMacros(list.sort((a, b) => a.name.localeCompare(b.name))),
-        )
+        .then((list) => setMacros(list.sort((a, b) => a.name.localeCompare(b.name))))
         .catch(() => setConnectionLost(true));
     }, 300);
 
@@ -90,24 +79,26 @@ export default function App() {
             minWidth: 180,
           }}
         >
-          <Tab icon={<ExploreIcon/>} label="Explorer" />
-          <Tab icon={<EditIcon/>} label="Editor" />
-          <Tab icon={<LayersIcon/>} label="Layer Manager" />
-          <Tab icon={<SettingsIcon/>} label="Settings" />
+          <Tab icon={<ExploreIcon />} label="Explorer" />
+          <Tab icon={<EditIcon />} label="Editor" />
+          <Tab icon={<LayersIcon />} label="Layer Manager" />
+          <Tab icon={<SettingsIcon />} label="Settings" />
         </Tabs>
         <Box sx={{ flexGrow: 1 }}>
-          {connectionLost && (
-            <div style={{ color: "red" }}>No connection to backend.</div>
-          )}
+          {connectionLost && <div style={{ color: "red" }}>No connection to backend.</div>}
           {tab === 0 && !connectionLost && (
             <MacroGrid
               macros={macros.filter(
-                (macro) =>
-                  search == "" ||
-                  macro.name.toLowerCase().includes(search.toLowerCase()),
+                (macro) => search == "" || macro.name.toLowerCase().includes(search.toLowerCase()),
               )}
               actions={actions}
               executionState={executionState}
+            />
+          )}
+          {tab === 1 && (
+            <GlobalOperationDesigner
+              onSave={(_macro: MacroDTO | null) => {}}
+              onRun={(_macro: MacroDTO | null) => {}}
             />
           )}
         </Box>

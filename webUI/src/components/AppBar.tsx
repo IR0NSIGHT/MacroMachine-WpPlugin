@@ -14,7 +14,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import MailIcon from "@mui/icons-material/Mail";
 import NotificationsIcon from "@mui/icons-material/Notifications";
-import MoreIcon from "@mui/icons-material/MoreVert";
 import { ExecutionQueueDTO, ExecutionStateDTO } from "@/types/DTO";
 import CircularProgress from "@mui/material/CircularProgress";
 
@@ -93,10 +92,6 @@ export function PrimarySearchAppBar(props: {
   const handleMenuClose = () => {
     setAnchorEl(null);
     handleMobileMenuClose();
-  };
-
-  const handleMobileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setMobileMoreAnchorEl(event.currentTarget);
   };
 
   const menuId = "primary-search-account-menu";
