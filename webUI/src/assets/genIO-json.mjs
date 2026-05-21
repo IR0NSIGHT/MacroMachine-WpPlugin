@@ -2,6 +2,8 @@
 
 import { promises as fs } from "fs";
 
+const filterType = "INTERMEDIATE_SELECTION";
+
 async function filterJsonFile(inputPath, outputPath) {
   try {
     // Read file
@@ -13,23 +15,28 @@ async function filterJsonFile(inputPath, outputPath) {
       throw new Error("JSON file must contain an array");
     }
 
-    // Example filter:
-    // Keep only items where `active === true`
-    const inputs = data
-      .filter((item) => item.input.type === "ALWAYS")
-      .map((item) => item)
-      .flat();
-    console.log(inputs);
-    const map = new Map();
-    inputs.forEach((input) => {
-      map.set(input.type, input);
+    const seen = new Set();
+
+    const accpetedFilters = data.filter((action) => {
+      if (action.output.type !== filterType) return false;
+      if (!action.name.startsWith("Filter: ")) return false;
+
+      const normalized = action.name.trim().toLowerCase();
+
+      if (seen.has(normalized)) {
+        return false;
+      }
+
+      seen.add(normalized);
+      return true;
     });
-    console.log(map);
-    const outputRaw = JSON.stringify(inputs, null, 3);
+    console.log(accpetedFilters.map((a) => a.name));
+
+    const outputRaw = JSON.stringify(accpetedFilters, null, 3);
     // Write output
     await fs.writeFile(outputPath, outputRaw, "utf8");
 
-    console.log(`Wrote ${inputs.length} items to ${outputPath}`);
+    console.log(`Wrote ${accpetedFilters.length} items to ${outputPath}`);
   } catch (err) {
     console.error("Error:", err.message);
   }
@@ -38,5 +45,5 @@ async function filterJsonFile(inputPath, outputPath) {
 // Usage
 filterJsonFile(
   "/home/klipper/Documents/repos/MacroMachine-WpPlugin/webUI/src/mocks/data/actions.json",
-  "./defaultApplyActions.json",
+  "./defaultFilters.json",
 );
