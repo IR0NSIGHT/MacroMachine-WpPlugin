@@ -8,6 +8,7 @@ import applyActions from "../assets/defaultApplyActions.json";
 import ClearIcon from "@mui/icons-material/Clear";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import { allowedValues, forbiddenValues, invertFilter, StepItemType } from "@/features/Filters";
+import EditIcon from "@mui/icons-material/Edit";
 
 type Props = {
   onSave: (macro: MacroDTO | null) => void;
@@ -60,20 +61,34 @@ const StepItem = ({ item, setItem }: StepItemProps) => {
             ": " +
             blockValues.map((mapping) => mapping.inputName).join(", ")}
       </Typography>
-      {isFilter && (
+      <ButtonGroup>
+        {isFilter && (
+          <IconButton
+            size="small"
+            disabled={false}
+            onClick={() => setItem(invertFilter(item))}
+            className="clear-btn"
+          >
+            <SwitchLeftIcon />
+          </IconButton>
+        )}
         <IconButton
           size="small"
           disabled={false}
           onClick={() => setItem(invertFilter(item))}
           className="clear-btn"
         >
-          <SwitchLeftIcon />
+          <EditIcon />
         </IconButton>
-      )}
-
-      <IconButton size="small" disabled={false} onClick={() => setItem(null)} className="clear-btn">
-        <ClearIcon />
-      </IconButton>
+        <IconButton
+          size="small"
+          disabled={false}
+          onClick={() => setItem(null)}
+          className="clear-btn"
+        >
+          <ClearIcon />
+        </IconButton>
+      </ButtonGroup>
     </Box>
   );
 };
