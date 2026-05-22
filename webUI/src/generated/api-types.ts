@@ -146,12 +146,12 @@ export interface components {
        * @enum {string}
        */
       actionType:
-        | "increments"
-        | "subtracts"
-        | "multiplies"
-        | "divides"
-        | "sets"
-        | "limits"
+        | "INCREMENT"
+        | "DECREMENT"
+        | "MULTIPLY"
+        | "DIVIDE"
+        | "SET"
+        | "LIMIT_TO"
         | "sets minimum";
       /** @description Human readable name */
       name: string;

@@ -6,6 +6,9 @@ import { useState } from "react";
 import filters from "../assets/defaultFilters.json";
 import applyActions from "../assets/defaultApplyActions.json";
 import ClearIcon from "@mui/icons-material/Clear";
+import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
+import { allowedValues, forbiddenValues, invertFilter, StepItemType } from "@/features/Filters";
+
 type Props = {
   onSave: (macro: MacroDTO | null) => void;
   onRun: (macro: MacroDTO | null) => void;
@@ -16,6 +19,10 @@ type StepItemProps = {
 };
 
 const StepItem = ({ item, setItem }: StepItemProps) => {
+  const isFilter = item.output.type === "INTERMEDIATE_SELECTION";
+  const passValues = allowedValues(item);
+  const blockValues = forbiddenValues(item);
+
   return (
     <Box
       key={item.uid}
@@ -38,15 +45,38 @@ const StepItem = ({ item, setItem }: StepItemProps) => {
         }}
       />
 
-      <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
+      <Typography color={item.active ? "text.primary" : "text.disabled"}>
+        {!isFilter && item.name}
+        {isFilter &&
+          blockValues.length >= passValues.length &&
+          "Only on " +
+            item.input.displayName +
+            ": " +
+            passValues.map((mapping) => mapping.inputName).join(", ")}
+        {isFilter &&
+          blockValues.length < passValues.length &&
+          "Except on " +
+            item.input.displayName +
+            ": " +
+            blockValues.map((mapping) => mapping.inputName).join(", ")}
+      </Typography>
+      {isFilter && (
+        <IconButton
+          size="small"
+          disabled={false}
+          onClick={() => setItem(invertFilter(item))}
+          className="clear-btn"
+        >
+          <SwitchLeftIcon />
+        </IconButton>
+      )}
+
       <IconButton size="small" disabled={false} onClick={() => setItem(null)} className="clear-btn">
         <ClearIcon />
       </IconButton>
     </Box>
   );
 };
-
-type StepItemType = ActionDTO & { active: boolean };
 
 const defaultFilters: StepItemType[] = (filters as ActionDTO[])
   .map((item) => ({

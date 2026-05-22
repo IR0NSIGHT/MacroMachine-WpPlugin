@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { valueToString } from "./InputOutput";
+import { SKIP_DISPLAY_NAME, valueToString } from "./InputOutput";
 import { InputDTO } from "@/types/DTO";
 
 const mock = {
@@ -136,6 +136,6 @@ describe("value to string", () => {
   it("can correctly do an output (ActionFilter)", () => {
     const toStr = valueToString(mock.output as InputDTO);
     expect(toStr(0)).toEqual("BLOCK (0)");
-    expect(toStr(mock.input.ignoreValue)).toEqual("SKIP");
+    expect(toStr(mock.input.ignoreValue)).toStrictEqual(SKIP_DISPLAY_NAME);
   });
 });

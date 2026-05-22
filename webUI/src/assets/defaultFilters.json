@@ -118,7 +118,7 @@
       "min": 0,
       "max": 1,
       "ignoreValue": 2147483647,
-      "valueDisplayNames": ["Skip", "BLOCK (0)", "PASS (1)"],
+      "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION"
     },
@@ -537,7 +537,7 @@
       "min": 0,
       "max": 1,
       "ignoreValue": 2147483647,
-      "valueDisplayNames": ["Skip", "BLOCK (0)", "PASS (1)"],
+      "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION"
     },
@@ -580,7 +580,7 @@
       "min": 0,
       "max": 1,
       "ignoreValue": 2147483647,
-      "valueDisplayNames": ["Skip", "BLOCK (0)", "PASS (1)"],
+      "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION"
     },
@@ -866,7 +866,7 @@
       "min": 0,
       "max": 1,
       "ignoreValue": 2147483647,
-      "valueDisplayNames": ["Skip", "BLOCK (0)", "PASS (1)"],
+      "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION"
     },
@@ -946,7 +946,7 @@
       "min": 0,
       "max": 1,
       "ignoreValue": 2147483647,
-      "valueDisplayNames": ["Skip", "BLOCK (0)", "PASS (1)"],
+      "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION"
     },
@@ -956,7 +956,7 @@
     "uid": "3532c357-c74e-41b1-82ab-95a92c9f721e",
     "mappingPointsX": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
     "mappingPointsY": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    "mappedOutputs": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    "mappedOutputs": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
   },
   {
     "input": {
@@ -975,7 +975,7 @@
       "min": 0,
       "max": 1,
       "ignoreValue": 2147483647,
-      "valueDisplayNames": ["Skip", "BLOCK (0)", "PASS (1)"],
+      "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION"
     },
@@ -1261,7 +1261,7 @@
       "min": 0,
       "max": 1,
       "ignoreValue": 2147483647,
-      "valueDisplayNames": ["Skip", "BLOCK (0)", "PASS (1)"],
+      "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION"
     },
@@ -1285,7 +1285,7 @@
       248, 249, 250, 251, 252, 253, 254, 255
     ],
     "mappingPointsY": [
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1296,7 +1296,7 @@
       0, 0, 0, 0, 0, 0, 0, 0
     ],
     "mappedOutputs": [
-      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

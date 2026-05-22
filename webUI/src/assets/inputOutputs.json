@@ -32,7 +32,7 @@
     "min": 0,
     "max": 1,
     "ignoreValue": 2147483647,
-    "valueDisplayNames": ["Skip", "BLOCK (0)", "PASS (1)"],
+    "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
     "discrete": true,
     "type": "INTERMEDIATE_SELECTION"
   },
@@ -70,7 +70,6 @@
     "max": 15,
     "ignoreValue": 2147483647,
     "valueDisplayNames": [
-      "Skip",
       "Absent",
       "1%",
       "8%",
@@ -828,7 +827,7 @@
     "min": 0,
     "max": 1,
     "ignoreValue": 2147483647,
-    "valueDisplayNames": ["Skip", "OFF", "ON"],
+    "valueDisplayNames": ["OFF", "ON"],
     "discrete": true,
     "type": "SELECTION"
   },
@@ -839,7 +838,6 @@
     "max": 319,
     "ignoreValue": 2147483647,
     "valueDisplayNames": [
-      "Skip",
       "-64",
       "-63",
       "-62",
@@ -1984,7 +1982,7 @@
     "min": 0,
     "max": 1,
     "ignoreValue": 2147483647,
-    "valueDisplayNames": ["Skip", "OFF", "ON"],
+    "valueDisplayNames": ["OFF", "ON"],
     "discrete": true,
     "type": "BINARY_LAYER"
   },
@@ -1995,7 +1993,6 @@
     "max": 161,
     "ignoreValue": 2147483647,
     "valueDisplayNames": [
-      "skip",
       "Grass",
       "Dirt",
       "Sand",
@@ -2169,7 +2166,6 @@
     "max": 10,
     "ignoreValue": 2147483647,
     "valueDisplayNames": [
-      "Skip",
       "Grass",
       "Gravel",
       "Stone",
