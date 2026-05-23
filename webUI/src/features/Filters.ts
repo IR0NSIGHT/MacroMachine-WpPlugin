@@ -1,5 +1,6 @@
 import { ActionDTO } from "@/types/DTO";
 import { valueToString } from "./InputOutput";
+import { collectRanges } from "./Ranges";
 
 export const _filterValuePass = 1;
 export const filterValueBlock = 0;
@@ -62,4 +63,78 @@ export const invertFilter = (filter: StepItemType): StepItemType => {
     ),
   };
   return inverted;
+};
+
+const isRangeFilter = (filter: ActionDTO): boolean => {
+  if (filter.input.discrete) return false;
+  const all = getRelevantMappings(filter);
+  const ranges = collectRanges(all);
+  return ranges.some((range) => range.length > 1); // continuous ranges exist that are interesting
+};
+
+const getRelevantMappings = (filter: ActionDTO): NamedMapping[] => {
+  const passValues = allowedValues(filter);
+  const blockValues = forbiddenValues(filter);
+  // only show either PASS or BLOCK values to keep it simple as "Only on .." or "Except on"
+  const relevant = passValues.length > blockValues.length ? blockValues : passValues;
+  return relevant;
+};
+
+const explainRangeFilter = (filter: ActionDTO): string => {
+  // only show either PASS or BLOCK values to keep it simple as "Only on .." or "Except on"
+  const all = getRelevantMappings(filter);
+  const ranges = collectRanges(all);
+  return ranges
+    .map((range) => {
+      let onlyOn = "";
+      switch (range.start.output) {
+        case filterValueBlock:
+          onlyOn = "Except on ";
+          break;
+        case _filterValuePass: //FIXME this is misleading. its not "only on", its an OR operation
+          onlyOn = "Only on ";
+          break;
+        case filter.output.ignoreValue:
+          onlyOn = "Only on ";
+          break;
+      }
+      return (
+        onlyOn +
+        filter.input.displayName +
+        ": " +
+        range.start.inputName +
+        " to " +
+        range.end.inputName
+      );
+    })
+    .join(", ");
+};
+
+const explainSimpleFilter = (filter: ActionDTO): string => {
+  const passValues = allowedValues(filter);
+  const blockValues = forbiddenValues(filter);
+  if (blockValues.length < passValues.length) {
+    const name =
+      "Except on " +
+      filter.input.displayName +
+      ": " +
+      blockValues.map((mapping) => mapping.inputName).join(", ");
+    return name;
+  } else {
+    const name =
+      "Only on " +
+      filter.input.displayName +
+      ": " +
+      passValues.map((mapping) => mapping.inputName).join(", ");
+    return name;
+  }
+};
+
+export const filterAutoName = (filter: StepItemType): StepItemType => {
+  const isRange = isRangeFilter(filter);
+  if (!isRange) {
+    return { ...filter, name: explainSimpleFilter(filter) };
+  } else {
+    return { ...filter, name: explainRangeFilter(filter) };
+  }
 };
