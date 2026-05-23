@@ -2,8 +2,8 @@
 
 import { promises as fs } from "fs";
 
-const filterType = "INTERMEDIATE_SELECTION";
-
+const _filterType = "INTERMEDIATE_SELECTION";
+const alwaysType = "ALWAYS";
 async function filterJsonFile(inputPath, outputPath) {
   try {
     // Read file
@@ -18,16 +18,15 @@ async function filterJsonFile(inputPath, outputPath) {
     const seen = new Set();
 
     const accpetedFilters = data.filter((action) => {
-      if (action.output.type !== filterType) return false;
-      if (!action.name.startsWith("Filter: ")) return false;
+      if (action.input.type !== alwaysType) return false;
 
-      const normalized = action.name.trim().toLowerCase();
+      const actionHash = action.output.type.trim().toLowerCase();
 
-      if (seen.has(normalized)) {
+      if (seen.has(actionHash)) {
         return false;
       }
 
-      seen.add(normalized);
+      seen.add(actionHash);
       return true;
     });
     console.log(accpetedFilters.map((a) => a.name));
@@ -45,5 +44,5 @@ async function filterJsonFile(inputPath, outputPath) {
 // Usage
 filterJsonFile(
   "/home/klipper/Documents/repos/MacroMachine-WpPlugin/webUI/src/mocks/data/actions.json",
-  "./defaultFilters.json",
+  "./defaultApplyActions.json",
 );

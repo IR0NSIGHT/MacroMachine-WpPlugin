@@ -1,4 +1,13 @@
-import { Box, ButtonGroup, Divider, IconButton, Paper, Switch, Typography } from "@mui/material";
+import {
+  Box,
+  ButtonGroup,
+  Divider,
+  IconButton,
+  Paper,
+  Switch,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SaveIcon from "@mui/icons-material/Save";
 import { ActionDTO, MacroDTO } from "@/types/DTO";
@@ -7,8 +16,18 @@ import filters from "../assets/defaultFilters.json";
 import applyActions from "../assets/defaultApplyActions.json";
 import ClearIcon from "@mui/icons-material/Clear";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
-import { allowedValues, forbiddenValues, invertFilter, StepItemType } from "@/features/Filters";
+import {
+  _filterValuePass,
+  allowedValues,
+  filterValueBlock,
+  forbiddenValues,
+  invertFilter,
+  NamedMapping,
+  namedMapping,
+  StepItemType,
+} from "@/features/Filters";
 import EditIcon from "@mui/icons-material/Edit";
+import { collectRanges } from "@/features/Ranges";
 
 type Props = {
   onSave: (macro: MacroDTO | null) => void;
@@ -19,11 +38,92 @@ type StepItemProps = {
   setItem: (item: StepItemType | null) => void;
 };
 
+const explainAlwaysAction = (item: ActionDTO): string => {
+  if (item.input.type !== "ALWAYS") return "Complex: " + item.name;
+
+  const all = namedMapping(item);
+  const [incrementStr, byStr] = (() => {
+    switch (item.actionType as string) {
+      case "DIVIDE":
+        return ["divide", "by"];
+      case "INCREMENT":
+        return ["increment", "by"];
+      case "LIMIT_TO":
+        return ["limit", "to"];
+      case "MULTIPLY":
+        return "multiplies";
+      case "SET":
+        return ["set", "to"];
+      case "AT_LEAST":
+        return ["set ", "to at least"];
+      case "DECREMENT":
+        return ["decrement", "by"];
+      default:
+        return [item.actionType, "??"];
+    }
+  })();
+  return [
+    incrementStr,
+    item.output.displayName,
+    byStr,
+    all.map((mapping) => mapping.outputName),
+  ].join(" ");
+};
+
+const isRangeFilter = (filter: ActionDTO): boolean => {
+  if (filter.input.discrete) return false;
+  const all = getRelevantMappings(filter);
+  const ranges = collectRanges(all);
+  return ranges.some((range) => range.length > 1); // continuous ranges exist that are interesting
+};
+
+const getRelevantMappings = (filter: ActionDTO): NamedMapping[] => {
+  const passValues = allowedValues(filter);
+  const blockValues = forbiddenValues(filter);
+  // only show either PASS or BLOCK values to keep it simple as "Only on .." or "Except on"
+  const relevant =
+    passValues.length > blockValues.length ? blockValues : passValues;
+  return relevant;
+};
+
+const explainRangeFilter = (filter: ActionDTO): string => {
+  // only show either PASS or BLOCK values to keep it simple as "Only on .." or "Except on"
+  const all = getRelevantMappings(filter);
+  const ranges = collectRanges(all);
+
+  return ranges
+    .map((range) => {
+      let onlyOn = "";
+      switch (range.start.output) {
+        case filterValueBlock:
+          onlyOn = "Except on ";
+          break;
+        case _filterValuePass: //FIXME this is misleading. its not "only on", its an OR operation
+          onlyOn = "Only on ";
+          break;
+        case filter.output.ignoreValue:
+          onlyOn = "Only on ";
+          break;
+      }
+      return (
+        onlyOn +
+        filter.input.displayName +
+        ": " +
+        range.start.inputName +
+        " to " +
+        range.end.inputName
+      );
+    })
+    .join(", ");
+};
+
 const StepItem = ({ item, setItem }: StepItemProps) => {
-  const isFilter = item.output.type === "INTERMEDIATE_SELECTION";
+  const isFilter =
+    item.input.type !== "ALWAYS" &&
+    item.output.type === "INTERMEDIATE_SELECTION";
+  const rangeFilter = isFilter && isRangeFilter(item);
   const passValues = allowedValues(item);
   const blockValues = forbiddenValues(item);
-
   return (
     <Box
       key={item.uid}
@@ -46,21 +146,30 @@ const StepItem = ({ item, setItem }: StepItemProps) => {
         }}
       />
 
-      <Typography color={item.active ? "text.primary" : "text.disabled"}>
-        {!isFilter && item.name}
-        {isFilter &&
-          blockValues.length >= passValues.length &&
-          "Only on " +
-            item.input.displayName +
-            ": " +
-            passValues.map((mapping) => mapping.inputName).join(", ")}
-        {isFilter &&
-          blockValues.length < passValues.length &&
-          "Except on " +
-            item.input.displayName +
-            ": " +
-            blockValues.map((mapping) => mapping.inputName).join(", ")}
-      </Typography>
+      <Tooltip
+        title={item.name + "   " + item.uid}
+        onClick={() => navigator.clipboard.writeText(item.uid)}
+      >
+        <Typography color={item.active ? "text.primary" : "text.disabled"}>
+          {!isFilter && explainAlwaysAction(item)}
+          {isFilter &&
+            !rangeFilter &&
+            blockValues.length >= passValues.length &&
+            "Only on " +
+              item.input.displayName +
+              ": " +
+              passValues.map((mapping) => mapping.inputName).join(", ")}
+          {isFilter &&
+            !rangeFilter &&
+            blockValues.length < passValues.length &&
+            "Except on " +
+              item.input.displayName +
+              ": " +
+              blockValues.map((mapping) => mapping.inputName).join(", ")}
+          {isFilter && rangeFilter && explainRangeFilter(item)}
+        </Typography>
+      </Tooltip>
+
       <ButtonGroup>
         {isFilter && (
           <IconButton
@@ -100,10 +209,12 @@ const defaultFilters: StepItemType[] = (filters as ActionDTO[])
   }))
   .filter((item) => item.name.startsWith("Filter: "));
 
-const defaultApplyActions: StepItemType[] = (applyActions as ActionDTO[]).map((item) => ({
-  ...item,
-  active: true,
-}));
+const defaultApplyActions: StepItemType[] = (applyActions as ActionDTO[]).map(
+  (item) => ({
+    ...item,
+    active: true,
+  }),
+);
 
 const sortInactiveLast = (a: StepItemType, b: StepItemType): number => {
   if (a.active === b.active) {
@@ -144,10 +255,14 @@ export const GlobalOperationDesigner = (props: Props) => {
   };
 
   const filterDTOtoComponent = (action: StepItemType, idx: number) => {
-    return <StepItem item={action} setItem={(item) => updateFilterItem(item, idx)} />;
+    return (
+      <StepItem item={action} setItem={(item) => updateFilterItem(item, idx)} />
+    );
   };
   const applyDTOtoComponent = (action: StepItemType, idx: number) => {
-    return <StepItem item={action} setItem={(item) => updateApplyItem(item, idx)} />;
+    return (
+      <StepItem item={action} setItem={(item) => updateApplyItem(item, idx)} />
+    );
   };
   return (
     <Box
@@ -165,10 +280,18 @@ export const GlobalOperationDesigner = (props: Props) => {
         }}
       >
         <ButtonGroup variant="contained" aria-label="Basic button group">
-          <IconButton size="small" disabled={false} onClick={() => props.onRun(null)}>
+          <IconButton
+            size="small"
+            disabled={false}
+            onClick={() => props.onRun(null)}
+          >
             <PlayArrowIcon />
           </IconButton>
-          <IconButton size="small" disabled={false} onClick={() => props.onSave(null)}>
+          <IconButton
+            size="small"
+            disabled={false}
+            onClick={() => props.onSave(null)}
+          >
             <SaveIcon />
           </IconButton>
         </ButtonGroup>

@@ -1,12 +1,18 @@
 import { ActionDTO } from "@/types/DTO";
 import { valueToString } from "./InputOutput";
 
-const _filterValuePass = 1;
-const filterValueBlock = 0;
+export const _filterValuePass = 1;
+export const filterValueBlock = 0;
 
 export type StepItemType = ActionDTO & { active: boolean };
+export type NamedMapping = {
+  input: number;
+  output: number;
+  inputName: string;
+  outputName: string;
+};
 
-export const namedMapping = (action: ActionDTO) => {
+export const namedMapping = (action: ActionDTO): NamedMapping[] => {
   const outputToString = valueToString(action.output);
   const inputToString = valueToString(action.input);
 
@@ -30,14 +36,14 @@ const isValueBlockedByFilter = (filterValue: number): boolean => {
   return filterValue !== filterValueBlock;
 };
 
-export const allowedValues = (action: StepItemType) => {
+export const allowedValues = (action: ActionDTO) => {
   const all = namedMapping(action);
   const allowed = all.filter((mapping) => isValueBlockedByFilter(mapping.output));
   //  console.log("allowed values for ", action, " are:", allowed);
   return allowed;
 };
 
-export const forbiddenValues = (action: StepItemType) => {
+export const forbiddenValues = (action: ActionDTO) => {
   const all = namedMapping(action);
   const forbidden = all.filter((mapping) => !isValueBlockedByFilter(mapping.output));
   //  console.log("allowed values for ", action, " are:", allowed);
