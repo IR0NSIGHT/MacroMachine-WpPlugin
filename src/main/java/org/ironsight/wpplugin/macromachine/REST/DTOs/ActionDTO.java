@@ -70,6 +70,10 @@ public class ActionDTO
         this.mappingPointsY = mappingPointsY;
         this.mappedOutputs = mappedOutputs;
         this.mappedInputs = mappedInputs;
+
+        assert mappedInputs.length == mappedOutputs.length;
+        assert mappingPointsX.length == mappingPointsY.length;
+
     }
 
     @Override
@@ -143,6 +147,12 @@ public class ActionDTO
     public int[] getMappedOutputs() {
         return mappedOutputs;
     }
+
+    @JsonProperty
+    public int[] getMappedInputs() {
+        return mappedInputs;
+    }
+
 
     public MappingAction toAction() {
         MappingPoint[] mappingPoints = new MappingPoint[this.mappingPointsX.length];

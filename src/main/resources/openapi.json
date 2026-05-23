@@ -270,7 +270,7 @@
   "components" : {
     "schemas" : {
       "ActionDTO" : {
-        "required" : [ "actionType", "description", "input", "mappedOutputs", "mappingPointsX", "mappingPointsY", "name", "output", "uid" ],
+        "required" : [ "actionType", "description", "input", "mappedInputs", "mappedOutputs", "mappingPointsX", "mappingPointsY", "name", "output", "uid" ],
         "type" : "object",
         "properties" : {
           "input" : {
@@ -282,7 +282,7 @@
           "actionType" : {
             "type" : "string",
             "description" : "Type of action",
-            "enum" : [ "increments", "subtracts", "multiplies", "divides", "sets", "limits", "sets minimum" ]
+            "enum" : [ "INCREMENT", "DECREMENT", "MULTIPLY", "DIVIDE", "SET", "LIMIT_TO", "AT_LEAST" ]
           },
           "name" : {
             "type" : "string",
@@ -326,9 +326,10 @@
           },
           "mappedInputs" : {
             "type" : "array",
-            "writeOnly" : true,
+            "description" : "actual numeric input values for all inputs",
             "items" : {
               "type" : "integer",
+              "description" : "actual numeric input values for all inputs",
               "format" : "int32"
             }
           }

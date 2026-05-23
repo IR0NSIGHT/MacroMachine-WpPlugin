@@ -94,9 +94,4 @@ public enum ActionType {
 
         return sb.toString();
     }
-
-    @Override
-    public String toString() {
-        return displayName;
-    }
 }
