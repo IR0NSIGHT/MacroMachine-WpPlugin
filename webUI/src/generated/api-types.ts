@@ -152,7 +152,7 @@ export interface components {
         | "DIVIDE"
         | "SET"
         | "LIMIT_TO"
-        | "sets minimum";
+        | "AT_LEAST";
       /** @description Human readable name */
       name: string;
       /** @description Description of the action */
@@ -168,7 +168,8 @@ export interface components {
       mappingPointsY: number[];
       /** @description actual numeric output values for all inputs */
       mappedOutputs: number[];
-      mappedInputs?: number[];
+      /** @description actual numeric input values for all inputs */
+      mappedInputs: number[];
     };
     /** @description Describes an input/output provider configuration */
     InputOutputDTO: {
