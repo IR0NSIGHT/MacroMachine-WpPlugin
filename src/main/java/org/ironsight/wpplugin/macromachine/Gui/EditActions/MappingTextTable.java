@@ -1,10 +1,13 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
-import org.ironsight.wpplugin.macromachine.operations.ActionType;
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.INPUT_COLUMN_IDX;
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.OUTPUT_COLUMN_IDX;
 
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.util.List;
+import java.util.function.Function;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -12,335 +15,357 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableRowSorter;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import java.util.List;
-import java.util.function.Function;
+import org.ironsight.wpplugin.macromachine.operations.ActionType;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
-import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.INPUT_COLUMN_IDX;
-import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.OUTPUT_COLUMN_IDX;
+public class MappingTextTable extends JPanel {
+  private final MappingActionValueTableModel tableModel;
+  private final JTable numberTable;
+  JScrollPane scrollPane;
+  ValuePreviewWindow previeWindow;
+  private boolean isFilterHideAutomaticValues = false;
+  private JCheckBox groupValuesCheckBox;
+  private JCheckBox showPreviewWindow;
+  private TableRowSorter<MappingActionValueTableModel> sorter;
+  private int[] selectedViewRows = new int[0];
+  private BlockingSelectionModel blockingSelectionModel;
 
-public class MappingTextTable extends JPanel
-{
-    private final MappingActionValueTableModel tableModel;
-    private final JTable numberTable;
-    JScrollPane scrollPane;
-    ValuePreviewWindow previeWindow;
-    private boolean isFilterHideAutomaticValues = false;
-    private JCheckBox groupValuesCheckBox;
-    private JCheckBox showPreviewWindow;
-    private TableRowSorter<MappingActionValueTableModel> sorter;
-    private int[] selectedViewRows = new int[0];
-    private BlockingSelectionModel blockingSelectionModel;
-    private String getToolTipForRow(int row) {
-        if (tableModel.getValueAt(row, INPUT_COLUMN_IDX) instanceof MappingPointValue input
-                && tableModel.getValueAt(row, OUTPUT_COLUMN_IDX) instanceof MappingPointValue output) {
-            return Explain(input, output, tableModel.constructMapping().getActionType());
-        }
-        return "";
+  private String getToolTipForRow(int row) {
+    if (tableModel.getValueAt(row, INPUT_COLUMN_IDX) instanceof MappingPointValue input
+        && tableModel.getValueAt(row, OUTPUT_COLUMN_IDX) instanceof MappingPointValue output) {
+      return Explain(input, output, tableModel.constructMapping().getActionType());
     }
+    return "";
+  }
 
-    public static void main(String[] args) {
-        var allGetterSetters = Arrays.stream(ProviderType.values()).map(ProviderType::fromTypeDefault).toList();
-        var allGetters = allGetterSetters.stream()
-                .filter(g -> g instanceof IPositionValueGetter)
-                .map(g -> (IPositionValueGetter) g)
-                .toList();
-        var allSetters = allGetterSetters.stream()
-                .filter(g -> g instanceof IPositionValueSetter)
-                .map(g -> (IPositionValueSetter) g)
-                .toList();
-        Random r = new Random(42069);
-        Function<int[], Integer> getRandom = arr -> {
-            if (arr.length == 0)
-                return 0;
-            return arr[r.nextInt(arr.length)];
+  public static void main(String[] args) {
+    var allGetterSetters =
+        Arrays.stream(ProviderType.values()).map(ProviderType::fromTypeDefault).toList();
+    var allGetters =
+        allGetterSetters.stream()
+            .filter(g -> g instanceof IPositionValueGetter)
+            .map(g -> (IPositionValueGetter) g)
+            .toList();
+    var allSetters =
+        allGetterSetters.stream()
+            .filter(g -> g instanceof IPositionValueSetter)
+            .map(g -> (IPositionValueSetter) g)
+            .toList();
+    Random r = new Random(42069);
+    Function<int[], Integer> getRandom =
+        arr -> {
+          if (arr.length == 0) return 0;
+          return arr[r.nextInt(arr.length)];
         };
-        for (var type : ActionType.values()) {
-            for (var setter : allSetters) {
-                for (var getter : allGetters) {
-                    var input = new MappingPointValue(getRandom.apply(getter.getAllInputValues()), getter);
-                    var output = new MappingPointValue(getRandom.apply(setter.getAllOutputValues()), setter);
+    for (var type : ActionType.values()) {
+      for (var setter : allSetters) {
+        for (var getter : allGetters) {
+          var input = new MappingPointValue(getRandom.apply(getter.getAllInputValues()), getter);
+          var output = new MappingPointValue(getRandom.apply(setter.getAllOutputValues()), setter);
 
-                    var explained = Explain(input, output, type);
-                    System.out.println(explained);
-                }
-            }
+          var explained = Explain(input, output, type);
+          System.out.println(explained);
         }
+      }
+    }
+  }
+
+  public static String Explain(
+      MappingPointValue input, MappingPointValue output, ActionType actionType) {
+    StringBuilder builder = new StringBuilder();
+    builder
+        .append("Where ")
+        .append(input.mappingValue.getName())
+        .append(" is ")
+        .append(input.mappingValue.valueToString(input.numericValue))
+        .append(", ");
+    if (output.mappingValue instanceof IPositionValueSetter setter
+        && setter.isIgnoreValue(output.numericValue)) {
+      builder.append(" do nothing.");
+    } else {
+      builder.append(actionType.getExplanationFor(output)).append(".");
     }
 
-    public static String Explain(MappingPointValue input, MappingPointValue output, ActionType actionType) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Where ")
-                .append(input.mappingValue.getName())
-                .append(" is ")
+    return builder.toString();
+  }
 
-                .append(input.mappingValue.valueToString(input.numericValue))
-                .append(", ");
-        if (output.mappingValue instanceof IPositionValueSetter setter && setter.isIgnoreValue(output.numericValue)) {
-            builder.append(" do nothing.");
-        } else {
-            builder.append(actionType.getExplanationFor(output)).append(".");
-        }
+  public MappingTextTable(
+      MappingActionValueTableModel model, BlockingSelectionModel selectionModel) {
+    this.blockingSelectionModel = selectionModel;
+    numberTable =
+        new JTable() {
+          @Override
+          public boolean editCellAt(int row, int column, EventObject e) {
+            // first click -> select
+            if (!numberTable.isCellSelected(row, column)) {
+              SwingUtilities.invokeLater(() -> numberTable.addRowSelectionInterval(row, row));
+              return false;
+            }
+            return super.editCellAt(row, column, e);
+          }
 
-        return builder.toString();
-    }
-    public MappingTextTable(MappingActionValueTableModel model, BlockingSelectionModel selectionModel) {
-        this.blockingSelectionModel = selectionModel;
-        numberTable = new JTable() {
-            @Override
-            public boolean editCellAt(int row, int column, EventObject e) {
-                // first click -> select
-                if (!numberTable.isCellSelected(row, column)) {
-                    SwingUtilities.invokeLater(() -> numberTable.addRowSelectionInterval(row, row));
-                    return false;
-                }
-                return super.editCellAt(row, column, e);
+          @Override
+          public String getToolTipText(MouseEvent e) {
+            Point p = e.getPoint();
+            int row = rowAtPoint(p);
+            int col = columnAtPoint(p);
+
+            if (row == -1 || col == -1) {
+              return null;
             }
 
-            @Override
-            public String getToolTipText(MouseEvent e) {
-                Point p = e.getPoint();
-                int row = rowAtPoint(p);
-                int col = columnAtPoint(p);
+            return getToolTipForRow(row);
+          }
 
-                if (row == -1 || col == -1) {
-                    return null;
-                }
+          @Override
+          public TableCellEditor getCellEditor(int row, int column) {
+            // second click -> edit
+            blockingSelectionModel.setSelectionBlocked(true);
+            return super.getCellEditor(row, column);
+          }
 
-                return getToolTipForRow(row);
-            }
-
-            @Override
-            public TableCellEditor getCellEditor(int row, int column) {
-                // second click -> edit
-                blockingSelectionModel.setSelectionBlocked(true);
-                return super.getCellEditor(row, column);
-            }
-
-            @Override
-            public void editingStopped(ChangeEvent e) {
-                TableCellEditor editor = getCellEditor();
-                if (editor != null) {
-                    Object value = editor.getCellEditorValue();
-
-                    model.setValuesAt((MappingPointValue) value, getSelectedModelRows(), editingColumn);
-                    removeEditor();
-                }
-            }
-
-            @Override
-            public void removeEditor() {
-                super.removeEditor();
-                blockingSelectionModel.setSelectionBlocked(false);
-            }
-        };
-        selectionModel.setTable(numberTable);
-        numberTable.setModel(model);
-        numberTable.setSelectionModel(selectionModel);
-        this.tableModel = model;
-        initComponents();
-        addListeners(model, selectionModel);
-    }
-
-    private int[] getSelectedModelRows() {
-        int[] selectedModelRows = Arrays.stream(numberTable.getSelectedRows())
-                .map(viewRow -> numberTable.convertRowIndexToModel(viewRow))
-                .toArray();
-        return selectedModelRows;
-    }
-
-    protected void updateComponents() {
-        TableRowSorter<?> sorter = (TableRowSorter<?>) numberTable.getRowSorter();
-        List<? extends RowSorter.SortKey> sortKeys = sorter.getSortKeys();
-        // force stop current edit, because the amount of rows changes, and otherwise
-        // will cause array index out
-        // of bounds
-        if (numberTable.isEditing()) {
-            TableCellEditor editor = numberTable.getCellEditor();
+          @Override
+          public void editingStopped(ChangeEvent e) {
+            TableCellEditor editor = getCellEditor();
             if (editor != null) {
-                editor.stopCellEditing(); // or editor.cancelCellEditing();
+              Object value = editor.getCellEditorValue();
+
+              model.setValuesAt((MappingPointValue) value, getSelectedModelRows(), editingColumn);
+              removeEditor();
             }
-        }
+          }
 
-        sorter.setSortKeys(sortKeys);
-        sorter.sort();
-
-    }
-
-    private void setRowFilter(boolean groupValues) {
-        if (!groupValues) {
-            sorter.setRowFilter(null);
-        } else {
-            sorter.setRowFilter(new RowFilter<MappingActionValueTableModel, Integer>() {
-                @Override
-                public boolean include(Entry<? extends MappingActionValueTableModel, ? extends Integer> entry) {
-                    return tableModel.isMappingPoint(entry.getIdentifier());
-                }
-            });
-        }
-    }
-
-    private void addListeners(MappingActionValueTableModel model, BlockingSelectionModel selectionModel) {
-        // Add listener to scroll to the selected row
-        selectionModel.addListSelectionListener(e -> {
-            if (e.getValueIsAdjusting()) {
-                return;
-            }
-            try {
-                int lastViewRow = numberTable.convertRowIndexToView(selectionModel.getLastSelectedModelRow());
-                numberTable.scrollRectToVisible(numberTable.getCellRect(lastViewRow, 0, true));
-            } catch (IndexOutOfBoundsException ignored) {
-            }
-        });
-
-        model.addTableModelListener(e -> {
-            if (e.getType() == TableModelEvent.UPDATE) {
-                SwingUtilities.invokeLater(this::updateComponents);
-
-            }
-        });
-        MouseAdapter rightClickListener = new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (!numberTable.isEditing() && e.getButton() == MouseEvent.BUTTON3) {
-                    // Show the popup menu
-                    JPopupMenu popupMenu = createRightClickMenu(selectionModel.getSelectedModelRows());
-                    popupMenu.show(numberTable, e.getX(), e.getY());
-                }
-            }
+          @Override
+          public void removeEditor() {
+            super.removeEditor();
+            blockingSelectionModel.setSelectionBlocked(false);
+          }
         };
-        numberTable.addMouseListener(rightClickListener);
+    selectionModel.setTable(numberTable);
+    numberTable.setModel(model);
+    numberTable.setSelectionModel(selectionModel);
+    this.tableModel = model;
+    initComponents();
+    addListeners(model, selectionModel);
+  }
 
-        // Save selected row table
-        numberTable.getSelectionModel().addListSelectionListener(e -> {
-            selectedViewRows = numberTable.getSelectedRows();
-        });
+  private int[] getSelectedModelRows() {
+    int[] selectedModelRows =
+        Arrays.stream(numberTable.getSelectedRows())
+            .map(viewRow -> numberTable.convertRowIndexToModel(viewRow))
+            .toArray();
+    return selectedModelRows;
+  }
 
-        // Restore selected raw table after a value was changed in the table
-        model.addTableModelListener(e -> SwingUtilities.invokeLater(() -> {
-            try {
-                selectionModel.addSelectionRows(selectedViewRows);
-            } catch (IllegalArgumentException ignored) {
-                // view row amount might be MUCH lower than expected. just ignore it
+  protected void updateComponents() {
+    TableRowSorter<?> sorter = (TableRowSorter<?>) numberTable.getRowSorter();
+    List<? extends RowSorter.SortKey> sortKeys = sorter.getSortKeys();
+    // force stop current edit, because the amount of rows changes, and otherwise
+    // will cause array index out
+    // of bounds
+    if (numberTable.isEditing()) {
+      TableCellEditor editor = numberTable.getCellEditor();
+      if (editor != null) {
+        editor.stopCellEditing(); // or editor.cancelCellEditing();
+      }
+    }
+
+    sorter.setSortKeys(sortKeys);
+    sorter.sort();
+  }
+
+  private void setRowFilter(boolean groupValues) {
+    if (!groupValues) {
+      sorter.setRowFilter(null);
+    } else {
+      sorter.setRowFilter(
+          new RowFilter<MappingActionValueTableModel, Integer>() {
+            @Override
+            public boolean include(
+                Entry<? extends MappingActionValueTableModel, ? extends Integer> entry) {
+              return tableModel.isMappingPoint(entry.getIdentifier());
             }
-        }));
-
-        // FIXME needed? scrollPane.addMouseWheelListener(previeWindow);
-        scrollPane.addMouseListener(rightClickListener);
+          });
     }
+  }
 
-    private JPopupMenu createRightClickMenu(int[] selectedModelRows) {
-        JPopupMenu menu = new JPopupMenu();
-        menu.setLayout(new GridLayout(0, 1));
-
-        boolean fixedValuesSelected = Arrays.stream(selectedModelRows).anyMatch(tableModel::isMappingPoint);
-        boolean interpolatedValuesSelected = Arrays.stream(selectedModelRows)
-                .anyMatch(r -> !tableModel.isMappingPoint(r));
-        {
-            JButton button = new JButton("clear selection");
-            button.addActionListener(e -> {
-                clearSelection();
-                menu.setVisible(false);
-            });
-            menu.add(button);
-        }
-
-        if (interpolatedValuesSelected) {
-            JButton button = new JButton("make fixed value");
-            button.setToolTipText("fixed values are set by you. They influence the values of nearby automatic values.");
-            button.addActionListener(e -> {
-                this.onMakeFixedValue(e);
-                menu.setVisible(false);
-            });
-            menu.add(button);
-        }
-
-        if (fixedValuesSelected) {
-            JButton button = new JButton("make automatic value");
-            button.setToolTipText(
-                    "automatic values are calculated, based on the nearest fixed values. You can not edit them directly.");
-            button.addActionListener(e -> {
-                this.onMakeAutomaticValue();
-                menu.setVisible(false);
-            });
-            menu.add(button);
-        }
-
-        return menu;
-    }
-
-    private void clearSelection() {
-        this.blockingSelectionModel.clearSelection();
-    }
-
-    private void onMakeFixedValue(ActionEvent actionEvent) {
-        final int[] selectedModelRows = getSelectedModelRows();
-        boolean somethingSelected = selectedModelRows != null && selectedModelRows.length != 0;
-        if (!somethingSelected) {
+  private void addListeners(
+      MappingActionValueTableModel model, BlockingSelectionModel selectionModel) {
+    // Add listener to scroll to the selected row
+    selectionModel.addListSelectionListener(
+        e -> {
+          if (e.getValueIsAdjusting()) {
             return;
-        }
-        // easy case: a point is not yet a mapping point
-        var notYetMappingPoints = Arrays.stream(selectedModelRows)
-                .filter(row -> !tableModel.isMappingPoint(row))
-                .toArray();
-        tableModel.setIsMappingPoint(notYetMappingPoints, true);
-        SwingUtilities.invokeLater(() -> {
-            Arrays.stream(notYetMappingPoints).forEach(blockingSelectionModel::setSelectionModelRow);
+          }
+          try {
+            int lastViewRow =
+                numberTable.convertRowIndexToView(selectionModel.getLastSelectedModelRow());
+            numberTable.scrollRectToVisible(numberTable.getCellRect(lastViewRow, 0, true));
+          } catch (IndexOutOfBoundsException ignored) {
+          }
         });
-    }
 
-    private void onMakeAutomaticValue() {
-        if (numberTable.getSelectedRow() != -1) {
-            tableModel.deleteMappingPointAt(getSelectedModelRows());
-        }
-    }
+    model.addTableModelListener(
+        e -> {
+          if (e.getType() == TableModelEvent.UPDATE) {
+            SwingUtilities.invokeLater(this::updateComponents);
+          }
+        });
+    MouseAdapter rightClickListener =
+        new MouseAdapter() {
+          @Override
+          public void mousePressed(MouseEvent e) {
+            if (!numberTable.isEditing() && e.getButton() == MouseEvent.BUTTON3) {
+              // Show the popup menu
+              JPopupMenu popupMenu = createRightClickMenu(selectionModel.getSelectedModelRows());
+              popupMenu.show(numberTable, e.getX(), e.getY());
+            }
+          }
+        };
+    numberTable.addMouseListener(rightClickListener);
 
-    protected void initComponents() {
-        previeWindow = new ValuePreviewWindow(this.numberTable);
-
-        this.setLayout(new BorderLayout());
-        Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
-        Border whiteBorder = new EmptyBorder(5, 5, 5, 5); // 5px white border
-        setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
-
-        // Add a TableModelListener to get a callback when a cell is edited
-        numberTable.setModel(tableModel);
-        sorter = new TableRowSorter<>(tableModel);
-        sorter.setSortsOnUpdates(true);
-        numberTable.setRowSorter(sorter);
-        setRowFilter(isFilterHideAutomaticValues);
-
-        Font font = new Font("Arial", Font.PLAIN, 24);
-        numberTable.setFont(font);
-        MappingPointCellRenderer cellRenderer = new MappingPointCellRenderer();
-        numberTable.setDefaultRenderer(MappingPointValue.class, cellRenderer);
-        numberTable.setRowHeight(cellRenderer.getPreferredHeight());
-        numberTable.setDefaultEditor(Object.class, new MappingPointCellEditor(new int[]{INPUT_COLUMN_IDX}));
-        scrollPane = new JScrollPane(numberTable);
-        this.add(scrollPane, BorderLayout.CENTER);
-        JPanel buttons = new JPanel();
-        {
-            groupValuesCheckBox = new JCheckBox("Hide automatic values");
-            groupValuesCheckBox.setSelected(isFilterHideAutomaticValues);
-            groupValuesCheckBox.addActionListener(f -> {
-                this.isFilterHideAutomaticValues = groupValuesCheckBox.isSelected();
-                setRowFilter(isFilterHideAutomaticValues);
+    // Save selected row table
+    numberTable
+        .getSelectionModel()
+        .addListSelectionListener(
+            e -> {
+              selectedViewRows = numberTable.getSelectedRows();
             });
-            buttons.add(groupValuesCheckBox);
-        }
 
-        {
-            showPreviewWindow = new JCheckBox("Preview Window");
-            showPreviewWindow.setToolTipText("Show preview window when hovering over values in the table");
-            showPreviewWindow.setSelected(false);
-            showPreviewWindow.addActionListener(previeWindow);
-            buttons.add(showPreviewWindow);
-        }
+    // Restore selected raw table after a value was changed in the table
+    model.addTableModelListener(
+        e ->
+            SwingUtilities.invokeLater(
+                () -> {
+                  try {
+                    selectionModel.addSelectionRows(selectedViewRows);
+                  } catch (IllegalArgumentException ignored) {
+                    // view row amount might be MUCH lower than expected. just ignore it
+                  }
+                }));
 
-        this.add(buttons, BorderLayout.SOUTH);
+    // FIXME needed? scrollPane.addMouseWheelListener(previeWindow);
+    scrollPane.addMouseListener(rightClickListener);
+  }
 
+  private JPopupMenu createRightClickMenu(int[] selectedModelRows) {
+    JPopupMenu menu = new JPopupMenu();
+    menu.setLayout(new GridLayout(0, 1));
+
+    boolean fixedValuesSelected =
+        Arrays.stream(selectedModelRows).anyMatch(tableModel::isMappingPoint);
+    boolean interpolatedValuesSelected =
+        Arrays.stream(selectedModelRows).anyMatch(r -> !tableModel.isMappingPoint(r));
+    {
+      JButton button = new JButton("clear selection");
+      button.addActionListener(
+          e -> {
+            clearSelection();
+            menu.setVisible(false);
+          });
+      menu.add(button);
     }
 
+    if (interpolatedValuesSelected) {
+      JButton button = new JButton("make fixed value");
+      button.setToolTipText(
+          "fixed values are set by you. They influence the values of nearby automatic values.");
+      button.addActionListener(
+          e -> {
+            this.onMakeFixedValue(e);
+            menu.setVisible(false);
+          });
+      menu.add(button);
+    }
+
+    if (fixedValuesSelected) {
+      JButton button = new JButton("make automatic value");
+      button.setToolTipText(
+          "automatic values are calculated, based on the nearest fixed values. You can not edit them directly.");
+      button.addActionListener(
+          e -> {
+            this.onMakeAutomaticValue();
+            menu.setVisible(false);
+          });
+      menu.add(button);
+    }
+
+    return menu;
+  }
+
+  private void clearSelection() {
+    this.blockingSelectionModel.clearSelection();
+  }
+
+  private void onMakeFixedValue(ActionEvent actionEvent) {
+    final int[] selectedModelRows = getSelectedModelRows();
+    boolean somethingSelected = selectedModelRows != null && selectedModelRows.length != 0;
+    if (!somethingSelected) {
+      return;
+    }
+    // easy case: a point is not yet a mapping point
+    var notYetMappingPoints =
+        Arrays.stream(selectedModelRows).filter(row -> !tableModel.isMappingPoint(row)).toArray();
+    tableModel.setIsMappingPoint(notYetMappingPoints, true);
+    SwingUtilities.invokeLater(
+        () -> {
+          Arrays.stream(notYetMappingPoints).forEach(blockingSelectionModel::setSelectionModelRow);
+        });
+  }
+
+  private void onMakeAutomaticValue() {
+    if (numberTable.getSelectedRow() != -1) {
+      tableModel.deleteMappingPointAt(getSelectedModelRows());
+    }
+  }
+
+  protected void initComponents() {
+    previeWindow = new ValuePreviewWindow(this.numberTable);
+
+    this.setLayout(new BorderLayout());
+    Border padding = new EmptyBorder(20, 20, 20, 20); // 20px padding on all sides
+    Border whiteBorder = new EmptyBorder(5, 5, 5, 5); // 5px white border
+    setBorder(BorderFactory.createCompoundBorder(whiteBorder, padding));
+
+    // Add a TableModelListener to get a callback when a cell is edited
+    numberTable.setModel(tableModel);
+    sorter = new TableRowSorter<>(tableModel);
+    sorter.setSortsOnUpdates(true);
+    numberTable.setRowSorter(sorter);
+    setRowFilter(isFilterHideAutomaticValues);
+
+    Font font = new Font("Arial", Font.PLAIN, 24);
+    numberTable.setFont(font);
+    MappingPointCellRenderer cellRenderer = new MappingPointCellRenderer();
+    numberTable.setDefaultRenderer(MappingPointValue.class, cellRenderer);
+    numberTable.setRowHeight(cellRenderer.getPreferredHeight());
+    numberTable.setDefaultEditor(
+        Object.class, new MappingPointCellEditor(new int[] {INPUT_COLUMN_IDX}));
+    scrollPane = new JScrollPane(numberTable);
+    this.add(scrollPane, BorderLayout.CENTER);
+    JPanel buttons = new JPanel();
+    {
+      groupValuesCheckBox = new JCheckBox("Hide automatic values");
+      groupValuesCheckBox.setSelected(isFilterHideAutomaticValues);
+      groupValuesCheckBox.addActionListener(
+          f -> {
+            this.isFilterHideAutomaticValues = groupValuesCheckBox.isSelected();
+            setRowFilter(isFilterHideAutomaticValues);
+          });
+      buttons.add(groupValuesCheckBox);
+    }
+
+    {
+      showPreviewWindow = new JCheckBox("Preview Window");
+      showPreviewWindow.setToolTipText(
+          "Show preview window when hovering over values in the table");
+      showPreviewWindow.setSelected(false);
+      showPreviewWindow.addActionListener(previeWindow);
+      buttons.add(showPreviewWindow);
+    }
+
+    this.add(buttons, BorderLayout.SOUTH);
+  }
 }

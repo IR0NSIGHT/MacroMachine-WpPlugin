@@ -7,8 +7,8 @@ import jakarta.ws.rs.core.Response;
 @Path("/")
 public class OptionsResource {
 
-    @OPTIONS
-    public Response options() {
-        return Response.ok().build();
-    }
+  @OPTIONS
+  public Response options() {
+    return Response.ok().build();
+  }
 }

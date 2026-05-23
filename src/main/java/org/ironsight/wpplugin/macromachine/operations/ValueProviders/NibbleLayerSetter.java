@@ -1,228 +1,223 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
+import java.util.Arrays;
+import java.util.Objects;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.renderers.NibbleLayerRenderer;
 
-import java.awt.*;
-import java.util.Arrays;
-import java.util.Objects;
+public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter, ILayerGetter {
+  private final Color[] COLORS =
+      new Color[] {
+        new Color(0, 0, 0), // Black
+        new Color(0, 0, 0), // Black
+        new Color(0, 16, 0), // Very dark green
+        new Color(0, 32, 0), // Dark green
+        new Color(0, 48, 0), // Darker green
+        new Color(0, 64, 0), // Medium-dark green
+        new Color(0, 80, 0), // Medium green
+        new Color(0, 96, 0), // Slightly lighter green
+        new Color(0, 112, 0), // Light green
+        new Color(0, 128, 0), // Lighter green
+        new Color(0, 144, 0), // Bright green
+        new Color(0, 160, 0), // Brighter green
+        new Color(0, 176, 0), // Vibrant green
+        new Color(0, 192, 0), // Very vibrant green
+        new Color(0, 208, 0), // Almost neon green
+        new Color(0, 224, 0), // Neon green
+        new Color(0, 255, 0) // Pure green
+      };
 
-public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter, ILayerGetter
-{
-    private final Color[] COLORS = new Color[]{new Color(0, 0, 0), // Black
-            new Color(0, 0, 0), // Black
-            new Color(0, 16, 0), // Very dark green
-            new Color(0, 32, 0), // Dark green
-            new Color(0, 48, 0), // Darker green
-            new Color(0, 64, 0), // Medium-dark green
-            new Color(0, 80, 0), // Medium green
-            new Color(0, 96, 0), // Slightly lighter green
-            new Color(0, 112, 0), // Light green
-            new Color(0, 128, 0), // Lighter green
-            new Color(0, 144, 0), // Bright green
-            new Color(0, 160, 0), // Brighter green
-            new Color(0, 176, 0), // Vibrant green
-            new Color(0, 192, 0), // Very vibrant green
-            new Color(0, 208, 0), // Almost neon green
-            new Color(0, 224, 0), // Neon green
-            new Color(0, 255, 0) // Pure green
-    };
+  private static final int[] defaultColorHex = new int[16];
 
-    private final static int[] defaultColorHex = new int[16];
+  private int[] colorHex;
+  protected String layerId;
+  protected String layerName;
+  protected Layer layer = null;
+  private boolean isCustom;
 
-    private int[] colorHex;
-    protected String layerId;
-    protected String layerName;
-    protected Layer layer = null;
-    private boolean isCustom;
+  protected NibbleLayerSetter(String name, String id, boolean isCustom, int[] colorHex) {
+    this.layerId = id;
+    this.layerName = name;
+    this.isCustom = isCustom;
+    this.colorHex = colorHex;
+    setColorsFromData(colorHex);
+  }
 
-    protected NibbleLayerSetter(String name, String id, boolean isCustom, int[] colorHex) {
-        this.layerId = id;
-        this.layerName = name;
-        this.isCustom = isCustom;
-        this.colorHex = colorHex;
-        setColorsFromData(colorHex);
+  public NibbleLayerSetter(Layer layer, boolean isCustom) {
+    this(layer.getName(), layer.getId(), isCustom, defaultColorHex.clone());
+    this.layer = layer;
+    pullColorsFromLayer();
+  }
+
+  private void pullColorsFromLayer() {
+    if (layer.getRenderer() == null || !(layer.getRenderer() instanceof NibbleLayerRenderer))
+      return;
+    NibbleLayerRenderer renderer = (NibbleLayerRenderer) layer.getRenderer();
+    for (int value : getAllInputValues()) {
+      if (isIgnoreValue(value)) continue;
+      colorHex[value] = renderer.getPixelColour(0, 0, 0, value);
     }
+    setColorsFromData(colorHex);
+  }
 
-    public NibbleLayerSetter(Layer layer, boolean isCustom) {
-        this(layer.getName(), layer.getId(), isCustom, defaultColorHex.clone());
-        this.layer = layer;
-        pullColorsFromLayer();
+  private void setColorsFromData(int[] colorHex) {
+    for (int value : getAllInputValues()) {
+      if (isIgnoreValue(value)) continue;
+      COLORS[value] = new Color(colorHex[value]);
     }
+  }
 
-    private void pullColorsFromLayer() {
-        if (layer.getRenderer() == null || !(layer.getRenderer() instanceof NibbleLayerRenderer))
-            return;
-        NibbleLayerRenderer renderer = (NibbleLayerRenderer) layer.getRenderer();
-        for (int value : getAllInputValues()) {
-            if (isIgnoreValue(value))
-                continue;
-            colorHex[value] = renderer.getPixelColour(0, 0, 0, value);
-        }
-        setColorsFromData(colorHex);
+  @Override
+  public void setValueAt(Dimension dim, int x, int y, int value) {
+    dim.setLayerValueAt(layer, x, y, value);
+  }
+
+  private final int[] outputValues =
+      new int[] {IGNORE_VALUE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  private final int[] inputValues =
+      new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+
+  @Override
+  public int[] getAllInputValues() {
+    return Arrays.copyOf(inputValues, inputValues.length);
+  }
+
+  @Override
+  public boolean isIgnoreValue(int value) {
+    return value == IGNORE_VALUE;
+  }
+
+  @Override
+  public int[] getAllOutputValues() {
+    return Arrays.copyOf(outputValues, outputValues.length);
+  }
+
+  @Override
+  public void prepareForDimension(Dimension dim) {
+    layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
+    if (layer == null)
+      throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
+    if (layer != null) {
+      layerName = layer.getName(); // maybe name was updated
+      pullColorsFromLayer();
     }
+  }
 
-    private void setColorsFromData(int[] colorHex) {
-        for (int value : getAllInputValues()) {
-            if (isIgnoreValue(value))
-                continue;
-            COLORS[value] = new Color(colorHex[value]);
-        }
-    }
+  @Override
+  public int getMaxValue() {
+    return 15;
+  }
 
-    @Override
-    public void setValueAt(Dimension dim, int x, int y, int value) {
-        dim.setLayerValueAt(layer, x, y, value);
-    }
+  @Override
+  public int getMinValue() {
+    return 0;
+  }
 
-    private final int[] outputValues = new int[]{IGNORE_VALUE, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-    private final int[] inputValues = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
+  @Override
+  public IMappingValue instantiateFrom(Object[] data) {
+    return new NibbleLayerSetter(
+        (String) data[0], (String) data[1], (Boolean) data[2], defaultColorHex);
+  }
 
-    @Override
-    public int[] getAllInputValues() {
-        return Arrays.copyOf(inputValues, inputValues.length);
-    }
-    @Override
-    public boolean isIgnoreValue(int value) {
-        return value == IGNORE_VALUE;
-    }
+  @Override
+  public Object[] getSaveData() {
+    return new Object[] {layerName, layerId, isCustom, colorHex};
+  }
 
-    @Override
-    public int[] getAllOutputValues() {
-        return Arrays.copyOf(outputValues, outputValues.length);
-    }
+  @Override
+  public String valueToString(int value) {
+    if (value == IGNORE_VALUE) return "Skip";
+    if (value == 0) return "Absent";
+    return String.format("%.0f%%", 1 + 99f * (value - 1) / 14f);
+    // 1, 8, 15, 22, 29, 36, 43, 51, 58, 65, 72, 79, 86, 93, 100 (worldpainter 14
+    // step intensities)
+  }
 
-    @Override
-    public void prepareForDimension(Dimension dim) {
-        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {
-        });
-        if (layer == null)
-            throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
-        if (layer != null) {
-            layerName = layer.getName(); // maybe name was updated
-            pullColorsFromLayer();
-        }
-    }
+  @Override
+  public boolean isDiscrete() {
+    return false;
+  }
 
-    @Override
-    public int getMaxValue() {
-        return 15;
-    }
+  @Override
+  public void paint(Graphics g, int value, java.awt.Dimension dim) {
+    if (isIgnoreValue(value)) return;
+    g.setColor(COLORS[value]);
+    g.fillRect(0, 0, dim.width, dim.height);
+  }
 
-    @Override
-    public int getMinValue() {
-        return 0;
-    }
+  @Override
+  public ProviderType getProviderType() {
+    return ProviderType.NIBBLE_LAYER;
+  }
 
-    @Override
-    public IMappingValue instantiateFrom(Object[] data) {
-        return new NibbleLayerSetter((String) data[0], (String) data[1], (Boolean) data[2], defaultColorHex);
+  @Override
+  public int getValueAt(Dimension dim, int x, int y) {
+    return dim.getLayerValueAt(layer, x, y);
+  }
 
-    }
+  @Override
+  public String getName() {
+    return layerName + (isCustom ? " custom layer" : " layer");
+  }
 
-    @Override
-    public Object[] getSaveData() {
-        return new Object[]{layerName, layerId, isCustom, colorHex};
-    }
+  @Override
+  public String getDescription() {
+    return "layer " + layerName + " with outputValues 0 to 15, where 0 is absent, 15 is full";
+  }
 
-    @Override
-    public String valueToString(int value) {
-        if (value == IGNORE_VALUE)
-            return "Skip";
-        if (value == 0)
-            return "Absent";
-        return String.format("%.0f%%", 1 + 99f * (value - 1) / 14f);
-        // 1, 8, 15, 22, 29, 36, 43, 51, 58, 65, 72, 79, 86, 93, 100 (worldpainter 14
-        // step intensities)
-    }
+  @Override
+  public String getToolTipText() {
+    return getDescription();
+  }
 
-    @Override
-    public boolean isDiscrete() {
-        return false;
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(layerId);
+  }
 
-    @Override
-    public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        if (isIgnoreValue(value))
-            return;
-        g.setColor(COLORS[value]);
-        g.fillRect(0, 0, dim.width, dim.height);
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    NibbleLayerSetter that = (NibbleLayerSetter) o;
+    return Objects.equals(layerId, that.layerId);
+  }
 
-    @Override
-    public ProviderType getProviderType() {
-        return ProviderType.NIBBLE_LAYER;
-    }
+  @Override
+  public int[] getAllPossibleValues() {
+    return getAllOutputValues();
+  }
 
-    @Override
-    public int getValueAt(Dimension dim, int x, int y) {
-        return dim.getLayerValueAt(layer, x, y);
-    }
+  @Override
+  public boolean isVirtual() {
+    return false;
+  }
 
-    @Override
-    public String getName() {
-        return layerName + (isCustom ? " custom layer" : " layer");
-    }
+  @Override
+  public String toString() {
+    return getName();
+  }
 
-    @Override
-    public String getDescription() {
-        return "layer " + layerName + " with outputValues 0 to 15, where 0 is absent, 15 is full";
-    }
+  @Override
+  public String getLayerName() {
+    return layerName;
+  }
 
-    @Override
-    public String getToolTipText() {
-        return getDescription();
-    }
+  @Override
+  public String getLayerId() {
+    return layerId;
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(layerId);
-    }
+  @Override
+  public boolean isCustomLayer() {
+    return isCustom;
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        NibbleLayerSetter that = (NibbleLayerSetter) o;
-        return Objects.equals(layerId, that.layerId);
-    }
-
-    @Override
-    public int[] getAllPossibleValues() {
-        return getAllOutputValues();
-    }
-
-    @Override
-    public boolean isVirtual() {
-        return false;
-    }
-
-    @Override
-    public String toString() {
-        return getName();
-    }
-
-    @Override
-    public String getLayerName() {
-        return layerName;
-    }
-
-    @Override
-    public String getLayerId() {
-        return layerId;
-    }
-
-    @Override
-    public boolean isCustomLayer() {
-        return isCustom;
-    }
-
-    @Override
-    public Layer getLayer() {
-        return layer;
-    }
+  @Override
+  public Layer getLayer() {
+    return layer;
+  }
 }

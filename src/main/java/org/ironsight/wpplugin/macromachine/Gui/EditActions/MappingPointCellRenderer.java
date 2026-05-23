@@ -1,84 +1,93 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
+
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
 import org.ironsight.wpplugin.macromachine.Gui.EditActions.RangeEditor.RangeTableModel;
 import org.ironsight.wpplugin.macromachine.Gui.MappingValuePreviewPanel;
 
-import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+public class MappingPointCellRenderer
+    implements TableCellRenderer, ListCellRenderer<MappingPointValue> {
+  private final JPanel panel;
+  private final JLabel textLabel;
+  private final MappingValuePreviewPanel valueRenderer;
 
-import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
+  public MappingPointCellRenderer() {
+    panel = new JPanel(new BorderLayout());
+    textLabel = new JLabel("NULL");
+    textLabel.setHorizontalAlignment(JLabel.CENTER);
+    textLabel.setVerticalAlignment(JLabel.CENTER);
+    textLabel.setOpaque(true);
+    panel.add(textLabel, BorderLayout.CENTER);
 
-public class MappingPointCellRenderer implements TableCellRenderer, ListCellRenderer<MappingPointValue>
-{
-    private final JPanel panel;
-    private final JLabel textLabel;
-    private final MappingValuePreviewPanel valueRenderer;
+    valueRenderer = new MappingValuePreviewPanel();
+    valueRenderer.setPreferredSize(new Dimension(30, 30));
+    valueRenderer.setOpaque(false);
+    panel.add(valueRenderer, BorderLayout.EAST);
+    panel.invalidate();
+  }
 
-    public MappingPointCellRenderer() {
-        panel = new JPanel(new BorderLayout());
-        textLabel = new JLabel("NULL");
-        textLabel.setHorizontalAlignment(JLabel.CENTER);
-        textLabel.setVerticalAlignment(JLabel.CENTER);
-        textLabel.setOpaque(true);
-        panel.add(textLabel, BorderLayout.CENTER);
+  public int getPreferredHeight() {
+    return panel.getPreferredSize().height;
+  }
 
-        valueRenderer = new MappingValuePreviewPanel();
-        valueRenderer.setPreferredSize(new Dimension(30, 30));
-        valueRenderer.setOpaque(false);
-        panel.add(valueRenderer, BorderLayout.EAST);
-        panel.invalidate();
+  public void updateTo(MappingPointValue point, boolean isEditable, boolean isSelected) {
+    textLabel.setText(point.mappingValue.valueToString(point.numericValue));
+
+    valueRenderer.setMappingValue(point.mappingValue);
+    valueRenderer.setValue(point.numericValue);
+    textLabel.setFont(
+        isEditable
+            ? textLabel.getFont().deriveFont(Font.PLAIN)
+            : textLabel.getFont().deriveFont(Font.ITALIC));
+
+    if (isSelected) {
+      textLabel.setBackground(SELECTED_BACKGROUND);
+      textLabel.setForeground(SELECTED_FOREGROUND);
+    } else if (isEditable) {
+      textLabel.setForeground(DEFAULT_FOREGROUND);
+      textLabel.setBackground(DEFAULT_BACKGROUND);
+    } else {
+      textLabel.setForeground(INTERPOLATED_FOREGROUND);
+      textLabel.setBackground(INTERPOLATED_BACKGROUND);
     }
+  }
 
-    public int getPreferredHeight() {
-        return panel.getPreferredSize().height;
+  @Override
+  public Component getTableCellRendererComponent(
+      JTable table,
+      Object value,
+      boolean isSelected,
+      boolean hasFocus,
+      int viewRow,
+      int viewColumn) {
+    assert value != null;
+    assert value instanceof MappingPointValue;
+    updateTo((MappingPointValue) value, table.isCellEditable(viewRow, viewColumn), isSelected);
+    if (table.getModel() instanceof RangeTableModel rtm) {
+      int modelRow = table.convertRowIndexToModel(viewRow);
+      int modelColumn = table.convertColumnIndexToModel(viewColumn);
+      if (rtm.isCellIllegalValue(modelRow, modelColumn)) {
+        panel.setBorder(BorderFactory.createLineBorder(Color.RED));
+      } else {
+        panel.setBorder(BorderFactory.createEmptyBorder());
+      }
     }
+    return panel;
+  }
 
-    public void updateTo(MappingPointValue point, boolean isEditable, boolean isSelected) {
-        textLabel.setText(point.mappingValue.valueToString(point.numericValue));
+  @Override
+  public Component getListCellRendererComponent(
+      JList<? extends MappingPointValue> list,
+      MappingPointValue value,
+      int index,
+      boolean isSelected,
+      boolean cellHasFocus) {
+    assert value != null;
+    updateTo(value, false, isSelected);
 
-        valueRenderer.setMappingValue(point.mappingValue);
-        valueRenderer.setValue(point.numericValue);
-        textLabel.setFont(
-                isEditable ? textLabel.getFont().deriveFont(Font.PLAIN) : textLabel.getFont().deriveFont(Font.ITALIC));
-
-        if (isSelected) {
-            textLabel.setBackground(SELECTED_BACKGROUND);
-            textLabel.setForeground(SELECTED_FOREGROUND);
-        } else if (isEditable) {
-            textLabel.setForeground(DEFAULT_FOREGROUND);
-            textLabel.setBackground(DEFAULT_BACKGROUND);
-        } else {
-            textLabel.setForeground(INTERPOLATED_FOREGROUND);
-            textLabel.setBackground(INTERPOLATED_BACKGROUND);
-        }
-
-    }
-
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-            int viewRow, int viewColumn) {
-        assert value != null;
-        assert value instanceof MappingPointValue;
-        updateTo((MappingPointValue) value, table.isCellEditable(viewRow, viewColumn), isSelected);
-        if (table.getModel() instanceof RangeTableModel rtm) {
-            int modelRow = table.convertRowIndexToModel(viewRow);
-            int modelColumn = table.convertColumnIndexToModel(viewColumn);
-            if (rtm.isCellIllegalValue(modelRow, modelColumn)) {
-                panel.setBorder(BorderFactory.createLineBorder(Color.RED));
-            } else {
-                panel.setBorder(BorderFactory.createEmptyBorder());
-            }
-        }
-        return panel;
-    }
-
-    @Override
-    public Component getListCellRendererComponent(JList<? extends MappingPointValue> list, MappingPointValue value,
-            int index, boolean isSelected, boolean cellHasFocus) {
-        assert value != null;
-        updateTo(value, false, isSelected);
-
-        return panel;
-    }
+    return panel;
+  }
 }

@@ -1,66 +1,63 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 
-import java.awt.*;
+public interface IMappingValue extends IDisplayUnit {
+  static int sanitizeValue(int value, IMappingValue getterSetter) { // FIXME only call thi
+    return Math.max(Math.min(value, getterSetter.getMaxValue()), getterSetter.getMinValue());
+  }
 
-public interface IMappingValue extends IDisplayUnit
-{
-    static int sanitizeValue(int value, IMappingValue getterSetter) { // FIXME only call thi
-        return Math.max(Math.min(value, getterSetter.getMaxValue()), getterSetter.getMinValue());
+  static boolean inNumericRange(int value, IMappingValue getterSetter) {
+    return value <= getterSetter.getMaxValue() && value >= getterSetter.getMinValue();
+  }
+
+  static MappingPoint[] getAllPointsForDiscreteIO(
+      IPositionValueSetter mappingValue, int outputValue) {
+    MappingPoint[] arr = new MappingPoint[mappingValue.getAllOutputValues().length];
+    for (int i = 0; i < arr.length; i++) {
+      arr[i] = new MappingPoint(i, outputValue);
     }
+    return arr;
+  }
 
-    static boolean inNumericRange(int value, IMappingValue getterSetter) {
-        return value <= getterSetter.getMaxValue() && value >= getterSetter.getMinValue();
-    }
+  int[] getAllPossibleValues();
 
-    static MappingPoint[] getAllPointsForDiscreteIO(IPositionValueSetter mappingValue, int outputValue) {
-        MappingPoint[] arr = new MappingPoint[mappingValue.getAllOutputValues().length];
-        for (int i = 0; i < arr.length; i++) {
-            arr[i] = new MappingPoint(i, outputValue);
-        }
-        return arr;
-    }
+  static int range(IMappingValue mappingValue) {
+    return mappingValue.getMaxValue() - mappingValue.getMinValue() + 1;
+  }
 
-    int[] getAllPossibleValues();
+  /**
+   * virtual values dont exist in the "real world", the dimension. f.e. actionfilter or intermediate
+   * values are virtual height slope and waterheight are real values from the world.
+   *
+   * @return
+   */
+  boolean isVirtual();
 
-    static int range(IMappingValue mappingValue) {
-        return mappingValue.getMaxValue() - mappingValue.getMinValue() + 1;
-    }
+  int getMaxValue();
 
-    /**
-     * virtual values dont exist in the "real world", the dimension. f.e.
-     * actionfilter or intermediate values are virtual height slope and waterheight
-     * are real values from the world.
-     *
-     * @return
-     */
-    boolean isVirtual();
+  int getMinValue();
 
-    int getMaxValue();
+  void prepareForDimension(org.pepsoft.worldpainter.Dimension dim) throws IllegalAccessError;
 
-    int getMinValue();
+  IMappingValue instantiateFrom(Object[] data);
 
-    void prepareForDimension(org.pepsoft.worldpainter.Dimension dim) throws IllegalAccessError;
+  Object[] getSaveData();
 
-    IMappingValue instantiateFrom(Object[] data);
+  String valueToString(int value);
 
-    Object[] getSaveData();
+  /**
+   * if the output layer can be smoothly interpolated or only knows discrete values
+   *
+   * @return
+   */
+  boolean isDiscrete();
 
-    String valueToString(int value);
+  void paint(Graphics g, int value, java.awt.Dimension dim);
 
-    /**
-     * if the output layer can be smoothly interpolated or only knows discrete
-     * values
-     *
-     * @return
-     */
-    boolean isDiscrete();
+  ProviderType getProviderType();
 
-    void paint(Graphics g, int value, java.awt.Dimension dim);
-
-    ProviderType getProviderType();
-
-    boolean equals(Object o);
+  boolean equals(Object o);
 }

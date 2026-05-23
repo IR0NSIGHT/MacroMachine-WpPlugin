@@ -1,9 +1,13 @@
 package org.ironsight.wpplugin.macromachine.REST.Resources;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Application;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.util.UUID;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.test.JerseyTest;
@@ -11,88 +15,89 @@ import org.ironsight.wpplugin.macromachine.REST.DTOs.MacroDTO;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.junit.jupiter.api.*;
 
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class MacroResourceTest extends JerseyTest
-{
+public class MacroResourceTest extends JerseyTest {
 
-    private static UUID createdId;
+  private static UUID createdId;
 
-    @Override
-    protected Application configure() {
-        return new ResourceConfig().register(MacroResource.class).register(JacksonFeature.class);
-    }
-    @BeforeAll
-    void setupOnce() {
-        MacroContainer.SetInstance(new MacroContainer(null));
-    }
+  @Override
+  protected Application configure() {
+    return new ResourceConfig().register(MacroResource.class).register(JacksonFeature.class);
+  }
 
-    // ---------------- CREATE ----------------
-    @Test
-    @Order(1)
-    void testCreateMacro() {
-        MacroDTO dto = new MacroDTO(new UUID[]{UUID.randomUUID()}, new boolean[]{true}, "Test Macro",
-                "Test Description", UUID.randomUUID());
+  @BeforeAll
+  void setupOnce() {
+    MacroContainer.SetInstance(new MacroContainer(null));
+  }
 
-        Response response = target("/macros").request().post(Entity.entity(dto, MediaType.APPLICATION_JSON));
+  // ---------------- CREATE ----------------
+  @Test
+  @Order(1)
+  void testCreateMacro() {
+    MacroDTO dto =
+        new MacroDTO(
+            new UUID[] {UUID.randomUUID()},
+            new boolean[] {true},
+            "Test Macro",
+            "Test Description",
+            UUID.randomUUID());
 
-        assertEquals(200, response.getStatus());
+    Response response =
+        target("/macros").request().post(Entity.entity(dto, MediaType.APPLICATION_JSON));
 
-        MacroDTO result = response.readEntity(MacroDTO.class);
-        assertNotNull(result);
+    assertEquals(200, response.getStatus());
 
-        createdId = result.getUid(); // assuming MacroDTO has getUid()
-    }
+    MacroDTO result = response.readEntity(MacroDTO.class);
+    assertNotNull(result);
 
-    // ---------------- GET ALL ----------------
-    @Test
-    @Order(2)
-    void testGetAll() {
-        Response response = target("/macros").request().get();
+    createdId = result.getUid(); // assuming MacroDTO has getUid()
+  }
 
-        assertEquals(200, response.getStatus());
+  // ---------------- GET ALL ----------------
+  @Test
+  @Order(2)
+  void testGetAll() {
+    Response response = target("/macros").request().get();
 
-        MacroDTO[] list = response.readEntity(MacroDTO[].class);
-        assertTrue(list.length >= 0);
-    }
+    assertEquals(200, response.getStatus());
 
-    // ---------------- GET BY ID ----------------
-    @Test
-    @Order(3)
-    void testGetById() {
-        assumeTrue(createdId != null);
+    MacroDTO[] list = response.readEntity(MacroDTO[].class);
+    assertTrue(list.length >= 0);
+  }
 
-        Response response = target("/macros/" + createdId).request().get();
+  // ---------------- GET BY ID ----------------
+  @Test
+  @Order(3)
+  void testGetById() {
+    assumeTrue(createdId != null);
 
-        assertEquals(200, response.getStatus());
+    Response response = target("/macros/" + createdId).request().get();
 
-        MacroDTO dto = response.readEntity(MacroDTO.class);
-        assertEquals(createdId, dto.getUid());
-    }
+    assertEquals(200, response.getStatus());
 
-    // ---------------- DELETE ----------------
-    @Test
-    @Order(4)
-    void testDelete() {
-        assumeTrue(createdId != null);
+    MacroDTO dto = response.readEntity(MacroDTO.class);
+    assertEquals(createdId, dto.getUid());
+  }
 
-        Response response = target("/macros/" + createdId).request().delete();
+  // ---------------- DELETE ----------------
+  @Test
+  @Order(4)
+  void testDelete() {
+    assumeTrue(createdId != null);
 
-        assertTrue(response.getStatus() == 200 || response.getStatus() == 204);
-    }
+    Response response = target("/macros/" + createdId).request().delete();
 
-    // ---------------- NOT FOUND ----------------
-    @Test
-    void testGetNotFound() {
-        UUID random = UUID.randomUUID();
+    assertTrue(response.getStatus() == 200 || response.getStatus() == 204);
+  }
 
-        Response response = target("/macros/" + random).request().get();
+  // ---------------- NOT FOUND ----------------
+  @Test
+  void testGetNotFound() {
+    UUID random = UUID.randomUUID();
 
-        assertEquals(404, response.getStatus());
-    }
+    Response response = target("/macros/" + random).request().get();
+
+    assertEquals(404, response.getStatus());
+  }
 }

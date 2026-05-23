@@ -1,16 +1,13 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
-
 import java.io.Serializable;
 import java.util.UUID;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 
-public interface SaveableAction extends Serializable, IDisplayUnit
-{
-    UUID getUid();
+public interface SaveableAction extends Serializable, IDisplayUnit {
+  UUID getUid();
 
-    boolean isActive();
+  boolean isActive();
 
-    void setActive(boolean active);
-
+  void setActive(boolean active);
 }

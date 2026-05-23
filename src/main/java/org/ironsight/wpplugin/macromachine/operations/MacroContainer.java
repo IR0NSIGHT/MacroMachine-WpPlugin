@@ -2,93 +2,97 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.pepsoft.worldpainter.Configuration;
-
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
+import org.pepsoft.worldpainter.Configuration;
 
-public class MacroContainer extends AbstractOperationContainer<Macro>
-{
-    private static MacroContainer instance;
+public class MacroContainer extends AbstractOperationContainer<Macro> {
+  private static MacroContainer instance;
 
-    public MacroContainer(String filePath) {
-        super(Macro.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultMacros.json");
+  public MacroContainer(String filePath) {
+    super(Macro.class, filePath == null ? getActionsFilePath() : filePath, "/DefaultMacros.json");
+  }
+
+  private MacroContainer(MacroContainer container) {
+    super(container);
+  }
+
+  @Override
+  public synchronized MacroContainer copy() {
+    return new MacroContainer(this);
+  }
+  ;
+
+  public static void SetInstance(MacroContainer container) {
+    assert instance == null;
+    instance = container;
+  }
+
+  public static MacroContainer getInstance() {
+    assert instance != null : "we have to set a global isntance first";
+    return instance;
+  }
+
+  public static String getActionsFilePath() {
+    return new File(Configuration.getConfigDir(), "plugins").getPath() + "/macroMachine";
+  }
+
+  @Override
+  protected Macro getNewAction() {
+    return getNewAction(getUUID());
+  }
+
+  @Override
+  protected Macro getNewAction(UUID uuid) {
+    return new Macro(
+        "New Mapping Macro",
+        "this macro is a collection of Mappings, each applied in order "
+            + "to"
+            + " the map to achieve "
+            + "complex, reusable, one-click operations.",
+        new UUID[0],
+        uuid,
+        new boolean[0]);
+  }
+
+  @Override
+  protected void fromSaveObject(String jsonString) throws JsonProcessingException {
+    assert jsonString != null;
+    ObjectMapper objectMapper = new ObjectMapper();
+    Macro[] obj = objectMapper.readValue(jsonString, Macro[].class);
+    for (Macro instance : obj) {
+      this.putMapping(instance);
     }
+  }
 
-    private MacroContainer(MacroContainer container) {
-        super(container);
+  public Set<UUID> getTopLevelMacros() {
+    HashSet<UUID> topLevels = new HashSet<>();
+    queryAll().stream().map(Macro::getUid).forEach(topLevels::add);
+
+    for (Macro m : queryAll()) {
+      for (UUID children : m.getExecutionUUIDs()) {
+        topLevels.remove(children);
+      }
     }
+    return topLevels;
+  }
 
-    @Override
-    public synchronized MacroContainer copy() {
-        return new MacroContainer(this);
-    };
-
-    public static void SetInstance(MacroContainer container) {
-        assert instance == null;
-        instance = container;
+  @Override
+  public void updateMapping(Macro macro, Consumer<String> onError) {
+    boolean loop = macro.hasLoop(new HashSet<>(), this);
+    if (loop) {
+      onError.accept("Macro has an infinite loop, caused by a nested macro. Can not save.");
+      return;
     }
+    super.updateMapping(macro, onError);
+  }
 
-    public static MacroContainer getInstance() {
-        assert instance != null : "we have to set a global isntance first";
-        return instance;
-    }
-
-    public static String getActionsFilePath() {
-        return new File(Configuration.getConfigDir(), "plugins").getPath() + "/macroMachine";
-    }
-
-    @Override
-    protected Macro getNewAction() {
-        return getNewAction(getUUID());
-    }
-
-    @Override
-    protected Macro getNewAction(UUID uuid) {
-        return new Macro(
-                "New Mapping Macro", "this macro is a collection of Mappings, each applied in order " + "to"
-                        + " the map to achieve " + "complex, reusable, one-click operations.",
-                new UUID[0], uuid, new boolean[0]);
-    }
-
-    @Override
-    protected void fromSaveObject(String jsonString) throws JsonProcessingException {
-        assert jsonString != null;
-        ObjectMapper objectMapper = new ObjectMapper();
-        Macro[] obj = objectMapper.readValue(jsonString, Macro[].class);
-        for (Macro instance : obj) {
-            this.putMapping(instance);
-        }
-    }
-
-    public Set<UUID> getTopLevelMacros() {
-        HashSet<UUID> topLevels = new HashSet<>();
-        queryAll().stream().map(Macro::getUid).forEach(topLevels::add);
-
-        for (Macro m : queryAll()) {
-            for (UUID children : m.getExecutionUUIDs()) {
-                topLevels.remove(children);
-            }
-        }
-        return topLevels;
-    }
-
-    @Override
-    public void updateMapping(Macro macro, Consumer<String> onError) {
-        boolean loop = macro.hasLoop(new HashSet<>(), this);
-        if (loop) {
-            onError.accept("Macro has an infinite loop, caused by a nested macro. Can not save.");
-            return;
-        }
-        super.updateMapping(macro, onError);
-    }
-
-    @Override
-    protected <T extends Serializable> T toSaveObject() {
-        return (T) queryAll().toArray(new Macro[0]);
-    }
+  @Override
+  protected <T extends Serializable> T toSaveObject() {
+    return (T) queryAll().toArray(new Macro[0]);
+  }
 }

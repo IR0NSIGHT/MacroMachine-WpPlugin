@@ -1,189 +1,184 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
+import java.util.Arrays;
+import java.util.Objects;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
 
-import java.awt.*;
-import java.util.Arrays;
-import java.util.Objects;
+public class BinaryLayerIO
+    implements IPositionValueSetter, IPositionValueGetter, IPositionTileValueGetter, ILayerGetter {
+  private String layerName;
+  private final String layerId;
+  boolean isCustom = false;
+  private Layer layer;
 
-public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter, IPositionTileValueGetter, ILayerGetter
-{
-    private String layerName;
-    private final String layerId;
-    boolean isCustom = false;
-    private Layer layer;
+  public BinaryLayerIO(Layer layer, boolean isCustom) {
+    this.layerId = layer.getId();
+    this.layerName = layer.getName();
+    this.layer = layer;
+    this.isCustom = isCustom;
+    assert layer.dataSize.equals(Layer.DataSize.BIT);
+  }
 
-    public BinaryLayerIO(Layer layer, boolean isCustom) {
-        this.layerId = layer.getId();
-        this.layerName = layer.getName();
-        this.layer = layer;
-        this.isCustom = isCustom;
-        assert layer.dataSize.equals(Layer.DataSize.BIT);
+  BinaryLayerIO(String name, String id, boolean isCustom) {
+    this.layerId = id;
+    this.layerName = name;
+    this.isCustom = isCustom;
+  }
+
+  private final int[] outputValues = new int[] {IGNORE_VALUE, 0, 1};
+
+  @Override
+  public int[] getAllInputValues() {
+    return new int[] {0, 1};
+  }
+
+  @Override
+  public int[] getAllOutputValues() {
+    return Arrays.copyOf(outputValues, outputValues.length);
+  }
+
+  @Override
+  public boolean isIgnoreValue(int value) {
+    return value == IGNORE_VALUE;
+  }
+
+  @Override
+  public String getName() {
+    return layerName + (isCustom ? " custom layer" : " layer");
+  }
+
+  public void setValueAt(Dimension dim, int x, int y, int value) {
+    assert layer != null;
+    assert value == 0 || value == 1;
+    dim.setBitLayerValueAt(layer, x, y, value == 1);
+  }
+
+  public int getMaxValue() {
+    return 1;
+  }
+
+  public int getMinValue() {
+    return 0;
+  }
+
+  @Override
+  public void prepareForDimension(Dimension dim) {
+    layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {});
+    if (layer == null)
+      throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
+    if (layer != null) layerName = layer.getName(); // maybe name was updated
+  }
+
+  public String valueToString(int value) {
+    if (value == IGNORE_VALUE) return "Skip";
+    if (value == 0) {
+      return "OFF";
+    } else {
+      return "ON";
     }
+  }
 
-    BinaryLayerIO(String name, String id, boolean isCustom) {
-        this.layerId = id;
-        this.layerName = name;
-        this.isCustom = isCustom;
-    }
+  public boolean isDiscrete() {
+    return true;
+  }
 
-    private final int[] outputValues = new int[]{IGNORE_VALUE, 0, 1};
-    @Override
-    public int[] getAllInputValues() {
-        return new int[]{0, 1};
-    }
+  public void paint(Graphics g, int value, java.awt.Dimension dim) {
+    if (isIgnoreValue(value)) return;
+    if (value == 0) return;
+    g.setColor(Color.red);
+    g.fillRect(0, 0, dim.width, dim.height);
+  }
 
-    @Override
-    public int[] getAllOutputValues() {
-        return Arrays.copyOf(outputValues, outputValues.length);
+  @Override
+  public IMappingValue instantiateFrom(Object[] data) {
+    Object[] saveData =
+        new Object[] {
+          "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false
+        };
+    for (int i = 0; i < data.length; i++) {
+      saveData[i] = data[i];
     }
+    return new BinaryLayerIO((String) saveData[0], (String) saveData[1], (Boolean) saveData[2]);
+  }
 
-    @Override
-    public boolean isIgnoreValue(int value) {
-        return value == IGNORE_VALUE;
-    }
+  @Override
+  public Object[] getSaveData() {
+    return new Object[] {layerName, layerId, isCustom};
+  }
 
-    @Override
-    public String getName() {
-        return layerName + (isCustom ? " custom layer" : " layer");
-    }
+  @Override
+  public ProviderType getProviderType() {
+    return ProviderType.BINARY_LAYER;
+  }
 
-    public void setValueAt(Dimension dim, int x, int y, int value) {
-        assert layer != null;
-        assert value == 0 || value == 1;
-        dim.setBitLayerValueAt(layer, x, y, value == 1);
-    }
+  public int getValueAt(Dimension dim, int x, int y) {
+    return dim.getBitLayerValueAt(layer, x, y) ? 1 : 0;
+  }
 
-    public int getMaxValue() {
-        return 1;
-    }
+  @Override
+  public String getDescription() {
+    return "binary (ON or OFF) layer " + layerName;
+  }
 
-    public int getMinValue() {
-        return 0;
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(layerId);
+  }
 
-    @Override
-    public void prepareForDimension(Dimension dim) {
-        layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {
-        });
-        if (layer == null)
-            throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
-        if (layer != null)
-            layerName = layer.getName(); // maybe name was updated
-    }
+  @Override
+  public int[] getAllPossibleValues() {
+    return getAllOutputValues();
+  }
 
-    public String valueToString(int value) {
-        if (value == IGNORE_VALUE)
-            return "Skip";
-        if (value == 0) {
-            return "OFF";
-        } else {
-            return "ON";
-        }
-    }
+  @Override
+  public boolean isVirtual() {
+    return false;
+  }
 
-    public boolean isDiscrete() {
-        return true;
-    }
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    BinaryLayerIO that = (BinaryLayerIO) o;
+    return Objects.equals(layerId, that.layerId);
+  }
 
-    public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        if (isIgnoreValue(value))
-            return;
-        if (value == 0)
-            return;
-        g.setColor(Color.red);
-        g.fillRect(0, 0, dim.width, dim.height);
-    }
+  @Override
+  public String getLayerName() {
+    return layerName;
+  }
 
-    @Override
-    public IMappingValue instantiateFrom(Object[] data) {
-        Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer",
-                false};
-        for (int i = 0; i < data.length; i++) {
-            saveData[i] = data[i];
-        }
-        return new BinaryLayerIO((String) saveData[0], (String) saveData[1], (Boolean) saveData[2]);
-    }
+  @Override
+  public String getToolTipText() {
+    return getDescription();
+  }
 
-    @Override
-    public Object[] getSaveData() {
-        return new Object[]{layerName, layerId, isCustom};
-    }
+  @Override
+  public String getLayerId() {
+    return layerId;
+  }
 
-    @Override
-    public ProviderType getProviderType() {
-        return ProviderType.BINARY_LAYER;
-    }
+  @Override
+  public boolean isCustomLayer() {
+    return isCustom;
+  }
 
-    public int getValueAt(Dimension dim, int x, int y) {
-        return dim.getBitLayerValueAt(layer, x, y) ? 1 : 0;
-    }
+  @Override
+  public Layer getLayer() {
+    return layer;
+  }
 
-    @Override
-    public String getDescription() {
-        return "binary (ON or OFF) layer " + layerName;
-    }
+  @Override
+  public String toString() {
+    return getName();
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(layerId);
-    }
-
-    @Override
-    public int[] getAllPossibleValues() {
-        return getAllOutputValues();
-    }
-
-    @Override
-    public boolean isVirtual() {
-        return false;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        BinaryLayerIO that = (BinaryLayerIO) o;
-        return Objects.equals(layerId, that.layerId);
-    }
-
-    @Override
-    public String getLayerName() {
-        return layerName;
-    }
-
-    @Override
-    public String getToolTipText() {
-        return getDescription();
-    }
-
-    @Override
-    public String getLayerId() {
-        return layerId;
-    }
-
-    @Override
-    public boolean isCustomLayer() {
-        return isCustom;
-    }
-
-    @Override
-    public Layer getLayer() {
-        return layer;
-    }
-
-    @Override
-    public String toString() {
-        return getName();
-    }
-
-    @Override
-    public int getValueAt(Tile tile, int tileX, int tileY) {
-        return tile.getBitLayerValue(layer, tileX, tileY) ? 1 : 0;
-    }
+  @Override
+  public int getValueAt(Tile tile, int tileX, int tileY) {
+    return tile.getBitLayerValue(layer, tileX, tileY) ? 1 : 0;
+  }
 }

@@ -1,270 +1,266 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import org.ironsight.wpplugin.macromachine.Layers.CustomLayerControllerWrapper;
 import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
-import org.ironsight.wpplugin.macromachine.Layers.CustomLayerControllerWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.*;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
 public class InputOutputProvider
-        implements
-            IMappingValueProvider,
-            org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider
-{
-    public static InputOutputProvider INSTANCE = new InputOutputProvider();
-    public final ArrayList<IMappingValue> setters = new ArrayList<>();
-    private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
-    public ArrayList<IMappingValue> getters = new ArrayList<>();
-    private HashSet<Layer> layers = new HashSet<>();
-    private HashSet<String> layerIds = new HashSet<>();
-    private HashMap<String, Layer> layers_by_id = new HashMap<>();
+    implements IMappingValueProvider,
+        org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider {
+  public static InputOutputProvider INSTANCE = new InputOutputProvider();
+  public final ArrayList<IMappingValue> setters = new ArrayList<>();
+  private final ArrayList<Runnable> genericNotifies = new ArrayList<>();
+  public ArrayList<IMappingValue> getters = new ArrayList<>();
+  private HashSet<Layer> layers = new HashSet<>();
+  private HashSet<String> layerIds = new HashSet<>();
+  private HashMap<String, Layer> layers_by_id = new HashMap<>();
 
-    private AllowedLayerSettings inputSettings = new AllowedLayerSettings(true, true, true, true);
-    private AllowedLayerSettings outputSettings = new AllowedLayerSettings(true, true, true, true);
-    private Dimension dimension = null;
+  private AllowedLayerSettings inputSettings = new AllowedLayerSettings(true, true, true, true);
+  private AllowedLayerSettings outputSettings = new AllowedLayerSettings(true, true, true, true);
+  private Dimension dimension = null;
 
-    private InputOutputProvider() {
-        updateFrom(null);
-    }
+  private InputOutputProvider() {
+    updateFrom(null);
+  }
 
-    public synchronized Map<String, Layer> getLayersById() {
-        return layers_by_id;
-    }
+  public synchronized Map<String, Layer> getLayersById() {
+    return layers_by_id;
+  }
 
-    @Override
-    public synchronized Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
-        var map = getLayersById();
-        var found = map.getOrDefault(layerId, null);
-        if (found == null)
-            layerNotFoundError.accept("could not find layer with id=" + layerId);
-        return found;
-    }
+  @Override
+  public synchronized Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
+    var map = getLayersById();
+    var found = map.getOrDefault(layerId, null);
+    if (found == null) layerNotFoundError.accept("could not find layer with id=" + layerId);
+    return found;
+  }
 
-    synchronized void subscribe(Runnable runnable) {
-        genericNotifies.add(runnable);
-    }
+  synchronized void subscribe(Runnable runnable) {
+    genericNotifies.add(runnable);
+  }
 
-    public synchronized IMappingValueProvider asInputProvider() {
-        return new IMappingValueProvider() {
-            @Override
-            public Collection<IMappingValue> getItems() {
-                return getters;
-            }
+  public synchronized IMappingValueProvider asInputProvider() {
+    return new IMappingValueProvider() {
+      @Override
+      public Collection<IMappingValue> getItems() {
+        return getters;
+      }
 
-            @Override
-            public void subscribeToUpdates(Runnable r) {
-                subscribe(r);
-            }
-
-            @Override
-            public boolean existsItem(Object item) {
-                return getters.contains(item);
-            }
-        };
-    }
-
-    public synchronized IMappingValueProvider asOutputProvider() {
-        return new IMappingValueProvider() {
-            @Override
-            public Collection<IMappingValue> getItems() {
-                return setters;
-            }
-
-            @Override
-            public void subscribeToUpdates(Runnable r) {
-                subscribe(r);
-            }
-
-            @Override
-            public boolean existsItem(Object item) {
-                return setters.contains(item);
-            }
-        };
-    }
-
-    public synchronized void updateFrom(Dimension dimension) {
-        this.dimension = dimension;
-        setters.clear();
-        getters.clear();
-
-        updateLayersFromAPI();
-        Iterable<Layer> layers = getLayers();
-        for (Layer l : layers) {
-            if (l instanceof CustomLayer)
-                continue;
-            if (l instanceof Annotations || l instanceof Biome)
-                continue;
-            if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
-                setters.add(new NibbleLayerSetter(l, false));
-                getters.add(new NibbleLayerSetter(l, false));
-            }
-            if (l.dataSize.equals(Layer.DataSize.BIT)) {
-                setters.add(new BitLayerBinarySpraypaintApplicator(l, false));
-                setters.add(new BinaryLayerIO(l, false));
-                getters.add(new BinaryLayerIO(l, false));
-            }
-        }
-        for (Layer l : layers) {
-            if (!(l instanceof CustomLayer))
-                continue;
-            if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
-                if (inputSettings.allowCustomLayers)
-                    setters.add(new NibbleLayerSetter(l, true));
-                if (outputSettings.allowCustomLayers)
-                    getters.add(new NibbleLayerSetter(l, true));
-            }
-            if (l.dataSize.equals(Layer.DataSize.BIT)) {
-                if (outputSettings.allowCustomLayers) {
-                    setters.add(new BitLayerBinarySpraypaintApplicator(l, true));
-                    setters.add(new BinaryLayerIO(l, true));
-                }
-                if (inputSettings.allowCustomLayers)
-                    getters.add(new BinaryLayerIO(l, true));
-            }
-        }
-        getters.add(new ShadowMapIO());
-        getters.add(new DistanceToLayerEdgeGetter(false, MacroSelectionLayer.INSTANCE, 100));
-        getters.add(new TerrainProvider());
-        setters.add(new TerrainProvider());
-        setters.add(new StonePaletteApplicator());
-
-        setters.add(new AnnotationSetter());
-        getters.add(new AnnotationSetter());
-
-        getters.add(new TerrainHeightIO(-64, 319));
-        setters.add(new TerrainHeightIO(-64, 319));
-
-        getters.add(new WaterHeightAbsoluteIO(-64, 319));
-        setters.add(new WaterHeightAbsoluteIO(-64, 319));
-
-        getters.add(new WaterDepthProvider());
-        setters.add(new WaterDepthProvider());
-
-        getters.add(new SlopeProvider());
-        getters.add(new BlockFacingDirectionIO());
-
-        getters.add(new SelectionIO());
-        setters.add(new SelectionIO());
-        setters.add(new BitLayerBinarySpraypaintApplicator(SelectionBlock.INSTANCE, false));
-
-        getters.add(new VanillaBiomeProvider());
-        setters.add(new VanillaBiomeProvider());
-
-        getters.add(ActionFilterIO.instance);
-        setters.add(ActionFilterIO.instance);
-
-        getters.add(AlwaysIO.instance);
-
-        // NOISE GENERATORS
-        getters.add(new PerlinNoiseIO(100, 100, 42069, 5));
-        getters.add(new VoronoiIO(0, 100, 123456, 5, 100));
-        getters.add(ProviderType.fromTypeDefault(ProviderType.RANDOM_NOISE));
-
-        setters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
-        getters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
-
-        notifyListeners();
-    }
-
-    private void notifyListeners() {
-        for (Runnable r : genericNotifies)
-            r.run();
-    }
-
-    @Override
-    public synchronized Collection<IMappingValue> getItems() {
-        ArrayList out = new ArrayList<>();
-        out.addAll(getters);
-        out.addAll(setters);
-        return out;
-    }
-
-    @Override
-    public synchronized void subscribeToUpdates(Runnable r) {
+      @Override
+      public void subscribeToUpdates(Runnable r) {
         subscribe(r);
+      }
+
+      @Override
+      public boolean existsItem(Object item) {
+        return getters.contains(item);
+      }
+    };
+  }
+
+  public synchronized IMappingValueProvider asOutputProvider() {
+    return new IMappingValueProvider() {
+      @Override
+      public Collection<IMappingValue> getItems() {
+        return setters;
+      }
+
+      @Override
+      public void subscribeToUpdates(Runnable r) {
+        subscribe(r);
+      }
+
+      @Override
+      public boolean existsItem(Object item) {
+        return setters.contains(item);
+      }
+    };
+  }
+
+  public synchronized void updateFrom(Dimension dimension) {
+    this.dimension = dimension;
+    setters.clear();
+    getters.clear();
+
+    updateLayersFromAPI();
+    Iterable<Layer> layers = getLayers();
+    for (Layer l : layers) {
+      if (l instanceof CustomLayer) continue;
+      if (l instanceof Annotations || l instanceof Biome) continue;
+      if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
+        setters.add(new NibbleLayerSetter(l, false));
+        getters.add(new NibbleLayerSetter(l, false));
+      }
+      if (l.dataSize.equals(Layer.DataSize.BIT)) {
+        setters.add(new BitLayerBinarySpraypaintApplicator(l, false));
+        setters.add(new BinaryLayerIO(l, false));
+        getters.add(new BinaryLayerIO(l, false));
+      }
     }
-
-    @Override
-    public synchronized boolean existsItem(Object item) {
-        return getItems().contains(item);
-    }
-
-    private synchronized Dimension getDimension() {
-        return dimension;
-    }
-
-    public synchronized void updateLayersFromAPI() {
-        LinkedList<Layer> layers = new LinkedList<>();
-        if (getDimension() != null) {
-            layers.addAll(LayerManager.getInstance().getLayers()); // vanilla layers
-
-            layers.addAll(new CustomLayerControllerWrapper().getCustomLayers());
-        } else {
-            layers.addAll(Arrays
-                    .stream(new Layer[]{PineForest.INSTANCE, DeciduousForest.INSTANCE, Frost.INSTANCE,
-                            MacroSelectionLayer.INSTANCE, HeatMapLayer.INSTANCE})
-                    .collect(Collectors.toCollection(ArrayList::new)));
+    for (Layer l : layers) {
+      if (!(l instanceof CustomLayer)) continue;
+      if (l.dataSize.equals(Layer.DataSize.NIBBLE)) {
+        if (inputSettings.allowCustomLayers) setters.add(new NibbleLayerSetter(l, true));
+        if (outputSettings.allowCustomLayers) getters.add(new NibbleLayerSetter(l, true));
+      }
+      if (l.dataSize.equals(Layer.DataSize.BIT)) {
+        if (outputSettings.allowCustomLayers) {
+          setters.add(new BitLayerBinarySpraypaintApplicator(l, true));
+          setters.add(new BinaryLayerIO(l, true));
         }
-        layers.add(Annotations.INSTANCE); // hardcoded bc not part by default
-
-        for (Layer layer : layers) {
-            this.layers.add(layer);
-            this.layers_by_id.put(layer.getId(), layer);
-            this.layerIds.add(layer.getId());
-        }
-        notifyListeners();
+        if (inputSettings.allowCustomLayers) getters.add(new BinaryLayerIO(l, true));
+      }
     }
+    getters.add(new ShadowMapIO());
+    getters.add(new DistanceToLayerEdgeGetter(false, MacroSelectionLayer.INSTANCE, 100));
+    getters.add(new TerrainProvider());
+    setters.add(new TerrainProvider());
+    setters.add(new StonePaletteApplicator());
 
-    /**
-     * gets layers from worldpainter API, each layer is the one loaded currently
-     * inside worldpainter, not some outdated instance.
-     *
-     * @return
-     */
-    @Override
-    public synchronized List<Layer> getLayers() {
-        return new ArrayList<>(this.layers);
+    setters.add(new AnnotationSetter());
+    getters.add(new AnnotationSetter());
+
+    getters.add(new TerrainHeightIO(-64, 319));
+    setters.add(new TerrainHeightIO(-64, 319));
+
+    getters.add(new WaterHeightAbsoluteIO(-64, 319));
+    setters.add(new WaterHeightAbsoluteIO(-64, 319));
+
+    getters.add(new WaterDepthProvider());
+    setters.add(new WaterDepthProvider());
+
+    getters.add(new SlopeProvider());
+    getters.add(new BlockFacingDirectionIO());
+
+    getters.add(new SelectionIO());
+    setters.add(new SelectionIO());
+    setters.add(new BitLayerBinarySpraypaintApplicator(SelectionBlock.INSTANCE, false));
+
+    getters.add(new VanillaBiomeProvider());
+    setters.add(new VanillaBiomeProvider());
+
+    getters.add(ActionFilterIO.instance);
+    setters.add(ActionFilterIO.instance);
+
+    getters.add(AlwaysIO.instance);
+
+    // NOISE GENERATORS
+    getters.add(new PerlinNoiseIO(100, 100, 42069, 5));
+    getters.add(new VoronoiIO(0, 100, 123456, 5, 100));
+    getters.add(ProviderType.fromTypeDefault(ProviderType.RANDOM_NOISE));
+
+    setters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
+    getters.sort(Comparator.comparing(o -> o.getName().toLowerCase()));
+
+    notifyListeners();
+  }
+
+  private void notifyListeners() {
+    for (Runnable r : genericNotifies) r.run();
+  }
+
+  @Override
+  public synchronized Collection<IMappingValue> getItems() {
+    ArrayList out = new ArrayList<>();
+    out.addAll(getters);
+    out.addAll(setters);
+    return out;
+  }
+
+  @Override
+  public synchronized void subscribeToUpdates(Runnable r) {
+    subscribe(r);
+  }
+
+  @Override
+  public synchronized boolean existsItem(Object item) {
+    return getItems().contains(item);
+  }
+
+  private synchronized Dimension getDimension() {
+    return dimension;
+  }
+
+  public synchronized void updateLayersFromAPI() {
+    LinkedList<Layer> layers = new LinkedList<>();
+    if (getDimension() != null) {
+      layers.addAll(LayerManager.getInstance().getLayers()); // vanilla layers
+
+      layers.addAll(new CustomLayerControllerWrapper().getCustomLayers());
+    } else {
+      layers.addAll(
+          Arrays.stream(
+                  new Layer[] {
+                    PineForest.INSTANCE,
+                    DeciduousForest.INSTANCE,
+                    Frost.INSTANCE,
+                    MacroSelectionLayer.INSTANCE,
+                    HeatMapLayer.INSTANCE
+                  })
+              .collect(Collectors.toCollection(ArrayList::new)));
     }
+    layers.add(Annotations.INSTANCE); // hardcoded bc not part by default
 
-    @Override
-    public synchronized void addLayer(Layer layer) {
-        if (layer == null)
-            return;
-        this.layers.add(layer);
-        this.layerIds.add(layer.getId());
-        this.layers_by_id.put(layer.getId(), layer);
-
-        // add layer to worldpainter API
-        var controller = new CustomLayerControllerWrapper();
-        if (!controller.existsLayerWithId(layer.getId()) && layer instanceof CustomLayer customLayer)
-            controller.addLayer(customLayer);
-        notifyListeners();
+    for (Layer layer : layers) {
+      this.layers.add(layer);
+      this.layers_by_id.put(layer.getId(), layer);
+      this.layerIds.add(layer.getId());
     }
+    notifyListeners();
+  }
 
-    @Override
-    public synchronized boolean existsLayerWithId(String layerId) {
-        return this.layerIds.contains(layerId);
+  /**
+   * gets layers from worldpainter API, each layer is the one loaded currently inside worldpainter,
+   * not some outdated instance.
+   *
+   * @return
+   */
+  @Override
+  public synchronized List<Layer> getLayers() {
+    return new ArrayList<>(this.layers);
+  }
+
+  @Override
+  public synchronized void addLayer(Layer layer) {
+    if (layer == null) return;
+    this.layers.add(layer);
+    this.layerIds.add(layer.getId());
+    this.layers_by_id.put(layer.getId(), layer);
+
+    // add layer to worldpainter API
+    var controller = new CustomLayerControllerWrapper();
+    if (!controller.existsLayerWithId(layer.getId()) && layer instanceof CustomLayer customLayer)
+      controller.addLayer(customLayer);
+    notifyListeners();
+  }
+
+  @Override
+  public synchronized boolean existsLayerWithId(String layerId) {
+    return this.layerIds.contains(layerId);
+  }
+
+  private class AllowedLayerSettings {
+    boolean allowCustomLayers;
+    boolean allowDefaultLayers;
+    boolean allowSelection;
+    boolean allowAnnotations;
+
+    public AllowedLayerSettings(
+        boolean allowCustomLayers,
+        boolean allowDefaultLayers,
+        boolean allowSelection,
+        boolean allowAnnotations) {
+      this.allowCustomLayers = allowCustomLayers;
+      this.allowDefaultLayers = allowDefaultLayers;
+      this.allowSelection = allowSelection;
+      this.allowAnnotations = allowAnnotations;
     }
-
-    private class AllowedLayerSettings
-    {
-        boolean allowCustomLayers;
-        boolean allowDefaultLayers;
-        boolean allowSelection;
-        boolean allowAnnotations;
-
-        public AllowedLayerSettings(boolean allowCustomLayers, boolean allowDefaultLayers, boolean allowSelection,
-                boolean allowAnnotations) {
-            this.allowCustomLayers = allowCustomLayers;
-            this.allowDefaultLayers = allowDefaultLayers;
-            this.allowSelection = allowSelection;
-            this.allowAnnotations = allowAnnotations;
-        }
-    }
+  }
 }

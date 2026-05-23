@@ -1,103 +1,97 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
+import java.util.Arrays;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
-import java.awt.*;
-import java.util.Arrays;
+public class AlwaysIO implements IPositionValueGetter {
+  public static AlwaysIO instance = new AlwaysIO();
+  private final int[] values = new int[] {0};
 
-public class AlwaysIO implements IPositionValueGetter
-{
-    public static AlwaysIO instance = new AlwaysIO();
-    private final int[] values = new int[]{0};
+  @Override
+  public String getToolTipText() {
+    return getDescription();
+  }
 
-    @Override
-    public String getToolTipText() {
-        return getDescription();
-    }
+  @Override
+  public int[] getAllPossibleValues() {
+    return getAllInputValues();
+  }
 
-    @Override
-    public int[] getAllPossibleValues() {
-        return getAllInputValues();
-    }
+  @Override
+  public boolean isVirtual() {
+    return true;
+  }
 
-    @Override
-    public boolean isVirtual() {
-        return true;
-    }
+  @Override
+  public int getValueAt(Dimension dim, int x, int y) {
+    return 0;
+  }
 
-    @Override
-    public int getValueAt(Dimension dim, int x, int y) {
-        return 0;
-    }
+  @Override
+  public int[] getAllInputValues() {
+    return Arrays.copyOf(values, values.length);
+  }
 
-    @Override
-    public int[] getAllInputValues() {
-        return Arrays.copyOf(values, values.length);
-    }
+  @Override
+  public String getName() {
+    return "Always";
+  }
 
-    @Override
-    public String getName() {
-        return "Always";
-    }
+  @Override
+  public String getDescription() {
+    return "Always apply the output with one value";
+  }
 
-    @Override
-    public String getDescription() {
-        return "Always apply the output with one value";
-    }
+  @Override
+  public int getMaxValue() {
+    return 0;
+  }
 
-    @Override
-    public int getMaxValue() {
-        return 0;
-    }
+  @Override
+  public int getMinValue() {
+    return 0;
+  }
 
-    @Override
-    public int getMinValue() {
-        return 0;
-    }
+  @Override
+  public int hashCode() {
+    return getProviderType().hashCode();
+  }
 
-    @Override
-    public int hashCode() {
-        return getProviderType().hashCode();
-    }
+  @Override
+  public void prepareForDimension(Dimension dim) {}
 
-    @Override
-    public void prepareForDimension(Dimension dim) {
+  @Override
+  public IMappingValue instantiateFrom(Object[] data) {
+    return instance;
+  }
 
-    }
+  @Override
+  public Object[] getSaveData() {
+    return new Object[0];
+  }
 
-    @Override
-    public IMappingValue instantiateFrom(Object[] data) {
-        return instance;
-    }
+  @Override
+  public String valueToString(int value) {
+    return "Always";
+  }
 
-    @Override
-    public Object[] getSaveData() {
-        return new Object[0];
-    }
+  @Override
+  public boolean isDiscrete() {
+    return true;
+  }
 
-    @Override
-    public String valueToString(int value) {
-        return "Always";
-    }
+  @Override
+  public void paint(Graphics g, int value, java.awt.Dimension dim) {}
 
-    @Override
-    public boolean isDiscrete() {
-        return true;
-    }
+  @Override
+  public String toString() {
+    return getName();
+  }
 
-    @Override
-    public void paint(Graphics g, int value, java.awt.Dimension dim) {
-
-    }
-
-    @Override
-    public String toString() {
-        return getName();
-    }
-
-    @Override
-    public ProviderType getProviderType() {
-        return ProviderType.ALWAYS;
-    }
+  @Override
+  public ProviderType getProviderType() {
+    return ProviderType.ALWAYS;
+  }
 }
