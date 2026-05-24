@@ -411,7 +411,8 @@
     "uid": "3b0be65a-b601-4e69-b7d6-33a369625ea8",
     "mappingPointsX": [0],
     "mappingPointsY": [70],
-    "mappedOutputs": [70]
+    "mappedOutputs": [70],
+    "mappedInputs": [0]
   },
   {
     "input": {
@@ -440,7 +441,8 @@
     "uid": "62912b73-a04e-44a5-8b88-ddd95c058ed6",
     "mappingPointsX": [0],
     "mappingPointsY": [0],
-    "mappedOutputs": [0]
+    "mappedOutputs": [0],
+    "mappedInputs": [0]
   },
   {
     "input": {
@@ -854,7 +856,8 @@
     "uid": "81923515-7df3-4e69-a7b5-f5d1f7bf6eca",
     "mappingPointsX": [0],
     "mappingPointsY": [62],
-    "mappedOutputs": [62]
+    "mappedOutputs": [62],
+    "mappedInputs": [0]
   },
   {
     "input": {
@@ -1046,7 +1049,8 @@
     "uid": "e07537e4-8bbf-49fd-864a-fd464dd22d2c",
     "mappingPointsX": [0],
     "mappingPointsY": [21],
-    "mappedOutputs": [21]
+    "mappedOutputs": [21],
+    "mappedInputs": [0]
   },
   {
     "input": {
@@ -1092,7 +1096,8 @@
     "uid": "3f31b643-c509-4e37-8e1b-3dd5b97697dc",
     "mappingPointsX": [0],
     "mappingPointsY": [9],
-    "mappedOutputs": [9]
+    "mappedOutputs": [9],
+    "mappedInputs": [0]
   },
   {
     "input": {
@@ -1121,7 +1126,8 @@
     "uid": "f25c73db-d735-44e4-b2f4-1631d6df247e",
     "mappingPointsX": [0],
     "mappingPointsY": [0],
-    "mappedOutputs": [0]
+    "mappedOutputs": [0],
+    "mappedInputs": [0]
   },
   {
     "input": {
@@ -1150,7 +1156,8 @@
     "uid": "07202ae5-b74c-4d70-b312-92419421a4ce",
     "mappingPointsX": [0],
     "mappingPointsY": [50],
-    "mappedOutputs": [50]
+    "mappedOutputs": [50],
+    "mappedInputs": [0]
   },
   {
     "input": {
@@ -1436,6 +1443,7 @@
     "uid": "b7122b2b-951c-4cb0-9ac5-9d78a48928f9",
     "mappingPointsX": [0],
     "mappingPointsY": [1],
-    "mappedOutputs": [1]
+    "mappedOutputs": [1],
+    "mappedInputs": [0]
   }
 ]

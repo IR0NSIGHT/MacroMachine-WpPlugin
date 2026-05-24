@@ -15,6 +15,7 @@ export function outputSet(items: NamedMapping[]): { output: number; outputName: 
 }
 
 export function collectRanges(items: NamedMapping[]): MappingRange[] {
+  //FIXME can not correctly do 2 separate ranges
   if (items.length === 0) {
     return [];
   }
@@ -30,7 +31,7 @@ export function collectRanges(items: NamedMapping[]): MappingRange[] {
   for (let i = 1; i < items.length; i++) {
     const item = items[i];
 
-    if (item.output === current.start.output) {
+    if (item.output === current.start.output && item.input - 1 === current.end.input) {
       current.end = item;
     } else {
       ranges.push(current);

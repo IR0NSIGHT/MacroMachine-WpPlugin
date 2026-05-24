@@ -53,7 +53,7 @@ export function MacroGrid({
   const [viewedMacro, setViewedMacro] = useState<
     (MacroDTO & { steps: (ActionDTO | MacroDTO)[] }) | null
   >(null);
-  const [viewAction, setViewAction] = useState<ActionDTO | null>(null);
+  const [viewAction, setViewAction] = useState<ActionDTO | undefined>(undefined);
 
   const macroSet = new Set<string>();
   macros.forEach((m) => macroSet.add(m.uid));
@@ -82,8 +82,6 @@ export function MacroGrid({
       (uid) => uuidToMacroOrAction.get(uid)!,
     );
     const macroWithSteps = { ...macro, steps: steps };
-    console.log("fat mamcro:", macroWithSteps);
-    console.log("actions:", uuidToMacroOrAction);
     setViewedMacro(macroWithSteps);
   };
 
@@ -91,7 +89,6 @@ export function MacroGrid({
     const isNested = nestedMacroUIDs.has(macro.uid);
     return hideNested ? !isNested : true;
   };
-  console.log(nestedMacroUIDs);
 
   return (
     <Box
@@ -166,7 +163,8 @@ export function MacroGrid({
         <ActionDetailsDialog
           open={!!viewAction}
           action={viewAction}
-          onClose={() => setViewAction(null)}
+          setAction={(_action) => {}}
+          onClose={() => setViewAction(undefined)}
           onViewItem={() => {}}
         />
       </Box>

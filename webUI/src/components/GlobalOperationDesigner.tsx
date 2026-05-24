@@ -19,6 +19,7 @@ import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import { _filterValuePass, filterAutoName, invertFilter, StepItemType } from "@/features/Filters";
 import EditIcon from "@mui/icons-material/Edit";
 import { actionAutoName } from "@/features/Action";
+import { FilterValueDialog } from "./MacroList/ActionDetailsDialog";
 
 type Props = {
   onSave: (macro: MacroDTO | null) => void;
@@ -27,9 +28,10 @@ type Props = {
 type StepItemProps = {
   item: StepItemType;
   setItem: (item: StepItemType | null) => void;
+  openEditorFor: (item: StepItemType) => void;
 };
 
-const StepItem = ({ item, setItem }: StepItemProps) => {
+const StepItem = ({ item, setItem, openEditorFor }: StepItemProps) => {
   const isFilter = item.input.type !== "ALWAYS" && item.output.type === "INTERMEDIATE_SELECTION";
   return (
     <Box
@@ -74,7 +76,7 @@ const StepItem = ({ item, setItem }: StepItemProps) => {
         <IconButton
           size="small"
           disabled={false}
-          onClick={() => setItem(invertFilter(item))}
+          onClick={() => openEditorFor(invertFilter(item))}
           className="clear-btn"
         >
           <EditIcon />
@@ -123,7 +125,11 @@ const sortAlphabetical = (a: StepItemType, b: StepItemType): number => {
 export const GlobalOperationDesigner = (props: Props) => {
   const [filters, setFilters] = useState<StepItemType[]>(defaultFilters);
   const [appliers, setAppliers] = useState<StepItemType[]>(defaultApplyActions);
-
+  const [editorItem, setEditorItem] = useState<{
+    item: StepItemType;
+    idx: number;
+    type: "filter" | "action";
+  } | null>(null);
   const updateFilterItem = (action: StepItemType | null, idx: number) => {
     if (action === null) {
       setFilters((prev) => prev.filter((p, i) => i !== idx));
@@ -148,10 +154,22 @@ export const GlobalOperationDesigner = (props: Props) => {
   };
 
   const filterDTOtoComponent = (action: StepItemType, idx: number) => {
-    return <StepItem item={action} setItem={(item) => updateFilterItem(item, idx)} />;
+    return (
+      <StepItem
+        item={action}
+        setItem={(item) => updateFilterItem(item, idx)}
+        openEditorFor={(filter) => setEditorItem({ item: filter, idx: idx, type: "filter" })}
+      />
+    );
   };
   const applyDTOtoComponent = (action: StepItemType, idx: number) => {
-    return <StepItem item={action} setItem={(item) => updateApplyItem(item, idx)} />;
+    return (
+      <StepItem
+        item={action}
+        setItem={(item) => updateApplyItem(item, idx)}
+        openEditorFor={(applyItem) => setEditorItem({ item: applyItem, idx: idx, type: "action" })}
+      />
+    );
   };
   return (
     <Box
@@ -197,6 +215,14 @@ export const GlobalOperationDesigner = (props: Props) => {
           {appliers.sort(sortInactiveLast).map(applyDTOtoComponent)}
         </Paper>
       </Box>
+      <FilterValueDialog
+        key={editorItem?.item.uid}
+        open={!!editorItem && editorItem.type === "filter"}
+        action={editorItem?.item}
+        setAction={(updatedFilter) => updateFilterItem(updatedFilter, editorItem!.idx)}
+        onClose={() => setEditorItem(null)}
+        onViewItem={() => {}}
+      />
     </Box>
   );
 };

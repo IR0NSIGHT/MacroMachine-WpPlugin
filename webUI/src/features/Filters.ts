@@ -1,4 +1,4 @@
-import { ActionDTO } from "@/types/DTO";
+import { ActionDTO, InputDTO } from "@/types/DTO";
 import { valueToString } from "./InputOutput";
 import { collectRanges } from "./Ranges";
 
@@ -40,14 +40,12 @@ const isValueBlockedByFilter = (filterValue: number): boolean => {
 export const allowedValues = (action: ActionDTO) => {
   const all = namedMapping(action);
   const allowed = all.filter((mapping) => isValueBlockedByFilter(mapping.output));
-  //  console.log("allowed values for ", action, " are:", allowed);
   return allowed;
 };
 
 export const forbiddenValues = (action: ActionDTO) => {
   const all = namedMapping(action);
   const forbidden = all.filter((mapping) => !isValueBlockedByFilter(mapping.output));
-  //  console.log("allowed values for ", action, " are:", allowed);
   return forbidden;
 };
 
@@ -65,6 +63,24 @@ export const invertFilter = (filter: StepItemType): StepItemType => {
   return inverted;
 };
 
+export function invertFilterSinglePosition<T extends ActionDTO>(filter: T, input: number): T {
+  const filterValueIgnore = filter.output.ignoreValue;
+  const inverted = {
+    ...filter,
+    mappingPointsY: filter.mappingPointsY.map((v, idx) => {
+      if (filter.mappingPointsX[idx] === input)
+        return v === filterValueBlock ? filterValueIgnore : filterValueBlock;
+      else return v;
+    }),
+    mappedOutputs: filter.mappedOutputs.map((v, idx) => {
+      if (filter.mappedInputs[idx] === input)
+        return v === filterValueBlock ? filterValueIgnore : filterValueBlock;
+      else return v;
+    }),
+  };
+  return inverted;
+}
+
 const isRangeFilter = (filter: ActionDTO): boolean => {
   if (filter.input.discrete) return false;
   const all = getRelevantMappings(filter);
@@ -72,7 +88,7 @@ const isRangeFilter = (filter: ActionDTO): boolean => {
   return ranges.some((range) => range.length > 1); // continuous ranges exist that are interesting
 };
 
-const getRelevantMappings = (filter: ActionDTO): NamedMapping[] => {
+export const getRelevantMappings = (filter: ActionDTO): NamedMapping[] => {
   const passValues = allowedValues(filter);
   const blockValues = forbiddenValues(filter);
   // only show either PASS or BLOCK values to keep it simple as "Only on .." or "Except on"
@@ -82,32 +98,21 @@ const getRelevantMappings = (filter: ActionDTO): NamedMapping[] => {
 
 const explainRangeFilter = (filter: ActionDTO): string => {
   // only show either PASS or BLOCK values to keep it simple as "Only on .." or "Except on"
-  const all = getRelevantMappings(filter);
-  const ranges = collectRanges(all);
-  return ranges
-    .map((range) => {
-      let onlyOn = "";
-      switch (range.start.output) {
-        case filterValueBlock:
-          onlyOn = "Except on ";
-          break;
-        case _filterValuePass: //FIXME this is misleading. its not "only on", its an OR operation
-          onlyOn = "Only on ";
-          break;
-        case filter.output.ignoreValue:
-          onlyOn = "Only on ";
-          break;
-      }
-      return (
-        onlyOn +
-        filter.input.displayName +
-        ": " +
-        range.start.inputName +
-        " to " +
-        range.end.inputName
-      );
-    })
-    .join(", ");
+  const ranges = collectRanges(namedMapping(filter));
+  const blockRanges = ranges.filter((r) => r.start.output === filterValueBlock);
+  const passRanges = ranges.filter((r) => r.start.output !== filterValueBlock);
+  const isOnlyOn = passRanges.length <= blockRanges.length;
+  const relevant = isOnlyOn ? passRanges : blockRanges;
+  return (
+    (isOnlyOn ? "Only on " : "Except on ") +
+    filter.input.displayName +
+    ": " +
+    relevant
+      .map((range) => {
+        return "[" + range.start.inputName + " to " + range.end.inputName + "]";
+      })
+      .join(", ")
+  );
 };
 
 const explainSimpleFilter = (filter: ActionDTO): string => {
@@ -130,11 +135,25 @@ const explainSimpleFilter = (filter: ActionDTO): string => {
   }
 };
 
+export const explainSingleFilterMapping = (mapping: NamedMapping, inputDisplayName: string) => {
+  const reject = mapping.output === filterValueBlock ? "rejects" : "allows";
+  return (
+    "if a position on the map has *" +
+    inputDisplayName +
+    "*=*" +
+    mapping.inputName +
+    "* then the filter **" +
+    reject +
+    "** it."
+  );
+};
+
 export const filterAutoName = (filter: StepItemType): StepItemType => {
+  const description = "Filter: Reject blocks based on " + filter.input.displayName;
   const isRange = isRangeFilter(filter);
   if (!isRange) {
-    return { ...filter, name: explainSimpleFilter(filter) };
+    return { ...filter, name: explainSimpleFilter(filter), description: description };
   } else {
-    return { ...filter, name: explainRangeFilter(filter) };
+    return { ...filter, name: explainRangeFilter(filter), description: description };
   }
 };

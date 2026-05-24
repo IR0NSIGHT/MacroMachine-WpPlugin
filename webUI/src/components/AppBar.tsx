@@ -74,7 +74,6 @@ export function PrimarySearchAppBar(props: {
   queue: ExecutionQueueDTO;
   executionState: ExecutionStateDTO;
 }) {
-  console.log(props);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState<null | HTMLElement>(null);
 
