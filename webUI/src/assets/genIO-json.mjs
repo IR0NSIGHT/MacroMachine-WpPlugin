@@ -6,7 +6,7 @@ const _filterType = "INTERMEDIATE_SELECTION";
 const alwaysType = "ALWAYS";
 
 async function fetchActionsToFile(fileOutputPath) {
-  const response = await fetch('http://localhost:8080/api/actions');
+  const response = await fetch("http://localhost:8080/api/actions");
 
   if (!response.ok) {
     throw new Error(`Request failed: ${response.status}`);
@@ -14,11 +14,7 @@ async function fetchActionsToFile(fileOutputPath) {
 
   const data = await response.json();
 
-  await fs.writeFile(
-    fileOutputPath,
-    JSON.stringify(data, null, 2),
-    'utf8'
-  );
+  await fs.writeFile(fileOutputPath, JSON.stringify(data, null, 2), "utf8");
 
   console.log(`Saved JSON to ${fileOutputPath}`);
 }
@@ -82,7 +78,7 @@ const getApplyActions = async (data, outputPath) => {
   console.log(`Wrote ${acceptedItems.length} items to ${outputPath}`);
 };
 
-async function filterJsonFile(inputPath, outputFilters, outputActions) {  
+async function filterJsonFile(inputPath, outputFilters, outputActions) {
   try {
     // Read file
     const raw = await fs.readFile(inputPath, "utf8");
@@ -100,13 +96,10 @@ async function filterJsonFile(inputPath, outputFilters, outputActions) {
   }
 }
 
-const ACTIONS_PATH = "/home/klipper/Documents/repos/MacroMachine-WpPlugin/webUI/src/mocks/data/actions.json";
+const ACTIONS_PATH =
+  "/home/klipper/Documents/repos/MacroMachine-WpPlugin/webUI/src/mocks/data/actions.json";
 
 // pull data
 await fetchActionsToFile(ACTIONS_PATH);
 // Usage
-filterJsonFile(
-  ACTIONS_PATH,
-  "./defaultFilters.json",
-  "./defaultApplyActions.json",
-);
+filterJsonFile(ACTIONS_PATH, "./defaultFilters.json", "./defaultApplyActions.json");
