@@ -32,6 +32,7 @@ public class ActionResource {
 
   @POST
   public ActionDTO create(ActionDTO dto) {
+    System.out.println("POST RECEVIED action dto" + dto.toString());
     MappingAction macro = dto.toAction();
     StringBuilder err = new StringBuilder();
     actionContainer.updateMapping(macro, err::append);

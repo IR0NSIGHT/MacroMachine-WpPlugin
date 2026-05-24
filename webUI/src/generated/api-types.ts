@@ -13,7 +13,7 @@ export interface paths {
     };
     get: operations["getAll"];
     put?: never;
-    post: operations["create"];
+    post: operations["create_1"];
     delete?: never;
     options?: never;
     head?: never;
@@ -94,7 +94,7 @@ export interface paths {
     /** Get all macros */
     get: operations["getAll_1"];
     put?: never;
-    post: operations["create_1"];
+    post: operations["create"];
     delete?: never;
     options?: never;
     head?: never;
@@ -345,7 +345,7 @@ export interface operations {
       };
     };
   };
-  create: {
+  create_1: {
     parameters: {
       query?: never;
       header?: never;
@@ -517,7 +517,7 @@ export interface operations {
       };
     };
   };
-  create_1: {
+  create: {
     parameters: {
       query?: never;
       header?: never;

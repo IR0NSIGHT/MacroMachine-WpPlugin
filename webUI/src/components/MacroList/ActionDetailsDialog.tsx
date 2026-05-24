@@ -95,8 +95,6 @@ export function FilterValueDialog({ open, action, onClose, setAction }: FilterEd
   const [actionState, setActionState] = useState<StepItemType | undefined>(action);
 
   if (!actionState) return null;
-  const outputToString = valueToString(actionState.output);
-  const inputToString = valueToString(actionState.input);
   return (
     <Dialog
       open={open}

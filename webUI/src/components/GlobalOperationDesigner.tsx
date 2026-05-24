@@ -5,6 +5,7 @@ import {
   IconButton,
   Paper,
   Switch,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -16,15 +17,22 @@ import filters from "../assets/defaultFilters.json";
 import applyActions from "../assets/defaultApplyActions.json";
 import ClearIcon from "@mui/icons-material/Clear";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
-import { _filterValuePass, filterAutoName, invertFilter, StepItemType } from "@/features/Filters";
+import { filterAutoName, invertFilter, StepItemType } from "@/features/Filters";
 import EditIcon from "@mui/icons-material/Edit";
 import { actionAutoName } from "@/features/Action";
 import { FilterValueDialog } from "./MacroList/ActionDetailsDialog";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import BugReportIcon from "@mui/icons-material/BugReport";
+import { MacroExecuteRequester, printDiff, runnableMacro, toMacroDTO, toRunnable } from "@/features/Execution";
+import equal from "fast-deep-equal";
 
 type Props = {
-  onSave: (macro: MacroDTO | null) => void;
-  onRun: (macro: MacroDTO | null) => void;
+  onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
+  onExecute: MacroExecuteRequester;
+  macros: MacroDTO[];
+  actions: ActionDTO[];
 };
+
 type StepItemProps = {
   item: StepItemType;
   setItem: (item: StepItemType | null) => void;
@@ -130,6 +138,48 @@ export const GlobalOperationDesigner = (props: Props) => {
     idx: number;
     type: "filter" | "action";
   } | null>(null);
+
+  const [title, setTitle] = useState<string | undefined>(undefined);
+  const [description, setDescription] = useState<string | undefined>(undefined);
+  const [uuid, setUUID] = useState<string>(crypto.randomUUID());
+
+  const currentRunnable = constructRunnable();
+  const backendRunnable = toRunnable(
+    props.macros.find((macro) => macro.uid === uuid),
+    props.actions,
+  );
+
+function downloadTextFile(
+  filename: string,
+  content: string
+) {
+  const blob = new Blob([content], {
+    type: "text/plain",
+  });
+
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+
+  document.body.appendChild(a);
+  a.click();
+
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+
+  const diff = !equal(currentRunnable, backendRunnable);
+ /* if (diff && currentRunnable && backendRunnable) {
+    printDiff(currentRunnable, backendRunnable);
+    downloadTextFile("currentRunnable",JSON.stringify(currentRunnable, null, 3));
+    downloadTextFile("backendRunnable",JSON.stringify(backendRunnable, null, 3));
+    throw new Error("Intentional crash");
+  } */
+
+  console.log("diff:", diff);
   const updateFilterItem = (action: StepItemType | null, idx: number) => {
     if (action === null) {
       setFilters((prev) => prev.filter((p, i) => i !== idx));
@@ -152,6 +202,43 @@ export const GlobalOperationDesigner = (props: Props) => {
       setAppliers((prev) => prev.map(mapper));
     }
   };
+
+  function constructActions(): StepItemType[] {
+    const steps = [...filters, ...appliers];
+    return steps;
+  }
+
+  function constructRunnable(): runnableMacro {
+    const actions = constructActions();
+    const runnable: runnableMacro = {
+      steps: actions,
+      name: title ?? "My new global operation macro " + uuid,
+      description: description ?? "",
+      uid: uuid,
+    };
+    return runnable;
+  }
+
+  function onExecute() {
+    props.onExecute(constructRunnable(), false);
+  }
+
+  function onSave() {
+    const runnable = constructRunnable();
+    props.onSave(toMacroDTO(runnable), runnable.steps);
+  }
+
+  function onStartNew() {
+    setUUID(crypto.randomUUID());
+    setFilters(defaultFilters);
+    setAppliers(defaultApplyActions);
+    setTitle(undefined);
+    setDescription(undefined);
+  }
+
+  function onDebug() {
+    props.onExecute(constructRunnable(), true);
+  }
 
   const filterDTOtoComponent = (action: StepItemType, idx: number) => {
     return (
@@ -187,16 +274,29 @@ export const GlobalOperationDesigner = (props: Props) => {
         }}
       >
         <ButtonGroup variant="contained" aria-label="Basic button group">
-          <IconButton size="small" disabled={false} onClick={() => props.onRun(null)}>
-            <PlayArrowIcon />
-          </IconButton>
-          <IconButton size="small" disabled={false} onClick={() => props.onSave(null)}>
-            <SaveIcon />
-          </IconButton>
+          <Tooltip title="Execute this macro on your map.">
+            <IconButton size="small" disabled={false} onClick={onExecute}>
+              <PlayArrowIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Debug-Execute this macro on your map, step-by-step.">
+            <IconButton size="small" disabled={false} onClick={onDebug}>
+              <BugReportIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Save this macro.">
+            <IconButton size="small" disabled={!diff} onClick={onSave}>
+              <SaveIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Start a new macro.">
+            <IconButton size="small" disabled={false} onClick={onStartNew}>
+              <RestartAltIcon />
+            </IconButton>
+          </Tooltip>
         </ButtonGroup>
-        <Typography>Name: My Global Operation</Typography>
+        <Typography>{uuid}</Typography>
       </Box>
-
       <Box
         sx={{
           flex: 1,
@@ -205,6 +305,22 @@ export const GlobalOperationDesigner = (props: Props) => {
           p: 2,
         }}
       >
+        <TextField
+          value={title ?? ""}
+          onChange={(e) => setTitle(e.target.value)}
+          label="Macro Name"
+          variant="outlined"
+          fullWidth
+          placeholder="My new Global Operation Macro"
+        />
+        <TextField
+          value={description ?? ""}
+          onChange={(e) => setDescription(e.target.value)}
+          label="Macro Description"
+          variant="outlined"
+          fullWidth
+          placeholder="This macro does a complex global operation"
+        />
         <Paper sx={{ p: 1, border: 1 }}>
           <Typography>If:</Typography>
           {filters.sort(sortInactiveLast).map(filterDTOtoComponent)}

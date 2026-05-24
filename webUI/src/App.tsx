@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 import "@fontsource/ubuntu";
-import { fetchActions, fetchExecutionQueue, fetchExecutionState, fetchMacros } from "./API/fetch";
+import {
+  fetchActions,
+  fetchExecutionQueue,
+  fetchExecutionState,
+  fetchMacros,
+  postActions,
+  postMacro,
+  postQueueMacros,
+} from "./API/fetch";
 import EditIcon from "@mui/icons-material/Edit";
 import ExploreIcon from "@mui/icons-material/Explore";
 import LayersIcon from "@mui/icons-material/Layers";
@@ -11,6 +19,7 @@ import { PrimarySearchAppBar } from "./components/AppBar";
 import { ExecutionQueueDTO, MacroDTO, ExecutionStateDTO, ActionDTO } from "./types/DTO";
 import { MacroGrid } from "./MacroGrid";
 import { GlobalOperationDesigner } from "./components/GlobalOperationDesigner";
+import { isUUID, MacroExecuteRequester, toMacroDTO } from "./features/Execution";
 
 export default function App() {
   const [search, setSearch] = useState("");
@@ -48,6 +57,25 @@ export default function App() {
 
     return () => clearInterval(interval);
   }, []);
+
+  const onRequestExecution: MacroExecuteRequester = (runnable, isDebug) => {
+    console.log(runnable);
+    if (!isDebug) {
+      if (isUUID(runnable)) {
+        postQueueMacros([runnable]).then(console.log).catch(console.error);
+      } else {
+        postActions(runnable.steps)
+          .then(() => postMacro(toMacroDTO(runnable)))
+          .then(() => postQueueMacros([runnable.uid]))
+          .then(console.log)
+          .catch(alert);
+      }
+    } else alert("Warning: Not implemented");
+  };
+
+  const onRequestSave = (macro: MacroDTO, actions: ActionDTO[]) => {
+    postActions(actions).then(() => postMacro(macro));
+  };
 
   return (
     <Box
@@ -93,12 +121,15 @@ export default function App() {
               )}
               actions={actions}
               executionState={executionState}
+              onRequestExecution={onRequestExecution}
             />
           )}
           {tab === 1 && (
             <GlobalOperationDesigner
-              onSave={(_macro: MacroDTO | null) => {}}
-              onRun={(_macro: MacroDTO | null) => {}}
+              onSave={onRequestSave}
+              onExecute={onRequestExecution}
+              macros={macros}
+              actions={actions}
             />
           )}
         </Box>

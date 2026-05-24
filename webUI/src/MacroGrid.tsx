@@ -1,11 +1,11 @@
 import { Box, Tooltip, FormControlLabel, Switch, Grid } from "@mui/material";
 import { useState } from "react";
-import { postQueueMacros } from "./API/fetch";
 import { ActionDetailsDialog } from "./components/MacroList/ActionDetailsDialog";
 import MacroCard from "./components/MacroList/MacroCard";
 import { MacroDetailsDialog } from "./components/MacroList/MacroDetailsDialog";
 import { MacroDTO, ActionDTO, ExecutionStateDTO, isMacroDTO } from "./types/DTO";
 import Item from "@mui/material/Grid";
+import { MacroExecuteRequester } from "./features/Execution";
 
 const imageURLs = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1600&auto=format&fit=crop",
@@ -44,10 +44,12 @@ export function MacroGrid({
   macros,
   actions,
   executionState,
+  onRequestExecution,
 }: {
   macros: MacroDTO[];
   actions: ActionDTO[];
   executionState: ExecutionStateDTO;
+  onRequestExecution: MacroExecuteRequester;
 }) {
   const [hideNested, setHideNested] = useState(false);
   const [viewedMacro, setViewedMacro] = useState<
@@ -136,9 +138,7 @@ export function MacroGrid({
                   macro={macro}
                   execution={executionState}
                   imageURL={imageURLs[idx % imageURLs.length]}
-                  onRequestExecution={() =>
-                    postQueueMacros([macro.uid]).then(console.log).catch(console.error)
-                  }
+                  onRequestExecution={() => onRequestExecution(macro.uid, false)}
                   onView={() => onView(macro)}
                   onShare={() => onShare(macro)}
                   onEdit={() => onEdit(macro)}
