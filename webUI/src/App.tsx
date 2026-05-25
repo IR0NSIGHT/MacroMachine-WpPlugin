@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import "@fontsource/ubuntu";
 import {
+  deleteMacro,
   fetchActions,
   fetchExecutionQueue,
   fetchExecutionState,
@@ -135,6 +136,7 @@ export default function App() {
               actions={actions}
               executionState={executionState}
               onRequestExecution={onRequestExecution}
+              onDeleteMacro={deleteMacro}
             />
           )}
           {tab === 1 && (

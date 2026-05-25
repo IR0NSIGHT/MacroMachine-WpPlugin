@@ -5,7 +5,7 @@ import MacroCard from "./components/MacroList/MacroCard";
 import { MacroDetailsDialog } from "./components/MacroList/MacroDetailsDialog";
 import { MacroDTO, ActionDTO, ExecutionStateDTO, isMacroDTO } from "./types/DTO";
 import Item from "@mui/material/Grid";
-import { MacroExecuteRequester, runnableMacro, toRunnable } from "./features/Execution";
+import { MacroExecuteRequester, runnableMacro, toRunnable, uuid } from "./features/Execution";
 
 const imageURLs = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400&auto=format&fit=crop",
@@ -39,7 +39,7 @@ const imageURLs = [
   "https://images.unsplash.com/photo-1504208434309-cb69f4fe52b0?q=80&w=400&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=400&auto=format&fit=crop",
 
-    "https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=400&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=400&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=400&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?q=80&w=400&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400&auto=format&fit=crop",
@@ -84,26 +84,18 @@ const imageURLs = [
   "https://images.unsplash.com/photo-1507149833265-60c372daea22?q=80&w=400&auto=format&fit=crop",
 ]; //FIXME images based on UUID until backend supports saving images
 
-const res = await fetch(
-  "https://picsum.photos/v2/list?page=1&limit=100"
-);
-
-const images = await res.json();
-
-const urls = images.map(
-  (x: any) => x.download_url
-);
-
 export function MacroGrid({
   macros,
   actions,
   executionState,
   onRequestExecution,
+  onDeleteMacro,
 }: {
   macros: MacroDTO[];
   actions: ActionDTO[];
   executionState: ExecutionStateDTO;
   onRequestExecution: MacroExecuteRequester;
+  onDeleteMacro: (uuid: uuid) => void;
 }) {
   const [hideNested, setHideNested] = useState(false);
   const [viewedMacro, setViewedMacro] = useState<runnableMacro | undefined>(undefined);
@@ -145,8 +137,8 @@ export function MacroGrid({
     function uuidToShortNumber(uuid: string): number {
       return parseInt(uuid.replace(/-/g, "").slice(0, 12), 16);
     }
-    const numberVal: number = uuidToShortNumber(uid)
-    return urls[numberVal % urls.length];
+    const numberVal: number = uuidToShortNumber(uid);
+    return imageURLs[numberVal % imageURLs.length];
   };
 
   return (
@@ -180,29 +172,34 @@ export function MacroGrid({
         }}
       >
         <Grid container spacing={{ xs: 1, md: 4 }}>
-          {macros.filter(filterHideNested).sort((a,b)=>a.name.localeCompare(b.name)).map((macro, idx) => (
-            <Grid
-              key={macro.uid}
-              size={{
-                xs: 12,
-                sm: 6,
-                md: 4,
-                lg: 3,
-              }}
-            >
-              <Item>
-                <MacroCard
-                  macro={macro}
-                  execution={executionState}
-                  imageURL={uidToImageURL(macro.uid)}
-                  onRequestExecution={() => onRequestExecution(macro.uid, false)}
-                  onView={() => onView(macro)}
-                  onShare={() => onShare(macro)}
-                  onEdit={() => onEdit(macro)}
-                />
-              </Item>
-            </Grid>
-          ))}
+          {macros
+            .filter(filterHideNested)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .map((macro) => (
+              <Grid
+                key={macro.uid}
+                size={{
+                  xs: 12,
+                  sm: 6,
+                  md: 4,
+                  lg: 3,
+                }}
+              >
+                <Item>
+                  <MacroCard
+                    macro={macro}
+                    execution={executionState}
+                    imageURL={uidToImageURL(macro.uid)}
+                    onRequestExecution={() => onRequestExecution(macro.uid, false)}
+                    onView={() => onView(macro)}
+                    onShare={() => onShare(macro)}
+                    onEdit={() => onEdit(macro)}
+                    onDelete={() => onDeleteMacro(macro.uid)}
+                    onSetFavorite={alert}
+                  />
+                </Item>
+              </Grid>
+            ))}
         </Grid>
 
         <MacroDetailsDialog

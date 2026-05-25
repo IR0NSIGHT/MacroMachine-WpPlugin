@@ -77,6 +77,26 @@ export async function fetchExecutionState(): Promise<components["schemas"]["Exec
   return await response.json();
 }
 
+export async function deleteMacro(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/api/macros/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete macro: ${response.status}`);
+  }
+}
+
+export async function deleteAction(id: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/api/actions/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete action: ${response.status}`);
+  }
+}
+
 export const toCleanAction = (action: ActionDTO): ActionDTO => {
   const cleanCopy: ActionDTO = {
     name: action.name,

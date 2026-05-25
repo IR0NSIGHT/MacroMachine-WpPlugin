@@ -11,6 +11,9 @@ import ShareIcon from "@mui/icons-material/Share";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { executionProgress } from "../AppBar";
+import DeleteIcon from "@mui/icons-material/Delete";
+import StarIcon from "@mui/icons-material/Star";
+
 type MacroDTO = components["schemas"]["MacroDTO"];
 type executionState = components["schemas"]["ExecutionStateDTO"];
 export default function MacroCard(props: {
@@ -21,8 +24,9 @@ export default function MacroCard(props: {
   onView: () => void;
   onEdit: () => void;
   onShare: () => void;
+  onDelete: () => void;
+  onSetFavorite: () => void;
 }) {
-  // FIXME needs a delete button
   const { macro, execution, imageURL } = props;
   const isMacroRunning = execution?.executionId == macro.uid;
   const percentage = executionProgress(props.execution);
@@ -69,14 +73,20 @@ export default function MacroCard(props: {
       </CardActionArea>
 
       <CardActions>
-        <IconButton size="small" disabled={isMacroRunning} onClick={props.onShare}>
+        <IconButton size="small" disabled={true} onClick={props.onShare}>
           <ShareIcon />
         </IconButton>
-        <IconButton size="small" disabled={isMacroRunning} onClick={props.onEdit}>
+        <IconButton size="small" disabled={true} onClick={props.onEdit}>
           <EditIcon />
         </IconButton>
-        <IconButton size="small" disabled={isMacroRunning} onClick={props.onView}>
+        <IconButton size="small" onClick={props.onView}>
           <VisibilityIcon />
+        </IconButton>
+        <IconButton size="small" disabled={isMacroRunning} onClick={props.onDelete}>
+          <DeleteIcon />
+        </IconButton>
+        <IconButton size="small" disabled={true} onClick={props.onSetFavorite}>
+          <StarIcon />
         </IconButton>
       </CardActions>
 
