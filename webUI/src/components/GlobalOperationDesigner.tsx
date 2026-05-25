@@ -23,8 +23,10 @@ import { actionAutoName } from "@/features/Action";
 import { FilterValueDialog } from "./MacroList/ActionDetailsDialog";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import BugReportIcon from "@mui/icons-material/BugReport";
-import { MacroExecuteRequester, printDiff, runnableMacro, toMacroDTO, toRunnable } from "@/features/Execution";
+import { MacroExecuteRequester, runnableMacro, toMacroDTO, toRunnable } from "@/features/Execution";
 import equal from "fast-deep-equal";
+import AddIcon from "@mui/icons-material/Add";
+import { ActionSelectDialog } from "./ActionSelectDialog";
 
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
@@ -84,7 +86,7 @@ const StepItem = ({ item, setItem, openEditorFor }: StepItemProps) => {
         <IconButton
           size="small"
           disabled={false}
-          onClick={() => openEditorFor(invertFilter(item))}
+          onClick={() => openEditorFor(item)}
           className="clear-btn"
         >
           <EditIcon />
@@ -143,43 +145,15 @@ export const GlobalOperationDesigner = (props: Props) => {
   const [description, setDescription] = useState<string | undefined>(undefined);
   const [uuid, setUUID] = useState<string>(crypto.randomUUID());
 
+  const [addItem, setAddItem] = useState<"filter" | "applier" | undefined>(undefined);
+
   const currentRunnable = constructRunnable();
   const backendRunnable = toRunnable(
     props.macros.find((macro) => macro.uid === uuid),
     props.actions,
   );
-
-function downloadTextFile(
-  filename: string,
-  content: string
-) {
-  const blob = new Blob([content], {
-    type: "text/plain",
-  });
-
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-
-  document.body.appendChild(a);
-  a.click();
-
-  a.remove();
-
-  URL.revokeObjectURL(url);
-}
-
   const diff = !equal(currentRunnable, backendRunnable);
- /* if (diff && currentRunnable && backendRunnable) {
-    printDiff(currentRunnable, backendRunnable);
-    downloadTextFile("currentRunnable",JSON.stringify(currentRunnable, null, 3));
-    downloadTextFile("backendRunnable",JSON.stringify(backendRunnable, null, 3));
-    throw new Error("Intentional crash");
-  } */
 
-  console.log("diff:", diff);
   const updateFilterItem = (action: StepItemType | null, idx: number) => {
     if (action === null) {
       setFilters((prev) => prev.filter((p, i) => i !== idx));
@@ -204,7 +178,10 @@ function downloadTextFile(
   };
 
   function constructActions(): StepItemType[] {
-    const steps = [...filters, ...appliers];
+    const steps = [...filters, ...appliers].map((action) => ({
+      ...action,
+      uid: crypto.randomUUID(),
+    })); //reshuffle UUIDs so no default action is present in two macros
     return steps;
   }
 
@@ -238,6 +215,13 @@ function downloadTextFile(
 
   function onDebug() {
     props.onExecute(constructRunnable(), true);
+  }
+
+  function onAddApplier() {
+    setAddItem("applier");
+  }
+  function onAddFilter() {
+    setAddItem("filter");
   }
 
   const filterDTOtoComponent = (action: StepItemType, idx: number) => {
@@ -324,11 +308,17 @@ function downloadTextFile(
         <Paper sx={{ p: 1, border: 1 }}>
           <Typography>If:</Typography>
           {filters.sort(sortInactiveLast).map(filterDTOtoComponent)}
+          <IconButton size="small" disabled={false} onClick={onAddFilter} className="clear-btn">
+            <AddIcon />
+          </IconButton>
         </Paper>
         <Divider orientation="vertical" flexItem />
         <Paper sx={{ p: 1, border: 1 }}>
           <Typography>Then:</Typography>
           {appliers.sort(sortInactiveLast).map(applyDTOtoComponent)}
+          <IconButton size="small" disabled={false} onClick={onAddApplier} className="clear-btn">
+            <AddIcon />
+          </IconButton>
         </Paper>
       </Box>
       <FilterValueDialog
@@ -338,6 +328,31 @@ function downloadTextFile(
         setAction={(updatedFilter) => updateFilterItem(updatedFilter, editorItem!.idx)}
         onClose={() => setEditorItem(null)}
         onViewItem={() => {}}
+      />
+
+      <ActionSelectDialog
+        open={addItem !== undefined}
+        actions={addItem === "applier" ? defaultApplyActions : defaultFilters}
+        onClose={(selected) => {
+          if (addItem === "applier") {
+            const list: StepItemType[] = [
+              ...appliers,
+              ...selected.map((i) =>
+                actionAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
+              ),
+            ];
+            setAppliers(list);
+          } else if (addItem === "filter") {
+            const list: StepItemType[] = [
+              ...filters,
+              ...selected.map((i) =>
+                filterAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
+              ),
+            ];
+            setFilters(list);
+          }
+          setAddItem(undefined);
+        }}
       />
     </Box>
   );

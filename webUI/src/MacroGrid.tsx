@@ -38,7 +38,7 @@ const imageURLs = [
   "https://images.unsplash.com/photo-1465189684280-6a8fa9b19a7a?q=80&w=1600&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1504208434309-cb69f4fe52b0?q=80&w=1600&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1505761671935-60b3a7427bad?q=80&w=1600&auto=format&fit=crop",
-];
+]; //FIXME make these images stable based on UUID until backend supports saving images
 
 export function MacroGrid({
   macros,

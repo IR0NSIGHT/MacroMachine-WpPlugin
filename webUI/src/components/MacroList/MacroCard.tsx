@@ -22,6 +22,7 @@ export default function MacroCard(props: {
   onEdit: () => void;
   onShare: () => void;
 }) {
+  // FIXME needs a delete button
   const { macro, execution, imageURL } = props;
   const isMacroRunning = execution?.executionId == macro.uid;
   const percentage = executionProgress(props.execution);

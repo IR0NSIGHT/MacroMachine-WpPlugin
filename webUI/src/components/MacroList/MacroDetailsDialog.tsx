@@ -8,7 +8,7 @@ type Props = {
   onClose: () => void;
   onViewItem: (item: MacroDTO | ActionDTO) => void;
 };
-
+//FIXME: active state of each step must be displayed
 const toSentence = (input: InputDTO, type: ActionType, output: OutputDTO) => {
   const does = (() => {
     switch (type as string) {

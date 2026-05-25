@@ -20,6 +20,7 @@ import { ExecutionQueueDTO, MacroDTO, ExecutionStateDTO, ActionDTO } from "./typ
 import { MacroGrid } from "./MacroGrid";
 import { GlobalOperationDesigner } from "./components/GlobalOperationDesigner";
 import { isUUID, MacroExecuteRequester, toMacroDTO } from "./features/Execution";
+import equal from "fast-deep-equal";
 
 export default function App() {
   const [search, setSearch] = useState("");
@@ -32,7 +33,7 @@ export default function App() {
     currentStepIndex: 0,
     status: "IDLE",
   });
-  const [_queue, setQueue] = useState<ExecutionQueueDTO>({
+  const [queue, setQueue] = useState<ExecutionQueueDTO>({
     queuedMacroIds: [],
   });
   const [connectionLost, setConnectionLost] = useState(false);
@@ -42,20 +43,32 @@ export default function App() {
   useEffect(() => {
     const interval = setInterval(async () => {
       await fetchExecutionQueue()
-        .then((r) => setQueue(r))
-        .catch(() => setConnectionLost(true));
+        .then((r) => {
+          if (!equal(r, queue)) setQueue(r);
+          setConnectionLost(false);
+        })
+        .catch((e) => {
+          setConnectionLost(true);
+          console.error(e);
+        });
       await fetchExecutionState()
-        .then(setExecutionState)
-        .catch(() => setConnectionLost(true));
+        .then((r) => {
+          if (!equal(r, executionState)) setExecutionState(r);
+        })
+        .catch(console.error);
       await fetchActions()
-        .then(setActions)
-        .catch(() => setConnectionLost(true));
+        .then((r) => {
+          if (!equal(r, actions)) setActions(r);
+        })
+        .catch(console.error);
       await fetchMacros()
-        .then((list) => setMacros(list.sort((a, b) => a.name.localeCompare(b.name))))
-        .catch(() => setConnectionLost(true));
+        .then((r) => {
+          if (!equal(r, macros)) setMacros(r);
+        })
+        .catch(console.error);
     }, 300);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval); //cleanup timer
   }, []);
 
   const onRequestExecution: MacroExecuteRequester = (runnable, isDebug) => {
@@ -88,7 +101,7 @@ export default function App() {
       <PrimarySearchAppBar
         search={search}
         onSearchChange={setSearch}
-        queue={_queue}
+        queue={queue}
         executionState={executionState}
       />
       <Box

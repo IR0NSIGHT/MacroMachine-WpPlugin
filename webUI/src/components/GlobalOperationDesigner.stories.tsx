@@ -11,5 +11,10 @@ export default meta;
 type Story = StoryObj<typeof GlobalOperationDesigner>;
 
 export const Default: Story = {
-  args: {},
+  args: {
+    actions: [],
+    macros: [],
+    onSave: alert,
+    onExecute: alert,
+  },
 };
