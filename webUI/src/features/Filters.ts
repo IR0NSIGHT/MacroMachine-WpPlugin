@@ -1,11 +1,10 @@
 import { ActionDTO } from "@/types/DTO";
 import { valueToString } from "./InputOutput";
 import { collectRanges } from "./Ranges";
+import { StepItemType } from "./Execution";
 
 export const filterValuePass = 1;
 export const filterValueBlock = 0;
-
-export type StepItemType = ActionDTO & { active: boolean };
 
 export type NamedMapping = {
   input: number;

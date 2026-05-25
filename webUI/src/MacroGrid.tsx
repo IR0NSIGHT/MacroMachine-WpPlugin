@@ -5,7 +5,7 @@ import MacroCard from "./components/MacroList/MacroCard";
 import { MacroDetailsDialog } from "./components/MacroList/MacroDetailsDialog";
 import { MacroDTO, ActionDTO, ExecutionStateDTO, isMacroDTO } from "./types/DTO";
 import Item from "@mui/material/Grid";
-import { MacroExecuteRequester } from "./features/Execution";
+import { MacroExecuteRequester, runnableMacro, toRunnable } from "./features/Execution";
 
 const imageURLs = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1600&auto=format&fit=crop",
@@ -52,9 +52,7 @@ export function MacroGrid({
   onRequestExecution: MacroExecuteRequester;
 }) {
   const [hideNested, setHideNested] = useState(false);
-  const [viewedMacro, setViewedMacro] = useState<
-    (MacroDTO & { steps: (ActionDTO | MacroDTO)[] }) | null
-  >(null);
+  const [viewedMacro, setViewedMacro] = useState<runnableMacro | undefined>(undefined);
   const [viewAction, setViewAction] = useState<ActionDTO | undefined>(undefined);
 
   const macroSet = new Set<string>();
@@ -80,11 +78,8 @@ export function MacroGrid({
   };
 
   const onView = (macro: MacroDTO) => {
-    const steps: (MacroDTO | ActionDTO)[] = macro.executionUUIDs.map(
-      (uid) => uuidToMacroOrAction.get(uid)!,
-    );
-    const macroWithSteps = { ...macro, steps: steps };
-    setViewedMacro(macroWithSteps);
+    const runnable = toRunnable(macro, actions, macros);
+    setViewedMacro(runnable);
   };
 
   const filterHideNested = (macro: MacroDTO) => {
@@ -151,7 +146,7 @@ export function MacroGrid({
         <MacroDetailsDialog
           open={!!viewedMacro}
           macro={viewedMacro}
-          onClose={() => setViewedMacro(null)}
+          onClose={() => setViewedMacro(undefined)}
           onViewItem={(item: MacroDTO | ActionDTO) => {
             if (isMacroDTO(item)) {
               onView(item);

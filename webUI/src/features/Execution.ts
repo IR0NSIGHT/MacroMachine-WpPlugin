@@ -1,17 +1,25 @@
 import { ActionDTO, MacroDTO } from "@/types/DTO";
-import { StepItemType } from "./Filters";
 
 export type uuid = string;
 export function isUUID(value: unknown): value is uuid {
   return typeof value === "string";
 }
 
+export function isStepItem(value: StepItemType | StepMacroType): value is StepItemType {
+  return "actionType" in value;
+}
+
+export function isStepMacro(value: StepItemType | StepMacroType): value is StepMacroType {
+  return "executionUUIDs" in value;
+}
+
 export type runnableMacro = {
-  steps: StepItemType[];
+  steps: (StepItemType | StepMacroType)[];
   name: string;
   description: string;
   uid: string;
 };
+
 export function isRunnableMacro(value: unknown): value is runnableMacro {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -42,15 +50,17 @@ export function toMacroDTO(runnabel: runnableMacro): MacroDTO {
 export function toRunnable(
   macro: MacroDTO | undefined,
   actions: ActionDTO[],
+  macros: MacroDTO[],
 ): runnableMacro | undefined {
   if (!macro) return undefined;
   console.log("to runnable:", macro, actions);
+  const actionsAndMacros = [...actions, ...macros];
   try {
-    const uidSet = new Set(actions.map((a) => a.uid));
-    const stepItems: StepItemType[] = macro.executionUUIDs
+    const uidSet = new Set(actionsAndMacros.map((a) => a.uid));
+    const stepItems: (StepItemType | StepMacroType)[] = macro.executionUUIDs
       .filter((uid) => uidSet.has(uid))
       .map((uid, idx) => ({
-        ...actions.find((a) => a.uid === uid)!,
+        ...actionsAndMacros.find((a) => a.uid === uid)!,
         active: macro.activeActions[idx],
       }));
     return {
@@ -63,3 +73,5 @@ export function toRunnable(
     console.log(error);
   }
 }
+export type StepItemType = ActionDTO & { active: boolean };
+export type StepMacroType = MacroDTO & { active: boolean };

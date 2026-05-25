@@ -3,8 +3,8 @@ import {
   filterAutoName,
   invertFilterSinglePosition,
   namedMapping,
-  StepItemType,
 } from "@/features/Filters";
+import { StepItemType } from "@/features/Execution";
 import ReactMarkdown from "react-markdown";
 import { valueToString } from "@/features/InputOutput";
 import { MacroDTO, ActionDTO } from "@/types/DTO";

@@ -1,10 +1,13 @@
 import { Dialog, DialogTitle, DialogContent, Typography, Stack, Chip } from "@mui/material";
 
 import { ActionDTO, ActionType, InputDTO, isMacroDTO, OutputDTO, MacroDTO } from "@/types/DTO";
+import { StepMacroType } from "@/features/Execution";
+import { StepItemType } from "@/features/Execution";
+import { runnableMacro } from "@/features/Execution";
 
 type Props = {
   open: boolean;
-  macro: (MacroDTO & { steps: (MacroDTO | ActionDTO)[] }) | null;
+  macro: runnableMacro | undefined;
   onClose: () => void;
   onViewItem: (item: MacroDTO | ActionDTO) => void;
 };
@@ -38,17 +41,24 @@ const DetailsItem = ({
   key,
   onClick,
 }: {
-  item: MacroDTO | ActionDTO;
+  item: StepMacroType | StepItemType;
   key: number;
   onClick: () => void;
 }) => {
   const details = isMacroDTO(item) ? "Macro" : toSentence(item.input, item.actionType, item.output);
-  return <Chip key={key} label={item.name + ": " + details} size="small" onClick={onClick} />;
+  return (
+    <Chip
+      key={key}
+      color={item.active ? (isMacroDTO(item) ? "primary" : "secondary") : "default"}
+      label={item.name + ": " + details}
+      size="small"
+      onClick={onClick}
+    />
+  );
 };
 
 export function MacroDetailsDialog({ open, macro, onClose, onViewItem }: Props) {
   if (!macro) return null;
-
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>{macro.name}</DialogTitle>

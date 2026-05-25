@@ -19,7 +19,7 @@ import { PrimarySearchAppBar } from "./components/AppBar";
 import { ExecutionQueueDTO, MacroDTO, ExecutionStateDTO, ActionDTO } from "./types/DTO";
 import { MacroGrid } from "./MacroGrid";
 import { GlobalOperationDesigner } from "./components/GlobalOperationDesigner";
-import { isUUID, MacroExecuteRequester, toMacroDTO } from "./features/Execution";
+import { isStepItem, isUUID, MacroExecuteRequester, toMacroDTO } from "./features/Execution";
 import equal from "fast-deep-equal";
 
 export default function App() {
@@ -77,7 +77,7 @@ export default function App() {
       if (isUUID(runnable)) {
         postQueueMacros([runnable]).then(console.log).catch(console.error);
       } else {
-        postActions(runnable.steps)
+        postActions(runnable.steps.filter(isStepItem))
           .then(() => postMacro(toMacroDTO(runnable)))
           .then(() => postQueueMacros([runnable.uid]))
           .then(console.log)

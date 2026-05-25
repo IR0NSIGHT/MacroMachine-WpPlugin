@@ -1,5 +1,6 @@
 import { ActionDTO } from "@/types/DTO";
-import { namedMapping, StepItemType } from "./Filters";
+import { namedMapping } from "./Filters";
+import { StepItemType } from "./Execution";
 
 export const explainAlwaysAction = (item: ActionDTO): string => {
   if (item.input.type !== "ALWAYS") return "Complex: " + item.name;
