@@ -27,7 +27,7 @@ import BugReportIcon from "@mui/icons-material/BugReport";
 import { MacroExecuteRequester, runnableMacro, toMacroDTO, toRunnable } from "@/features/Execution";
 import equal from "fast-deep-equal";
 import AddIcon from "@mui/icons-material/Add";
-import { SelectDialog } from "./ActionSelectDialog";
+import { SelectDialog } from "./SelectDialog";
 
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;

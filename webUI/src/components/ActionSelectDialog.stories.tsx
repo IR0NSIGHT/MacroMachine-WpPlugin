@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { SelectDialog } from "./ActionSelectDialog";
+import { SelectDialog } from "./SelectDialog";
 import defaultAppliers from "../assets/defaultApplyActions.json";
 import defaultFilters from "../assets/defaultFilters.json";
 import { ActionDTO } from "@/types/DTO";
