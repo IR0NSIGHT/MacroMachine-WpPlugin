@@ -1,23 +1,63 @@
-import { Dialog, DialogTitle, DialogContent, Stack, Box, Chip } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, Stack, Box, Chip, Fab } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import CheckIcon from "@mui/icons-material/Check";
 import { useState } from "react";
 
-type SelectDialogProps<T> = {
+export type SelectDialogProps<T> = {
   open: boolean;
   items: T[];
   getId: (item: T) => string;
   getLabel: (item: T) => string;
   onClose: (selected: T[]) => void;
+  isSingleSelect: boolean;
+  title: string;
 };
 
-export function SelectDialog<T>({ open, items, getId, getLabel, onClose }: SelectDialogProps<T>) {
+export function SelectDialog<T>({
+  open,
+  items,
+  getId,
+  getLabel,
+  onClose,
+  isSingleSelect = false,
+  title,
+}: SelectDialogProps<T>) {
   const [selected, setSelected] = useState<T[]>([]);
 
   return (
-    <Dialog open={open} onClose={() => onClose(selected)} maxWidth="md" fullWidth>
-      <DialogTitle>Select Items</DialogTitle>
+    <Dialog
+      open={open}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          position: "relative",
+          overflow: "visible",
+        },
+      }}
+    >
+      {/* Floating abort */}
+      <Fab
+        size="small"
+        color="default"
+        onClick={() => {
+          setSelected([]);
+          onClose([]);
+        }}
+        sx={{
+          position: "absolute",
+          top: 12,
+          right: 12,
+          zIndex: 10,
+        }}
+      >
+        <CloseIcon />
+      </Fab>
 
-      <DialogContent>
-        <Stack direction="column" spacing={1}>
+      <DialogTitle>{title}</DialogTitle>
+
+      <DialogContent sx={{ pb: 10 }}>
+        <Stack spacing={0}>
           {[...items]
             .sort((a, b) => getLabel(a).localeCompare(getLabel(b)))
             .map((item) => {
@@ -32,9 +72,13 @@ export function SelectDialog<T>({ open, items, getId, getLabel, onClose }: Selec
                     color={isSelected ? "primary" : "default"}
                     variant={isSelected ? "filled" : "outlined"}
                     onClick={() => {
-                      setSelected((prev) =>
-                        isSelected ? prev.filter((s) => getId(s) !== id) : [...prev, item],
-                      );
+                      if (isSingleSelect) {
+                        setSelected(isSelected ? [] : [item]);
+                      } else {
+                        setSelected((prev) =>
+                          isSelected ? prev.filter((s) => getId(s) !== id) : [...prev, item],
+                        );
+                      }
                     }}
                   />
                 </Box>
@@ -42,6 +86,20 @@ export function SelectDialog<T>({ open, items, getId, getLabel, onClose }: Selec
             })}
         </Stack>
       </DialogContent>
+
+      {/* Floating confirm */}
+      <Fab
+        color="primary"
+        onClick={() => onClose(selected)}
+        sx={{
+          position: "absolute",
+          bottom: 24,
+          right: 24,
+          zIndex: 10,
+        }}
+      >
+        <CheckIcon />
+      </Fab>
     </Dialog>
   );
 }

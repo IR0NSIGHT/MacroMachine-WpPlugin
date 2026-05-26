@@ -214,9 +214,9 @@ export const GlobalOperationDesigner = (props: Props) => {
     const allowedMacros = props.macros
       .map((m) => toRunnable(m, props.actions, props.macros))
       .filter((m) => m !== undefined)
-      .filter(isGlobalOpsMacro);
+      .filter((m) => isGlobalOpsMacro(m) === true);
 
-    setLoadMacros(allowedMacros);
+    setLoadMacros(allowedMacros); //FIXME linter doesnt like | undefined here
   }
 
   function isGlobalOpsMacro(runnable: runnableMacro): true | { error: string } {
@@ -384,10 +384,13 @@ export const GlobalOperationDesigner = (props: Props) => {
       />
 
       <SelectDialog<StepItemType>
+        key={addItem}
         open={addItem !== undefined}
         items={addItem === "applier" ? defaultApplyActions : defaultFilters}
         getId={(item) => item.uid}
         getLabel={(item) => item.name}
+        isSingleSelect={false}
+        title={"Select a " + (addItem ?? "undefined")}
         onClose={(selected) => {
           if (addItem === "applier") {
             const list: StepItemType[] = [
@@ -414,10 +417,12 @@ export const GlobalOperationDesigner = (props: Props) => {
         items={loadMacros ?? []}
         getId={(item) => item.uid}
         getLabel={(item) => item.name}
+        isSingleSelect={true}
         onClose={(selected) => {
           if (selected.length !== 0) onLoadExisting(selected[0]);
           setLoadMacros(undefined);
         }}
+        title={"Select a macro"}
       />
     </Box>
   );
