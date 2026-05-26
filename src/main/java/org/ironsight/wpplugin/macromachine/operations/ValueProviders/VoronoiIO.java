@@ -76,18 +76,18 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO {
   public void prepareForDimension(Dimension dim) throws IllegalAccessError {}
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
+  public IMappingValue instantiateFrom(IoParameter[] data) {
     return new VoronoiIO(
-        (Integer) data[0],
-        (Integer) data[1],
-        (Integer) data[2],
-        (Integer) data[3],
-        (Integer) data[4]);
+            ((IntValue) data[0]).value(),
+            ((IntValue) data[1]).value(),
+            ((IntValue) data[2]).value(),
+            ((IntValue) data[3]).value(),
+            ((IntValue) data[4]).value());
   }
 
   @Override
-  public Object[] getSaveData() {
-    return new Object[] {min, max, seed, frequency, (int) scale};
+  public IoParameter[] getSaveData() {
+    return new IoParameter[] {new IntValue(min),new IntValue( max), new IntValue(seed),new IntValue( frequency), new IntValue((int) scale)};
   }
 
   @Override

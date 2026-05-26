@@ -46,7 +46,7 @@ public class SelectionIO extends BinaryLayerIO {
   }
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
+  public IMappingValue instantiateFrom(IoParameter[] data) {
     return new SelectionIO();
   }
 

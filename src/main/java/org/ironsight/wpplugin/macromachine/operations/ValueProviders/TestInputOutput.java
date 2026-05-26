@@ -75,13 +75,13 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
   }
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
+  public IMappingValue instantiateFrom(IoParameter[] data) {
     return new TestInputOutput();
   }
 
   @Override
-  public Object[] getSaveData() {
-    return new Object[0];
+  public IoParameter[] getSaveData() {
+    return new IoParameter[0];
   }
 
   @Override

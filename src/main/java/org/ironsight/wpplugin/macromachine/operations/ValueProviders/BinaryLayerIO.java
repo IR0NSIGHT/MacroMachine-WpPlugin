@@ -94,7 +94,7 @@ public class BinaryLayerIO
   }
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
+  public IMappingValue instantiateFrom(IoParameter[] data) {
     Object[] saveData =
         new Object[] {
           "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false
@@ -102,12 +102,12 @@ public class BinaryLayerIO
     for (int i = 0; i < data.length; i++) {
       saveData[i] = data[i];
     }
-    return new BinaryLayerIO((String) saveData[0], (String) saveData[1], (Boolean) saveData[2]);
+    return new BinaryLayerIO(((StringValue) saveData[0]).value(), ((StringValue) saveData[1]).value(), ((BoolValue) saveData[2]).value());
   }
 
   @Override
-  public Object[] getSaveData() {
-    return new Object[] {layerName, layerId, isCustom};
+  public IoParameter[] getSaveData() {
+    return new IoParameter[] {new StringValue(layerName), new StringValue(layerId), new BoolValue(isCustom)};
   }
 
   @Override

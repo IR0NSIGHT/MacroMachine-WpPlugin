@@ -40,7 +40,7 @@ class PerlinNoiseIOTest {
   @Test
   void serialize() {
     PerlinNoiseIO io = new PerlinNoiseIO(1, 2, 3, 4);
-    Object[] data = io.getSaveData();
+    IoParameter[] data = io.getSaveData();
     IMappingValue instantiated = io.instantiateFrom(data);
     assertEquals(io, instantiated);
   }

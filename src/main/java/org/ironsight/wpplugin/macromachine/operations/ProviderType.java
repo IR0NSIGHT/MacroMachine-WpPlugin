@@ -5,6 +5,8 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
 
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IoParameter.parseParameter;
+
 public enum ProviderType {
   HEIGHT,
   SLOPE,
@@ -31,27 +33,28 @@ public enum ProviderType {
   RANDOM_NOISE;
 
   public static IMappingValue fromType(Object[] data, ProviderType type) {
-    /**
-     * take save data, compare to default savedata. only use it if it has the correct type keep
-     * default entries if data item could not be used/was not present
-     */
-    Object[] dataSafe = ProviderType.fromTypeDefault(type).getSaveData();
-    for (int i = 0; i < dataSafe.length; i++) {
+    IoParameter[] dataSafe = ProviderType.fromTypeDefault(type).getSaveData();
+
+    for (int i = 0; i < dataSafe.length && i < data.length; i++) {
       try {
-        if (i >= data.length) continue;
-        Object dataObj = data[i];
-        Object dataDef = dataSafe[i];
-        if (dataObj.getClass().equals(dataDef.getClass())) dataSafe[i] = dataObj;
+        Object raw = data[i];
+        IoParameter expected = dataSafe[i];
+
+        IoParameter parsed = parseParameter(raw, expected);
+
+        if (parsed != null) {
+          dataSafe[i] = parsed;
+        }
       } catch (Exception ignored) {
-        // System.err.println("exception when parsing save data obj:" + ignored);
       }
-      ;
     }
 
     IMappingValue newV = fromTypeDefault(type).instantiateFrom(dataSafe);
     assert newV.getProviderType() == type;
+
     return newV;
   }
+
 
   public static IMappingValue fromTypeDefault(ProviderType type) {
     switch (type) {

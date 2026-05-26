@@ -85,7 +85,7 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
   }
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
+  public IMappingValue instantiateFrom(IoParameter[] data) {
     Object[] saveData =
         new Object[] {
           "Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer", false
@@ -94,12 +94,12 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
       saveData[i] = data[i];
     }
     return new BitLayerBinarySpraypaintApplicator(
-        (String) saveData[0], (String) saveData[1], (Boolean) saveData[2]);
+        ((StringValue) saveData[0]).value(), ((StringValue) saveData[1]).value(), ((BoolValue) saveData[2]).value());
   }
 
   @Override
-  public Object[] getSaveData() {
-    return new Object[] {layerId, layerName, isCustom};
+  public IoParameter[] getSaveData() {
+    return new IoParameter[] {new StringValue(layerId), new StringValue(layerName), new BoolValue( isCustom)};
   }
 
   @Override

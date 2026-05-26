@@ -84,13 +84,13 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
   }
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
+  public IMappingValue instantiateFrom(IoParameter[] data) {
     return new WaterDepthProvider();
   }
 
   @Override
-  public Object[] getSaveData() {
-    return new Object[0];
+  public IoParameter[] getSaveData() {
+    return new IoParameter[0];
   }
 
   @Override

@@ -98,15 +98,15 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
   public void prepareForDimension(Dimension dim) throws IllegalAccessError {}
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
-    int seed = (Integer) data[0];
-    int chance = (Integer) data[1];
+  public IMappingValue instantiateFrom(IoParameter[] data) {
+    int seed = ((IntValue) data[0]).value();
+    int chance = ((IntValue) data[1]).value();
     return (IMappingValue) instantiateWithValues(new int[] {seed, chance});
   }
 
   @Override
-  public Object[] getSaveData() {
-    return new Object[] {(Integer) seed, ((Float) (1 / chance)).intValue()};
+  public IoParameter[] getSaveData() {
+    return new IoParameter[] {new IntValue(seed), new IntValue (((Float) (1 / chance)).intValue())};
   }
 
   @Override

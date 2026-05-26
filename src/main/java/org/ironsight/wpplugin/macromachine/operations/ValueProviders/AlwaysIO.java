@@ -63,13 +63,13 @@ public class AlwaysIO implements IPositionValueGetter {
   public void prepareForDimension(Dimension dim) {}
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
+  public IMappingValue instantiateFrom(IoParameter[] data) {
     return instance;
   }
 
   @Override
-  public Object[] getSaveData() {
-    return new Object[0];
+  public IoParameter[] getSaveData() {
+    return new IoParameter[0];
   }
 
   @Override

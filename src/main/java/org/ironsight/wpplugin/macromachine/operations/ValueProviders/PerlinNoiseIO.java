@@ -87,22 +87,22 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO {
   public void prepareForDimension(Dimension dim) throws IllegalAccessError {}
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
+  public IMappingValue instantiateFrom(IoParameter[] data) {
     int[] intArray = new int[data.length];
 
     for (int i = 0; i < data.length; i++) {
-      intArray[i] = (int) data[i]; // Autoboxing converts int to Integer
+      intArray[i] = ((IntValue) data[i]).value(); // Autoboxing converts int to Integer
     }
     return instantiateWithValues(intArray);
   }
 
   @Override
-  public Object[] getSaveData() {
+  public IoParameter[] getSaveData() {
     int[] intArray = getEditableValues();
-    Object[] objectArray = new Object[intArray.length];
+    IoParameter[] objectArray = new IoParameter[intArray.length];
 
     for (int i = 0; i < intArray.length; i++) {
-      objectArray[i] = intArray[i]; // Autoboxing converts int to Integer
+      objectArray[i] = new IntValue(intArray[i]); // Autoboxing converts int to Integer
     }
     return objectArray;
   }

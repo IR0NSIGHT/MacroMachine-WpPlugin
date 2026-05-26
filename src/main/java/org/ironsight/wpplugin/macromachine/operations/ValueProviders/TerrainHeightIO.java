@@ -110,16 +110,16 @@ public class TerrainHeightIO
   }
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
+  public IMappingValue instantiateFrom(IoParameter[] data) {
     if (data.length == 0) return new TerrainHeightIO(-64, 319);
-    int minHeight = (int) data[0];
-    int maxHeight = (int) data[1];
+    int minHeight = ((IntValue) data[0]).value();
+    int maxHeight = ((IntValue) data[1]).value();
     return new TerrainHeightIO(minHeight, maxHeight);
   }
 
   @Override
-  public Object[] getSaveData() {
-    return new Object[] {(Integer) minHeight, (Integer) maxHeight};
+  public IoParameter[] getSaveData() {
+    return new IoParameter[] {new IntValue (minHeight),new IntValue ( maxHeight)};
   }
 
   @Override

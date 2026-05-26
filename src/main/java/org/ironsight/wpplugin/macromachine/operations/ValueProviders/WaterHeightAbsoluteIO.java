@@ -70,14 +70,14 @@ public class WaterHeightAbsoluteIO
   }
 
   @Override
-  public IMappingValue instantiateFrom(Object[] data) {
+  public IMappingValue instantiateFrom(IoParameter[] data) {
     if (data.length == 0) return new WaterHeightAbsoluteIO(-64, 319);
-    return new WaterHeightAbsoluteIO((Integer) data[0], (Integer) data[1]);
+    return new WaterHeightAbsoluteIO(((IntValue) data[0]).value(), ((IntValue) data[1]).value());
   }
 
   @Override
-  public Object[] getSaveData() {
-    return new Object[] {min, max};
+  public IoParameter[] getSaveData() {
+    return new IoParameter[] {new IntValue(min), new IntValue(max)};
   }
 
   @Override

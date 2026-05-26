@@ -42,9 +42,9 @@ public interface IMappingValue extends IDisplayUnit {
 
   void prepareForDimension(org.pepsoft.worldpainter.Dimension dim) throws IllegalAccessError;
 
-  IMappingValue instantiateFrom(Object[] data);
+  IMappingValue instantiateFrom(IoParameter[] data);
 
-  Object[] getSaveData();
+  IoParameter[] getSaveData();
 
   String valueToString(int value);
 

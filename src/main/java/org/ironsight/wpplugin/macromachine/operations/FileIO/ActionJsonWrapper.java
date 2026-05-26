@@ -10,6 +10,8 @@ import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IoParameter.unwrap;
+
 public class ActionJsonWrapper {
   private ProviderType inputId;
   private Object[] inputData;
@@ -50,10 +52,10 @@ public class ActionJsonWrapper {
 
   public ActionJsonWrapper(MappingAction mapping) {
     setInputId(mapping.input.getProviderType());
-    setInputData(mapping.input.getSaveData());
+    setInputData(unwrap(mapping.input.getSaveData()));
 
     setOutputId(mapping.output.getProviderType());
-    setOutputData(mapping.output.getSaveData());
+    setOutputData(unwrap(mapping.output.getSaveData()));
 
     setActionType(mapping.getActionType());
     setName(mapping.getName());
