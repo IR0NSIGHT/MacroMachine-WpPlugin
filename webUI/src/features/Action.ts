@@ -1,5 +1,5 @@
 import { ActionDTO } from "@/types/DTO";
-import { namedMapping } from "./Filters";
+import { isFilter, namedMapping } from "./Filters";
 import { StepItemType } from "./Execution";
 
 export const explainAlwaysAction = (item: ActionDTO): string => {
@@ -32,6 +32,10 @@ export const explainAlwaysAction = (item: ActionDTO): string => {
     byStr,
     all.map((mapping) => mapping.outputName),
   ].join(" ");
+};
+
+export const isSimpleAction = (item: ActionDTO) => {
+  return !isFilter(item) && item.input.type === "ALWAYS";
 };
 
 export const actionAutoName = (action: StepItemType): StepItemType => {

@@ -1,43 +1,40 @@
-import { ActionDTO } from "@/types/DTO";
 import { Dialog, DialogTitle, DialogContent, Stack, Box, Chip } from "@mui/material";
 import { useState } from "react";
 
-type FilterEditorProps = {
+type SelectDialogProps<T> = {
   open: boolean;
-  actions: ActionDTO[];
-  onClose: (item: ActionDTO[]) => void;
+  items: T[];
+  getId: (item: T) => string;
+  getLabel: (item: T) => string;
+  onClose: (selected: T[]) => void;
 };
 
-export function ActionSelectDialog({ open, actions, onClose }: FilterEditorProps) {
-  const [selected, setSelected] = useState<ActionDTO[]>([]);
+export function SelectDialog<T>({ open, items, getId, getLabel, onClose }: SelectDialogProps<T>) {
+  const [selected, setSelected] = useState<T[]>([]);
 
   return (
-    <Dialog
-      open={open}
-      onClose={() => {
-        onClose(selected);
-      }}
-      maxWidth="md"
-      fullWidth
-    >
+    <Dialog open={open} onClose={() => onClose(selected)} maxWidth="md" fullWidth>
       <DialogTitle>Select Items</DialogTitle>
 
       <DialogContent>
-        <Stack direction="column" spacing={1} flexWrap="wrap">
-          {actions
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((action) => {
-              const isSelected = selected.some((s) => s.uid === action.uid);
+        <Stack direction="column" spacing={1}>
+          {[...items]
+            .sort((a, b) => getLabel(a).localeCompare(getLabel(b)))
+            .map((item) => {
+              const id = getId(item);
+              const isSelected = selected.some((s) => getId(s) === id);
+
               return (
-                <Box key={action.uid}>
+                <Box key={id}>
                   <Chip
-                    label={action.name}
+                    label={getLabel(item)}
                     size="small"
                     color={isSelected ? "primary" : "default"}
                     variant={isSelected ? "filled" : "outlined"}
                     onClick={() => {
-                      if (isSelected) setSelected(selected.filter((s) => s.uid !== action.uid));
-                      else setSelected([...selected, action]);
+                      setSelected((prev) =>
+                        isSelected ? prev.filter((s) => getId(s) !== id) : [...prev, item],
+                      );
                     }}
                   />
                 </Box>

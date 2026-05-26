@@ -13,6 +13,10 @@ export type NamedMapping = {
   outputName: string;
 };
 
+export const isFilter = (item: ActionDTO): boolean => {
+  return item.output.type === "INTERMEDIATE_SELECTION";
+};
+
 export const namedMapping = (action: ActionDTO): NamedMapping[] => {
   const outputToString = valueToString(action.output);
   const inputToString = valueToString(action.input);

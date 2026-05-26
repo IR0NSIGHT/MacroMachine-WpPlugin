@@ -17,17 +17,17 @@ import filters from "../assets/defaultFilters.json";
 import applyActions from "../assets/defaultApplyActions.json";
 import ClearIcon from "@mui/icons-material/Clear";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
-import { filterAutoName, invertFilter } from "@/features/Filters";
-import { StepItemType } from "@/features/Execution";
+import { filterAutoName, invertFilter, isFilter } from "@/features/Filters";
+import { isStepItem, isStepMacro, StepItemType } from "@/features/Execution";
 import EditIcon from "@mui/icons-material/Edit";
-import { actionAutoName } from "@/features/Action";
+import { actionAutoName, isSimpleAction } from "@/features/Action";
 import { FilterValueDialog } from "./MacroList/ActionDetailsDialog";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import { MacroExecuteRequester, runnableMacro, toMacroDTO, toRunnable } from "@/features/Execution";
 import equal from "fast-deep-equal";
 import AddIcon from "@mui/icons-material/Add";
-import { ActionSelectDialog } from "./ActionSelectDialog";
+import { SelectDialog } from "./ActionSelectDialog";
 
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
@@ -44,7 +44,6 @@ type StepItemProps = {
 };
 
 const StepItem = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) => {
-  const isFilter = item.input.type !== "ALWAYS" && item.output.type === "INTERMEDIATE_SELECTION";
   return (
     <Box
       key={item.uid}
@@ -75,7 +74,7 @@ const StepItem = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) =
       </Tooltip>
 
       <ButtonGroup>
-        {isFilter && (
+        {isFilter(item) && (
           <IconButton
             size="small"
             disabled={false}
@@ -142,6 +141,7 @@ export const GlobalOperationDesigner = (props: Props) => {
   const [uuid, setUUID] = useState<string>(crypto.randomUUID());
 
   const [addItem, setAddItem] = useState<"filter" | "applier" | undefined>(undefined);
+  const [loadMacros, setLoadMacros] = useState<runnableMacro[] | undefined>();
 
   const currentRunnable = constructRunnable();
   const backendRunnable = toRunnable(
@@ -208,6 +208,55 @@ export const GlobalOperationDesigner = (props: Props) => {
     setAppliers(defaultApplyActions);
     setTitle(undefined);
     setDescription(undefined);
+  }
+
+  function onRequestLoadExisting() {
+    const allowedMacros = props.macros
+      .map((m) => toRunnable(m, props.actions, props.macros))
+      .filter((m) => m !== undefined)
+      .filter(isGlobalOpsMacro);
+
+    setLoadMacros(allowedMacros);
+  }
+
+  function isGlobalOpsMacro(runnable: runnableMacro): true | { error: string } {
+    const steps = runnable.steps;
+    if (steps.some((step) => isStepMacro(step)))
+      return {
+        error:
+          "this macro contains nested macros. It does not work with this Global Operation Designer.",
+      };
+
+    if (steps.some((step) => isStepMacro(step) || (!isFilter(step) && !isSimpleAction(step)))) {
+      return {
+        error:
+          "this macro contains steps that are neither filters nor simple actions. It does not work with this Global Operation Designer.",
+      };
+    }
+
+    const filters = steps.filter(isStepItem).filter(isFilter);
+    const firstXItems = steps.slice(0, filters.length);
+    if (!equal(filters, firstXItems)) {
+      return {
+        error:
+          "this macro does not have all filters at the beginning. It does not work with this Global Operation Designer.",
+      };
+    }
+    return true;
+  }
+
+  function onLoadExisting(runnable: runnableMacro) {
+    const steps = runnable.steps;
+
+    const filters = steps.filter(isStepItem).filter(isFilter);
+    const appliers = steps.filter(isStepItem).filter(isSimpleAction);
+
+    // --- allow this macro ---
+    setUUID(runnable.uid);
+    setFilters(filters);
+    setAppliers(appliers);
+    setTitle(runnable.name);
+    setDescription(runnable.description);
   }
 
   function onDebug() {
@@ -277,6 +326,11 @@ export const GlobalOperationDesigner = (props: Props) => {
               <RestartAltIcon />
             </IconButton>
           </Tooltip>
+          <Tooltip title="Load an existing macro that is structured like a global operation.">
+            <IconButton size="small" disabled={false} onClick={onRequestLoadExisting}>
+              <RestartAltIcon />
+            </IconButton>
+          </Tooltip>
         </ButtonGroup>
         <Typography>{uuid}</Typography>
       </Box>
@@ -329,9 +383,11 @@ export const GlobalOperationDesigner = (props: Props) => {
         onViewItem={() => {}}
       />
 
-      <ActionSelectDialog
+      <SelectDialog<StepItemType>
         open={addItem !== undefined}
-        actions={addItem === "applier" ? defaultApplyActions : defaultFilters}
+        items={addItem === "applier" ? defaultApplyActions : defaultFilters}
+        getId={(item) => item.uid}
+        getLabel={(item) => item.name}
         onClose={(selected) => {
           if (addItem === "applier") {
             const list: StepItemType[] = [
@@ -351,6 +407,16 @@ export const GlobalOperationDesigner = (props: Props) => {
             setFilters(list);
           }
           setAddItem(undefined);
+        }}
+      />
+      <SelectDialog<runnableMacro>
+        open={loadMacros !== undefined}
+        items={loadMacros ?? []}
+        getId={(item) => item.uid}
+        getLabel={(item) => item.name}
+        onClose={(selected) => {
+          if (selected.length !== 0) onLoadExisting(selected[0]);
+          setLoadMacros(undefined);
         }}
       />
     </Box>
