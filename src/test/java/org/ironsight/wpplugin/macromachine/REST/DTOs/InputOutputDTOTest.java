@@ -21,6 +21,7 @@ class InputOutputDTOTest {
             setter.getMaxValue(),
             IPositionValueSetter.getIgnoreValue(setter),
             Arrays.stream(setter.getAllOutputValues())
+                .filter(i -> !setter.isIgnoreValue(i))
                 .mapToObj(setter::valueToString)
                 .toArray(String[]::new),
             setter.isDiscrete(),
