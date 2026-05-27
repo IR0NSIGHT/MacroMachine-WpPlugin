@@ -119,16 +119,20 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
   @Override
   public IMappingValue instantiateFrom(IoParameter[] data) {
     return new NibbleLayerSetter(
-            ((StringValue) data[0]).value(),
-            ((StringValue) data[1]).value(),
-            ((BoolValue) data[2]).value(),
-            defaultColorHex
-    );
+        ((StringValue) data[0]).value(),
+        ((StringValue) data[1]).value(),
+        ((BoolValue) data[2]).value(),
+        ((IntArrayValue) data[3]).value());
   }
 
   @Override
   public IoParameter[] getSaveData() {
-    return new IoParameter[] { new StringValue(layerName),  new StringValue(layerId),  new BoolValue(isCustom), new IntArrayValue(colorHex)};
+    return new IoParameter[] {
+      new StringValue(layerName),
+      new StringValue(layerId),
+      new BoolValue(isCustom),
+      new IntArrayValue(colorHex)
+    };
   }
 
   @Override

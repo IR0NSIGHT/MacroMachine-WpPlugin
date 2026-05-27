@@ -7,10 +7,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IoParameter;
 
 @Schema(description = "Describes an input/output provider configuration")
 public class InputOutputDTO {
@@ -46,6 +48,25 @@ public class InputOutputDTO {
   private final int ignoreValue;
 
   @ArraySchema(
+      schema = @Schema(implementation = IoParameter.class),
+      arraySchema =
+          @Schema(
+              description =
+                  "Parameters used to instantiate the IO provider. Each item contains a 'type' discriminator and matching value.",
+              requiredMode = Schema.RequiredMode.REQUIRED,
+              example =
+                  """
+        [
+          {"type":"int","value":42},
+          {"type":"float","value":1.5},
+          {"type":"string","value":"abc"},
+          {"type":"bool","value":true},
+          {"type":"intArray","value":[1,2,3]}
+        ]
+        """))
+  private final List<IoParameter> ioParameters;
+
+  @ArraySchema(
       schema =
           @Schema(
               description = "Display names for discrete values",
@@ -75,7 +96,8 @@ public class InputOutputDTO {
       @JsonProperty("ignoreValue") int ignoreValue,
       @JsonProperty("valueDisplayNames") String[] valueDisplayNames,
       @JsonProperty("discrete") boolean discrete,
-      @JsonProperty("type") ProviderType type) {
+      @JsonProperty("type") ProviderType type,
+      @JsonProperty("ioParameters") List<IoParameter> ioParameters) {
     this.displayName = displayName;
     this.description = description;
     this.min = min;
@@ -84,6 +106,11 @@ public class InputOutputDTO {
     this.valueDisplayNames = valueDisplayNames;
     this.discrete = discrete;
     this.type = type;
+    this.ioParameters = Objects.requireNonNull(ioParameters, "ioParameters can not be null");
+  }
+
+  public List<IoParameter> getIoParameters() {
+    return ioParameters;
   }
 
   public static InputOutputDTO fromOutputSetter(IPositionValueSetter setter) {
@@ -98,7 +125,8 @@ public class InputOutputDTO {
             .mapToObj(setter::valueToString)
             .toArray(String[]::new),
         setter.isDiscrete(),
-        setter.getProviderType());
+        setter.getProviderType(),
+        Arrays.asList(setter.getSaveData()));
   }
 
   public static InputOutputDTO fromInputGetter(IPositionValueGetter getter) {
@@ -114,7 +142,8 @@ public class InputOutputDTO {
             .mapToObj(getter::valueToString)
             .toArray(String[]::new),
         getter.isDiscrete(),
-        getter.getProviderType());
+        getter.getProviderType(),
+        Arrays.asList(getter.getSaveData()));
   }
 
   public int getMin() {
@@ -142,13 +171,13 @@ public class InputOutputDTO {
   }
 
   public IPositionValueGetter toGetter() {
-    var io = ProviderType.fromTypeDefault(type); // FIXME with params
+    var io = ProviderType.fromTypeWithParams(ioParameters.toArray(IoParameter[]::new), type);
     if (io instanceof IPositionValueGetter getter) return getter;
     else throw new IllegalArgumentException("this provider type is not a getter:" + type);
   }
 
   public IPositionValueSetter toSetter() {
-    var io = ProviderType.fromTypeDefault(type); // FIXME with params
+    var io = ProviderType.fromTypeWithParams(ioParameters.toArray(IoParameter[]::new), type);
     if (io instanceof IPositionValueSetter setter) return setter;
     else throw new IllegalArgumentException("this provider type is not a setter:" + type);
   }
@@ -172,6 +201,7 @@ public class InputOutputDTO {
         && isDiscrete() == that.isDiscrete()
         && Objects.equals(getDisplayName(), that.getDisplayName())
         && Objects.equals(getDescription(), that.getDescription())
+        && Objects.equals(ioParameters, that.ioParameters)
         && Arrays.equals(getValueDisplayNames(), that.getValueDisplayNames())
         && getType() == that.getType();
   }
@@ -206,6 +236,8 @@ public class InputOutputDTO {
         + max
         + ", ignoreValue="
         + ignoreValue
+        + ", ioParameters="
+        + ioParameters
         + ", valueDisplayNames="
         + Arrays.toString(valueDisplayNames)
         + ", discrete="

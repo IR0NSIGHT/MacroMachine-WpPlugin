@@ -94,12 +94,16 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
       saveData[i] = data[i];
     }
     return new BitLayerBinarySpraypaintApplicator(
-        ((StringValue) saveData[0]).value(), ((StringValue) saveData[1]).value(), ((BoolValue) saveData[2]).value());
+        ((StringValue) saveData[0]).value(),
+        ((StringValue) saveData[1]).value(),
+        ((BoolValue) saveData[2]).value());
   }
 
   @Override
   public IoParameter[] getSaveData() {
-    return new IoParameter[] {new StringValue(layerId), new StringValue(layerName), new BoolValue( isCustom)};
+    return new IoParameter[] {
+      new StringValue(layerId), new StringValue(layerName), new BoolValue(isCustom)
+    };
   }
 
   @Override

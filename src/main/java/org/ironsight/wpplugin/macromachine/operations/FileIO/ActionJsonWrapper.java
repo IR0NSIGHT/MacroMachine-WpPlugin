@@ -1,5 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.FileIO;
 
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IoParameter.unwrap;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Arrays;
@@ -9,8 +11,6 @@ import org.ironsight.wpplugin.macromachine.operations.ActionType;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-
-import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IoParameter.unwrap;
 
 public class ActionJsonWrapper {
   private ProviderType inputId;

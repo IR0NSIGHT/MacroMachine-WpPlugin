@@ -72,23 +72,23 @@ public class DistanceToLayerEdgeGetter
   public IMappingValue instantiateFrom(IoParameter[] data) {
     try {
       return new DistanceToLayerEdgeGetter(
-              ((BoolValue) data[3]).value(),
-              ((StringValue) data[0]).value(),
-              ((StringValue) data[1]).value(),
-              ((IntValue) data[2]).value()
-      );
+          ((BoolValue) data[3]).value(),
+          ((StringValue) data[0]).value(),
+          ((StringValue) data[1]).value(),
+          ((IntValue) data[2]).value());
     } catch (Exception ex) {
-      return new DistanceToLayerEdgeGetter(
-              searchInwards,
-              MacroSelectionLayer.INSTANCE,
-              100
-      );
+      return new DistanceToLayerEdgeGetter(searchInwards, MacroSelectionLayer.INSTANCE, 100);
     }
   }
 
   @Override
   public IoParameter[] getSaveData() {
-    return new IoParameter[] {new StringValue(layerName), new StringValue(layerId), new IntValue(maxDistance), new IntValue( searchInwards ? 1 : 0 )};
+    return new IoParameter[] {
+      new StringValue(layerName),
+      new StringValue(layerId),
+      new IntValue(maxDistance),
+      new IntValue(searchInwards ? 1 : 0)
+    };
   }
 
   @Override

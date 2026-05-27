@@ -118,7 +118,9 @@ public class StonePaletteApplicator implements IPositionValueSetter {
   @Override
   public IMappingValue instantiateFrom(IoParameter[] data) {
     return new StonePaletteApplicator(
-        Arrays.stream(data).map(f -> Terrain.values()[((IntValue) f).value()]).toArray(Terrain[]::new));
+        Arrays.stream(data)
+            .map(f -> Terrain.values()[((IntValue) f).value()])
+            .toArray(Terrain[]::new));
   }
 
   @Override

@@ -78,16 +78,22 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO {
   @Override
   public IMappingValue instantiateFrom(IoParameter[] data) {
     return new VoronoiIO(
-            ((IntValue) data[0]).value(),
-            ((IntValue) data[1]).value(),
-            ((IntValue) data[2]).value(),
-            ((IntValue) data[3]).value(),
-            ((IntValue) data[4]).value());
+        ((IntValue) data[0]).value(),
+        ((IntValue) data[1]).value(),
+        ((IntValue) data[2]).value(),
+        ((IntValue) data[3]).value(),
+        ((IntValue) data[4]).value());
   }
 
   @Override
   public IoParameter[] getSaveData() {
-    return new IoParameter[] {new IntValue(min),new IntValue( max), new IntValue(seed),new IntValue( frequency), new IntValue((int) scale)};
+    return new IoParameter[] {
+      new IntValue(min),
+      new IntValue(max),
+      new IntValue(seed),
+      new IntValue(frequency),
+      new IntValue((int) scale)
+    };
   }
 
   @Override

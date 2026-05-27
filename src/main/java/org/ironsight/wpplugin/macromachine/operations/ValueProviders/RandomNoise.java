@@ -106,7 +106,7 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
 
   @Override
   public IoParameter[] getSaveData() {
-    return new IoParameter[] {new IntValue(seed), new IntValue (((Float) (1 / chance)).intValue())};
+    return new IoParameter[] {new IntValue(seed), new IntValue(((Float) (1 / chance)).intValue())};
   }
 
   @Override

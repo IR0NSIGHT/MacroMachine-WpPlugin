@@ -1,11 +1,11 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IoParameter.parseParameter;
+
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
-
-import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IoParameter.parseParameter;
 
 public enum ProviderType {
   HEIGHT,
@@ -32,6 +32,13 @@ public enum ProviderType {
   VORONOI_NOISE,
   RANDOM_NOISE;
 
+  public static IMappingValue fromTypeWithParams(IoParameter[] data, ProviderType type) {
+    IMappingValue newV = fromTypeDefault(type).instantiateFrom(data);
+    assert newV.getProviderType() == type;
+
+    return newV;
+  }
+
   public static IMappingValue fromType(Object[] data, ProviderType type) {
     IoParameter[] dataSafe = ProviderType.fromTypeDefault(type).getSaveData();
 
@@ -48,13 +55,8 @@ public enum ProviderType {
       } catch (Exception ignored) {
       }
     }
-
-    IMappingValue newV = fromTypeDefault(type).instantiateFrom(dataSafe);
-    assert newV.getProviderType() == type;
-
-    return newV;
+    return fromTypeWithParams(dataSafe, type);
   }
-
 
   public static IMappingValue fromTypeDefault(ProviderType type) {
     switch (type) {

@@ -119,7 +119,7 @@ public class TerrainHeightIO
 
   @Override
   public IoParameter[] getSaveData() {
-    return new IoParameter[] {new IntValue (minHeight),new IntValue ( maxHeight)};
+    return new IoParameter[] {new IntValue(minHeight), new IntValue(maxHeight)};
   }
 
   @Override

@@ -69,7 +69,7 @@ public class MacroConcurrentApplicator implements MacroApplicator {
   private void runExecutionQueue() {
     assert getCurrentState().status().equals(ExecutionStatus.IDLE)
         : "why are we idle running when the status is" + getCurrentState().status();
-    //System.out.println("queue:" + queue);
+    // System.out.println("queue:" + queue);
     if (queue.isEmpty()) return;
     var nextUID = queue.poll();
     var next = MacroContainer.getInstance().queryById(nextUID);

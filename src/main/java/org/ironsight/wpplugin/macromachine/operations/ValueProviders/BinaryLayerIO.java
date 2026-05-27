@@ -102,12 +102,17 @@ public class BinaryLayerIO
     for (int i = 0; i < data.length; i++) {
       saveData[i] = data[i];
     }
-    return new BinaryLayerIO(((StringValue) saveData[0]).value(), ((StringValue) saveData[1]).value(), ((BoolValue) saveData[2]).value());
+    return new BinaryLayerIO(
+        ((StringValue) saveData[0]).value(),
+        ((StringValue) saveData[1]).value(),
+        ((BoolValue) saveData[2]).value());
   }
 
   @Override
   public IoParameter[] getSaveData() {
-    return new IoParameter[] {new StringValue(layerName), new StringValue(layerId), new BoolValue(isCustom)};
+    return new IoParameter[] {
+      new StringValue(layerName), new StringValue(layerId), new BoolValue(isCustom)
+    };
   }
 
   @Override
