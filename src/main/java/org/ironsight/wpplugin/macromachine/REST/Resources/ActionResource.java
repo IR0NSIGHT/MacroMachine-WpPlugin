@@ -6,14 +6,25 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.ironsight.wpplugin.macromachine.REST.DTOs.ActionDTO;
+import org.ironsight.wpplugin.macromachine.operations.ActionType;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
+import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
+
+import static org.ironsight.wpplugin.macromachine.operations.MappingAction.getNewEmptyAction;
 
 @Path("/actions")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class ActionResource {
-  private MappingActionContainer actionContainer = MappingActionContainer.getInstance();
+  private final InputOutputProvider ioProvider;
+  public ActionResource(InputOutputProvider ioProvider,MappingActionContainer actionContainer ) {
+    this.ioProvider = ioProvider;
+    this.actionContainer = actionContainer;
+  }
+
+  private final MappingActionContainer actionContainer;
 
   @GET
   public List<ActionDTO> getAll() {
@@ -28,6 +39,53 @@ public class ActionResource {
       throw new NotFoundException("Action not found for uuid=: " + id);
     }
     return new ActionDTO(macro);
+  }
+
+  private List<MappingAction> getDefaultFilters() {
+    var filterOutput = new ActionFilterIO();
+    return ioProvider.getters.stream()
+            .filter(IPositionValueGetter.class::isInstance)
+            .map(IPositionValueGetter.class::cast)
+            .map(input -> {
+              return getNewEmptyAction(UUID.randomUUID())
+                      .withInput(input)
+                      .withOutput(filterOutput)
+                      .withType(ActionType.SET)
+                      .withDescription("Default simple filter")
+                      .withName("Filter by: " + input.getName()); //FIXME maybe add some preset to block certain things?
+            }).toList();
+  }
+
+  private List<MappingAction> getDefaultAppliers() {
+    var filterOutput = new ActionFilterIO();
+    return ioProvider.setters.stream()
+            .filter(IPositionValueSetter.class::isInstance)
+            .map(IPositionValueSetter.class::cast)
+            .map(output -> {
+
+              return getNewEmptyAction(UUID.randomUUID())
+                      .withInput(new AlwaysIO())
+                      .withOutput(output)
+                      .withDescription("Default simple applier.")
+                      .withName("Set: " + output.getName())
+                      .withNewPoints(new MappingPoint[]{ new MappingPoint(AlwaysIO.instance.getMinValue(), Math.round((output.getMaxValue()+output.getMinValue())/2f))}) // halfway point
+                      ; //FIXME maybe add some preset to block certain things?
+            }).toList();
+  }
+
+  @GET
+  @Path("/filters")
+  public  List<ActionDTO> getFilters() {
+    var filterList = getDefaultFilters();
+    var dtos = filterList.stream().map(ActionDTO::new).toList();
+    return dtos;
+  }
+
+  @GET @Path("/appliers")
+  public  List<ActionDTO> getAppliers() {
+    var filterList = getDefaultAppliers();
+    var dtos = filterList.stream().map(ActionDTO::new).toList();
+    return dtos;
   }
 
   @POST

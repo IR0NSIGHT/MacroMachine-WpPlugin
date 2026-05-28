@@ -36,6 +36,38 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/actions/appliers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["getAppliers"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/actions/filters": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["getFilters"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/docs": {
     parameters: {
       query?: never;
@@ -171,6 +203,17 @@ export interface components {
       /** @description actual numeric input values for all inputs */
       mappedInputs: number[];
     };
+    BoolValue: {
+      type: "BoolValue";
+    } & (Omit<components["schemas"]["IoParameter"], "type"> & {
+      value?: boolean;
+    });
+    FloatValue: {
+      type: "FloatValue";
+    } & (Omit<components["schemas"]["IoParameter"], "type"> & {
+      /** Format: float */
+      value?: number;
+    });
     /** @description Describes an input/output provider configuration */
     InputOutputDTO: {
       /**
@@ -234,7 +277,56 @@ export interface components {
         | "SHADOW"
         | "VORONOI_NOISE"
         | "RANDOM_NOISE";
+      /**
+       * @description Parameters used to instantiate the IO provider. Each item contains a 'type' discriminator and matching value.
+       * @example [
+       *       {
+       *         "type": "int",
+       *         "value": 42
+       *       },
+       *       {
+       *         "type": "float",
+       *         "value": 1.5
+       *       },
+       *       {
+       *         "type": "string",
+       *         "value": "abc"
+       *       },
+       *       {
+       *         "type": "bool",
+       *         "value": true
+       *       },
+       *       {
+       *         "type": "intArray",
+       *         "value": [
+       *           1,
+       *           2,
+       *           3
+       *         ]
+       *       }
+       *     ]
+       */
+      ioParameters?: components["schemas"]["IoParameter"][];
     };
+    IntArrayValue: {
+      type: "IntArrayValue";
+    } & (Omit<components["schemas"]["IoParameter"], "type"> & {
+      value?: number[];
+    });
+    IntValue: {
+      type: "IntValue";
+    } & (Omit<components["schemas"]["IoParameter"], "type"> & {
+      /** Format: int32 */
+      value?: number;
+    });
+    IoParameter: {
+      type: string;
+    };
+    StringValue: {
+      type: "StringValue";
+    } & (Omit<components["schemas"]["IoParameter"], "type"> & {
+      value?: string;
+    });
     /** @description Represents the application's execution state */
     ExecutionStateDTO: {
       /**
@@ -409,6 +501,46 @@ export interface operations {
         };
         content: {
           "application/json": unknown;
+        };
+      };
+    };
+  };
+  getAppliers: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description default response */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ActionDTO"][];
+        };
+      };
+    };
+  };
+  getFilters: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description default response */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ActionDTO"][];
         };
       };
     };

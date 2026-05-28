@@ -9,6 +9,7 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.ironsight.wpplugin.macromachine.REST.MacroApplication;
 import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.pepsoft.worldpainter.Dimension;
 
 public class WebUIServer {
@@ -16,12 +17,14 @@ public class WebUIServer {
   private final MacroContainer macros;
   private final MappingActionContainer actions;
   private HttpServer server;
+  private final InputOutputProvider ioProvider;
 
   public WebUIServer(
-      MacroApplicator applicator, MappingActionContainer actions, MacroContainer macros) {
+          MacroApplicator applicator, MappingActionContainer actions, MacroContainer macros, InputOutputProvider ioProvider) {
     this.actions = actions;
     this.applicator = applicator;
     this.macros = macros;
+    this.ioProvider = ioProvider;
   }
 
   public static void main(String[] args) throws IOException {
@@ -44,10 +47,8 @@ public class WebUIServer {
 
     applicator.start();
 
-    new WebUIServer(applicator, MappingActionContainer.getInstance(), MacroContainer.getInstance())
+    new WebUIServer(applicator, MappingActionContainer.getInstance(), MacroContainer.getInstance(), InputOutputProvider.INSTANCE)
         .start();
-
-    System.out.println("");
   }
 
   public void start() throws IOException {
@@ -55,7 +56,7 @@ public class WebUIServer {
 
     server =
         GrizzlyHttpServerFactory.createHttpServer(
-            uri, new MacroApplication(applicator, actions, macros));
+            uri, new MacroApplication(applicator, actions, macros, ioProvider));
 
     System.out.println("REST server started:");
     System.out.println("http://localhost:8080/");

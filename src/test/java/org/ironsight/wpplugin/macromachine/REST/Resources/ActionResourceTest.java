@@ -17,6 +17,7 @@ import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainHeightIO;
 import org.junit.jupiter.api.*;
 
@@ -28,7 +29,7 @@ public class ActionResourceTest extends JerseyTest {
 
   @Override
   protected Application configure() {
-    return new ResourceConfig().register(ActionResource.class).register(JacksonFeature.class);
+    return new ResourceConfig().register(new ActionResource(InputOutputProvider.INSTANCE, new MappingActionContainer(""))).register(JacksonFeature.class);
   }
 
   @BeforeAll

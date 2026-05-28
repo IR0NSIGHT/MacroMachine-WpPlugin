@@ -91,6 +91,46 @@
         }
       }
     },
+    "/actions/appliers" : {
+      "get" : {
+        "operationId" : "getAppliers",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ActionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actions/filters" : {
+      "get" : {
+        "operationId" : "getFilters",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ActionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/docs" : {
       "get" : {
         "operationId" : "getDocs",

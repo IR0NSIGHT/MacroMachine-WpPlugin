@@ -79,8 +79,10 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
     MacroApplicator applicator = MacroApplicator.mock();
 
+    final InputOutputProvider ioProvider = InputOutputProvider.INSTANCE;
+
     // Start web UI server
-    WebUIServer server = new WebUIServer(applicator, actions, macros);
+    WebUIServer server = new WebUIServer(applicator, actions, macros, ioProvider);
     try {
       server.start();
     } catch (IOException e) {
@@ -98,7 +100,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
         saveFile,
         new ImportExportPolicy(),
         s -> ErrorPopUpString("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s),
-        InputOutputProvider.INSTANCE);
+        ioProvider);
 
     SaveAllWorker fileWriter =
         new SaveAllWorker(
@@ -107,7 +109,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback {
 
     MappingActionContainer.getInstance().subscribe(fileWriter::flagForSave);
     MacroContainer.getInstance().subscribe(fileWriter::flagForSave);
-    InputOutputProvider.INSTANCE.updateFrom(null);
+    ioProvider.updateFrom(null);
     // Create and show a JFrame
     JFrame frame = new JFrame("Main Window");
     frame.setSize(500, 500);
