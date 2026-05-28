@@ -1,6 +1,9 @@
 package org.ironsight.wpplugin.macromachine.REST;
 
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
+import io.swagger.v3.oas.integration.SwaggerConfiguration;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
 import jakarta.ws.rs.ApplicationPath;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -24,6 +27,20 @@ public class MacroApplication extends ResourceConfig {
     register(new ExecutionResource(applicator, actions, macros));
 
     register(JacksonFeature.class);
-    register(OpenApiResource.class);
+
+
+    OpenAPI openAPI = new OpenAPI()
+            .info(new Info()
+                    .title("MacroMachine API")
+                    .version("1.0.0"));
+
+    SwaggerConfiguration config = new SwaggerConfiguration()
+            .openAPI(openAPI)
+            .prettyPrint(true);
+
+    OpenApiResource resource = new OpenApiResource();
+    resource.openApiConfiguration(config);
+
+    register(resource);
   }
 }
