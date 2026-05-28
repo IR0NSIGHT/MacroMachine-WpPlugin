@@ -4,27 +4,27 @@ All URIs are relative to _http://localhost_
 
 | Method                                                     | HTTP request                         | Description    |
 | ---------------------------------------------------------- | ------------------------------------ | -------------- |
-| [**\_delete**](DefaultApi.md#_delete)                      | **DELETE** /api/actions/{id}         |                |
-| [**create**](DefaultApi.md#create)                         | **POST** /api/actions                |                |
-| [**create1**](DefaultApi.md#create1)                       | **POST** /api/macros                 |                |
-| [**delete1**](DefaultApi.md#delete1)                       | **DELETE** /api/macros/{id}          |                |
-| [**get**](DefaultApi.md#get)                               | **GET** /api/actions/{id}            |                |
-| [**get1**](DefaultApi.md#get1)                             | **GET** /api/macros/{id}             |                |
-| [**getAll**](DefaultApi.md#getall)                         | **GET** /api/actions                 |                |
-| [**getAll1**](DefaultApi.md#getall1)                       | **GET** /api/macros                  | Get all macros |
+| [**addToQueue**](DefaultApi.md#addtoqueue)                 | **POST** /api/execution/queue        |                |
+| [**deleteAction**](DefaultApi.md#deleteaction)             | **DELETE** /api/actions/{id}         |                |
+| [**deleteMacro**](DefaultApi.md#deletemacro)               | **DELETE** /api/macros/{id}          |                |
+| [**getActionById**](DefaultApi.md#getactionbyid)           | **GET** /api/actions/{id}            |                |
+| [**getAllActions**](DefaultApi.md#getallactions)           | **GET** /api/actions                 |                |
+| [**getAllMacros**](DefaultApi.md#getallmacros)             | **GET** /api/macros                  | Get all macros |
 | [**getAppliers**](DefaultApi.md#getappliers)               | **GET** /api/actions/appliers        |                |
 | [**getCurrentState**](DefaultApi.md#getcurrentstate)       | **GET** /api/execution/state         |                |
 | [**getDocs**](DefaultApi.md#getdocs)                       | **GET** /api/docs                    |                |
 | [**getExternalGrammar**](DefaultApi.md#getexternalgrammar) | **GET** /api/application.wadl/{path} |                |
 | [**getFilters**](DefaultApi.md#getfilters)                 | **GET** /api/actions/filters         |                |
+| [**getMacroById**](DefaultApi.md#getmacrobyid)             | **GET** /api/macros/{id}             |                |
 | [**getQueue**](DefaultApi.md#getqueue)                     | **GET** /api/execution/queue         |                |
 | [**getWadl**](DefaultApi.md#getwadl)                       | **GET** /api/application.wadl        |                |
 | [**options**](DefaultApi.md#options)                       | **OPTIONS** /api                     |                |
-| [**updateQueue**](DefaultApi.md#updatequeue)               | **POST** /api/execution/queue        |                |
+| [**postAction**](DefaultApi.md#postaction)                 | **POST** /api/actions                |                |
+| [**postMacro**](DefaultApi.md#postmacro)                   | **POST** /api/macros                 |                |
 
-## \_delete
+## addToQueue
 
-> \_delete(id)
+> ExecutionQueueDTO addToQueue(executionQueueDTO)
 
 ### Example
 
@@ -33,7 +33,68 @@ import {
   Configuration,
   DefaultApi,
 } from '';
-import type { DeleteRequest } from '';
+import type { AddToQueueRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new DefaultApi();
+
+  const body = {
+    // ExecutionQueueDTO (optional)
+    executionQueueDTO: ...,
+  } satisfies AddToQueueRequest;
+
+  try {
+    const data = await api.addToQueue(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+| Name                  | Type                                      | Description | Notes      |
+| --------------------- | ----------------------------------------- | ----------- | ---------- |
+| **executionQueueDTO** | [ExecutionQueueDTO](ExecutionQueueDTO.md) |             | [Optional] |
+
+### Return type
+
+[**ExecutionQueueDTO**](ExecutionQueueDTO.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+### HTTP response details
+
+| Status code | Description      | Response headers |
+| ----------- | ---------------- | ---------------- |
+| **0**       | default response | -                |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+## deleteAction
+
+> deleteAction(id)
+
+### Example
+
+```ts
+import {
+  Configuration,
+  DefaultApi,
+} from '';
+import type { DeleteActionRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
@@ -42,10 +103,10 @@ async function example() {
   const body = {
     // string
     id: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
-  } satisfies DeleteRequest;
+  } satisfies DeleteActionRequest;
 
   try {
-    const data = await api._delete(body);
+    const data = await api.deleteAction(body);
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -83,70 +144,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-## create
+## deleteMacro
 
-> ActionDTO create(actionDTO)
-
-### Example
-
-```ts
-import {
-  Configuration,
-  DefaultApi,
-} from '';
-import type { CreateRequest } from '';
-
-async function example() {
-  console.log("🚀 Testing  SDK...");
-  const api = new DefaultApi();
-
-  const body = {
-    // ActionDTO (optional)
-    actionDTO: ...,
-  } satisfies CreateRequest;
-
-  try {
-    const data = await api.create(body);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-| Name          | Type                      | Description | Notes      |
-| ------------- | ------------------------- | ----------- | ---------- |
-| **actionDTO** | [ActionDTO](ActionDTO.md) |             | [Optional] |
-
-### Return type
-
-[**ActionDTO**](ActionDTO.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: `application/json`
-- **Accept**: `application/json`
-
-### HTTP response details
-
-| Status code | Description      | Response headers |
-| ----------- | ---------------- | ---------------- |
-| **0**       | default response | -                |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-## create1
-
-> MacroDTO create1(macroDTO)
+> deleteMacro(id)
 
 ### Example
 
@@ -155,68 +155,7 @@ import {
   Configuration,
   DefaultApi,
 } from '';
-import type { Create1Request } from '';
-
-async function example() {
-  console.log("🚀 Testing  SDK...");
-  const api = new DefaultApi();
-
-  const body = {
-    // MacroDTO (optional)
-    macroDTO: ...,
-  } satisfies Create1Request;
-
-  try {
-    const data = await api.create1(body);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-| Name         | Type                    | Description | Notes      |
-| ------------ | ----------------------- | ----------- | ---------- |
-| **macroDTO** | [MacroDTO](MacroDTO.md) |             | [Optional] |
-
-### Return type
-
-[**MacroDTO**](MacroDTO.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: `application/json`
-- **Accept**: `application/json`
-
-### HTTP response details
-
-| Status code | Description      | Response headers |
-| ----------- | ---------------- | ---------------- |
-| **0**       | default response | -                |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-## delete1
-
-> delete1(id)
-
-### Example
-
-```ts
-import {
-  Configuration,
-  DefaultApi,
-} from '';
-import type { Delete1Request } from '';
+import type { DeleteMacroRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
@@ -225,10 +164,10 @@ async function example() {
   const body = {
     // string
     id: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
-  } satisfies Delete1Request;
+  } satisfies DeleteMacroRequest;
 
   try {
-    const data = await api.delete1(body);
+    const data = await api.deleteMacro(body);
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -266,9 +205,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-## get
+## getActionById
 
-> ActionDTO get(id)
+> ActionDTO getActionById(id)
 
 ### Example
 
@@ -277,7 +216,7 @@ import {
   Configuration,
   DefaultApi,
 } from '';
-import type { GetRequest } from '';
+import type { GetActionByIdRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
@@ -286,10 +225,10 @@ async function example() {
   const body = {
     // string
     id: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
-  } satisfies GetRequest;
+  } satisfies GetActionByIdRequest;
 
   try {
-    const data = await api.get(body);
+    const data = await api.getActionById(body);
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -327,83 +266,22 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-## get1
+## getAllActions
 
-> MacroDTO get1(id)
-
-### Example
-
-```ts
-import {
-  Configuration,
-  DefaultApi,
-} from '';
-import type { Get1Request } from '';
-
-async function example() {
-  console.log("🚀 Testing  SDK...");
-  const api = new DefaultApi();
-
-  const body = {
-    // string
-    id: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
-  } satisfies Get1Request;
-
-  try {
-    const data = await api.get1(body);
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-| Name   | Type     | Description | Notes                     |
-| ------ | -------- | ----------- | ------------------------- |
-| **id** | `string` |             | [Defaults to `undefined`] |
-
-### Return type
-
-[**MacroDTO**](MacroDTO.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: `application/json`
-
-### HTTP response details
-
-| Status code | Description      | Response headers |
-| ----------- | ---------------- | ---------------- |
-| **0**       | default response | -                |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-## getAll
-
-> Array&lt;ActionDTO&gt; getAll()
+> Array&lt;ActionDTO&gt; getAllActions()
 
 ### Example
 
 ```ts
 import { Configuration, DefaultApi } from "";
-import type { GetAllRequest } from "";
+import type { GetAllActionsRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
   const api = new DefaultApi();
 
   try {
-    const data = await api.getAll();
+    const data = await api.getAllActions();
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -439,9 +317,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-## getAll1
+## getAllMacros
 
-> Array&lt;MacroDTO&gt; getAll1()
+> Array&lt;MacroDTO&gt; getAllMacros()
 
 Get all macros
 
@@ -449,14 +327,14 @@ Get all macros
 
 ```ts
 import { Configuration, DefaultApi } from "";
-import type { GetAll1Request } from "";
+import type { GetAllMacrosRequest } from "";
 
 async function example() {
   console.log("🚀 Testing  SDK...");
   const api = new DefaultApi();
 
   try {
-    const data = await api.getAll1();
+    const data = await api.getAllMacros();
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -754,6 +632,67 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
+## getMacroById
+
+> MacroDTO getMacroById(id)
+
+### Example
+
+```ts
+import {
+  Configuration,
+  DefaultApi,
+} from '';
+import type { GetMacroByIdRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new DefaultApi();
+
+  const body = {
+    // string
+    id: 38400000-8cf0-11bd-b23e-10b96e4ef00d,
+  } satisfies GetMacroByIdRequest;
+
+  try {
+    const data = await api.getMacroById(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+| Name   | Type     | Description | Notes                     |
+| ------ | -------- | ----------- | ------------------------- |
+| **id** | `string` |             | [Defaults to `undefined`] |
+
+### Return type
+
+[**MacroDTO**](MacroDTO.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+### HTTP response details
+
+| Status code | Description      | Response headers |
+| ----------- | ---------------- | ---------------- |
+| **0**       | default response | -                |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 ## getQueue
 
 > ExecutionQueueDTO getQueue()
@@ -907,9 +846,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-## updateQueue
+## postAction
 
-> ExecutionQueueDTO updateQueue(executionQueueDTO)
+> ActionDTO postAction(actionDTO)
 
 ### Example
 
@@ -918,19 +857,19 @@ import {
   Configuration,
   DefaultApi,
 } from '';
-import type { UpdateQueueRequest } from '';
+import type { PostActionRequest } from '';
 
 async function example() {
   console.log("🚀 Testing  SDK...");
   const api = new DefaultApi();
 
   const body = {
-    // ExecutionQueueDTO (optional)
-    executionQueueDTO: ...,
-  } satisfies UpdateQueueRequest;
+    // ActionDTO (optional)
+    actionDTO: ...,
+  } satisfies PostActionRequest;
 
   try {
-    const data = await api.updateQueue(body);
+    const data = await api.postAction(body);
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -943,13 +882,74 @@ example().catch(console.error);
 
 ### Parameters
 
-| Name                  | Type                                      | Description | Notes      |
-| --------------------- | ----------------------------------------- | ----------- | ---------- |
-| **executionQueueDTO** | [ExecutionQueueDTO](ExecutionQueueDTO.md) |             | [Optional] |
+| Name          | Type                      | Description | Notes      |
+| ------------- | ------------------------- | ----------- | ---------- |
+| **actionDTO** | [ActionDTO](ActionDTO.md) |             | [Optional] |
 
 ### Return type
 
-[**ExecutionQueueDTO**](ExecutionQueueDTO.md)
+[**ActionDTO**](ActionDTO.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+### HTTP response details
+
+| Status code | Description      | Response headers |
+| ----------- | ---------------- | ---------------- |
+| **0**       | default response | -                |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+## postMacro
+
+> MacroDTO postMacro(macroDTO)
+
+### Example
+
+```ts
+import {
+  Configuration,
+  DefaultApi,
+} from '';
+import type { PostMacroRequest } from '';
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new DefaultApi();
+
+  const body = {
+    // MacroDTO (optional)
+    macroDTO: ...,
+  } satisfies PostMacroRequest;
+
+  try {
+    const data = await api.postMacro(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+| Name         | Type                    | Description | Notes      |
+| ------------ | ----------------------- | ----------- | ---------- |
+| **macroDTO** | [MacroDTO](MacroDTO.md) |             | [Optional] |
+
+### Return type
+
+[**MacroDTO**](MacroDTO.md)
 
 ### Authorization
 

@@ -26,27 +26,19 @@ import {
 } from "../models/ExecutionStateDTO";
 import { type MacroDTO, MacroDTOFromJSON, MacroDTOToJSON } from "../models/MacroDTO";
 
-export interface DeleteRequest {
+export interface AddToQueueRequest {
+  executionQueueDTO?: ExecutionQueueDTO;
+}
+
+export interface DeleteActionRequest {
   id: string;
 }
 
-export interface CreateRequest {
-  actionDTO?: ActionDTO;
-}
-
-export interface Create1Request {
-  macroDTO?: MacroDTO;
-}
-
-export interface Delete1Request {
+export interface DeleteMacroRequest {
   id: string;
 }
 
-export interface GetRequest {
-  id: string;
-}
-
-export interface Get1Request {
+export interface GetActionByIdRequest {
   id: string;
 }
 
@@ -54,8 +46,16 @@ export interface GetExternalGrammarRequest {
   path: string;
 }
 
-export interface UpdateQueueRequest {
-  executionQueueDTO?: ExecutionQueueDTO;
+export interface GetMacroByIdRequest {
+  id: string;
+}
+
+export interface PostActionRequest {
+  actionDTO?: ActionDTO;
+}
+
+export interface PostMacroRequest {
+  macroDTO?: MacroDTO;
 }
 
 /**
@@ -63,13 +63,60 @@ export interface UpdateQueueRequest {
  */
 export class DefaultApi extends runtime.BaseAPI {
   /**
-   * Creates request options for _delete without sending the request
+   * Creates request options for addToQueue without sending the request
    */
-  async _deleteRequestOpts(requestParameters: DeleteRequest): Promise<runtime.RequestOpts> {
+  async addToQueueRequestOpts(requestParameters: AddToQueueRequest): Promise<runtime.RequestOpts> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters["Content-Type"] = "application/json";
+
+    let urlPath = `/api/execution/queue`;
+
+    return {
+      path: urlPath,
+      method: "POST",
+      headers: headerParameters,
+      query: queryParameters,
+      body: ExecutionQueueDTOToJSON(requestParameters["executionQueueDTO"]),
+    };
+  }
+
+  /**
+   */
+  async addToQueueRaw(
+    requestParameters: AddToQueueRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ExecutionQueueDTO>> {
+    const requestOptions = await this.addToQueueRequestOpts(requestParameters);
+    const response = await this.request(requestOptions, initOverrides);
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      ExecutionQueueDTOFromJSON(jsonValue),
+    );
+  }
+
+  /**
+   */
+  async addToQueue(
+    requestParameters: AddToQueueRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ExecutionQueueDTO> {
+    const response = await this.addToQueueRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Creates request options for deleteAction without sending the request
+   */
+  async deleteActionRequestOpts(
+    requestParameters: DeleteActionRequest,
+  ): Promise<runtime.RequestOpts> {
     if (requestParameters["id"] == null) {
       throw new runtime.RequiredError(
         "id",
-        'Required parameter "id" was null or undefined when calling _delete().',
+        'Required parameter "id" was null or undefined when calling deleteAction().',
       );
     }
 
@@ -90,11 +137,11 @@ export class DefaultApi extends runtime.BaseAPI {
 
   /**
    */
-  async _deleteRaw(
-    requestParameters: DeleteRequest,
+  async deleteActionRaw(
+    requestParameters: DeleteActionRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<void>> {
-    const requestOptions = await this._deleteRequestOpts(requestParameters);
+    const requestOptions = await this.deleteActionRequestOpts(requestParameters);
     const response = await this.request(requestOptions, initOverrides);
 
     return new runtime.VoidApiResponse(response);
@@ -102,107 +149,23 @@ export class DefaultApi extends runtime.BaseAPI {
 
   /**
    */
-  async _delete(
-    requestParameters: DeleteRequest,
+  async deleteAction(
+    requestParameters: DeleteActionRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
-    await this._deleteRaw(requestParameters, initOverrides);
+    await this.deleteActionRaw(requestParameters, initOverrides);
   }
 
   /**
-   * Creates request options for create without sending the request
+   * Creates request options for deleteMacro without sending the request
    */
-  async createRequestOpts(requestParameters: CreateRequest): Promise<runtime.RequestOpts> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters["Content-Type"] = "application/json";
-
-    let urlPath = `/api/actions`;
-
-    return {
-      path: urlPath,
-      method: "POST",
-      headers: headerParameters,
-      query: queryParameters,
-      body: ActionDTOToJSON(requestParameters["actionDTO"]),
-    };
-  }
-
-  /**
-   */
-  async createRaw(
-    requestParameters: CreateRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<ActionDTO>> {
-    const requestOptions = await this.createRequestOpts(requestParameters);
-    const response = await this.request(requestOptions, initOverrides);
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => ActionDTOFromJSON(jsonValue));
-  }
-
-  /**
-   */
-  async create(
-    requestParameters: CreateRequest = {},
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<ActionDTO> {
-    const response = await this.createRaw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * Creates request options for create1 without sending the request
-   */
-  async create1RequestOpts(requestParameters: Create1Request): Promise<runtime.RequestOpts> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters["Content-Type"] = "application/json";
-
-    let urlPath = `/api/macros`;
-
-    return {
-      path: urlPath,
-      method: "POST",
-      headers: headerParameters,
-      query: queryParameters,
-      body: MacroDTOToJSON(requestParameters["macroDTO"]),
-    };
-  }
-
-  /**
-   */
-  async create1Raw(
-    requestParameters: Create1Request,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<MacroDTO>> {
-    const requestOptions = await this.create1RequestOpts(requestParameters);
-    const response = await this.request(requestOptions, initOverrides);
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => MacroDTOFromJSON(jsonValue));
-  }
-
-  /**
-   */
-  async create1(
-    requestParameters: Create1Request = {},
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<MacroDTO> {
-    const response = await this.create1Raw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * Creates request options for delete1 without sending the request
-   */
-  async delete1RequestOpts(requestParameters: Delete1Request): Promise<runtime.RequestOpts> {
+  async deleteMacroRequestOpts(
+    requestParameters: DeleteMacroRequest,
+  ): Promise<runtime.RequestOpts> {
     if (requestParameters["id"] == null) {
       throw new runtime.RequiredError(
         "id",
-        'Required parameter "id" was null or undefined when calling delete1().',
+        'Required parameter "id" was null or undefined when calling deleteMacro().',
       );
     }
 
@@ -223,11 +186,11 @@ export class DefaultApi extends runtime.BaseAPI {
 
   /**
    */
-  async delete1Raw(
-    requestParameters: Delete1Request,
+  async deleteMacroRaw(
+    requestParameters: DeleteMacroRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<void>> {
-    const requestOptions = await this.delete1RequestOpts(requestParameters);
+    const requestOptions = await this.deleteMacroRequestOpts(requestParameters);
     const response = await this.request(requestOptions, initOverrides);
 
     return new runtime.VoidApiResponse(response);
@@ -235,21 +198,23 @@ export class DefaultApi extends runtime.BaseAPI {
 
   /**
    */
-  async delete1(
-    requestParameters: Delete1Request,
+  async deleteMacro(
+    requestParameters: DeleteMacroRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
-    await this.delete1Raw(requestParameters, initOverrides);
+    await this.deleteMacroRaw(requestParameters, initOverrides);
   }
 
   /**
-   * Creates request options for get without sending the request
+   * Creates request options for getActionById without sending the request
    */
-  async getRequestOpts(requestParameters: GetRequest): Promise<runtime.RequestOpts> {
+  async getActionByIdRequestOpts(
+    requestParameters: GetActionByIdRequest,
+  ): Promise<runtime.RequestOpts> {
     if (requestParameters["id"] == null) {
       throw new runtime.RequiredError(
         "id",
-        'Required parameter "id" was null or undefined when calling get().',
+        'Required parameter "id" was null or undefined when calling getActionById().',
       );
     }
 
@@ -270,11 +235,11 @@ export class DefaultApi extends runtime.BaseAPI {
 
   /**
    */
-  async getRaw(
-    requestParameters: GetRequest,
+  async getActionByIdRaw(
+    requestParameters: GetActionByIdRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<ActionDTO>> {
-    const requestOptions = await this.getRequestOpts(requestParameters);
+    const requestOptions = await this.getActionByIdRequestOpts(requestParameters);
     const response = await this.request(requestOptions, initOverrides);
 
     return new runtime.JSONApiResponse(response, (jsonValue) => ActionDTOFromJSON(jsonValue));
@@ -282,66 +247,18 @@ export class DefaultApi extends runtime.BaseAPI {
 
   /**
    */
-  async get(
-    requestParameters: GetRequest,
+  async getActionById(
+    requestParameters: GetActionByIdRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ActionDTO> {
-    const response = await this.getRaw(requestParameters, initOverrides);
+    const response = await this.getActionByIdRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
   /**
-   * Creates request options for get1 without sending the request
+   * Creates request options for getAllActions without sending the request
    */
-  async get1RequestOpts(requestParameters: Get1Request): Promise<runtime.RequestOpts> {
-    if (requestParameters["id"] == null) {
-      throw new runtime.RequiredError(
-        "id",
-        'Required parameter "id" was null or undefined when calling get1().',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    let urlPath = `/api/macros/{id}`;
-    urlPath = urlPath.replace("{id}", encodeURIComponent(String(requestParameters["id"])));
-
-    return {
-      path: urlPath,
-      method: "GET",
-      headers: headerParameters,
-      query: queryParameters,
-    };
-  }
-
-  /**
-   */
-  async get1Raw(
-    requestParameters: Get1Request,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<MacroDTO>> {
-    const requestOptions = await this.get1RequestOpts(requestParameters);
-    const response = await this.request(requestOptions, initOverrides);
-
-    return new runtime.JSONApiResponse(response, (jsonValue) => MacroDTOFromJSON(jsonValue));
-  }
-
-  /**
-   */
-  async get1(
-    requestParameters: Get1Request,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<MacroDTO> {
-    const response = await this.get1Raw(requestParameters, initOverrides);
-    return await response.value();
-  }
-
-  /**
-   * Creates request options for getAll without sending the request
-   */
-  async getAllRequestOpts(): Promise<runtime.RequestOpts> {
+  async getAllActionsRequestOpts(): Promise<runtime.RequestOpts> {
     const queryParameters: any = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -358,10 +275,10 @@ export class DefaultApi extends runtime.BaseAPI {
 
   /**
    */
-  async getAllRaw(
+  async getAllActionsRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<Array<ActionDTO>>> {
-    const requestOptions = await this.getAllRequestOpts();
+    const requestOptions = await this.getAllActionsRequestOpts();
     const response = await this.request(requestOptions, initOverrides);
 
     return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(ActionDTOFromJSON));
@@ -369,17 +286,17 @@ export class DefaultApi extends runtime.BaseAPI {
 
   /**
    */
-  async getAll(
+  async getAllActions(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Array<ActionDTO>> {
-    const response = await this.getAllRaw(initOverrides);
+    const response = await this.getAllActionsRaw(initOverrides);
     return await response.value();
   }
 
   /**
-   * Creates request options for getAll1 without sending the request
+   * Creates request options for getAllMacros without sending the request
    */
-  async getAll1RequestOpts(): Promise<runtime.RequestOpts> {
+  async getAllMacrosRequestOpts(): Promise<runtime.RequestOpts> {
     const queryParameters: any = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -397,10 +314,10 @@ export class DefaultApi extends runtime.BaseAPI {
   /**
    * Get all macros
    */
-  async getAll1Raw(
+  async getAllMacrosRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<Array<MacroDTO>>> {
-    const requestOptions = await this.getAll1RequestOpts();
+    const requestOptions = await this.getAllMacrosRequestOpts();
     const response = await this.request(requestOptions, initOverrides);
 
     return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(MacroDTOFromJSON));
@@ -409,10 +326,10 @@ export class DefaultApi extends runtime.BaseAPI {
   /**
    * Get all macros
    */
-  async getAll1(
+  async getAllMacros(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Array<MacroDTO>> {
-    const response = await this.getAll1Raw(initOverrides);
+    const response = await this.getAllMacrosRaw(initOverrides);
     return await response.value();
   }
 
@@ -617,6 +534,56 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
+   * Creates request options for getMacroById without sending the request
+   */
+  async getMacroByIdRequestOpts(
+    requestParameters: GetMacroByIdRequest,
+  ): Promise<runtime.RequestOpts> {
+    if (requestParameters["id"] == null) {
+      throw new runtime.RequiredError(
+        "id",
+        'Required parameter "id" was null or undefined when calling getMacroById().',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/macros/{id}`;
+    urlPath = urlPath.replace("{id}", encodeURIComponent(String(requestParameters["id"])));
+
+    return {
+      path: urlPath,
+      method: "GET",
+      headers: headerParameters,
+      query: queryParameters,
+    };
+  }
+
+  /**
+   */
+  async getMacroByIdRaw(
+    requestParameters: GetMacroByIdRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<MacroDTO>> {
+    const requestOptions = await this.getMacroByIdRequestOpts(requestParameters);
+    const response = await this.request(requestOptions, initOverrides);
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => MacroDTOFromJSON(jsonValue));
+  }
+
+  /**
+   */
+  async getMacroById(
+    requestParameters: GetMacroByIdRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<MacroDTO> {
+    const response = await this.getMacroByIdRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * Creates request options for getQueue without sending the request
    */
   async getQueueRequestOpts(): Promise<runtime.RequestOpts> {
@@ -727,49 +694,88 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Creates request options for updateQueue without sending the request
+   * Creates request options for postAction without sending the request
    */
-  async updateQueueRequestOpts(
-    requestParameters: UpdateQueueRequest,
-  ): Promise<runtime.RequestOpts> {
+  async postActionRequestOpts(requestParameters: PostActionRequest): Promise<runtime.RequestOpts> {
     const queryParameters: any = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
 
     headerParameters["Content-Type"] = "application/json";
 
-    let urlPath = `/api/execution/queue`;
+    let urlPath = `/api/actions`;
 
     return {
       path: urlPath,
       method: "POST",
       headers: headerParameters,
       query: queryParameters,
-      body: ExecutionQueueDTOToJSON(requestParameters["executionQueueDTO"]),
+      body: ActionDTOToJSON(requestParameters["actionDTO"]),
     };
   }
 
   /**
    */
-  async updateQueueRaw(
-    requestParameters: UpdateQueueRequest,
+  async postActionRaw(
+    requestParameters: PostActionRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<ExecutionQueueDTO>> {
-    const requestOptions = await this.updateQueueRequestOpts(requestParameters);
+  ): Promise<runtime.ApiResponse<ActionDTO>> {
+    const requestOptions = await this.postActionRequestOpts(requestParameters);
     const response = await this.request(requestOptions, initOverrides);
 
-    return new runtime.JSONApiResponse(response, (jsonValue) =>
-      ExecutionQueueDTOFromJSON(jsonValue),
-    );
+    return new runtime.JSONApiResponse(response, (jsonValue) => ActionDTOFromJSON(jsonValue));
   }
 
   /**
    */
-  async updateQueue(
-    requestParameters: UpdateQueueRequest = {},
+  async postAction(
+    requestParameters: PostActionRequest = {},
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<ExecutionQueueDTO> {
-    const response = await this.updateQueueRaw(requestParameters, initOverrides);
+  ): Promise<ActionDTO> {
+    const response = await this.postActionRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Creates request options for postMacro without sending the request
+   */
+  async postMacroRequestOpts(requestParameters: PostMacroRequest): Promise<runtime.RequestOpts> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters["Content-Type"] = "application/json";
+
+    let urlPath = `/api/macros`;
+
+    return {
+      path: urlPath,
+      method: "POST",
+      headers: headerParameters,
+      query: queryParameters,
+      body: MacroDTOToJSON(requestParameters["macroDTO"]),
+    };
+  }
+
+  /**
+   */
+  async postMacroRaw(
+    requestParameters: PostMacroRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<MacroDTO>> {
+    const requestOptions = await this.postMacroRequestOpts(requestParameters);
+    const response = await this.request(requestOptions, initOverrides);
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => MacroDTOFromJSON(jsonValue));
+  }
+
+  /**
+   */
+  async postMacro(
+    requestParameters: PostMacroRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<MacroDTO> {
+    const response = await this.postMacroRaw(requestParameters, initOverrides);
     return await response.value();
   }
 }
