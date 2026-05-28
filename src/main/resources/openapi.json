@@ -1,53 +1,9 @@
 {
   "openapi" : "3.0.1",
   "paths" : {
-    "/actions" : {
-      "get" : {
-        "operationId" : "getAll",
-        "responses" : {
-          "default" : {
-            "description" : "default response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/ActionDTO"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "operationId" : "create",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ActionDTO"
-              }
-            }
-          }
-        },
-        "responses" : {
-          "default" : {
-            "description" : "default response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ActionDTO"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/actions/{id}" : {
       "get" : {
-        "operationId" : "get",
+        "operationId" : "getActionById",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -71,7 +27,7 @@
         }
       },
       "delete" : {
-        "operationId" : "delete",
+        "operationId" : "deleteAction",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -86,6 +42,50 @@
             "description" : "default response",
             "content" : {
               "application/json" : { }
+            }
+          }
+        }
+      }
+    },
+    "/actions" : {
+      "get" : {
+        "operationId" : "getAllActions",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ActionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "postAction",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ActionDTO"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ActionDTO"
+                }
+              }
             }
           }
         }
@@ -144,23 +144,6 @@
         }
       }
     },
-    "/execution/state" : {
-      "get" : {
-        "operationId" : "getCurrentState",
-        "responses" : {
-          "default" : {
-            "description" : "default response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ExecutionStateDTO"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/execution/queue" : {
       "get" : {
         "operationId" : "getQueue",
@@ -178,7 +161,7 @@
         }
       },
       "post" : {
-        "operationId" : "updateQueue",
+        "operationId" : "addToQueue",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -202,44 +185,16 @@
         }
       }
     },
-    "/macros" : {
+    "/execution/state" : {
       "get" : {
-        "summary" : "Get all macros",
-        "operationId" : "getAll_1",
-        "responses" : {
-          "200" : {
-            "description" : "List of macros",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/MacroDTO"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post" : {
-        "operationId" : "create_1",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/MacroDTO"
-              }
-            }
-          }
-        },
+        "operationId" : "getCurrentState",
         "responses" : {
           "default" : {
             "description" : "default response",
             "content" : {
               "application/json" : {
                 "schema" : {
-                  "$ref" : "#/components/schemas/MacroDTO"
+                  "$ref" : "#/components/schemas/ExecutionStateDTO"
                 }
               }
             }
@@ -249,7 +204,7 @@
     },
     "/macros/{id}" : {
       "get" : {
-        "operationId" : "get_1",
+        "operationId" : "getMacroById",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -273,7 +228,7 @@
         }
       },
       "delete" : {
-        "operationId" : "delete_1",
+        "operationId" : "deleteMacro",
         "parameters" : [ {
           "name" : "id",
           "in" : "path",
@@ -288,6 +243,51 @@
             "description" : "default response",
             "content" : {
               "application/json" : { }
+            }
+          }
+        }
+      }
+    },
+    "/macros" : {
+      "get" : {
+        "summary" : "Get all macros",
+        "operationId" : "getAllMacros",
+        "responses" : {
+          "200" : {
+            "description" : "List of macros",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MacroDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "postMacro",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MacroDTO"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MacroDTO"
+                }
+              }
             }
           }
         }
@@ -535,6 +535,22 @@
           }
         } ]
       },
+      "ExecutionQueueDTO" : {
+        "required" : [ "queuedMacroIds" ],
+        "type" : "object",
+        "properties" : {
+          "queuedMacroIds" : {
+            "type" : "array",
+            "description" : "Ordered list of macro IDs to enqueue",
+            "items" : {
+              "type" : "string",
+              "description" : "Ordered list of macro IDs to enqueue",
+              "format" : "uuid"
+            }
+          }
+        },
+        "description" : "Request to enqueue macros for execution"
+      },
       "ExecutionStateDTO" : {
         "required" : [ "currentStepIndex", "executionId", "status", "steps" ],
         "type" : "object",
@@ -592,22 +608,6 @@
           }
         },
         "description" : "Represents a single action step within a macro execution"
-      },
-      "ExecutionQueueDTO" : {
-        "required" : [ "queuedMacroIds" ],
-        "type" : "object",
-        "properties" : {
-          "queuedMacroIds" : {
-            "type" : "array",
-            "description" : "Ordered list of macro IDs to enqueue",
-            "items" : {
-              "type" : "string",
-              "description" : "Ordered list of macro IDs to enqueue",
-              "format" : "uuid"
-            }
-          }
-        },
-        "description" : "Request to enqueue macros for execution"
       },
       "MacroDTO" : {
         "required" : [ "activeActions", "description", "executionUUIDs", "name", "uid" ],

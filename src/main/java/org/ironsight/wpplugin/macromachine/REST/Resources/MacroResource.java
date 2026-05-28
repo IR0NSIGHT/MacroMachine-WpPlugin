@@ -29,13 +29,13 @@ public class MacroResource {
           @Content(
               mediaType = "application/json",
               array = @ArraySchema(schema = @Schema(implementation = MacroDTO.class))))
-  public List<MacroDTO> getAll() {
+  public List<MacroDTO> getAllMacros() {
     return macroContainer.queryAll().stream().map(MacroDTO::new).collect(Collectors.toList());
   }
 
   @GET
   @Path("/{id}")
-  public MacroDTO get(@PathParam("id") UUID id) {
+  public MacroDTO getMacroById(@PathParam("id") UUID id) {
     var macro = macroContainer.queryById(id);
     if (macro == null) {
       throw new NotFoundException("Macro not found for uuid=: " + id);
@@ -44,7 +44,7 @@ public class MacroResource {
   }
 
   @POST
-  public MacroDTO create(MacroDTO dto) {
+  public MacroDTO postMacro(MacroDTO dto) {
     Macro macro = dto.toMacro();
     StringBuilder err = new StringBuilder();
     macroContainer.updateMapping(macro, err::append);
@@ -57,7 +57,7 @@ public class MacroResource {
 
   @DELETE
   @Path("/{id}")
-  public void delete(@PathParam("id") UUID id) {
+  public void deleteMacro(@PathParam("id") UUID id) {
     if (!macroContainer.queryContains(id))
       throw new NotFoundException("Macro not found for uuid=: " + id);
     macroContainer.deleteMapping(id);

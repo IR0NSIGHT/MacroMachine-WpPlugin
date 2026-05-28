@@ -2,6 +2,8 @@ package org.ironsight.wpplugin.macromachine.REST.Resources;
 
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -27,13 +29,13 @@ public class ActionResource {
   private final MappingActionContainer actionContainer;
 
   @GET
-  public List<ActionDTO> getAll() {
+  public List<ActionDTO> getAllActions() {
     return actionContainer.queryAll().stream().map(ActionDTO::new).collect(Collectors.toList());
   }
 
   @GET
   @Path("/{id}")
-  public ActionDTO get(@PathParam("id") UUID id) {
+  public ActionDTO getActionById(@PathParam("id") UUID id) {
     var macro = actionContainer.queryById(id);
     if (macro == null) {
       throw new NotFoundException("Action not found for uuid=: " + id);
@@ -47,10 +49,19 @@ public class ActionResource {
             .filter(IPositionValueGetter.class::isInstance)
             .map(IPositionValueGetter.class::cast)
             .map(input -> {
-              return getNewEmptyAction(UUID.randomUUID())
+              var mappingPoints = input.isDiscrete() ? Arrays.stream(input.getAllInputValues())
+                      .mapToObj(v ->
+                            new MappingPoint(v, v == input.getMinValue() ? ActionFilterIO.IGNORE_VALUE : ActionFilterIO.BLOCK_VALUE))
+                      .toArray(MappingPoint[]::new) : new MappingPoint[]{
+                              new MappingPoint(Math.round((input.getMinValue() + input.getMaxValue()) / 2f) - 1, ActionFilterIO.BLOCK_VALUE),
+                              new MappingPoint( Math.round((input.getMinValue() + input.getMaxValue()) / 2f), ActionFilterIO.IGNORE_VALUE),
+              };
+              var filterAction = getNewEmptyAction(UUID.randomUUID())
                       .withInput(input)
                       .withOutput(filterOutput)
                       .withType(ActionType.SET)
+                      .withNewPoints(mappingPoints);
+                      return filterAction
                       .withDescription("Default simple filter")
                       .withName("Filter by: " + input.getName()); //FIXME maybe add some preset to block certain things?
             }).toList();
@@ -89,7 +100,7 @@ public class ActionResource {
   }
 
   @POST
-  public ActionDTO create(ActionDTO dto) {
+  public ActionDTO postAction(ActionDTO dto) {
     System.out.println("POST RECEVIED action dto" + dto.toString());
     MappingAction macro = dto.toAction();
     StringBuilder err = new StringBuilder();
@@ -103,7 +114,7 @@ public class ActionResource {
 
   @DELETE
   @Path("/{id}")
-  public void delete(@PathParam("id") UUID id) {
+  public void deleteAction(@PathParam("id") UUID id) {
     if (!actionContainer.queryContains(id))
       throw new NotFoundException("Action not found for uuid=: " + id);
     actionContainer.deleteMapping(id);

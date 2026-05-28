@@ -40,7 +40,7 @@ public class ExecutionResource {
 
   @POST
   @Path("/queue")
-  public ExecutionQueueDTO updateQueue(@Valid ExecutionQueueDTO request) {
+  public ExecutionQueueDTO addToQueue(@Valid ExecutionQueueDTO request) {
     var existingMacros = request.queuedMacroIds().stream().filter(macros::queryContains).toList();
     for (var uid : existingMacros) applicator.queueMacro(uid);
     return new ExecutionQueueDTO(applicator.getQueue());
