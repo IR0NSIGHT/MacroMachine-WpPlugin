@@ -4,22 +4,6 @@
  */
 
 export interface paths {
-  "/actions": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations["getAll"];
-    put?: never;
-    post: operations["create"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   "/actions/{id}": {
     parameters: {
       query?: never;
@@ -27,10 +11,26 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get: operations["get"];
+    get: operations["getActionById"];
     put?: never;
     post?: never;
-    delete: operations["delete"];
+    delete: operations["deleteAction"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/actions": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["getAllActions"];
+    put?: never;
+    post: operations["postAction"];
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -84,6 +84,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/execution/queue": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["getQueue"];
+    put?: never;
+    post: operations["addToQueue"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/execution/state": {
     parameters: {
       query?: never;
@@ -100,17 +116,17 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/execution/queue": {
+  "/macros/{id}": {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["getQueue"];
+    get: operations["getMacroById"];
     put?: never;
-    post: operations["updateQueue"];
-    delete?: never;
+    post?: never;
+    delete: operations["deleteMacro"];
     options?: never;
     head?: never;
     patch?: never;
@@ -124,26 +140,10 @@ export interface paths {
       cookie?: never;
     };
     /** Get all macros */
-    get: operations["getAll_1"];
+    get: operations["getAllMacros"];
     put?: never;
-    post: operations["create_1"];
+    post: operations["postMacro"];
     delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/macros/{id}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations["get_1"];
-    put?: never;
-    post?: never;
-    delete: operations["delete_1"];
     options?: never;
     head?: never;
     patch?: never;
@@ -203,17 +203,25 @@ export interface components {
       /** @description actual numeric input values for all inputs */
       mappedInputs: number[];
     };
-    BoolValue: {
-      type: "BoolValue";
-    } & (Omit<components["schemas"]["IoParameter"], "type"> & {
+    BoolValue: Omit<components["schemas"]["IoParameter"], "type"> & {
       value?: boolean;
-    });
-    FloatValue: {
-      type: "FloatValue";
-    } & (Omit<components["schemas"]["IoParameter"], "type"> & {
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "BoolValue";
+    };
+    FloatValue: Omit<components["schemas"]["IoParameter"], "type"> & {
       /** Format: float */
       value?: number;
-    });
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "FloatValue";
+    };
     /** @description Describes an input/output provider configuration */
     InputOutputDTO: {
       /**
@@ -308,25 +316,48 @@ export interface components {
        */
       ioParameters?: components["schemas"]["IoParameter"][];
     };
-    IntArrayValue: {
-      type: "IntArrayValue";
-    } & (Omit<components["schemas"]["IoParameter"], "type"> & {
+    IntArrayValue: Omit<components["schemas"]["IoParameter"], "type"> & {
       value?: number[];
-    });
-    IntValue: {
-      type: "IntValue";
-    } & (Omit<components["schemas"]["IoParameter"], "type"> & {
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "IntArrayValue";
+    };
+    IntValue: Omit<components["schemas"]["IoParameter"], "type"> & {
       /** Format: int32 */
       value?: number;
-    });
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "IntValue";
+    };
     IoParameter: {
       type: string;
-    };
-    StringValue: {
-      type: "StringValue";
-    } & (Omit<components["schemas"]["IoParameter"], "type"> & {
+    } & (
+      | components["schemas"]["IntValue"]
+      | components["schemas"]["FloatValue"]
+      | components["schemas"]["StringValue"]
+      | components["schemas"]["BoolValue"]
+      | components["schemas"]["IntArrayValue"]
+    );
+    StringValue: Omit<components["schemas"]["IoParameter"], "type"> & {
       value?: string;
-    });
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: "StringValue";
+    };
+    /** @description Request to enqueue macros for execution */
+    ExecutionQueueDTO: {
+      /** @description Ordered list of macro IDs to enqueue */
+      queuedMacroIds: string[];
+    };
     /** @description Represents the application's execution state */
     ExecutionStateDTO: {
       /**
@@ -367,11 +398,6 @@ export interface components {
        * @example 42.5
        */
       percentComplete: number;
-    };
-    /** @description Request to enqueue macros for execution */
-    ExecutionQueueDTO: {
-      /** @description Ordered list of macro IDs to enqueue */
-      queuedMacroIds: string[];
     };
     /** @description Represents a macro: collection of macros and actions */
     MacroDTO: {
@@ -417,7 +443,51 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  getAll: {
+  getActionById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description default response */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ActionDTO"];
+        };
+      };
+    };
+  };
+  deleteAction: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description default response */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+    };
+  };
+  getAllActions: {
     parameters: {
       query?: never;
       header?: never;
@@ -437,7 +507,7 @@ export interface operations {
       };
     };
   };
-  create: {
+  postAction: {
     parameters: {
       query?: never;
       header?: never;
@@ -457,50 +527,6 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["ActionDTO"];
-        };
-      };
-    };
-  };
-  get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ActionDTO"];
-        };
-      };
-    };
-  };
-  delete: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
         };
       };
     };
@@ -565,26 +591,6 @@ export interface operations {
       };
     };
   };
-  getCurrentState: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ExecutionStateDTO"];
-        };
-      };
-    };
-  };
   getQueue: {
     parameters: {
       query?: never;
@@ -605,7 +611,7 @@ export interface operations {
       };
     };
   };
-  updateQueue: {
+  addToQueue: {
     parameters: {
       query?: never;
       header?: never;
@@ -629,7 +635,71 @@ export interface operations {
       };
     };
   };
-  getAll_1: {
+  getCurrentState: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description default response */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["ExecutionStateDTO"];
+        };
+      };
+    };
+  };
+  getMacroById: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description default response */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["MacroDTO"];
+        };
+      };
+    };
+  };
+  deleteMacro: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description default response */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": unknown;
+        };
+      };
+    };
+  };
+  getAllMacros: {
     parameters: {
       query?: never;
       header?: never;
@@ -649,7 +719,7 @@ export interface operations {
       };
     };
   };
-  create_1: {
+  postMacro: {
     parameters: {
       query?: never;
       header?: never;
@@ -669,50 +739,6 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["MacroDTO"];
-        };
-      };
-    };
-  };
-  get_1: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["MacroDTO"];
-        };
-      };
-    };
-  };
-  delete_1: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description default response */
-      default: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": unknown;
         };
       };
     };

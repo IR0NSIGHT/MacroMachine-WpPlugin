@@ -2,9 +2,10 @@
 
 ## Properties
 
-| Name   | Type   |
-| ------ | ------ |
-| `type` | string |
+| Name    | Type                |
+| ------- | ------------------- |
+| `type`  | string              |
+| `value` | Array&lt;number&gt; |
 
 ## Example
 
@@ -14,6 +15,7 @@ import type { IoParameter } from "";
 // TODO: Update the object below with actual values
 const example = {
   type: null,
+  value: null,
 } satisfies IoParameter;
 
 console.log(example);

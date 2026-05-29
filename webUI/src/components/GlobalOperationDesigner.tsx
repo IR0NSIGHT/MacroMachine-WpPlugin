@@ -12,7 +12,7 @@ import {
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SaveIcon from "@mui/icons-material/Save";
 import { ActionDTO, MacroDTO } from "@/types/DTO";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import filters from "../assets/defaultFilters.json";
 import applyActions from "../assets/defaultApplyActions.json";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -28,6 +28,8 @@ import { MacroExecuteRequester, runnableMacro, toMacroDTO, toRunnable } from "@/
 import equal from "fast-deep-equal";
 import AddIcon from "@mui/icons-material/Add";
 import { SelectDialog } from "./SelectDialog";
+import { DefaultApi } from "../generated/client/apis/DefaultApi";
+import { Configuration } from "@/generated/client";
 
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
@@ -129,8 +131,14 @@ const sortAlphabetical = (a: StepItemType, b: StepItemType): number => {
 };
 
 export const GlobalOperationDesigner = (props: Props) => {
-  const [filters, setFilters] = useState<StepItemType[]>(defaultFilters);
-  const [appliers, setAppliers] = useState<StepItemType[]>(defaultApplyActions);
+  const api = new DefaultApi(
+    new Configuration({
+      basePath: "http://localhost:8080",
+    }),
+  );
+
+  const [filters, setFilters] = useState<StepItemType[]>([]);
+  const [appliers, setAppliers] = useState<StepItemType[]>([]);
   const [editorItem, setEditorItem] = useState<{
     item: StepItemType;
     type: "filter" | "action";
@@ -150,6 +158,15 @@ export const GlobalOperationDesigner = (props: Props) => {
     props.macros,
   );
   const diff = !equal(currentRunnable, backendRunnable);
+
+  useEffect(() => {
+    api.getFilters().then((result) => {
+      setFilters(result.map((i) => ({ ...i, active: true })).map(filterAutoName));
+    });
+    api.getAppliers().then((result) => {
+      setAppliers(result.map((i) => ({ ...i, active: true })).map(actionAutoName));
+    });
+  }, []);
 
   const updateFilterItem = (action: StepItemType, isDelete: boolean) => {
     if (isDelete) {

@@ -12,58 +12,53 @@
  * Do not edit the class manually.
  */
 
-import { mapValues } from "../runtime";
+import type { BoolValue } from "./BoolValue";
 import {
-  type BoolValue,
+  instanceOfBoolValue,
+  BoolValueFromJSON,
   BoolValueFromJSONTyped,
   BoolValueToJSON,
-  BoolValueToJSONTyped,
 } from "./BoolValue";
+import type { FloatValue } from "./FloatValue";
 import {
-  type FloatValue,
+  instanceOfFloatValue,
+  FloatValueFromJSON,
   FloatValueFromJSONTyped,
   FloatValueToJSON,
-  FloatValueToJSONTyped,
 } from "./FloatValue";
+import type { IntArrayValue } from "./IntArrayValue";
 import {
-  type IntArrayValue,
+  instanceOfIntArrayValue,
+  IntArrayValueFromJSON,
   IntArrayValueFromJSONTyped,
   IntArrayValueToJSON,
-  IntArrayValueToJSONTyped,
 } from "./IntArrayValue";
+import type { IntValue } from "./IntValue";
 import {
-  type IntValue,
+  instanceOfIntValue,
+  IntValueFromJSON,
   IntValueFromJSONTyped,
   IntValueToJSON,
-  IntValueToJSONTyped,
 } from "./IntValue";
+import type { StringValue } from "./StringValue";
 import {
-  type StringValue,
+  instanceOfStringValue,
+  StringValueFromJSON,
   StringValueFromJSONTyped,
   StringValueToJSON,
-  StringValueToJSONTyped,
 } from "./StringValue";
-/**
- *
- * @export
- * @interface IoParameter
- */
-export interface IoParameter {
-  /**
-   *
-   * @type {string}
-   * @memberof IoParameter
-   */
-  type: string;
-}
 
 /**
- * Check if a given object implements the IoParameter interface.
+ * @type IoParameter
+ *
+ * @export
  */
-export function instanceOfIoParameter(value: object): value is IoParameter {
-  if (!("type" in value) || value["type"] === undefined) return false;
-  return true;
-}
+export type IoParameter =
+  | ({ type: "bool" } & BoolValue)
+  | ({ type: "float" } & FloatValue)
+  | ({ type: "int" } & IntValue)
+  | ({ type: "intArray" } & IntArrayValue)
+  | ({ type: "string" } & StringValue);
 
 export function IoParameterFromJSON(json: any): IoParameter {
   return IoParameterFromJSONTyped(json, false);
@@ -73,29 +68,25 @@ export function IoParameterFromJSONTyped(json: any, ignoreDiscriminator: boolean
   if (json == null) {
     return json;
   }
-  if (!ignoreDiscriminator) {
-    if (json["type"] === "BoolValue") {
-      return BoolValueFromJSONTyped(json, ignoreDiscriminator);
-    }
-    if (json["type"] === "FloatValue") {
-      return FloatValueFromJSONTyped(json, ignoreDiscriminator);
-    }
-    if (json["type"] === "IntArrayValue") {
-      return IntArrayValueFromJSONTyped(json, ignoreDiscriminator);
-    }
-    if (json["type"] === "IntValue") {
-      return IntValueFromJSONTyped(json, ignoreDiscriminator);
-    }
-    if (json["type"] === "StringValue") {
-      return StringValueFromJSONTyped(json, ignoreDiscriminator);
-    }
+  switch (json["type"]) {
+    case "bool":
+      return Object.assign({}, BoolValueFromJSONTyped(json, true), { type: "bool" } as const);
+    case "float":
+      return Object.assign({}, FloatValueFromJSONTyped(json, true), { type: "float" } as const);
+    case "int":
+      return Object.assign({}, IntValueFromJSONTyped(json, true), { type: "int" } as const);
+    case "intArray":
+      return Object.assign({}, IntArrayValueFromJSONTyped(json, true), {
+        type: "intArray",
+      } as const);
+    case "string":
+      return Object.assign({}, StringValueFromJSONTyped(json, true), { type: "string" } as const);
+    default:
+      return json;
   }
-  return {
-    type: json["type"],
-  };
 }
 
-export function IoParameterToJSON(json: any): IoParameter {
+export function IoParameterToJSON(json: any): any {
   return IoParameterToJSONTyped(json, false);
 }
 
@@ -106,25 +97,18 @@ export function IoParameterToJSONTyped(
   if (value == null) {
     return value;
   }
-
-  if (!ignoreDiscriminator) {
-    switch (value["type"]) {
-      case "BoolValue":
-        return BoolValueToJSONTyped(value as BoolValue, ignoreDiscriminator);
-      case "FloatValue":
-        return FloatValueToJSONTyped(value as FloatValue, ignoreDiscriminator);
-      case "IntArrayValue":
-        return IntArrayValueToJSONTyped(value as IntArrayValue, ignoreDiscriminator);
-      case "IntValue":
-        return IntValueToJSONTyped(value as IntValue, ignoreDiscriminator);
-      case "StringValue":
-        return StringValueToJSONTyped(value as StringValue, ignoreDiscriminator);
-      default:
-        return value;
-    }
+  switch (value["type"]) {
+    case "bool":
+      return Object.assign({}, BoolValueToJSON(value), { type: "bool" } as const);
+    case "float":
+      return Object.assign({}, FloatValueToJSON(value), { type: "float" } as const);
+    case "int":
+      return Object.assign({}, IntValueToJSON(value), { type: "int" } as const);
+    case "intArray":
+      return Object.assign({}, IntArrayValueToJSON(value), { type: "intArray" } as const);
+    case "string":
+      return Object.assign({}, StringValueToJSON(value), { type: "string" } as const);
+    default:
+      return value;
   }
-
-  return {
-    type: value["type"],
-  };
 }
