@@ -13,8 +13,5 @@ public record IntValue(String type, int value) implements IoParameter {
         this("int",value);
     }
 
-    @JsonValue
-    public int jsonValue() {
-        return value;
-    }
+    // keep object form with fields `type` and `value` for compatibility
 }

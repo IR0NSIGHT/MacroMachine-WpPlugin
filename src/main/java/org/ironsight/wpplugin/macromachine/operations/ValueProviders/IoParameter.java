@@ -6,15 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonDeserialize(using = IoParameterDeserializer.class)
-@JsonSubTypes({
-  @JsonSubTypes.Type(value = IntValue.class, name = "int"),
-  @JsonSubTypes.Type(value = FloatValue.class, name = "float"),
-  @JsonSubTypes.Type(value = StringValue.class, name = "string"),
-  @JsonSubTypes.Type(value = BoolValue.class, name = "bool"),
-  @JsonSubTypes.Type(value = IntArrayValue.class, name = "intArray")
-})
 @Schema(hidden = true)
 public sealed interface IoParameter
     permits IntValue, FloatValue, StringValue, BoolValue, IntArrayValue {

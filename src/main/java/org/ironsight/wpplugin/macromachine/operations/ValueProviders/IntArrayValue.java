@@ -15,11 +15,7 @@ public record IntArrayValue(String type, int[] value) implements IoParameter {
     this("intArray",value);
   }
 
-  @JsonValue
-  public int[] jsonValue() {
-    return value;
-  }
-
+  // keep object form with fields `type` and `value` for compatibility
   @Override
   public String toString() {
     return "IntArrayValue{" + "value=" + Arrays.toString(value) + '}';

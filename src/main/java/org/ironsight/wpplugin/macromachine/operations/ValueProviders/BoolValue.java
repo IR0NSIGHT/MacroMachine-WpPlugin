@@ -13,8 +13,5 @@ public record BoolValue(String type, boolean value) implements IoParameter {
         this("bool",value);
     }
 
-    @JsonValue
-    public boolean jsonValue() {
-        return value;
-    }
+    // keep object form with fields `type` and `value` for compatibility
 }

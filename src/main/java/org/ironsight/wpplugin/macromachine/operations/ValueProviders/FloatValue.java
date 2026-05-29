@@ -13,8 +13,5 @@ public record FloatValue(String type, float value) implements IoParameter {
         this("float",value);
     }
 
-    @JsonValue
-    public float jsonValue() {
-        return value;
-    }
+    // keep object form with fields `type` and `value` for compatibility
 }

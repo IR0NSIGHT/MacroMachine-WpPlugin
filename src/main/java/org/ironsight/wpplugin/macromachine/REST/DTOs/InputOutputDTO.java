@@ -63,7 +63,7 @@ public class InputOutputDTO {
                   requiredMode = Schema.RequiredMode.REQUIRED
           )
   )
-  private final List<Object> ioParameters;
+  private final List<IoParameter> ioParameters;
 
   @ArraySchema(
       schema =
@@ -96,7 +96,7 @@ public class InputOutputDTO {
       @JsonProperty("valueDisplayNames") String[] valueDisplayNames,
       @JsonProperty("discrete") boolean discrete,
       @JsonProperty("type") ProviderType type,
-      @JsonProperty("ioParameters") List<Object> ioParameters) {
+      @JsonProperty("ioParameters") List<IoParameter> ioParameters) {
     this.displayName = displayName;
     this.description = description;
     this.min = min;
@@ -109,7 +109,7 @@ public class InputOutputDTO {
   }
 
   public List<Object> getIoParameters() {
-    return ioParameters;
+    return (List) ioParameters;
   }
 
   public static InputOutputDTO fromOutputSetter(IPositionValueSetter setter) {
@@ -170,13 +170,13 @@ public class InputOutputDTO {
   }
 
   public IPositionValueGetter toGetter() {
-    var io = ProviderType.fromTypeWithParams(ioParameters.stream().map(o -> (IoParameter) o).toArray(IoParameter[]::new), type);
+    var io = ProviderType.fromTypeWithParams(ioParameters.toArray(IoParameter[]::new), type);
     if (io instanceof IPositionValueGetter getter) return getter;
     else throw new IllegalArgumentException("this provider type is not a getter:" + type);
   }
 
   public IPositionValueSetter toSetter() {
-    var io = ProviderType.fromTypeWithParams(ioParameters.stream().map(o -> (IoParameter) o).toArray(IoParameter[]::new), type);
+    var io = ProviderType.fromTypeWithParams(ioParameters.toArray(IoParameter[]::new), type);
     if (io instanceof IPositionValueSetter setter) return setter;
     else throw new IllegalArgumentException("this provider type is not a setter:" + type);
   }
