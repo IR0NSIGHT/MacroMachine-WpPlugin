@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "openapi-typescript ../src/main/resources/openapi.json -o src/generated/api-types.ts",
+    "typegen": "npx @openapitools/openapi-generator-cli generate -i http://localhost:8080/api/openapi.json -g typescript-fetch -o src/generated/client && npm run fmt -- src/generated/client",
     "build": "vite build",
     "lint": "oxlint src --max-warnings 0 --fix",
     "preview": "vite preview",
