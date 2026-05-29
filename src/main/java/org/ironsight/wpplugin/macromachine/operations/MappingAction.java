@@ -426,7 +426,8 @@ public class MappingAction implements SaveableAction {
     mappingPoints =
         Arrays.stream(mappingPoints)
             .map(this::sanitize)
-            //FIXME this is necessary on discrete IOs .filter(p -> !this.output.isIgnoreValue(p.output))
+            // FIXME this is necessary on discrete IOs .filter(p ->
+            // !this.output.isIgnoreValue(p.output))
             .toArray(MappingPoint[]::new);
 
     TreeSet<MappingPoint> newPoints = new TreeSet<>(Comparator.comparingInt(o -> o.input));

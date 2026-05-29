@@ -2,9 +2,12 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import java.util.Arrays;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonDeserialize(using = IoParameterDeserializer.class)
 @JsonSubTypes({
   @JsonSubTypes.Type(value = IntValue.class, name = "int"),
   @JsonSubTypes.Type(value = FloatValue.class, name = "float"),
@@ -12,6 +15,7 @@ import java.util.Arrays;
   @JsonSubTypes.Type(value = BoolValue.class, name = "bool"),
   @JsonSubTypes.Type(value = IntArrayValue.class, name = "intArray")
 })
+@Schema(hidden = true)
 public sealed interface IoParameter
     permits IntValue, FloatValue, StringValue, BoolValue, IntArrayValue {
   public static Object[] unwrap(IoParameter[] params) {
@@ -81,20 +85,5 @@ public sealed interface IoParameter
     }
 
     return null;
-  }
-}
-
-record IntValue(int value) implements IoParameter {}
-
-record FloatValue(float value) implements IoParameter {}
-
-record StringValue(String value) implements IoParameter {}
-
-record BoolValue(boolean value) implements IoParameter {}
-
-record IntArrayValue(int[] value) implements IoParameter {
-  @Override
-  public String toString() {
-    return "IntArrayValue{" + "value=" + Arrays.toString(value) + '}';
   }
 }

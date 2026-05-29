@@ -376,33 +376,6 @@
         },
         "description" : "Represents an executable mapping action, that reads one inputtype from the map and based on that writes output values to the map."
       },
-      "BoolValue" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/IoParameter"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "value" : {
-              "type" : "boolean"
-            }
-          }
-        } ]
-      },
-      "FloatValue" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/IoParameter"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "value" : {
-              "type" : "number",
-              "format" : "float"
-            }
-          }
-        } ]
-      },
       "InputOutputDTO" : {
         "required" : [ "description", "discrete", "displayName", "ignoreValue", "max", "min", "type", "valueDisplayNames" ],
         "type" : "object",
@@ -455,85 +428,30 @@
           },
           "ioParameters" : {
             "type" : "array",
-            "description" : "Parameters used to instantiate the IO provider. Each item contains a 'type' discriminator and matching value.",
-            "example" : [ {
-              "type" : "int",
-              "value" : 42
-            }, {
-              "type" : "float",
-              "value" : 1.5
-            }, {
-              "type" : "string",
-              "value" : "abc"
-            }, {
-              "type" : "bool",
-              "value" : true
-            }, {
-              "type" : "intArray",
-              "value" : [ 1, 2, 3 ]
-            } ],
+            "description" : "Parameters used to instantiate the IO provider.",
             "items" : {
-              "$ref" : "#/components/schemas/IoParameter"
+              "type" : "object",
+              "oneOf" : [ {
+                "type" : "integer",
+                "format" : "int32"
+              }, {
+                "type" : "number",
+                "format" : "float"
+              }, {
+                "type" : "string"
+              }, {
+                "type" : "boolean"
+              }, {
+                "type" : "array",
+                "items" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              } ]
             }
           }
         },
         "description" : "Describes an input/output provider configuration"
-      },
-      "IntArrayValue" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/IoParameter"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "value" : {
-              "type" : "array",
-              "items" : {
-                "type" : "integer",
-                "format" : "int32"
-              }
-            }
-          }
-        } ]
-      },
-      "IntValue" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/IoParameter"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "value" : {
-              "type" : "integer",
-              "format" : "int32"
-            }
-          }
-        } ]
-      },
-      "IoParameter" : {
-        "required" : [ "type" ],
-        "type" : "object",
-        "properties" : {
-          "type" : {
-            "type" : "string"
-          }
-        },
-        "discriminator" : {
-          "propertyName" : "type"
-        }
-      },
-      "StringValue" : {
-        "type" : "object",
-        "allOf" : [ {
-          "$ref" : "#/components/schemas/IoParameter"
-        }, {
-          "type" : "object",
-          "properties" : {
-            "value" : {
-              "type" : "string"
-            }
-          }
-        } ]
       },
       "ExecutionQueueDTO" : {
         "required" : [ "queuedMacroIds" ],

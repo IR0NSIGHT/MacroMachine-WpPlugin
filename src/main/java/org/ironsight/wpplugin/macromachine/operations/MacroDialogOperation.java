@@ -31,7 +31,9 @@ public class MacroDialogOperation extends AbstractBrushOperation {
     applicator = new MacroConcurrentApplicator(macros, actions, this::getDimension);
     applicator.start();
 
-    WebUIServer server = new WebUIServer(applicator, MappingActionContainer.getInstance(), macros, InputOutputProvider.INSTANCE);
+    WebUIServer server =
+        new WebUIServer(
+            applicator, MappingActionContainer.getInstance(), macros, InputOutputProvider.INSTANCE);
     try {
       server.start();
     } catch (IOException e) {

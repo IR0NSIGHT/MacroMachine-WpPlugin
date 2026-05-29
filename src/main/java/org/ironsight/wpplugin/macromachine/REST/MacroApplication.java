@@ -18,7 +18,10 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutput
 @ApplicationPath("/api")
 public class MacroApplication extends ResourceConfig {
   public MacroApplication(
-          MacroApplicator applicator, MappingActionContainer actions, MacroContainer macros, InputOutputProvider ioProvider) {
+      MacroApplicator applicator,
+      MappingActionContainer actions,
+      MacroContainer macros,
+      InputOutputProvider ioProvider) {
     register(PreflightRequestFilter.class);
     register(CorsFilter.class);
 
@@ -28,15 +31,9 @@ public class MacroApplication extends ResourceConfig {
 
     register(JacksonFeature.class);
 
+    OpenAPI openAPI = new OpenAPI().info(new Info().title("MacroMachine API").version("1.0.0"));
 
-    OpenAPI openAPI = new OpenAPI()
-            .info(new Info()
-                    .title("MacroMachine API")
-                    .version("1.0.0"));
-
-    SwaggerConfiguration config = new SwaggerConfiguration()
-            .openAPI(openAPI)
-            .prettyPrint(true);
+    SwaggerConfiguration config = new SwaggerConfiguration().openAPI(openAPI).prettyPrint(true);
 
     OpenApiResource resource = new OpenApiResource();
     resource.openApiConfiguration(config);

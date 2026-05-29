@@ -20,7 +20,10 @@ public class WebUIServer {
   private final InputOutputProvider ioProvider;
 
   public WebUIServer(
-          MacroApplicator applicator, MappingActionContainer actions, MacroContainer macros, InputOutputProvider ioProvider) {
+      MacroApplicator applicator,
+      MappingActionContainer actions,
+      MacroContainer macros,
+      InputOutputProvider ioProvider) {
     this.actions = actions;
     this.applicator = applicator;
     this.macros = macros;
@@ -47,7 +50,11 @@ public class WebUIServer {
 
     applicator.start();
 
-    new WebUIServer(applicator, MappingActionContainer.getInstance(), MacroContainer.getInstance(), InputOutputProvider.INSTANCE)
+    new WebUIServer(
+            applicator,
+            MappingActionContainer.getInstance(),
+            MacroContainer.getInstance(),
+            InputOutputProvider.INSTANCE)
         .start();
   }
 

@@ -5,14 +5,13 @@ import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPos
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IoParameter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 @Schema(description = "Describes an input/output provider configuration")
 public class InputOutputDTO {
@@ -48,23 +47,23 @@ public class InputOutputDTO {
   private final int ignoreValue;
 
   @ArraySchema(
-      schema = @Schema(implementation = IoParameter.class),
-      arraySchema =
+      schema = @Schema(
+        oneOf = {
+          Integer.class,
+          Float.class,
+          String.class,
+          Boolean.class,
+          int[].class
+        }
+      ),
+          arraySchema =
           @Schema(
-              description =
-                  "Parameters used to instantiate the IO provider. Each item contains a 'type' discriminator and matching value.",
-              requiredMode = Schema.RequiredMode.REQUIRED,
-              example =
-                  """
-        [
-          {"type":"int","value":42},
-          {"type":"float","value":1.5},
-          {"type":"string","value":"abc"},
-          {"type":"bool","value":true},
-          {"type":"intArray","value":[1,2,3]}
-        ]
-        """))
-  private final List<IoParameter> ioParameters;
+                  description =
+                          "Parameters used to instantiate the IO provider.",
+                  requiredMode = Schema.RequiredMode.REQUIRED
+          )
+  )
+  private final List<Object> ioParameters;
 
   @ArraySchema(
       schema =
@@ -97,7 +96,7 @@ public class InputOutputDTO {
       @JsonProperty("valueDisplayNames") String[] valueDisplayNames,
       @JsonProperty("discrete") boolean discrete,
       @JsonProperty("type") ProviderType type,
-      @JsonProperty("ioParameters") List<IoParameter> ioParameters) {
+      @JsonProperty("ioParameters") List<Object> ioParameters) {
     this.displayName = displayName;
     this.description = description;
     this.min = min;
@@ -109,7 +108,7 @@ public class InputOutputDTO {
     this.ioParameters = Objects.requireNonNull(ioParameters, "ioParameters can not be null");
   }
 
-  public List<IoParameter> getIoParameters() {
+  public List<Object> getIoParameters() {
     return ioParameters;
   }
 
@@ -171,13 +170,13 @@ public class InputOutputDTO {
   }
 
   public IPositionValueGetter toGetter() {
-    var io = ProviderType.fromTypeWithParams(ioParameters.toArray(IoParameter[]::new), type);
+    var io = ProviderType.fromTypeWithParams(ioParameters.stream().map(o -> (IoParameter) o).toArray(IoParameter[]::new), type);
     if (io instanceof IPositionValueGetter getter) return getter;
     else throw new IllegalArgumentException("this provider type is not a getter:" + type);
   }
 
   public IPositionValueSetter toSetter() {
-    var io = ProviderType.fromTypeWithParams(ioParameters.toArray(IoParameter[]::new), type);
+    var io = ProviderType.fromTypeWithParams(ioParameters.stream().map(o -> (IoParameter) o).toArray(IoParameter[]::new), type);
     if (io instanceof IPositionValueSetter setter) return setter;
     else throw new IllegalArgumentException("this provider type is not a setter:" + type);
   }

@@ -64,6 +64,9 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
   }
 
   private void setColorsFromData(int[] colorHex) {
+    if (colorHex == null) {
+      throw new IllegalArgumentException("can not be null");
+    }
     for (int value : getAllInputValues()) {
       if (isIgnoreValue(value)) continue;
       COLORS[value] = new Color(colorHex[value]);

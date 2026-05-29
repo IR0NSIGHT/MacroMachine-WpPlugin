@@ -29,7 +29,9 @@ public class ActionResourceTest extends JerseyTest {
 
   @Override
   protected Application configure() {
-    return new ResourceConfig().register(new ActionResource(InputOutputProvider.INSTANCE, new MappingActionContainer(""))).register(JacksonFeature.class);
+    return new ResourceConfig()
+        .register(new ActionResource(InputOutputProvider.INSTANCE, new MappingActionContainer("")))
+        .register(JacksonFeature.class);
   }
 
   @BeforeAll
