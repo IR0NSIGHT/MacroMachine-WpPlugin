@@ -114,9 +114,6 @@ export const toCleanAction = (action: ActionDTO): ActionDTO => {
 };
 
 // #############################################
-type _CreateActionBody = NonNullable<
-  NonNullable<operations["create"]["requestBody"]>["content"]
->["application/json"];
 export async function postAction(action: ActionDTO): Promise<ActionDTO> {
   const response = await fetch(`${API_BASE}/api/actions`, {
     method: "POST",

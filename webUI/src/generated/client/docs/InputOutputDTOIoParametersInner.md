@@ -1,20 +1,17 @@
-# StringValue
+# InputOutputDTOIoParametersInner
 
 ## Properties
 
-| Name    | Type   |
-| ------- | ------ |
-| `value` | string |
+| Name | Type |
+| ---- | ---- |
 
 ## Example
 
 ```typescript
-import type { StringValue } from "";
+import type { InputOutputDTOIoParametersInner } from "";
 
 // TODO: Update the object below with actual values
-const example = {
-  value: null,
-} satisfies StringValue;
+const example = {} satisfies InputOutputDTOIoParametersInner;
 
 console.log(example);
 
@@ -23,7 +20,7 @@ const exampleJSON: string = JSON.stringify(example);
 console.log(exampleJSON);
 
 // Parse the JSON string back to an object
-const exampleParsed = JSON.parse(exampleJSON) as StringValue;
+const exampleParsed = JSON.parse(exampleJSON) as InputOutputDTOIoParametersInner;
 console.log(exampleParsed);
 ```
 

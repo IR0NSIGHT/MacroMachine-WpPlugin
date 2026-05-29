@@ -13,13 +13,13 @@
  */
 
 import { mapValues } from "../runtime";
-import type { IoParameter } from "./IoParameter";
+import type { InputOutputDTOIoParametersInner } from "./InputOutputDTOIoParametersInner";
 import {
-  IoParameterFromJSON,
-  IoParameterFromJSONTyped,
-  IoParameterToJSON,
-  IoParameterToJSONTyped,
-} from "./IoParameter";
+  InputOutputDTOIoParametersInnerFromJSON,
+  InputOutputDTOIoParametersInnerFromJSONTyped,
+  InputOutputDTOIoParametersInnerToJSON,
+  InputOutputDTOIoParametersInnerToJSONTyped,
+} from "./InputOutputDTOIoParametersInner";
 
 /**
  * Describes an input/output provider configuration
@@ -76,11 +76,11 @@ export interface InputOutputDTO {
    */
   type: InputOutputDTOTypeEnum;
   /**
-   * Parameters used to instantiate the IO provider. Each item contains a 'type' discriminator and matching value.
-   * @type {Array<IoParameter>}
+   * Parameters used to instantiate the IO provider.
+   * @type {Array<InputOutputDTOIoParametersInner>}
    * @memberof InputOutputDTO
    */
-  ioParameters?: Array<IoParameter>;
+  ioParameters?: Array<InputOutputDTOIoParametersInner>;
 }
 
 /**
@@ -151,7 +151,7 @@ export function InputOutputDTOFromJSONTyped(
     ioParameters:
       json["ioParameters"] == null
         ? undefined
-        : (json["ioParameters"] as Array<any>).map(IoParameterFromJSON),
+        : (json["ioParameters"] as Array<any>).map(InputOutputDTOIoParametersInnerFromJSON),
   };
 }
 
@@ -179,6 +179,6 @@ export function InputOutputDTOToJSONTyped(
     ioParameters:
       value["ioParameters"] == null
         ? undefined
-        : (value["ioParameters"] as Array<any>).map(IoParameterToJSON),
+        : (value["ioParameters"] as Array<any>).map(InputOutputDTOIoParametersInnerToJSON),
   };
 }

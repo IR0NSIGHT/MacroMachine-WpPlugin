@@ -203,25 +203,6 @@ export interface components {
       /** @description actual numeric input values for all inputs */
       mappedInputs: number[];
     };
-    BoolValue: Omit<components["schemas"]["IoParameter"], "type"> & {
-      value?: boolean;
-    } & {
-      /**
-       * @description discriminator enum property added by openapi-typescript
-       * @enum {string}
-       */
-      type: "BoolValue";
-    };
-    FloatValue: Omit<components["schemas"]["IoParameter"], "type"> & {
-      /** Format: float */
-      value?: number;
-    } & {
-      /**
-       * @description discriminator enum property added by openapi-typescript
-       * @enum {string}
-       */
-      type: "FloatValue";
-    };
     /** @description Describes an input/output provider configuration */
     InputOutputDTO: {
       /**
@@ -285,73 +266,8 @@ export interface components {
         | "SHADOW"
         | "VORONOI_NOISE"
         | "RANDOM_NOISE";
-      /**
-       * @description Parameters used to instantiate the IO provider. Each item contains a 'type' discriminator and matching value.
-       * @example [
-       *       {
-       *         "type": "int",
-       *         "value": 42
-       *       },
-       *       {
-       *         "type": "float",
-       *         "value": 1.5
-       *       },
-       *       {
-       *         "type": "string",
-       *         "value": "abc"
-       *       },
-       *       {
-       *         "type": "bool",
-       *         "value": true
-       *       },
-       *       {
-       *         "type": "intArray",
-       *         "value": [
-       *           1,
-       *           2,
-       *           3
-       *         ]
-       *       }
-       *     ]
-       */
-      ioParameters?: components["schemas"]["IoParameter"][];
-    };
-    IntArrayValue: Omit<components["schemas"]["IoParameter"], "type"> & {
-      value?: number[];
-    } & {
-      /**
-       * @description discriminator enum property added by openapi-typescript
-       * @enum {string}
-       */
-      type: "IntArrayValue";
-    };
-    IntValue: Omit<components["schemas"]["IoParameter"], "type"> & {
-      /** Format: int32 */
-      value?: number;
-    } & {
-      /**
-       * @description discriminator enum property added by openapi-typescript
-       * @enum {string}
-       */
-      type: "IntValue";
-    };
-    IoParameter: {
-      type: string;
-    } & (
-      | components["schemas"]["IntValue"]
-      | components["schemas"]["FloatValue"]
-      | components["schemas"]["StringValue"]
-      | components["schemas"]["BoolValue"]
-      | components["schemas"]["IntArrayValue"]
-    );
-    StringValue: Omit<components["schemas"]["IoParameter"], "type"> & {
-      value?: string;
-    } & {
-      /**
-       * @description discriminator enum property added by openapi-typescript
-       * @enum {string}
-       */
-      type: "StringValue";
+      /** @description Parameters used to instantiate the IO provider. */
+      ioParameters?: (number | string | boolean | number[])[];
     };
     /** @description Request to enqueue macros for execution */
     ExecutionQueueDTO: {

@@ -4,17 +4,17 @@ Describes an input/output provider configuration
 
 ## Properties
 
-| Name                | Type                                       |
-| ------------------- | ------------------------------------------ |
-| `displayName`       | string                                     |
-| `description`       | string                                     |
-| `min`               | number                                     |
-| `max`               | number                                     |
-| `ignoreValue`       | number                                     |
-| `valueDisplayNames` | Array&lt;string&gt;                        |
-| `discrete`          | boolean                                    |
-| `type`              | string                                     |
-| `ioParameters`      | [Array&lt;IoParameter&gt;](IoParameter.md) |
+| Name                | Type                                                                               |
+| ------------------- | ---------------------------------------------------------------------------------- |
+| `displayName`       | string                                                                             |
+| `description`       | string                                                                             |
+| `min`               | number                                                                             |
+| `max`               | number                                                                             |
+| `ignoreValue`       | number                                                                             |
+| `valueDisplayNames` | Array&lt;string&gt;                                                                |
+| `discrete`          | boolean                                                                            |
+| `type`              | string                                                                             |
+| `ioParameters`      | [Array&lt;InputOutputDTOIoParametersInner&gt;](InputOutputDTOIoParametersInner.md) |
 
 ## Example
 
@@ -31,7 +31,7 @@ const example = {
   "valueDisplayNames": null,
   "discrete": true,
   "type": null,
-  "ioParameters": [{"type":"int","value":42},{"type":"float","value":1.5},{"type":"string","value":"abc"},{"type":"bool","value":true},{"type":"intArray","value":[1,2,3]}],
+  "ioParameters": null,
 } satisfies InputOutputDTO
 
 console.log(example)
