@@ -4,7 +4,10 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Typography from "@mui/material/Typography";
 import { CardActionArea, Box, CircularProgress, alpha, IconButton } from "@mui/material";
-import { components } from "@/generated/api-types";
+import type {
+  MacroDTO as GeneratedMacroDTO,
+  ExecutionStateDTO as GeneratedExecutionStateDTO,
+} from "@/generated/client";
 import { theme } from "@/theme";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ShareIcon from "@mui/icons-material/Share";
@@ -14,8 +17,8 @@ import { executionProgress } from "../AppBar";
 import DeleteIcon from "@mui/icons-material/Delete";
 import StarIcon from "@mui/icons-material/Star";
 
-type MacroDTO = components["schemas"]["MacroDTO"];
-type executionState = components["schemas"]["ExecutionStateDTO"];
+type MacroDTO = GeneratedMacroDTO;
+type executionState = GeneratedExecutionStateDTO;
 export default function MacroCard(props: {
   macro: MacroDTO;
   execution?: executionState;

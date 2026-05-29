@@ -1,9 +1,14 @@
-import type { components } from "../generated/api-types";
+import type {
+  ActionDTO as GeneratedActionDTO,
+  MacroDTO as GeneratedMacroDTO,
+  ExecutionStateDTO as GeneratedExecutionStateDTO,
+  ExecutionQueueDTO as GeneratedExecutionQueueDTO,
+} from "../generated/client";
 
-export type ActionDTO = components["schemas"]["ActionDTO"];
-export type MacroDTO = components["schemas"]["MacroDTO"];
-export type ExecutionStateDTO = components["schemas"]["ExecutionStateDTO"];
-export type ExecutionQueueDTO = components["schemas"]["ExecutionQueueDTO"];
+export type ActionDTO = GeneratedActionDTO;
+export type MacroDTO = GeneratedMacroDTO;
+export type ExecutionStateDTO = GeneratedExecutionStateDTO;
+export type ExecutionQueueDTO = GeneratedExecutionQueueDTO;
 export type InputDTO = ActionDTO["input"];
 export type OutputDTO = ActionDTO["output"];
 export type IOType = ActionDTO["output"]["type"] | ActionDTO["input"]["type"];
