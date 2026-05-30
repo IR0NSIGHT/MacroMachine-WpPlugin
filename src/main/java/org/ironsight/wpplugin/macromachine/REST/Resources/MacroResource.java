@@ -43,6 +43,16 @@ public class MacroResource {
     return new MacroDTO(macro);
   }
 
+  @GET
+  @Path("/lastChange")
+  @Operation(
+      summary = "Get last modification timestamp",
+      description =
+          "Returns the timestamp of the most recent modification to the macro container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).")
+  public long getMacroLastChange() {
+    return macroContainer.getLastChange();
+  }
+
   @POST
   public MacroDTO postMacro(MacroDTO dto) {
     Macro macro = dto.toMacro();

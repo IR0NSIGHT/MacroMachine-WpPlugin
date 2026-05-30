@@ -5,7 +5,6 @@ import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPos
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Arrays;
 import java.util.List;
@@ -47,22 +46,12 @@ public class InputOutputDTO {
   private final int ignoreValue;
 
   @ArraySchema(
-      schema = @Schema(
-        oneOf = {
-          Integer.class,
-          Float.class,
-          String.class,
-          Boolean.class,
-          int[].class
-        }
-      ),
-          arraySchema =
+      schema =
+          @Schema(oneOf = {Integer.class, Float.class, String.class, Boolean.class, int[].class}),
+      arraySchema =
           @Schema(
-                  description =
-                          "Parameters used to instantiate the IO provider.",
-                  requiredMode = Schema.RequiredMode.REQUIRED
-          )
-  )
+              description = "Parameters used to instantiate the IO provider.",
+              requiredMode = Schema.RequiredMode.REQUIRED))
   private final List<IoParameter> ioParameters;
 
   @ArraySchema(

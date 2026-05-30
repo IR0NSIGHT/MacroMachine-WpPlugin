@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import "./App.css";
 import "@fontsource/ubuntu";
 import {
+  api,
   deleteMacro,
   fetchActions,
   fetchExecutionQueue,
@@ -40,12 +41,32 @@ export default function App() {
   const [connectionLost, setConnectionLost] = useState(false);
 
   const [tab, setTab] = useState(0);
+  const [lastActionChange, setLastActionChange] = useState(0);
+  const [lastMacroChange, setLastMacroChange] = useState(0);
+
+  useEffect(() => {
+    fetchActions()
+      .then((r) => {
+        console.log("ACTION CHANGED!");
+        setActions((prev) => (equal(prev, r) ? prev : r));
+      })
+      .catch(console.error);
+  }, [lastActionChange]);
+
+  useEffect(() => {
+    fetchMacros()
+      .then((r) => {
+        console.log("MACROS CHANGED!");
+        setMacros((prev) => (equal(prev, r) ? prev : r));
+      })
+      .catch(console.error);
+  }, [lastMacroChange]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
       await fetchExecutionQueue()
         .then((r) => {
-          if (!equal(r, queue)) setQueue(r);
+          setQueue((prev) => (equal(prev, r) ? prev : r));
           setConnectionLost(false);
         })
         .catch((e) => {
@@ -54,19 +75,17 @@ export default function App() {
         });
       await fetchExecutionState()
         .then((r) => {
-          if (!equal(r, executionState)) setExecutionState(r);
+          setExecutionState((prev) => (equal(prev, r) ? prev : r));
         })
         .catch(console.error);
-      await fetchActions()
-        .then((r) => {
-          if (!equal(r, actions)) setActions(r);
-        })
-        .catch(console.error);
-      await fetchMacros()
-        .then((r) => {
-          if (!equal(r, macros)) setMacros(r);
-        })
-        .catch(console.error);
+
+      await api.getActionLastChange().then((lastChangeBackend) => {
+        setLastActionChange(lastChangeBackend);
+      });
+
+      await api.getMacroLastChange().then((lastChangeBackend) => {
+        setLastMacroChange(lastChangeBackend);
+      });
     }, 300);
 
     return () => clearInterval(interval); //cleanup timer

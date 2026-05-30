@@ -2,25 +2,27 @@
 
 All URIs are relative to _http://localhost_
 
-| Method                                                     | HTTP request                         | Description    |
-| ---------------------------------------------------------- | ------------------------------------ | -------------- |
-| [**addToQueue**](DefaultApi.md#addtoqueue)                 | **POST** /api/execution/queue        |                |
-| [**deleteAction**](DefaultApi.md#deleteaction)             | **DELETE** /api/actions/{id}         |                |
-| [**deleteMacro**](DefaultApi.md#deletemacro)               | **DELETE** /api/macros/{id}          |                |
-| [**getActionById**](DefaultApi.md#getactionbyid)           | **GET** /api/actions/{id}            |                |
-| [**getAllActions**](DefaultApi.md#getallactions)           | **GET** /api/actions                 |                |
-| [**getAllMacros**](DefaultApi.md#getallmacros)             | **GET** /api/macros                  | Get all macros |
-| [**getAppliers**](DefaultApi.md#getappliers)               | **GET** /api/actions/appliers        |                |
-| [**getCurrentState**](DefaultApi.md#getcurrentstate)       | **GET** /api/execution/state         |                |
-| [**getDocs**](DefaultApi.md#getdocs)                       | **GET** /api/docs                    |                |
-| [**getExternalGrammar**](DefaultApi.md#getexternalgrammar) | **GET** /api/application.wadl/{path} |                |
-| [**getFilters**](DefaultApi.md#getfilters)                 | **GET** /api/actions/filters         |                |
-| [**getMacroById**](DefaultApi.md#getmacrobyid)             | **GET** /api/macros/{id}             |                |
-| [**getQueue**](DefaultApi.md#getqueue)                     | **GET** /api/execution/queue         |                |
-| [**getWadl**](DefaultApi.md#getwadl)                       | **GET** /api/application.wadl        |                |
-| [**options**](DefaultApi.md#options)                       | **OPTIONS** /api                     |                |
-| [**postAction**](DefaultApi.md#postaction)                 | **POST** /api/actions                |                |
-| [**postMacro**](DefaultApi.md#postmacro)                   | **POST** /api/macros                 |                |
+| Method                                                       | HTTP request                         | Description                     |
+| ------------------------------------------------------------ | ------------------------------------ | ------------------------------- |
+| [**addToQueue**](DefaultApi.md#addtoqueue)                   | **POST** /api/execution/queue        |                                 |
+| [**deleteAction**](DefaultApi.md#deleteaction)               | **DELETE** /api/actions/{id}         |                                 |
+| [**deleteMacro**](DefaultApi.md#deletemacro)                 | **DELETE** /api/macros/{id}          |                                 |
+| [**getActionById**](DefaultApi.md#getactionbyid)             | **GET** /api/actions/{id}            |                                 |
+| [**getActionLastChange**](DefaultApi.md#getactionlastchange) | **GET** /api/actions/lastChange      | Get last modification timestamp |
+| [**getAllActions**](DefaultApi.md#getallactions)             | **GET** /api/actions                 |                                 |
+| [**getAllMacros**](DefaultApi.md#getallmacros)               | **GET** /api/macros                  | Get all macros                  |
+| [**getAppliers**](DefaultApi.md#getappliers)                 | **GET** /api/actions/appliers        |                                 |
+| [**getCurrentState**](DefaultApi.md#getcurrentstate)         | **GET** /api/execution/state         |                                 |
+| [**getDocs**](DefaultApi.md#getdocs)                         | **GET** /api/docs                    |                                 |
+| [**getExternalGrammar**](DefaultApi.md#getexternalgrammar)   | **GET** /api/application.wadl/{path} |                                 |
+| [**getFilters**](DefaultApi.md#getfilters)                   | **GET** /api/actions/filters         |                                 |
+| [**getMacroById**](DefaultApi.md#getmacrobyid)               | **GET** /api/macros/{id}             |                                 |
+| [**getMacroLastChange**](DefaultApi.md#getmacrolastchange)   | **GET** /api/macros/lastChange       | Get last modification timestamp |
+| [**getQueue**](DefaultApi.md#getqueue)                       | **GET** /api/execution/queue         |                                 |
+| [**getWadl**](DefaultApi.md#getwadl)                         | **GET** /api/application.wadl        |                                 |
+| [**options**](DefaultApi.md#options)                         | **OPTIONS** /api                     |                                 |
+| [**postAction**](DefaultApi.md#postaction)                   | **POST** /api/actions                |                                 |
+| [**postMacro**](DefaultApi.md#postmacro)                     | **POST** /api/macros                 |                                 |
 
 ## addToQueue
 
@@ -248,6 +250,61 @@ example().catch(console.error);
 ### Return type
 
 [**ActionDTO**](ActionDTO.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+### HTTP response details
+
+| Status code | Description      | Response headers |
+| ----------- | ---------------- | ---------------- |
+| **0**       | default response | -                |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+## getActionLastChange
+
+> number getActionLastChange()
+
+Get last modification timestamp
+
+Returns the timestamp of the most recent modification to the action container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).
+
+### Example
+
+```ts
+import { Configuration, DefaultApi } from "";
+import type { GetActionLastChangeRequest } from "";
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new DefaultApi();
+
+  try {
+    const data = await api.getActionLastChange();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**number**
 
 ### Authorization
 
@@ -675,6 +732,61 @@ example().catch(console.error);
 ### Return type
 
 [**MacroDTO**](MacroDTO.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+### HTTP response details
+
+| Status code | Description      | Response headers |
+| ----------- | ---------------- | ---------------- |
+| **0**       | default response | -                |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+## getMacroLastChange
+
+> number getMacroLastChange()
+
+Get last modification timestamp
+
+Returns the timestamp of the most recent modification to the macro container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).
+
+### Example
+
+```ts
+import { Configuration, DefaultApi } from "";
+import type { GetMacroLastChangeRequest } from "";
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new DefaultApi();
+
+  try {
+    const data = await api.getMacroLastChange();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**number**
 
 ### Authorization
 

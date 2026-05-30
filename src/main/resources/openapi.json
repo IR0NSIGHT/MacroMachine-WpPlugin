@@ -47,6 +47,26 @@
         }
       }
     },
+    "/actions/lastChange" : {
+      "get" : {
+        "summary" : "Get last modification timestamp",
+        "description" : "Returns the timestamp of the most recent modification to the action container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).",
+        "operationId" : "getActionLastChange",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int64"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/actions" : {
       "get" : {
         "operationId" : "getAllActions",
@@ -286,6 +306,26 @@
               "application/json" : {
                 "schema" : {
                   "$ref" : "#/components/schemas/MacroDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/macros/lastChange" : {
+      "get" : {
+        "summary" : "Get last modification timestamp",
+        "description" : "Returns the timestamp of the most recent modification to the macro container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).",
+        "operationId" : "getMacroLastChange",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int64"
                 }
               }
             }

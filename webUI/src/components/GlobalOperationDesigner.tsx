@@ -137,6 +137,7 @@ export const GlobalOperationDesigner = (props: Props) => {
       basePath: "http://localhost:8080",
     }),
   );
+  console.log("Rerender Global Operation Designer!");
 
   const [filters, setFilters] = useState<StepItemType[]>([]);
   const [appliers, setAppliers] = useState<StepItemType[]>([]);
@@ -151,14 +152,18 @@ export const GlobalOperationDesigner = (props: Props) => {
 
   const [addItem, setAddItem] = useState<"filter" | "applier" | undefined>(undefined);
   const [loadMacros, setLoadMacros] = useState<runnableMacro[] | undefined>();
+  const [isDiff, setIsDiff] = useState(false);
 
-  const currentRunnable = constructRunnable();
-  const backendRunnable = toRunnable(
-    props.macros.find((macro) => macro.uid === uuid),
-    props.actions,
-    props.macros,
-  );
-  const diff = !equal(currentRunnable, backendRunnable);
+  useEffect(() => {
+    const currentRunnable = constructRunnable();
+    const backendRunnable = toRunnable(
+      props.macros.find((macro) => macro.uid === uuid),
+      props.actions,
+      props.macros,
+    );
+    const diff = !equal(currentRunnable, backendRunnable);
+    setIsDiff(diff);
+  }, [props.macros, props.actions]);
 
   useEffect(() => {
     api.getFilters().then((result) => {
@@ -240,9 +245,9 @@ export const GlobalOperationDesigner = (props: Props) => {
     const allowedMacros = props.macros
       .map((m) => toRunnable(m, props.actions, props.macros))
       .filter((m) => m !== undefined)
-      .filter((m) => isGlobalOpsMacro(m) === true);
+      .filter((m) => isGlobalOpsMacro(m as runnableMacro) === true);
 
-    setLoadMacros(allowedMacros); //FIXME linter doesnt like | undefined here
+    setLoadMacros(allowedMacros as runnableMacro[]); //FIXME linter doesnt like | undefined here
   }
 
   function isGlobalOpsMacro(runnable: runnableMacro): true | { error: string } {
@@ -343,7 +348,7 @@ export const GlobalOperationDesigner = (props: Props) => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Save this macro.">
-            <IconButton size="small" disabled={!diff} onClick={onSave}>
+            <IconButton size="small" disabled={!isDiff} onClick={onSave}>
               <SaveIcon />
             </IconButton>
           </Tooltip>

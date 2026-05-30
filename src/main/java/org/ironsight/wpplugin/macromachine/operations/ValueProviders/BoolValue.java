@@ -8,15 +8,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonTypeName("bool")
 @Schema(hidden = true)
 public record BoolValue(String type, boolean value) implements IoParameter {
-    @JsonCreator
-    public BoolValue(boolean value){
-        this("bool",value);
-    }
+  @JsonCreator
+  public BoolValue(boolean value) {
+    this("bool", value);
+  }
 
-    // keep object form with fields `type` and `value` for compatibility
+  // keep object form with fields `type` and `value` for compatibility
 
-    @JsonValue
-    public Object getValue() {
-        return value();
-    }
+  @JsonValue
+  public Object getValue() {
+    return value();
+  }
 }

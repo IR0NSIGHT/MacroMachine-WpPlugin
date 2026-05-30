@@ -53,7 +53,6 @@ export function toRunnable(
   macros: MacroDTO[],
 ): runnableMacro | undefined {
   if (!macro) return undefined;
-  console.log("to runnable:", macro, actions);
   const actionsAndMacros = [...actions, ...macros];
   try {
     const uidSet = new Set(actionsAndMacros.map((a) => a.uid));

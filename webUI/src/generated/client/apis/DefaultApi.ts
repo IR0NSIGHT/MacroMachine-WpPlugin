@@ -256,6 +256,52 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
+   * Creates request options for getActionLastChange without sending the request
+   */
+  async getActionLastChangeRequestOpts(): Promise<runtime.RequestOpts> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/actions/lastChange`;
+
+    return {
+      path: urlPath,
+      method: "GET",
+      headers: headerParameters,
+      query: queryParameters,
+    };
+  }
+
+  /**
+   * Returns the timestamp of the most recent modification to the action container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).
+   * Get last modification timestamp
+   */
+  async getActionLastChangeRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<number>> {
+    const requestOptions = await this.getActionLastChangeRequestOpts();
+    const response = await this.request(requestOptions, initOverrides);
+
+    if (this.isJsonMime(response.headers.get("content-type"))) {
+      return new runtime.JSONApiResponse<number>(response);
+    } else {
+      return new runtime.TextApiResponse(response) as any;
+    }
+  }
+
+  /**
+   * Returns the timestamp of the most recent modification to the action container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).
+   * Get last modification timestamp
+   */
+  async getActionLastChange(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<number> {
+    const response = await this.getActionLastChangeRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
    * Creates request options for getAllActions without sending the request
    */
   async getAllActionsRequestOpts(): Promise<runtime.RequestOpts> {
@@ -580,6 +626,52 @@ export class DefaultApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<MacroDTO> {
     const response = await this.getMacroByIdRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Creates request options for getMacroLastChange without sending the request
+   */
+  async getMacroLastChangeRequestOpts(): Promise<runtime.RequestOpts> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/macros/lastChange`;
+
+    return {
+      path: urlPath,
+      method: "GET",
+      headers: headerParameters,
+      query: queryParameters,
+    };
+  }
+
+  /**
+   * Returns the timestamp of the most recent modification to the macro container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).
+   * Get last modification timestamp
+   */
+  async getMacroLastChangeRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<number>> {
+    const requestOptions = await this.getMacroLastChangeRequestOpts();
+    const response = await this.request(requestOptions, initOverrides);
+
+    if (this.isJsonMime(response.headers.get("content-type"))) {
+      return new runtime.JSONApiResponse<number>(response);
+    } else {
+      return new runtime.TextApiResponse(response) as any;
+    }
+  }
+
+  /**
+   * Returns the timestamp of the most recent modification to the macro container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).
+   * Get last modification timestamp
+   */
+  async getMacroLastChange(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<number> {
+    const response = await this.getMacroLastChangeRaw(initOverrides);
     return await response.value();
   }
 

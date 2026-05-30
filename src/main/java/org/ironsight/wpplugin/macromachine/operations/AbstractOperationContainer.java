@@ -21,6 +21,11 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
   private final boolean suppressFileWriting = false;
   private final String defaultFileResourcePath;
   private String filePath;
+  private long lastChange = 0;
+
+  public long getLastChange() {
+    return lastChange;
+  }
 
   /**
    * copy constructor
@@ -123,6 +128,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
   }
 
   private void notify(UUID... mapping) {
+    lastChange = System.currentTimeMillis();
     for (Runnable r : genericNotifies) r.run();
     for (UUID obj : mapping)
       if (uidNotifies.containsKey(obj)) {

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,15 +57,16 @@ public class IoParameterDeserializer extends JsonDeserializer<IoParameter> {
             return new StringValue(val.asText());
           case "bool":
             return new BoolValue(val.asBoolean());
-          case "intArray": {
-            if (val.isArray()) {
-              List<Integer> tmp = new ArrayList<>();
-              for (JsonNode e : val) if (e.isNumber()) tmp.add(e.intValue());
-              int[] arr = tmp.stream().mapToInt(Integer::intValue).toArray();
-              return new IntArrayValue(arr);
+          case "intArray":
+            {
+              if (val.isArray()) {
+                List<Integer> tmp = new ArrayList<>();
+                for (JsonNode e : val) if (e.isNumber()) tmp.add(e.intValue());
+                int[] arr = tmp.stream().mapToInt(Integer::intValue).toArray();
+                return new IntArrayValue(arr);
+              }
+              break;
             }
-            break;
-          }
         }
       }
     }

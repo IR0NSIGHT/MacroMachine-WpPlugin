@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.macromachine.REST.Resources;
 
 import static org.ironsight.wpplugin.macromachine.operations.MappingAction.getNewEmptyAction;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import java.util.Arrays;
@@ -124,6 +125,16 @@ public class ActionResource {
     return dtos;
   }
 
+  @GET
+  @Path("/lastChange")
+  @Operation(
+      summary = "Get last modification timestamp",
+      description =
+          "Returns the timestamp of the most recent modification to the action container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).")
+  public long getActionLastChange() {
+    return actionContainer.getLastChange();
+  }
+
   @POST
   public ActionDTO postAction(ActionDTO dto) {
     System.out.println("POST RECEVIED action dto" + dto.toString());
@@ -135,7 +146,7 @@ public class ActionResource {
         throw new InternalServerErrorException(err.toString());
       }
     } catch (NullPointerException ex) {
-      System.err.println("DTO produces nullpointer:\n"+ex+"\n"+dto);
+      System.err.println("DTO produces nullpointer:\n" + ex + "\n" + dto);
       throw ex;
     }
     return dto;

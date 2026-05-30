@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.Layers.CustomLayerControllerWrapper;
 import org.ironsight.wpplugin.macromachine.REST.DTOs.ExecutionStateDTO;
@@ -35,7 +36,7 @@ public class MacroConcurrentApplicator implements MacroApplicator {
   public void start() {
     ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-    executor.scheduleAtFixedRate(this::runExecutionQueue, 0, 1000, TimeUnit.MILLISECONDS);
+    executor.scheduleAtFixedRate(this::runExecutionQueue, 0, 5, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -71,14 +72,24 @@ public class MacroConcurrentApplicator implements MacroApplicator {
         : "why are we idle running when the status is" + getCurrentState().status();
     // System.out.println("queue:" + queue);
     if (queue.isEmpty()) return;
-    var nextUID = queue.poll();
+    final var nextUID = queue.poll();
     var next = MacroContainer.getInstance().queryById(nextUID);
     if (next != null) {
       updateState(new ExecutionStateDTO(nextUID, List.of(), 0, ExecutionStatus.RUNNING));
-      System.out.println("Execute macro: " + next.getName() + "(" + next.getUid() + ")");
-      System.out.println("Queue:" + queue.size());
-      applyMacroSync(next);
-      updateState(new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE));
+      SwingUtilities.invokeLater(
+          () -> {
+            System.out.println("Execute macro: " + next.getName() + "(" + next.getUid() + ")");
+            System.out.println("Queue:" + queue.size());
+            try {
+              applyMacroSync(next);
+
+            } catch (Exception ex) {
+              System.err.println("applying macro caused error:" + ex);
+              updateState(new ExecutionStateDTO(nextUID, List.of(), 0, ExecutionStatus.FAILED));
+              return;
+            }
+            updateState(new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE));
+          });
     } else {
       GlobalActionPanel.logMessage("error: can not execute macro, doesnt exist: " + nextUID);
     }
@@ -159,7 +170,9 @@ public class MacroConcurrentApplicator implements MacroApplicator {
 
           @Override
           public void afterEverything() {
-            updateState(new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.COMPLETED));
+            updateState(
+                new ExecutionStateDTO(
+                    getCurrentState().executionId(), List.of(), 0, ExecutionStatus.COMPLETED));
           }
         };
 
