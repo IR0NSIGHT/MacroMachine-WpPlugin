@@ -13,5 +13,9 @@ public record StringValue(String type, String value) implements IoParameter {
         this("string", value);
     }
 
+    @JsonValue
+    public Object getValue() {
+        return value();
+    }
     // keep object form with fields `type` and `value` for compatibility
 }

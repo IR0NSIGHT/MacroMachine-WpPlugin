@@ -74,7 +74,8 @@ const StepItem = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) =
       >
         <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
       </Tooltip>
-
+      <Typography>input params: {JSON.stringify(item.input.ioParameters)}</Typography>
+      <Typography>output params: {JSON.stringify(item.output.ioParameters)}</Typography>
       <ButtonGroup>
         {isFilter(item) && (
           <IconButton
@@ -161,6 +162,14 @@ export const GlobalOperationDesigner = (props: Props) => {
 
   useEffect(() => {
     api.getFilters().then((result) => {
+      result.forEach((filter) => {
+        console.log(
+          "filter input params:",
+          filter.input.ioParameters,
+          " output params:",
+          filter.output.ioParameters,
+        );
+      });
       setFilters(result.map((i) => ({ ...i, active: true })).map(filterAutoName));
     });
     api.getAppliers().then((result) => {

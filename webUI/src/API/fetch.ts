@@ -1,160 +1,98 @@
-import { ActionDTO, MacroDTO } from "@/types/DTO";
 import type {
   ActionDTO as GeneratedActionDTO,
   MacroDTO as GeneratedMacroDTO,
   ExecutionQueueDTO as GeneratedExecutionQueueDTO,
   ExecutionStateDTO as GeneratedExecutionStateDTO,
+  ConfigurationParameters,
+} from "../generated/client";
+import {
+  DefaultApi as GeneratedDefaultApi,
+  Configuration as GeneratedConfiguration,
 } from "../generated/client";
 import { API_BASE } from "./api";
+import { toCleanAction } from "./utils";
+
+function safeCall<T>(fn: () => Promise<T>): Promise<T> {
+  return fn().catch((e) => {
+    if (e instanceof Error) throw new Error(`API error: ${e.message}`);
+    throw e;
+  });
+}
+
+export function createApi(config?: ConfigurationParameters) {
+  const cfg = new GeneratedConfiguration({ basePath: API_BASE, ...config });
+  return new GeneratedDefaultApi(cfg);
+}
+
+let api = createApi();
+
+export function setApi(newApi: GeneratedDefaultApi) {
+  api = newApi;
+}
+
+export { api };
 
 type GetMacrosResponse = GeneratedMacroDTO[];
 type GetActionsResponse = GeneratedActionDTO[];
 
 export async function fetchMacros(): Promise<GetMacrosResponse> {
-  const response = await fetch(`${API_BASE}/api/macros`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch macros: ${response.status}`);
-  }
-
-  return response.json();
+  return safeCall(() => api.getAllMacros());
 }
 
 export async function fetchActions(): Promise<GetActionsResponse> {
-  const response = await fetch(`${API_BASE}/api/actions`);
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch actions: ${response.status}`);
-  }
-
-  return response.json();
+  return safeCall(() => api.getAllActions());
 }
 
 type ExecutionQueueDTO = GeneratedExecutionQueueDTO;
 
 export async function postQueueMacros(macroIds: string[]): Promise<ExecutionQueueDTO> {
-  const response = await fetch(`${API_BASE}/api/execution/queue`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      queuedMacroIds: macroIds,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to queue macros: ${response.status} ${response.statusText}`);
-  }
-
-  return await response.json();
+  return safeCall(() => api.addToQueue({ executionQueueDTO: { queuedMacroIds: macroIds } }));
 }
 
 export async function fetchExecutionQueue(): Promise<GeneratedExecutionQueueDTO> {
-  const response = await fetch(`${API_BASE}/api/execution/queue`, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch queue: ${response.status} ${response.statusText}`);
-  }
-
-  return await response.json();
+  return safeCall(() => api.getQueue());
 }
 
 export async function fetchExecutionState(): Promise<GeneratedExecutionStateDTO> {
-  const response = await fetch(`${API_BASE}/api/execution/state`, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch state: ${response.status} ${response.statusText}`);
-  }
-
-  return await response.json();
+  return safeCall(() => api.getCurrentState());
 }
 
 export async function deleteMacro(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/api/macros/${id}`, {
-    method: "DELETE",
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete macro: ${response.status}`);
-  }
+  return safeCall(() => api.deleteMacro({ id }));
 }
 
 export async function deleteAction(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/api/actions/${id}`, {
-    method: "DELETE",
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to delete action: ${response.status}`);
-  }
+  return safeCall(() => api.deleteAction({ id }));
 }
-
-export const toCleanAction = (action: ActionDTO): ActionDTO => {
-  const cleanCopy: ActionDTO = {
-    name: action.name,
-    description: action.description,
-    uid: action.uid,
-    input: action.input,
-    output: action.output,
-    mappedInputs: action.mappedInputs,
-    mappedOutputs: action.mappedOutputs,
-    mappingPointsX: action.mappingPointsX,
-    mappingPointsY: action.mappingPointsY,
-    actionType: action.actionType,
-  };
-  return cleanCopy;
-};
 
 // #############################################
-export async function postAction(action: ActionDTO): Promise<ActionDTO> {
-  const response = await fetch(`${API_BASE}/api/actions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(toCleanAction(action)),
-  });
-
-  if (!response.ok) {
-    console.error(`Failed to create action: ${response.status} ${response.statusText}`);
-    throw new Error(`Failed to create action: ${response.status} ${response.statusText}`);
-  }
-
-  return await response.json();
+export async function postAction(action: GeneratedActionDTO): Promise<GeneratedActionDTO> {
+  console.log(
+    "post action with input params:",
+    action.input.ioParameters,
+    " output params:",
+    action.output.ioParameters,
+  );
+  return safeCall(() => api.postAction({ actionDTO: toCleanAction(action) }));
 }
 
-export async function postActions(actions: ActionDTO[]): Promise<ActionDTO[]> {
-  return Promise.all(actions.map(postAction));
+export async function postActions(actions: GeneratedActionDTO[]): Promise<GeneratedActionDTO[]> {
+  return Promise.all(
+    actions.map((a) =>
+      safeCall(() => {
+        console.log(
+          "post action with input params:",
+          a.input.ioParameters,
+          " output params:",
+          a.output.ioParameters,
+        );
+
+        return api.postAction({ actionDTO: toCleanAction(a) });
+      }),
+    ),
+  );
 }
 
-export async function postMacro(macro: MacroDTO): Promise<MacroDTO> {
-  const response = await fetch(`${API_BASE}/api/macros`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify(macro),
-  });
-
-  if (!response.ok) {
-    const message = await response.text();
-    console.error(`Failed to create macro: ${response.status} ${response.statusText}`);
-    throw new Error(message || `Failed to create macro: ${response.status} ${response.statusText}`);
-  }
-
-  return await response.json();
+export async function postMacro(macro: GeneratedMacroDTO): Promise<GeneratedMacroDTO> {
+  return safeCall(() => api.postMacro({ macroDTO: macro }));
 }

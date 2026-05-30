@@ -127,13 +127,17 @@ public class ActionResource {
   @POST
   public ActionDTO postAction(ActionDTO dto) {
     System.out.println("POST RECEVIED action dto" + dto.toString());
-    MappingAction macro = dto.toAction();
-    StringBuilder err = new StringBuilder();
-    actionContainer.updateMapping(macro, err::append);
-    if (!err.isEmpty()) {
-      throw new InternalServerErrorException(err.toString());
+    try {
+      MappingAction macro = dto.toAction();
+      StringBuilder err = new StringBuilder();
+      actionContainer.updateMapping(macro, err::append);
+      if (!err.isEmpty()) {
+        throw new InternalServerErrorException(err.toString());
+      }
+    } catch (NullPointerException ex) {
+      System.err.println("DTO produces nullpointer:\n"+ex+"\n"+dto);
+      throw ex;
     }
-
     return dto;
   }
 

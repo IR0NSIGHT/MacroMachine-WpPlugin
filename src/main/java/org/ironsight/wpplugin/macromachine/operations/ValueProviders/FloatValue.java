@@ -14,4 +14,8 @@ public record FloatValue(String type, float value) implements IoParameter {
     }
 
     // keep object form with fields `type` and `value` for compatibility
+    @JsonValue
+    public Object getValue() {
+        return value();
+    }
 }

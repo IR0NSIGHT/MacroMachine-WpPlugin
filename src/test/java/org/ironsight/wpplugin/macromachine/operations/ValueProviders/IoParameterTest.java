@@ -2,60 +2,48 @@ package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.ironsight.wpplugin.macromachine.REST.DTOs.InputOutputDTO;
 import org.junit.jupiter.api.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 class IoParameterTest {
 
   private final ObjectMapper mapper = new ObjectMapper();
 
   @Test
-  void shouldDeserializeAllIoParameterTypes() throws Exception {
+  void serializeToPrimitive() throws JsonProcessingException {
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.findAndRegisterModules();
 
-    String json =
-        """
-            [
-              {
-                "type": "int",
-                "value": 42
-              },
-              {
-                "type": "float",
-                "value": 3.14
-              },
-              {
-                "type": "string",
-                "value": "hello"
-              },
-              {
-                "type": "bool",
-                "value": true
-              },
-              {
-                "type": "intArray",
-                "value": [1, 2, 3]
-              }
-            ]
-            """;
+    var ioParams = new ArrayList<IoParameter>();
+    ioParams.add(new IntValue(-17));
+    ioParams.add(new StringValue("hello world"));
+    ioParams.add(new BoolValue(false));
+    ioParams.add(new IntArrayValue(new int[]{1,2,3,4,5,6,7,8,9}));
+    ioParams.add(new FloatValue(3.141592654f));
 
-    IoParameter[] result = mapper.readValue(json, IoParameter[].class);
-
-    assertNotNull(result);
-    assertEquals(5, result.length);
-
-    assertInstanceOf(IntValue.class, result[0]);
-    assertEquals(42, ((IntValue) result[0]).value());
-
-    assertInstanceOf(FloatValue.class, result[1]);
-    assertEquals(3.14f, ((FloatValue) result[1]).value());
-
-    assertInstanceOf(StringValue.class, result[2]);
-    assertEquals("hello", ((StringValue) result[2]).value());
-
-    assertInstanceOf(BoolValue.class, result[3]);
-    assertTrue(((BoolValue) result[3]).value());
-
-    assertInstanceOf(IntArrayValue.class, result[4]);
-    assertArrayEquals(new int[] {1, 2, 3}, ((IntArrayValue) result[4]).value());
+    String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ioParams);
+    assertEquals("[ -17, \"hello world\", false, [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ], 3.1415927 ]",json);
   }
+
+  @Test
+  void deserializeFromPrimitive() throws JsonProcessingException {
+    var json = "[ -17, \"hello world\", false, [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ], 3.1415927 ]";
+    ObjectMapper mapper = new ObjectMapper();
+    mapper.findAndRegisterModules();
+    List<IoParameter> parameters =
+            mapper.readValue(json, new TypeReference<List<IoParameter>>() {});
+
+    assertEquals(new IntValue(-17), parameters.get(0));
+    assertEquals(new StringValue("hello world"), parameters.get(1));
+    assertEquals(new BoolValue(false), parameters.get(2));
+    assertEquals(new IntArrayValue(new int[]{1,2,3,4,5,6,7,8,9}), parameters.get(3));
+    assertEquals(new FloatValue(3.141592654f), parameters.get(4));
+  }
+
 }

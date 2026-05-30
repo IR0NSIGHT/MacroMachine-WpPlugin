@@ -14,4 +14,9 @@ public record BoolValue(String type, boolean value) implements IoParameter {
     }
 
     // keep object form with fields `type` and `value` for compatibility
+
+    @JsonValue
+    public Object getValue() {
+        return value();
+    }
 }
