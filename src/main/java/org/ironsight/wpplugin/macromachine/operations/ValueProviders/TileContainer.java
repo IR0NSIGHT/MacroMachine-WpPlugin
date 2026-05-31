@@ -147,8 +147,8 @@ public class TileContainer {
     pointX += offsetX;
     pointY += offsetY;
 
-    assert pointX >= 0;
-    assert pointY >= 0;
+    assert pointX >= 0 : pointX;
+    assert pointY >= 0 : pointY; // FIXME these fail in MacroConcurrentApplicatorTest testRunningMacro
 
     int indexX = pointX >> Constants.TILE_SIZE_BITS;
     int indexY = pointY >> Constants.TILE_SIZE_BITS;

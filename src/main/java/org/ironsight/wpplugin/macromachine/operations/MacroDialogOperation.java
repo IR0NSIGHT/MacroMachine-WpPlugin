@@ -28,7 +28,7 @@ public class MacroDialogOperation extends AbstractBrushOperation {
     MappingActionContainer actions = new MappingActionContainer(null);
     MappingActionContainer.SetInstance(actions);
 
-    applicator = new MacroConcurrentApplicator(macros, actions, this::getDimension);
+    applicator = new MacroConcurrentApplicator(macros, actions, this::getDimension, uuid -> {});
     applicator.start();
 
     WebUIServer server =

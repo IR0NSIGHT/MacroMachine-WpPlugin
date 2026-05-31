@@ -9,7 +9,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
 import org.pepsoft.worldpainter.Dimension;
@@ -120,6 +119,7 @@ public class Macro implements SaveableAction {
 
       List<MappingAction> executionSteps =
           macroToFlatActions(macro, context.macros, context.actions);
+
       boolean hasNullActions = executionSteps.stream().anyMatch(Objects::isNull);
       if (hasNullActions) {
         throw new NullPointerException(
@@ -144,20 +144,14 @@ public class Macro implements SaveableAction {
           context.apiLayerManager.addLayer(l);
         }
       }
-
-      try {
-        context.actionFilterIO.prepareForDimension(dim);
-      } catch (Exception e) {
-        GlobalActionPanel.ErrorPopUpString(
-            "ActionFilter Preparation caused an exception:" + e.getMessage());
-        return statistics;
-      }
+      context.actionFilterIO.prepareForDimension(dim);
 
       // ----------------------- macro is ready and can be applied to map
       statistics = ApplyAction.applyExecutionSteps(context, executionSteps, callback);
       context.actionFilterIO.releaseAfterApplication();
     } catch (Exception ex) {
-      GlobalActionPanel.ErrorPopUp(ex);
+      System.err.println(ex);
+      // GlobalActionPanel.ErrorPopUp(ex);
       return statistics;
     } finally {
       callback.afterEverything();

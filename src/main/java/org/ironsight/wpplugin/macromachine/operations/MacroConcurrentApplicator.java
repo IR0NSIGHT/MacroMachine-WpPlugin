@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
@@ -25,18 +26,35 @@ public class MacroConcurrentApplicator implements MacroApplicator {
   private ExecutionStateDTO currentExecutionState =
       new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE);
   private Queue<UUID> queue = new ConcurrentLinkedQueue<>();
+  private final int extraSuspendMillis = 10;
+  private Consumer<UUID> onMacroFinished;
 
   public MacroConcurrentApplicator(
-      MacroContainer macros, MappingActionContainer actions, Supplier<Dimension> getDimension) {
+      MacroContainer macros,
+      MappingActionContainer actions,
+      Supplier<Dimension> getDimension,
+      Consumer<UUID> onMacroFinished) {
     this.macros = macros;
     this.actions = actions;
     this.getDimension = getDimension;
+    this.onMacroFinished = onMacroFinished;
   }
 
-  public void start() {
-    ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+  public void shutdown() {
+      executor.shutdown();
+      executor = null;
+  }
 
-    executor.scheduleAtFixedRate(this::runExecutionQueue, 0, 5, TimeUnit.MILLISECONDS);
+  private static ScheduledExecutorService executor = null;
+
+  public void start() {
+    if (executor != null) throw new IllegalArgumentException("can not run a second applicator!");
+    executor = Executors.newSingleThreadScheduledExecutor(r -> {
+          Thread t = new Thread(r);
+          t.setName("MacroConcurrentApplicator-thread");
+          return t;
+      });
+    executor.scheduleAtFixedRate(this::runExecutionQueue, 0, 1000, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -54,41 +72,44 @@ public class MacroConcurrentApplicator implements MacroApplicator {
     return Macro.applyMacroToDimension(context, macro, callback);
   }
 
+  // FIXME this interface should have a onError callback
   @Override
   public ExecutionStateDTO getCurrentState() {
-    return currentExecutionState;
+    synchronized (currentExecutionState) {
+      return currentExecutionState;
+    }
   }
 
   @Override
   public void updateState(ExecutionStateDTO newState) {
-    if (currentExecutionState.status() != newState.status())
-      System.out.println(
-          "UPDATE EXECUTION STATE TO:" + newState.status() + " for " + newState.executionId());
-    this.currentExecutionState = newState;
+    synchronized (currentExecutionState) {
+      if (currentExecutionState.status() != newState.status())
+        System.out.println(
+            "UPDATE EXECUTION STATE TO:" + newState.status() + " for " + newState.executionId());
+      this.currentExecutionState = newState;
+    }
   }
 
   private void runExecutionQueue() {
-    assert getCurrentState().status().equals(ExecutionStatus.IDLE)
-        : "why are we idle running when the status is" + getCurrentState().status();
+    // System.out.println("run rexecution for queue: " + queue);
     // System.out.println("queue:" + queue);
     if (queue.isEmpty()) return;
     final var nextUID = queue.poll();
-    var next = MacroContainer.getInstance().queryById(nextUID);
+    var next = macros.queryById(nextUID);
     if (next != null) {
       updateState(new ExecutionStateDTO(nextUID, List.of(), 0, ExecutionStatus.RUNNING));
       SwingUtilities.invokeLater(
           () -> {
-            System.out.println("Execute macro: " + next.getName() + "(" + next.getUid() + ")");
-            System.out.println("Queue:" + queue.size());
+            // System.out.println("Execute macro: " + next.getName() + "(" + next.getUid() + ")");
+            // System.out.println("Queue:" + queue.size());
             try {
               applyMacroSync(next);
-
             } catch (Exception ex) {
               System.err.println("applying macro caused error:" + ex);
-              updateState(new ExecutionStateDTO(nextUID, List.of(), 0, ExecutionStatus.FAILED));
-              return;
+            } finally {
+              updateState(new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE));
+              onMacroFinished.accept(nextUID);
             }
-            updateState(new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE));
           });
     } else {
       GlobalActionPanel.logMessage("error: can not execute macro, doesnt exist: " + nextUID);
@@ -143,7 +164,14 @@ public class MacroConcurrentApplicator implements MacroApplicator {
           }
 
           @Override
-          public void afterEachTile(int tileX, int tileY) {}
+          public void afterEachTile(int tileX, int tileY) {
+            try {
+              Thread.sleep(extraSuspendMillis);
+
+            } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          }
 
           @Override
           public void afterEachAction(ExecutionStatistic statistic) {}

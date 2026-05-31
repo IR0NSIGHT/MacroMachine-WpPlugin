@@ -40,7 +40,12 @@ public class WebUIServer {
     MappingActionContainer.getInstance().readFromFile();
 
     Dimension dimension = createDimension(new Rectangle(0, 0, 256, 256), 256);
-    var applicator = new MacroConcurrentApplicator(macros, actions, () -> dimension);
+    var applicator =
+        new MacroConcurrentApplicator(
+            macros,
+            actions,
+            () -> dimension,
+            (uuid) -> System.out.println("macro finished running: " + uuid));
 
     applicator.queueMacro(macros.queryAll().get(0).getUid());
     applicator.queueMacro(macros.queryAll().get(0).getUid());
