@@ -74,8 +74,6 @@ const StepItem = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) =
       >
         <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
       </Tooltip>
-      <Typography>input params: {JSON.stringify(item.input.ioParameters)}</Typography>
-      <Typography>output params: {JSON.stringify(item.output.ioParameters)}</Typography>
       <ButtonGroup>
         {isFilter(item) && (
           <IconButton
