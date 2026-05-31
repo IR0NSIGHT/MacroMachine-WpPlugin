@@ -17,7 +17,7 @@ import ExploreIcon from "@mui/icons-material/Explore";
 import LayersIcon from "@mui/icons-material/Layers";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { Box, Tab, Tabs } from "@mui/material";
-import { PrimarySearchAppBar } from "./components/AppBar";
+import { PrimaryAppBar } from "./components/AppBar";
 import { ExecutionQueueDTO, MacroDTO, ExecutionStateDTO, ActionDTO } from "./types/DTO";
 import { MacroGrid } from "./MacroGrid";
 import { GlobalOperationDesigner } from "./components/GlobalOperationDesigner";
@@ -118,11 +118,10 @@ export default function App() {
         height: "100vh",
       }}
     >
-      <PrimarySearchAppBar
-        search={search}
-        onSearchChange={setSearch}
+      <PrimaryAppBar
         queue={queue}
         executionState={executionState}
+        connectionLost={connectionLost}
       />
       <Box
         sx={{
@@ -146,8 +145,7 @@ export default function App() {
           <Tab icon={<SettingsIcon />} label="Settings" />
         </Tabs>
         <Box sx={{ flexGrow: 1 }}>
-          {connectionLost && <div style={{ color: "red" }}>No connection to backend.</div>}
-          {tab === 0 && !connectionLost && (
+          {tab === 0 && (
             <MacroGrid
               macros={macros.filter(
                 (macro) => search == "" || macro.name.toLowerCase().includes(search.toLowerCase()),
@@ -156,6 +154,8 @@ export default function App() {
               executionState={executionState}
               onRequestExecution={onRequestExecution}
               onDeleteMacro={deleteMacro}
+              search={search}
+              setSearch={setSearch}
             />
           )}
           {tab === 1 && (

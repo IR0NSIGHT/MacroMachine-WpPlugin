@@ -19,7 +19,7 @@ export const theme = createTheme({
     text: {
       primary: "#e2e2e2",
       secondary: "rgba(255,255,255,0.6)",
-      disabled: "rgba(255,255,255,0.3)",
+      disabled: "rgb(105, 105, 105)",
       //hint: 'rgba(255,255,255,0.5)',
     },
     background: {

@@ -30,7 +30,8 @@ import AddIcon from "@mui/icons-material/Add";
 import { SelectDialog } from "./SelectDialog";
 import { DefaultApi } from "../generated/client/apis/DefaultApi";
 import { Configuration } from "@/generated/client";
-
+import ManageSearchIcon from "@mui/icons-material/ManageSearch";
+import { FilterInlineEditor } from "@/features/FilterComponent";
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
   onExecute: MacroExecuteRequester;
@@ -46,80 +47,76 @@ type StepItemProps = {
 };
 
 const StepItem = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) => {
-  return (
-    <Box
-      key={item.uid}
-      sx={{
-        display: "flex",
-        flexDirection: "row",
-        "& .clear-btn": {
-          color: "transparent",
-        },
+  if (isFilter(item)) {
+    return <FilterInlineEditor item={item} setItem={setItem} />;
+  } else {
+    return (
+      <Box
+        key={item.uid}
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          "& .clear-btn": {
+            opacity: 0.3,
+            transition: "opacity 0.2s",
+          },
 
-        "&:hover .clear-btn": {
-          color: "inherit",
-        },
-      }}
-    >
-      <Switch
-        checked={item.active}
-        onChange={(e) => {
-          setItem({ ...item, active: e.target.checked });
+          "&:hover .clear-btn": {
+            opacity: 1,
+          },
         }}
-      />
-
-      <Tooltip
-        title={item.name + "   " + item.uid}
-        onClick={() => navigator.clipboard.writeText(item.uid)}
       >
-        <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
-      </Tooltip>
-      <ButtonGroup>
-        {isFilter(item) && (
+        <Switch
+          checked={item.active}
+          onChange={(e) => {
+            setItem({ ...item, active: e.target.checked });
+          }}
+        />
+        <ButtonGroup>
+          {isFilter(item) && (
+            <IconButton
+              size="small"
+              disabled={!item.active}
+              onClick={() => setItem(invertFilter(item))}
+              className="clear-btn"
+            >
+              <SwitchLeftIcon />
+            </IconButton>
+          )}
           <IconButton
             size="small"
-            disabled={false}
-            onClick={() => setItem(invertFilter(item))}
+            disabled={!item.active}
+            onClick={() => openEditorFor(item)}
             className="clear-btn"
           >
-            <SwitchLeftIcon />
+            <EditIcon />
           </IconButton>
-        )}
-        <IconButton
-          size="small"
-          disabled={false}
-          onClick={() => openEditorFor(item)}
-          className="clear-btn"
-        >
-          <EditIcon />
-        </IconButton>
-        <IconButton size="small" disabled={false} onClick={deleteItem} className="clear-btn">
-          <ClearIcon />
-        </IconButton>
-      </ButtonGroup>
-    </Box>
-  );
+          <IconButton size="small" disabled={false} onClick={deleteItem} className="clear-btn">
+            <ClearIcon />
+          </IconButton>
+        </ButtonGroup>
+        <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
+      </Box>
+    );
+  }
 };
 
 const defaultFilters: StepItemType[] = (filters as ActionDTO[])
   .map((item) => ({
     ...item,
-    active: true,
+    active: false,
   }))
   .map(filterAutoName);
 
 const defaultApplyActions: StepItemType[] = (applyActions as ActionDTO[])
   .map((item) => ({
     ...item,
-    active: true,
+    active: false,
   }))
   .map(actionAutoName);
 
 const sortInactiveLast = (a: StepItemType, b: StepItemType): number => {
-  if (a.active === b.active) {
-    return sortAlphabetical(a, b);
-  }
-  return Number(b.active) - Number(a.active);
+  return sortAlphabetical(a, b);
 };
 
 const sortAlphabetical = (a: StepItemType, b: StepItemType): number => {
@@ -153,6 +150,10 @@ export const GlobalOperationDesigner = (props: Props) => {
   const [isDiff, setIsDiff] = useState(false);
 
   useEffect(() => {
+    onStartNew();
+  }, []);
+
+  useEffect(() => {
     const currentRunnable = constructRunnable();
     const backendRunnable = toRunnable(
       props.macros.find((macro) => macro.uid === uuid),
@@ -181,6 +182,7 @@ export const GlobalOperationDesigner = (props: Props) => {
   }, []);
 
   const updateFilterItem = (action: StepItemType, isDelete: boolean) => {
+    console.log("updateFilterItem", action, isDelete);
     if (isDelete) {
       setFilters((prev) => prev.filter((p) => p.uid !== action?.uid));
     } else {
@@ -302,9 +304,10 @@ export const GlobalOperationDesigner = (props: Props) => {
   const filterDTOtoComponent = (action: StepItemType) => {
     return (
       <StepItem
+        key={action.uid}
         item={action}
         setItem={(item) => updateFilterItem(item, false)}
-        deleteItem={() => updateApplyItem(action, true)}
+        deleteItem={() => updateFilterItem(action, true)}
         openEditorFor={(filter) => setEditorItem({ item: filter, type: "filter" })}
       />
     );
@@ -312,6 +315,7 @@ export const GlobalOperationDesigner = (props: Props) => {
   const applyDTOtoComponent = (action: StepItemType) => {
     return (
       <StepItem
+        key={action.uid}
         item={action}
         setItem={(item) => updateApplyItem(item, false)}
         deleteItem={() => updateApplyItem(action, true)}
@@ -357,7 +361,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           </Tooltip>
           <Tooltip title="Load an existing macro that is structured like a global operation.">
             <IconButton size="small" disabled={false} onClick={onRequestLoadExisting}>
-              <RestartAltIcon />
+              <ManageSearchIcon />
             </IconButton>
           </Tooltip>
         </ButtonGroup>
@@ -388,7 +392,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           placeholder="This macro does a complex global operation"
         />
         <Paper sx={{ p: 1, border: 1 }}>
-          <Typography>If:</Typography>
+          <Typography>Filter by:</Typography>
           {filters.sort(sortInactiveLast).map(filterDTOtoComponent)}
           <IconButton size="small" disabled={false} onClick={onAddFilter} className="clear-btn">
             <AddIcon />

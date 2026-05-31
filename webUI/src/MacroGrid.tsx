@@ -1,4 +1,13 @@
-import { Box, Tooltip, FormControlLabel, Switch, Grid } from "@mui/material";
+import {
+  Box,
+  Tooltip,
+  FormControlLabel,
+  Switch,
+  Grid,
+  alpha,
+  InputBase,
+  styled,
+} from "@mui/material";
 import { useState } from "react";
 import { ActionDetailsDialog } from "./components/MacroList/ActionDetailsDialog";
 import MacroCard from "./components/MacroList/MacroCard";
@@ -6,6 +15,8 @@ import { MacroDetailsDialog } from "./components/MacroList/MacroDetailsDialog";
 import { MacroDTO, ActionDTO, ExecutionStateDTO, isMacroDTO } from "./types/DTO";
 import Item from "@mui/material/Grid";
 import { MacroExecuteRequester, runnableMacro, toRunnable, uuid } from "./features/Execution";
+import Typography from "@mui/material/Typography";
+import SearchIcon from "@mui/icons-material/Search";
 
 const imageURLs = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400&auto=format&fit=crop",
@@ -84,18 +95,62 @@ const imageURLs = [
   "https://images.unsplash.com/photo-1507149833265-60c372daea22?q=80&w=400&auto=format&fit=crop",
 ]; //FIXME images based on UUID until backend supports saving images
 
+const Search = styled("div")(({ theme }) => ({
+  position: "relative",
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(theme.palette.common.white, 0.15),
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.common.white, 0.25),
+  },
+  marginRight: theme.spacing(2),
+  marginLeft: 0,
+  width: "100%",
+  [theme.breakpoints.up("sm")]: {
+    marginLeft: theme.spacing(3),
+    width: "auto",
+  },
+}));
+
+const SearchIconWrapper = styled("div")(({ theme }) => ({
+  padding: theme.spacing(0, 2),
+  height: "100%",
+  position: "absolute",
+  pointerEvents: "none",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+}));
+
+const StyledInputBase = styled(InputBase)(({ theme }) => ({
+  color: "inherit",
+  "& .MuiInputBase-input": {
+    padding: theme.spacing(1, 1, 1, 0),
+    // vertical padding + font size from searchIcon
+    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
+    transition: theme.transitions.create("width"),
+    width: "100%",
+    [theme.breakpoints.up("md")]: {
+      width: "20ch",
+    },
+  },
+}));
+
 export function MacroGrid({
   macros,
   actions,
   executionState,
   onRequestExecution,
   onDeleteMacro,
+  search,
+  setSearch,
 }: {
   macros: MacroDTO[];
   actions: ActionDTO[];
   executionState: ExecutionStateDTO;
   onRequestExecution: MacroExecuteRequester;
   onDeleteMacro: (uuid: uuid) => void;
+  search: string;
+  setSearch: (newValue: string) => void;
 }) {
   const [hideNested, setHideNested] = useState(false);
   const [viewedMacro, setViewedMacro] = useState<runnableMacro | undefined>(undefined);
@@ -140,7 +195,6 @@ export function MacroGrid({
     const numberVal: number = uuidToShortNumber(uid);
     return imageURLs[numberVal % imageURLs.length];
   };
-
   return (
     <Box
       sx={{
@@ -150,6 +204,17 @@ export function MacroGrid({
       }}
       p={1}
     >
+      <Search>
+        <SearchIconWrapper>
+          <SearchIcon />
+        </SearchIconWrapper>
+        <StyledInputBase
+          placeholder="Search…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          inputProps={{ "aria-label": "search" }}
+        />
+      </Search>
       <Tooltip title="Hide all macros, that are used by another macro.">
         <FormControlLabel
           control={
@@ -171,6 +236,11 @@ export function MacroGrid({
           p: 2,
         }}
       >
+        {(!macros || macros.length === 0) && (
+          <Typography>
+            You dont have any macros yet. Create some or import existing ones.
+          </Typography>
+        )}
         <Grid container spacing={{ xs: 1, md: 4 }}>
           {macros
             .filter(filterHideNested)
