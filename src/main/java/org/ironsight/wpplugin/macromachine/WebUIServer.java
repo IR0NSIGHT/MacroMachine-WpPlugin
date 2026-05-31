@@ -5,6 +5,8 @@ import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.creat
 import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
+
+import org.glassfish.grizzly.http.server.CLStaticHttpHandler;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.ironsight.wpplugin.macromachine.REST.MacroApplication;
@@ -69,6 +71,14 @@ public class WebUIServer {
     server =
         GrizzlyHttpServerFactory.createHttpServer(
             uri, new MacroApplication(applicator, actions, macros, ioProvider));
+
+    server.getServerConfiguration().addHttpHandler(
+            new CLStaticHttpHandler(
+                    getClass().getClassLoader(),
+                    "/static/"
+            ),
+            "/"
+    );
 
     System.out.println("REST server started:");
     System.out.println("http://localhost:8080/");
