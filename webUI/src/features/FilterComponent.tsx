@@ -1,23 +1,104 @@
-import { Box, IconButton, Slider, Switch, Tooltip, Typography } from "@mui/material";
+import { Box, ButtonGroup, IconButton, Slider, Switch, Tooltip, Typography } from "@mui/material";
 import { StepItemType } from "./Execution";
-import { isRangeFilter, namedMapping, invertFilter, isInsideRangeFilter } from "./Filters";
+import {
+  isRangeFilter,
+  namedMapping,
+  invertFilter,
+  isInsideRangeFilter,
+  isFilter,
+} from "./Filters";
 import { theme } from "@/theme";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
+import EditIcon from "@mui/icons-material/Edit";
+import ClearIcon from "@mui/icons-material/Clear";
+
+export const SimpleFilterInlineEditor = ({
+  item,
+  setItem,
+  deleteItem,
+  openEditorFor,
+}: {
+  item: StepItemType;
+  setItem: (item: StepItemType) => void;
+  deleteItem: () => void;
+  openEditorFor: (item: StepItemType) => void;
+}) => {
+  return (
+    <Box
+      key={item.uid}
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        "& .clear-btn": {
+          color: "transparent",
+        },
+
+        "&:hover .clear-btn": {
+          color: "inherit",
+        },
+      }}
+    >
+      <Switch
+        checked={item.active}
+        onChange={(e) => {
+          setItem({ ...item, active: e.target.checked });
+        }}
+      />
+
+      <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
+      <ButtonGroup>
+        {isFilter(item) && (
+          <IconButton
+            size="small"
+            disabled={false}
+            onClick={() => setItem(invertFilter(item))}
+            className="clear-btn"
+          >
+            <SwitchLeftIcon />
+          </IconButton>
+        )}
+        <IconButton
+          size="small"
+          disabled={false}
+          onClick={() => openEditorFor(item)}
+          className="clear-btn"
+        >
+          <EditIcon />
+        </IconButton>
+        <IconButton size="small" disabled={false} onClick={deleteItem} className="clear-btn">
+          <ClearIcon />
+        </IconButton>
+      </ButtonGroup>
+    </Box>
+  );
+};
 
 export const FilterInlineEditor = ({
   item,
   setItem,
+  deleteItem,
+  openEditorFor,
 }: {
   item: StepItemType;
   setItem: (item: StepItemType) => void;
+  deleteItem: () => void;
+  openEditorFor: (item: StepItemType) => void;
 }) => {
   const isRanged = isRangeFilter(item);
 
   if (isRanged) {
     return <RangeFilterInlineEditor item={item} setItem={setItem} />;
   }
-  return <Typography>{item.name}</Typography>;
+  return (
+    <SimpleFilterInlineEditor
+      item={item}
+      setItem={setItem}
+      deleteItem={deleteItem}
+      openEditorFor={openEditorFor}
+    />
+  );
 };
+
 export const RangeFilterInlineEditor = ({
   item,
   setItem,
@@ -39,8 +120,6 @@ export const RangeFilterInlineEditor = ({
 
   const insideRangeFilter = isInsideRangeFilter(item);
 
-  const _maxLabelLength = Math.max(0, ...mappings.map((m) => m.inputName.length));
-
   const trackColor = !item.active
     ? theme.palette.text.disabled
     : insideRangeFilter
@@ -59,31 +138,32 @@ export const RangeFilterInlineEditor = ({
         alignItems: "center",
       }}
     >
-      <Switch
-        checked={item.active}
-        onChange={(e) => {
-          setItem({ ...item, active: e.target.checked });
-        }}
-      />
-      <Typography
-        sx={{
-          whiteSpace: "nowrap",
-          flexShrink: 0,
-          color: !item.active ? theme.palette.text.disabled : theme.palette.text.primary,
-        }}
-      >
-        Filter by {item.input.displayName} {value[0]} to {value[1]}
-      </Typography>
-      <Tooltip title={"Invert filter"}>
-        <IconButton
-          color="primary"
-          size="small"
-          disabled={!item.active}
-          onClick={() => setItem(invertFilter(item))}
+      <Box sx={{ display: "flex", alignItems: "center", width: "50%", gap: 1 }}>
+        <Switch
+          checked={item.active}
+          onChange={(e) => {
+            setItem({ ...item, active: e.target.checked });
+          }}
+        />
+        <Typography
+          sx={{ color: !item.active ? theme.palette.text.disabled : theme.palette.text.secondary }}
         >
-          <SwitchLeftIcon />
-        </IconButton>
-      </Tooltip>
+          Filter by
+        </Typography>
+        <Typography
+          sx={{ color: !item.active ? theme.palette.text.disabled : theme.palette.text.primary }}
+        >
+          {item.input.displayName}
+        </Typography>
+        <Typography
+          sx={{
+            color: !item.active ? theme.palette.text.disabled : theme.palette.text.secondary,
+          }}
+        >
+          {insideRangeFilter ? "inside range" : "outside range"} {valueToString(value[0])} to{" "}
+          {valueToString(value[1])}
+        </Typography>
+      </Box>
       <Box
         sx={{
           width: 300,
@@ -91,8 +171,19 @@ export const RangeFilterInlineEditor = ({
           alignItems: "center",
           display: "flex",
           mx: 1,
+          gap: 1,
         }}
       >
+        <Tooltip title={"Invert filter"}>
+          <IconButton
+            color="primary"
+            size="small"
+            disabled={!item.active}
+            onClick={() => setItem(invertFilter(item))}
+          >
+            <SwitchLeftIcon />
+          </IconButton>
+        </Tooltip>
         <Slider
           value={value}
           onChange={handleChange}
@@ -101,6 +192,7 @@ export const RangeFilterInlineEditor = ({
           step={1}
           valueLabelDisplay="auto"
           valueLabelFormat={(v) => valueToString(v)}
+          disabled={!item.active}
           sx={(theme) => ({
             alignSelf: "center",
             "& .MuiSlider-rail": {

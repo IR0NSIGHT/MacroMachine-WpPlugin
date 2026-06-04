@@ -48,7 +48,14 @@ type StepItemProps = {
 
 const StepItem = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) => {
   if (isFilter(item)) {
-    return <FilterInlineEditor item={item} setItem={setItem} />;
+    return (
+      <FilterInlineEditor
+        item={item}
+        setItem={setItem}
+        deleteItem={deleteItem}
+        openEditorFor={openEditorFor}
+      />
+    );
   } else {
     return (
       <Box
