@@ -29,6 +29,7 @@ export const SimpleFilterInlineEditor = ({
       sx={{
         display: "flex",
         flexDirection: "row",
+        alignItems: "center",
         "& .clear-btn": {
           color: "transparent",
         },
@@ -138,7 +139,7 @@ export const RangeFilterInlineEditor = ({
         alignItems: "center",
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", width: "50%", gap: 1 }}>
+      <Box sx={{ display: "flex", alignItems: "center", width: "50%" }}>
         <Switch
           checked={item.active}
           onChange={(e) => {

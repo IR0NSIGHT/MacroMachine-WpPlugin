@@ -4,6 +4,7 @@ import {
   Divider,
   IconButton,
   Paper,
+  Stack,
   Switch,
   TextField,
   Tooltip,
@@ -310,13 +311,16 @@ export const GlobalOperationDesigner = (props: Props) => {
 
   const filterDTOtoComponent = (action: StepItemType) => {
     return (
-      <StepItem
-        key={action.uid}
-        item={action}
-        setItem={(item) => updateFilterItem(item, false)}
-        deleteItem={() => updateFilterItem(action, true)}
-        openEditorFor={(filter) => setEditorItem({ item: filter, type: "filter" })}
-      />
+      <Box>
+        <StepItem
+          key={action.uid}
+          item={action}
+          setItem={(item) => updateFilterItem(item, false)}
+          deleteItem={() => updateFilterItem(action, true)}
+          openEditorFor={(filter) => setEditorItem({ item: filter, type: "filter" })}
+        />
+        <Divider />
+      </Box>
     );
   };
   const applyDTOtoComponent = (action: StepItemType) => {
@@ -337,12 +341,14 @@ export const GlobalOperationDesigner = (props: Props) => {
         display: "flex",
         flexDirection: "column",
         height: "95vh", // FIXME ugly hack to make the fucking flexbox work
+        gap: 1,
       }}
     >
       <Box
         sx={{
           display: "flex",
           flexDirection: "row",
+          gap: 1,
         }}
       >
         <ButtonGroup variant="contained" aria-label="Basic button group">
@@ -374,7 +380,8 @@ export const GlobalOperationDesigner = (props: Props) => {
         </ButtonGroup>
         <Typography>{uuid}</Typography>
       </Box>
-      <Box
+      <Stack
+        spacing={1}
         sx={{
           flex: 1,
           minHeight: 0,
@@ -407,13 +414,13 @@ export const GlobalOperationDesigner = (props: Props) => {
         </Paper>
         <Divider orientation="vertical" flexItem />
         <Paper sx={{ p: 1, border: 1 }}>
-          <Typography>Then:</Typography>
+          <Typography>Apply:</Typography>
           {appliers.sort(sortInactiveLast).map(applyDTOtoComponent)}
           <IconButton size="small" disabled={false} onClick={onAddApplier} className="clear-btn">
             <AddIcon />
           </IconButton>
         </Paper>
-      </Box>
+      </Stack>
       <FilterValueDialog
         key={editorItem?.item.uid}
         open={!!editorItem && editorItem.type === "filter"}

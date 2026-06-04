@@ -30,4 +30,7 @@ export default defineConfig({
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     exclude: ["node_modules", ".storybook", "storybook-static"],
   },
+  build: {
+    outDir: "../src/main/resources/static",
+  },
 });

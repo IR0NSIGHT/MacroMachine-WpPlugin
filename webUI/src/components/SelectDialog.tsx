@@ -3,6 +3,65 @@ import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
 import { useState } from "react";
 
+export function PopupDialog({
+  open,
+  onAbort,
+  onConfirm,
+  title,
+}: {
+  open: boolean;
+  onAbort: () => void;
+  onConfirm: () => void;
+  title: string;
+}) {
+  return (
+    <Dialog
+      open={open}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          position: "relative",
+          overflow: "visible",
+        },
+      }}
+    >
+      {/* Floating abort */}
+      <Fab
+        size="small"
+        color="default"
+        onClick={onAbort}
+        sx={{
+          position: "absolute",
+          top: 12,
+          right: 12,
+          zIndex: 10,
+        }}
+      >
+        <CloseIcon />
+      </Fab>
+
+      <DialogTitle>{title}</DialogTitle>
+
+      <DialogContent sx={{ pb: 10 }}></DialogContent>
+
+      {/* Floating confirm */}
+      <Fab
+        color="primary"
+        onClick={onConfirm}
+        sx={{
+          position: "absolute",
+          bottom: 24,
+          right: 24,
+          zIndex: 10,
+        }}
+      >
+        <CheckIcon />
+      </Fab>
+    </Dialog>
+  );
+}
+
 export type SelectDialogProps<T> = {
   open: boolean;
   items: T[];
@@ -57,8 +116,9 @@ export function SelectDialog<T>({
       <DialogTitle>{title}</DialogTitle>
 
       <DialogContent sx={{ pb: 10 }}>
+        {items.length === 0 && <Box>No items available</Box>}
         <Stack spacing={0}>
-          {[...items]
+          {items
             .sort((a, b) => getLabel(a).localeCompare(getLabel(b)))
             .map((item) => {
               const id = getId(item);

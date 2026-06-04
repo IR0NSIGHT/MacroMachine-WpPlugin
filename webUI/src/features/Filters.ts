@@ -53,6 +53,16 @@ export const forbiddenValues = (action: ActionDTO) => {
   return forbidden;
 };
 
+export const clearFilter = (filter: StepItemType): StepItemType => {
+  const filterValueIgnore = filter.output.ignoreValue;
+  const inverted = {
+    ...filter,
+    mappingPointsY: filter.mappingPointsY.map(() => filterValueIgnore),
+    mappedOutputs: filter.mappedOutputs.map(() => filterValueIgnore),
+  };
+  return inverted;
+};
+
 export const invertFilter = (filter: StepItemType): StepItemType => {
   const filterValueIgnore = filter.output.ignoreValue;
   const inverted = {

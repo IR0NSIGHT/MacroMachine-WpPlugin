@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "typegen": "npx @openapitools/openapi-generator-cli generate -i http://localhost:8080/api/openapi.json -g typescript-fetch -o src/generated/client && npm run fmt -- src/generated/client",
-    "build": "vite build",
+    "build": " rm -rf src/main/resources/static/* && vite build",
     "lint": "oxlint src --max-warnings 0 --fix",
     "preview": "vite preview",
     "build-storybook": "storybook build",
