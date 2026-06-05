@@ -8,11 +8,13 @@ export function PopupDialog({
   onAbort,
   onConfirm,
   title,
+  children,
 }: {
   open: boolean;
-  onAbort: () => void;
-  onConfirm: () => void;
-  title: string;
+  onAbort?: () => void | undefined;
+  onConfirm?: () => void | undefined;
+  title: React.ReactNode;
+  children: React.ReactNode;
 }) {
   return (
     <Dialog
@@ -27,37 +29,38 @@ export function PopupDialog({
       }}
     >
       {/* Floating abort */}
-      <Fab
-        size="small"
-        color="default"
-        onClick={onAbort}
-        sx={{
-          position: "absolute",
-          top: 12,
-          right: 12,
-          zIndex: 10,
-        }}
-      >
-        <CloseIcon />
-      </Fab>
-
+      {onAbort && (
+        <Fab
+          size="small"
+          color="default"
+          onClick={onAbort}
+          sx={{
+            position: "absolute",
+            top: 12,
+            right: 12,
+            zIndex: 10,
+          }}
+        >
+          <CloseIcon />
+        </Fab>
+      )}
       <DialogTitle>{title}</DialogTitle>
-
-      <DialogContent sx={{ pb: 10 }}></DialogContent>
-
+      <DialogContent sx={{ pb: 10 }}> {children} </DialogContent>
       {/* Floating confirm */}
-      <Fab
-        color="primary"
-        onClick={onConfirm}
-        sx={{
-          position: "absolute",
-          bottom: 24,
-          right: 24,
-          zIndex: 10,
-        }}
-      >
-        <CheckIcon />
-      </Fab>
+      {onConfirm && (
+        <Fab
+          color="primary"
+          onClick={onConfirm}
+          sx={{
+            position: "absolute",
+            bottom: 24,
+            right: 24,
+            zIndex: 10,
+          }}
+        >
+          <CheckIcon />
+        </Fab>
+      )}
     </Dialog>
   );
 }
@@ -83,83 +86,50 @@ export function SelectDialog<T>({
 }: SelectDialogProps<T>) {
   const [selected, setSelected] = useState<T[]>([]);
 
+  const toggleItem = (item: T) => {
+    const id = getId(item);
+    const isSelected = selected.some((s) => getId(s) === id);
+
+    if (isSingleSelect) {
+      setSelected(isSelected ? [] : [item]);
+    } else {
+      setSelected((prev) => (isSelected ? prev.filter((s) => getId(s) !== id) : [...prev, item]));
+    }
+  };
+
+  const abort = () => {
+    setSelected([]);
+    onClose([]);
+  };
+
+  const confirm = () => {
+    onClose(selected);
+  };
+
   return (
-    <Dialog
-      open={open}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          position: "relative",
-          overflow: "visible",
-        },
-      }}
-    >
-      {/* Floating abort */}
-      <Fab
-        size="small"
-        color="default"
-        onClick={() => {
-          setSelected([]);
-          onClose([]);
-        }}
-        sx={{
-          position: "absolute",
-          top: 12,
-          right: 12,
-          zIndex: 10,
-        }}
-      >
-        <CloseIcon />
-      </Fab>
+    <PopupDialog open={open} onAbort={abort} onConfirm={confirm} title={title}>
+      {items.length === 0 && <Box>No items available</Box>}
 
-      <DialogTitle>{title}</DialogTitle>
+      <Stack spacing={0}>
+        {items
+          .sort((a, b) => getLabel(a).localeCompare(getLabel(b)))
+          .map((item) => {
+            const id = getId(item);
+            const isSelected = selected.some((s) => getId(s) === id);
 
-      <DialogContent sx={{ pb: 10 }}>
-        {items.length === 0 && <Box>No items available</Box>}
-        <Stack spacing={0}>
-          {items
-            .sort((a, b) => getLabel(a).localeCompare(getLabel(b)))
-            .map((item) => {
-              const id = getId(item);
-              const isSelected = selected.some((s) => getId(s) === id);
-
-              return (
-                <Box key={id}>
-                  <Chip
-                    label={getLabel(item)}
-                    size="small"
-                    color={isSelected ? "primary" : "default"}
-                    variant={isSelected ? "filled" : "outlined"}
-                    onClick={() => {
-                      if (isSingleSelect) {
-                        setSelected(isSelected ? [] : [item]);
-                      } else {
-                        setSelected((prev) =>
-                          isSelected ? prev.filter((s) => getId(s) !== id) : [...prev, item],
-                        );
-                      }
-                    }}
-                  />
-                </Box>
-              );
-            })}
-        </Stack>
-      </DialogContent>
-
-      {/* Floating confirm */}
-      <Fab
-        color="primary"
-        onClick={() => onClose(selected)}
-        sx={{
-          position: "absolute",
-          bottom: 24,
-          right: 24,
-          zIndex: 10,
-        }}
-      >
-        <CheckIcon />
-      </Fab>
-    </Dialog>
+            return (
+              <Box key={id}>
+                <Chip
+                  label={getLabel(item)}
+                  size="small"
+                  color={isSelected ? "primary" : "default"}
+                  variant={isSelected ? "filled" : "outlined"}
+                  onClick={() => toggleItem(item)}
+                />
+              </Box>
+            );
+          })}
+      </Stack>
+    </PopupDialog>
   );
 }

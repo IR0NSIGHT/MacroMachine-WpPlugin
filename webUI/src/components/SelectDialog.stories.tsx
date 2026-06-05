@@ -12,6 +12,24 @@ const meta: Meta<typeof SelectDialog> = {
 
 export default meta;
 
+export const None: StoryObj<typeof SelectDialog<ActionDTO>> = {
+  args: {
+    getId(item: ActionDTO): string {
+      return item.uid;
+    },
+    getLabel(item: ActionDTO): string {
+      return item.name;
+    },
+    isSingleSelect: false,
+    items: [],
+    onClose(selected: ActionDTO[]): void {
+      alert("selected: " + selected.map((i) => i.name + " - " + i.uid));
+    },
+    open: true,
+    title: "Select actions",
+  },
+};
+
 export const Many: StoryObj<typeof SelectDialog<ActionDTO>> = {
   args: {
     getId(item: ActionDTO): string {

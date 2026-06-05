@@ -1,9 +1,10 @@
-import { Dialog, DialogTitle, DialogContent, Typography, Stack, Chip } from "@mui/material";
+import { Typography, Stack, Chip } from "@mui/material";
 
 import { ActionDTO, ActionType, InputDTO, isMacroDTO, OutputDTO, MacroDTO } from "@/types/DTO";
 import { StepMacroType } from "@/features/Execution";
 import { StepItemType } from "@/features/Execution";
 import { runnableMacro } from "@/features/Execution";
+import { PopupDialog } from "../SelectDialog";
 
 type Props = {
   open: boolean;
@@ -59,28 +60,24 @@ const DetailsItem = ({
 export function MacroDetailsDialog({ open, macro, onClose, onViewItem }: Props) {
   if (!macro) return null;
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>{macro.name}</DialogTitle>
+    <PopupDialog open={open} onAbort={onClose} title={macro.name}>
+      <Stack spacing={2}>
+        <Typography color="text.secondary">{macro.description}</Typography>
 
-      <DialogContent>
-        <Stack spacing={2}>
-          <Typography color="text.secondary">{macro.description}</Typography>
+        <Typography variant="subtitle2">Macro ID</Typography>
 
-          <Typography variant="subtitle2">Macro ID</Typography>
+        <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
+          {macro.uid}
+        </Typography>
 
-          <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
-            {macro.uid}
-          </Typography>
+        <Typography variant="subtitle2">Steps</Typography>
 
-          <Typography variant="subtitle2">Steps</Typography>
-
-          <Stack direction="column" spacing={1} flexWrap="wrap">
-            {macro.steps.map((stepDTO, idx) => (
-              <DetailsItem item={stepDTO} key={idx} onClick={() => onViewItem(stepDTO)} />
-            ))}
-          </Stack>
+        <Stack direction="column" spacing={1} flexWrap="wrap">
+          {macro.steps.map((stepDTO, idx) => (
+            <DetailsItem item={stepDTO} key={idx} onClick={() => onViewItem(stepDTO)} />
+          ))}
         </Stack>
-      </DialogContent>
-    </Dialog>
+      </Stack>
+    </PopupDialog>
   );
 }

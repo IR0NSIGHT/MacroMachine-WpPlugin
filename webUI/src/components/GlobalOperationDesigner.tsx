@@ -405,7 +405,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           fullWidth
           placeholder="This macro does a complex global operation"
         />
-        <Paper sx={{ p: 1, border: 1 }}>
+        <Paper sx={{ p: 1 }}>
           <Typography>Filter by:</Typography>
           {filters.sort(sortInactiveLast).map(filterDTOtoComponent)}
           <IconButton size="small" disabled={false} onClick={onAddFilter} className="clear-btn">
@@ -413,7 +413,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           </IconButton>
         </Paper>
         <Divider orientation="vertical" flexItem />
-        <Paper sx={{ p: 1, border: 1 }}>
+        <Paper sx={{ p: 1 }}>
           <Typography>Apply:</Typography>
           {appliers.sort(sortInactiveLast).map(applyDTOtoComponent)}
           <IconButton size="small" disabled={false} onClick={onAddApplier} className="clear-btn">
@@ -469,7 +469,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           if (selected.length !== 0) onLoadExisting(selected[0]);
           setLoadMacros(undefined);
         }}
-        title={"Select a macro"}
+        title={"Select a macro to load"}
       />
     </Box>
   );
