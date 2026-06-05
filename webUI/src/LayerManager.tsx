@@ -1,15 +1,7 @@
 import { Stack, Box, Typography } from "@mui/material";
+import { LayerDTO } from "./generated/client";
 
-export type Layer = {
-  id: string;
-  name: string;
-  type: "NIBBLE" | "BIT" | "BYTE";
-  custom: boolean;
-  usedMacros: string[];
-  existsInProject: boolean;
-};
-
-export const LayerManager = ({ layers }: { layers: Layer[] }) => {
+export const LayerManager = ({ layers }: { layers: LayerDTO[] }) => {
   return (
     <Box
       sx={{
@@ -19,6 +11,9 @@ export const LayerManager = ({ layers }: { layers: Layer[] }) => {
       }}
       p={1}
     >
+      <Typography variant="h4" gutterBottom>
+        Layers used in current project
+      </Typography>
       <Stack
         spacing={1}
         sx={{
@@ -41,10 +36,6 @@ export const LayerManager = ({ layers }: { layers: Layer[] }) => {
             <Typography variant="h6">{layer.name}</Typography>
             <Typography variant="body2">Type: {layer.type}</Typography>
             <Typography variant="body2">Id: {layer.id}</Typography>
-            <Typography variant="body2">
-              Exists in Project: {layer.existsInProject ? "Yes" : "No"}
-            </Typography>
-            <Typography variant="body2">Used Macros: {layer.usedMacros.join(", ")}</Typography>
             {layer.custom && <Typography variant="body2">Custom Layer</Typography>}
           </Box>
         ))}

@@ -24,6 +24,7 @@ import {
   ExecutionStateDTOFromJSON,
   ExecutionStateDTOToJSON,
 } from "../models/ExecutionStateDTO";
+import { type LayerDTO, LayerDTOFromJSON, LayerDTOToJSON } from "../models/LayerDTO";
 import { type MacroDTO, MacroDTOFromJSON, MacroDTOToJSON } from "../models/MacroDTO";
 
 export interface AddToQueueRequest {
@@ -35,6 +36,10 @@ export interface DeleteActionRequest {
 }
 
 export interface DeleteMacroRequest {
+  id: string;
+}
+
+export interface ExistsLayerInProjectRequest {
   id: string;
 }
 
@@ -206,6 +211,60 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
+   * Creates request options for existsLayerInProject without sending the request
+   */
+  async existsLayerInProjectRequestOpts(
+    requestParameters: ExistsLayerInProjectRequest,
+  ): Promise<runtime.RequestOpts> {
+    if (requestParameters["id"] == null) {
+      throw new runtime.RequiredError(
+        "id",
+        'Required parameter "id" was null or undefined when calling existsLayerInProject().',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/layers/{id}`;
+    urlPath = urlPath.replace("{id}", encodeURIComponent(String(requestParameters["id"])));
+
+    return {
+      path: urlPath,
+      method: "GET",
+      headers: headerParameters,
+      query: queryParameters,
+    };
+  }
+
+  /**
+   */
+  async existsLayerInProjectRaw(
+    requestParameters: ExistsLayerInProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<boolean>> {
+    const requestOptions = await this.existsLayerInProjectRequestOpts(requestParameters);
+    const response = await this.request(requestOptions, initOverrides);
+
+    if (this.isJsonMime(response.headers.get("content-type"))) {
+      return new runtime.JSONApiResponse<boolean>(response);
+    } else {
+      return new runtime.TextApiResponse(response) as any;
+    }
+  }
+
+  /**
+   */
+  async existsLayerInProject(
+    requestParameters: ExistsLayerInProjectRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<boolean> {
+    const response = await this.existsLayerInProjectRaw(requestParameters, initOverrides);
+    return await response.value();
+  }
+
+  /**
    * Creates request options for getActionById without sending the request
    */
   async getActionByIdRequestOpts(
@@ -336,6 +395,44 @@ export class DefaultApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Array<ActionDTO>> {
     const response = await this.getAllActionsRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Creates request options for getAllLayers without sending the request
+   */
+  async getAllLayersRequestOpts(): Promise<runtime.RequestOpts> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/layers`;
+
+    return {
+      path: urlPath,
+      method: "GET",
+      headers: headerParameters,
+      query: queryParameters,
+    };
+  }
+
+  /**
+   */
+  async getAllLayersRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Array<LayerDTO>>> {
+    const requestOptions = await this.getAllLayersRequestOpts();
+    const response = await this.request(requestOptions, initOverrides);
+
+    return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(LayerDTOFromJSON));
+  }
+
+  /**
+   */
+  async getAllLayers(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Array<LayerDTO>> {
+    const response = await this.getAllLayersRaw(initOverrides);
     return await response.value();
   }
 
