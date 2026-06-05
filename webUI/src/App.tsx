@@ -23,6 +23,8 @@ import { MacroGrid } from "./MacroGrid";
 import { GlobalOperationDesigner } from "./components/GlobalOperationDesigner";
 import { isStepItem, isUUID, MacroExecuteRequester, toMacroDTO } from "./features/Execution";
 import equal from "fast-deep-equal";
+import { LayerManager } from "./LayerManager";
+import { InputOutputDTOTypeEnum } from "./generated/client";
 
 export default function App() {
   const [search, setSearch] = useState("");
@@ -110,6 +112,15 @@ export default function App() {
     postActions(actions).then(() => postMacro(macro));
   };
 
+  const layers = Array.from({ length: 20 }, (_, i) => ({
+    id: `${i + 1}`,
+    name: `Layer ${i + 1}`,
+    type: ["NIBBLE", "BIT", "BYTE"][i % 3] as "NIBBLE" | "BIT" | "BYTE",
+    custom: i % 2 === 0,
+    usedMacros: i % 4 === 0 ? [`Macro${i + 1}`] : [],
+    existsInProject: i % 3 !== 0,
+  }));
+
   return (
     <Box
       sx={{
@@ -166,6 +177,7 @@ export default function App() {
               actions={actions}
             />
           )}
+          {tab === 2 && <LayerManager layers={layers} />}
         </Box>
       </Box>
     </Box>

@@ -150,17 +150,14 @@ export const RangeFilterInlineEditor = ({
           sx={{ color: !item.active ? theme.palette.text.disabled : theme.palette.text.secondary }}
         >
           Filter by
-        </Typography>
-        <Typography
-          sx={{ color: !item.active ? theme.palette.text.disabled : theme.palette.text.primary }}
-        >
-          {item.input.displayName}
-        </Typography>
-        <Typography
-          sx={{
-            color: !item.active ? theme.palette.text.disabled : theme.palette.text.secondary,
-          }}
-        >
+          <span
+            style={{
+              color: !item.active ? theme.palette.text.disabled : theme.palette.text.primary,
+            }}
+          >
+            {" "}
+            {item.input.displayName}{" "}
+          </span>
           {insideRangeFilter ? "inside range" : "outside range"} {valueToString(value[0])} to{" "}
           {valueToString(value[1])}
         </Typography>

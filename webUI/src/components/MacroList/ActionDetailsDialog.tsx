@@ -163,30 +163,30 @@ export function FilterValueDialog({ open, action, onClose, setAction }: FilterEd
           {sortedMappings.map((mapping) => {
             const isActive = mapping.output !== filterValueBlock;
             return (
-              <Tooltip
-                title={
-                  <ReactMarkdown>
-                    {explainSingleFilterMapping(mapping, actionState.input.displayName)}
-                  </ReactMarkdown>
-                }
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "row", // optional, row is the default
+                  alignItems: "center",
+                }}
                 key={mapping.input}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row", // optional, row is the default
-                    alignItems: "center",
+                <Switch
+                  checked={isActive}
+                  onChange={() => {
+                    const newFilter = filterAutoName(
+                      invertFilterSinglePosition(actionState, mapping.input),
+                    );
+                    setActionState(newFilter);
                   }}
+                />{" "}
+                <Tooltip
+                  title={
+                    <ReactMarkdown>
+                      {explainSingleFilterMapping(mapping, actionState.input.displayName)}
+                    </ReactMarkdown>
+                  }
                 >
-                  <Switch
-                    checked={isActive}
-                    onChange={() => {
-                      const newFilter = filterAutoName(
-                        invertFilterSinglePosition(actionState, mapping.input),
-                      );
-                      setActionState(newFilter);
-                    }}
-                  />
                   <Typography
                     sx={{
                       color: !isActive ? theme.palette.text.disabled : theme.palette.text.primary,
@@ -194,8 +194,8 @@ export function FilterValueDialog({ open, action, onClose, setAction }: FilterEd
                   >
                     {mapping.inputName}
                   </Typography>
-                </Box>
-              </Tooltip>
+                </Tooltip>
+              </Box>
             );
           })}
         </Stack>
