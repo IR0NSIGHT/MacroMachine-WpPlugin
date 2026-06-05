@@ -222,6 +222,51 @@
         }
       }
     },
+    "/layers/{id}" : {
+      "get" : {
+        "operationId" : "existsLayerInProject",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/layers" : {
+      "get" : {
+        "operationId" : "getAllLayers",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LayerDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/macros/{id}" : {
       "get" : {
         "operationId" : "getMacroById",
@@ -566,6 +611,47 @@
           }
         },
         "description" : "Represents a single action step within a macro execution"
+      },
+      "LayerDTO" : {
+        "required" : [ "custom", "dataSize", "description", "discrete", "id", "name", "priority", "type" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "Display name of the layer"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Description of the layer"
+          },
+          "dataSize" : {
+            "type" : "string",
+            "description" : "Amount of possible values the layer can store",
+            "enum" : [ "BIT", "NIBBLE", "BYTE", "BIT_PER_CHUNK", "NONE" ]
+          },
+          "priority" : {
+            "type" : "integer",
+            "description" : "IDK? Possible export application priority?",
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "string",
+            "description" : "Unique, stable ID of layer"
+          },
+          "discrete" : {
+            "type" : "boolean",
+            "description" : "Discrete. IDK about the semantic"
+          },
+          "type" : {
+            "type" : "string",
+            "description" : "Specific layer category"
+          },
+          "custom" : {
+            "type" : "boolean",
+            "description" : "Input"
+          }
+        },
+        "description" : "A layer used in worldpainter."
       },
       "MacroDTO" : {
         "required" : [ "activeActions", "description", "executionUUIDs", "name", "uid" ],

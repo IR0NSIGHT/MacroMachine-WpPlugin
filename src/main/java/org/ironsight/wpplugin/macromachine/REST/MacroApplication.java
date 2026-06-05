@@ -9,6 +9,7 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.ironsight.wpplugin.macromachine.REST.Resources.ActionResource;
 import org.ironsight.wpplugin.macromachine.REST.Resources.ExecutionResource;
+import org.ironsight.wpplugin.macromachine.REST.Resources.LayerResource;
 import org.ironsight.wpplugin.macromachine.REST.Resources.MacroResource;
 import org.ironsight.wpplugin.macromachine.operations.MacroApplicator;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
@@ -28,6 +29,7 @@ public class MacroApplication extends ResourceConfig {
     register(MacroResource.class);
     register(new ActionResource(ioProvider, actions));
     register(new ExecutionResource(applicator, actions, macros));
+    register(new LayerResource(ioProvider, actions, macros));
 
     register(JacksonFeature.class);
 
