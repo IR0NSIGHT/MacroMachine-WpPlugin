@@ -804,6 +804,8 @@ public class MacroDesigner extends JPanel {
     for (UUID id : macro.executionUUIDs) {
       SaveableAction m = actionContainer.queryById(id);
       if (m == null) m = macroContainer.queryById(id);
+      if (m == null)
+        continue;
       m.setActive(macro.getActiveActions()[row]);
       table.setValueAt(m, row++, 0);
     }

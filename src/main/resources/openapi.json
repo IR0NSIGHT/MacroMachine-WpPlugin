@@ -649,6 +649,14 @@
           "custom" : {
             "type" : "boolean",
             "description" : "Input"
+          },
+          "macrosUsingLayer" : {
+            "type" : "array",
+            "description" : "IDs of macros that use this layer",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
           }
         },
         "description" : "A layer used in worldpainter."

@@ -1,7 +1,12 @@
 package org.ironsight.wpplugin.macromachine.REST.DTOs;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.pepsoft.worldpainter.layers.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Schema(
         description =
@@ -22,9 +27,20 @@ public record LayerDTO(  @Schema(description = "Display name of the layer", requ
                          @Schema(description = "Specific layer category", requiredMode = Schema.RequiredMode.REQUIRED, examples = {"Custom Objects","CityLayer","Annotations"})
                          String type,
                          @Schema(description = "Input", requiredMode = Schema.RequiredMode.REQUIRED)
-                         boolean custom) {
+                         boolean custom,
+                         @ArraySchema(
+                                 schema = @Schema(
+                                         implementation = UUID.class,
+                                         format = "uuid"
+                                 ),
+                                 arraySchema = @Schema(
+                                         description = "IDs of macros that use this layer",
+                                         requiredMode = Schema.RequiredMode.REQUIRED
+                                 )
+                         )
+                         List<UUID> macrosUsingLayer) {
     public LayerDTO(Layer layer) {
-        this(layer.getName(), layer.getDescription(), layer.getDataSize(), layer.getPriority(), layer.getId(), layer.discrete, GetType(layer), layer instanceof CustomLayer);
+        this(layer.getName(), layer.getDescription(), layer.getDataSize(), layer.getPriority(), layer.getId(), layer.discrete, GetType(layer), layer instanceof CustomLayer, new ArrayList<>());
     }
 
 
