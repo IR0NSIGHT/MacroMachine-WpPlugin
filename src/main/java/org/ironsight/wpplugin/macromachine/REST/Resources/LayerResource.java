@@ -1,21 +1,22 @@
 package org.ironsight.wpplugin.macromachine.REST.Resources;
 
-import static org.ironsight.wpplugin.macromachine.operations.MappingAction.getNewEmptyAction;
-
-import io.swagger.v3.oas.annotations.Operation;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
-import org.ironsight.wpplugin.macromachine.REST.DTOs.ActionDTO;
+import jakarta.ws.rs.core.Response;
 import org.ironsight.wpplugin.macromachine.REST.DTOs.LayerDTO;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.layers.Layer;
+
+import javax.imageio.ImageIO;
 
 @Path("/layers")
 @Produces(MediaType.APPLICATION_JSON)
@@ -41,8 +42,32 @@ public class LayerResource {
     @GET
     @Path("/{id}")
     public boolean existsLayerInProject(@PathParam("id") String id) {
-        return true;
+        return ioProvider.existsLayerWithId(id);
     }
+
+    @GET
+    @Path("/{id}/icon")
+    @Produces("image/png")
+    public Response getLayerIcon(@PathParam("id") String layerId) throws IOException {
+        if (!ioProvider.existsLayerWithId(layerId))
+            return Response.status(Response.Status.NOT_FOUND).build();
+
+        var layer = ioProvider.getLayerById(layerId, System.err::println);
+        if (layer == null)
+            return Response.status(Response.Status.NOT_FOUND).build();
+
+        BufferedImage image = layer.getIcon();
+        if (image == null)
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos);
+
+        return Response.ok(baos.toByteArray())
+                .header("Cache-Control", "public, max-age=86400")
+                .build();
+    }
+
 
     private List<LayerDTO> collectLayers() {
         HashMap<String, LayerDTO> layerIdToDTO = new HashMap<>(){

@@ -267,6 +267,27 @@
         }
       }
     },
+    "/layers/{id}/icon" : {
+      "get" : {
+        "operationId" : "getLayerIcon",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "image/png" : { }
+            }
+          }
+        }
+      }
+    },
     "/macros/{id}" : {
       "get" : {
         "operationId" : "getMacroById",
