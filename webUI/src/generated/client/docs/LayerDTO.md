@@ -4,16 +4,18 @@ A layer used in worldpainter.
 
 ## Properties
 
-| Name          | Type    |
-| ------------- | ------- |
-| `name`        | string  |
-| `description` | string  |
-| `dataSize`    | string  |
-| `priority`    | number  |
-| `id`          | string  |
-| `discrete`    | boolean |
-| `type`        | string  |
-| `custom`      | boolean |
+| Name               | Type                |
+| ------------------ | ------------------- |
+| `name`             | string              |
+| `description`      | string              |
+| `dataSize`         | string              |
+| `priority`         | number              |
+| `id`               | string              |
+| `discrete`         | boolean             |
+| `type`             | string              |
+| `custom`           | boolean             |
+| `macrosUsingLayer` | Array&lt;string&gt; |
+| `presentInProject` | boolean             |
 
 ## Example
 
@@ -30,6 +32,8 @@ const example = {
   discrete: null,
   type: null,
   custom: null,
+  macrosUsingLayer: null,
+  presentInProject: null,
 } satisfies LayerDTO;
 
 console.log(example);

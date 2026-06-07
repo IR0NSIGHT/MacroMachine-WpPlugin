@@ -62,11 +62,23 @@ export interface LayerDTO {
    */
   type: string;
   /**
-   * Input
+   * is Custom layer
    * @type {boolean}
    * @memberof LayerDTO
    */
   custom: boolean;
+  /**
+   * IDs of macros that use this layer
+   * @type {Array<string>}
+   * @memberof LayerDTO
+   */
+  macrosUsingLayer?: Array<string>;
+  /**
+   * Input
+   * @type {boolean}
+   * @memberof LayerDTO
+   */
+  presentInProject: boolean;
 }
 
 /**
@@ -93,6 +105,7 @@ export function instanceOfLayerDTO(value: object): value is LayerDTO {
   if (!("discrete" in value) || value["discrete"] === undefined) return false;
   if (!("type" in value) || value["type"] === undefined) return false;
   if (!("custom" in value) || value["custom"] === undefined) return false;
+  if (!("presentInProject" in value) || value["presentInProject"] === undefined) return false;
   return true;
 }
 
@@ -113,6 +126,8 @@ export function LayerDTOFromJSONTyped(json: any, ignoreDiscriminator: boolean): 
     discrete: json["discrete"],
     type: json["type"],
     custom: json["custom"],
+    macrosUsingLayer: json["macrosUsingLayer"] == null ? undefined : json["macrosUsingLayer"],
+    presentInProject: json["presentInProject"],
   };
 }
 
@@ -137,5 +152,7 @@ export function LayerDTOToJSONTyped(
     discrete: value["discrete"],
     type: value["type"],
     custom: value["custom"],
+    macrosUsingLayer: value["macrosUsingLayer"],
+    presentInProject: value["presentInProject"],
   };
 }

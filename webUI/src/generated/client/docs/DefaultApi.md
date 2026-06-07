@@ -18,6 +18,7 @@ All URIs are relative to _http://localhost_
 | [**getDocs**](DefaultApi.md#getdocs)                           | **GET** /api/docs                    |                                 |
 | [**getExternalGrammar**](DefaultApi.md#getexternalgrammar)     | **GET** /api/application.wadl/{path} |                                 |
 | [**getFilters**](DefaultApi.md#getfilters)                     | **GET** /api/actions/filters         |                                 |
+| [**getLayerIcon**](DefaultApi.md#getlayericon)                 | **GET** /api/layers/{id}/icon        |                                 |
 | [**getMacroById**](DefaultApi.md#getmacrobyid)                 | **GET** /api/macros/{id}             |                                 |
 | [**getMacroLastChange**](DefaultApi.md#getmacrolastchange)     | **GET** /api/macros/lastChange       | Get last modification timestamp |
 | [**getQueue**](DefaultApi.md#getqueue)                         | **GET** /api/execution/queue         |                                 |
@@ -791,6 +792,64 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: `application/json`
+
+### HTTP response details
+
+| Status code | Description      | Response headers |
+| ----------- | ---------------- | ---------------- |
+| **0**       | default response | -                |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+## getLayerIcon
+
+> getLayerIcon(id)
+
+### Example
+
+```ts
+import { Configuration, DefaultApi } from "";
+import type { GetLayerIconRequest } from "";
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new DefaultApi();
+
+  const body = {
+    // string
+    id: id_example,
+  } satisfies GetLayerIconRequest;
+
+  try {
+    const data = await api.getLayerIcon(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+| Name   | Type     | Description | Notes                     |
+| ------ | -------- | ----------- | ------------------------- |
+| **id** | `string` |             | [Defaults to `undefined`] |
+
+### Return type
+
+`void` (Empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `image/png`
 
 ### HTTP response details
 

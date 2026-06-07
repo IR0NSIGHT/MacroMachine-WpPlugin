@@ -115,7 +115,8 @@ public class LayerResource {
                                             false,
                                             "unknown",
                                             layerIo.isCustomLayer(),
-                                            new ArrayList<>()
+                                            new ArrayList<>(),
+                                            false
                                     );
                                     layerToUsingMacros.put(dto, new HashSet<>());
                                     layerIdToDTO.put(dto.id(), dto);

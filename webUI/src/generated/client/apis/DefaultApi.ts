@@ -51,6 +51,10 @@ export interface GetExternalGrammarRequest {
   path: string;
 }
 
+export interface GetLayerIconRequest {
+  id: string;
+}
+
 export interface GetMacroByIdRequest {
   id: string;
 }
@@ -674,6 +678,55 @@ export class DefaultApi extends runtime.BaseAPI {
   ): Promise<Array<ActionDTO>> {
     const response = await this.getFiltersRaw(initOverrides);
     return await response.value();
+  }
+
+  /**
+   * Creates request options for getLayerIcon without sending the request
+   */
+  async getLayerIconRequestOpts(
+    requestParameters: GetLayerIconRequest,
+  ): Promise<runtime.RequestOpts> {
+    if (requestParameters["id"] == null) {
+      throw new runtime.RequiredError(
+        "id",
+        'Required parameter "id" was null or undefined when calling getLayerIcon().',
+      );
+    }
+
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/layers/{id}/icon`;
+    urlPath = urlPath.replace("{id}", encodeURIComponent(String(requestParameters["id"])));
+
+    return {
+      path: urlPath,
+      method: "GET",
+      headers: headerParameters,
+      query: queryParameters,
+    };
+  }
+
+  /**
+   */
+  async getLayerIconRaw(
+    requestParameters: GetLayerIconRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    const requestOptions = await this.getLayerIconRequestOpts(requestParameters);
+    const response = await this.request(requestOptions, initOverrides);
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   */
+  async getLayerIcon(
+    requestParameters: GetLayerIconRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.getLayerIconRaw(requestParameters, initOverrides);
   }
 
   /**

@@ -634,7 +634,7 @@
         "description" : "Represents a single action step within a macro execution"
       },
       "LayerDTO" : {
-        "required" : [ "custom", "dataSize", "description", "discrete", "id", "name", "priority", "type" ],
+        "required" : [ "custom", "dataSize", "description", "discrete", "id", "name", "presentInProject", "priority", "type" ],
         "type" : "object",
         "properties" : {
           "name" : {
@@ -669,7 +669,7 @@
           },
           "custom" : {
             "type" : "boolean",
-            "description" : "Input"
+            "description" : "is Custom layer"
           },
           "macrosUsingLayer" : {
             "type" : "array",
@@ -678,6 +678,10 @@
               "type" : "string",
               "format" : "uuid"
             }
+          },
+          "presentInProject" : {
+            "type" : "boolean",
+            "description" : "Input"
           }
         },
         "description" : "A layer used in worldpainter."

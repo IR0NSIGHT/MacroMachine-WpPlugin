@@ -26,7 +26,7 @@ public record LayerDTO(  @Schema(description = "Display name of the layer", requ
                          boolean discrete,
                          @Schema(description = "Specific layer category", requiredMode = Schema.RequiredMode.REQUIRED, examples = {"Custom Objects","CityLayer","Annotations"})
                          String type,
-                         @Schema(description = "Input", requiredMode = Schema.RequiredMode.REQUIRED)
+                         @Schema(description = "is Custom layer", requiredMode = Schema.RequiredMode.REQUIRED)
                          boolean custom,
                          @ArraySchema(
                                  schema = @Schema(
@@ -38,9 +38,13 @@ public record LayerDTO(  @Schema(description = "Display name of the layer", requ
                                          requiredMode = Schema.RequiredMode.REQUIRED
                                  )
                          )
-                         List<UUID> macrosUsingLayer) {
+                         List<UUID> macrosUsingLayer,
+                       @Schema(description = "Input", requiredMode = Schema.RequiredMode.REQUIRED)
+                    boolean presentInProject
+) {
     public LayerDTO(Layer layer) {
-        this(layer.getName(), layer.getDescription(), layer.getDataSize(), layer.getPriority(), layer.getId(), layer.discrete, GetType(layer), layer instanceof CustomLayer, new ArrayList<>());
+        this(layer.getName(), layer.getDescription(), layer.getDataSize(), layer.getPriority(), layer.getId(), layer.discrete, GetType(layer), layer instanceof CustomLayer,
+                new ArrayList<>(), true);
     }
 
 
