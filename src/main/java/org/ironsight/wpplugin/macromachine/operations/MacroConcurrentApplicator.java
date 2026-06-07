@@ -41,19 +41,21 @@ public class MacroConcurrentApplicator implements MacroApplicator {
   }
 
   public void shutdown() {
-      executor.shutdown();
-      executor = null;
+    executor.shutdown();
+    executor = null;
   }
 
   private static ScheduledExecutorService executor = null;
 
   public void start() {
     if (executor != null) throw new IllegalArgumentException("can not run a second applicator!");
-    executor = Executors.newSingleThreadScheduledExecutor(r -> {
-          Thread t = new Thread(r);
-          t.setName("MacroConcurrentApplicator-thread");
-          return t;
-      });
+    executor =
+        Executors.newSingleThreadScheduledExecutor(
+            r -> {
+              Thread t = new Thread(r);
+              t.setName("MacroConcurrentApplicator-thread");
+              return t;
+            });
     executor.scheduleAtFixedRate(this::runExecutionQueue, 0, 1000, TimeUnit.MILLISECONDS);
   }
 

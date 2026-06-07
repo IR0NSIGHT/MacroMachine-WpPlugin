@@ -17,12 +17,7 @@ import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 
-@OpenAPIDefinition(
-        info = @Info(
-                title = "MacroMachine API",
-                version = "1.0.0"
-        )
-)
+@OpenAPIDefinition(info = @Info(title = "MacroMachine API", version = "1.0.0"))
 @ApplicationPath("/api")
 public class MacroApplication extends ResourceConfig {
   public MacroApplication(

@@ -26,7 +26,9 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
   public boolean skipTile(int tileX, int tileY) {
     assert tileContainer != null;
-    return tileContainer.getMaxValueAtTile(tileX, tileY) == BLOCK_VALUE;
+    if (tileContainer.existsTile(tileX, tileY))
+      return tileContainer.getMaxValueAtTile(tileX, tileY) == BLOCK_VALUE;
+    return true;
   }
 
   @Override
