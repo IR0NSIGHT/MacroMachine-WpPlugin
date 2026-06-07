@@ -60,7 +60,10 @@
                 <filtering>false</filtering>
             </resource>
         </resources>
+
+
         <plugins>
+            <!-- GENERATE OPENAPI SPECIFICATION -->
             <plugin>
                 <groupId>io.swagger.core.v3</groupId>
                 <artifactId>swagger-maven-plugin-jakarta</artifactId>
@@ -68,13 +71,13 @@
 
                 <configuration>
                     <resourcePackages>
-                        <package>org.ironsight.wpplugin.macromachine.REST.Resources</package>
+                        <package>org.ironsight.wpplugin.macromachine.REST</package>
                     </resourcePackages>
 
                     <outputFileName>openapi</outputFileName>
+                    <outputFormat>JSON</outputFormat>
                     <outputPath>${project.basedir}/src/main/resources</outputPath>
                     <prettyPrint>true</prettyPrint>
-
                 </configuration>
 
                 <executions>
@@ -86,6 +89,50 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Frontend build: install dependencies and build webUI during Maven generate-resources -->
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.12.1</version>
+                <executions>
+                    <execution>
+                        <id>install-node-and-npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <nodeVersion>v24.12.0</nodeVersion>
+                            <npmVersion>11.6.2</npmVersion>
+                            <workingDirectory>webUI</workingDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-install</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <arguments>install</arguments>
+                            <workingDirectory>webUI</workingDirectory>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm-build</id>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <arguments>run build</arguments>
+                            <workingDirectory>webUI</workingDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -123,48 +170,6 @@
                 <version>3.3.1</version>
             </plugin>
 
-            <!-- Frontend build: install dependencies and build webUI during Maven generate-resources -->
-            <plugin>
-                <groupId>com.github.eirslett</groupId>
-                <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.12.1</version>
-                <executions>
-                    <execution>
-                        <id>install-node-and-npm</id>
-                        <goals>
-                            <goal>install-node-and-npm</goal>
-                        </goals>
-                        <phase>generate-resources</phase>
-                        <configuration>
-                            <nodeVersion>v24.12.0</nodeVersion>
-                            <npmVersion>11.6.2</npmVersion>
-                            <workingDirectory>webUI</workingDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm-install</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <phase>generate-resources</phase>
-                        <configuration>
-                            <arguments>install</arguments>
-                            <workingDirectory>webUI</workingDirectory>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm-build</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <phase>generate-resources</phase>
-                        <configuration>
-                            <arguments>run build</arguments>
-                            <workingDirectory>webUI</workingDirectory>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
 
         </plugins>
     </build>

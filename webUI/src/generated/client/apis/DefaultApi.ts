@@ -47,10 +47,6 @@ export interface GetActionByIdRequest {
   id: string;
 }
 
-export interface GetExternalGrammarRequest {
-  path: string;
-}
-
 export interface GetLayerIconRequest {
   id: string;
 }
@@ -81,7 +77,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     headerParameters["Content-Type"] = "application/json";
 
-    let urlPath = `/api/execution/queue`;
+    let urlPath = `/execution/queue`;
 
     return {
       path: urlPath,
@@ -133,7 +129,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/actions/{id}`;
+    let urlPath = `/actions/{id}`;
     urlPath = urlPath.replace("{id}", encodeURIComponent(String(requestParameters["id"])));
 
     return {
@@ -182,7 +178,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/macros/{id}`;
+    let urlPath = `/macros/{id}`;
     urlPath = urlPath.replace("{id}", encodeURIComponent(String(requestParameters["id"])));
 
     return {
@@ -231,7 +227,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/layers/{id}`;
+    let urlPath = `/layers/{id}`;
     urlPath = urlPath.replace("{id}", encodeURIComponent(String(requestParameters["id"])));
 
     return {
@@ -285,7 +281,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/actions/{id}`;
+    let urlPath = `/actions/{id}`;
     urlPath = urlPath.replace("{id}", encodeURIComponent(String(requestParameters["id"])));
 
     return {
@@ -326,7 +322,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/actions/lastChange`;
+    let urlPath = `/actions/lastChange`;
 
     return {
       path: urlPath,
@@ -372,7 +368,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/actions`;
+    let urlPath = `/actions`;
 
     return {
       path: urlPath,
@@ -410,7 +406,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/layers`;
+    let urlPath = `/layers`;
 
     return {
       path: urlPath,
@@ -448,7 +444,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/macros`;
+    let urlPath = `/macros`;
 
     return {
       path: urlPath,
@@ -488,7 +484,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/actions/appliers`;
+    let urlPath = `/actions/appliers`;
 
     return {
       path: urlPath,
@@ -526,7 +522,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/execution/state`;
+    let urlPath = `/execution/state`;
 
     return {
       path: urlPath,
@@ -566,7 +562,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/docs`;
+    let urlPath = `/docs`;
 
     return {
       path: urlPath,
@@ -594,55 +590,6 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Creates request options for getExternalGrammar without sending the request
-   */
-  async getExternalGrammarRequestOpts(
-    requestParameters: GetExternalGrammarRequest,
-  ): Promise<runtime.RequestOpts> {
-    if (requestParameters["path"] == null) {
-      throw new runtime.RequiredError(
-        "path",
-        'Required parameter "path" was null or undefined when calling getExternalGrammar().',
-      );
-    }
-
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    let urlPath = `/api/application.wadl/{path}`;
-    urlPath = urlPath.replace("{path}", encodeURIComponent(String(requestParameters["path"])));
-
-    return {
-      path: urlPath,
-      method: "GET",
-      headers: headerParameters,
-      query: queryParameters,
-    };
-  }
-
-  /**
-   */
-  async getExternalGrammarRaw(
-    requestParameters: GetExternalGrammarRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    const requestOptions = await this.getExternalGrammarRequestOpts(requestParameters);
-    const response = await this.request(requestOptions, initOverrides);
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   */
-  async getExternalGrammar(
-    requestParameters: GetExternalGrammarRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<void> {
-    await this.getExternalGrammarRaw(requestParameters, initOverrides);
-  }
-
-  /**
    * Creates request options for getFilters without sending the request
    */
   async getFiltersRequestOpts(): Promise<runtime.RequestOpts> {
@@ -650,7 +597,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/actions/filters`;
+    let urlPath = `/actions/filters`;
 
     return {
       path: urlPath,
@@ -697,7 +644,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/layers/{id}/icon`;
+    let urlPath = `/layers/{id}/icon`;
     urlPath = urlPath.replace("{id}", encodeURIComponent(String(requestParameters["id"])));
 
     return {
@@ -746,7 +693,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/macros/{id}`;
+    let urlPath = `/macros/{id}`;
     urlPath = urlPath.replace("{id}", encodeURIComponent(String(requestParameters["id"])));
 
     return {
@@ -787,7 +734,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/macros/lastChange`;
+    let urlPath = `/macros/lastChange`;
 
     return {
       path: urlPath,
@@ -833,7 +780,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/execution/queue`;
+    let urlPath = `/execution/queue`;
 
     return {
       path: urlPath,
@@ -866,41 +813,6 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
-   * Creates request options for getWadl without sending the request
-   */
-  async getWadlRequestOpts(): Promise<runtime.RequestOpts> {
-    const queryParameters: any = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    let urlPath = `/api/application.wadl`;
-
-    return {
-      path: urlPath,
-      method: "GET",
-      headers: headerParameters,
-      query: queryParameters,
-    };
-  }
-
-  /**
-   */
-  async getWadlRaw(
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
-    const requestOptions = await this.getWadlRequestOpts();
-    const response = await this.request(requestOptions, initOverrides);
-
-    return new runtime.VoidApiResponse(response);
-  }
-
-  /**
-   */
-  async getWadl(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<void> {
-    await this.getWadlRaw(initOverrides);
-  }
-
-  /**
    * Creates request options for options without sending the request
    */
   async optionsRequestOpts(): Promise<runtime.RequestOpts> {
@@ -908,7 +820,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api`;
+    let urlPath = `/`;
 
     return {
       path: urlPath,
@@ -945,7 +857,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     headerParameters["Content-Type"] = "application/json";
 
-    let urlPath = `/api/actions`;
+    let urlPath = `/actions`;
 
     return {
       path: urlPath,
@@ -988,7 +900,7 @@ export class DefaultApi extends runtime.BaseAPI {
 
     headerParameters["Content-Type"] = "application/json";
 
-    let urlPath = `/api/macros`;
+    let urlPath = `/macros`;
 
     return {
       path: urlPath,
