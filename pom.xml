@@ -117,24 +117,32 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+
+            <!-- Frontend build: install dependencies and build webUI during Maven generate-resources -->
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
                 <version>1.12.1</version>
                 <executions>
                     <execution>
-                        <id>install node and npm</id>
+                        <id>install-node-and-npm</id>
                         <goals>
                             <goal>install-node-and-npm</goal>
                         </goals>
+                        <phase>generate-resources</phase>
                         <configuration>
-                            <nodeVersion>v18.17.0</nodeVersion>
-                            <npmVersion>9.6.7</npmVersion>
+                            <nodeVersion>v24.12.0</nodeVersion>
+                            <npmVersion>11.6.2</npmVersion>
+                            <workingDirectory>webUI</workingDirectory>
                         </configuration>
                     </execution>
-                    <!--
                     <execution>
-                        <id>npm install</id>
+                        <id>npm-install</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
@@ -144,22 +152,20 @@
                             <workingDirectory>webUI</workingDirectory>
                         </configuration>
                     </execution>
-                    -->
-                    <!--
                     <execution>
-                        <id>npm run build</id>
+                        <id>npm-build</id>
                         <goals>
                             <goal>npm</goal>
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
-                            <arguments>run build outDir ../target/webui-dist</arguments>
+                            <arguments>run build</arguments>
                             <workingDirectory>webUI</workingDirectory>
                         </configuration>
                     </execution>
-                    -->
                 </executions>
             </plugin>
+
         </plugins>
     </build>
 
