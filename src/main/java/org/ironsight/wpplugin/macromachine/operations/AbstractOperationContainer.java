@@ -144,7 +144,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction> {
         list.add(removed.getUid());
       }
     }
-    notify(list.toArray(new UUID[0]));
+    notify(list.toArray(list.toArray(UUID[]::new)));
   }
 
   public synchronized void updateMapping(Consumer<String> onError, T... items) {

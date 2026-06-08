@@ -96,8 +96,7 @@ async function filterJsonFile(inputPath, outputFilters, outputActions) {
   }
 }
 
-const ACTIONS_PATH =
-  "/home/klipper/Documents/repos/MacroMachine-WpPlugin/webUI/src/mocks/data/actions.json";
+const ACTIONS_PATH = "../mocks/data/actions.json";
 
 // pull data
 await fetchActionsToFile(ACTIONS_PATH);

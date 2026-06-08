@@ -72,7 +72,7 @@ public class DistanceToLayerEdgeGetter
   public IMappingValue instantiateFrom(IoParameter[] data) {
     try {
       return new DistanceToLayerEdgeGetter(
-          ((BoolValue) data[3]).value(),
+          ((IntValue) data[3]).value() == 1,
           ((StringValue) data[0]).value(),
           ((StringValue) data[1]).value(),
           ((IntValue) data[2]).value());

@@ -139,6 +139,7 @@ public class MacroConcurrentApplicator implements MacroApplicator {
             var steps = new ArrayList<>(state.steps());
 
             int idx = state.currentStepIndex();
+            if (steps.size() <= idx) return;
             var currentStep = steps.get(idx);
 
             var updatedStep =

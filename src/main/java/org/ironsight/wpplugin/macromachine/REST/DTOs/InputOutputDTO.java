@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -45,13 +46,15 @@ public class InputOutputDTO {
       requiredMode = Schema.RequiredMode.REQUIRED)
   private final int ignoreValue;
 
+  @NotNull
   @ArraySchema(
       schema =
-          @Schema(oneOf = {Integer.class, Float.class, String.class, Boolean.class, int[].class}),
-      arraySchema =
           @Schema(
-              description = "Parameters used to instantiate the IO provider.",
-              requiredMode = Schema.RequiredMode.REQUIRED))
+              oneOf = {Integer.class, Float.class, String.class, Boolean.class, int[].class},
+              description =
+                  "specific parameters known by the specific ioClass, used to instantiated equal objects.",
+              requiredMode = Schema.RequiredMode.REQUIRED),
+      arraySchema = @Schema(description = "Parameters used to instantiate the IO provider."))
   private final List<IoParameter> ioParameters;
 
   @ArraySchema(
@@ -97,10 +100,6 @@ public class InputOutputDTO {
     this.ioParameters = Objects.requireNonNull(ioParameters, "ioParameters can not be null");
   }
 
-  public List<Object> getIoParameters() {
-    return (List) ioParameters;
-  }
-
   public static InputOutputDTO fromOutputSetter(IPositionValueSetter setter) {
     return new InputOutputDTO(
         setter.getName(),
@@ -132,6 +131,10 @@ public class InputOutputDTO {
         getter.isDiscrete(),
         getter.getProviderType(),
         Arrays.asList(getter.getSaveData()));
+  }
+
+  public List<Object> getIoParameters() {
+    return (List) ioParameters;
   }
 
   public int getMin() {

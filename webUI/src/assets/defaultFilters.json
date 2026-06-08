@@ -110,7 +110,8 @@
         "100 deep"
       ],
       "discrete": false,
-      "type": "WATER_DEPTH"
+      "type": "WATER_DEPTH",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -120,7 +121,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Only On Land",
@@ -168,7 +170,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -178,7 +181,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "except on annotation",
@@ -583,7 +587,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "output": {
       "displayName": "Action Filter",
@@ -593,7 +598,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Below height",
@@ -648,7 +654,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "output": {
       "displayName": "Action Filter",
@@ -658,7 +665,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Outside Selection",
@@ -935,7 +943,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -945,7 +954,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Except on biome",
@@ -1115,7 +1125,13 @@
         "outside"
       ],
       "discrete": false,
-      "type": "DISTANCE_TO_EDGE"
+      "type": "DISTANCE_TO_EDGE",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        100,
+        0
+      ]
     },
     "output": {
       "displayName": "Action Filter",
@@ -1125,7 +1141,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "filter distance 6m",
@@ -1248,7 +1265,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -1258,7 +1276,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "no cliffs",
@@ -1450,7 +1469,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -1460,7 +1480,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "only on grass",

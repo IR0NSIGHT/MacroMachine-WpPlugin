@@ -29,10 +29,9 @@ import { MacroExecuteRequester, runnableMacro, toMacroDTO, toRunnable } from "@/
 import equal from "fast-deep-equal";
 import AddIcon from "@mui/icons-material/Add";
 import { SelectDialog } from "./SelectDialog";
-import { DefaultApi } from "../generated/client/apis/DefaultApi";
-import { Configuration } from "@/generated/client";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 import { FilterInlineEditor } from "@/features/FilterComponent";
+import { api } from "@/API/fetch";
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
   onExecute: MacroExecuteRequester;
@@ -135,11 +134,6 @@ const sortAlphabetical = (a: StepItemType, b: StepItemType): number => {
 };
 
 export const GlobalOperationDesigner = (props: Props) => {
-  const api = new DefaultApi(
-    new Configuration({
-      basePath: "http://localhost:8080",
-    }),
-  );
   console.log("Rerender Global Operation Designer!");
 
   const [filters, setFilters] = useState<StepItemType[]>([]);

@@ -28,24 +28,43 @@ import { LayerDTO } from "./generated/client";
 
 export default function App() {
   const [search, setSearch] = useState("");
-
+  useEffect(() => {
+    console.log("SEARCH CHANGED");
+  }, [search]);
   const [macros, setMacros] = useState<MacroDTO[]>([]);
+  useEffect(() => {
+    console.log("MACROS CHANGED");
+  }, [macros]);
   const [actions, setActions] = useState<ActionDTO[]>([]);
+  useEffect(() => {
+    console.log("ACTIONS CHANGED");
+  }, [actions]);
   const [executionState, setExecutionState] = useState<ExecutionStateDTO>({
     executionId: "",
     steps: [],
     currentStepIndex: 0,
     status: "IDLE",
   });
+  useEffect(() => {
+    console.log("EXECUTION STATE CHANGED");
+  }, [executionState]);
   const [queue, setQueue] = useState<ExecutionQueueDTO>({
     queuedMacroIds: [],
   });
+  useEffect(() => {
+    console.log("QUEUE CHANGED");
+  }, [queue]);
   const [connectionLost, setConnectionLost] = useState(false);
 
   const [tab, setTab] = useState(0);
   const [lastActionChange, setLastActionChange] = useState(0);
+  useEffect(() => {
+    console.log("LAST ACTION CHANGE TIMESTAMP CHANGED");
+  }, [lastActionChange]);
   const [lastMacroChange, setLastMacroChange] = useState(0);
-
+  useEffect(() => {
+    console.log("LAST MACRO CHANGE TIMESTAMP CHANGED");
+  }, [lastMacroChange]);
   useEffect(() => {
     fetchActions()
       .then((r) => {
@@ -63,6 +82,14 @@ export default function App() {
       })
       .catch(console.error);
   }, [lastMacroChange]);
+
+  useEffect(() => {
+    console.log("ACTIONS OR MACROS CHANGED");
+  }, [lastActionChange, lastMacroChange]);
+
+  useEffect(() => {
+    console.log("CONNECTION LOST CHANGED");
+  }, [connectionLost]);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -90,9 +117,7 @@ export default function App() {
       });
 
       await api.getAllLayers().then((layers) => {
-        setLayers((prev) =>
-          equal(layers, prev) ? prev : layers.sort((a, b) => a.name.localeCompare(b.name)),
-        );
+        setLayers((prev) => (equal(layers, prev) ? prev : layers));
       });
     }, 300);
 
@@ -119,7 +144,10 @@ export default function App() {
   };
 
   const [layers, setLayers] = useState<LayerDTO[]>([]);
-
+  useEffect(() => {
+    console.log("LAYERS CHANGED");
+  }, [layers]);
+  console.log("Rerender App!");
   return (
     <Box
       sx={{

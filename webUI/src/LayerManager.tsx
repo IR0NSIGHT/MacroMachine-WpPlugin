@@ -29,19 +29,20 @@ export const LayerManager = ({ layers }: { layers: LayerDTO[] }) => {
   const PAGE_SIZE = 50;
   const [page, setPage] = useState(0);
 
-  useEffect(() => {
-    setPage(0);
-  }, [onlyProject, onlyUsedInMacros, selectedType, search]);
-
   const sortedFilteredLayers = useMemo(() => {
     let filtered = layers
       .filter((layer) => !onlyUsedInMacros || (layer.macrosUsingLayer?.length ?? 0) > 0)
       .filter((layer) => !onlyProject || layer.presentInProject)
+      .filter((layer) => !onlyCustom || layer.custom)
       .filter((layer) => selectedType === "all" || layer.type === selectedType)
       .filter((layer) => search === "" || layer.name.toLowerCase().includes(search.toLowerCase()));
 
     return filtered.sort((a, b) => a.name.localeCompare(b.name));
-  }, [layers, onlyProject, onlyUsedInMacros, selectedType, search]);
+  }, [layers, onlyProject, onlyUsedInMacros, onlyCustom, selectedType, search]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [sortedFilteredLayers]);
 
   const pagedLayers = useMemo(() => {
     const start = page * PAGE_SIZE;
@@ -50,7 +51,7 @@ export const LayerManager = ({ layers }: { layers: LayerDTO[] }) => {
 
   const layerTypes = useMemo(() => {
     const types = new Set<string>();
-    layers.forEach((layer) => types.add(layer.type));
+    layers.filter((layer) => layer.custom).forEach((layer) => types.add(layer.type));
     return Array.from(types);
   }, [layers]);
 

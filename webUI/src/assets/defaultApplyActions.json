@@ -8,7 +8,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Height",
@@ -403,7 +404,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "actionType": "SET",
     "name": "flatten all",
@@ -423,7 +425,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Selection",
@@ -433,7 +436,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "clear selection",
@@ -453,7 +457,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "water level",
@@ -848,7 +853,8 @@
         "319"
       ],
       "discrete": false,
-      "type": "WATER_HEIGHT"
+      "type": "WATER_HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "actionType": "SET",
     "name": "reset water",
@@ -868,7 +874,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -1041,7 +1048,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "apply beach",
@@ -1061,7 +1069,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Annotations",
@@ -1088,7 +1097,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "paint",
@@ -1108,7 +1118,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Macro Selection layer",
@@ -1118,7 +1129,12 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "BINARY_LAYER"
+      "type": "BINARY_LAYER",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        false
+      ]
     },
     "actionType": "SET",
     "name": "reset MacroSelectionLayer",
@@ -1138,7 +1154,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Spraypaint: SelectionBlock layer",
@@ -1148,7 +1165,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": [],
       "discrete": false,
-      "type": "BINARY_SPRAYPAINT"
+      "type": "BINARY_SPRAYPAINT",
+      "ioParameters": ["org.pepsoft.worldpainter.selection.SelectionBlock", "SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "spraypaint 50%",
@@ -1168,7 +1186,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Biome",
@@ -1435,7 +1454,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "Plains",

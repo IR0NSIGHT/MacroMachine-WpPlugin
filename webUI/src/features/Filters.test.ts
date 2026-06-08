@@ -20,6 +20,7 @@ describe("invert filters", () => {
         valueDisplayNames: ["OFF", "ON"],
         discrete: true,
         type: "SELECTION",
+        ioParameters: [],
       },
       output: {
         displayName: "Action Filter",
@@ -30,6 +31,7 @@ describe("invert filters", () => {
         valueDisplayNames: ["BLOCK (0)", "PASS (1)"],
         discrete: true,
         type: "INTERMEDIATE_SELECTION",
+        ioParameters: [],
       },
       actionType: "SET",
       name: "Filter: Inside Selection",
@@ -83,6 +85,7 @@ describe("invert filters", () => {
         ],
         discrete: true,
         type: "ANNOTATION",
+        ioParameters: [],
       },
       output: {
         displayName: "Action Filter",
@@ -93,6 +96,7 @@ describe("invert filters", () => {
         valueDisplayNames: ["BLOCK (0)", "PASS (1)"],
         discrete: true,
         type: "INTERMEDIATE_SELECTION",
+        ioParameters: [],
       },
       actionType: "SET",
       name: "Filter: Only On Annotations Cyan",

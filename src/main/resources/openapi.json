@@ -4,6 +4,9 @@
     "title" : "MacroMachine API",
     "version" : "1.0.0"
   },
+  "servers" : [ {
+    "url" : "/api"
+  } ],
   "paths" : {
     "/actions/{id}" : {
       "get" : {
@@ -487,7 +490,7 @@
         "description" : "Represents an executable mapping action, that reads one inputtype from the map and based on that writes output values to the map."
       },
       "InputOutputDTO" : {
-        "required" : [ "description", "discrete", "displayName", "ignoreValue", "max", "min", "type", "valueDisplayNames" ],
+        "required" : [ "description", "discrete", "displayName", "ignoreValue", "ioParameters", "max", "min", "type", "valueDisplayNames" ],
         "type" : "object",
         "properties" : {
           "displayName" : {
@@ -541,6 +544,7 @@
             "description" : "Parameters used to instantiate the IO provider.",
             "items" : {
               "type" : "object",
+              "description" : "specific parameters known by the specific ioClass, used to instantiated equal objects.",
               "oneOf" : [ {
                 "type" : "integer",
                 "format" : "int32"

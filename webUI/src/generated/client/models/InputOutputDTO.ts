@@ -80,7 +80,7 @@ export interface InputOutputDTO {
    * @type {Array<InputOutputDTOIoParametersInner>}
    * @memberof InputOutputDTO
    */
-  ioParameters?: Array<InputOutputDTOIoParametersInner>;
+  ioParameters: Array<InputOutputDTOIoParametersInner>;
 }
 
 /**
@@ -125,6 +125,7 @@ export function instanceOfInputOutputDTO(value: object): value is InputOutputDTO
   if (!("valueDisplayNames" in value) || value["valueDisplayNames"] === undefined) return false;
   if (!("discrete" in value) || value["discrete"] === undefined) return false;
   if (!("type" in value) || value["type"] === undefined) return false;
+  if (!("ioParameters" in value) || value["ioParameters"] === undefined) return false;
   return true;
 }
 
@@ -148,10 +149,7 @@ export function InputOutputDTOFromJSONTyped(
     valueDisplayNames: json["valueDisplayNames"],
     discrete: json["discrete"],
     type: json["type"],
-    ioParameters:
-      json["ioParameters"] == null
-        ? undefined
-        : (json["ioParameters"] as Array<any>).map(InputOutputDTOIoParametersInnerFromJSON),
+    ioParameters: (json["ioParameters"] as Array<any>).map(InputOutputDTOIoParametersInnerFromJSON),
   };
 }
 
@@ -176,9 +174,6 @@ export function InputOutputDTOToJSONTyped(
     valueDisplayNames: value["valueDisplayNames"],
     discrete: value["discrete"],
     type: value["type"],
-    ioParameters:
-      value["ioParameters"] == null
-        ? undefined
-        : (value["ioParameters"] as Array<any>).map(InputOutputDTOIoParametersInnerToJSON),
+    ioParameters: (value["ioParameters"] as Array<any>).map(InputOutputDTOIoParametersInnerToJSON),
   };
 }

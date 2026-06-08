@@ -3,9 +3,5 @@ set -e
 
 echo "Build and Start MacroMachine Backend Server"
 
-cd ./webUi
-npm run build
-cd ..
-
 mvn package -DskipTests dependency:copy-dependencies
 java -cp "target/classes;target/dependency/*" org.ironsight.wpplugin.macromachine.WebUIServer

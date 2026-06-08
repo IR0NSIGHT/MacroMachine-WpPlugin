@@ -14,7 +14,7 @@
 
 /**
  * @type InputOutputDTOIoParametersInner
- *
+ * specific parameters known by the specific ioClass, used to instantiated equal objects.
  * @export
  */
 export type InputOutputDTOIoParametersInner = Array<number> | boolean | number | string;

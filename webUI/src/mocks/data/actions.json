@@ -25,7 +25,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -35,7 +36,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "intermediate value filter",
@@ -72,7 +74,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Pine layer",
@@ -99,7 +102,13 @@
         "100%"
       ],
       "discrete": false,
-      "type": "NIBBLE_LAYER"
+      "type": "NIBBLE_LAYER",
+      "ioParameters": [
+        "Pine",
+        "Pine",
+        false,
+        [0, 512, 1024, 1536, 2048, 2560, 3072, 3584, 4352, 4864, 5376, 5888, 6400, 6912, 7424, 8192]
+      ]
     },
     "actionType": "SET",
     "name": "paint pine",
@@ -221,7 +230,8 @@
         "100 deep"
       ],
       "discrete": false,
-      "type": "WATER_DEPTH"
+      "type": "WATER_DEPTH",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -231,7 +241,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Only On Land",
@@ -262,7 +273,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Height",
@@ -657,7 +669,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "actionType": "SET",
     "name": "flatten all",
@@ -694,7 +707,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -704,7 +718,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "except on annotation",
@@ -826,7 +841,8 @@
         "100"
       ],
       "discrete": false,
-      "type": "PERLIN_NOISE"
+      "type": "PERLIN_NOISE",
+      "ioParameters": [500, 100, 6, 42069]
     },
     "output": {
       "displayName": "Annotations",
@@ -853,7 +869,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "perlin color",
@@ -976,7 +993,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Selection",
@@ -986,7 +1004,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "45-70°",
@@ -1032,7 +1051,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Intermediate Value",
@@ -1059,7 +1079,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "actionType": "DECREMENT",
     "name": "change distances",
@@ -1079,7 +1100,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Selection",
@@ -1089,7 +1111,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "clear selection",
@@ -1494,7 +1517,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "output": {
       "displayName": "Pine layer",
@@ -1521,7 +1545,13 @@
         "100%"
       ],
       "discrete": false,
-      "type": "NIBBLE_LAYER"
+      "type": "NIBBLE_LAYER",
+      "ioParameters": [
+        "Pine",
+        "Pine",
+        false,
+        [0, 512, 1024, 1536, 2048, 2560, 3072, 3584, 4352, 4864, 5376, 5888, 6400, 6912, 7424, 8192]
+      ]
     },
     "actionType": "LIMIT_TO",
     "name": "pines prefer lowland",
@@ -1578,7 +1608,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "water level",
@@ -1973,7 +2004,8 @@
         "319"
       ],
       "discrete": false,
-      "type": "WATER_HEIGHT"
+      "type": "WATER_HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "actionType": "SET",
     "name": "reset water",
@@ -2378,7 +2410,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "output": {
       "displayName": "Annotations",
@@ -2405,7 +2438,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "select",
@@ -2460,7 +2494,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Selection",
@@ -2470,7 +2505,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "clear selection",
@@ -2490,7 +2526,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Height",
@@ -2885,7 +2922,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "actionType": "INCREMENT",
     "name": "raise 20",
@@ -3290,7 +3328,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "output": {
       "displayName": "Action Filter",
@@ -3300,7 +3339,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Below height",
@@ -3355,7 +3395,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "output": {
       "displayName": "Action Filter",
@@ -3365,7 +3406,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Outside Selection",
@@ -3746,7 +3788,8 @@
         "359° N"
       ],
       "discrete": false,
-      "type": "BLOCK_DIRECTION"
+      "type": "BLOCK_DIRECTION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Intermediate Value",
@@ -3773,7 +3816,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "actionType": "DECREMENT",
     "name": "subtract sunny side",
@@ -4084,7 +4128,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -4094,7 +4139,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Except on biome",
@@ -4179,7 +4225,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -4189,7 +4236,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Only On Annotations Cyan",
@@ -4209,7 +4257,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "output": {
       "displayName": "Action Filter",
@@ -4219,7 +4268,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Inside Selection",
@@ -4341,7 +4391,13 @@
         "outside"
       ],
       "discrete": false,
-      "type": "DISTANCE_TO_EDGE"
+      "type": "DISTANCE_TO_EDGE",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        100,
+        0
+      ]
     },
     "output": {
       "displayName": "Intermediate Value",
@@ -4368,7 +4424,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "collect distances",
@@ -4417,7 +4474,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Macro Selection layer",
@@ -4427,7 +4485,12 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "BINARY_LAYER"
+      "type": "BINARY_LAYER",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        false
+      ]
     },
     "actionType": "SET",
     "name": "select black to macro",
@@ -4447,7 +4510,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -4620,7 +4684,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "apply beach",
@@ -4640,7 +4705,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "output": {
       "displayName": "Annotations",
@@ -4667,7 +4733,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "selection to cyan",
@@ -4789,7 +4856,13 @@
         "outside"
       ],
       "discrete": false,
-      "type": "DISTANCE_TO_EDGE"
+      "type": "DISTANCE_TO_EDGE",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        100,
+        0
+      ]
     },
     "output": {
       "displayName": "Action Filter",
@@ -4799,7 +4872,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "filter distance 6m",
@@ -4830,7 +4904,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Annotations",
@@ -4857,7 +4932,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "paint",
@@ -5279,7 +5355,8 @@
         "400"
       ],
       "discrete": false,
-      "type": "PERLIN_NOISE"
+      "type": "PERLIN_NOISE",
+      "ioParameters": [500, 400, 7, 123123]
     },
     "output": {
       "displayName": "Height",
@@ -5674,7 +5751,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "actionType": "INCREMENT",
     "name": "Perlin Hills",
@@ -5838,7 +5916,8 @@
         "100 deep"
       ],
       "discrete": false,
-      "type": "WATER_DEPTH"
+      "type": "WATER_DEPTH",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -5848,7 +5927,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "except on water",
@@ -5971,7 +6051,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Stone Palette",
@@ -5993,7 +6074,8 @@
         "Rock"
       ],
       "discrete": true,
-      "type": "STONE_PALETTE"
+      "type": "STONE_PALETTE",
+      "ioParameters": [0, 10, 4, 12, 13, 72, 73, 74, 150, 75, 5]
     },
     "actionType": "SET",
     "name": "paint slopes",
@@ -6039,7 +6121,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -6049,7 +6132,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "filter cyan",
@@ -6161,7 +6245,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Selection",
@@ -6171,7 +6256,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "45-70°",
@@ -6200,7 +6286,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -6373,7 +6460,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "apply beach",
@@ -6393,7 +6481,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -6566,7 +6655,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "cobblestone wall",
@@ -6843,7 +6933,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -6853,7 +6944,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Only on biome",
@@ -6938,7 +7030,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Frost layer",
@@ -6948,7 +7041,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "BINARY_LAYER"
+      "type": "BINARY_LAYER",
+      "ioParameters": ["Frost", "Frost", false]
     },
     "actionType": "SET",
     "name": "frost on cyan",
@@ -7060,7 +7154,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -7070,7 +7165,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "no cliffs",
@@ -7099,7 +7195,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Macro Selection layer",
@@ -7109,7 +7206,12 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "BINARY_LAYER"
+      "type": "BINARY_LAYER",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        false
+      ]
     },
     "actionType": "SET",
     "name": "reset MacroSelectionLayer",
@@ -8195,7 +8297,8 @@
         "1000 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 1000]
     },
     "output": {
       "displayName": "Intermediate Value",
@@ -8222,7 +8325,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "select heights",
@@ -8362,7 +8466,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -8372,7 +8477,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "filter only cyan annotation",
@@ -8484,7 +8590,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -8494,7 +8601,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "DECREMENT",
     "name": "no steep angles",
@@ -8615,7 +8723,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Selection",
@@ -8625,7 +8734,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "45-70°",
@@ -8756,7 +8866,8 @@
         "100"
       ],
       "discrete": false,
-      "type": "PERLIN_NOISE"
+      "type": "PERLIN_NOISE",
+      "ioParameters": [30, 100, 5, 67823]
     },
     "output": {
       "displayName": "Annotations",
@@ -8783,7 +8894,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "debug: highlight 50%",
@@ -8977,7 +9089,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -8987,7 +9100,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "only on grass",
@@ -9424,7 +9538,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "output": {
       "displayName": "Intermediate Value",
@@ -9451,7 +9566,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "actionType": "DECREMENT",
     "name": "prefer lowland",
@@ -9525,7 +9641,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "village houses layer",
@@ -9552,7 +9669,13 @@
         "100%"
       ],
       "discrete": false,
-      "type": "NIBBLE_LAYER"
+      "type": "NIBBLE_LAYER",
+      "ioParameters": [
+        "village houses",
+        "My Custom Objects.cb2251c8730bbcce",
+        false,
+        [0, 512, 1024, 1536, 2048, 2560, 3072, 3584, 4352, 4864, 5376, 5888, 6400, 6912, 7424, 8192]
+      ]
     },
     "actionType": "SET",
     "name": "house layer",
@@ -9589,7 +9712,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Spraypaint: SelectionBlock layer",
@@ -9599,7 +9723,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": [],
       "discrete": false,
-      "type": "BINARY_SPRAYPAINT"
+      "type": "BINARY_SPRAYPAINT",
+      "ioParameters": ["org.pepsoft.worldpainter.selection.SelectionBlock", "SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "crops",
@@ -9636,7 +9761,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "houses layer",
@@ -9663,7 +9789,13 @@
         "100%"
       ],
       "discrete": false,
-      "type": "NIBBLE_LAYER"
+      "type": "NIBBLE_LAYER",
+      "ioParameters": [
+        "houses",
+        "My Custom Objects.f3680e3339b12d50",
+        false,
+        [0, 512, 1024, 1536, 2048, 2560, 3072, 3584, 4352, 4864, 5376, 5888, 6400, 6912, 7424, 8192]
+      ]
     },
     "actionType": "SET",
     "name": "crops layer",
@@ -9683,7 +9815,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Spraypaint: SelectionBlock layer",
@@ -9693,7 +9826,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": [],
       "discrete": false,
-      "type": "BINARY_SPRAYPAINT"
+      "type": "BINARY_SPRAYPAINT",
+      "ioParameters": ["org.pepsoft.worldpainter.selection.SelectionBlock", "SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "spraypaint 50%",
@@ -9713,7 +9847,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Height",
@@ -10108,7 +10243,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "actionType": "INCREMENT",
     "name": "raise wall 6m",
@@ -10230,7 +10366,8 @@
         "100 deep"
       ],
       "discrete": false,
-      "type": "WATER_DEPTH"
+      "type": "WATER_DEPTH",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -10240,7 +10377,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "except on water",
@@ -10373,7 +10511,8 @@
         "100 deep"
       ],
       "discrete": false,
-      "type": "WATER_DEPTH"
+      "type": "WATER_DEPTH",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -10383,7 +10522,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "except on water",
@@ -10671,7 +10811,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -10681,7 +10822,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Only on biome",
@@ -10725,7 +10867,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -10735,7 +10878,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "No Filter",
@@ -11012,7 +11156,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Selection",
@@ -11022,7 +11167,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "auto biome",
@@ -11107,7 +11253,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Spraypaint: Frost layer",
@@ -11117,7 +11264,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": [],
       "discrete": false,
-      "type": "BINARY_SPRAYPAINT"
+      "type": "BINARY_SPRAYPAINT",
+      "ioParameters": ["Frost", "Frost", false]
     },
     "actionType": "SET",
     "name": "apply frost",
@@ -11154,7 +11302,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -11164,7 +11313,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Only On Annotations Cyan",
@@ -11201,7 +11351,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -11374,7 +11525,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "mark walls and path",
@@ -11411,7 +11563,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -11421,7 +11574,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "filter outside",
@@ -11441,7 +11595,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "output": {
       "displayName": "Action Filter",
@@ -11451,7 +11606,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Inside Selection",
@@ -11471,7 +11627,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Biome",
@@ -11738,7 +11895,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "Plains",
@@ -11758,7 +11916,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -11931,7 +12090,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "apply beach",
@@ -11951,7 +12111,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Selection",
@@ -11961,7 +12122,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "Deselect",
@@ -12083,7 +12245,13 @@
         "outside"
       ],
       "discrete": false,
-      "type": "DISTANCE_TO_EDGE"
+      "type": "DISTANCE_TO_EDGE",
+      "ioParameters": [
+        "SelectionBlock",
+        "org.pepsoft.worldpainter.selection.SelectionBlock",
+        100,
+        0
+      ]
     },
     "output": {
       "displayName": "Annotations",
@@ -12110,7 +12278,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "distance",
@@ -12398,7 +12567,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -12408,7 +12578,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Only on biome",
@@ -12568,7 +12739,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -12578,7 +12750,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "only on flats",
@@ -12624,7 +12797,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Macro Selection layer",
@@ -12634,7 +12808,12 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "BINARY_LAYER"
+      "type": "BINARY_LAYER",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        false
+      ]
     },
     "actionType": "SET",
     "name": "Select red",
@@ -12671,7 +12850,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Macro Selection layer",
@@ -12681,7 +12861,12 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "BINARY_LAYER"
+      "type": "BINARY_LAYER",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        false
+      ]
     },
     "actionType": "SET",
     "name": "select orange to macro",
@@ -12958,7 +13143,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Annotations",
@@ -12985,7 +13171,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "mark biomes",
@@ -13145,7 +13332,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Selection",
@@ -13155,7 +13343,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "45-70°",
@@ -13184,7 +13373,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Annotations",
@@ -13211,7 +13401,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "mark all",
@@ -13333,7 +13524,8 @@
         "100"
       ],
       "discrete": false,
-      "type": "PERLIN_NOISE"
+      "type": "PERLIN_NOISE",
+      "ioParameters": [30, 100, 5, 467823]
     },
     "output": {
       "displayName": "Intermediate Value",
@@ -13360,7 +13552,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "perlin spots",
@@ -13483,7 +13676,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Intermediate Value",
@@ -13510,7 +13704,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "deselect steep",
@@ -13557,7 +13752,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Spraypaint: Macro Selection layer",
@@ -13567,7 +13763,12 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": [],
       "discrete": false,
-      "type": "BINARY_SPRAYPAINT"
+      "type": "BINARY_SPRAYPAINT",
+      "ioParameters": [
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        "Macro Selection",
+        false
+      ]
     },
     "actionType": "SET",
     "name": "reduce by 50%",
@@ -13604,7 +13805,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -13777,7 +13979,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "paint road",
@@ -13889,7 +14092,8 @@
         "90°"
       ],
       "discrete": false,
-      "type": "SLOPE"
+      "type": "SLOPE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -14062,7 +14266,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "beach by slope",
@@ -14194,7 +14399,13 @@
         "outside"
       ],
       "discrete": false,
-      "type": "DISTANCE_TO_EDGE"
+      "type": "DISTANCE_TO_EDGE",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        100,
+        0
+      ]
     },
     "output": {
       "displayName": "Annotations",
@@ -14221,7 +14432,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "distance selection",
@@ -14354,7 +14566,8 @@
         "100 deep"
       ],
       "discrete": false,
-      "type": "WATER_DEPTH"
+      "type": "WATER_DEPTH",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -14364,7 +14577,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "only on water",
@@ -14497,7 +14711,8 @@
         "100 deep"
       ],
       "discrete": false,
-      "type": "WATER_DEPTH"
+      "type": "WATER_DEPTH",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Pine layer",
@@ -14524,7 +14739,13 @@
         "100%"
       ],
       "discrete": false,
-      "type": "NIBBLE_LAYER"
+      "type": "NIBBLE_LAYER",
+      "ioParameters": [
+        "Pine",
+        "Pine",
+        false,
+        [0, 512, 1024, 1536, 2048, 2560, 3072, 3584, 4352, 4864, 5376, 5888, 6400, 6912, 7424, 8192]
+      ]
     },
     "actionType": "LIMIT_TO",
     "name": "pines not on water",
@@ -14813,7 +15034,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Selection",
@@ -14823,7 +15045,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "SELECTION"
+      "type": "SELECTION",
+      "ioParameters": ["SelectionBlock", "org.pepsoft.worldpainter.selection.SelectionBlock", false]
     },
     "actionType": "SET",
     "name": "plains biome",
@@ -14891,7 +15114,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -15064,7 +15288,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "apply snow",
@@ -15186,7 +15411,8 @@
         "100"
       ],
       "discrete": false,
-      "type": "PERLIN_NOISE"
+      "type": "PERLIN_NOISE",
+      "ioParameters": [250, 100, 5, 3]
     },
     "output": {
       "displayName": "Annotations",
@@ -15213,7 +15439,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "select forest types",
@@ -15261,7 +15488,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "INTERMEDIATE"
+      "type": "INTERMEDIATE",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Height",
@@ -15656,7 +15884,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "actionType": "INCREMENT",
     "name": "raise walls",
@@ -15933,7 +16162,8 @@
         "Auto Biome"
       ],
       "discrete": true,
-      "type": "VANILLA_BIOME"
+      "type": "VANILLA_BIOME",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -15943,7 +16173,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Only on biome",
@@ -16396,7 +16627,8 @@
         "319 H"
       ],
       "discrete": false,
-      "type": "HEIGHT"
+      "type": "HEIGHT",
+      "ioParameters": [-64, 319]
     },
     "output": {
       "displayName": "Action Filter",
@@ -16406,7 +16638,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "near 62",
@@ -16461,7 +16694,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -16634,7 +16868,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "paint floor",
@@ -16671,7 +16906,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -16681,7 +16917,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "LIMIT_TO",
     "name": "Filter: Only On Annotations Cyan",
@@ -16803,7 +17040,13 @@
         "outside"
       ],
       "discrete": false,
-      "type": "DISTANCE_TO_EDGE"
+      "type": "DISTANCE_TO_EDGE",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        100,
+        0
+      ]
     },
     "output": {
       "displayName": "Action Filter",
@@ -16813,7 +17056,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "filter",
@@ -16844,7 +17088,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -16854,7 +17099,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "Select all",
@@ -16891,7 +17137,8 @@
         "Black"
       ],
       "discrete": true,
-      "type": "ANNOTATION"
+      "type": "ANNOTATION",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Macro Selection layer",
@@ -16901,7 +17148,12 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "BINARY_LAYER"
+      "type": "BINARY_LAYER",
+      "ioParameters": [
+        "Macro Selection",
+        "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+        false
+      ]
     },
     "actionType": "SET",
     "name": "Select cyan",
@@ -16921,7 +17173,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Terrain",
@@ -17094,7 +17347,8 @@
         "Pale Moss"
       ],
       "discrete": true,
-      "type": "TERRAIN"
+      "type": "TERRAIN",
+      "ioParameters": []
     },
     "actionType": "SET",
     "name": "apply beach",
@@ -17114,7 +17368,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["Always"],
       "discrete": true,
-      "type": "ALWAYS"
+      "type": "ALWAYS",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Frost layer",
@@ -17124,7 +17379,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["OFF", "ON"],
       "discrete": true,
-      "type": "BINARY_LAYER"
+      "type": "BINARY_LAYER",
+      "ioParameters": ["Frost", "Frost", false]
     },
     "actionType": "SET",
     "name": "No frost",
@@ -17246,7 +17502,8 @@
         "100 deep"
       ],
       "discrete": false,
-      "type": "WATER_DEPTH"
+      "type": "WATER_DEPTH",
+      "ioParameters": []
     },
     "output": {
       "displayName": "Action Filter",
@@ -17256,7 +17513,8 @@
       "ignoreValue": 2147483647,
       "valueDisplayNames": ["BLOCK (0)", "PASS (1)"],
       "discrete": true,
-      "type": "INTERMEDIATE_SELECTION"
+      "type": "INTERMEDIATE_SELECTION",
+      "ioParameters": []
     },
     "actionType": "DECREMENT",
     "name": "filter shallow water",

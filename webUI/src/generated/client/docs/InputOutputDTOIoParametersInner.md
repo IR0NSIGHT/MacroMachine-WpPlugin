@@ -1,5 +1,7 @@
 # InputOutputDTOIoParametersInner
 
+specific parameters known by the specific ioClass, used to instantiated equal objects.
+
 ## Properties
 
 | Name | Type |

@@ -13,6 +13,7 @@ describe("collect ranges from filter", () => {
         min: 0,
         max: 100,
         ignoreValue: 2147483647,
+        ioParameters: [],
         valueDisplayNames: [
           "Land (0)",
           "1 deep",
@@ -128,6 +129,7 @@ describe("collect ranges from filter", () => {
         valueDisplayNames: ["BLOCK (0)", "PASS (1)"],
         discrete: true,
         type: "INTERMEDIATE_SELECTION",
+        ioParameters: [],
       },
       actionType: "LIMIT_TO",
       name: "Except on Water Depth: 8 deep to 11 deep",
@@ -192,6 +194,7 @@ describe("collect ranges from filter", () => {
         min: 0,
         max: 100,
         ignoreValue: 2147483647,
+        ioParameters: [],
         valueDisplayNames: [
           "Land (0)",
           "1 deep",
@@ -307,6 +310,7 @@ describe("collect ranges from filter", () => {
         valueDisplayNames: ["BLOCK (0)", "PASS (1)"],
         discrete: true,
         type: "INTERMEDIATE_SELECTION",
+        ioParameters: [],
       },
       actionType: "LIMIT_TO",
       name: "Except on Water Depth: 8 deep to 11 deep",

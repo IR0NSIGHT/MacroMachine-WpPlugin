@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.REST;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.servers.Server;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
 import io.swagger.v3.oas.models.OpenAPI;
 import jakarta.ws.rs.ApplicationPath;
@@ -17,7 +18,9 @@ import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 
-@OpenAPIDefinition(info = @Info(title = "MacroMachine API", version = "1.0.0"))
+@OpenAPIDefinition(
+    info = @Info(title = "MacroMachine API", version = "1.0.0"),
+    servers = {@Server(url = "/api")})
 @ApplicationPath("/api")
 public class MacroApplication extends ResourceConfig {
   public MacroApplication(
