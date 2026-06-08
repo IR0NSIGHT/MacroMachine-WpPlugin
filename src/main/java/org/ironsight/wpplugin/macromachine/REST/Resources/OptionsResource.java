@@ -5,10 +5,11 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Response;
 
 @Path("/")
-public class OptionsResource {
+public class OptionsResource
+{
 
-  @OPTIONS
-  public Response options() {
-    return Response.ok().build();
-  }
+    @OPTIONS
+    public Response options() {
+        return Response.ok().build();
+    }
 }

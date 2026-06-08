@@ -2,8 +2,10 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import org.junit.jupiter.api.Test;
 
-class GradientTest {
+class GradientTest
+{
 
-  @Test
-  void getValue() {}
+    @Test
+    void getValue() {
+    }
 }

@@ -8,50 +8,51 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingVal
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
-public class IOMapper {
+public class IOMapper
+{
 
-  private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
-  public static Map<String, Object> toInputOutputJson(IMappingValue io, boolean asInput) {
-    Map<String, Object> root = new HashMap<>();
+    public static Map<String, Object> toInputOutputJson(IMappingValue io, boolean asInput) {
+        Map<String, Object> root = new HashMap<>();
 
-    root.put("displayName", io.getName());
-    root.put("description", io.getDescription());
-    root.put("min", io.getMinValue());
-    root.put("max", io.getMaxValue());
+        root.put("displayName", io.getName());
+        root.put("description", io.getDescription());
+        root.put("min", io.getMinValue());
+        root.put("max", io.getMaxValue());
 
-    root.put("discrete", io.isDiscrete());
-    root.put("uid", String.valueOf(io.hashCode()));
+        root.put("discrete", io.isDiscrete());
+        root.put("uid", String.valueOf(io.hashCode()));
 
-    // values
-    List<Map<String, Object>> valuesList = new ArrayList<>();
-    int[] values =
-        asInput
-            ? ((IPositionValueGetter) io).getAllInputValues()
-            : ((IPositionValueSetter) io).getAllOutputValues();
-    for (int v : values) {
-      Map<String, Object> val = new HashMap<>();
-      val.put("numericValue", v);
-      val.put("displayName", io.valueToString(v));
-      valuesList.add(val);
-    }
-    root.put("values", valuesList);
-
-    // parameters (empty for now)
-    root.put("parameters", new ArrayList<>());
-
-    // ignore value
-    if (io instanceof IPositionValueSetter setter) {
-      int ignore = -1;
-      for (int v : setter.getAllOutputValues()) {
-        if (setter.isIgnoreValue(v)) {
-          ignore = v;
-          break;
+        // values
+        List<Map<String, Object>> valuesList = new ArrayList<>();
+        int[] values = asInput
+                ? ((IPositionValueGetter) io).getAllInputValues()
+                : ((IPositionValueSetter) io).getAllOutputValues();
+        for (int v : values) {
+            Map<String, Object> val = new HashMap<>();
+            val.put("numericValue", v);
+            val.put("displayName", io.valueToString(v));
+            valuesList.add(val);
         }
-      }
-      root.put("ignoreValue", ignore);
-    } else root.put("ignoreValue", IGNORE_VALUE);
+        root.put("values", valuesList);
 
-    return root;
-  }
+        // parameters (empty for now)
+        root.put("parameters", new ArrayList<>());
+
+        // ignore value
+        if (io instanceof IPositionValueSetter setter) {
+            int ignore = -1;
+            for (int v : setter.getAllOutputValues()) {
+                if (setter.isIgnoreValue(v)) {
+                    ignore = v;
+                    break;
+                }
+            }
+            root.put("ignoreValue", ignore);
+        } else
+            root.put("ignoreValue", IGNORE_VALUE);
+
+        return root;
+    }
 }

@@ -18,33 +18,29 @@ import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 
-@OpenAPIDefinition(
-    info = @Info(title = "MacroMachine API", version = "1.0.0"),
-    servers = {@Server(url = "/api")})
+@OpenAPIDefinition(info = @Info(title = "MacroMachine API", version = "1.0.0"), servers = {@Server(url = "/api")})
 @ApplicationPath("/api")
-public class MacroApplication extends ResourceConfig {
-  public MacroApplication(
-      MacroApplicator applicator,
-      MappingActionContainer actions,
-      MacroContainer macros,
-      InputOutputProvider ioProvider) {
-    register(PreflightRequestFilter.class);
-    register(CorsFilter.class);
+public class MacroApplication extends ResourceConfig
+{
+    public MacroApplication(MacroApplicator applicator, MappingActionContainer actions, MacroContainer macros,
+            InputOutputProvider ioProvider) {
+        register(PreflightRequestFilter.class);
+        register(CorsFilter.class);
 
-    register(MacroResource.class);
-    register(new ActionResource(ioProvider, actions));
-    register(new ExecutionResource(applicator, actions, macros));
-    register(new LayerResource(ioProvider, actions, macros));
+        register(MacroResource.class);
+        register(new ActionResource(ioProvider, actions));
+        register(new ExecutionResource(applicator, actions, macros));
+        register(new LayerResource(ioProvider, actions, macros));
 
-    register(JacksonFeature.class);
+        register(JacksonFeature.class);
 
-    OpenAPI openAPI = new OpenAPI();
+        OpenAPI openAPI = new OpenAPI();
 
-    SwaggerConfiguration config = new SwaggerConfiguration().openAPI(openAPI).prettyPrint(true);
+        SwaggerConfiguration config = new SwaggerConfiguration().openAPI(openAPI).prettyPrint(true);
 
-    OpenApiResource resource = new OpenApiResource();
-    resource.openApiConfiguration(config);
+        OpenApiResource resource = new OpenApiResource();
+        resource.openApiConfiguration(config);
 
-    register(resource);
-  }
+        register(resource);
+    }
 }

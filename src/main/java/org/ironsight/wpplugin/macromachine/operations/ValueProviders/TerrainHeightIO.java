@@ -9,179 +9,183 @@ import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 
-public class TerrainHeightIO
-    implements IPositionValueGetter, IPositionValueSetter, IPositionTileValueGetter, EditableIO {
-  private final int minHeight;
-  private final int maxHeight;
+public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSetter, IPositionTileValueGetter, EditableIO
+{
+    private final int minHeight;
+    private final int maxHeight;
 
-  public TerrainHeightIO(int minHeight, int maxHeight) {
-    this.minHeight = minHeight;
-    this.maxHeight = maxHeight;
-    outputValues = IntStream.range(minHeight - 1, maxHeight + 1).toArray();
-    outputValues[0] = IGNORE_VALUE;
-    inputValues = IntStream.range(minHeight, maxHeight + 1).toArray();
-  }
-
-  @Override
-  public String toString() {
-    return getName();
-  }
-
-  @Override
-  public String getToolTipText() {
-    return getDescription();
-  }
-
-  private Tile tile;
-  private int tileX = Integer.MAX_VALUE, tileY = Integer.MAX_VALUE;
-
-  @Override
-  public int getValueAt(Dimension dim, int x, int y) {
-    if (x >> TILE_SIZE_BITS != tileX || y >> TILE_SIZE_BITS != tileY) {
-      tileX = x >> TILE_SIZE_BITS;
-      tileY = y >> TILE_SIZE_BITS;
-      tile = dim.getTile(tileX, tileY);
-    }
-    if (tile == null) return getMinValue();
-    return (int)
-        EditableIO.clamp(
-            Math.round(tile.getHeight(x & 127, y & 127)), getMinValue(), getMaxValue());
-  }
-
-  @Override
-  public String getName() {
-    return "Height";
-  }
-
-  @Override
-  public int hashCode() {
-    return getProviderType().hashCode();
-  }
-
-  @Override
-  public int[] getAllPossibleValues() {
-    return getAllOutputValues();
-  }
-
-  @Override
-  public boolean isVirtual() {
-    return false;
-  }
-
-  @Override
-  public String getDescription() {
-    return "get the height of a position in percent for 0 to 255.";
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    TerrainHeightIO that = (TerrainHeightIO) o;
-    return minHeight == that.minHeight && maxHeight == that.maxHeight;
-  }
-
-  @Override
-  public void setValueAt(Dimension dim, int x, int y, int value) {
-    dim.setHeightAt(x, y, value);
-  }
-
-  private final int[] inputValues;
-  private final int[] outputValues;
-
-  @Override
-  public int[] getAllInputValues() {
-    return Arrays.copyOf(inputValues, inputValues.length);
-  }
-
-  @Override
-  public boolean isIgnoreValue(int value) {
-    return value == IGNORE_VALUE;
-  }
-
-  @Override
-  public int[] getAllOutputValues() {
-    return Arrays.copyOf(outputValues, outputValues.length);
-  }
-
-  @Override
-  public int getMinValue() {
-    return minHeight;
-  }
-
-  @Override
-  public IMappingValue instantiateFrom(IoParameter[] data) {
-    if (data.length == 0) return new TerrainHeightIO(-64, 319);
-    int minHeight = ((IntValue) data[0]).value();
-    int maxHeight = ((IntValue) data[1]).value();
-    return new TerrainHeightIO(minHeight, maxHeight);
-  }
-
-  @Override
-  public IoParameter[] getSaveData() {
-    return new IoParameter[] {new IntValue(minHeight), new IntValue(maxHeight)};
-  }
-
-  @Override
-  public int getMaxValue() {
-    return maxHeight;
-  }
-
-  @Override
-  public String valueToString(int value) {
-    if (IGNORE_VALUE == value) return "skip";
-    return value + " H";
-  }
-
-  @Override
-  public boolean isDiscrete() {
-    return false;
-  }
-
-  @Override
-  public void paint(Graphics g, int value, java.awt.Dimension dim) {
-    if (isIgnoreValue(value)) {
-      return;
+    public TerrainHeightIO(int minHeight, int maxHeight) {
+        this.minHeight = minHeight;
+        this.maxHeight = maxHeight;
+        outputValues = IntStream.range(minHeight - 1, maxHeight + 1).toArray();
+        outputValues[0] = IGNORE_VALUE;
+        inputValues = IntStream.range(minHeight, maxHeight + 1).toArray();
     }
 
-    float percent = (value - getMinValue() * 1f) / (getMaxValue() - getMinValue());
+    @Override
+    public String toString() {
+        return getName();
+    }
 
-    g.setColor(new Color(131, 154, 255));
-    g.fillRect(0, 0, dim.width, dim.height);
-    g.setColor(new Color(0, 142, 7));
-    g.fillRect(0, (int) (dim.height * (1 - percent)), dim.width, (int) (dim.height * (percent)));
-  }
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
 
-  @Override
-  public ProviderType getProviderType() {
-    return ProviderType.HEIGHT;
-  }
+    private Tile tile;
+    private int tileX = Integer.MAX_VALUE, tileY = Integer.MAX_VALUE;
 
-  @Override
-  public void prepareForDimension(Dimension dim) {}
+    @Override
+    public int getValueAt(Dimension dim, int x, int y) {
+        if (x >> TILE_SIZE_BITS != tileX || y >> TILE_SIZE_BITS != tileY) {
+            tileX = x >> TILE_SIZE_BITS;
+            tileY = y >> TILE_SIZE_BITS;
+            tile = dim.getTile(tileX, tileY);
+        }
+        if (tile == null)
+            return getMinValue();
+        return (int) EditableIO.clamp(Math.round(tile.getHeight(x & 127, y & 127)), getMinValue(), getMaxValue());
+    }
 
-  @Override
-  public int[] getEditableValues() {
-    return new int[] {minHeight, maxHeight};
-  }
+    @Override
+    public String getName() {
+        return "Height";
+    }
 
-  @Override
-  public String[] getValueNames() {
-    return new String[] {"min", "max"};
-  }
+    @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
 
-  @Override
-  public String[] getValueTooltips() {
-    return new String[] {"lowest value allowed", "highest value allowed"};
-  }
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
+    }
 
-  @Override
-  public EditableIO instantiateWithValues(int[] values) {
-    return new TerrainHeightIO(values[0], values[1]);
-  }
+    @Override
+    public boolean isVirtual() {
+        return false;
+    }
 
-  @Override
-  public int getValueAt(Tile tile, int tileX, int tileY) {
-    return tile.getIntHeight(tileX, tileY);
-  }
+    @Override
+    public String getDescription() {
+        return "get the height of a position in percent for 0 to 255.";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        TerrainHeightIO that = (TerrainHeightIO) o;
+        return minHeight == that.minHeight && maxHeight == that.maxHeight;
+    }
+
+    @Override
+    public void setValueAt(Dimension dim, int x, int y, int value) {
+        dim.setHeightAt(x, y, value);
+    }
+
+    private final int[] inputValues;
+    private final int[] outputValues;
+
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues, inputValues.length);
+    }
+
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE_VALUE;
+    }
+
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
+    }
+
+    @Override
+    public int getMinValue() {
+        return minHeight;
+    }
+
+    @Override
+    public IMappingValue instantiateFrom(IoParameter[] data) {
+        if (data.length == 0)
+            return new TerrainHeightIO(-64, 319);
+        int minHeight = ((IntValue) data[0]).value();
+        int maxHeight = ((IntValue) data[1]).value();
+        return new TerrainHeightIO(minHeight, maxHeight);
+    }
+
+    @Override
+    public IoParameter[] getSaveData() {
+        return new IoParameter[]{new IntValue(minHeight), new IntValue(maxHeight)};
+    }
+
+    @Override
+    public int getMaxValue() {
+        return maxHeight;
+    }
+
+    @Override
+    public String valueToString(int value) {
+        if (IGNORE_VALUE == value)
+            return "skip";
+        return value + " H";
+    }
+
+    @Override
+    public boolean isDiscrete() {
+        return false;
+    }
+
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value)) {
+            return;
+        }
+
+        float percent = (value - getMinValue() * 1f) / (getMaxValue() - getMinValue());
+
+        g.setColor(new Color(131, 154, 255));
+        g.fillRect(0, 0, dim.width, dim.height);
+        g.setColor(new Color(0, 142, 7));
+        g.fillRect(0, (int) (dim.height * (1 - percent)), dim.width, (int) (dim.height * (percent)));
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.HEIGHT;
+    }
+
+    @Override
+    public void prepareForDimension(Dimension dim) {
+    }
+
+    @Override
+    public int[] getEditableValues() {
+        return new int[]{minHeight, maxHeight};
+    }
+
+    @Override
+    public String[] getValueNames() {
+        return new String[]{"min", "max"};
+    }
+
+    @Override
+    public String[] getValueTooltips() {
+        return new String[]{"lowest value allowed", "highest value allowed"};
+    }
+
+    @Override
+    public EditableIO instantiateWithValues(int[] values) {
+        return new TerrainHeightIO(values[0], values[1]);
+    }
+
+    @Override
+    public int getValueAt(Tile tile, int tileX, int tileY) {
+        return tile.getIntHeight(tileX, tileY);
+    }
 }

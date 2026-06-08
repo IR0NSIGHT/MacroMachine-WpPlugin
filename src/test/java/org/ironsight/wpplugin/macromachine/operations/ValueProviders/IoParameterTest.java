@@ -9,38 +9,39 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class IoParameterTest {
+class IoParameterTest
+{
 
-  private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
-  @Test
-  void serializeToPrimitive() throws JsonProcessingException {
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.findAndRegisterModules();
+    @Test
+    void serializeToPrimitive() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.findAndRegisterModules();
 
-    var ioParams = new ArrayList<IoParameter>();
-    ioParams.add(new IntValue(-17));
-    ioParams.add(new StringValue("hello world"));
-    ioParams.add(new BoolValue(false));
-    ioParams.add(new IntArrayValue(new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9}));
-    ioParams.add(new FloatValue(3.141592654f));
+        var ioParams = new ArrayList<IoParameter>();
+        ioParams.add(new IntValue(-17));
+        ioParams.add(new StringValue("hello world"));
+        ioParams.add(new BoolValue(false));
+        ioParams.add(new IntArrayValue(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9}));
+        ioParams.add(new FloatValue(3.141592654f));
 
-    String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ioParams);
-    assertEquals("[ -17, \"hello world\", false, [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ], 3.1415927 ]", json);
-  }
+        String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(ioParams);
+        assertEquals("[ -17, \"hello world\", false, [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ], 3.1415927 ]", json);
+    }
 
-  @Test
-  void deserializeFromPrimitive() throws JsonProcessingException {
-    var json = "[ -17, \"hello world\", false, [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ], 3.1415927 ]";
-    ObjectMapper mapper = new ObjectMapper();
-    mapper.findAndRegisterModules();
-    List<IoParameter> parameters =
-        mapper.readValue(json, new TypeReference<List<IoParameter>>() {});
+    @Test
+    void deserializeFromPrimitive() throws JsonProcessingException {
+        var json = "[ -17, \"hello world\", false, [ 1, 2, 3, 4, 5, 6, 7, 8, 9 ], 3.1415927 ]";
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.findAndRegisterModules();
+        List<IoParameter> parameters = mapper.readValue(json, new TypeReference<List<IoParameter>>() {
+        });
 
-    assertEquals(new IntValue(-17), parameters.get(0));
-    assertEquals(new StringValue("hello world"), parameters.get(1));
-    assertEquals(new BoolValue(false), parameters.get(2));
-    assertEquals(new IntArrayValue(new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9}), parameters.get(3));
-    assertEquals(new FloatValue(3.141592654f), parameters.get(4));
-  }
+        assertEquals(new IntValue(-17), parameters.get(0));
+        assertEquals(new StringValue("hello world"), parameters.get(1));
+        assertEquals(new BoolValue(false), parameters.get(2));
+        assertEquals(new IntArrayValue(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9}), parameters.get(3));
+        assertEquals(new FloatValue(3.141592654f), parameters.get(4));
+    }
 }

@@ -17,87 +17,82 @@ import org.junit.jupiter.api.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class MacroResourceTest extends JerseyTest {
+public class MacroResourceTest extends JerseyTest
+{
 
-  private static UUID createdId;
+    private static UUID createdId;
 
-  @Override
-  protected Application configure() {
-    return new ResourceConfig().register(MacroResource.class).register(JacksonFeature.class);
-  }
+    @Override
+    protected Application configure() {
+        return new ResourceConfig().register(MacroResource.class).register(JacksonFeature.class);
+    }
 
-  @BeforeAll
-  void setupOnce() {
-    MacroContainer.SetInstance(new MacroContainer(null));
-  }
+    @BeforeAll
+    void setupOnce() {
+        MacroContainer.SetInstance(new MacroContainer(null));
+    }
 
-  // ---------------- CREATE ----------------
-  @Test
-  @Order(1)
-  void testCreateMacro() {
-    MacroDTO dto =
-        new MacroDTO(
-            new UUID[] {UUID.randomUUID()},
-            new boolean[] {true},
-            "Test Macro",
-            "Test Description",
-            UUID.randomUUID());
+    // ---------------- CREATE ----------------
+    @Test
+    @Order(1)
+    void testCreateMacro() {
+        MacroDTO dto = new MacroDTO(new UUID[]{UUID.randomUUID()}, new boolean[]{true}, "Test Macro",
+                "Test Description", UUID.randomUUID());
 
-    Response response =
-        target("/macros").request().post(Entity.entity(dto, MediaType.APPLICATION_JSON));
+        Response response = target("/macros").request().post(Entity.entity(dto, MediaType.APPLICATION_JSON));
 
-    assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
 
-    MacroDTO result = response.readEntity(MacroDTO.class);
-    assertNotNull(result);
+        MacroDTO result = response.readEntity(MacroDTO.class);
+        assertNotNull(result);
 
-    createdId = result.getUid(); // assuming MacroDTO has getUid()
-  }
+        createdId = result.getUid(); // assuming MacroDTO has getUid()
+    }
 
-  // ---------------- GET ALL ----------------
-  @Test
-  @Order(2)
-  void testGetAll() {
-    Response response = target("/macros").request().get();
+    // ---------------- GET ALL ----------------
+    @Test
+    @Order(2)
+    void testGetAll() {
+        Response response = target("/macros").request().get();
 
-    assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
 
-    MacroDTO[] list = response.readEntity(MacroDTO[].class);
-    assertTrue(list.length >= 0);
-  }
+        MacroDTO[] list = response.readEntity(MacroDTO[].class);
+        assertTrue(list.length >= 0);
+    }
 
-  // ---------------- GET BY ID ----------------
-  @Test
-  @Order(3)
-  void testGetById() {
-    assumeTrue(createdId != null);
+    // ---------------- GET BY ID ----------------
+    @Test
+    @Order(3)
+    void testGetById() {
+        assumeTrue(createdId != null);
 
-    Response response = target("/macros/" + createdId).request().get();
+        Response response = target("/macros/" + createdId).request().get();
 
-    assertEquals(200, response.getStatus());
+        assertEquals(200, response.getStatus());
 
-    MacroDTO dto = response.readEntity(MacroDTO.class);
-    assertEquals(createdId, dto.getUid());
-  }
+        MacroDTO dto = response.readEntity(MacroDTO.class);
+        assertEquals(createdId, dto.getUid());
+    }
 
-  // ---------------- DELETE ----------------
-  @Test
-  @Order(4)
-  void testDelete() {
-    assumeTrue(createdId != null);
+    // ---------------- DELETE ----------------
+    @Test
+    @Order(4)
+    void testDelete() {
+        assumeTrue(createdId != null);
 
-    Response response = target("/macros/" + createdId).request().delete();
+        Response response = target("/macros/" + createdId).request().delete();
 
-    assertTrue(response.getStatus() == 200 || response.getStatus() == 204);
-  }
+        assertTrue(response.getStatus() == 200 || response.getStatus() == 204);
+    }
 
-  // ---------------- NOT FOUND ----------------
-  @Test
-  void testGetNotFound() {
-    UUID random = UUID.randomUUID();
+    // ---------------- NOT FOUND ----------------
+    @Test
+    void testGetNotFound() {
+        UUID random = UUID.randomUUID();
 
-    Response response = target("/macros/" + random).request().get();
+        Response response = target("/macros/" + random).request().get();
 
-    assertEquals(404, response.getStatus());
-  }
+        assertEquals(404, response.getStatus());
+    }
 }

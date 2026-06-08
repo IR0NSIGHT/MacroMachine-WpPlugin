@@ -5,119 +5,123 @@ import java.util.stream.IntStream;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 
-public class TestInputOutput implements IPositionValueSetter, IPositionValueGetter {
-  public TestInputOutput() {
-    values = IntStream.range(getMinValue() - 1, getMaxValue() + 1).toArray();
-    values[0] = IGNORE_VALUE;
-  }
+public class TestInputOutput implements IPositionValueSetter, IPositionValueGetter
+{
+    public TestInputOutput() {
+        values = IntStream.range(getMinValue() - 1, getMaxValue() + 1).toArray();
+        values[0] = IGNORE_VALUE;
+    }
 
-  @Override
-  public void setValueAt(Dimension dim, int x, int y, int value) {}
+    @Override
+    public void setValueAt(Dimension dim, int x, int y, int value) {
+    }
 
-  @Override
-  public boolean isIgnoreValue(int value) {
-    return value == Integer.MAX_VALUE;
-  }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == Integer.MAX_VALUE;
+    }
 
-  @Override
-  public int[] getAllOutputValues() {
-    return values;
-  }
+    @Override
+    public int[] getAllOutputValues() {
+        return values;
+    }
 
-  private final int[] values;
+    private final int[] values;
 
-  @Override
-  public int[] getAllInputValues() {
-    return IntStream.range(getMinValue(), getMaxValue() + 1).toArray();
-  }
+    @Override
+    public int[] getAllInputValues() {
+        return IntStream.range(getMinValue(), getMaxValue() + 1).toArray();
+    }
 
-  @Override
-  public boolean equals(Object obj) {
-    return obj != null && this.getClass().equals(obj.getClass());
-  }
+    @Override
+    public boolean equals(Object obj) {
+        return obj != null && this.getClass().equals(obj.getClass());
+    }
 
-  @Override
-  public String toString() {
-    return getName();
-  }
+    @Override
+    public String toString() {
+        return getName();
+    }
 
-  @Override
-  public void prepareForDimension(Dimension dim) {}
+    @Override
+    public void prepareForDimension(Dimension dim) {
+    }
 
-  @Override
-  public int hashCode() {
-    return getProviderType().hashCode();
-  }
+    @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
 
-  @Override
-  public int[] getAllPossibleValues() {
-    return new int[0];
-  }
+    @Override
+    public int[] getAllPossibleValues() {
+        return new int[0];
+    }
 
-  @Override
-  public boolean isVirtual() {
-    return true;
-  }
+    @Override
+    public boolean isVirtual() {
+        return true;
+    }
 
-  @Override
-  public int getValueAt(Dimension dim, int x, int y) {
-    return 7;
-  }
+    @Override
+    public int getValueAt(Dimension dim, int x, int y) {
+        return 7;
+    }
 
-  @Override
-  public int getMaxValue() {
-    return 1000;
-  }
+    @Override
+    public int getMaxValue() {
+        return 1000;
+    }
 
-  @Override
-  public int getMinValue() {
-    return -5;
-  }
+    @Override
+    public int getMinValue() {
+        return -5;
+    }
 
-  @Override
-  public IMappingValue instantiateFrom(IoParameter[] data) {
-    return new TestInputOutput();
-  }
+    @Override
+    public IMappingValue instantiateFrom(IoParameter[] data) {
+        return new TestInputOutput();
+    }
 
-  @Override
-  public IoParameter[] getSaveData() {
-    return new IoParameter[0];
-  }
+    @Override
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
+    }
 
-  @Override
-  public String valueToString(int value) {
-    return "testvalue-" + value;
-  }
+    @Override
+    public String valueToString(int value) {
+        return "testvalue-" + value;
+    }
 
-  @Override
-  public boolean isDiscrete() {
-    return false;
-  }
+    @Override
+    public boolean isDiscrete() {
+        return false;
+    }
 
-  @Override
-  public void paint(Graphics g, int value, java.awt.Dimension dim) {
-    if (isIgnoreValue(value)) return;
-    g.setColor(Color.RED);
-    g.fillRect(0, 0, dim.width, dim.height);
-  }
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value))
+            return;
+        g.setColor(Color.RED);
+        g.fillRect(0, 0, dim.width, dim.height);
+    }
 
-  @Override
-  public ProviderType getProviderType() {
-    return ProviderType.TEST;
-  }
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.TEST;
+    }
 
-  @Override
-  public String getName() {
-    return "Test Getter";
-  }
+    @Override
+    public String getName() {
+        return "Test Getter";
+    }
 
-  @Override
-  public String getToolTipText() {
-    return getDescription();
-  }
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
 
-  @Override
-  public String getDescription() {
-    return "test class for getting values";
-  }
+    @Override
+    public String getDescription() {
+        return "test class for getting values";
+    }
 }

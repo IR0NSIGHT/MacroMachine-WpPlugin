@@ -8,54 +8,54 @@ import org.ironsight.wpplugin.macromachine.REST.DTOs.ExecutionStateDTO;
 import org.ironsight.wpplugin.macromachine.REST.DTOs.ExecutionStatus;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
 
-public interface MacroApplicator {
-  Collection<ExecutionStatistic> applyLayerAction(Macro macro, ApplyActionCallback callback);
+public interface MacroApplicator
+{
+    Collection<ExecutionStatistic> applyLayerAction(Macro macro, ApplyActionCallback callback);
 
-  ExecutionStateDTO getCurrentState();
+    ExecutionStateDTO getCurrentState();
 
-  void updateState(ExecutionStateDTO newState);
+    void updateState(ExecutionStateDTO newState);
 
-  void applyMacroSync(Macro macro);
+    void applyMacroSync(Macro macro);
 
-  void queueMacro(UUID macroUid);
+    void queueMacro(UUID macroUid);
 
-  List<UUID> getQueue();
+    List<UUID> getQueue();
 
-  static MacroApplicator mock() {
-    return new MacroApplicator() {
-      private ExecutionStateDTO stateDTO =
-          new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE);
-      private LinkedList<UUID> queue = new LinkedList<>();
+    static MacroApplicator mock() {
+        return new MacroApplicator() {
+            private ExecutionStateDTO stateDTO = new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE);
+            private LinkedList<UUID> queue = new LinkedList<>();
 
-      @Override
-      public Collection<ExecutionStatistic> applyLayerAction(
-          Macro macro, ApplyActionCallback callback) {
-        System.out.println("apply macro " + macro);
-        return java.util.List.of();
-      }
+            @Override
+            public Collection<ExecutionStatistic> applyLayerAction(Macro macro, ApplyActionCallback callback) {
+                System.out.println("apply macro " + macro);
+                return java.util.List.of();
+            }
 
-      @Override
-      public ExecutionStateDTO getCurrentState() {
-        return stateDTO;
-      }
+            @Override
+            public ExecutionStateDTO getCurrentState() {
+                return stateDTO;
+            }
 
-      @Override
-      public void updateState(ExecutionStateDTO newState) {
-        this.stateDTO = newState;
-      }
+            @Override
+            public void updateState(ExecutionStateDTO newState) {
+                this.stateDTO = newState;
+            }
 
-      @Override
-      public void applyMacroSync(Macro macro) {}
+            @Override
+            public void applyMacroSync(Macro macro) {
+            }
 
-      @Override
-      public void queueMacro(UUID macroUid) {
-        queue.add(macroUid);
-      }
+            @Override
+            public void queueMacro(UUID macroUid) {
+                queue.add(macroUid);
+            }
 
-      @Override
-      public List<UUID> getQueue() {
-        return queue.stream().toList();
-      }
-    };
-  }
+            @Override
+            public List<UUID> getQueue() {
+                return queue.stream().toList();
+            }
+        };
+    }
 }

@@ -8,14 +8,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonTypeName("string")
 @Schema(hidden = true)
 public record StringValue(String type, String value) implements IoParameter {
-  @JsonCreator
-  public StringValue(String value) {
-    this("string", value);
-  }
+    @JsonCreator
+    public StringValue(String value) {
+        this("string", value);
+    }
 
-  @JsonValue
-  public Object getValue() {
-    return value();
-  }
-  // keep object form with fields `type` and `value` for compatibility
+    @JsonValue
+    public Object getValue() {
+        return value();
+    }
+    // keep object form with fields `type` and `value` for compatibility
 }

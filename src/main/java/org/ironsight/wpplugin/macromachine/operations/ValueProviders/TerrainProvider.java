@@ -10,134 +10,139 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.colourschemes.HardcodedColourScheme;
 
-public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter {
-  private static final ColourScheme colorScheme = new HardcodedColourScheme();
-  private final int[] outputValues;
-  private final int[] inputValues;
+public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter
+{
+    private static final ColourScheme colorScheme = new HardcodedColourScheme();
+    private final int[] outputValues;
+    private final int[] inputValues;
 
-  public TerrainProvider() {
-    outputValues = IntStream.range(-1, Terrain.values().length).toArray();
-    outputValues[0] = IGNORE_VALUE;
-    inputValues = IntStream.range(0, Terrain.values().length).toArray();
-  }
+    public TerrainProvider() {
+        outputValues = IntStream.range(-1, Terrain.values().length).toArray();
+        outputValues[0] = IGNORE_VALUE;
+        inputValues = IntStream.range(0, Terrain.values().length).toArray();
+    }
 
-  @Override
-  public String toString() {
-    return getName();
-  }
+    @Override
+    public String toString() {
+        return getName();
+    }
 
-  @Override
-  public boolean equals(Object obj) {
-    return obj != null && this.getClass().equals(obj.getClass());
-  }
+    @Override
+    public boolean equals(Object obj) {
+        return obj != null && this.getClass().equals(obj.getClass());
+    }
 
-  @Override
-  public int getValueAt(Dimension dim, int x, int y) {
-    Terrain t = dim.getTerrainAt(x, y);
-    if (t == null) return getMinValue();
-    return t.ordinal();
-  }
+    @Override
+    public int getValueAt(Dimension dim, int x, int y) {
+        Terrain t = dim.getTerrainAt(x, y);
+        if (t == null)
+            return getMinValue();
+        return t.ordinal();
+    }
 
-  @Override
-  public int hashCode() {
-    return getProviderType().hashCode();
-  }
+    @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
 
-  @Override
-  public int[] getAllPossibleValues() {
-    return getAllOutputValues();
-  }
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
+    }
 
-  @Override
-  public boolean isVirtual() {
-    return false;
-  }
+    @Override
+    public boolean isVirtual() {
+        return false;
+    }
 
-  @Override
-  public void setValueAt(Dimension dim, int x, int y, int value) {
-    dim.setTerrainAt(x, y, Terrain.values()[value]);
-  }
+    @Override
+    public void setValueAt(Dimension dim, int x, int y, int value) {
+        dim.setTerrainAt(x, y, Terrain.values()[value]);
+    }
 
-  @Override
-  public void prepareForDimension(Dimension dim) {}
+    @Override
+    public void prepareForDimension(Dimension dim) {
+    }
 
-  @Override
-  public String getName() {
-    return "Terrain";
-  }
+    @Override
+    public String getName() {
+        return "Terrain";
+    }
 
-  @Override
-  public String getDescription() {
-    return "surface terrain blocks";
-  }
+    @Override
+    public String getDescription() {
+        return "surface terrain blocks";
+    }
 
-  @Override
-  public int getMinValue() {
-    return 0;
-  }
+    @Override
+    public int getMinValue() {
+        return 0;
+    }
 
-  @Override
-  public boolean isIgnoreValue(int value) {
-    return value == IGNORE_VALUE;
-  }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE_VALUE;
+    }
 
-  @Override
-  public int[] getAllInputValues() {
-    return Arrays.copyOf(inputValues, inputValues.length);
-  }
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues, inputValues.length);
+    }
 
-  @Override
-  public int[] getAllOutputValues() {
-    return Arrays.copyOf(outputValues, outputValues.length);
-  }
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
+    }
 
-  @Override
-  public IMappingValue instantiateFrom(IoParameter[] data) {
-    return new TerrainProvider();
-  }
+    @Override
+    public IMappingValue instantiateFrom(IoParameter[] data) {
+        return new TerrainProvider();
+    }
 
-  @Override
-  public IoParameter[] getSaveData() {
-    return new IoParameter[0];
-  }
+    @Override
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
+    }
 
-  @Override
-  public int getMaxValue() {
-    return Terrain.values().length - 1;
-  }
+    @Override
+    public int getMaxValue() {
+        return Terrain.values().length - 1;
+    }
 
-  @Override
-  public String valueToString(int value) {
-    if (value == IGNORE_VALUE) return "skip";
-    return Terrain.values()[value].getName();
-  }
+    @Override
+    public String valueToString(int value) {
+        if (value == IGNORE_VALUE)
+            return "skip";
+        return Terrain.values()[value].getName();
+    }
 
-  @Override
-  public boolean isDiscrete() {
-    return true;
-  }
+    @Override
+    public boolean isDiscrete() {
+        return true;
+    }
 
-  public int getColour(int value) {
-    assert colorScheme != null;
-    Terrain t = Terrain.values()[value];
-    return t.getColour(1234L, 0, 0, 0, 0, null, colorScheme);
-  }
+    public int getColour(int value) {
+        assert colorScheme != null;
+        Terrain t = Terrain.values()[value];
+        return t.getColour(1234L, 0, 0, 0, 0, null, colorScheme);
+    }
 
-  @Override
-  public void paint(Graphics g, int value, java.awt.Dimension dim) {
-    if (isIgnoreValue(value)) return;
-    Terrain terrain = Terrain.values()[value];
-    BufferedImage terrainImg = terrain.getScaledIcon(Math.min(dim.height, dim.width), colorScheme);
-    g.drawImage(terrainImg, 0, 0, null);
-  }
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value))
+            return;
+        Terrain terrain = Terrain.values()[value];
+        BufferedImage terrainImg = terrain.getScaledIcon(Math.min(dim.height, dim.width), colorScheme);
+        g.drawImage(terrainImg, 0, 0, null);
+    }
 
-  @Override
-  public String getToolTipText() {
-    return getDescription();
-  }
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
 
-  @Override
-  public ProviderType getProviderType() {
-    return ProviderType.TERRAIN;
-  }
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.TERRAIN;
+    }
 }

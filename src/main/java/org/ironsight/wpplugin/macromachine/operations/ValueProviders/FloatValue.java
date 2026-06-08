@@ -8,14 +8,14 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonTypeName("float")
 @Schema(hidden = true)
 public record FloatValue(String type, float value) implements IoParameter {
-  @JsonCreator
-  public FloatValue(float value) {
-    this("float", value);
-  }
+    @JsonCreator
+    public FloatValue(float value) {
+        this("float", value);
+    }
 
-  // keep object form with fields `type` and `value` for compatibility
-  @JsonValue
-  public Object getValue() {
-    return value();
-  }
+    // keep object form with fields `type` and `value` for compatibility
+    @JsonValue
+    public Object getValue() {
+        return value();
+    }
 }

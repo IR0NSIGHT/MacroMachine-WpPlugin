@@ -161,9 +161,9 @@
 
                 <configuration>
                     <java>
-                        <googleJavaFormat>
-                            <version>1.27.0</version>
-                        </googleJavaFormat>
+                        <eclipse>
+                            <file>${project.basedir}/formatter.xml</file>
+                        </eclipse>
                     </java>
                 </configuration>
                 <executions>

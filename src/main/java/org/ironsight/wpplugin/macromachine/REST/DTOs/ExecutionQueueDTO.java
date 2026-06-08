@@ -7,8 +7,5 @@ import java.util.UUID;
 
 @Schema(description = "Request to enqueue macros for execution")
 public record ExecutionQueueDTO(
-    @NotEmpty
-        @Schema(
-            description = "Ordered list of macro IDs to enqueue",
-            requiredMode = Schema.RequiredMode.REQUIRED)
-        List<UUID> queuedMacroIds) {}
+        @NotEmpty @Schema(description = "Ordered list of macro IDs to enqueue", requiredMode = Schema.RequiredMode.REQUIRED) List<UUID> queuedMacroIds) {
+}

@@ -10,131 +10,138 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.biomeschemes.Minecraft1_21Biomes;
 import org.pepsoft.worldpainter.layers.Biome;
 
-public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValueSetter {
-  String[] biomes;
+public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValueSetter
+{
+    String[] biomes;
 
-  public VanillaBiomeProvider() {
-    biomes = Minecraft1_21Biomes.BIOME_NAMES.clone();
-    outputValues = IntStream.range(-1, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
-    outputValues[0] = IGNORE_VALUE;
-  }
+    public VanillaBiomeProvider() {
+        biomes = Minecraft1_21Biomes.BIOME_NAMES.clone();
+        outputValues = IntStream.range(-1, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
+        outputValues[0] = IGNORE_VALUE;
+    }
 
-  @Override
-  public String getToolTipText() {
-    return getDescription();
-  }
+    @Override
+    public String getToolTipText() {
+        return getDescription();
+    }
 
-  @Override
-  public boolean equals(Object obj) {
-    return obj != null && this.getClass().equals(obj.getClass());
-  }
+    @Override
+    public boolean equals(Object obj) {
+        return obj != null && this.getClass().equals(obj.getClass());
+    }
 
-  @Override
-  public String toString() {
-    return getName();
-  }
+    @Override
+    public String toString() {
+        return getName();
+    }
 
-  @Override
-  public String getName() {
-    return "Biome";
-  }
+    @Override
+    public String getName() {
+        return "Biome";
+    }
 
-  @Override
-  public int hashCode() {
-    return getProviderType().hashCode();
-  }
+    @Override
+    public int hashCode() {
+        return getProviderType().hashCode();
+    }
 
-  @Override
-  public int[] getAllPossibleValues() {
-    return getAllOutputValues();
-  }
+    @Override
+    public int[] getAllPossibleValues() {
+        return getAllOutputValues();
+    }
 
-  @Override
-  public boolean isVirtual() {
-    return false;
-  }
+    @Override
+    public boolean isVirtual() {
+        return false;
+    }
 
-  @Override
-  public String getDescription() {
-    return "Get biome type of a position";
-  }
+    @Override
+    public String getDescription() {
+        return "Get biome type of a position";
+    }
 
-  @Override
-  public int getValueAt(Dimension dim, int x, int y) {
-    if (!dim.getExtent().contains(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS)) return getMinValue();
-    return dim.getLayerValueAt(Biome.INSTANCE, x, y);
-  }
+    @Override
+    public int getValueAt(Dimension dim, int x, int y) {
+        if (!dim.getExtent().contains(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS))
+            return getMinValue();
+        return dim.getLayerValueAt(Biome.INSTANCE, x, y);
+    }
 
-  @Override
-  public int getMinValue() {
-    return 0;
-  }
+    @Override
+    public int getMinValue() {
+        return 0;
+    }
 
-  @Override
-  public IMappingValue instantiateFrom(IoParameter[] data) {
-    return new VanillaBiomeProvider();
-  }
+    @Override
+    public IMappingValue instantiateFrom(IoParameter[] data) {
+        return new VanillaBiomeProvider();
+    }
 
-  @Override
-  public IoParameter[] getSaveData() {
-    return new IoParameter[0];
-  }
+    @Override
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
+    }
 
-  @Override
-  public int getMaxValue() {
-    return biomes.length - 1;
-  }
+    @Override
+    public int getMaxValue() {
+        return biomes.length - 1;
+    }
 
-  @Override
-  public String valueToString(int value) {
-    if (value == IGNORE_VALUE) return "Skip";
-    if (value < 0 || value >= biomes.length) return "INVALID (" + value + ")";
-    if (value == 255) return "Auto Biome";
-    if (biomes[value] == null) return "zzz-NULL-(" + value + ")";
-    return biomes[value];
-  }
+    @Override
+    public String valueToString(int value) {
+        if (value == IGNORE_VALUE)
+            return "Skip";
+        if (value < 0 || value >= biomes.length)
+            return "INVALID (" + value + ")";
+        if (value == 255)
+            return "Auto Biome";
+        if (biomes[value] == null)
+            return "zzz-NULL-(" + value + ")";
+        return biomes[value];
+    }
 
-  @Override
-  public boolean isDiscrete() {
-    return true;
-  }
+    @Override
+    public boolean isDiscrete() {
+        return true;
+    }
 
-  @Override
-  public void paint(Graphics g, int value, java.awt.Dimension dim) {
-    if (isIgnoreValue(value)) return;
-    g.setColor(Color.WHITE);
-    g.fillRect(0, 0, dim.width, dim.height);
-  }
+    @Override
+    public void paint(Graphics g, int value, java.awt.Dimension dim) {
+        if (isIgnoreValue(value))
+            return;
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, dim.width, dim.height);
+    }
 
-  @Override
-  public ProviderType getProviderType() {
-    return ProviderType.VANILLA_BIOME;
-  }
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.VANILLA_BIOME;
+    }
 
-  @Override
-  public void setValueAt(Dimension dim, int x, int y, int value) {
-    dim.setLayerValueAt(Biome.INSTANCE, x, y, value);
-  }
+    @Override
+    public void setValueAt(Dimension dim, int x, int y, int value) {
+        dim.setLayerValueAt(Biome.INSTANCE, x, y, value);
+    }
 
-  private final int[] inputValues =
-      IntStream.range(0, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
-  private final int[] outputValues;
+    private final int[] inputValues = IntStream.range(0, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
+    private final int[] outputValues;
 
-  @Override
-  public int[] getAllInputValues() {
-    return Arrays.copyOf(inputValues, inputValues.length);
-  }
+    @Override
+    public int[] getAllInputValues() {
+        return Arrays.copyOf(inputValues, inputValues.length);
+    }
 
-  @Override
-  public boolean isIgnoreValue(int value) {
-    return value == IGNORE_VALUE;
-  }
+    @Override
+    public boolean isIgnoreValue(int value) {
+        return value == IGNORE_VALUE;
+    }
 
-  @Override
-  public int[] getAllOutputValues() {
-    return Arrays.copyOf(outputValues, outputValues.length);
-  }
+    @Override
+    public int[] getAllOutputValues() {
+        return Arrays.copyOf(outputValues, outputValues.length);
+    }
 
-  @Override
-  public void prepareForDimension(Dimension dim) {}
+    @Override
+    public void prepareForDimension(Dimension dim) {
+    }
 }

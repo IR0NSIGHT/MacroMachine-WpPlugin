@@ -4,49 +4,55 @@ import java.awt.*;
 import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.operations.*;
 
-public class ConflictResolveImportPolicy extends ImportExportPolicy {
-  private MacroContainer macroContainer;
-  private MappingActionContainer actionContainer;
-  private Window parent;
-  private boolean allowAll = false;
-  private boolean skipAll = false;
+public class ConflictResolveImportPolicy extends ImportExportPolicy
+{
+    private MacroContainer macroContainer;
+    private MappingActionContainer actionContainer;
+    private Window parent;
+    private boolean allowAll = false;
+    private boolean skipAll = false;
 
-  public ConflictResolveImportPolicy(
-      MacroContainer macros, MappingActionContainer actions, Window parent) {
-    this.macroContainer = macros;
-    this.actionContainer = actions;
-    this.parent = parent;
-  }
-
-  @Override
-  boolean allowImportExport(Macro macro) {
-    return doDialogFor(macro, macroContainer);
-  }
-
-  private boolean doDialogFor(SaveableAction action, AbstractOperationContainer container) {
-    if (skipAll) return false;
-    if (allowAll) return true;
-    if (container.queryContains(action.getUid())) {
-      SaveableAction original = container.queryById(action.getUid());
-      if (original.equals(action)) return false; // nothing to do, just skip
-      FileConflictResolverDialog diag;
-      if (parent instanceof JDialog)
-        diag = new FileConflictResolverDialog((JDialog) parent, original, action);
-      else if (parent instanceof JFrame)
-        diag = new FileConflictResolverDialog((JFrame) parent, original, action);
-      else diag = new FileConflictResolverDialog((JFrame) null, original, action);
-      diag.setVisible(true);
-      if (diag.isRemember() && diag.isOverwrite()) allowAll = true;
-      if (diag.isRemember() && !diag.isOverwrite()) skipAll = true;
-      return diag.isOverwrite();
-
-    } else {
-      return true;
+    public ConflictResolveImportPolicy(MacroContainer macros, MappingActionContainer actions, Window parent) {
+        this.macroContainer = macros;
+        this.actionContainer = actions;
+        this.parent = parent;
     }
-  }
 
-  @Override
-  boolean allowImportExport(MappingAction action) {
-    return doDialogFor(action, actionContainer);
-  }
+    @Override
+    boolean allowImportExport(Macro macro) {
+        return doDialogFor(macro, macroContainer);
+    }
+
+    private boolean doDialogFor(SaveableAction action, AbstractOperationContainer container) {
+        if (skipAll)
+            return false;
+        if (allowAll)
+            return true;
+        if (container.queryContains(action.getUid())) {
+            SaveableAction original = container.queryById(action.getUid());
+            if (original.equals(action))
+                return false; // nothing to do, just skip
+            FileConflictResolverDialog diag;
+            if (parent instanceof JDialog)
+                diag = new FileConflictResolverDialog((JDialog) parent, original, action);
+            else if (parent instanceof JFrame)
+                diag = new FileConflictResolverDialog((JFrame) parent, original, action);
+            else
+                diag = new FileConflictResolverDialog((JFrame) null, original, action);
+            diag.setVisible(true);
+            if (diag.isRemember() && diag.isOverwrite())
+                allowAll = true;
+            if (diag.isRemember() && !diag.isOverwrite())
+                skipAll = true;
+            return diag.isOverwrite();
+
+        } else {
+            return true;
+        }
+    }
+
+    @Override
+    boolean allowImportExport(MappingAction action) {
+        return doDialogFor(action, actionContainer);
+    }
 }

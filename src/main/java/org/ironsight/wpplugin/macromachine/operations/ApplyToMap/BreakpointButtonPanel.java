@@ -11,216 +11,215 @@ import java.util.function.Supplier;
 import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 
-public class BreakpointButtonPanel extends JPanel implements DebugUserInterface {
-  private ArrayList<MappingAction> breakpoints;
-  private JButton stepperButton;
-  private JButton startDebugButton;
-  private JButton abortButton;
-  private JButton startButton;
-  public JProgressBar globalProgressBar;
-  public JProgressBar localProgessBar;
-  private boolean doContinue;
-  private boolean doAbort = false;
-  private boolean isRunning = false;
-  private BreakpointListener stepperVisulaizer;
-  private Supplier<BreakpointListener> getStepperVisualizer;
+public class BreakpointButtonPanel extends JPanel implements DebugUserInterface
+{
+    private ArrayList<MappingAction> breakpoints;
+    private JButton stepperButton;
+    private JButton startDebugButton;
+    private JButton abortButton;
+    private JButton startButton;
+    public JProgressBar globalProgressBar;
+    public JProgressBar localProgessBar;
+    private boolean doContinue;
+    private boolean doAbort = false;
+    private boolean isRunning = false;
+    private BreakpointListener stepperVisulaizer;
+    private Supplier<BreakpointListener> getStepperVisualizer;
 
-  private void onStartButton() {
-    onUserStartsMacro.accept(false);
-  }
-
-  private void onStartDebugButton() {
-    onUserStartsMacro.accept(Boolean.TRUE);
-  }
-
-  public JButton newStartButton() {
-    JButton startButton = new MacroMachineButton("▶");
-    startButton.setToolTipText("Start macro");
-    startButton.addActionListener(l -> onStartButton());
-    return startButton;
-  }
-
-  public JButton newDebugButton() {
-    JButton startDebugButton = new MacroMachineButton("\uD83D\uDC1E"); /* bug */
-    startDebugButton.addActionListener(l -> onStartDebugButton());
-    startDebugButton.setToolTipText("Start macro with debugger");
-    return startDebugButton;
-  }
-
-  private final Consumer<Boolean> onUserStartsMacro;
-
-  public BreakpointButtonPanel(
-      Consumer<Boolean> onUserStartsMacro, Supplier<BreakpointListener> getStepperVisualizer) {
-    this.onUserStartsMacro = onUserStartsMacro;
-
-    this.getStepperVisualizer = getStepperVisualizer;
-    this.startButton = newStartButton();
-
-    this.stepperButton = new MacroMachineButton("⏩");
-    stepperButton.setToolTipText("Continue next step");
-    this.abortButton = new MacroMachineButton("◼");
-    abortButton.setToolTipText("abort current macro");
-
-    startDebugButton = newDebugButton();
-
-    this.setLayout(new BorderLayout());
-
-    JPanel progressBars = new JPanel();
-    globalProgressBar = new JProgressBar();
-    globalProgressBar.setMinimum(0);
-    globalProgressBar.setMaximum(100);
-    globalProgressBar.setStringPainted(true); // Show percentage text
-    progressBars.add(globalProgressBar);
-
-    localProgessBar = new JProgressBar();
-    localProgessBar.setMinimum(0);
-    localProgessBar.setMaximum(100);
-    localProgessBar.setStringPainted(true); // Show percentage text
-    progressBars.add(localProgessBar);
-    this.add(progressBars, BorderLayout.NORTH);
-
-    JPanel buttons = new JPanel(new FlowLayout());
-    this.add(buttons, BorderLayout.CENTER);
-    buttons.add(startButton);
-    buttons.add(startDebugButton);
-    buttons.add(stepperButton);
-    buttons.add(abortButton);
-
-    stepperButton.addActionListener(f -> this.onStepperButton());
-    abortButton.addActionListener(f -> this.onAbortButton());
-    setButtonsActive(false);
-  }
-
-  public static void main(String[] args) {
-    // Create a JFrame
-    JFrame frame = new JFrame("Emoji Button Example");
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setLayout(new java.awt.FlowLayout());
-    frame.setSize(300, 200);
-
-    DebugUserInterface panel =
-        new BreakpointButtonPanel(
-            f -> {},
-            () ->
-                new BreakpointListener() {
-                  @Override
-                  public void OnReachedBreakpoint(int idx) {}
-
-                  @Override
-                  public void PostReachedBreakpoint(int idx) {}
-
-                  @Override
-                  public void SetBreakpoints(ArrayList<MappingAction> breakpoints) {}
-
-                  @Override
-                  public void afterEverything() {}
-                });
-    // Add the button to the frame
-    frame.add((JPanel) panel);
-
-    // Make the frame visible
-    frame.setVisible(true);
-    for (int i = 0; i < 5; i++) {
-      panel.CheckBreakpointStatus(i, MappingAction.getNewEmptyAction().withName("Action " + i));
+    private void onStartButton() {
+        onUserStartsMacro.accept(false);
     }
-  }
 
-  private void onStepperButton() {
-    doContinue = true;
-  }
-
-  private void onAbortButton() {
-    this.doAbort = true;
-  }
-
-  @Override
-  public void setProgessTo(int actionIndex, int actionpercent, int totalActions) {
-    globalProgressBar.setMaximum(totalActions);
-    globalProgressBar.setValue(actionIndex);
-    localProgessBar.setValue(actionpercent);
-  }
-
-  @Override
-  public BreakpointReaction CheckBreakpointStatus(int index, MappingAction action) {
-    if (doAbort) {
-      return BreakpointReaction.ABORT;
+    private void onStartDebugButton() {
+        onUserStartsMacro.accept(Boolean.TRUE);
     }
-    if (doContinue) {
-      return BreakpointReaction.CONTINUE;
-    }
-    return BreakpointReaction.WAIT;
-  }
 
-  @Override
-  public void OnReachedBreakpoint(int idx) {
-    SwingUtilities.invokeLater(
-        () -> {
-          stepperButton.setToolTipText("continue with " + breakpoints.get(idx));
-          stepperButton.setEnabled(true);
-          globalProgressBar.setValue(idx);
+    public JButton newStartButton() {
+        JButton startButton = new MacroMachineButton("▶");
+        startButton.setToolTipText("Start macro");
+        startButton.addActionListener(l -> onStartButton());
+        return startButton;
+    }
+
+    public JButton newDebugButton() {
+        JButton startDebugButton = new MacroMachineButton("\uD83D\uDC1E"); /* bug */
+        startDebugButton.addActionListener(l -> onStartDebugButton());
+        startDebugButton.setToolTipText("Start macro with debugger");
+        return startDebugButton;
+    }
+
+    private final Consumer<Boolean> onUserStartsMacro;
+
+    public BreakpointButtonPanel(Consumer<Boolean> onUserStartsMacro,
+            Supplier<BreakpointListener> getStepperVisualizer) {
+        this.onUserStartsMacro = onUserStartsMacro;
+
+        this.getStepperVisualizer = getStepperVisualizer;
+        this.startButton = newStartButton();
+
+        this.stepperButton = new MacroMachineButton("⏩");
+        stepperButton.setToolTipText("Continue next step");
+        this.abortButton = new MacroMachineButton("◼");
+        abortButton.setToolTipText("abort current macro");
+
+        startDebugButton = newDebugButton();
+
+        this.setLayout(new BorderLayout());
+
+        JPanel progressBars = new JPanel();
+        globalProgressBar = new JProgressBar();
+        globalProgressBar.setMinimum(0);
+        globalProgressBar.setMaximum(100);
+        globalProgressBar.setStringPainted(true); // Show percentage text
+        progressBars.add(globalProgressBar);
+
+        localProgessBar = new JProgressBar();
+        localProgessBar.setMinimum(0);
+        localProgessBar.setMaximum(100);
+        localProgessBar.setStringPainted(true); // Show percentage text
+        progressBars.add(localProgessBar);
+        this.add(progressBars, BorderLayout.NORTH);
+
+        JPanel buttons = new JPanel(new FlowLayout());
+        this.add(buttons, BorderLayout.CENTER);
+        buttons.add(startButton);
+        buttons.add(startDebugButton);
+        buttons.add(stepperButton);
+        buttons.add(abortButton);
+
+        stepperButton.addActionListener(f -> this.onStepperButton());
+        abortButton.addActionListener(f -> this.onAbortButton());
+        setButtonsActive(false);
+    }
+
+    public static void main(String[] args) {
+        // Create a JFrame
+        JFrame frame = new JFrame("Emoji Button Example");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new java.awt.FlowLayout());
+        frame.setSize(300, 200);
+
+        DebugUserInterface panel = new BreakpointButtonPanel(f -> {
+        }, () -> new BreakpointListener() {
+            @Override
+            public void OnReachedBreakpoint(int idx) {
+            }
+
+            @Override
+            public void PostReachedBreakpoint(int idx) {
+            }
+
+            @Override
+            public void SetBreakpoints(ArrayList<MappingAction> breakpoints) {
+            }
+
+            @Override
+            public void afterEverything() {
+            }
         });
-    stepperVisulaizer.OnReachedBreakpoint(idx);
-  }
+        // Add the button to the frame
+        frame.add((JPanel) panel);
 
-  @Override
-  public void PostReachedBreakpoint(int idx) {
-    doContinue = false;
-    SwingUtilities.invokeLater(
-        () -> {
-          stepperButton.setToolTipText("continue");
-          stepperButton.setEnabled(false);
-        });
-  }
-
-  private void resetState() {
-    doAbort = false;
-  }
-
-  @Override
-  public void SetBreakpoints(ArrayList<MappingAction> breakpoints) {
-    this.breakpoints = breakpoints;
-    doAbort = false;
-    this.stepperVisulaizer = getStepperVisualizer.get();
-    stepperVisulaizer.SetBreakpoints(breakpoints);
-
-    SwingUtilities.invokeLater(
-        () -> {
-          this.globalProgressBar.setMinimum(0);
-          this.globalProgressBar.setMaximum(breakpoints.size());
-          setButtonsActive(true);
-        });
-  }
-
-  @Override
-  public boolean isAbort() {
-    return doAbort;
-  }
-
-  private void setButtonsActive(boolean isRunning) {
-    startButton.setEnabled(!isRunning);
-    startDebugButton.setEnabled(!isRunning);
-    abortButton.setEnabled(isRunning);
-    stepperButton.setEnabled(isRunning);
-    globalProgressBar.setValue(isRunning ? 0 : globalProgressBar.getMaximum());
-    globalProgressBar.setVisible(isRunning);
-
-    localProgessBar.setValue(isRunning ? 0 : localProgessBar.getMaximum());
-    localProgessBar.setVisible(isRunning);
-  }
-
-  @Override
-  public void afterEverything() {
-    setButtonsActive(false);
-    stepperVisulaizer.afterEverything();
-  }
-
-  class MacroMachineButton extends JButton {
-    public MacroMachineButton(String text) {
-      this.setBackground(DEFAULT_BACKGROUND);
-      this.setForeground(DEFAULT_FOREGROUND);
-      this.setFont(header1Font);
-      this.setText(text);
+        // Make the frame visible
+        frame.setVisible(true);
+        for (int i = 0; i < 5; i++) {
+            panel.CheckBreakpointStatus(i, MappingAction.getNewEmptyAction().withName("Action " + i));
+        }
     }
-  }
-  ;
+
+    private void onStepperButton() {
+        doContinue = true;
+    }
+
+    private void onAbortButton() {
+        this.doAbort = true;
+    }
+
+    @Override
+    public void setProgessTo(int actionIndex, int actionpercent, int totalActions) {
+        globalProgressBar.setMaximum(totalActions);
+        globalProgressBar.setValue(actionIndex);
+        localProgessBar.setValue(actionpercent);
+    }
+
+    @Override
+    public BreakpointReaction CheckBreakpointStatus(int index, MappingAction action) {
+        if (doAbort) {
+            return BreakpointReaction.ABORT;
+        }
+        if (doContinue) {
+            return BreakpointReaction.CONTINUE;
+        }
+        return BreakpointReaction.WAIT;
+    }
+
+    @Override
+    public void OnReachedBreakpoint(int idx) {
+        SwingUtilities.invokeLater(() -> {
+            stepperButton.setToolTipText("continue with " + breakpoints.get(idx));
+            stepperButton.setEnabled(true);
+            globalProgressBar.setValue(idx);
+        });
+        stepperVisulaizer.OnReachedBreakpoint(idx);
+    }
+
+    @Override
+    public void PostReachedBreakpoint(int idx) {
+        doContinue = false;
+        SwingUtilities.invokeLater(() -> {
+            stepperButton.setToolTipText("continue");
+            stepperButton.setEnabled(false);
+        });
+    }
+
+    private void resetState() {
+        doAbort = false;
+    }
+
+    @Override
+    public void SetBreakpoints(ArrayList<MappingAction> breakpoints) {
+        this.breakpoints = breakpoints;
+        doAbort = false;
+        this.stepperVisulaizer = getStepperVisualizer.get();
+        stepperVisulaizer.SetBreakpoints(breakpoints);
+
+        SwingUtilities.invokeLater(() -> {
+            this.globalProgressBar.setMinimum(0);
+            this.globalProgressBar.setMaximum(breakpoints.size());
+            setButtonsActive(true);
+        });
+    }
+
+    @Override
+    public boolean isAbort() {
+        return doAbort;
+    }
+
+    private void setButtonsActive(boolean isRunning) {
+        startButton.setEnabled(!isRunning);
+        startDebugButton.setEnabled(!isRunning);
+        abortButton.setEnabled(isRunning);
+        stepperButton.setEnabled(isRunning);
+        globalProgressBar.setValue(isRunning ? 0 : globalProgressBar.getMaximum());
+        globalProgressBar.setVisible(isRunning);
+
+        localProgessBar.setValue(isRunning ? 0 : localProgessBar.getMaximum());
+        localProgessBar.setVisible(isRunning);
+    }
+
+    @Override
+    public void afterEverything() {
+        setButtonsActive(false);
+        stepperVisulaizer.afterEverything();
+    }
+
+    class MacroMachineButton extends JButton
+    {
+        public MacroMachineButton(String text) {
+            this.setBackground(DEFAULT_BACKGROUND);
+            this.setForeground(DEFAULT_FOREGROUND);
+            this.setFont(header1Font);
+            this.setText(text);
+        }
+    };
 }

@@ -6,28 +6,30 @@ import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.pepsoft.worldpainter.Dimension;
 
 /**
- * callback to inform GUI of the progress for executing a macro / applying an action to a dimension
+ * callback to inform GUI of the progress for executing a macro / applying an
+ * action to a dimension
  */
-public interface ApplyActionCallback {
-  void setProgressOfAction(int percent);
+public interface ApplyActionCallback
+{
+    void setProgressOfAction(int percent);
 
-  boolean isActionAbort();
+    boolean isActionAbort();
 
-  void beforeEachAction(MappingAction action, Dimension dimension);
+    void beforeEachAction(MappingAction action, Dimension dimension);
 
-  void afterEachTile(int tileX, int tileY);
+    void afterEachTile(int tileX, int tileY);
 
-  void afterEachAction(ExecutionStatistic statistic);
+    void afterEachAction(ExecutionStatistic statistic);
 
-  /**
-   * allow UI events to be genereated after the action is complete? FALSE: wait until everything is
-   * done
-   *
-   * @return
-   */
-  boolean isUpdateMapAfterEachAction();
+    /**
+     * allow UI events to be genereated after the action is complete? FALSE: wait
+     * until everything is done
+     *
+     * @return
+     */
+    boolean isUpdateMapAfterEachAction();
 
-  void setAllActionsBeforeRun(List<MappingAction> steps);
+    void setAllActionsBeforeRun(List<MappingAction> steps);
 
-  void afterEverything();
+    void afterEverything();
 }

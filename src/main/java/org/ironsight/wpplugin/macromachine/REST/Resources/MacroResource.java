@@ -17,59 +17,51 @@ import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 @Path("/macros")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class MacroResource {
-  private MacroContainer macroContainer = MacroContainer.getInstance();
+public class MacroResource
+{
+    private MacroContainer macroContainer = MacroContainer.getInstance();
 
-  @GET
-  @Operation(summary = "Get all macros")
-  @ApiResponse(
-      responseCode = "200",
-      description = "List of macros",
-      content =
-          @Content(
-              mediaType = "application/json",
-              array = @ArraySchema(schema = @Schema(implementation = MacroDTO.class))))
-  public List<MacroDTO> getAllMacros() {
-    return macroContainer.queryAll().stream().map(MacroDTO::new).collect(Collectors.toList());
-  }
-
-  @GET
-  @Path("/{id}")
-  public MacroDTO getMacroById(@PathParam("id") UUID id) {
-    var macro = macroContainer.queryById(id);
-    if (macro == null) {
-      throw new NotFoundException("Macro not found for uuid=: " + id);
-    }
-    return new MacroDTO(macro);
-  }
-
-  @GET
-  @Path("/lastChange")
-  @Operation(
-      summary = "Get last modification timestamp",
-      description =
-          "Returns the timestamp of the most recent modification to the macro container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).")
-  public long getMacroLastChange() {
-    return macroContainer.getLastChange();
-  }
-
-  @POST
-  public MacroDTO postMacro(MacroDTO dto) {
-    Macro macro = dto.toMacro();
-    StringBuilder err = new StringBuilder();
-    macroContainer.updateMapping(macro, err::append);
-    if (!err.isEmpty()) {
-      throw new InternalServerErrorException(err.toString());
+    @GET
+    @Operation(summary = "Get all macros")
+    @ApiResponse(responseCode = "200", description = "List of macros", content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = MacroDTO.class))))
+    public List<MacroDTO> getAllMacros() {
+        return macroContainer.queryAll().stream().map(MacroDTO::new).collect(Collectors.toList());
     }
 
-    return dto;
-  }
+    @GET
+    @Path("/{id}")
+    public MacroDTO getMacroById(@PathParam("id") UUID id) {
+        var macro = macroContainer.queryById(id);
+        if (macro == null) {
+            throw new NotFoundException("Macro not found for uuid=: " + id);
+        }
+        return new MacroDTO(macro);
+    }
 
-  @DELETE
-  @Path("/{id}")
-  public void deleteMacro(@PathParam("id") UUID id) {
-    if (!macroContainer.queryContains(id))
-      throw new NotFoundException("Macro not found for uuid=: " + id);
-    macroContainer.deleteMapping(id);
-  }
+    @GET
+    @Path("/lastChange")
+    @Operation(summary = "Get last modification timestamp", description = "Returns the timestamp of the most recent modification to the macro container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).")
+    public long getMacroLastChange() {
+        return macroContainer.getLastChange();
+    }
+
+    @POST
+    public MacroDTO postMacro(MacroDTO dto) {
+        Macro macro = dto.toMacro();
+        StringBuilder err = new StringBuilder();
+        macroContainer.updateMapping(macro, err::append);
+        if (!err.isEmpty()) {
+            throw new InternalServerErrorException(err.toString());
+        }
+
+        return dto;
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public void deleteMacro(@PathParam("id") UUID id) {
+        if (!macroContainer.queryContains(id))
+            throw new NotFoundException("Macro not found for uuid=: " + id);
+        macroContainer.deleteMapping(id);
+    }
 }

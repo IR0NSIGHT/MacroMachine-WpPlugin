@@ -9,27 +9,30 @@ import org.ironsight.wpplugin.rivertool.operations.ContinuousCurve;
 import org.ironsight.wpplugin.rivertool.pathing.Path;
 import org.ironsight.wpplugin.rivertool.pathing.PointType;
 
-final class RiverToolAPIImplementation implements RiverToolAPI {
+final class RiverToolAPIImplementation implements RiverToolAPI
+{
 
-  /**
-   * take a bunch of handles and interpolate all positions between them so they build a connected
-   * path using bezier curves. takes x and y for bezier, rest is interpolated linear
-   *
-   * @param handles
-   * @return
-   */
-  @Override
-  public ArrayList<RiverToolAPI.PositionInformation> handlesToConnectedBezierPath(
-      Collection<RiverToolAPI.PositionInformation> handles, PointType handleDataDescriptor) {
-    List<float[]> handleData = new ArrayList<>(handles.size());
-    for (var point : handles) {
-      handleData.add(point.data);
+    /**
+     * take a bunch of handles and interpolate all positions between them so they
+     * build a connected path using bezier curves. takes x and y for bezier, rest is
+     * interpolated linear
+     *
+     * @param handles
+     * @return
+     */
+    @Override
+    public ArrayList<RiverToolAPI.PositionInformation> handlesToConnectedBezierPath(
+            Collection<RiverToolAPI.PositionInformation> handles, PointType handleDataDescriptor) {
+        List<float[]> handleData = new ArrayList<>(handles.size());
+        for (var point : handles) {
+            handleData.add(point.data);
+        }
+        var path = new Path(handleData, handleDataDescriptor);
+        var connectedCurve = ContinuousCurve.fromPath(path, HeightDimension.getImmutableDimension62());
+
+        return connectedCurve.getCurveAsPositions()
+                .stream()
+                .map(PositionInformation::new)
+                .collect(Collectors.toCollection(ArrayList::new));
     }
-    var path = new Path(handleData, handleDataDescriptor);
-    var connectedCurve = ContinuousCurve.fromPath(path, HeightDimension.getImmutableDimension62());
-
-    return connectedCurve.getCurveAsPositions().stream()
-        .map(PositionInformation::new)
-        .collect(Collectors.toCollection(ArrayList::new));
-  }
 }

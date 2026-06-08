@@ -22,90 +22,89 @@ import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
 import org.pepsoft.worldpainter.themes.SimpleTheme;
 import org.pepsoft.worldpainter.themes.Theme;
 
-public final class TestData {
-  public static final Platform PLATFORM = DefaultPlugin.JAVA_ANVIL_1_19;
-  public static final int MIN_HEIGHT = PLATFORM.minZ;
-  public static final int MAX_HEIGHT = PLATFORM.standardMaxHeight;
-  public static final World2 WORLD = new World2(PLATFORM, MIN_HEIGHT, MAX_HEIGHT);
-  public static final Theme THEME =
-      SimpleTheme.createSingleTerrain(GRASS, MIN_HEIGHT, MAX_HEIGHT, 62);
-  public static final long SEED = 0L;
+public final class TestData
+{
+    public static final Platform PLATFORM = DefaultPlugin.JAVA_ANVIL_1_19;
+    public static final int MIN_HEIGHT = PLATFORM.minZ;
+    public static final int MAX_HEIGHT = PLATFORM.standardMaxHeight;
+    public static final World2 WORLD = new World2(PLATFORM, MIN_HEIGHT, MAX_HEIGHT);
+    public static final Theme THEME = SimpleTheme.createSingleTerrain(GRASS, MIN_HEIGHT, MAX_HEIGHT, 62);
+    public static final long SEED = 0L;
 
-  public static TileFactory createTileFactory(int terrainHeight) {
-    return new HeightMapTileFactory(
-        SEED, new ConstantHeightMap(terrainHeight), MIN_HEIGHT, MAX_HEIGHT, false, THEME);
-  }
-
-  /**
-   * @param area area in blocks, must be aligned to TILE_SIZE modulo
-   * @param terrainHeight
-   * @return
-   */
-  public static Dimension createDimension(Rectangle area, int terrainHeight) {
-    final TileFactory tileFactory = createTileFactory(terrainHeight);
-    final Dimension dimension = new Dimension(WORLD, "Surface", SEED, tileFactory, NORMAL_DETAIL);
-    final int tileX1 = area.x / TILE_SIZE,
-        tileX2 = (area.x + area.width - 1) / TILE_SIZE,
-        tileY1 = area.y / TILE_SIZE,
-        tileY2 = (area.y + area.height - 1) / TILE_SIZE;
-    for (int tileX = tileX1; tileX <= tileX2; tileX++) {
-      for (int tileY = tileY1; tileY <= tileY2; tileY++) {
-        dimension.addTile(tileFactory.createTile(tileX, tileY));
-      }
+    public static TileFactory createTileFactory(int terrainHeight) {
+        return new HeightMapTileFactory(SEED, new ConstantHeightMap(terrainHeight), MIN_HEIGHT, MAX_HEIGHT, false,
+                THEME);
     }
-    return dimension;
-  }
 
-  public static LayerProvider getMockLayerProvider() {
-    return new LayerProvider() {
-      private HashMap<String, Layer> id_to_layer = new HashMap<>();
-
-      @Override
-      public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
-        if (!existsLayerWithId(layerId)) layerNotFoundError.accept(layerId);
-        return id_to_layer.get(layerId);
-      }
-
-      @Override
-      public List<Layer> getLayers() {
-        return new ArrayList<>(id_to_layer.values());
-      }
-
-      @Override
-      public void addLayer(Layer layer) {
-        id_to_layer.put(layer.getId(), layer);
-      }
-
-      @Override
-      public boolean existsLayerWithId(String layerId) {
-        return id_to_layer.containsKey(layerId);
-      }
-    };
-  }
-
-  /**
-   * Create an in-memory {@link MinecraftWorld} with the specified {@code area} and filled with
-   * blocks up to and including {@code terrainHeight}, consisting of one layer of bedrock, up to 63
-   * layers of deepslate, as many layers of stone as required, three layers of dirt and one layer of
-   * grass block.
-   */
-  public static MinecraftWorld createMinecraftWorld(
-      Rectangle area, int terrainHeight, Material terrainMaterial) {
-    final Box volume = new Box(area.x, area.width, area.y, area.height, MIN_HEIGHT, MAX_HEIGHT);
-    final Material[] lowestBlocks = new Material[terrainHeight - MIN_HEIGHT + 1];
-    for (int z = 0; z <= terrainHeight - MIN_HEIGHT; z++) {
-      if (z >= terrainHeight - MIN_HEIGHT) {
-        lowestBlocks[z] = terrainMaterial;
-      } else if (z == 0) {
-        lowestBlocks[z] = BEDROCK;
-      } else if (z >= terrainHeight - MIN_HEIGHT - 3) {
-        lowestBlocks[z] = DIRT;
-      } else if (z >= -MIN_HEIGHT) {
-        lowestBlocks[z] = STONE;
-      } else {
-        lowestBlocks[z] = DEEPSLATE_Y;
-      }
+    /**
+     * @param area
+     *            area in blocks, must be aligned to TILE_SIZE modulo
+     * @param terrainHeight
+     * @return
+     */
+    public static Dimension createDimension(Rectangle area, int terrainHeight) {
+        final TileFactory tileFactory = createTileFactory(terrainHeight);
+        final Dimension dimension = new Dimension(WORLD, "Surface", SEED, tileFactory, NORMAL_DETAIL);
+        final int tileX1 = area.x / TILE_SIZE, tileX2 = (area.x + area.width - 1) / TILE_SIZE,
+                tileY1 = area.y / TILE_SIZE, tileY2 = (area.y + area.height - 1) / TILE_SIZE;
+        for (int tileX = tileX1; tileX <= tileX2; tileX++) {
+            for (int tileY = tileY1; tileY <= tileY2; tileY++) {
+                dimension.addTile(tileFactory.createTile(tileX, tileY));
+            }
+        }
+        return dimension;
     }
-    return new MinecraftWorldObject("Test", volume, MAX_HEIGHT, 0, lowestBlocks, null);
-  }
+
+    public static LayerProvider getMockLayerProvider() {
+        return new LayerProvider() {
+            private HashMap<String, Layer> id_to_layer = new HashMap<>();
+
+            @Override
+            public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
+                if (!existsLayerWithId(layerId))
+                    layerNotFoundError.accept(layerId);
+                return id_to_layer.get(layerId);
+            }
+
+            @Override
+            public List<Layer> getLayers() {
+                return new ArrayList<>(id_to_layer.values());
+            }
+
+            @Override
+            public void addLayer(Layer layer) {
+                id_to_layer.put(layer.getId(), layer);
+            }
+
+            @Override
+            public boolean existsLayerWithId(String layerId) {
+                return id_to_layer.containsKey(layerId);
+            }
+        };
+    }
+
+    /**
+     * Create an in-memory {@link MinecraftWorld} with the specified {@code area}
+     * and filled with blocks up to and including {@code terrainHeight}, consisting
+     * of one layer of bedrock, up to 63 layers of deepslate, as many layers of
+     * stone as required, three layers of dirt and one layer of grass block.
+     */
+    public static MinecraftWorld createMinecraftWorld(Rectangle area, int terrainHeight, Material terrainMaterial) {
+        final Box volume = new Box(area.x, area.width, area.y, area.height, MIN_HEIGHT, MAX_HEIGHT);
+        final Material[] lowestBlocks = new Material[terrainHeight - MIN_HEIGHT + 1];
+        for (int z = 0; z <= terrainHeight - MIN_HEIGHT; z++) {
+            if (z >= terrainHeight - MIN_HEIGHT) {
+                lowestBlocks[z] = terrainMaterial;
+            } else if (z == 0) {
+                lowestBlocks[z] = BEDROCK;
+            } else if (z >= terrainHeight - MIN_HEIGHT - 3) {
+                lowestBlocks[z] = DIRT;
+            } else if (z >= -MIN_HEIGHT) {
+                lowestBlocks[z] = STONE;
+            } else {
+                lowestBlocks[z] = DEEPSLATE_Y;
+            }
+        }
+        return new MinecraftWorldObject("Test", volume, MAX_HEIGHT, 0, lowestBlocks, null);
+    }
 }
