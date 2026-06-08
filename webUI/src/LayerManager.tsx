@@ -20,7 +20,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, SearchIconWrapper, StyledInputBase } from "./MacroGrid";
 import SearchIcon from "@mui/icons-material/Search";
 
-export const LayerManager = ({ layers }: { layers: LayerDTO[] }) => {
+export const LayerManager = ({ layers }: { layers?: LayerDTO[] }) => {
   const [onlyProject, setOnlyProject] = useState(false);
   const [onlyUsedInMacros, setOnlyUsedInMacros] = useState(false);
   const [onlyCustom, setOnlyCustom] = useState(false);
@@ -28,6 +28,23 @@ export const LayerManager = ({ layers }: { layers: LayerDTO[] }) => {
   const [search, setSearch] = useState("");
   const PAGE_SIZE = 50;
   const [page, setPage] = useState(0);
+
+  if (!layers) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100%",
+        }}
+      >
+        <Typography variant="h6" color="text.secondary">
+          Loading layers...
+        </Typography>
+      </Box>
+    );
+  }
 
   const sortedFilteredLayers = useMemo(() => {
     let filtered = layers

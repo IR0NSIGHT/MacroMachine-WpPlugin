@@ -1,128 +1,36 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import "./App.css";
 import "@fontsource/ubuntu";
-import {
-  api,
-  deleteMacro,
-  fetchActions,
-  fetchExecutionQueue,
-  fetchExecutionState,
-  fetchMacros,
-  postActions,
-  postMacro,
-  postQueueMacros,
-} from "./API/fetch";
+import { deleteMacro, postActions, postMacro, postQueueMacros } from "./API/fetch";
 import EditIcon from "@mui/icons-material/Edit";
 import ExploreIcon from "@mui/icons-material/Explore";
 import LayersIcon from "@mui/icons-material/Layers";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { Box, Tab, Tabs } from "@mui/material";
 import { PrimaryAppBar } from "./components/AppBar";
-import { ExecutionQueueDTO, MacroDTO, ExecutionStateDTO, ActionDTO } from "./types/DTO";
+import { MacroDTO, ActionDTO } from "./types/DTO";
 import { MacroGrid } from "./MacroGrid";
 import { GlobalOperationDesigner } from "./components/GlobalOperationDesigner";
 import { isStepItem, isUUID, MacroExecuteRequester, toMacroDTO } from "./features/Execution";
-import equal from "fast-deep-equal";
 import { LayerManager } from "./LayerManager";
-import { LayerDTO } from "./generated/client";
+import {
+  useActionsQuery,
+  useExecutionQueueQuery,
+  useExecutionStateQuery,
+  useLayersQuery,
+  useMacrosQuery,
+} from "./API/queries";
 
 export default function App() {
   const [search, setSearch] = useState("");
-  useEffect(() => {
-    console.log("SEARCH CHANGED");
-  }, [search]);
-  const [macros, setMacros] = useState<MacroDTO[]>([]);
-  useEffect(() => {
-    console.log("MACROS CHANGED");
-  }, [macros]);
-  const [actions, setActions] = useState<ActionDTO[]>([]);
-  useEffect(() => {
-    console.log("ACTIONS CHANGED");
-  }, [actions]);
-  const [executionState, setExecutionState] = useState<ExecutionStateDTO>({
-    executionId: "",
-    steps: [],
-    currentStepIndex: 0,
-    status: "IDLE",
-  });
-  useEffect(() => {
-    console.log("EXECUTION STATE CHANGED");
-  }, [executionState]);
-  const [queue, setQueue] = useState<ExecutionQueueDTO>({
-    queuedMacroIds: [],
-  });
-  useEffect(() => {
-    console.log("QUEUE CHANGED");
-  }, [queue]);
-  const [connectionLost, setConnectionLost] = useState(false);
 
   const [tab, setTab] = useState(0);
-  const [lastActionChange, setLastActionChange] = useState(0);
-  useEffect(() => {
-    console.log("LAST ACTION CHANGE TIMESTAMP CHANGED");
-  }, [lastActionChange]);
-  const [lastMacroChange, setLastMacroChange] = useState(0);
-  useEffect(() => {
-    console.log("LAST MACRO CHANGE TIMESTAMP CHANGED");
-  }, [lastMacroChange]);
-  useEffect(() => {
-    fetchActions()
-      .then((r) => {
-        console.log("ACTION CHANGED!");
-        setActions((prev) => (equal(prev, r) ? prev : r));
-      })
-      .catch(console.error);
-  }, [lastActionChange]);
 
-  useEffect(() => {
-    fetchMacros()
-      .then((r) => {
-        console.log("MACROS CHANGED!");
-        setMacros((prev) => (equal(prev, r) ? prev : r));
-      })
-      .catch(console.error);
-  }, [lastMacroChange]);
-
-  useEffect(() => {
-    console.log("ACTIONS OR MACROS CHANGED");
-  }, [lastActionChange, lastMacroChange]);
-
-  useEffect(() => {
-    console.log("CONNECTION LOST CHANGED");
-  }, [connectionLost]);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      await fetchExecutionQueue()
-        .then((r) => {
-          setQueue((prev) => (equal(prev, r) ? prev : r));
-          setConnectionLost(false);
-        })
-        .catch((e) => {
-          setConnectionLost(true);
-          console.error(e);
-        });
-      await fetchExecutionState()
-        .then((r) => {
-          setExecutionState((prev) => (equal(prev, r) ? prev : r));
-        })
-        .catch(console.error);
-
-      await api.getActionLastChange().then((lastChangeBackend) => {
-        setLastActionChange(lastChangeBackend);
-      });
-
-      await api.getMacroLastChange().then((lastChangeBackend) => {
-        setLastMacroChange(lastChangeBackend);
-      });
-
-      await api.getAllLayers().then((layers) => {
-        setLayers((prev) => (equal(layers, prev) ? prev : layers));
-      });
-    }, 300);
-
-    return () => clearInterval(interval); //cleanup timer
-  }, []);
+  const { data: executionState } = useExecutionStateQuery();
+  const { data: macros } = useMacrosQuery();
+  const { data: actions } = useActionsQuery();
+  const { data: queue } = useExecutionQueueQuery();
+  const { data: layers } = useLayersQuery();
 
   const onRequestExecution: MacroExecuteRequester = (runnable, isDebug) => {
     console.log(runnable);
@@ -142,11 +50,6 @@ export default function App() {
   const onRequestSave = (macro: MacroDTO, actions: ActionDTO[]) => {
     postActions(actions).then(() => postMacro(macro));
   };
-
-  const [layers, setLayers] = useState<LayerDTO[]>([]);
-  useEffect(() => {
-    console.log("LAYERS CHANGED");
-  }, [layers]);
   console.log("Rerender App!");
   return (
     <Box
@@ -159,7 +62,7 @@ export default function App() {
       <PrimaryAppBar
         queue={queue}
         executionState={executionState}
-        connectionLost={connectionLost}
+        connectionLost={false} //FIXME
       />
       <Box
         sx={{
@@ -185,9 +88,7 @@ export default function App() {
         <Box sx={{ flexGrow: 1 }}>
           {tab === 0 && (
             <MacroGrid
-              macros={macros.filter(
-                (macro) => search == "" || macro.name.toLowerCase().includes(search.toLowerCase()),
-              )}
+              macros={macros}
               actions={actions}
               executionState={executionState}
               onRequestExecution={onRequestExecution}

@@ -144,9 +144,9 @@ export function MacroGrid({
   search,
   setSearch,
 }: {
-  macros: MacroDTO[];
-  actions: ActionDTO[];
-  executionState: ExecutionStateDTO;
+  macros?: MacroDTO[];
+  actions?: ActionDTO[];
+  executionState?: ExecutionStateDTO;
   onRequestExecution: MacroExecuteRequester;
   onDeleteMacro: (uuid: uuid) => void;
   search: string;
@@ -157,6 +157,9 @@ export function MacroGrid({
   const [viewAction, setViewAction] = useState<ActionDTO | undefined>(undefined);
 
   const macroSet = new Set<string>();
+  if (!macros || !actions || !executionState) {
+    return <Typography>Loading...</Typography>;
+  }
   macros.forEach((m) => macroSet.add(m.uid));
 
   const uuidToMacroOrAction = new Map<string, MacroDTO | ActionDTO>();

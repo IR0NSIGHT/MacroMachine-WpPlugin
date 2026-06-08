@@ -35,8 +35,8 @@ import { api } from "@/API/fetch";
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
   onExecute: MacroExecuteRequester;
-  macros: MacroDTO[];
-  actions: ActionDTO[];
+  macros?: MacroDTO[];
+  actions?: ActionDTO[];
 };
 
 type StepItemProps = {
@@ -150,7 +150,9 @@ export const GlobalOperationDesigner = (props: Props) => {
   const [addItem, setAddItem] = useState<"filter" | "applier" | undefined>(undefined);
   const [loadMacros, setLoadMacros] = useState<runnableMacro[] | undefined>();
   const [isDiff, setIsDiff] = useState(false);
-
+  if (!props.macros || !props.actions) {
+    return <Typography>Loading...</Typography>;
+  }
   useEffect(() => {
     onStartNew();
   }, []);
@@ -158,9 +160,9 @@ export const GlobalOperationDesigner = (props: Props) => {
   useEffect(() => {
     const currentRunnable = constructRunnable();
     const backendRunnable = toRunnable(
-      props.macros.find((macro) => macro.uid === uuid),
-      props.actions,
-      props.macros,
+      props.macros!.find((macro) => macro.uid === uuid),
+      props.actions!,
+      props.macros!,
     );
     const diff = !equal(currentRunnable, backendRunnable);
     setIsDiff(diff);
@@ -244,8 +246,8 @@ export const GlobalOperationDesigner = (props: Props) => {
   }
 
   function onRequestLoadExisting() {
-    const allowedMacros = props.macros
-      .map((m) => toRunnable(m, props.actions, props.macros))
+    const allowedMacros = props
+      .macros!.map((m) => toRunnable(m, props.actions!, props.macros!))
       .filter((m) => m !== undefined)
       .filter((m) => isGlobalOpsMacro(m as runnableMacro) === true);
 

@@ -25,8 +25,8 @@ export const executionProgress = (execution?: ExecutionStateDTO): number => {
 };
 
 export function PrimaryAppBar(props: {
-  queue: ExecutionQueueDTO;
-  executionState: ExecutionStateDTO;
+  queue?: ExecutionQueueDTO;
+  executionState?: ExecutionStateDTO;
   connectionLost: boolean;
 }) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -130,7 +130,7 @@ export function PrimaryAppBar(props: {
           >
             MacroMachine
           </Typography>
-          {props.executionState.status !== "IDLE" && (
+          {props.executionState && props.executionState.status !== "IDLE" && (
             <CircularProgress
               key={-1}
               enableTrackSlot
@@ -140,7 +140,7 @@ export function PrimaryAppBar(props: {
               aria-label="Upload photos"
             />
           )}
-          {props.queue.queuedMacroIds.map((id, idx) => (
+          {props.queue?.queuedMacroIds.map((id, idx) => (
             <CircularProgress
               key={idx}
               enableTrackSlot
