@@ -26,7 +26,12 @@ export default function App() {
 
   const [tab, setTab] = useState(0);
 
-  const { data: executionState } = useExecutionStateQuery();
+  const {
+    data: executionState,
+    isLoading: isExecutionStateLoading,
+    isError: isExecutionStateError,
+    error: executionStateError,
+  } = useExecutionStateQuery();
   const { data: macros } = useMacrosQuery();
   const { data: actions } = useActionsQuery();
   const { data: queue } = useExecutionQueueQuery();
@@ -50,6 +55,17 @@ export default function App() {
   const onRequestSave = (macro: MacroDTO, actions: ActionDTO[]) => {
     postActions(actions).then(() => postMacro(macro));
   };
+
+  console.log(
+    "isLoading",
+    isExecutionStateLoading,
+    "Execution state error:",
+    isExecutionStateError,
+    executionStateError,
+  );
+
+  const connection =
+    !executionState && isExecutionStateLoading ? "loading" : executionState ? "ok" : "error";
   console.log("Rerender App!");
   return (
     <Box
@@ -59,11 +75,7 @@ export default function App() {
         height: "100vh",
       }}
     >
-      <PrimaryAppBar
-        queue={queue}
-        executionState={executionState}
-        connectionLost={false} //FIXME
-      />
+      <PrimaryAppBar queue={queue} executionState={executionState} connection={connection} />
       <Box
         sx={{
           display: "flex",

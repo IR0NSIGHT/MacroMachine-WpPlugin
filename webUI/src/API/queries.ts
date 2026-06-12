@@ -8,7 +8,6 @@ import {
   fetchMacros,
   fetchActions,
   fetchExecutionQueue,
-  fetchExecutionState,
   postQueueMacros,
   postAction,
   postActions,
@@ -66,7 +65,7 @@ export function useExecutionStateQuery(
 ) {
   return useQuery({
     queryKey: queryKeys.executionState,
-    queryFn: fetchExecutionState,
+    queryFn: api.getCurrentState,
     refetchInterval: 250, // 4 times/sec
     refetchIntervalInBackground: true,
     ...options,

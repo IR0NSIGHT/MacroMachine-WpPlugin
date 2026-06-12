@@ -27,7 +27,7 @@ export const executionProgress = (execution?: ExecutionStateDTO): number => {
 export function PrimaryAppBar(props: {
   queue?: ExecutionQueueDTO;
   executionState?: ExecutionStateDTO;
-  connectionLost: boolean;
+  connection: "error" | "ok" | "loading";
 }) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -151,7 +151,11 @@ export function PrimaryAppBar(props: {
             />
           ))}
           <Box sx={{ flexGrow: 1 }} />
-          {props.connectionLost && <div style={{ color: "red" }}>No connection to backend.</div>}
+          {props.connection === "error" && (
+            <div style={{ color: "red" }}>No connection to backend.</div>
+          )}
+          {props.connection === "loading" && <div style={{ color: "yellow" }}>Connecting...</div>}
+          {props.connection === "ok" && <div style={{ color: "green" }}>Connected to backend.</div>}
         </Toolbar>
       </AppBar>
       {renderMobileMenu}
