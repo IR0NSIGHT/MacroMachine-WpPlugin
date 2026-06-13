@@ -13,6 +13,7 @@ import { MacroGrid } from "./MacroGrid";
 import { GlobalOperationDesigner } from "./components/GlobalOperationDesigner";
 import { isStepItem, isUUID, MacroExecuteRequester, toMacroDTO } from "./features/Execution";
 import { LayerManager } from "./LayerManager";
+import HistoryIcon from "@mui/icons-material/History";
 import {
   useActionsQuery,
   useExecutionQueueQuery,
@@ -20,6 +21,7 @@ import {
   useLayersQuery,
   useMacrosQuery,
 } from "./API/queries";
+import { HistoryTab } from "./HistoryViewer";
 
 export default function App() {
   const [search, setSearch] = useState("");
@@ -95,6 +97,7 @@ export default function App() {
           <Tab icon={<ExploreIcon />} label="Explorer" />
           <Tab icon={<EditIcon />} label="Editor" />
           <Tab icon={<LayersIcon />} label="Layer Manager" />
+          <Tab icon={<HistoryIcon />} label="History" />
           <Tab icon={<SettingsIcon />} label="Settings" />
         </Tabs>
         <Box sx={{ flexGrow: 1 }}>
@@ -118,6 +121,8 @@ export default function App() {
             />
           )}
           {tab === 2 && <LayerManager layers={layers} />}
+          {tab === 3 && <HistoryTab />}
+          {tab === 4 && <div>Settings - Not implemented yet</div>}
         </Box>
       </Box>
     </Box>

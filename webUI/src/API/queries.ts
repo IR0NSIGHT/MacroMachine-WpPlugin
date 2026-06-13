@@ -61,6 +61,17 @@ export function useExecutionQueueQuery(
   });
 }
 
+export function useExecutionHistoryQuery(
+  options?: Omit<UseQueryOptions<ExecutionStateDTO[]>, "queryKey" | "queryFn">,
+) {
+  return useQuery({
+    queryKey: ["executionHistory"],
+    queryFn: () => api.getExecutionHistory(),
+    refetchInterval: 500,
+    ...options,
+  });
+}
+
 export function useExecutionStateQuery(
   options?: Omit<UseQueryOptions<ExecutionStateDTO>, "queryKey" | "queryFn">,
 ) {
