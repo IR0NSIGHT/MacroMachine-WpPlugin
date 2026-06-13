@@ -225,6 +225,7 @@ async function processQueue() {
         actionId: id,
         breakpoint: false,
         percentComplete: 0,
+        status: "IDLE",
       })),
     };
 

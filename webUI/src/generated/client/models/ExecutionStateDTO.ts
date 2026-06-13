@@ -63,6 +63,8 @@ export const ExecutionStateDTOStatusEnum = {
   Completed: "COMPLETED",
   Failed: "FAILED",
   Aborting: "ABORTING",
+  Queued: "QUEUED",
+  Preparing: "PREPARING",
 } as const;
 export type ExecutionStateDTOStatusEnum =
   (typeof ExecutionStateDTOStatusEnum)[keyof typeof ExecutionStateDTOStatusEnum];

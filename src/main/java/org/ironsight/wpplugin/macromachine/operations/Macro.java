@@ -5,12 +5,16 @@ import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO.
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCallback;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ILayerGetter;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.CustomLayer;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -115,13 +119,9 @@ public class Macro implements SaveableAction
 
         Dimension dim = context.dimension;
         Collection<ExecutionStatistic> statistics = new ArrayList<>();
+        List<MappingAction> executionSteps = List.of();
         try {
-            if (!dim.isEventsInhibited()) {
-                dim.setEventsInhibited(true);
-            }
-            dim.rememberChanges();
-
-            List<MappingAction> executionSteps = macroToFlatActions(macro, context.macros, context.actions);
+            executionSteps = macroToFlatActions(macro, context.macros, context.actions);
 
             boolean hasNullActions = executionSteps.stream().anyMatch(Objects::isNull);
             if (hasNullActions) {
@@ -131,9 +131,20 @@ public class Macro implements SaveableAction
             }
             callback.setAllActionsBeforeRun(executionSteps);
             // prepare action for dimension
-            for (MappingAction action : executionSteps) {
-                action.output.prepareForDimension(dim);
-                action.input.prepareForDimension(dim);
+            for (int i = 0; i < executionSteps.size(); i++) {
+                MappingAction action = executionSteps.get(i);
+                try {
+                    action.output.prepareForDimension(dim);
+                    action.input.prepareForDimension(dim);
+                } catch (Exception ex) {
+                    System.err.println(ex);
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    ex.printStackTrace(pw);
+                    callback.onError(i, action, sw.toString());
+
+                    throw ex;
+                }
             }
             for (Layer l : getUsedLayers(executionSteps, context.internalLayerManager, System.err::println)) {
                 // add new layer to this .world
@@ -144,18 +155,31 @@ public class Macro implements SaveableAction
             }
             context.actionFilterIO.prepareForDimension(dim);
 
-            // ----------------------- macro is ready and can be applied to map
-            statistics = ApplyAction.applyExecutionSteps(context, executionSteps, callback);
-            context.actionFilterIO.releaseAfterApplication();
-        } catch (Exception ex) {
+        } catch (Exception ex) { // Preparation failed
             System.err.println(ex);
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
             // GlobalActionPanel.ErrorPopUp(ex);
-            return statistics;
-        } finally {
+            callback.onError(0, null, sw.toString());
             callback.afterEverything();
-            if (dim.isEventsInhibited()) {
-                dim.setEventsInhibited(false);
-            }
+
+            return statistics;
+        }
+        // ----------------------- macro is ready and can be applied to map
+        callback.afterPreparation();
+        if (!dim.isEventsInhibited()) {
+            dim.setEventsInhibited(true);
+        }
+        dim.rememberChanges();
+        statistics = ApplyAction.applyExecutionSteps(context, executionSteps, callback);
+        context.actionFilterIO.releaseAfterApplication();
+        if (dim.isEventsInhibited()) {
+            dim.setEventsInhibited(false);
+        }
+        callback.afterEverything();
+        if (dim.isEventsInhibited()) {
+            dim.setEventsInhibited(false);
         }
         return statistics;
     }

@@ -10,6 +10,7 @@ import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyActionCall
 
 public interface MacroApplicator
 {
+    List<ExecutionStateDTO> getHistory();
     Collection<ExecutionStatistic> applyLayerAction(Macro macro, ApplyActionCallback callback);
 
     ExecutionStateDTO getCurrentState();
@@ -26,6 +27,11 @@ public interface MacroApplicator
         return new MacroApplicator() {
             private ExecutionStateDTO stateDTO = new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE);
             private LinkedList<UUID> queue = new LinkedList<>();
+
+            @Override
+            public List<ExecutionStateDTO> getHistory() {
+                return List.of();
+            }
 
             @Override
             public Collection<ExecutionStatistic> applyLayerAction(Macro macro, ApplyActionCallback callback) {

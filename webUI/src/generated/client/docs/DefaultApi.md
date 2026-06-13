@@ -2,28 +2,29 @@
 
 All URIs are relative to _/api_
 
-| Method                                                         | HTTP request                | Description                     |
-| -------------------------------------------------------------- | --------------------------- | ------------------------------- |
-| [**addToQueue**](DefaultApi.md#addtoqueue)                     | **POST** /execution/queue   |                                 |
-| [**deleteAction**](DefaultApi.md#deleteaction)                 | **DELETE** /actions/{id}    |                                 |
-| [**deleteMacro**](DefaultApi.md#deletemacro)                   | **DELETE** /macros/{id}     |                                 |
-| [**existsLayerInProject**](DefaultApi.md#existslayerinproject) | **GET** /layers/{id}        |                                 |
-| [**getActionById**](DefaultApi.md#getactionbyid)               | **GET** /actions/{id}       |                                 |
-| [**getActionLastChange**](DefaultApi.md#getactionlastchange)   | **GET** /actions/lastChange | Get last modification timestamp |
-| [**getAllActions**](DefaultApi.md#getallactions)               | **GET** /actions            |                                 |
-| [**getAllLayers**](DefaultApi.md#getalllayers)                 | **GET** /layers             |                                 |
-| [**getAllMacros**](DefaultApi.md#getallmacros)                 | **GET** /macros             | Get all macros                  |
-| [**getAppliers**](DefaultApi.md#getappliers)                   | **GET** /actions/appliers   |                                 |
-| [**getCurrentState**](DefaultApi.md#getcurrentstate)           | **GET** /execution/state    |                                 |
-| [**getDocs**](DefaultApi.md#getdocs)                           | **GET** /docs               |                                 |
-| [**getFilters**](DefaultApi.md#getfilters)                     | **GET** /actions/filters    |                                 |
-| [**getLayerIcon**](DefaultApi.md#getlayericon)                 | **GET** /layers/{id}/icon   |                                 |
-| [**getMacroById**](DefaultApi.md#getmacrobyid)                 | **GET** /macros/{id}        |                                 |
-| [**getMacroLastChange**](DefaultApi.md#getmacrolastchange)     | **GET** /macros/lastChange  | Get last modification timestamp |
-| [**getQueue**](DefaultApi.md#getqueue)                         | **GET** /execution/queue    |                                 |
-| [**options**](DefaultApi.md#options)                           | **OPTIONS** /               |                                 |
-| [**postAction**](DefaultApi.md#postaction)                     | **POST** /actions           |                                 |
-| [**postMacro**](DefaultApi.md#postmacro)                       | **POST** /macros            |                                 |
+| Method                                                         | HTTP request                     | Description                     |
+| -------------------------------------------------------------- | -------------------------------- | ------------------------------- |
+| [**addToQueue**](DefaultApi.md#addtoqueue)                     | **POST** /execution/queue        |                                 |
+| [**deleteAction**](DefaultApi.md#deleteaction)                 | **DELETE** /actions/{id}         |                                 |
+| [**deleteMacro**](DefaultApi.md#deletemacro)                   | **DELETE** /macros/{id}          |                                 |
+| [**existsLayerInProject**](DefaultApi.md#existslayerinproject) | **GET** /layers/{id}             |                                 |
+| [**getActionById**](DefaultApi.md#getactionbyid)               | **GET** /actions/{id}            |                                 |
+| [**getActionLastChange**](DefaultApi.md#getactionlastchange)   | **GET** /actions/lastChange      | Get last modification timestamp |
+| [**getAllActions**](DefaultApi.md#getallactions)               | **GET** /actions                 |                                 |
+| [**getAllLayers**](DefaultApi.md#getalllayers)                 | **GET** /layers                  |                                 |
+| [**getAllMacros**](DefaultApi.md#getallmacros)                 | **GET** /macros                  | Get all macros                  |
+| [**getAppliers**](DefaultApi.md#getappliers)                   | **GET** /actions/appliers        |                                 |
+| [**getCurrentState**](DefaultApi.md#getcurrentstate)           | **GET** /execution/state         |                                 |
+| [**getDocs**](DefaultApi.md#getdocs)                           | **GET** /docs                    |                                 |
+| [**getExecutionHistory**](DefaultApi.md#getexecutionhistory)   | **GET** /execution/state/history |                                 |
+| [**getFilters**](DefaultApi.md#getfilters)                     | **GET** /actions/filters         |                                 |
+| [**getLayerIcon**](DefaultApi.md#getlayericon)                 | **GET** /layers/{id}/icon        |                                 |
+| [**getMacroById**](DefaultApi.md#getmacrobyid)                 | **GET** /macros/{id}             |                                 |
+| [**getMacroLastChange**](DefaultApi.md#getmacrolastchange)     | **GET** /macros/lastChange       | Get last modification timestamp |
+| [**getQueue**](DefaultApi.md#getqueue)                         | **GET** /execution/queue         |                                 |
+| [**options**](DefaultApi.md#options)                           | **OPTIONS** /                    |                                 |
+| [**postAction**](DefaultApi.md#postaction)                     | **POST** /actions                |                                 |
+| [**postMacro**](DefaultApi.md#postmacro)                       | **POST** /macros                 |                                 |
 
 ## addToQueue
 
@@ -681,6 +682,57 @@ No authorization required
 
 - **Content-Type**: Not defined
 - **Accept**: `text/html`
+
+### HTTP response details
+
+| Status code | Description      | Response headers |
+| ----------- | ---------------- | ---------------- |
+| **0**       | default response | -                |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+## getExecutionHistory
+
+> Array&lt;ExecutionStateDTO&gt; getExecutionHistory()
+
+### Example
+
+```ts
+import { Configuration, DefaultApi } from "";
+import type { GetExecutionHistoryRequest } from "";
+
+async function example() {
+  console.log("🚀 Testing  SDK...");
+  const api = new DefaultApi();
+
+  try {
+    const data = await api.getExecutionHistory();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**Array&lt;ExecutionStateDTO&gt;**](ExecutionStateDTO.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
 
 ### HTTP response details
 

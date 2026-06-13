@@ -43,10 +43,6 @@ public class WebUIServer
                 (uuid) -> System.out.println("macro finished running: " + uuid));
 
         applicator.queueMacro(macros.queryAll().get(0).getUid());
-        applicator.queueMacro(macros.queryAll().get(0).getUid());
-        applicator.queueMacro(macros.queryAll().get(0).getUid());
-        applicator.queueMacro(macros.queryAll().get(0).getUid());
-        applicator.queueMacro(macros.queryAll().get(0).getUid());
 
         applicator.start();
 

@@ -590,6 +590,46 @@ export class DefaultApi extends runtime.BaseAPI {
   }
 
   /**
+   * Creates request options for getExecutionHistory without sending the request
+   */
+  async getExecutionHistoryRequestOpts(): Promise<runtime.RequestOpts> {
+    const queryParameters: any = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/execution/state/history`;
+
+    return {
+      path: urlPath,
+      method: "GET",
+      headers: headerParameters,
+      query: queryParameters,
+    };
+  }
+
+  /**
+   */
+  async getExecutionHistoryRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Array<ExecutionStateDTO>>> {
+    const requestOptions = await this.getExecutionHistoryRequestOpts();
+    const response = await this.request(requestOptions, initOverrides);
+
+    return new runtime.JSONApiResponse(response, (jsonValue) =>
+      jsonValue.map(ExecutionStateDTOFromJSON),
+    );
+  }
+
+  /**
+   */
+  async getExecutionHistory(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Array<ExecutionStateDTO>> {
+    const response = await this.getExecutionHistoryRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
    * Creates request options for getFilters without sending the request
    */
   async getFiltersRequestOpts(): Promise<runtime.RequestOpts> {

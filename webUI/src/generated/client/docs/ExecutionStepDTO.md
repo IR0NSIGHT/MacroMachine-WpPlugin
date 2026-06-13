@@ -9,6 +9,8 @@ Represents a single action step within a macro execution
 | `actionId`        | string  |
 | `breakpoint`      | boolean |
 | `percentComplete` | number  |
+| `status`          | string  |
+| `error`           | string  |
 
 ## Example
 
@@ -20,6 +22,8 @@ const example = {
   "actionId": 550e8400-e29b-41d4-a716-446655440000,
   "breakpoint": false,
   "percentComplete": 42.5,
+  "status": null,
+  "error": null,
 } satisfies ExecutionStepDTO
 
 console.log(example)

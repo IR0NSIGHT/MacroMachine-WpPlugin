@@ -24,11 +24,7 @@ export function createApi(config?: ConfigurationParameters) {
   return new GeneratedDefaultApi(cfg);
 }
 
-let api = createApi();
-
-export function setApi(newApi: GeneratedDefaultApi) {
-  api = newApi;
-}
+const api = createApi();
 
 export { api };
 
@@ -54,7 +50,7 @@ export async function fetchExecutionQueue(): Promise<GeneratedExecutionQueueDTO>
 }
 
 export async function fetchExecutionState(): Promise<GeneratedExecutionStateDTO> {
-  return safeCall(() => api.getCurrentState());
+  return api.getCurrentState();
 }
 
 export async function deleteMacro(id: string): Promise<void> {

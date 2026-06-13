@@ -9,6 +9,8 @@ import org.ironsight.wpplugin.macromachine.operations.MacroApplicator;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 
+import java.util.List;
+
 @Path("/execution")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -31,6 +33,12 @@ public class ExecutionResource
     }
 
     // DELETE and POST state left out on purpose
+
+    @GET
+    @Path("/state/history")
+    public List<ExecutionStateDTO> getExecutionHistory() {
+        return applicator.getHistory();
+    }
 
     @GET
     @Path("/queue")

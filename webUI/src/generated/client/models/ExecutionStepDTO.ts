@@ -37,7 +37,35 @@ export interface ExecutionStepDTO {
    * @memberof ExecutionStepDTO
    */
   percentComplete: number;
+  /**
+   * state of the execution
+   * @type {ExecutionStepDTOStatusEnum}
+   * @memberof ExecutionStepDTO
+   */
+  status: ExecutionStepDTOStatusEnum;
+  /**
+   * error description
+   * @type {string}
+   * @memberof ExecutionStepDTO
+   */
+  error?: string;
 }
+
+/**
+ * @export
+ */
+export const ExecutionStepDTOStatusEnum = {
+  Idle: "IDLE",
+  Running: "RUNNING",
+  Paused: "PAUSED",
+  Completed: "COMPLETED",
+  Failed: "FAILED",
+  Aborting: "ABORTING",
+  Queued: "QUEUED",
+  Preparing: "PREPARING",
+} as const;
+export type ExecutionStepDTOStatusEnum =
+  (typeof ExecutionStepDTOStatusEnum)[keyof typeof ExecutionStepDTOStatusEnum];
 
 /**
  * Check if a given object implements the ExecutionStepDTO interface.
@@ -46,6 +74,7 @@ export function instanceOfExecutionStepDTO(value: object): value is ExecutionSte
   if (!("actionId" in value) || value["actionId"] === undefined) return false;
   if (!("breakpoint" in value) || value["breakpoint"] === undefined) return false;
   if (!("percentComplete" in value) || value["percentComplete"] === undefined) return false;
+  if (!("status" in value) || value["status"] === undefined) return false;
   return true;
 }
 
@@ -64,6 +93,8 @@ export function ExecutionStepDTOFromJSONTyped(
     actionId: json["actionId"],
     breakpoint: json["breakpoint"],
     percentComplete: json["percentComplete"],
+    status: json["status"],
+    error: json["error"] == null ? undefined : json["error"],
   };
 }
 
@@ -83,5 +114,7 @@ export function ExecutionStepDTOToJSONTyped(
     actionId: value["actionId"],
     breakpoint: value["breakpoint"],
     percentComplete: value["percentComplete"],
+    status: value["status"],
+    error: value["error"],
   };
 }

@@ -229,6 +229,26 @@
         }
       }
     },
+    "/execution/state/history" : {
+      "get" : {
+        "operationId" : "getExecutionHistory",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ExecutionStateDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/layers/{id}" : {
       "get" : {
         "operationId" : "existsLayerInProject",
@@ -608,13 +628,13 @@
           "status" : {
             "type" : "string",
             "description" : "state of the execution",
-            "enum" : [ "IDLE", "RUNNING", "PAUSED", "COMPLETED", "FAILED", "ABORTING" ]
+            "enum" : [ "IDLE", "RUNNING", "PAUSED", "COMPLETED", "FAILED", "ABORTING", "QUEUED", "PREPARING" ]
           }
         },
         "description" : "Represents the application's execution state"
       },
       "ExecutionStepDTO" : {
-        "required" : [ "actionId", "breakpoint", "percentComplete" ],
+        "required" : [ "actionId", "breakpoint", "percentComplete", "status" ],
         "type" : "object",
         "properties" : {
           "actionId" : {
@@ -637,6 +657,15 @@
             "description" : "Completion percentage of this step, from 0 to 100",
             "format" : "float",
             "example" : 42.5
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "state of the execution",
+            "enum" : [ "IDLE", "RUNNING", "PAUSED", "COMPLETED", "FAILED", "ABORTING", "QUEUED", "PREPARING" ]
+          },
+          "error" : {
+            "type" : "string",
+            "description" : "error description"
           }
         },
         "description" : "Represents a single action step within a macro execution"

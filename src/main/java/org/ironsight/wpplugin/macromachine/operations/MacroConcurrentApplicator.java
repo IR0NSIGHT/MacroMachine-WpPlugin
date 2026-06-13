@@ -6,6 +6,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
@@ -21,12 +22,13 @@ import org.pepsoft.worldpainter.Dimension;
 
 public class MacroConcurrentApplicator implements MacroApplicator
 {
+    private final LinkedList<ExecutionStateDTO> pastRuns = new LinkedList<>();
     private final MacroContainer macros;
     private final MappingActionContainer actions;
     private final Supplier<Dimension> getDimension;
     private ExecutionStateDTO currentExecutionState = new ExecutionStateDTO(null, List.of(), 0, ExecutionStatus.IDLE);
     private Queue<UUID> queue = new ConcurrentLinkedQueue<>();
-    private final int extraSuspendMillis = 10;
+    private final int extraSuspendMillis = 0;
     private Consumer<UUID> onMacroFinished;
 
     public MacroConcurrentApplicator(MacroContainer macros, MappingActionContainer actions,
@@ -56,6 +58,11 @@ public class MacroConcurrentApplicator implements MacroApplicator
     }
 
     @Override
+    public List<ExecutionStateDTO> getHistory() {
+        return pastRuns;
+    }
+
+    @Override
     public Collection<ExecutionStatistic> applyLayerAction(Macro macro, ApplyActionCallback callback) {
         ApplyAction.ApplicationContext context = new ApplyAction.ApplicationContext(getDimension.get(), macros, actions,
                 InputOutputProvider.INSTANCE, new CustomLayerControllerWrapper(), ActionFilterIO.instance); // FIXME
@@ -65,7 +72,6 @@ public class MacroConcurrentApplicator implements MacroApplicator
                                                                                                             // static
                                                                                                             // access
                                                                                                             // here
-        updateState(new ExecutionStateDTO(macro.getUid(), List.of(), 0, ExecutionStatus.RUNNING));
         return Macro.applyMacroToDimension(context, macro, callback);
     }
 
@@ -80,8 +86,8 @@ public class MacroConcurrentApplicator implements MacroApplicator
     @Override
     public void updateState(ExecutionStateDTO newState) {
         synchronized (currentExecutionState) {
-            if (currentExecutionState.status() != newState.status())
-                System.out.println("UPDATE EXECUTION STATE TO:" + newState.status() + " for " + newState.executionId());
+            // if (currentExecutionState.status() != newState.status())
+            System.out.println("UPDATE EXECUTION STATE TO:\n" + newState);
             this.currentExecutionState = newState;
         }
     }
@@ -94,7 +100,7 @@ public class MacroConcurrentApplicator implements MacroApplicator
         final var nextUID = queue.poll();
         var next = macros.queryById(nextUID);
         if (next != null) {
-            updateState(new ExecutionStateDTO(nextUID, List.of(), 0, ExecutionStatus.RUNNING));
+            updateState(new ExecutionStateDTO(nextUID, List.of(), 0, ExecutionStatus.PREPARING));
             SwingUtilities.invokeLater(() -> {
                 // System.out.println("Execute macro: " + next.getName() + "(" + next.getUid() +
                 // ")");
@@ -125,72 +131,125 @@ public class MacroConcurrentApplicator implements MacroApplicator
 
     @Override
     public void applyMacroSync(Macro macro) {
-        ApplyActionCallback callback = new ApplyActionCallback() {
-            @Override
-            public void setProgressOfAction(int percent) {
-                var state = getCurrentState();
-
-                var steps = new ArrayList<>(state.steps());
-
-                int idx = state.currentStepIndex();
-                if (steps.size() <= idx)
-                    return;
-                var currentStep = steps.get(idx);
-
-                var updatedStep = new ExecutionStepDTO(currentStep.actionId(), currentStep.breakpoint(), percent);
-
-                steps.set(idx, updatedStep);
-
-                updateState(new ExecutionStateDTO(state.executionId(), steps, idx, state.status()));
-            }
-
-            @Override
-            public boolean isActionAbort() {
-                return getCurrentState().status().equals(ExecutionStatus.ABORTING);
-            }
-
-            @Override
-            public void beforeEachAction(MappingAction action, Dimension dimension) {
-                var currentState = getCurrentState();
-                updateState(new ExecutionStateDTO(currentState.executionId(), currentState.steps(),
-                        Math.min(currentState.steps().size() - 1, currentState.currentStepIndex() + 1),
-                        currentState.status()));
-            }
-
-            @Override
-            public void afterEachTile(int tileX, int tileY) {
-                try {
-                    Thread.sleep(extraSuspendMillis);
-
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            @Override
-            public void afterEachAction(ExecutionStatistic statistic) {
-            }
-
-            @Override
-            public boolean isUpdateMapAfterEachAction() {
-                return false; // FIXME will be necessary for breakpoint usage
-            }
-
-            @Override
-            public void setAllActionsBeforeRun(List<MappingAction> steps) {
-                var stepDTOS = steps.stream().map(action -> new ExecutionStepDTO(action.getUid(), false, 0)).toList();
-
-                updateState(new ExecutionStateDTO(getCurrentState().executionId(), stepDTOS,
-                        getCurrentState().currentStepIndex(), getCurrentState().status()));
-            }
-
-            @Override
-            public void afterEverything() {
-                updateState(new ExecutionStateDTO(getCurrentState().executionId(), List.of(), 0,
-                        ExecutionStatus.COMPLETED));
-            }
-        };
-
+        ApplyActionCallback callback = new MyApplyActionCallback();
         applyLayerAction(macro, callback);
+    }
+
+    private class MyApplyActionCallback implements ApplyActionCallback
+    {
+        @Override
+        public void afterPreparation() {
+            var currentState = getCurrentState();
+            updateState(new ExecutionStateDTO(currentState.executionId(), currentState.steps(),
+                    currentState.currentStepIndex(), ExecutionStatus.RUNNING));
+        }
+
+        @Override
+        public void onError(int stepIdx, MappingAction action, String error) {
+            var currentState = getCurrentState();
+            var steps = currentState.steps()
+                    .stream()
+                    .map(s -> s.actionId() == action.getUid()
+                            ? new ExecutionStepDTO(s.actionId(), s.breakpoint(), 100, ExecutionStatus.FAILED, error)
+                            : s)
+                    .toList();
+            updateState(new ExecutionStateDTO(currentState.executionId(), steps, currentState.currentStepIndex(),
+                    ExecutionStatus.FAILED));
+        }
+
+        @Override
+        public void setProgressOfAction(int percent, MappingAction action) {
+            var state = getCurrentState();
+
+            var steps = new ArrayList<>(state.steps());
+
+            int idx = state.currentStepIndex();
+            if (steps.size() <= idx)
+                return;
+
+            var currentStep = steps.get(idx);
+            assert currentStep.actionId() == action.getUid();
+            if (currentStep.percentComplete() == percent)
+                return; // nothing to do
+
+            var updatedStep = new ExecutionStepDTO(currentStep.actionId(), currentStep.breakpoint(), percent,
+                    currentStep.status(), currentStep.error());
+
+            steps.set(idx, updatedStep);
+
+            updateState(new ExecutionStateDTO(state.executionId(), steps, idx, state.status()));
+        }
+
+        @Override
+        public boolean isActionAbort() {
+            return getCurrentState().status().equals(ExecutionStatus.ABORTING)
+                    || getCurrentState().status().equals(ExecutionStatus.FAILED);
+        }
+
+        @Override
+        public void beforeEachAction(MappingAction action, Dimension dimension) {
+            var currentState = getCurrentState();
+            var steps = currentState.steps()
+                    .stream()
+                    .map(s -> s.actionId() == action.getUid()
+                            ? new ExecutionStepDTO(s.actionId(), s.breakpoint(), 0,
+                                    s.status() == ExecutionStatus.QUEUED ? ExecutionStatus.RUNNING : s.status(), null)
+                            : s)
+                    .toList();
+            updateState(new ExecutionStateDTO(currentState.executionId(), steps, currentState.currentStepIndex(),
+                    currentState.status()));
+        }
+
+        @Override
+        public void afterEachTile(int tileX, int tileY) {
+            try {
+                Thread.sleep(extraSuspendMillis);
+
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void afterEachAction(ExecutionStatistic statistic, MappingAction action) {
+            var currentState = getCurrentState();
+            Function<ExecutionStepDTO, ExecutionStepDTO> updateStep = (s) -> {
+                return new ExecutionStepDTO(s.actionId(), s.breakpoint(), 100,
+                        s.status() == ExecutionStatus.RUNNING ? ExecutionStatus.COMPLETED : s.status(), s.error());
+            };
+            var steps = currentState.steps()
+                    .stream()
+                    .map(s -> s.actionId() == action.getUid() ? updateStep.apply(s) : s)
+                    .toList();
+            updateState(new ExecutionStateDTO(currentState.executionId(), steps, currentState.currentStepIndex(),
+                    currentState.status()));
+        }
+
+        @Override
+        public boolean isUpdateMapAfterEachAction() {
+            return false; // FIXME will be necessary for breakpoint usage
+        }
+
+        @Override
+        public void setAllActionsBeforeRun(List<MappingAction> steps) {
+            var stepDTOS = steps.stream()
+                    .map(action -> new ExecutionStepDTO(action.getUid(), false, 0, ExecutionStatus.QUEUED, null))
+                    .toList();
+
+            updateState(new ExecutionStateDTO(getCurrentState().executionId(), stepDTOS,
+                    getCurrentState().currentStepIndex(), getCurrentState().status()));
+        }
+
+        @Override
+        public void afterEverything() {
+            var currentState = getCurrentState();
+            var finalState = new ExecutionStateDTO(currentState.executionId(), currentState.steps(),
+                    currentState.steps().size() - 1,
+                    currentState.status() == ExecutionStatus.RUNNING
+                            ? ExecutionStatus.COMPLETED
+                            : currentState.status());
+            updateState(finalState);
+            pastRuns.add(finalState);
+        }
     }
 }

@@ -22,7 +22,17 @@ public class UserApplyActionCallback implements ApplyActionCallback
     }
 
     @Override
-    public void setProgressOfAction(int percent) {
+    public void afterPreparation() {
+
+    }
+
+    @Override
+    public void onError(int stepIdx, MappingAction action, String error) {
+
+    }
+
+    @Override
+    public void setProgressOfAction(int percent, MappingAction action) {
         debugUI.setProgessTo(actionIdx, percent, totalActions);
     }
 
@@ -57,7 +67,7 @@ public class UserApplyActionCallback implements ApplyActionCallback
     }
 
     @Override
-    public void afterEachAction(ExecutionStatistic statistic) {
+    public void afterEachAction(ExecutionStatistic statistic, MappingAction action) {
         debugUI.setProgessTo(actionIdx, 100, totalActions);
 
         if (statistic != null) {

@@ -69,11 +69,13 @@ export const RunningMacro: Story = {
           actionId: "ccdb9830-a63a-4b35-a6fb-e55ed4baef15",
           breakpoint: false,
           percentComplete: 100,
+          status: "IDLE",
         },
         {
           actionId: "8526cdb2-bb3c-4ce3-b6b7-9eeeb5ce2bef",
           breakpoint: true,
           percentComplete: 45,
+          status: "IDLE",
         },
       ],
       currentStepIndex: 1,

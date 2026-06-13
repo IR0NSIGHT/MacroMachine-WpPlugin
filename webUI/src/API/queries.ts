@@ -15,6 +15,7 @@ import {
   deleteMacro,
   deleteAction,
   api,
+  fetchExecutionState,
 } from "./fetch";
 
 export const queryKeys = {
@@ -54,7 +55,7 @@ export function useExecutionQueueQuery(
   return useQuery({
     queryKey: queryKeys.executionQueue,
     queryFn: fetchExecutionQueue,
-    refetchInterval: 250, // 4 times/sec
+    refetchInterval: 1000,
     refetchIntervalInBackground: true,
     ...options,
   });
@@ -65,8 +66,8 @@ export function useExecutionStateQuery(
 ) {
   return useQuery({
     queryKey: queryKeys.executionState,
-    queryFn: api.getCurrentState,
-    refetchInterval: 250, // 4 times/sec
+    queryFn: fetchExecutionState,
+    refetchInterval: 100,
     refetchIntervalInBackground: true,
     ...options,
   });
