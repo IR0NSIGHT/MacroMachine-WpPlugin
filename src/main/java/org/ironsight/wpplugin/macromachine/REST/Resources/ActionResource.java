@@ -56,7 +56,7 @@ public class ActionResource
                             .withDescription("Default simple filter")
                             .withName("Filter by: " + input.getName());
                     if (!input.isDiscrete()) {
-                        return FilterUtils.asRangeFilter(filterAction, input.getMinValue(), (input.getMaxValue()+input.getMinValue()/2), true);
+                        return FilterUtils.asRangeFilter(filterAction, input.getMinValue(), ((input.getMaxValue()+input.getMinValue())/2), true);
                     } else {
                         return filterAction.withNewPoints(Arrays.stream(input.getAllInputValues())
                                 .mapToObj(v -> new MappingPoint(v,
