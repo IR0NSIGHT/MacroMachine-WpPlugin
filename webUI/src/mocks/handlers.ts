@@ -6,12 +6,16 @@ import mock_actions from "./data/actions.json";
 import mock_macros from "./data/macros.json";
 import mock_state from "./data/state.json";
 import mock_queue from "./data/queue.json";
+import defaultApplyActions from "@/assets/defaultApplyActions.json";
+import defaultFilters from "@/assets/defaultFilters.json";
 
 /**
  * Replace these with your actual hardcoded JSON fixtures later
  */
 const actions: ActionDTO[] = mock_actions as ActionDTO[];
 const macros: MacroDTO[] = mock_macros;
+const applyActions: ActionDTO[] = defaultApplyActions as ActionDTO[];
+const filters: ActionDTO[] = defaultFilters as ActionDTO[];
 
 let executionQueue: ExecutionQueueDTO = mock_queue;
 
@@ -26,6 +30,20 @@ export const handlers = [
    */
   http.get("/api/actions", () => {
     return HttpResponse.json(actions);
+  }),
+
+  /**
+   * GET /actions/filters
+   */
+  http.get("/api/actions/filters", () => {
+    return HttpResponse.json(filters);
+  }),
+
+  /**
+   * GET /actions/appliers
+   */
+  http.get("/api/actions/appliers", () => {
+    return HttpResponse.json(applyActions);
   }),
 
   /**

@@ -8,7 +8,7 @@ import {
   InputBase,
   styled,
 } from "@mui/material";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ActionDetailsDialog } from "./components/MacroList/ActionDetailsDialog";
 import MacroCard from "./components/MacroList/MacroCard";
 import { MacroDetailsDialog } from "./components/MacroList/MacroDetailsDialog";
@@ -17,6 +17,7 @@ import Item from "@mui/material/Grid";
 import { MacroExecuteRequester, runnableMacro, toRunnable, uuid } from "./features/Execution";
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
+import { PageLoadingSpinner } from "./PageLoadingSpinner";
 
 const imageURLs = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400&auto=format&fit=crop",
@@ -135,43 +136,64 @@ export const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
+const searchFilter = (search: string) => {
+  return (Macro: MacroDTO) => {
+    return (
+      Macro.name.toLowerCase().includes(search.toLowerCase()) ||
+      Macro.description.toLowerCase().includes(search.toLowerCase())
+    );
+  };
+};
+
 export function MacroGrid({
   macros,
   actions,
   executionState,
   onRequestExecution,
   onDeleteMacro,
-  search,
-  setSearch,
 }: {
   macros?: MacroDTO[];
   actions?: ActionDTO[];
   executionState?: ExecutionStateDTO;
   onRequestExecution: MacroExecuteRequester;
   onDeleteMacro: (uuid: uuid) => void;
-  search: string;
-  setSearch: (newValue: string) => void;
 }) {
+  if (!macros || !actions || !executionState) {
+    return <PageLoadingSpinner />;
+  }
+
+  const [search, setSearch] = useState("");
   const [hideNested, setHideNested] = useState(false);
   const [viewedMacro, setViewedMacro] = useState<runnableMacro | undefined>(undefined);
   const [viewAction, setViewAction] = useState<ActionDTO | undefined>(undefined);
 
-  const macroSet = new Set<string>();
-  if (!macros || !actions || !executionState) {
-    return <Typography>Loading...</Typography>;
-  }
-  macros.forEach((m) => macroSet.add(m.uid));
+  const nestedMacroUIDs = useMemo(() => {
+    const nestedMacroUIDs = new Set<string>();
+    const macroSet = new Set<string>();
 
-  const uuidToMacroOrAction = new Map<string, MacroDTO | ActionDTO>();
-  macros.forEach((macro) => uuidToMacroOrAction.set(macro.uid, macro)); //FIXME useMemo ? or sth?
-  actions.forEach((action) => uuidToMacroOrAction.set(action.uid, action));
+    macros.forEach((m) => macroSet.add(m.uid));
+    const uuidToMacroOrAction = new Map<string, MacroDTO | ActionDTO>();
+    macros.forEach((macro) => uuidToMacroOrAction.set(macro.uid, macro)); //FIXME useMemo ? or sth?
+    actions.forEach((action) => uuidToMacroOrAction.set(action.uid, action));
+    macros.forEach((macro) =>
+      macro.executionUUIDs
+        .filter((uid) => macroSet.has(uid))
+        .forEach((uid) => nestedMacroUIDs.add(uid)),
+    ); //FIXME useMemo ? or sth?
+    return nestedMacroUIDs;
+  }, [macros]);
 
-  const nestedMacroUIDs = new Set<string>();
-  macros.forEach((macro) =>
-    macro.executionUUIDs
-      .filter((uid) => macroSet.has(uid))
-      .forEach((uid) => nestedMacroUIDs.add(uid)),
-  ); //FIXME useMemo ? or sth?
+  const sortedFilteredMacros = useMemo(() => {
+    const filterHideNested = (macro: MacroDTO) => {
+      const isNested = nestedMacroUIDs.has(macro.uid);
+      return hideNested ? !isNested : true;
+    };
+
+    return macros
+      .filter(searchFilter(search))
+      .filter(filterHideNested)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [macros, search]);
 
   const onShare = (macro: MacroDTO) => {
     console.log("USER WANTS TO SHARE THE MARCO", macro.name);
@@ -186,11 +208,6 @@ export function MacroGrid({
     setViewedMacro(runnable);
   };
 
-  const filterHideNested = (macro: MacroDTO) => {
-    const isNested = nestedMacroUIDs.has(macro.uid);
-    return hideNested ? !isNested : true;
-  };
-
   const uidToImageURL = (uid: string): string => {
     function uuidToShortNumber(uuid: string): number {
       return parseInt(uuid.replace(/-/g, "").slice(0, 12), 16);
@@ -198,6 +215,7 @@ export function MacroGrid({
     const numberVal: number = uuidToShortNumber(uid);
     return imageURLs[numberVal % imageURLs.length];
   };
+
   return (
     <Box
       sx={{
@@ -245,34 +263,31 @@ export function MacroGrid({
           </Typography>
         )}
         <Grid container spacing={{ xs: 1, md: 4 }}>
-          {macros
-            .filter(filterHideNested)
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((macro) => (
-              <Grid
-                key={macro.uid}
-                size={{
-                  xs: 12,
-                  sm: 6,
-                  md: 4,
-                  lg: 3,
-                }}
-              >
-                <Item>
-                  <MacroCard
-                    macro={macro}
-                    execution={executionState}
-                    imageURL={uidToImageURL(macro.uid)}
-                    onRequestExecution={() => onRequestExecution(macro.uid, false)}
-                    onView={() => onView(macro)}
-                    onShare={() => onShare(macro)}
-                    onEdit={() => onEdit(macro)}
-                    onDelete={() => onDeleteMacro(macro.uid)}
-                    onSetFavorite={alert}
-                  />
-                </Item>
-              </Grid>
-            ))}
+          {sortedFilteredMacros.map((macro) => (
+            <Grid
+              key={macro.uid}
+              size={{
+                xs: 12,
+                sm: 6,
+                md: 4,
+                lg: 3,
+              }}
+            >
+              <Item>
+                <MacroCard
+                  macro={macro}
+                  execution={executionState}
+                  imageURL={uidToImageURL(macro.uid)}
+                  onRequestExecution={() => onRequestExecution(macro.uid, false)}
+                  onView={() => onView(macro)}
+                  onShare={() => onShare(macro)}
+                  onEdit={() => onEdit(macro)}
+                  onDelete={() => onDeleteMacro(macro.uid)}
+                  onSetFavorite={alert}
+                />
+              </Item>
+            </Grid>
+          ))}
         </Grid>
 
         <MacroDetailsDialog

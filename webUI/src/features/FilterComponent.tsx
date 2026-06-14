@@ -136,82 +136,91 @@ export const RangeFilterInlineEditor = ({
       sx={{
         display: "flex",
         flexDirection: "row",
-        alignItems: "center",
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", width: "50%" }}>
-        <Switch
-          checked={item.active}
-          onChange={(e) => {
-            setItem({ ...item, active: e.target.checked });
-          }}
-        />
-        <Typography
-          sx={{ color: !item.active ? theme.palette.text.disabled : theme.palette.text.secondary }}
-        >
-          Filter by
-          <span
-            style={{
-              color: !item.active ? theme.palette.text.disabled : theme.palette.text.primary,
-            }}
-          >
-            {" "}
-            {item.input.displayName}{" "}
-          </span>
-          {insideRangeFilter ? "inside range" : "outside range"} {valueToString(value[0])} to{" "}
-          {valueToString(value[1])}
-        </Typography>
-      </Box>
+      <Switch
+        checked={item.active}
+        onChange={(e) => {
+          setItem({ ...item, active: e.target.checked });
+        }}
+      />
       <Box
         sx={{
-          width: 300,
-          flexShrink: 0,
-          alignItems: "center",
           display: "flex",
-          mx: 1,
-          gap: 1,
+          flexDirection: "column",
+          width: "100%",
         }}
       >
-        <Tooltip title={"Invert filter"}>
-          <IconButton
-            color="primary"
-            size="small"
-            disabled={!item.active}
-            onClick={() => setItem(invertFilter(item))}
+        <Box sx={{ display: "flex", alignItems: "center", width: "50%" }}>
+          <Typography
+            sx={{
+              color: !item.active ? theme.palette.text.disabled : theme.palette.text.secondary,
+            }}
           >
-            <SwitchLeftIcon />
-          </IconButton>
-        </Tooltip>
-        <Slider
-          value={value}
-          onChange={handleChange}
-          min={item.input.min}
-          max={item.input.max}
-          step={1}
-          valueLabelDisplay="auto"
-          valueLabelFormat={(v) => valueToString(v)}
-          disabled={!item.active}
-          sx={(theme) => ({
-            alignSelf: "center",
-            "& .MuiSlider-rail": {
-              backgroundColor: railColor,
-              opacity: 1,
-            },
+            Filter by
+            <span
+              style={{
+                color: !item.active ? theme.palette.text.disabled : theme.palette.text.primary,
+              }}
+            >
+              {" "}
+              {item.input.displayName}{" "}
+            </span>
+            {insideRangeFilter ? "inside range" : "outside range"} {valueToString(value[0])} to{" "}
+            {valueToString(value[1])}
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            width: 300,
+            flexShrink: 0,
+            alignItems: "center",
+            display: "flex",
+            mx: 1,
+            gap: 1,
+          }}
+        >
+          <Tooltip title={"Invert filter"}>
+            <IconButton
+              color="primary"
+              size="small"
+              disabled={!item.active}
+              onClick={() => setItem(invertFilter(item))}
+            >
+              <SwitchLeftIcon />
+            </IconButton>
+          </Tooltip>
+          <Slider
+            value={value}
+            onChange={handleChange}
+            min={item.input.min}
+            max={item.input.max}
+            step={1}
+            valueLabelDisplay="auto"
+            valueLabelFormat={(v) => valueToString(v)}
+            disabled={!item.active}
+            sx={(theme) => ({
+              alignSelf: "center",
+              "& .MuiSlider-rail": {
+                backgroundColor: railColor,
+                opacity: 1,
+              },
 
-            "& .MuiSlider-track": {
-              backgroundColor: trackColor,
-              borderColor: trackColor,
-              opacity: 1,
-            },
+              "& .MuiSlider-track": {
+                backgroundColor: trackColor,
+                borderColor: trackColor,
+                opacity: 1,
+              },
 
-            "& .MuiSlider-thumb": {
-              backgroundColor: !item.active
-                ? theme.palette.text.disabled
-                : theme.palette.primary.main,
-              opacity: 1,
-            },
-          })}
-        />
+              "& .MuiSlider-thumb": {
+                backgroundColor: !item.active
+                  ? theme.palette.text.disabled
+                  : theme.palette.primary.main,
+                opacity: 1,
+              },
+            })}
+          />
+        </Box>
       </Box>
     </Box>
   );

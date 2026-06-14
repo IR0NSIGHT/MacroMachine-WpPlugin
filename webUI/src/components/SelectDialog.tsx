@@ -67,7 +67,7 @@ export function PopupDialog({
 
 export type SelectDialogProps<T> = {
   open: boolean;
-  items: T[];
+  items?: T[];
   getId: (item: T) => string;
   getLabel: (item: T) => string;
   onClose: (selected: T[]) => void;
@@ -108,28 +108,30 @@ export function SelectDialog<T>({
 
   return (
     <PopupDialog open={open} onAbort={abort} onConfirm={confirm} title={title}>
-      {items.length === 0 && <Box>No items available</Box>}
+      {!items || items.length === 0 ? <Box>No items available</Box> : null}
 
-      <Stack spacing={0}>
-        {items
-          .sort((a, b) => getLabel(a).localeCompare(getLabel(b)))
-          .map((item) => {
-            const id = getId(item);
-            const isSelected = selected.some((s) => getId(s) === id);
+      {items && (
+        <Stack spacing={0}>
+          {items
+            .sort((a, b) => getLabel(a).localeCompare(getLabel(b)))
+            .map((item) => {
+              const id = getId(item);
+              const isSelected = selected.some((s) => getId(s) === id);
 
-            return (
-              <Box key={id}>
-                <Chip
-                  label={getLabel(item)}
-                  size="small"
-                  color={isSelected ? "primary" : "default"}
-                  variant={isSelected ? "filled" : "outlined"}
-                  onClick={() => toggleItem(item)}
-                />
-              </Box>
-            );
-          })}
-      </Stack>
+              return (
+                <Box key={id}>
+                  <Chip
+                    label={getLabel(item)}
+                    size="small"
+                    color={isSelected ? "primary" : "default"}
+                    variant={isSelected ? "filled" : "outlined"}
+                    onClick={() => toggleItem(item)}
+                  />
+                </Box>
+              );
+            })}
+        </Stack>
+      )}
     </PopupDialog>
   );
 }

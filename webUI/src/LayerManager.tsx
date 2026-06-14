@@ -19,6 +19,7 @@ import { LayerDTO } from "./generated/client";
 import { useEffect, useMemo, useState } from "react";
 import { Search, SearchIconWrapper, StyledInputBase } from "./MacroGrid";
 import SearchIcon from "@mui/icons-material/Search";
+import { PageLoadingSpinner } from "./PageLoadingSpinner";
 
 export const LayerManager = ({ layers }: { layers?: LayerDTO[] }) => {
   const [onlyProject, setOnlyProject] = useState(false);
@@ -30,20 +31,7 @@ export const LayerManager = ({ layers }: { layers?: LayerDTO[] }) => {
   const [page, setPage] = useState(0);
 
   if (!layers) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100%",
-        }}
-      >
-        <Typography variant="h6" color="text.secondary">
-          Loading layers...
-        </Typography>
-      </Box>
-    );
+    return <PageLoadingSpinner />;
   }
 
   const sortedFilteredLayers = useMemo(() => {

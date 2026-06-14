@@ -13,6 +13,7 @@ import { useExecutionHistoryQuery } from "./API/queries";
 import { ExecutionStateDTO } from "./types/DTO";
 import { ExecutionStateDTOStatusEnum } from "./generated/client/models/ExecutionStateDTO";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { PageLoadingSpinner } from "./PageLoadingSpinner";
 
 export const HistoryTab = () => {
   const { data: history, isLoading, isError, error } = useExecutionHistoryQuery();
@@ -42,13 +43,15 @@ export const HistoryViewer = ({ data: history, isLoading, isError, error }: Hist
     }
   };
 
+  if (isLoading) {
+    return <PageLoadingSpinner />;
+  }
+
   return (
     <Box sx={{ p: 2, maxWidth: 1200 }}>
       <Typography variant="h5" gutterBottom>
         Execution History
       </Typography>
-
-      {isLoading && <Typography>Loading...</Typography>}
 
       {isError && <Typography color="error">Error: {String(error)}</Typography>}
 

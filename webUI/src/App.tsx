@@ -24,8 +24,6 @@ import {
 import { HistoryTab } from "./HistoryViewer";
 
 export default function App() {
-  const [search, setSearch] = useState("");
-
   const [tab, setTab] = useState(0);
 
   const {
@@ -108,8 +106,6 @@ export default function App() {
               executionState={executionState}
               onRequestExecution={onRequestExecution}
               onDeleteMacro={deleteMacro}
-              search={search}
-              setSearch={setSearch}
             />
           )}
           {tab === 1 && (

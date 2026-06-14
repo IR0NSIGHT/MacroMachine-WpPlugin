@@ -13,9 +13,7 @@ import {
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SaveIcon from "@mui/icons-material/Save";
 import { ActionDTO, MacroDTO } from "@/types/DTO";
-import { useEffect, useState } from "react";
-import filters from "../assets/defaultFilters.json";
-import applyActions from "../assets/defaultApplyActions.json";
+import { useEffect, useMemo, useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import { filterAutoName, invertFilter, isFilter } from "@/features/Filters";
@@ -31,7 +29,8 @@ import AddIcon from "@mui/icons-material/Add";
 import { SelectDialog } from "./SelectDialog";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 import { FilterInlineEditor } from "@/features/FilterComponent";
-import { api } from "@/API/fetch";
+import { useDefaultAppliersQuery, useDefaultFiltersQuery } from "@/API/queries";
+import { PageLoadingSpinner } from "@/PageLoadingSpinner";
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
   onExecute: MacroExecuteRequester;
@@ -45,6 +44,23 @@ type StepItemProps = {
   deleteItem: () => void;
   openEditorFor: (item: StepItemType) => void;
 };
+
+function constructRunnable(
+  sortedFiltersArg: StepItemType[],
+  sortedAppliersArg: StepItemType[],
+  uuid: string,
+  title?: string,
+  description?: string,
+): runnableMacro {
+  const actions = constructActions(sortedFiltersArg, sortedAppliersArg);
+  const runnable: runnableMacro = {
+    steps: actions,
+    name: title ?? "My new global operation macro " + uuid,
+    description: description ?? "",
+    uid: uuid,
+  };
+  return runnable;
+}
 
 const StepItem = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) => {
   if (isFilter(item)) {
@@ -108,20 +124,6 @@ const StepItem = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) =
   }
 };
 
-const defaultFilters: StepItemType[] = (filters as ActionDTO[])
-  .map((item) => ({
-    ...item,
-    active: false,
-  }))
-  .map(filterAutoName);
-
-const defaultApplyActions: StepItemType[] = (applyActions as ActionDTO[])
-  .map((item) => ({
-    ...item,
-    active: false,
-  }))
-  .map(actionAutoName);
-
 const sortInactiveLast = (a: StepItemType, b: StepItemType): number => {
   return sortAlphabetical(a, b);
 };
@@ -131,6 +133,45 @@ const sortAlphabetical = (a: StepItemType, b: StepItemType): number => {
 
   if (isFilter) return a.input.displayName.localeCompare(b.input.displayName);
   else return a.output.displayName.localeCompare(b.output.displayName);
+};
+function constructActions(filters: StepItemType[], appliers: StepItemType[]): StepItemType[] {
+  const steps = [...filters, ...appliers].map((action) => ({
+    ...action,
+    uid: crypto.randomUUID(),
+  })); //reshuffle UUIDs so no default action is present in two macros
+  return steps;
+}
+
+const updateFilterItem = (
+  action: StepItemType,
+  isDelete: boolean,
+  setFilters: (update: (prev: StepItemType[]) => StepItemType[]) => void,
+) => {
+  console.log("updateFilterItem", action, isDelete);
+  if (isDelete) {
+    setFilters((prev) => prev.filter((p) => p.uid !== action?.uid));
+  } else {
+    const mapper = (item: StepItemType): StepItemType => {
+      if (item.uid === action.uid) return filterAutoName(action);
+      else return item;
+    };
+    setFilters((prev) => prev.map(mapper));
+  }
+};
+const updateApplyItem = (
+  action: StepItemType,
+  isDelete: boolean,
+  setAppliers: (update: (prev: StepItemType[]) => StepItemType[]) => void,
+) => {
+  if (isDelete) {
+    setAppliers((prev) => prev.filter((p) => p.uid !== action?.uid));
+  } else {
+    const mapper = (item: StepItemType): StepItemType => {
+      if (item.uid === action.uid) return actionAutoName(action);
+      else return item;
+    };
+    setAppliers((prev) => prev.map(mapper));
+  }
 };
 
 export const GlobalOperationDesigner = (props: Props) => {
@@ -149,98 +190,43 @@ export const GlobalOperationDesigner = (props: Props) => {
 
   const [addItem, setAddItem] = useState<"filter" | "applier" | undefined>(undefined);
   const [loadMacros, setLoadMacros] = useState<runnableMacro[] | undefined>();
-  const [isDiff, setIsDiff] = useState(false);
+
+  const { data: defaultFilters } = useDefaultFiltersQuery();
+  const { data: defaultAppliers } = useDefaultAppliersQuery();
+
   if (!props.macros || !props.actions) {
-    return <Typography>Loading...</Typography>;
+    return <PageLoadingSpinner />;
   }
+
   useEffect(() => {
     onStartNew();
   }, []);
 
   useEffect(() => {
-    const currentRunnable = constructRunnable();
-    const backendRunnable = toRunnable(
-      props.macros!.find((macro) => macro.uid === uuid),
-      props.actions!,
-      props.macros!,
-    );
-    const diff = !equal(currentRunnable, backendRunnable);
-    setIsDiff(diff);
-  }, [props.macros, props.actions]);
+    if (defaultFilters) setFilters(defaultFilters);
 
-  useEffect(() => {
-    api.getFilters().then((result) => {
-      result.forEach((filter) => {
-        console.log(
-          "filter input params:",
-          filter.input.ioParameters,
-          " output params:",
-          filter.output.ioParameters,
-        );
-      });
-      setFilters(result.map((i) => ({ ...i, active: true })).map(filterAutoName));
-    });
-    api.getAppliers().then((result) => {
-      setAppliers(result.map((i) => ({ ...i, active: true })).map(actionAutoName));
-    });
-  }, []);
+    if (defaultAppliers) setAppliers(defaultAppliers);
+  }, [uuid]);
 
-  const updateFilterItem = (action: StepItemType, isDelete: boolean) => {
-    console.log("updateFilterItem", action, isDelete);
-    if (isDelete) {
-      setFilters((prev) => prev.filter((p) => p.uid !== action?.uid));
-    } else {
-      const mapper = (item: StepItemType): StepItemType => {
-        if (item.uid === action.uid) return filterAutoName(action);
-        else return item;
-      };
-      setFilters((prev) => prev.map(mapper));
-    }
-  };
-  const updateApplyItem = (action: StepItemType, isDelete: boolean) => {
-    if (isDelete) {
-      setAppliers((prev) => prev.filter((p) => p.uid !== action?.uid));
-    } else {
-      const mapper = (item: StepItemType): StepItemType => {
-        if (item.uid === action.uid) return actionAutoName(action);
-        else return item;
-      };
-      setAppliers((prev) => prev.map(mapper));
-    }
-  };
-
-  function constructActions(): StepItemType[] {
-    const steps = [...filters, ...appliers].map((action) => ({
-      ...action,
-      uid: crypto.randomUUID(),
-    })); //reshuffle UUIDs so no default action is present in two macros
-    return steps;
-  }
-
-  function constructRunnable(): runnableMacro {
-    const actions = constructActions();
-    const runnable: runnableMacro = {
-      steps: actions,
-      name: title ?? "My new global operation macro " + uuid,
-      description: description ?? "",
-      uid: uuid,
-    };
-    return runnable;
-  }
+  const sortedFilters = useMemo(() => filters.sort(sortInactiveLast), [filters]);
+  const sortedAppliers = useMemo(() => appliers.sort(sortInactiveLast), [appliers]);
 
   function onExecute() {
-    props.onExecute(constructRunnable(), false);
+    props.onExecute(
+      constructRunnable(sortedFilters, sortedAppliers, uuid, title, description),
+      false,
+    );
   }
 
   function onSave() {
-    const runnable = constructRunnable();
-    props.onSave(toMacroDTO(runnable), constructActions());
+    const runnable = constructRunnable(sortedFilters, sortedAppliers, uuid, title, description);
+    props.onSave(toMacroDTO(runnable), constructActions(sortedFilters, sortedAppliers));
+    setTitle(runnable.name);
+    setDescription(runnable.description);
   }
 
   function onStartNew() {
     setUUID(crypto.randomUUID());
-    setFilters(defaultFilters);
-    setAppliers(defaultApplyActions);
     setTitle(undefined);
     setDescription(undefined);
   }
@@ -294,25 +280,14 @@ export const GlobalOperationDesigner = (props: Props) => {
     setDescription(runnable.description);
   }
 
-  function onDebug() {
-    props.onExecute(constructRunnable(), true);
-  }
-
-  function onAddApplier() {
-    setAddItem("applier");
-  }
-  function onAddFilter() {
-    setAddItem("filter");
-  }
-
   const filterDTOtoComponent = (action: StepItemType) => {
     return (
       <Box>
         <StepItem
           key={action.uid}
           item={action}
-          setItem={(item) => updateFilterItem(item, false)}
-          deleteItem={() => updateFilterItem(action, true)}
+          setItem={(item) => updateFilterItem(item, false, setFilters)}
+          deleteItem={() => updateFilterItem(action, true, setFilters)}
           openEditorFor={(filter) => setEditorItem({ item: filter, type: "filter" })}
         />
         <Divider />
@@ -324,8 +299,8 @@ export const GlobalOperationDesigner = (props: Props) => {
       <StepItem
         key={action.uid}
         item={action}
-        setItem={(item) => updateApplyItem(item, false)}
-        deleteItem={() => updateApplyItem(action, true)}
+        setItem={(item) => updateApplyItem(item, false, setAppliers)}
+        deleteItem={() => updateApplyItem(action, true, setAppliers)}
         openEditorFor={(applyItem) => setEditorItem({ item: applyItem, type: "action" })}
       />
     );
@@ -354,12 +329,21 @@ export const GlobalOperationDesigner = (props: Props) => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Debug-Execute this macro on your map, step-by-step.">
-            <IconButton size="small" disabled={false} onClick={onDebug}>
+            <IconButton
+              size="small"
+              disabled={false}
+              onClick={() =>
+                props.onExecute(
+                  constructRunnable(sortedFilters, sortedAppliers, uuid, title, description),
+                  true,
+                )
+              }
+            >
               <BugReportIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Save this macro.">
-            <IconButton size="small" disabled={!isDiff} onClick={onSave}>
+            <IconButton size="small" onClick={onSave}>
               <SaveIcon />
             </IconButton>
           </Tooltip>
@@ -401,27 +385,61 @@ export const GlobalOperationDesigner = (props: Props) => {
           fullWidth
           placeholder="This macro does a complex global operation"
         />
+
+        {/* --- Filters --- */}
         <Paper sx={{ p: 1 }}>
           <Typography>Filter by:</Typography>
-          {filters.sort(sortInactiveLast).map(filterDTOtoComponent)}
-          <IconButton size="small" disabled={false} onClick={onAddFilter} className="clear-btn">
+          <ButtonGroup>
+            <IconButton
+              size="small"
+              disabled={false}
+              onClick={() => setFilters([])}
+              className="clear-btn"
+            >
+              <ClearIcon />
+            </IconButton>
+          </ButtonGroup>
+          {sortedFilters.map(filterDTOtoComponent)}
+          <IconButton
+            size="small"
+            disabled={false}
+            onClick={() => setAddItem("filter")}
+            className="clear-btn"
+          >
             <AddIcon />
           </IconButton>
         </Paper>
+
         <Divider orientation="vertical" flexItem />
         <Paper sx={{ p: 1 }}>
           <Typography>Apply:</Typography>
-          {appliers.sort(sortInactiveLast).map(applyDTOtoComponent)}
-          <IconButton size="small" disabled={false} onClick={onAddApplier} className="clear-btn">
+          <ButtonGroup>
+            <IconButton
+              size="small"
+              disabled={false}
+              onClick={() => setAppliers([])}
+              className="clear-btn"
+            >
+              <ClearIcon />
+            </IconButton>
+          </ButtonGroup>
+          {sortedAppliers.map(applyDTOtoComponent)}
+          <IconButton
+            size="small"
+            disabled={false}
+            onClick={() => setAddItem("applier")}
+            className="clear-btn"
+          >
             <AddIcon />
           </IconButton>
         </Paper>
       </Stack>
+
       <FilterValueDialog
         key={editorItem?.item.uid}
         open={!!editorItem && editorItem.type === "filter"}
         action={editorItem?.item}
-        setAction={(updatedFilter) => updateFilterItem(updatedFilter, false)}
+        setAction={(updatedFilter) => updateFilterItem(updatedFilter, false, setFilters)}
         onClose={() => setEditorItem(null)}
         onViewItem={() => {}}
       />
@@ -429,7 +447,7 @@ export const GlobalOperationDesigner = (props: Props) => {
       <SelectDialog<StepItemType>
         key={addItem}
         open={addItem !== undefined}
-        items={addItem === "applier" ? defaultApplyActions : defaultFilters}
+        items={addItem === "applier" ? defaultAppliers : defaultFilters}
         getId={(item) => item.uid}
         getLabel={(item) => item.name}
         isSingleSelect={false}

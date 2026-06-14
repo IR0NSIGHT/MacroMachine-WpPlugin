@@ -68,7 +68,9 @@ export default function MacroCard(props: {
           <Typography gutterBottom variant="h5">
             {macro.name}
           </Typography>
-
+          <Typography variant="body1" sx={{ color: "text.primary" }}>
+            {macro.executionUUIDs.length} step{macro.executionUUIDs.length != 1 && "s"}
+          </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             {macro.description}
           </Typography>

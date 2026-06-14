@@ -2,7 +2,13 @@
 // Query Keys
 // ======================================================
 // queries.ts
-import { useQuery, useMutation, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryOptions,
+  UseQueryResult,
+} from "@tanstack/react-query";
 import { MacroDTO, ActionDTO, ExecutionQueueDTO, ExecutionStateDTO } from "@/generated/client";
 import {
   fetchMacros,
@@ -17,6 +23,9 @@ import {
   api,
   fetchExecutionState,
 } from "./fetch";
+import { StepItemType } from "@/features/Execution";
+import { actionAutoName } from "@/features/Action";
+import { filterAutoName } from "@/features/Filters";
 
 export const queryKeys = {
   macros: ["macros"] as const,
@@ -69,6 +78,28 @@ export function useExecutionHistoryQuery(
     queryFn: () => api.getExecutionHistory(),
     refetchInterval: 500,
     ...options,
+  });
+}
+
+export function useDefaultFiltersQuery(): UseQueryResult<StepItemType[], Error> {
+  return useQuery({
+    queryKey: ["defaultFilters"],
+    queryFn: () =>
+      api
+        .getFilters()
+        .then((filters) => filters.map((f) => ({ ...f, active: false })).map(filterAutoName)),
+    refetchInterval: 5000,
+  });
+}
+
+export function useDefaultAppliersQuery(): UseQueryResult<StepItemType[], Error> {
+  return useQuery({
+    queryKey: ["defaultAppliers"],
+    queryFn: () =>
+      api
+        .getAppliers()
+        .then((appliers) => appliers.map((a) => ({ ...a, active: false })).map(actionAutoName)),
+    refetchInterval: 5000,
   });
 }
 
