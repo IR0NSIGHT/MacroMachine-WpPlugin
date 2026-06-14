@@ -10,10 +10,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.ironsight.wpplugin.macromachine.REST.DTOs.ActionDTO;
-import org.ironsight.wpplugin.macromachine.operations.ActionType;
-import org.ironsight.wpplugin.macromachine.operations.MappingAction;
-import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
-import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
+import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 @Path("/actions")
@@ -50,34 +47,33 @@ public class ActionResource
         return ioProvider.getters.stream()
                 .filter(IPositionValueGetter.class::isInstance)
                 .map(IPositionValueGetter.class::cast)
+                .filter(input -> input.getProviderType() != ProviderType.INTERMEDIATE_SELECTION) // "filter by: Filter" is pointless
+                .filter(input -> input.getProviderType() != ProviderType.ALWAYS) // so is "Filter by: always"
                 .map(input -> {
-                    var mappingPoints = input.isDiscrete()
-                            ? Arrays.stream(input.getAllInputValues())
-                                    .mapToObj(v -> new MappingPoint(v,
-                                            v == input.getMinValue()
-                                                    ? ActionFilterIO.IGNORE_VALUE
-                                                    : ActionFilterIO.BLOCK_VALUE))
-                                    .toArray(MappingPoint[]::new)
-                            : new MappingPoint[]{
-                                    new MappingPoint(Math.round((input.getMinValue() + input.getMaxValue()) / 2f) - 1,
-                                            ActionFilterIO.BLOCK_VALUE),
-                                    new MappingPoint(Math.round((input.getMinValue() + input.getMaxValue()) / 2f),
-                                            ActionFilterIO.IGNORE_VALUE),};
                     var filterAction = getNewEmptyAction(UUID.randomUUID()).withInput(input)
                             .withOutput(filterOutput)
                             .withType(ActionType.SET)
-                            .withNewPoints(mappingPoints);
-                    return filterAction.withDescription("Default simple filter")
-                            .withName("Filter by: " + input.getName()); // FIXME maybe add some preset to block certain
-                                                                        // things?
+                            .withDescription("Default simple filter")
+                            .withName("Filter by: " + input.getName());
+                    if (!input.isDiscrete()) {
+                        return FilterUtils.asRangeFilter(filterAction, input.getMinValue(), (input.getMaxValue()+input.getMinValue()/2), true);
+                    } else {
+                        return filterAction.withNewPoints(Arrays.stream(input.getAllInputValues())
+                                .mapToObj(v -> new MappingPoint(v,
+                                        v == input.getMinValue()
+                                                ? ActionFilterIO.IGNORE_VALUE
+                                                : ActionFilterIO.BLOCK_VALUE))
+                                .toArray(MappingPoint[]::new));
+                    }
                 })
                 .toList();
     }
 
     private List<MappingAction> getDefaultAppliers() {
-        var filterOutput = new ActionFilterIO();
         return ioProvider.setters.stream()
                 .filter(IPositionValueSetter.class::isInstance)
+                .filter(input -> input.getProviderType() != ProviderType.INTERMEDIATE_SELECTION) // "Set: Filter" is pointless
+                .filter(input -> input.getProviderType() != ProviderType.ALWAYS) // so is "Set: always"
                 .map(IPositionValueSetter.class::cast)
                 .map(output -> {
                     return getNewEmptyAction(UUID.randomUUID()).withInput(new AlwaysIO())
