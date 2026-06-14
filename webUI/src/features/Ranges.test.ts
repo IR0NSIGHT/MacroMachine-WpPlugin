@@ -1,7 +1,7 @@
 import { ActionDTO } from "@/types/DTO";
 import { describe, expect, it } from "vitest";
 import { collectRanges } from "./Ranges";
-import { getRelevantMappings } from "./Filters";
+import { getRelevantMappings, isRangeFilter, namedMapping } from "./Filters";
 
 describe("collect ranges from filter", () => {
   it("can collect a single range", () => {
@@ -183,6 +183,95 @@ describe("collect ranges from filter", () => {
         length: 5,
       },
     ]);
+  });
+
+  it("can collect ranges for a continous filter that is PASS ALL", () => {
+    const filter = {
+      input: {
+        displayName: "Deciduous layer",
+        description: "layer Deciduous with outputValues 0 to 15, where 0 is absent, 15 is full",
+        min: 0,
+        max: 15,
+        ignoreValue: 2147483647,
+        valueDisplayNames: [
+          "Absent",
+          "1%",
+          "8%",
+          "15%",
+          "22%",
+          "29%",
+          "36%",
+          "43%",
+          "51%",
+          "58%",
+          "65%",
+          "72%",
+          "79%",
+          "86%",
+          "93%",
+          "100%",
+        ],
+        discrete: false,
+        type: "NIBBLE_LAYER",
+        ioParameters: [
+          "Deciduous",
+          "Deciduous",
+          false,
+          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ],
+      },
+      output: {
+        displayName: "Action Filter",
+        description: "only blocks that pass this filter will be used in following actions.",
+        min: 0,
+        max: 1,
+        ignoreValue: 2147483647,
+        valueDisplayNames: ["BLOCK (0)", "PASS (1)"],
+        discrete: true,
+        type: "INTERMEDIATE_SELECTION",
+        ioParameters: [],
+      },
+      actionType: "SET",
+      name: "Filter by Deciduous layer: Except on ",
+      description: "Filter: Reject blocks based on Deciduous layer",
+      uid: "1e2b2399-62d9-4fa0-8691-da834502449b",
+      mappingPointsX: [0, 15, -1, 16],
+      mappingPointsY: [2147483647, 2147483647, 0, 0],
+      mappedOutputs: [
+        2147483647, 2147483647, 2147483647, 2147483647, 2147483647, 2147483647, 2147483647,
+        2147483647, 2147483647, 2147483647, 2147483647, 2147483647, 2147483647, 2147483647,
+        2147483647, 2147483647,
+      ],
+      mappedInputs: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    } as ActionDTO;
+    {
+      const ranges = collectRanges(namedMapping(filter));
+      console.log(ranges);
+      expect(ranges).toHaveLength(1);
+      expect(ranges).toStrictEqual([
+        {
+          start: {
+            input: 0,
+            output: 2147483647,
+            inputName: "Absent",
+            outputName: "Ignore",
+          },
+          end: {
+            input: 15,
+            output: 2147483647,
+            inputName: "100%",
+            outputName: "Ignore",
+          },
+          length: 16,
+        },
+      ]);
+    }
+
+    const all = getRelevantMappings(filter);
+    const ranges = collectRanges(all);
+    console.log("relevant mappings", all, " ranges ", ranges);
+    const rangeFilter = isRangeFilter(filter);
+    expect(rangeFilter).toBeTruthy();
   });
 
   it("can collect a many separate ranges", () => {

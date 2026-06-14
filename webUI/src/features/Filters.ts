@@ -97,8 +97,9 @@ export function invertFilterSinglePosition<T extends ActionDTO>(filter: T, input
 
 export const isRangeFilter = (filter: ActionDTO): boolean => {
   if (filter.input.discrete) return false;
-  const all = getRelevantMappings(filter);
+  const all = namedMapping(filter);
   const ranges = collectRanges(all);
+  console.log("range of filter ", filter.name, ranges, "mappings:", all);
   return ranges.some((range) => range.length > 1); // continuous ranges exist that are interesting
 };
 
@@ -186,4 +187,24 @@ export const filterAutoName = (filter: StepItemType): StepItemType => {
     console.log("auto naming filter", name);
     return { ...filter, name: name, description: description };
   }
+};
+
+export const setFilterRange = (
+  filter: StepItemType,
+  start: number,
+  end: number,
+  isInside: boolean,
+): StepItemType => {
+  const blockV = 0;
+  const passV = 2147483647;
+  const insideV = isInside ? passV : blockV;
+  const outsideV = isInside ? blockV : passV;
+
+  return {
+    ...filter,
+    mappingPointsX: [start, end, start - 1, end + 1],
+    mappingPointsY: [insideV, insideV, outsideV, outsideV],
+
+    mappedOutputs: filter.mappedInputs.map((i) => (i < start || i > end ? outsideV : insideV)),
+  };
 };

@@ -173,13 +173,13 @@ export function MacroGrid({
 
     macros.forEach((m) => macroSet.add(m.uid));
     const uuidToMacroOrAction = new Map<string, MacroDTO | ActionDTO>();
-    macros.forEach((macro) => uuidToMacroOrAction.set(macro.uid, macro)); //FIXME useMemo ? or sth?
+    macros.forEach((macro) => uuidToMacroOrAction.set(macro.uid, macro));
     actions.forEach((action) => uuidToMacroOrAction.set(action.uid, action));
     macros.forEach((macro) =>
       macro.executionUUIDs
         .filter((uid) => macroSet.has(uid))
         .forEach((uid) => nestedMacroUIDs.add(uid)),
-    ); //FIXME useMemo ? or sth?
+    );
     return nestedMacroUIDs;
   }, [macros]);
 

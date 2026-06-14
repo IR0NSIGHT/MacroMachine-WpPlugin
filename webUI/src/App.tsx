@@ -53,6 +53,8 @@ export default function App() {
   };
 
   const onRequestSave = (macro: MacroDTO, actions: ActionDTO[]) => {
+    //FIXME this should invalidate the macro and actions queries so they are refetched.
+    console.log("post actions:", actions, "then post macro", macro);
     postActions(actions).then(() => postMacro(macro));
   };
 

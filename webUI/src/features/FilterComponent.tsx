@@ -17,6 +17,8 @@ import {
   invertFilter,
   isInsideRangeFilter,
   isFilter,
+  setFilterRange,
+  filterAutoName,
 } from "./Filters";
 import { theme } from "@/theme";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
@@ -110,8 +112,11 @@ export const FilterInlineEditor = ({
   const isRanged = isRangeFilter(item);
 
   if (isRanged) {
+    console.log("filter by ", item.input.displayName, " is RANGED");
     return <RangeFilterInlineEditor item={item} setItem={setItem} deleteItem={deleteItem} />;
   }
+
+  console.log("filter by " + item.input.displayName + " is NOT RANGED");
   return (
     <SimpleFilterInlineEditor
       item={item}
@@ -136,8 +141,9 @@ export const RangeFilterInlineEditor = ({
   const value = [mappingPoints[0], mappingPoints[1]];
 
   const handleChange = (_event: Event, newValue: number[]) => {
-    console.log("handle change:", newValue);
-    setItem({ ...item, mappingPointsX: newValue });
+    const newFilter = setFilterRange(item, newValue[0], newValue[1], true);
+    setItem(filterAutoName(newFilter));
+    console.log("handle change:", newValue, newFilter.name);
   };
 
   const valueToString = (v: number) => {

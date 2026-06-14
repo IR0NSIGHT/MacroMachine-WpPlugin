@@ -193,12 +193,6 @@ export const GlobalOperationDesigner = (props: Props) => {
     onStartNew();
   }, []);
 
-  useEffect(() => {
-    if (defaultFilters) setFilters(defaultFilters);
-
-    if (defaultAppliers) setAppliers(defaultAppliers);
-  }, [uuid]);
-
   const sortedFilters = useMemo(() => filters.sort(sortInactiveLast), [filters]);
   const sortedAppliers = useMemo(() => appliers.sort(sortInactiveLast), [appliers]);
 
@@ -211,7 +205,11 @@ export const GlobalOperationDesigner = (props: Props) => {
 
   function onSave() {
     const runnable = constructRunnable(sortedFilters, sortedAppliers, uuid, title, description);
-    props.onSave(toMacroDTO(runnable), constructActions(sortedFilters, sortedAppliers));
+    props.onSave(
+      toMacroDTO(runnable),
+      runnable.steps.filter((f) => isStepItem(f)),
+    );
+    console.log("save global operation:", runnable.steps);
     setTitle(runnable.name);
     setDescription(runnable.description);
   }
@@ -220,6 +218,8 @@ export const GlobalOperationDesigner = (props: Props) => {
     setUUID(crypto.randomUUID());
     setTitle(undefined);
     setDescription(undefined);
+    if (defaultFilters) setFilters(defaultFilters);
+    if (defaultAppliers) setAppliers(defaultAppliers);
   }
 
   function onRequestLoadExisting() {
@@ -228,7 +228,7 @@ export const GlobalOperationDesigner = (props: Props) => {
       .filter((m) => m !== undefined)
       .filter((m) => isGlobalOpsMacro(m as runnableMacro) === true);
 
-    setLoadMacros(allowedMacros as runnableMacro[]); //FIXME linter doesnt like | undefined here
+    setLoadMacros(allowedMacros); //FIXME linter doesnt like | undefined here
   }
 
   function isGlobalOpsMacro(runnable: runnableMacro): true | { error: string } {
@@ -262,7 +262,7 @@ export const GlobalOperationDesigner = (props: Props) => {
 
     const filters = steps.filter(isStepItem).filter(isFilter);
     const appliers = steps.filter(isStepItem).filter(isSimpleAction);
-
+    console.log("load existing:", runnable);
     // --- allow this macro ---
     setUUID(runnable.uid);
     setFilters(filters);
