@@ -4,6 +4,7 @@ const config = {
   framework: {
     name: "@storybook/react-vite",
   },
+  staticDirs: ["../public"],
 
   stories: ["../src/**/*.stories.tsx"],
 

@@ -3,6 +3,7 @@ import {
   ButtonGroup,
   Divider,
   IconButton,
+  List,
   Paper,
   Stack,
   Switch,
@@ -63,66 +64,55 @@ function constructRunnable(
   return runnable;
 }
 
-const StepItem = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) => {
-  if (isFilter(item)) {
-    return (
-      <FilterInlineEditor
-        item={item}
-        setItem={setItem}
-        deleteItem={deleteItem}
-        openEditorFor={openEditorFor}
-      />
-    );
-  } else {
-    return (
-      <Box
-        key={item.uid}
-        sx={{
-          display: "flex",
-          flexDirection: "row",
-          "& .clear-btn": {
-            opacity: 0.3,
-            transition: "opacity 0.2s",
-          },
+const ApplierInlineEditor = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) => {
+  return (
+    <Box
+      key={item.uid}
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        "& .clear-btn": {
+          opacity: 0.3,
+          transition: "opacity 0.2s",
+        },
 
-          "&:hover .clear-btn": {
-            opacity: 1,
-          },
+        "&:hover .clear-btn": {
+          opacity: 1,
+        },
+      }}
+    >
+      <Switch
+        checked={item.active}
+        onChange={(e) => {
+          setItem({ ...item, active: e.target.checked });
         }}
-      >
-        <Switch
-          checked={item.active}
-          onChange={(e) => {
-            setItem({ ...item, active: e.target.checked });
-          }}
-        />
-        <ButtonGroup>
-          {isFilter(item) && (
-            <IconButton
-              size="small"
-              disabled={!item.active}
-              onClick={() => setItem(invertFilter(item))}
-              className="clear-btn"
-            >
-              <SwitchLeftIcon />
-            </IconButton>
-          )}
+      />
+      <ButtonGroup>
+        {isFilter(item) && (
           <IconButton
             size="small"
             disabled={!item.active}
-            onClick={() => openEditorFor(item)}
+            onClick={() => setItem(invertFilter(item))}
             className="clear-btn"
           >
-            <EditIcon />
+            <SwitchLeftIcon />
           </IconButton>
-          <IconButton size="small" disabled={false} onClick={deleteItem} className="clear-btn">
-            <ClearIcon />
-          </IconButton>
-        </ButtonGroup>
-        <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
-      </Box>
-    );
-  }
+        )}
+        <IconButton
+          size="small"
+          disabled={!item.active}
+          onClick={() => openEditorFor(item)}
+          className="clear-btn"
+        >
+          <EditIcon />
+        </IconButton>
+        <IconButton size="small" disabled={false} onClick={deleteItem} className="clear-btn">
+          <ClearIcon />
+        </IconButton>
+      </ButtonGroup>
+      <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
+    </Box>
+  );
 };
 
 const sortInactiveLast = (a: StepItemType, b: StepItemType): number => {
@@ -295,32 +285,6 @@ export const GlobalOperationDesigner = (props: Props) => {
     );
     return unusedFilters;
   }, [defaultFilters, filters]);
-
-  const filterDTOtoComponent = (action: StepItemType) => {
-    return (
-      <Box>
-        <StepItem
-          key={action.uid}
-          item={action}
-          setItem={(item) => updateFilterItem(item, false, setFilters)}
-          deleteItem={() => updateFilterItem(action, true, setFilters)}
-          openEditorFor={(filter) => setEditorItem({ item: filter, type: "filter" })}
-        />
-        <Divider />
-      </Box>
-    );
-  };
-  const applyDTOtoComponent = (action: StepItemType) => {
-    return (
-      <StepItem
-        key={action.uid}
-        item={action}
-        setItem={(item) => updateApplyItem(item, false, setAppliers)}
-        deleteItem={() => updateApplyItem(action, true, setAppliers)}
-        openEditorFor={(applyItem) => setEditorItem({ item: applyItem, type: "action" })}
-      />
-    );
-  };
   return (
     <Box
       sx={{
@@ -415,7 +379,17 @@ export const GlobalOperationDesigner = (props: Props) => {
               <ClearIcon />
             </IconButton>
           </ButtonGroup>
-          {sortedFilters.map(filterDTOtoComponent)}
+          <List>
+            {sortedFilters.map((filterAction) => (
+              <FilterInlineEditor
+                key={filterAction.uid}
+                item={filterAction}
+                setItem={(item) => updateFilterItem(item, false, setFilters)}
+                deleteItem={() => updateFilterItem(filterAction, true, setFilters)}
+                openEditorFor={(filter) => setEditorItem({ item: filter, type: "filter" })}
+              />
+            ))}
+          </List>
           <IconButton
             size="small"
             disabled={false}
@@ -439,7 +413,15 @@ export const GlobalOperationDesigner = (props: Props) => {
               <ClearIcon />
             </IconButton>
           </ButtonGroup>
-          {sortedAppliers.map(applyDTOtoComponent)}
+          {sortedAppliers.map((modifierAction) => (
+            <ApplierInlineEditor
+              key={modifierAction.uid}
+              item={modifierAction}
+              setItem={(item) => updateApplyItem(item, false, setAppliers)}
+              deleteItem={() => updateApplyItem(modifierAction, true, setAppliers)}
+              openEditorFor={(applyItem) => setEditorItem({ item: applyItem, type: "action" })}
+            />
+          ))}
           <IconButton
             size="small"
             disabled={false}
