@@ -449,7 +449,9 @@ export const GlobalOperationDesigner = (props: Props) => {
         open={addItem !== undefined}
         items={addItem === "applier" ? defaultAppliers : defaultFilters}
         getId={(item) => item.uid}
-        getLabel={(item) => item.name}
+        getLabel={(item) =>
+          addItem === "applier" ? item.output.displayName : item.input.displayName
+        }
         isSingleSelect={false}
         title={"Select a " + (addItem ?? "undefined")}
         onClose={(selected) => {

@@ -1,10 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { SelectDialog, SelectDialogProps } from "./SelectDialog";
+import { IconImage, SelectDialog, SelectDialogProps } from "./SelectDialog";
 import defaultAppliers from "../assets/defaultApplyActions.json";
 import defaultFilters from "../assets/defaultFilters.json";
 import { ActionDTO, MacroDTO } from "@/types/DTO";
 import defaultMacros from "../mocks/data/macros.json";
-import defaultActions from "../mocks/data/actions.json";
 const meta: Meta<typeof SelectDialog> = {
   title: "Components/SelectDialog",
   component: SelectDialog,
@@ -39,9 +38,26 @@ export const Many: StoryObj<typeof SelectDialog<ActionDTO>> = {
       return item.name;
     },
     isSingleSelect: false,
-    items: defaultActions as ActionDTO[],
+    items: Array.from(
+      { length: 700 },
+      (_, i): ActionDTO => ({
+        ...(defaultFilters[0] as ActionDTO),
+        uid: crypto.randomUUID(),
+        name: "action_" + i,
+      }),
+    ),
     onClose(selected: ActionDTO[]): void {
       alert("selected: " + selected.map((i) => i.name + " - " + i.uid));
+    },
+    renderIcon: (item: ActionDTO) => {
+      return (
+        <IconImage
+          src={
+            "https://png.pngtree.com/recommend-works/png-clipart/20250321/ourmid/pngtree-green-check-mark-icon-png-image_15808519.png"
+          }
+          alt={item.name}
+        />
+      );
     },
     open: true,
     title: "Select actions",
