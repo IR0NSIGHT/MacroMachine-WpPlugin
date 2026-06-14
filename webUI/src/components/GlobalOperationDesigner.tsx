@@ -31,6 +31,7 @@ import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 import { FilterInlineEditor } from "@/features/FilterComponent";
 import { useDefaultAppliersQuery, useDefaultFiltersQuery } from "@/API/queries";
 import { PageLoadingSpinner } from "@/PageLoadingSpinner";
+import { GetIconForIoType } from "./CustomSvgIcons";
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
   onExecute: MacroExecuteRequester;
@@ -280,6 +281,21 @@ export const GlobalOperationDesigner = (props: Props) => {
     setDescription(runnable.description);
   }
 
+  const unusedFilters = useMemo(() => {
+    const filterToString = (f: ActionDTO) => f.input.type + "_" + f.input.displayName;
+    const existingFilters = new Set<string>(filters.map(filterToString));
+    const unusedFilters = defaultFilters?.filter((f) => !existingFilters.has(filterToString(f)));
+    console.log(
+      "recalculate unused filters:",
+      unusedFilters,
+      " out of ",
+      defaultFilters,
+      " with used filters:",
+      filters,
+    );
+    return unusedFilters;
+  }, [defaultFilters, filters]);
+
   const filterDTOtoComponent = (action: StepItemType) => {
     return (
       <Box>
@@ -445,36 +461,50 @@ export const GlobalOperationDesigner = (props: Props) => {
       />
 
       <SelectDialog<StepItemType>
-        key={addItem}
-        open={addItem !== undefined}
-        items={addItem === "applier" ? defaultAppliers : defaultFilters}
+        key={"filters_dlg"}
+        open={addItem === "filter"}
+        items={unusedFilters}
         getId={(item) => item.uid}
-        getLabel={(item) =>
-          addItem === "applier" ? item.output.displayName : item.input.displayName
-        }
+        getLabel={(item) => item.input.displayName}
+        getSecondaryText={(item) => item.input.type}
         isSingleSelect={false}
-        title={"Select a " + (addItem ?? "undefined")}
+        title={"Select additional filters"}
+        renderIcon={(item) => {
+          return GetIconForIoType(item.input.type);
+        }}
         onClose={(selected) => {
-          if (addItem === "applier") {
-            const list: StepItemType[] = [
-              ...appliers,
-              ...selected.map((i) =>
-                actionAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
-              ),
-            ];
-            setAppliers(list);
-          } else if (addItem === "filter") {
-            const list: StepItemType[] = [
-              ...filters,
-              ...selected.map((i) =>
-                filterAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
-              ),
-            ];
-            setFilters(list);
-          }
+          const list: StepItemType[] = [
+            ...filters,
+            ...selected.map((i) =>
+              filterAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
+            ),
+          ];
+          setFilters(list);
           setAddItem(undefined);
         }}
       />
+
+      <SelectDialog<StepItemType>
+        key={"appliers_dlg"}
+        open={addItem === "applier"}
+        items={defaultAppliers}
+        getId={(item) => item.uid}
+        getLabel={(item) => item.output.displayName}
+        getSecondaryText={(item) => item.output.type}
+        isSingleSelect={false}
+        title={"Select additional modifiers"}
+        onClose={(selected) => {
+          const list: StepItemType[] = [
+            ...appliers,
+            ...selected.map((i) =>
+              actionAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
+            ),
+          ];
+          setAppliers(list);
+          setAddItem(undefined);
+        }}
+      />
+
       <SelectDialog<runnableMacro>
         open={loadMacros !== undefined}
         items={loadMacros ?? []}

@@ -229,7 +229,7 @@ export function SelectDialog<T>({
         {sortedFilteredItems && sortedFilteredItems.length !== 0 && (
           <Box sx={{ width: "100%", height: 400, bgcolor: "background.paper" }}>
             <List
-              rowHeight={getSecondaryText ? 92 : 56}
+              rowHeight={getSecondaryText ? 72 : 56}
               rowCount={sortedFilteredItems.length}
               style={{}}
               rowProps={{
