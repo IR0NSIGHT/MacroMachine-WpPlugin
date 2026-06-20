@@ -41,7 +41,6 @@ public class CubicBezierSpline
     }
 
     /**
-     *
      * @param pos0
      *            pos 0
      * @param handle0
@@ -100,5 +99,4 @@ public class CubicBezierSpline
         }
         return out;
     }
-
 }

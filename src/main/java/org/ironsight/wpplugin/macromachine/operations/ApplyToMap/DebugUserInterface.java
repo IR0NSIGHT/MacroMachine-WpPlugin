@@ -9,8 +9,8 @@ public interface DebugUserInterface extends BreakpointListener
     }
 
     public void setProgessTo(int actionIndex, int actionpercent, int totalActions);
+
     BreakpointReaction CheckBreakpointStatus(int index, MappingAction action);
 
     boolean isAbort();
-
 }

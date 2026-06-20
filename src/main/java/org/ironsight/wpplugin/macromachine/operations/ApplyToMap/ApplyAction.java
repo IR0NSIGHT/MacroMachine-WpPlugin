@@ -1,18 +1,17 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.*;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
-
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.*;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ApplyAction
 {
@@ -70,14 +69,14 @@ public class ApplyAction
         tileY = Arrays.copyOf(tileY, tileArrIdx);
 
         if (tileX.length == 0 || tileY.length == 0)
-            return statistic;
+            return statistic; // FIXME this will break the callback logic because it skips expected steps.
 
         if (action.getInput() instanceof ILimitedMapOperation)
             ((ILimitedMapOperation) action.getInput()).prepareRightBeforeRun(dim, tileX, tileY);
         if (action.getOutput() instanceof ILimitedMapOperation)
             ((ILimitedMapOperation) action.getOutput()).prepareRightBeforeRun(dim, tileX, tileY);
 
-        callback.setProgressOfAction(0);
+        callback.setProgressOfAction(0, action);
         for (int i = 0; i < tileX.length; i++) {
             Tile tile = dim.getTile(tileX[i], tileY[i]);
 
@@ -104,14 +103,14 @@ public class ApplyAction
                 if (callback.isActionAbort())
                     break;
             }
+
             // this pass is done, for this tile calculate new minMax
             context.actionFilterIO.getTileContainer().calculateMinMax(tile.getX() * TILE_SIZE, tile.getY() * TILE_SIZE);
             tilesVisitedCount++;
-            callback.setProgressOfAction(Math.round(100f * tilesVisitedCount / (totalTiles)));
+            callback.setProgressOfAction(Math.round(100f * tilesVisitedCount / (totalTiles)), action);
             callback.afterEachTile(tile.getX(), tile.getY());
         }
-        callback.setProgressOfAction(100);
-
+        callback.setProgressOfAction(100, action);
         if (action.getInput() instanceof ILimitedMapOperation)
             ((ILimitedMapOperation) action.getInput()).releaseRightAfterRun();
         if (action.getOutput() instanceof ILimitedMapOperation)
@@ -137,7 +136,7 @@ public class ApplyAction
             List<MappingAction> actions, ApplyActionCallback ui) {
         Dimension dim = context.dimension;
         ArrayList<ExecutionStatistic> statistics = new ArrayList<>(actions.size());
-        ui.setAllActionsBeforeRun(actions);
+        int idx = 0;
         for (MappingAction action : actions) {
             if (!dim.isEventsInhibited()) {
                 dim.setEventsInhibited(true);
@@ -149,21 +148,25 @@ public class ApplyAction
             ExecutionStatistic statistic = null;
             try {
                 statistic = applyToDimensionWithFilter(context, earlyAbortFilter, action, ui);
+                // DEBUG
+                if (action.getUid().equals(UUID.fromString("f7b9a0bd-59cb-4532-a218-0344e77cd122")))
+                    throw new RuntimeException("this is a test error");
             } catch (Exception ex) {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
                 ex.printStackTrace(pw);
-                GlobalActionPanel.ErrorPopUpString(sw.toString());
+                // GlobalActionPanel.ErrorPopUpString(sw.toString());
+                ui.onError(idx, action, sw.toString());
                 break;
             } finally {
                 statistics.add(statistic);
-                ui.afterEachAction(statistic);
+                ui.afterEachAction(statistic, action);
                 if (ui.isUpdateMapAfterEachAction() && dim.isEventsInhibited()) {
                     dim.setEventsInhibited(false);
                 }
             }
+            idx++;
         }
-        ui.afterEverything();
 
         return statistics;
     }
@@ -180,5 +183,4 @@ public class ApplyAction
             this.progressInStep = progressInStep;
         }
     }
-
 }

@@ -7,5 +7,6 @@ public interface IMappingValueProvider
     Collection<IMappingValue> getItems();
 
     void subscribeToUpdates(Runnable r);
+
     boolean existsItem(Object item);
 }

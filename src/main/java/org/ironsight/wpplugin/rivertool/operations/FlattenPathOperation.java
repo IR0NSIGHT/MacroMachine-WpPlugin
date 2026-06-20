@@ -1,18 +1,17 @@
 package org.ironsight.wpplugin.rivertool.operations;
 
+import static org.ironsight.wpplugin.rivertool.pathing.PointUtils.getPoint2D;
+
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.function.Function;
 import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.function.Function;
-
-import static org.ironsight.wpplugin.rivertool.pathing.PointUtils.getPoint2D;
 
 /**
  * For any operation that is intended to be applied to the dimension in a
@@ -42,11 +41,13 @@ import static org.ironsight.wpplugin.rivertool.pathing.PointUtils.getPoint2D;
  */
 public abstract class FlattenPathOperation extends MouseOrTabletOperation
         implements
-            PaintOperation, // Implement this if you need access to the currently selected paint; note that
-                            // some base
+            PaintOperation, // Implement this if you need access to the currently selected paint;
+            // note that
+            // some base
             // classes already provide this
-            BrushOperation // Implement this if you need access to the currently selected brush; note that
-                           // some base
+            BrushOperation // Implement this if you need access to the currently selected brush; note
+// that
+// some base
 // classes already provide this
 {
 
@@ -56,10 +57,10 @@ public abstract class FlattenPathOperation extends MouseOrTabletOperation
      * here, or you could use a UUID. As long as it is globally unique.
      */
     static final String ID = "orig.ironsight.wpplugin.rivertool.FlattenPathOperation.v1";
-    /**
-     * Human-readable short name of the operation.
-     */
+
+    /** Human-readable short name of the operation. */
     static final String NAME = "Flatten Path Tool";
+
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip
      * of the operation selection button.
@@ -333,9 +334,7 @@ public abstract class FlattenPathOperation extends MouseOrTabletOperation
             throw e;
         } finally {
             this.getDimension().setEventsInhibited(false);
-
         }
-
     }
 
     private int getClosestPointIndexOnCurveTo(ArrayList<float[]> curve, Point nearby) {

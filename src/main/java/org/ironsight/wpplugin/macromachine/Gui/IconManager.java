@@ -1,17 +1,19 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
+import javax.swing.*;
 
 public class IconManager
 {
     public enum Icon {
         MACRO("/icons/macro.png"), ACTION("/icons/action.png"), INPUT("/icons/input.png"), OUTPUT(
                 "/icons/output.png"), PARAM("/icons/param.png"), INVALID("/icons/invalid.png");
+
         Icon(String resourcePath) {
             this.resourcePath = resourcePath;
         }
+
         ImageIcon icon;
         String resourcePath;
     }

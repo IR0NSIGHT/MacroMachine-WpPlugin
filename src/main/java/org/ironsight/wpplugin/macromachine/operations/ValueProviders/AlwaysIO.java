@@ -1,10 +1,9 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
-
 import java.awt.*;
 import java.util.Arrays;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
 
 public class AlwaysIO implements IPositionValueGetter
 {
@@ -63,17 +62,16 @@ public class AlwaysIO implements IPositionValueGetter
 
     @Override
     public void prepareForDimension(Dimension dim) {
-
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return instance;
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[0];
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
     }
 
     @Override
@@ -88,7 +86,6 @@ public class AlwaysIO implements IPositionValueGetter
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-
     }
 
     @Override

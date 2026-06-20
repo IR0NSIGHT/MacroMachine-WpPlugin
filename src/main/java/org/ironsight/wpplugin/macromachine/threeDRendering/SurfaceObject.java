@@ -1,5 +1,11 @@
 package org.ironsight.wpplugin.macromachine.threeDRendering;
 
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import javax.vecmath.Point3i;
 import org.pepsoft.minecraft.Entity;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.minecraft.TileEntity;
@@ -7,16 +13,10 @@ import org.pepsoft.util.AttributeKey;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.objects.WPObject;
 
-import javax.vecmath.Point3i;
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class SurfaceObject implements WPObject
 {
     private String name = "Surface";
+
     @Override
     public String getName() {
         return name;
@@ -100,7 +100,6 @@ public class SurfaceObject implements WPObject
 
     @Override
     public void prepareForExport(Dimension dimension) {
-
     }
 
     @Override
@@ -110,12 +109,10 @@ public class SurfaceObject implements WPObject
 
     @Override
     public void setAttributes(Map<String, Serializable> map) {
-
     }
 
     @Override
     public <T extends Serializable> void setAttribute(AttributeKey<T> attributeKey, T t) {
-
     }
 
     @Override

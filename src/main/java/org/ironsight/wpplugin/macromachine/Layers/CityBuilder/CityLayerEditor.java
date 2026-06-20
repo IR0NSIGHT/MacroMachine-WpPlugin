@@ -1,5 +1,25 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
+import static java.lang.String.format;
+import static org.pepsoft.util.swing.MessageUtils.*;
+import static org.pepsoft.worldpainter.ExceptionHandler.doWithoutExceptionReporting;
+import static org.pepsoft.worldpainter.Platform.Capability.NAME_BASED;
+import static org.pepsoft.worldpainter.objects.WPObject.ATTRIBUTE_FILE;
+
+import java.awt.*;
+import java.io.File;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.*;
+import java.util.List;
+import java.util.prefs.Preferences;
+import java.util.stream.IntStream;
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import org.pepsoft.worldpainter.ColourScheme;
 import org.pepsoft.worldpainter.Configuration;
 import org.pepsoft.worldpainter.DefaultPlugin;
@@ -13,27 +33,6 @@ import org.pepsoft.worldpainter.layers.exporters.ExporterSettings;
 import org.pepsoft.worldpainter.objects.WPObject;
 import org.pepsoft.worldpainter.plugins.CustomObjectManager;
 import org.pepsoft.worldpainter.plugins.WPPluginManager;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import java.awt.*;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.List;
-import java.util.*;
-import java.util.prefs.Preferences;
-import java.util.stream.IntStream;
-
-import static java.lang.String.format;
-import static org.pepsoft.util.swing.MessageUtils.*;
-import static org.pepsoft.worldpainter.ExceptionHandler.doWithoutExceptionReporting;
-import static org.pepsoft.worldpainter.Platform.Capability.NAME_BASED;
-import static org.pepsoft.worldpainter.objects.WPObject.ATTRIBUTE_FILE;
 
 public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements ListSelectionListener, DocumentListener
 {
@@ -315,7 +314,6 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                 }
             }
         }
-
     }
 
     private void addFile(boolean checkForNameOnlyMaterials, Set<String> nameOnlyMaterialsNames, File file) {
@@ -592,17 +590,17 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE,
                                         javax.swing.GroupLayout.DEFAULT_SIZE,
                                         javax.swing.GroupLayout.PREFERRED_SIZE))));
-    }// </editor-fold>//GEN-END:initComponents
+    } // </editor-fold>//GEN-END:initComponents
 
-    private void buttonReloadAllActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonReloadAllActionPerformed
+    private void buttonReloadAllActionPerformed(java.awt.event.ActionEvent evt) { // GEN-FIRST:event_buttonReloadAllActionPerformed
         reloadObjects();
-    }// GEN-LAST:event_buttonReloadAllActionPerformed
+    } // GEN-LAST:event_buttonReloadAllActionPerformed
 
-    private void buttonEditActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonEditActionPerformed
+    private void buttonEditActionPerformed(java.awt.event.ActionEvent evt) { // GEN-FIRST:event_buttonEditActionPerformed
         editObjects();
-    }// GEN-LAST:event_buttonEditActionPerformed
+    } // GEN-LAST:event_buttonEditActionPerformed
 
-    private void listObjectsMouseClicked(java.awt.event.MouseEvent evt) {// GEN-FIRST:event_listObjectsMouseClicked
+    private void listObjectsMouseClicked(java.awt.event.MouseEvent evt) { // GEN-FIRST:event_listObjectsMouseClicked
         if (evt.getClickCount() == 2) {
             int row = listObjects.getSelectedIndex();
             if (row != -1) {
@@ -612,13 +610,13 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                 dialog.setVisible(true);
             }
         }
-    }// GEN-LAST:event_listObjectsMouseClicked
+    } // GEN-LAST:event_listObjectsMouseClicked
 
-    private void buttonAddFileActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonAddFileActionPerformed
+    private void buttonAddFileActionPerformed(java.awt.event.ActionEvent evt) { // GEN-FIRST:event_buttonAddFileActionPerformed
         addFilesOrDirectory();
-    }// GEN-LAST:event_buttonAddFileActionPerformed
+    } // GEN-LAST:event_buttonAddFileActionPerformed
 
-    private void buttonRemoveFileActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_buttonRemoveFileActionPerformed
+    private void buttonRemoveFileActionPerformed(java.awt.event.ActionEvent evt) { // GEN-FIRST:event_buttonRemoveFileActionPerformed
         removeFiles();
-    }// GEN-LAST:event_buttonRemoveFileActionPerformed
+    } // GEN-LAST:event_buttonRemoveFileActionPerformed
 }

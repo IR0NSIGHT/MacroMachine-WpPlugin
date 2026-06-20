@@ -1,16 +1,8 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel;
-import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.DisplayUnitPickerDialog;
-import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.PickerFilterOption;
-import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
-import org.ironsight.wpplugin.macromachine.Gui.TreeView.MacroTreePanel;
-import org.ironsight.wpplugin.macromachine.operations.*;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
+import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.getAllPointsForDiscreteIO;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -19,9 +11,16 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
-import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.getAllPointsForDiscreteIO;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel;
+import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.DisplayUnitPickerDialog;
+import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.PickerFilterOption;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.MacroTreePanel;
+import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 public class MacroDesigner extends JPanel
 {
@@ -35,9 +34,11 @@ public class MacroDesigner extends JPanel
     UUIDFilterOptions customActionsFilter = new UUIDFilterOptions("custom", "show user created actions");
     UUIDFilterOptions defaultFilter = new UUIDFilterOptions("defaults", "show default actions");
     private Macro macro;
+
     private Macro getMacro() {
         return macro == null ? null : macro.clone();
     }
+
     private JTextField name;
     private JTextArea description;
     private JTable table;
@@ -184,9 +185,7 @@ public class MacroDesigner extends JPanel
         frame.setVisible(true);
     }
 
-    /**
-     * user requested to edit the selected item (macro or action)
-     */
+    /** user requested to edit the selected item (macro or action) */
     private void onEditItem() {
         int selected = table.getSelectedRow();
         if (selected == -1)
@@ -330,6 +329,7 @@ public class MacroDesigner extends JPanel
         setMacro(newMacro, true);
         button.setText(!isTargetRowActive ? "disable" : "enable");
     }
+
     private void onSave() {
         if (onSubmit == null) {
             assert false;
@@ -472,8 +472,10 @@ public class MacroDesigner extends JPanel
 
         initKeyMap();
     }
+
     private final MappingActionContainer actionContainer;
     private final MacroContainer macroContainer;
+
     private void onAddMapping() {
         Set<MappingAction> customActions = new TreeSet<>((o1, o2) -> {
             if (o1.equalsWithoutUUID(o2)) {
@@ -520,6 +522,7 @@ public class MacroDesigner extends JPanel
             table.addRowSelectionInterval(row, row);
         }
     }
+
     public static Macro moveUp(Macro macro, int[] selectedItemIndices) {
         UUID[] ids = macro.getExecutionUUIDs().clone();
         boolean[] active = macro.getActiveActions();
@@ -646,6 +649,8 @@ public class MacroDesigner extends JPanel
             SaveableAction m = actionContainer.queryById(id);
             if (m == null)
                 m = macroContainer.queryById(id);
+            if (m == null)
+                continue;
             m.setActive(macro.getActiveActions()[row]);
             table.setValueAt(m, row++, 0);
         }
@@ -699,5 +704,4 @@ public class MacroDesigner extends JPanel
             return item instanceof SaveableAction && matchingIds.contains(((SaveableAction) item).getUid());
         }
     }
-
 }

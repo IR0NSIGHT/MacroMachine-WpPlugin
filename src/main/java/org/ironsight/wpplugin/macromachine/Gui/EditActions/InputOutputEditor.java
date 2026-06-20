@@ -1,17 +1,16 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
+import java.awt.*;
+import java.util.Arrays;
+import java.util.function.Consumer;
+import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.table.AbstractTableModel;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.EditableIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.PerlinNoiseIO;
-
-import javax.swing.*;
-import javax.swing.event.TableModelEvent;
-import javax.swing.table.AbstractTableModel;
-import java.awt.*;
-import java.util.Arrays;
-import java.util.function.Consumer;
 
 public class InputOutputEditor extends LayerMappingPanel
 {
@@ -40,6 +39,7 @@ public class InputOutputEditor extends LayerMappingPanel
 
     private boolean isInput = true;
     private KeyValueTableModel tableModel;
+
     public InputOutputEditor(Consumer<MappingAction> onChanged) {
         this.onChanged = onChanged;
         initialize();
@@ -132,7 +132,6 @@ public class InputOutputEditor extends LayerMappingPanel
         private Object[][] data = new Object[0][];
 
         public KeyValueTableModel() {
-
         }
 
         public String getTooltip(int row) {

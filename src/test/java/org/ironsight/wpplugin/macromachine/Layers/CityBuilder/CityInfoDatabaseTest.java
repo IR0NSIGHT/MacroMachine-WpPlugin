@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
-import org.junit.jupiter.api.Test;
-
-import java.awt.*;
-
 import static org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityInfoDatabase.NO_DATA;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
+import java.awt.*;
+import org.junit.jupiter.api.Test;
 
 class CityInfoDatabaseTest
 {

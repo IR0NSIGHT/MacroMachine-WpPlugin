@@ -1,15 +1,14 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import com.flowpowered.noise.module.source.Voronoi;
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
+import com.flowpowered.noise.module.source.Voronoi;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.IntStream;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
 
 public class VoronoiIO implements IPositionValueGetter, EditableIO
 {
@@ -66,25 +65,28 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO
     public int getMinValue() {
         return min;
     }
+
     private final int[] values;
+
     @Override
     public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
+
     @Override
     public void prepareForDimension(Dimension dim) throws IllegalAccessError {
-
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
-        return new VoronoiIO((Integer) data[0], (Integer) data[1], (Integer) data[2], (Integer) data[3],
-                (Integer) data[4]);
+    public IMappingValue instantiateFrom(IoParameter[] data) {
+        return new VoronoiIO(((IntValue) data[0]).value(), ((IntValue) data[1]).value(), ((IntValue) data[2]).value(),
+                ((IntValue) data[3]).value(), ((IntValue) data[4]).value());
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[]{min, max, seed, frequency, (int) scale};
+    public IoParameter[] getSaveData() {
+        return new IoParameter[]{new IntValue(min), new IntValue(max), new IntValue(seed), new IntValue(frequency),
+                new IntValue((int) scale)};
     }
 
     @Override

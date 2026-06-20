@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.rivertool.layers;
 
+import static org.pepsoft.worldpainter.layers.Layer.DataSize.NIBBLE;
+
+import java.io.Serializable;
 import org.ironsight.wpplugin.rivertool.layers.renderers.DemoLayerRenderer;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.renderers.LayerRenderer;
-
-import java.io.Serializable;
-
-import static org.pepsoft.worldpainter.layers.Layer.DataSize.NIBBLE;
 
 /**
  * The layer descriptor and provider class for your custom layer. This class is
@@ -33,9 +32,7 @@ public class PathPreviewLayer extends Layer
      */
     static final String ID = "orig.ironsight.wpplugin.rivertool.PathPreviewLayer.v1";
 
-    /**
-     * Human-readable short name of the plugin.
-     */
+    /** Human-readable short name of the plugin. */
     static final String NAME = "PathPreviewLayer";
 
     /**

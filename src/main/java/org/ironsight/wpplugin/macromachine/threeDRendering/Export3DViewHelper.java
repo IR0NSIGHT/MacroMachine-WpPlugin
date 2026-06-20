@@ -1,5 +1,16 @@
 package org.ironsight.wpplugin.macromachine.threeDRendering;
 
+import static java.util.Collections.singleton;
+import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.*;
+import static org.pepsoft.worldpainter.Constants.DIM_NORMAL;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Dimension.Role.DETAIL;
+import static org.pepsoft.worldpainter.exporting.WorldRegion.CHUNKS_PER_SIDE;
+
+import java.awt.*;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.vecmath.Point3i;
 import org.pepsoft.minecraft.Chunk;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.util.Box;
@@ -8,19 +19,6 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.exporting.WorldExportSettings;
 import org.pepsoft.worldpainter.exporting.WorldRegion;
 import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
-
-import javax.vecmath.Point3i;
-
-import java.awt.*;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static java.util.Collections.singleton;
-import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.*;
-import static org.pepsoft.worldpainter.Constants.DIM_NORMAL;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Dimension.Role.DETAIL;
-import static org.pepsoft.worldpainter.exporting.WorldRegion.CHUNKS_PER_SIDE;
 
 public class Export3DViewHelper
 {
@@ -84,7 +82,7 @@ public class Export3DViewHelper
                 (1 + tileMaxY) * TILE_SIZE, tileMinHeight, tileMaxHeight);
 
         Point3i tileOffset = new Point3i(-displayObjectBBX.getWidth() / 2, -displayObjectBBX.getLength() / 2,
-                -tileMinHeight);// -displayObjectBBX.getWidth() /
+                -tileMinHeight); // -displayObjectBBX.getWidth() /
         // 2,
         // -displayObjectBBX
         // .getLength() /
@@ -150,6 +148,5 @@ public class Export3DViewHelper
 
     private class ChunkWrapper
     {
-
     }
 }

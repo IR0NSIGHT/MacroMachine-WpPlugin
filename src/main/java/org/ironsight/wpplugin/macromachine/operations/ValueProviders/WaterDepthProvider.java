@@ -1,19 +1,18 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.stream.IntStream;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
 
 public class WaterDepthProvider implements IPositionValueSetter, IPositionValueGetter
 {
-    private final static Color LAND_GREEN = new Color(43, 157, 0);
-    private final static Color SHORE_BLUE = new Color(159, 181, 255);
-    private final static Color DEEP_BLUE = new Color(0, 46, 171);
+    private static final Color LAND_GREEN = new Color(43, 157, 0);
+    private static final Color SHORE_BLUE = new Color(159, 181, 255);
+    private static final Color DEEP_BLUE = new Color(0, 46, 171);
     private final int[] outputValues;
     private final int[] inputValues;
 
@@ -70,7 +69,6 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
 
     @Override
     public void prepareForDimension(Dimension dim) {
-
     }
 
     @Override
@@ -89,13 +87,13 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return new WaterDepthProvider();
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[0];
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
     }
 
     @Override

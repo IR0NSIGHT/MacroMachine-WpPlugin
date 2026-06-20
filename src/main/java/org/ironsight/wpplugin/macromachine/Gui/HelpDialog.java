@@ -1,9 +1,9 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import javax.swing.*;
-import java.awt.*;
-
 import static org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel.header1Font;
+
+import java.awt.*;
+import javax.swing.*;
 
 public class HelpDialog extends JDialog
 {

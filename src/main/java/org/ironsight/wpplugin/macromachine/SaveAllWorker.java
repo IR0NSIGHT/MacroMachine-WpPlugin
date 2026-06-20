@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.macromachine;
 
+import java.io.File;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
-
-import java.io.File;
 
 public class SaveAllWorker
 {

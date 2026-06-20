@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
 import org.ironsight.wpplugin.macromachine.operations.*;
 import org.pepsoft.worldpainter.Constants;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
-
-import java.awt.*;
 
 public class ActionFilterIO implements IPositionValueSetter, IPositionValueGetter
 {
@@ -29,7 +28,9 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     public boolean skipTile(int tileX, int tileY) {
         assert tileContainer != null;
-        return tileContainer.getMaxValueAtTile(tileX, tileY) == BLOCK_VALUE;
+        if (tileContainer.existsTile(tileX, tileY))
+            return tileContainer.getMaxValueAtTile(tileX, tileY) == BLOCK_VALUE;
+        return true;
     }
 
     @Override
@@ -74,7 +75,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
             tileContainer = null;
         Rectangle rect = dim.getExtent();
         tileContainer = debugMode
-                ? new DebugTileContainer(dim, Annotations.INSTANCE, new int[]{14/* red */, 6/* green */}, rect.width,
+                ? new DebugTileContainer(dim, Annotations.INSTANCE, new int[]{14 /* red */, 6 /* green */}, rect.width,
                         rect.height, rect.x * Constants.TILE_SIZE, rect.y * Constants.TILE_SIZE, PASS_VALUE)
                 : new TileContainer(rect.width, rect.height, rect.x * Constants.TILE_SIZE, rect.y * Constants.TILE_SIZE,
                         PASS_VALUE);
@@ -174,6 +175,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     public int[] getAllInputValues() {
         return new int[]{BLOCK_VALUE, PASS_VALUE};
     }
+
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_VALUE;
@@ -185,13 +187,13 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return instance;
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[0];
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
     }
 
     @Override

@@ -1,13 +1,12 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
+import java.util.Arrays;
+import java.util.Objects;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
-
-import java.awt.*;
-import java.util.Arrays;
-import java.util.Objects;
 
 public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter, IPositionTileValueGetter, ILayerGetter
 {
@@ -31,6 +30,7 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     }
 
     private final int[] outputValues = new int[]{IGNORE_VALUE, 0, 1};
+
     @Override
     public int[] getAllInputValues() {
         return new int[]{0, 1};
@@ -99,18 +99,19 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer",
                 false};
         for (int i = 0; i < data.length; i++) {
             saveData[i] = data[i];
         }
-        return new BinaryLayerIO((String) saveData[0], (String) saveData[1], (Boolean) saveData[2]);
+        return new BinaryLayerIO(((StringValue) saveData[0]).value(), ((StringValue) saveData[1]).value(),
+                ((BoolValue) saveData[2]).value());
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[]{layerName, layerId, isCustom};
+    public IoParameter[] getSaveData() {
+        return new IoParameter[]{new StringValue(layerName), new StringValue(layerId), new BoolValue(isCustom)};
     }
 
     @Override

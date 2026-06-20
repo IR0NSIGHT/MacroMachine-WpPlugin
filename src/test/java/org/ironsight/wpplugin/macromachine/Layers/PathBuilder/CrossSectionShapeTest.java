@@ -1,10 +1,9 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class CrossSectionShapeTest
 {
@@ -23,7 +22,6 @@ class CrossSectionShapeTest
             float expected = 2 * t;
             assertEquals(expected, shape.getStrengthAt(t));
         }
-
     }
 
     @Test

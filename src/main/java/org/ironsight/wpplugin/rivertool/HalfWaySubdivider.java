@@ -1,10 +1,10 @@
 package org.ironsight.wpplugin.rivertool;
 
-import java.util.Arrays;
-import java.util.Random;
-
 import static org.ironsight.wpplugin.rivertool.operations.ApplyPath.ApplyRiverOperation.angleOf;
 import static org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation.INHERIT_VALUE;
+
+import java.util.Arrays;
+import java.util.Random;
 
 public class HalfWaySubdivider implements Subdivide
 {

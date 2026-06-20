@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
+import java.util.Arrays;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Layer;
-
-import java.awt.*;
-import java.util.Arrays;
 
 public class AnnotationSetter implements IPositionValueGetter, IPositionValueSetter, ILayerGetter
 {
@@ -75,17 +74,16 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public void prepareForDimension(org.pepsoft.worldpainter.Dimension dim) {
-
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return getInstance();
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[0];
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
     }
 
     @Override

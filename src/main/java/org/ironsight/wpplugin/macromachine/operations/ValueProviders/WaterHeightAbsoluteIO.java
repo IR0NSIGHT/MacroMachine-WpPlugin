@@ -1,14 +1,13 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.IntStream;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
 
 public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionValueSetter, EditableIO
 {
@@ -72,15 +71,15 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         if (data.length == 0)
             return new WaterHeightAbsoluteIO(-64, 319);
-        return new WaterHeightAbsoluteIO((Integer) data[0], (Integer) data[1]);
+        return new WaterHeightAbsoluteIO(((IntValue) data[0]).value(), ((IntValue) data[1]).value());
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[]{min, max};
+    public IoParameter[] getSaveData() {
+        return new IoParameter[]{new IntValue(min), new IntValue(max)};
     }
 
     @Override
@@ -117,7 +116,6 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
 
     @Override
     public void prepareForDimension(Dimension dim) throws IllegalAccessError {
-
     }
 
     @Override

@@ -1,17 +1,16 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import com.kenperlin.ImprovedNoise;
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
-import javax.swing.*;
+import com.kenperlin.ImprovedNoise;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.IntStream;
-
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+import javax.swing.*;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
 
 public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
 {
@@ -21,6 +20,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
     private final int octaves;
     private transient ImprovedNoise generator;
     private float shift = 0, multi = 1;
+
     public PerlinNoiseIO(float scale, float amplitude, long seed, int octaves) {
         this.scale = scale;
         this.amplitude = amplitude;
@@ -76,33 +76,35 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
     public int getMinValue() {
         return 0;
     }
+
     private final int[] values;
+
     @Override
     public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
+
     @Override
     public void prepareForDimension(Dimension dim) throws IllegalAccessError {
-
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         int[] intArray = new int[data.length];
 
         for (int i = 0; i < data.length; i++) {
-            intArray[i] = (int) data[i]; // Autoboxing converts int to Integer
+            intArray[i] = ((IntValue) data[i]).value(); // Autoboxing converts int to Integer
         }
         return instantiateWithValues(intArray);
     }
 
     @Override
-    public Object[] getSaveData() {
+    public IoParameter[] getSaveData() {
         int[] intArray = getEditableValues();
-        Object[] objectArray = new Object[intArray.length];
+        IoParameter[] objectArray = new IoParameter[intArray.length];
 
         for (int i = 0; i < intArray.length; i++) {
-            objectArray[i] = intArray[i]; // Autoboxing converts int to Integer
+            objectArray[i] = new IntValue(intArray[i]); // Autoboxing converts int to Integer
         }
         return objectArray;
     }
@@ -143,9 +145,11 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
         }
         return images;
     }
+
     private static BufferedImage[] imagesByValue;
 
     boolean isGenerating = false;
+
     private void generateImageTask() {
         if (isGenerating)
             return;
@@ -156,7 +160,6 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
             SwingUtilities.invokeLater(() -> {
                 imagesByValue = image;
             });
-
         }).start();
     }
 
@@ -176,6 +179,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
     public ProviderType getProviderType() {
         return ProviderType.PERLIN_NOISE;
     }
+
     private static final float[] octaveNormalizer = new float[]{1, // should be zero but would cause division error
             1, 1 + 1 / 2f, 1 + 1 / 2f + 1 / 4f, 1 + 1 / 2f + 1 / 4f + 1 / 8f, 1 + 1 / 2f + 1 / 4f + 1 / 8f + 1 / 16f,
             1 + 1 / 2f + 1 / 4f + 1 / 8f + 1 / 16f + 1 / 32f,
@@ -204,6 +208,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
         value = value / octaveNormalizer[octaves];
         return value;
     }
+
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         float value = getRawValueAt(x, y);
@@ -270,6 +275,7 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
     public String toString() {
         return getName();
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();

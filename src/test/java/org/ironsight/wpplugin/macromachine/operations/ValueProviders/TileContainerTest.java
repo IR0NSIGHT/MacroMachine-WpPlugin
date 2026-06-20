@@ -1,9 +1,9 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
+import org.junit.jupiter.api.Test;
 
 class TileContainerTest
 {

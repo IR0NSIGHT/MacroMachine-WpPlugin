@@ -1,19 +1,18 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.inNumericRange;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
-
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-import javax.swing.table.TableModel;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-
-import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue.inNumericRange;
 
 class MappingActionValueTableModel implements TableModel
 {
@@ -146,9 +145,7 @@ class MappingActionValueTableModel implements TableModel
         return rowToMappingPointIdx;
     }
 
-    /**
-     * rebuild internal arrays from this.action
-     */
+    /** rebuild internal arrays from this.action */
     private void rebuildData() {
         int rowAmount = IMappingValue.range(action.getInput());
         IPositionValueGetter getter = action.getInput();
@@ -209,7 +206,7 @@ class MappingActionValueTableModel implements TableModel
     public boolean isCellEditable(int rowIndex, int columnIndex) {
         if (columnIndex == INPUT_COLUMN_IDX && action.getInput().isDiscrete())
             return false; // discrete inputs already have 1 mapping point per value, there is no point in
-                          // changing it.
+        // changing it.
         return isControlPoint(rowIndex);
     }
 

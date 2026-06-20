@@ -1,5 +1,9 @@
 package org.ironsight.wpplugin.rivertool.operations;
 
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import org.ironsight.wpplugin.rivertool.ArrayUtility;
 import org.ironsight.wpplugin.rivertool.CatMullRomInterpolation;
 import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
@@ -7,11 +11,6 @@ import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 import org.ironsight.wpplugin.rivertool.pathing.MapPointAction;
 import org.ironsight.wpplugin.rivertool.pathing.Path;
 import org.ironsight.wpplugin.rivertool.pathing.PointType;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 
 public class ContinuousCurve
 {
@@ -85,10 +84,10 @@ public class ContinuousCurve
         for (int n = 0; n < path.type.size; n++) {
             float[] nthHandles = flatHandles.get(n);
             float defaultVal = n == RiverHandleInformation.RiverInformation.WATER_Z.idx + 2 ? 9999 : 5; // FIXME add
-                                                                                                        // this info the
-                                                                                                        // the
-                                                                                                        // RiverInfroamtion
-                                                                                                        // class
+            // this info the
+            // the
+            // RiverInfroamtion
+            // class
             float[] interpolated = CatMullRomInterpolation.interpolateCatmullRom(nthHandles, handleStrength,
                     handleToCurveIdx, segmentLengths, defaultVal);
             interpolatedCurve.add(interpolated);
@@ -168,7 +167,6 @@ public class ContinuousCurve
                 continuousPositions.add(newPoint); // contains previous up to one before thisPos
             }
             continuousPositions.add(thisPos);
-
         }
 
         continuousPositions = connectDiagonals(continuousPositions);
@@ -367,7 +365,7 @@ public class ContinuousCurve
 
     public ArrayList<float[]> getCurveAsPositions() {
         ArrayList<float[]> positions = ArrayUtility.transposeMatrix(flatCurve); // each entry is one position with x,y
-                                                                                // and other data
+        // and other data
         return positions;
     }
 }

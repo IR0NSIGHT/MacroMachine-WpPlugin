@@ -1,5 +1,10 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
+import java.awt.*;
+import java.io.Serializable;
+import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
@@ -8,12 +13,6 @@ import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
-
-import java.awt.*;
-import java.io.Serializable;
-import java.util.*;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * a filter to check if a tile should be further touched or if we can abort
@@ -142,7 +141,6 @@ public class TileFilter implements Serializable
             default :
                 return passType.SOME_BLOCKS;
         }
-
     }
 
     public passType testTile(Tile tile) {

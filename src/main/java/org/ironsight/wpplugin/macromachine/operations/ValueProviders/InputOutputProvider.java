@@ -1,16 +1,15 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import org.ironsight.wpplugin.macromachine.Layers.CustomLayerControllerWrapper;
 import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
-import org.ironsight.wpplugin.macromachine.Layers.CustomLayerControllerWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.*;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
-
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class InputOutputProvider
         implements

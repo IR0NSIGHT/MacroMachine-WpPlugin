@@ -1,5 +1,9 @@
 package org.ironsight.wpplugin.macromachine;
 
+import static org.ironsight.wpplugin.macromachine.Version.VERSION;
+
+import java.util.ArrayList;
+import java.util.List;
 import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityEditToolOperation;
 import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityLayer;
 import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityLayerEditor;
@@ -16,11 +20,6 @@ import org.pepsoft.worldpainter.layers.LayerEditor;
 import org.pepsoft.worldpainter.operations.Operation;
 import org.pepsoft.worldpainter.plugins.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.ironsight.wpplugin.macromachine.Version.VERSION;
-
 /**
  * The main plugin class. This demo combines the various providers in one plugin
  * class. You could of course also separate them out into separate plugins
@@ -28,9 +27,9 @@ import static org.ironsight.wpplugin.macromachine.Version.VERSION;
  * services your plugin does not provide.
  *
  * <p>
- * <strong>Note:</strong> this class is referred to from the
- * {@code org.pepsoft.worldpainter.plugins} file, so when you rename or copy it,
- * be sure to keep that file up-to-date.
+ * <strong>Note:</strong> this class is referred to from the {@code
+ * org.pepsoft.worldpainter.plugins} file, so when you rename or copy it, be
+ * sure to keep that file up-to-date.
  */
 @SuppressWarnings("unused") // Instantiated by WorldPainter
 public class MacroMachinePlugin extends AbstractPlugin
@@ -41,10 +40,12 @@ public class MacroMachinePlugin extends AbstractPlugin
             // org.pepsoft.worldpainter.plugins
             // registry file
             LayerProvider, // Implement this to provide one or more singular, unconfigurable layers
-            OperationProvider, // Implement this to provide one or more custom operations for the Tools panel
+            OperationProvider, // Implement this to provide one or more custom operations for the Tools
+            // panel
             CustomLayerProvider,
             LayerEditorProvider
 {
+
     public WorldPainterView view;
 
     @Override
@@ -59,9 +60,8 @@ public class MacroMachinePlugin extends AbstractPlugin
     }
 
     private static MacroMachinePlugin instance;
-    /**
-     * Short, human-readble name of the plugin.
-     */
+
+    /** Short, human-readble name of the plugin. */
     public static final String NAME = "Macro Machine";
 
     // LayerProvider
@@ -79,9 +79,7 @@ public class MacroMachinePlugin extends AbstractPlugin
 
     private static org.slf4j.Logger logger;
 
-    /**
-     * The plugin class must have a default (public, no arguments) constructor.
-     */
+    /** The plugin class must have a default (public, no arguments) constructor. */
     public MacroMachinePlugin() {
         super(NAME, VERSION);
         instance = this;

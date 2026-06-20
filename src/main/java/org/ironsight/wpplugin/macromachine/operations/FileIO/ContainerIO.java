@@ -1,16 +1,10 @@
 package org.ironsight.wpplugin.macromachine.operations.FileIO;
 
+import static org.ironsight.wpplugin.macromachine.operations.AbstractOperationContainer.createBackup;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.ironsight.wpplugin.macromachine.operations.Macro;
-import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
-import org.ironsight.wpplugin.macromachine.operations.MappingAction;
-import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ILayerGetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
-import org.pepsoft.worldpainter.layers.Layer;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,8 +14,13 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
-
-import static org.ironsight.wpplugin.macromachine.operations.AbstractOperationContainer.createBackup;
+import org.ironsight.wpplugin.macromachine.operations.Macro;
+import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
+import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ILayerGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
+import org.pepsoft.worldpainter.layers.Layer;
 
 public class ContainerIO
 {
@@ -151,7 +150,6 @@ public class ContainerIO
                     return true;
                 }
             }
-
         }
         return false;
     }
@@ -187,7 +185,6 @@ public class ContainerIO
                 }
                 seenActions.put(child, macroData);
             }
-
         }
         return false;
     }

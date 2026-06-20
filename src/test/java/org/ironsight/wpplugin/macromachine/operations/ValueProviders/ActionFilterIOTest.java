@@ -1,13 +1,12 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
+
+import java.awt.*;
 import org.ironsight.wpplugin.macromachine.threeDRendering.TestData;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
-
-import java.awt.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 
 class ActionFilterIOTest
 {
@@ -24,6 +23,5 @@ class ActionFilterIOTest
         // mutate a value
         actionFilter.setValueAt(dim, 7, -177, ActionFilterIO.PASS_VALUE);
         assertEquals(ActionFilterIO.PASS_VALUE, actionFilter.getValueAt(dim, 7, -177));
-
     }
 }

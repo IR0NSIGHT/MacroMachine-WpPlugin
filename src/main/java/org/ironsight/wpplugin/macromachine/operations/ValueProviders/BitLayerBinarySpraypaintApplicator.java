@@ -1,14 +1,13 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.layers.Layer;
-
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
 import java.util.stream.IntStream;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.layers.Layer;
 
 public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter, ILayerGetter
 {
@@ -28,10 +27,12 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         this.layerName = layer.getName();
         this.isCustom = isCustom;
     }
+
     @Override
     public int[] getAllPossibleValues() {
         return getAllOutputValues();
     }
+
     BitLayerBinarySpraypaintApplicator(String layerId, String layerName, boolean isCustom) {
         this.layerId = layerId;
         this.layerName = layerName;
@@ -39,10 +40,12 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     }
 
     private final int[] outputValues = IntStream.range(IGNORE_VALUE, getMaxValue() + 1).toArray();
+
     @Override
     public int[] getAllOutputValues() {
         return Arrays.copyOf(outputValues, outputValues.length);
     }
+
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_VALUE;
@@ -80,25 +83,25 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
         layer = InputOutputProvider.INSTANCE.getLayerById(layerId, f -> {
         });
         if (layer == null)
-            throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
+            throw new RuntimeException("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null)
             layerName = layer.getName(); // maybe name was updated
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         Object[] saveData = new Object[]{"Macro Selection", "org.ironsight.wpplugin.macropainter.macroselectionlayer",
                 false};
         for (int i = 0; i < data.length; i++) {
             saveData[i] = data[i];
         }
-        return new BitLayerBinarySpraypaintApplicator((String) saveData[0], (String) saveData[1],
-                (Boolean) saveData[2]);
+        return new BitLayerBinarySpraypaintApplicator(((StringValue) saveData[0]).value(),
+                ((StringValue) saveData[1]).value(), ((BoolValue) saveData[2]).value());
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[]{layerId, layerName, isCustom};
+    public IoParameter[] getSaveData() {
+        return new IoParameter[]{new StringValue(layerId), new StringValue(layerName), new BoolValue(isCustom)};
     }
 
     @Override
@@ -199,5 +202,4 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     public Layer getLayer() {
         return layer;
     }
-
 }

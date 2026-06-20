@@ -1,9 +1,8 @@
 package org.ironsight.wpplugin.macromachine.operations.FileIO;
 
-import org.ironsight.wpplugin.macromachine.operations.*;
-
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
+import org.ironsight.wpplugin.macromachine.operations.*;
 
 public class ConflictResolveImportPolicy extends ImportExportPolicy
 {

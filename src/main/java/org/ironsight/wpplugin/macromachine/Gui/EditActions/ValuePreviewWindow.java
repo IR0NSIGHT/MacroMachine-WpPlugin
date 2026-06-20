@@ -1,12 +1,12 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
-import javax.swing.*;
+import static java.awt.Image.SCALE_FAST;
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-
-import static java.awt.Image.SCALE_FAST;
-import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+import javax.swing.*;
 
 public class ValuePreviewWindow extends MouseAdapter implements ActionListener
 {
@@ -61,6 +61,7 @@ public class ValuePreviewWindow extends MouseAdapter implements ActionListener
     }
 
     private boolean enabled;
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }

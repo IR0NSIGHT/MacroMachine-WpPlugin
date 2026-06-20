@@ -1,13 +1,12 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class MacroDesignerTest
 {
@@ -87,7 +86,7 @@ public class MacroDesignerTest
         ArrayList<Integer> newSelection = new ArrayList<>();
         Macro inserted = Macro.insertSaveableActionToList(macro.clone(), inputItem, container::addMapping,
                 action -> container.updateMapping(action, Assertions::fail), new int[]{2}, // insert after index=2 in
-                                                                                           // list => at index 3
+                // list => at index 3
                 newSelection);
         assertEquals(5, inserted.getExecutionUUIDs().length);
         UUID[] expectedIds = Arrays.copyOf(actionIds, 5);
@@ -120,7 +119,7 @@ public class MacroDesignerTest
             addedIdsInOrder.add(lm.getUid());
             return lm;
         }, action -> container.updateMapping(action, Assertions::fail), new int[]{2, 3}, // insert after index=2 in list
-                                                                                         // => at index 3
+                // => at index 3
                 newSelection);
         assertEquals(6, inserted.getExecutionUUIDs().length);
 
@@ -177,6 +176,5 @@ public class MacroDesignerTest
         expectedSelection.add(5);
 
         assertIterableEquals(expectedSelection, newSelection, "new items are selected");
-
     }
 }

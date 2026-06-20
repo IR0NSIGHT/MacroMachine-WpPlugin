@@ -1,10 +1,9 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
-
 import java.awt.*;
 import java.util.stream.IntStream;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
 
 public class TestInputOutput implements IPositionValueSetter, IPositionValueGetter
 {
@@ -12,10 +11,11 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
         values = IntStream.range(getMinValue() - 1, getMaxValue() + 1).toArray();
         values[0] = IGNORE_VALUE;
     }
+
     @Override
     public void setValueAt(Dimension dim, int x, int y, int value) {
-
     }
+
     @Override
     public boolean isIgnoreValue(int value) {
         return value == Integer.MAX_VALUE;
@@ -27,21 +27,24 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     }
 
     private final int[] values;
+
     @Override
     public int[] getAllInputValues() {
         return IntStream.range(getMinValue(), getMaxValue() + 1).toArray();
     }
+
     @Override
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());
     }
+
     @Override
     public String toString() {
         return getName();
     }
+
     @Override
     public void prepareForDimension(Dimension dim) {
-
     }
 
     @Override
@@ -75,13 +78,13 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return new TestInputOutput();
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[0];
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
     }
 
     @Override
@@ -111,10 +114,12 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     public String getName() {
         return "Test Getter";
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
     }
+
     @Override
     public String getDescription() {
         return "test class for getting values";

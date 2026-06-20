@@ -1,15 +1,14 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import javax.swing.event.TableModelEvent;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AnnotationSetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainHeightIO;
 import org.junit.jupiter.api.Test;
-
-import javax.swing.event.TableModelEvent;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class MappingActionValueTableModelTest
 {
@@ -33,7 +32,6 @@ class MappingActionValueTableModelTest
             assertTrue(model.isMappingPoint(row));
             assertTrue(model.isCellEditable(row, 0));
             assertTrue(model.isCellEditable(row, 1));
-
         }
     }
 
@@ -80,7 +78,6 @@ class MappingActionValueTableModelTest
 
         assertEquals(action.getInput().getName(), model.getColumnName(0));
         assertEquals(action.getOutput().getName(), model.getColumnName(1));
-
     }
 
     @Test
@@ -149,7 +146,6 @@ class MappingActionValueTableModelTest
             if (e.getType() == TableModelEvent.UPDATE) {
                 updatedAction[0] = model.constructMapping();
             }
-
         });
         assertEquals(0, headerChangedCalls[0]);
 

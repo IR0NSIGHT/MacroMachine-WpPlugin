@@ -1,18 +1,17 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.junit.jupiter.api.Test;
-import org.pepsoft.worldpainter.*;
-import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.heightMaps.ConstantHeightMap;
-import org.pepsoft.worldpainter.themes.SimpleTheme;
-
-import java.awt.*;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Dimension.Anchor.NORMAL_DETAIL;
 import static org.pepsoft.worldpainter.Terrain.GRASS;
 import static org.pepsoft.worldpainter.Terrain.STONE;
+
+import java.awt.*;
+import org.junit.jupiter.api.Test;
+import org.pepsoft.worldpainter.*;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.heightMaps.ConstantHeightMap;
+import org.pepsoft.worldpainter.themes.SimpleTheme;
 
 public class TestDimension
 {
@@ -63,6 +62,7 @@ public class TestDimension
         }
         return dimension;
     }
+
     private static TileFactory createTileFactory(int terrainHeight, int minHeight, int maxHeight, int waterLevel,
             int seed, Terrain terrain) {
         SimpleTheme theme = SimpleTheme.createSingleTerrain(terrain, minHeight, maxHeight, waterLevel);

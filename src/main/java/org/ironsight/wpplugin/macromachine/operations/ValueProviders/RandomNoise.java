@@ -1,15 +1,14 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.Tile;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Tile;
 
 public class RandomNoise implements IPositionValueGetter, IPositionTileValueGetter, EditableIO
 {
@@ -88,6 +87,7 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
     }
 
     private final int[] values = new int[]{BLOCK, PASS};
+
     @Override
     public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
@@ -95,19 +95,18 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
 
     @Override
     public void prepareForDimension(Dimension dim) throws IllegalAccessError {
-
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
-        int seed = (Integer) data[0];
-        int chance = (Integer) data[1];
+    public IMappingValue instantiateFrom(IoParameter[] data) {
+        int seed = ((IntValue) data[0]).value();
+        int chance = ((IntValue) data[1]).value();
         return (IMappingValue) instantiateWithValues(new int[]{seed, chance});
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[]{(Integer) seed, ((Float) (1 / chance)).intValue()};
+    public IoParameter[] getSaveData() {
+        return new IoParameter[]{new IntValue(seed), new IntValue(((Float) (1 / chance)).intValue())};
     }
 
     @Override

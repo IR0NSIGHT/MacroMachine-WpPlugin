@@ -1,11 +1,10 @@
 package org.ironsight.wpplugin.macromachine.operations.FileIO;
 
+import java.util.HashSet;
+import java.util.UUID;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
-
-import java.util.HashSet;
-import java.util.UUID;
 
 /**
  * this policy will filter out everything but a given macro and all its
@@ -14,6 +13,7 @@ import java.util.UUID;
 public class MacroExportPolicy extends ImportExportPolicy
 {
     private HashSet<UUID> requiredIds = new HashSet<>();
+
     public MacroExportPolicy(Macro macro, MacroContainer container) {
         addMacroAndChildren(macro, container);
     }
@@ -29,7 +29,6 @@ public class MacroExportPolicy extends ImportExportPolicy
                 requiredIds.add(childId);
             }
         }
-
     }
 
     @Override

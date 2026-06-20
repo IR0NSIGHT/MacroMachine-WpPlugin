@@ -1,15 +1,14 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.biomeschemes.Minecraft1_21Biomes;
-import org.pepsoft.worldpainter.layers.Biome;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.stream.IntStream;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.biomeschemes.Minecraft1_21Biomes;
+import org.pepsoft.worldpainter.layers.Biome;
 
 public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValueSetter
 {
@@ -20,18 +19,22 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
         outputValues = IntStream.range(-1, Minecraft1_21Biomes.BIOME_NAMES.length).toArray();
         outputValues[0] = IGNORE_VALUE;
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
     }
+
     @Override
     public boolean equals(Object obj) {
         return obj != null && this.getClass().equals(obj.getClass());
     }
+
     @Override
     public String toString() {
         return getName();
     }
+
     @Override
     public String getName() {
         return "Biome";
@@ -70,13 +73,13 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return new VanillaBiomeProvider();
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[0];
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
     }
 
     @Override
@@ -127,6 +130,7 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     public int[] getAllInputValues() {
         return Arrays.copyOf(inputValues, inputValues.length);
     }
+
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_VALUE;
@@ -139,6 +143,5 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
 
     @Override
     public void prepareForDimension(Dimension dim) {
-
     }
 }

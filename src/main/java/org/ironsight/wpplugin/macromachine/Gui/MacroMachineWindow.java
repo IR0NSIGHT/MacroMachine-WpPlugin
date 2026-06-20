@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
-import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
-import org.ironsight.wpplugin.macromachine.operations.MacroApplicator;
-
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
+import javax.swing.*;
+import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
+import org.ironsight.wpplugin.macromachine.operations.MacroApplicator;
 
 public class MacroMachineWindow extends JFrame
 {
@@ -40,6 +39,7 @@ public class MacroMachineWindow extends JFrame
     }
 
     private boolean stayOnTop;
+
     public MacroMachineWindow(JFrame parent, String title) {
         super(title);
         dialog = this;

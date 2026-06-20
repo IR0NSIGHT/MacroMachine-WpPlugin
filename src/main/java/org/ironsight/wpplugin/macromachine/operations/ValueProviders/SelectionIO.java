@@ -1,11 +1,10 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
-
-import java.awt.*;
 
 public class SelectionIO extends BinaryLayerIO
 {
@@ -47,7 +46,7 @@ public class SelectionIO extends BinaryLayerIO
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return new SelectionIO();
     }
 
@@ -55,6 +54,7 @@ public class SelectionIO extends BinaryLayerIO
     public String toString() {
         return getName();
     }
+
     @Override
     public ProviderType getProviderType() {
         return ProviderType.SELECTION;

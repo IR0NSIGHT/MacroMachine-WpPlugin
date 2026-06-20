@@ -1,5 +1,15 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
+import static java.lang.Math.*;
+import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
+import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
+
+import java.util.*;
+import java.util.List;
+import java.util.function.Function;
+import javax.vecmath.Point2f;
+import javax.vecmath.Point3i;
+import javax.vecmath.Point4f;
 import org.ironsight.wpplugin.rivertool.API.RiverTool;
 import org.ironsight.wpplugin.rivertool.API.RiverToolAPI;
 import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
@@ -7,17 +17,6 @@ import org.ironsight.wpplugin.rivertool.pathing.PointType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.painting.Paint;
-
-import javax.vecmath.Point2f;
-import javax.vecmath.Point3i;
-import javax.vecmath.Point4f;
-import java.util.*;
-import java.util.List;
-import java.util.function.Function;
-
-import static java.lang.Math.*;
-import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
-import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
 
 public class PathToolBackend
 {
@@ -32,6 +31,7 @@ public class PathToolBackend
             this.handlesToPathIndex = handlesToPathIndex;
         }
     }
+
     static PathResult getPathFromHandles(List<Point4f> handles, float handleStrength) {
         var api = RiverTool.create();
         var handlesData = handles.stream()
@@ -150,6 +150,7 @@ public class PathToolBackend
             point.w = Math.max(point.w, minRadius);
         }
     }
+
     public static List<Point4f> enforceSlopeLimit(List<Point4f> path, float slopeLimit) {
         if (slopeLimit == 0 || path.isEmpty()) {
             return path;
@@ -174,6 +175,7 @@ public class PathToolBackend
 
         return path;
     }
+
     static Set<Point3i> collectTilesAroundPath(Collection<Point4f> path, float radiusMultiplier) {
         HashSet<Point3i> tilePositions = new HashSet<>(path.size() / TILE_SIZE);
         for (Point4f pathPoint : path) {

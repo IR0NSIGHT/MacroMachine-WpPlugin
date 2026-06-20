@@ -8,6 +8,7 @@ public class HandleAndIdcs
     public final int[] idcs;
     public final float[] segmentLengths;
     public final float[] handleStrengths;
+
     public HandleAndIdcs(float[] positions, int[] idcs, float[] segmentLengths, float[] handleStrengths) {
         if (positions.length != idcs.length || idcs.length != segmentLengths.length)
             throw new IllegalArgumentException("all arrays must be of same length.");

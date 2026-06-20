@@ -1,20 +1,19 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
-import org.ironsight.wpplugin.macromachine.Gui.EditActions.RangeEditor.RangeTableEditor;
-import org.ironsight.wpplugin.macromachine.operations.*;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
-import org.pepsoft.worldpainter.layers.PineForest;
+import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
 
-import javax.swing.*;
-import javax.swing.event.TableModelEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.UUID;
 import java.util.function.Consumer;
-
-import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
-import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
+import javax.swing.*;
+import javax.swing.event.TableModelEvent;
+import org.ironsight.wpplugin.macromachine.Gui.EditActions.RangeEditor.RangeTableEditor;
+import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
+import org.pepsoft.worldpainter.layers.PineForest;
 
 public class ActionDesigner extends LayerMappingPanel
 {
@@ -45,7 +44,6 @@ public class ActionDesigner extends LayerMappingPanel
                 // call your save method here
             }
         });
-
     }
 
     @Override

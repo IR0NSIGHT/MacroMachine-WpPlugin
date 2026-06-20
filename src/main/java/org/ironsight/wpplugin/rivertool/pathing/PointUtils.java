@@ -1,15 +1,14 @@
 package org.ironsight.wpplugin.rivertool.pathing;
 
-import org.ironsight.wpplugin.rivertool.geometry.BoundingBoxes.AxisAlignedBoundingBox2d;
-import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
-import org.ironsight.wpplugin.rivertool.geometry.PaintDimension;
-import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
-
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import org.ironsight.wpplugin.rivertool.geometry.BoundingBoxes.AxisAlignedBoundingBox2d;
+import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
+import org.ironsight.wpplugin.rivertool.geometry.PaintDimension;
+import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 
 public class PointUtils
 {
@@ -161,7 +160,6 @@ public class PointUtils
     }
 
     /**
-     *
      * @param meta
      *            handle with meta info
      * @param position

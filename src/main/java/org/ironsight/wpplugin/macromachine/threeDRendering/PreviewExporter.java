@@ -1,5 +1,7 @@
 package org.ironsight.wpplugin.macromachine.threeDRendering;
 
+import java.awt.*;
+import java.util.*;
 import org.pepsoft.minecraft.ChunkFactory;
 import org.pepsoft.util.ProgressReceiver;
 import org.pepsoft.worldpainter.Dimension;
@@ -7,9 +9,6 @@ import org.pepsoft.worldpainter.World2;
 import org.pepsoft.worldpainter.exporting.*;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.platforms.JavaExportSettings;
-
-import java.awt.*;
-import java.util.*;
 
 public class PreviewExporter extends JavaWorldExporter
 {

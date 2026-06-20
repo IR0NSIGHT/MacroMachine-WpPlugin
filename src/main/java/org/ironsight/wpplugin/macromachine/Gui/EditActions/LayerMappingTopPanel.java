@@ -1,5 +1,10 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
+import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.util.Arrays;
+import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
@@ -7,12 +12,6 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilte
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.util.Arrays;
 
 public class LayerMappingTopPanel extends LayerMappingPanel
 {
@@ -57,8 +56,8 @@ public class LayerMappingTopPanel extends LayerMappingPanel
                 MappingPoint[] mps = mapping.getMappingPoints();
                 IPositionValueSetter output = (IPositionValueSetter) outputSelect.getSelectedProvider();
                 if (output.getProviderType() == ProviderType.INTERMEDIATE_SELECTION) // special case: for filters, all
-                                                                                     // mapping points map to PASS by
-                                                                                     // default
+                    // mapping points map to PASS by
+                    // default
                     mps = Arrays.stream(mps)
                             .map(mp -> new MappingPoint(mp.input, ActionFilterIO.PASS_VALUE))
                             .toArray(MappingPoint[]::new);
@@ -134,5 +133,4 @@ public class LayerMappingTopPanel extends LayerMappingPanel
         outputSelect.setFont(header2Font);
         isInit = false;
     }
-
 }

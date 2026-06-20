@@ -1,14 +1,13 @@
 package org.ironsight.wpplugin.rivertool.API;
 
-import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
-import org.ironsight.wpplugin.rivertool.operations.ContinuousCurve;
-import org.ironsight.wpplugin.rivertool.pathing.Path;
-import org.ironsight.wpplugin.rivertool.pathing.PointType;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
+import org.ironsight.wpplugin.rivertool.operations.ContinuousCurve;
+import org.ironsight.wpplugin.rivertool.pathing.Path;
+import org.ironsight.wpplugin.rivertool.pathing.PointType;
 
 final class RiverToolAPIImplementation implements RiverToolAPI
 {

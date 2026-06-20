@@ -1,16 +1,15 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
-import org.ironsight.wpplugin.macromachine.operations.MappingAction;
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel.header1Font;
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_FOREGROUND;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
-import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
-import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_FOREGROUND;
-import static org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel.header1Font;
+import javax.swing.*;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 
 public class BreakpointButtonPanel extends JPanel implements DebugUserInterface
 {
@@ -104,22 +103,18 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface
         }, () -> new BreakpointListener() {
             @Override
             public void OnReachedBreakpoint(int idx) {
-
             }
 
             @Override
             public void PostReachedBreakpoint(int idx) {
-
             }
 
             @Override
             public void SetBreakpoints(ArrayList<MappingAction> breakpoints) {
-
             }
 
             @Override
             public void afterEverything() {
-
             }
         });
         // Add the button to the frame
@@ -226,7 +221,5 @@ public class BreakpointButtonPanel extends JPanel implements DebugUserInterface
             this.setFont(header1Font);
             this.setText(text);
         }
-    }
-
-    ;
+    };
 }

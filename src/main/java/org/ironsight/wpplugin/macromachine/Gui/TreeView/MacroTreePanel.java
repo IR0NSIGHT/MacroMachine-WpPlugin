@@ -1,19 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Gui.TreeView;
 
-import org.ironsight.wpplugin.macromachine.Gui.*;
-import org.ironsight.wpplugin.macromachine.operations.*;
-import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointButtonPanel;
-import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointListener;
-import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.UserApplyActionCallback;
-import org.ironsight.wpplugin.macromachine.operations.FileIO.ConflictResolveImportPolicy;
-import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
-import org.ironsight.wpplugin.macromachine.operations.FileIO.MacroExportPolicy;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
+import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
-import javax.swing.*;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
@@ -25,8 +13,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+import javax.swing.*;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.tree.*;
+import org.ironsight.wpplugin.macromachine.Gui.*;
+import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointButtonPanel;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointListener;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.UserApplyActionCallback;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ConflictResolveImportPolicy;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
+import org.ironsight.wpplugin.macromachine.operations.FileIO.MacroExportPolicy;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 public class MacroTreePanel extends JPanel
 {
@@ -394,12 +393,10 @@ public class MacroTreePanel extends JPanel
         tree.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
-
             }
 
             @Override
@@ -418,12 +415,10 @@ public class MacroTreePanel extends JPanel
 
             @Override
             public void mouseEntered(MouseEvent e) {
-
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-
             }
         });
         JScrollPane scrollPane = new JScrollPane(tree, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -635,8 +630,6 @@ public class MacroTreePanel extends JPanel
         macroIsCurrentlyExecuting = true;
         GlobalActionPanel.logMessage("Start execution");
 
-        ExecutorService executorService = Executors.newFixedThreadPool(1);
-
         // Submit a task to the ExecutorService
         final MacroTreePanel panel = this;
         TreePath selected = tree.getSelectionPath();
@@ -660,6 +653,7 @@ public class MacroTreePanel extends JPanel
 
         treeStepper = new TreeDebugStepperUI((MacroTreeNode) selected.getLastPathComponent(), macroContainer,
                 this.mappingContainer, this::setStepperToPath);
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
         executorService.submit(() -> {
             applyToMap.applyLayerAction(executingMacro, macroExecutionCallback);
             SwingUtilities.invokeLater(() -> {
@@ -670,7 +664,6 @@ public class MacroTreePanel extends JPanel
 
         // Shutdown the ExecutorService
         executorService.shutdown();
-
     }
 
     static class ToggleSelectionModel extends DefaultTreeSelectionModel

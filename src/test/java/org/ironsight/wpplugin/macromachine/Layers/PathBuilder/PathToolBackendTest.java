@@ -1,13 +1,11 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
-import org.junit.jupiter.api.Test;
-
-import javax.vecmath.Point4f;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.stream.IntStream;
-
-import static org.junit.jupiter.api.Assertions.*;
+import javax.vecmath.Point4f;
+import org.junit.jupiter.api.Test;
 
 class PathToolBackendTest
 {
@@ -113,7 +111,6 @@ class PathToolBackendTest
 
     @Test
     void applyToTile() {
-
     }
 
     @Test
@@ -132,7 +129,6 @@ class PathToolBackendTest
             var subPath = PathToolBackend.getSubPathFor(new Point2i(-10, -10), new Point2i(10, 10), path, 1);
             assertTrue(subPath.contains(path.get(2)));
             assertTrue(subPath.contains(path.get(3)));
-
         }
         {
             var path = new ArrayList<Point4f>();

@@ -1,8 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
-import org.ironsight.wpplugin.macromachine.operations.MappingAction;
-
 import java.util.ArrayList;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 
 public interface BreakpointListener
 {

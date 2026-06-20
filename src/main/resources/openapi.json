@@ -1,0 +1,771 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "MacroMachine API",
+    "version" : "1.0.0"
+  },
+  "servers" : [ {
+    "url" : "/api"
+  } ],
+  "paths" : {
+    "/actions/{id}" : {
+      "get" : {
+        "operationId" : "getActionById",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ActionDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "deleteAction",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : { }
+            }
+          }
+        }
+      }
+    },
+    "/actions/lastChange" : {
+      "get" : {
+        "summary" : "Get last modification timestamp",
+        "description" : "Returns the timestamp of the most recent modification to the action container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).",
+        "operationId" : "getActionLastChange",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int64"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actions" : {
+      "get" : {
+        "operationId" : "getAllActions",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ActionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "postAction",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ActionDTO"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ActionDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actions/appliers" : {
+      "get" : {
+        "operationId" : "getAppliers",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ActionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/actions/filters" : {
+      "get" : {
+        "operationId" : "getFilters",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ActionDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs" : {
+      "get" : {
+        "operationId" : "getDocs",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "text/html" : { }
+            }
+          }
+        }
+      }
+    },
+    "/execution/queue" : {
+      "get" : {
+        "operationId" : "getQueue",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExecutionQueueDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "addToQueue",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ExecutionQueueDTO"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExecutionQueueDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/execution/state" : {
+      "get" : {
+        "operationId" : "getCurrentState",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ExecutionStateDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/execution/state/history" : {
+      "get" : {
+        "operationId" : "getExecutionHistory",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/ExecutionStateDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/layers/{id}" : {
+      "get" : {
+        "operationId" : "existsLayerInProject",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/layers" : {
+      "get" : {
+        "operationId" : "getAllLayers",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/LayerDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/layers/{id}/icon" : {
+      "get" : {
+        "operationId" : "getLayerIcon",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "image/png" : { }
+            }
+          }
+        }
+      }
+    },
+    "/macros/{id}" : {
+      "get" : {
+        "operationId" : "getMacroById",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MacroDTO"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete" : {
+        "operationId" : "deleteMacro",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : { }
+            }
+          }
+        }
+      }
+    },
+    "/macros" : {
+      "get" : {
+        "summary" : "Get all macros",
+        "operationId" : "getAllMacros",
+        "responses" : {
+          "200" : {
+            "description" : "List of macros",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/MacroDTO"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post" : {
+        "operationId" : "postMacro",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MacroDTO"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/MacroDTO"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/macros/lastChange" : {
+      "get" : {
+        "summary" : "Get last modification timestamp",
+        "description" : "Returns the timestamp of the most recent modification to the macro container as milliseconds since the Unix epoch (equivalent to System.currentTimeMillis()).",
+        "operationId" : "getMacroLastChange",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "integer",
+                  "format" : "int64"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/" : {
+      "options" : {
+        "operationId" : "options",
+        "responses" : {
+          "default" : {
+            "description" : "default response",
+            "content" : {
+              "*/*" : { }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "ActionDTO" : {
+        "required" : [ "actionType", "description", "input", "mappedInputs", "mappedOutputs", "mappingPointsX", "mappingPointsY", "name", "output", "uid" ],
+        "type" : "object",
+        "properties" : {
+          "input" : {
+            "$ref" : "#/components/schemas/InputOutputDTO"
+          },
+          "output" : {
+            "$ref" : "#/components/schemas/InputOutputDTO"
+          },
+          "actionType" : {
+            "type" : "string",
+            "description" : "Type of action",
+            "enum" : [ "INCREMENT", "DECREMENT", "MULTIPLY", "DIVIDE", "SET", "LIMIT_TO", "AT_LEAST" ]
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Human readable name"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Description of the action"
+          },
+          "uid" : {
+            "type" : "string",
+            "description" : "Unique identifier",
+            "format" : "uuid"
+          },
+          "mappingPointsX" : {
+            "type" : "array",
+            "description" : "numeric input values for the mapping points",
+            "items" : {
+              "type" : "integer",
+              "description" : "numeric input values for the mapping points",
+              "format" : "int32"
+            }
+          },
+          "mappingPointsY" : {
+            "type" : "array",
+            "description" : "numeric output values for the mapping points",
+            "items" : {
+              "type" : "integer",
+              "description" : "numeric output values for the mapping points",
+              "format" : "int32"
+            }
+          },
+          "mappedOutputs" : {
+            "type" : "array",
+            "description" : "actual numeric output values for all inputs",
+            "items" : {
+              "type" : "integer",
+              "description" : "actual numeric output values for all inputs",
+              "format" : "int32"
+            }
+          },
+          "mappedInputs" : {
+            "type" : "array",
+            "description" : "actual numeric input values for all inputs",
+            "items" : {
+              "type" : "integer",
+              "description" : "actual numeric input values for all inputs",
+              "format" : "int32"
+            }
+          }
+        },
+        "description" : "Represents an executable mapping action, that reads one inputtype from the map and based on that writes output values to the map."
+      },
+      "InputOutputDTO" : {
+        "required" : [ "description", "discrete", "displayName", "ignoreValue", "ioParameters", "max", "min", "type", "valueDisplayNames" ],
+        "type" : "object",
+        "properties" : {
+          "displayName" : {
+            "type" : "string",
+            "description" : "Human readable macro name",
+            "example" : "Terrain Height"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Detailed description of the provider",
+            "example" : "Controls the generated terrain elevation"
+          },
+          "min" : {
+            "type" : "integer",
+            "description" : "Minimum supported value",
+            "format" : "int32",
+            "example" : 0
+          },
+          "max" : {
+            "type" : "integer",
+            "description" : "Maximum supported value",
+            "format" : "int32",
+            "example" : 255
+          },
+          "ignoreValue" : {
+            "type" : "integer",
+            "description" : "Value that should be ignored or treated as unset",
+            "format" : "int32",
+            "example" : -1
+          },
+          "valueDisplayNames" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "description" : "Display names for discrete values",
+              "example" : "Blue"
+            }
+          },
+          "discrete" : {
+            "type" : "boolean",
+            "description" : "Whether the values are discrete instead of continuous (colors are discrete, forest strength % is continuous)",
+            "example" : true
+          },
+          "type" : {
+            "type" : "string",
+            "description" : "Provider type",
+            "enum" : [ "HEIGHT", "SLOPE", "ANNOTATION", "BINARY_LAYER", "BINARY_SPRAYPAINT", "BLOCK_DIRECTION", "INTERMEDIATE", "INTERMEDIATE_SELECTION", "NIBBLE_LAYER", "SELECTION", "STONE_PALETTE", "TERRAIN", "TEST", "VANILLA_BIOME", "WATER_DEPTH", "WATER_HEIGHT", "ALWAYS", "DISTANCE_TO_EDGE", "PERLIN_NOISE", "SHADOW", "VORONOI_NOISE", "RANDOM_NOISE" ]
+          },
+          "ioParameters" : {
+            "type" : "array",
+            "description" : "Parameters used to instantiate the IO provider.",
+            "items" : {
+              "type" : "object",
+              "description" : "specific parameters known by the specific ioClass, used to instantiated equal objects.",
+              "oneOf" : [ {
+                "type" : "integer",
+                "format" : "int32"
+              }, {
+                "type" : "number",
+                "format" : "float"
+              }, {
+                "type" : "string"
+              }, {
+                "type" : "boolean"
+              }, {
+                "type" : "array",
+                "items" : {
+                  "type" : "integer",
+                  "format" : "int32"
+                }
+              } ]
+            }
+          }
+        },
+        "description" : "Describes an input/output provider configuration"
+      },
+      "ExecutionQueueDTO" : {
+        "required" : [ "queuedMacroIds" ],
+        "type" : "object",
+        "properties" : {
+          "queuedMacroIds" : {
+            "type" : "array",
+            "description" : "Ordered list of macro IDs to enqueue",
+            "items" : {
+              "type" : "string",
+              "description" : "Ordered list of macro IDs to enqueue",
+              "format" : "uuid"
+            }
+          }
+        },
+        "description" : "Request to enqueue macros for execution"
+      },
+      "ExecutionStateDTO" : {
+        "required" : [ "currentStepIndex", "executionId", "status", "steps" ],
+        "type" : "object",
+        "properties" : {
+          "executionId" : {
+            "type" : "string",
+            "description" : "ID of the currently executing macro",
+            "format" : "uuid"
+          },
+          "steps" : {
+            "type" : "array",
+            "description" : "Ordered execution steps for the current execution",
+            "items" : {
+              "$ref" : "#/components/schemas/ExecutionStepDTO"
+            }
+          },
+          "currentStepIndex" : {
+            "type" : "integer",
+            "description" : "Zero-based index of the currently active step",
+            "format" : "int32",
+            "example" : 0
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "state of the execution",
+            "enum" : [ "IDLE", "RUNNING", "PAUSED", "COMPLETED", "FAILED", "ABORTING", "QUEUED", "PREPARING" ]
+          }
+        },
+        "description" : "Represents the application's execution state"
+      },
+      "ExecutionStepDTO" : {
+        "required" : [ "actionId", "breakpoint", "percentComplete", "status" ],
+        "type" : "object",
+        "properties" : {
+          "actionId" : {
+            "type" : "string",
+            "description" : "Unique identifier of the action executed in this step",
+            "format" : "uuid",
+            "example" : "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "breakpoint" : {
+            "type" : "boolean",
+            "description" : "Whether execution should pause before this step is executed",
+            "example" : false
+          },
+          "percentComplete" : {
+            "maximum" : 100.0,
+            "exclusiveMaximum" : false,
+            "minimum" : 0.0,
+            "exclusiveMinimum" : false,
+            "type" : "number",
+            "description" : "Completion percentage of this step, from 0 to 100",
+            "format" : "float",
+            "example" : 42.5
+          },
+          "status" : {
+            "type" : "string",
+            "description" : "state of the execution",
+            "enum" : [ "IDLE", "RUNNING", "PAUSED", "COMPLETED", "FAILED", "ABORTING", "QUEUED", "PREPARING" ]
+          },
+          "error" : {
+            "type" : "string",
+            "description" : "error description"
+          }
+        },
+        "description" : "Represents a single action step within a macro execution"
+      },
+      "LayerDTO" : {
+        "required" : [ "custom", "dataSize", "description", "discrete", "id", "name", "presentInProject", "priority", "type" ],
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string",
+            "description" : "Display name of the layer"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Description of the layer"
+          },
+          "dataSize" : {
+            "type" : "string",
+            "description" : "Amount of possible values the layer can store",
+            "enum" : [ "BIT", "NIBBLE", "BYTE", "BIT_PER_CHUNK", "NONE" ]
+          },
+          "priority" : {
+            "type" : "integer",
+            "description" : "IDK? Possible export application priority?",
+            "format" : "int32"
+          },
+          "id" : {
+            "type" : "string",
+            "description" : "Unique, stable ID of layer"
+          },
+          "discrete" : {
+            "type" : "boolean",
+            "description" : "Discrete. IDK about the semantic"
+          },
+          "type" : {
+            "type" : "string",
+            "description" : "Specific layer category"
+          },
+          "custom" : {
+            "type" : "boolean",
+            "description" : "is Custom layer"
+          },
+          "macrosUsingLayer" : {
+            "type" : "array",
+            "description" : "IDs of macros that use this layer",
+            "items" : {
+              "type" : "string",
+              "format" : "uuid"
+            }
+          },
+          "presentInProject" : {
+            "type" : "boolean",
+            "description" : "Input"
+          }
+        },
+        "description" : "A layer used in worldpainter."
+      },
+      "MacroDTO" : {
+        "required" : [ "activeActions", "description", "executionUUIDs", "name", "uid" ],
+        "type" : "object",
+        "properties" : {
+          "executionUUIDs" : {
+            "type" : "array",
+            "description" : "UUIDs of executions associated with this macro. can be of a macro or an action",
+            "example" : [ "550e8400-e29b-41d4-a716-446655440000" ],
+            "items" : {
+              "type" : "string",
+              "description" : "UUIDs of executions associated with this macro. can be of a macro or an action",
+              "format" : "uuid"
+            }
+          },
+          "activeActions" : {
+            "type" : "array",
+            "description" : "Flags indicating whether each action is active",
+            "example" : [ true, false, true ],
+            "items" : {
+              "type" : "boolean",
+              "description" : "Flags indicating whether each action is active",
+              "example" : false
+            }
+          },
+          "name" : {
+            "type" : "string",
+            "description" : "Human readable macro name",
+            "example" : "Morning Routine"
+          },
+          "description" : {
+            "type" : "string",
+            "description" : "Detailed description of the macro",
+            "example" : "Runs all startup automation tasks"
+          },
+          "uid" : {
+            "type" : "string",
+            "description" : "Unique identifier of the macro",
+            "format" : "uuid",
+            "example" : "550e8400-e29b-41d4-a716-446655440000"
+          }
+        },
+        "description" : "Represents a macro: collection of macros and actions"
+      }
+    }
+  }
+}

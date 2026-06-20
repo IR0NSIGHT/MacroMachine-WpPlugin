@@ -1,13 +1,12 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.ExecutionStatistic;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.pepsoft.worldpainter.Dimension;
-
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 public class UserApplyActionCallback implements ApplyActionCallback
 {
@@ -23,7 +22,17 @@ public class UserApplyActionCallback implements ApplyActionCallback
     }
 
     @Override
-    public void setProgressOfAction(int percent) {
+    public void afterPreparation() {
+
+    }
+
+    @Override
+    public void onError(int stepIdx, MappingAction action, String error) {
+
+    }
+
+    @Override
+    public void setProgressOfAction(int percent, MappingAction action) {
         debugUI.setProgessTo(actionIdx, percent, totalActions);
     }
 
@@ -58,7 +67,7 @@ public class UserApplyActionCallback implements ApplyActionCallback
     }
 
     @Override
-    public void afterEachAction(ExecutionStatistic statistic) {
+    public void afterEachAction(ExecutionStatistic statistic, MappingAction action) {
         debugUI.setProgessTo(actionIdx, 100, totalActions);
 
         if (statistic != null) {

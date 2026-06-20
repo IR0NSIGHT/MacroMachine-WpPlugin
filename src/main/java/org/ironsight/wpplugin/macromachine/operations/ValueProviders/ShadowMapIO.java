@@ -1,16 +1,15 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
+import java.awt.*;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 import org.ironsight.wpplugin.macromachine.ArrayUtils;
 import org.ironsight.wpplugin.macromachine.operations.ILimitedMapOperation;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.ironsight.wpplugin.macromachine.operations.specialOperations.ShadowMap;
 import org.pepsoft.worldpainter.Dimension;
-
-import java.awt.*;
-import java.util.Arrays;
-import java.util.stream.IntStream;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation
 {
@@ -59,17 +58,16 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation
 
     @Override
     public void prepareForDimension(Dimension dim) throws IllegalAccessError {
-
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return new ShadowMapIO();
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[0];
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
     }
 
     @Override

@@ -9,6 +9,8 @@ public interface EditableIO extends IDisplayUnit
     int[] getEditableValues();
 
     String[] getValueNames();
+
     String[] getValueTooltips();
+
     EditableIO instantiateWithValues(int[] values);
 }

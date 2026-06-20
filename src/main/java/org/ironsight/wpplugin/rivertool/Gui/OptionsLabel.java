@@ -1,10 +1,9 @@
 package org.ironsight.wpplugin.rivertool.Gui;
 
-import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
-
-import javax.swing.*;
 import java.text.ParseException;
 import java.util.function.Consumer;
+import javax.swing.*;
+import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 
 public interface OptionsLabel
 {

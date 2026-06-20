@@ -1,18 +1,17 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
-import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
-import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.DisplayUnitPickerDialog;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.SELECTED_BACKGROUND;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Consumer;
-
-import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.DEFAULT_BACKGROUND;
-import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.SELECTED_BACKGROUND;
+import javax.swing.*;
+import org.ironsight.wpplugin.macromachine.Gui.ItemPicker.DisplayUnitPickerDialog;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 
 public class IoSelectLabel extends JPanel
 {
@@ -41,13 +40,12 @@ public class IoSelectLabel extends JPanel
     private void showPickingDialog() {
         new DisplayUnitPickerDialog(new ArrayList<IDisplayUnit>(provider.getItems()), this::onPickerSubmit,
                 Collections.emptyList(), true, this).setVisible(true);
-
     }
 
     private void onPickerSubmit(IDisplayUnit selected) {
         SetSelected((IMappingValue) selected);
         onChangeCallback.accept(((IMappingValue) selected).instantiateFrom(((IMappingValue) selected).getSaveData())); // return
-                                                                                                                       // clone
+        // clone
     }
 
     private void addClickListener(JPanel panel) {

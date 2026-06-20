@@ -33,6 +33,7 @@ public class PickerFilterOption<T>
     }
 
     private boolean active;
+
     public void setActive(boolean active) {
         this.active = active;
     }

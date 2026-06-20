@@ -1,5 +1,20 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
+import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+
+import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseWheelEvent;
+import java.beans.PropertyVetoException;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Random;
+import javax.swing.*;
+import javax.vecmath.Point3i;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.pepsoft.util.undo.UndoManager;
 import org.pepsoft.worldpainter.DefaultCustomObjectProvider;
@@ -16,29 +31,11 @@ import org.pepsoft.worldpainter.painting.LayerPaint;
 import org.pepsoft.worldpainter.painting.NibbleLayerPaint;
 import org.pepsoft.worldpainter.painting.Paint;
 
-import javax.swing.*;
-import javax.vecmath.Point3i;
-import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseWheelEvent;
-import java.beans.PropertyVetoException;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.Random;
-
-import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
-
-/**
- * STARMADE MOD CREATOR: Max1M DATE: 19.08.2025 TIME: 14:54
- */
+/** STARMADE MOD CREATOR: Max1M DATE: 19.08.2025 TIME: 14:54 */
 public class CityEditToolOperation extends AbstractBrushOperation implements PaintOperation, KeyEventDispatcher
 {
-    private final static String HelpTitle = "City Editor";
-    private final static String HELPTEXT = """
+    private static final String HelpTitle = "City Editor";
+    private static final String HELPTEXT = """
             this tool is for editing City Layers, a new special type of Custom Object Layer.
             1. Create or import a city layer (make sure your schematic offsets are centered and not 0,0,0)
             2. select the city layer
@@ -74,6 +71,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private boolean isAutoRandomRotate = false;
     private boolean isAutoRandomSelect = false;
     private Paint paint;
+
     public CityEditToolOperation() {
         super("City Tool", "Edit city layers using this tool", "city-edit-tool-operation");
         instance = this;
@@ -84,13 +82,12 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
         init();
         Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
-
             if (e instanceof MouseWheelEvent ev && isActive()
                     && (ev.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0) {
                 if (ev.getComponent()
                         .equals(SwingUtilities.getDeepestComponentAt(ev.getComponent(), ev.getX(), ev.getY()))) { // fire
-                                                                                                                  // only
-                                                                                                                  // once
+                    // only
+                    // once
                     onMouseWheel(ev.getWheelRotation());
                 }
             }
@@ -100,7 +97,6 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
         // Add a global key event dispatcher
         manager.addKeyEventDispatcher(this);
-
     }
 
     public static void updateInstance() {
@@ -205,7 +201,6 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
     @Override
     public void interrupt() {
-
     }
 
     @Override

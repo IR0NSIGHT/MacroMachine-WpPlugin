@@ -1,14 +1,14 @@
 package org.ironsight.wpplugin.macromachine.operations.FileIO;
 
+import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIOTest.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIOTest.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 class MacroExportPolicyTest
 {
@@ -27,6 +27,7 @@ class MacroExportPolicyTest
         assertEquals(3, macroContainer.queryAll().size(), "expect macros: empty, simple, complex");
         assertEquals(2, actionContainer.queryAll().size()); // 2 actions
     }
+
     @Test
     void testEmptyMacroExportPolicy() {
         Macro emtpyMacro = macroContainer.queryById(emptyMacroUID);

@@ -1,17 +1,17 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
+import java.util.Objects;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
-
-import java.util.Objects;
 
 public class MappingPointValue implements Comparable<MappingPointValue>
 {
     public IMappingValue mappingValue;
     public int numericValue;
     public boolean illegal = false;
+
     public MappingPointValue(int numericValue, IMappingValue mappingValue) { // TODO make constructors forgetter OR
-                                                                             // setter to diffferentiate context?
+        // setter to diffferentiate context?
         this.numericValue = numericValue;
         this.mappingValue = mappingValue;
     }

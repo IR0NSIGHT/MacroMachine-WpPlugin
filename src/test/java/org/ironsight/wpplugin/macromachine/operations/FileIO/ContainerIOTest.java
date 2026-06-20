@@ -1,11 +1,6 @@
 package org.ironsight.wpplugin.macromachine.operations.FileIO;
 
-import org.ironsight.wpplugin.macromachine.operations.*;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.layers.plants.PlantLayer;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.awt.*;
 import java.io.*;
@@ -13,8 +8,12 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.layers.plants.PlantLayer;
 
 class ContainerIOTest
 {
@@ -103,6 +102,7 @@ class ContainerIOTest
     public void importFileToContainers() throws IOException {
         LayerProvider layerProvider = new LayerProvider() {
             HashSet<Layer> layers = new HashSet<>();
+
             @Override
             public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
                 return null;

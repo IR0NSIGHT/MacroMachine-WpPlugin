@@ -1,5 +1,15 @@
 package org.ironsight.wpplugin.rivertool.operations;
 
+import static org.ironsight.wpplugin.rivertool.Gui.OptionsLabel.numericInput;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyVetoException;
+import java.util.*;
+import javax.swing.*;
 import org.ironsight.wpplugin.rivertool.Gui.GradientDisplay;
 import org.ironsight.wpplugin.rivertool.Gui.GradientEditor;
 import org.ironsight.wpplugin.rivertool.Gui.OptionsLabel;
@@ -7,17 +17,6 @@ import org.ironsight.wpplugin.rivertool.pathing.RingFinder;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Annotations;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.beans.PropertyVetoException;
-import java.util.*;
-
-import static org.ironsight.wpplugin.rivertool.Gui.OptionsLabel.numericInput;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class SelectEdgeOperation extends MouseOrTabletOperation
 {
@@ -81,7 +80,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation
             });
 
             panel.add(button3);
-
         }
 
         {
@@ -147,7 +145,6 @@ public class SelectEdgeOperation extends MouseOrTabletOperation
 
     @Override
     protected void activate() throws PropertyVetoException {
-
     }
 
     private void run() {
@@ -229,12 +226,10 @@ public class SelectEdgeOperation extends MouseOrTabletOperation
 
     @Override
     protected void deactivate() {
-
     }
 
     @Override
     protected void tick(int i, int i1, boolean b, boolean b1, float v) {
-
     }
 
     private static class SelectEdgeOptions

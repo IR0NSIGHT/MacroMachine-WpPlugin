@@ -1,27 +1,26 @@
 package org.ironsight.wpplugin.macromachine.threeDRendering;
 
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
-import org.pepsoft.minecraft.Material;
-import org.pepsoft.util.Box;
-import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.*;
-import org.pepsoft.worldpainter.exporting.MinecraftWorld;
-import org.pepsoft.worldpainter.heightMaps.ConstantHeightMap;
-import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
-import org.pepsoft.worldpainter.themes.SimpleTheme;
-import org.pepsoft.worldpainter.themes.Theme;
+import static org.pepsoft.minecraft.Material.*;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Dimension.Anchor.NORMAL_DETAIL;
+import static org.pepsoft.worldpainter.Terrain.GRASS;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
-
-import static org.pepsoft.minecraft.Material.*;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Dimension.Anchor.NORMAL_DETAIL;
-import static org.pepsoft.worldpainter.Terrain.GRASS;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
+import org.pepsoft.minecraft.Material;
+import org.pepsoft.util.Box;
+import org.pepsoft.worldpainter.*;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.exporting.MinecraftWorld;
+import org.pepsoft.worldpainter.heightMaps.ConstantHeightMap;
+import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
+import org.pepsoft.worldpainter.themes.SimpleTheme;
+import org.pepsoft.worldpainter.themes.Theme;
 
 public final class TestData
 {
@@ -59,6 +58,7 @@ public final class TestData
     public static LayerProvider getMockLayerProvider() {
         return new LayerProvider() {
             private HashMap<String, Layer> id_to_layer = new HashMap<>();
+
             @Override
             public Layer getLayerById(String layerId, Consumer<String> layerNotFoundError) {
                 if (!existsLayerWithId(layerId))

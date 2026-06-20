@@ -1,11 +1,10 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
+import java.util.Arrays;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
-
-import java.awt.*;
-import java.util.Arrays;
 
 public class StonePaletteApplicator implements IPositionValueSetter
 {
@@ -78,7 +77,6 @@ public class StonePaletteApplicator implements IPositionValueSetter
 
     @Override
     public void prepareForDimension(Dimension dim) {
-
     }
 
     @Override
@@ -107,14 +105,14 @@ public class StonePaletteApplicator implements IPositionValueSetter
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return new StonePaletteApplicator(
-                Arrays.stream(data).map(f -> Terrain.values()[(int) f]).toArray(Terrain[]::new));
+                Arrays.stream(data).map(f -> Terrain.values()[((IntValue) f).value()]).toArray(Terrain[]::new));
     }
 
     @Override
-    public Object[] getSaveData() { // int[] with enum ordinals
-        return Arrays.stream(materials).map(f -> f.ordinal()).toArray();
+    public IoParameter[] getSaveData() { // int[] with enum ordinals
+        return Arrays.stream(materials).map(f -> new IntValue(f.ordinal())).toArray(IoParameter[]::new);
     }
 
     @Override

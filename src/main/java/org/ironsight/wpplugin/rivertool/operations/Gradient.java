@@ -26,5 +26,4 @@ public class Gradient
         }
         return values[idx];
     }
-
 }

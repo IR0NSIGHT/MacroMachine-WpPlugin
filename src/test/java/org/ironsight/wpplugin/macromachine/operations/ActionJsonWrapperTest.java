@@ -1,13 +1,12 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.UUID;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AnnotationSetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainHeightIO;
 import org.junit.jupiter.api.Test;
-
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ActionJsonWrapperTest
 {
@@ -23,6 +22,5 @@ class ActionJsonWrapperTest
 
             assertEquals(original, restored);
         }
-
     }
 }

@@ -1,10 +1,9 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import java.awt.*;
+import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.StonePaletteApplicator;
-
-import javax.swing.*;
-import java.awt.*;
 
 public class MappingValuePreviewPanel extends JPanel
 {

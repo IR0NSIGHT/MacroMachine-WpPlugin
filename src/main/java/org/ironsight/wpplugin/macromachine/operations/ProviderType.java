@@ -1,5 +1,7 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IoParameter.parseParameter;
+
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.layers.Frost;
@@ -10,29 +12,30 @@ public enum ProviderType {
     // action filter
     INTERMEDIATE_SELECTION, NIBBLE_LAYER, SELECTION, STONE_PALETTE, TERRAIN, TEST, VANILLA_BIOME, WATER_DEPTH, WATER_HEIGHT, ALWAYS, DISTANCE_TO_EDGE, PERLIN_NOISE, SHADOW, VORONOI_NOISE, RANDOM_NOISE;
 
-    public static IMappingValue fromType(Object[] data, ProviderType type) {
-        /**
-         * take save data, compare to default savedata. only use it if it has the
-         * correct type keep default entries if data item could not be used/was not
-         * present
-         */
-        Object[] dataSafe = ProviderType.fromTypeDefault(type).getSaveData();
-        for (int i = 0; i < dataSafe.length; i++) {
-            try {
-                if (i >= data.length)
-                    continue;
-                Object dataObj = data[i];
-                Object dataDef = dataSafe[i];
-                if (dataObj.getClass().equals(dataDef.getClass()))
-                    dataSafe[i] = dataObj;
-            } catch (Exception ignored) {
-                // System.err.println("exception when parsing save data obj:" + ignored);
-            } ;
-        }
-
-        IMappingValue newV = fromTypeDefault(type).instantiateFrom(dataSafe);
+    public static IMappingValue fromTypeWithParams(IoParameter[] data, ProviderType type) {
+        IMappingValue newV = fromTypeDefault(type).instantiateFrom(data);
         assert newV.getProviderType() == type;
+
         return newV;
+    }
+
+    public static IMappingValue fromType(Object[] data, ProviderType type) {
+        IoParameter[] dataSafe = ProviderType.fromTypeDefault(type).getSaveData();
+
+        for (int i = 0; i < dataSafe.length && i < data.length; i++) {
+            try {
+                Object raw = data[i];
+                IoParameter expected = dataSafe[i];
+
+                IoParameter parsed = parseParameter(raw, expected);
+
+                if (parsed != null) {
+                    dataSafe[i] = parsed;
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return fromTypeWithParams(dataSafe, type);
     }
 
     public static IMappingValue fromTypeDefault(ProviderType type) {
@@ -84,7 +87,6 @@ public enum ProviderType {
             default :
                 throw new IllegalArgumentException(
                         "not implemented: can not instantiate providers that need extra " + "information");
-
         }
     }
 }

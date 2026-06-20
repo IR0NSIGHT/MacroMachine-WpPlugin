@@ -1,15 +1,14 @@
 package org.ironsight.wpplugin.macromachine.operations.specialOperations;
 
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.BinaryLayerIO;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainHeightIO;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TileContainer;
-import org.pepsoft.worldpainter.Dimension;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.stream.IntStream;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.BinaryLayerIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainHeightIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TileContainer;
+import org.pepsoft.worldpainter.Dimension;
 
 public class ShadowMap
 {
