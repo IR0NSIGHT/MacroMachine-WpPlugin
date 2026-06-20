@@ -293,6 +293,7 @@ export const GlobalOperationDesigner = (props: Props) => {
         flexDirection: "column",
         height: "95vh", // FIXME ugly hack to make the fucking flexbox work
         gap: 1,
+        maxWidth: "1200px",
       }}
     >
       <Box

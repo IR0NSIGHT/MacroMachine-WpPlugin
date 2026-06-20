@@ -17,10 +17,12 @@ const config: StorybookConfig = {
     VITE_STORYBOOK: "true",
   }),
 
-  async viteFinal(config, { configType }) {
+  async viteFinal(config) {
+    const isProd = process.env.STORYBOOK_BUILD === "true";
+
     return {
       ...config,
-      base: configType === "PRODUCTION" ? "/MacroMachine-WpPlugin/" : "/",
+      base: isProd ? "/MacroMachine-WpPlugin/" : "/",
     };
   },
 };

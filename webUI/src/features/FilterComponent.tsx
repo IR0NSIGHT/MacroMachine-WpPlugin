@@ -24,14 +24,17 @@ import { theme } from "@/theme";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import EditIcon from "@mui/icons-material/Edit";
 import ClearIcon from "@mui/icons-material/Clear";
-import { InputOutputDTO } from "@/generated/client";
+import { InputOutputDTO, InputOutputDTOIoParametersInner } from "@/generated/client";
 
 const ioToIconName = (io: InputOutputDTO) => {
+  //FIXME icons are not built into dist
   if (io.type === "NIBBLE_LAYER" && io.ioParameters.length >= 2 && io.ioParameters[1] === "") {
-    const layerId = io.ioParameters[1];
-    return `/api/layers/${layerId}/icon`;
+    const layerId: InputOutputDTOIoParametersInner = io.ioParameters[1];
+    const API_BASE = import.meta.env.VITE_API_BASE_URL;
+    return `${API_BASE}/api/layers/${layerId}/icon`;
   }
-  return "/icons/minecraft_grass_block.png";
+  const iconUrl = `${import.meta.env.BASE_URL}icons/minecraft_grass_block.png`;
+  return iconUrl;
 };
 
 export const SimpleFilterInlineEditor = ({
