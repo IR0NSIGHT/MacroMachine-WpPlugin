@@ -1,15 +1,17 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import java.util.Arrays;
-
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
+import java.util.Arrays;
 
 public class IntegerTile
 {
     private int min, max;
+
     public IntegerTile(int defaultValue) {
         fillWith(defaultValue);
     }
+
     int[] values = new int[TILE_SIZE * TILE_SIZE];
 
     public void fillWith(int value) {
@@ -53,7 +55,6 @@ public class IntegerTile
     }
 
     /**
-     *
      * @param x
      *            global pos
      * @param y
@@ -65,7 +66,6 @@ public class IntegerTile
     }
 
     /**
-     *
      * @param x
      *            global pos
      * @param y

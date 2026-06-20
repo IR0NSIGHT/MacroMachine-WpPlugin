@@ -1,10 +1,13 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
-import org.ironsight.wpplugin.macromachine.operations.ActionType;
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.INPUT_COLUMN_IDX;
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.OUTPUT_COLUMN_IDX;
 
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.util.List;
+import java.util.function.Function;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -12,14 +15,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableRowSorter;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import java.util.List;
-import java.util.function.Function;
-
-import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.INPUT_COLUMN_IDX;
-import static org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingActionValueTableModel.OUTPUT_COLUMN_IDX;
+import org.ironsight.wpplugin.macromachine.operations.ActionType;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 public class MappingTextTable extends JPanel
 {
@@ -33,6 +32,7 @@ public class MappingTextTable extends JPanel
     private TableRowSorter<MappingActionValueTableModel> sorter;
     private int[] selectedViewRows = new int[0];
     private BlockingSelectionModel blockingSelectionModel;
+
     private String getToolTipForRow(int row) {
         if (tableModel.getValueAt(row, INPUT_COLUMN_IDX) instanceof MappingPointValue input
                 && tableModel.getValueAt(row, OUTPUT_COLUMN_IDX) instanceof MappingPointValue output) {
@@ -75,7 +75,6 @@ public class MappingTextTable extends JPanel
         builder.append("Where ")
                 .append(input.mappingValue.getName())
                 .append(" is ")
-
                 .append(input.mappingValue.valueToString(input.numericValue))
                 .append(", ");
         if (output.mappingValue instanceof IPositionValueSetter setter && setter.isIgnoreValue(output.numericValue)) {
@@ -86,6 +85,7 @@ public class MappingTextTable extends JPanel
 
         return builder.toString();
     }
+
     public MappingTextTable(MappingActionValueTableModel model, BlockingSelectionModel selectionModel) {
         this.blockingSelectionModel = selectionModel;
         numberTable = new JTable() {
@@ -166,7 +166,6 @@ public class MappingTextTable extends JPanel
 
         sorter.setSortKeys(sortKeys);
         sorter.sort();
-
     }
 
     private void setRowFilter(boolean groupValues) {
@@ -198,7 +197,6 @@ public class MappingTextTable extends JPanel
         model.addTableModelListener(e -> {
             if (e.getType() == TableModelEvent.UPDATE) {
                 SwingUtilities.invokeLater(this::updateComponents);
-
             }
         });
         MouseAdapter rightClickListener = new MouseAdapter() {
@@ -340,7 +338,5 @@ public class MappingTextTable extends JPanel
         }
 
         this.add(buttons, BorderLayout.SOUTH);
-
     }
-
 }

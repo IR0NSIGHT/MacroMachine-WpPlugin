@@ -1,5 +1,14 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import static org.ironsight.wpplugin.macromachine.threeDRendering.Export3DViewHelper.renderTileToSurfaceObject;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.Dimension;
@@ -7,16 +16,6 @@ import org.pepsoft.worldpainter.Platform;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.ironsight.wpplugin.macromachine.threeDRendering.Export3DViewHelper.renderTileToSurfaceObject;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class PreviewOperation extends AbstractBrushOperation
 {
@@ -27,15 +26,16 @@ public class PreviewOperation extends AbstractBrushOperation
      * here, or you could use a UUID. As long as it is globally unique.
      */
     static final String ID = "org.demo.wpplugin.3D_preview_Operation";
-    /**
-     * Human-readable short name of the operation.
-     */
+
+    /** Human-readable short name of the operation. */
     static final String NAME = "3D Preview";
+
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip
      * of the operation selection button.
      */
     static final String DESCRIPTION = "Show terrain, height and waterheight in a 3d preview";
+
     float[][] height = new float[0][];
     float[][] waterHeight = new float[0][];
     Material[][] terrain = new Material[0][];
@@ -217,23 +217,18 @@ public class PreviewOperation extends AbstractBrushOperation
 
         @Override
         public void layerDataChanged(Tile tile, Set<Layer> set) {
-
         }
 
         @Override
         public void allBitLayerDataChanged(Tile tile) {
-
         }
 
         @Override
         public void allNonBitlayerDataChanged(Tile tile) {
-
         }
 
         @Override
         public void seedsChanged(Tile tile) {
-
         }
     }
-
 }

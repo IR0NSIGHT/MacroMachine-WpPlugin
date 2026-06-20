@@ -1,5 +1,24 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
+import static java.lang.Math.PI;
+import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
+import static org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathToolBackend.*;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
+import java.awt.*;
+import java.beans.PropertyVetoException;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import javax.swing.*;
+import javax.vecmath.Point3i;
+import javax.vecmath.Point4f;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
 import org.pepsoft.util.AttributeKey;
 import org.pepsoft.util.undo.BufferKey;
@@ -12,26 +31,6 @@ import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
 import org.pepsoft.worldpainter.painting.Paint;
 
-import javax.swing.*;
-import javax.vecmath.Point3i;
-import javax.vecmath.Point4f;
-import java.awt.*;
-import java.beans.PropertyVetoException;
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
-import static java.lang.Math.PI;
-import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
-import static org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathToolBackend.*;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
-
 public class PathTool extends AbstractBrushOperation implements PaintOperation, UndoListener
 {
     private static final String help = """
@@ -43,7 +42,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             """;
     // use flat list of floats to not create any serialization dependecies to custom
     // classes. use like a float buffer
-    private final static AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES",
+    private static final AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<Float>());
     private final JPanel optionsPanel = new JPanel();
     ArrayList<Point4f> pathHandles = new ArrayList<>();
@@ -144,7 +143,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             optionsPanel.add(panel);
         }
         {
-
             limitSlopeSpinner = new JSpinner(new SpinnerNumberModel(0d, 0d, 100d, 1d));
             limitSlopeSpinner.setToolTipText(
                     "Limits the allowed slope to x block vertical per 16 blocks horizontal. 0 to disable.");
@@ -158,7 +156,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             optionsPanel.add(panel);
         }
         {
-
             transitionMultiSpinner = new JSpinner(new SpinnerNumberModel(1d, 0d, 100d, .25d));
             transitionMultiSpinner.setToolTipText(
                     "How many times bigger the transition is compared to the brush radius. 0 = no transition, 1 = one brush radius width transition");
@@ -451,27 +448,22 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     @Override
     public void savePointArmed() {
-
     }
 
     @Override
     public void savePointCreated() {
-
     }
 
     @Override
     public void undoPerformed() {
-
     }
 
     @Override
     public void redoPerformed() {
-
     }
 
     @Override
     public void bufferChanged(BufferKey<?> key) {
-
     }
 
     private static class PathHandlesContainer implements Cloneable, Serializable

@@ -1,14 +1,13 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 class QuadTreeTest
 {
@@ -46,7 +45,6 @@ class QuadTreeTest
         IntStream.range(0, 2090)
                 .mapToObj(i -> new Point2i(random.nextInt(-100, 100), random.nextInt(-100, 100)))
                 .forEach(testTreeQueryCorrect);
-
     }
 
     @Test

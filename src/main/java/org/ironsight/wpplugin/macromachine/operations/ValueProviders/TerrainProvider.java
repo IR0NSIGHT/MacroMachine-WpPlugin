@@ -1,21 +1,21 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.util.Arrays;
+import java.util.stream.IntStream;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.ColourScheme;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.colourschemes.HardcodedColourScheme;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.util.Arrays;
-import java.util.stream.IntStream;
-
 public class TerrainProvider implements IPositionValueGetter, IPositionValueSetter
 {
     private static final ColourScheme colorScheme = new HardcodedColourScheme();
     private final int[] outputValues;
     private final int[] inputValues;
+
     public TerrainProvider() {
         outputValues = IntStream.range(-1, Terrain.values().length).toArray();
         outputValues[0] = IGNORE_VALUE;
@@ -62,7 +62,6 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public void prepareForDimension(Dimension dim) {
-
     }
 
     @Override
@@ -96,13 +95,13 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return new TerrainProvider();
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[0];
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
     }
 
     @Override

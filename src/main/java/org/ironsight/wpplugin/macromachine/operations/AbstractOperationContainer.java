@@ -2,8 +2,6 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
-
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -13,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
+import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 
 public abstract class AbstractOperationContainer<T extends SaveableAction>
 {
@@ -23,6 +22,11 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
     private final boolean suppressFileWriting = false;
     private final String defaultFileResourcePath;
     private String filePath;
+    private long lastChange = 0;
+
+    public long getLastChange() {
+        return lastChange;
+    }
 
     /**
      * copy constructor
@@ -121,6 +125,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
     }
 
     private void notify(UUID... mapping) {
+        lastChange = System.currentTimeMillis();
         for (Runnable r : genericNotifies)
             r.run();
         for (UUID obj : mapping)
@@ -138,7 +143,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
                 list.add(removed.getUid());
             }
         }
-        notify(list.toArray(new UUID[0]));
+        notify(list.toArray(list.toArray(UUID[]::new)));
     }
 
     public synchronized void updateMapping(Consumer<String> onError, T... items) {
@@ -153,7 +158,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
 
             // filter for identity
             if (!mappings.containsKey(mapping.getUid()) || queryById(mapping.getUid()).equals(mapping)) {
-                mapping.getUid();
+                mapping.getUid(); // FIXME whats going on here??
             }
             mappings.put(mapping.getUid(), mapping);
             uids[idx++] = mapping.getUid();
@@ -180,7 +185,6 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
     }
 
     public synchronized T addMapping(T item) {
-        System.out.println("ADD ITEM " + item);
         if (item.getUid() == null) {
             assert false : " items HAVE to have a UUID";
             return item;
@@ -233,7 +237,7 @@ public abstract class AbstractOperationContainer<T extends SaveableAction>
             lines = Files.readAllLines(Paths.get(filePath), StandardCharsets.UTF_8);
             String jsonString = String.join("", lines);
             fromSaveObject(jsonString);
-        } catch (NoSuchFileException | FileNotFoundException e) {
+        } catch (NoSuchFileException | FileNotFoundException | AccessDeniedException e) {
             GlobalActionPanel.ErrorPopUp(e);
         } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);

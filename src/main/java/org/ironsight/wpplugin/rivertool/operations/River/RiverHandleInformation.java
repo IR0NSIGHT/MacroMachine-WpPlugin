@@ -1,5 +1,17 @@
 package org.ironsight.wpplugin.rivertool.operations.River;
 
+import static org.ironsight.wpplugin.rivertool.Gui.OptionsLabel.numericInput;
+import static org.ironsight.wpplugin.rivertool.operations.ApplyPath.ApplyRiverOperation.angleOf;
+import static org.ironsight.wpplugin.rivertool.operations.EditPath.EditPathOperation.COLOR_CURVE;
+import static org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation.RiverInformation.*;
+import static org.ironsight.wpplugin.rivertool.pathing.PointType.RIVER_2D;
+
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.ArrayList;
+import java.util.function.Consumer;
+import javax.swing.*;
 import org.ironsight.wpplugin.rivertool.Gui.OptionsLabel;
 import org.ironsight.wpplugin.rivertool.Gui.PathHistogram;
 import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
@@ -8,19 +20,6 @@ import org.ironsight.wpplugin.rivertool.operations.ContinuousCurve;
 import org.ironsight.wpplugin.rivertool.pathing.Path;
 import org.ironsight.wpplugin.rivertool.pathing.PointType;
 import org.ironsight.wpplugin.rivertool.pathing.PointUtils;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.util.ArrayList;
-import java.util.function.Consumer;
-
-import static org.ironsight.wpplugin.rivertool.Gui.OptionsLabel.numericInput;
-import static org.ironsight.wpplugin.rivertool.operations.ApplyPath.ApplyRiverOperation.angleOf;
-import static org.ironsight.wpplugin.rivertool.operations.EditPath.EditPathOperation.COLOR_CURVE;
-import static org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation.RiverInformation.*;
-import static org.ironsight.wpplugin.rivertool.pathing.PointType.RIVER_2D;
 
 public class RiverHandleInformation
 {
@@ -160,7 +159,6 @@ public class RiverHandleInformation
                 dim.setValue(curvePointP.x + x, curvePointP.y + y, color);
                 color = color + 1 % 15;
             }
-
         }
 
         for (int i = 0; i < path.amountHandles(); i++) {
@@ -170,7 +168,6 @@ public class RiverHandleInformation
             if (!(getValue(handle, RIVER_RADIUS) == INHERIT_VALUE))
                 PointUtils.drawCircle(PointUtils.getPoint2D(handle), COLOR_CURVE, getValue(handle, RIVER_RADIUS), dim,
                         getValue(handle, RIVER_RADIUS) == RiverHandleInformation.INHERIT_VALUE);
-
         }
     }
 
@@ -227,5 +224,4 @@ public class RiverHandleInformation
             this.idx = idx;
         }
     }
-
 }

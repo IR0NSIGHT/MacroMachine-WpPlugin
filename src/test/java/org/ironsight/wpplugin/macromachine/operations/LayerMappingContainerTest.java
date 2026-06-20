@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.IntStream;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class LayerMappingContainerTest
 {
@@ -76,7 +75,6 @@ class LayerMappingContainerTest
     void saveLoad() {
         MappingActionContainer container = new MappingActionContainer(
                 System.getProperty("user.dir") + "/TestActions" + ".json");
-        MappingActionContainer.SetInstance(container);
         MappingAction saved = container.addMapping().withName("hello i am a test mapping");
         container.updateMapping(saved, f -> {
         });

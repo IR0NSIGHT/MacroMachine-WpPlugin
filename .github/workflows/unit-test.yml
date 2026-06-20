@@ -27,8 +27,5 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Run Maven tests
-        run: mvn test
-
-      - name: Check formatting
-        run: mvn -B spotless:check
+      - name: Run Maven verify
+        run: mvn verify

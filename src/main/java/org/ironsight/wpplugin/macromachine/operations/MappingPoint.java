@@ -1,14 +1,18 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.util.Objects;
 
 public class MappingPoint implements Serializable
 {
+    @JsonProperty("x")
     public final int input;
+
+    @JsonProperty("y")
     public final int output;
 
-    public MappingPoint(int input, int output) {
+    public MappingPoint(@JsonProperty("x") int input, @JsonProperty("y") int output) {
         this.input = input;
         this.output = output;
     }

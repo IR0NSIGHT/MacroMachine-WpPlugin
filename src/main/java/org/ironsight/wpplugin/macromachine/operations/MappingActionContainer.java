@@ -2,16 +2,15 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.File;
+import java.io.Serializable;
+import java.util.UUID;
+import java.util.function.Consumer;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Configuration;
 import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
-
-import java.io.File;
-import java.io.Serializable;
-import java.util.UUID;
-import java.util.function.Consumer;
 
 /**
  * this class stores MappingActions by UUID it can read and write to file its
@@ -53,13 +52,13 @@ public class MappingActionContainer extends AbstractOperationContainer<MappingAc
     }
 
     public static boolean isDebugMode() {
-        return false;/*
-                      * RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
-                      * List<String> arguments = runtimeMXBean.getInputArguments();
-                      *
-                      * for (String arg : arguments) { if (arg.contains("jdwp") ||
-                      * arg.contains("-Xdebug")) { return true; } } return false;
-                      */
+        return false; /*
+                       * RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+                       * List<String> arguments = runtimeMXBean.getInputArguments();
+                       *
+                       * for (String arg : arguments) { if (arg.contains("jdwp") ||
+                       * arg.contains("-Xdebug")) { return true; } } return false;
+                       */
     }
 
     public static void addDefaultMappings(MappingActionContainer container) {
@@ -96,7 +95,6 @@ public class MappingActionContainer extends AbstractOperationContainer<MappingAc
     @Override
     protected MappingAction getNewAction() {
         return getNewAction(getUUID());
-
     }
 
     @Override

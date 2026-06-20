@@ -1,5 +1,8 @@
 package org.ironsight.wpplugin.macromachine.Gui.TreeView;
 
+import java.util.*;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
@@ -8,10 +11,6 @@ import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
-
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-import java.util.*;
 
 public class MacroTreeNode implements TreeNode
 {

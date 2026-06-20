@@ -1,11 +1,10 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
-
 import java.awt.*;
 import java.util.Arrays;
 import java.util.stream.IntStream;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
 
 public class SlopeProvider implements IPositionValueGetter
 {
@@ -49,28 +48,30 @@ public class SlopeProvider implements IPositionValueGetter
 
     @Override
     public void prepareForDimension(Dimension dim) {
-
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return new SlopeProvider();
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[0];
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
     }
 
     @Override
     public int getMaxValue() {
         return 90;
     }
+
     private final int[] values = IntStream.range(0, 90 + 1).toArray();
+
     @Override
     public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
+
     @Override
     public String valueToString(int value) {
         return value + "°";
@@ -97,18 +98,22 @@ public class SlopeProvider implements IPositionValueGetter
     public ProviderType getProviderType() {
         return ProviderType.SLOPE;
     }
+
     @Override
     public String toString() {
         return getName();
     }
+
     @Override
     public String getName() {
         return "Slope";
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
     }
+
     @Override
     public String getDescription() {
         return "get the slope of a position in degrees from 0 to 90°";

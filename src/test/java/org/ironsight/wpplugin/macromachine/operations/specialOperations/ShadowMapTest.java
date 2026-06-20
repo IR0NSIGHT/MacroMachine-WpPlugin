@@ -1,17 +1,16 @@
 package org.ironsight.wpplugin.macromachine.operations.specialOperations;
 
+import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.createDimension;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
+import java.awt.*;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.BinaryLayerIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainHeightIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TileContainer;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
-
-import java.awt.*;
-
-import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.createDimension;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 class ShadowMapTest
 {
@@ -138,7 +137,6 @@ class ShadowMapTest
         assertEquals(31, dist(p2x, p2y, 9, 37), "");
         assertTrue(dist(p1x, p1y, 9, 37) > dist(p2x, p2y, 9, 37), "");
         assertEquals(31, container.getValueAt(9, 37), "its closer to p2, so should take this distance to p1");
-
     }
 
     private int dist(int p1x, int p1y, int p2x, int p2y) {
@@ -192,6 +190,5 @@ class ShadowMapTest
         assertEquals(0, expandedMap.getValueAt(-17, 29));
         assertEquals(1, expandedMap.getValueAt(-17, 28));
         assertEquals(2, expandedMap.getValueAt(-17, 27));
-
     }
 }

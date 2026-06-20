@@ -1,9 +1,8 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.pepsoft.worldpainter.layers.Layer;
-
 import java.util.List;
 import java.util.function.Consumer;
+import org.pepsoft.worldpainter.layers.Layer;
 
 public interface LayerProvider
 {

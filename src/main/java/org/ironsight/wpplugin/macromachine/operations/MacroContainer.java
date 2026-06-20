@@ -2,14 +2,13 @@ package org.ironsight.wpplugin.macromachine.operations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.pepsoft.worldpainter.Configuration;
-
 import java.io.File;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
+import org.pepsoft.worldpainter.Configuration;
 
 public class MacroContainer extends AbstractOperationContainer<Macro>
 {

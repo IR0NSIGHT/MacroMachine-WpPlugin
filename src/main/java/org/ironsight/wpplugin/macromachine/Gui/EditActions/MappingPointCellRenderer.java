@@ -1,13 +1,12 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
-import org.ironsight.wpplugin.macromachine.Gui.EditActions.RangeEditor.RangeTableModel;
-import org.ironsight.wpplugin.macromachine.Gui.MappingValuePreviewPanel;
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
 
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
-
-import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
+import org.ironsight.wpplugin.macromachine.Gui.EditActions.RangeEditor.RangeTableModel;
+import org.ironsight.wpplugin.macromachine.Gui.MappingValuePreviewPanel;
 
 public class MappingPointCellRenderer implements TableCellRenderer, ListCellRenderer<MappingPointValue>
 {
@@ -52,7 +51,6 @@ public class MappingPointCellRenderer implements TableCellRenderer, ListCellRend
             textLabel.setForeground(INTERPOLATED_FOREGROUND);
             textLabel.setBackground(INTERPOLATED_BACKGROUND);
         }
-
     }
 
     @Override

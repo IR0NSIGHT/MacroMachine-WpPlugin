@@ -1,31 +1,30 @@
 package org.ironsight.wpplugin.rivertool.Gui;
 
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import javax.swing.*;
 import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
 import org.ironsight.wpplugin.rivertool.operations.ContinuousCurve;
 import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 import org.ironsight.wpplugin.rivertool.pathing.Path;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 public class PathHistogram extends JPanel implements KeyListener
 {
     private final float[] terrainCurve;
     private final HeightDimension dimension;
     private final Point userFocus = new Point(0, 0);
-    /**
-     * array that tells which handles are currently selected by the user
-     */
+
+    /** array that tells which handles are currently selected by the user */
     private final boolean[] handleSelection;
+
     int[] handleToCurve;
     private float userZoom = 1f;
     private Path path;
-    /**
-     * the handle where the users selection cursor is currently
-     */
+
+    /** the handle where the users selection cursor is currently */
     private int cursorHandleIdx;
+
     private ContinuousCurve curve;
     private boolean recalcCurve = false;
 
@@ -207,7 +206,6 @@ public class PathHistogram extends JPanel implements KeyListener
                 g2d.setStroke(dottedGrid);
                 g2d.drawLine(pointCurveIdx, -userFocus.y, pointCurveIdx, -Math.round(terrainHeight));
             }
-
         }
     }
 
@@ -238,7 +236,6 @@ public class PathHistogram extends JPanel implements KeyListener
 
     @Override
     public void keyTyped(KeyEvent e) {
-
     }
 
     @Override
@@ -434,6 +431,5 @@ public class PathHistogram extends JPanel implements KeyListener
 
     @Override
     public void keyReleased(KeyEvent e) {
-
     }
 }

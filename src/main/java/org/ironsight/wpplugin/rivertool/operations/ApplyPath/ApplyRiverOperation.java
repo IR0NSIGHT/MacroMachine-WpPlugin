@@ -1,24 +1,23 @@
 package org.ironsight.wpplugin.rivertool.operations.ApplyPath;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
+import java.awt.*;
+import java.util.*;
+import java.util.function.Function;
+import javax.swing.*;
 import org.ironsight.wpplugin.rivertool.Gui.OperationOptionsPanel;
+import org.ironsight.wpplugin.rivertool.Gui.OptionsLabel;
 import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
 import org.ironsight.wpplugin.rivertool.operations.ContinuousCurve;
 import org.ironsight.wpplugin.rivertool.operations.EditPath.EditPathOperation;
-import org.ironsight.wpplugin.rivertool.Gui.OptionsLabel;
 import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 import org.ironsight.wpplugin.rivertool.pathing.Path;
 import org.ironsight.wpplugin.rivertool.pathing.PathGeometryHelper;
 import org.ironsight.wpplugin.rivertool.pathing.PathManager;
 import org.ironsight.wpplugin.rivertool.pathing.RingFinder;
 import org.pepsoft.worldpainter.operations.*;
-
-import javax.swing.*;
-import java.awt.*;
-import java.util.*;
-import java.util.function.Function;
-
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 /**
  * For any operation that is intended to be applied to the dimension in a
@@ -54,16 +53,17 @@ public class ApplyRiverOperation extends MouseOrTabletOperation
      * here, or you could use a UUID. As long as it is globally unique.
      */
     static final String ID = "orig.ironsight.wpplugin.rivertool.applyRiverOperation.v1";
-    /**
-     * Human-readable short name of the operation.
-     */
+
+    /** Human-readable short name of the operation. */
     static final String NAME = "Apply River Operation";
+
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip
      * of the operation selection button.
      */
     static final String DESCRIPTION = "<html>Apply river to this world<br>Last selected path gets applied into the "
             + "world.<br>Potentially " + "slow and expensive</html>";
+
     private final ApplyPathOptions options = new ApplyPathOptions(0, 1);
     private final StandardOptionsPanel optionsPanel = new StandardOptionsPanel(getName(), getDescription()) {
         @Override

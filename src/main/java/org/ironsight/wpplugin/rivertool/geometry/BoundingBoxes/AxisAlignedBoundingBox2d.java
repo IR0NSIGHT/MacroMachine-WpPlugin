@@ -9,6 +9,7 @@ public class AxisAlignedBoundingBox2d implements BoundingBox
     final Point maxPoint;
     final Point minPoint;
     public final int id;
+
     /**
      * axis aligned boundingbox. will contain min and maxpoint.
      *

@@ -1,13 +1,12 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
+import java.util.Arrays;
+import java.util.Objects;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.renderers.NibbleLayerRenderer;
-
-import java.awt.*;
-import java.util.Arrays;
-import java.util.Objects;
 
 public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGetter, ILayerGetter
 {
@@ -30,7 +29,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
             new Color(0, 255, 0) // Pure green
     };
 
-    private final static int[] defaultColorHex = new int[16];
+    private static final int[] defaultColorHex = new int[16];
 
     private int[] colorHex;
     protected String layerId;
@@ -65,6 +64,9 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     }
 
     private void setColorsFromData(int[] colorHex) {
+        if (colorHex == null) {
+            throw new IllegalArgumentException("can not be null");
+        }
         for (int value : getAllInputValues()) {
             if (isIgnoreValue(value))
                 continue;
@@ -84,6 +86,7 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     public int[] getAllInputValues() {
         return Arrays.copyOf(inputValues, inputValues.length);
     }
+
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_VALUE;
@@ -117,14 +120,15 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
-        return new NibbleLayerSetter((String) data[0], (String) data[1], (Boolean) data[2], defaultColorHex);
-
+    public IMappingValue instantiateFrom(IoParameter[] data) {
+        return new NibbleLayerSetter(((StringValue) data[0]).value(), ((StringValue) data[1]).value(),
+                ((BoolValue) data[2]).value(), ((IntArrayValue) data[3]).value());
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[]{layerName, layerId, isCustom, colorHex};
+    public IoParameter[] getSaveData() {
+        return new IoParameter[]{new StringValue(layerName), new StringValue(layerId), new BoolValue(isCustom),
+                new IntArrayValue(colorHex)};
     }
 
     @Override

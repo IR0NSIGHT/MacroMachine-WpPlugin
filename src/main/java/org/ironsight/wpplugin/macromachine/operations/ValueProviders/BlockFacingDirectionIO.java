@@ -1,13 +1,12 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.stream.IntStream;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
 
 public class BlockFacingDirectionIO implements IPositionValueGetter
 {
@@ -50,6 +49,7 @@ public class BlockFacingDirectionIO implements IPositionValueGetter
     }
 
     private final int[] values = IntStream.range(0, 360).toArray();
+
     @Override
     public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
@@ -106,7 +106,6 @@ public class BlockFacingDirectionIO implements IPositionValueGetter
 
     @Override
     public void prepareForDimension(Dimension dim) {
-
     }
 
     @Override
@@ -115,13 +114,13 @@ public class BlockFacingDirectionIO implements IPositionValueGetter
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         return new BlockFacingDirectionIO();
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[0];
+    public IoParameter[] getSaveData() {
+        return new IoParameter[0];
     }
 
     @Override
@@ -150,10 +149,12 @@ public class BlockFacingDirectionIO implements IPositionValueGetter
         // g.fillRect(0, 0, (int) (dim.width * 0.1f), dim.height);
         g.drawLine(0, -dim.height, 0, 0); // pointing north in local space always
     }
+
     @Override
     public String toString() {
         return getName();
     }
+
     @Override
     public ProviderType getProviderType() {
         return ProviderType.BLOCK_DIRECTION;

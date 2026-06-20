@@ -1,5 +1,14 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
+import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.createDimension;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
+import java.awt.*;
+import java.util.Arrays;
+import java.util.HashSet;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -12,16 +21,6 @@ import org.pepsoft.worldpainter.layers.Frost;
 import org.pepsoft.worldpainter.layers.PineForest;
 import org.pepsoft.worldpainter.selection.SelectionBlock;
 import org.pepsoft.worldpainter.selection.SelectionChunk;
-
-import java.awt.*;
-import java.util.Arrays;
-import java.util.HashSet;
-
-import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
-import static org.ironsight.wpplugin.macromachine.threeDRendering.TestData.createDimension;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class ProviderTest
 {
@@ -89,7 +88,6 @@ public class ProviderTest
                     assertEquals(ioInstance.getMinValue(), value,
                             "unknown postion should always return min value " + ioInstance.getName());
                 }
-
             }
         }
     }
@@ -98,10 +96,8 @@ public class ProviderTest
     void AllProvidersCanStringifyValues() {
         for (ProviderType type : ProviderType.values()) {
             IMappingValue ioInstance = ProviderType.fromTypeDefault(type);
-            System.out.println(ioInstance.getName() + " #############");
             for (int value : ioInstance.getAllPossibleValues()) {
                 String valueString = ioInstance.valueToString(value);
-                System.out.println(value + " -> " + valueString);
             }
         }
     }
@@ -136,9 +132,9 @@ public class ProviderTest
                     }
                 }
             }
-
         }
     }
+
     @Test
     void WaterLevelProviderGetSetValue() {
         WaterHeightAbsoluteIO h = new WaterHeightAbsoluteIO(-64, 319);
@@ -173,7 +169,6 @@ public class ProviderTest
         assertEquals(319, h.getMaxValue());
 
         assertNotEquals(new WaterHeightAbsoluteIO(3, 12), new WaterHeightAbsoluteIO(27, 99));
-
     }
 
     @Test
@@ -203,7 +198,6 @@ public class ProviderTest
         h.setValueAt(dim, 17, 18, 3);
         assertEquals(77, dim.getWaterLevelAt(17, 18), "water depth should not touch waterlevel");
         assertEquals(77 - 3, dim.getHeightAt(17, 18), "water depth should change terrain height to achieve waterdepth");
-
     }
 
     @Test
@@ -249,7 +243,6 @@ public class ProviderTest
         assertTrue(dim.getBitLayerValueAt(Frost.INSTANCE, 21, 22));
         h.setValueAt(dim, 21, 22, 0);
         assertFalse(dim.getBitLayerValueAt(Frost.INSTANCE, 21, 22));
-
     }
 
     @Test
@@ -280,7 +273,6 @@ public class ProviderTest
             assertEquals(value, dim.getLayerValueAt(Frost.INSTANCE, 17, 18) == 0,
                     "spraypainting again caused change of " + "value at i=" + i);
         }
-
     }
 
     @Test

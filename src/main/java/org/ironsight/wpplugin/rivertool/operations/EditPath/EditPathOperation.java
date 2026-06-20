@@ -1,5 +1,15 @@
 package org.ironsight.wpplugin.rivertool.operations.EditPath;
 
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.beans.PropertyVetoException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedList;
+import javax.swing.*;
 import org.ironsight.wpplugin.rivertool.Gui.OperationOptionsPanel;
 import org.ironsight.wpplugin.rivertool.Gui.OptionsLabel;
 import org.ironsight.wpplugin.rivertool.HalfWaySubdivider;
@@ -14,17 +24,6 @@ import org.ironsight.wpplugin.rivertool.pathing.*;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.*;
 import org.pepsoft.worldpainter.painting.Paint;
-
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.beans.PropertyVetoException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedList;
 
 /**
  * For any operation that is intended to be applied to the dimension in a
@@ -52,7 +51,7 @@ import java.util.LinkedList;
  * <p>
  * <strong>Note</strong> that for now WorldPainter only supports operations that
  */
-abstract public class EditPathOperation extends MouseOrTabletOperation
+public abstract class EditPathOperation extends MouseOrTabletOperation
         implements
             PaintOperation, // Implement this if you
             // need access to the currently selected paint; note that some base
@@ -69,16 +68,17 @@ abstract public class EditPathOperation extends MouseOrTabletOperation
     public static final int SIZE_SELECTED = 15;
     public static final int SIZE_DOT = 0;
     public static final int SIZE_MEDIUM_CROSS = 10;
+
     /**
      * The globally unique ID of the operation. It's up to you what to use here. It
      * is not visible to the user. It can be a FQDN or package and class name, like
      * here, or you could use a UUID. As long as it is globally unique.
      */
     static final String ID = "orig.ironsight.wpplugin.rivertool.BezierPathTool.v1";
-    /**
-     * Human-readable short name of the operation.
-     */
+
+    /** Human-readable short name of the operation. */
     static final String NAME = "Edit Path Operation";
+
     /**
      * Human-readable description of the operation. This is used e.g. in the tooltip
      * of the operation selection button.
@@ -86,6 +86,7 @@ abstract public class EditPathOperation extends MouseOrTabletOperation
     static final String DESCRIPTION = "<html>Draw smooth, connected curves " + "with C1 continuity.<br>left click: "
             + "add " + "new" + " point " + "after selected<br>right click: delete selected<br>ctrl+click: " + "select "
             + "this " + "handle<br>shift+click: move " + "selected" + " " + "handle here</html>";
+
     // update path
     public static int PATH_ID = 1;
     private final EditPathOptions options = new EditPathOptions();
@@ -185,8 +186,8 @@ abstract public class EditPathOperation extends MouseOrTabletOperation
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     if (currentState.indexSelection.getSelectedIdcs(false).length == getSelectedPath().amountHandles()) // all
-                                                                                                                        // are
-                                                                                                                        // selected
+                        // are
+                        // selected
                         currentState.indexSelection.deselectAll();
                     else // not all are selected
                         currentState.indexSelection.selectAll();
@@ -416,7 +417,6 @@ abstract public class EditPathOperation extends MouseOrTabletOperation
                     if (path.amountHandles() != 0)
                         userDoSelectPosition(userClickedCoord, path);
                 }
-
             }
 
             assert getSelectedPath().amountHandles() == 0 || getCursorHandle() != null;
@@ -517,7 +517,6 @@ abstract public class EditPathOperation extends MouseOrTabletOperation
             if (idx != -1)
                 setSelectedPointIdx(idx);
         }
-
     }
 
     private int getHandleNear(float[] userClickedCoord, Path path) {
@@ -713,7 +712,6 @@ abstract public class EditPathOperation extends MouseOrTabletOperation
 
                 @Override
                 public void setHeight(int x, int y, float z) {
-
                 }
             };
 

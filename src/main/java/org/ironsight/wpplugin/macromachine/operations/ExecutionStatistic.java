@@ -5,6 +5,7 @@ public class ExecutionStatistic
     public ExecutionStatistic(MappingAction action) {
         this.action = action;
     }
+
     public long durationMillis;
     public long touchedTiles;
     public long touchedBlocks;

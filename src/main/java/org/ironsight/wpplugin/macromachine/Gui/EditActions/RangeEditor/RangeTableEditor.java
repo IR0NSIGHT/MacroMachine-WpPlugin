@@ -1,5 +1,15 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions.RangeEditor;
 
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
+
+import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Arrays;
+import java.util.EventObject;
+import java.util.UUID;
+import javax.swing.*;
+import javax.swing.table.TableRowSorter;
 import org.ironsight.wpplugin.macromachine.Gui.EditActions.*;
 import org.ironsight.wpplugin.macromachine.operations.ActionType;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
@@ -7,17 +17,6 @@ import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.layers.PineForest;
-
-import javax.swing.*;
-import javax.swing.table.TableRowSorter;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.Arrays;
-import java.util.EventObject;
-import java.util.UUID;
-
-import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
 
 public class RangeTableEditor extends LayerMappingPanel
 {
@@ -193,7 +192,6 @@ public class RangeTableEditor extends LayerMappingPanel
 
     @Override
     protected void initComponents() {
-
     }
 
     private void initTableListener() {

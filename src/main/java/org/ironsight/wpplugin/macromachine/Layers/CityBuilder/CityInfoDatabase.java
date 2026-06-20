@@ -1,16 +1,14 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
+import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
+
 import java.awt.*;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
-
-/**
- * STARMADE MOD CREATOR: Max1M DATE: 19.08.2025 TIME: 14:52
- */
+/** STARMADE MOD CREATOR: Max1M DATE: 19.08.2025 TIME: 14:52 */
 public class CityInfoDatabase implements Serializable
 {
     public static final int NO_DATA = Integer.MIN_VALUE;
@@ -30,7 +28,6 @@ public class CityInfoDatabase implements Serializable
             deletedSome = deletedSome || !toDelete.isEmpty();
             for (Point p : toDelete)
                 tileInfo.remove(p);
-
         }
         return deletedSome;
     }

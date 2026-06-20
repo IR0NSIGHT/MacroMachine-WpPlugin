@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.rivertool.kernel;
 
-import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
-
 import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
 
 public class KernelConvolution
 {

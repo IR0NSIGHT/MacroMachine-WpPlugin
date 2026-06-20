@@ -1,14 +1,13 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.Tile;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 import java.awt.*;
 import java.util.Arrays;
 import java.util.stream.IntStream;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Tile;
 
 public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSetter, IPositionTileValueGetter, EditableIO
 {
@@ -27,6 +26,7 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     public String toString() {
         return getName();
     }
+
     @Override
     public String getToolTipText() {
         return getDescription();
@@ -34,6 +34,7 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
 
     private Tile tile;
     private int tileX = Integer.MAX_VALUE, tileY = Integer.MAX_VALUE;
+
     @Override
     public int getValueAt(Dimension dim, int x, int y) {
         if (x >> TILE_SIZE_BITS != tileX || y >> TILE_SIZE_BITS != tileY) {
@@ -93,6 +94,7 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     public int[] getAllInputValues() {
         return Arrays.copyOf(inputValues, inputValues.length);
     }
+
     @Override
     public boolean isIgnoreValue(int value) {
         return value == IGNORE_VALUE;
@@ -109,17 +111,17 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         if (data.length == 0)
             return new TerrainHeightIO(-64, 319);
-        int minHeight = (int) data[0];
-        int maxHeight = (int) data[1];
+        int minHeight = ((IntValue) data[0]).value();
+        int maxHeight = ((IntValue) data[1]).value();
         return new TerrainHeightIO(minHeight, maxHeight);
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[]{(Integer) minHeight, (Integer) maxHeight};
+    public IoParameter[] getSaveData() {
+        return new IoParameter[]{new IntValue(minHeight), new IntValue(maxHeight)};
     }
 
     @Override
@@ -160,7 +162,6 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public void prepareForDimension(Dimension dim) {
-
     }
 
     @Override

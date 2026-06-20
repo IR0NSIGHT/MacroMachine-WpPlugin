@@ -1,8 +1,5 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
-import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
-
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -12,6 +9,8 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.function.Function;
+import javax.swing.*;
+import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 
 public class MappingGridPanel extends LayerMappingPanel implements MouseListener, MouseMotionListener
 {
@@ -406,7 +405,6 @@ public class MappingGridPanel extends LayerMappingPanel implements MouseListener
 
     @Override
     public void mouseClicked(MouseEvent e) {
-
     }
 
     @Override
@@ -486,12 +484,10 @@ public class MappingGridPanel extends LayerMappingPanel implements MouseListener
 
     @Override
     public void mouseEntered(MouseEvent e) {
-
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-
     }
 
     @Override
@@ -538,6 +534,5 @@ public class MappingGridPanel extends LayerMappingPanel implements MouseListener
 
     @Override
     public void mouseMoved(MouseEvent e) {
-
     }
 }

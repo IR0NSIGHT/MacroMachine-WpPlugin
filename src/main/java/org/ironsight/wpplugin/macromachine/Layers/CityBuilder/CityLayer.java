@@ -1,5 +1,17 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
+import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
+import static org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityInfoDatabase.NO_DATA;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+import static org.pepsoft.worldpainter.objects.WPObject.ATTRIBUTE_FILE;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.HashMap;
+import javax.vecmath.Point3i;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.util.undo.BufferKey;
 import org.pepsoft.util.undo.UndoListener;
@@ -14,19 +26,6 @@ import org.pepsoft.worldpainter.layers.exporters.ExporterSettings;
 import org.pepsoft.worldpainter.objects.MirroredObject;
 import org.pepsoft.worldpainter.objects.RotatedObject;
 import org.pepsoft.worldpainter.objects.WPObject;
-
-import javax.vecmath.Point3i;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
-import static org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityInfoDatabase.NO_DATA;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
-import static org.pepsoft.worldpainter.objects.WPObject.ATTRIBUTE_FILE;
 
 public class CityLayer extends CustomLayer implements UndoListener
 {
@@ -61,7 +60,6 @@ public class CityLayer extends CustomLayer implements UndoListener
                 repaintTile(tileX, tileY, dimension, database);
             }
         }
-
     }
 
     public Image getSchematicImage(ObjectState state) {
@@ -358,7 +356,6 @@ public class CityLayer extends CustomLayer implements UndoListener
             } else {
                 return NORTH;
             }
-
         }
 
         public CityLayer.Direction nextRotation() {

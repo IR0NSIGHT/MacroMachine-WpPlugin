@@ -1,15 +1,17 @@
-package org.ironsight.wpplugin.rivertool.Gui;//
+package org.ironsight.wpplugin.rivertool.Gui; //
+
 // Source code recreated from a .class file by IntelliJ IDEA
 // (powered by FernFlower decompiler)
 //
 
-import javax.swing.*;
 import java.util.ArrayList;
+import javax.swing.*;
 
 public abstract class OperationOptionsPanel<Options> extends JPanel
 {
     private final Options options;
     ArrayList<OptionsLabel> inputs;
+
     public OperationOptionsPanel(Options options) {
         this.options = options;
         displayOptions(this.options);

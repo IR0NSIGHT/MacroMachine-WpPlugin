@@ -1,8 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
-import org.ironsight.wpplugin.macromachine.operations.ActionType;
-
 import javax.swing.*;
+import org.ironsight.wpplugin.macromachine.operations.ActionType;
 
 public class ActionTypeComboBox extends JComboBox<String>
 {

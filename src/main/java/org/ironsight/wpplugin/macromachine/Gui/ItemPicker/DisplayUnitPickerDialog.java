@@ -1,11 +1,13 @@
 package org.ironsight.wpplugin.macromachine.Gui.ItemPicker;
 
-import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
-import org.ironsight.wpplugin.macromachine.operations.Macro;
-import org.ironsight.wpplugin.macromachine.operations.MappingAction;
-import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel.header1Font;
+import static org.ironsight.wpplugin.macromachine.Gui.MacroDesigner.getDefaultFiltersAndEmptyAction;
 
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -13,14 +15,11 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-
-import static org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel.header1Font;
-import static org.ironsight.wpplugin.macromachine.Gui.MacroDesigner.getDefaultFiltersAndEmptyAction;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
+import org.ironsight.wpplugin.macromachine.operations.Macro;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
+import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 
 public class DisplayUnitPickerDialog extends JDialog
 {
@@ -228,7 +227,6 @@ public class DisplayUnitPickerDialog extends JDialog
             filterCheckbox.addActionListener(updateFilter);
             filterCheckbox.setSelected(f.isActive());
             updateFilter.actionPerformed(null);
-
         }
         this.add(filterCheckboxes, BorderLayout.NORTH);
     }
@@ -359,5 +357,4 @@ public class DisplayUnitPickerDialog extends JDialog
 
         return searchPanel;
     }
-
 }

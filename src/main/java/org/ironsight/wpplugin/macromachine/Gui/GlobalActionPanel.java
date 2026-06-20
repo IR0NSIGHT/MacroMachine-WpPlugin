@@ -1,14 +1,30 @@
 package org.ironsight.wpplugin.macromachine.Gui;
 
+import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
+
+import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.UUID;
+import java.util.function.Consumer;
+import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.Gui.EditActions.ActionDesigner;
 import org.ironsight.wpplugin.macromachine.Gui.EditActions.InputOutputEditor;
 import org.ironsight.wpplugin.macromachine.Gui.TreeView.MacroTreePanel;
 import org.ironsight.wpplugin.macromachine.MacroMachinePlugin;
 import org.ironsight.wpplugin.macromachine.SaveAllWorker;
+import org.ironsight.wpplugin.macromachine.WebUIServer;
 import org.ironsight.wpplugin.macromachine.operations.*;
+import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
-import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.EditableIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
@@ -17,23 +33,8 @@ import org.ironsight.wpplugin.macromachine.threeDRendering.SurfaceObject;
 import org.pepsoft.worldpainter.dynmap.DynmapPreviewer;
 import org.pepsoft.worldpainter.objects.WPObject;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.HierarchyEvent;
-import java.io.File;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.UUID;
-import java.util.function.Consumer;
-
-import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
-import static org.ironsight.wpplugin.macromachine.operations.Macro.macroToFlatActions;
-
-// top level panel that contains a selection list of macros/layers/input/output on the left, like a file browser
+// top level panel that contains a selection list of macros/layers/input/output on the left, like a
+// file browser
 // and an editor for the currently selected action on the right
 public class GlobalActionPanel extends JPanel implements ISelectItemCallback
 {
@@ -43,7 +44,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     public static final String INPUT_OUTPUT_DESIGNER = "inputoutputdesigner";
     static final int MAX_LOG_LINES = 2000;
     static JTextArea logPanel;
-    private static DynmapPreviewer previewer = new DynmapPreviewer();
+    private static DynmapPreviewer previewer = null;
     private static GlobalActionPanel INSTANCE;
     private static WPObject surfaceObject = new SurfaceObject();
     MacroTreePanel macroTreePanel;
@@ -71,16 +72,30 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     }
 
     public static void main(String[] args) {
+        MacroContainer macros = new MacroContainer("./src/main/resources/DefaultMacros.json");
+        MacroContainer.SetInstance(macros);
+        MappingActionContainer actions = new MappingActionContainer("./src/main/resources/DefaultActions.json");
+        MappingActionContainer.SetInstance(actions);
+
+        MacroApplicator applicator = MacroApplicator.mock();
+
+        final InputOutputProvider ioProvider = InputOutputProvider.INSTANCE;
+
+        // Start web UI server
+        WebUIServer server = new WebUIServer(applicator, actions, macros, ioProvider);
+        try {
+            server.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
         File saveFile = new File("./plugins/macroMachine/mySavefile.macro");
 
-        MacroContainer.SetInstance(new MacroContainer("./src/main/resources/DefaultMacros.json"));
-        MacroContainer macros = MacroContainer.getInstance();
-        MappingActionContainer.SetInstance(new MappingActionContainer("./src/main/resources/DefaultActions.json"));
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
         ContainerIO.importFile(layers, macros, saveFile, new ImportExportPolicy(),
-                s -> ErrorPopUpString("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s),
-                InputOutputProvider.INSTANCE);
+                s -> ErrorPopUpString("Can not load from savefile:\n" + saveFile.getPath() + "\n" + s), ioProvider);
 
         SaveAllWorker fileWriter = new SaveAllWorker(MacroContainer.getInstance(), MappingActionContainer.getInstance(),
                 saveFile);
@@ -88,35 +103,23 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
 
         MappingActionContainer.getInstance().subscribe(fileWriter::flagForSave);
         MacroContainer.getInstance().subscribe(fileWriter::flagForSave);
-        InputOutputProvider.INSTANCE.updateFrom(null);
+        ioProvider.updateFrom(null);
         // Create and show a JFrame
         JFrame frame = new JFrame("Main Window");
         frame.setSize(500, 500);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
 
-        JFrame diag = createDialog(frame, (macro, uiCallback) -> {
-            ArrayList<MappingAction> steps = new ArrayList<>(
-                    macroToFlatActions(macro, MacroContainer.getInstance(), MappingActionContainer.getInstance()));
-            int i = 0;
-            uiCallback.setAllActionsBeforeRun(steps);
-            for (MappingAction a : steps) {
-                if (uiCallback.isActionAbort())
-                    break;
-                try {
-                    uiCallback.beforeEachAction(a, null);
-                    Thread.sleep(100);
-                    uiCallback.setProgressOfAction(Math.round(100f * i++ / 30f));
-                    uiCallback.afterEachAction(new ExecutionStatistic(a));
-
-                } catch (InterruptedException ex) {
-                    GlobalActionPanel.ErrorPopUp(ex);
-                }
-            }
-            uiCallback.afterEverything();
-            return Collections.emptyList();
-        });
+        JFrame diag = createDialog(frame, applicator);
         diag.setVisible(true);
+
+        // Stop server on close
+        diag.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                server.stop();
+            }
+        });
     }
 
     /**
@@ -143,8 +146,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
                 JOptionPane.ERROR_MESSAGE
         // Type of message (error icon)
         );
-
     }
+
     public static void ErrorPopUp(Exception ex) {
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
@@ -156,7 +159,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
                 JOptionPane.ERROR_MESSAGE
         // Type of message (error icon)
         );
-
     }
 
     // Method to log messages
@@ -186,6 +188,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     }
 
     private static DynmapPreviewer getPreviewer() {
+        if (previewer == null)
+            previewer = new DynmapPreviewer();
         return previewer;
     }
 
@@ -197,7 +201,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
             SwingUtilities.invokeLater(() -> {
                 INSTANCE.doRender3d();
             });
-
     }
 
     public static WPObject getSurfaceObject() {
@@ -244,7 +247,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
                 layout.show(editorPanel, INVALID_SELECTION);
                 break;
         }
-
     }
 
     private void doRender3d() {
@@ -292,9 +294,11 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
 
         tabbedPane.add("log", logPanel);
 
-        previewer.setInclination(30);
-        previewer.setObject(new SurfaceObject()/* empty dummy */, null);
-        tabbedPane.add("3d", previewer);
+        getPreviewer().setInclination(30);
+        getPreviewer().setObject(new SurfaceObject() /* empty dummy */, null);
+        tabbedPane.add("3d", getPreviewer());
+
+        tabbedPane.addTab("Web UI", new WebUIViewPanel());
 
         previewer.addHierarchyListener(e -> {
             if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing() && rerender3d) {
@@ -366,7 +370,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
 
     private void onSubmitInputOutput(EditableIO io) {
         assert io instanceof IPositionValueGetter || io instanceof IPositionValueSetter;
-
     }
 
     public enum SELECTION_TPYE {

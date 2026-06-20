@@ -1,13 +1,12 @@
 package org.ironsight.wpplugin.rivertool.pathing;
 
+import java.awt.*;
+import java.util.*;
+import java.util.List;
+import java.util.function.Consumer;
 import org.ironsight.wpplugin.rivertool.geometry.HeightDimension;
 import org.ironsight.wpplugin.rivertool.operations.ContinuousCurve;
 import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
-
-import java.awt.*;
-import java.util.List;
-import java.util.*;
-import java.util.function.Consumer;
 
 public class Path implements Iterable<float[]>
 {
@@ -237,5 +236,4 @@ public class Path implements Iterable<float[]>
         sb.append("]");
         return sb.toString();
     }
-
 }

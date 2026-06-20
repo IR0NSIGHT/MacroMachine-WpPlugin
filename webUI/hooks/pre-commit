@@ -1,0 +1,14 @@
+#!/bin/sh
+
+changed_frontend_files=$(git diff --cached --name-only | grep '^webUI')
+
+if [ -z "$changed_frontend_files" ]; then
+    echo "No frontend files changed, skipping"
+    exit 0
+fi
+
+echo "Frontend files changed:"
+echo "$changed_frontend_files"
+
+npm test -- --run || exit 1
+npm run verify || exit 1

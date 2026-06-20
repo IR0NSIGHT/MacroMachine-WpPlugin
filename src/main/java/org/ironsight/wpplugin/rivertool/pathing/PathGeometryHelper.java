@@ -1,11 +1,10 @@
 package org.ironsight.wpplugin.rivertool.pathing;
 
+import java.awt.*;
+import java.util.*;
 import org.ironsight.wpplugin.rivertool.geometry.BoundingBoxes.AxisAlignedBoundingBox2d;
 import org.ironsight.wpplugin.rivertool.geometry.BoundingBoxes.BoundingBox;
 import org.ironsight.wpplugin.rivertool.geometry.BoundingBoxes.TreeBoundingBox;
-
-import java.awt.*;
-import java.util.*;
 
 public class PathGeometryHelper implements BoundingBox
 {

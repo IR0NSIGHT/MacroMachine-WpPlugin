@@ -1,11 +1,10 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
-import org.ironsight.wpplugin.macromachine.operations.MappingAction;
-import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
-
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.function.Consumer;
+import javax.swing.*;
+import org.ironsight.wpplugin.macromachine.operations.MappingAction;
+import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 
 public abstract class LayerMappingPanel extends JPanel
 {
@@ -16,7 +15,6 @@ public abstract class LayerMappingPanel extends JPanel
     };
 
     public LayerMappingPanel() {
-
     }
 
     protected final void initialize() {

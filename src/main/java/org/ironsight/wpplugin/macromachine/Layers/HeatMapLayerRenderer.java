@@ -59,13 +59,8 @@ public class HeatMapLayerRenderer extends TransparentColourRenderer
 
     @Override
     public int getPixelColour(int x, int y, int underlyingColour, int value) {
-        int[] colors = {0xff2400, 0xff6000, 0xff9a00, 0xffd700,
-
-                0xebff00, 0xa5ff00, 0x62ff00, 0x18ff00,
-
-                0x00ff25, 0x00ff68, 0x00ffa4, 0x00ffeb,
-
-                0x00daff, 0x009aff, 0x005fff, 0x001fff};
+        int[] colors = {0xff2400, 0xff6000, 0xff9a00, 0xffd700, 0xebff00, 0xa5ff00, 0x62ff00, 0x18ff00, 0x00ff25,
+                0x00ff68, 0x00ffa4, 0x00ffeb, 0x00daff, 0x009aff, 0x005fff, 0x001fff};
         return colors[15 - value];
         // return 0x010000 * value * 16 | ((15 - value) * 16) * 0x000001;
     }

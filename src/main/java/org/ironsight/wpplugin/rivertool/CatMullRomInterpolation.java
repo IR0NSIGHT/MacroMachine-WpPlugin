@@ -1,11 +1,10 @@
 package org.ironsight.wpplugin.rivertool;
 
-import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
-import org.ironsight.wpplugin.rivertool.pathing.CubicBezierSpline;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.Predicate;
+import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
+import org.ironsight.wpplugin.rivertool.pathing.CubicBezierSpline;
 
 public class CatMullRomInterpolation
 {
@@ -233,5 +232,4 @@ public class CatMullRomInterpolation
         }
         return interpolated;
     }
-
 }

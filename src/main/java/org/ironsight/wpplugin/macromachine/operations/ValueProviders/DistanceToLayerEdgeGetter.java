@@ -1,5 +1,13 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
+import java.awt.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.stream.IntStream;
 import org.ironsight.wpplugin.macromachine.ArrayUtils;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.ILimitedMapOperation;
@@ -8,15 +16,6 @@ import org.ironsight.wpplugin.macromachine.operations.specialOperations.ShadowMa
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
-
-import java.awt.*;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.stream.IntStream;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimitedMapOperation, EditableIO
 {
@@ -27,10 +26,12 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
     protected Layer layer = null;
     private TileContainer distanceMap;
     private final int[] values;
+
     @Override
     public int[] getAllInputValues() {
         return Arrays.copyOf(values, values.length);
     }
+
     protected DistanceToLayerEdgeGetter(boolean searchInwards, String name, String id, int maxDistance) {
         this.searchInwards = searchInwards;
         this.layerId = id;
@@ -56,7 +57,6 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
             throw new IllegalAccessError("Layer not found: " + layerName + "(" + layerId + ")");
         if (layer != null)
             layerName = layer.getName(); // maybe name was updated
-
     }
 
     @Override
@@ -70,19 +70,19 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
     }
 
     @Override
-    public IMappingValue instantiateFrom(Object[] data) {
-
+    public IMappingValue instantiateFrom(IoParameter[] data) {
         try {
-            return new DistanceToLayerEdgeGetter(((Integer) data[3]) == 1, (String) data[0], (String) data[1],
-                    (Integer) data[2]);
+            return new DistanceToLayerEdgeGetter(((IntValue) data[3]).value() == 1, ((StringValue) data[0]).value(),
+                    ((StringValue) data[1]).value(), ((IntValue) data[2]).value());
         } catch (Exception ex) {
             return new DistanceToLayerEdgeGetter(searchInwards, MacroSelectionLayer.INSTANCE, 100);
         }
     }
 
     @Override
-    public Object[] getSaveData() {
-        return new Object[]{layerName, layerId, (Integer) maxDistance, searchInwards ? 1 : 0};
+    public IoParameter[] getSaveData() {
+        return new IoParameter[]{new StringValue(layerName), new StringValue(layerId), new IntValue(maxDistance),
+                new IntValue(searchInwards ? 1 : 0)};
     }
 
     @Override

@@ -1,23 +1,24 @@
 package org.ironsight.wpplugin.macromachine.Gui.ItemPicker;
 
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
-
-import javax.swing.*;
-import javax.swing.table.TableModel;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.swing.*;
+import javax.swing.table.TableModel;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 
 public class DisplayValueRowFilter extends RowFilter<TableModel, Integer>
 {
 
     private Pattern pattern = Pattern.compile("(?i)" + Pattern.quote(""));
     private PickerFilterOption[] filters = new PickerFilterOption[0];
-    public DisplayValueRowFilter() {
 
+    public DisplayValueRowFilter() {
     }
+
     public void setFilters(PickerFilterOption... filters) {
         this.filters = filters;
     }
+
     public void setString(String searchString) {
         this.pattern = Pattern.compile("(?i)" + Pattern.quote(searchString));
     }

@@ -15,7 +15,6 @@ public interface HeightDimension
 
             @Override
             public void setHeight(int x, int y, float z) {
-
             }
         };
     }

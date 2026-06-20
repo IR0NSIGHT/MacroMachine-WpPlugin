@@ -1,18 +1,17 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions.RangeEditor;
 
+import static org.ironsight.wpplugin.macromachine.operations.MappingAction.calculateRanges;
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter.isLegalInput;
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.isLegalOutput;
+
+import java.util.*;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import org.ironsight.wpplugin.macromachine.Gui.EditActions.MappingPointValue;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
-
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
-import java.util.*;
-
-import static org.ironsight.wpplugin.macromachine.operations.MappingAction.calculateRanges;
-import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter.isLegalInput;
-import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.isLegalOutput;
 
 public class RangeTableModel extends DefaultTableModel
 {
@@ -103,7 +102,6 @@ public class RangeTableModel extends DefaultTableModel
             fireTableCellUpdated(rowIndex, columnIndex);
 
             SwingUtilities.invokeLater(this::updateValidationData);
-
         }
     }
 
@@ -164,7 +162,7 @@ public class RangeTableModel extends DefaultTableModel
                 incorrectRows.add(row);
             }
 
-            if (values[idxEnd]) {// already set
+            if (values[idxEnd]) { // already set
                 incorrectRows.add(row);
             }
 
@@ -241,9 +239,7 @@ public class RangeTableModel extends DefaultTableModel
         fireTableDataChanged();
     }
 
-    /**
-     * validate data and overwrite content of table model with validated data
-     */
+    /** validate data and overwrite content of table model with validated data */
     public void enforceDataValidation() {
         var newRanges = validateRanges(ranges, action.getInput());
         ranges.clear();
@@ -308,5 +304,4 @@ public class RangeTableModel extends DefaultTableModel
 
     private record ValueRange(MappingPointValue start, MappingPointValue end, MappingPointValue value) {
     }
-
 }

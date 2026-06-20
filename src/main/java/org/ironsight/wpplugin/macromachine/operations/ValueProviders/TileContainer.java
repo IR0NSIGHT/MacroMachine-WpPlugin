@@ -1,12 +1,11 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.pepsoft.worldpainter.Constants;
-import org.pepsoft.worldpainter.Dimension;
-
-import java.awt.*;
-
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+
+import java.awt.*;
+import org.pepsoft.worldpainter.Constants;
+import org.pepsoft.worldpainter.Dimension;
 
 public class TileContainer
 {
@@ -157,8 +156,8 @@ public class TileContainer
         pointX += offsetX;
         pointY += offsetY;
 
-        assert pointX >= 0;
-        assert pointY >= 0;
+        assert pointX >= 0 : pointX;
+        assert pointY >= 0 : pointY; // FIXME these fail in MacroConcurrentApplicatorTest testRunningMacro
 
         int indexX = pointX >> Constants.TILE_SIZE_BITS;
         int indexY = pointY >> Constants.TILE_SIZE_BITS;

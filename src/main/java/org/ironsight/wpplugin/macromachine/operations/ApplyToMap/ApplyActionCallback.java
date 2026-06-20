@@ -1,10 +1,9 @@
 package org.ironsight.wpplugin.macromachine.operations.ApplyToMap;
 
+import java.util.List;
 import org.ironsight.wpplugin.macromachine.operations.ExecutionStatistic;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.pepsoft.worldpainter.Dimension;
-
-import java.util.List;
 
 /**
  * callback to inform GUI of the progress for executing a macro / applying an
@@ -12,7 +11,9 @@ import java.util.List;
  */
 public interface ApplyActionCallback
 {
-    void setProgressOfAction(int percent);
+    void afterPreparation();
+    void onError(int stepIdx, MappingAction action, String error);
+    void setProgressOfAction(int percent, MappingAction action);
 
     boolean isActionAbort();
 
@@ -20,7 +21,7 @@ public interface ApplyActionCallback
 
     void afterEachTile(int tileX, int tileY);
 
-    void afterEachAction(ExecutionStatistic statistic);
+    void afterEachAction(ExecutionStatistic statistic, MappingAction action);
 
     /**
      * allow UI events to be genereated after the action is complete? FALSE: wait

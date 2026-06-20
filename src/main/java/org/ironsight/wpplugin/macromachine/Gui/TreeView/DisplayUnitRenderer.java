@@ -1,5 +1,13 @@
 package org.ironsight.wpplugin.macromachine.Gui.TreeView;
 
+import static org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel.*;
+import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
+
+import java.awt.*;
+import java.util.function.Function;
+import javax.swing.*;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel;
 import org.ironsight.wpplugin.macromachine.Gui.IconManager;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
@@ -8,15 +16,6 @@ import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IDisplayUnit;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
-
-import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.tree.DefaultTreeCellRenderer;
-import java.awt.*;
-import java.util.function.Function;
-
-import static org.ironsight.wpplugin.macromachine.Gui.IDisplayUnitCellRenderer.*;
-import static org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel.*;
 
 public class DisplayUnitRenderer extends DefaultTreeCellRenderer implements TableCellRenderer, ListCellRenderer<Object>
 {
@@ -148,7 +147,6 @@ public class DisplayUnitRenderer extends DefaultTreeCellRenderer implements Tabl
             panel.setBackground(DEFAULT_BACKGROUND);
         panel.invalidate();
         return panel;
-
     }
 
     @Override

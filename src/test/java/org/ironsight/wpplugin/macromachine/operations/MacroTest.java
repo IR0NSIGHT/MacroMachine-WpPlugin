@@ -1,5 +1,10 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
+
+import java.awt.*;
+import java.util.UUID;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.DummyCallback;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
@@ -9,12 +14,6 @@ import org.ironsight.wpplugin.macromachine.threeDRendering.TestData;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;
-
-import java.awt.*;
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
 
 class MacroTest
 {
@@ -33,7 +32,6 @@ class MacroTest
         assertEquals(replacer, result.getExecutionUUIDs()[1]);
         assertEquals(initial.getExecutionUUIDs()[2], result.getExecutionUUIDs()[2]);
         assertEquals(replacer, result.getExecutionUUIDs()[3]);
-
     }
 
     @Test

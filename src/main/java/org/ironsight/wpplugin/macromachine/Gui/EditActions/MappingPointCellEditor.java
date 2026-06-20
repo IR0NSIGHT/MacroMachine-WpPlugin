@@ -1,26 +1,26 @@
 package org.ironsight.wpplugin.macromachine.Gui.EditActions;
 
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
-
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EventObject;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EventObject;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValue;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 
 public class MappingPointCellEditor implements TableCellEditor
 {
     private final JComboBox<MappingPointValue> dropdown = new JComboBox<>();
     private final ArrayList<CellEditorListener> listeners = new ArrayList<>();
     private final int[] inputColumns;
+
     public MappingPointCellEditor(int[] inputColumns) {
         this.inputColumns = inputColumns;
         dropdown.setRenderer(new MappingPointCellRenderer());
@@ -60,10 +60,10 @@ public class MappingPointCellEditor implements TableCellEditor
             l.editingCanceled(new ChangeEvent(this));
         }
     }
+
     private final FocusListener onDropdownFocusLost = new FocusListener() {
         @Override
         public void focusGained(FocusEvent e) {
-
         }
 
         @Override
@@ -133,7 +133,6 @@ public class MappingPointCellEditor implements TableCellEditor
     private PopupMenuListener onComboboxSelected = new PopupMenuListener() {
         @Override
         public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-
         }
 
         @Override
@@ -146,5 +145,4 @@ public class MappingPointCellEditor implements TableCellEditor
             cancelCellEditing();
         }
     };
-
 }

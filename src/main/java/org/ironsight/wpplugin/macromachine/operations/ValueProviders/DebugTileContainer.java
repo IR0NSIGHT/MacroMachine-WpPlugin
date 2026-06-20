@@ -1,16 +1,17 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 public class DebugTileContainer extends TileContainer
 {
     private final Dimension dimension;
     private final Layer layer;
     private final int[] valueMapping;
+
     public DebugTileContainer(Dimension dimension, Layer layer, int[] valueMapping, int width, int height, int minX,
             int minY, int defaultValue) {
         super(width, height, minX, minY, defaultValue);

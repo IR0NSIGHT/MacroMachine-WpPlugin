@@ -1,5 +1,13 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
+import static org.pepsoft.minecraft.Material.AIR;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+import static org.pepsoft.worldpainter.objects.WPObject.*;
+
+import java.awt.*;
+import java.util.List;
+import java.util.Set;
+import javax.vecmath.Point3i;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Platform;
@@ -11,15 +19,6 @@ import org.pepsoft.worldpainter.layers.FloodWithLava;
 import org.pepsoft.worldpainter.layers.exporters.ExporterSettings;
 import org.pepsoft.worldpainter.layers.exporters.WPObjectExporter;
 import org.pepsoft.worldpainter.objects.WPObject;
-
-import javax.vecmath.Point3i;
-import java.awt.*;
-import java.util.List;
-import java.util.Set;
-
-import static org.pepsoft.minecraft.Material.AIR;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
-import static org.pepsoft.worldpainter.objects.WPObject.*;
 
 public class CityLayerExporter extends WPObjectExporter<CityLayer>
         implements

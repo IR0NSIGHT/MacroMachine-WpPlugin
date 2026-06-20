@@ -1,9 +1,9 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
+import org.junit.jupiter.api.Test;
 
 class IntegerTileTest
 {
@@ -13,6 +13,7 @@ class IntegerTileTest
         assertEquals(67, tile.getMin());
         assertEquals(67, tile.getMax());
     }
+
     @Test
     void setValueAt() {
         IntegerTile tile = new IntegerTile(7);

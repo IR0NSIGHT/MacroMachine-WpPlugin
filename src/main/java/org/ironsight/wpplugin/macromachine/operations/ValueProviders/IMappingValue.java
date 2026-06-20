@@ -1,9 +1,8 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import java.awt.*;
 import org.ironsight.wpplugin.macromachine.operations.MappingPoint;
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
-
-import java.awt.*;
 
 public interface IMappingValue extends IDisplayUnit
 {
@@ -44,9 +43,9 @@ public interface IMappingValue extends IDisplayUnit
 
     void prepareForDimension(org.pepsoft.worldpainter.Dimension dim) throws IllegalAccessError;
 
-    IMappingValue instantiateFrom(Object[] data);
+    IMappingValue instantiateFrom(IoParameter[] data);
 
-    Object[] getSaveData();
+    IoParameter[] getSaveData();
 
     String valueToString(int value);
 

@@ -1,10 +1,9 @@
 package org.ironsight.wpplugin.rivertool.Gui;
 
-import org.ironsight.wpplugin.rivertool.operations.Gradient;
-
-import javax.swing.*;
 import java.awt.*;
 import java.util.Random;
+import javax.swing.*;
+import org.ironsight.wpplugin.rivertool.operations.Gradient;
 
 public class GradientDisplay extends JPanel
 {
@@ -18,7 +17,6 @@ public class GradientDisplay extends JPanel
         // Example Gradient class for testing (replace with your implementation)
         Gradient gradient = new Gradient(new float[]{0.1f, 0.25f, 0.5f, 0.75f, 1f},
                 new float[]{1f, 0.5f, 0.25f, 0.1f, 0.05f});
-
     }
 
     public void setGradient(Gradient gradient) {

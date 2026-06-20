@@ -1,19 +1,18 @@
 package org.ironsight.wpplugin.macromachine.operations.FileIO;
 
-import org.ironsight.wpplugin.macromachine.Gui.TreeView.MacroTreePanel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import org.ironsight.wpplugin.macromachine.Gui.TreeView.DisplayUnitRenderer;
+import org.ironsight.wpplugin.macromachine.Gui.TreeView.MacroTreePanel;
 import org.ironsight.wpplugin.macromachine.operations.Macro;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.SaveableAction;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.AnnotationSetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.NibbleLayerSetter;
 import org.pepsoft.worldpainter.layers.PineForest;
-
-import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class FileConflictResolverDialog extends JDialog
 {
@@ -26,6 +25,7 @@ public class FileConflictResolverDialog extends JDialog
         super(owner, "Resolve " + "Import Conflict", true);
         init(owner, original, imported);
     }
+
     public FileConflictResolverDialog(JDialog owner, SaveableAction original, SaveableAction imported) {
         // Create a modal dialog
         super(owner, "Resolve " + "Import Conflict", true);

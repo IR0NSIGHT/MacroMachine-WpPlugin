@@ -1,10 +1,9 @@
 package org.ironsight.wpplugin.macromachine.Layers;
 
+import java.awt.image.BufferedImage;
 import org.pepsoft.util.IconUtils;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.renderers.LayerRenderer;
-
-import java.awt.image.BufferedImage;
 
 public class HeatMapLayer extends Layer
 {
@@ -13,10 +12,12 @@ public class HeatMapLayer extends Layer
     public LayerRenderer getRenderer() {
         return HeatMapLayerRenderer.instance;
     }
+
     // fixed UID from class on first release. do not change or all world files will
     // be broken/unloadable
     private static final long serialVersionUID = 1L;
-    private transient final BufferedImage icon;
+    private final transient BufferedImage icon;
+
     @Override
     public BufferedImage getIcon() {
         return icon;
@@ -29,8 +30,8 @@ public class HeatMapLayer extends Layer
      * and SelecctionChunk which messes up the result. so this is a
      * single-layer-paintable-selection substitute.
      */
-
     private static final String id = "org.ironsight.wpplugin.macropainter.heatmaplayer";
+
     private static final String name = "Heatmap";
     private static final String description = "";
 
@@ -40,6 +41,5 @@ public class HeatMapLayer extends Layer
         super(id, name, description, DataSize.NIBBLE, false, 0);
         this.icon = IconUtils.loadScaledImage(this.getClass().getClassLoader(),
                 "org/pepsoft/worldpainter/icons/macroselectionlayer.png");
-
     }
 }

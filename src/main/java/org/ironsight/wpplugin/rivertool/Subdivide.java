@@ -21,5 +21,4 @@ public interface Subdivide
     }
 
     float[] subdividePoints(float[] a, float[] b);
-
 }

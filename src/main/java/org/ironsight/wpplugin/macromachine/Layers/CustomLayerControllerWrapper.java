@@ -1,10 +1,5 @@
 package org.ironsight.wpplugin.macromachine.Layers;
 
-import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
-import org.pepsoft.worldpainter.CustomLayerController;
-import org.pepsoft.worldpainter.layers.CustomLayer;
-import org.pepsoft.worldpainter.layers.Layer;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,6 +7,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.LayerProvider;
+import org.pepsoft.worldpainter.CustomLayerController;
+import org.pepsoft.worldpainter.layers.CustomLayer;
+import org.pepsoft.worldpainter.layers.Layer;
 
 /**
  * API to worldpainters CustomLayerController, that manages all custom layers
@@ -23,7 +22,6 @@ public class CustomLayerControllerWrapper implements LayerProvider
     private CustomLayerController controller;
 
     public CustomLayerControllerWrapper() {
-
     }
 
     private CustomLayerController getController() {

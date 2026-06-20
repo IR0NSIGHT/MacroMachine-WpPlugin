@@ -1,8 +1,7 @@
 package org.ironsight.wpplugin.rivertool.pathing;
 
-import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
-
 import java.util.*;
+import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 
 public class PathManager
 {

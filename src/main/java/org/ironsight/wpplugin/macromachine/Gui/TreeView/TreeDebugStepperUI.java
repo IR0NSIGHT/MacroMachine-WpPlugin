@@ -1,27 +1,25 @@
 package org.ironsight.wpplugin.macromachine.Gui.TreeView;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.UUID;
+import java.util.function.Consumer;
+import javax.swing.*;
+import javax.swing.tree.TreePath;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.operations.ApplyToMap.BreakpointListener;
 import org.ironsight.wpplugin.macromachine.operations.MacroContainer;
 import org.ironsight.wpplugin.macromachine.operations.MappingAction;
 import org.ironsight.wpplugin.macromachine.operations.MappingActionContainer;
 
-import javax.swing.*;
-import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.UUID;
-import java.util.function.Consumer;
-
-/**
- * visualize the debug stepper, breakpoints etc in a tree of macro/actions
- */
+/** visualize the debug stepper, breakpoints etc in a tree of macro/actions */
 public class TreeDebugStepperUI implements BreakpointListener
 {
     HashMap<UUID, MacroTreeNode> actionToNode = new HashMap<>();
     ArrayList<MappingAction> executionSteps;
     Consumer<TreePath> setStepperToNode;
     private MacroTreeNode rootMacroNode;
+
     public TreeDebugStepperUI(MacroTreeNode rootMacro, MacroContainer macroContainer,
             MappingActionContainer actionContainer, Consumer<TreePath> setStepperToNode) {
         this.setStepperToNode = setStepperToNode;
@@ -38,7 +36,6 @@ public class TreeDebugStepperUI implements BreakpointListener
             for (MacroTreeNode child : node.getChildren())
                 addToMapRecursive(child, actionToNode);
         }
-
     }
 
     @Override
@@ -57,7 +54,6 @@ public class TreeDebugStepperUI implements BreakpointListener
 
     @Override
     public void PostReachedBreakpoint(int idx) {
-
     }
 
     @Override

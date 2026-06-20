@@ -1,13 +1,12 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.layers.renderers.LayerRenderer;
-import org.pepsoft.worldpainter.layers.renderers.PaintRenderer;
+import static java.awt.Color.YELLOW;
 
 import java.awt.image.BufferedImage;
 import java.io.Serial;
-
-import static java.awt.Color.YELLOW;
+import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.layers.renderers.LayerRenderer;
+import org.pepsoft.worldpainter.layers.renderers.PaintRenderer;
 
 class AnnotationLayer extends Layer
 {
@@ -27,6 +26,7 @@ class AnnotationLayer extends Layer
     }
 
     private static final BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_RGB);
+
     @Override
     public BufferedImage getIcon() {
         return icon;
@@ -34,5 +34,4 @@ class AnnotationLayer extends Layer
 
     @Serial
     private static final long serialVersionUID = 1L;
-
 }

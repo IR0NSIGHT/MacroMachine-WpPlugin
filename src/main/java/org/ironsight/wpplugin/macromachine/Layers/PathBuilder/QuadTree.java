@@ -1,10 +1,10 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
-
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 public class QuadTree
 {

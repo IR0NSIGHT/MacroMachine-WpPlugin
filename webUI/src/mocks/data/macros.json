@@ -1,0 +1,105 @@
+[
+  {
+    "executionUUIDs": [
+      "ccdb9830-a63a-4b35-a6fb-e55ed4baef15",
+      "8526cdb2-bb3c-4ce3-b6b7-9eeeb5ce2bef",
+      "f7b9a0bd-59cb-4532-a218-0344e77cd122",
+      "16632d51-fe28-4dfb-b53a-7cfa749062e9"
+    ],
+    "activeActions": [true, true, true, true],
+    "name": "Apply: auto beach",
+    "description": "simple beach under water at flat angles.",
+    "uid": "28558748-ff19-4ecf-9feb-7dec9173996f"
+  },
+  {
+    "executionUUIDs": [
+      "ba4ae64f-4b96-45a4-9c17-1b7f5be1b72e",
+      "a05419d9-4507-4508-8f08-3f15320987ba",
+      "07202ae5-b74c-4d70-b312-92419421a4ce",
+      "f805b666-46a0-4253-a324-f09b5843afce"
+    ],
+    "activeActions": [true, true, true, true],
+    "name": "Reduce cyan annotations by 50%",
+    "description": "each cyan layer point has 50% chance to remain after the macro was executed",
+    "uid": "d4edc006-bcf3-423d-8281-e9a916df0517"
+  },
+  {
+    "executionUUIDs": ["63fd4bd9-e0c5-4d7e-8469-010df68bb4b7"],
+    "activeActions": [true],
+    "name": "Selection Mask: auto biome",
+    "description": "-",
+    "uid": "1d053e6a-18cc-4d7f-96df-e18013668542"
+  },
+  {
+    "executionUUIDs": [
+      "3b0be65a-b601-4e69-b7d6-33a369625ea8",
+      "72172d29-1d85-4da8-88ac-28fdcae6428c",
+      "6fa2a28b-3bed-4dc6-9e58-6d753137ef85"
+    ],
+    "activeActions": [true, true, true],
+    "name": "Perlin Rocky Hills",
+    "description": "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+    "uid": "f501c350-3fa7-45f1-9c92-7e69ccd010a4"
+  },
+  {
+    "executionUUIDs": ["81a6fd0d-dd2f-4a50-8812-a47acbeccc3f"],
+    "activeActions": [true],
+    "name": "Selection Mask: plains biome",
+    "description": "-",
+    "uid": "d1e3e684-024b-473c-b12d-0b7b0464753b"
+  },
+  {
+    "executionUUIDs": [
+      "f25c73db-d735-44e4-b2f4-1631d6df247e",
+      "f9096f37-5efa-4230-9a32-79abf5de4a1a",
+      "a555c3ff-ff46-4b9e-87de-839106b28eb8",
+      "2d8a03a8-d14b-4c9c-949d-81a6c15d8ef4",
+      "7277f40e-992a-42f6-83ac-292b95b8a8c4",
+      "600f91f1-6bd5-40f0-8dbd-bf6e001906f9",
+      "6f4467b3-a9f9-496a-8331-309359081376",
+      "d2d8aa86-d534-4158-924d-a36384429037"
+    ],
+    "activeActions": [true, true, true, true, true, true, true, true],
+    "name": "Perlin Flower Patches",
+    "description": "flowers execpt on annotations",
+    "uid": "042248e3-2760-434e-a31b-d6b44023231a"
+  },
+  {
+    "executionUUIDs": ["92537724-f6c2-4152-896c-2d4abdc32385"],
+    "activeActions": [true],
+    "name": "Perlin Dev",
+    "description": "showcase of perlin historgram\t",
+    "uid": "1f68a457-c171-4761-99d3-6ab20b68126f"
+  },
+  {
+    "executionUUIDs": [],
+    "activeActions": [],
+    "name": "Hello World",
+    "description": "this macro is a collection of Mappings, each applied in order to the map to achieve complex, reusable, one-click operations.",
+    "uid": "65cfcd1a-5e2a-4f51-8c5d-d9e213dd9517"
+  },
+  {
+    "executionUUIDs": [
+      "328f34b4-9994-422c-a85b-272c93e6263e",
+      "60e87a5b-ceee-40b2-a25d-cab29a50d787",
+      "0e669f94-31c5-4d84-b69c-620953dd65b5",
+      "a1f1fa77-387b-4b62-b7aa-aab71f307781",
+      "6b3370ee-ba73-49b0-b64e-155195df7cb7",
+      "a5838003-43b6-402d-85dd-269a0b019ecb",
+      "a09da31d-82c2-47b2-863f-d1f584dbd5ad",
+      "25ae2016-1bd7-44c2-a6c6-4217c3604a1c",
+      "09e5d68d-991c-48e7-a4a8-59e1777be8d1"
+    ],
+    "activeActions": [true, true, true, true, true, true, true, true, true],
+    "name": "Apply: Alpine mountains",
+    "description": "rocky slopes, frosted tips, northern slopes have more snow than southern (sun facing) slopes",
+    "uid": "6fa2a28b-3bed-4dc6-9e58-6d753137ef85"
+  },
+  {
+    "executionUUIDs": ["68bddcaa-f0a2-4f16-abea-65270bc4fe9e"],
+    "activeActions": [true],
+    "name": "Selection Mask: 45-70° angle",
+    "description": "-",
+    "uid": "d35b2b3b-630b-4ca9-baa7-7928c06997ca"
+  }
+]

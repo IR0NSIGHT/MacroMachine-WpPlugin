@@ -1,9 +1,9 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.ironsight.wpplugin.macromachine.operations.ProviderType;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class IMappingValueTest
 {

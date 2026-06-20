@@ -50,7 +50,6 @@ public class ArrayUtils
     }
 
     /**
-     *
      * @param center
      * @param right
      * @return
@@ -59,5 +58,4 @@ public class ArrayUtils
         float[] out = append(reverse(right), append(center, right));
         return out;
     }
-
 }

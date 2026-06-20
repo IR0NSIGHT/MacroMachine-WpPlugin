@@ -1,14 +1,13 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.vecmath.Point2d;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
 import org.pepsoft.worldpainter.Dimension;
-
-import javax.vecmath.Point2d;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.ironsight.wpplugin.macromachine.operations.ProviderType.*;
 
 /**
  * this class represents a single global-operation. it can be applied to the map
@@ -93,7 +92,6 @@ public class MappingAction implements SaveableAction
         } else {
             mappings = generateInterpolatedOutput(mappingPoints, input, output);
         }
-
     }
 
     public static int[] generateInterpolatedOutput(MappingPoint[] mappingPoints, IPositionValueGetter getter,
@@ -376,7 +374,11 @@ public class MappingAction implements SaveableAction
     }
 
     public MappingAction withNewPoints(MappingPoint[] mappingPoints) {
-        mappingPoints = Arrays.stream(mappingPoints).map(this::sanitize).toArray(MappingPoint[]::new);
+        mappingPoints = Arrays.stream(mappingPoints)
+                .map(this::sanitize)
+                // FIXME this is necessary on discrete IOs .filter(p ->
+                // !this.output.isIgnoreValue(p.output))
+                .toArray(MappingPoint[]::new);
 
         TreeSet<MappingPoint> newPoints = new TreeSet<>(Comparator.comparingInt(o -> o.input));
         newPoints.addAll(Arrays.asList(mappingPoints));
@@ -478,5 +480,4 @@ public class MappingAction implements SaveableAction
             return value;
         return Math.min(output.getMaxValue(), Math.max(output.getMinValue(), value));
     }
-
 }

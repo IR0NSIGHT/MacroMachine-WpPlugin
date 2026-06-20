@@ -1,9 +1,8 @@
 package org.ironsight.wpplugin.rivertool.API;
 
-import org.ironsight.wpplugin.rivertool.pathing.PointType;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import org.ironsight.wpplugin.rivertool.pathing.PointType;
 
 public interface RiverToolAPI
 {
@@ -27,5 +26,4 @@ public interface RiverToolAPI
             this.data = data.clone();
         }
     }
-
 }

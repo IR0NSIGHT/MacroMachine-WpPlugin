@@ -11,12 +11,11 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.pepsoft.worldpainter.layers.Layer;
-
 import java.io.*;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Objects;
+import org.pepsoft.worldpainter.layers.Layer;
 
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class ExportContainer implements Serializable
@@ -35,6 +34,7 @@ public class ExportContainer implements Serializable
             }
         }
     }
+
     static class LayerArrayJavaSerializer extends JsonSerializer<Layer[]>
     {
         @Override
@@ -53,6 +53,7 @@ public class ExportContainer implements Serializable
             }
         }
     }
+
     private final String exportDate;
     private final String comment;
     private final MacroJsonWrapper[] macros;

@@ -1,11 +1,10 @@
 package org.ironsight.wpplugin.macromachine.operations.ValueProviders;
 
-import com.kenperlin.ImprovedNoise;
-import org.junit.jupiter.api.Test;
-
-import java.util.Arrays;
-
 import static org.junit.jupiter.api.Assertions.*;
+
+import com.kenperlin.ImprovedNoise;
+import java.util.Arrays;
+import org.junit.jupiter.api.Test;
 
 class PerlinNoiseIOTest
 {
@@ -42,7 +41,7 @@ class PerlinNoiseIOTest
     @Test
     void serialize() {
         PerlinNoiseIO io = new PerlinNoiseIO(1, 2, 3, 4);
-        Object[] data = io.getSaveData();
+        IoParameter[] data = io.getSaveData();
         IMappingValue instantiated = io.instantiateFrom(data);
         assertEquals(io, instantiated);
     }
@@ -87,5 +86,4 @@ class PerlinNoiseIOTest
         assertArrayEquals(new int[]{12, 13, 7, 14}, newIo.getEditableValues());
         assertNotEquals(io, newIo);
     }
-
 }

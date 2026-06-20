@@ -1,10 +1,9 @@
 package org.ironsight.wpplugin.macromachine;
 
+import java.awt.image.BufferedImage;
 import org.pepsoft.util.IconUtils;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.layers.renderers.LayerRenderer;
-
-import java.awt.image.BufferedImage;
 
 public class MacroSelectionLayer extends Layer
 {
@@ -13,10 +12,12 @@ public class MacroSelectionLayer extends Layer
     public LayerRenderer getRenderer() {
         return MacroSelectionLayerRenderer.instance;
     }
+
     // fixed UID from class on first release. do not change or all world files will
     // be broken/unloadable
     private static final long serialVersionUID = -6448177550160813133L;
-    private transient final BufferedImage icon;
+    private final transient BufferedImage icon;
+
     @Override
     public BufferedImage getIcon() {
         return icon;
@@ -29,8 +30,8 @@ public class MacroSelectionLayer extends Layer
      * and SelecctionChunk which messes up the result. so this is a
      * single-layer-paintable-selection substitute.
      */
-
     private static final String id = "org.ironsight.wpplugin.macropainter.macroselectionlayer";
+
     private static final String name = "Macro Selection";
     private static final String description = "a simple bit layer to make selection easier";
 
@@ -40,6 +41,5 @@ public class MacroSelectionLayer extends Layer
         super(id, name, description, DataSize.BIT, false, 0);
         this.icon = IconUtils.loadScaledImage(this.getClass().getClassLoader(),
                 "org/pepsoft/worldpainter/icons/macroselectionlayer.png");
-
     }
 }

@@ -1,15 +1,14 @@
 package org.ironsight.wpplugin.rivertool.Gui;
 
-import org.ironsight.wpplugin.rivertool.operations.Gradient;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.function.Consumer;
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import org.ironsight.wpplugin.rivertool.operations.Gradient;
 
 public class GradientEditor extends JPanel
 {
@@ -97,7 +96,6 @@ public class GradientEditor extends JPanel
             public void changedUpdate(DocumentEvent e) {
                 // This is fired for attribute changes, which is uncommon for plain text fields.
             }
-
         };
 
         for (int i = 0; i < gradient.positions.length; i++) {
@@ -169,5 +167,4 @@ public class GradientEditor extends JPanel
         revalidate();
         repaint();
     }
-
 }

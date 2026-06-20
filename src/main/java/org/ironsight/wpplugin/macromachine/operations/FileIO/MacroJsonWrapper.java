@@ -3,7 +3,6 @@ package org.ironsight.wpplugin.macromachine.operations.FileIO;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;

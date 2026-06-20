@@ -1,5 +1,15 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
+import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
+
+import java.awt.*;
+import java.io.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import javax.vecmath.Point2d;
 import org.ironsight.wpplugin.macromachine.MacroSelectionLayer;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ActionJsonWrapper;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.*;
@@ -7,17 +17,6 @@ import org.ironsight.wpplugin.macromachine.threeDRendering.TestData;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.layers.Annotations;
-
-import javax.vecmath.Point2d;
-import java.awt.*;
-import java.io.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-
-import static org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter.IGNORE_VALUE;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 
 class LayerMappingTest
 {
@@ -146,11 +145,10 @@ class LayerMappingTest
         }
 
         { // action with interpolateable output with IGNROE output
-            MappingAction mapper = new MappingAction(new TerrainHeightIO(-5, 10), new WaterHeightAbsoluteIO(0, 20),
-                    new MappingPoint[]{new MappingPoint(-3, 3), new MappingPoint(5, 11),
-                            new MappingPoint(9, IGNORE_VALUE)
-
-                    }, ActionType.SET, "", "", UUID.randomUUID());
+            MappingAction mapper = new MappingAction(
+                    new TerrainHeightIO(-5, 10), new WaterHeightAbsoluteIO(0, 20), new MappingPoint[]{
+                            new MappingPoint(-3, 3), new MappingPoint(5, 11), new MappingPoint(9, IGNORE_VALUE)},
+                    ActionType.SET, "", "", UUID.randomUUID());
             var mappedValues = Arrays.stream(mapper.input.getAllInputValues()).map(mapper::map).toArray();
             var expectedValues = new int[]{3, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 11, 11, 11, IGNORE_VALUE, IGNORE_VALUE};
             assertArrayEquals(expectedValues, mappedValues, "mapping was incorrect");
@@ -198,7 +196,6 @@ class LayerMappingTest
             assertEquals(new Point2d(0, 0), ranges.get(0));
             assertEquals(new Point2d(1, 2), ranges.get(1));
             assertEquals(new Point2d(3, 3), ranges.get(2));
-
         }
 
         {
