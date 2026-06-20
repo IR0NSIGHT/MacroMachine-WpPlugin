@@ -1,16 +1,17 @@
 import {
   Box,
   ButtonGroup,
-  Divider,
-  IconButton,
   List,
   Paper,
-  Stack,
   Switch,
   TextField,
-  Tooltip,
   Typography,
+  Grid,
+  ListItem,
+  ListItemButton,
 } from "@mui/material";
+import Item from "@mui/material/Grid";
+
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import SaveIcon from "@mui/icons-material/Save";
 import { ActionDTO, MacroDTO } from "@/types/DTO";
@@ -29,10 +30,11 @@ import equal from "fast-deep-equal";
 import AddIcon from "@mui/icons-material/Add";
 import { SelectDialog } from "./SelectDialog";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
-import { FilterInlineEditor } from "@/features/FilterComponent";
+import { FilterInlineEditor, ioToIconName } from "@/features/FilterComponent";
 import { useDefaultAppliersQuery, useDefaultFiltersQuery } from "@/API/queries";
 import { PageLoadingSpinner } from "@/PageLoadingSpinner";
-import { GetIconForIoType } from "./CustomSvgIcons";
+import { fillParentSx } from "@/App";
+import { MMIconButton } from "./IconButton";
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
   onExecute: MacroExecuteRequester;
@@ -71,14 +73,6 @@ const ApplierInlineEditor = ({ item, setItem, deleteItem, openEditorFor }: StepI
       sx={{
         display: "flex",
         flexDirection: "row",
-        "& .clear-btn": {
-          opacity: 0.3,
-          transition: "opacity 0.2s",
-        },
-
-        "&:hover .clear-btn": {
-          opacity: 1,
-        },
       }}
     >
       <Switch
@@ -89,26 +83,18 @@ const ApplierInlineEditor = ({ item, setItem, deleteItem, openEditorFor }: StepI
       />
       <ButtonGroup>
         {isFilter(item) && (
-          <IconButton
-            size="small"
+          <MMIconButton
             disabled={!item.active}
             onClick={() => setItem(invertFilter(item))}
-            className="clear-btn"
-          >
-            <SwitchLeftIcon />
-          </IconButton>
+            icon={<SwitchLeftIcon />}
+          />
         )}
-        <IconButton
-          size="small"
+        <MMIconButton
           disabled={!item.active}
           onClick={() => openEditorFor(item)}
-          className="clear-btn"
-        >
-          <EditIcon />
-        </IconButton>
-        <IconButton size="small" disabled={false} onClick={deleteItem} className="clear-btn">
-          <ClearIcon />
-        </IconButton>
+          icon={<EditIcon />}
+        />
+        <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />} />
       </ButtonGroup>
       <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
     </Box>
@@ -285,220 +271,245 @@ export const GlobalOperationDesigner = (props: Props) => {
     );
     return unusedFilters;
   }, [defaultFilters, filters]);
+
+  const unusedAppliers = defaultAppliers;
+
+  const sxBreakPoints = { sm: 12, md: 6, xl: 4 };
   return (
     <Box
       sx={{
-        p: 1,
+        ...fillParentSx,
         display: "flex",
         flexDirection: "column",
-        height: "95vh", // FIXME ugly hack to make the fucking flexbox work
-        gap: 1,
       }}
+      p={1}
     >
       <Box
         sx={{
+          ...fillParentSx,
           display: "flex",
-          flexDirection: "row",
+          flexDirection: "column",
+          overflowY: "auto", // scrollable list
+
           gap: 1,
+          p: 1,
         }}
       >
-        <ButtonGroup variant="contained" aria-label="Basic button group">
-          <Tooltip title="Execute this macro on your map.">
-            <IconButton size="small" disabled={false} onClick={onExecute}>
-              <PlayArrowIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Debug-Execute this macro on your map, step-by-step.">
-            <IconButton
-              size="small"
-              disabled={false}
-              onClick={() =>
-                props.onExecute(
-                  constructRunnable(sortedFilters, sortedAppliers, uuid, title, description),
-                  true,
-                )
-              }
-            >
-              <BugReportIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Save this macro.">
-            <IconButton size="small" onClick={onSave}>
-              <SaveIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Start a new macro.">
-            <IconButton size="small" disabled={false} onClick={onStartNew}>
-              <RestartAltIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Load an existing macro that is structured like a global operation.">
-            <IconButton size="small" disabled={false} onClick={onRequestLoadExisting}>
-              <ManageSearchIcon />
-            </IconButton>
-          </Tooltip>
+        <ButtonGroup variant="outlined">
+          <MMIconButton
+            disabled={false}
+            onClick={onExecute}
+            icon={<PlayArrowIcon />}
+            tooltip="Execute this macro on your map."
+          />
+          <MMIconButton
+            disabled={false}
+            onClick={() =>
+              props.onExecute(
+                constructRunnable(sortedFilters, sortedAppliers, uuid, title, description),
+                true,
+              )
+            }
+            icon={<BugReportIcon />}
+            tooltip="Debug-Execute this macro on your map, step-by-step."
+          />
+          <MMIconButton onClick={onSave} icon={<SaveIcon />} tooltip="Save this macro." />
+          <MMIconButton
+            disabled={false}
+            onClick={onStartNew}
+            tooltip="Start a new macro"
+            icon={<RestartAltIcon />}
+          />
+          <MMIconButton
+            disabled={false}
+            onClick={onRequestLoadExisting}
+            icon={<ManageSearchIcon />}
+            tooltip="Load an existing macro that is structured like a global operation."
+          />
         </ButtonGroup>
-        <Typography>{uuid}</Typography>
+
+        <Paper sx={{ width: "100%" }}>
+          Input B
+          <TextField
+            value={title ?? ""}
+            onChange={(e) => setTitle(e.target.value)}
+            label="Macro Name"
+            variant="outlined"
+            fullWidth
+            placeholder="My new Global Operation Macro"
+          />
+          <TextField
+            value={description ?? ""}
+            onChange={(e) => setDescription(e.target.value)}
+            label="Macro Description"
+            variant="outlined"
+            fullWidth
+            placeholder="This macro does a complex global operation"
+          />
+        </Paper>
+
+        <Grid container spacing={2}>
+          <Grid size={sxBreakPoints}>
+            {" "}
+            {/** FILTERS */}
+            <Item>
+              <Paper
+                sx={{
+                  width: "100%",
+                }}
+              >
+                <Typography>Filter by:</Typography>
+                <ButtonGroup>
+                  {sortedFilters.length != 0 && (
+                    <MMIconButton
+                      disabled={false}
+                      onClick={() => setFilters([])}
+                      icon={<ClearIcon />}
+                      tooltip={"Delete all filters"}
+                    />
+                  )}
+                </ButtonGroup>
+                <List
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  {sortedFilters.map((filterAction) => (
+                    <FilterInlineEditor
+                      key={filterAction.uid}
+                      item={filterAction}
+                      setItem={(item) => updateFilterItem(item, false, setFilters)}
+                      deleteItem={() => updateFilterItem(filterAction, true, setFilters)}
+                      openEditorFor={(filter) => setEditorItem({ item: filter, type: "filter" })}
+                    />
+                  ))}
+
+                  {unusedFilters && unusedFilters.length != 0 && (
+                    <ListItem disablePadding>
+                      <ListItemButton>
+                        <MMIconButton
+                          disabled={false}
+                          onClick={() => setAddItem("filter")}
+                          icon={<AddIcon />}
+                          tooltip={"Add new filter"}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
+                </List>
+              </Paper>
+            </Item>
+          </Grid>
+          <Grid size={sxBreakPoints}>
+            {" "}
+            {/** MODIFIERS */}
+            <Item>
+              <Paper sx={{ width: "100%" }}>
+                Appliers
+                <Typography>Apply:</Typography>
+                <ButtonGroup>
+                  {sortedFilters.length != 0 && (
+                    <MMIconButton
+                      disabled={false}
+                      onClick={() => setAppliers([])}
+                      icon={<ClearIcon />}
+                      tooltip={"Delete all appliers"}
+                    />
+                  )}
+                </ButtonGroup>
+                {sortedAppliers.map((modifierAction) => (
+                  <ApplierInlineEditor
+                    key={modifierAction.uid}
+                    item={modifierAction}
+                    setItem={(item) => updateApplyItem(item, false, setAppliers)}
+                    deleteItem={() => updateApplyItem(modifierAction, true, setAppliers)}
+                    openEditorFor={(applyItem) =>
+                      setEditorItem({ item: applyItem, type: "action" })
+                    }
+                  />
+                ))}
+                {unusedAppliers && unusedAppliers.length != 0 && (
+                  <MMIconButton
+                    disabled={false}
+                    onClick={() => setAddItem("applier")}
+                    icon={<AddIcon />}
+                    tooltip={"Add new applier"}
+                  />
+                )}
+              </Paper>
+            </Item>
+          </Grid>
+        </Grid>
+
+        <FilterValueDialog
+          key={editorItem?.item.uid}
+          open={!!editorItem && editorItem.type === "filter"}
+          action={editorItem?.item}
+          setAction={(updatedFilter) => updateFilterItem(updatedFilter, false, setFilters)}
+          onClose={() => setEditorItem(null)}
+          onViewItem={() => {}}
+        />
+
+        <SelectDialog<StepItemType>
+          key={"filters_dlg"}
+          open={addItem === "filter"}
+          items={unusedFilters}
+          getId={(item) => item.uid}
+          getLabel={(item) => item.input.displayName}
+          getSecondaryText={(item) => item.input.type}
+          isSingleSelect={false}
+          title={"Select additional filters"}
+          renderIcon={(item) => {
+            return ioToIconName(item.input);
+          }}
+          onClose={(selected) => {
+            const list: StepItemType[] = [
+              ...filters,
+              ...selected.map((i) =>
+                filterAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
+              ),
+            ];
+            setFilters(list);
+            setAddItem(undefined);
+          }}
+        />
+
+        <SelectDialog<StepItemType>
+          key={"appliers_dlg"}
+          open={addItem === "applier"}
+          items={defaultAppliers}
+          getId={(item) => item.uid}
+          getLabel={(item) => item.output.displayName}
+          getSecondaryText={(item) => item.output.type}
+          isSingleSelect={false}
+          title={"Select additional modifiers"}
+          renderIcon={(item) => ioToIconName(item.output)}
+          onClose={(selected) => {
+            const list: StepItemType[] = [
+              ...appliers,
+              ...selected.map((i) =>
+                actionAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
+              ),
+            ];
+            setAppliers(list);
+            setAddItem(undefined);
+          }}
+        />
+
+        <SelectDialog<runnableMacro>
+          open={loadMacros !== undefined}
+          items={loadMacros ?? []}
+          getId={(item) => item.uid}
+          getLabel={(item) => item.name}
+          isSingleSelect={true}
+          onClose={(selected) => {
+            if (selected.length !== 0) onLoadExisting(selected[0]);
+            setLoadMacros(undefined);
+          }}
+          title={"Select a macro to load"}
+        />
       </Box>
-      <Stack
-        spacing={1}
-        sx={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
-          p: 2,
-        }}
-      >
-        <TextField
-          value={title ?? ""}
-          onChange={(e) => setTitle(e.target.value)}
-          label="Macro Name"
-          variant="outlined"
-          fullWidth
-          placeholder="My new Global Operation Macro"
-        />
-        <TextField
-          value={description ?? ""}
-          onChange={(e) => setDescription(e.target.value)}
-          label="Macro Description"
-          variant="outlined"
-          fullWidth
-          placeholder="This macro does a complex global operation"
-        />
-
-        {/* --- Filters --- */}
-        <Paper sx={{ p: 1 }}>
-          <Typography>Filter by:</Typography>
-          <ButtonGroup>
-            <IconButton
-              size="small"
-              disabled={false}
-              onClick={() => setFilters([])}
-              className="clear-btn"
-            >
-              <ClearIcon />
-            </IconButton>
-          </ButtonGroup>
-          <List>
-            {sortedFilters.map((filterAction) => (
-              <FilterInlineEditor
-                key={filterAction.uid}
-                item={filterAction}
-                setItem={(item) => updateFilterItem(item, false, setFilters)}
-                deleteItem={() => updateFilterItem(filterAction, true, setFilters)}
-                openEditorFor={(filter) => setEditorItem({ item: filter, type: "filter" })}
-              />
-            ))}
-          </List>
-          <IconButton
-            size="small"
-            disabled={false}
-            onClick={() => setAddItem("filter")}
-            className="clear-btn"
-          >
-            <AddIcon />
-          </IconButton>
-        </Paper>
-
-        <Divider orientation="vertical" flexItem />
-        <Paper sx={{ p: 1 }}>
-          <Typography>Apply:</Typography>
-          <ButtonGroup>
-            <IconButton
-              size="small"
-              disabled={false}
-              onClick={() => setAppliers([])}
-              className="clear-btn"
-            >
-              <ClearIcon />
-            </IconButton>
-          </ButtonGroup>
-          {sortedAppliers.map((modifierAction) => (
-            <ApplierInlineEditor
-              key={modifierAction.uid}
-              item={modifierAction}
-              setItem={(item) => updateApplyItem(item, false, setAppliers)}
-              deleteItem={() => updateApplyItem(modifierAction, true, setAppliers)}
-              openEditorFor={(applyItem) => setEditorItem({ item: applyItem, type: "action" })}
-            />
-          ))}
-          <IconButton
-            size="small"
-            disabled={false}
-            onClick={() => setAddItem("applier")}
-            className="clear-btn"
-          >
-            <AddIcon />
-          </IconButton>
-        </Paper>
-      </Stack>
-
-      <FilterValueDialog
-        key={editorItem?.item.uid}
-        open={!!editorItem && editorItem.type === "filter"}
-        action={editorItem?.item}
-        setAction={(updatedFilter) => updateFilterItem(updatedFilter, false, setFilters)}
-        onClose={() => setEditorItem(null)}
-        onViewItem={() => {}}
-      />
-
-      <SelectDialog<StepItemType>
-        key={"filters_dlg"}
-        open={addItem === "filter"}
-        items={unusedFilters}
-        getId={(item) => item.uid}
-        getLabel={(item) => item.input.displayName}
-        getSecondaryText={(item) => item.input.type}
-        isSingleSelect={false}
-        title={"Select additional filters"}
-        renderIcon={(item) => {
-          return GetIconForIoType(item.input.type);
-        }}
-        onClose={(selected) => {
-          const list: StepItemType[] = [
-            ...filters,
-            ...selected.map((i) =>
-              filterAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
-            ),
-          ];
-          setFilters(list);
-          setAddItem(undefined);
-        }}
-      />
-
-      <SelectDialog<StepItemType>
-        key={"appliers_dlg"}
-        open={addItem === "applier"}
-        items={defaultAppliers}
-        getId={(item) => item.uid}
-        getLabel={(item) => item.output.displayName}
-        getSecondaryText={(item) => item.output.type}
-        isSingleSelect={false}
-        title={"Select additional modifiers"}
-        onClose={(selected) => {
-          const list: StepItemType[] = [
-            ...appliers,
-            ...selected.map((i) =>
-              actionAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
-            ),
-          ];
-          setAppliers(list);
-          setAddItem(undefined);
-        }}
-      />
-
-      <SelectDialog<runnableMacro>
-        open={loadMacros !== undefined}
-        items={loadMacros ?? []}
-        getId={(item) => item.uid}
-        getLabel={(item) => item.name}
-        isSingleSelect={true}
-        onClose={(selected) => {
-          if (selected.length !== 0) onLoadExisting(selected[0]);
-          setLoadMacros(undefined);
-        }}
-        title={"Select a macro to load"}
-      />
     </Box>
   );
 };

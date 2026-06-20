@@ -3,7 +3,8 @@ import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Typography from "@mui/material/Typography";
-import { CardActionArea, Box, CircularProgress, alpha, IconButton } from "@mui/material";
+import { CardActionArea, Box, CircularProgress, alpha, ButtonGroup } from "@mui/material";
+import { MMIconButton } from "../IconButton";
 import type {
   MacroDTO as GeneratedMacroDTO,
   ExecutionStateDTO as GeneratedExecutionStateDTO,
@@ -78,21 +79,37 @@ export default function MacroCard(props: {
       </CardActionArea>
 
       <CardActions>
-        <IconButton size="small" disabled={true} onClick={props.onShare}>
-          <ShareIcon />
-        </IconButton>
-        <IconButton size="small" disabled={true} onClick={props.onEdit}>
-          <EditIcon />
-        </IconButton>
-        <IconButton size="small" onClick={props.onView}>
-          <VisibilityIcon />
-        </IconButton>
-        <IconButton size="small" disabled={isMacroRunning} onClick={props.onDelete}>
-          <DeleteIcon />
-        </IconButton>
-        <IconButton size="small" disabled={true} onClick={props.onSetFavorite}>
-          <StarIcon />
-        </IconButton>
+        <ButtonGroup>
+          <MMIconButton
+            disabled={true}
+            onClick={props.onShare}
+            icon={<ShareIcon />}
+            tooltip={"Share this macro"}
+          />
+          <MMIconButton
+            disabled={true}
+            onClick={props.onEdit}
+            icon={<EditIcon />}
+            tooltip={"Edit this macro"}
+          />
+          <MMIconButton
+            onClick={props.onView}
+            icon={<VisibilityIcon />}
+            tooltip={"Inspect this macro"}
+          />
+          <MMIconButton
+            disabled={isMacroRunning}
+            onClick={props.onDelete}
+            icon={<DeleteIcon />}
+            tooltip={"Delete this macro permanently"}
+          />
+          <MMIconButton
+            disabled={true}
+            onClick={props.onSetFavorite}
+            icon={<StarIcon />}
+            tooltip={"Pin this macro as favorite"}
+          />
+        </ButtonGroup>
       </CardActions>
 
       {/* PLAY OVERLAY (hover hint) */}

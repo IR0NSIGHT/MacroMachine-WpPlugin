@@ -1,19 +1,30 @@
-// .storybook/main.ts
+import type { StorybookConfig } from "@storybook/react-vite";
 
-const config = {
+const config: StorybookConfig = {
   framework: {
     name: "@storybook/react-vite",
+    options: {},
   },
-  staticDirs: ["../public"],
 
   stories: ["../src/**/*.stories.tsx"],
 
   addons: [],
 
-  env: (config: Record<string, string>) => ({
+  staticDirs: ["../public"],
+
+  env: (config) => ({
     ...config,
     VITE_STORYBOOK: "true",
   }),
+
+  async viteFinal(config) {
+    const isProd = process.env.STORYBOOK_BUILD === "true";
+
+    return {
+      ...config,
+      base: isProd ? "/MacroMachine-WpPlugin/" : "/",
+    };
+  },
 };
 
 export default config;

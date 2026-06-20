@@ -13,16 +13,8 @@ import ReactMarkdown from "react-markdown";
 import { valueToString } from "@/features/InputOutput";
 import { MacroDTO, ActionDTO } from "@/types/DTO";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
-import {
-  Stack,
-  Typography,
-  Chip,
-  Box,
-  Tooltip,
-  Switch,
-  ButtonGroup,
-  IconButton,
-} from "@mui/material";
+import { Stack, Typography, Chip, Box, Tooltip, Switch, ButtonGroup } from "@mui/material";
+import { MMIconButton } from "../IconButton";
 import { useMemo, useState } from "react";
 import { theme } from "@/theme";
 import SortByAlphaIcon from "@mui/icons-material/SortByAlpha";
@@ -131,31 +123,28 @@ export function FilterValueDialog({ open, action, onClose, setAction }: FilterEd
         <Typography color="text.secondary">{actionState.description}</Typography>
         <ButtonGroup>
           <Tooltip title={"Order by " + (sortOrder === "input" ? "Input" : "Output")}>
-            <IconButton
-              color="primary"
-              size="small"
+            <MMIconButton
+              disabled={false}
               onClick={() => setSortOrder((prev) => (prev === "input" ? "output" : "input"))}
-            >
-              <SortByAlphaIcon />
-            </IconButton>
+              icon={<SortByAlphaIcon />}
+              tooltip={"Order by"}
+            />
           </Tooltip>
           <Tooltip title={"Invert filter"}>
-            <IconButton
-              color="primary"
-              size="small"
+            <MMIconButton
+              disabled={false}
               onClick={() => setActionState(filterAutoName(invertFilter(actionState)))}
-            >
-              <SwitchLeftIcon />
-            </IconButton>
+              icon={<SwitchLeftIcon />}
+              tooltip={"Invert filter"}
+            />
           </Tooltip>
           <Tooltip title={"Clear filter"}>
-            <IconButton
-              color="primary"
-              size="small"
+            <MMIconButton
+              disabled={false}
               onClick={() => setActionState(filterAutoName(clearFilter(actionState)))}
-            >
-              <ClearIcon />
-            </IconButton>
+              icon={<ClearIcon />}
+              tooltip={"Clear filter"}
+            />
           </Tooltip>
         </ButtonGroup>
 

@@ -32,21 +32,21 @@ export function InputOutputDTOIoParametersInnerFromJSONTyped(
   if (json == null) {
     return json;
   }
-  if (typeof json === "string") {
-    return json;
-  }
   if (Array.isArray(json)) {
     if (json.every((item) => typeof item === "number")) {
       return json;
     }
   }
-  if (typeof json === "number") {
-    return json;
-  }
-  if (typeof json === "number") {
-    return json;
-  }
   if (typeof json === "boolean") {
+    return json;
+  }
+  if (typeof json === "number") {
+    return json;
+  }
+  if (typeof json === "string") {
+    return json;
+  }
+  if (typeof json === "number") {
     return json;
   }
   return {} as any;
@@ -63,21 +63,21 @@ export function InputOutputDTOIoParametersInnerToJSONTyped(
   if (value == null) {
     return value;
   }
-  if (typeof value === "string") {
-    return value;
-  }
   if (Array.isArray(value)) {
     if (value.every((item) => typeof item === "number")) {
       return value;
     }
   }
-  if (typeof value === "number") {
-    return value;
-  }
-  if (typeof value === "number") {
-    return value;
-  }
   if (typeof value === "boolean") {
+    return value;
+  }
+  if (typeof value === "number") {
+    return value;
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  if (typeof value === "number") {
     return value;
   }
   return {};

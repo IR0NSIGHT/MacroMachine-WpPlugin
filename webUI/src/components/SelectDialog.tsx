@@ -3,7 +3,6 @@ import {
   DialogTitle,
   DialogContent,
   Box,
-  Fab,
   ListItem,
   ListItemButton,
   ListItemText,
@@ -18,6 +17,7 @@ import InboxIcon from "@mui/icons-material/Inbox";
 import { List } from "react-window";
 import { Search, SearchIconWrapper, StyledInputBase } from "@/MacroGrid";
 import SearchIcon from "@mui/icons-material/Search";
+import { MMIconButton } from "./IconButton";
 
 export function PopupDialog({
   open,
@@ -49,36 +49,22 @@ export function PopupDialog({
     >
       {/* Floating abort */}
       {onAbort && (
-        <Fab
-          size="small"
-          color="default"
-          onClick={onAbort}
-          sx={{
-            position: "absolute",
-            top: 12,
-            right: 12,
-            zIndex: 10,
-          }}
-        >
-          <CloseIcon />
-        </Fab>
+        <Box sx={{ position: "absolute", top: 12, right: 12, zIndex: 10 }}>
+          <MMIconButton disabled={false} onClick={onAbort} icon={<CloseIcon />} tooltip={"Abort"} />
+        </Box>
       )}
       <DialogTitle>{title}</DialogTitle>
       <DialogContent sx={{ pb: 10 }}> {children} </DialogContent>
       {/* Floating confirm */}
       {onConfirm && (
-        <Fab
-          color="primary"
-          onClick={onConfirm}
-          sx={{
-            position: "absolute",
-            bottom: 24,
-            right: 24,
-            zIndex: 10,
-          }}
-        >
-          <CheckIcon />
-        </Fab>
+        <Box sx={{ position: "absolute", bottom: 24, right: 24, zIndex: 10 }}>
+          <MMIconButton
+            disabled={false}
+            onClick={onConfirm}
+            icon={<CheckIcon />}
+            tooltip={"Confirm"}
+          />
+        </Box>
       )}
     </Dialog>
   );
@@ -94,7 +80,7 @@ type RowProps<T> = {
   isSelected: (id: string) => boolean;
   toggleItemSelected: (item: T) => void;
   getSecondaryText?: (item: T) => string;
-  renderIcon?: (item: T) => React.ReactNode;
+  renderIcon?: (item: T) => React.ReactNode | string;
 };
 
 function renderRow<T>({
@@ -112,13 +98,18 @@ function renderRow<T>({
   const id = getId(item);
   const selected = isSelected(id);
 
+  const icon = renderIcon?.(item);
   return (
     <Box style={style}>
       <ListItem disablePadding color={selected ? "primary" : "default"}>
         <ListItemButton onClick={() => toggleItemSelected(item)} selected={selected}>
-          <ListItemAvatar>
-            <Avatar>{renderIcon?.(item) ?? <InboxIcon />}</Avatar>
-          </ListItemAvatar>
+          {icon && (
+            <ListItemAvatar>
+              <Avatar src={typeof icon === "string" ? icon : undefined}>
+                {typeof icon === "string" ? null : (icon ?? <InboxIcon />)}
+              </Avatar>
+            </ListItemAvatar>
+          )}
           <ListItemText
             primary={getLabel(item)}
             secondary={getSecondaryText ? getSecondaryText(item) : undefined}
@@ -160,7 +151,7 @@ export type SelectDialogProps<T> = {
   onClose: (selected: T[]) => void;
   isSingleSelect: boolean;
   title: string;
-  renderIcon?: (item: T) => React.ReactNode;
+  renderIcon?: (item: T) => React.ReactNode | string;
 };
 
 export function SelectDialog<T>({

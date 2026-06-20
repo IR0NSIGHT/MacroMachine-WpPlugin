@@ -6,7 +6,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import ExploreIcon from "@mui/icons-material/Explore";
 import LayersIcon from "@mui/icons-material/Layers";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { Box, Tab, Tabs } from "@mui/material";
+import { Box, Tab, Tabs, useMediaQuery } from "@mui/material";
 import { PrimaryAppBar } from "./components/AppBar";
 import { MacroDTO, ActionDTO } from "./types/DTO";
 import { MacroGrid } from "./MacroGrid";
@@ -22,6 +22,12 @@ import {
   useMacrosQuery,
 } from "./API/queries";
 import { HistoryTab } from "./HistoryViewer";
+
+export const fillParentSx = {
+  flex: 1,
+  minHeight: 0,
+  minWidth: 0,
+};
 
 export default function App() {
   const [tab, setTab] = useState(0);
@@ -69,19 +75,30 @@ export default function App() {
   const connection =
     !executionState && isExecutionStateLoading ? "loading" : executionState ? "ok" : "error";
   console.log("Rerender App!");
+
+  const isNarrowSideBare = useMediaQuery("(max-width: 600px), (max-height: 440px)");
+  const tabSx = {
+    width: isNarrowSideBare ? 36 : 90,
+    minWidth: 0,
+    flex: "0 0 auto",
+  };
   return (
     <Box
       sx={{
+        // root component
+        height: "100%",
+        width: "100%",
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        overflow: "hidden",
       }}
     >
       <PrimaryAppBar queue={queue} executionState={executionState} connection={connection} />
       <Box
         sx={{
-          display: "flex",
+          ...fillParentSx,
           flexDirection: "row",
+          display: "flex",
         }}
       >
         <Tabs
@@ -91,37 +108,47 @@ export default function App() {
           sx={{
             borderRight: 1,
             borderColor: "divider",
-            minWidth: 180,
+            ...tabSx,
           }}
         >
-          <Tab icon={<ExploreIcon />} label="Explorer" />
-          <Tab icon={<EditIcon />} label="Editor" />
-          <Tab icon={<LayersIcon />} label="Layer Manager" />
-          <Tab icon={<HistoryIcon />} label="History" />
-          <Tab icon={<SettingsIcon />} label="Settings" />
+          <Tab
+            icon={<ExploreIcon />}
+            label={isNarrowSideBare ? undefined : "Explorer"}
+            sx={tabSx}
+          />
+          <Tab icon={<EditIcon />} label={isNarrowSideBare ? undefined : "Editor"} sx={tabSx} />
+          <Tab
+            icon={<LayersIcon />}
+            label={isNarrowSideBare ? undefined : "Layer Manager"}
+            sx={tabSx}
+          />
+          <Tab icon={<HistoryIcon />} label={isNarrowSideBare ? undefined : "History"} sx={tabSx} />
+          <Tab
+            icon={<SettingsIcon />}
+            label={isNarrowSideBare ? undefined : "Settings"}
+            sx={tabSx}
+          />
         </Tabs>
-        <Box sx={{ flexGrow: 1 }}>
-          {tab === 0 && (
-            <MacroGrid
-              macros={macros}
-              actions={actions}
-              executionState={executionState}
-              onRequestExecution={onRequestExecution}
-              onDeleteMacro={deleteMacro}
-            />
-          )}
-          {tab === 1 && (
-            <GlobalOperationDesigner
-              onSave={onRequestSave}
-              onExecute={onRequestExecution}
-              macros={macros}
-              actions={actions}
-            />
-          )}
-          {tab === 2 && <LayerManager layers={layers} />}
-          {tab === 3 && <HistoryTab />}
-          {tab === 4 && <div>Settings - Not implemented yet</div>}
-        </Box>
+        {tab === 0 && (
+          <MacroGrid
+            macros={macros}
+            actions={actions}
+            executionState={executionState}
+            onRequestExecution={onRequestExecution}
+            onDeleteMacro={deleteMacro}
+          />
+        )}
+        {tab === 1 && (
+          <GlobalOperationDesigner
+            onSave={onRequestSave}
+            onExecute={onRequestExecution}
+            macros={macros}
+            actions={actions}
+          />
+        )}
+        {tab === 2 && <LayerManager layers={layers} />}
+        {tab === 3 && <HistoryTab />}
+        {tab === 4 && <div>Settings - Not implemented yet</div>}
       </Box>
     </Box>
   );
