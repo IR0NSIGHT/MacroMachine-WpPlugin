@@ -6,7 +6,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import ExploreIcon from "@mui/icons-material/Explore";
 import LayersIcon from "@mui/icons-material/Layers";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { Box, Tab, Tabs } from "@mui/material";
+import { Box, Tab, Tabs, useMediaQuery, useTheme } from "@mui/material";
 import { PrimaryAppBar } from "./components/AppBar";
 import { MacroDTO, ActionDTO } from "./types/DTO";
 import { MacroGrid } from "./MacroGrid";
@@ -69,6 +69,13 @@ export default function App() {
   const connection =
     !executionState && isExecutionStateLoading ? "loading" : executionState ? "ok" : "error";
   console.log("Rerender App!");
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const tabSx = {
+    width: { xs: 36, sm: 90 },
+    minWidth: { xs: 36, sm: 90 },
+  };
   return (
     <Box
       sx={{
@@ -91,14 +98,15 @@ export default function App() {
           sx={{
             borderRight: 1,
             borderColor: "divider",
-            minWidth: 180,
+            minWidth: { xs: 36, sm: 90 },
+            width: { xs: 36, sm: 90 },
           }}
         >
-          <Tab icon={<ExploreIcon />} label="Explorer" />
-          <Tab icon={<EditIcon />} label="Editor" />
-          <Tab icon={<LayersIcon />} label="Layer Manager" />
-          <Tab icon={<HistoryIcon />} label="History" />
-          <Tab icon={<SettingsIcon />} label="Settings" />
+          <Tab icon={<ExploreIcon />} label={isMobile ? undefined : "Explorer"} sx={tabSx} />
+          <Tab icon={<EditIcon />} label={isMobile ? undefined : "Editor"} sx={tabSx} />
+          <Tab icon={<LayersIcon />} label={isMobile ? undefined : "Layer Manager"} sx={tabSx} />
+          <Tab icon={<HistoryIcon />} label={isMobile ? undefined : "History"} sx={tabSx} />
+          <Tab icon={<SettingsIcon />} label={isMobile ? undefined : "Settings"} sx={tabSx} />
         </Tabs>
         <Box sx={{ flexGrow: 1 }}>
           {tab === 0 && (
