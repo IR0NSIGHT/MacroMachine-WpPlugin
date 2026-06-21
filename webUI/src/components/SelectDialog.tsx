@@ -3,7 +3,6 @@ import {
   DialogTitle,
   DialogContent,
   Box,
-  Fab,
   ListItem,
   ListItemButton,
   ListItemText,
@@ -18,6 +17,7 @@ import InboxIcon from "@mui/icons-material/Inbox";
 import { List } from "react-window";
 import { Search, SearchIconWrapper, StyledInputBase } from "@/MacroGrid";
 import SearchIcon from "@mui/icons-material/Search";
+import { MMIconButton } from "./IconButton";
 
 export function PopupDialog({
   open,
@@ -49,36 +49,22 @@ export function PopupDialog({
     >
       {/* Floating abort */}
       {onAbort && (
-        <Fab
-          size="small"
-          color="default"
-          onClick={onAbort}
-          sx={{
-            position: "absolute",
-            top: 12,
-            right: 12,
-            zIndex: 10,
-          }}
-        >
-          <CloseIcon />
-        </Fab>
+        <Box sx={{ position: "absolute", top: 12, right: 12, zIndex: 10 }}>
+          <MMIconButton disabled={false} onClick={onAbort} icon={<CloseIcon />} tooltip={"Abort"} />
+        </Box>
       )}
       <DialogTitle>{title}</DialogTitle>
       <DialogContent sx={{ pb: 10 }}> {children} </DialogContent>
       {/* Floating confirm */}
       {onConfirm && (
-        <Fab
-          color="primary"
-          onClick={onConfirm}
-          sx={{
-            position: "absolute",
-            bottom: 24,
-            right: 24,
-            zIndex: 10,
-          }}
-        >
-          <CheckIcon />
-        </Fab>
+        <Box sx={{ position: "absolute", bottom: 24, right: 24, zIndex: 10 }}>
+          <MMIconButton
+            disabled={false}
+            onClick={onConfirm}
+            icon={<CheckIcon />}
+            tooltip={"Confirm"}
+          />
+        </Box>
       )}
     </Dialog>
   );
