@@ -1,4 +1,15 @@
-import { Box, ButtonGroup, List, Paper, Switch, TextField, Typography, Grid } from "@mui/material";
+import {
+  Box,
+  ButtonGroup,
+  List,
+  Paper,
+  Switch,
+  TextField,
+  Typography,
+  Grid,
+  ListItem,
+  ListItemButton,
+} from "@mui/material";
 import Item from "@mui/material/Grid";
 
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -262,6 +273,8 @@ export const GlobalOperationDesigner = (props: Props) => {
     return unusedFilters;
   }, [defaultFilters, filters]);
 
+  const unusedAppliers = defaultAppliers;
+
   const sxBreakPoints = { xs: 12, sm: 12, md: 6, lg: 6, xl: 4 };
   return (
     <Box
@@ -348,12 +361,14 @@ export const GlobalOperationDesigner = (props: Props) => {
               >
                 <Typography>Filter by:</Typography>
                 <ButtonGroup>
-                  <MMIconButton
-                    disabled={false}
-                    onClick={() => setFilters([])}
-                    icon={<ClearIcon />}
-                    tooltip={""}
-                  />
+                  {sortedFilters.length != 0 && (
+                    <MMIconButton
+                      disabled={false}
+                      onClick={() => setFilters([])}
+                      icon={<ClearIcon />}
+                      tooltip={"Delete all filters"}
+                    />
+                  )}
                 </ButtonGroup>
                 <List>
                   {sortedFilters.map((filterAction) => (
@@ -365,6 +380,19 @@ export const GlobalOperationDesigner = (props: Props) => {
                       openEditorFor={(filter) => setEditorItem({ item: filter, type: "filter" })}
                     />
                   ))}
+
+                  {unusedFilters && unusedFilters.length != 0 && (
+                    <ListItem disablePadding>
+                      <ListItemButton>
+                        <MMIconButton
+                          disabled={false}
+                          onClick={() => setAddItem("filter")}
+                          icon={<AddIcon />}
+                          tooltip={"Add new filter"}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  )}
                 </List>
               </Paper>
             </Item>
@@ -377,12 +405,14 @@ export const GlobalOperationDesigner = (props: Props) => {
                 Appliers
                 <Typography>Apply:</Typography>
                 <ButtonGroup>
-                  <MMIconButton
-                    disabled={false}
-                    onClick={() => setAppliers([])}
-                    icon={<ClearIcon />}
-                    tooltip={""}
-                  />
+                  {sortedFilters.length != 0 && (
+                    <MMIconButton
+                      disabled={false}
+                      onClick={() => setAppliers([])}
+                      icon={<ClearIcon />}
+                      tooltip={"Delete all appliers"}
+                    />
+                  )}
                 </ButtonGroup>
                 {sortedAppliers.map((modifierAction) => (
                   <ApplierInlineEditor
@@ -395,12 +425,14 @@ export const GlobalOperationDesigner = (props: Props) => {
                     }
                   />
                 ))}
-                <MMIconButton
-                  disabled={false}
-                  onClick={() => setAddItem("applier")}
-                  icon={<AddIcon />}
-                  tooltip={""}
-                />
+                {unusedAppliers && unusedAppliers.length != 0 && (
+                  <MMIconButton
+                    disabled={false}
+                    onClick={() => setAddItem("applier")}
+                    icon={<AddIcon />}
+                    tooltip={"Add new applier"}
+                  />
+                )}
               </Paper>
             </Item>
           </Grid>
