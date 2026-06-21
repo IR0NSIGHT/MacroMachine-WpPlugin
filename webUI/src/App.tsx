@@ -6,7 +6,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import ExploreIcon from "@mui/icons-material/Explore";
 import LayersIcon from "@mui/icons-material/Layers";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { Box, Tab, Tabs, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Tab, Tabs, useMediaQuery } from "@mui/material";
 import { PrimaryAppBar } from "./components/AppBar";
 import { MacroDTO, ActionDTO } from "./types/DTO";
 import { MacroGrid } from "./MacroGrid";
@@ -77,11 +77,11 @@ export default function App() {
     !executionState && isExecutionStateLoading ? "loading" : executionState ? "ok" : "error";
   console.log("Rerender App!");
 
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isNarrowSideBare = useMediaQuery("(max-width: 600px), (max-height: 440px)");
   const tabSx = {
-    width: { xs: 36, sm: 90 },
-    minWidth: { xs: 36, sm: 90 },
+    width: isNarrowSideBare ? 36 : 90,
+    minWidth: 0,
+    flex: "0 0 auto",
   };
   return (
     <Box
@@ -110,15 +110,26 @@ export default function App() {
           sx={{
             borderRight: 1,
             borderColor: "divider",
-            minWidth: { xs: 36, sm: 90 },
-            width: { xs: 36, sm: 90 },
+            ...tabSx,
           }}
         >
-          <Tab icon={<ExploreIcon />} label={isMobile ? undefined : "Explorer"} sx={tabSx} />
-          <Tab icon={<EditIcon />} label={isMobile ? undefined : "Editor"} sx={tabSx} />
-          <Tab icon={<LayersIcon />} label={isMobile ? undefined : "Layer Manager"} sx={tabSx} />
-          <Tab icon={<HistoryIcon />} label={isMobile ? undefined : "History"} sx={tabSx} />
-          <Tab icon={<SettingsIcon />} label={isMobile ? undefined : "Settings"} sx={tabSx} />
+          <Tab
+            icon={<ExploreIcon />}
+            label={isNarrowSideBare ? undefined : "Explorer"}
+            sx={tabSx}
+          />
+          <Tab icon={<EditIcon />} label={isNarrowSideBare ? undefined : "Editor"} sx={tabSx} />
+          <Tab
+            icon={<LayersIcon />}
+            label={isNarrowSideBare ? undefined : "Layer Manager"}
+            sx={tabSx}
+          />
+          <Tab icon={<HistoryIcon />} label={isNarrowSideBare ? undefined : "History"} sx={tabSx} />
+          <Tab
+            icon={<SettingsIcon />}
+            label={isNarrowSideBare ? undefined : "Settings"}
+            sx={tabSx}
+          />
         </Tabs>
         {tab === 0 && (
           <MacroGrid
