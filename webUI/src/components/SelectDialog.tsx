@@ -80,7 +80,7 @@ type RowProps<T> = {
   isSelected: (id: string) => boolean;
   toggleItemSelected: (item: T) => void;
   getSecondaryText?: (item: T) => string;
-  renderIcon?: (item: T) => React.ReactNode;
+  renderIcon?: (item: T) => React.ReactNode | string;
 };
 
 function renderRow<T>({
@@ -98,13 +98,18 @@ function renderRow<T>({
   const id = getId(item);
   const selected = isSelected(id);
 
+  const icon = renderIcon?.(item);
   return (
     <Box style={style}>
       <ListItem disablePadding color={selected ? "primary" : "default"}>
         <ListItemButton onClick={() => toggleItemSelected(item)} selected={selected}>
-          <ListItemAvatar>
-            <Avatar>{renderIcon?.(item) ?? <InboxIcon />}</Avatar>
-          </ListItemAvatar>
+          {icon && (
+            <ListItemAvatar>
+              <Avatar src={typeof icon === "string" ? icon : undefined}>
+                {typeof icon === "string" ? null : (icon ?? <InboxIcon />)}
+              </Avatar>
+            </ListItemAvatar>
+          )}
           <ListItemText
             primary={getLabel(item)}
             secondary={getSecondaryText ? getSecondaryText(item) : undefined}
@@ -146,7 +151,7 @@ export type SelectDialogProps<T> = {
   onClose: (selected: T[]) => void;
   isSingleSelect: boolean;
   title: string;
-  renderIcon?: (item: T) => React.ReactNode;
+  renderIcon?: (item: T) => React.ReactNode | string;
 };
 
 export function SelectDialog<T>({

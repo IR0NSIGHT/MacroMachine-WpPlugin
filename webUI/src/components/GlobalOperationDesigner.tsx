@@ -30,10 +30,9 @@ import equal from "fast-deep-equal";
 import AddIcon from "@mui/icons-material/Add";
 import { SelectDialog } from "./SelectDialog";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
-import { FilterInlineEditor } from "@/features/FilterComponent";
+import { FilterInlineEditor, ioToIconName } from "@/features/FilterComponent";
 import { useDefaultAppliersQuery, useDefaultFiltersQuery } from "@/API/queries";
 import { PageLoadingSpinner } from "@/PageLoadingSpinner";
-import { GetIconForIoType } from "./CustomSvgIcons";
 import { fillParentSx } from "@/App";
 import { MMIconButton } from "./IconButton";
 type Props = {
@@ -275,7 +274,7 @@ export const GlobalOperationDesigner = (props: Props) => {
 
   const unusedAppliers = defaultAppliers;
 
-  const sxBreakPoints = { xs: 12, sm: 12, md: 6, lg: 6, xl: 4 };
+  const sxBreakPoints = { sm: 12, md: 6, xl: 4 };
   return (
     <Box
       sx={{
@@ -370,7 +369,12 @@ export const GlobalOperationDesigner = (props: Props) => {
                     />
                   )}
                 </ButtonGroup>
-                <List>
+                <List
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
                   {sortedFilters.map((filterAction) => (
                     <FilterInlineEditor
                       key={filterAction.uid}
@@ -457,7 +461,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           isSingleSelect={false}
           title={"Select additional filters"}
           renderIcon={(item) => {
-            return GetIconForIoType(item.input.type);
+            return ioToIconName(item.input);
           }}
           onClose={(selected) => {
             const list: StepItemType[] = [
@@ -480,6 +484,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           getSecondaryText={(item) => item.output.type}
           isSingleSelect={false}
           title={"Select additional modifiers"}
+          renderIcon={(item) => ioToIconName(item.output)}
           onClose={(selected) => {
             const list: StepItemType[] = [
               ...appliers,

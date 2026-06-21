@@ -25,8 +25,10 @@ import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import EditIcon from "@mui/icons-material/Edit";
 import ClearIcon from "@mui/icons-material/Clear";
 import { InputOutputDTO, InputOutputDTOIoParametersInner } from "@/generated/client";
+import { fillParentSx } from "@/App";
+import { useState } from "react";
 
-const ioToIconName = (io: InputOutputDTO) => {
+export const ioToIconName = (io: InputOutputDTO) => {
   //FIXME icons are not built into dist
   if (io.type === "NIBBLE_LAYER" && io.ioParameters.length >= 2 && io.ioParameters[1] === "") {
     const layerId: InputOutputDTOIoParametersInner = io.ioParameters[1];
@@ -42,40 +44,41 @@ export const SimpleFilterInlineEditor = ({
   setItem,
   deleteItem,
   openEditorFor,
+  isSelected,
 }: {
   item: StepItemType;
   setItem: (item: StepItemType) => void;
   deleteItem: () => void;
   openEditorFor: (item: StepItemType) => void;
+  isSelected: boolean;
 }) => {
   return (
-    <ListItem disablePadding color={item.active ? "default" : "text.disabled"}>
-      <ListItemButton
-        disableRipple
-        disableTouchRipple
-        sx={{
-          cursor: "default",
-          display: "grid",
-          gridTemplateColumns: "10fr 2fr",
-          alignItems: "center",
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <ListItemAvatar>
-            <Avatar src={ioToIconName(item.input)} />
-          </ListItemAvatar>
-          <ListItemText primary={item.input.displayName} secondary={item.name} />
-        </Box>
+    <Box sx={fillParentSx}>
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <ListItemAvatar sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Avatar
+            src={ioToIconName(item.input)}
+            sx={{
+              filter: item.active ? "none" : "grayscale(100%)",
+              opacity: item.active ? 1 : 0.4,
+            }}
+          />
+        </ListItemAvatar>
+        <ListItemText
+          primary={item.input.displayName}
+          secondary={item.name}
+          primaryTypographyProps={{ color: item.active ? "text.primary" : "text.disabled" }}
+          secondaryTypographyProps={{ color: item.active ? "text.secondary" : "text.disabled" }}
+        />
+      </Box>
 
+      {isSelected && (
         <Box
           sx={{
             display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
             gap: 1,
           }}
         >
-          {" "}
           <Switch
             checked={item.active}
             onChange={(e) => {
@@ -100,8 +103,8 @@ export const SimpleFilterInlineEditor = ({
             <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />} tooltip={""} />
           </ButtonGroup>
         </Box>
-      </ListItemButton>
-    </ListItem>
+      )}
+    </Box>
   );
 };
 
@@ -116,21 +119,58 @@ export const FilterInlineEditor = ({
   deleteItem: () => void;
   openEditorFor: (item: StepItemType) => void;
 }) => {
+  const [isSelected, setSelected] = useState(false);
   const isRanged = isRangeFilter(item);
-
-  if (isRanged) {
-    console.log("filter by ", item.input.displayName, " is RANGED");
-    return <RangeFilterInlineEditor item={item} setItem={setItem} deleteItem={deleteItem} />;
-  }
-
-  console.log("filter by " + item.input.displayName + " is NOT RANGED");
-  return (
+  const editor = isRanged ? (
+    <RangeFilterInlineEditor
+      item={item}
+      setItem={setItem}
+      deleteItem={deleteItem}
+      isSelected={isSelected}
+    />
+  ) : (
     <SimpleFilterInlineEditor
       item={item}
       setItem={setItem}
       deleteItem={deleteItem}
       openEditorFor={openEditorFor}
+      isSelected={isSelected}
     />
+  );
+
+  return (
+    <ListItem
+      disablePadding
+      color={item.active ? "default" : "text.disabled"}
+      sx={{ alignItems: "flex-start" }}
+      key={item.uid}
+    >
+      <ListItemButton
+        disableRipple
+        disableTouchRipple
+        sx={{
+          ...fillParentSx,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "stretch",
+          cursor: "default",
+          borderBottom: 2,
+          py: 1,
+          borderColor: "divider",
+        }}
+        onClick={(e) => {
+          const target = e.target as HTMLElement;
+          console.log("target clicked:", target);
+          if (target.closest("button,input,label,span")) {
+            return;
+          }
+
+          setSelected((s) => !s);
+        }}
+      >
+        {editor}
+      </ListItemButton>
+    </ListItem>
   );
 };
 
@@ -138,10 +178,12 @@ export const RangeFilterInlineEditor = ({
   item,
   setItem,
   deleteItem,
+  isSelected,
 }: {
   item: StepItemType;
   setItem: (item: StepItemType) => void;
   deleteItem: () => void;
+  isSelected: boolean;
 }) => {
   const mappings = namedMapping(item);
   const mappingPoints = item.mappingPointsX;
@@ -170,12 +212,34 @@ export const RangeFilterInlineEditor = ({
       ? theme.palette.text.disabled
       : theme.palette.primary.main;
   return (
-    <ListItem disablePadding color={item.active ? "default" : "text.disabled"}>
-      <ListItemButton disableRipple disableTouchRipple sx={{ cursor: "default" }}>
-        <ListItemAvatar>
-          <Avatar src={ioToIconName(item.input)} />
+    <Box>
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <ListItemAvatar sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Avatar
+            src={ioToIconName(item.input)}
+            sx={{
+              filter: item.active ? "none" : "grayscale(100%)",
+              opacity: item.active ? 1 : 0.4,
+            }}
+          />
         </ListItemAvatar>
-        <ListItemText primary={item.input.displayName} secondary={item.name} />
+        <ListItemText
+          primary={item.input.displayName}
+          secondary={item.name}
+          primaryTypographyProps={{ color: item.active ? "text.primary" : "text.disabled" }}
+          secondaryTypographyProps={{ color: item.active ? "text.secondary" : "text.disabled" }}
+        />
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "left",
+          py: 2,
+          px: 4,
+          borderRadius: 2,
+        }}
+      >
         <Slider
           value={value}
           onChange={handleChange}
@@ -186,7 +250,8 @@ export const RangeFilterInlineEditor = ({
           valueLabelFormat={(v) => valueToString(v)}
           disabled={!item.active}
           sx={(theme) => ({
-            alignSelf: "center",
+            width: "100%",
+            maxWidth: "400px",
             "& .MuiSlider-rail": {
               backgroundColor: railColor,
               opacity: 1,
@@ -206,76 +271,29 @@ export const RangeFilterInlineEditor = ({
             },
           })}
         />
-        <Switch
-          checked={item.active}
-          onChange={(e) => {
-            setItem({ ...item, active: e.target.checked });
-          }}
-        />
-        <ButtonGroup>
-          {isFilter(item) && (
-            <MMIconButton
-              disabled={false}
-              onClick={() => setItem(invertFilter(item))}
-              icon={<SwitchLeftIcon />}
-              tooltip={""}
-            />
-          )}
-          <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />} tooltip={""} />
-        </ButtonGroup>
-      </ListItemButton>
-    </ListItem>
-  );
+      </Box>
 
-  //   <Box
-  //     sx={{
-  //       display: "flex",
-  //       flexDirection: "column",
-  //       width: "100%",
-  //     }}
-  //   >
-  //     <Box sx={{ display: "flex", alignItems: "center", width: "50%" }}>
-  //       <Typography
-  //         sx={{
-  //           color: !item.active ? theme.palette.text.disabled : theme.palette.text.secondary,
-  //         }}
-  //       >
-  //         Filter by
-  //         <span
-  //           style={{
-  //             color: !item.active ? theme.palette.text.disabled : theme.palette.text.primary,
-  //           }}
-  //         >
-  //           {" "}
-  //           {item.input.displayName}{" "}
-  //         </span>
-  //         {insideRangeFilter ? "inside range" : "outside range"} {valueToString(value[0])} to{" "}
-  //         {valueToString(value[1])}
-  //       </Typography>
-  //     </Box>
-  //     <Box
-  //       sx={{
-  //         width: 300,
-  //         flexShrink: 0,
-  //         alignItems: "center",
-  //         display: "flex",
-  //         mx: 1,
-  //         gap: 1,
-  //       }}
-  //     >
-  //       <Tooltip title={"Invert filter"}>
-  //         <IconButton
-  //           color="primary"
-  //           size="small"
-  //           disabled={!item.active}
-  //           onClick={() => setItem(invertFilter(item))}
-  //         >
-  //           <SwitchLeftIcon />
-  //         </IconButton>
-  //       </Tooltip>
-  //
-  //     </Box>
-  //   </Box>
-  // </Box>
-  //;
+      {isSelected && (
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <Switch
+            checked={item.active}
+            onChange={(e) => {
+              setItem({ ...item, active: e.target.checked });
+            }}
+          />
+          <ButtonGroup>
+            {isFilter(item) && (
+              <MMIconButton
+                disabled={false}
+                onClick={() => setItem(invertFilter(item))}
+                icon={<SwitchLeftIcon />}
+                tooltip={""}
+              />
+            )}
+            <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />} tooltip={""} />
+          </ButtonGroup>
+        </Box>
+      )}
+    </Box>
+  );
 };
