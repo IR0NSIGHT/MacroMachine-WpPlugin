@@ -20,6 +20,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, SearchIconWrapper, StyledInputBase } from "./MacroGrid";
 import SearchIcon from "@mui/icons-material/Search";
 import { PageLoadingSpinner } from "./PageLoadingSpinner";
+import { fillParentSx } from "./App";
 
 export const LayerManager = ({ layers }: { layers?: LayerDTO[] }) => {
   const [onlyProject, setOnlyProject] = useState(false);
@@ -63,15 +64,12 @@ export const LayerManager = ({ layers }: { layers?: LayerDTO[] }) => {
   return (
     <Box
       sx={{
+        ...fillParentSx,
         display: "flex",
         flexDirection: "column",
-        height: "95vh", // FIXME ugly hack to make the fucking flexbox work
       }}
       p={1}
     >
-      <Typography variant="h4" gutterBottom>
-        Layers known to MacroMachine
-      </Typography>
       <Search>
         <SearchIconWrapper>
           <SearchIcon />
@@ -152,7 +150,7 @@ export const LayerManager = ({ layers }: { layers?: LayerDTO[] }) => {
             </Typography>
           )}
           {pagedLayers.map((layer) => (
-            <Grid key={layer.id} size={{ xs: 12, sm: 4, md: 3, lg: 2 }}>
+            <Grid key={layer.id} size={{ xs: 12, md: 6, lg: 4 }}>
               <Card
                 variant="outlined"
                 sx={{

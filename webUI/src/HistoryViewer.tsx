@@ -14,6 +14,7 @@ import { ExecutionStateDTO } from "./types/DTO";
 import { ExecutionStateDTOStatusEnum } from "./generated/client/models/ExecutionStateDTO";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { PageLoadingSpinner } from "./PageLoadingSpinner";
+import { fillParentSx } from "./App";
 
 export const HistoryTab = () => {
   const { data: history, isLoading, isError, error } = useExecutionHistoryQuery();
@@ -48,7 +49,15 @@ export const HistoryViewer = ({ data: history, isLoading, isError, error }: Hist
   }
 
   return (
-    <Box sx={{ p: 2, maxWidth: 1200 }}>
+    <Box
+      sx={{
+        ...fillParentSx,
+        display: "flex",
+        flexDirection: "column",
+        p: 2,
+        maxWidth: 1200,
+      }}
+    >
       <Typography variant="h5" gutterBottom>
         Execution History
       </Typography>
