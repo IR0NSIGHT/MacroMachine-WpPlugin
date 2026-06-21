@@ -7,3 +7,4 @@ src/main/resources/**backup**
 **backup**
 mySavefile.macro
 plugins/
+src/main/resources/static/
