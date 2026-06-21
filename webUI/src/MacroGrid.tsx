@@ -256,7 +256,6 @@ export function MacroGrid({
           ...fillParentSx,
           display: "flex",
           flexDirection: "column",
-          border: "2px solid green",
           overflowY: "auto",
           p: 2,
         }}

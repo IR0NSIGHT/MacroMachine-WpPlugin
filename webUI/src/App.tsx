@@ -27,7 +27,6 @@ export const fillParentSx = {
   flex: 1,
   minHeight: 0,
   minWidth: 0,
-  border: "2px solid red",
 };
 
 export default function App() {
@@ -92,7 +91,6 @@ export default function App() {
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
-        border: "2px solid green",
       }}
     >
       <PrimaryAppBar queue={queue} executionState={executionState} connection={connection} />

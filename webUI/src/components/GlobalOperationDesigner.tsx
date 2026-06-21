@@ -344,7 +344,6 @@ export const GlobalOperationDesigner = (props: Props) => {
               <Paper
                 sx={{
                   width: "100%",
-                  border: "2px solid blue",
                 }}
               >
                 <Typography>Filter by:</Typography>
