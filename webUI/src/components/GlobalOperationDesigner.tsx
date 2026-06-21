@@ -287,6 +287,8 @@ export const GlobalOperationDesigner = (props: Props) => {
     );
     return unusedFilters;
   }, [defaultFilters, filters]);
+
+  const sxBreakPoints = { xs: 12, sm: 12, md: 6, lg: 6, xl: 4 };
   return (
     <Box
       sx={{
@@ -343,35 +345,29 @@ export const GlobalOperationDesigner = (props: Props) => {
             </IconButton>
           </Tooltip>
         </ButtonGroup>
+
+        <Paper sx={{ width: "100%" }}>
+          Input B
+          <TextField
+            value={title ?? ""}
+            onChange={(e) => setTitle(e.target.value)}
+            label="Macro Name"
+            variant="outlined"
+            fullWidth
+            placeholder="My new Global Operation Macro"
+          />
+          <TextField
+            value={description ?? ""}
+            onChange={(e) => setDescription(e.target.value)}
+            label="Macro Description"
+            variant="outlined"
+            fullWidth
+            placeholder="This macro does a complex global operation"
+          />
+        </Paper>
+
         <Grid container spacing={2}>
-          {" "}
-          {/** BUTTONS */}
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-            {" "}
-            {/** TEXT INPUTS */}
-            <Item>
-              <Paper sx={{ width: "100%" }}>
-                Input B
-                <TextField
-                  value={title ?? ""}
-                  onChange={(e) => setTitle(e.target.value)}
-                  label="Macro Name"
-                  variant="outlined"
-                  fullWidth
-                  placeholder="My new Global Operation Macro"
-                />
-                <TextField
-                  value={description ?? ""}
-                  onChange={(e) => setDescription(e.target.value)}
-                  label="Macro Description"
-                  variant="outlined"
-                  fullWidth
-                  placeholder="This macro does a complex global operation"
-                />
-              </Paper>
-            </Item>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 8, md: 6, lg: 4 }}>
+          <Grid size={sxBreakPoints}>
             {" "}
             {/** FILTERS */}
             <Item>
@@ -406,7 +402,7 @@ export const GlobalOperationDesigner = (props: Props) => {
               </Paper>
             </Item>
           </Grid>
-          <Grid size={{ xs: 12, sm: 8, md: 6, lg: 4 }}>
+          <Grid size={sxBreakPoints}>
             {" "}
             {/** MODIFIERS */}
             <Item>
