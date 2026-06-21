@@ -3,7 +3,8 @@ import CardActions from "@mui/material/CardActions";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import Typography from "@mui/material/Typography";
-import { CardActionArea, Box, CircularProgress, alpha, IconButton } from "@mui/material";
+import { CardActionArea, Box, CircularProgress, alpha } from "@mui/material";
+import { MMIconButton } from "../IconButton";
 import type {
   MacroDTO as GeneratedMacroDTO,
   ExecutionStateDTO as GeneratedExecutionStateDTO,
@@ -78,21 +79,21 @@ export default function MacroCard(props: {
       </CardActionArea>
 
       <CardActions>
-        <IconButton size="small" disabled={true} onClick={props.onShare}>
-          <ShareIcon />
-        </IconButton>
-        <IconButton size="small" disabled={true} onClick={props.onEdit}>
-          <EditIcon />
-        </IconButton>
-        <IconButton size="small" onClick={props.onView}>
-          <VisibilityIcon />
-        </IconButton>
-        <IconButton size="small" disabled={isMacroRunning} onClick={props.onDelete}>
-          <DeleteIcon />
-        </IconButton>
-        <IconButton size="small" disabled={true} onClick={props.onSetFavorite}>
-          <StarIcon />
-        </IconButton>
+        <MMIconButton disabled={true} onClick={props.onShare} icon={<ShareIcon />} tooltip={""} />
+        <MMIconButton disabled={true} onClick={props.onEdit} icon={<EditIcon />} tooltip={""} />
+        <MMIconButton onClick={props.onView} icon={<VisibilityIcon />} tooltip={""} />
+        <MMIconButton
+          disabled={isMacroRunning}
+          onClick={props.onDelete}
+          icon={<DeleteIcon />}
+          tooltip={""}
+        />
+        <MMIconButton
+          disabled={true}
+          onClick={props.onSetFavorite}
+          icon={<StarIcon />}
+          tooltip={""}
+        />
       </CardActions>
 
       {/* PLAY OVERLAY (hover hint) */}

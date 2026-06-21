@@ -2,7 +2,6 @@ import {
   Avatar,
   Box,
   ButtonGroup,
-  IconButton,
   ListItem,
   ListItemAvatar,
   ListItemButton,
@@ -10,6 +9,7 @@ import {
   Slider,
   Switch,
 } from "@mui/material";
+import { MMIconButton } from "../components/IconButton";
 import { StepItemType } from "./Execution";
 import {
   isRangeFilter,
@@ -84,16 +84,20 @@ export const SimpleFilterInlineEditor = ({
           />
           <ButtonGroup>
             {isFilter(item) && (
-              <IconButton size="small" disabled={false} onClick={() => setItem(invertFilter(item))}>
-                <SwitchLeftIcon />
-              </IconButton>
+              <MMIconButton
+                disabled={false}
+                onClick={() => setItem(invertFilter(item))}
+                icon={<SwitchLeftIcon />}
+                tooltip={""}
+              />
             )}
-            <IconButton size="small" disabled={false} onClick={() => openEditorFor(item)}>
-              <EditIcon />
-            </IconButton>
-            <IconButton size="small" disabled={false} onClick={deleteItem}>
-              <ClearIcon />
-            </IconButton>
+            <MMIconButton
+              disabled={false}
+              onClick={() => openEditorFor(item)}
+              icon={<EditIcon />}
+              tooltip={""}
+            />
+            <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />} tooltip={""} />
           </ButtonGroup>
         </Box>
       </ListItemButton>
@@ -210,13 +214,14 @@ export const RangeFilterInlineEditor = ({
         />
         <ButtonGroup>
           {isFilter(item) && (
-            <IconButton size="small" disabled={false} onClick={() => setItem(invertFilter(item))}>
-              <SwitchLeftIcon />
-            </IconButton>
+            <MMIconButton
+              disabled={false}
+              onClick={() => setItem(invertFilter(item))}
+              icon={<SwitchLeftIcon />}
+              tooltip={""}
+            />
           )}
-          <IconButton size="small" disabled={false} onClick={deleteItem}>
-            <ClearIcon />
-          </IconButton>
+          <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />} tooltip={""} />
         </ButtonGroup>
       </ListItemButton>
     </ListItem>

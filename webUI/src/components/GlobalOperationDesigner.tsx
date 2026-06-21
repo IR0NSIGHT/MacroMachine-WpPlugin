@@ -1,15 +1,4 @@
-import {
-  Box,
-  ButtonGroup,
-  IconButton,
-  List,
-  Paper,
-  Switch,
-  TextField,
-  Tooltip,
-  Typography,
-  Grid,
-} from "@mui/material";
+import { Box, ButtonGroup, List, Paper, Switch, TextField, Typography, Grid } from "@mui/material";
 import Item from "@mui/material/Grid";
 
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -35,6 +24,7 @@ import { useDefaultAppliersQuery, useDefaultFiltersQuery } from "@/API/queries";
 import { PageLoadingSpinner } from "@/PageLoadingSpinner";
 import { GetIconForIoType } from "./CustomSvgIcons";
 import { fillParentSx } from "@/App";
+import { MMIconButton } from "./IconButton";
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
   onExecute: MacroExecuteRequester;
@@ -73,14 +63,6 @@ const ApplierInlineEditor = ({ item, setItem, deleteItem, openEditorFor }: StepI
       sx={{
         display: "flex",
         flexDirection: "row",
-        "& .clear-btn": {
-          opacity: 0.3,
-          transition: "opacity 0.2s",
-        },
-
-        "&:hover .clear-btn": {
-          opacity: 1,
-        },
       }}
     >
       <Switch
@@ -91,26 +73,18 @@ const ApplierInlineEditor = ({ item, setItem, deleteItem, openEditorFor }: StepI
       />
       <ButtonGroup>
         {isFilter(item) && (
-          <IconButton
-            size="small"
+          <MMIconButton
             disabled={!item.active}
             onClick={() => setItem(invertFilter(item))}
-            className="clear-btn"
-          >
-            <SwitchLeftIcon />
-          </IconButton>
+            icon={<SwitchLeftIcon />}
+          />
         )}
-        <IconButton
-          size="small"
+        <MMIconButton
           disabled={!item.active}
           onClick={() => openEditorFor(item)}
-          className="clear-btn"
-        >
-          <EditIcon />
-        </IconButton>
-        <IconButton size="small" disabled={false} onClick={deleteItem} className="clear-btn">
-          <ClearIcon />
-        </IconButton>
+          icon={<EditIcon />}
+        />
+        <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />} />
       </ButtonGroup>
       <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
     </Box>
@@ -309,41 +283,37 @@ export const GlobalOperationDesigner = (props: Props) => {
           p: 1,
         }}
       >
-        <ButtonGroup variant="contained">
-          <Tooltip title="Execute this macro on your map.">
-            <IconButton size="small" disabled={false} onClick={onExecute}>
-              <PlayArrowIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Debug-Execute this macro on your map, step-by-step.">
-            <IconButton
-              size="small"
-              disabled={false}
-              onClick={() =>
-                props.onExecute(
-                  constructRunnable(sortedFilters, sortedAppliers, uuid, title, description),
-                  true,
-                )
-              }
-            >
-              <BugReportIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Save this macro.">
-            <IconButton size="small" onClick={onSave}>
-              <SaveIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Start a new macro.">
-            <IconButton size="small" disabled={false} onClick={onStartNew}>
-              <RestartAltIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Load an existing macro that is structured like a global operation.">
-            <IconButton size="small" disabled={false} onClick={onRequestLoadExisting}>
-              <ManageSearchIcon />
-            </IconButton>
-          </Tooltip>
+        <ButtonGroup variant="outlined">
+          <MMIconButton
+            disabled={false}
+            onClick={onExecute}
+            icon={<PlayArrowIcon />}
+            tooltip="Execute this macro on your map."
+          />
+          <MMIconButton
+            disabled={false}
+            onClick={() =>
+              props.onExecute(
+                constructRunnable(sortedFilters, sortedAppliers, uuid, title, description),
+                true,
+              )
+            }
+            icon={<BugReportIcon />}
+            tooltip="Debug-Execute this macro on your map, step-by-step."
+          />
+          <MMIconButton onClick={onSave} icon={<SaveIcon />} tooltip="Save this macro." />
+          <MMIconButton
+            disabled={false}
+            onClick={onStartNew}
+            tooltip="Start a new macro"
+            icon={<RestartAltIcon />}
+          />
+          <MMIconButton
+            disabled={false}
+            onClick={onRequestLoadExisting}
+            icon={<ManageSearchIcon />}
+            tooltip="Load an existing macro that is structured like a global operation."
+          />
         </ButtonGroup>
 
         <Paper sx={{ width: "100%" }}>
@@ -379,14 +349,12 @@ export const GlobalOperationDesigner = (props: Props) => {
               >
                 <Typography>Filter by:</Typography>
                 <ButtonGroup>
-                  <IconButton
-                    size="small"
+                  <MMIconButton
                     disabled={false}
                     onClick={() => setFilters([])}
-                    className="clear-btn"
-                  >
-                    <ClearIcon />
-                  </IconButton>
+                    icon={<ClearIcon />}
+                    tooltip={""}
+                  />
                 </ButtonGroup>
                 <List>
                   {sortedFilters.map((filterAction) => (
@@ -410,14 +378,12 @@ export const GlobalOperationDesigner = (props: Props) => {
                 Appliers
                 <Typography>Apply:</Typography>
                 <ButtonGroup>
-                  <IconButton
-                    size="small"
+                  <MMIconButton
                     disabled={false}
                     onClick={() => setAppliers([])}
-                    className="clear-btn"
-                  >
-                    <ClearIcon />
-                  </IconButton>
+                    icon={<ClearIcon />}
+                    tooltip={""}
+                  />
                 </ButtonGroup>
                 {sortedAppliers.map((modifierAction) => (
                   <ApplierInlineEditor
@@ -430,14 +396,12 @@ export const GlobalOperationDesigner = (props: Props) => {
                     }
                   />
                 ))}
-                <IconButton
-                  size="small"
+                <MMIconButton
                   disabled={false}
                   onClick={() => setAddItem("applier")}
-                  className="clear-btn"
-                >
-                  <AddIcon />
-                </IconButton>
+                  icon={<AddIcon />}
+                  tooltip={""}
+                />
               </Paper>
             </Item>
           </Grid>
