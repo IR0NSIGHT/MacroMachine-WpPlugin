@@ -1,0 +1,316 @@
+[
+  {
+    "executionId": "28558748-ff19-4ecf-9feb-7dec9173996f",
+    "steps": [
+      {
+        "actionId": "ccdb9830-a63a-4b35-a6fb-e55ed4baef15",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "8526cdb2-bb3c-4ce3-b6b7-9eeeb5ce2bef",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "f7b9a0bd-59cb-4532-a218-0344e77cd122",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "FAILED",
+        "error": "java.lang.RuntimeException: this is a test error\r\n\tat org.ironsight.wpplugin.macromachine.operations.ApplyToMap.ApplyAction.applyExecutionSteps(ApplyAction.java:153)\r\n\tat org.ironsight.wpplugin.macromachine.operations.Macro.applyMacroToDimension(Macro.java:175)\r\n\tat org.ironsight.wpplugin.macromachine.operations.MacroConcurrentApplicator.applyLayerAction(MacroConcurrentApplicator.java:75)\r\n\tat org.ironsight.wpplugin.macromachine.operations.MacroConcurrentApplicator.applyMacroSync(MacroConcurrentApplicator.java:135)\r\n\tat org.ironsight.wpplugin.macromachine.operations.MacroConcurrentApplicator.lambda$runExecutionQueue$1(MacroConcurrentApplicator.java:109)\r\n\tat java.desktop/java.awt.event.InvocationEvent.dispatch(InvocationEvent.java:318)\r\n\tat java.desktop/java.awt.EventQueue.dispatchEventImpl(EventQueue.java:773)\r\n\tat java.desktop/java.awt.EventQueue$4.run(EventQueue.java:720)\r\n\tat java.desktop/java.awt.EventQueue$4.run(EventQueue.java:714)\r\n\tat java.base/java.security.AccessController.doPrivileged(AccessController.java:400)\r\n\tat java.base/java.security.ProtectionDomain$JavaSecurityAccessImpl.doIntersectionPrivilege(ProtectionDomain.java:87)\r\n\tat java.desktop/java.awt.EventQueue.dispatchEvent(EventQueue.java:742)\r\n\tat java.desktop/java.awt.EventDispatchThread.pumpOneEventForFilters(EventDispatchThread.java:203)\r\n\tat java.desktop/java.awt.EventDispatchThread.pumpEventsForFilter(EventDispatchThread.java:124)\r\n\tat java.desktop/java.awt.EventDispatchThread.pumpEventsForHierarchy(EventDispatchThread.java:113)\r\n\tat java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:109)\r\n\tat java.desktop/java.awt.EventDispatchThread.pumpEvents(EventDispatchThread.java:101)\r\n\tat java.desktop/java.awt.EventDispatchThread.run(EventDispatchThread.java:90)\r\n"
+      },
+      {
+        "actionId": "16632d51-fe28-4dfb-b53a-7cfa749062e9",
+        "breakpoint": false,
+        "percentComplete": 0.0,
+        "status": "QUEUED",
+        "error": null
+      }
+    ],
+    "currentStepIndex": 3,
+    "status": "FAILED"
+  },
+  {
+    "executionId": "1d053e6a-18cc-4d7f-96df-e18013668542",
+    "steps": [
+      {
+        "actionId": "63fd4bd9-e0c5-4d7e-8469-010df68bb4b7",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      }
+    ],
+    "currentStepIndex": 0,
+    "status": "COMPLETED"
+  },
+  {
+    "executionId": "f501c350-3fa7-45f1-9c92-7e69ccd010a4",
+    "steps": [
+      {
+        "actionId": "3b0be65a-b601-4e69-b7d6-33a369625ea8",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "72172d29-1d85-4da8-88ac-28fdcae6428c",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "328f34b4-9994-422c-a85b-272c93e6263e",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "60e87a5b-ceee-40b2-a25d-cab29a50d787",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "0e669f94-31c5-4d84-b69c-620953dd65b5",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "a1f1fa77-387b-4b62-b7aa-aab71f307781",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "6b3370ee-ba73-49b0-b64e-155195df7cb7",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "a5838003-43b6-402d-85dd-269a0b019ecb",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "a09da31d-82c2-47b2-863f-d1f584dbd5ad",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "25ae2016-1bd7-44c2-a6c6-4217c3604a1c",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "09e5d68d-991c-48e7-a4a8-59e1777be8d1",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      }
+    ],
+    "currentStepIndex": 10,
+    "status": "COMPLETED"
+  },
+  {
+    "executionId": "d1e3e684-024b-473c-b12d-0b7b0464753b",
+    "steps": [
+      {
+        "actionId": "81a6fd0d-dd2f-4a50-8812-a47acbeccc3f",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      }
+    ],
+    "currentStepIndex": 0,
+    "status": "COMPLETED"
+  },
+  {
+    "executionId": "042248e3-2760-434e-a31b-d6b44023231a",
+    "steps": [
+      {
+        "actionId": "f25c73db-d735-44e4-b2f4-1631d6df247e",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "f9096f37-5efa-4230-9a32-79abf5de4a1a",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "a555c3ff-ff46-4b9e-87de-839106b28eb8",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "2d8a03a8-d14b-4c9c-949d-81a6c15d8ef4",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "7277f40e-992a-42f6-83ac-292b95b8a8c4",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "600f91f1-6bd5-40f0-8dbd-bf6e001906f9",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "6f4467b3-a9f9-496a-8331-309359081376",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "d2d8aa86-d534-4158-924d-a36384429037",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      }
+    ],
+    "currentStepIndex": 7,
+    "status": "COMPLETED"
+  },
+  {
+    "executionId": "1f68a457-c171-4761-99d3-6ab20b68126f",
+    "steps": [
+      {
+        "actionId": "92537724-f6c2-4152-896c-2d4abdc32385",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      }
+    ],
+    "currentStepIndex": 0,
+    "status": "COMPLETED"
+  },
+  {
+    "executionId": "65cfcd1a-5e2a-4f51-8c5d-d9e213dd9517",
+    "steps": [],
+    "currentStepIndex": -1,
+    "status": "COMPLETED"
+  },
+  {
+    "executionId": "6fa2a28b-3bed-4dc6-9e58-6d753137ef85",
+    "steps": [
+      {
+        "actionId": "328f34b4-9994-422c-a85b-272c93e6263e",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "60e87a5b-ceee-40b2-a25d-cab29a50d787",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "0e669f94-31c5-4d84-b69c-620953dd65b5",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "a1f1fa77-387b-4b62-b7aa-aab71f307781",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "6b3370ee-ba73-49b0-b64e-155195df7cb7",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "a5838003-43b6-402d-85dd-269a0b019ecb",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "a09da31d-82c2-47b2-863f-d1f584dbd5ad",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "25ae2016-1bd7-44c2-a6c6-4217c3604a1c",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      },
+      {
+        "actionId": "09e5d68d-991c-48e7-a4a8-59e1777be8d1",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      }
+    ],
+    "currentStepIndex": 8,
+    "status": "COMPLETED"
+  },
+  {
+    "executionId": "d35b2b3b-630b-4ca9-baa7-7928c06997ca",
+    "steps": [
+      {
+        "actionId": "68bddcaa-f0a2-4f16-abea-65270bc4fe9e",
+        "breakpoint": false,
+        "percentComplete": 100.0,
+        "status": "COMPLETED",
+        "error": null
+      }
+    ],
+    "currentStepIndex": 0,
+    "status": "COMPLETED"
+  }
+]

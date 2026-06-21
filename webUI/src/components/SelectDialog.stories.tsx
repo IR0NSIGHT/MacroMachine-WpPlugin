@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { SelectDialog, SelectDialogProps } from "./SelectDialog";
-import defaultAppliers from "../assets/defaultApplyActions.json";
-import defaultFilters from "../assets/defaultFilters.json";
+import defaultAppliers from "@/mocks/data/defaultApplyActions.json";
+import defaultFilters from "@/mocks/data/defaultFilters.json";
 import { ActionDTO, MacroDTO } from "@/types/DTO";
 import defaultMacros from "../mocks/data/macros.json";
 import { GetIconForIoType, GrassBlockSvg } from "./CustomSvgIcons";

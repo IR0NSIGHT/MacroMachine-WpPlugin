@@ -1,0 +1,97 @@
+[
+  {
+    "name": "SelectionBlock",
+    "description": "unknown",
+    "dataSize": "NONE",
+    "priority": -1,
+    "id": "org.pepsoft.worldpainter.selection.SelectionBlock",
+    "discrete": false,
+    "type": "unknown",
+    "custom": false,
+    "macrosUsingLayer": [
+      "d4edc006-bcf3-423d-8281-e9a916df0517",
+      "1d053e6a-18cc-4d7f-96df-e18013668542",
+      "d1e3e684-024b-473c-b12d-0b7b0464753b",
+      "6fa2a28b-3bed-4dc6-9e58-6d753137ef85",
+      "d35b2b3b-630b-4ca9-baa7-7928c06997ca"
+    ],
+    "presentInProject": false
+  },
+  {
+    "name": "Macro Selection",
+    "description": "a simple bit layer to make selection easier",
+    "dataSize": "BIT",
+    "priority": 0,
+    "id": "org.ironsight.wpplugin.macropainter.macroselectionlayer",
+    "discrete": false,
+    "type": "MacroSelectionLayer",
+    "custom": false,
+    "macrosUsingLayer": ["042248e3-2760-434e-a31b-d6b44023231a"],
+    "presentInProject": true
+  },
+  {
+    "name": "Heatmap",
+    "description": "",
+    "dataSize": "NIBBLE",
+    "priority": 0,
+    "id": "org.ironsight.wpplugin.macropainter.heatmaplayer",
+    "discrete": false,
+    "type": "HeatMapLayer",
+    "custom": false,
+    "macrosUsingLayer": [],
+    "presentInProject": true
+  },
+  {
+    "name": "Frost",
+    "description": "Cover the ground with snow and turn water to ice",
+    "dataSize": "BIT",
+    "priority": 60,
+    "id": "Frost",
+    "discrete": false,
+    "type": "Frost",
+    "custom": false,
+    "macrosUsingLayer": ["6fa2a28b-3bed-4dc6-9e58-6d753137ef85"],
+    "presentInProject": true
+  },
+  {
+    "name": "Deciduous",
+    "description": "Generate a deciduous forest",
+    "dataSize": "NIBBLE",
+    "priority": 40,
+    "id": "Deciduous",
+    "discrete": false,
+    "type": "DeciduousForest",
+    "custom": false,
+    "macrosUsingLayer": [],
+    "presentInProject": true
+  },
+  {
+    "name": "Annotations",
+    "description": "Coloured annotations on the world, which can optionally be exported with it",
+    "dataSize": "NIBBLE",
+    "priority": 65,
+    "id": "org.pepsoft.Annotations",
+    "discrete": true,
+    "type": "Annotations",
+    "custom": false,
+    "macrosUsingLayer": [
+      "d4edc006-bcf3-423d-8281-e9a916df0517",
+      "1f68a457-c171-4761-99d3-6ab20b68126f",
+      "042248e3-2760-434e-a31b-d6b44023231a",
+      "6fa2a28b-3bed-4dc6-9e58-6d753137ef85"
+    ],
+    "presentInProject": true
+  },
+  {
+    "name": "Pine",
+    "description": "Generate a pine forest",
+    "dataSize": "NIBBLE",
+    "priority": 41,
+    "id": "Pine",
+    "discrete": false,
+    "type": "PineForest",
+    "custom": false,
+    "macrosUsingLayer": [],
+    "presentInProject": true
+  }
+]
