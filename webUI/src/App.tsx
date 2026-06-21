@@ -23,6 +23,13 @@ import {
 } from "./API/queries";
 import { HistoryTab } from "./HistoryViewer";
 
+export const fillParentSx = {
+  flex: 1,
+  minHeight: 0,
+  minWidth: 0,
+  border: "2px solid red",
+};
+
 export default function App() {
   const [tab, setTab] = useState(0);
 
@@ -79,16 +86,21 @@ export default function App() {
   return (
     <Box
       sx={{
+        // root component
+        height: "100vh",
+        width: "100vw",
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        overflow: "hidden",
+        border: "2px solid green",
       }}
     >
       <PrimaryAppBar queue={queue} executionState={executionState} connection={connection} />
       <Box
         sx={{
-          display: "flex",
+          ...fillParentSx,
           flexDirection: "row",
+          display: "flex",
         }}
       >
         <Tabs
@@ -108,28 +120,26 @@ export default function App() {
           <Tab icon={<HistoryIcon />} label={isMobile ? undefined : "History"} sx={tabSx} />
           <Tab icon={<SettingsIcon />} label={isMobile ? undefined : "Settings"} sx={tabSx} />
         </Tabs>
-        <Box sx={{ flexGrow: 1 }}>
-          {tab === 0 && (
-            <MacroGrid
-              macros={macros}
-              actions={actions}
-              executionState={executionState}
-              onRequestExecution={onRequestExecution}
-              onDeleteMacro={deleteMacro}
-            />
-          )}
-          {tab === 1 && (
-            <GlobalOperationDesigner
-              onSave={onRequestSave}
-              onExecute={onRequestExecution}
-              macros={macros}
-              actions={actions}
-            />
-          )}
-          {tab === 2 && <LayerManager layers={layers} />}
-          {tab === 3 && <HistoryTab />}
-          {tab === 4 && <div>Settings - Not implemented yet</div>}
-        </Box>
+        {tab === 0 && (
+          <MacroGrid
+            macros={macros}
+            actions={actions}
+            executionState={executionState}
+            onRequestExecution={onRequestExecution}
+            onDeleteMacro={deleteMacro}
+          />
+        )}
+        {tab === 1 && (
+          <GlobalOperationDesigner
+            onSave={onRequestSave}
+            onExecute={onRequestExecution}
+            macros={macros}
+            actions={actions}
+          />
+        )}
+        {tab === 2 && <LayerManager layers={layers} />}
+        {tab === 3 && <HistoryTab />}
+        {tab === 4 && <div>Settings - Not implemented yet</div>}
       </Box>
     </Box>
   );

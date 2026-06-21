@@ -18,6 +18,7 @@ import { MacroExecuteRequester, runnableMacro, toRunnable, uuid } from "./featur
 import Typography from "@mui/material/Typography";
 import SearchIcon from "@mui/icons-material/Search";
 import { PageLoadingSpinner } from "./PageLoadingSpinner";
+import { fillParentSx } from "./App";
 
 const imageURLs = [
   "https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400&auto=format&fit=crop",
@@ -219,9 +220,9 @@ export function MacroGrid({
   return (
     <Box
       sx={{
+        ...fillParentSx,
         display: "flex",
         flexDirection: "column",
-        height: "95vh", // FIXME ugly hack to make the fucking flexbox work
       }}
       p={1}
     >
@@ -251,8 +252,11 @@ export function MacroGrid({
       </Tooltip>
       <Box
         sx={{
-          flex: 1,
-          minHeight: 0,
+          // scrollable list
+          ...fillParentSx,
+          display: "flex",
+          flexDirection: "column",
+          border: "2px solid green",
           overflowY: "auto",
           p: 2,
         }}
@@ -289,27 +293,26 @@ export function MacroGrid({
             </Grid>
           ))}
         </Grid>
-
-        <MacroDetailsDialog
-          open={!!viewedMacro}
-          macro={viewedMacro}
-          onClose={() => setViewedMacro(undefined)}
-          onViewItem={(item: MacroDTO | ActionDTO) => {
-            if (isMacroDTO(item)) {
-              onView(item);
-            } else {
-              setViewAction(item);
-            }
-          }}
-        />
-        <ActionDetailsDialog
-          open={!!viewAction}
-          action={viewAction}
-          setAction={(_action) => {}}
-          onClose={() => setViewAction(undefined)}
-          onViewItem={() => {}}
-        />
       </Box>
+      <MacroDetailsDialog
+        open={!!viewedMacro}
+        macro={viewedMacro}
+        onClose={() => setViewedMacro(undefined)}
+        onViewItem={(item: MacroDTO | ActionDTO) => {
+          if (isMacroDTO(item)) {
+            onView(item);
+          } else {
+            setViewAction(item);
+          }
+        }}
+      />
+      <ActionDetailsDialog
+        open={!!viewAction}
+        action={viewAction}
+        setAction={(_action) => {}}
+        onClose={() => setViewAction(undefined)}
+        onViewItem={() => {}}
+      />
     </Box>
   );
 }
