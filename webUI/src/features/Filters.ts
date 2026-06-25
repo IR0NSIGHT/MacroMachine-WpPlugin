@@ -2,6 +2,7 @@ import { ActionDTO } from "@/types/DTO";
 import { valueToString } from "./InputOutput";
 import { collectRanges } from "./Ranges";
 import { StepItemType } from "./Execution";
+import { InputOutputDTO } from "@/generated/client";
 
 export const filterValuePass = 1;
 export const filterValueBlock = 0;
@@ -13,8 +14,29 @@ export type NamedMapping = {
   outputName: string;
 };
 
+export type NamedValue = {
+  value: number;
+  name: string;
+};
+
 export const isFilter = (item: ActionDTO): boolean => {
   return item.output.type === "INTERMEDIATE_SELECTION";
+};
+
+
+export const ioNamedValues = (input: InputOutputDTO): NamedValue[] => {
+  const inputToString = valueToString(input);
+
+  return Array.from(
+    { length: input.max - input.min + 1 },
+    (_, i) => input.min + i,
+  ).map((inputNumericValue) => {
+    const inputName = inputToString(inputNumericValue);
+    return {
+      value: inputNumericValue,
+      name: inputName
+    };
+  });
 };
 
 export const namedMapping = (action: ActionDTO): NamedMapping[] => {

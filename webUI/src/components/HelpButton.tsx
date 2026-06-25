@@ -1,8 +1,8 @@
-import {  Popover, Typography } from "@mui/material";
+import { Popover, Typography } from "@mui/material";
 import { useState } from "react";
 import { MMIconButton } from "./IconButton";
 
-export default function HelpButton({ explanation }: { explanation: String}) {
+export default function HelpButton({ explanation }: { explanation: String }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event: any) => {
@@ -13,10 +13,7 @@ export default function HelpButton({ explanation }: { explanation: String}) {
 
   return (
     <>
-      <MMIconButton
-              onClick={handleClick}
-              tooltip="Show help"
-              title="?" icon={undefined}      />
+      <MMIconButton onClick={handleClick} tooltip="Show help" title="?" icon={undefined} />
 
       <Popover
         open={open}
@@ -27,10 +24,8 @@ export default function HelpButton({ explanation }: { explanation: String}) {
           horizontal: "left",
         }}
       >
-        <Typography sx={{ p: 2, maxWidth: 300 }}>
-          {explanation}
-        </Typography>
+        <Typography sx={{ p: 2, maxWidth: 300 }}>{explanation}</Typography>
       </Popover>
     </>
-  )
+  );
 }

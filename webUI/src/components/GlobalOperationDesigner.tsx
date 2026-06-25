@@ -19,7 +19,12 @@ import { ActionDTO, MacroDTO } from "@/types/DTO";
 import { useEffect, useMemo, useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
-import { filterAutoName, invertFilter, isFilter } from "@/features/Filters";
+import {
+  filterAutoName,
+  invertFilter,
+  isFilter,
+  isRangeFilter,
+} from "@/features/Filters";
 import { isStepItem, isStepMacro, StepItemType } from "@/features/Execution";
 import EditIcon from "@mui/icons-material/Edit";
 import { actionAutoName, isSimpleAction } from "@/features/Action";
@@ -36,7 +41,13 @@ import equal from "fast-deep-equal";
 import AddIcon from "@mui/icons-material/Add";
 import { SelectDialog } from "./SelectDialog";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
-import { FilterInlineEditor, ioToIconName } from "@/features/FilterComponent";
+import {
+  ApplyActionInlineEditor,
+  RangeFilterInlineEditor,
+  SimpleFilterInlineEditor,
+  StepInlineEditor,
+  ioToIconName,
+} from "@/features/FilterComponent";
 import { useDefaultAppliersQuery, useDefaultFiltersQuery } from "@/API/queries";
 import { PageLoadingSpinner } from "@/PageLoadingSpinner";
 import { fillParentSx } from "@/App";
@@ -246,10 +257,6 @@ export const GlobalOperationDesigner = (props: Props) => {
   const { data: defaultFilters } = useDefaultFiltersQuery();
   const { data: defaultAppliers } = useDefaultAppliersQuery();
 
-  if (!props.macros || !props.actions) {
-    return <PageLoadingSpinner />;
-  }
-
   useEffect(() => {
     onStartNew();
   }, []);
@@ -262,6 +269,28 @@ export const GlobalOperationDesigner = (props: Props) => {
     () => appliers.sort(sortInactiveLast),
     [appliers],
   );
+
+  const unusedFilters = useMemo(() => {
+    const filterToString = (f: ActionDTO) =>
+      f.input.type + "_" + f.input.displayName;
+    const existingFilters = new Set<string>(filters.map(filterToString));
+    const unusedFilters = defaultFilters?.filter(
+      (f) => !existingFilters.has(filterToString(f)),
+    );
+    console.log(
+      "recalculate unused filters:",
+      unusedFilters,
+      " out of ",
+      defaultFilters,
+      " with used filters:",
+      filters,
+    );
+    return unusedFilters;
+  }, [defaultFilters, filters]);
+
+  if (!props.macros || !props.actions) {
+    return <PageLoadingSpinner />;
+  }
 
   function onExecute() {
     props.onExecute(
@@ -354,24 +383,6 @@ export const GlobalOperationDesigner = (props: Props) => {
     setTitle(runnable.name);
     setDescription(runnable.description);
   }
-
-  const unusedFilters = useMemo(() => {
-    const filterToString = (f: ActionDTO) =>
-      f.input.type + "_" + f.input.displayName;
-    const existingFilters = new Set<string>(filters.map(filterToString));
-    const unusedFilters = defaultFilters?.filter(
-      (f) => !existingFilters.has(filterToString(f)),
-    );
-    console.log(
-      "recalculate unused filters:",
-      unusedFilters,
-      " out of ",
-      defaultFilters,
-      " with used filters:",
-      filters,
-    );
-    return unusedFilters;
-  }, [defaultFilters, filters]);
 
   const unusedAppliers = defaultAppliers;
 
@@ -467,7 +478,7 @@ export const GlobalOperationDesigner = (props: Props) => {
                   title="Filters"
                   onClearList={() => setFilters([])}
                   listItems={sortedFilters.map((filterAction) => (
-                    <FilterInlineEditor
+                    <StepInlineEditor
                       key={filterAction.uid}
                       item={filterAction}
                       setItem={(item) =>
@@ -476,8 +487,28 @@ export const GlobalOperationDesigner = (props: Props) => {
                       deleteItem={() =>
                         updateFilterItem(filterAction, true, setFilters)
                       }
-                      openEditorFor={(filter) =>
-                        setEditorItem({ item: filter, type: "filter" })
+                      primaryText={filterAction.input.displayName}
+                      secondaryText={filterAction.name}
+                      relevantIo={filterAction.input}
+                      editor={
+                        isRangeFilter(filterAction) ? (
+                          <RangeFilterInlineEditor
+                            item={filterAction}
+                            setItem={(item) =>
+                              updateFilterItem(item, false, setFilters)
+                            }
+                          />
+                        ) : (
+                          <SimpleFilterInlineEditor
+                            item={filterAction}
+                            setItem={(item) =>
+                              updateFilterItem(item, false, setFilters)
+                            }
+                            openEditorFor={(filter) =>
+                              setEditorItem({ item: filter, type: "filter" })
+                            }
+                          />
+                        )
                       }
                     />
                   ))}
@@ -495,7 +526,7 @@ export const GlobalOperationDesigner = (props: Props) => {
                 title={"Actions"}
                 onClearList={() => setAppliers([])}
                 listItems={sortedAppliers.map((modifierAction) => (
-                  <ApplierInlineEditor
+                  <StepInlineEditor
                     key={modifierAction.uid}
                     item={modifierAction}
                     setItem={(item) =>
@@ -504,9 +535,12 @@ export const GlobalOperationDesigner = (props: Props) => {
                     deleteItem={() =>
                       updateApplyItem(modifierAction, true, setAppliers)
                     }
-                    openEditorFor={(applyItem) =>
-                      setEditorItem({ item: applyItem, type: "action" })
-                    }
+                    relevantIo={modifierAction.output}
+                    primaryText={modifierAction.output.displayName}
+                    secondaryText={modifierAction.name}
+                    editor={<ApplyActionInlineEditor item={modifierAction} setItem={(item) =>
+                      updateApplyItem(item, false, setAppliers)
+                    } />}
                   />
                 ))}
                 onAddItem={() => setAddItem("applier")}
