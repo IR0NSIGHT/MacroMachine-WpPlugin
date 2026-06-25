@@ -23,20 +23,18 @@ export const isFilter = (item: ActionDTO): boolean => {
   return item.output.type === "INTERMEDIATE_SELECTION";
 };
 
-
 export const ioNamedValues = (input: InputOutputDTO): NamedValue[] => {
   const inputToString = valueToString(input);
-
-  return Array.from(
-    { length: input.max - input.min + 1 },
-    (_, i) => input.min + i,
-  ).map((inputNumericValue) => {
-    const inputName = inputToString(inputNumericValue);
-    return {
-      value: inputNumericValue,
-      name: inputName
-    };
-  });
+  
+  return Array.from({ length: input.max - input.min + 1 }, (_, i) => input.min + i).map(
+    (inputNumericValue) => {
+      const inputName = inputToString(inputNumericValue);
+      return {
+        value: inputNumericValue,
+        name: inputName,
+      };
+    },
+  );
 };
 
 export const namedMapping = (action: ActionDTO): NamedMapping[] => {

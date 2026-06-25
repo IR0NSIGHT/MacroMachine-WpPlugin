@@ -2,6 +2,7 @@ import {
   Avatar,
   Box,
   ButtonGroup,
+  Chip,
   FormControl,
   InputLabel,
   ListItem,
@@ -12,8 +13,9 @@ import {
   Select,
   Slider,
   Switch,
+  Tooltip,
 } from "@mui/material";
-import { SelectChangeEvent } from '@mui/material/Select';
+import { SelectChangeEvent } from "@mui/material/Select";
 import { MMIconButton } from "../components/IconButton";
 import { StepItemType } from "./Execution";
 import {
@@ -23,6 +25,7 @@ import {
   setFilterRange,
   filterAutoName,
   ioNamedValues,
+  getRelevantMappings,
 } from "./Filters";
 import { theme } from "@/theme";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
@@ -33,8 +36,7 @@ import {
   InputOutputDTOIoParametersInner,
 } from "@/generated/client";
 import { fillParentSx } from "@/App";
-import { useState } from "react";
-import { ActionDTO } from "@/types/DTO";
+import { fill } from "lodash";
 
 export const ioToIconName = (io: InputOutputDTO) => {
   //FIXME icons are not built into dist
@@ -74,16 +76,26 @@ export const SimpleFilterInlineEditor = ({
   setItem: (item: StepItemType) => void;
   openEditorFor: (item: StepItemType) => void;
 }) => {
+  const mappings = getRelevantMappings(item);
   return (
-    <ButtonGroup>
-      <InvertFilterButton onClick={() => setItem(invertFilter(item))} />
-      <MMIconButton
-        disabled={false}
-        onClick={() => openEditorFor(item)}
-        icon={<EditIcon />}
-        tooltip={""}
-      />
-    </ButtonGroup>
+    <>
+      <Box
+        sx={{ ...fillParentSx, flexDirection: "row", display: "flex", alignItems: "center", gap: 1, flexWrap:"wrap" }}
+      >
+        <ButtonGroup>
+          <InvertFilterButton onClick={() => setItem(invertFilter(item))} />
+          <MMIconButton
+            disabled={false}
+            onClick={() => openEditorFor(item)}
+            icon={<EditIcon />}
+            tooltip={""}
+          />
+        </ButtonGroup>
+        {mappings.map((m) => (
+          <Chip key={m.input} label={m.inputName} />
+        ))}
+      </Box>
+    </>
   );
 };
 
@@ -105,40 +117,41 @@ export const StepInlineEditor = ({
   // eslint-disable-next-line no-undef
   editor: JSX.Element;
 }) => {
-  const [isSelected, setSelected] = useState(false);
-
   return (
     <ListItem
       disablePadding
       color={item.active ? "default" : "text.disabled"}
       sx={{ alignItems: "flex-start" }}
-      key={item.uid}
     >
       <ListItemButton
         disableRipple
         disableTouchRipple
         sx={{
           ...fillParentSx,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "stretch",
           cursor: "default",
           borderBottom: 2,
-          py: 1,
+          py: 0,
           borderColor: "divider",
-        }}
-        onClick={(e) => {
-          const target = e.target as HTMLElement;
-          console.log("target clicked:", target);
-          if (target.closest("button,input,label,span")) {
-            return;
-          }
-
-          setSelected((s) => !s);
+          alignItems: "stretch",
         }}
       >
-        <Box sx={fillParentSx}>
-          <Box sx={{ display: "flex", gap: 1 }}>
+        <Box
+          sx={{
+            ...fillParentSx,
+            flexDirection: "column",
+            display: "flex",
+            p: 1,
+          }}
+        >
+          <Box
+            sx={{
+              ...fillParentSx,
+              flexDirection: "row",
+              display: "flex",
+              gap: 1,
+              alignItems: "center",
+            }}
+          >
             <ListItemAvatar
               sx={{
                 display: "flex",
@@ -154,7 +167,9 @@ export const StepInlineEditor = ({
                 }}
               />
             </ListItemAvatar>
+
             <ListItemText
+              sx={{maxWidth: 400}}
               primary={primaryText}
               secondary={secondaryText}
               primaryTypographyProps={{
@@ -164,32 +179,29 @@ export const StepInlineEditor = ({
                 color: item.active ? "text.secondary" : "text.disabled",
               }}
             />
-          </Box>
+            <Box>
+              <Tooltip title={"Enable item"}>
+                <Switch
+                  checked={item.active}
+                  onChange={(e) =>
+                    setItem({
+                      ...item,
+                      active: e.target.checked,
+                    })
+                  }
+                />
+              </Tooltip>
 
-          {isSelected && (
-            <Box
-              sx={{
-                display: "flex",
-                gap: 1,
-              }}
-            >
-              <Switch
-                checked={item.active}
-                onChange={(e) => {
-                  setItem({ ...item, active: e.target.checked });
-                }}
-              />
-              <ButtonGroup>
                 <MMIconButton
                   disabled={false}
                   onClick={deleteItem}
                   icon={<ClearIcon />}
-                  tooltip={"Delete this item"}
+                  tooltip="Delete this item"
                 />
-              </ButtonGroup>
             </Box>
-          )}
-          {item.active && editor}
+          </Box>
+
+          {editor}
         </Box>
       </ListItemButton>
     </ListItem>
@@ -198,12 +210,12 @@ export const StepInlineEditor = ({
 
 export const ApplyActionInlineEditor = ({
   item,
-  setItem
+  setItem,
 }: {
   item: StepItemType;
   setItem: (item: StepItemType) => void;
 }) => {
-  const outputOptions = ioNamedValues(item.output);   
+  const outputOptions = ioNamedValues(item.output);
   const handleChange = (event: SelectChangeEvent<string>) => {
     const value = Number(event.target.value);
 
@@ -213,14 +225,16 @@ export const ApplyActionInlineEditor = ({
     });
   };
   return (
-    <Box sx={{ minWidth: 120, maxWidth: 180 }}>      <FormControl fullWidth>
+    <Box sx={{ minWidth: 120, maxWidth: 400, m: 1 }}>
+      {" "}
+      <FormControl fullWidth>
         <InputLabel id="select-action-output-">Set to</InputLabel>
         <Select
           labelId="demo-simple-select-label"
           id="demo-simple-select"
           value={item.mappingPointsY}
           label="Age"
-          onChange={handleChange as any}   //FIXME this is an ugy hack
+          onChange={handleChange as any} //FIXME this is an ugy hack
         >
           {outputOptions.map((option) => (
             <MenuItem key={option.value} value={option.value}>

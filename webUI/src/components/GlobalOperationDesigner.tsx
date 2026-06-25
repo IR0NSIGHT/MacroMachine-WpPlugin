@@ -19,24 +19,14 @@ import { ActionDTO, MacroDTO } from "@/types/DTO";
 import { useEffect, useMemo, useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
-import {
-  filterAutoName,
-  invertFilter,
-  isFilter,
-  isRangeFilter,
-} from "@/features/Filters";
+import { filterAutoName, invertFilter, isFilter, isRangeFilter } from "@/features/Filters";
 import { isStepItem, isStepMacro, StepItemType } from "@/features/Execution";
 import EditIcon from "@mui/icons-material/Edit";
 import { actionAutoName, isSimpleAction } from "@/features/Action";
 import { FilterValueDialog } from "./MacroList/ActionDetailsDialog";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import BugReportIcon from "@mui/icons-material/BugReport";
-import {
-  MacroExecuteRequester,
-  runnableMacro,
-  toMacroDTO,
-  toRunnable,
-} from "@/features/Execution";
+import { MacroExecuteRequester, runnableMacro, toMacroDTO, toRunnable } from "@/features/Execution";
 import equal from "fast-deep-equal";
 import AddIcon from "@mui/icons-material/Add";
 import { SelectDialog } from "./SelectDialog";
@@ -85,12 +75,7 @@ function constructRunnable(
   return runnable;
 }
 
-const ApplierInlineEditor = ({
-  item,
-  setItem,
-  deleteItem,
-  openEditorFor,
-}: StepItemProps) => {
+const ApplierInlineEditor = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) => {
   return (
     <Box
       key={item.uid}
@@ -118,15 +103,9 @@ const ApplierInlineEditor = ({
           onClick={() => openEditorFor(item)}
           icon={<EditIcon />}
         />
-        <MMIconButton
-          disabled={false}
-          onClick={deleteItem}
-          icon={<ClearIcon />}
-        />
+        <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />} />
       </ButtonGroup>
-      <Typography color={item.active ? "text.primary" : "text.disabled"}>
-        {item.name}
-      </Typography>
+      <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
     </Box>
   );
 };
@@ -136,16 +115,12 @@ const sortInactiveLast = (a: StepItemType, b: StepItemType): number => {
 };
 
 const sortAlphabetical = (a: StepItemType, b: StepItemType): number => {
-  const isFilter =
-    a.input.type !== "ALWAYS" && a.output.type === "INTERMEDIATE_SELECTION";
+  const isFilter = a.input.type !== "ALWAYS" && a.output.type === "INTERMEDIATE_SELECTION";
 
   if (isFilter) return a.input.displayName.localeCompare(b.input.displayName);
   else return a.output.displayName.localeCompare(b.output.displayName);
 };
-function constructActions(
-  filters: StepItemType[],
-  appliers: StepItemType[],
-): StepItemType[] {
+function constructActions(filters: StepItemType[], appliers: StepItemType[]): StepItemType[] {
   const steps = [...filters, ...appliers].map((action) => ({
     ...action,
     uid: crypto.randomUUID(),
@@ -249,9 +224,7 @@ export const GlobalOperationDesigner = (props: Props) => {
   const [description, setDescription] = useState<string | undefined>(undefined);
   const [uuid, setUUID] = useState<string>(crypto.randomUUID());
 
-  const [addItem, setAddItem] = useState<"filter" | "applier" | undefined>(
-    undefined,
-  );
+  const [addItem, setAddItem] = useState<"filter" | "applier" | undefined>(undefined);
   const [loadMacros, setLoadMacros] = useState<runnableMacro[] | undefined>();
 
   const { data: defaultFilters } = useDefaultFiltersQuery();
@@ -261,22 +234,13 @@ export const GlobalOperationDesigner = (props: Props) => {
     onStartNew();
   }, []);
 
-  const sortedFilters = useMemo(
-    () => filters.sort(sortInactiveLast),
-    [filters],
-  );
-  const sortedAppliers = useMemo(
-    () => appliers.sort(sortInactiveLast),
-    [appliers],
-  );
+  const sortedFilters = useMemo(() => filters.sort(sortInactiveLast), [filters]);
+  const sortedAppliers = useMemo(() => appliers.sort(sortInactiveLast), [appliers]);
 
   const unusedFilters = useMemo(() => {
-    const filterToString = (f: ActionDTO) =>
-      f.input.type + "_" + f.input.displayName;
+    const filterToString = (f: ActionDTO) => f.input.type + "_" + f.input.displayName;
     const existingFilters = new Set<string>(filters.map(filterToString));
-    const unusedFilters = defaultFilters?.filter(
-      (f) => !existingFilters.has(filterToString(f)),
-    );
+    const unusedFilters = defaultFilters?.filter((f) => !existingFilters.has(filterToString(f)));
     console.log(
       "recalculate unused filters:",
       unusedFilters,
@@ -294,25 +258,13 @@ export const GlobalOperationDesigner = (props: Props) => {
 
   function onExecute() {
     props.onExecute(
-      constructRunnable(
-        sortedFilters,
-        sortedAppliers,
-        uuid,
-        title,
-        description,
-      ),
+      constructRunnable(sortedFilters, sortedAppliers, uuid, title, description),
       false,
     );
   }
 
   function onSave() {
-    const runnable = constructRunnable(
-      sortedFilters,
-      sortedAppliers,
-      uuid,
-      title,
-      description,
-    );
+    const runnable = constructRunnable(sortedFilters, sortedAppliers, uuid, title, description);
     props.onSave(
       toMacroDTO(runnable),
       runnable.steps.filter((f) => isStepItem(f)),
@@ -347,12 +299,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           "this macro contains nested macros. It does not work with this Global Operation Designer.",
       };
 
-    if (
-      steps.some(
-        (step) =>
-          isStepMacro(step) || (!isFilter(step) && !isSimpleAction(step)),
-      )
-    ) {
+    if (steps.some((step) => isStepMacro(step) || (!isFilter(step) && !isSimpleAction(step)))) {
       return {
         error:
           "this macro contains steps that are neither filters nor simple actions. It does not work with this Global Operation Designer.",
@@ -419,24 +366,14 @@ export const GlobalOperationDesigner = (props: Props) => {
             disabled={false}
             onClick={() =>
               props.onExecute(
-                constructRunnable(
-                  sortedFilters,
-                  sortedAppliers,
-                  uuid,
-                  title,
-                  description,
-                ),
+                constructRunnable(sortedFilters, sortedAppliers, uuid, title, description),
                 true,
               )
             }
             icon={<BugReportIcon />}
             tooltip="Debug-Execute this macro on your map, step-by-step."
           />
-          <MMIconButton
-            onClick={onSave}
-            icon={<SaveIcon />}
-            tooltip="Save this macro."
-          />
+          <MMIconButton onClick={onSave} icon={<SaveIcon />} tooltip="Save this macro." />
           <MMIconButton
             disabled={false}
             onClick={onStartNew}
@@ -481,12 +418,8 @@ export const GlobalOperationDesigner = (props: Props) => {
                     <StepInlineEditor
                       key={filterAction.uid}
                       item={filterAction}
-                      setItem={(item) =>
-                        updateFilterItem(item, false, setFilters)
-                      }
-                      deleteItem={() =>
-                        updateFilterItem(filterAction, true, setFilters)
-                      }
+                      setItem={(item) => updateFilterItem(item, false, setFilters)}
+                      deleteItem={() => updateFilterItem(filterAction, true, setFilters)}
                       primaryText={filterAction.input.displayName}
                       secondaryText={filterAction.name}
                       relevantIo={filterAction.input}
@@ -494,16 +427,12 @@ export const GlobalOperationDesigner = (props: Props) => {
                         isRangeFilter(filterAction) ? (
                           <RangeFilterInlineEditor
                             item={filterAction}
-                            setItem={(item) =>
-                              updateFilterItem(item, false, setFilters)
-                            }
+                            setItem={(item) => updateFilterItem(item, false, setFilters)}
                           />
                         ) : (
                           <SimpleFilterInlineEditor
                             item={filterAction}
-                            setItem={(item) =>
-                              updateFilterItem(item, false, setFilters)
-                            }
+                            setItem={(item) => updateFilterItem(item, false, setFilters)}
                             openEditorFor={(filter) =>
                               setEditorItem({ item: filter, type: "filter" })
                             }
@@ -529,18 +458,17 @@ export const GlobalOperationDesigner = (props: Props) => {
                   <StepInlineEditor
                     key={modifierAction.uid}
                     item={modifierAction}
-                    setItem={(item) =>
-                      updateApplyItem(item, false, setAppliers)
-                    }
-                    deleteItem={() =>
-                      updateApplyItem(modifierAction, true, setAppliers)
-                    }
+                    setItem={(item) => updateApplyItem(item, false, setAppliers)}
+                    deleteItem={() => updateApplyItem(modifierAction, true, setAppliers)}
                     relevantIo={modifierAction.output}
                     primaryText={modifierAction.output.displayName}
                     secondaryText={modifierAction.name}
-                    editor={<ApplyActionInlineEditor item={modifierAction} setItem={(item) =>
-                      updateApplyItem(item, false, setAppliers)
-                    } />}
+                    editor={
+                      <ApplyActionInlineEditor
+                        item={modifierAction}
+                        setItem={(item) => updateApplyItem(item, false, setAppliers)}
+                      />
+                    }
                   />
                 ))}
                 onAddItem={() => setAddItem("applier")}
@@ -556,9 +484,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           key={editorItem?.item.uid}
           open={!!editorItem && editorItem.type === "filter"}
           action={editorItem?.item}
-          setAction={(updatedFilter) =>
-            updateFilterItem(updatedFilter, false, setFilters)
-          }
+          setAction={(updatedFilter) => updateFilterItem(updatedFilter, false, setFilters)}
           onClose={() => setEditorItem(null)}
           onViewItem={() => {}}
         />
