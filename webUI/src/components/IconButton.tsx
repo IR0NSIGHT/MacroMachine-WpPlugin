@@ -2,7 +2,9 @@ import { Button, Tooltip } from "@mui/material";
 
 export type ButtonProps = {
   disabled?: boolean;
-  onClick: () => void;
+  // eslint-disable-next-line no-undef
+  onClick: React.MouseEventHandler<HTMLButtonElement> | undefined;
+  // eslint-disable-next-line no-undef
   icon: React.ReactNode;
   tooltip?: string;
   title?: string;
