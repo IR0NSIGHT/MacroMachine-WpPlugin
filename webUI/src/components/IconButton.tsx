@@ -5,8 +5,9 @@ export type ButtonProps = {
   onClick: () => void;
   icon: React.ReactNode;
   tooltip?: string;
+  title?: string;
 };
-export const MMIconButton = ({ disabled, onClick, icon, tooltip }: ButtonProps) => {
+export const MMIconButton = ({ disabled, onClick, icon, tooltip, title }: ButtonProps) => {
   return (
     <Tooltip title={tooltip}>
       <Button
@@ -24,7 +25,9 @@ export const MMIconButton = ({ disabled, onClick, icon, tooltip }: ButtonProps) 
             margin: 0,
           },
         }}
-      />
+      >
+        {title}
+      </Button>
     </Tooltip>
   );
 };

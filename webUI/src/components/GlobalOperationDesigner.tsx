@@ -35,6 +35,7 @@ import { useDefaultAppliersQuery, useDefaultFiltersQuery } from "@/API/queries";
 import { PageLoadingSpinner } from "@/PageLoadingSpinner";
 import { fillParentSx } from "@/App";
 import { MMIconButton } from "./IconButton";
+import React from "react";
 type Props = {
   onSave: (macro: MacroDTO, actions: ActionDTO[]) => void;
   onExecute: MacroExecuteRequester;
@@ -94,7 +95,7 @@ const ApplierInlineEditor = ({ item, setItem, deleteItem, openEditorFor }: StepI
           onClick={() => openEditorFor(item)}
           icon={<EditIcon />}
         />
-        <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />} />
+        <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />}/>
       </ButtonGroup>
       <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
     </Box>
@@ -150,6 +151,58 @@ const updateApplyItem = (
     setAppliers((prev) => prev.map(mapper));
   }
 };
+
+function EditorPanel({
+  title,
+  listItems,
+  addButtonTitle,
+  addButtonVisible,
+  onClearList,
+  onAddItem,
+}: {
+  title: String;
+  listItems: React.JSX.Element[];
+  onClearList: () => void;
+  onAddItem: () => void;
+  addButtonTitle: string;
+  addButtonVisible: boolean;
+}) {
+  return (
+    <Paper sx={{ width: "100%", p: 1 }}>
+      <Typography variant="h4">{title}</Typography>
+      { listItems.length != 0 &&
+        <MMIconButton
+          disabled={false}
+          onClick={() => onClearList()}
+          icon={<ClearIcon />}
+          tooltip={"Delete all items"}
+          title="Delete all"
+        />
+      }
+      <List
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {listItems}
+        {addButtonVisible && (
+          <ListItem disablePadding>
+            <ListItemButton>
+              <MMIconButton
+                disabled={false}
+                onClick={onAddItem}
+                icon={<AddIcon />}
+                tooltip={addButtonTitle}
+                title={addButtonTitle}
+              />
+            </ListItemButton>
+          </ListItem>
+        )}
+      </List>
+    </Paper>
+  );
+}
 
 export const GlobalOperationDesigner = (props: Props) => {
   console.log("Rerender Global Operation Designer!");
@@ -284,6 +337,7 @@ export const GlobalOperationDesigner = (props: Props) => {
       }}
       p={1}
     >
+      <Typography variant="h5" >Design a new Global Operation</Typography>
       <Box
         sx={{
           ...fillParentSx,
@@ -329,11 +383,10 @@ export const GlobalOperationDesigner = (props: Props) => {
         </ButtonGroup>
 
         <Paper sx={{ width: "100%" }}>
-          Input B
           <TextField
             value={title ?? ""}
             onChange={(e) => setTitle(e.target.value)}
-            label="Macro Name"
+            label="Operation Name"
             variant="outlined"
             fullWidth
             placeholder="My new Global Operation Macro"
@@ -341,7 +394,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           <TextField
             value={description ?? ""}
             onChange={(e) => setDescription(e.target.value)}
-            label="Macro Description"
+            label="Operation Description"
             variant="outlined"
             fullWidth
             placeholder="This macro does a complex global operation"
@@ -350,32 +403,12 @@ export const GlobalOperationDesigner = (props: Props) => {
 
         <Grid container spacing={2}>
           <Grid size={sxBreakPoints}>
-            {" "}
-            {/** FILTERS */}
             <Item>
-              <Paper
-                sx={{
-                  width: "100%",
-                }}
-              >
-                <Typography>Filter by:</Typography>
-                <ButtonGroup>
-                  {sortedFilters.length != 0 && (
-                    <MMIconButton
-                      disabled={false}
-                      onClick={() => setFilters([])}
-                      icon={<ClearIcon />}
-                      tooltip={"Delete all filters"}
-                    />
-                  )}
-                </ButtonGroup>
-                <List
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  {sortedFilters.map((filterAction) => (
+              {
+                <EditorPanel
+                  title="Filters"
+                  onClearList={() => setFilters([])}
+                  listItems={sortedFilters.map((filterAction) => (
                     <FilterInlineEditor
                       key={filterAction.uid}
                       item={filterAction}
@@ -384,41 +417,19 @@ export const GlobalOperationDesigner = (props: Props) => {
                       openEditorFor={(filter) => setEditorItem({ item: filter, type: "filter" })}
                     />
                   ))}
-
-                  {unusedFilters && unusedFilters.length != 0 && (
-                    <ListItem disablePadding>
-                      <ListItemButton>
-                        <MMIconButton
-                          disabled={false}
-                          onClick={() => setAddItem("filter")}
-                          icon={<AddIcon />}
-                          tooltip={"Add new filter"}
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  )}
-                </List>
-              </Paper>
+                  addButtonTitle={"Add filter"}
+                  onAddItem={() => setAddItem("filter")}
+                  addButtonVisible={(unusedFilters?.length ?? 0) != 0}
+                />
+              }
             </Item>
           </Grid>
           <Grid size={sxBreakPoints}>
-            {" "}
-            {/** MODIFIERS */}
             <Item>
-              <Paper sx={{ width: "100%" }}>
-                Appliers
-                <Typography>Apply:</Typography>
-                <ButtonGroup>
-                  {sortedFilters.length != 0 && (
-                    <MMIconButton
-                      disabled={false}
-                      onClick={() => setAppliers([])}
-                      icon={<ClearIcon />}
-                      tooltip={"Delete all appliers"}
-                    />
-                  )}
-                </ButtonGroup>
-                {sortedAppliers.map((modifierAction) => (
+              <EditorPanel
+                title={"Actions"}
+                onClearList={() => setAppliers([])}
+                listItems={sortedAppliers.map((modifierAction) => (
                   <ApplierInlineEditor
                     key={modifierAction.uid}
                     item={modifierAction}
@@ -429,15 +440,10 @@ export const GlobalOperationDesigner = (props: Props) => {
                     }
                   />
                 ))}
-                {unusedAppliers && unusedAppliers.length != 0 && (
-                  <MMIconButton
-                    disabled={false}
-                    onClick={() => setAddItem("applier")}
-                    icon={<AddIcon />}
-                    tooltip={"Add new applier"}
-                  />
-                )}
-              </Paper>
+                onAddItem={() => setAddItem("applier")}
+                addButtonTitle={"Add new action"}
+                addButtonVisible={(unusedAppliers?.length ?? 0) != 0}
+              />
             </Item>
           </Grid>
         </Grid>
@@ -467,7 +473,11 @@ export const GlobalOperationDesigner = (props: Props) => {
             const list: StepItemType[] = [
               ...filters,
               ...selected.map((i) =>
-                filterAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
+                filterAutoName({
+                  ...i,
+                  uid: crypto.randomUUID(),
+                  active: true,
+                }),
               ),
             ];
             setFilters(list);
@@ -489,7 +499,11 @@ export const GlobalOperationDesigner = (props: Props) => {
             const list: StepItemType[] = [
               ...appliers,
               ...selected.map((i) =>
-                actionAutoName({ ...i, uid: crypto.randomUUID(), active: true }),
+                actionAutoName({
+                  ...i,
+                  uid: crypto.randomUUID(),
+                  active: true,
+                }),
               ),
             ];
             setAppliers(list);
