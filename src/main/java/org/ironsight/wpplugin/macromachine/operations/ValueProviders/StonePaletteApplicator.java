@@ -147,4 +147,14 @@ public class StonePaletteApplicator implements IPositionValueSetter
         return obj != null && this.getClass().equals(obj.getClass())
                 && Arrays.equals(materials, ((StonePaletteApplicator) obj).materials);
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

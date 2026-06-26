@@ -124,4 +124,14 @@ public class TestInputOutput implements IPositionValueSetter, IPositionValueGett
     public String getDescription() {
         return "test class for getting values";
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

@@ -159,4 +159,14 @@ public class BlockFacingDirectionIO implements IPositionValueGetter
     public ProviderType getProviderType() {
         return ProviderType.BLOCK_DIRECTION;
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

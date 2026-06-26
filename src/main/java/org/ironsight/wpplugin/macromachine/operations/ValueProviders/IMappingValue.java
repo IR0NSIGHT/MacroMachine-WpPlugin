@@ -62,4 +62,8 @@ public interface IMappingValue extends IDisplayUnit
     ProviderType getProviderType();
 
     boolean equals(Object o);
+
+    int getColorForValue(int value);
+
+    String getIconNameForValue(int value);
 }

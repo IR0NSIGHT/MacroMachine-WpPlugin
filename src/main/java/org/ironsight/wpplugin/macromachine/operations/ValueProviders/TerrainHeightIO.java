@@ -188,4 +188,14 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
     public int getValueAt(Tile tile, int tileX, int tileY) {
         return tile.getIntHeight(tileX, tileY);
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

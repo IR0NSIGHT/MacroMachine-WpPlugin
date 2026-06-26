@@ -144,4 +144,14 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
     @Override
     public void prepareForDimension(Dimension dim) {
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

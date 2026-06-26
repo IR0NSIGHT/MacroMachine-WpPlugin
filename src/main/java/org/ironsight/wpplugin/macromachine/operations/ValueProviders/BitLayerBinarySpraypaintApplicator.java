@@ -202,4 +202,14 @@ public class BitLayerBinarySpraypaintApplicator implements IPositionValueSetter,
     public Layer getLayer() {
         return layer;
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

@@ -230,4 +230,14 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
     public String toString() {
         return getName();
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

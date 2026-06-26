@@ -145,4 +145,14 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
     public ProviderType getProviderType() {
         return ProviderType.TERRAIN;
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

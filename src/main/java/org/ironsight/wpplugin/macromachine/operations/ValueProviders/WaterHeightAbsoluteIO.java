@@ -170,4 +170,14 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
     public String getToolTipText() {
         return getDescription();
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

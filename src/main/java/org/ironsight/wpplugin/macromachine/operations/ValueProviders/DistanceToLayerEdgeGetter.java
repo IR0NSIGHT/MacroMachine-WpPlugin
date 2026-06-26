@@ -229,4 +229,14 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
     public EditableIO instantiateWithValues(int[] values) {
         return new DistanceToLayerEdgeGetter(values[0] == 1, layerName, layerId, values[1]);
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

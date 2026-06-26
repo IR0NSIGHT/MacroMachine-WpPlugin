@@ -163,4 +163,14 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
     public String toString() {
         return "RandomNoise{" + "seed=" + seed + ", chance=" + chance + '}';
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

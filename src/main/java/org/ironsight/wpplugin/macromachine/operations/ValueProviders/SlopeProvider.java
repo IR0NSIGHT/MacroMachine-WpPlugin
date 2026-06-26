@@ -118,4 +118,14 @@ public class SlopeProvider implements IPositionValueGetter
     public String getDescription() {
         return "get the slope of a position in degrees from 0 to 90°";
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

@@ -153,4 +153,14 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO
     public int hashCode() {
         return Objects.hash(min, max, seed, frequency, scale);
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

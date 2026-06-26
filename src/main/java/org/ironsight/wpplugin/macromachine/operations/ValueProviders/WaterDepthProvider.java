@@ -157,4 +157,14 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     public int hashCode() {
         return getProviderType().hashCode();
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }

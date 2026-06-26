@@ -189,4 +189,14 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     public Layer getLayer() {
         return Annotations.INSTANCE;
     }
+
+    @Override
+    public int getColorForValue(int value) {
+        return 0;
+    }
+
+    @Override
+    public String getIconNameForValue(int value) {
+        return "";
+    }
 }
