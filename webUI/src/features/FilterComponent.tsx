@@ -80,7 +80,14 @@ export const SimpleFilterInlineEditor = ({
   return (
     <>
       <Box
-        sx={{ ...fillParentSx, flexDirection: "row", display: "flex", alignItems: "center", gap: 1, flexWrap:"wrap" }}
+        sx={{
+          ...fillParentSx,
+          flexDirection: "row",
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          flexWrap: "wrap",
+        }}
       >
         <ButtonGroup>
           <InvertFilterButton onClick={() => setItem(invertFilter(item))} />
@@ -133,6 +140,9 @@ export const StepInlineEditor = ({
           py: 0,
           borderColor: "divider",
           alignItems: "stretch",
+
+          filter: item.active ? "none" : "grayscale(100%)",
+          opacity: item.active ? 1 : 0.4,
         }}
       >
         <Box
@@ -159,17 +169,11 @@ export const StepInlineEditor = ({
                 justifyContent: "center",
               }}
             >
-              <Avatar
-                src={ioToIconName(relevantIo)}
-                sx={{
-                  filter: item.active ? "none" : "grayscale(100%)",
-                  opacity: item.active ? 1 : 0.4,
-                }}
-              />
+              <Avatar src={ioToIconName(relevantIo)} />
             </ListItemAvatar>
 
             <ListItemText
-              sx={{maxWidth: 400}}
+              sx={{ maxWidth: 400 }}
               primary={primaryText}
               secondary={secondaryText}
               primaryTypographyProps={{
@@ -192,16 +196,17 @@ export const StepInlineEditor = ({
                 />
               </Tooltip>
 
-                <MMIconButton
-                  disabled={false}
-                  onClick={deleteItem}
-                  icon={<ClearIcon />}
-                  tooltip="Delete this item"
-                />
+              <MMIconButton
+                disabled={false}
+                onClick={deleteItem}
+                icon={<ClearIcon />}
+                tooltip="Delete this item"
+              />
             </Box>
           </Box>
-
+          <Box sx={{ pointerEvents: item.active ? "auto" : "none" }}>
           {editor}
+          </Box>
         </Box>
       </ListItemButton>
     </ListItem>
