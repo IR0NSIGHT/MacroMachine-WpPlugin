@@ -164,6 +164,15 @@ const explainRangeFilter = (filter: ActionDTO): string => {
   );
 };
 
+export const destructureSimpleFilter = (filter: ActionDTO) => {
+  const passValues = allowedValues(filter);
+  const blockValues = forbiddenValues(filter);
+
+  const isOnlyOn: boolean = blockValues.length >= passValues.length;
+  const relevantMappings = isOnlyOn ? passValues : blockValues;
+  return { isOnlyOn: isOnlyOn, relevantMappings: relevantMappings };
+};
+
 const explainSimpleFilter = (filter: ActionDTO): string => {
   const passValues = allowedValues(filter);
   const blockValues = forbiddenValues(filter);
@@ -201,7 +210,11 @@ export const filterAutoName = (filter: StepItemType): StepItemType => {
   const description = "Filter: Reject blocks based on " + filter.input.displayName;
   const isRange = isRangeFilter(filter);
   if (!isRange) {
-    return { ...filter, name: explainSimpleFilter(filter), description: description };
+    return {
+      ...filter,
+      name: explainSimpleFilter(filter),
+      description: description,
+    };
   } else {
     const name = explainRangeFilter(filter);
     console.log("auto naming filter", name);

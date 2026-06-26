@@ -2,7 +2,7 @@ import { Popover, Typography } from "@mui/material";
 import { useState } from "react";
 import { MMIconButton } from "./IconButton";
 
-export default function HelpButton({ explanation }: { explanation: String }) {
+export default function HelpButton({ explanation }: { explanation: string }) {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event: any) => {

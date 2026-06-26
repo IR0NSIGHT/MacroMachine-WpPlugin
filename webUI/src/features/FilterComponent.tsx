@@ -18,6 +18,7 @@ import {
 import { SelectChangeEvent } from "@mui/material/Select";
 import { MMIconButton } from "../components/IconButton";
 import { StepItemType } from "./Execution";
+import FaceIcon from "@mui/icons-material/Face";
 import {
   namedMapping,
   invertFilter,
@@ -25,7 +26,7 @@ import {
   setFilterRange,
   filterAutoName,
   ioNamedValues,
-  getRelevantMappings,
+  destructureSimpleFilter,
 } from "./Filters";
 import { theme } from "@/theme";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
@@ -33,7 +34,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import ClearIcon from "@mui/icons-material/Clear";
 import { InputOutputDTO, InputOutputDTOIoParametersInner } from "@/generated/client";
 import { fillParentSx } from "@/App";
-import { fill } from "lodash";
+
+export const getIconForValue = (_io: InputOutputDTO, _value: number) => {
+  return <FaceIcon />;
+};
 
 export const ioToIconName = (io: InputOutputDTO) => {
   //FIXME icons are not built into dist
@@ -69,7 +73,7 @@ export const SimpleFilterInlineEditor = ({
   setItem: (item: StepItemType) => void;
   openEditorFor: (item: StepItemType) => void;
 }) => {
-  const mappings = getRelevantMappings(item);
+  const filterData = destructureSimpleFilter(item);
   return (
     <>
       <Box
@@ -91,8 +95,19 @@ export const SimpleFilterInlineEditor = ({
             tooltip={""}
           />
         </ButtonGroup>
-        {mappings.map((m) => (
-          <Chip key={m.input} label={m.inputName} />
+        <Chip
+          key={"isOnlyOn"}
+          label={filterData.isOnlyOn ? "Only on" : "Except on"}
+          color="info"
+          variant="outlined"
+        />
+        {filterData.relevantMappings.map((m) => (
+          <Chip
+            key={m.input}
+            label={m.inputName}
+            variant="outlined"
+            icon={getIconForValue(item.input, m.input)}
+          />
         ))}
       </Box>
     </>
@@ -153,29 +168,42 @@ export const StepInlineEditor = ({
               display: "flex",
               gap: 1,
               alignItems: "center",
+              flexWrap: "wrap",
             }}
           >
-            <ListItemAvatar
+            <Box
               sx={{
+                ...fillParentSx,
+                flexDirection: "row",
                 display: "flex",
+                gap: 1,
                 alignItems: "center",
-                justifyContent: "center",
+                minWidth: 250,
               }}
             >
-              <Avatar src={ioToIconName(relevantIo)} />
-            </ListItemAvatar>
+              <ListItemAvatar
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Avatar src={ioToIconName(relevantIo)} />
+              </ListItemAvatar>
 
-            <ListItemText
-              sx={{ maxWidth: 400 }}
-              primary={primaryText}
-              secondary={secondaryText}
-              primaryTypographyProps={{
-                color: item.active ? "text.primary" : "text.disabled",
-              }}
-              secondaryTypographyProps={{
-                color: item.active ? "text.secondary" : "text.disabled",
-              }}
-            />
+              <ListItemText
+                sx={{ maxWidth: 400 }}
+                primary={primaryText}
+                secondary={secondaryText}
+                primaryTypographyProps={{
+                  color: item.active ? "text.primary" : "text.disabled",
+                }}
+                secondaryTypographyProps={{
+                  color: item.active ? "text.secondary" : "text.disabled",
+                }}
+              />
+            </Box>
+
             <Box>
               <Tooltip title={"Enable item"}>
                 <Switch
@@ -281,6 +309,7 @@ export const RangeFilterInlineEditor = ({
       sx={{
         display: "flex",
         justifyContent: "left",
+        alignItems: "center",
         py: 2,
         px: 4,
         borderRadius: 2,

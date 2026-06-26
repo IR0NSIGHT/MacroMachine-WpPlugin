@@ -1,16 +1,4 @@
-import {
-  Box,
-  ButtonGroup,
-  List,
-  Paper,
-  Switch,
-  TextField,
-  Typography,
-  Grid,
-  ListItem,
-  ListItemButton,
-  Button,
-} from "@mui/material";
+import { Box, ButtonGroup, List, Paper, TextField, Typography, Grid } from "@mui/material";
 import Item from "@mui/material/Grid";
 
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -18,10 +6,8 @@ import SaveIcon from "@mui/icons-material/Save";
 import { ActionDTO, MacroDTO } from "@/types/DTO";
 import { useEffect, useMemo, useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
-import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
-import { filterAutoName, invertFilter, isFilter, isRangeFilter } from "@/features/Filters";
+import { filterAutoName, isFilter, isRangeFilter } from "@/features/Filters";
 import { isStepItem, isStepMacro, StepItemType } from "@/features/Execution";
-import EditIcon from "@mui/icons-material/Edit";
 import { actionAutoName, isSimpleAction } from "@/features/Action";
 import { FilterValueDialog } from "./MacroList/ActionDetailsDialog";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
@@ -51,13 +37,6 @@ type Props = {
   actions?: ActionDTO[];
 };
 
-type StepItemProps = {
-  item: StepItemType;
-  setItem: (item: StepItemType) => void;
-  deleteItem: () => void;
-  openEditorFor: (item: StepItemType) => void;
-};
-
 function constructRunnable(
   sortedFiltersArg: StepItemType[],
   sortedAppliersArg: StepItemType[],
@@ -74,41 +53,6 @@ function constructRunnable(
   };
   return runnable;
 }
-
-const ApplierInlineEditor = ({ item, setItem, deleteItem, openEditorFor }: StepItemProps) => {
-  return (
-    <Box
-      key={item.uid}
-      sx={{
-        display: "flex",
-        flexDirection: "row",
-      }}
-    >
-      <Switch
-        checked={item.active}
-        onChange={(e) => {
-          setItem({ ...item, active: e.target.checked });
-        }}
-      />
-      <ButtonGroup>
-        {isFilter(item) && (
-          <MMIconButton
-            disabled={!item.active}
-            onClick={() => setItem(invertFilter(item))}
-            icon={<SwitchLeftIcon />}
-          />
-        )}
-        <MMIconButton
-          disabled={!item.active}
-          onClick={() => openEditorFor(item)}
-          icon={<EditIcon />}
-        />
-        <MMIconButton disabled={false} onClick={deleteItem} icon={<ClearIcon />} />
-      </ButtonGroup>
-      <Typography color={item.active ? "text.primary" : "text.disabled"}>{item.name}</Typography>
-    </Box>
-  );
-};
 
 const sortInactiveLast = (a: StepItemType, b: StepItemType): number => {
   return sortAlphabetical(a, b);
@@ -169,7 +113,7 @@ function EditorPanel({
   onAddItem,
   helpString,
 }: {
-  title: String;
+  title: string;
   listItems: React.JSX.Element[];
   onClearList: () => void;
   onAddItem: () => void;
@@ -333,7 +277,7 @@ export const GlobalOperationDesigner = (props: Props) => {
 
   const unusedAppliers = defaultAppliers;
 
-  const sxBreakPoints = { sm: 12, md: 6, xl: 4 };
+  const sxBreakPoints = { sm: 12, lg: 6, xl: 4 };
   return (
     <Box
       sx={{
