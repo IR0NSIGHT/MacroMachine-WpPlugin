@@ -40,6 +40,12 @@ public class InputOutputDTO
     @ArraySchema(schema = @Schema(description = "Display names for discrete values", example = "Blue", requiredMode = Schema.RequiredMode.REQUIRED))
     private final String[] valueDisplayNames;
 
+    @ArraySchema(schema = @Schema(description = "Colors for discrete values", example = "-16776961", requiredMode = Schema.RequiredMode.REQUIRED))
+    private final int[] colors;
+
+    @ArraySchema(schema = @Schema(description = "Icon names for discrete values", example = "droplet", requiredMode = Schema.RequiredMode.REQUIRED))
+    private final String[] iconNames;
+
     @Schema(description = "Whether the values are discrete instead of continuous (colors are discrete, forest strength % is continuous)", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
     private final boolean discrete;
 
@@ -50,6 +56,7 @@ public class InputOutputDTO
     public InputOutputDTO(@JsonProperty("displayName") String displayName,
             @JsonProperty("description") String description, @JsonProperty("min") int min, @JsonProperty("max") int max,
             @JsonProperty("ignoreValue") int ignoreValue, @JsonProperty("valueDisplayNames") String[] valueDisplayNames,
+            @JsonProperty("colors") int[] colors, @JsonProperty("iconNames") String[] iconNames,
             @JsonProperty("discrete") boolean discrete, @JsonProperty("type") ProviderType type,
             @JsonProperty("ioParameters") List<IoParameter> ioParameters) {
         this.displayName = displayName;
@@ -58,28 +65,33 @@ public class InputOutputDTO
         this.max = max;
         this.ignoreValue = ignoreValue;
         this.valueDisplayNames = valueDisplayNames;
+        this.colors = colors;
+        this.iconNames = iconNames;
         this.discrete = discrete;
         this.type = type;
         this.ioParameters = Objects.requireNonNull(ioParameters, "ioParameters can not be null");
     }
 
     public static InputOutputDTO fromOutputSetter(IPositionValueSetter setter) {
+        int[] values = Arrays.stream(setter.getAllOutputValues()).filter(i -> !setter.isIgnoreValue(i)).toArray();
         return new InputOutputDTO(setter.getName(), setter.getDescription(), setter.getMinValue(), setter.getMaxValue(),
                 IPositionValueSetter.getIgnoreValue(setter),
-                Arrays.stream(setter.getAllOutputValues())
-                        .filter(i -> !setter.isIgnoreValue(i))
-                        .mapToObj(setter::valueToString)
-                        .toArray(String[]::new),
-                setter.isDiscrete(), setter.getProviderType(), Arrays.asList(setter.getSaveData()));
+                Arrays.stream(values).mapToObj(setter::valueToString).toArray(String[]::new),
+                Arrays.stream(values).map(setter::getColorForValue).toArray(),
+                Arrays.stream(values).mapToObj(setter::getIconNameForValue).toArray(String[]::new), setter.isDiscrete(),
+                setter.getProviderType(), Arrays.asList(setter.getSaveData()));
     }
 
     public static InputOutputDTO fromInputGetter(IPositionValueGetter getter) {
+        int[] values = getter.getAllInputValues();
         return new InputOutputDTO(getter.getName(), getter.getDescription(), getter.getMinValue(), getter.getMaxValue(),
                 (getter instanceof IPositionValueSetter setter)
                         ? IPositionValueSetter.getIgnoreValue(setter)
                         : IGNORE_VALUE,
-                Arrays.stream(getter.getAllInputValues()).mapToObj(getter::valueToString).toArray(String[]::new),
-                getter.isDiscrete(), getter.getProviderType(), Arrays.asList(getter.getSaveData()));
+                Arrays.stream(values).mapToObj(getter::valueToString).toArray(String[]::new),
+                Arrays.stream(values).map(getter::getColorForValue).toArray(),
+                Arrays.stream(values).mapToObj(getter::getIconNameForValue).toArray(String[]::new), getter.isDiscrete(),
+                getter.getProviderType(), Arrays.asList(getter.getSaveData()));
     }
 
     public List<Object> getIoParameters() {
@@ -100,6 +112,14 @@ public class InputOutputDTO
 
     public String[] getValueDisplayNames() {
         return valueDisplayNames;
+    }
+
+    public int[] getColors() {
+        return colors;
+    }
+
+    public String[] getIconNames() {
+        return iconNames;
     }
 
     public boolean isDiscrete() {
@@ -145,7 +165,9 @@ public class InputOutputDTO
                 && isDiscrete() == that.isDiscrete() && Objects.equals(getDisplayName(), that.getDisplayName())
                 && Objects.equals(getDescription(), that.getDescription())
                 && Objects.equals(ioParameters, that.ioParameters)
-                && Arrays.equals(getValueDisplayNames(), that.getValueDisplayNames()) && getType() == that.getType();
+                && Arrays.equals(getValueDisplayNames(), that.getValueDisplayNames())
+                && Arrays.equals(getColors(), that.getColors()) && Arrays.equals(getIconNames(), that.getIconNames())
+                && getType() == that.getType();
     }
 
     @Override
@@ -153,6 +175,8 @@ public class InputOutputDTO
         int result = Objects.hash(getDisplayName(), getDescription(), getMin(), getMax(), getIgnoreValue(),
                 isDiscrete(), getType());
         result = 31 * result + Arrays.hashCode(getValueDisplayNames());
+        result = 31 * result + Arrays.hashCode(getColors());
+        result = 31 * result + Arrays.hashCode(getIconNames());
         return result;
     }
 
@@ -160,7 +184,7 @@ public class InputOutputDTO
     public String toString() {
         return "InputOutputDTO{" + "displayName='" + displayName + '\'' + ", description='" + description + '\''
                 + ", min=" + min + ", max=" + max + ", ignoreValue=" + ignoreValue + ", ioParameters=" + ioParameters
-                + ", valueDisplayNames=" + Arrays.toString(valueDisplayNames) + ", discrete=" + discrete + ", type="
-                + type + '}';
+                + ", valueDisplayNames=" + Arrays.toString(valueDisplayNames) + ", colors=" + Arrays.toString(colors)
+                + ", iconNames=" + Arrays.toString(iconNames) + ", discrete=" + discrete + ", type=" + type + '}';
     }
 }

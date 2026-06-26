@@ -12,6 +12,8 @@ Describes an input/output provider configuration
 | `max`               | number                                                                             |
 | `ignoreValue`       | number                                                                             |
 | `valueDisplayNames` | Array&lt;string&gt;                                                                |
+| `colors`            | Array&lt;number&gt;                                                                |
+| `iconNames`         | Array&lt;string&gt;                                                                |
 | `discrete`          | boolean                                                                            |
 | `type`              | string                                                                             |
 | `ioParameters`      | [Array&lt;InputOutputDTOIoParametersInner&gt;](InputOutputDTOIoParametersInner.md) |
@@ -29,6 +31,8 @@ const example = {
   "max": 255,
   "ignoreValue": -1,
   "valueDisplayNames": null,
+  "colors": null,
+  "iconNames": null,
   "discrete": true,
   "type": null,
   "ioParameters": null,

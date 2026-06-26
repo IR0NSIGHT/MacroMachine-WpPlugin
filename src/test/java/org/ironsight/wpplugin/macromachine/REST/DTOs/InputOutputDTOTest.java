@@ -18,13 +18,13 @@ class InputOutputDTOTest
     public void fromOutputSetter() {
         var setter = new AnnotationSetter();
         var dto = InputOutputDTO.fromOutputSetter(new AnnotationSetter());
+        int[] values = Arrays.stream(setter.getAllOutputValues()).filter(i -> !setter.isIgnoreValue(i)).toArray();
         var expected = new InputOutputDTO(setter.getName(), setter.getDescription(), setter.getMinValue(),
                 setter.getMaxValue(), IPositionValueSetter.getIgnoreValue(setter),
-                Arrays.stream(setter.getAllOutputValues())
-                        .filter(i -> !setter.isIgnoreValue(i))
-                        .mapToObj(setter::valueToString)
-                        .toArray(String[]::new),
-                setter.isDiscrete(), setter.getProviderType(), Arrays.asList(setter.getSaveData()));
+                Arrays.stream(values).mapToObj(setter::valueToString).toArray(String[]::new),
+                Arrays.stream(values).map(setter::getColorForValue).toArray(),
+                Arrays.stream(values).mapToObj(setter::getIconNameForValue).toArray(String[]::new), setter.isDiscrete(),
+                setter.getProviderType(), Arrays.asList(setter.getSaveData()));
         assertEquals(expected, dto);
     }
 
@@ -32,10 +32,13 @@ class InputOutputDTOTest
     public void fromInputSetter() {
         var setter = new AnnotationSetter();
         var dto = InputOutputDTO.fromInputGetter(new AnnotationSetter());
+        int[] values = setter.getAllInputValues();
         var expected = new InputOutputDTO(setter.getName(), setter.getDescription(), setter.getMinValue(),
                 setter.getMaxValue(), IPositionValueSetter.getIgnoreValue(setter),
-                Arrays.stream(setter.getAllInputValues()).mapToObj(setter::valueToString).toArray(String[]::new),
-                setter.isDiscrete(), setter.getProviderType(), Arrays.asList(setter.getSaveData()));
+                Arrays.stream(values).mapToObj(setter::valueToString).toArray(String[]::new),
+                Arrays.stream(values).map(setter::getColorForValue).toArray(),
+                Arrays.stream(values).mapToObj(setter::getIconNameForValue).toArray(String[]::new), setter.isDiscrete(),
+                setter.getProviderType(), Arrays.asList(setter.getSaveData()));
         assertEquals(expected, dto);
     }
 

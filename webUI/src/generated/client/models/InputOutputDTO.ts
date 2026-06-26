@@ -64,6 +64,18 @@ export interface InputOutputDTO {
    */
   valueDisplayNames: Array<string>;
   /**
+   *
+   * @type {Array<number>}
+   * @memberof InputOutputDTO
+   */
+  colors: Array<number>;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof InputOutputDTO
+   */
+  iconNames: Array<string>;
+  /**
    * Whether the values are discrete instead of continuous (colors are discrete, forest strength % is continuous)
    * @type {boolean}
    * @memberof InputOutputDTO
@@ -123,6 +135,8 @@ export function instanceOfInputOutputDTO(value: object): value is InputOutputDTO
   if (!("max" in value) || value["max"] === undefined) return false;
   if (!("ignoreValue" in value) || value["ignoreValue"] === undefined) return false;
   if (!("valueDisplayNames" in value) || value["valueDisplayNames"] === undefined) return false;
+  if (!("colors" in value) || value["colors"] === undefined) return false;
+  if (!("iconNames" in value) || value["iconNames"] === undefined) return false;
   if (!("discrete" in value) || value["discrete"] === undefined) return false;
   if (!("type" in value) || value["type"] === undefined) return false;
   if (!("ioParameters" in value) || value["ioParameters"] === undefined) return false;
@@ -147,6 +161,8 @@ export function InputOutputDTOFromJSONTyped(
     max: json["max"],
     ignoreValue: json["ignoreValue"],
     valueDisplayNames: json["valueDisplayNames"],
+    colors: json["colors"],
+    iconNames: json["iconNames"],
     discrete: json["discrete"],
     type: json["type"],
     ioParameters: (json["ioParameters"] as Array<any>).map(InputOutputDTOIoParametersInnerFromJSON),
@@ -172,6 +188,8 @@ export function InputOutputDTOToJSONTyped(
     max: value["max"],
     ignoreValue: value["ignoreValue"],
     valueDisplayNames: value["valueDisplayNames"],
+    colors: value["colors"],
+    iconNames: value["iconNames"],
     discrete: value["discrete"],
     type: value["type"],
     ioParameters: (value["ioParameters"] as Array<any>).map(InputOutputDTOIoParametersInnerToJSON),
