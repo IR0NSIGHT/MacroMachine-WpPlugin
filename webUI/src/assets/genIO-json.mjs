@@ -1,104 +1,50 @@
-// THIS IS ONLY TEMPORARY TO EXTRACT INPUTS AND OUTPUTS FROM A JSON
-
 import { promises as fs } from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const _filterType = "INTERMEDIATE_SELECTION";
-const alwaysType = "ALWAYS";
+const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
 
-async function fetchActionsToFile(fileOutputPath) {
-  const response = await fetch("http://localhost:8080/api/actions");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const DEFAULT_FILTERS_PATH = path.join(__dirname, "../mocks/data/defaultFilters.json");
+const DEFAULT_APPLIERS_PATH = path.join(__dirname, "../mocks/data/defaultApplyActions.json");
+
+async function fetchJson(endpoint) {
+  const url = new URL(endpoint, BACKEND_URL);
+  const response = await fetch(url);
 
   if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+    throw new Error(`GET ${url} failed: ${response.status} ${response.statusText}`);
   }
 
-  const data = await response.json();
-
-  await fs.writeFile(fileOutputPath, JSON.stringify(data, null, 2), "utf8");
-
-  console.log(`Saved JSON to ${fileOutputPath}`);
+  return response.json();
 }
 
-const getFilters = async (data, outputPath) => {
-  const seen = new Set();
-
-  const accpetedFilters = data.filter((action) => {
-    if (
-      action.input.type === "INTERMEDIATE" ||
-      action.input.type === alwaysType ||
-      action.output.type !== _filterType
-    )
-      return false;
-
-    const actionHash = action.input.type.trim().toLowerCase();
-
-    if (seen.has(actionHash)) {
-      return false;
-    }
-
-    seen.add(actionHash);
-    return true;
-  });
-  console.log(
-    "filters:",
-    accpetedFilters.map((a) => a.name),
-  );
-
-  const outputRaw = JSON.stringify(accpetedFilters, null, 3);
-  // Write output
-  await fs.writeFile(outputPath, outputRaw, "utf8");
-
-  console.log(`Wrote ${accpetedFilters.length} items to ${outputPath}`);
-};
-
-const getApplyActions = async (data, outputPath) => {
-  const seen = new Set();
-
-  const acceptedItems = data.filter((action) => {
-    if (action.input.type !== alwaysType || action.output.type === _filterType) return false;
-
-    const actionHash = action.output.type.trim().toLowerCase();
-
-    if (seen.has(actionHash)) {
-      return false;
-    }
-
-    seen.add(actionHash);
-    return true;
-  });
-  console.log(
-    "actions",
-    acceptedItems.map((a) => a.name),
-  );
-
-  const outputRaw = JSON.stringify(acceptedItems, null, 3);
-  // Write output
-  await fs.writeFile(outputPath, outputRaw, "utf8");
-
-  console.log(`Wrote ${acceptedItems.length} items to ${outputPath}`);
-};
-
-async function filterJsonFile(inputPath, outputFilters, outputActions) {
-  try {
-    // Read file
-    const raw = await fs.readFile(inputPath, "utf8");
-    // Parse JSON
-    const data = JSON.parse(raw);
-
-    if (!Array.isArray(data)) {
-      throw new Error("JSON file must contain an array");
-    }
-
-    await getFilters(data, outputFilters);
-    await getApplyActions(data, outputActions);
-  } catch (err) {
-    console.error("Error:", err.message);
+async function writeJson(filePath, data) {
+  if (!Array.isArray(data)) {
+    throw new Error(`${filePath} data must be an array`);
   }
+
+  await fs.writeFile(filePath, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+  console.log(`Wrote ${data.length} items to ${filePath}`);
 }
 
-const ACTIONS_PATH = "../mocks/data/actions.json";
+async function main() {
+  console.log(`Fetching mock data from ${BACKEND_URL}`);
 
-// pull data
-await fetchActionsToFile(ACTIONS_PATH);
-// Usage
-filterJsonFile(ACTIONS_PATH, "./defaultFilters.json", "./defaultApplyActions.json");
+  const [filters, appliers] = await Promise.all([
+    fetchJson("/api/actions/filters"),
+    fetchJson("/api/actions/appliers"),
+  ]);
+
+  await Promise.all([
+    writeJson(DEFAULT_FILTERS_PATH, filters),
+    writeJson(DEFAULT_APPLIERS_PATH, appliers),
+  ]);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exitCode = 1;
+});
