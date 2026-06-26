@@ -192,7 +192,9 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
 
     @Override
     public int getColorForValue(int value) {
-        return 0;
+        if (isIgnoreValue(value) || value < 0 || value >= COLORS.length)
+            return 0;
+        return COLORS[value].getRGB();
     }
 
     @Override
