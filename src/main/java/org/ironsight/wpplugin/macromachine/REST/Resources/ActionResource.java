@@ -47,7 +47,8 @@ public class ActionResource
         return ioProvider.getters.stream()
                 .filter(IPositionValueGetter.class::isInstance)
                 .map(IPositionValueGetter.class::cast)
-                .filter(input -> input.getProviderType() != ProviderType.INTERMEDIATE_SELECTION) // "filter by: Filter" is pointless
+                .filter(input -> input.getProviderType() != ProviderType.INTERMEDIATE_SELECTION) // "filter by: Filter"
+                                                                                                 // is pointless
                 .filter(input -> input.getProviderType() != ProviderType.ALWAYS) // so is "Filter by: always"
                 .map(input -> {
                     var filterAction = getNewEmptyAction(UUID.randomUUID()).withInput(input)
@@ -56,7 +57,8 @@ public class ActionResource
                             .withDescription("Default simple filter")
                             .withName("Filter by: " + input.getName());
                     if (!input.isDiscrete()) {
-                        return FilterUtils.asRangeFilter(filterAction, input.getMinValue(), ((input.getMaxValue()+input.getMinValue())/2), true);
+                        return FilterUtils.asRangeFilter(filterAction, input.getMinValue(),
+                                ((input.getMaxValue() + input.getMinValue()) / 2), true);
                     } else {
                         return filterAction.withNewPoints(Arrays.stream(input.getAllInputValues())
                                 .mapToObj(v -> new MappingPoint(v,
@@ -72,7 +74,8 @@ public class ActionResource
     private List<MappingAction> getDefaultAppliers() {
         return ioProvider.setters.stream()
                 .filter(IPositionValueSetter.class::isInstance)
-                .filter(input -> input.getProviderType() != ProviderType.INTERMEDIATE_SELECTION) // "Set: Filter" is pointless
+                .filter(input -> input.getProviderType() != ProviderType.INTERMEDIATE_SELECTION) // "Set: Filter" is
+                                                                                                 // pointless
                 .filter(input -> input.getProviderType() != ProviderType.ALWAYS) // so is "Set: always"
                 .map(IPositionValueSetter.class::cast)
                 .map(output -> {

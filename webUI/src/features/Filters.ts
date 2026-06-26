@@ -25,7 +25,7 @@ export const isFilter = (item: ActionDTO): boolean => {
 
 export const ioNamedValues = (input: InputOutputDTO): NamedValue[] => {
   const inputToString = valueToString(input);
-  
+
   return Array.from({ length: input.max - input.min + 1 }, (_, i) => input.min + i).map(
     (inputNumericValue) => {
       const inputName = inputToString(inputNumericValue);

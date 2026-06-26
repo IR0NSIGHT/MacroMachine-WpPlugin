@@ -31,20 +31,13 @@ import { theme } from "@/theme";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import EditIcon from "@mui/icons-material/Edit";
 import ClearIcon from "@mui/icons-material/Clear";
-import {
-  InputOutputDTO,
-  InputOutputDTOIoParametersInner,
-} from "@/generated/client";
+import { InputOutputDTO, InputOutputDTOIoParametersInner } from "@/generated/client";
 import { fillParentSx } from "@/App";
 import { fill } from "lodash";
 
 export const ioToIconName = (io: InputOutputDTO) => {
   //FIXME icons are not built into dist
-  if (
-    io.type === "NIBBLE_LAYER" &&
-    io.ioParameters.length >= 2 &&
-    io.ioParameters[1] === ""
-  ) {
+  if (io.type === "NIBBLE_LAYER" && io.ioParameters.length >= 2 && io.ioParameters[1] === "") {
     const layerId: InputOutputDTOIoParametersInner = io.ioParameters[1];
     const API_BASE = import.meta.env.VITE_API_BASE_URL;
     return `${API_BASE}/api/layers/${layerId}/icon`;
@@ -204,9 +197,7 @@ export const StepInlineEditor = ({
               />
             </Box>
           </Box>
-          <Box sx={{ pointerEvents: item.active ? "auto" : "none" }}>
-          {editor}
-          </Box>
+          <Box sx={{ pointerEvents: item.active ? "auto" : "none" }}>{editor}</Box>
         </Box>
       </ListItemButton>
     </ListItem>
