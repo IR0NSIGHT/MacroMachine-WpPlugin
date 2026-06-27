@@ -43,6 +43,9 @@ public class InputOutputDTO
     @ArraySchema(schema = @Schema(description = "Colors for discrete values", example = "-16776961", requiredMode = Schema.RequiredMode.REQUIRED))
     private final int[] colors;
 
+    @ArraySchema(schema = @Schema(description = "Icons for each discrete value", example = "annotation_red", requiredMode = Schema.RequiredMode.REQUIRED))
+    private final String[] iconByValue;
+
     @Schema(description = "Icon name for the provider type", example = "droplet", requiredMode = Schema.RequiredMode.REQUIRED)
     private final String iconName;
 
@@ -56,7 +59,8 @@ public class InputOutputDTO
     public InputOutputDTO(@JsonProperty("displayName") String displayName,
             @JsonProperty("description") String description, @JsonProperty("min") int min, @JsonProperty("max") int max,
             @JsonProperty("ignoreValue") int ignoreValue,             @JsonProperty("valueDisplayNames") String[] valueDisplayNames,
-            @JsonProperty("colors") int[] colors, @JsonProperty("iconName") String iconName,
+            @JsonProperty("colors") int[] colors, @JsonProperty("iconByValue") String[] iconByValue,
+            @JsonProperty("iconName") String iconName,
             @JsonProperty("discrete") boolean discrete, @JsonProperty("type") ProviderType type,
             @JsonProperty("ioParameters") List<IoParameter> ioParameters) {
         this.displayName = displayName;
@@ -66,6 +70,7 @@ public class InputOutputDTO
         this.ignoreValue = ignoreValue;
         this.valueDisplayNames = valueDisplayNames;
         this.colors = colors;
+        this.iconByValue = iconByValue;
         this.iconName = iconName;
         this.discrete = discrete;
         this.type = type;
@@ -78,6 +83,7 @@ public class InputOutputDTO
                 IPositionValueSetter.getIgnoreValue(setter),
                 Arrays.stream(values).mapToObj(setter::valueToString).toArray(String[]::new),
                 Arrays.stream(values).map(setter::getColorForValue).toArray(),
+                Arrays.stream(values).mapToObj(setter::getIconForValue).toArray(String[]::new),
                 setter.getIconName(), setter.isDiscrete(),
                 setter.getProviderType(), Arrays.asList(setter.getSaveData()));
     }
@@ -90,6 +96,7 @@ public class InputOutputDTO
                         : IGNORE_VALUE,
                 Arrays.stream(values).mapToObj(getter::valueToString).toArray(String[]::new),
                 Arrays.stream(values).map(getter::getColorForValue).toArray(),
+                Arrays.stream(values).mapToObj(getter::getIconForValue).toArray(String[]::new),
                 getter.getIconName(), getter.isDiscrete(),
                 getter.getProviderType(), Arrays.asList(getter.getSaveData()));
     }
@@ -116,6 +123,10 @@ public class InputOutputDTO
 
     public int[] getColors() {
         return colors;
+    }
+
+    public String[] getIconByValue() {
+        return iconByValue;
     }
 
     public String getIconName() {
@@ -167,6 +178,7 @@ public class InputOutputDTO
                 && Objects.equals(ioParameters, that.ioParameters)
                 && Arrays.equals(getValueDisplayNames(), that.getValueDisplayNames())
                 && Arrays.equals(getColors(), that.getColors())
+                && Arrays.equals(getIconByValue(), that.getIconByValue())
                 && Objects.equals(getIconName(), that.getIconName())
                 && getType() == that.getType();
     }
@@ -177,6 +189,7 @@ public class InputOutputDTO
                 isDiscrete(), getType());
         result = 31 * result + Arrays.hashCode(getValueDisplayNames());
         result = 31 * result + Arrays.hashCode(getColors());
+        result = 31 * result + Arrays.hashCode(getIconByValue());
         result = 31 * result + Objects.hash(getIconName());
         return result;
     }
@@ -186,6 +199,7 @@ public class InputOutputDTO
         return "InputOutputDTO{" + "displayName='" + displayName + '\'' + ", description='" + description + '\''
                 + ", min=" + min + ", max=" + max + ", ignoreValue=" + ignoreValue + ", ioParameters=" + ioParameters
                 + ", valueDisplayNames=" + Arrays.toString(valueDisplayNames) + ", colors=" + Arrays.toString(colors)
-                + ", iconName=" + iconName + ", discrete=" + discrete + ", type=" + type + '}';
+                + ", iconByValue=" + Arrays.toString(iconByValue) + ", iconName=" + iconName + ", discrete=" + discrete
+                + ", type=" + type + '}';
     }
 }

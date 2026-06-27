@@ -70,6 +70,12 @@ export interface InputOutputDTO {
    */
   colors: Array<number>;
   /**
+   *
+   * @type {Array<string>}
+   * @memberof InputOutputDTO
+   */
+  iconByValue: Array<string>;
+  /**
    * Icon name for the provider type
    * @type {string}
    * @memberof InputOutputDTO
@@ -136,6 +142,7 @@ export function instanceOfInputOutputDTO(value: object): value is InputOutputDTO
   if (!("ignoreValue" in value) || value["ignoreValue"] === undefined) return false;
   if (!("valueDisplayNames" in value) || value["valueDisplayNames"] === undefined) return false;
   if (!("colors" in value) || value["colors"] === undefined) return false;
+  if (!("iconByValue" in value) || value["iconByValue"] === undefined) return false;
   if (!("iconName" in value) || value["iconName"] === undefined) return false;
   if (!("discrete" in value) || value["discrete"] === undefined) return false;
   if (!("type" in value) || value["type"] === undefined) return false;
@@ -162,6 +169,7 @@ export function InputOutputDTOFromJSONTyped(
     ignoreValue: json["ignoreValue"],
     valueDisplayNames: json["valueDisplayNames"],
     colors: json["colors"],
+    iconByValue: json["iconByValue"],
     iconName: json["iconName"],
     discrete: json["discrete"],
     type: json["type"],
@@ -189,6 +197,7 @@ export function InputOutputDTOToJSONTyped(
     ignoreValue: value["ignoreValue"],
     valueDisplayNames: value["valueDisplayNames"],
     colors: value["colors"],
+    iconByValue: value["iconByValue"],
     iconName: value["iconName"],
     discrete: value["discrete"],
     type: value["type"],

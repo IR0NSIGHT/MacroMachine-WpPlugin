@@ -13,6 +13,7 @@ Describes an input/output provider configuration
 | `ignoreValue`       | number                                                                             |
 | `valueDisplayNames` | Array&lt;string&gt;                                                                |
 | `colors`            | Array&lt;number&gt;                                                                |
+| `iconByValue`       | Array&lt;string&gt;                                                                |
 | `iconName`          | string                                                                             |
 | `discrete`          | boolean                                                                            |
 | `type`              | string                                                                             |
@@ -32,6 +33,7 @@ const example = {
   "ignoreValue": -1,
   "valueDisplayNames": null,
   "colors": null,
+  "iconByValue": null,
   "iconName": droplet,
   "discrete": true,
   "type": null,

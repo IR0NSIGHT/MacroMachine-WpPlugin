@@ -510,7 +510,7 @@
         "description" : "Represents an executable mapping action, that reads one inputtype from the map and based on that writes output values to the map."
       },
       "InputOutputDTO" : {
-        "required" : [ "colors", "description", "discrete", "displayName", "iconName", "ignoreValue", "ioParameters", "max", "min", "type", "valueDisplayNames" ],
+        "required" : [ "colors", "description", "discrete", "displayName", "iconByValue", "iconName", "ignoreValue", "ioParameters", "max", "min", "type", "valueDisplayNames" ],
         "type" : "object",
         "properties" : {
           "displayName" : {
@@ -556,6 +556,14 @@
               "description" : "Colors for discrete values",
               "format" : "int32",
               "example" : -16776961
+            }
+          },
+          "iconByValue" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "description" : "Icons for each discrete value",
+              "example" : "annotation_red"
             }
           },
           "iconName" : {
