@@ -80,10 +80,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -91,7 +91,7 @@
     "actionType": "SET",
     "name": "Filter by: Annotations",
     "description": "Default simple filter",
-    "uid": "5f487893-4840-4086-ad05-35a6e6cdaecf",
+    "uid": "85e74bf9-b130-49d1-a854-c560ee882d8c",
     "mappingPointsX": [
       0,
       1,
@@ -966,10 +966,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -977,7 +977,7 @@
     "actionType": "SET",
     "name": "Filter by: Biome",
     "description": "Default simple filter",
-    "uid": "0b289f35-ffc4-4636-9577-ce00e6cc9332",
+    "uid": "984305cb-18cd-4b12-840c-0f30c509b3f6",
     "mappingPointsX": [
       0,
       1,
@@ -2114,10 +2114,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -2125,7 +2125,7 @@
     "actionType": "SET",
     "name": "Filter by: Deciduous layer",
     "description": "Default simple filter",
-    "uid": "d8c21423-1762-4a4e-968e-0a5e589f8d11",
+    "uid": "f35ed44a-daea-47b9-8ba1-644e51160b9f",
     "mappingPointsX": [
       0,
       7,
@@ -2514,10 +2514,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -2525,7 +2525,7 @@
     "actionType": "SET",
     "name": "Filter by: distance to Macro Selection",
     "description": "Default simple filter",
-    "uid": "65932704-c236-45bf-b858-a12f940a2913",
+    "uid": "d3bc5eab-df26-4c6b-936d-aa4077314492",
     "mappingPointsX": [
       0,
       50,
@@ -2786,10 +2786,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -2797,7 +2797,7 @@
     "actionType": "SET",
     "name": "Filter by: Frost layer",
     "description": "Default simple filter",
-    "uid": "f58bad2e-a5ec-4d3a-8585-022c0e91b99d",
+    "uid": "087f1af0-7a33-49b7-9c23-f3796752467a",
     "mappingPointsX": [
       0,
       1
@@ -2918,10 +2918,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -2929,7 +2929,7 @@
     "actionType": "SET",
     "name": "Filter by: Heatmap layer",
     "description": "Default simple filter",
-    "uid": "551404a2-7eb9-4fca-bf05-b424a92f9ab7",
+    "uid": "c9dd9d8e-6817-4263-b043-3c0edcbf2517",
     "mappingPointsX": [
       0,
       7,
@@ -4165,10 +4165,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -4176,7 +4176,7 @@
     "actionType": "SET",
     "name": "Filter by: Height",
     "description": "Default simple filter",
-    "uid": "a6d6dc55-a23a-4d81-bc51-1654d0261651",
+    "uid": "a01f82ef-524a-45b5-9e8f-9170d66c25c0",
     "mappingPointsX": [
       -64,
       127,
@@ -5003,10 +5003,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -5014,7 +5014,7 @@
     "actionType": "SET",
     "name": "Filter by: Macro Selection layer",
     "description": "Default simple filter",
-    "uid": "10d78ff0-5e13-4333-879a-1fbc951feac4",
+    "uid": "825b6aa9-dad4-49d9-931d-961524534083",
     "mappingPointsX": [
       0,
       1
@@ -5373,10 +5373,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -5384,7 +5384,7 @@
     "actionType": "SET",
     "name": "Filter by: Perlin Noise",
     "description": "Default simple filter",
-    "uid": "60f2c874-c568-4429-a794-a6cda969dcf2",
+    "uid": "0470b454-2ec1-4c50-a352-7927170049bb",
     "mappingPointsX": [
       0,
       50,
@@ -5705,10 +5705,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -5716,7 +5716,7 @@
     "actionType": "SET",
     "name": "Filter by: Pine layer",
     "description": "Default simple filter",
-    "uid": "4cd774fc-d569-4beb-9437-3c217f9c6957",
+    "uid": "29166624-dff2-4d7f-8a94-ed3fb95b64ad",
     "mappingPointsX": [
       0,
       7,
@@ -5806,10 +5806,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -5817,7 +5817,7 @@
     "actionType": "SET",
     "name": "Filter by: Random Chance",
     "description": "Default simple filter",
-    "uid": "78ef4e23-3464-4c35-a4b4-c427c59024d3",
+    "uid": "3d91ff52-2d07-43a1-a03f-6d0e7348f63c",
     "mappingPointsX": [
       0,
       1
@@ -5878,10 +5878,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -5889,7 +5889,7 @@
     "actionType": "SET",
     "name": "Filter by: Selection",
     "description": "Default simple filter",
-    "uid": "f363bea2-9e38-49aa-b4bc-ebfacf623901",
+    "uid": "e8354c67-4552-44a0-980b-97b68646d93e",
     "mappingPointsX": [
       0,
       1
@@ -6243,10 +6243,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -6254,7 +6254,7 @@
     "actionType": "SET",
     "name": "Filter by: Shadow",
     "description": "Default simple filter",
-    "uid": "233cf5bc-6438-4c61-ae8c-66263f723f08",
+    "uid": "c4119469-cb58-4794-9810-43a32120eb61",
     "mappingPointsX": [
       0,
       50,
@@ -6666,99 +6666,99 @@
         0
       ],
       "iconByValue": [
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        ""
+        "slope_0.svg",
+        "slope_1.svg",
+        "slope_2.svg",
+        "slope_3.svg",
+        "slope_4.svg",
+        "slope_5.svg",
+        "slope_6.svg",
+        "slope_7.svg",
+        "slope_8.svg",
+        "slope_9.svg",
+        "slope_10.svg",
+        "slope_11.svg",
+        "slope_12.svg",
+        "slope_13.svg",
+        "slope_14.svg",
+        "slope_15.svg",
+        "slope_16.svg",
+        "slope_17.svg",
+        "slope_18.svg",
+        "slope_19.svg",
+        "slope_20.svg",
+        "slope_21.svg",
+        "slope_22.svg",
+        "slope_23.svg",
+        "slope_24.svg",
+        "slope_25.svg",
+        "slope_26.svg",
+        "slope_27.svg",
+        "slope_28.svg",
+        "slope_29.svg",
+        "slope_30.svg",
+        "slope_31.svg",
+        "slope_32.svg",
+        "slope_33.svg",
+        "slope_34.svg",
+        "slope_35.svg",
+        "slope_36.svg",
+        "slope_37.svg",
+        "slope_38.svg",
+        "slope_39.svg",
+        "slope_40.svg",
+        "slope_41.svg",
+        "slope_42.svg",
+        "slope_43.svg",
+        "slope_44.svg",
+        "slope_45.svg",
+        "slope_46.svg",
+        "slope_47.svg",
+        "slope_48.svg",
+        "slope_49.svg",
+        "slope_50.svg",
+        "slope_51.svg",
+        "slope_52.svg",
+        "slope_53.svg",
+        "slope_54.svg",
+        "slope_55.svg",
+        "slope_56.svg",
+        "slope_57.svg",
+        "slope_58.svg",
+        "slope_59.svg",
+        "slope_60.svg",
+        "slope_61.svg",
+        "slope_62.svg",
+        "slope_63.svg",
+        "slope_64.svg",
+        "slope_65.svg",
+        "slope_66.svg",
+        "slope_67.svg",
+        "slope_68.svg",
+        "slope_69.svg",
+        "slope_70.svg",
+        "slope_71.svg",
+        "slope_72.svg",
+        "slope_73.svg",
+        "slope_74.svg",
+        "slope_75.svg",
+        "slope_76.svg",
+        "slope_77.svg",
+        "slope_78.svg",
+        "slope_79.svg",
+        "slope_80.svg",
+        "slope_81.svg",
+        "slope_82.svg",
+        "slope_83.svg",
+        "slope_84.svg",
+        "slope_85.svg",
+        "slope_86.svg",
+        "slope_87.svg",
+        "slope_88.svg",
+        "slope_89.svg",
+        "slope_90.svg"
       ],
-      "iconName": "",
+      "iconName": "slope",
       "discrete": false,
       "type": "SLOPE",
       "ioParameters": []
@@ -6778,10 +6778,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -6789,7 +6789,7 @@
     "actionType": "SET",
     "name": "Filter by: Slope",
     "description": "Default simple filter",
-    "uid": "d10bc3a5-cb0a-4584-8125-591d6ec4b938",
+    "uid": "dfddd20f-d7d5-46c4-8e4b-b4b79e52e54b",
     "mappingPointsX": [
       0,
       45,
@@ -8100,10 +8100,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -8111,7 +8111,7 @@
     "actionType": "SET",
     "name": "Filter by: Slope Direction",
     "description": "Default simple filter",
-    "uid": "ef50538f-06cb-4f9b-b689-c69051213390",
+    "uid": "0bed7dd9-2e34-4630-8e65-554fcd16c62d",
     "mappingPointsX": [
       0,
       179,
@@ -9366,10 +9366,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -9377,7 +9377,7 @@
     "actionType": "SET",
     "name": "Filter by: Terrain",
     "description": "Default simple filter",
-    "uid": "85d8b365-b56c-4015-b7f3-3c86437e2fb9",
+    "uid": "e6fb85c2-0da3-4d00-a58a-6d0c07ec16bc",
     "mappingPointsX": [
       0,
       1,
@@ -10377,10 +10377,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -10388,7 +10388,7 @@
     "actionType": "SET",
     "name": "Filter by: Voronoi",
     "description": "Default simple filter",
-    "uid": "11e12409-e21e-4cfc-8b03-bd5f43ec8b17",
+    "uid": "87aba69a-2e3a-4999-9b00-d496c3d10eeb",
     "mappingPointsX": [
       0,
       50,
@@ -10942,10 +10942,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -10953,7 +10953,7 @@
     "actionType": "SET",
     "name": "Filter by: Water Depth",
     "description": "Default simple filter",
-    "uid": "39616997-4e2e-41f9-b213-51c9f01e4b2a",
+    "uid": "0a8f78bd-4f6d-437a-b6bd-874a2e185e8c",
     "mappingPointsX": [
       0,
       50,
@@ -12359,10 +12359,10 @@
         0
       ],
       "iconByValue": [
-        "",
-        ""
+        "actionfilter_block.svg",
+        "actionfilter_pass.svg"
       ],
-      "iconName": "",
+      "iconName": "actionfilter",
       "discrete": true,
       "type": "INTERMEDIATE_SELECTION",
       "ioParameters": []
@@ -12370,7 +12370,7 @@
     "actionType": "SET",
     "name": "Filter by: water level",
     "description": "Default simple filter",
-    "uid": "1ac07758-d960-4b64-a941-2f64693e5e43",
+    "uid": "7d7b6848-a58e-43e3-81de-37c8397332dd",
     "mappingPointsX": [
       -64,
       127,

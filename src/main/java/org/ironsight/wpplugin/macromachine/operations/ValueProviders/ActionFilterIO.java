@@ -236,4 +236,18 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
         return 0;
     }
 
+    @Override
+    public String getIconName() {
+        return "actionfilter";
+    }
+
+    @Override
+    public String getIconForValue(int value) {
+        if (value == PASS_VALUE)
+            return "actionfilter_pass.svg";
+        if (value == BLOCK_VALUE)
+            return "actionfilter_block.svg";
+        return "";
+    }
+
 }
