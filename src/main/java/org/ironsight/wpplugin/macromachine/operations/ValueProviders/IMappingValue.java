@@ -68,4 +68,8 @@ public interface IMappingValue extends IDisplayUnit
     default String getIconName() {
         return "";
     }
+
+    default String getIconForValue(int value) {
+        return "";
+    }
 }

@@ -31,6 +31,24 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
             Color.pink, Color.lightGray, Color.cyan, new Color(128, 0, 128), // purple
             Color.BLUE, new Color(165, 42, 42), // brown
             Color.GREEN, Color.RED, Color.BLACK};
+    private static final String[] ICON_NAMES = new String[]{
+            "annotation_absent",     // 0
+            "annotation_white",      // 1
+            "annotation_orange",     // 2
+            "annotation_magenta",    // 3
+            "annotation_light_blue", // 4
+            "annotation_yellow",     // 5
+            "annotation_lime",       // 6
+            "annotation_pink",       // 7
+            "annotation_light_grey", // 8
+            "annotation_cyan",       // 9
+            "annotation_purple",     // 10
+            "annotation_blue",       // 11
+            "annotation_brown",      // 12
+            "annotation_green",      // 13
+            "annotation_red",        // 14
+            "annotation_black"       // 15
+    };
     private static AnnotationSetter instance;
     private final int[] OUTPUT_VALUES = new int[]{IGNORE_VALUE, ANNOTATION_ABSENT, ANNOTATION_WHITE, ANNOTATION_ORANGE,
             ANNOTATION_MAGENTA, ANNOTATION_LIGHT_BLUE, ANNOTATION_YELLOW, ANNOTATION_LIME, ANNOTATION_PINK,
@@ -200,5 +218,12 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     @Override
     public String getIconName() {
         return "annotations";
+    }
+
+    @Override
+    public String getIconForValue(int value) {
+        if (isIgnoreValue(value) || value < 0 || value >= ICON_NAMES.length)
+            return "";
+        return ICON_NAMES[value];
     }
 }
