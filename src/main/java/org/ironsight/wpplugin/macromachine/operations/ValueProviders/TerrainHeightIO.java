@@ -194,8 +194,4 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
         return 0;
     }
 
-    @Override
-    public String getIconNameForValue(int value) {
-        return "";
-    }
 }

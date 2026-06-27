@@ -124,8 +124,4 @@ public class SlopeProvider implements IPositionValueGetter
         return 0;
     }
 
-    @Override
-    public String getIconNameForValue(int value) {
-        return "";
-    }
 }

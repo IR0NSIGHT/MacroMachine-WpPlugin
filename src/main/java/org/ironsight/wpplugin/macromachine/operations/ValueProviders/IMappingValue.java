@@ -65,5 +65,7 @@ public interface IMappingValue extends IDisplayUnit
 
     int getColorForValue(int value);
 
-    String getIconNameForValue(int value);
+    default String getIconName() {
+        return "";
+    }
 }

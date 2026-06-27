@@ -176,8 +176,4 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
         return 0;
     }
 
-    @Override
-    public String getIconNameForValue(int value) {
-        return "";
-    }
 }

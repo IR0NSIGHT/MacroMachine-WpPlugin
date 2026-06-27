@@ -159,8 +159,4 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO
         return 0;
     }
 
-    @Override
-    public String getIconNameForValue(int value) {
-        return "";
-    }
 }

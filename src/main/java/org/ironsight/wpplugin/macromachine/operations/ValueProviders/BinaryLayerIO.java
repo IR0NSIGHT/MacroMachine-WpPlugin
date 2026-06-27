@@ -193,8 +193,4 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
         return 0;
     }
 
-    @Override
-    public String getIconNameForValue(int value) {
-        return "";
-    }
 }

@@ -235,8 +235,4 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
         return 0;
     }
 
-    @Override
-    public String getIconNameForValue(int value) {
-        return "";
-    }
 }

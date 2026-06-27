@@ -235,8 +235,4 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
         return 0;
     }
 
-    @Override
-    public String getIconNameForValue(int value) {
-        return "";
-    }
 }

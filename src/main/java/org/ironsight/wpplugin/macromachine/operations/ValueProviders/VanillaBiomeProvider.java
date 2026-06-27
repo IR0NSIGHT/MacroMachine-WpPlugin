@@ -150,8 +150,4 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
         return 0;
     }
 
-    @Override
-    public String getIconNameForValue(int value) {
-        return "";
-    }
 }

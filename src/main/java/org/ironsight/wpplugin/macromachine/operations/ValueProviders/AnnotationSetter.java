@@ -198,7 +198,7 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     }
 
     @Override
-    public String getIconNameForValue(int value) {
-        return "";
+    public String getIconName() {
+        return "annotations";
     }
 }

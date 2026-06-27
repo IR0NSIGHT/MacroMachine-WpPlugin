@@ -236,8 +236,4 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
         return 0;
     }
 
-    @Override
-    public String getIconNameForValue(int value) {
-        return "";
-    }
 }

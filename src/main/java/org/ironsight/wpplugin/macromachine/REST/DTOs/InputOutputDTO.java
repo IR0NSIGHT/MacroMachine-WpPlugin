@@ -43,8 +43,8 @@ public class InputOutputDTO
     @ArraySchema(schema = @Schema(description = "Colors for discrete values", example = "-16776961", requiredMode = Schema.RequiredMode.REQUIRED))
     private final int[] colors;
 
-    @ArraySchema(schema = @Schema(description = "Icon names for discrete values", example = "droplet", requiredMode = Schema.RequiredMode.REQUIRED))
-    private final String[] iconNames;
+    @Schema(description = "Icon name for the provider type", example = "droplet", requiredMode = Schema.RequiredMode.REQUIRED)
+    private final String iconName;
 
     @Schema(description = "Whether the values are discrete instead of continuous (colors are discrete, forest strength % is continuous)", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
     private final boolean discrete;
@@ -55,8 +55,8 @@ public class InputOutputDTO
     @JsonCreator
     public InputOutputDTO(@JsonProperty("displayName") String displayName,
             @JsonProperty("description") String description, @JsonProperty("min") int min, @JsonProperty("max") int max,
-            @JsonProperty("ignoreValue") int ignoreValue, @JsonProperty("valueDisplayNames") String[] valueDisplayNames,
-            @JsonProperty("colors") int[] colors, @JsonProperty("iconNames") String[] iconNames,
+            @JsonProperty("ignoreValue") int ignoreValue,             @JsonProperty("valueDisplayNames") String[] valueDisplayNames,
+            @JsonProperty("colors") int[] colors, @JsonProperty("iconName") String iconName,
             @JsonProperty("discrete") boolean discrete, @JsonProperty("type") ProviderType type,
             @JsonProperty("ioParameters") List<IoParameter> ioParameters) {
         this.displayName = displayName;
@@ -66,7 +66,7 @@ public class InputOutputDTO
         this.ignoreValue = ignoreValue;
         this.valueDisplayNames = valueDisplayNames;
         this.colors = colors;
-        this.iconNames = iconNames;
+        this.iconName = iconName;
         this.discrete = discrete;
         this.type = type;
         this.ioParameters = Objects.requireNonNull(ioParameters, "ioParameters can not be null");
@@ -78,7 +78,7 @@ public class InputOutputDTO
                 IPositionValueSetter.getIgnoreValue(setter),
                 Arrays.stream(values).mapToObj(setter::valueToString).toArray(String[]::new),
                 Arrays.stream(values).map(setter::getColorForValue).toArray(),
-                Arrays.stream(values).mapToObj(setter::getIconNameForValue).toArray(String[]::new), setter.isDiscrete(),
+                setter.getIconName(), setter.isDiscrete(),
                 setter.getProviderType(), Arrays.asList(setter.getSaveData()));
     }
 
@@ -90,7 +90,7 @@ public class InputOutputDTO
                         : IGNORE_VALUE,
                 Arrays.stream(values).mapToObj(getter::valueToString).toArray(String[]::new),
                 Arrays.stream(values).map(getter::getColorForValue).toArray(),
-                Arrays.stream(values).mapToObj(getter::getIconNameForValue).toArray(String[]::new), getter.isDiscrete(),
+                getter.getIconName(), getter.isDiscrete(),
                 getter.getProviderType(), Arrays.asList(getter.getSaveData()));
     }
 
@@ -118,8 +118,8 @@ public class InputOutputDTO
         return colors;
     }
 
-    public String[] getIconNames() {
-        return iconNames;
+    public String getIconName() {
+        return iconName;
     }
 
     public boolean isDiscrete() {
@@ -166,7 +166,8 @@ public class InputOutputDTO
                 && Objects.equals(getDescription(), that.getDescription())
                 && Objects.equals(ioParameters, that.ioParameters)
                 && Arrays.equals(getValueDisplayNames(), that.getValueDisplayNames())
-                && Arrays.equals(getColors(), that.getColors()) && Arrays.equals(getIconNames(), that.getIconNames())
+                && Arrays.equals(getColors(), that.getColors())
+                && Objects.equals(getIconName(), that.getIconName())
                 && getType() == that.getType();
     }
 
@@ -176,7 +177,7 @@ public class InputOutputDTO
                 isDiscrete(), getType());
         result = 31 * result + Arrays.hashCode(getValueDisplayNames());
         result = 31 * result + Arrays.hashCode(getColors());
-        result = 31 * result + Arrays.hashCode(getIconNames());
+        result = 31 * result + Objects.hash(getIconName());
         return result;
     }
 
@@ -185,6 +186,6 @@ public class InputOutputDTO
         return "InputOutputDTO{" + "displayName='" + displayName + '\'' + ", description='" + description + '\''
                 + ", min=" + min + ", max=" + max + ", ignoreValue=" + ignoreValue + ", ioParameters=" + ioParameters
                 + ", valueDisplayNames=" + Arrays.toString(valueDisplayNames) + ", colors=" + Arrays.toString(colors)
-                + ", iconNames=" + Arrays.toString(iconNames) + ", discrete=" + discrete + ", type=" + type + '}';
+                + ", iconName=" + iconName + ", discrete=" + discrete + ", type=" + type + '}';
     }
 }

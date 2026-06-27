@@ -23,7 +23,7 @@ class InputOutputDTOTest
                 setter.getMaxValue(), IPositionValueSetter.getIgnoreValue(setter),
                 Arrays.stream(values).mapToObj(setter::valueToString).toArray(String[]::new),
                 Arrays.stream(values).map(setter::getColorForValue).toArray(),
-                Arrays.stream(values).mapToObj(setter::getIconNameForValue).toArray(String[]::new), setter.isDiscrete(),
+                setter.getIconName(), setter.isDiscrete(),
                 setter.getProviderType(), Arrays.asList(setter.getSaveData()));
         assertEquals(expected, dto);
     }
@@ -37,7 +37,7 @@ class InputOutputDTOTest
                 setter.getMaxValue(), IPositionValueSetter.getIgnoreValue(setter),
                 Arrays.stream(values).mapToObj(setter::valueToString).toArray(String[]::new),
                 Arrays.stream(values).map(setter::getColorForValue).toArray(),
-                Arrays.stream(values).mapToObj(setter::getIconNameForValue).toArray(String[]::new), setter.isDiscrete(),
+                setter.getIconName(), setter.isDiscrete(),
                 setter.getProviderType(), Arrays.asList(setter.getSaveData()));
         assertEquals(expected, dto);
     }

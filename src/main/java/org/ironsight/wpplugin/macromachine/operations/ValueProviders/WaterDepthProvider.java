@@ -163,8 +163,4 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
         return 0;
     }
 
-    @Override
-    public String getIconNameForValue(int value) {
-        return "";
-    }
 }
