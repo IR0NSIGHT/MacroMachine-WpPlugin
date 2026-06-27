@@ -26,7 +26,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 echo "=== Starting backend server ==="
-"$SCRIPT_DIR/run_backend.sh" 2>&1 | tee "$BACKEND_LOG" &
+"$SCRIPT_DIR/run_backend.sh" > "$BACKEND_LOG" 2>&1 &
 BACKEND_PID=$!
 
 echo "=== Waiting for backend to start (30s timeout) ==="
