@@ -165,4 +165,16 @@ public class BlockFacingDirectionIO implements IPositionValueGetter
         return 0;
     }
 
+    @Override
+    public String getIconName() {
+        return "slope_dir";
+    }
+
+    @Override
+    public String getIconForValue(int value) {
+        if (value >= 0 && value < 360)
+            return "slope_dir_" + value + ".svg";
+        return "";
+    }
+
 }

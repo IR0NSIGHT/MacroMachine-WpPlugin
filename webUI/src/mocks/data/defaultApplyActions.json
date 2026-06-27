@@ -88,7 +88,7 @@
     "actionType": "SET",
     "name": "Set: Annotations",
     "description": "Default simple applier.",
-    "uid": "7060a9da-4cd7-4d43-b4ec-70b57e369c56",
+    "uid": "311c798e-297c-49a0-a0be-d738f2b0d4c6",
     "mappingPointsX": [
       0
     ],
@@ -911,7 +911,7 @@
     "actionType": "SET",
     "name": "Set: Biome",
     "description": "Default simple applier.",
-    "uid": "c456a73d-d435-46a2-8394-0d6f9b5e6891",
+    "uid": "e30abf34-d51e-413a-a9fd-18cc9818df49",
     "mappingPointsX": [
       0
     ],
@@ -1036,7 +1036,7 @@
     "actionType": "SET",
     "name": "Set: Deciduous layer",
     "description": "Default simple applier.",
-    "uid": "c85d3969-d72a-422b-a83d-5cf8b976fa59",
+    "uid": "9b4fecfc-07a1-467e-8821-b66ce6f54f72",
     "mappingPointsX": [
       0
     ],
@@ -1101,7 +1101,7 @@
     "actionType": "SET",
     "name": "Set: Frost layer",
     "description": "Default simple applier.",
-    "uid": "bad80a83-277b-4a01-a520-52dc22ef46ea",
+    "uid": "5a7bfe37-ff40-4f85-b739-b22f9d758dd6",
     "mappingPointsX": [
       0
     ],
@@ -1226,7 +1226,7 @@
     "actionType": "SET",
     "name": "Set: Heatmap layer",
     "description": "Default simple applier.",
-    "uid": "c1832597-1dbb-4488-9da4-e577eccbd255",
+    "uid": "e5c02042-6de9-4c7b-a2f8-cd96c6e6ba5a",
     "mappingPointsX": [
       0
     ],
@@ -2436,7 +2436,7 @@
     "actionType": "SET",
     "name": "Set: Height",
     "description": "Default simple applier.",
-    "uid": "3da6373b-9e44-4831-b198-02ea6f7cd4ff",
+    "uid": "af2b2773-4019-4cec-bcc7-e7eeae4e18ec",
     "mappingPointsX": [
       0
     ],
@@ -2501,7 +2501,7 @@
     "actionType": "SET",
     "name": "Set: Macro Selection layer",
     "description": "Default simple applier.",
-    "uid": "63047058-9468-4a46-9735-dd1242b20e33",
+    "uid": "24c0e9f8-a657-41fe-8d77-896cc5c04862",
     "mappingPointsX": [
       0
     ],
@@ -2626,7 +2626,7 @@
     "actionType": "SET",
     "name": "Set: Pine layer",
     "description": "Default simple applier.",
-    "uid": "28ebf47c-390d-4e1f-ab41-e176dd3eb7d1",
+    "uid": "4f6c6433-1520-42d0-962b-73472c9588be",
     "mappingPointsX": [
       0
     ],
@@ -2691,7 +2691,7 @@
     "actionType": "SET",
     "name": "Set: Selection",
     "description": "Default simple applier.",
-    "uid": "dcf95653-377a-4f80-a764-05758f9c4dc6",
+    "uid": "a3da335c-7e4e-4cbb-91cc-53e7aebb2ba5",
     "mappingPointsX": [
       0
     ],
@@ -2747,7 +2747,7 @@
     "actionType": "SET",
     "name": "Set: Spraypaint: Frost layer",
     "description": "Default simple applier.",
-    "uid": "691e50a9-7441-4264-820e-093631b5617a",
+    "uid": "af221f2f-d2f6-4fcd-8569-06c6d318ef03",
     "mappingPointsX": [
       0
     ],
@@ -2803,7 +2803,7 @@
     "actionType": "SET",
     "name": "Set: Spraypaint: Macro Selection layer",
     "description": "Default simple applier.",
-    "uid": "f16f5518-68e7-4b4b-8c56-3fce81b00ab4",
+    "uid": "dc5167ee-8198-4168-9c05-89529a3e79f6",
     "mappingPointsX": [
       0
     ],
@@ -2859,7 +2859,7 @@
     "actionType": "SET",
     "name": "Set: Spraypaint: SelectionBlock layer",
     "description": "Default simple applier.",
-    "uid": "f3483213-2357-4121-8c29-00b8e7b6c832",
+    "uid": "78aa2ae4-e941-4e3b-a6f5-15228b07afe3",
     "mappingPointsX": [
       0
     ],
@@ -2959,7 +2959,7 @@
     "actionType": "SET",
     "name": "Set: Stone Palette",
     "description": "Default simple applier.",
-    "uid": "a4757d54-5227-42ff-b9da-4551eee2b5a7",
+    "uid": "e7cbfa54-cd0f-4bd1-94a4-12c93b67f605",
     "mappingPointsX": [
       0
     ],
@@ -3500,7 +3500,7 @@
     "actionType": "SET",
     "name": "Set: Terrain",
     "description": "Default simple applier.",
-    "uid": "49241416-0d09-44b6-85f4-a9d1aec22af9",
+    "uid": "78499226-8fa2-4658-b902-c45b3b7c1b4d",
     "mappingPointsX": [
       0
     ],
@@ -3858,7 +3858,7 @@
     "actionType": "SET",
     "name": "Set: Water Depth",
     "description": "Default simple applier.",
-    "uid": "044f253b-ddba-4c77-86a7-716272d2c745",
+    "uid": "42362d99-6186-46e6-a46b-d7f63b618353",
     "mappingPointsX": [
       0
     ],
@@ -5068,7 +5068,7 @@
     "actionType": "SET",
     "name": "Set: water level",
     "description": "Default simple applier.",
-    "uid": "4c5acc53-9654-442d-b298-9742c538d9d8",
+    "uid": "afcda75e-f46e-4393-8fa3-fd44cb87cbf4",
     "mappingPointsX": [
       0
     ],

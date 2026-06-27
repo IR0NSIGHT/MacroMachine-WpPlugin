@@ -8,33 +8,10 @@
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <defs
-     id="defs64">
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient1108">
-      <stop
-         style="stop-color:#ff0000;stop-opacity:1;"
-         offset="0"
-         id="stop1104" />
-      <stop
-         style="stop-color:#000000;stop-opacity:1;"
-         offset="1"
-         id="stop1106" />
-    </linearGradient>
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient1108"
-       id="linearGradient1110"
-       x1="26.053278"
-       y1="36.464157"
-       x2="26.551382"
-       y2="37.054844"
-       gradientUnits="userSpaceOnUse" />
-  </defs>
+     id="defs64" />
   <sodipodi:namedview
      id="namedview62"
      pagecolor="#ffffff"
@@ -45,9 +22,9 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      showgrid="false"
-     inkscape:zoom="6.5159263"
-     inkscape:cx="-22.099697"
-     inkscape:cy="24.018074"
+     inkscape:zoom="10.6185"
+     inkscape:cx="21.095258"
+     inkscape:cy="29.241418"
      inkscape:window-width="1920"
      inkscape:window-height="1011"
      inkscape:window-x="0"
@@ -55,21 +32,15 @@
      inkscape:window-maximized="1"
      inkscape:current-layer="svg60" />
   <path
-     sodipodi:type="star"
-     style="fill:url(#linearGradient1110);fill-opacity:1"
-     id="path386"
-     inkscape:flatsided="false"
-     sodipodi:sides="2"
-     sodipodi:cx="26.420013"
-     sodipodi:cy="36.530693"
-     sodipodi:r1="28.897049"
-     sodipodi:r2="4.75769"
-     sodipodi:arg1="0.85960893"
-     sodipodi:arg2="2.4304053"
-     inkscape:rounded="0"
-     inkscape:randomized="0"
-     d="M 45.282094,58.422732 22.815648,39.636198 7.5579332,14.638654 30.024379,33.425188 Z"
-     inkscape:transform-center-x="0.048496616"
-     inkscape:transform-center-y="0.098547903"
-     transform="rotate(40.139751,35.410457,41.901801)" />
+     style="fill:#ff0000;fill-opacity:1;stroke-width:2.67251"
+     id="path1300"
+     sodipodi:type="arc"
+     sodipodi:cx="32"
+     sodipodi:cy="5.2414589"
+     sodipodi:rx="53.517082"
+     sodipodi:ry="53.517082"
+     sodipodi:start="1.3089969"
+     sodipodi:end="1.8325957"
+     sodipodi:arc-type="slice"
+     d="m 45.851242,56.93499 a 53.517082,53.517082 0 0 1 -27.702481,10e-7 L 32,5.2414589 Z" />
 </svg>
