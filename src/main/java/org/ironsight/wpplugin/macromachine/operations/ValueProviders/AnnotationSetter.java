@@ -224,6 +224,6 @@ public class AnnotationSetter implements IPositionValueGetter, IPositionValueSet
     public String getIconForValue(int value) {
         if (isIgnoreValue(value) || value < 0 || value >= ICON_NAMES.length)
             return "";
-        return ICON_NAMES[value];
+        return ICON_NAMES[value] + ".svg";
     }
 }

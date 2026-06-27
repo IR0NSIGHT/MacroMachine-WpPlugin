@@ -27,6 +27,7 @@ import {
   filterAutoName,
   ioNamedValues,
   destructureSimpleFilter,
+  NamedMapping,
 } from "./Filters";
 import { theme } from "@/theme";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
@@ -36,8 +37,9 @@ import { InputOutputDTO, InputOutputDTOIoParametersInner } from "@/generated/cli
 import { fillParentSx } from "@/App";
 
 export const getIconForValue = (_io: InputOutputDTO, _value: number) => {
-  if (_io.iconName) {
-    return <Avatar src={staticAssetUrl(_io.iconName)} sx={{ width: 20, height: 20 }} />;
+  const valueIcon = _io.iconByValue[_value];
+  if (valueIcon) {
+    return <Avatar src={staticAssetUrl(valueIcon)} sx={{ width: 20, height: 20 }} />;
   }
   const color =
     _io.colors.length > _value
@@ -112,18 +114,19 @@ export const SimpleFilterInlineEditor = ({
           color="info"
           variant="outlined"
         />
-        {filterData.relevantMappings.map((m) => (
-          <Chip
-            key={m.input}
-            label={m.inputName}
-            variant="outlined"
-            icon={getIconForValue(item.input, m.input)}
-          />
-        ))}
+        {filterData.relevantMappings.map(m => <ChipForValue key={m.input} mapping={m} io={item.input} />)}
       </Box>
     </>
   );
 };
+
+export const ChipForValue = ({ mapping, io }: { mapping: NamedMapping; io: InputOutputDTO }) => {
+  return <Chip
+            label={mapping.inputName}
+            variant="outlined"
+            icon={getIconForValue(io, mapping.input)}
+          />
+}
 
 export const StepInlineEditor = ({
   item,

@@ -1,9 +1,9 @@
 import type { Meta } from "@storybook/react-vite";
 import defaultFilters from "@/mocks/data/defaultFilters.json";
 import { ActionDTO } from "@/types/DTO";
-import { Chip, Box } from "@mui/material";
+import { Box } from "@mui/material";
 import { namedMapping } from "./Filters";
-import { getIconForValue } from "./FilterComponent";
+import { ChipForValue } from "./FilterComponent";
 
 const meta: Meta = {
   title: "Features/FilterComponent",
@@ -18,12 +18,12 @@ export const AnnotationFilterChips = {
     return (
       <Box sx={{ display: "flex", flexDirection: "row", gap: 1, flexWrap: "wrap", p: 2 }}>
         {mappings.map((m) => (
-          <Chip
-            key={m.input}
-            label={m.inputName + " icon:" + filter.input.iconName}
-            variant="outlined"
-            icon={getIconForValue(filter.input, m.input)}
-          />
+          <Box key={m.input} sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <ChipForValue mapping={m} io={filter.input} />
+            <Box sx={{ fontSize: 10, color: "text.secondary", mt: 0.5 }}>
+              icon: {filter.input.iconByValue[m.input] || "(none)"}
+            </Box>
+          </Box>
         ))}
       </Box>
     );
