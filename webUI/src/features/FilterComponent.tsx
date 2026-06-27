@@ -35,8 +35,17 @@ import ClearIcon from "@mui/icons-material/Clear";
 import { InputOutputDTO, InputOutputDTOIoParametersInner } from "@/generated/client";
 import { fillParentSx } from "@/App";
 
-export const getIconForValue = (_io: InputOutputDTO, _value: number) => {
-  return <FaceIcon />;
+export const getIconForValue = (_io: InputOutputDTO, value: number) => {
+  const color =
+    value >= 0 && value < _io.colors.length
+      ? `#${((_io.colors[value] & 0xffffff) >>> 0)
+          .toString(16)
+          .padStart(6, "0")}`
+      : undefined;
+
+  console.log("color for icon:", color);
+
+  return <FaceIcon sx={color ? { color } : undefined} />;
 };
 
 export const ioToIconName = (io: InputOutputDTO) => {
