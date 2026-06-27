@@ -35,17 +35,20 @@ import ClearIcon from "@mui/icons-material/Clear";
 import { InputOutputDTO, InputOutputDTOIoParametersInner } from "@/generated/client";
 import { fillParentSx } from "@/App";
 
-export const getIconForValue = (_io: InputOutputDTO, value: number) => {
+export const getIconForValue = (_io: InputOutputDTO, _value: number) => {
+  if (_io.iconName) {
+    return <Avatar src={staticAssetUrl(_io.iconName)} sx={{ width: 20, height: 20 }} />;
+  }
   const color =
-    value >= 0 && value < _io.colors.length
-      ? `#${((_io.colors[value] & 0xffffff) >>> 0)
-          .toString(16)
-          .padStart(6, "0")}`
+    _io.colors.length > _value
+      ? `#${(_io.colors[_value] & 0xffffff).toString(16).padStart(6, "0")}`
       : undefined;
+  return <FaceIcon sx={{ color }} />;
+};
 
-  console.log("color for icon:", color);
-
-  return <FaceIcon sx={color ? { color } : undefined} />;
+const staticAssetUrl = (assetName: string) => {
+  const iconUrl = `${import.meta.env.BASE_URL}icons/${assetName}`;
+  return iconUrl;
 };
 
 export const ioToIconName = (io: InputOutputDTO) => {
@@ -55,8 +58,7 @@ export const ioToIconName = (io: InputOutputDTO) => {
     const API_BASE = import.meta.env.VITE_API_BASE_URL;
     return `${API_BASE}/api/layers/${layerId}/icon`;
   }
-  const iconUrl = `${import.meta.env.BASE_URL}icons/minecraft_grass_block.png`;
-  return iconUrl;
+  return staticAssetUrl("minecraft_grass_block.png");
 };
 
 // eslint-disable-next-line no-undef

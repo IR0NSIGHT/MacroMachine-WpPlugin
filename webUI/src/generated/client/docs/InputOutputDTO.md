@@ -13,7 +13,7 @@ Describes an input/output provider configuration
 | `ignoreValue`       | number                                                                             |
 | `valueDisplayNames` | Array&lt;string&gt;                                                                |
 | `colors`            | Array&lt;number&gt;                                                                |
-| `iconNames`         | Array&lt;string&gt;                                                                |
+| `iconName`          | string                                                                             |
 | `discrete`          | boolean                                                                            |
 | `type`              | string                                                                             |
 | `ioParameters`      | [Array&lt;InputOutputDTOIoParametersInner&gt;](InputOutputDTOIoParametersInner.md) |
@@ -32,7 +32,7 @@ const example = {
   "ignoreValue": -1,
   "valueDisplayNames": null,
   "colors": null,
-  "iconNames": null,
+  "iconName": droplet,
   "discrete": true,
   "type": null,
   "ioParameters": null,
