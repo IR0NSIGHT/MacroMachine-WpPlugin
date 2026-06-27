@@ -42,7 +42,7 @@ public class WebUIServer
         var applicator = new MacroConcurrentApplicator(macros, actions, () -> dimension,
                 (uuid) -> System.out.println("macro finished running: " + uuid));
 
-        macros.queryAll().stream().map(Macro::getUid).forEach(applicator::queueMacro);
+   //     macros.queryAll().stream().map(Macro::getUid).forEach(applicator::queueMacro);
 
         applicator.start();
 
