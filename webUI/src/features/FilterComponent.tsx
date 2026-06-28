@@ -15,6 +15,7 @@ import {
   Switch,
   Tooltip,
 } from "@mui/material";
+import * as React from "react";
 import { SelectChangeEvent } from "@mui/material/Select";
 import { MMIconButton } from "../components/IconButton";
 import { StepItemType } from "./Execution";
@@ -29,7 +30,6 @@ import {
   destructureSimpleFilter,
   NamedMapping,
 } from "./Filters";
-import { theme } from "@/theme";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import EditIcon from "@mui/icons-material/Edit";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -318,27 +318,19 @@ export const RangeFilterInlineEditor = ({
   };
 
   const valueToString = (v: number) => {
-    return mappings.find((m) => m.input === v)?.inputName ?? String(v);
+    const mapping = mappings.find((m) => m.input === v);
+    if (!mapping) return "error for value " + v;
+    return <ChipForValue mapping={mapping} io={item.input} />;
   };
 
-  const insideRangeFilter = isInsideRangeFilter(item);
-
-  const trackColor = !item.active
-    ? theme.palette.text.disabled
-    : insideRangeFilter
-      ? theme.palette.primary.main
-      : theme.palette.text.disabled;
-  const railColor = !item.active
-    ? theme.palette.text.disabled
-    : insideRangeFilter
-      ? theme.palette.text.disabled
-      : theme.palette.primary.main;
+  const _insideRangeFilter = isInsideRangeFilter(item);
   return (
     <Box
       sx={{
         display: "flex",
         justifyContent: "left",
         alignItems: "center",
+        marginTop: 4,
         py: 2,
         px: 4,
         borderRadius: 2,
@@ -351,30 +343,18 @@ export const RangeFilterInlineEditor = ({
         min={item.input.min}
         max={item.input.max}
         step={1}
-        valueLabelDisplay="auto"
+        valueLabelDisplay="on"
         valueLabelFormat={(v) => valueToString(v)}
         disabled={!item.active}
-        sx={(theme) => ({
+        track={_insideRangeFilter ? "normal" : "inverted"}
+        sx={{
           width: "100%",
           maxWidth: "400px",
-          "& .MuiSlider-rail": {
-            backgroundColor: railColor,
-            opacity: 1,
-          },
 
-          "& .MuiSlider-track": {
-            backgroundColor: trackColor,
-            borderColor: trackColor,
-            opacity: 1,
+          "& .MuiSlider-valueLabel": {
+            background: "transparent",
           },
-
-          "& .MuiSlider-thumb": {
-            backgroundColor: !item.active
-              ? theme.palette.text.disabled
-              : theme.palette.primary.main,
-            opacity: 1,
-          },
-        })}
+        }}
       />
       <InvertFilterButton onClick={() => setItem(invertFilter(item))} />
     </Box>
