@@ -322,7 +322,7 @@
                                 <argument>-classpath</argument>
                                 <classpath/>
                                 <!-- Uncomment this to enable debugging. Change suspend=n to suspend=y if you want to debug plugin loading or initialisation: -->
-                                <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005
+                                <argument>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
                                 </argument>
                                 <argLine>-ea</argLine>
                                 <argLine>-Dsun.awt.disablegrab=true</argLine>
