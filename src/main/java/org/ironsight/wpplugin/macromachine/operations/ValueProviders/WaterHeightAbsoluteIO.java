@@ -173,7 +173,7 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
 
     @Override
     public int getColorForValue(int value) {
-        return 0;
+        return Color.BLUE.getRGB();
     }
 
 }

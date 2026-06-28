@@ -18,7 +18,7 @@ import {
 import { SelectChangeEvent } from "@mui/material/Select";
 import { MMIconButton } from "../components/IconButton";
 import { StepItemType } from "./Execution";
-import FaceIcon from "@mui/icons-material/Face";
+import CircleIcon from "@mui/icons-material/Circle";
 import {
   namedMapping,
   invertFilter,
@@ -36,16 +36,18 @@ import ClearIcon from "@mui/icons-material/Clear";
 import { InputOutputDTO, InputOutputDTOIoParametersInner } from "@/generated/client";
 import { fillParentSx } from "@/App";
 
+export const colorForValue = (io: InputOutputDTO, value: number): string | undefined => {
+  const idx = value - io.min;
+  const color = io.colors.length > idx ? io.colors[idx] : 0;
+  return color ? `#${(color & 0xffffff).toString(16).padStart(6, "0")}` : undefined;
+};
+
 export const getIconForValue = (_io: InputOutputDTO, _value: number) => {
-  const valueIcon = _io.iconByValue[_value];
+  const valueIcon = _io.iconByValue[_value - _io.min];
   if (valueIcon) {
     return <Avatar src={staticAssetUrl(valueIcon)} sx={{ width: 20, height: 20 }} />;
   }
-  const color =
-    _io.colors.length > _value
-      ? `#${(_io.colors[_value] & 0xffffff).toString(16).padStart(6, "0")}`
-      : undefined;
-  return <FaceIcon sx={{ color }} />;
+  return <CircleIcon sx={{ color: colorForValue(_io, _value) }} />;
 };
 
 const staticAssetUrl = (assetName: string) => {
@@ -123,8 +125,18 @@ export const SimpleFilterInlineEditor = ({
 };
 
 export const ChipForValue = ({ mapping, io }: { mapping: NamedMapping; io: InputOutputDTO }) => {
+  const color = colorForValue(io, mapping.input);
   return (
-    <Chip label={mapping.inputName} variant="outlined" icon={getIconForValue(io, mapping.input)} />
+    <Chip
+      label={mapping.inputName}
+      variant="outlined"
+      icon={getIconForValue(io, mapping.input)}
+      sx={{
+        "& .MuiChip-icon": {
+          color: color,
+        },
+      }}
+    />
   );
 };
 

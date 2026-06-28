@@ -13,6 +13,7 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     private static final Color LAND_GREEN = new Color(43, 157, 0);
     private static final Color SHORE_BLUE = new Color(159, 181, 255);
     private static final Color DEEP_BLUE = new Color(0, 46, 171);
+    private static final Color LAND_BROWN = new Color(139, 90, 43);
     private final int[] outputValues;
     private final int[] inputValues;
 
@@ -154,13 +155,31 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     }
 
     @Override
+    public String getIconForValue(int value) {
+        if (value <= 0) {
+            return "minecraft_grass_block.png";
+        }
+        return "";
+    }
+
+    @Override
     public int hashCode() {
         return getProviderType().hashCode();
     }
 
     @Override
     public int getColorForValue(int value) {
-        return 0;
+        if (value <= 0) {
+            return LAND_BROWN.getRGB();
+        }
+        if (value >= getMaxValue()) {
+            return DEEP_BLUE.getRGB();
+        }
+        float t = (value - 1f) / (getMaxValue() - 1);
+        int r = Math.round(SHORE_BLUE.getRed() + t * (DEEP_BLUE.getRed() - SHORE_BLUE.getRed()));
+        int g = Math.round(SHORE_BLUE.getGreen() + t * (DEEP_BLUE.getGreen() - SHORE_BLUE.getGreen()));
+        int b = Math.round(SHORE_BLUE.getBlue() + t * (DEEP_BLUE.getBlue() - SHORE_BLUE.getBlue()));
+        return new Color(r, g, b).getRGB();
     }
 
 }
