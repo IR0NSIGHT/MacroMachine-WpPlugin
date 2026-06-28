@@ -232,7 +232,10 @@ public class NibbleLayerSetter implements IPositionValueSetter, IPositionValueGe
 
     @Override
     public int getColorForValue(int value) {
-        return 0;
+        if (value <= 0) return Color.BLACK.getRGB();
+        if (value >= getMaxValue()) return Color.GREEN.getRGB();
+        int g = Math.round(255f * value / getMaxValue());
+        return new Color(0, g, 0).getRGB();
     }
 
 }

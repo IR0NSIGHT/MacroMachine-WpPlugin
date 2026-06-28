@@ -190,7 +190,8 @@ public class BinaryLayerIO implements IPositionValueSetter, IPositionValueGetter
 
     @Override
     public int getColorForValue(int value) {
-        return 0;
+        if (value > 0) return Color.GREEN.getRGB();
+        return Color.BLACK.getRGB();
     }
 
 }

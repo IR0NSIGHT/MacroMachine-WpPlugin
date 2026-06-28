@@ -283,7 +283,10 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
 
     @Override
     public int getColorForValue(int value) {
-        return 0;
+        if (value <= 0) return Color.BLACK.getRGB();
+        if (value >= getMaxValue()) return Color.WHITE.getRGB();
+        int c = Math.round(255f * value / getMaxValue());
+        return new Color(c, c, c).getRGB();
     }
 
 }

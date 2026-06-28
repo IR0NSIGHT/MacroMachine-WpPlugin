@@ -191,7 +191,10 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public int getColorForValue(int value) {
-        return 0;
+        if (value <= getMinValue()) return Color.BLACK.getRGB();
+        if (value >= getMaxValue()) return Color.WHITE.getRGB();
+        int c = Math.round(255f * (value - getMinValue()) / (getMaxValue() - getMinValue()));
+        return new Color(c, c, c).getRGB();
     }
 
 }
