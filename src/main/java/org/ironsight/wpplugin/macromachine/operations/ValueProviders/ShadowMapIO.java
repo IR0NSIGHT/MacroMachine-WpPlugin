@@ -138,4 +138,9 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation
         return 0;
     }
 
+    @Override
+    public String getIconName() {
+        return "shadow_provider.svg";
+    }
+
 }

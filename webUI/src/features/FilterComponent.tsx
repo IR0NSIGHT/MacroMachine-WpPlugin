@@ -62,6 +62,9 @@ export const ioToIconName = (io: InputOutputDTO) => {
     const API_BASE = import.meta.env.VITE_API_BASE_URL;
     return `${API_BASE}/api/layers/${layerId}/icon`;
   }
+  if (io.iconName) {
+    return staticAssetUrl(io.iconName);
+  }
   return staticAssetUrl("minecraft_grass_block.png");
 };
 

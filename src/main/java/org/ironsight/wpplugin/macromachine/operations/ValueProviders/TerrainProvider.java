@@ -153,7 +153,7 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
 
     @Override
     public String getIconName() {
-        return "terrain";
+        return "minecraft_grass_block.png";
     }
 
     @Override

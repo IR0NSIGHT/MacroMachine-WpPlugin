@@ -238,7 +238,7 @@ public class ActionFilterIO implements IPositionValueSetter, IPositionValueGette
 
     @Override
     public String getIconName() {
-        return "actionfilter";
+        return "actionfilter_provider.svg";
     }
 
     @Override

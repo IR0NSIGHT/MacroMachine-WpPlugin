@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import defaultFilters from "@/mocks/data/defaultFilters.json";
 import { ActionDTO } from "@/types/DTO";
-import { Box, Typography } from "@mui/material";
-import { ChipForValue } from "./FilterComponent";
+import { Avatar, Box, Typography } from "@mui/material";
+import { ChipForValue, ioToIconName } from "./FilterComponent";
 import { InputOutputDTO, InputOutputDTOTypeEnum } from "@/generated/client";
 
 const meta: Meta = {
@@ -35,6 +35,7 @@ const mkStory = (type: string): StoryObj => ({
     const io = iosByType[type];
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: 2 }}>
+        <Avatar src={ioToIconName(io)} sx={{ width: 48, height: 48 }} />
         <Typography variant="h6" sx={{ mb: 1 }}>
           {io.displayName} ({io.type})
         </Typography>

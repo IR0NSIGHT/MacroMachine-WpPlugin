@@ -235,4 +235,9 @@ public class DistanceToLayerEdgeGetter implements IPositionValueGetter, ILimited
         return 0;
     }
 
+    @Override
+    public String getIconName() {
+        return "distance_to_edge_provider.svg";
+    }
+
 }

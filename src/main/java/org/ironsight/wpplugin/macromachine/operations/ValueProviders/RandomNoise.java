@@ -169,4 +169,9 @@ public class RandomNoise implements IPositionValueGetter, IPositionTileValueGett
         return 0;
     }
 
+    @Override
+    public String getIconName() {
+        return "random_noise_provider.svg";
+    }
+
 }

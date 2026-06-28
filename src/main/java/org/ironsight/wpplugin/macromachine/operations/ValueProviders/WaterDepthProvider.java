@@ -163,6 +163,11 @@ public class WaterDepthProvider implements IPositionValueSetter, IPositionValueG
     }
 
     @Override
+    public String getIconName() {
+        return "waterdepth_provider.svg";
+    }
+
+    @Override
     public int hashCode() {
         return getProviderType().hashCode();
     }

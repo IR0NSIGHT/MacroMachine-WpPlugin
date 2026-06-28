@@ -172,6 +172,11 @@ public class WaterHeightAbsoluteIO implements IPositionValueGetter, IPositionVal
     }
 
     @Override
+    public String getIconName() {
+        return "waterlevel_provider.svg";
+    }
+
+    @Override
     public int getColorForValue(int value) {
         return Color.BLUE.getRGB();
     }

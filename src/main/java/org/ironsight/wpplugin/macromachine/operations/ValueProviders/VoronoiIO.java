@@ -156,7 +156,15 @@ public class VoronoiIO implements IPositionValueGetter, EditableIO
 
     @Override
     public int getColorForValue(int value) {
-        return 0;
+        int range = getMaxValue() - getMinValue();
+        if (range <= 0) return Color.WHITE.getRGB();
+        float hue = (float) (value - getMinValue()) / range;
+        return Color.HSBtoRGB(hue, 1f, 0.9f);
+    }
+
+    @Override
+    public String getIconName() {
+        return "voronoi_provider.svg";
     }
 
 }

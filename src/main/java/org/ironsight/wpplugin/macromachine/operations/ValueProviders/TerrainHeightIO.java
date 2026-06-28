@@ -197,4 +197,9 @@ public class TerrainHeightIO implements IPositionValueGetter, IPositionValueSett
         return new Color(c, c, c).getRGB();
     }
 
+    @Override
+    public String getIconName() {
+        return "height_provider.svg";
+    }
+
 }

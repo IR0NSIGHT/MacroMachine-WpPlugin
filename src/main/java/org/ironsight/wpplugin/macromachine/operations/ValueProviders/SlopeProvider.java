@@ -126,7 +126,7 @@ public class SlopeProvider implements IPositionValueGetter
 
     @Override
     public String getIconName() {
-        return "slope";
+        return "slope_provider.svg";
     }
 
     @Override

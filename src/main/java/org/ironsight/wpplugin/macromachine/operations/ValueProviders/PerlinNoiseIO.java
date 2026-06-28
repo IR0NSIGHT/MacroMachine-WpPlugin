@@ -289,4 +289,9 @@ public class PerlinNoiseIO implements IPositionValueGetter, EditableIO
         return new Color(c, c, c).getRGB();
     }
 
+    @Override
+    public String getIconName() {
+        return "perlin_noise_icon.svg";
+    }
+
 }
