@@ -35,6 +35,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import ClearIcon from "@mui/icons-material/Clear";
 import { InputOutputDTO, InputOutputDTOIoParametersInner } from "@/generated/client";
 import { fillParentSx } from "@/App";
+import { API_BASE } from "@/API/api";
 
 export const colorForValue = (io: InputOutputDTO, value: number): string | undefined => {
   const idx = value - io.min;
@@ -57,10 +58,23 @@ const staticAssetUrl = (assetName: string) => {
 
 export const ioToIconName = (io: InputOutputDTO) => {
   //FIXME icons are not built into dist
-  if (io.type === "NIBBLE_LAYER" && io.ioParameters.length >= 2 && io.ioParameters[1] === "") {
-    const layerId: InputOutputDTOIoParametersInner = io.ioParameters[1];
-    const API_BASE = import.meta.env.VITE_API_BASE_URL;
-    return `${API_BASE}/api/layers/${layerId}/icon`;
+  if (io.type === "BINARY_LAYER" ||  io.type === "NIBBLE_LAYER"  || io.type === "BINARY_SPRAYPAINT") {
+    
+    let layerId: InputOutputDTOIoParametersInner = "";
+    switch (io.type) {
+      case "BINARY_LAYER":
+        layerId = io.ioParameters[1];
+        break;
+      case "NIBBLE_LAYER":
+        layerId = io.ioParameters[1];
+        break;
+      case "BINARY_SPRAYPAINT":
+        layerId = io.ioParameters[0];
+        break;
+    }
+    const iconBackendUrl =  `${API_BASE}/layers/${layerId}/icon`; 
+    console.log("try fetching icon from backend: " + iconBackendUrl)
+    return iconBackendUrl;
   }
   if (io.iconName) {
     return staticAssetUrl(io.iconName);
@@ -291,7 +305,10 @@ export const ApplyActionInlineEditor = ({
         >
           {outputOptions.map((option) => (
             <MenuItem key={option.value} value={option.value}>
-              {option.name}
+              <ChipForValue
+                mapping={{ input: option.value, output: option.value, inputName: option.name, outputName: option.name }}
+                io={item.output}
+              />
             </MenuItem>
           ))}
         </Select>

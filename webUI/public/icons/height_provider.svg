@@ -11,7 +11,6 @@
    inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
   <sodipodi:namedview
@@ -25,9 +24,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="px"
      showgrid="true"
-     inkscape:zoom="5.9486812"
-     inkscape:cx="-26.308352"
-     inkscape:cy="37.235144"
+     inkscape:zoom="5.1353324"
+     inkscape:cx="21.225501"
+     inkscape:cy="52.479563"
      inkscape:window-width="1920"
      inkscape:window-height="1011"
      inkscape:window-x="0"
@@ -40,30 +39,6 @@
   </sodipodi:namedview>
   <defs
      id="defs2587">
-    <linearGradient
-       inkscape:collect="always"
-       id="linearGradient8567">
-      <stop
-         style="stop-color:#ffffff;stop-opacity:1;"
-         offset="0"
-         id="stop8622" />
-      <stop
-         style="stop-color:#787878;stop-opacity:1;"
-         offset="0.21527308"
-         id="stop8624" />
-      <stop
-         style="stop-color:#757575;stop-opacity:1;"
-         offset="0.36078623"
-         id="stop8563" />
-      <stop
-         style="stop-color:#00c500;stop-opacity:1;"
-         offset="1"
-         id="stop8565" />
-      <stop
-         style="stop-color:#00c500;stop-opacity:1;"
-         offset="1"
-         id="stop8620" />
-    </linearGradient>
     <inkscape:perspective
        sodipodi:type="inkscape:persp3d"
        inkscape:vp_x="0 : 32 : 1"
@@ -71,15 +46,6 @@
        inkscape:vp_z="64 : 32 : 1"
        inkscape:persp3d-origin="32 : 21.333333 : 1"
        id="perspective225" />
-    <linearGradient
-       inkscape:collect="always"
-       xlink:href="#linearGradient8567"
-       id="linearGradient8569"
-       x1="32.607624"
-       y1="9.5583754"
-       x2="32.632824"
-       y2="58.757378"
-       gradientUnits="userSpaceOnUse" />
   </defs>
   <g
      inkscape:label="Layer 1"
@@ -87,50 +53,43 @@
      id="layer1">
     <g
        id="g7559"
-       style="fill:url(#linearGradient8569);fill-opacity:1"
+       style="fill:#000000;fill-opacity:1"
        transform="translate(-0.32146621,0.9832983)">
       <rect
-         style="fill:url(#linearGradient8569);fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
          id="rect7127"
          width="72.464165"
          height="6.025938"
          x="-4.096312"
          y="3.653717" />
       <rect
-         style="fill:url(#linearGradient8569);fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
          id="rect7127-7"
          width="72.464165"
          height="6.025938"
          x="-4.096312"
          y="15.828725" />
       <rect
-         style="fill:url(#linearGradient8569);fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
          id="rect7127-5"
          width="72.464165"
          height="6.025938"
          x="-4.096312"
          y="28.003733" />
       <rect
-         style="fill:url(#linearGradient8569);fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
          id="rect7127-3"
          width="72.464165"
          height="6.025938"
          x="-4.096312"
          y="40.178741" />
       <rect
-         style="fill:url(#linearGradient8569);fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+         style="fill:#000000;fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
          id="rect7127-56"
          width="72.464165"
          height="6.025938"
          x="-3.7249203"
          y="52.353748" />
     </g>
-    <rect
-       style="fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:4;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-       id="rect7637"
-       width="90.167648"
-       height="1.9079229"
-       x="-14.299017"
-       y="4.3782058" />
   </g>
 </svg>

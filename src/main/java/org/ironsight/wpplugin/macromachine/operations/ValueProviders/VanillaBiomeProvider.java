@@ -247,4 +247,9 @@ public class VanillaBiomeProvider implements IPositionValueGetter, IPositionValu
         return BIOME_COLORS[value];
     }
 
+    @Override
+    public String getIconName() {
+        return "biome_provider.svg";
+    }
+
 }

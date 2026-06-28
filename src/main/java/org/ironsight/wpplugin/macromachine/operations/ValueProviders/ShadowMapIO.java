@@ -82,12 +82,15 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation
 
     @Override
     public void paint(Graphics g, int value, java.awt.Dimension dim) {
-        if (value != 0) {
-            float point = ((float) value) / getMaxValue();
-            int color = (int) (64 * point + (1 - point) * 192);
-            g.setColor(new Color(color, color, color));
-        } else
-            g.setColor(Color.WHITE);
+        if (value == 0) {
+            g.setColor(Color.YELLOW);
+        } else if (value == 1) {
+            g.setColor(Color.GRAY);
+        } else {
+            float t = (float) (value - 1) / (getMaxValue() - 1);
+            int c = Math.round(128 * (1 - t));
+            g.setColor(new Color(c, c, c));
+        }
         g.fillRect(0, 0, dim.width, dim.height);
     }
 
@@ -135,7 +138,11 @@ public class ShadowMapIO implements IPositionValueGetter, ILimitedMapOperation
 
     @Override
     public int getColorForValue(int value) {
-        return 0;
+        if (value == 0) return Color.YELLOW.getRGB();
+        if (value == 1) return Color.GRAY.getRGB();
+        float t = (float) (value - 1) / (getMaxValue() - 1);
+        int c = Math.round(128 * (1 - t));
+        return new Color(c, c, c).getRGB();
     }
 
     @Override
