@@ -114,19 +114,19 @@ export const SimpleFilterInlineEditor = ({
           color="info"
           variant="outlined"
         />
-        {filterData.relevantMappings.map(m => <ChipForValue key={m.input} mapping={m} io={item.input} />)}
+        {filterData.relevantMappings.map((m) => (
+          <ChipForValue key={m.input} mapping={m} io={item.input} />
+        ))}
       </Box>
     </>
   );
 };
 
 export const ChipForValue = ({ mapping, io }: { mapping: NamedMapping; io: InputOutputDTO }) => {
-  return <Chip
-            label={mapping.inputName}
-            variant="outlined"
-            icon={getIconForValue(io, mapping.input)}
-          />
-}
+  return (
+    <Chip label={mapping.inputName} variant="outlined" icon={getIconForValue(io, mapping.input)} />
+  );
+};
 
 export const StepInlineEditor = ({
   item,
