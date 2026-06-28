@@ -151,4 +151,21 @@ public class TerrainProvider implements IPositionValueGetter, IPositionValueSett
         return 0;
     }
 
+    @Override
+    public String getIconName() {
+        return "terrain";
+    }
+
+    @Override
+    public String getIconForValue(int value) {
+        if (isIgnoreValue(value)) return "";
+        try {
+            var material = Terrain.values()[value].getMaterial(null,0,0,0,0,0);
+            return material.name.replace(":","_") + ".png";
+        } catch (Exception e) {
+            return "terrain.png"; //FIXME put a useful error thing here or sth
+        }
+
+    }
+
 }
