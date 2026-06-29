@@ -8,6 +8,7 @@ import {
   NamedMapping,
   namedMapping,
 } from "@/features/Filters";
+import { ChipForValue } from "@/features/FilterComponent";
 import { StepItemType } from "@/features/Execution";
 import ReactMarkdown from "react-markdown";
 import { valueToString } from "@/features/InputOutput";
@@ -16,7 +17,6 @@ import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import { Stack, Typography, Chip, Box, Tooltip, Switch, ButtonGroup } from "@mui/material";
 import { MMIconButton } from "../IconButton";
 import { useMemo, useState } from "react";
-import { theme } from "@/theme";
 import SortByAlphaIcon from "@mui/icons-material/SortByAlpha";
 import ClearIcon from "@mui/icons-material/Clear";
 import { PopupDialog } from "../SelectDialog";
@@ -176,13 +176,9 @@ export function FilterValueDialog({ open, action, onClose, setAction }: FilterEd
                     </ReactMarkdown>
                   }
                 >
-                  <Typography
-                    sx={{
-                      color: !isActive ? theme.palette.text.disabled : theme.palette.text.primary,
-                    }}
-                  >
-                    {mapping.inputName}
-                  </Typography>
+                  <Box sx={{ opacity: !isActive ? 0.5 : 1 }}>
+                    <ChipForValue mapping={mapping} io={actionState.input} />
+                  </Box>
                 </Tooltip>
               </Box>
             );
