@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import InboxIcon from "@mui/icons-material/Inbox";
 import { List } from "react-window";
 import { Search, SearchIconWrapper, StyledInputBase } from "@/MacroGrid";
@@ -148,10 +148,13 @@ export type SelectDialogProps<T> = {
   getId: (item: T) => string;
   getLabel: (item: T) => string;
   getSecondaryText?: (item: T) => string;
-  onClose: (selected: T[]) => void;
+  onClose: (selected: T[], confirmed: boolean) => void;
   isSingleSelect: boolean;
   title: string;
   renderIcon?: (item: T) => React.ReactNode | string;
+  selectedItems?: T[];
+  toolbar?: React.ReactNode;
+  compare?: (a: T, b: T) => number;
 };
 
 export function SelectDialog<T>({
@@ -164,8 +167,17 @@ export function SelectDialog<T>({
   onClose,
   isSingleSelect = false,
   title,
+  selectedItems,
+  toolbar,
+  compare,
 }: SelectDialogProps<T>) {
   const [selected, setSelected] = useState<T[]>([]);
+
+  useEffect(() => {
+    if (open) {
+      setSelected(selectedItems ?? []);
+    }
+  }, [open, selectedItems]);
   const [search, setSearch] = useState("");
 
   const isSelected = (id: string) => selected.some((s) => getId(s) === id);
@@ -182,12 +194,11 @@ export function SelectDialog<T>({
   };
 
   const abort = () => {
-    setSelected([]);
-    onClose([]);
+    onClose(selected, false);
   };
 
   const confirm = () => {
-    onClose(selected);
+    onClose(selected, true);
   };
 
   const sortedFilteredItems = useMemo(() => {
@@ -195,13 +206,16 @@ export function SelectDialog<T>({
       ?.filter(
         (item) => search === "" || getLabel(item).toLowerCase().includes(search.toLowerCase()),
       )
-      .sort((a, b) => getLabel(a).localeCompare(getLabel(b)));
-  }, [items, search]);
+      .sort(
+        compare ?? ((a, b) => getLabel(a).toLowerCase().localeCompare(getLabel(b).toLowerCase())),
+      );
+  }, [items, search, compare]);
 
   console.log(items?.map(getId));
   return (
     <PopupDialog open={open} onAbort={abort} onConfirm={confirm} title={title}>
       <Box display="flex" flexDirection="column" gap={2}>
+        {toolbar}
         <Search>
           <SearchIconWrapper>
             <SearchIcon />

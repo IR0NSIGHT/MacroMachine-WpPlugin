@@ -56,7 +56,7 @@ const staticAssetUrl = (assetName: string) => {
   return iconUrl;
 };
 
-export const ioToIconName = (io: InputOutputDTO) => {
+export const getIoIconUrl = (io: InputOutputDTO) => {
   //FIXME icons are not built into dist
   if (io.type === "BINARY_LAYER" || io.type === "NIBBLE_LAYER" || io.type === "BINARY_SPRAYPAINT") {
     let layerId: InputOutputDTOIoParametersInner = "";
@@ -230,7 +230,7 @@ export const StepInlineEditor = ({
                   justifyContent: "center",
                 }}
               >
-                <Avatar src={ioToIconName(relevantIo)} />
+                <Avatar src={getIoIconUrl(relevantIo)} />
               </ListItemAvatar>
 
               <ListItemText

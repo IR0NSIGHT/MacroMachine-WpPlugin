@@ -9,20 +9,20 @@ import ClearIcon from "@mui/icons-material/Clear";
 import { filterAutoName, isFilter, isRangeFilter } from "@/features/Filters";
 import { isStepItem, isStepMacro, StepItemType } from "@/features/Execution";
 import { actionAutoName, isSimpleAction } from "@/features/Action";
-import { FilterValueDialog } from "./FilterValueDialog";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import { MacroExecuteRequester, runnableMacro, toMacroDTO, toRunnable } from "@/features/Execution";
 import equal from "fast-deep-equal";
 import AddIcon from "@mui/icons-material/Add";
 import { SelectDialog } from "./SelectDialog";
+import { FilterValueDialog } from "./FilterValueDialog";
 import ManageSearchIcon from "@mui/icons-material/ManageSearch";
 import {
   ApplyActionInlineEditor,
   RangeFilterInlineEditor,
   SimpleFilterInlineEditor,
   StepInlineEditor,
-  ioToIconName,
+  getIoIconUrl,
 } from "@/features/FilterComponent";
 import { useDefaultAppliersQuery, useDefaultFiltersQuery } from "@/API/queries";
 import { PageLoadingSpinner } from "@/PageLoadingSpinner";
@@ -443,9 +443,9 @@ export const GlobalOperationDesigner = (props: Props) => {
           isSingleSelect={false}
           title={"Select additional filters"}
           renderIcon={(item) => {
-            return ioToIconName(item.input);
+            return getIoIconUrl(item.input);
           }}
-          onClose={(selected) => {
+          onClose={(selected, _confirmed) => {
             const list: StepItemType[] = [
               ...filters,
               ...selected.map((i) =>
@@ -470,8 +470,8 @@ export const GlobalOperationDesigner = (props: Props) => {
           getSecondaryText={(item) => item.output.type}
           isSingleSelect={false}
           title={"Select additional modifiers"}
-          renderIcon={(item) => ioToIconName(item.output)}
-          onClose={(selected) => {
+          renderIcon={(item) => getIoIconUrl(item.output)}
+          onClose={(selected, _confirmed) => {
             const list: StepItemType[] = [
               ...appliers,
               ...selected.map((i) =>
@@ -493,7 +493,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           getId={(item) => item.uid}
           getLabel={(item) => item.name}
           isSingleSelect={true}
-          onClose={(selected) => {
+          onClose={(selected, _confirmed) => {
             if (selected.length !== 0) onLoadExisting(selected[0]);
             setLoadMacros(undefined);
           }}

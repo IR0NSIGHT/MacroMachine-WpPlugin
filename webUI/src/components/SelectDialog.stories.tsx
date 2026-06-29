@@ -5,6 +5,7 @@ import defaultFilters from "@/mocks/data/defaultFilters.json";
 import { ActionDTO, MacroDTO } from "@/types/DTO";
 import defaultMacros from "../mocks/data/macros.json";
 import { GetIconForIoType, GrassBlockSvg } from "./CustomSvgIcons";
+
 import { InputOutputDTOTypeEnum } from "@/generated/client";
 const meta: Meta<typeof SelectDialog> = {
   title: "Components/SelectDialog",
@@ -42,7 +43,7 @@ export const AllIcons: StoryObj<typeof SelectDialog<IconItem>> = {
 
     isSingleSelect: false,
 
-    onClose(selected: IconItem[]) {
+    onClose(selected: IconItem[], _confirmed: boolean) {
       alert(selected.map((i) => `${i.name} - ${i.uid}`).join("\n"));
     },
   },
@@ -62,7 +63,7 @@ export const None: StoryObj<typeof SelectDialog<ActionDTO>> = {
     },
     isSingleSelect: false,
     items: [],
-    onClose(selected: ActionDTO[]): void {
+    onClose(selected: ActionDTO[], _confirmed: boolean): void {
       alert("selected: " + selected.map((i) => i.name + " - " + i.uid));
     },
     open: true,
@@ -87,7 +88,7 @@ export const Many: StoryObj<typeof SelectDialog<ActionDTO>> = {
         name: "action_" + i,
       }),
     ),
-    onClose(selected: ActionDTO[]): void {
+    onClose(selected: ActionDTO[], _confirmed: boolean): void {
       alert("selected: " + selected.map((i) => i.name + " - " + i.uid));
     },
     renderIcon: (_item: ActionDTO) => {
@@ -113,7 +114,7 @@ const defaultFilterProps: SelectDialogProps<ActionDTO> = {
   },
   isSingleSelect: false,
   items: defaultFilters as ActionDTO[],
-  onClose(selected: ActionDTO[]): void {
+  onClose(selected: ActionDTO[], _confirmed: boolean): void {
     alert("selected: " + selected.map((i) => i.name + " - " + i.uid));
   },
   open: true,
@@ -133,7 +134,7 @@ export const Appliers: StoryObj<typeof SelectDialog<ActionDTO>> = {
     },
     isSingleSelect: false,
     items: defaultAppliers as ActionDTO[],
-    onClose(selected: ActionDTO[]): void {
+    onClose(selected: ActionDTO[], _confirmed: boolean): void {
       alert("selected: " + selected.map((i) => i.name + " - " + i.uid));
     },
     open: true,
@@ -151,7 +152,7 @@ export const Macros: StoryObj<typeof SelectDialog<MacroDTO>> = {
     },
     isSingleSelect: true,
     items: defaultMacros,
-    onClose(selected: MacroDTO[]): void {
+    onClose(selected: MacroDTO[], _confirmed: boolean): void {
       alert("selected: " + selected.map((i) => i.name + " - " + i.uid));
     },
     open: true,
