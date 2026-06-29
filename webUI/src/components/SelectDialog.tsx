@@ -13,7 +13,6 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import CheckIcon from "@mui/icons-material/Check";
 import { useEffect, useMemo, useState } from "react";
-import InboxIcon from "@mui/icons-material/Inbox";
 import { List } from "react-window";
 import { Search, SearchIconWrapper, StyledInputBase } from "@/MacroGrid";
 import SearchIcon from "@mui/icons-material/Search";
@@ -99,15 +98,21 @@ function renderRow<T>({
   const selected = isSelected(id);
 
   const icon = renderIcon?.(item);
+  const hasIcon = icon !== undefined;
+  const isReactNodeIcon = icon !== undefined && typeof icon !== "string";
+
   return (
     <Box style={style}>
       <ListItem disablePadding color={selected ? "primary" : "default"}>
-        <ListItemButton onClick={() => toggleItemSelected(item)} selected={selected}>
-          {icon && (
+        <ListItemButton
+          onClick={() => toggleItemSelected(item)}
+          selected={selected}
+          sx={{ height: getSecondaryText ? 72 : 56 }}
+        >
+          {hasIcon && (
             <ListItemAvatar>
-              <Avatar src={typeof icon === "string" ? icon : undefined}>
-                {typeof icon === "string" ? null : (icon ?? <InboxIcon />)}
-              </Avatar>
+              {!isReactNodeIcon && <Avatar src={icon} />}
+              {isReactNodeIcon && icon}
             </ListItemAvatar>
           )}
           <ListItemText

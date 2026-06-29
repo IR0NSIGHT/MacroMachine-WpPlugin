@@ -43,12 +43,16 @@ export const colorForValue = (io: InputOutputDTO, value: number): string | undef
   return color ? `#${(color & 0xffffff).toString(16).padStart(6, "0")}` : undefined;
 };
 
-export const getIconForValue = (_io: InputOutputDTO, _value: number) => {
+export const getIconForValue = (
+  _io: InputOutputDTO,
+  _value: number,
+  sx: { width: number; height: number } = { width: 20, height: 20 },
+) => {
   const valueIcon = _io.iconByValue[_value - _io.min];
   if (valueIcon) {
-    return <Avatar src={staticAssetUrl(valueIcon)} sx={{ width: 20, height: 20 }} />;
+    return <Avatar src={staticAssetUrl(valueIcon)} sx={sx} />;
   }
-  return <CircleIcon sx={{ color: colorForValue(_io, _value) }} />;
+  return <CircleIcon sx={{ ...sx, color: colorForValue(_io, _value) }} />;
 };
 
 const staticAssetUrl = (assetName: string) => {

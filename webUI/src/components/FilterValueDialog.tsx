@@ -14,7 +14,6 @@ import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import { Typography, ButtonGroup } from "@mui/material";
 import { MMIconButton } from "./IconButton";
 import { useMemo, useState } from "react";
-import SortByAlphaIcon from "@mui/icons-material/SortByAlpha";
 import ClearIcon from "@mui/icons-material/Clear";
 import { SelectDialog } from "./SelectDialog";
 
@@ -39,7 +38,7 @@ const sortMappingByOutput = (a: NamedMapping, b: NamedMapping): number => {
 
 export function FilterValueDialog({ open, action, onClose, setAction }: FilterEditorProps) {
   const [actionState, setActionState] = useState<StepItemType | undefined>(action);
-  const [sortOrder, setSortOrder] = useState<"input" | "output">("input");
+  const sortOrder = "input" as const;
   const sortedMappings = useMemo(() => {
     if (!actionState) return [];
     return namedMapping(actionState).sort(
@@ -67,7 +66,9 @@ export function FilterValueDialog({ open, action, onClose, setAction }: FilterEd
       getLabel={(mapping) => mapping.inputName}
       isSingleSelect={false}
       title={"Select which values of " + actionState.input.displayName + " to allow "}
-      renderIcon={(mapping) => getIconForValue(actionState.input, mapping.input)}
+      renderIcon={(mapping) =>
+        getIconForValue(actionState.input, mapping.input, { width: 40, height: 40 })
+      }
       toolbar={
         <>
           <Typography color="text.secondary">{action?.name}</Typography>
