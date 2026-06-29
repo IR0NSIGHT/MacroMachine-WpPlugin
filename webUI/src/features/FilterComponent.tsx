@@ -58,8 +58,7 @@ const staticAssetUrl = (assetName: string) => {
 
 export const ioToIconName = (io: InputOutputDTO) => {
   //FIXME icons are not built into dist
-  if (io.type === "BINARY_LAYER" ||  io.type === "NIBBLE_LAYER"  || io.type === "BINARY_SPRAYPAINT") {
-    
+  if (io.type === "BINARY_LAYER" || io.type === "NIBBLE_LAYER" || io.type === "BINARY_SPRAYPAINT") {
     let layerId: InputOutputDTOIoParametersInner = "";
     switch (io.type) {
       case "BINARY_LAYER":
@@ -72,8 +71,8 @@ export const ioToIconName = (io: InputOutputDTO) => {
         layerId = io.ioParameters[0];
         break;
     }
-    const iconBackendUrl =  `${API_BASE}/layers/${layerId}/icon`; 
-    console.log("try fetching icon from backend: " + iconBackendUrl)
+    const iconBackendUrl = `${API_BASE}/layers/${layerId}/icon`;
+    console.log("try fetching icon from backend: " + iconBackendUrl);
     return iconBackendUrl;
   }
   if (io.iconName) {
@@ -306,7 +305,12 @@ export const ApplyActionInlineEditor = ({
           {outputOptions.map((option) => (
             <MenuItem key={option.value} value={option.value}>
               <ChipForValue
-                mapping={{ input: option.value, output: option.value, inputName: option.name, outputName: option.name }}
+                mapping={{
+                  input: option.value,
+                  output: option.value,
+                  inputName: option.name,
+                  outputName: option.name,
+                }}
                 io={item.output}
               />
             </MenuItem>
