@@ -160,6 +160,7 @@ export type SelectDialogProps<T> = {
   selectedItems?: T[];
   toolbar?: React.ReactNode;
   compare?: (a: T, b: T) => number;
+  onSelectionChange?: (selected: T[]) => void;
 };
 
 export function SelectDialog<T>({
@@ -175,6 +176,7 @@ export function SelectDialog<T>({
   selectedItems,
   toolbar,
   compare,
+  onSelectionChange,
 }: SelectDialogProps<T>) {
   const [selected, setSelected] = useState<T[]>([]);
 
@@ -189,12 +191,14 @@ export function SelectDialog<T>({
 
   const toggleItem = (item: T) => {
     const id = getId(item);
-    const selected = isSelected(id);
-
     if (isSingleSelect) {
-      setSelected(selected ? [] : [item]);
+      const next = isSelected(id) ? [] : [item];
+      setSelected(next);
+      onSelectionChange?.(next);
     } else {
-      setSelected((prev) => (selected ? prev.filter((s) => getId(s) !== id) : [...prev, item]));
+      const next = isSelected(id) ? selected.filter((s) => getId(s) !== id) : [...selected, item];
+      setSelected(next);
+      onSelectionChange?.(next);
     }
   };
 

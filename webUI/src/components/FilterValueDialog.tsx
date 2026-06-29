@@ -1,9 +1,7 @@
 import {
-  clearFilter,
   filterAutoName,
   filterValueBlock,
   filterValuePass,
-  invertFilter,
   NamedMapping,
   namedMapping,
 } from "@/features/Filters";
@@ -13,7 +11,7 @@ import { MacroDTO, ActionDTO } from "@/types/DTO";
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import { Typography, ButtonGroup } from "@mui/material";
 import { MMIconButton } from "./IconButton";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ClearIcon from "@mui/icons-material/Clear";
 import { SelectDialog } from "./SelectDialog";
 
@@ -29,59 +27,72 @@ const sortMappingByInput = (a: NamedMapping, b: NamedMapping) => {
   return a.inputName.localeCompare(b.inputName);
 };
 
-const sortMappingByOutput = (a: NamedMapping, b: NamedMapping): number => {
-  if (a.outputName === b.outputName) {
-    return sortMappingByInput(a, b);
-  }
-  return a.outputName.localeCompare(b.outputName);
-};
-
 export function FilterValueDialog({ open, action, onClose, setAction }: FilterEditorProps) {
-  const [actionState, setActionState] = useState<StepItemType | undefined>(action);
-  const sortOrder = "input" as const;
   const sortedMappings = useMemo(() => {
-    if (!actionState) return [];
-    return namedMapping(actionState).sort(
-      sortOrder === "input" ? sortMappingByInput : sortMappingByOutput,
-    );
-  }, [actionState, sortOrder]);
+    if (!action) return [];
+    return namedMapping(action).sort(sortMappingByInput);
+  }, [action]);
+
   const passMappings = useMemo(
     () => sortedMappings.filter((m) => m.output !== filterValueBlock),
     [sortedMappings],
   );
+
+  const [dialogSelected, setDialogSelected] = useState<NamedMapping[]>(passMappings);
+
+  useEffect(() => {
+    if (open && action) {
+      setDialogSelected(passMappings);
+    }
+  }, [open, action, passMappings]);
+
   const compareFn = useMemo(() => {
-    if (!actionState?.input.discrete) {
+    if (!action?.input.discrete) {
       return (a: NamedMapping, b: NamedMapping) => a.input - b.input;
     }
     return undefined;
-  }, [actionState]);
-  if (!actionState) return null;
+  }, [action]);
+
+  if (!action) return null;
+
+  const selectedInputs = new Set(dialogSelected.map((m) => m.input));
+
+  const handleInvert = () => {
+    const inverted = sortedMappings.filter((m) => !selectedInputs.has(m.input));
+    setDialogSelected(inverted);
+  };
+
+  const handleClear = () => {
+    setDialogSelected([]);
+  };
+
   return (
     <SelectDialog<NamedMapping>
       open={open}
       items={sortedMappings}
-      selectedItems={passMappings}
+      selectedItems={dialogSelected}
+      onSelectionChange={setDialogSelected}
       compare={compareFn}
       getId={(mapping) => String(mapping.input)}
       getLabel={(mapping) => mapping.inputName}
       isSingleSelect={false}
-      title={"Select which values of " + actionState.input.displayName + " to allow "}
+      title={"Select which values of " + action.input.displayName + " to allow "}
       renderIcon={(mapping) =>
-        getIconForValue(actionState.input, mapping.input, { width: 40, height: 40 })
+        getIconForValue(action.input, mapping.input, { width: 40, height: 40 })
       }
       toolbar={
         <>
-          <Typography color="text.secondary">{action?.name}</Typography>
+          <Typography color="text.secondary">{action.name}</Typography>
           <ButtonGroup>
             <MMIconButton
               disabled={false}
-              onClick={() => setActionState(filterAutoName(invertFilter(actionState)))}
+              onClick={handleInvert}
               icon={<SwitchLeftIcon />}
               tooltip={"Invert filter"}
             />
             <MMIconButton
               disabled={false}
-              onClick={() => setActionState(filterAutoName(clearFilter(actionState)))}
+              onClick={handleClear}
               icon={<ClearIcon />}
               tooltip={"Clear filter"}
             />
@@ -89,10 +100,10 @@ export function FilterValueDialog({ open, action, onClose, setAction }: FilterEd
         </>
       }
       onClose={(selected, confirmed) => {
-        if (confirmed && actionState) {
-          const updatedFilter = { ...actionState };
-          namedMapping(actionState).forEach((mapping) => {
-            const idx = mapping.input - actionState.input.min;
+        if (confirmed && action) {
+          const updatedFilter = { ...action };
+          namedMapping(action).forEach((mapping) => {
+            const idx = mapping.input - action.input.min;
             const isPass = selected.some((s) => s.input === mapping.input);
             updatedFilter.mappedOutputs[idx] = isPass ? filterValuePass : filterValueBlock;
           });
