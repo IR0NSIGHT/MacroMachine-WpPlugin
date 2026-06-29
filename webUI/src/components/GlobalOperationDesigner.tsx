@@ -9,7 +9,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import { filterAutoName, isFilter, isRangeFilter } from "@/features/Filters";
 import { isStepItem, isStepMacro, StepItemType } from "@/features/Execution";
 import { actionAutoName, isSimpleAction } from "@/features/Action";
-import { FilterValueDialog } from "./MacroList/ActionDetailsDialog";
+import { FilterValueDialog } from "./FilterValueDialog";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import BugReportIcon from "@mui/icons-material/BugReport";
 import { MacroExecuteRequester, runnableMacro, toMacroDTO, toRunnable } from "@/features/Execution";
