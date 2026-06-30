@@ -76,7 +76,7 @@ export function FilterValueDialog({ open, action, onClose, setAction }: FilterEd
       getId={(mapping) => String(mapping.input)}
       getLabel={(mapping) => mapping.inputName}
       isSingleSelect={false}
-      title={"Select which values of " + action.input.displayName + " to allow "}
+      title={"Select which '" + action.input.displayName + "' values the filter allows "}
       renderIcon={(mapping) =>
         getIconForValue(action.input, mapping.input, { width: 40, height: 40 })
       }
