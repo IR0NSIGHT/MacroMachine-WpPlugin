@@ -7,9 +7,12 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import javax.swing.*;
-import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import javax.swing.Timer;
+import org.ironsight.cubearray.render.CubeSetup;
+import org.ironsight.cubearray.render.InstancedCubes;
+import org.ironsight.cubearray.schematic.SchemReader;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Platform;
@@ -149,9 +152,16 @@ public class PreviewOperation extends AbstractBrushOperation
         if (dim.isEventsInhibited())
             dim.setEventsInhibited(false);
 
-        var schemObj = renderTileToSurfaceObject(tiles, dim);
-        GlobalActionPanel.setSurfaceObject(schemObj);
-        GlobalActionPanel.flagForChangedSurfaceObject();
+        var schemObj = renderTileToSurfaceObject(tiles, dim); //fixme: do this in the background
+        Runnable task = () -> {
+            try {
+                CubeSetup setup = SchemReader.prepareData(List.of(schemObj));
+                new InstancedCubes(setup).run();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        };
+        new Thread(task).start();
         /*
          * var clone = new Sponge2Schematic(schemObj); try {
          * clone.save("D:\\Repos\\cubeArray\\testSchems\\exported_"+(int)(Math.random()*
