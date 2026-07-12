@@ -131,7 +131,9 @@ public class Export3DViewHelper
                                         dz + minecraftWorldObject.getVolume().getHeight() - 1); y >= dz; --y) {
                                     int xx = blockPosX + x, zz = blockPosZ + z, yy = y;
                                     Material mat = chunk.getMaterial(x, y, z);
-                                    minecraftWorldObject.setMaterialAt(xx, zz, yy, mat);
+                                    if (mat != Material.HARDENED_CLAY) {
+                                        minecraftWorldObject.setMaterialAt(xx, zz, yy, mat);
+                                    }
                                 }
                             }
                         }

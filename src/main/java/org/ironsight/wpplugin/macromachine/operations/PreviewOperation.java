@@ -5,11 +5,12 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import javax.swing.Timer;
+import javax.swing.*;
 import org.ironsight.cubearray.render.CubeSetup;
 import org.ironsight.cubearray.render.InstancedCubes;
 import org.ironsight.cubearray.schematic.SchemReader;
@@ -45,10 +46,65 @@ public class PreviewOperation extends AbstractBrushOperation
     private Rectangle lastExtent = new Rectangle(0, 0, 0, 0);
     private TileChangedListener listener = new TileChangedListener(this);
     private ArrayList<Tile> tilesInExtent = new ArrayList<>();
+    private volatile InstancedCubes renderer;
+    private Set<Point> lastTileCoords;
+    private Dimension lastDim;
     private Platform platform;
+    private JButton rerenderButton;
+    private final JPanel optionsPanel;
 
     public PreviewOperation() {
         super(NAME, DESCRIPTION, ID);
+        optionsPanel = new JPanel();
+        optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
+        JLabel title = new JLabel(NAME);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        optionsPanel.add(title);
+        JTextArea desc = new JTextArea(DESCRIPTION);
+        desc.setEditable(false);
+        desc.setWrapStyleWord(true);
+        desc.setLineWrap(true);
+        desc.setAlignmentX(Component.LEFT_ALIGNMENT);
+        optionsPanel.add(desc);
+        optionsPanel.add(Box.createVerticalStrut(8));
+        rerenderButton = new JButton("Rerender");
+        rerenderButton.setEnabled(false);
+        rerenderButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rerenderButton.addActionListener(this::rerenderLastSelection);
+        optionsPanel.add(rerenderButton);
+    }
+
+    @Override
+    public JPanel getOptionsPanel() {
+        return optionsPanel;
+    }
+
+    private void rerenderLastSelection(ActionEvent e) {
+        if (lastTileCoords == null || lastTileCoords.isEmpty() || lastDim == null) {
+            return;
+        }
+        HashSet<Tile> tiles = new HashSet<>();
+        for (Point coord : lastTileCoords) {
+            Tile tile = lastDim.getTile(coord.x, coord.y);
+            if (tile != null) {
+                tiles.add(tile);
+            }
+        }
+        if (tiles.isEmpty()) {
+            return;
+        }
+        var schemObj = renderTileToSurfaceObject(tiles, lastDim);
+        Runnable task = () -> {
+            try {
+                CubeSetup setup = SchemReader.prepareData(List.of(schemObj));
+                if (renderer != null) {
+                    renderer.replaceData(setup);
+                }
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        };
+        new Thread(task).start();
     }
 
     // HIGHLIGHT AREA
@@ -136,6 +192,13 @@ public class PreviewOperation extends AbstractBrushOperation
             }
         }
 
+        lastTileCoords = new HashSet<>();
+        for (Tile tile : tiles) {
+            lastTileCoords.add(new Point(tile.getX(), tile.getY()));
+        }
+        lastDim = dim;
+        rerenderButton.setEnabled(true);
+
         if (!dim.isEventsInhibited())
             dim.setEventsInhibited(true);
         dim.clearLayerData(annotationLayer);
@@ -156,25 +219,18 @@ public class PreviewOperation extends AbstractBrushOperation
         Runnable task = () -> {
             try {
                 CubeSetup setup = SchemReader.prepareData(List.of(schemObj));
-                new InstancedCubes(setup).run();
+                if (renderer == null) {
+                    renderer = new InstancedCubes(setup);
+                    renderer.run();
+                    renderer = null;
+                } else {
+                    renderer.replaceData(setup);
+                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         };
         new Thread(task).start();
-        /*
-         * var clone = new Sponge2Schematic(schemObj); try {
-         * clone.save("D:\\Repos\\cubeArray\\testSchems\\exported_"+(int)(Math.random()*
-         * 1000)+".schem"); } catch (IOException ex) { System.err.println(ex); }
-         *
-         *
-         * Runnable task = () -> { InstancedCubes renderer = null; try { renderer = new
-         * InstancedCubes(SchemReader.prepareData(java.util.List.of(schemObj)));
-         * renderer.run(); } catch (Exception e) { throw new RuntimeException(e); } };
-         *
-         * Thread thread = new Thread(task); thread.start(); // actually starts it in a
-         * new thread
-         */
 
     }
 

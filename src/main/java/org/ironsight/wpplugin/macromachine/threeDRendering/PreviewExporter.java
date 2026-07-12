@@ -5,6 +5,7 @@ import java.util.*;
 import org.pepsoft.minecraft.ChunkFactory;
 import org.pepsoft.util.ProgressReceiver;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.World2;
 import org.pepsoft.worldpainter.exporting.*;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -19,8 +20,14 @@ public class PreviewExporter extends JavaWorldExporter
 
     public HashMap<Point, WorldRegion> export(Dimension dimension) {
         ExportSettings originalSettings = dimension.getExportSettings();
+        Terrain originalSubsurface = dimension.getSubsurfaceMaterial();
+        int originalMinDepth = dimension.getTopLayerMinDepth();
+        int originalVariation = dimension.getTopLayerVariation();
 
         try {
+            dimension.setSubsurfaceMaterial(Terrain.HARDENED_CLAY);
+            dimension.setTopLayerMinDepth(1);
+            dimension.setTopLayerVariation(0);
             ExportSettings minimalExportSettings = new JavaExportSettings(JavaExportSettings.FloatMode.LEAVE_FLOATING,
                     JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING,
                     JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING, false,
@@ -75,6 +82,9 @@ public class PreviewExporter extends JavaWorldExporter
             System.err.println(t);
         } finally {
             dimension.setExportSettings(originalSettings);
+            dimension.setSubsurfaceMaterial(originalSubsurface);
+            dimension.setTopLayerMinDepth(originalMinDepth);
+            dimension.setTopLayerVariation(originalVariation);
         }
         return null;
     }
