@@ -16,7 +16,6 @@ import {
   Tooltip,
 } from "@mui/material";
 import * as React from "react";
-import { SelectChangeEvent } from "@mui/material/Select";
 import { MMIconButton } from "../components/IconButton";
 import { StepItemType } from "./Execution";
 import CircleIcon from "@mui/icons-material/Circle";
@@ -33,9 +32,14 @@ import {
 import SwitchLeftIcon from "@mui/icons-material/SwitchLeft";
 import EditIcon from "@mui/icons-material/Edit";
 import ClearIcon from "@mui/icons-material/Clear";
-import { InputOutputDTO, InputOutputDTOIoParametersInner } from "@/generated/client";
+import {
+  InputOutputDTO,
+  InputOutputDTOIoParametersInner,
+  ActionDTOActionTypeEnum,
+} from "@/generated/client";
 import { fillParentSx } from "@/App";
 import { API_BASE } from "@/API/api";
+import { ActionType } from "@/types/DTO";
 
 export const colorForValue = (io: InputOutputDTO, value: number): string | undefined => {
   const idx = value - io.min;
@@ -60,7 +64,7 @@ const staticAssetUrl = (assetName: string) => {
   return iconUrl;
 };
 
-export const getIoIconUrl = (io: InputOutputDTO) => {
+export const getIconForInputOutput = (io: InputOutputDTO) => {
   //FIXME icons are not built into dist
   if (io.type === "BINARY_LAYER" || io.type === "NIBBLE_LAYER" || io.type === "BINARY_SPRAYPAINT") {
     let layerId: InputOutputDTOIoParametersInner = "";
@@ -234,7 +238,7 @@ export const StepInlineEditor = ({
                   justifyContent: "center",
                 }}
               >
-                <Avatar src={getIoIconUrl(relevantIo)} />
+                <Avatar src={getIconForInputOutput(relevantIo)} />
               </ListItemAvatar>
 
               <ListItemText
@@ -278,6 +282,25 @@ export const StepInlineEditor = ({
   );
 };
 
+const actionTypeToString = (type: ActionType) => {
+  switch (type) {
+    case "AT_LEAST":
+      return "at least";
+    case "DECREMENT":
+      return "subtract";
+    case "INCREMENT":
+      return "add";
+    case "DIVIDE":
+      return "divide by";
+    case "LIMIT_TO":
+      return "limit to";
+    case "MULTIPLY":
+      return "multiply by";
+    case "SET":
+      return "set to";
+  }
+};
+
 export const ApplyActionInlineEditor = ({
   item,
   setItem,
@@ -286,25 +309,56 @@ export const ApplyActionInlineEditor = ({
   setItem: (item: StepItemType) => void;
 }) => {
   const outputOptions = ioNamedValues(item.output);
-  const handleChange = (event: SelectChangeEvent<string>) => {
-    const value = Number(event.target.value);
 
+  const setMappingValue = (value: number) => {
     setItem({
       ...item,
       mappingPointsY: [value],
     });
   };
+
+  const actionTypeOptions = Object.values(ActionDTOActionTypeEnum);
+
   return (
-    <Box sx={{ minWidth: 120, maxWidth: 400, m: 1 }}>
-      {" "}
+    <Box
+      sx={{
+        ...fillParentSx,
+        display: "flex",
+        flexDirection: "row",
+        align: "center",
+        minWidth: 120,
+        maxWidth: 400,
+        m: 1,
+      }}
+    >
+      {!item.output.discrete && (
+        <Box sx={{ width: 200 }}>
+          <FormControl fullWidth>
+            <InputLabel id="select-action-type-label">Action Type</InputLabel>
+            <Select<ActionDTOActionTypeEnum>
+              labelId="select-action-type-label"
+              id="select-action-type"
+              value={item.actionType}
+              label="Action type"
+              onChange={(event) => setItem({ ...item, actionType: event.target.value })}
+            >
+              {actionTypeOptions.map((option) => (
+                <MenuItem key={option} value={option}>
+                  {actionTypeToString(option)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      )}
       <FormControl fullWidth>
-        <InputLabel id="select-action-output-">Set to</InputLabel>
-        <Select
+        <InputLabel id="select-action-output-">value</InputLabel>
+        <Select<number>
           labelId="demo-simple-select-label"
           id="demo-simple-select"
-          value={item.mappingPointsY}
-          label="Age"
-          onChange={handleChange as any} //FIXME this is an ugy hack
+          value={item.mappingPointsY[0]}
+          label="value"
+          onChange={(event) => setMappingValue(event.target.value)}
         >
           {outputOptions.map((option) => (
             <MenuItem key={option.value} value={option.value}>

@@ -1,81 +1,77 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { Box, Typography } from "@mui/material";
+import {
+  SimpleFilterInlineEditor,
+  RangeFilterInlineEditor,
+  ApplyActionInlineEditor,
+} from "./FilterComponent";
 import defaultFilters from "@/mocks/data/defaultFilters.json";
+import defaultApplyActions from "@/mocks/data/defaultApplyActions.json";
 import { ActionDTO } from "@/types/DTO";
-import { Avatar, Box, Typography } from "@mui/material";
-import { ChipForValue, getIoIconUrl } from "./FilterComponent";
-import { InputOutputDTO, InputOutputDTOTypeEnum } from "@/generated/client";
+import { StepItemType } from "./Execution";
+import { useState } from "react";
+
+const filters = defaultFilters as ActionDTO[];
+const applyActions = defaultApplyActions as ActionDTO[];
+
+const simpleFilter = filters.find(
+  (f) => f.output.type === "INTERMEDIATE_SELECTION" && f.input.discrete,
+)!;
+const rangeFilter = filters.find(
+  (f) => f.output.type === "INTERMEDIATE_SELECTION" && !f.input.discrete,
+)!;
+const applyDiscrete = applyActions.find((a) => a.output.discrete)!;
+const applyNonDiscrete = applyActions.find((a) => !a.output.discrete)!;
 
 const meta: Meta = {
-  title: "Features/FilterComponent",
+  title: "Features/FilterComponent/InlineEditors",
 };
 
 export default meta;
 
-const allIos = () => {
-  const seen = new Set<string>();
-  const ios: InputOutputDTO[] = [];
-  for (const f of defaultFilters as ActionDTO[]) {
-    for (const io of [f.input, f.output]) {
-      if (!seen.has(io.type)) {
-        seen.add(io.type);
-        ios.push(io);
-      }
-    }
-  }
-  return ios;
-};
-
-const iosByType: Record<string, InputOutputDTO> = {};
-for (const io of allIos()) {
-  iosByType[io.type] = io;
-}
-
-const mkStory = (type: string): StoryObj => ({
-  render: () => {
-    const io = iosByType[type];
+const editorStory = (label: string, item: ActionDTO, Editor: React.ComponentType<any>) => {
+  const Story = () => {
+    const [stepItem, setStepItem] = useState<StepItemType>({ ...item, active: true });
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: 2 }}>
-        <Avatar src={getIoIconUrl(io)} sx={{ width: 48, height: 48 }} />
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          {io.displayName} ({io.type})
+      <Box sx={{ p: 2, maxWidth: 600 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          {label}
         </Typography>
-        <Box sx={{ display: "flex", flexDirection: "row", gap: 1, flexWrap: "wrap" }}>
-          {Array.from({ length: io.max - io.min + 1 }, (_, i) => io.min + i).map((v) => (
-            <Box key={v} sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              <ChipForValue
-                mapping={{
-                  input: v,
-                  inputName: io.valueDisplayNames?.[v - io.min] || String(v),
-                  output: 0,
-                  outputName: "",
-                }}
-                io={io}
-              />
-              <Box sx={{ fontSize: 10, color: "text.secondary", mt: 0.5 }}>
-                icon: {io.iconByValue?.[v - io.min] || "(none)"}
-              </Box>
-            </Box>
-          ))}
-        </Box>
+        <Typography variant="body2" sx={{ mb: 2, color: "text.secondary" }}>
+          {item.name} — input: {item.input.type}, output: {item.output.type}, discrete:{" "}
+          {String(item.output.discrete ?? item.input.discrete)}
+        </Typography>
+        <Editor item={stepItem} setItem={setStepItem} openEditorFor={(_i: StepItemType) => {}} />
+        <Typography variant="caption" sx={{ mt: 2, display: "block", color: "text.secondary" }}>
+          mappingPointsY: {JSON.stringify(stepItem.mappingPointsY)}
+          {stepItem.actionType && `, actionType: ${stepItem.actionType}`}
+        </Typography>
       </Box>
     );
-  },
-});
+  };
+  return { render: Story } as StoryObj;
+};
 
-export const Height = mkStory(InputOutputDTOTypeEnum.Height);
-export const Slope = mkStory(InputOutputDTOTypeEnum.Slope);
-export const Annotation = mkStory(InputOutputDTOTypeEnum.Annotation);
-export const BinaryLayer = mkStory(InputOutputDTOTypeEnum.BinaryLayer);
-export const BlockDirection = mkStory(InputOutputDTOTypeEnum.BlockDirection);
-export const DistanceToEdge = mkStory(InputOutputDTOTypeEnum.DistanceToEdge);
-export const IntermediateSelection = mkStory(InputOutputDTOTypeEnum.IntermediateSelection);
-export const NibbleLayer = mkStory(InputOutputDTOTypeEnum.NibbleLayer);
-export const PerlinNoise = mkStory(InputOutputDTOTypeEnum.PerlinNoise);
-export const RandomNoise = mkStory(InputOutputDTOTypeEnum.RandomNoise);
-export const Selection = mkStory(InputOutputDTOTypeEnum.Selection);
-export const Shadow = mkStory(InputOutputDTOTypeEnum.Shadow);
-export const Terrain = mkStory(InputOutputDTOTypeEnum.Terrain);
-export const VanillaBiome = mkStory(InputOutputDTOTypeEnum.VanillaBiome);
-export const VoronoiNoise = mkStory(InputOutputDTOTypeEnum.VoronoiNoise);
-export const WaterDepth = mkStory(InputOutputDTOTypeEnum.WaterDepth);
-export const WaterHeight = mkStory(InputOutputDTOTypeEnum.WaterHeight);
+export const SimpleFilter = editorStory(
+  "SimpleFilterInlineEditor (discrete input)",
+  simpleFilter,
+  SimpleFilterInlineEditor,
+);
+
+export const RangeFilter = editorStory(
+  "RangeFilterInlineEditor (non-discrete input)",
+  rangeFilter,
+  RangeFilterInlineEditor,
+);
+
+export const ApplyActionDiscrete = editorStory(
+  "ApplyActionInlineEditor (discrete output)",
+  applyDiscrete,
+  ApplyActionInlineEditor,
+);
+
+export const ApplyActionNonDiscrete = editorStory(
+  "ApplyActionInlineEditor (non-discrete output — shows action type dropdown)",
+  applyNonDiscrete,
+  ApplyActionInlineEditor,
+);

@@ -22,7 +22,7 @@ import {
   RangeFilterInlineEditor,
   SimpleFilterInlineEditor,
   StepInlineEditor,
-  getIoIconUrl,
+  getIconForInputOutput,
 } from "@/features/FilterComponent";
 import { useDefaultAppliersQuery, useDefaultFiltersQuery } from "@/API/queries";
 import { PageLoadingSpinner } from "@/PageLoadingSpinner";
@@ -402,7 +402,7 @@ export const GlobalOperationDesigner = (props: Props) => {
                   <StepInlineEditor
                     key={modifierAction.uid}
                     item={modifierAction}
-                    setItem={(item) => updateApplyItem(item, false, setAppliers)}
+                    setItem={(item) => updateApplyItem(actionAutoName(item), false, setAppliers)}
                     deleteItem={() => updateApplyItem(modifierAction, true, setAppliers)}
                     relevantIo={modifierAction.output}
                     primaryText={modifierAction.output.displayName}
@@ -443,7 +443,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           isSingleSelect={false}
           title={"Select additional filters"}
           renderIcon={(item) => {
-            return getIoIconUrl(item.input);
+            return getIconForInputOutput(item.input);
           }}
           onClose={(selected, _confirmed) => {
             const list: StepItemType[] = [
@@ -470,7 +470,7 @@ export const GlobalOperationDesigner = (props: Props) => {
           getSecondaryText={(item) => item.output.type}
           isSingleSelect={false}
           title={"Select additional modifiers"}
-          renderIcon={(item) => getIoIconUrl(item.output)}
+          renderIcon={(item) => getIconForInputOutput(item.output)}
           onClose={(selected, _confirmed) => {
             const list: StepItemType[] = [
               ...appliers,
