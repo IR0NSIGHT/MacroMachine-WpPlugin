@@ -169,7 +169,7 @@ public class PathToolBackend
             }
 
             // Mutate the existing Point4f in the list
-            path.set(i, new Point4f(pos.x, pos.y, z, pos.w));
+            pos.z = z;
             previousZ = z;
         }
 
