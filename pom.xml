@@ -222,6 +222,7 @@
             <groupId>org.ironsight</groupId>
             <artifactId>CubeArray</artifactId>
             <version>1.4.4-SNAPSHOT</version>
+            <classifier>lib</classifier>
         </dependency>
         <dependency>
             <groupId>org.lwjgl</groupId>
