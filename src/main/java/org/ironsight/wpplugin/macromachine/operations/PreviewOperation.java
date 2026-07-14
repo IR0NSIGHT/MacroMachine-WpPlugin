@@ -79,6 +79,7 @@ public class PreviewOperation extends AbstractBrushOperation
     private boolean showGrid = true;
     private InstancedCubes.CameraState prevCameraState;
     private boolean selectCameraPos;
+    private float heightAboveGround;
     private final JPanel optionsPanel;
 
     public PreviewOperation() {
@@ -302,11 +303,15 @@ public class PreviewOperation extends AbstractBrushOperation
             selectCameraPos = false;
             InstancedCubes r = renderer;
             if (r != null && lastRenderedObject != null && lastDim != null) {
-                int worldY = (int) lastDim.getHeightAt(centreX, centreY);
+                CameraState cs = r.getCameraState();
+                javax.vecmath.Point3i currentWP = sceneToWP(cs.target().x, cs.target().y, cs.target().z);
+                float currentTerrainHeight = lastDim.getHeightAt(currentWP.x, currentWP.z);
+                heightAboveGround = currentWP.y - currentTerrainHeight;
+                float newTerrainHeight = lastDim.getHeightAt(centreX, centreY);
+                int worldY = Math.round(newTerrainHeight + heightAboveGround);
                 Vector3f target = wpToScene(centreX, centreY, worldY);
                 System.out.println("[PreviewOp] SetCameraPos: WP (" + centreX + ", " + centreY + ", " + worldY
                     + ") -> scene (" + target.x + ", " + target.y + ", " + target.z + ")");
-                CameraState cs = r.getCameraState();
                 System.out.println("[PreviewOp] SetCameraPos: prev target (" + cs.target().x + ", " + cs.target().y + ", " + cs.target().z + ")");
                 cs.target().x = target.x;
                 cs.target().y = target.y;
