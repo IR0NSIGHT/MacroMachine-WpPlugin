@@ -14,7 +14,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import org.ironsight.cubearray.render.CubeSetup;
@@ -79,6 +81,7 @@ public class PreviewOperation extends AbstractBrushOperation
     private boolean showGrid = true;
     private InstancedCubes.CameraState prevCameraState;
     private boolean selectCameraPos;
+    private boolean useFullExport;
     private float heightAboveGround;
     private final JPanel optionsPanel;
 
@@ -188,6 +191,12 @@ public class PreviewOperation extends AbstractBrushOperation
         saveSchematicButton.addActionListener(e -> saveSchematic());
         optionsPanel.add(saveSchematicButton);
 
+        JToggleButton fullExportToggle = new JToggleButton("Full Export", false);
+        fullExportToggle.setToolTipText("Use full export settings (slower, produces a larger schematic)");
+        fullExportToggle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        fullExportToggle.addActionListener(e -> useFullExport = fullExportToggle.isSelected());
+        optionsPanel.add(fullExportToggle);
+
         new Timer(500, e -> {
             InstancedCubes r = renderer;
             if (r != null) {
@@ -239,7 +248,7 @@ public class PreviewOperation extends AbstractBrushOperation
         statusLabel.setText("Rendering...");
         Runnable task = () -> {
             try {
-                var schemObj = renderTileToSurfaceObject(tiles, lastDim);
+                var schemObj = renderTileToSurfaceObject(tiles, lastDim, useFullExport);
                 lastRenderedObject = schemObj;
                 org.pepsoft.util.Box vol = schemObj.getVolume();
                 javax.vecmath.Point3i off = schemObj.getOffset();
@@ -408,7 +417,7 @@ public class PreviewOperation extends AbstractBrushOperation
 
         Runnable task = () -> {
             try {
-                var schemObj = renderTileToSurfaceObject(clonedTiles, dim);
+                var schemObj = renderTileToSurfaceObject(clonedTiles, dim, useFullExport);
                 lastRenderedObject = schemObj;
                 org.pepsoft.util.Box vol = schemObj.getVolume();
                 javax.vecmath.Point3i off = schemObj.getOffset();
@@ -493,7 +502,7 @@ public class PreviewOperation extends AbstractBrushOperation
                         for (int z = 0; z < h; z++) {
                             Material mat = obj.getMaterial(x, y, z);
                             if (mat != null) {
-                                builder.setBlockAt(x, z, y, mat.toFullString());
+                                builder.setBlockAt(x, z, y, toSchemBlockString(mat));
                             }
                         }
                     }
@@ -513,6 +522,17 @@ public class PreviewOperation extends AbstractBrushOperation
             }
         };
         new Thread(task).start();
+    }
+
+    private static String toSchemBlockString(Material mat) {
+        String blockString = mat.identity.name;
+        Map<String, String> props = mat.getProperties();
+        if (props != null && !props.isEmpty()) {
+            blockString += "[" + props.entrySet().stream()
+                .map(e -> e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining(",")) + "]";
+        }
+        return blockString;
     }
 
     private void saveScreenshot(BufferedImage image) {

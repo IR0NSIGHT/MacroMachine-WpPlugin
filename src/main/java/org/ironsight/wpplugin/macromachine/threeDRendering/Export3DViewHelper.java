@@ -23,17 +23,19 @@ import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
 public class Export3DViewHelper
 {
 
-    public static MinecraftWorldObject renderTileToSurfaceObject(Set<Tile> tiles, Dimension dimension) {
+    public static MinecraftWorldObject renderTileToSurfaceObject(Set<Tile> tiles, Dimension dimension, boolean useFullExport) {
         WorldExportSettings settings = new WorldExportSettings();
 
         settings.setTilesToExport(tiles.stream().map(t -> new Point(t.getX(), t.getY())).collect(Collectors.toSet()));
 
-        HashSet<WorldExportSettings.Step> skipSteps = new HashSet<>();
-        skipSteps.add(WorldExportSettings.Step.CAVES);
-        skipSteps.add(WorldExportSettings.Step.LEAVES);
-        skipSteps.add(WorldExportSettings.Step.LIGHTING);
-        skipSteps.add(WorldExportSettings.Step.RESOURCES);
-        settings.setStepsToSkip(skipSteps);
+        if (!useFullExport) {
+            HashSet<WorldExportSettings.Step> skipSteps = new HashSet<>();
+            skipSteps.add(WorldExportSettings.Step.CAVES);
+            skipSteps.add(WorldExportSettings.Step.LEAVES);
+            skipSteps.add(WorldExportSettings.Step.LIGHTING);
+            skipSteps.add(WorldExportSettings.Step.RESOURCES);
+            settings.setStepsToSkip(skipSteps);
+        }
 
         settings.setDimensionsToExport(singleton(DIM_NORMAL));
 
@@ -46,6 +48,7 @@ public class Export3DViewHelper
         world.setSpawnPointDimension((anchor.role == DETAIL) ? null : anchor);
 
         PreviewExporter exporter = new PreviewExporter(dimension.getWorld(), dimension.getWorld().getExportSettings());
+        exporter.setUseFullExport(useFullExport);
         Map<Point, WorldRegion> worldRegionList = exporter.export(dimension);
 
         int tileMinX = Integer.MAX_VALUE, tileMinY = Integer.MAX_VALUE, tileMaxX = Integer.MIN_VALUE,

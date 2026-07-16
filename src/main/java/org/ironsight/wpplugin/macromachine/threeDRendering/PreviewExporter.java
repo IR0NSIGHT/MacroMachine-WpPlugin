@@ -14,8 +14,14 @@ import org.pepsoft.worldpainter.platforms.JavaExportSettings;
 public class PreviewExporter extends JavaWorldExporter
 {
 
+    private boolean useFullExport;
+
     protected PreviewExporter(World2 world, WorldExportSettings exportSettings) {
         super(world, exportSettings);
+    }
+
+    public void setUseFullExport(boolean useFullExport) {
+        this.useFullExport = useFullExport;
     }
 
     public HashMap<Point, WorldRegion> export(Dimension dimension) {
@@ -25,15 +31,16 @@ public class PreviewExporter extends JavaWorldExporter
         int originalVariation = dimension.getTopLayerVariation();
 
         try {
-            dimension.setSubsurfaceMaterial(Terrain.HARDENED_CLAY);
-            dimension.setTopLayerMinDepth(1);
-            dimension.setTopLayerVariation(0);
-            ExportSettings minimalExportSettings = new JavaExportSettings(JavaExportSettings.FloatMode.LEAVE_FLOATING,
-                    JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING,
-                    JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING, false,
-                    false, false, false, false, false, false, false);
-
-            dimension.setExportSettings(minimalExportSettings);
+            if (!useFullExport) {
+                dimension.setSubsurfaceMaterial(Terrain.HARDENED_CLAY);
+                dimension.setTopLayerMinDepth(1);
+                dimension.setTopLayerVariation(0);
+                ExportSettings minimalExportSettings = new JavaExportSettings(JavaExportSettings.FloatMode.LEAVE_FLOATING,
+                        JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING,
+                        JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING, false,
+                        false, false, false, false, false, false, false);
+                dimension.setExportSettings(minimalExportSettings);
+            }
 
             Set<Point> tiles = dimension.getWorld().getExportSettings().getTilesToExport();
             HashSet<Point> regions = new HashSet<>();
