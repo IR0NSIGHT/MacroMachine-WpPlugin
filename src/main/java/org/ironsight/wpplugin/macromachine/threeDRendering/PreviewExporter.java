@@ -29,7 +29,9 @@ public class PreviewExporter extends JavaWorldExporter
         Terrain originalSubsurface = dimension.getSubsurfaceMaterial();
         int originalMinDepth = dimension.getTopLayerMinDepth();
         int originalVariation = dimension.getTopLayerVariation();
+        Set<Point> selectedTiles = dimension.getWorld().getExportSettings().getTilesToExport();
 
+        Object savedSettings = null;
         try {
             if (!useFullExport) {
                 dimension.setSubsurfaceMaterial(Terrain.HARDENED_CLAY);
@@ -42,11 +44,12 @@ public class PreviewExporter extends JavaWorldExporter
                 dimension.setExportSettings(minimalExportSettings);
             }
 
-            Set<Point> tiles = dimension.getWorld().getExportSettings().getTilesToExport();
+            savedSettings = setupDimensionForExport(dimension, selectedTiles);
+
             HashSet<Point> regions = new HashSet<>();
             int lowestRegionX = Integer.MAX_VALUE, highestRegionX = Integer.MIN_VALUE,
                     lowestRegionZ = Integer.MAX_VALUE, highestRegionZ = Integer.MIN_VALUE;
-            for (Point tile : tiles) {
+            for (Point tile : selectedTiles) {
                 int regionX = tile.x >> 2;
                 int regionZ = tile.y >> 2;
                 regions.add(new Point(regionX, regionZ));
@@ -88,6 +91,9 @@ public class PreviewExporter extends JavaWorldExporter
         } catch (Throwable t) {
             System.err.println(t);
         } finally {
+            if (savedSettings != null) {
+                restoreDimensionAfterExport(dimension, savedSettings);
+            }
             dimension.setExportSettings(originalSettings);
             dimension.setSubsurfaceMaterial(originalSubsurface);
             dimension.setTopLayerMinDepth(originalMinDepth);

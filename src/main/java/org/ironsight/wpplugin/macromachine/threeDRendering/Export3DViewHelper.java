@@ -17,15 +17,20 @@ import org.pepsoft.util.Box;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.exporting.WorldExportSettings;
+import org.pepsoft.worldpainter.layers.exporters.ExporterSettings;
 import org.pepsoft.worldpainter.exporting.WorldRegion;
+import org.pepsoft.worldpainter.layers.CustomLayer;
 import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
 
 public class Export3DViewHelper
 {
 
-    public static MinecraftWorldObject renderTileToSurfaceObject(Set<Tile> tiles, Dimension dimension, boolean useFullExport) {
-        WorldExportSettings settings = new WorldExportSettings();
+    public static MinecraftWorldObject renderTileToSurfaceObject(Set<Tile> tiles, Dimension liveDimension, boolean useFullExport) {
+        Dimension dimension = createDimensionFromTiles(tiles, liveDimension);
+        World2 world = dimension.getWorld();
+        Dimension.Anchor anchor = dimension.getAnchor();
 
+        WorldExportSettings settings = new WorldExportSettings();
         settings.setTilesToExport(tiles.stream().map(t -> new Point(t.getX(), t.getY())).collect(Collectors.toSet()));
 
         if (!useFullExport) {
@@ -38,16 +43,12 @@ public class Export3DViewHelper
         }
 
         settings.setDimensionsToExport(singleton(DIM_NORMAL));
-
-        dimension.getWorld().setExportSettings(settings);
-        dimension.getWorld().setCreateGoodiesChest(false);
-
-        final Dimension.Anchor anchor = dimension.getAnchor();
-        World2 world = dimension.getWorld();
+        world.setExportSettings(settings);
+        world.setCreateGoodiesChest(false);
         world.setSpawnPoint(new Point(0, 0));
         world.setSpawnPointDimension((anchor.role == DETAIL) ? null : anchor);
 
-        PreviewExporter exporter = new PreviewExporter(dimension.getWorld(), dimension.getWorld().getExportSettings());
+        PreviewExporter exporter = new PreviewExporter(world, world.getExportSettings());
         exporter.setUseFullExport(useFullExport);
         Map<Point, WorldRegion> worldRegionList = exporter.export(dimension);
 
@@ -85,20 +86,12 @@ public class Export3DViewHelper
                 (1 + tileMaxY) * TILE_SIZE, tileMinHeight, tileMaxHeight);
 
         Point3i tileOffset = new Point3i(-displayObjectBBX.getWidth() / 2, -displayObjectBBX.getLength() / 2,
-                -tileMinHeight); // -displayObjectBBX.getWidth() /
-        // 2,
-        // -displayObjectBBX
-        // .getLength() /
-        // 2, -displayObjectBBX.getHeight() / 2);
+                -tileMinHeight);
 
         final MinecraftWorldObject minecraftWorldObject = new MinecraftWorldObject("Preview", displayObjectBBX,
                 previewHeight, waterHeight, null, tileOffset);
 
         System.out.println("display " + displayObjectBBX);
-
-        // chunk size = 16x16
-        // tile size = 128 x 128
-        // region size = 512 x 512 (x 256H)
 
         int blockMinX = Integer.MAX_VALUE, blockMinY = Integer.MAX_VALUE, blockMaxX = Integer.MIN_VALUE,
                 blockMaxY = Integer.MIN_VALUE;
@@ -112,10 +105,6 @@ public class Export3DViewHelper
                     Chunk chunk = region.getChunk(chunkX + (int) regionPos.getX() * CHUNKS_PER_SIDE,
                             chunkY + (int) regionPos.getY() * CHUNKS_PER_SIDE);
                     if (chunk != null) {
-                        /*
-                         * if (!minecraftWorldObject.getVolume().contains(blockPosX,blockPosZ,
-                         * tileMaxHeight)) { System.out.println("reject"); continue; }
-                         */
                         System.out.println("accept");
                         blockMaxX = Math.max(blockMaxX, blockPosX);
                         blockMinX = Math.min(blockMinX, blockPosX);
@@ -123,10 +112,6 @@ public class Export3DViewHelper
                         blockMaxY = Math.max(blockMaxY, blockPosZ);
                         blockMinY = Math.min(blockMinY, blockPosZ);
 
-                        // minecraftWorldObject.addChunk(chunk);
-                        // copy values over from chunk to worldobject. necessary manually because chunk
-                        // region offset
-                        // is lost when using addChunk.
                         int dz = minecraftWorldObject.getVolume().getZ1();
                         for (int x = 0; x < 16; ++x) {
                             for (int z = 0; z < 16; ++z) {
@@ -146,9 +131,39 @@ public class Export3DViewHelper
         }
         System.out.println("block extents are:" + new Box(blockMinX, blockMaxX + 16, blockMinY, blockMaxY + 16, 0, 0));
 
-        // FIXME set offset in minecraftWorldObject so tile is centered.
-
         return minecraftWorldObject;
+    }
+
+    private static Dimension createDimensionFromTiles(Set<Tile> clonedTiles, Dimension originalDim) {
+        World2 originalWorld = originalDim.getWorld();
+        int minHeight = originalDim.getMinHeight();
+        int maxHeight = originalDim.getMaxHeight();
+
+        World2 standaloneWorld = new World2(originalWorld.getPlatform(), minHeight, maxHeight);
+        Dimension standaloneDim = new Dimension(standaloneWorld,
+                originalDim.getName(), originalDim.getMinecraftSeed(),
+                originalDim.getTileFactory(), originalDim.getAnchor());
+
+        for (Tile tile : clonedTiles) {
+            standaloneDim.addTile(tile);
+        }
+
+        standaloneDim.setCustomLayers(new ArrayList<>(originalDim.getCustomLayers()));
+
+        for (CustomLayer layer : originalDim.getCustomLayers()) {
+            ExporterSettings settings = originalDim.getLayerSettings(layer);
+            if (settings != null) {
+                standaloneDim.setLayerSettings(layer, settings);
+            }
+        }
+
+        standaloneDim.setSubsurfaceMaterial(originalDim.getSubsurfaceMaterial());
+        standaloneDim.setTopLayerMinDepth(originalDim.getTopLayerMinDepth());
+        standaloneDim.setTopLayerVariation(originalDim.getTopLayerVariation());
+        standaloneDim.setTopLayerAnchor(originalDim.getTopLayerAnchor());
+        standaloneDim.setSubsurfaceLayerAnchor(originalDim.getSubsurfaceLayerAnchor());
+
+        return standaloneDim;
     }
 
     private class ChunkWrapper
