@@ -73,18 +73,20 @@ public class PreviewOperation extends AbstractBrushOperation
         optionsPanel.add(Box.createVerticalStrut(2));
         optionsPanel.add(Box.createVerticalStrut(4));
         autoUpdateCheckbox = new JCheckBox("Auto Update");
-        autoUpdateCheckbox.setToolTipText("Automatically update the 3d Preview, every time you edit the map. Can be slow.");
+        autoUpdateCheckbox
+                .setToolTipText("Automatically update the 3d Preview, every time you edit the map. Can be slow.");
         autoUpdateCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
         optionsPanel.add(autoUpdateCheckbox);
         optionsPanel.add(Box.createVerticalStrut(8));
 
         /*
-        JToggleButton fullExportToggle = new JToggleButton("Full Export", false);
-        fullExportToggle.setToolTipText("Use full export settings (slower, produces a larger schematic)");
-        fullExportToggle.setAlignmentX(Component.LEFT_ALIGNMENT);
-        fullExportToggle.addActionListener(e -> useFullExport = fullExportToggle.isSelected());
-        optionsPanel.add(fullExportToggle);
-        */
+         * JToggleButton fullExportToggle = new JToggleButton("Full Export", false);
+         * fullExportToggle.
+         * setToolTipText("Use full export settings (slower, produces a larger schematic)"
+         * ); fullExportToggle.setAlignmentX(Component.LEFT_ALIGNMENT);
+         * fullExportToggle.addActionListener(e -> useFullExport =
+         * fullExportToggle.isSelected()); optionsPanel.add(fullExportToggle);
+         */
     }
 
     @Override
@@ -120,7 +122,8 @@ public class PreviewOperation extends AbstractBrushOperation
         return lastRenderStart == renderStart;
     }
 
-    private void startExportAndRenderThread(Set<Tile> referenceTiles, Dimension referenceDimension, boolean fullExport) {
+    private void startExportAndRenderThread(Set<Tile> referenceTiles, Dimension referenceDimension,
+            boolean fullExport) {
 
         final long thisRenderStart = flagNewRenderRequested();
         statusLabel.setText("Copying Data...");
@@ -128,16 +131,15 @@ public class PreviewOperation extends AbstractBrushOperation
         for (Tile tile : referenceTiles) {
             clonedTiles.add(tile.transform(CoordinateTransform.NOOP));
         }
-        if (!isCurrentRender(thisRenderStart)) //abort if another render was requested later
-                return;
-
+        if (!isCurrentRender(thisRenderStart)) // abort if another render was requested later
+            return;
 
         Runnable exportAndPassToRenderer = () -> {
             try {
                 statusLabel.setText("Exporting...");
                 var schemObj = renderTileToSurfaceObject(clonedTiles, referenceDimension, useFullExport);
 
-                if (!isCurrentRender(thisRenderStart)) //abort if another render was requested later
+                if (!isCurrentRender(thisRenderStart)) // abort if another render was requested later
                     return;
 
                 statusLabel.setText("Rendering...");
@@ -269,7 +271,7 @@ public class PreviewOperation extends AbstractBrushOperation
         if (dim.isEventsInhibited())
             dim.setEventsInhibited(false);
 
-       startExportAndRenderThread(tiles, dim, useFullExport);
+        startExportAndRenderThread(tiles, dim, useFullExport);
     }
 
     static class TileChangedListener implements Tile.Listener
