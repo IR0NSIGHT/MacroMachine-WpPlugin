@@ -83,7 +83,7 @@ public class CityLayer extends CustomLayer implements UndoListener
                 int totalPosY = y;
                 for (int z = object.getDimensions().z - 1; z >= 0; z--) {
                     Material mat = object.getMaterial(x, y, z);
-                    if (mat != Material.AIR) {
+                    if (mat != null && mat != Material.AIR) {
                         double value = (Math.sqrt(1f * z / height)) * 0.5f + 0.5f;
                         Color base = new Color(mat.colour);
                         Color darkenFactor = new Color((int) (Math.max(0, Math.min(255, value * base.getRed()))),

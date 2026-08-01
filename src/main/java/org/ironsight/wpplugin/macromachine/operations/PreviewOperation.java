@@ -1,21 +1,22 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import static org.ironsight.wpplugin.macromachine.threeDRendering.Export3DViewHelper.renderTileToSurfaceObject;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
-
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
-import javax.swing.*;
+import jakarta.annotation.Nullable;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
-import org.pepsoft.minecraft.Material;
+import org.pepsoft.worldpainter.CoordinateTransform;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.Platform;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.util.HashSet;
+import java.util.Set;
+
+import static org.ironsight.wpplugin.macromachine.threeDRendering.Export3DViewHelper.renderTileToSurfaceObject;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class PreviewOperation extends AbstractBrushOperation
 {
@@ -36,16 +37,120 @@ public class PreviewOperation extends AbstractBrushOperation
      */
     static final String DESCRIPTION = "Show terrain, height and waterheight in a 3d preview";
 
-    float[][] height = new float[0][];
-    float[][] waterHeight = new float[0][];
-    Material[][] terrain = new Material[0][];
-    private Rectangle lastExtent = new Rectangle(0, 0, 0, 0);
     private TileChangedListener listener = new TileChangedListener(this);
-    private ArrayList<Tile> tilesInExtent = new ArrayList<>();
-    private Platform platform;
+    private Set<Point> lastTileCoords;
+    private Dimension lastDim;
+    private JButton rerenderButton;
+    private JLabel statusLabel;
+    private JCheckBox autoUpdateCheckbox;
+    private Set<Point> subscribedTileCoords = new HashSet<>();
+    private boolean useFullExport;
+    private final JPanel optionsPanel;
 
     public PreviewOperation() {
         super(NAME, DESCRIPTION, ID);
+        optionsPanel = new JPanel();
+        optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
+        JLabel title = new JLabel(NAME);
+        title.setAlignmentX(Component.LEFT_ALIGNMENT);
+        optionsPanel.add(title);
+        JTextArea desc = new JTextArea(DESCRIPTION);
+        desc.setEditable(false);
+        desc.setWrapStyleWord(true);
+        desc.setLineWrap(true);
+        desc.setAlignmentX(Component.LEFT_ALIGNMENT);
+        optionsPanel.add(desc);
+        optionsPanel.add(Box.createVerticalStrut(8));
+        rerenderButton = new JButton("Rerender");
+        rerenderButton.setEnabled(false);
+        rerenderButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        rerenderButton.addActionListener(this::rerenderLastSelection);
+        optionsPanel.add(rerenderButton);
+        optionsPanel.add(Box.createVerticalStrut(4));
+        statusLabel = new JLabel("Idle");
+        statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        optionsPanel.add(statusLabel);
+        optionsPanel.add(Box.createVerticalStrut(2));
+        optionsPanel.add(Box.createVerticalStrut(4));
+        autoUpdateCheckbox = new JCheckBox("Auto Update");
+        autoUpdateCheckbox.setToolTipText("Automatically update the 3d Preview, every time you edit the map. Can be slow.");
+        autoUpdateCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        optionsPanel.add(autoUpdateCheckbox);
+        optionsPanel.add(Box.createVerticalStrut(8));
+
+        /*
+        JToggleButton fullExportToggle = new JToggleButton("Full Export", false);
+        fullExportToggle.setToolTipText("Use full export settings (slower, produces a larger schematic)");
+        fullExportToggle.setAlignmentX(Component.LEFT_ALIGNMENT);
+        fullExportToggle.addActionListener(e -> useFullExport = fullExportToggle.isSelected());
+        optionsPanel.add(fullExportToggle);
+        */
+    }
+
+    @Override
+    public JPanel getOptionsPanel() {
+        return optionsPanel;
+    }
+
+    private void rerenderLastSelection(@Nullable ActionEvent e) {
+        if (lastTileCoords == null || lastTileCoords.isEmpty() || lastDim == null) {
+            return;
+        }
+        HashSet<Tile> tiles = new HashSet<>();
+        for (Point coord : lastTileCoords) {
+            Tile liveTile = lastDim.getTile(coord.x, coord.y);
+            if (liveTile != null) {
+                tiles.add(liveTile.transform(CoordinateTransform.NOOP));
+            }
+        }
+        if (tiles.isEmpty()) {
+            statusLabel.setText("Idle");
+            return;
+        }
+        startExportAndRenderThread(tiles, lastDim, useFullExport);
+    }
+    private long lastRenderStart = 0;
+
+    private synchronized long flagNewRenderRequested() {
+        lastRenderStart = System.currentTimeMillis();
+        return lastRenderStart;
+    };
+
+    private synchronized boolean isCurrentRender(long renderStart) {
+        return lastRenderStart == renderStart;
+    }
+
+    private void startExportAndRenderThread(Set<Tile> referenceTiles, Dimension referenceDimension, boolean fullExport) {
+
+        final long thisRenderStart = flagNewRenderRequested();
+        statusLabel.setText("Copying Data...");
+        HashSet<Tile> clonedTiles = new HashSet<>();
+        for (Tile tile : referenceTiles) {
+            clonedTiles.add(tile.transform(CoordinateTransform.NOOP));
+        }
+        if (!isCurrentRender(thisRenderStart)) //abort if another render was requested later
+                return;
+
+
+        Runnable exportAndPassToRenderer = () -> {
+            try {
+                statusLabel.setText("Exporting...");
+                var schemObj = renderTileToSurfaceObject(clonedTiles, referenceDimension, useFullExport);
+
+                if (!isCurrentRender(thisRenderStart)) //abort if another render was requested later
+                    return;
+
+                statusLabel.setText("Rendering...");
+                GlobalActionPanel.renderSurfaceObject(schemObj);
+                SwingUtilities.invokeLater(() -> statusLabel.setText("Idle"));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            SwingUtilities.invokeLater(() -> {
+                statusLabel.setText("Idle");
+            });
+        };
+        new Thread(exportAndPassToRenderer).start();
     }
 
     // HIGHLIGHT AREA
@@ -85,20 +190,9 @@ public class PreviewOperation extends AbstractBrushOperation
      */
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
-        // Perform the operation. In addition to the parameters you have the following
-        // methods available:
-        // * getDimension() - obtain the dimension on which to perform the operation
-        // * getLevel() - obtain the current brush intensity setting as a float between
-        // 0.0 and 1.0
-        // * isAltDown() - whether the Alt key is currently pressed - NOTE: this is
-        // already in use to indicate whether
-        // the operation should be inverted, so should probably not be overloaded
-        // * isCtrlDown() - whether any of the Ctrl, Windows or Command keys are
-        // currently pressed
-        // * isShiftDown() - whether the Shift key is currently pressed
-        // In addition you have the following fields in this class:
-        // * brush - the currently selected brush
-        // * paint - the currently selected paint
+        System.out.println("[PreviewOp] tick - world pos: (" + centreX + ", " + centreY + ")");
+        if (inverse)
+            return;
 
         int radius = this.getBrush().getEffectiveRadius();
 
@@ -133,6 +227,32 @@ public class PreviewOperation extends AbstractBrushOperation
             }
         }
 
+        lastTileCoords = new HashSet<>();
+        for (Tile tile : tiles) {
+            lastTileCoords.add(new Point(tile.getX(), tile.getY()));
+        }
+        lastDim = dim;
+        rerenderButton.setEnabled(true);
+
+        Set<Point> newCoords = new HashSet<>(lastTileCoords);
+        for (Point coord : subscribedTileCoords) {
+            if (!newCoords.contains(coord)) {
+                Tile oldTile = dim.getTile(coord.x, coord.y);
+                if (oldTile != null) {
+                    oldTile.removeListener(listener);
+                }
+            }
+        }
+        for (Point coord : newCoords) {
+            if (!subscribedTileCoords.contains(coord)) {
+                Tile newTile = dim.getTile(coord.x, coord.y);
+                if (newTile != null) {
+                    newTile.addListener(listener);
+                }
+            }
+        }
+        subscribedTileCoords = newCoords;
+
         if (!dim.isEventsInhibited())
             dim.setEventsInhibited(true);
         dim.clearLayerData(annotationLayer);
@@ -149,86 +269,66 @@ public class PreviewOperation extends AbstractBrushOperation
         if (dim.isEventsInhibited())
             dim.setEventsInhibited(false);
 
-        var schemObj = renderTileToSurfaceObject(tiles, dim);
-        GlobalActionPanel.setSurfaceObject(schemObj);
-        GlobalActionPanel.flagForChangedSurfaceObject();
-        /*
-         * var clone = new Sponge2Schematic(schemObj); try {
-         * clone.save("D:\\Repos\\cubeArray\\testSchems\\exported_"+(int)(Math.random()*
-         * 1000)+".schem"); } catch (IOException ex) { System.err.println(ex); }
-         *
-         *
-         * Runnable task = () -> { InstancedCubes renderer = null; try { renderer = new
-         * InstancedCubes(SchemReader.prepareData(java.util.List.of(schemObj)));
-         * renderer.run(); } catch (Exception e) { throw new RuntimeException(e); } };
-         *
-         * Thread thread = new Thread(task); thread.start(); // actually starts it in a
-         * new thread
-         */
-
+       startExportAndRenderThread(tiles, dim, useFullExport);
     }
 
     static class TileChangedListener implements Tile.Listener
     {
         private PreviewOperation op;
-        private HashSet<Tile> dirtyTiles = new HashSet<>();
-        private boolean changed = false;
+        private Timer debounceTimer;
 
         TileChangedListener(PreviewOperation op) {
             this.op = op;
-            Timer timer = new Timer(750, e -> triggerTileUpdate());
-            timer.setRepeats(true);
-            timer.start();
+            debounceTimer = new Timer(500, e -> {
+                if (op.autoUpdateCheckbox.isSelected() && op.lastTileCoords != null && !op.lastTileCoords.isEmpty()) {
+                    op.rerenderLastSelection(null);
+                }
+            });
+            debounceTimer.setRepeats(false);
+        }
+
+        private void onTileChanged(Tile tile) {
+            if (op.lastTileCoords == null || op.lastTileCoords.isEmpty())
+                return;
+            Point tileCoord = new Point(tile.getX(), tile.getY());
+            if (op.lastTileCoords.contains(tileCoord) && op.autoUpdateCheckbox.isSelected()) {
+                debounceTimer.restart();
+            }
         }
 
         @Override
         public void heightMapChanged(Tile tile) {
-            dirtyTiles.add(tile);
-        }
-
-        private void triggerTileUpdate() {
-            if (dirtyTiles.isEmpty())
-                return;
-            for (Tile t : dirtyTiles) {
-                // boolean tileChanged = updateArraysFromTile(op.height, op.waterHeight,
-                // op.terrain, op
-                // .lastExtent, t,
-                // op.platform);
-                // if (tileChanged)
-                // changed = true;
-            }
-            /*
-             * if (changed) op.submitArraysToViewer();
-             */
-
-            dirtyTiles.clear();
-            changed = false;
+            onTileChanged(tile);
         }
 
         @Override
         public void terrainChanged(Tile tile) {
-            dirtyTiles.add(tile);
+            onTileChanged(tile);
         }
 
         @Override
         public void waterLevelChanged(Tile tile) {
-            dirtyTiles.add(tile);
+            onTileChanged(tile);
         }
 
         @Override
         public void layerDataChanged(Tile tile, Set<Layer> set) {
+            onTileChanged(tile);
         }
 
         @Override
         public void allBitLayerDataChanged(Tile tile) {
+            onTileChanged(tile);
         }
 
         @Override
         public void allNonBitlayerDataChanged(Tile tile) {
+            onTileChanged(tile);
         }
 
         @Override
         public void seedsChanged(Tile tile) {
+            onTileChanged(tile);
         }
     }
 }

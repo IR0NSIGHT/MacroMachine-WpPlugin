@@ -5,6 +5,7 @@ import java.util.*;
 import org.pepsoft.minecraft.ChunkFactory;
 import org.pepsoft.util.ProgressReceiver;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Terrain;
 import org.pepsoft.worldpainter.World2;
 import org.pepsoft.worldpainter.exporting.*;
 import org.pepsoft.worldpainter.layers.Layer;
@@ -13,26 +14,42 @@ import org.pepsoft.worldpainter.platforms.JavaExportSettings;
 public class PreviewExporter extends JavaWorldExporter
 {
 
+    private boolean useFullExport;
+
     protected PreviewExporter(World2 world, WorldExportSettings exportSettings) {
         super(world, exportSettings);
     }
 
+    public void setUseFullExport(boolean useFullExport) {
+        this.useFullExport = useFullExport;
+    }
+
     public HashMap<Point, WorldRegion> export(Dimension dimension) {
         ExportSettings originalSettings = dimension.getExportSettings();
+        Terrain originalSubsurface = dimension.getSubsurfaceMaterial();
+        int originalMinDepth = dimension.getTopLayerMinDepth();
+        int originalVariation = dimension.getTopLayerVariation();
+        Set<Point> selectedTiles = dimension.getWorld().getExportSettings().getTilesToExport();
 
+        Object savedSettings = null;
         try {
-            ExportSettings minimalExportSettings = new JavaExportSettings(JavaExportSettings.FloatMode.LEAVE_FLOATING,
-                    JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING,
-                    JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING, false,
-                    false, false, false, false, false, false, false);
+            if (!useFullExport) {
+                dimension.setSubsurfaceMaterial(Terrain.HARDENED_CLAY);
+                dimension.setTopLayerMinDepth(1);
+                dimension.setTopLayerVariation(0);
+                ExportSettings minimalExportSettings = new JavaExportSettings(JavaExportSettings.FloatMode.LEAVE_FLOATING,
+                        JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING,
+                        JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING, false,
+                        false, false, false, false, false, false, false);
+                dimension.setExportSettings(minimalExportSettings);
+            }
 
-            dimension.setExportSettings(minimalExportSettings);
+            savedSettings = setupDimensionForExport(dimension, selectedTiles);
 
-            Set<Point> tiles = dimension.getWorld().getExportSettings().getTilesToExport();
             HashSet<Point> regions = new HashSet<>();
             int lowestRegionX = Integer.MAX_VALUE, highestRegionX = Integer.MIN_VALUE,
                     lowestRegionZ = Integer.MAX_VALUE, highestRegionZ = Integer.MIN_VALUE;
-            for (Point tile : tiles) {
+            for (Point tile : selectedTiles) {
                 int regionX = tile.x >> 2;
                 int regionZ = tile.y >> 2;
                 regions.add(new Point(regionX, regionZ));
@@ -74,7 +91,13 @@ public class PreviewExporter extends JavaWorldExporter
         } catch (Throwable t) {
             System.err.println(t);
         } finally {
+            if (savedSettings != null) {
+                restoreDimensionAfterExport(dimension, savedSettings);
+            }
             dimension.setExportSettings(originalSettings);
+            dimension.setSubsurfaceMaterial(originalSubsurface);
+            dimension.setTopLayerMinDepth(originalMinDepth);
+            dimension.setTopLayerVariation(originalVariation);
         }
         return null;
     }
