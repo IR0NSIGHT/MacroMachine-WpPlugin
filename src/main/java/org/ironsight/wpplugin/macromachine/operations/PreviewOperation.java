@@ -1,27 +1,17 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import jakarta.annotation.Nullable;
-import org.apache.commons.lang3.NotImplementedException;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.pepsoft.worldpainter.CoordinateTransform;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.Platform;
 import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static org.ironsight.wpplugin.macromachine.threeDRendering.Export3DViewHelper.renderTileToSurfaceObject;
@@ -88,11 +78,13 @@ public class PreviewOperation extends AbstractBrushOperation
         optionsPanel.add(autoUpdateCheckbox);
         optionsPanel.add(Box.createVerticalStrut(8));
 
+        /*
         JToggleButton fullExportToggle = new JToggleButton("Full Export", false);
         fullExportToggle.setToolTipText("Use full export settings (slower, produces a larger schematic)");
         fullExportToggle.setAlignmentX(Component.LEFT_ALIGNMENT);
         fullExportToggle.addActionListener(e -> useFullExport = fullExportToggle.isSelected());
         optionsPanel.add(fullExportToggle);
+        */
     }
 
     @Override
@@ -117,21 +109,39 @@ public class PreviewOperation extends AbstractBrushOperation
         }
         startExportAndRenderThread(tiles, lastDim, useFullExport);
     }
+    private long lastRenderStart = 0;
+
+    private synchronized long flagNewRenderRequested() {
+        lastRenderStart = System.currentTimeMillis();
+        return lastRenderStart;
+    };
+
+    private synchronized boolean isCurrentRender(long renderStart) {
+        return lastRenderStart == renderStart;
+    }
 
     private void startExportAndRenderThread(Set<Tile> referenceTiles, Dimension referenceDimension, boolean fullExport) {
+
+        final long thisRenderStart = flagNewRenderRequested();
         statusLabel.setText("Copying Data...");
         HashSet<Tile> clonedTiles = new HashSet<>();
         for (Tile tile : referenceTiles) {
             clonedTiles.add(tile.transform(CoordinateTransform.NOOP));
         }
+        if (!isCurrentRender(thisRenderStart)) //abort if another render was requested later
+                return;
+
 
         Runnable exportAndPassToRenderer = () -> {
             try {
                 statusLabel.setText("Exporting...");
                 var schemObj = renderTileToSurfaceObject(clonedTiles, referenceDimension, useFullExport);
+
+                if (!isCurrentRender(thisRenderStart)) //abort if another render was requested later
+                    return;
+
                 statusLabel.setText("Rendering...");
-                GlobalActionPanel.setSurfaceObject(schemObj);
-                GlobalActionPanel.flagForChangedSurfaceObject();
+                GlobalActionPanel.renderSurfaceObject(schemObj);
                 SwingUtilities.invokeLater(() -> statusLabel.setText("Idle"));
             } catch (Exception e) {
                 throw new RuntimeException(e);

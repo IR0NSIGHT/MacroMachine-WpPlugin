@@ -203,12 +203,13 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
             });
     }
 
-    public static WPObject getSurfaceObject() {
+    public synchronized static WPObject getSurfaceObject() {
         return surfaceObject;
     }
 
-    public static void setSurfaceObject(WPObject surfaceObject) {
+    public synchronized static void renderSurfaceObject(WPObject surfaceObject) {
         GlobalActionPanel.surfaceObject = surfaceObject;
+        GlobalActionPanel.flagForChangedSurfaceObject();
     }
 
     private void onUpdate() {
@@ -250,9 +251,11 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     }
 
     private void doRender3d() {
-
-        getPreviewer().setObject(getSurfaceObject(), null); // immediate redraw
-        rerender3d = false;
+        new Thread(()-> {
+            getPreviewer().setObject(getSurfaceObject(), null); // immediate redraw
+            rerender3d = false;
+            SwingUtilities.invokeLater(()->getPreviewer().repaint());
+        }).start();
     }
 
     private void init() {
@@ -298,7 +301,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
         getPreviewer().setObject(new SurfaceObject() /* empty dummy */, null);
         tabbedPane.add("3d", getPreviewer());
 
-        tabbedPane.addTab("Web UI", new WebUIViewPanel());
+      //  tabbedPane.addTab("Web UI", new WebUIViewPanel());
 
         previewer.addHierarchyListener(e -> {
             if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing() && rerender3d) {
