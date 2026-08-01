@@ -1,9 +1,18 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
-import static org.ironsight.wpplugin.macromachine.threeDRendering.Export3DViewHelper.renderTileToSurfaceObject;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
-import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
+import jakarta.annotation.Nullable;
+import org.apache.commons.lang3.NotImplementedException;
+import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.pepsoft.worldpainter.CoordinateTransform;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.Platform;
+import org.pepsoft.worldpainter.Tile;
+import org.pepsoft.worldpainter.layers.Layer;
+import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
+import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 
+import javax.imageio.ImageIO;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
@@ -11,28 +20,13 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import org.ironsight.cubearray.render.CubeSetup;
-import org.ironsight.cubearray.render.InstancedCubes;
-import org.ironsight.cubearray.render.InstancedCubes.CameraState;
-import org.ironsight.cubearray.edit.BlockReplacer;
-import org.ironsight.cubearray.schematic.SchemReader;
-import org.pepsoft.minecraft.Material;
-import org.pepsoft.worldpainter.CoordinateTransform;
-import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
-import org.joml.Vector3f;
-import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.Platform;
-import org.pepsoft.worldpainter.Tile;
-import org.pepsoft.worldpainter.layers.Layer;
-import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
+
+import static org.ironsight.wpplugin.macromachine.threeDRendering.Export3DViewHelper.renderTileToSurfaceObject;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 public class PreviewOperation extends AbstractBrushOperation
 {
@@ -53,36 +47,14 @@ public class PreviewOperation extends AbstractBrushOperation
      */
     static final String DESCRIPTION = "Show terrain, height and waterheight in a 3d preview";
 
-    float[][] height = new float[0][];
-    float[][] waterHeight = new float[0][];
-    Material[][] terrain = new Material[0][];
-    private Rectangle lastExtent = new Rectangle(0, 0, 0, 0);
     private TileChangedListener listener = new TileChangedListener(this);
-    private ArrayList<Tile> tilesInExtent = new ArrayList<>();
-    private volatile InstancedCubes renderer;
     private Set<Point> lastTileCoords;
     private Dimension lastDim;
-    private Platform platform;
     private JButton rerenderButton;
     private JLabel statusLabel;
     private JCheckBox autoUpdateCheckbox;
-    private JButton saveScreenshotButton;
-    private JButton openScreenshotFolderButton;
-    private JButton hideGridButton;
-    private JLabel cameraStateLabel;
-    private JButton setCameraButton;
-    private JSpinner yawSpinner;
-    private JSpinner pitchSpinner;
-    private JSpinner radiusSpinner;
-    private int lastClickX;
-    private int lastClickZ;
-    private MinecraftWorldObject lastRenderedObject;
     private Set<Point> subscribedTileCoords = new HashSet<>();
-    private boolean showGrid = true;
-    private InstancedCubes.CameraState prevCameraState;
-    private boolean selectCameraPos;
     private boolean useFullExport;
-    private float heightAboveGround;
     private final JPanel optionsPanel;
 
     public PreviewOperation() {
@@ -109,119 +81,18 @@ public class PreviewOperation extends AbstractBrushOperation
         statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         optionsPanel.add(statusLabel);
         optionsPanel.add(Box.createVerticalStrut(2));
-        cameraStateLabel = new JLabel("Camera: —");
-        cameraStateLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        optionsPanel.add(cameraStateLabel);
         optionsPanel.add(Box.createVerticalStrut(4));
         autoUpdateCheckbox = new JCheckBox("Auto Update");
+        autoUpdateCheckbox.setToolTipText("Automatically update the 3d Preview, every time you edit the map. Can be slow.");
         autoUpdateCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
         optionsPanel.add(autoUpdateCheckbox);
         optionsPanel.add(Box.createVerticalStrut(8));
-        saveScreenshotButton = new JButton("Save Screenshot");
-        saveScreenshotButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        saveScreenshotButton.addActionListener(e -> {
-            InstancedCubes r = renderer;
-            if (r != null) {
-                r.requestScreenshot().thenAcceptAsync(PreviewOperation.this::saveScreenshot);
-            }
-        });
-        optionsPanel.add(saveScreenshotButton);
-        optionsPanel.add(Box.createVerticalStrut(4));
-        openScreenshotFolderButton = new JButton("Open Screenshot Folder");
-        openScreenshotFolderButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        openScreenshotFolderButton.addActionListener(e -> {
-            Dimension dim = getDimension();
-            if (dim == null) return;
-            String worldName = dim.getWorld().getName();
-            String safeName = worldName.replaceAll("[\\\\/:*?\"<>|]", "_");
-            File screenshotsDir = new File(MacroContainer.getActionsFilePath(),
-                    "screenshots" + File.separator + safeName);
-            screenshotsDir.mkdirs();
-            try {
-                Desktop.getDesktop().open(screenshotsDir);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-        });
-        optionsPanel.add(openScreenshotFolderButton);
-        optionsPanel.add(Box.createVerticalStrut(8));
-        hideGridButton = new JButton("Hide Grid");
-        hideGridButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        hideGridButton.setEnabled(false);
-        hideGridButton.addActionListener(e -> toggleGrid());
-        optionsPanel.add(hideGridButton);
-        optionsPanel.add(Box.createVerticalStrut(8));
-        JPanel cameraPanel = new JPanel(new GridBagLayout());
-        cameraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        GridBagConstraints c = new GridBagConstraints();
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.insets = new Insets(2, 2, 2, 2);
-        c.gridx = 0;
-        c.gridy = 0;
-        cameraPanel.add(new JLabel("Yaw"), c);
-        c.gridx = 1;
-        yawSpinner = new JSpinner(new SpinnerNumberModel(0.0, -360.0, 360.0, 1.0));
-        yawSpinner.setPreferredSize(new java.awt.Dimension(80, 24));
-        cameraPanel.add(yawSpinner, c);
-        c.gridx = 2;
-        c.gridy = 0;
-        cameraPanel.add(new JLabel("Pitch"), c);
-        c.gridx = 3;
-        pitchSpinner = new JSpinner(new SpinnerNumberModel(30.0, -90.0, 90.0, 1.0));
-        pitchSpinner.setPreferredSize(new java.awt.Dimension(80, 24));
-        cameraPanel.add(pitchSpinner, c);
-        c.gridx = 4;
-        c.gridy = 0;
-        cameraPanel.add(new JLabel("Radius"), c);
-        c.gridx = 5;
-        radiusSpinner = new JSpinner(new SpinnerNumberModel(100.0, 1.0, 10000.0, 10.0));
-        radiusSpinner.setPreferredSize(new java.awt.Dimension(80, 24));
-        cameraPanel.add(radiusSpinner, c);
-        c.gridx = 6;
-        setCameraButton = new JButton("Set Camera Pos");
-        setCameraButton.addActionListener(e -> {
-            selectCameraPos = true;
-            statusLabel.setText("Click on map to set camera position");
-        });
-        cameraPanel.add(setCameraButton, c);
-        optionsPanel.add(cameraPanel);
-        optionsPanel.add(Box.createVerticalStrut(8));
-        JButton saveSchematicButton = new JButton("Save As Schematic");
-        saveSchematicButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-        saveSchematicButton.addActionListener(e -> saveSchematic());
-        optionsPanel.add(saveSchematicButton);
 
         JToggleButton fullExportToggle = new JToggleButton("Full Export", false);
         fullExportToggle.setToolTipText("Use full export settings (slower, produces a larger schematic)");
         fullExportToggle.setAlignmentX(Component.LEFT_ALIGNMENT);
         fullExportToggle.addActionListener(e -> useFullExport = fullExportToggle.isSelected());
         optionsPanel.add(fullExportToggle);
-
-        new Timer(500, e -> {
-            InstancedCubes r = renderer;
-            if (r != null) {
-                var cs = r.getCameraState();
-                if (cs != null && lastRenderedObject != null) {
-                    double yawDeg = Math.toDegrees(cs.yaw());
-                    double pitchDeg = Math.toDegrees(cs.pitch());
-                    double radius = cs.radius();
-                    yawSpinner.setValue(yawDeg);
-                    pitchSpinner.setValue(pitchDeg);
-                    radiusSpinner.setValue(radius);
-                    javax.vecmath.Point3i wp = sceneToWP(cs.target().x, cs.target().y, cs.target().z);
-                    if (!cs.equals(prevCameraState)) {
-                        System.out.println("[PreviewOp] camera - scene target (" + cs.target().x + ", " + cs.target().y + ", " + cs.target().z
-                            + ") -> WP (" + wp.x + ", " + wp.y + ", " + wp.z + ")");
-                        prevCameraState = cs;
-                    }
-                    cameraStateLabel.setText(String.format("Pos: (%.1f, %.1f, %.1f)  WP: (%d, %d, %d)  Yaw: %.1f°  Pitch: %.1f°  Radius: %.1f",
-                            cs.target().x, cs.target().y, cs.target().z,
-                            wp.x, wp.y, wp.z, yawDeg, pitchDeg, radius));
-                }
-            } else {
-                cameraStateLabel.setText("Camera: —");
-            }
-        }).start();
     }
 
     @Override
@@ -229,11 +100,10 @@ public class PreviewOperation extends AbstractBrushOperation
         return optionsPanel;
     }
 
-    private void rerenderLastSelection(ActionEvent e) {
+    private void rerenderLastSelection(@Nullable ActionEvent e) {
         if (lastTileCoords == null || lastTileCoords.isEmpty() || lastDim == null) {
             return;
         }
-        statusLabel.setText("Loading...");
         HashSet<Tile> tiles = new HashSet<>();
         for (Point coord : lastTileCoords) {
             Tile liveTile = lastDim.getTile(coord.x, coord.y);
@@ -245,26 +115,32 @@ public class PreviewOperation extends AbstractBrushOperation
             statusLabel.setText("Idle");
             return;
         }
-        statusLabel.setText("Rendering...");
-        Runnable task = () -> {
+        startExportAndRenderThread(tiles, lastDim, useFullExport);
+    }
+
+    private void startExportAndRenderThread(Set<Tile> referenceTiles, Dimension referenceDimension, boolean fullExport) {
+        statusLabel.setText("Copying Data...");
+        HashSet<Tile> clonedTiles = new HashSet<>();
+        for (Tile tile : referenceTiles) {
+            clonedTiles.add(tile.transform(CoordinateTransform.NOOP));
+        }
+
+        Runnable exportAndPassToRenderer = () -> {
             try {
-                var schemObj = renderTileToSurfaceObject(tiles, lastDim, useFullExport);
-                lastRenderedObject = schemObj;
-                org.pepsoft.util.Box vol = schemObj.getVolume();
-                javax.vecmath.Point3i off = schemObj.getOffset();
-                System.out.println("[PreviewOp] rerenderLastSelection: vol(x1=" + vol.getX1() + " x2=" + vol.getX2()
-                    + " y1=" + vol.getY1() + " y2=" + vol.getY2() + " z1=" + vol.getZ1() + " z2=" + vol.getZ2()
-                    + ") off(" + off.x + ", " + off.y + ", " + off.z + ")");
-                CubeSetup setup = SchemReader.prepareData(List.of(schemObj), showGrid);
-                if (renderer != null) {
-                    renderer.replaceData(setup);
-                }
+                statusLabel.setText("Exporting...");
+                var schemObj = renderTileToSurfaceObject(clonedTiles, referenceDimension, useFullExport);
+                statusLabel.setText("Rendering...");
+                GlobalActionPanel.setSurfaceObject(schemObj);
+                GlobalActionPanel.flagForChangedSurfaceObject();
                 SwingUtilities.invokeLater(() -> statusLabel.setText("Idle"));
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
+            SwingUtilities.invokeLater(() -> {
+                statusLabel.setText("Idle");
+            });
         };
-        new Thread(task).start();
+        new Thread(exportAndPassToRenderer).start();
     }
 
     // HIGHLIGHT AREA
@@ -304,32 +180,9 @@ public class PreviewOperation extends AbstractBrushOperation
      */
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
-        lastClickX = centreX;
-        lastClickZ = centreY;
         System.out.println("[PreviewOp] tick - world pos: (" + centreX + ", " + centreY + ")");
-
-        if (selectCameraPos) {
-            selectCameraPos = false;
-            InstancedCubes r = renderer;
-            if (r != null && lastRenderedObject != null && lastDim != null) {
-                CameraState cs = r.getCameraState();
-                javax.vecmath.Point3i currentWP = sceneToWP(cs.target().x, cs.target().y, cs.target().z);
-                float currentTerrainHeight = lastDim.getHeightAt(currentWP.x, currentWP.z);
-                heightAboveGround = currentWP.y - currentTerrainHeight;
-                float newTerrainHeight = lastDim.getHeightAt(centreX, centreY);
-                int worldY = Math.round(newTerrainHeight + heightAboveGround);
-                Vector3f target = wpToScene(centreX, centreY, worldY);
-                System.out.println("[PreviewOp] SetCameraPos: WP (" + centreX + ", " + centreY + ", " + worldY
-                    + ") -> scene (" + target.x + ", " + target.y + ", " + target.z + ")");
-                System.out.println("[PreviewOp] SetCameraPos: prev target (" + cs.target().x + ", " + cs.target().y + ", " + cs.target().z + ")");
-                cs.target().x = target.x;
-                cs.target().y = target.y;
-                cs.target().z = target.z;
-                System.out.println("[PreviewOp] SetCameraPos: new target (" + cs.target().x + ", " + cs.target().y + ", " + cs.target().z + ")");
-            }
-            statusLabel.setText("Idle");
+        if (inverse)
             return;
-        }
 
         int radius = this.getBrush().getEffectiveRadius();
 
@@ -390,15 +243,6 @@ public class PreviewOperation extends AbstractBrushOperation
         }
         subscribedTileCoords = newCoords;
 
-        statusLabel.setText("Loading...");
-
-        HashSet<Tile> clonedTiles = new HashSet<>();
-        for (Tile tile : tiles) {
-            clonedTiles.add(tile.transform(CoordinateTransform.NOOP));
-        }
-
-        statusLabel.setText("Rendering...");
-
         if (!dim.isEventsInhibited())
             dim.setEventsInhibited(true);
         dim.clearLayerData(annotationLayer);
@@ -415,141 +259,7 @@ public class PreviewOperation extends AbstractBrushOperation
         if (dim.isEventsInhibited())
             dim.setEventsInhibited(false);
 
-        Runnable task = () -> {
-            try {
-                var schemObj = renderTileToSurfaceObject(clonedTiles, dim, useFullExport);
-                lastRenderedObject = schemObj;
-                org.pepsoft.util.Box vol = schemObj.getVolume();
-                javax.vecmath.Point3i off = schemObj.getOffset();
-                System.out.println("[PreviewOp] tick render: vol(x1=" + vol.getX1() + " x2=" + vol.getX2()
-                    + " y1=" + vol.getY1() + " y2=" + vol.getY2() + " z1=" + vol.getZ1() + " z2=" + vol.getZ2()
-                    + ") off(" + off.x + ", " + off.y + ", " + off.z + ")");
-                CubeSetup setup = SchemReader.prepareData(List.of(schemObj), showGrid);
-                if (renderer == null) {
-                    renderer = new InstancedCubes(setup);
-                    hideGridButton.setEnabled(true);
-                    renderer.run();
-                    renderer = null;
-                    SwingUtilities.invokeLater(() -> hideGridButton.setEnabled(false));
-                } else {
-                    renderer.replaceData(setup);
-                }
-                SwingUtilities.invokeLater(() -> statusLabel.setText("Idle"));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        };
-        new Thread(task).start();
-
-    }
-
-    private Vector3f wpToScene(int worldX, int worldZ, int worldY) {
-        org.pepsoft.util.Box vol = lastRenderedObject.getVolume();
-        javax.vecmath.Point3i off = lastRenderedObject.getOffset();
-        float sx = worldX - vol.getX1() + off.x;
-        float sy = worldY - vol.getZ1() + off.z;
-        float sz = worldZ - vol.getY1() + off.y;
-        System.out.println("[PreviewOp] wpToScene: vol(x1=" + vol.getX1() + " y1=" + vol.getY1() + " z1=" + vol.getZ1()
-            + ") off(" + off.x + ", " + off.y + ", " + off.z
-            + ")  WP(" + worldX + ", " + worldZ + ", " + worldY
-            + ") -> scene(" + sx + ", " + sy + ", " + sz + ")");
-        return new Vector3f(sx, sy, sz);
-    }
-
-    private javax.vecmath.Point3i sceneToWP(float sx, float sy, float sz) {
-        org.pepsoft.util.Box vol = lastRenderedObject.getVolume();
-        javax.vecmath.Point3i off = lastRenderedObject.getOffset();
-        int wx = Math.round(sx - off.x + vol.getX1());
-        int wz = Math.round(sz - off.y + vol.getY1());
-        int wy = Math.round(sy - off.z + vol.getZ1());
-        System.out.println("[PreviewOp] sceneToWP: vol(x1=" + vol.getX1() + " y1=" + vol.getY1() + " z1=" + vol.getZ1()
-            + ") off(" + off.x + ", " + off.y + ", " + off.z
-            + ")  scene(" + sx + ", " + sy + ", " + sz
-            + ") -> WP(" + wx + ", " + wz + ", " + wy + ")");
-        return new javax.vecmath.Point3i(wx, wz, wy);
-    }
-
-    private void toggleGrid() {
-        showGrid = !showGrid;
-        hideGridButton.setText(showGrid ? "Hide Grid" : "Show Grid");
-        InstancedCubes r = renderer;
-        if (r == null || lastRenderedObject == null)
-            return;
-        new Thread(() -> {
-            try {
-                CubeSetup setup = SchemReader.prepareData(List.of(lastRenderedObject), showGrid);
-                r.replaceData(setup);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }).start();
-    }
-
-    private void saveSchematic() {
-        MinecraftWorldObject obj = lastRenderedObject;
-        if (obj == null) return;
-        statusLabel.setText("Saving schematic...");
-        Runnable task = () -> {
-            try {
-                javax.vecmath.Point3i dims = obj.getDimensions();
-                int w = dims.x;
-                int l = dims.y;
-                int h = dims.z;
-                pitheguy.schemconvert.converter.Schematic.Builder builder =
-                        new pitheguy.schemconvert.converter.Schematic.Builder(null, 1343, w, h, l);
-                for (int x = 0; x < w; x++) {
-                    for (int y = 0; y < l; y++) {
-                        for (int z = 0; z < h; z++) {
-                            Material mat = obj.getMaterial(x, y, z);
-                            if (mat != null) {
-                                builder.setBlockAt(x, z, y, toSchemBlockString(mat));
-                            }
-                        }
-                    }
-                }
-                Dimension dim = getDimension();
-                String worldName = (dim != null) ? dim.getWorld().getName() : "unknown";
-                String safeName = worldName.replaceAll("[\\\\/:*?\"<>|]", "_");
-                File schemDir = new File(MacroContainer.getActionsFilePath(),
-                        "schematics" + File.separator + safeName);
-                schemDir.mkdirs();
-                String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
-                File outputFile = new File(schemDir, worldName + "_" + timestamp + ".schem");
-                BlockReplacer.write(builder.build(), outputFile);
-                SwingUtilities.invokeLater(() -> statusLabel.setText("Schematic saved"));
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        };
-        new Thread(task).start();
-    }
-
-    private static String toSchemBlockString(Material mat) {
-        String blockString = mat.identity.name;
-        Map<String, String> props = mat.getProperties();
-        if (props != null && !props.isEmpty()) {
-            blockString += "[" + props.entrySet().stream()
-                .map(e -> e.getKey() + "=" + e.getValue())
-                .collect(Collectors.joining(",")) + "]";
-        }
-        return blockString;
-    }
-
-    private void saveScreenshot(BufferedImage image) {
-        try {
-            Dimension dim = getDimension();
-            if (dim == null) return;
-            String worldName = dim.getWorld().getName();
-            String safeName = worldName.replaceAll("[\\\\/:*?\"<>|]", "_");
-            File screenshotsDir = new File(MacroContainer.getActionsFilePath(),
-                    "screenshots" + File.separator + safeName);
-            screenshotsDir.mkdirs();
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
-            File outputFile = new File(screenshotsDir, "screenshot_" + timestamp + ".png");
-            ImageIO.write(image, "PNG", outputFile);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+       startExportAndRenderThread(tiles, dim, useFullExport);
     }
 
     static class TileChangedListener implements Tile.Listener
