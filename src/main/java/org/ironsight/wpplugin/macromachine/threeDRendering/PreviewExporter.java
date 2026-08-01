@@ -37,10 +37,11 @@ public class PreviewExporter extends JavaWorldExporter
                 dimension.setSubsurfaceMaterial(Terrain.HARDENED_CLAY);
                 dimension.setTopLayerMinDepth(1);
                 dimension.setTopLayerVariation(0);
-                ExportSettings minimalExportSettings = new JavaExportSettings(JavaExportSettings.FloatMode.LEAVE_FLOATING,
+                ExportSettings minimalExportSettings = new JavaExportSettings(
                         JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING,
-                        JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING, false,
-                        false, false, false, false, false, false, false);
+                        JavaExportSettings.FloatMode.LEAVE_FLOATING, JavaExportSettings.FloatMode.LEAVE_FLOATING,
+                        JavaExportSettings.FloatMode.LEAVE_FLOATING, false, false, false, false, false, false, false,
+                        false);
                 dimension.setExportSettings(minimalExportSettings);
             }
 

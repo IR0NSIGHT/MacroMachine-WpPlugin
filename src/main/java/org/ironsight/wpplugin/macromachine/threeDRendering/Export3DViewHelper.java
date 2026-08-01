@@ -25,7 +25,8 @@ import org.pepsoft.worldpainter.objects.MinecraftWorldObject;
 public class Export3DViewHelper
 {
 
-    public static MinecraftWorldObject renderTileToSurfaceObject(Set<Tile> tiles, Dimension liveDimension, boolean useFullExport) {
+    public static MinecraftWorldObject renderTileToSurfaceObject(Set<Tile> tiles, Dimension liveDimension,
+            boolean useFullExport) {
         Dimension dimension = createDimensionFromTiles(tiles, liveDimension);
         World2 world = dimension.getWorld();
         Dimension.Anchor anchor = dimension.getAnchor();
@@ -140,8 +141,7 @@ public class Export3DViewHelper
         int maxHeight = originalDim.getMaxHeight();
 
         World2 standaloneWorld = new World2(originalWorld.getPlatform(), minHeight, maxHeight);
-        Dimension standaloneDim = new Dimension(standaloneWorld,
-                originalDim.getName(), originalDim.getMinecraftSeed(),
+        Dimension standaloneDim = new Dimension(standaloneWorld, originalDim.getName(), originalDim.getMinecraftSeed(),
                 originalDim.getTileFactory(), originalDim.getAnchor());
 
         for (Tile tile : clonedTiles) {

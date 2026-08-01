@@ -31,13 +31,14 @@ public class MacroDialogOperation extends AbstractBrushOperation
         applicator.start();
 
         // DISABLED: REST + webUI server no longer started on plugin load.
-        // WebUIServer server = new WebUIServer(applicator, MappingActionContainer.getInstance(), macros,
-        //         InputOutputProvider.INSTANCE);
+        // WebUIServer server = new WebUIServer(applicator,
+        // MappingActionContainer.getInstance(), macros,
+        // InputOutputProvider.INSTANCE);
         // try {
-        //     server.start();
+        // server.start();
         // } catch (IOException e) {
-        //     e.printStackTrace();
-        //     return;
+        // e.printStackTrace();
+        // return;
         // }
 
         MappingActionContainer layers = MappingActionContainer.getInstance();

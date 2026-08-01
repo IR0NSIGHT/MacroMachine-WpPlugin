@@ -251,10 +251,10 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     }
 
     private void doRender3d() {
-        new Thread(()-> {
+        new Thread(() -> {
             getPreviewer().setObject(getSurfaceObject(), null); // immediate redraw
             rerender3d = false;
-            SwingUtilities.invokeLater(()->getPreviewer().repaint());
+            SwingUtilities.invokeLater(() -> getPreviewer().repaint());
         }).start();
     }
 
