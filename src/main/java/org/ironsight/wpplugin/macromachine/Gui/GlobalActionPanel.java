@@ -298,7 +298,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
         getPreviewer().setObject(new SurfaceObject() /* empty dummy */, null);
         tabbedPane.add("3d", getPreviewer());
 
-        tabbedPane.addTab("Web UI", new WebUIViewPanel());
+        // DISABLED: Web UI tab no longer shown (server disabled).
+        // tabbedPane.addTab("Web UI", new WebUIViewPanel());
 
         previewer.addHierarchyListener(e -> {
             if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing() && rerender3d) {

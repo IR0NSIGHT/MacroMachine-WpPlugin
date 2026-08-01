@@ -91,6 +91,7 @@
             </plugin>
 
             <!-- Frontend build: install dependencies and build webUI during Maven generate-resources -->
+            <!-- DISABLED: webUI build steps commented out for now.
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
@@ -143,6 +144,7 @@
                     </execution>
                 </executions>
             </plugin>
+            -->
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

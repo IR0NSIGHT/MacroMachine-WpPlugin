@@ -3,11 +3,9 @@ package org.ironsight.wpplugin.macromachine.operations;
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import javax.swing.*;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
-import org.ironsight.wpplugin.macromachine.WebUIServer;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ContainerIO;
 import org.ironsight.wpplugin.macromachine.operations.FileIO.ImportExportPolicy;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
@@ -32,14 +30,15 @@ public class MacroDialogOperation extends AbstractBrushOperation
         });
         applicator.start();
 
-        WebUIServer server = new WebUIServer(applicator, MappingActionContainer.getInstance(), macros,
-                InputOutputProvider.INSTANCE);
-        try {
-            server.start();
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
+        // DISABLED: REST + webUI server no longer started on plugin load.
+        // WebUIServer server = new WebUIServer(applicator, MappingActionContainer.getInstance(), macros,
+        //         InputOutputProvider.INSTANCE);
+        // try {
+        //     server.start();
+        // } catch (IOException e) {
+        //     e.printStackTrace();
+        //     return;
+        // }
 
         MappingActionContainer layers = MappingActionContainer.getInstance();
 
