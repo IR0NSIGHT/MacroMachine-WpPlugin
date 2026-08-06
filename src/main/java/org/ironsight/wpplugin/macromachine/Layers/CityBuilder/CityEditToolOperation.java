@@ -17,9 +17,8 @@ import javax.swing.*;
 import javax.vecmath.Point3i;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.pepsoft.util.undo.UndoManager;
-import org.pepsoft.worldpainter.DefaultCustomObjectProvider;
+import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.RadiusControl;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.brushes.RotatedBrush;
 import org.pepsoft.worldpainter.brushes.SymmetricBrush;
@@ -66,8 +65,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     JCheckBox isMirroredCheckbox;
     JCheckBox randomSelectCheckBox;
     JCheckBox rotateCheckBox;
-    private ObjectState currentState = new ObjectState(CityLayer.Direction.NORTH, false, 0);
-    private int lastCentreX = Integer.MAX_VALUE, lastCentreY = Integer.MAX_VALUE;
+    private ObjectState currentState = new ObjectState(CityLayer.Direction.NORTH, false, 0, Integer.MAX_VALUE,Integer.MAX_VALUE);
+    private int lastCentreX = Integer.MAX_VALUE, lastCentreY = Integer.MAX_VALUE; //FIXME are these obsolete with state carrying xy?
     private boolean isAutoRandomRotate = false;
     private boolean isAutoRandomSelect = false;
     private Paint paint;
@@ -86,8 +85,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                     && (ev.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0) {
                 if (ev.getComponent()
                         .equals(SwingUtilities.getDeepestComponentAt(ev.getComponent(), ev.getX(), ev.getY()))) { // fire
-                    // only
-                    // once
+                    // only once
                     onMouseWheel(ev.getWheelRotation());
                 }
             }
@@ -224,6 +222,16 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         }
     }
 
+    /**
+     * overwrites the current states position
+     * @param x
+     * @param y
+     */
+    private void setCurrentStatePosition(int x, int y) {
+        this.currentState = new ObjectState(currentState.rotation,currentState.mirrored,currentState.objectIndex,x,y);
+        onObjectStateChanged();
+    }
+
     private void onAddAt(int centreX, int centreY, CityLayer cityLayer) {
         cityLayer.setDataAt(getDimension(), centreX, centreY, currentState);
 
@@ -244,7 +252,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         if (index < 0 && index >= list.getModel().getSize())
             return;
 
-        this.currentState = new ObjectState(currentState.rotation, currentState.mirrored, index);
+        this.currentState = new ObjectState(currentState.rotation, currentState.mirrored, index, currentState.xPos, currentState.yPos);
         if (list.getSelectedIndex() != index)
             list.setSelectedIndex(index);
         onObjectStateChanged();
@@ -282,7 +290,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             setSelectedObjectIndex(data.objectIndex);
             setRotation(data.rotation);
             setIsMirrored(data.mirrored);
-
+            setCurrentStatePosition(lastX,lastY);
             lastCentreX = lastX;
             lastCentreY = lastY;
         } else {
@@ -300,6 +308,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         cityLayer.setDataAt(getDimension(), centreX, centreY, currentState);
         lastCentreY = centreY;
         lastCentreX = centreX;
+        setCurrentStatePosition(centreX,centreY);
     }
 
     @Override
@@ -346,8 +355,13 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         else
             setRotation(CityLayer.Direction.NORTH);
     }
-
+    private CityLayer lastLayer = null;
     protected void paintChanged(Paint ignored) {
+        if (lastLayer != null)
+            lastLayer.setIsSelectedPaint(false);
+        if (getSelectedLayer() != null)
+            getSelectedLayer().setIsSelectedPaint(true);
+        lastLayer = getSelectedLayer();
         updatePanel();
     }
 
@@ -355,12 +369,12 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         if (rotation == this.currentState.rotation)
             return;
         System.out.println("set rotation from" + currentState.rotation + " to " + rotation);
-        this.currentState = new ObjectState(rotation, currentState.mirrored, currentState.objectIndex);
+        this.currentState = new ObjectState(rotation, currentState.mirrored, currentState.objectIndex, currentState.xPos, currentState.yPos);
         onObjectStateChanged();
     }
 
     private void setIsMirrored(boolean mirrored) {
-        this.currentState = new ObjectState(currentState.rotation, mirrored, currentState.objectIndex);
+        this.currentState = new ObjectState(currentState.rotation, mirrored, currentState.objectIndex, currentState.xPos, currentState.yPos);
         onObjectStateChanged();
     }
 
@@ -457,6 +471,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     }
 
     private void onObjectStateChanged() {
+        System.out.println("### City Tool state changed to:" + currentState);
         CityLayer layer = getSelectedLayer();
         if (layer == null)
             return;
@@ -465,6 +480,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             return;
         WPObject object = layer.getObjectList().get(selectedObjectIndex);
         Point3i dim = object.getDimensions();
+        layer.setSelected(currentState);
 
         // update brush radius
         int desiredRadius = Math.max(dim.x, dim.y) / 2;
@@ -489,6 +505,16 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
         optionsPanel.revalidate();
         optionsPanel.repaint();
+
+        if (getViewAsWP() != null) { //force a tile renderer update //FIXME use less frequently, this will force ALL tiles to be rerendered.
+            getViewAsWP().refreshTilesForLayer(layer, false);
+        }
+    }
+
+    private WorldPainter getViewAsWP() {
+        if (getView() instanceof WorldPainter wp)
+            return wp;
+        return null;
     }
 
     @Override

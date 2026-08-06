@@ -66,13 +66,13 @@ public class IntegerTile
     }
 
     /**
-     * @param x
-     *            global pos
-     * @param y
+     * @param x global pos x
+     * @param y global pos y
      * @return
      */
     public int getValueAt(int x, int y) {
         int index = (y % TILE_SIZE) * TILE_SIZE + (x % TILE_SIZE);
+        assert index >= 0 && index < values.length : "attempting to access value outside of tile bounds: " + x + ", " + y;
         return values[index];
     }
 

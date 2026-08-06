@@ -2,6 +2,7 @@ package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
 import static java.awt.image.BufferedImage.TYPE_INT_ARGB;
 import static org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityInfoDatabase.NO_DATA;
+import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 import static org.pepsoft.worldpainter.objects.WPObject.ATTRIBUTE_FILE;
 
@@ -12,6 +13,8 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import javax.vecmath.Point3i;
+
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IntegerTile;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.util.undo.BufferKey;
 import org.pepsoft.util.undo.UndoListener;
@@ -23,12 +26,12 @@ import org.pepsoft.worldpainter.Tile;
 import org.pepsoft.worldpainter.exporting.LayerExporter;
 import org.pepsoft.worldpainter.layers.CustomLayer;
 import org.pepsoft.worldpainter.layers.exporters.ExporterSettings;
+import org.pepsoft.worldpainter.layers.renderers.LayerRenderer;
 import org.pepsoft.worldpainter.objects.MirroredObject;
 import org.pepsoft.worldpainter.objects.RotatedObject;
 import org.pepsoft.worldpainter.objects.WPObject;
 
-public class CityLayer extends CustomLayer implements UndoListener
-{
+public class CityLayer extends CustomLayer implements UndoListener {
     public static final int MIRROR_BIT_MASK = 0b1;
     public static final int MIRROR_BIT_SHIFT = 0;
     public static final int ID_BIT_SHIFT = 4;
@@ -39,9 +42,22 @@ public class CityLayer extends CustomLayer implements UndoListener
     private static final long serialVersionUID = 1L;
     private ArrayList<WPObject> objects = new ArrayList<>();
     private CityInfoDatabase database = new CityInfoDatabase();
-
+    private transient CityLayerRenderer renderer = new CityLayerRenderer(this);
+    public void setIsSelectedPaint(boolean isSelectedPaint) {
+        renderer.setIsSelectedPaint(isSelectedPaint);
+    }
     public CityLayer(String name, String description) {
         super(name, description, DataSize.NIBBLE, 50, Color.cyan);
+    }
+
+    public void setSelected(ObjectState state) {
+        WPObject object = getObjectForState(state);
+        Point3i dim = object.getDimensions();
+        Point3i offset = object.getOffset();
+
+        Rectangle bbxSelected = new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dim.x, dim.y);
+        System.out.println("SELECTED BOUNDING BOX:" + bbxSelected);
+        renderer.setCurrentSelectBBX(bbxSelected);
     }
 
     public void setDataAt(Dimension dimension, int blockX, int blockY, ObjectState state) {
@@ -49,7 +65,7 @@ public class CityLayer extends CustomLayer implements UndoListener
             return;
 
         database.setDataAt(blockX, blockY, getValueForState(state.rotation, state.mirrored, state.objectIndex));
-
+        resetLastEdited();
         WPObject paintedSchem = getObjectForState(state);
         if (paintedSchem == null)
             return;
@@ -57,9 +73,20 @@ public class CityLayer extends CustomLayer implements UndoListener
         for (int tileX = (blockX - dims.x) >> TILE_SIZE_BITS; tileX <= (blockX + dims.x) >> TILE_SIZE_BITS; tileX++) {
             for (int tileY = (blockY - dims.y) >> TILE_SIZE_BITS; tileY <= (blockY
                     + dims.y) >> TILE_SIZE_BITS; tileY++) {
-                repaintTile(tileX, tileY, dimension, database);
+                repaintWorldpainterTile(tileX, tileY, dimension, database);
             }
         }
+    }
+
+    @Override
+    public LayerRenderer getRenderer() {
+        if (renderer == null) {
+            renderer = new CityLayerRenderer(this);
+        }
+        if (this.getPaint() instanceof Color color) {
+            renderer.setBaseColor(color.getRGB());
+        }
+        return renderer;
     }
 
     public Image getSchematicImage(ObjectState state) {
@@ -74,6 +101,32 @@ public class CityLayer extends CustomLayer implements UndoListener
         paintObjectToImage(g2d, space, space, schematic);
         g2d.dispose();
         return img;
+    }
+
+    private void paintObjectToColorTile(IntegerTile colorTile, WPObject object, int objectTilePosX, int objectTilePosY) {
+        int height = object.getDimensions().z;
+        int offsetX = object.getOffset().x;
+        int offsetY = object.getOffset().y;
+        for (int x = 0; x < object.getDimensions().x; x++) {
+            for (int y = 0; y < object.getDimensions().y; y++) {
+                for (int z = object.getDimensions().z - 1; z >= 0; z--) {
+                    Material mat = object.getMaterial(x, y, z);
+                    if (mat != null && mat != Material.AIR) {
+                        double value = (Math.sqrt(1f * z / height)) * 0.5f + 0.5f;
+                        Color base = new Color(mat.colour);
+                        Color darkenFactor = new Color((int) (Math.max(0, Math.min(255, value * base.getRed()))),
+                                (int) (Math.max(0, Math.min(255, value * base.getGreen()))),
+                                (int) (Math.max(0, Math.min(255, value * base.getBlue()))));
+                        int pixelPosInTileX = objectTilePosX + x + offsetX;
+                        int pixelPosInTileY = objectTilePosY + y + offsetY;
+                        if (pixelPosInTileX < 0 || pixelPosInTileY < 0 || pixelPosInTileX >= TILE_SIZE ||pixelPosInTileY >= TILE_SIZE)
+                            break; // dont try to paint outside the colorTiles bounds.
+                        colorTile.setValueAt(pixelPosInTileX, pixelPosInTileY, darkenFactor.getRGB());
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     private void paintObjectToImage(Graphics2D graphics2D, int width, int heightPx, WPObject object) {
@@ -126,22 +179,49 @@ public class CityLayer extends CustomLayer implements UndoListener
             }
         }
     }
-
-    private void repaintTile(int tileX, int tileY, Dimension dimension, CityInfoDatabase database) {
-        Tile tile = dimension.getTileForEditing(tileX, tileY);
-        tile.clearLayerData(this);
-
+    private long lastEdited = 0;
+    public boolean lastEditedAfter(long compareTimeMillis) {
+        return lastEdited > compareTimeMillis;
+    }
+    private void resetLastEdited() {
+        lastEdited = System.currentTimeMillis();
+    }
+    void repaintColorTile(int tileX, int tileY, IntegerTile tile) {
         // find all objects that live in tile
-        for (int tileXX = tileX - 1; tileXX <= tileX + 1; tileXX++)
+        for (int tileXX = tileX - 1; tileXX <= tileX + 1; tileXX++) // iterate neighbouring tiles, one left,r,u,d
             for (int tileYY = tileY - 1; tileYY <= tileY + 1; tileYY++) {
-                HashMap<Point, Integer> tileData = database.getTileData(tileXX, tileYY);
+                HashMap<Point, Integer> tileData = database.getTileData(tileXX, tileYY); //gets data which objects live in this tile
                 if (tileData == null)
                     continue;
-                for (var pos : tileData.keySet()) {
+                for (var pos : tileData.keySet()) { //iterate all objects in the tile
                     ObjectState state = getInformationAt(pos.x, pos.y);
                     WPObject object = getObjectForState(state);
                     if (object == null)
                         continue;
+
+                    // paint object into reference tile
+                    paintObjectToColorTile(tile, object, state.xPos - tileX*TILE_SIZE, state.yPos- tileY*TILE_SIZE);
+                }
+            }
+    }
+
+    private void repaintWorldpainterTile(int tileX, int tileY, Dimension dimension, CityInfoDatabase database) {
+        Tile tile = dimension.getTileForEditing(tileX, tileY);
+        tile.clearLayerData(this);
+
+        // find all objects that live in tile
+        for (int tileXX = tileX - 1; tileXX <= tileX + 1; tileXX++) // iterate neighbouring tiles, one left,r,u,d
+            for (int tileYY = tileY - 1; tileYY <= tileY + 1; tileYY++) {
+                HashMap<Point, Integer> tileData = database.getTileData(tileXX, tileYY); //gets data which objects live in this tile
+                if (tileData == null)
+                    continue;
+                for (var pos : tileData.keySet()) { //iterate all objects in the tile
+                    ObjectState state = getInformationAt(pos.x, pos.y);
+                    WPObject object = getObjectForState(state);
+                    if (object == null)
+                        continue;
+
+                    // paint object into reference tile
                     paintObjectIntoTile(tile, object, pos);
                 }
             }
@@ -151,13 +231,13 @@ public class CityLayer extends CustomLayer implements UndoListener
         WPObject paintedSchem = getObjectForState(getInformationAt(blockX, blockY));
         if (paintedSchem != null) {
             database.setDataAt(blockX, blockY, NO_DATA);
-
+            resetLastEdited();
             Point3i dims = paintedSchem.getDimensions();
             for (int tileX = (blockX - dims.x) >> TILE_SIZE_BITS; tileX <= (blockX
                     + dims.x) >> TILE_SIZE_BITS; tileX++) {
                 for (int tileY = (blockY - dims.y) >> TILE_SIZE_BITS; tileY <= (blockY
                         + dims.y) >> TILE_SIZE_BITS; tileY++) {
-                    repaintTile(tileX, tileY, dimension, database);
+                    repaintWorldpainterTile(tileX, tileY, dimension, database);
                 }
             }
         }
@@ -201,9 +281,14 @@ public class CityLayer extends CustomLayer implements UndoListener
         int data = database.getDataAt(blockX, blockY);
         if (data == NO_DATA)
             return null;
-        return new ObjectState(getRotation(data), isMirrored(data), getObjectIdx(data));
+        return new ObjectState(getRotation(data), isMirrored(data), getObjectIdx(data), blockX, blockY);
     }
 
+    /**
+     * returns an object that matches the type of scheamtic, with rotation and mirror
+     * @param state
+     * @return
+     */
     public WPObject getObjectForState(ObjectState state) {
         if (state == null)
             return null;
@@ -284,7 +369,7 @@ public class CityLayer extends CustomLayer implements UndoListener
                 dim.setEventsInhibited(true);
             }
             for (Tile t : dim.getTiles()) {
-                repaintTile(t.getX(), t.getY(), dim, database);
+                repaintWorldpainterTile(t.getX(), t.getY(), dim, database);
             }
         } catch (Exception exception) {
 

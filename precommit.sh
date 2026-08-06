@@ -10,6 +10,6 @@ STAGED_JAVA_FILES=$(git diff --cached --name-only -- '*.java')
 [ -z "$STAGED_JAVA_FILES" ] && exit 0
 
 echo "Running verify phase..."
-mvn clean verify
+mvn clean verify || exit 1
 
 echo "Tests passed"
