@@ -42,9 +42,19 @@ public class CityLayer extends CustomLayer implements UndoListener {
     private static final long serialVersionUID = 1L;
     private ArrayList<WPObject> objects = new ArrayList<>();
     private CityInfoDatabase database = new CityInfoDatabase();
+    private boolean useHighlightColors = true;
     private transient CityLayerRenderer renderer = new CityLayerRenderer(this);
     public void setIsSelectedPaint(boolean isSelectedPaint) {
         renderer.setIsSelectedPaint(isSelectedPaint);
+    }
+    public boolean isUseHighlightColors() {
+        return useHighlightColors;
+    }
+    public void setUseHighlightColors(boolean useHighlightColors) {
+        this.useHighlightColors = useHighlightColors;
+        if (renderer != null) {
+            renderer.setUseHighlightColors(useHighlightColors);
+        }
     }
     public CityLayer(String name, String description) {
         super(name, description, DataSize.NIBBLE, 50, Color.cyan);
@@ -86,6 +96,7 @@ public class CityLayer extends CustomLayer implements UndoListener {
         if (this.getPaint() instanceof Color color) {
             renderer.setBaseColor(color.getRGB());
         }
+        renderer.setUseHighlightColors(this.useHighlightColors);
         return renderer;
     }
 

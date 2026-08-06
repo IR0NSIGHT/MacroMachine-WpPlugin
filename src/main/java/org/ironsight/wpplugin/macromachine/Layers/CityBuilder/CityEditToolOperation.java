@@ -65,6 +65,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     JCheckBox isMirroredCheckbox;
     JCheckBox randomSelectCheckBox;
     JCheckBox rotateCheckBox;
+    JCheckBox useHighlightColorsCheckbox;
     private ObjectState currentState = new ObjectState(CityLayer.Direction.NORTH, false, 0, Integer.MAX_VALUE,Integer.MAX_VALUE);
     private int lastCentreX = Integer.MAX_VALUE, lastCentreY = Integer.MAX_VALUE; //FIXME are these obsolete with state carrying xy?
     private boolean isAutoRandomRotate = false;
@@ -407,12 +408,25 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         isMirroredCheckbox.setToolTipText("Randomly select new schematic after each use");
         isMirroredCheckbox.addActionListener(l -> setIsMirrored(isMirroredCheckbox.isSelected()));
 
+        useHighlightColorsCheckbox = new JCheckBox("use highlight colors");
+        useHighlightColorsCheckbox.setToolTipText("Use the layers color instead of painting the actual schematics");
+        useHighlightColorsCheckbox.addActionListener(l -> {
+            CityLayer layer = getSelectedLayer();
+            if (layer != null) {
+                layer.setUseHighlightColors(useHighlightColorsCheckbox.isSelected());
+                if (getViewAsWP() != null) {
+                    getViewAsWP().refreshTilesForLayer(layer, false);
+                }
+            }
+        });
+
         // Put the icon into a JLabel
         JLabel previewPanel = getPreviewPanel();
         content.add(getHelpButton(HelpTitle, HELPTEXT));
         content.add(rotateCheckBox);
         content.add(randomSelectCheckBox);
         content.add(isMirroredCheckbox);
+        content.add(useHighlightColorsCheckbox);
         content.add(previewPanel);
         JScrollPane scrollPane = new JScrollPane(list);
         scrollPane.setMaximumSize(new java.awt.Dimension(1000, 300));
@@ -462,6 +476,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
             warningLabel.setVisible(false);
             contentPanel.setVisible(true);
+            useHighlightColorsCheckbox.setSelected(cityLayer.isUseHighlightColors());
         } else {
             warningLabel.setVisible(true);
             contentPanel.setVisible(false);
