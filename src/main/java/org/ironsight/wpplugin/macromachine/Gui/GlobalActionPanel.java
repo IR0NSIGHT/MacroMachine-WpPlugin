@@ -3,7 +3,6 @@ package org.ironsight.wpplugin.macromachine.Gui;
 import static org.ironsight.wpplugin.macromachine.Gui.MacroMachineWindow.createDialog;
 
 import java.awt.*;
-import java.awt.event.HierarchyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -29,8 +28,8 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.EditableIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueGetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
+import org.ironsight.wpplugin.macromachine.threeDRendering.CubeArrayRenderer;
 import org.ironsight.wpplugin.macromachine.threeDRendering.SurfaceObject;
-import org.pepsoft.worldpainter.dynmap.DynmapPreviewer;
 import org.pepsoft.worldpainter.objects.WPObject;
 
 // top level panel that contains a selection list of macros/layers/input/output on the left, like a
@@ -44,7 +43,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     public static final String INPUT_OUTPUT_DESIGNER = "inputoutputdesigner";
     static final int MAX_LOG_LINES = 2000;
     static JTextArea logPanel;
-    private static DynmapPreviewer previewer = null;
     private static GlobalActionPanel INSTANCE;
     private static WPObject surfaceObject = new SurfaceObject();
     MacroTreePanel macroTreePanel;
@@ -187,17 +185,11 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
         MacroMachinePlugin.error(message);
     }
 
-    private static DynmapPreviewer getPreviewer() {
-        if (previewer == null)
-            previewer = new DynmapPreviewer();
-        return previewer;
-    }
-
     public static void flagForChangedSurfaceObject() {
         if (INSTANCE == null)
             return; // gui wasnt opened before.
         INSTANCE.rerender3d = true;
-        if (getPreviewer().isShowing())
+        if (CubeArrayRenderer.getInstance().isRendering())
             SwingUtilities.invokeLater(() -> {
                 INSTANCE.doRender3d();
             });
@@ -251,11 +243,8 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     }
 
     private void doRender3d() {
-        new Thread(() -> {
-            getPreviewer().setObject(getSurfaceObject(), null); // immediate redraw
-            rerender3d = false;
-            SwingUtilities.invokeLater(() -> getPreviewer().repaint());
-        }).start();
+        CubeArrayRenderer.getInstance().render(surfaceObject);
+        rerender3d = false;
     }
 
     private void init() {
@@ -297,18 +286,31 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
 
         tabbedPane.add("log", logPanel);
 
-        getPreviewer().setInclination(30);
-        getPreviewer().setObject(new SurfaceObject() /* empty dummy */, null);
-        tabbedPane.add("3d", getPreviewer());
+        // Cubearray 3D renderer status panel
+        JPanel panel3d = new JPanel(new BorderLayout());
+        JButton open3DButton = new JButton("Open 3D View");
+        open3DButton.addActionListener(e -> {
+            CubeArrayRenderer.getInstance().render(getSurfaceObject());
+        });
+        JLabel statusLabel3d = new JLabel("Renderer: Closed", SwingConstants.CENTER);
+        JButton rerender3DButton = new JButton("Re-render");
+        rerender3DButton.addActionListener(e -> CubeArrayRenderer.getInstance().reRender());
+        JPanel buttons3d = new JPanel(new FlowLayout());
+        buttons3d.add(open3DButton);
+        buttons3d.add(rerender3DButton);
+        panel3d.add(buttons3d, BorderLayout.CENTER);
+        panel3d.add(statusLabel3d, BorderLayout.SOUTH);
+        tabbedPane.add("3d", panel3d);
+
+        // Poll for renderer state changes
+        Timer rendererStatusTimer = new Timer(500, e -> {
+            boolean rendering = CubeArrayRenderer.getInstance().isRendering();
+            statusLabel3d.setText(rendering ? "Renderer: Open" : "Renderer: Closed");
+        });
+        rendererStatusTimer.start();
 
         // DISABLED: Web UI tab no longer shown (server disabled).
         // tabbedPane.addTab("Web UI", new WebUIViewPanel());
-
-        previewer.addHierarchyListener(e -> {
-            if ((e.getChangeFlags() & HierarchyEvent.SHOWING_CHANGED) != 0 && isShowing() && rerender3d) {
-                SwingUtilities.invokeLater(() -> doRender3d());
-            }
-        });
 
         this.add(macroTreePanel, BorderLayout.WEST);
 
