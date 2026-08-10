@@ -11,7 +11,8 @@ import java.util.HashMap;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
-public class CityLayerRenderer implements NibbleLayerRenderer {
+public class CityLayerRenderer implements NibbleLayerRenderer
+{
 
     private HashMap<Point2i, IntegerTile> tiles = new HashMap<>();
     private Rectangle2D selectedBBX = new Rectangle(0, 0, 0, 0);
@@ -45,11 +46,11 @@ public class CityLayerRenderer implements NibbleLayerRenderer {
     }
 
     private boolean existsTile(int tileX, int tileY) {
-        return tiles.containsKey(new Point2i(tileX,tileY));
+        return tiles.containsKey(new Point2i(tileX, tileY));
     }
 
     private boolean tileRequiredRepaint(int tileX, int tileY) {
-        long lastPaint = tileLastRepaint.getOrDefault(new Point2i(tileX,tileY), 0L);
+        long lastPaint = tileLastRepaint.getOrDefault(new Point2i(tileX, tileY), 0L);
         return layer.lastEditedAfter(lastPaint);
     }
 
@@ -89,13 +90,13 @@ public class CityLayerRenderer implements NibbleLayerRenderer {
             int tileY = y >> TILE_SIZE_BITS;
 
             IntegerTile colorTile;
-            if (!existsTile(tileX,tileY) || tileRequiredRepaint(tileX,tileY)) {
-                IntegerTile tile = getExistingOrNewColorTileFor(tileX,tileY);
-                layer.repaintColorTile(tileX,tileY,tile);
-                tileLastRepaint.put(new Point2i(tileX,tileY), System.currentTimeMillis());
+            if (!existsTile(tileX, tileY) || tileRequiredRepaint(tileX, tileY)) {
+                IntegerTile tile = getExistingOrNewColorTileFor(tileX, tileY);
+                layer.repaintColorTile(tileX, tileY, tile);
+                tileLastRepaint.put(new Point2i(tileX, tileY), System.currentTimeMillis());
                 colorTile = tile;
             } else {
-                colorTile = getExistingOrNewColorTileFor(tileX,tileY);
+                colorTile = getExistingOrNewColorTileFor(tileX, tileY);
             }
             resultColor = colorTile.getValueAt(x - tileX * TILE_SIZE, y - tileY * TILE_SIZE);
         }

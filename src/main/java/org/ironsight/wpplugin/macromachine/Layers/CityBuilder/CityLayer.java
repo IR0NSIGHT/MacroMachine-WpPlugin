@@ -31,7 +31,8 @@ import org.pepsoft.worldpainter.objects.MirroredObject;
 import org.pepsoft.worldpainter.objects.RotatedObject;
 import org.pepsoft.worldpainter.objects.WPObject;
 
-public class CityLayer extends CustomLayer implements UndoListener {
+public class CityLayer extends CustomLayer implements UndoListener
+{
     public static final int MIRROR_BIT_MASK = 0b1;
     public static final int MIRROR_BIT_SHIFT = 0;
     public static final int ID_BIT_SHIFT = 4;
@@ -114,7 +115,8 @@ public class CityLayer extends CustomLayer implements UndoListener {
         return img;
     }
 
-    private void paintObjectToColorTile(IntegerTile colorTile, WPObject object, int objectTilePosX, int objectTilePosY) {
+    private void paintObjectToColorTile(IntegerTile colorTile, WPObject object, int objectTilePosX,
+            int objectTilePosY) {
         int height = object.getDimensions().z;
         int offsetX = object.getOffset().x;
         int offsetY = object.getOffset().y;
@@ -130,7 +132,8 @@ public class CityLayer extends CustomLayer implements UndoListener {
                                 (int) (Math.max(0, Math.min(255, value * base.getBlue()))));
                         int pixelPosInTileX = objectTilePosX + x + offsetX;
                         int pixelPosInTileY = objectTilePosY + y + offsetY;
-                        if (pixelPosInTileX < 0 || pixelPosInTileY < 0 || pixelPosInTileX >= TILE_SIZE ||pixelPosInTileY >= TILE_SIZE)
+                        if (pixelPosInTileX < 0 || pixelPosInTileY < 0 || pixelPosInTileX >= TILE_SIZE
+                                || pixelPosInTileY >= TILE_SIZE)
                             break; // dont try to paint outside the colorTiles bounds.
                         colorTile.setValueAt(pixelPosInTileX, pixelPosInTileY, darkenFactor.getRGB());
                         break;
@@ -201,17 +204,19 @@ public class CityLayer extends CustomLayer implements UndoListener {
         // find all objects that live in tile
         for (int tileXX = tileX - 1; tileXX <= tileX + 1; tileXX++) // iterate neighbouring tiles, one left,r,u,d
             for (int tileYY = tileY - 1; tileYY <= tileY + 1; tileYY++) {
-                HashMap<Point, Integer> tileData = database.getTileData(tileXX, tileYY); //gets data which objects live in this tile
+                HashMap<Point, Integer> tileData = database.getTileData(tileXX, tileYY); // gets data which objects live
+                                                                                         // in this tile
                 if (tileData == null)
                     continue;
-                for (var pos : tileData.keySet()) { //iterate all objects in the tile
+                for (var pos : tileData.keySet()) { // iterate all objects in the tile
                     ObjectState state = getInformationAt(pos.x, pos.y);
                     WPObject object = getObjectForState(state);
                     if (object == null)
                         continue;
 
                     // paint object into reference tile
-                    paintObjectToColorTile(tile, object, state.xPos - tileX*TILE_SIZE, state.yPos- tileY*TILE_SIZE);
+                    paintObjectToColorTile(tile, object, state.xPos - tileX * TILE_SIZE,
+                            state.yPos - tileY * TILE_SIZE);
                 }
             }
     }
@@ -223,10 +228,11 @@ public class CityLayer extends CustomLayer implements UndoListener {
         // find all objects that live in tile
         for (int tileXX = tileX - 1; tileXX <= tileX + 1; tileXX++) // iterate neighbouring tiles, one left,r,u,d
             for (int tileYY = tileY - 1; tileYY <= tileY + 1; tileYY++) {
-                HashMap<Point, Integer> tileData = database.getTileData(tileXX, tileYY); //gets data which objects live in this tile
+                HashMap<Point, Integer> tileData = database.getTileData(tileXX, tileYY); // gets data which objects live
+                                                                                         // in this tile
                 if (tileData == null)
                     continue;
-                for (var pos : tileData.keySet()) { //iterate all objects in the tile
+                for (var pos : tileData.keySet()) { // iterate all objects in the tile
                     ObjectState state = getInformationAt(pos.x, pos.y);
                     WPObject object = getObjectForState(state);
                     if (object == null)
@@ -296,7 +302,9 @@ public class CityLayer extends CustomLayer implements UndoListener {
     }
 
     /**
-     * returns an object that matches the type of scheamtic, with rotation and mirror
+     * returns an object that matches the type of scheamtic, with rotation and
+     * mirror
+     * 
      * @param state
      * @return
      */
@@ -438,6 +446,10 @@ public class CityLayer extends CustomLayer implements UndoListener {
 
         Direction(int rotateSteps) {
             this.rotateSteps = rotateSteps;
+        }
+
+        public int toCompass() {
+            return rotateSteps * 90;
         }
 
         public static Direction fromCompass(int degrees) {

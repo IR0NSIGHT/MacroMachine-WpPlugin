@@ -19,12 +19,7 @@ public class ObjectState
 
     @Override
     public String toString() {
-        return "ObjectState{" +
-                "rotation=" + rotation +
-                ", mirrored=" + mirrored +
-                ", objectIndex=" + objectIndex +
-                ", xPos=" + xPos +
-                ", yPos=" + yPos +
-                '}';
+        return "ObjectState{" + "rotation=" + rotation + ", mirrored=" + mirrored + ", objectIndex=" + objectIndex
+                + ", xPos=" + xPos + ", yPos=" + yPos + '}';
     }
 }
