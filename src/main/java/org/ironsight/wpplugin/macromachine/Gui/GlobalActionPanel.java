@@ -189,10 +189,9 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
         if (INSTANCE == null)
             return; // gui wasnt opened before.
         INSTANCE.rerender3d = true;
-        if (CubeArrayRenderer.getInstance().isRendering())
-            SwingUtilities.invokeLater(() -> {
-                INSTANCE.doRender3d();
-            });
+        SwingUtilities.invokeLater(() -> {
+            INSTANCE.doRender3d();
+        });
     }
 
     public synchronized static WPObject getSurfaceObject() {
