@@ -34,10 +34,11 @@ public class CubeArrayRenderer
     /**
      * Render a WPObject in the 3D viewer window.
      * <p>
-     * If a window is already open, hotswaps the data in-place (keeps camera position).
-     * If no window is open, creates a new one.
+     * If a window is already open, hotswaps the data in-place (keeps camera
+     * position). If no window is open, creates a new one.
      *
-     * @param wpObject the WorldPainter object to render
+     * @param wpObject
+     *            the WorldPainter object to render
      */
     public void render(WPObject wpObject) {
         if (wpObject == null) {

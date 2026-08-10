@@ -285,28 +285,7 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
 
         tabbedPane.add("log", logPanel);
 
-        // Cubearray 3D renderer status panel
-        JPanel panel3d = new JPanel(new BorderLayout());
-        JButton open3DButton = new JButton("Open 3D View");
-        open3DButton.addActionListener(e -> {
-            CubeArrayRenderer.getInstance().render(getSurfaceObject());
-        });
-        JLabel statusLabel3d = new JLabel("Renderer: Closed", SwingConstants.CENTER);
-        JButton rerender3DButton = new JButton("Re-render");
-        rerender3DButton.addActionListener(e -> CubeArrayRenderer.getInstance().reRender());
-        JPanel buttons3d = new JPanel(new FlowLayout());
-        buttons3d.add(open3DButton);
-        buttons3d.add(rerender3DButton);
-        panel3d.add(buttons3d, BorderLayout.CENTER);
-        panel3d.add(statusLabel3d, BorderLayout.SOUTH);
-        tabbedPane.add("3d", panel3d);
-
-        // Poll for renderer state changes
-        Timer rendererStatusTimer = new Timer(500, e -> {
-            boolean rendering = CubeArrayRenderer.getInstance().isRendering();
-            statusLabel3d.setText(rendering ? "Renderer: Open" : "Renderer: Closed");
-        });
-        rendererStatusTimer.start();
+        tabbedPane.add("3d", new RendererKeyBindingsPanel());
 
         // DISABLED: Web UI tab no longer shown (server disabled).
         // tabbedPane.addTab("Web UI", new WebUIViewPanel());
