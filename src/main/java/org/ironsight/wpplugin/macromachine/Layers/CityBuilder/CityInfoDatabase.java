@@ -49,7 +49,7 @@ public class CityInfoDatabase implements Serializable
     }
 
     public void setDataAt(int blockX, int blockY, int data) {
-        System.out.println("## SET DATA AT " + blockX +", " + blockY + " data="+data);
+        System.out.println("## SET DATA AT " + blockX + ", " + blockY + " data=" + data);
         Point tileId = new Point(blockX >> TILE_SIZE_BITS, blockY >> TILE_SIZE_BITS);
         var tile = tileInformation.getOrDefault(tileId, new HashMap<Point, Integer>());
 

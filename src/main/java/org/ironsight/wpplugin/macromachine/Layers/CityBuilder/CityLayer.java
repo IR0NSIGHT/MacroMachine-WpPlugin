@@ -46,6 +46,9 @@ public class CityLayer extends CustomLayer implements UndoListener
     private boolean useHighlightColors = true;
     private transient CityLayerRenderer renderer = new CityLayerRenderer(this);
     public void setIsSelectedPaint(boolean isSelectedPaint) {
+        if (renderer == null) {
+            renderer = new CityLayerRenderer(this);
+        }
         renderer.setIsSelectedPaint(isSelectedPaint);
     }
     public boolean isUseHighlightColors() {
@@ -63,6 +66,9 @@ public class CityLayer extends CustomLayer implements UndoListener
 
     public void setSelected(ObjectState state) {
         WPObject object = getObjectForState(state);
+        if (object == null) {
+            return;
+        }
         Point3i dim = object.getDimensions();
         Point3i offset = object.getOffset();
 
@@ -201,6 +207,7 @@ public class CityLayer extends CustomLayer implements UndoListener
         lastEdited = System.currentTimeMillis();
     }
     void repaintColorTile(int tileX, int tileY, IntegerTile tile) {
+        tile.fillWith(0);
         // find all objects that live in tile
         for (int tileXX = tileX - 1; tileXX <= tileX + 1; tileXX++) // iterate neighbouring tiles, one left,r,u,d
             for (int tileYY = tileY - 1; tileYY <= tileY + 1; tileYY++) {

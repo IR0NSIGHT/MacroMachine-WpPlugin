@@ -22,4 +22,21 @@ public class ObjectState
         return "ObjectState{" + "rotation=" + rotation + ", mirrored=" + mirrored + ", objectIndex=" + objectIndex
                 + ", xPos=" + xPos + ", yPos=" + yPos + '}';
     }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof ObjectState state)) {
+            return false;
+        }
+        return mirrored == state.mirrored && objectIndex == state.objectIndex && xPos == state.xPos
+                && yPos == state.yPos && rotation == state.rotation;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(rotation, mirrored, objectIndex, xPos, yPos);
+    }
 }
