@@ -33,6 +33,48 @@ This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK
 4. Click into worldpainter or close the Macro Panel. 
 5. Deselect macro tool, reselect macro tool to open the panel again.
 
+### CityLayer
+CityLayer works like a Custom Object Layer, but places individual schematics at precise positions instead of painting random placements.
+
+1. Create a new custom layer named `CityLayer`.
+2. Add schematics to the layer.
+![Create a CityLayer](./imgs/tutorial/CityLayer_Showcase_Create.PNG)
+3. Select the `CityLayer`.
+4. Select the CityLayer tool with the House icon.
+5. Select a schematic in the tool options.
+![Use the CityLayer tool](./imgs/tutorial/CityLayer_Showcase_Use.PNG)
+6. Place schematics on the map. Using the 3D Preview with Auto Update is recommended.
+
+CityLayer uses each schematic's offset. Center the offset in the options for each schematic for predictable placement.
+
+Controls:
+- Left click: place the selected schematic.
+- Right click: remove buildings within the brush area.
+- `Ctrl` + left click: select a building on the map.
+- `Ctrl` + right click: move the last placed building.
+- `Shift` + mouse wheel: select a different schematic.
+- `Alt` + mouse wheel: rotate the brush.
+- `W`/`A`/`S`/`D`: move the selected building.
+- `C`: rotate the selected building.
+- `X`: mirror the selected building.
+
+Options:
+- `random rotate`: randomly rotate after each placement.
+- `random select`: select another schematic after each placement.
+- `random mirrored`: randomly mirror after each placement.
+- `use highlight colors`: show the layer color instead of the schematic.
+
+CityLayer is not compatible with WorldPainter undo/redo. Do not use undo/redo while editing it.
+
+### 3D Preview
+1. Open MacroMachine with the `M` tool.
+2. Select the `3D Preview` tool.
+3. Select an area on the map.
+4. View the result in the 3D renderer.
+![3D Preview](./imgs/tutorial/preview_operation_showcase.PNG)
+
+Enable `Auto Update` to refresh the preview after map edits. Large areas can cause lag with Auto Update enabled. The preview performs a background test export and uses a workaround to remove the underground from the rendered result.
+
 ### Edit Macros
 [Youtube Tutorial](https://youtu.be/jog4qHFP4WI?si=gqlX9unvOYhtRQ4x)  
 Let's create a simple macro that creates a mask for us:  add all Swamp and Desert biome to selection. 
