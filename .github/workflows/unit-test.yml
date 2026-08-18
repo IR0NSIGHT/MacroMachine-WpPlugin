@@ -5,17 +5,6 @@ on:
   pull_request:
     branches:
       - master
-      - main
-      - feature/webUI
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: storybook-pages
-  cancel-in-progress: true
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -40,52 +29,3 @@ jobs:
 
       - name: Run Maven verify
         run: mvn --batch-mode --no-transfer-progress verify
-
-  build-storybook:
-    needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    defaults:
-      run:
-        working-directory: webUI
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: webUI/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Storybook
-        run: npm run build-storybook
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Storybook artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: webUI/storybook-static
-
-  deploy-storybook:
-    needs: build-storybook
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
