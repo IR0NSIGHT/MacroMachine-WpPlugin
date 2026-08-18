@@ -22,6 +22,14 @@ This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK
 6. place the downloaded jar file in the folder
 7. restart worldpainter
 
+### Versioning and Releases
+1. Update the project version in the root `pom.xml` using the next numeric version, for example `0.4.14` to `0.4.15`.
+2. Verify the resolved Maven version with `mvn help:evaluate -Dexpression=project.version -q -DforceStdout`.
+3. Commit the version change and merge it into `master`.
+4. The `merge-release` GitHub Actions workflow compares the `master` version with the `release` branch. When it changes, the workflow creates and pushes the `release-X.Y.Z` tag, then updates the `release` branch to match `master`.
+
+The `wp-build-N` tags are separate build/deployment markers and should not be used in place of the versioned `release-X.Y.Z` tag.
+
 ### Use Macros
 [Youtube Tutorial](https://youtu.be/to27vExZfoM?si=CPMGnqGgRdljYbB3)  
 1. Find the Macro tool and left click it. The macro panel will open.  
