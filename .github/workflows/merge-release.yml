@@ -9,6 +9,7 @@ on:
 
 jobs:
   check-version:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     outputs:
       version_changed: ${{ steps.check.outputs.version_changed }}
@@ -61,4 +62,3 @@ jobs:
           git push -f origin release
           git status
           
-
