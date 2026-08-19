@@ -169,17 +169,21 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     int cellSize = 6;
                     int rows = height / cellSize;
                     int columns = width / cellSize;
+                    float centreRow = (rows - 1) / 2f;
+                    float centreColumn = (columns - 1) / 2f;
 
                     g.setColor(Color.WHITE);
                     g.fillRect(0, 0, width, height);
                     for (int column = 0; column < columns; column++) {
-                        int filledRows = slopeLimit == 0
-                                ? rows
-                                : Math.min(rows, Math.max(0, (int) Math.ceil((column + 1) * slopeLimit / 16f)));
+                        int hypotenuseRow = slopeLimit == 0
+                                ? -1
+                                : Math.min(rows - 1,
+                                        Math.max(0, Math.round(
+                                                centreRow + (column - centreColumn) * slopeLimit / 16f)));
                         for (int row = 0; row < rows; row++) {
                             boolean alternate = (column + row) % 2 == 1;
                             g.setColor(alternate ? new Color(232, 232, 232) : Color.WHITE);
-                            if (row < filledRows)
+                            if (slopeLimit == 0 || row == hypotenuseRow)
                                 g.setColor(alternate ? new Color(224, 0, 0) : Color.RED);
                             g.fillRect(column * cellSize, height - (row + 1) * cellSize, cellSize, cellSize);
                         }
