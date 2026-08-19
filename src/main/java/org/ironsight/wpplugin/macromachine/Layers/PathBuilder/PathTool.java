@@ -192,7 +192,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             terrainModeDropdown.addActionListener(l -> {
                 this.terrainMode = (TerrainMode) terrainModeDropdown.getSelectedItem();
             });
-            optionsPanel.add(terrainModeDropdown);
+            JPanel panel = new JPanel();
+            panel.add(new JLabel("set terrain:"));
+            panel.add(terrainModeDropdown);
+            optionsPanel.add(panel);
         }
         {
             fixHeightCheckbox = new JCheckBox("fixHeightCheckbox");
