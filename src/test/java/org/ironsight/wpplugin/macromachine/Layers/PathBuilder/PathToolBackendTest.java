@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
 import java.util.stream.IntStream;
+import javax.vecmath.Point3i;
 import javax.vecmath.Point4f;
 import org.junit.jupiter.api.Test;
 
@@ -111,6 +112,20 @@ class PathToolBackendTest
 
     @Test
     void applyToTile() {
+        var heightInput = new FloatTile(new Point3i(0, 0, 0));
+        var paintOutput = new FloatTile(new Point3i(0, 0, 0));
+        var waterHeightMap = new FloatTile(new Point3i(0, 0, 0));
+        var path = new ArrayList<Point4f>();
+        path.add(new Point4f(10, 10, 100, 2));
+
+        var output = PathToolBackend.applyToTile(heightInput, paintOutput, waterHeightMap,
+                new Point3i(0, 0, 0), new CrossSectionShape("linear", "") {}, path, 2, false);
+
+        assertNotNull(output);
+        assertEquals(1, paintOutput.getValueAt(10, 10));
+        assertEquals(1, paintOutput.getValueAt(12, 10));
+        assertEquals(.5f, paintOutput.getValueAt(13, 10));
+        assertEquals(0, paintOutput.getValueAt(14, 10));
     }
 
     @Test

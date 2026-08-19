@@ -34,6 +34,24 @@ import org.pepsoft.worldpainter.painting.Paint;
 
 public class PathTool extends AbstractBrushOperation implements PaintOperation, UndoListener
 {
+    private enum TerrainMode
+    {
+        DONT_CHANGE("Don't change terrain"),
+        FLATTEN("Flatten terrain"),
+        CARVE("Carve terrain");
+
+        private final String label;
+
+        TerrainMode(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
     private static final String help = """
             PathTool will connect clicked positions into a path and smoothly blend them into existing terrain, based on the brush you are using.
 
@@ -55,7 +73,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private boolean fixHeightTo;
     private boolean usePaint;
     private boolean setWaterHeight;
-    private boolean setTerrainHeight;
+    private TerrainMode terrainMode = TerrainMode.FLATTEN;
     private float slopeLimit = 0;
     private float handleStrength = 0f;
     private JCheckBox onlyDownCheckbox;
@@ -63,7 +81,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JCheckBox fixHeightCheckbox;
     private JCheckBox usePaintCheckbox;
     private JCheckBox setWaterHeightCheckbox;
-    private JCheckBox setTerrainHeightCheckbox;
+    private JComboBox<TerrainMode> terrainModeDropdown;
     private JSpinner limitSlopeSpinner;
     private JSpinner handleFactorSpinner;
     private JSpinner transitionMultiSpinner;
@@ -72,6 +90,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JComboBox<CrossSectionShape> profilesDropdown;
     private CrossSectionShape brushProfile;
     private float transitionMultiplier = 2;
+    private JButton applyButton;
 
     public PathTool() {
         super("Road Tool", "Create smooth roads", "MacroMachine_RoadTool"); // ONE SHOT OP
@@ -99,13 +118,33 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         {
             JPanel presetPanel = new JPanel();
             JButton riverPresetButton = new JButton("River preset");
-            riverPresetButton.addActionListener(l -> applyPreset(true, true, false, true, true, 1f, 5f, 0f, null));
+            riverPresetButton.addActionListener(l -> applyPreset(true, true, false, true, TerrainMode.CARVE, 1f, 5f, 0f,
+                    null));
             presetPanel.add(riverPresetButton);
             JButton roadPresetButton = new JButton("Road preset");
             roadPresetButton
-                    .addActionListener(l -> applyPreset(false, true, true, false, true, .3f, 1f, 4f, "Triangle"));
+                    .addActionListener(l -> applyPreset(false, true, true, false, TerrainMode.FLATTEN, .3f, 1f, 4f,
+                            "Triangle"));
             presetPanel.add(roadPresetButton);
             optionsPanel.add(presetPanel);
+        }
+        {
+            applyButton = new JButton("Apply");
+            applyButton.setName("PathTool.Apply");
+            applyButton.setToolTipText("apply the path to the map.");
+            applyButton.addActionListener((e) -> {
+                var dim = getDimension();
+                if (dim == null)
+                    return;
+                if (!dim.isEventsInhibited())
+                    dim.setEventsInhibited(true);
+
+                this.OnSmoothPath(pathHandles, false); // generate path
+
+                if (dim.isEventsInhibited())
+                    dim.setEventsInhibited(false);
+            });
+            optionsPanel.add(applyButton);
         }
 
         {
@@ -147,14 +186,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             optionsPanel.add(setWaterHeightCheckbox);
         }
         {
-            setTerrainHeightCheckbox = new JCheckBox("Set terrain height");
-            setTerrainHeightCheckbox.setSelected(true);
-            setTerrainHeightCheckbox.setToolTipText("Terrain height will be set to match the path.");
-            setTerrainHeightCheckbox.addActionListener(l -> {
-                this.setTerrainHeight = setTerrainHeightCheckbox.isSelected();
+            terrainModeDropdown = new JComboBox<>(TerrainMode.values());
+            terrainModeDropdown.setSelectedItem(terrainMode);
+            terrainModeDropdown.setToolTipText("Controls how terrain height is changed along the path.");
+            terrainModeDropdown.addActionListener(l -> {
+                this.terrainMode = (TerrainMode) terrainModeDropdown.getSelectedItem();
             });
-            this.setTerrainHeight = setTerrainHeightCheckbox.isSelected();
-            optionsPanel.add(setTerrainHeightCheckbox);
+            optionsPanel.add(terrainModeDropdown);
         }
         {
             fixHeightCheckbox = new JCheckBox("fixHeightCheckbox");
@@ -311,18 +349,18 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void applyPreset(boolean onlyDown, boolean snapToTerrain, boolean usePaint, boolean setWaterHeight,
-            boolean setTerrainHeight, float curveStrength, float transition, float slopeLimit,
+            TerrainMode terrainMode, float curveStrength, float transition, float slopeLimit,
             String transitionProfile) {
         this.onlyDown = onlyDown;
         this.snapToTerrain = snapToTerrain;
         this.usePaint = usePaint;
         this.setWaterHeight = setWaterHeight;
-        this.setTerrainHeight = setTerrainHeight;
+        this.terrainMode = terrainMode;
         onlyDownCheckbox.setSelected(onlyDown);
         minCheckbox.setSelected(snapToTerrain);
         usePaintCheckbox.setSelected(usePaint);
         setWaterHeightCheckbox.setSelected(setWaterHeight);
-        setTerrainHeightCheckbox.setSelected(setTerrainHeight);
+        terrainModeDropdown.setSelectedItem(terrainMode);
         handleFactorSpinner.setValue((double) curveStrength);
         transitionMultiSpinner.setValue((double) transition);
         limitSlopeSpinner.setValue((double) slopeLimit);
@@ -389,7 +427,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             if (!dim.isEventsInhibited())
                 dim.setEventsInhibited(true);
 
-            this.OnSmoothPath(pathHandles); // generate path
+            this.OnSmoothPath(pathHandles, true); // generate path
 
             if (dim.isEventsInhibited())
                 dim.setEventsInhibited(false);
@@ -410,7 +448,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         SwingUtilities.invokeLater(this::updateCheckboxTexts);
     }
 
-    private void OnSmoothPath(List<Point4f> pathHandles) {
+    private void OnSmoothPath(List<Point4f> pathHandles, boolean onlyPreview) {
         if (pathHandles.size() < 2)
             return; // nothing to do
         var thisPosition = pathHandles.get(pathHandles.size() - 1);
@@ -426,18 +464,22 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             for (var p : pathRes.path) {
                 dimension.setBitLayerValueAt(PreviewOperation.annotationLayer, Math.round(p.x), Math.round(p.y), true);
             }
+            if (onlyPreview)
+                return; //early abort, dont apply to map
+
             if (pathHandles.size() < 4)
                 return;
 
-            // cut off last segment that will change on next click anyways
-            Point4f secondLastHandle = pathHandles.get(pathHandles.size() - 2);
-            final var path = pathRes.path.subList(0,
-                    pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
-
-            // changed segment: thirdlast to secondLast handle
-            Point4f thirdLastHandle = pathHandles.get(pathHandles.size() - 3);
-            var newPathSection = path.subList(pathRes.handlesToPathIndex.getOrDefault(thirdLastHandle, 0),
-                    pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
+            final var path = pathRes.path;
+        //    // cut off last segment that will change on next click anyways
+        //    Point4f secondLastHandle = pathHandles.get(pathHandles.size() - 2);
+        //    final var path = pathRes.path.subList(0,
+        //            pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
+//
+        //    // changed segment: thirdlast to secondLast handle
+        //    Point4f thirdLastHandle = pathHandles.get(pathHandles.size() - 3);
+        //    var newPathSection = path.subList(pathRes.handlesToPathIndex.getOrDefault(thirdLastHandle, 0),
+        //            pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
 
             // mutate path with filters based on user input
             if (snapToTerrain)
@@ -454,7 +496,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             forceRadiusAtLeast(path, .5f); // always at least 1 thick
 
             // collect tiles where the newly added path section passed through
-            Set<Point3i> newPathTiles = PathToolBackend.collectTilesAroundPath(newPathSection, transitionMultiplier);
+            Set<Point3i> newPathTiles = PathToolBackend.collectTilesAroundPath(path, transitionMultiplier);
 
             // cache all tiles that might be affected
             for (var tilePos : newPathTiles) {
@@ -478,28 +520,34 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             AtomicInteger totalProcessedPath = new AtomicInteger();
             AtomicInteger totalTiles = new AtomicInteger();
             HashMap<Point3i, FloatTile> paintOutputMap = new HashMap<>();
-            var outputTiles = newPathTiles.parallelStream().map(tilePos -> {
+            HashMap<Point3i, FloatTile> waterHeightMap = new HashMap<>();
+            var heightInfoTiles = newPathTiles.parallelStream().map(tilePos -> {
                 Point2i tileAreaStart = new Point2i((tilePos.x) << TILE_SIZE_BITS, (tilePos.y) << TILE_SIZE_BITS);
                 Point2i tileAreaEnd = new Point2i(TILE_SIZE + ((tilePos.x) << TILE_SIZE_BITS),
                         TILE_SIZE + ((tilePos.y) << TILE_SIZE_BITS));
                 var paintOutput = new FloatTile(tilePos);
                 paintOutputMap.put(tilePos, paintOutput);
+                var waterHeightTile = new FloatTile(tilePos);
+                waterHeightMap.put(tilePos, waterHeightTile);
 
-                return PathToolBackend.applyToTile(cachedTiles.get(tilePos), paintOutput, tilePos, brushProfile,
+                return PathToolBackend.applyToTile(cachedTiles.get(tilePos), paintOutput, waterHeightTile,
+                        tilePos, brushProfile,
                         PathToolBackend.getSubPathFor(tileAreaStart, tileAreaEnd, path, transitionMultiplier),
-                        getTransitionMultiplier());
+                        getTransitionMultiplier(), terrainMode == TerrainMode.CARVE); //FIXME use actual "dig down" checkbox?
             }).toList();
-            outputTiles.forEach(floatTile -> {
-                if (floatTile == null)
+            heightInfoTiles.forEach(heightInfoTile -> {
+                if (heightInfoTile == null)
                     return;
-                Tile wpTile = dimension.getTileForEditing(floatTile.tilePosX, floatTile.tilePosY);
+                Tile wpTile = dimension.getTileForEditing(heightInfoTile.tilePosX, heightInfoTile.tilePosY);
                 if (wpTile == null)
                     return;
-                if (setTerrainHeight)
-                    PathToolBackend.writeHeightMapDataToTile(floatTile, wpTile);
-                if (setWaterHeight)
+                if (terrainMode != TerrainMode.DONT_CHANGE)
+                    PathToolBackend.writeHeightMapDataToTile(heightInfoTile, wpTile);
+                if (setWaterHeight) {
+                    var waterHeightTile = waterHeightMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writeWaterHeightDataToDimension(
-                            paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0)), dimension);
+                            waterHeightTile, wpTile);
+                }
                 if (usePaint) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());
