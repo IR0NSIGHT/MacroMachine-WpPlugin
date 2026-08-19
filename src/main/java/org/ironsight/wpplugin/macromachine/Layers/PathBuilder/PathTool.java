@@ -63,8 +63,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JSpinner limitSlopeSpinner;
     private JSpinner handleFactorSpinner;
     private JSpinner transitionMultiSpinner;
-    private JPanel slopePreview;
+    private CellPreviewPanel slopePreview;
     private JPanel brushQuerschnitt;
+    private JComboBox<CrossSectionShape> profilesDropdown;
     private CrossSectionShape brushProfile;
     private float transitionMultiplier = 2;
 
@@ -91,6 +92,16 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
         optionsPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
         optionsPanel.add(getHelpButton("Road Tool", help));
+        {
+            JPanel presetPanel = new JPanel();
+            JButton riverPresetButton = new JButton("River preset");
+            riverPresetButton.addActionListener(l -> applyPreset(true, true, false, 1f, 5f, 0f, null));
+            presetPanel.add(riverPresetButton);
+            JButton roadPresetButton = new JButton("Road preset");
+            roadPresetButton.addActionListener(l -> applyPreset(false, true, true, .3f, 1f, 4f, "Triangle"));
+            presetPanel.add(roadPresetButton);
+            optionsPanel.add(presetPanel);
+        }
 
         {
             onlyDownCheckbox = new JCheckBox("onlyDownCheckbox");
@@ -160,40 +171,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             panel.add(limitSlopeSpinner);
             optionsPanel.add(panel);
 
-            slopePreview = new JPanel() {
-                @Override
-                public void paint(Graphics g) {
-                    super.paint(g);
-                    int width = getWidth();
-                    int height = getHeight();
-                    int cellSize = 6;
-                    int rows = height / cellSize;
-                    int columns = width / cellSize;
-                    float centreRow = (rows - 1) / 2f;
-                    float centreColumn = (columns - 1) / 2f;
-
-                    g.setColor(Color.WHITE);
-                    g.fillRect(0, 0, width, height);
-                    for (int column = 0; column < columns; column++) {
-                        int hypotenuseRow = slopeLimit == 0
-                                ? -1
-                                : Math.min(rows - 1,
-                                        Math.max(0, Math.round(
-                                                centreRow + (column - centreColumn) * slopeLimit / 16f)));
-                        for (int row = 0; row < rows; row++) {
-                            boolean alternate = (column + row) % 2 == 1;
-                            g.setColor(alternate ? new Color(232, 232, 232) : Color.WHITE);
-                            if (slopeLimit == 0 || row == hypotenuseRow)
-                                g.setColor(alternate ? new Color(224, 0, 0) : Color.RED);
-                            g.fillRect(column * cellSize, height - (row + 1) * cellSize, cellSize, cellSize);
-                        }
-                    }
-
-                }
-            };
-            slopePreview.setPreferredSize(new java.awt.Dimension(0, 48));
-            slopePreview.setMinimumSize(new java.awt.Dimension(0, 48));
-            slopePreview.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 48));
+            slopePreview = new CellPreviewPanel((x, y) -> {
+                if (slopeLimit == 0)
+                    return false;
+                float centreRow = (slopePreview.getCellRows() - 1) / 2f;
+                float centreColumn = (slopePreview.getCellColumns() - 1) / 2f;
+                int hypotenuseRow = Math.min(slopePreview.getCellRows() - 1,
+                        Math.max(0, Math.round(centreRow + (x - centreColumn) * slopeLimit / 16f)));
+                return y == hypotenuseRow;
+            });
             slopePreview.setToolTipText("Shows the maximum allowed slope; 0 means unlimited");
             optionsPanel.add(slopePreview);
         }
@@ -285,7 +271,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 }
             });
 
-            JComboBox<CrossSectionShape> profilesDropdown = new JComboBox<>(model);
+            profilesDropdown = new JComboBox<>(model);
             profilesDropdown.addActionListener(l -> {
                 this.brushProfile = (CrossSectionShape) profilesDropdown.getSelectedItem();
                 brushQuerschnitt.repaint();
@@ -298,6 +284,28 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             optionsPanel.add(panel);
         }
 
+        updateCheckboxTexts();
+    }
+
+    private void applyPreset(boolean onlyDown, boolean snapToTerrain, boolean usePaint, float curveStrength,
+            float transition, float slopeLimit, String transitionProfile) {
+        this.onlyDown = onlyDown;
+        this.snapToTerrain = snapToTerrain;
+        this.usePaint = usePaint;
+        onlyDownCheckbox.setSelected(onlyDown);
+        minCheckbox.setSelected(snapToTerrain);
+        usePaintCheckbox.setSelected(usePaint);
+        handleFactorSpinner.setValue((double) curveStrength);
+        transitionMultiSpinner.setValue((double) transition);
+        limitSlopeSpinner.setValue((double) slopeLimit);
+        if (transitionProfile != null) {
+            for (int i = 0; i < profilesDropdown.getItemCount(); i++) {
+                if (transitionProfile.equals(String.valueOf(profilesDropdown.getItemAt(i)))) {
+                    profilesDropdown.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
         updateCheckboxTexts();
     }
 

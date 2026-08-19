@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import javax.imageio.ImageIO;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JSpinner;
@@ -24,9 +25,10 @@ public final class PathToolScreenshot
     }
 
     public static void main(String[] args) throws Exception {
-        if ((args.length != 2 && args.length != 3) || (!args[1].equals("default") && !args[1].equals("dropdown"))) {
+        if ((args.length != 2 && args.length != 3) || (!args[1].equals("default") && !args[1].equals("dropdown")
+                && !args[1].equals("river") && !args[1].equals("road"))) {
             throw new IllegalArgumentException(
-                    "Usage: PathToolScreenshot <output.png> <default|dropdown> [slope-limit]");
+                    "Usage: PathToolScreenshot <output.png> <default|dropdown|river|road> [slope-limit]");
         }
         if (GraphicsEnvironment.isHeadless())
             throw new IllegalStateException("A display is required to capture the Swing window");
@@ -34,10 +36,10 @@ public final class PathToolScreenshot
         Path output = Path.of(args[0]);
         Files.createDirectories(output.toAbsolutePath().getParent());
         float slopeLimit = args.length == 3 ? Float.parseFloat(args[2]) : 0;
-        capture(output, args[1].equals("dropdown"), slopeLimit);
+        capture(output, args[1], slopeLimit);
     }
 
-    private static void capture(Path output, boolean openDropdown, float slopeLimit) throws Exception {
+    private static void capture(Path output, String mode, float slopeLimit) throws Exception {
         CaptureState state = new CaptureState();
         SwingUtilities.invokeAndWait(() -> {
             PathTool pathTool = new PathTool();
@@ -57,15 +59,23 @@ public final class PathToolScreenshot
                 throw new IllegalStateException("Road options panel does not contain a slope spinner");
             state.slopeSpinner = spinners.get(1);
             state.slopeSpinner.setValue((double) slopeLimit);
+            if (mode.equals("river") || mode.equals("road")) {
+                String buttonText = mode.equals("river") ? "River preset" : "Road preset";
+                JButton presetButton = findButton(frame, buttonText);
+                if (presetButton == null)
+                    throw new IllegalStateException("Road options panel does not contain " + buttonText);
+                presetButton.doClick();
+            }
             if (state.dropdown.getItemCount() != 6)
                 throw new IllegalStateException("Expected six transition profiles");
-            if (!"Sinus".equals(String.valueOf(state.dropdown.getSelectedItem())))
-                throw new IllegalStateException("Sinus must be the default transition profile");
+            String expectedProfile = mode.equals("road") ? "Triangle" : "Sinus";
+            if (!expectedProfile.equals(String.valueOf(state.dropdown.getSelectedItem())))
+                throw new IllegalStateException(expectedProfile + " must be selected for " + mode);
             frame.setVisible(true);
         });
 
         Thread.sleep(300);
-        if (openDropdown)
+        if (mode.equals("dropdown"))
             SwingUtilities.invokeAndWait(state.dropdown::showPopup);
         Thread.sleep(300);
         Toolkit.getDefaultToolkit().sync();
@@ -94,6 +104,19 @@ public final class PathToolScreenshot
         if (component instanceof Container container) {
             for (Component child : container.getComponents()) {
                 JComboBox<?> result = findComboBox(child);
+                if (result != null)
+                    return result;
+            }
+        }
+        return null;
+    }
+
+    private static JButton findButton(Component component, String text) {
+        if (component instanceof JButton button && text.equals(button.getText()))
+            return button;
+        if (component instanceof Container container) {
+            for (Component child : container.getComponents()) {
+                JButton result = findButton(child, text);
                 if (result != null)
                     return result;
             }

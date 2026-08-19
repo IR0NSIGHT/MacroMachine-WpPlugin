@@ -10,6 +10,8 @@ $mainClass = "org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathToolScr
 
 & java -cp $classpath $mainClass (Join-Path $outputDirectory "road-tool-options-default.png") "default"
 & java -cp $classpath $mainClass (Join-Path $outputDirectory "road-tool-options-dropdown.png") "dropdown"
+& java -cp $classpath $mainClass (Join-Path $outputDirectory "road-tool-options-river.png") "river"
+& java -cp $classpath $mainClass (Join-Path $outputDirectory "road-tool-options-road.png") "road"
 
 foreach ($slopeLimit in @(1, 4, 8, 16)) {
     & java -cp $classpath $mainClass (Join-Path $outputDirectory "road-tool-slope-$slopeLimit.png") "default" $slopeLimit
