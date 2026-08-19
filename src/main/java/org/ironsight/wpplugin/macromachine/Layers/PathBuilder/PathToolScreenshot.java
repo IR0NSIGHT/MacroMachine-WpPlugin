@@ -10,9 +10,12 @@ import java.awt.Window;
 import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 
 public final class PathToolScreenshot
@@ -21,18 +24,20 @@ public final class PathToolScreenshot
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 2 || (!args[1].equals("default") && !args[1].equals("dropdown"))) {
-            throw new IllegalArgumentException("Usage: PathToolScreenshot <output.png> <default|dropdown>");
+        if ((args.length != 2 && args.length != 3) || (!args[1].equals("default") && !args[1].equals("dropdown"))) {
+            throw new IllegalArgumentException(
+                    "Usage: PathToolScreenshot <output.png> <default|dropdown> [slope-limit]");
         }
         if (GraphicsEnvironment.isHeadless())
             throw new IllegalStateException("A display is required to capture the Swing window");
 
         Path output = Path.of(args[0]);
         Files.createDirectories(output.toAbsolutePath().getParent());
-        capture(output, args[1].equals("dropdown"));
+        float slopeLimit = args.length == 3 ? Float.parseFloat(args[2]) : 0;
+        capture(output, args[1].equals("dropdown"), slopeLimit);
     }
 
-    private static void capture(Path output, boolean openDropdown) throws Exception {
+    private static void capture(Path output, boolean openDropdown, float slopeLimit) throws Exception {
         CaptureState state = new CaptureState();
         SwingUtilities.invokeAndWait(() -> {
             PathTool pathTool = new PathTool();
@@ -47,6 +52,11 @@ public final class PathToolScreenshot
             state.dropdown = findComboBox(frame);
             if (state.dropdown == null)
                 throw new IllegalStateException("Road options panel does not contain a combo box");
+            List<JSpinner> spinners = findSpinners(frame);
+            if (spinners.size() < 2)
+                throw new IllegalStateException("Road options panel does not contain a slope spinner");
+            state.slopeSpinner = spinners.get(1);
+            state.slopeSpinner.setValue((double) slopeLimit);
             if (state.dropdown.getItemCount() != 6)
                 throw new IllegalStateException("Expected six transition profiles");
             if (!"Sinus".equals(String.valueOf(state.dropdown.getSelectedItem())))
@@ -91,9 +101,21 @@ public final class PathToolScreenshot
         return null;
     }
 
+    private static List<JSpinner> findSpinners(Component component) {
+        List<JSpinner> spinners = new ArrayList<>();
+        if (component instanceof JSpinner spinner)
+            spinners.add(spinner);
+        if (component instanceof Container container) {
+            for (Component child : container.getComponents())
+                spinners.addAll(findSpinners(child));
+        }
+        return spinners;
+    }
+
     private static final class CaptureState
     {
         JFrame frame;
         JComboBox<?> dropdown;
+        JSpinner slopeSpinner;
     }
 }

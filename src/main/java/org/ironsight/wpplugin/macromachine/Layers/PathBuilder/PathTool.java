@@ -63,6 +63,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JSpinner limitSlopeSpinner;
     private JSpinner handleFactorSpinner;
     private JSpinner transitionMultiSpinner;
+    private JPanel slopePreview;
     private JPanel brushQuerschnitt;
     private CrossSectionShape brushProfile;
     private float transitionMultiplier = 2;
@@ -150,12 +151,47 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     "Limits the allowed slope to x block vertical per 16 blocks horizontal. 0 to disable.");
             limitSlopeSpinner.addChangeListener(l -> {
                 slopeLimit = ((Number) limitSlopeSpinner.getValue()).floatValue();
+                if (slopePreview != null)
+                    slopePreview.repaint();
             });
             slopeLimit = ((Number) limitSlopeSpinner.getValue()).floatValue();
             JPanel panel = new JPanel();
             panel.add(new JLabel("Limit slope to x/16 blocks"));
             panel.add(limitSlopeSpinner);
             optionsPanel.add(panel);
+
+            slopePreview = new JPanel() {
+                @Override
+                public void paint(Graphics g) {
+                    super.paint(g);
+                    int width = getWidth();
+                    int height = getHeight();
+                    int cellSize = 6;
+                    int rows = height / cellSize;
+                    int columns = width / cellSize;
+
+                    g.setColor(Color.WHITE);
+                    g.fillRect(0, 0, width, height);
+                    for (int column = 0; column < columns; column++) {
+                        int filledRows = slopeLimit == 0
+                                ? rows
+                                : Math.min(rows, Math.max(0, (int) Math.ceil((column + 1) * slopeLimit / 16f)));
+                        for (int row = 0; row < rows; row++) {
+                            boolean alternate = (column + row) % 2 == 1;
+                            g.setColor(alternate ? new Color(232, 232, 232) : Color.WHITE);
+                            if (row < filledRows)
+                                g.setColor(alternate ? new Color(224, 0, 0) : Color.RED);
+                            g.fillRect(column * cellSize, height - (row + 1) * cellSize, cellSize, cellSize);
+                        }
+                    }
+
+                }
+            };
+            slopePreview.setPreferredSize(new java.awt.Dimension(0, 48));
+            slopePreview.setMinimumSize(new java.awt.Dimension(0, 48));
+            slopePreview.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 48));
+            slopePreview.setToolTipText("Shows the maximum allowed slope; 0 means unlimited");
+            optionsPanel.add(slopePreview);
         }
         {
             transitionMultiSpinner = new JSpinner(new SpinnerNumberModel(1d, 0d, 100d, .25d));
@@ -198,7 +234,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     }
                 }
             };
-            brushQuerschnitt.setPreferredSize(new java.awt.Dimension(100, 48));
+            brushQuerschnitt.setPreferredSize(new java.awt.Dimension(0, 48));
+            brushQuerschnitt.setMinimumSize(new java.awt.Dimension(0, 48));
+            brushQuerschnitt.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 48));
             brushQuerschnitt.setToolTipText("Shows the cross section of the brush strength. Red area = 100% strength");
             optionsPanel.add(brushQuerschnitt);
         }
