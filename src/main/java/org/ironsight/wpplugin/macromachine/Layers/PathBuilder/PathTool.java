@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.vecmath.Point3i;
 import javax.vecmath.Point4f;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
@@ -87,6 +88,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private void init() {
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
+        optionsPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
         optionsPanel.add(getHelpButton("Road Tool", help));
 
         {
@@ -174,8 +176,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 @Override
                 public void paint(Graphics g) {
                     super.paint(g);
-                    Brush brush = getBrush();
-                    if (brush == null)
+                    if (brushProfile == null)
                         return;
                     g.setColor(Color.WHITE);
                     g.fillRect(0, 0, getWidth(), getHeight());
@@ -197,13 +198,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     }
                 }
             };
-            brushQuerschnitt.setPreferredSize(new java.awt.Dimension(100, 30));
+            brushQuerschnitt.setPreferredSize(new java.awt.Dimension(100, 48));
             brushQuerschnitt.setToolTipText("Shows the cross section of the brush strength. Red area = 100% strength");
             optionsPanel.add(brushQuerschnitt);
         }
         {
-            JList<CrossSectionShape> profilesList = new JList<>();
-            DefaultListModel<CrossSectionShape> model = new DefaultListModel<CrossSectionShape>();
+            DefaultComboBoxModel<CrossSectionShape> model = new DefaultComboBoxModel<>();
             model.addElement(new CrossSectionShape("Square Root", "") {
                 @Override
                 public float getStrengthAt(float t) {
@@ -243,14 +243,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 }
             });
 
-            profilesList.setModel(model);
-            profilesList.addListSelectionListener(l -> {
-                if (!l.getValueIsAdjusting())
-                    this.brushProfile = profilesList.getSelectedValue();
+            JComboBox<CrossSectionShape> profilesDropdown = new JComboBox<>(model);
+            profilesDropdown.addActionListener(l -> {
+                this.brushProfile = (CrossSectionShape) profilesDropdown.getSelectedItem();
                 brushQuerschnitt.repaint();
             });
-            profilesList.setSelectedIndex(0);
-            optionsPanel.add(new JScrollPane(profilesList));
+            profilesDropdown.setSelectedItem(model.getElementAt(3));
+            this.brushProfile = (CrossSectionShape) profilesDropdown.getSelectedItem();
+            JPanel panel = new JPanel();
+            panel.add(new JLabel("Transition profile"));
+            panel.add(profilesDropdown);
+            optionsPanel.add(panel);
         }
 
         updateCheckboxTexts();
@@ -464,6 +467,18 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     @Override
     public void bufferChanged(BufferKey<?> key) {
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            PathTool pathTool = new PathTool();
+            JFrame frame = new JFrame("Road Tool Options");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.add(pathTool.getOptionsPanel());
+            frame.pack();
+            frame.setLocationByPlatform(true);
+            frame.setVisible(true);
+        });
     }
 
     private static class PathHandlesContainer implements Cloneable, Serializable
