@@ -17,6 +17,7 @@ import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 import org.ironsight.wpplugin.rivertool.pathing.PointType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
+import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.painting.Paint;
 
 public class PathToolBackend
@@ -130,6 +131,17 @@ public class PathToolBackend
                 float value = affected.getValueAt(xx,yy);
                 if (value != IGNORE_VALUE)
                     out.setWaterLevel(xx, yy, Math.round(affected.getValueAt(xx,yy)));
+            }
+    }
+
+    static void writeBinaryLayerDataToDimension(FloatTile layerInput, Tile out, Layer binaryLayer) {
+        if (layerInput == null || out == null)
+            return;
+        for (int xx = 0; xx < TILE_SIZE; xx++)
+            for (int yy = 0; yy < TILE_SIZE; yy++) {
+                float value = layerInput.getValueAt(xx,yy);
+                if (value != IGNORE_VALUE)
+                    out.setBitLayerValue(binaryLayer, xx, yy, value >= 1);
             }
     }
 

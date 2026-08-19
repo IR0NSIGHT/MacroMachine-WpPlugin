@@ -139,7 +139,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 if (!dim.isEventsInhibited())
                     dim.setEventsInhibited(true);
 
-                this.OnSmoothPath(pathHandles, false); // generate path
+                this.OnSmoothPath(new ArrayList<>(pathHandles), false); // generate path
 
                 if (dim.isEventsInhibited())
                     dim.setEventsInhibited(false);
@@ -170,7 +170,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             usePaintCheckbox = new JCheckBox("usePaintCheckbox");
             usePaintCheckbox.setSelected(true);
             usePaintCheckbox.setToolTipText(
-                    "if active, the path will paint the current selected layer/terrain where the filter strength is 100% (red area in the cross-section)");
+                    "set currently selected paint along the path");
             usePaintCheckbox.addActionListener(l -> {
                 this.usePaint = usePaintCheckbox.isSelected();
             });
@@ -427,7 +427,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             if (!dim.isEventsInhibited())
                 dim.setEventsInhibited(true);
 
-            this.OnSmoothPath(pathHandles, true); // generate path
+            this.OnSmoothPath(new ArrayList<>(pathHandles), true); // generate path
 
             if (dim.isEventsInhibited())
                 dim.setEventsInhibited(false);
@@ -449,23 +449,32 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void OnSmoothPath(List<Point4f> pathHandles, boolean onlyPreview) {
-        if (pathHandles.size() < 2)
-            return; // nothing to do
+        if (pathHandles.size() == 1) {
+            var first = pathHandles.getFirst();
+            pathHandles.addFirst(new Point4f(first.x+.1f,first.y, first.z, first.w));
+            pathHandles.addFirst(new Point4f(first.x+.2f,first.y, first.z, first.w));
+            pathHandles.addFirst(new Point4f(first.x+.3f,first.y, first.z, first.w));
+        } else if (pathHandles.size() == 2) {
+            // duplicate the first and last handle to get a straight line
+            var first = pathHandles.getFirst();
+            pathHandles.addFirst(new Point4f(first.x+.1f,first.y, first.z, first.w));
+            var last = pathHandles.getFirst();
+            pathHandles.addFirst(new Point4f(last.x+.1f,last.y, last.z, last.w));
+        } else if (pathHandles.size() == 3){
+            var last = pathHandles.getFirst();
+            pathHandles.addFirst(new Point4f(last.x+.1f,last.y, last.z, last.w));
+        } // else: more than 4 handles, legal.
+
         var thisPosition = pathHandles.get(pathHandles.size() - 1);
         var lastPosition = pathHandles.get(pathHandles.size() - 2);
 
         Dimension dimension = getDimension();
+
         if (lastPosition != null) {
             // get new path section and append it
             var pathRes = getPathFromHandles(pathHandles, handleStrength);
 
-            // DRAW RESULT ON MAP WITH ALL SEGMENTS
             dimension.clearLayerData(PreviewOperation.annotationLayer);
-            for (var p : pathRes.path) {
-                dimension.setBitLayerValueAt(PreviewOperation.annotationLayer, Math.round(p.x), Math.round(p.y), true);
-            }
-            if (onlyPreview)
-                return; //early abort, dont apply to map
 
             if (pathHandles.size() < 4)
                 return;
@@ -541,16 +550,20 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 Tile wpTile = dimension.getTileForEditing(heightInfoTile.tilePosX, heightInfoTile.tilePosY);
                 if (wpTile == null)
                     return;
-                if (terrainMode != TerrainMode.DONT_CHANGE)
+                if (!onlyPreview && terrainMode != TerrainMode.DONT_CHANGE)
                     PathToolBackend.writeHeightMapDataToTile(heightInfoTile, wpTile);
-                if (setWaterHeight) {
+                if (!onlyPreview && setWaterHeight) {
                     var waterHeightTile = waterHeightMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writeWaterHeightDataToDimension(
                             waterHeightTile, wpTile);
                 }
-                if (usePaint) {
+                if (!onlyPreview &&usePaint) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());
+                }
+                if (onlyPreview) {
+                    var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
+                    PathToolBackend.writeBinaryLayerDataToDimension(paintTile, wpTile, PreviewOperation.annotationLayer);
                 }
             });
 
