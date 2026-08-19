@@ -119,6 +119,18 @@ public class PathToolBackend
             }
     }
 
+    static void writeWaterHeightDataToDimension(FloatTile affected, Dimension out) {
+        if (affected == null || out == null)
+            return;
+        int tileX = affected.tilePosX << TILE_SIZE_BITS;
+        int tileY = affected.tilePosY << TILE_SIZE_BITS;
+        for (int xx = 0; xx < TILE_SIZE; xx++)
+            for (int yy = 0; yy < TILE_SIZE; yy++) {
+                if (affected.getValueAt(xx, yy) == 1)
+                    out.setWaterLevelAt(xx + tileX, yy + tileY, Math.round(out.getHeightAt(xx + tileX, yy + tileY)));
+            }
+    }
+
     static void writePaintDataToDimension(FloatTile in, Dimension out, Paint paint) {
         if (in == null || out == null || paint == null)
             return;

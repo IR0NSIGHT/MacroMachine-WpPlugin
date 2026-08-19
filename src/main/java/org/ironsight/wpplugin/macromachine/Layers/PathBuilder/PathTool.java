@@ -54,12 +54,16 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private boolean snapToTerrain;
     private boolean fixHeightTo;
     private boolean usePaint;
+    private boolean setWaterHeight;
+    private boolean setTerrainHeight;
     private float slopeLimit = 0;
     private float handleStrength = 0f;
     private JCheckBox onlyDownCheckbox;
     private JCheckBox minCheckbox;
     private JCheckBox fixHeightCheckbox;
     private JCheckBox usePaintCheckbox;
+    private JCheckBox setWaterHeightCheckbox;
+    private JCheckBox setTerrainHeightCheckbox;
     private JSpinner limitSlopeSpinner;
     private JSpinner handleFactorSpinner;
     private JSpinner transitionMultiSpinner;
@@ -95,10 +99,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         {
             JPanel presetPanel = new JPanel();
             JButton riverPresetButton = new JButton("River preset");
-            riverPresetButton.addActionListener(l -> applyPreset(true, true, false, 1f, 5f, 0f, null));
+            riverPresetButton.addActionListener(l -> applyPreset(true, true, false, true, true, 1f, 5f, 0f, null));
             presetPanel.add(riverPresetButton);
             JButton roadPresetButton = new JButton("Road preset");
-            roadPresetButton.addActionListener(l -> applyPreset(false, true, true, .3f, 1f, 4f, "Triangle"));
+            roadPresetButton
+                    .addActionListener(l -> applyPreset(false, true, true, false, true, .3f, 1f, 4f, "Triangle"));
             presetPanel.add(roadPresetButton);
             optionsPanel.add(presetPanel);
         }
@@ -132,6 +137,24 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             });
             this.usePaint = usePaintCheckbox.isSelected();
             optionsPanel.add(usePaintCheckbox);
+        }
+        {
+            setWaterHeightCheckbox = new JCheckBox("Set water height");
+            setWaterHeightCheckbox.setToolTipText("Water height will be set to terrain height.");
+            setWaterHeightCheckbox.addActionListener(l -> {
+                this.setWaterHeight = setWaterHeightCheckbox.isSelected();
+            });
+            optionsPanel.add(setWaterHeightCheckbox);
+        }
+        {
+            setTerrainHeightCheckbox = new JCheckBox("Set terrain height");
+            setTerrainHeightCheckbox.setSelected(true);
+            setTerrainHeightCheckbox.setToolTipText("Terrain height will be set to match the path.");
+            setTerrainHeightCheckbox.addActionListener(l -> {
+                this.setTerrainHeight = setTerrainHeightCheckbox.isSelected();
+            });
+            this.setTerrainHeight = setTerrainHeightCheckbox.isSelected();
+            optionsPanel.add(setTerrainHeightCheckbox);
         }
         {
             fixHeightCheckbox = new JCheckBox("fixHeightCheckbox");
@@ -287,14 +310,19 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         updateCheckboxTexts();
     }
 
-    private void applyPreset(boolean onlyDown, boolean snapToTerrain, boolean usePaint, float curveStrength,
-            float transition, float slopeLimit, String transitionProfile) {
+    private void applyPreset(boolean onlyDown, boolean snapToTerrain, boolean usePaint, boolean setWaterHeight,
+            boolean setTerrainHeight, float curveStrength, float transition, float slopeLimit,
+            String transitionProfile) {
         this.onlyDown = onlyDown;
         this.snapToTerrain = snapToTerrain;
         this.usePaint = usePaint;
+        this.setWaterHeight = setWaterHeight;
+        this.setTerrainHeight = setTerrainHeight;
         onlyDownCheckbox.setSelected(onlyDown);
         minCheckbox.setSelected(snapToTerrain);
         usePaintCheckbox.setSelected(usePaint);
+        setWaterHeightCheckbox.setSelected(setWaterHeight);
+        setTerrainHeightCheckbox.setSelected(setTerrainHeight);
         handleFactorSpinner.setValue((double) curveStrength);
         transitionMultiSpinner.setValue((double) transition);
         limitSlopeSpinner.setValue((double) slopeLimit);
@@ -312,7 +340,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private void updateCheckboxTexts() {
         onlyDownCheckbox.setText("Only downhill");
         fixHeightCheckbox.setText("Fix height to: " + getFixHeight());
-        usePaintCheckbox.setText("Use paint");
+        usePaintCheckbox.setText("Set paint");
     }
 
     @Override
@@ -467,7 +495,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 Tile wpTile = dimension.getTileForEditing(floatTile.tilePosX, floatTile.tilePosY);
                 if (wpTile == null)
                     return;
-                PathToolBackend.writeHeightMapDataToTile(floatTile, wpTile);
+                if (setTerrainHeight)
+                    PathToolBackend.writeHeightMapDataToTile(floatTile, wpTile);
+                if (setWaterHeight)
+                    PathToolBackend.writeWaterHeightDataToDimension(
+                            paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0)), dimension);
                 if (usePaint) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());

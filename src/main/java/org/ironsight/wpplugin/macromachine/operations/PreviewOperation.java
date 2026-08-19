@@ -157,7 +157,7 @@ public class PreviewOperation extends AbstractBrushOperation
 
     // HIGHLIGHT AREA
     public static final Layer annotationLayer = new AnnotationLayer("macroMachine_3dpreview_annotationlayer",
-            "3d " + "Preview", "Shows " + "what the 3d preview is currently " + "rendering", Layer.DataSize.BIT, true,
+            "3d " + "Preview", "Shows " + "what the 3d preview is currently " + "rendering", Layer.DataSize.BIT, false,
             65, '\0');
 
     /**
