@@ -51,7 +51,7 @@ public final class PathToolScreenshot
             frame.setSize(Math.max(420, frame.getWidth()), frame.getHeight());
             frame.setLocation(100, 100);
             state.frame = frame;
-            state.dropdown = findComboBox(frame);
+            state.dropdown = findTransitionProfilesComboBox(frame);
             if (state.dropdown == null)
                 throw new IllegalStateException("Road options panel does not contain a combo box");
             List<JSpinner> spinners = findSpinners(frame);
@@ -98,12 +98,12 @@ public final class PathToolScreenshot
         return bounds;
     }
 
-    private static JComboBox<?> findComboBox(Component component) {
-        if (component instanceof JComboBox<?> comboBox)
+    private static JComboBox<?> findTransitionProfilesComboBox(Component component) {
+        if (component instanceof JComboBox<?> comboBox && "PathTool.TransitionProfiles".equals(comboBox.getName()))
             return comboBox;
         if (component instanceof Container container) {
             for (Component child : container.getComponents()) {
-                JComboBox<?> result = findComboBox(child);
+                JComboBox<?> result = findTransitionProfilesComboBox(child);
                 if (result != null)
                     return result;
             }

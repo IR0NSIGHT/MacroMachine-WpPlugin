@@ -354,6 +354,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             });
 
             profilesDropdown = new JComboBox<>(model);
+            profilesDropdown.setName("PathTool.TransitionProfiles");
             profilesDropdown.addActionListener(l -> {
                 this.brushProfile = (CrossSectionShape) profilesDropdown.getSelectedItem();
                 brushQuerschnitt.repaint();
@@ -420,11 +421,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private ArrayList<Point4f> getCurrentPath() {
-        if (getDimension() == null)
+        Dimension dimension = getView() == null ? null : getDimension();
+        if (dimension == null)
             return new ArrayList<>();
         // pull data from attributes
         var pathHandles = new ArrayList<Point4f>();
-        var rawData = getDimension().getAttribute(PATHHANDLES_KEY);
+        var rawData = dimension.getAttribute(PATHHANDLES_KEY);
         assert rawData.size() % 4 == 0;
         for (int i = 0; i < rawData.size(); i += 4) {
             pathHandles
@@ -434,7 +436,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void setCurrentPath(ArrayList<Point4f> pathHandles) {
-        if (pathHandles != null && getDimension() != null) {
+        Dimension dimension = getView() == null ? null : getDimension();
+        if (pathHandles != null && dimension != null) {
             var flatData = new ArrayList<Float>();
             for (var point : pathHandles) {
                 flatData.add(point.x);
@@ -442,7 +445,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 flatData.add(point.z);
                 flatData.add(point.w);
             }
-            getDimension().setAttribute(PATHHANDLES_KEY, flatData, true);
+            dimension.setAttribute(PATHHANDLES_KEY, flatData, true);
         }
     }
 
