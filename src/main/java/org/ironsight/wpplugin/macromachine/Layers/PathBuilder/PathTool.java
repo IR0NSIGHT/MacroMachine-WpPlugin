@@ -52,6 +52,24 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
     }
 
+    private enum WaterMode
+    {
+        SET_WATER("Set water"),
+        SET_WATER_RESPECT_EXISTING_WATERLEVEL("Set water, respect existing waterlevel"),
+        DONT_SET_WATER("Don't set water");
+
+        private final String label;
+
+        WaterMode(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
     private static final String help = """
             PathTool will connect clicked positions into a path and smoothly blend them into existing terrain, based on the brush you are using.
 
@@ -72,7 +90,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private boolean snapToTerrain;
     private boolean fixHeightTo;
     private boolean usePaint;
-    private boolean setWaterHeight;
+    private WaterMode waterMode = WaterMode.DONT_SET_WATER;
     private TerrainMode terrainMode = TerrainMode.FLATTEN;
     private float slopeLimit = 0;
     private float handleStrength = 0f;
@@ -80,7 +98,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JCheckBox minCheckbox;
     private JCheckBox fixHeightCheckbox;
     private JCheckBox usePaintCheckbox;
-    private JCheckBox setWaterHeightCheckbox;
+    private JComboBox<WaterMode> waterModeDropdown;
     private JComboBox<TerrainMode> terrainModeDropdown;
     private JSpinner limitSlopeSpinner;
     private JSpinner handleFactorSpinner;
@@ -118,13 +136,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         {
             JPanel presetPanel = new JPanel();
             JButton riverPresetButton = new JButton("River preset");
-            riverPresetButton.addActionListener(l -> applyPreset(true, true, false, true, TerrainMode.CARVE, 1f, 5f, 0f,
-                    null));
+            riverPresetButton.addActionListener(l -> applyPreset(true, true, false, WaterMode.SET_WATER,
+                    TerrainMode.CARVE, 1f, 5f, 0f, null));
             presetPanel.add(riverPresetButton);
             JButton roadPresetButton = new JButton("Road preset");
-            roadPresetButton
-                    .addActionListener(l -> applyPreset(false, true, true, false, TerrainMode.FLATTEN, .3f, 1f, 4f,
-                            "Triangle"));
+            roadPresetButton.addActionListener(l -> applyPreset(false, true, true, WaterMode.DONT_SET_WATER,
+                    TerrainMode.FLATTEN, .3f, 1f, 4f, "Triangle"));
             presetPanel.add(roadPresetButton);
             optionsPanel.add(presetPanel);
         }
@@ -178,12 +195,16 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             optionsPanel.add(usePaintCheckbox);
         }
         {
-            setWaterHeightCheckbox = new JCheckBox("Set water height");
-            setWaterHeightCheckbox.setToolTipText("Water height will be set to terrain height.");
-            setWaterHeightCheckbox.addActionListener(l -> {
-                this.setWaterHeight = setWaterHeightCheckbox.isSelected();
+            waterModeDropdown = new JComboBox<>(WaterMode.values());
+            waterModeDropdown.setSelectedItem(waterMode);
+            waterModeDropdown.setToolTipText("Controls how water level is changed along the path.");
+            waterModeDropdown.addActionListener(l -> {
+                this.waterMode = (WaterMode) waterModeDropdown.getSelectedItem();
             });
-            optionsPanel.add(setWaterHeightCheckbox);
+            JPanel panel = new JPanel();
+            panel.add(new JLabel("set water:"));
+            panel.add(waterModeDropdown);
+            optionsPanel.add(panel);
         }
         {
             terrainModeDropdown = new JComboBox<>(TerrainMode.values());
@@ -351,18 +372,18 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         updateCheckboxTexts();
     }
 
-    private void applyPreset(boolean onlyDown, boolean snapToTerrain, boolean usePaint, boolean setWaterHeight,
+    private void applyPreset(boolean onlyDown, boolean snapToTerrain, boolean usePaint, WaterMode waterMode,
             TerrainMode terrainMode, float curveStrength, float transition, float slopeLimit,
             String transitionProfile) {
         this.onlyDown = onlyDown;
         this.snapToTerrain = snapToTerrain;
         this.usePaint = usePaint;
-        this.setWaterHeight = setWaterHeight;
+        this.waterMode = waterMode;
         this.terrainMode = terrainMode;
         onlyDownCheckbox.setSelected(onlyDown);
         minCheckbox.setSelected(snapToTerrain);
         usePaintCheckbox.setSelected(usePaint);
-        setWaterHeightCheckbox.setSelected(setWaterHeight);
+        waterModeDropdown.setSelectedItem(waterMode);
         terrainModeDropdown.setSelectedItem(terrainMode);
         handleFactorSpinner.setValue((double) curveStrength);
         transitionMultiSpinner.setValue((double) transition);
@@ -452,7 +473,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void OnSmoothPath(List<Point4f> pathHandles, boolean onlyPreview) {
-        if (pathHandles.size() == 1) {
+        if (pathHandles.size() == 0){
+            return;
+        }else if (pathHandles.size() == 1) {
             var first = pathHandles.getFirst();
             pathHandles.addFirst(new Point4f(first.x+.1f,first.y, first.z, first.w));
             pathHandles.addFirst(new Point4f(first.x+.2f,first.y, first.z, first.w));
@@ -555,10 +578,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     return;
                 if (!onlyPreview && terrainMode != TerrainMode.DONT_CHANGE)
                     PathToolBackend.writeHeightMapDataToTile(heightInfoTile, wpTile);
-                if (!onlyPreview && setWaterHeight) {
+                if (!onlyPreview && waterMode != WaterMode.DONT_SET_WATER) {
                     var waterHeightTile = waterHeightMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writeWaterHeightDataToDimension(
-                            waterHeightTile, wpTile);
+                            waterHeightTile, wpTile,
+                            waterMode == WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL);
                 }
                 if (!onlyPreview &&usePaint) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));

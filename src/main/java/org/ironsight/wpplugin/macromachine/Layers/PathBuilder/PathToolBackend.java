@@ -123,13 +123,13 @@ public class PathToolBackend
             }
     }
 
-    static void writeWaterHeightDataToDimension(FloatTile affected, Tile out) {
+    static void writeWaterHeightDataToDimension(FloatTile affected, Tile out, boolean dontGoBelowExistingWaterlevel) {
         if (affected == null || out == null)
             return;
         for (int xx = 0; xx < TILE_SIZE; xx++)
             for (int yy = 0; yy < TILE_SIZE; yy++) {
                 float value = affected.getValueAt(xx,yy);
-                if (value != IGNORE_VALUE)
+                if (value != IGNORE_VALUE && (!dontGoBelowExistingWaterlevel || value > out.getWaterLevel(xx,yy)))
                     out.setWaterLevel(xx, yy, Math.round(affected.getValueAt(xx,yy)));
             }
     }
