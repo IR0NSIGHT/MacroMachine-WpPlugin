@@ -82,7 +82,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private static final AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<Float>());
     private final JPanel optionsPanel = new JPanel();
-    ArrayList<Point4f> pathHandles = new ArrayList<>();
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
     private Paint paint;
     // only allow downwards movement
@@ -118,14 +117,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     @Override
     protected void activate() throws PropertyVetoException {
         super.activate();
-        this.pathHandles.clear();
         this.cachedTiles.clear();
     }
 
     @Override
     protected void deactivate() {
         super.deactivate();
-        this.pathHandles.clear();
         this.cachedTiles.clear();
     }
 
@@ -156,7 +153,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 if (!dim.isEventsInhibited())
                     dim.setEventsInhibited(true);
 
-                this.OnSmoothPath(new ArrayList<>(pathHandles), false); // generate path
+                this.OnSmoothPath(getCurrentPath(), false); // generate path
 
                 if (dim.isEventsInhibited())
                     dim.setEventsInhibited(false);
@@ -411,7 +408,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private float getFixHeight() {
-        return pathHandles.isEmpty() ? 62 : pathHandles.get(pathHandles.size() - 1).z;
+        var currentPath = getCurrentPath();
+        return currentPath.isEmpty() ? 62 : currentPath.get(currentPath.size() - 1).z;
     }
 
     @Override
@@ -421,21 +419,40 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         brushQuerschnitt.repaint();
     }
 
+    private ArrayList<Point4f> getCurrentPath() {
+        if (getDimension() == null)
+            return new ArrayList<>();
+        // pull data from attributes
+        var pathHandles = new ArrayList<Point4f>();
+        var rawData = getDimension().getAttribute(PATHHANDLES_KEY);
+        assert rawData.size() % 4 == 0;
+        for (int i = 0; i < rawData.size(); i += 4) {
+            pathHandles
+                    .add(new Point4f(rawData.get(i), rawData.get(i + 1), rawData.get(i + 2), rawData.get(i + 3)));
+        }
+        return pathHandles;
+    }
+
+    private void setCurrentPath(ArrayList<Point4f> pathHandles) {
+        if (pathHandles != null && getDimension() != null) {
+            var flatData = new ArrayList<Float>();
+            for (var point : pathHandles) {
+                flatData.add(point.x);
+                flatData.add(point.y);
+                flatData.add(point.z);
+                flatData.add(point.w);
+            }
+            getDimension().setAttribute(PATHHANDLES_KEY, flatData, true);
+        }
+    }
+
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
         Dimension dim = getDimension();
         if (dim == null)
             return;
 
-        { // pull data from attributes
-            pathHandles = new ArrayList<>();
-            var rawData = dim.getAttribute(PATHHANDLES_KEY);
-            assert rawData.size() % 4 == 0;
-            for (int i = 0; i < rawData.size(); i += 4) {
-                pathHandles
-                        .add(new Point4f(rawData.get(i), rawData.get(i + 1), rawData.get(i + 2), rawData.get(i + 3)));
-            }
-        }
+        var pathHandles = getCurrentPath();
 
         getPaint().setBrush(getBrush());
 
@@ -457,16 +474,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 dim.setEventsInhibited(false);
         }
         { // Push path handles to dimension attribute as flat float array (list)
-            if (pathHandles != null) {
-                var flatData = new ArrayList<Float>();
-                for (var point : pathHandles) {
-                    flatData.add(point.x);
-                    flatData.add(point.y);
-                    flatData.add(point.z);
-                    flatData.add(point.w);
-                }
-                dim.setAttribute(PATHHANDLES_KEY, flatData, true);
-            }
+            setCurrentPath(pathHandles);
         }
 
         SwingUtilities.invokeLater(this::updateCheckboxTexts);
