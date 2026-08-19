@@ -7,6 +7,7 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyVetoException;
 import java.io.Serial;
 import java.io.Serializable;
@@ -32,7 +33,7 @@ import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
 import org.pepsoft.worldpainter.painting.Paint;
 
-public class PathTool extends AbstractBrushOperation implements PaintOperation, UndoListener
+public class PathTool extends AbstractBrushOperation implements PaintOperation, UndoListener, KeyEventDispatcher
 {
     private enum TerrainMode
     {
@@ -75,6 +76,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
             Right click: Start new path at this position
             Left click: Advance current path to this position
+            Backspace: Delete the last point on the current path
 
             """;
     // use flat list of floats to not create any serialization dependecies to custom
@@ -112,6 +114,18 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     public PathTool() {
         super("Road Tool", "Create smooth roads", "MacroMachine_RoadTool"); // ONE SHOT OP
         init();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent e) {
+        if (e.getID() != KeyEvent.KEY_PRESSED || !isActive() || getDimension() == null)
+            return false;
+        if (e.isShiftDown() || e.isControlDown() || e.isAltDown() || e.isMetaDown())
+            return false;
+        if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE)
+            deleteLastPathPoint();
+        return false;
     }
 
     @Override
@@ -447,6 +461,35 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             }
             dimension.setAttribute(PATHHANDLES_KEY, flatData, true);
         }
+    }
+
+    // TODO Backspace does not work properly with undo/redo.
+    private void deleteLastPathPoint() {
+        Dimension dimension = getDimension();
+        if (dimension == null)
+            return;
+
+        var pathHandles = getCurrentPath();
+        if (pathHandles.isEmpty())
+            return;
+
+        pathHandles.removeLast();
+        boolean eventsWereInhibited = dimension.isEventsInhibited();
+        if (!eventsWereInhibited)
+            dimension.setEventsInhibited(true);
+        try {
+            setCurrentPath(pathHandles);
+            dimension.clearLayerData(PreviewOperation.annotationLayer);
+            if (pathHandles.isEmpty()) {
+                cachedTiles.clear();
+            } else {
+                OnSmoothPath(new ArrayList<>(pathHandles), true);
+            }
+        } finally {
+            if (!eventsWereInhibited && dimension.isEventsInhibited())
+                dimension.setEventsInhibited(false);
+        }
+        SwingUtilities.invokeLater(this::updateCheckboxTexts);
     }
 
     @Override
