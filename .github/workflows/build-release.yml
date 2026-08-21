@@ -1,10 +1,9 @@
 name: Build Windows Release
 
 on:
-  workflow_run:
-    workflows: ["Maven Test"]
-    branches: [release]
-    types: [completed]
+  push:
+    branches:
+      - release
 
 permissions:
   actions: read
