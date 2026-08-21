@@ -14,6 +14,9 @@ This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK
 
 ### Download
 [Youtube Tutorial](https://youtu.be/FtfwxDTzWgk?si=2JaUsOgvU1c2SFsF)  
+For version 0.4.14 and newer, install the plugin using the [WorldPainter plugin installer](https://www.patreon.com/wpdude/posts/worldpainter-v0-164248344). Do not copy the plugin JAR manually for these versions.
+
+For versions before 0.4.14:
 1. go to the [release page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/latest)
 2. select the top most Macro-Machine release
 3. download the Macro-Machine-Plugin-x.x.x.jar file
