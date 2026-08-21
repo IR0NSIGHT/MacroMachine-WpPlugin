@@ -118,8 +118,9 @@ class PathToolBackendTest
         var path = new ArrayList<Point4f>();
         path.add(new Point4f(10, 10, 100, 2));
 
-        var output = PathToolBackend.applyToTile(heightInput, paintOutput, waterHeightMap,
-                new Point3i(0, 0, 0), new CrossSectionShape("linear", "") {}, path, 2, false);
+        var output = PathToolBackend.applyToTile(heightInput, paintOutput, waterHeightMap, new Point3i(0, 0, 0),
+                new CrossSectionShape("linear", "") {
+                }, path, 2, false);
 
         assertNotNull(output);
         assertEquals(1, paintOutput.getValueAt(10, 10));

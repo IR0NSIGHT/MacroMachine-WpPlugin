@@ -128,9 +128,9 @@ public class PathToolBackend
             return;
         for (int xx = 0; xx < TILE_SIZE; xx++)
             for (int yy = 0; yy < TILE_SIZE; yy++) {
-                float value = affected.getValueAt(xx,yy);
-                if (value != IGNORE_VALUE && (!dontGoBelowExistingWaterlevel || value > out.getWaterLevel(xx,yy)))
-                    out.setWaterLevel(xx, yy, Math.round(affected.getValueAt(xx,yy)));
+                float value = affected.getValueAt(xx, yy);
+                if (value != IGNORE_VALUE && (!dontGoBelowExistingWaterlevel || value > out.getWaterLevel(xx, yy)))
+                    out.setWaterLevel(xx, yy, Math.round(affected.getValueAt(xx, yy)));
             }
     }
 
@@ -139,7 +139,7 @@ public class PathToolBackend
             return;
         for (int xx = 0; xx < TILE_SIZE; xx++)
             for (int yy = 0; yy < TILE_SIZE; yy++) {
-                float value = layerInput.getValueAt(xx,yy);
+                float value = layerInput.getValueAt(xx, yy);
                 if (value != IGNORE_VALUE)
                     out.setBitLayerValue(binaryLayer, xx, yy, value >= 1);
             }
@@ -269,9 +269,9 @@ public class PathToolBackend
         return query.x <= end.x && query.y <= end.y && query.x >= start.x && query.y >= start.y;
     }
 
-    protected static FloatTile applyToTile(FloatTile heightInputTile, FloatTile paintOutput,
-            FloatTile waterHeightTile, Point3i tilePos, CrossSectionShape filterCrossSection,
-            ArrayList<Point4f> subPath, float transitionMultiplier, boolean digOutRiverBed) {
+    protected static FloatTile applyToTile(FloatTile heightInputTile, FloatTile paintOutput, FloatTile waterHeightTile,
+            Point3i tilePos, CrossSectionShape filterCrossSection, ArrayList<Point4f> subPath,
+            float transitionMultiplier, boolean digOutRiverBed) {
         if (heightInputTile == null)
             return null;
         if (subPath.isEmpty())
@@ -302,9 +302,7 @@ public class PathToolBackend
                 var distance = closest == null
                         ? Float.MAX_VALUE
                         : Math.sqrt(xyDistSq(closest, new Point4f(query.x, query.y, 0, 0)));
-                float distanceToBrushEdge = closest == null
-                        ? 0
-                        : Math.max(0, closest.w - (float) distance);
+                float distanceToBrushEdge = closest == null ? 0 : Math.max(0, closest.w - (float) distance);
 
                 // calculate height based on closest point and filter
                 float originalHeight = heightInputTile.getValueAt(xx, yy);
@@ -323,7 +321,7 @@ public class PathToolBackend
                         outHeight = closest.z;
                         filterStrength = 1;
                     } else {
-                        outHeight = outWaterHeight - distanceToBrushEdge - 1; //FIXME apply a river bed profile here
+                        outHeight = outWaterHeight - distanceToBrushEdge - 1; // FIXME apply a river bed profile here
                         filterStrength = 1;
                     }
                 } else {
@@ -336,7 +334,7 @@ public class PathToolBackend
                 }
                 paintOutput.setValueAt(xx, yy, filterStrength);
                 outputTile.setValueAt(xx, yy, outHeight);
-                waterHeightTile.setValueAt(xx,yy,outWaterHeight);
+                waterHeightTile.setValueAt(xx, yy, outWaterHeight);
             }
 
         waterHeightTile.calculateMinMax();

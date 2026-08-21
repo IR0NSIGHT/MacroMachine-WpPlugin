@@ -35,11 +35,8 @@ import org.pepsoft.worldpainter.painting.Paint;
 
 public class PathTool extends AbstractBrushOperation implements PaintOperation, UndoListener, KeyEventDispatcher
 {
-    private enum TerrainMode
-    {
-        DONT_CHANGE("Don't change terrain"),
-        FLATTEN("Flatten terrain"),
-        CARVE("Carve terrain");
+    private enum TerrainMode {
+        DONT_CHANGE("Don't change terrain"), FLATTEN("Flatten terrain"), CARVE("Carve terrain");
 
         private final String label;
 
@@ -53,11 +50,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
     }
 
-    private enum WaterMode
-    {
-        SET_WATER("Set water"),
-        SET_WATER_RESPECT_EXISTING_WATERLEVEL("Set water, respect existing waterlevel"),
-        DONT_SET_WATER("Don't set water");
+    private enum WaterMode {
+        SET_WATER("Set water"), SET_WATER_RESPECT_EXISTING_WATERLEVEL(
+                "Set water, respect existing waterlevel"), DONT_SET_WATER("Don't set water");
 
         private final String label;
 
@@ -147,8 +142,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         {
             JPanel presetPanel = new JPanel();
             JButton riverPresetButton = new JButton("River preset");
-            riverPresetButton.addActionListener(l -> applyPreset(true, true, false, WaterMode.SET_WATER,
-                    TerrainMode.CARVE, 1f, 5f, 0f, null));
+            riverPresetButton.addActionListener(
+                    l -> applyPreset(true, true, false, WaterMode.SET_WATER, TerrainMode.CARVE, 1f, 5f, 0f, null));
             presetPanel.add(riverPresetButton);
             JButton roadPresetButton = new JButton("Road preset");
             roadPresetButton.addActionListener(l -> applyPreset(false, true, true, WaterMode.DONT_SET_WATER,
@@ -197,8 +192,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         {
             usePaintCheckbox = new JCheckBox("usePaintCheckbox");
             usePaintCheckbox.setSelected(true);
-            usePaintCheckbox.setToolTipText(
-                    "set currently selected paint along the path");
+            usePaintCheckbox.setToolTipText("set currently selected paint along the path");
             usePaintCheckbox.addActionListener(l -> {
                 this.usePaint = usePaintCheckbox.isSelected();
             });
@@ -443,8 +437,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var rawData = dimension.getAttribute(PATHHANDLES_KEY);
         assert rawData.size() % 4 == 0;
         for (int i = 0; i < rawData.size(); i += 4) {
-            pathHandles
-                    .add(new Point4f(rawData.get(i), rawData.get(i + 1), rawData.get(i + 2), rawData.get(i + 3)));
+            pathHandles.add(new Point4f(rawData.get(i), rawData.get(i + 1), rawData.get(i + 2), rawData.get(i + 3)));
         }
         return pathHandles;
     }
@@ -527,22 +520,22 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void OnSmoothPath(List<Point4f> pathHandles, boolean onlyPreview) {
-        if (pathHandles.size() == 0){
+        if (pathHandles.size() == 0) {
             return;
-        }else if (pathHandles.size() == 1) {
+        } else if (pathHandles.size() == 1) {
             var first = pathHandles.getFirst();
-            pathHandles.addFirst(new Point4f(first.x+.1f,first.y, first.z, first.w));
-            pathHandles.addFirst(new Point4f(first.x+.2f,first.y, first.z, first.w));
-            pathHandles.addFirst(new Point4f(first.x+.3f,first.y, first.z, first.w));
+            pathHandles.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
+            pathHandles.addFirst(new Point4f(first.x + .2f, first.y, first.z, first.w));
+            pathHandles.addFirst(new Point4f(first.x + .3f, first.y, first.z, first.w));
         } else if (pathHandles.size() == 2) {
             // duplicate the first and last handle to get a straight line
             var first = pathHandles.getFirst();
-            pathHandles.addFirst(new Point4f(first.x+.1f,first.y, first.z, first.w));
+            pathHandles.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
             var last = pathHandles.getFirst();
-            pathHandles.addFirst(new Point4f(last.x+.1f,last.y, last.z, last.w));
-        } else if (pathHandles.size() == 3){
+            pathHandles.addFirst(new Point4f(last.x + .1f, last.y, last.z, last.w));
+        } else if (pathHandles.size() == 3) {
             var last = pathHandles.getFirst();
-            pathHandles.addFirst(new Point4f(last.x+.1f,last.y, last.z, last.w));
+            pathHandles.addFirst(new Point4f(last.x + .1f, last.y, last.z, last.w));
         } // else: more than 4 handles, legal.
 
         var thisPosition = pathHandles.get(pathHandles.size() - 1);
@@ -560,15 +553,18 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 return;
 
             final var path = pathRes.path;
-        //    // cut off last segment that will change on next click anyways
-        //    Point4f secondLastHandle = pathHandles.get(pathHandles.size() - 2);
-        //    final var path = pathRes.path.subList(0,
-        //            pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
-//
-        //    // changed segment: thirdlast to secondLast handle
-        //    Point4f thirdLastHandle = pathHandles.get(pathHandles.size() - 3);
-        //    var newPathSection = path.subList(pathRes.handlesToPathIndex.getOrDefault(thirdLastHandle, 0),
-        //            pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
+            // // cut off last segment that will change on next click anyways
+            // Point4f secondLastHandle = pathHandles.get(pathHandles.size() - 2);
+            // final var path = pathRes.path.subList(0,
+            // pathRes.handlesToPathIndex.getOrDefault(secondLastHandle,
+            // pathHandles.size()));
+            //
+            // // changed segment: thirdlast to secondLast handle
+            // Point4f thirdLastHandle = pathHandles.get(pathHandles.size() - 3);
+            // var newPathSection =
+            // path.subList(pathRes.handlesToPathIndex.getOrDefault(thirdLastHandle, 0),
+            // pathRes.handlesToPathIndex.getOrDefault(secondLastHandle,
+            // pathHandles.size()));
 
             // mutate path with filters based on user input
             if (snapToTerrain)
@@ -619,10 +615,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 var waterHeightTile = new FloatTile(tilePos);
                 waterHeightMap.put(tilePos, waterHeightTile);
 
-                return PathToolBackend.applyToTile(cachedTiles.get(tilePos), paintOutput, waterHeightTile,
-                        tilePos, brushProfile,
+                return PathToolBackend.applyToTile(cachedTiles.get(tilePos), paintOutput, waterHeightTile, tilePos,
+                        brushProfile,
                         PathToolBackend.getSubPathFor(tileAreaStart, tileAreaEnd, path, transitionMultiplier),
-                        getTransitionMultiplier(), terrainMode == TerrainMode.CARVE); //FIXME use actual "dig down" checkbox?
+                        getTransitionMultiplier(), terrainMode == TerrainMode.CARVE); // FIXME use actual "dig down"
+                                                                                      // checkbox?
             }).toList();
             heightInfoTiles.forEach(heightInfoTile -> {
                 if (heightInfoTile == null)
@@ -634,17 +631,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     PathToolBackend.writeHeightMapDataToTile(heightInfoTile, wpTile);
                 if (!onlyPreview && waterMode != WaterMode.DONT_SET_WATER) {
                     var waterHeightTile = waterHeightMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
-                    PathToolBackend.writeWaterHeightDataToDimension(
-                            waterHeightTile, wpTile,
+                    PathToolBackend.writeWaterHeightDataToDimension(waterHeightTile, wpTile,
                             waterMode == WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL);
                 }
-                if (!onlyPreview &&usePaint) {
+                if (!onlyPreview && usePaint) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());
                 }
                 if (onlyPreview) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
-                    PathToolBackend.writeBinaryLayerDataToDimension(paintTile, wpTile, PreviewOperation.annotationLayer);
+                    PathToolBackend.writeBinaryLayerDataToDimension(paintTile, wpTile,
+                            PreviewOperation.annotationLayer);
                 }
             });
 
