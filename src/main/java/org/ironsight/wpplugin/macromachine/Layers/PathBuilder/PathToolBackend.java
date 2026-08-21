@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
 import static java.lang.Math.*;
+import static org.ironsight.wpplugin.macromachine.Layers.PathBuilder.FloatTile.IGNORE_VALUE;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE;
 import static org.pepsoft.util.swing.TiledImageViewer.TILE_SIZE_BITS;
 
@@ -16,6 +17,7 @@ import org.ironsight.wpplugin.rivertool.operations.River.RiverHandleInformation;
 import org.ironsight.wpplugin.rivertool.pathing.PointType;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
+import org.pepsoft.worldpainter.layers.Layer;
 import org.pepsoft.worldpainter.painting.Paint;
 
 public class PathToolBackend
@@ -115,7 +117,31 @@ public class PathToolBackend
     static void writeHeightMapDataToTile(FloatTile in, Tile out) {
         for (int xx = 0; xx < TILE_SIZE; xx++)
             for (int yy = 0; yy < TILE_SIZE; yy++) {
-                out.setHeight(xx, yy, in.getValueAt(xx, yy));
+                float value = in.getValueAt(xx, yy);
+                if (value != IGNORE_VALUE)
+                    out.setHeight(xx, yy, value);
+            }
+    }
+
+    static void writeWaterHeightDataToDimension(FloatTile affected, Tile out, boolean dontGoBelowExistingWaterlevel) {
+        if (affected == null || out == null)
+            return;
+        for (int xx = 0; xx < TILE_SIZE; xx++)
+            for (int yy = 0; yy < TILE_SIZE; yy++) {
+                float value = affected.getValueAt(xx, yy);
+                if (value != IGNORE_VALUE && (!dontGoBelowExistingWaterlevel || value > out.getWaterLevel(xx, yy)))
+                    out.setWaterLevel(xx, yy, Math.round(affected.getValueAt(xx, yy)));
+            }
+    }
+
+    static void writeBinaryLayerDataToDimension(FloatTile layerInput, Tile out, Layer binaryLayer) {
+        if (layerInput == null || out == null)
+            return;
+        for (int xx = 0; xx < TILE_SIZE; xx++)
+            for (int yy = 0; yy < TILE_SIZE; yy++) {
+                float value = layerInput.getValueAt(xx, yy);
+                if (value != IGNORE_VALUE)
+                    out.setBitLayerValue(binaryLayer, xx, yy, value >= 1);
             }
     }
 
@@ -243,8 +269,9 @@ public class PathToolBackend
         return query.x <= end.x && query.y <= end.y && query.x >= start.x && query.y >= start.y;
     }
 
-    protected static FloatTile applyToTile(FloatTile heightInputTile, FloatTile paintOutput, Point3i tilePos,
-            CrossSectionShape filterCrossSection, ArrayList<Point4f> subPath, float transitionMultiplier) {
+    protected static FloatTile applyToTile(FloatTile heightInputTile, FloatTile paintOutput, FloatTile waterHeightTile,
+            Point3i tilePos, CrossSectionShape filterCrossSection, ArrayList<Point4f> subPath,
+            float transitionMultiplier, boolean digOutRiverBed) {
         if (heightInputTile == null)
             return null;
         if (subPath.isEmpty())
@@ -264,6 +291,8 @@ public class PathToolBackend
         FloatTile outputTile = new FloatTile(0);
         outputTile.tilePosX = tilePos.x;
         outputTile.tilePosY = tilePos.y;
+        waterHeightTile.tilePosX = tilePos.x;
+        waterHeightTile.tilePosY = tilePos.y;
         for (int xx = 0; xx < TILE_SIZE; xx++)
             for (int yy = 0; yy < TILE_SIZE; yy++) {
                 // find closest point
@@ -273,20 +302,31 @@ public class PathToolBackend
                 var distance = closest == null
                         ? Float.MAX_VALUE
                         : Math.sqrt(xyDistSq(closest, new Point4f(query.x, query.y, 0, 0)));
+                float distanceToBrushEdge = closest == null ? 0 : Math.max(0, closest.w - (float) distance);
 
                 // calculate height based on closest point and filter
                 float originalHeight = heightInputTile.getValueAt(xx, yy);
                 float outHeight;
+                final float outWaterHeight;
                 float filterStrength;
                 if (closest == null || distance > closest.w * transitionMultiplier) {
                     // outside transition zone
                     outHeight = originalHeight;
                     filterStrength = 0;
-                } else if (distance <= closest.w) {
-                    // use closest points attributes for this point
-                    outHeight = closest.z;
-                    filterStrength = 1;
+                    outWaterHeight = IGNORE_VALUE;
+                } else if (distance <= closest.w) { // its inside the radius
+                    outWaterHeight = closest.z; // water level at path level
+                    if (!digOutRiverBed) {
+                        // use closest points attributes for this point
+                        outHeight = closest.z;
+                        filterStrength = 1;
+                    } else {
+                        outHeight = outWaterHeight - distanceToBrushEdge - 1; // FIXME apply a river bed profile here
+                        filterStrength = 1;
+                    }
                 } else {
+                    outWaterHeight = IGNORE_VALUE;
+
                     // transition with terrain
                     filterStrength = filterStrengthFor((float) distance, closest.w, transitionMultiplier,
                             filterCrossSection);
@@ -294,7 +334,12 @@ public class PathToolBackend
                 }
                 paintOutput.setValueAt(xx, yy, filterStrength);
                 outputTile.setValueAt(xx, yy, outHeight);
+                waterHeightTile.setValueAt(xx, yy, outWaterHeight);
             }
+
+        waterHeightTile.calculateMinMax();
+        outputTile.calculateMinMax();
+        paintOutput.calculateMinMax();
         return outputTile;
     }
 

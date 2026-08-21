@@ -7,6 +7,7 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyVetoException;
 import java.io.Serial;
 import java.io.Serializable;
@@ -17,6 +18,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.vecmath.Point3i;
 import javax.vecmath.Point4f;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
@@ -31,13 +33,45 @@ import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
 import org.pepsoft.worldpainter.painting.Paint;
 
-public class PathTool extends AbstractBrushOperation implements PaintOperation, UndoListener
+public class PathTool extends AbstractBrushOperation implements PaintOperation, UndoListener, KeyEventDispatcher
 {
+    private enum TerrainMode {
+        DONT_CHANGE("Don't change terrain"), FLATTEN("Flatten terrain"), CARVE("Carve terrain");
+
+        private final String label;
+
+        TerrainMode(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
+    private enum WaterMode {
+        SET_WATER("Set water"), SET_WATER_RESPECT_EXISTING_WATERLEVEL(
+                "Set water, respect existing waterlevel"), DONT_SET_WATER("Don't set water");
+
+        private final String label;
+
+        WaterMode(String label) {
+            this.label = label;
+        }
+
+        @Override
+        public String toString() {
+            return label;
+        }
+    }
+
     private static final String help = """
             PathTool will connect clicked positions into a path and smoothly blend them into existing terrain, based on the brush you are using.
 
             Right click: Start new path at this position
             Left click: Advance current path to this position
+            Backspace: Delete the last point on the current path
 
             """;
     // use flat list of floats to not create any serialization dependecies to custom
@@ -45,7 +79,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private static final AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<Float>());
     private final JPanel optionsPanel = new JPanel();
-    ArrayList<Point4f> pathHandles = new ArrayList<>();
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
     private Paint paint;
     // only allow downwards movement
@@ -53,41 +86,89 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private boolean snapToTerrain;
     private boolean fixHeightTo;
     private boolean usePaint;
+    private WaterMode waterMode = WaterMode.DONT_SET_WATER;
+    private TerrainMode terrainMode = TerrainMode.FLATTEN;
     private float slopeLimit = 0;
     private float handleStrength = 0f;
     private JCheckBox onlyDownCheckbox;
     private JCheckBox minCheckbox;
     private JCheckBox fixHeightCheckbox;
     private JCheckBox usePaintCheckbox;
+    private JComboBox<WaterMode> waterModeDropdown;
+    private JComboBox<TerrainMode> terrainModeDropdown;
     private JSpinner limitSlopeSpinner;
     private JSpinner handleFactorSpinner;
     private JSpinner transitionMultiSpinner;
+    private CellPreviewPanel slopePreview;
     private JPanel brushQuerschnitt;
+    private JComboBox<CrossSectionShape> profilesDropdown;
     private CrossSectionShape brushProfile;
     private float transitionMultiplier = 2;
+    private JButton applyButton;
 
     public PathTool() {
         super("Road Tool", "Create smooth roads", "MacroMachine_RoadTool"); // ONE SHOT OP
         init();
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent e) {
+        if (e.getID() != KeyEvent.KEY_PRESSED || !isActive() || getDimension() == null)
+            return false;
+        if (e.isShiftDown() || e.isControlDown() || e.isAltDown() || e.isMetaDown())
+            return false;
+        if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE)
+            deleteLastPathPoint();
+        return false;
     }
 
     @Override
     protected void activate() throws PropertyVetoException {
         super.activate();
-        this.pathHandles.clear();
         this.cachedTiles.clear();
     }
 
     @Override
     protected void deactivate() {
         super.deactivate();
-        this.pathHandles.clear();
         this.cachedTiles.clear();
     }
 
     private void init() {
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
+        optionsPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
         optionsPanel.add(getHelpButton("Road Tool", help));
+        {
+            JPanel presetPanel = new JPanel();
+            JButton riverPresetButton = new JButton("River preset");
+            riverPresetButton.addActionListener(
+                    l -> applyPreset(true, true, false, WaterMode.SET_WATER, TerrainMode.CARVE, 1f, 5f, 0f, null));
+            presetPanel.add(riverPresetButton);
+            JButton roadPresetButton = new JButton("Road preset");
+            roadPresetButton.addActionListener(l -> applyPreset(false, true, true, WaterMode.DONT_SET_WATER,
+                    TerrainMode.FLATTEN, .3f, 1f, 4f, "Triangle"));
+            presetPanel.add(roadPresetButton);
+            optionsPanel.add(presetPanel);
+        }
+        {
+            applyButton = new JButton("Apply");
+            applyButton.setName("PathTool.Apply");
+            applyButton.setToolTipText("apply the path to the map.");
+            applyButton.addActionListener((e) -> {
+                var dim = getDimension();
+                if (dim == null)
+                    return;
+                if (!dim.isEventsInhibited())
+                    dim.setEventsInhibited(true);
+
+                this.OnSmoothPath(getCurrentPath(), false); // generate path
+
+                if (dim.isEventsInhibited())
+                    dim.setEventsInhibited(false);
+            });
+            optionsPanel.add(applyButton);
+        }
 
         {
             onlyDownCheckbox = new JCheckBox("onlyDownCheckbox");
@@ -111,13 +192,36 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         {
             usePaintCheckbox = new JCheckBox("usePaintCheckbox");
             usePaintCheckbox.setSelected(true);
-            usePaintCheckbox.setToolTipText(
-                    "if active, the path will paint the current selected layer/terrain where the filter strength is 100% (red area in the cross-section)");
+            usePaintCheckbox.setToolTipText("set currently selected paint along the path");
             usePaintCheckbox.addActionListener(l -> {
                 this.usePaint = usePaintCheckbox.isSelected();
             });
             this.usePaint = usePaintCheckbox.isSelected();
             optionsPanel.add(usePaintCheckbox);
+        }
+        {
+            waterModeDropdown = new JComboBox<>(WaterMode.values());
+            waterModeDropdown.setSelectedItem(waterMode);
+            waterModeDropdown.setToolTipText("Controls how water level is changed along the path.");
+            waterModeDropdown.addActionListener(l -> {
+                this.waterMode = (WaterMode) waterModeDropdown.getSelectedItem();
+            });
+            JPanel panel = new JPanel();
+            panel.add(new JLabel("set water:"));
+            panel.add(waterModeDropdown);
+            optionsPanel.add(panel);
+        }
+        {
+            terrainModeDropdown = new JComboBox<>(TerrainMode.values());
+            terrainModeDropdown.setSelectedItem(terrainMode);
+            terrainModeDropdown.setToolTipText("Controls how terrain height is changed along the path.");
+            terrainModeDropdown.addActionListener(l -> {
+                this.terrainMode = (TerrainMode) terrainModeDropdown.getSelectedItem();
+            });
+            JPanel panel = new JPanel();
+            panel.add(new JLabel("set terrain:"));
+            panel.add(terrainModeDropdown);
+            optionsPanel.add(panel);
         }
         {
             fixHeightCheckbox = new JCheckBox("fixHeightCheckbox");
@@ -148,12 +252,26 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     "Limits the allowed slope to x block vertical per 16 blocks horizontal. 0 to disable.");
             limitSlopeSpinner.addChangeListener(l -> {
                 slopeLimit = ((Number) limitSlopeSpinner.getValue()).floatValue();
+                if (slopePreview != null)
+                    slopePreview.repaint();
             });
             slopeLimit = ((Number) limitSlopeSpinner.getValue()).floatValue();
             JPanel panel = new JPanel();
             panel.add(new JLabel("Limit slope to x/16 blocks"));
             panel.add(limitSlopeSpinner);
             optionsPanel.add(panel);
+
+            slopePreview = new CellPreviewPanel((x, y) -> {
+                if (slopeLimit == 0)
+                    return false;
+                float centreRow = (slopePreview.getCellRows() - 1) / 2f;
+                float centreColumn = (slopePreview.getCellColumns() - 1) / 2f;
+                int hypotenuseRow = Math.min(slopePreview.getCellRows() - 1,
+                        Math.max(0, Math.round(centreRow + (x - centreColumn) * slopeLimit / 16f)));
+                return y == hypotenuseRow;
+            });
+            slopePreview.setToolTipText("Shows the maximum allowed slope; 0 means unlimited");
+            optionsPanel.add(slopePreview);
         }
         {
             transitionMultiSpinner = new JSpinner(new SpinnerNumberModel(1d, 0d, 100d, .25d));
@@ -174,8 +292,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 @Override
                 public void paint(Graphics g) {
                     super.paint(g);
-                    Brush brush = getBrush();
-                    if (brush == null)
+                    if (brushProfile == null)
                         return;
                     g.setColor(Color.WHITE);
                     g.fillRect(0, 0, getWidth(), getHeight());
@@ -197,13 +314,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     }
                 }
             };
-            brushQuerschnitt.setPreferredSize(new java.awt.Dimension(100, 30));
+            brushQuerschnitt.setPreferredSize(new java.awt.Dimension(0, 48));
+            brushQuerschnitt.setMinimumSize(new java.awt.Dimension(0, 48));
+            brushQuerschnitt.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 48));
             brushQuerschnitt.setToolTipText("Shows the cross section of the brush strength. Red area = 100% strength");
             optionsPanel.add(brushQuerschnitt);
         }
         {
-            JList<CrossSectionShape> profilesList = new JList<>();
-            DefaultListModel<CrossSectionShape> model = new DefaultListModel<CrossSectionShape>();
+            DefaultComboBoxModel<CrossSectionShape> model = new DefaultComboBoxModel<>();
             model.addElement(new CrossSectionShape("Square Root", "") {
                 @Override
                 public float getStrengthAt(float t) {
@@ -243,23 +361,54 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 }
             });
 
-            profilesList.setModel(model);
-            profilesList.addListSelectionListener(l -> {
-                if (!l.getValueIsAdjusting())
-                    this.brushProfile = profilesList.getSelectedValue();
+            profilesDropdown = new JComboBox<>(model);
+            profilesDropdown.setName("PathTool.TransitionProfiles");
+            profilesDropdown.addActionListener(l -> {
+                this.brushProfile = (CrossSectionShape) profilesDropdown.getSelectedItem();
                 brushQuerschnitt.repaint();
             });
-            profilesList.setSelectedIndex(0);
-            optionsPanel.add(new JScrollPane(profilesList));
+            profilesDropdown.setSelectedItem(model.getElementAt(3));
+            this.brushProfile = (CrossSectionShape) profilesDropdown.getSelectedItem();
+            JPanel panel = new JPanel();
+            panel.add(new JLabel("Transition profile"));
+            panel.add(profilesDropdown);
+            optionsPanel.add(panel);
         }
 
+        updateCheckboxTexts();
+    }
+
+    private void applyPreset(boolean onlyDown, boolean snapToTerrain, boolean usePaint, WaterMode waterMode,
+            TerrainMode terrainMode, float curveStrength, float transition, float slopeLimit,
+            String transitionProfile) {
+        this.onlyDown = onlyDown;
+        this.snapToTerrain = snapToTerrain;
+        this.usePaint = usePaint;
+        this.waterMode = waterMode;
+        this.terrainMode = terrainMode;
+        onlyDownCheckbox.setSelected(onlyDown);
+        minCheckbox.setSelected(snapToTerrain);
+        usePaintCheckbox.setSelected(usePaint);
+        waterModeDropdown.setSelectedItem(waterMode);
+        terrainModeDropdown.setSelectedItem(terrainMode);
+        handleFactorSpinner.setValue((double) curveStrength);
+        transitionMultiSpinner.setValue((double) transition);
+        limitSlopeSpinner.setValue((double) slopeLimit);
+        if (transitionProfile != null) {
+            for (int i = 0; i < profilesDropdown.getItemCount(); i++) {
+                if (transitionProfile.equals(String.valueOf(profilesDropdown.getItemAt(i)))) {
+                    profilesDropdown.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
         updateCheckboxTexts();
     }
 
     private void updateCheckboxTexts() {
         onlyDownCheckbox.setText("Only downhill");
         fixHeightCheckbox.setText("Fix height to: " + getFixHeight());
-        usePaintCheckbox.setText("Use paint");
+        usePaintCheckbox.setText("Set paint");
     }
 
     @Override
@@ -268,7 +417,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private float getFixHeight() {
-        return pathHandles.isEmpty() ? 62 : pathHandles.get(pathHandles.size() - 1).z;
+        var currentPath = getCurrentPath();
+        return currentPath.isEmpty() ? 62 : currentPath.get(currentPath.size() - 1).z;
     }
 
     @Override
@@ -278,21 +428,70 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         brushQuerschnitt.repaint();
     }
 
+    private ArrayList<Point4f> getCurrentPath() {
+        Dimension dimension = getView() == null ? null : getDimension();
+        if (dimension == null)
+            return new ArrayList<>();
+        // pull data from attributes
+        var pathHandles = new ArrayList<Point4f>();
+        var rawData = dimension.getAttribute(PATHHANDLES_KEY);
+        assert rawData.size() % 4 == 0;
+        for (int i = 0; i < rawData.size(); i += 4) {
+            pathHandles.add(new Point4f(rawData.get(i), rawData.get(i + 1), rawData.get(i + 2), rawData.get(i + 3)));
+        }
+        return pathHandles;
+    }
+
+    private void setCurrentPath(ArrayList<Point4f> pathHandles) {
+        Dimension dimension = getView() == null ? null : getDimension();
+        if (pathHandles != null && dimension != null) {
+            var flatData = new ArrayList<Float>();
+            for (var point : pathHandles) {
+                flatData.add(point.x);
+                flatData.add(point.y);
+                flatData.add(point.z);
+                flatData.add(point.w);
+            }
+            dimension.setAttribute(PATHHANDLES_KEY, flatData, true);
+        }
+    }
+
+    // TODO Backspace does not work properly with undo/redo.
+    private void deleteLastPathPoint() {
+        Dimension dimension = getDimension();
+        if (dimension == null)
+            return;
+
+        var pathHandles = getCurrentPath();
+        if (pathHandles.isEmpty())
+            return;
+
+        pathHandles.removeLast();
+        boolean eventsWereInhibited = dimension.isEventsInhibited();
+        if (!eventsWereInhibited)
+            dimension.setEventsInhibited(true);
+        try {
+            setCurrentPath(pathHandles);
+            dimension.clearLayerData(PreviewOperation.annotationLayer);
+            if (pathHandles.isEmpty()) {
+                cachedTiles.clear();
+            } else {
+                OnSmoothPath(new ArrayList<>(pathHandles), true);
+            }
+        } finally {
+            if (!eventsWereInhibited && dimension.isEventsInhibited())
+                dimension.setEventsInhibited(false);
+        }
+        SwingUtilities.invokeLater(this::updateCheckboxTexts);
+    }
+
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
         Dimension dim = getDimension();
         if (dim == null)
             return;
 
-        { // pull data from attributes
-            pathHandles = new ArrayList<>();
-            var rawData = dim.getAttribute(PATHHANDLES_KEY);
-            assert rawData.size() % 4 == 0;
-            for (int i = 0; i < rawData.size(); i += 4) {
-                pathHandles
-                        .add(new Point4f(rawData.get(i), rawData.get(i + 1), rawData.get(i + 2), rawData.get(i + 3)));
-            }
-        }
+        var pathHandles = getCurrentPath();
 
         getPaint().setBrush(getBrush());
 
@@ -308,55 +507,64 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             if (!dim.isEventsInhibited())
                 dim.setEventsInhibited(true);
 
-            this.OnSmoothPath(pathHandles); // generate path
+            this.OnSmoothPath(new ArrayList<>(pathHandles), true); // generate path
 
             if (dim.isEventsInhibited())
                 dim.setEventsInhibited(false);
         }
         { // Push path handles to dimension attribute as flat float array (list)
-            if (pathHandles != null) {
-                var flatData = new ArrayList<Float>();
-                for (var point : pathHandles) {
-                    flatData.add(point.x);
-                    flatData.add(point.y);
-                    flatData.add(point.z);
-                    flatData.add(point.w);
-                }
-                dim.setAttribute(PATHHANDLES_KEY, flatData, true);
-            }
+            setCurrentPath(pathHandles);
         }
 
         SwingUtilities.invokeLater(this::updateCheckboxTexts);
     }
 
-    private void OnSmoothPath(List<Point4f> pathHandles) {
-        if (pathHandles.size() < 2)
-            return; // nothing to do
+    private void OnSmoothPath(List<Point4f> pathHandles, boolean onlyPreview) {
+        if (pathHandles.size() == 0) {
+            return;
+        } else if (pathHandles.size() == 1) {
+            var first = pathHandles.getFirst();
+            pathHandles.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
+            pathHandles.addFirst(new Point4f(first.x + .2f, first.y, first.z, first.w));
+            pathHandles.addFirst(new Point4f(first.x + .3f, first.y, first.z, first.w));
+        } else if (pathHandles.size() == 2) {
+            // duplicate the first and last handle to get a straight line
+            var first = pathHandles.getFirst();
+            pathHandles.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
+            var last = pathHandles.getFirst();
+            pathHandles.addFirst(new Point4f(last.x + .1f, last.y, last.z, last.w));
+        } else if (pathHandles.size() == 3) {
+            var last = pathHandles.getFirst();
+            pathHandles.addFirst(new Point4f(last.x + .1f, last.y, last.z, last.w));
+        } // else: more than 4 handles, legal.
+
         var thisPosition = pathHandles.get(pathHandles.size() - 1);
         var lastPosition = pathHandles.get(pathHandles.size() - 2);
 
         Dimension dimension = getDimension();
+
         if (lastPosition != null) {
             // get new path section and append it
             var pathRes = getPathFromHandles(pathHandles, handleStrength);
 
-            // DRAW RESULT ON MAP WITH ALL SEGMENTS
             dimension.clearLayerData(PreviewOperation.annotationLayer);
-            for (var p : pathRes.path) {
-                dimension.setBitLayerValueAt(PreviewOperation.annotationLayer, Math.round(p.x), Math.round(p.y), true);
-            }
+
             if (pathHandles.size() < 4)
                 return;
 
-            // cut off last segment that will change on next click anyways
-            Point4f secondLastHandle = pathHandles.get(pathHandles.size() - 2);
-            final var path = pathRes.path.subList(0,
-                    pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
-
-            // changed segment: thirdlast to secondLast handle
-            Point4f thirdLastHandle = pathHandles.get(pathHandles.size() - 3);
-            var newPathSection = path.subList(pathRes.handlesToPathIndex.getOrDefault(thirdLastHandle, 0),
-                    pathRes.handlesToPathIndex.getOrDefault(secondLastHandle, pathHandles.size()));
+            final var path = pathRes.path;
+            // // cut off last segment that will change on next click anyways
+            // Point4f secondLastHandle = pathHandles.get(pathHandles.size() - 2);
+            // final var path = pathRes.path.subList(0,
+            // pathRes.handlesToPathIndex.getOrDefault(secondLastHandle,
+            // pathHandles.size()));
+            //
+            // // changed segment: thirdlast to secondLast handle
+            // Point4f thirdLastHandle = pathHandles.get(pathHandles.size() - 3);
+            // var newPathSection =
+            // path.subList(pathRes.handlesToPathIndex.getOrDefault(thirdLastHandle, 0),
+            // pathRes.handlesToPathIndex.getOrDefault(secondLastHandle,
+            // pathHandles.size()));
 
             // mutate path with filters based on user input
             if (snapToTerrain)
@@ -373,7 +581,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             forceRadiusAtLeast(path, .5f); // always at least 1 thick
 
             // collect tiles where the newly added path section passed through
-            Set<Point3i> newPathTiles = PathToolBackend.collectTilesAroundPath(newPathSection, transitionMultiplier);
+            Set<Point3i> newPathTiles = PathToolBackend.collectTilesAroundPath(path, transitionMultiplier);
 
             // cache all tiles that might be affected
             for (var tilePos : newPathTiles) {
@@ -397,27 +605,43 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             AtomicInteger totalProcessedPath = new AtomicInteger();
             AtomicInteger totalTiles = new AtomicInteger();
             HashMap<Point3i, FloatTile> paintOutputMap = new HashMap<>();
-            var outputTiles = newPathTiles.parallelStream().map(tilePos -> {
+            HashMap<Point3i, FloatTile> waterHeightMap = new HashMap<>();
+            var heightInfoTiles = newPathTiles.parallelStream().map(tilePos -> {
                 Point2i tileAreaStart = new Point2i((tilePos.x) << TILE_SIZE_BITS, (tilePos.y) << TILE_SIZE_BITS);
                 Point2i tileAreaEnd = new Point2i(TILE_SIZE + ((tilePos.x) << TILE_SIZE_BITS),
                         TILE_SIZE + ((tilePos.y) << TILE_SIZE_BITS));
                 var paintOutput = new FloatTile(tilePos);
                 paintOutputMap.put(tilePos, paintOutput);
+                var waterHeightTile = new FloatTile(tilePos);
+                waterHeightMap.put(tilePos, waterHeightTile);
 
-                return PathToolBackend.applyToTile(cachedTiles.get(tilePos), paintOutput, tilePos, brushProfile,
+                return PathToolBackend.applyToTile(cachedTiles.get(tilePos), paintOutput, waterHeightTile, tilePos,
+                        brushProfile,
                         PathToolBackend.getSubPathFor(tileAreaStart, tileAreaEnd, path, transitionMultiplier),
-                        getTransitionMultiplier());
+                        getTransitionMultiplier(), terrainMode == TerrainMode.CARVE); // FIXME use actual "dig down"
+                                                                                      // checkbox?
             }).toList();
-            outputTiles.forEach(floatTile -> {
-                if (floatTile == null)
+            heightInfoTiles.forEach(heightInfoTile -> {
+                if (heightInfoTile == null)
                     return;
-                Tile wpTile = dimension.getTileForEditing(floatTile.tilePosX, floatTile.tilePosY);
+                Tile wpTile = dimension.getTileForEditing(heightInfoTile.tilePosX, heightInfoTile.tilePosY);
                 if (wpTile == null)
                     return;
-                PathToolBackend.writeHeightMapDataToTile(floatTile, wpTile);
-                if (usePaint) {
+                if (!onlyPreview && terrainMode != TerrainMode.DONT_CHANGE)
+                    PathToolBackend.writeHeightMapDataToTile(heightInfoTile, wpTile);
+                if (!onlyPreview && waterMode != WaterMode.DONT_SET_WATER) {
+                    var waterHeightTile = waterHeightMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
+                    PathToolBackend.writeWaterHeightDataToDimension(waterHeightTile, wpTile,
+                            waterMode == WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL);
+                }
+                if (!onlyPreview && usePaint) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());
+                }
+                if (onlyPreview) {
+                    var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
+                    PathToolBackend.writeBinaryLayerDataToDimension(paintTile, wpTile,
+                            PreviewOperation.annotationLayer);
                 }
             });
 
@@ -464,6 +688,18 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     @Override
     public void bufferChanged(BufferKey<?> key) {
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            PathTool pathTool = new PathTool();
+            JFrame frame = new JFrame("Road Tool Options");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.add(pathTool.getOptionsPanel());
+            frame.pack();
+            frame.setLocationByPlatform(true);
+            frame.setVisible(true);
+        });
     }
 
     private static class PathHandlesContainer implements Cloneable, Serializable

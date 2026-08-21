@@ -9,6 +9,7 @@ on:
 
 jobs:
   check-version:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     outputs:
       version_changed: ${{ steps.check.outputs.version_changed }}
@@ -16,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
       - name: Check for pom.xml changes
@@ -39,10 +41,12 @@ jobs:
     if: needs.check-version.outputs.version_changed == 'true'
     runs-on: ubuntu-latest
     permissions:
+      actions: write
       contents: write
     steps:
       - uses: actions/checkout@v3
         with:
+          ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
 
       - name: Merge master into release
@@ -51,14 +55,15 @@ jobs:
           git config --global user.email 'action@github.com'
           
           # add tag
-          git checkout master
-          git tag release-${{ needs.check-version.outputs.current_version }}
+          git tag release-${{ needs.check-version.outputs.current_version }} ${{ github.event.workflow_run.head_sha }}
           git push --tag
           
           # set release to state of master and push
-          git checkout release
-          git reset origin/master --hard
-          git push -f origin release
+          git push -f origin ${{ github.event.workflow_run.head_sha }}:release
           git status
-          
 
+      - name: Start release branch tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run unit-test.yml --ref release
+          

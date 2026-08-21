@@ -10,7 +10,7 @@ public class FloatTile
     public int tilePosX;
     public int tilePosY;
     private float min, max;
-
+    public static final float IGNORE_VALUE = Float.MAX_VALUE;
     public FloatTile(int defaultValue) {
         fillWith(defaultValue);
     }

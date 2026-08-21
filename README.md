@@ -14,6 +14,9 @@ This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK
 
 ### Download
 [Youtube Tutorial](https://youtu.be/FtfwxDTzWgk?si=2JaUsOgvU1c2SFsF)  
+For version 0.4.14 and newer, install the plugin using the [WorldPainter plugin installer](https://www.patreon.com/wpdude/posts/worldpainter-v0-164248344). Do not copy the plugin JAR manually for these versions.
+
+For versions before 0.4.14:
 1. go to the [release page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/latest)
 2. select the top most Macro-Machine release
 3. download the Macro-Machine-Plugin-x.x.x.jar file
@@ -75,6 +78,26 @@ CityLayer is not compatible with WorldPainter undo/redo. Do not use undo/redo wh
 
 Enable `Auto Update` to refresh the preview after map edits. Large areas can cause lag with Auto Update enabled. The preview performs a background test export and uses a workaround to remove the underground from the rendered result.
 
+### Path Tool
+Place roads or rivers with the path tool, or create slopes with full control over maximum degrees. The path is automatically merged into existing terrain with a smooth transition between terrain and path.
+
+1. Select the Path Tool (Road Icon)
+2. Left Click in the map to place a node. Brush radius decides the size of the node.
+3. Left Click again to place the next node and connect to the previous node
+4. Use undo to delete the last node
+5. Right click to reset and start a new path
+
+
+Options:
+- "only downhill": the path is guarenteed to only go down in height, but never upwards. Use this for rivers.
+- "snap to terrain": the path will try to follow the terrain height as close as possible without creating tall walls to bridge depressions. Use this for roads
+- "Use paint": the path will apply
+the selected paint to the map (f.e. terrain cobblestone)
+- "Curve Strength": how curved the path is. 0 = straight lines, hard edges. 1 = smooth bezier curve. I use 0.4 for roads, 1 for rivers.
+- "Limit slope": the path is guaranteed to never have a steeper slope than this value. Limit to 4 blocks per 16: for 16 blocks walking along the path, the path can only rise/go down by 4 blocks. 16/16 compares to stairs. 8/16 compares to slabs. I use 4/16 for roads.  
+- "Transition multiplier"
+
+
 ### Edit Macros
 [Youtube Tutorial](https://youtu.be/jog4qHFP4WI?si=gqlX9unvOYhtRQ4x)  
 Let's create a simple macro that creates a mask for us:  add all Swamp and Desert biome to selection. 
@@ -121,8 +144,15 @@ For this, the gradient editor exists.
 ### Filter
 If you only want to operate on some parts of the map, you should use the action filter. Create an action that uses an input to set the action filter.
 Any actions in the macro after the filter action will ignore blocks that were previously filtered out.
-Use Always-set-ActionFilter to reset the filter and allow all blocks.
-Each filter is limited to its macro and does not influence other macros.
+
+Use this pattern for filters:
+```
+    Input: what you want to filter (f.e. Annotations)
+    Type: set
+    Output: Action Filter
+```
+then set all values you DONT want to "block" and everything else to "ignore". This will filter out all these values for any subsequent actions.
+
 More restrictive filters usually also mean better performance, because less tiles have to be touched by the macro.
 
 ### Always input
@@ -132,15 +162,13 @@ Use the "Always" input to apply an output everywhere. Always still respects prev
 Spraypaint output will spraypaint a layer onto blocks with certain chance for each block.
 
 ### Intermediate value
-This input/output only exists during the execution of the macro. it allows you to save values for the duration fo the execution.
-The alpine macro uses it to store the chance for snow in each block over multple actions, before finally applying it to snow.
-Its also more performance-friendly than saving the value into a layer in the world.
+obsolete and discontinued. please dont use it anymore.
 
 ### Nesting macros
-You can call a macro inside of another macro. But beware: if macro A calls Macro B and macro B calls Macro A, you get an infinite loop. The system will detect it and now allow you to save such a state.
+You can call a macro inside of another macro. It will inherit the filter state and can edit it.
 
 ### Custom layers
-It's not yet possible to use custom layers as inputs or outputs. We are working on it.
+MacroMachine offers you all customer layers in your current .world project AND all custom layers that are already used in Macros as inputs or outputs. If your custom layer is not shown, close the MacroMachine window, save your world and open the MacroMachine window again.
 
 ## troubleshooting
 Q: What does this panel do
