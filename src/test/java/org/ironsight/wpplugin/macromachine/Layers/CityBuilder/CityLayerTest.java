@@ -110,6 +110,13 @@ class CityLayerTest
     }
 
     @Test
+    void nullSelectionClearsLayerSelection() {
+        CityLayer layer = layerWithObjects();
+
+        assertDoesNotThrow(() -> layer.setSelected(null));
+    }
+
+    @Test
     void highlightColorsAreEnabledByDefault() {
         CityLayer layer = layerWithObjects();
 

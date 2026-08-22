@@ -38,7 +38,7 @@ public class CityLayerRenderer implements NibbleLayerRenderer
     }
 
     public void setCurrentSelectBBX(Rectangle2D bbx) {
-        selectedBBX = bbx;
+        selectedBBX = bbx == null ? new Rectangle() : bbx;
     }
 
     public void setBaseColor(int rgbHex) {
@@ -109,8 +109,4 @@ public class CityLayerRenderer implements NibbleLayerRenderer
         }
         return resultColor;
     }
-    private boolean isSelectionBorder(int x, int y) {
-        return false;
-}
-
 }

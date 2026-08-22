@@ -109,9 +109,20 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             if (!getDimension().isEventsInhibited())
                 getDimension().setEventsInhibited(true);
             var oldState = uiState;
+            CityLayer layer = getSelectedLayer();
+            boolean requiresSelection = keyCode == KeyEvent.VK_Q || keyCode == KeyEvent.VK_W
+                    || keyCode == KeyEvent.VK_A || keyCode == KeyEvent.VK_S || keyCode == KeyEvent.VK_D
+                    || keyCode == KeyEvent.VK_C || keyCode == KeyEvent.VK_X;
+            if (requiresSelection && (layer == null || layer.getInformationAt(oldState.xPos, oldState.yPos) == null))
+                return;
+
             ObjectState newState;
             switch (keyCode) {
                 case KeyEvent.VK_Q -> newState = randomizeState(oldState);
+                case KeyEvent.VK_DELETE -> {
+                    deleteSelected();
+                    return;
+                }
                 case KeyEvent.VK_W -> newState = setCurrentStatePosition(oldState.xPos, oldState.yPos - 1, oldState);
                 case KeyEvent.VK_S -> newState = setCurrentStatePosition(oldState.xPos, oldState.yPos + 1, oldState);
                 case KeyEvent.VK_A -> newState = setCurrentStatePosition(oldState.xPos - 1, oldState.yPos, oldState);
@@ -121,18 +132,28 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                     newState = setIsMirrored(!oldState.mirrored, oldState);
                 default -> newState = oldState;
             }
-            CityLayer layer = getSelectedLayer();
-            if (keyCode == KeyEvent.VK_Q && layer != null
-                    && layer.getInformationAt(oldState.xPos, oldState.yPos) == null) {
-                applyToUi(newState);
-            } else {
-                applyToMapAndUI(layer, newState, oldState);
-            }
+            applyToMapAndUI(layer, newState, oldState);
         } catch (Exception ex) {
             GlobalActionPanel.ErrorPopUp(ex);
         } finally {
             if (getDimension().isEventsInhibited())
                 getDimension().setEventsInhibited(false);
+        }
+    }
+
+    void handleClick(int centreX, int centreY, boolean rightClick, boolean ctrlDown) {
+        CityLayer layer = getSelectedLayer();
+        if (layer == null)
+            return;
+
+        if (ctrlDown && !rightClick) {
+            placeAt(centreX, centreY);
+        } else if (rightClick) {
+            if (layer.getInformationAt(uiState.xPos, uiState.yPos) != null) {
+                applyToMapAndUI(layer, setCurrentStatePosition(centreX, centreY, uiState), uiState);
+            }
+        } else {
+            onPickAt(centreX, centreY, layer);
         }
     }
 
@@ -193,15 +214,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             getDimension().setEventsInhibited(true);
         if (getPaint() instanceof LayerPaint layerPaint && layerPaint.getLayer() instanceof CityLayer cityLayer) {
             ensureLayerHasUndoManager(cityLayer, getDimension());
-            if (this.isCtrlDown() && !inverse) {
-                onPickAt(centreX, centreY, cityLayer);
-            } else if (this.isCtrlDown() && inverse) { // set position of current object to
-                applyToMapAndUI(cityLayer, setCurrentStatePosition(centreX, centreY, uiState), uiState);
-            } else if (inverse) {
-                onRemoveAt(centreX, centreY, cityLayer);
-            } else {
-                placeAt(centreX, centreY);
-            }
+            handleClick(centreX, centreY, inverse, this.isCtrlDown());
         }
         if (getDimension().isEventsInhibited())
             getDimension().setEventsInhibited(false);
@@ -315,7 +328,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
     private void onPickAt(int centreX, int centreY, CityLayer cityLayer) { // FIXME even at tiny brush sizes, the
                                                                            // closest obj should be selected.
-        int radius = getBrush().getRadius();
+        int radius = Math.max(1, getBrush().getRadius());
         int lastIndex = -1;
         float lastDist = Float.MAX_VALUE;
         int lastX = 0, lastY = 0;
@@ -343,7 +356,26 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             if (getViewAsWP() != null) {
                 getViewAsWP().refreshTilesForLayer(getSelectedLayer(), false);
             }
+        } else {
+            deselect(cityLayer);
         }
+    }
+
+    private void deselect(CityLayer layer) {
+        layer.setSelected(null);
+        applyToUi(new ObjectState(uiState.rotation, uiState.mirrored, uiState.objectIndex,
+                Integer.MAX_VALUE, Integer.MAX_VALUE));
+        if (getViewAsWP() != null)
+            getViewAsWP().refreshTilesForLayer(layer, false);
+    } 
+
+    private void deleteSelected() {
+        CityLayer layer = getSelectedLayer();
+        if (layer == null || layer.getInformationAt(uiState.xPos, uiState.yPos) == null)
+            return;
+
+        layer.removeDataAt(getDimension(), uiState.xPos, uiState.yPos);
+        deselect(layer);
     }
 
     private void onRemoveAt(int centreX, int centreY, CityLayer cityLayer) { // FIXME respect brush shape (round or

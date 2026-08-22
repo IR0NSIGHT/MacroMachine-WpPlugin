@@ -141,6 +141,27 @@ class CityEditToolOperationTest
         ObjectState movedState = layer.getInformationAt(100, 99);
         assertNotNull(movedState);
         assertEquals(randomisedState.objectIndex, movedState.objectIndex);
+
+        operation.handleClick(100, 99, false, false);
+        operation.handleClick(400, 400, false, false);
+        assertNotNull(layer.getInformationAt(100, 99));
+
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+        operation.handleKeyInteraction(KeyEvent.VK_X);
+        operation.handleKeyInteraction(KeyEvent.VK_Q);
+        assertNull(layer.getInformationAt(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        assertNull(layer.getInformationAt(Integer.MAX_VALUE, Integer.MAX_VALUE - 1));
+
+        operation.handleClick(200, 200, false, true);
+        assertNotNull(layer.getInformationAt(200, 200));
+        operation.handleClick(200, 200, false, false);
+        operation.handleClick(201, 200, true, false);
+        assertNull(layer.getInformationAt(200, 200));
+        assertNotNull(layer.getInformationAt(201, 200));
+
+        operation.handleKeyInteraction(KeyEvent.VK_DELETE);
+        assertNull(layer.getInformationAt(201, 200));
     }
 
     private static CityLayer layerWithObjects() {

@@ -67,6 +67,10 @@ public class CityLayer extends CustomLayer implements UndoListener
     public void setSelected(ObjectState state) {
         WPObject object = getObjectForState(state);
         if (object == null) {
+            if (renderer == null) {
+                renderer = new CityLayerRenderer(this);
+            }
+            renderer.setCurrentSelectBBX(null);
             return;
         }
         Point3i dim = object.getDimensions();
