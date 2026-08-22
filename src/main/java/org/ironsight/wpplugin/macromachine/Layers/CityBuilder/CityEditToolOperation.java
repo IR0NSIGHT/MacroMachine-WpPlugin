@@ -111,6 +111,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             var oldState = uiState;
             ObjectState newState;
             switch (keyCode) {
+                case KeyEvent.VK_Q -> newState = randomizeState(oldState);
                 case KeyEvent.VK_W -> newState = setCurrentStatePosition(oldState.xPos, oldState.yPos - 1, oldState);
                 case KeyEvent.VK_S -> newState = setCurrentStatePosition(oldState.xPos, oldState.yPos + 1, oldState);
                 case KeyEvent.VK_A -> newState = setCurrentStatePosition(oldState.xPos - 1, oldState.yPos, oldState);
@@ -120,7 +121,13 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                     newState = setIsMirrored(!oldState.mirrored, oldState);
                 default -> newState = oldState;
             }
-            applyToMapAndUI(getSelectedLayer(), newState, oldState);
+            CityLayer layer = getSelectedLayer();
+            if (keyCode == KeyEvent.VK_Q && layer != null
+                    && layer.getInformationAt(oldState.xPos, oldState.yPos) == null) {
+                applyToUi(newState);
+            } else {
+                applyToMapAndUI(layer, newState, oldState);
+            }
         } catch (Exception ex) {
             GlobalActionPanel.ErrorPopUp(ex);
         } finally {
@@ -142,7 +149,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
      * @param direction
      *            up (dir<0) or down (dir>0) wheel
      */
-    private void onMouseWheel(int direction) {
+    void onMouseWheel(int direction) {
         int max = optionsPanel.getObjectCount();
         if (max == 0)
             return;
@@ -150,7 +157,12 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         int nextIdx = Math.clamp(oldState.objectIndex + direction, 0, max - 1);
         System.out.println("change index by direction " + direction);
         var newState = setSelectedObjectIndex(nextIdx, oldState);
-        applyToUi(newState);
+        CityLayer layer = getSelectedLayer();
+        if (layer != null && layer.getInformationAt(oldState.xPos, oldState.yPos) == null) {
+            applyToUi(newState);
+        } else {
+            applyToMapAndUI(layer, newState, oldState);
+        }
     }
 
     @Override
@@ -345,26 +357,22 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     }
 
     private void onAddAt(int centreX, int centreY, CityLayer cityLayer) {
-        // add new object
         var newState = setCurrentStatePosition(centreX, centreY, uiState);
-
-        // set position
         applyToMapAndUI(cityLayer, newState, null);
+    }
 
-        // ----------- set state for next object -----------
-        var nextUiState = newState;
+    private ObjectState randomizeState(ObjectState oldState) {
+        ObjectState newState = oldState;
         if (placementOptions.randomRotate()) {
-            nextUiState = setRotation(CityLayer.Direction.fromCompass(random.nextInt(4) * 90), nextUiState);
+            newState = setRotation(CityLayer.Direction.fromCompass(random.nextInt(4) * 90), newState);
         }
-
         if (placementOptions.randomSelect()) {
-            nextUiState = setSelectedObjectIndex(random.nextInt(optionsPanel.getObjectCount()), nextUiState);
+            newState = setSelectedObjectIndex(random.nextInt(optionsPanel.getObjectCount()), newState);
         }
-
         if (placementOptions.randomMirror()) {
-            nextUiState = setIsMirrored(random.nextBoolean(), nextUiState);
+            newState = setIsMirrored(random.nextBoolean(), newState);
         }
-        applyToUi(nextUiState);
+        return newState;
     }
 
     private ObjectState setRotation(CityLayer.Direction rotation, ObjectState oldState) {
@@ -388,7 +396,14 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     }
 
     private void onObjectSelectionChanged(int index) {
-        applyToUi(setSelectedObjectIndex(index, uiState));
+        ObjectState oldState = uiState;
+        ObjectState newState = setSelectedObjectIndex(index, oldState);
+        CityLayer layer = getSelectedLayer();
+        if (layer != null && layer.getInformationAt(oldState.xPos, oldState.yPos) != null) {
+            applyToMapAndUI(layer, newState, oldState);
+        } else {
+            applyToUi(newState);
+        }
     }
 
     private void setUseHighlightColors(boolean selected) {

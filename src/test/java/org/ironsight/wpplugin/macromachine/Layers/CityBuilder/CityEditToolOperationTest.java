@@ -107,7 +107,7 @@ class CityEditToolOperationTest
     }
 
     @Test
-    void movingRandomisedPlacementKeepsItsObjectType() throws Exception {
+    void randomisationIsAppliedOnlyWhenRequestedAndMovementKeepsObjectType() throws Exception {
         CityLayer layer = layerWithObjects();
         Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500),
                 -256, 512, 70, 123456789, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
@@ -124,12 +124,23 @@ class CityEditToolOperationTest
 
         ObjectState placedState = layer.getInformationAt(100, 100);
         assertNotNull(placedState);
+        assertEquals(0, placedState.objectIndex);
+
+        operation.onMouseWheel(1);
+        ObjectState wheelSelectedState = layer.getInformationAt(100, 100);
+        assertNotNull(wheelSelectedState);
+        assertEquals(1, wheelSelectedState.objectIndex);
+
+        operation.handleKeyInteraction(KeyEvent.VK_Q);
+        ObjectState randomisedState = layer.getInformationAt(100, 100);
+        assertNotNull(randomisedState);
+        assertEquals(2, randomisedState.objectIndex);
 
         operation.handleKeyInteraction(KeyEvent.VK_W);
         assertNull(layer.getInformationAt(100, 100));
         ObjectState movedState = layer.getInformationAt(100, 99);
         assertNotNull(movedState);
-        assertEquals(placedState.objectIndex, movedState.objectIndex);
+        assertEquals(randomisedState.objectIndex, movedState.objectIndex);
     }
 
     private static CityLayer layerWithObjects() {
