@@ -38,14 +38,16 @@ class OptionsPanel extends JPanel
 
             """;
 
-    private final JPanel contentPanel = new ScrollablePanel();
+    private final JPanel layerContentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 8));
     private final JList<WPObject> list = new JList<>();
     private final JLabel warningLabel = new JLabel("Please select a city layer");
+    private JPanel checkboxPanel;
     private final JCheckBox randomMirroredCheckBox = new JCheckBox("random mirrored");
     private final JCheckBox randomSelectCheckBox = new JCheckBox("random select");
     private final JCheckBox randomRotateCheckBox = new JCheckBox("random rotate");
     private final JCheckBox useHighlightColorsCheckBox = new JCheckBox("use highlight colors");
     private JLabel previewPanel;
+    private JScrollPane listPanel;
     private final Consumer<CityEditToolOperation.PlacementOptions> placementOptionsChanged;
     private final Consumer<Integer> objectSelectionChanged;
     private final Consumer<Boolean> highlightColorsChanged;
@@ -94,18 +96,14 @@ class OptionsPanel extends JPanel
     }
 
     void showLayer(boolean hasLayer) {
-        warningLabel.setVisible(!hasLayer);
-        contentPanel.setVisible(hasLayer);
+        CardLayout layout = (CardLayout) getLayout();
+        layout.show(this, hasLayer ? "content" : "warning");
         revalidate();
         repaint();
     }
 
     private void init() {
-        setLayout(new BorderLayout());
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        add(new JScrollPane(contentPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
-        add(warningLabel, BorderLayout.SOUTH);
+        setLayout(new CardLayout());
 
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setCellRenderer(new WPObjectListCellRenderer());
@@ -125,44 +123,33 @@ class OptionsPanel extends JPanel
         useHighlightColorsCheckBox
                 .addActionListener(event -> highlightColorsChanged.accept(useHighlightColorsCheckBox.isSelected()));
 
-        contentPanel.add(getHelpButton(HELP_TITLE, HELP_TEXT));
-        contentPanel.add(randomRotateCheckBox);
-        contentPanel.add(randomSelectCheckBox);
-        contentPanel.add(randomMirroredCheckBox);
-        contentPanel.add(useHighlightColorsCheckBox);
+        checkboxPanel = new JPanel(new BorderLayout());
+        checkboxPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
+        checkboxPanel.setPreferredSize(new java.awt.Dimension(200, 150));
+        checkboxPanel.setMinimumSize(new java.awt.Dimension(200, 150));
+        checkboxPanel.setMaximumSize(new java.awt.Dimension(200, 150));
+        checkboxPanel.add(getHelpButton(HELP_TITLE, HELP_TEXT), BorderLayout.NORTH);
+        JPanel checkboxGrid = new JPanel(new GridLayout(0, 1));
+        checkboxGrid.add(randomRotateCheckBox);
+        checkboxGrid.add(randomSelectCheckBox);
+        checkboxGrid.add(randomMirroredCheckBox);
+        checkboxGrid.add(useHighlightColorsCheckBox);
+        checkboxPanel.add(checkboxGrid, BorderLayout.CENTER);
+
         previewPanel = getPreviewPanel();
-        contentPanel.add(previewPanel);
-        JScrollPane scrollPane = new JScrollPane(list);
-        scrollPane.setMaximumSize(new java.awt.Dimension(1000, 300));
-        contentPanel.add(scrollPane);
-    }
+        previewPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
+        listPanel = new JScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        listPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
+        listPanel.setPreferredSize(new java.awt.Dimension(200, 200));
+        listPanel.setMinimumSize(new java.awt.Dimension(200, 200));
+        listPanel.setMaximumSize(new java.awt.Dimension(200, 200));
 
-    private static class ScrollablePanel extends JPanel implements Scrollable
-    {
-        @Override
-        public Dimension getPreferredScrollableViewportSize() {
-            return getPreferredSize();
-        }
-
-        @Override
-        public int getScrollableUnitIncrement(Rectangle visibleRectangle, int orientation, int direction) {
-            return 16;
-        }
-
-        @Override
-        public int getScrollableBlockIncrement(Rectangle visibleRectangle, int orientation, int direction) {
-            return Math.max(visibleRectangle.height - 16, 16);
-        }
-
-        @Override
-        public boolean getScrollableTracksViewportWidth() {
-            return true;
-        }
-
-        @Override
-        public boolean getScrollableTracksViewportHeight() {
-            return false;
-        }
+        layerContentPanel.add(checkboxPanel);
+        layerContentPanel.add(previewPanel);
+        layerContentPanel.add(listPanel);
+        add(layerContentPanel, "content");
+        add(warningLabel, "warning");
     }
 
     private void notifyPlacementOptionsChanged() {
@@ -172,8 +159,6 @@ class OptionsPanel extends JPanel
 
     private JLabel getPreviewPanel() {
         JLabel preview = new JLabel() {
-            private int width = 100;
-
             @Override
             public void paintComponent(Graphics graphics) {
                 super.paintComponent(graphics);
@@ -184,21 +169,27 @@ class OptionsPanel extends JPanel
                 Image original = layer.getSchematicImage(state);
                 if (original == null)
                     return;
-                int scale = Math.max(100, getHeight()) / original.getHeight(null);
-                Image image = original.getScaledInstance(original.getWidth(null) * scale,
-                        original.getHeight(null) * scale, Image.SCALE_REPLICATE);
-                width = image.getWidth(null);
-                graphics.drawImage(image, 0, 0, null);
+
+                int availableWidth = Math.max(1, getWidth() - 8);
+                int availableHeight = Math.max(1, getHeight() - 8);
+                double scale = Math.min((double) availableWidth / original.getWidth(null),
+                        (double) availableHeight / original.getHeight(null));
+                int imageWidth = Math.max(1, (int) Math.round(original.getWidth(null) * scale));
+                int imageHeight = Math.max(1, (int) Math.round(original.getHeight(null) * scale));
+                int x = (getWidth() - imageWidth) / 2;
+                int y = (getHeight() - imageHeight) / 2;
+                graphics.drawImage(original, x, y, imageWidth, imageHeight, null);
             }
 
             @Override
             public java.awt.Dimension getPreferredSize() {
-                return new java.awt.Dimension(width, Math.max(100, getHeight()));
+                return new java.awt.Dimension(200, 200);
             }
         };
-        preview.setPreferredSize(new java.awt.Dimension(50, 50));
-        preview.setMaximumSize(new java.awt.Dimension(300, 300));
-        preview.setMinimumSize(new java.awt.Dimension(50, 50));
+        preview.setPreferredSize(new java.awt.Dimension(200, 200));
+        preview.setMinimumSize(new java.awt.Dimension(200, 200));
+        preview.setMaximumSize(new java.awt.Dimension(200, 200));
         return preview;
     }
+
 }
