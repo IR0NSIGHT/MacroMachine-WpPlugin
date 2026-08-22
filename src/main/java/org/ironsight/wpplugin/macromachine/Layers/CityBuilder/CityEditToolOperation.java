@@ -621,14 +621,10 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                 }
 
                 if (mapView != null && dragStartWorld != null && dragEndWorld != null) {
-                    int side = Math.max(Math.abs(dragEndWorld.x - dragStartWorld.x),
-                            Math.abs(dragEndWorld.y - dragStartWorld.y));
-                    int endX = dragStartWorld.x + (dragEndWorld.x < dragStartWorld.x ? -side : side);
-                    int endY = dragStartWorld.y + (dragEndWorld.y < dragStartWorld.y ? -side : side);
-                    Rectangle worldSquare = new Rectangle(Math.min(dragStartWorld.x, endX),
-                            Math.min(dragStartWorld.y, endY), Math.abs(endX - dragStartWorld.x) + 1,
-                            Math.abs(endY - dragStartWorld.y) + 1);
-                    Rectangle rectangle = mapView.worldToView(worldSquare);
+                    Rectangle worldSelection = new Rectangle(Math.min(dragStartWorld.x, dragEndWorld.x),
+                            Math.min(dragStartWorld.y, dragEndWorld.y), Math.abs(dragEndWorld.x - dragStartWorld.x) + 1,
+                            Math.abs(dragEndWorld.y - dragStartWorld.y) + 1);
+                    Rectangle rectangle = mapView.worldToView(worldSelection);
                     g.setColor(BORDER);
                     g.drawRect(rectangle.x, rectangle.y, rectangle.width - 1, rectangle.height - 1);
                 }
