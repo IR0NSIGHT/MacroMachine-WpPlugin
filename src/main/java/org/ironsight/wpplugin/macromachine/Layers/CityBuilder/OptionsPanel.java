@@ -12,7 +12,7 @@ import javax.swing.*;
 import org.pepsoft.worldpainter.layers.bo2.WPObjectListCellRenderer;
 import org.pepsoft.worldpainter.objects.WPObject;
 
-class OptionsPanel extends JPanel implements Scrollable
+class OptionsPanel extends JPanel
 {
     private static final String HELP_TITLE = "City Editor";
     private static final String HELP_TEXT = """
@@ -82,6 +82,7 @@ class OptionsPanel extends JPanel implements Scrollable
 
     void setSelectedIndex(int index) {
         list.setSelectedIndex(index);
+        list.ensureIndexIsVisible(index);
         if (previewPanel != null)
             previewPanel.repaint();
     }
@@ -104,7 +105,7 @@ class OptionsPanel extends JPanel implements Scrollable
     }
 
     private void init() {
-        setLayout(new ResponsiveFlowLayout(FlowLayout.CENTER, 8, 8));
+        setLayout(new SizingFlowLayout(FlowLayout.CENTER, 8, 8));
 
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setCellRenderer(new WPObjectListCellRenderer());
@@ -125,7 +126,6 @@ class OptionsPanel extends JPanel implements Scrollable
                 .addActionListener(event -> highlightColorsChanged.accept(useHighlightColorsCheckBox.isSelected()));
 
         checkboxPanel = new JPanel(new BorderLayout());
-        checkboxPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
         checkboxPanel.setPreferredSize(new java.awt.Dimension(200, 150));
         checkboxPanel.setMinimumSize(new java.awt.Dimension(200, 150));
         checkboxPanel.setMaximumSize(new java.awt.Dimension(200, 150));
@@ -138,10 +138,8 @@ class OptionsPanel extends JPanel implements Scrollable
         checkboxPanel.add(checkboxGrid, BorderLayout.CENTER);
 
         previewPanel = getPreviewPanel();
-        previewPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
         listPanel = new JScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        listPanel.setBorder(BorderFactory.createLineBorder(Color.RED));
         listPanel.setPreferredSize(new java.awt.Dimension(200, 200));
         listPanel.setMinimumSize(new java.awt.Dimension(200, 200));
         listPanel.setMaximumSize(new java.awt.Dimension(200, 200));
@@ -193,62 +191,45 @@ class OptionsPanel extends JPanel implements Scrollable
         return preview;
     }
 
-    @Override
-    public java.awt.Dimension getPreferredScrollableViewportSize() {
-        return getPreferredSize();
-    }
-
-    @Override
-    public int getScrollableUnitIncrement(Rectangle visibleRectangle, int orientation, int direction) {
-        return 16;
-    }
-
-    @Override
-    public int getScrollableBlockIncrement(Rectangle visibleRectangle, int orientation, int direction) {
-        return Math.max(visibleRectangle.height - 16, 16);
-    }
-
-    @Override
-    public boolean getScrollableTracksViewportWidth() {
-        return true;
-    }
-
-    @Override
-    public boolean getScrollableTracksViewportHeight() {
-        return false;
-    }
-
-    private static final class ResponsiveFlowLayout extends FlowLayout
+    private static final class SizingFlowLayout extends FlowLayout
     {
-        private ResponsiveFlowLayout(int align, int horizontalGap, int verticalGap) {
+        private static final int EXTRA_PREFERRED_WIDTH = 10;
+
+        private SizingFlowLayout(int align, int horizontalGap, int verticalGap) {
             super(align, horizontalGap, verticalGap);
         }
 
         @Override
         public Dimension preferredLayoutSize(Container parent) {
-            return calculateLayoutSize(parent, false);
+            ArrayList<Component> components = visibleComponents(parent);
+            Insets insets = parent.getInsets();
+            if (components.isEmpty())
+                return new Dimension(insets.left + insets.right, insets.top + insets.bottom);
+
+            int naturalWidth = rowWidth(components, false);
+            int availableWidth = parent.getWidth() - insets.left - insets.right;
+            int widestMinimumWidth = components.stream()
+                    .mapToInt(component -> component.getMinimumSize().width)
+                    .max()
+                    .orElse(0);
+            int layoutWidth = availableWidth > widestMinimumWidth ? availableWidth : naturalWidth;
+
+            int height = wrappedHeight(components, layoutWidth, false);
+            return new Dimension(Math.max(200,layoutWidth + insets.left + insets.right) ,
+                    height + insets.top + insets.bottom);
         }
 
         @Override
         public Dimension minimumLayoutSize(Container parent) {
-            Insets insets = parent.getInsets();
             ArrayList<Component> components = visibleComponents(parent);
+            Insets insets = parent.getInsets();
             int width = components.stream().mapToInt(component -> component.getMinimumSize().width).max().orElse(0);
             int height = components.stream().mapToInt(component -> component.getMinimumSize().height).sum()
                     + getVgap() * Math.max(0, components.size() - 1);
             return new Dimension(width + insets.left + insets.right, height + insets.top + insets.bottom);
         }
 
-        private Dimension calculateLayoutSize(Container parent, boolean minimum) {
-            Insets insets = parent.getInsets();
-            ArrayList<Component> components = visibleComponents(parent);
-            if (components.isEmpty())
-                return new Dimension(insets.left + insets.right, insets.top + insets.bottom);
-
-            int availableWidth = parent.getWidth() - insets.left - insets.right;
-            if (availableWidth <= 0)
-                availableWidth = rowWidth(components, minimum);
-
+        private int wrappedHeight(ArrayList<Component> components, int availableWidth, boolean minimum) {
             int rows = 1;
             int rowWidth = 0;
             int rowHeight = 0;
@@ -264,10 +245,14 @@ class OptionsPanel extends JPanel implements Scrollable
                 rowWidth += rowWidth == 0 ? size.width : getHgap() + size.width;
                 rowHeight = Math.max(rowHeight, size.height);
             }
-            height += rowHeight + getVgap() * (rows - 1);
+            return height + rowHeight + getVgap() * (rows + 1);
+        }
 
-            int width = parent.getWidth() > 0 ? availableWidth : rowWidth(components, minimum);
-            return new Dimension(width + insets.left + insets.right, height + insets.top + insets.bottom);
+        private int rowWidth(ArrayList<Component> components, boolean minimum) {
+            int width = 0;
+            for (Component component : components)
+                width += componentSize(component, minimum).width;
+            return width + getHgap() * Math.max(0, components.size() - 1);
         }
 
         private static ArrayList<Component> visibleComponents(Container parent) {
@@ -277,13 +262,6 @@ class OptionsPanel extends JPanel implements Scrollable
                     components.add(component);
             }
             return components;
-        }
-
-        private int rowWidth(ArrayList<Component> components, boolean minimum) {
-            int width = 0;
-            for (Component component : components)
-                width += componentSize(component, minimum).width;
-            return width + getHgap() * Math.max(0, components.size() - 1);
         }
 
         private static Dimension componentSize(Component component, boolean minimum) {
