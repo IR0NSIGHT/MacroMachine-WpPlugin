@@ -1,27 +1,111 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Random;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TestDimension;
 import org.junit.jupiter.api.Test;
-import org.pepsoft.worldpainter.BrushControl;
+import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.MapDragControl;
-import org.pepsoft.worldpainter.RadiusControl;
-import org.pepsoft.worldpainter.WorldPainterView;
 import org.pepsoft.worldpainter.brushes.SymmetricBrush;
 import org.pepsoft.worldpainter.objects.GenericObject;
 import org.pepsoft.worldpainter.objects.WPObject;
 import org.pepsoft.minecraft.Material;
 import org.pepsoft.worldpainter.painting.NibbleLayerPaint;
 
+import javax.swing.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityEditToolOperationTest
 {
+
+
+    static ArrayList<WPObject> loadDevelopmentSchematics() throws IOException {
+        var resource = CityEditToolOperation.class.getResource("/CityBuilder/Houses");
+        if (resource == null)
+            throw new IOException("Development schematic resources were not found: /CityBuilder/Houses");
+
+        try {
+            Path directory = Paths.get(resource.toURI());
+            try (var paths = Files.list(directory)) {
+                ArrayList<WPObject> schematics = new ArrayList<>();
+                var provider = new DefaultCustomObjectProvider();
+                paths.filter(Files::isRegularFile)
+                        .filter(path -> path.getFileName().toString().toLowerCase().endsWith(".schem"))
+                        .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                        .forEach(path -> {
+                            try {
+                                schematics.add(provider.loadObject(path.toFile()));
+                            } catch (IOException exception) {
+                                throw new DevelopmentSchematicLoadException(path, exception);
+                            }
+                        });
+                if (schematics.isEmpty())
+                    throw new IOException("No development schematics found in /CityBuilder/Houses");
+                return schematics;
+            } catch (DevelopmentSchematicLoadException exception) {
+                throw exception.getIOException();
+            }
+        } catch (URISyntaxException exception) {
+            throw new IOException("Could not resolve development schematic resources", exception);
+        }
+    }
+
+    private static class DevelopmentSchematicLoadException extends RuntimeException
+    {
+        private final IOException exception;
+
+        DevelopmentSchematicLoadException(Path path, IOException exception) {
+            super("Could not load development schematic: " + path, exception);
+            this.exception = exception;
+        }
+
+        IOException getIOException() {
+            return exception;
+        }
+    }
+
+
+    public static void main(String[] args) throws IOException {
+        // set up layer
+        CityLayer layer = new CityLayer("test-city-layer", "this is a description");
+        layer.setObjectList(loadDevelopmentSchematics());
+
+        // set up operation
+        var op = new CityEditToolOperation();
+        op.setBrush(SymmetricBrush.CONSTANT_SQUARE);
+        op.setPaint(new NibbleLayerPaint(layer));
+
+        JDialog dialog = new JDialog((Frame) null, "CityLayer Options");
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.add(op.getOptionsPanel());
+        dialog.setResizable(false);
+        dialog.setSize(220, 250);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+    }
+
+    @Test
+    void developmentSchematicsLoadOnlyTopLevelFixtures() throws Exception {
+        var schematics = loadDevelopmentSchematics();
+
+        assertEquals(8, schematics.size());
+        assertEquals("Ektelion - Ukrainian house 1-converted.schem",
+                schematics.get(0).getAttribute(WPObject.ATTRIBUTE_FILE).getName());
+        assertEquals("Ektelion - Ukrainian house 9-converted.schem",
+                schematics.get(7).getAttribute(WPObject.ATTRIBUTE_FILE).getName());
+        schematics.forEach(schematic -> assertTrue(schematic.getDimensions().x > 0));
+    }
+
     @Test
     void directKeyboardFlowMovesAndTransformsRandomisedPlacement() throws Exception {
         CityLayer layer = layerWithObjects();

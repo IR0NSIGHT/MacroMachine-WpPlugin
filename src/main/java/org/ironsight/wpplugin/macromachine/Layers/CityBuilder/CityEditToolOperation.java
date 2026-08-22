@@ -8,7 +8,12 @@ import java.beans.PropertyVetoException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Random;
 import javax.swing.*;
@@ -79,37 +84,6 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             instance.updatePanel();
     }
 
-    public static void main(String[] args) throws IOException {
-        // set up layer
-        CityLayer layer = new CityLayer("test-city-layer", "this is a description");
-        File dir = new File(
-                "C:/Users/Max1M/curseforge/minecraft/Instances/neoforge 1.12.1 camboi shaders/config/worldedit/schematics");
-        File[] files = dir.listFiles();
-        ArrayList<WPObject> schematics = new ArrayList<>();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isFile()) {
-                    assert file.exists();
-                    WPObject schematic = new DefaultCustomObjectProvider().loadObject(file);
-                    schematics.add(schematic);
-                }
-            }
-        }
-        layer.setObjectList(schematics);
-
-        // set up operation
-        var op = new CityEditToolOperation();
-        op.setBrush(SymmetricBrush.CONSTANT_SQUARE);
-        op.setPaint(new NibbleLayerPaint(layer));
-
-        JDialog dialog = new JDialog((Frame) null, "CityLayer Options");
-        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        dialog.add(op.getOptionsPanel());
-        dialog.setResizable(false);
-        dialog.setSize(220, 250);
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
-    }
 
     public static UndoManager getUndoManager(Dimension obj) throws IllegalAccessException, NoSuchFieldException {
         Field f = obj.getClass().getDeclaredField("undoManager");
