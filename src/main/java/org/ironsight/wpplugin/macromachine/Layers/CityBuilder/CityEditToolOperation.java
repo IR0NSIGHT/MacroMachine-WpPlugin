@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyVetoException;
 import java.io.File;
@@ -48,6 +49,15 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
     private Paint paint;
     private CityLayer lastLayer = null;
+
+    private WorldPainterView overlayView;
+    private final JComponent dragOverlay = new DragOverlay();
+    private final java.awt.event.ComponentAdapter overlayResizeListener = new java.awt.event.ComponentAdapter() {
+        @Override
+        public void componentResized(java.awt.event.ComponentEvent event) {
+            resizeDragOverlay();
+        }
+    };
 
     public CityEditToolOperation() {
         super("City Tool", "Edit city layers using this tool", "city-edit-tool-operation");
@@ -187,6 +197,60 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     public void interrupt() {
     }
 
+    private void attachDragOverlay() {
+        WorldPainterView view = getView();
+        if (view == null || overlayView == view)
+            return;
+        detachDragOverlay();
+        overlayView = view;
+        if (view != null) {
+            ((DragOverlay) dragOverlay).setMapView(view);
+            view.addComponentListener(overlayResizeListener);
+            view.add(dragOverlay);
+            view.setComponentZOrder(dragOverlay, 0);
+            resizeDragOverlay();
+        }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent event) {
+        if (SwingUtilities.isLeftMouseButton(event)) {
+            ((DragOverlay) dragOverlay).startDrag(event.getPoint());
+        }
+        super.mousePressed(event);
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent event) {
+        if (((DragOverlay) dragOverlay).isDragging()) {
+            ((DragOverlay) dragOverlay).updateDrag(event.getPoint());
+        }
+        super.mouseDragged(event);
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent event) {
+        super.mouseReleased(event);
+        if (SwingUtilities.isLeftMouseButton(event)) {
+            ((DragOverlay) dragOverlay).endDrag();
+        }
+    }
+
+    private void resizeDragOverlay() {
+        if (overlayView != null)
+            dragOverlay.setBounds(0, 0, overlayView.getWidth(), overlayView.getHeight());
+    }
+
+    private void detachDragOverlay() {
+        if (overlayView == null)
+            return;
+        overlayView.removeComponentListener(overlayResizeListener);
+        overlayView.remove(dragOverlay);
+        overlayView.repaint();
+        ((DragOverlay) dragOverlay).setMapView(null);
+        overlayView = null;
+    }
+
     @Override
     public JPanel getOptionsPanel() {
         return optionsPanel;
@@ -230,7 +294,15 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     @Override
     protected void activate() throws PropertyVetoException {
         super.activate();
+        attachDragOverlay();
         updatePanel();
+    }
+
+    @Override
+    protected void deactivate() {
+        ((DragOverlay) dragOverlay).endDrag();
+        detachDragOverlay();
+        super.deactivate();
     }
 
     @Override
@@ -454,5 +526,94 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             return;
         this.paint = paint;
         paintChanged(paint);
+    }
+
+    private static class DragOverlay extends JComponent
+    {
+        private static final int CELL_SIZE = 10;
+        private static final Color LIGHT_CELL = new Color(255, 255, 255, 80);
+        private static final Color DARK_CELL = new Color(255, 0, 0, 80);
+        private static final Color BORDER = new Color(255, 255, 255, 180);
+
+        private WorldPainterView mapView;
+        private Point dragStart;
+        private Point dragEnd;
+
+        DragOverlay() {
+            setOpaque(false);
+        }
+
+        @Override
+        public boolean contains(int x, int y) {
+            return false;
+        }
+
+        void startDrag(Point point) {
+            dragStart = point;
+            dragEnd = point;
+            repaint();
+        }
+
+        void updateDrag(Point point) {
+            dragEnd = point;
+            repaint();
+        }
+
+        void endDrag() {
+            dragStart = null;
+            dragEnd = null;
+            repaint();
+        }
+
+        boolean isDragging() {
+            return dragStart != null;
+        }
+
+        void setMapView(WorldPainterView mapView) {
+            this.mapView = mapView;
+            repaint();
+        }
+
+        @Override
+        public void paint(Graphics graphics) {
+            // Set a breakpoint here to verify that Swing paints this child overlay.
+            super.paint(graphics);
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            super.paintComponent(graphics);
+            Graphics2D g = (Graphics2D) graphics.create();
+            try {
+                if (mapView != null) {
+                    Rectangle worldBounds = mapView.viewToWorld(0, 0, getWidth(), getHeight());
+                    int startX = Math.floorDiv(worldBounds.x, CELL_SIZE) * CELL_SIZE;
+                    int startY = Math.floorDiv(worldBounds.y, CELL_SIZE) * CELL_SIZE;
+                    int endX = worldBounds.x + worldBounds.width + CELL_SIZE;
+                    int endY = worldBounds.y + worldBounds.height + CELL_SIZE;
+
+                    for (int worldY = startY; worldY < endY; worldY += CELL_SIZE) {
+                        for (int worldX = startX; worldX < endX; worldX += CELL_SIZE) {
+                            Point topLeft = mapView.worldToView(worldX, worldY);
+                            Point bottomRight = mapView.worldToView(worldX + CELL_SIZE, worldY + CELL_SIZE);
+                            g.setColor((Math.floorDiv(worldX, CELL_SIZE) + Math.floorDiv(worldY, CELL_SIZE)) % 2 == 0
+                                    ? LIGHT_CELL
+                                    : DARK_CELL);
+                            g.fillRect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+                        }
+                    }
+                }
+
+                if (dragStart != null && dragEnd != null) {
+                    Rectangle rectangle = new Rectangle(Math.min(dragStart.x, dragEnd.x),
+                            Math.min(dragStart.y, dragEnd.y), Math.abs(dragEnd.x - dragStart.x) + 1,
+                            Math.abs(dragEnd.y - dragStart.y) + 1);
+                    g.setColor(BORDER);
+                    g.drawRect(rectangle.x, rectangle.y, rectangle.width - 1, rectangle.height - 1);
+                }
+            } finally {
+                g.dispose();
+            }
+        }
     }
 }
