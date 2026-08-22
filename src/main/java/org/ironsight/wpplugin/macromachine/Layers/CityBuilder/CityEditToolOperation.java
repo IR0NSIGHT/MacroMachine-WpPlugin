@@ -1,7 +1,5 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
-import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
-
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -35,43 +33,13 @@ import org.pepsoft.worldpainter.painting.Paint;
  */
 public class CityEditToolOperation extends AbstractBrushOperation implements PaintOperation, KeyEventDispatcher
 {
-    private static final String HelpTitle = "City Editor";
-    private static final String HELPTEXT = """
-            this tool is for editing City Layers, a new special type of Custom Object Layer.
-            1. Create or import a city layer (make sure your schematic offsets are centered and not 0,0,0)
-            2. select the city layer
-            3. select the city editor tool
-            4. select a custom brush (the one with the little arrow showing the rotation)
-            - Left click to place a building
-            - Right click to delete all buildings inside the brush area
-
-            - CTRL + left click to select a building type on the map
-            - CTRL + right click to move last placed building to new position
-
-            - SHIFT + mousewheel to scroll the building type list
-            - ALT + mousewheel to rotate brush
-
-            - X key : mirror last selected building on map
-            - C key : rotate last selected building on map
-            - AWSD key : move last selected building on map
-
-            Warning: This layer is NOT compatible with undo/redo. Do NOT use undo/redo with this layer.
-
-            """;
     private static CityEditToolOperation instance;
     record PlacementOptions(boolean randomRotate, boolean randomSelect, boolean randomMirror)
     {
     }
 
-    private final JPanel optionsPanel;
-    private final JPanel contentPanel;
-    private final JList<WPObject> list;
-    private final JLabel warningLabel;
+    private final OptionsPanel optionsPanel;
     Random random = new Random();
-    JCheckBox isRandomMirroredCheckbox;
-    JCheckBox isRandomSelectCheckBox;
-    JCheckBox isRandomRotateCheckBox;
-    JCheckBox useHighlightColorsCheckbox;
     private ObjectState uiState = new ObjectState(CityLayer.Direction.NORTH, false, 0, Integer.MAX_VALUE,
             Integer.MAX_VALUE);
     private PlacementOptions placementOptions = new PlacementOptions(false, false, false);
@@ -82,12 +50,9 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     public CityEditToolOperation() {
         super("City Tool", "Edit city layers using this tool", "city-edit-tool-operation");
         instance = this;
-        optionsPanel = new JPanel();
-        contentPanel = new JPanel();
-        list = new JList<>();
-        warningLabel = new JLabel("Please select a city layer");
+        optionsPanel = new OptionsPanel(this::setPlacementOptions, this::onObjectSelectionChanged,
+                this::setUseHighlightColors, this::getSelectedLayer, () -> uiState);
 
-        init();
         Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
             if (e instanceof MouseWheelEvent ev && isActive()
                     && (ev.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0) {
@@ -107,9 +72,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
     void setPlacementOptions(PlacementOptions placementOptions) {
         this.placementOptions = Objects.requireNonNull(placementOptions);
-        isRandomRotateCheckBox.setSelected(placementOptions.randomRotate());
-        isRandomSelectCheckBox.setSelected(placementOptions.randomSelect());
-        isRandomMirroredCheckbox.setSelected(placementOptions.randomMirror());
+        optionsPanel.setPlacementOptions(placementOptions);
     }
 
     public static void updateInstance() {
@@ -210,7 +173,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
      * @param direction up (dir<0) or down (dir>0) wheel
      */
     private void onMouseWheel(int direction) {
-        int max = list.getModel().getSize();
+        int max = optionsPanel.getObjectCount();
         if (max == 0)
             return;
         var oldState = uiState;
@@ -345,7 +308,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         });
 
         // update list
-        list.setSelectedIndex(uiState.objectIndex);
+        optionsPanel.setSelectedIndex(uiState.objectIndex);
 
         optionsPanel.revalidate();
         optionsPanel.repaint();
@@ -423,7 +386,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         }
 
         if (placementOptions.randomSelect()) {
-            nextUiState = setSelectedObjectIndex(random.nextInt(list.getModel().getSize()), nextUiState);
+            nextUiState = setSelectedObjectIndex(random.nextInt(optionsPanel.getObjectCount()), nextUiState);
         }
 
         if (placementOptions.randomMirror()) {
@@ -446,10 +409,23 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private ObjectState setSelectedObjectIndex(int index, ObjectState oldState) {
         if (index == oldState.objectIndex)
             return oldState;
-        if (index < 0 || index >= list.getModel().getSize())
+        if (index < 0 || index >= getSelectedLayer().getObjectList().size())
             return oldState;
 
         return new ObjectState(oldState.rotation, oldState.mirrored, index, oldState.xPos, oldState.yPos);
+    }
+
+    private void onObjectSelectionChanged(int index) {
+        applyToUi(setSelectedObjectIndex(index, uiState));
+    }
+
+    private void setUseHighlightColors(boolean selected) {
+        CityLayer layer = getSelectedLayer();
+        if (layer == null)
+            return;
+        layer.setUseHighlightColors(selected);
+        if (getViewAsWP() != null)
+            getViewAsWP().refreshTilesForLayer(layer, false);
     }
 
     /**
@@ -462,112 +438,14 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         return new ObjectState(oldState.rotation, oldState.mirrored, oldState.objectIndex, x, y);
     }
 
-    private void init() {
-        JPanel content = contentPanel;
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        optionsPanel.add(content);
-        optionsPanel.add(warningLabel);
-        list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        list.setCellRenderer(new WPObjectListCellRenderer());
-        list.addListSelectionListener(l -> {
-            if (l.getValueIsAdjusting())
-                return;
-            if (list.getSelectedIndex() != -1) {
-                var newState = setSelectedObjectIndex(list.getSelectedIndex(), uiState);
-                list.ensureIndexIsVisible(newState.objectIndex);
-                applyToUi(newState);
-            }
-        });
-
-        isRandomRotateCheckBox = new JCheckBox("random rotate");
-        isRandomRotateCheckBox.setToolTipText("Randomly rotate the brush after each use");
-        isRandomRotateCheckBox.addActionListener(l -> updatePlacementOptions());
-
-        isRandomSelectCheckBox = new JCheckBox("random select");
-        isRandomSelectCheckBox.setToolTipText("Randomly select new schematic after each use");
-        isRandomSelectCheckBox.addActionListener(l -> updatePlacementOptions());
-
-        isRandomMirroredCheckbox = new JCheckBox("random mirrored");
-        isRandomMirroredCheckbox.setToolTipText("Randomly select new schematic after each use");
-        isRandomMirroredCheckbox.addActionListener(l -> updatePlacementOptions());
-
-        useHighlightColorsCheckbox = new JCheckBox("use highlight colors");
-        useHighlightColorsCheckbox.setToolTipText("Use the layers color instead of painting the actual schematics");
-        useHighlightColorsCheckbox.addActionListener(l -> {
-            CityLayer layer = getSelectedLayer();
-            if (layer != null) {
-                layer.setUseHighlightColors(useHighlightColorsCheckbox.isSelected());
-                if (getViewAsWP() != null) {
-                    getViewAsWP().refreshTilesForLayer(layer, false);
-                }
-            }
-        });
-
-        // Put the icon into a JLabel
-        JLabel previewPanel = getPreviewPanel();
-        content.add(getHelpButton(HelpTitle, HELPTEXT));
-        content.add(isRandomRotateCheckBox);
-        content.add(isRandomSelectCheckBox);
-        content.add(isRandomMirroredCheckbox);
-        content.add(useHighlightColorsCheckbox);
-        content.add(previewPanel);
-        JScrollPane scrollPane = new JScrollPane(list);
-        scrollPane.setMaximumSize(new java.awt.Dimension(1000, 300));
-        content.add(scrollPane);
-
-        optionsPanel.revalidate();
-        optionsPanel.repaint();
-    }
-
-    private void updatePlacementOptions() {
-        placementOptions = new PlacementOptions(isRandomRotateCheckBox.isSelected(), isRandomSelectCheckBox.isSelected(),
-                isRandomMirroredCheckbox.isSelected());
-    }
-
-    private JLabel getPreviewPanel() {
-        JLabel previewPanel = new JLabel() {
-            private int width = 100;
-
-            @Override
-            public void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Image original = Objects.requireNonNull(getSelectedLayer()).getSchematicImage(uiState);
-                if (original == null)
-                    return;
-                int scale = Math.max(100, getHeight()) / original.getHeight(null);
-                Image img = original.getScaledInstance(original.getWidth(null) * scale,
-                        original.getHeight(null) * scale, Image.SCALE_REPLICATE);
-                width = img.getWidth(null);
-                g.drawImage(img, 0, 0, null);
-            }
-
-            @Override
-            public java.awt.Dimension getPreferredSize() {
-                return new java.awt.Dimension(width, Math.max(100, getHeight()));
-            }
-        };
-        previewPanel.setPreferredSize(new java.awt.Dimension(50, 50));
-        previewPanel.setMaximumSize(new java.awt.Dimension(300, 300));
-        previewPanel.setMinimumSize(new java.awt.Dimension(50, 50));
-        return previewPanel;
-    }
-
     private void updatePanel() {
         if (getPaint() instanceof LayerPaint layerPaint && layerPaint.getLayer() instanceof CityLayer cityLayer) {
-            DefaultListModel<WPObject> listModel = new DefaultListModel<>();
-            listModel.setSize(cityLayer.getObjectList().size());
-            for (int i = 0; i < listModel.getSize(); i++) {
-                listModel.setElementAt(cityLayer.getObjectList().get(i), i);
-            }
-            list.setModel(listModel);
+            optionsPanel.setObjects(cityLayer.getObjectList());
             applyToUi(setSelectedObjectIndex(0, uiState)); // some safety thing to always be inside of list bound?
-
-            warningLabel.setVisible(false);
-            contentPanel.setVisible(true);
-            useHighlightColorsCheckbox.setSelected(cityLayer.isUseHighlightColors());
+            optionsPanel.setHighlightColorsSelected(cityLayer.isUseHighlightColors());
+            optionsPanel.showLayer(true);
         } else {
-            warningLabel.setVisible(true);
-            contentPanel.setVisible(false);
+            optionsPanel.showLayer(false);
         }
         optionsPanel.revalidate();
         optionsPanel.repaint();

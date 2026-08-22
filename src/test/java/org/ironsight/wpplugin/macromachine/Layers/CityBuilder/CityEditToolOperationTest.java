@@ -35,9 +35,6 @@ class CityEditToolOperationTest
         operation.setPaint(new NibbleLayerPaint(layer));
         operation.random = new Random(1234);
         operation.setPlacementOptions(new CityEditToolOperation.PlacementOptions(true, true, true));
-        assertTrue(operation.isRandomRotateCheckBox.isSelected());
-        assertTrue(operation.isRandomSelectCheckBox.isSelected());
-        assertTrue(operation.isRandomMirroredCheckbox.isSelected());
 
 
         operation.placeAt(100, 100);
