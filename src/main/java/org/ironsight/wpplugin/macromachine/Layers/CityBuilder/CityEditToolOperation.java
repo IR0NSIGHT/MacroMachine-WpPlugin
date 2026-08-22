@@ -20,6 +20,7 @@ import java.util.Random;
 import javax.swing.*;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.pepsoft.util.swing.TiledImageViewer;
 import org.pepsoft.util.undo.UndoManager;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
@@ -52,6 +53,12 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
     private WorldPainterView overlayView;
     private final JComponent dragOverlay = new DragOverlay();
+    private TiledImageViewer.ViewListener previousViewListener;
+    private final TiledImageViewer.ViewListener overlayViewListener = changedView -> {
+        if (previousViewListener != null)
+            previousViewListener.viewChanged(changedView);
+        dragOverlay.repaint();
+    };
     private final java.awt.event.ComponentAdapter overlayResizeListener = new java.awt.event.ComponentAdapter() {
         @Override
         public void componentResized(java.awt.event.ComponentEvent event) {
@@ -75,6 +82,33 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                 }
             }
         }, AWTEvent.MOUSE_WHEEL_EVENT_MASK);
+
+        Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
+            if (!(e instanceof MouseEvent event) || !isActive() || overlayView == null)
+                return;
+            if (!SwingUtilities.isDescendingFrom(event.getComponent(), overlayView)
+                    && event.getComponent() != overlayView)
+                return;
+
+            Point viewPoint = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), overlayView);
+            DragOverlay overlay = (DragOverlay) dragOverlay;
+            switch (event.getID()) {
+                case MouseEvent.MOUSE_PRESSED -> {
+                    if (SwingUtilities.isLeftMouseButton(event))
+                        overlay.startDrag(viewPoint);
+                }
+                case MouseEvent.MOUSE_DRAGGED -> {
+                    if (overlay.isDragging())
+                        overlay.updateDrag(viewPoint);
+                }
+                case MouseEvent.MOUSE_RELEASED -> {
+                    if (SwingUtilities.isLeftMouseButton(event))
+                        overlay.endDrag();
+                }
+                default -> {
+                }
+            }
+        }, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
         KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 
@@ -205,34 +239,12 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         overlayView = view;
         if (view != null) {
             ((DragOverlay) dragOverlay).setMapView(view);
+            previousViewListener = view.getViewListener();
+            view.setViewListener(overlayViewListener);
             view.addComponentListener(overlayResizeListener);
             view.add(dragOverlay);
             view.setComponentZOrder(dragOverlay, 0);
             resizeDragOverlay();
-        }
-    }
-
-    @Override
-    public void mousePressed(MouseEvent event) {
-        if (SwingUtilities.isLeftMouseButton(event)) {
-            ((DragOverlay) dragOverlay).startDrag(event.getPoint());
-        }
-        super.mousePressed(event);
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent event) {
-        if (((DragOverlay) dragOverlay).isDragging()) {
-            ((DragOverlay) dragOverlay).updateDrag(event.getPoint());
-        }
-        super.mouseDragged(event);
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent event) {
-        super.mouseReleased(event);
-        if (SwingUtilities.isLeftMouseButton(event)) {
-            ((DragOverlay) dragOverlay).endDrag();
         }
     }
 
@@ -246,8 +258,11 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             return;
         overlayView.removeComponentListener(overlayResizeListener);
         overlayView.remove(dragOverlay);
+        if (overlayView.getViewListener() == overlayViewListener)
+            overlayView.setViewListener(previousViewListener);
         overlayView.repaint();
         ((DragOverlay) dragOverlay).setMapView(null);
+        previousViewListener = null;
         overlayView = null;
     }
 
@@ -536,8 +551,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         private static final Color BORDER = new Color(255, 255, 255, 180);
 
         private WorldPainterView mapView;
-        private Point dragStart;
-        private Point dragEnd;
+        private Point dragStartWorld;
+        private Point dragEndWorld;
 
         DragOverlay() {
             setOpaque(false);
@@ -548,25 +563,26 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             return false;
         }
 
-        void startDrag(Point point) {
-            dragStart = point;
-            dragEnd = point;
+        void startDrag(Point viewPoint) {
+            dragStartWorld = mapView != null ? mapView.viewToWorld(viewPoint) : viewPoint;
+            dragEndWorld = dragStartWorld;
             repaint();
         }
 
-        void updateDrag(Point point) {
-            dragEnd = point;
+        void updateDrag(Point viewPoint) {
+            if (mapView != null)
+                dragEndWorld = mapView.viewToWorld(viewPoint);
             repaint();
         }
 
         void endDrag() {
-            dragStart = null;
-            dragEnd = null;
+            dragStartWorld = null;
+            dragEndWorld = null;
             repaint();
         }
 
         boolean isDragging() {
-            return dragStart != null;
+            return dragStartWorld != null;
         }
 
         void setMapView(WorldPainterView mapView) {
@@ -604,10 +620,15 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                     }
                 }
 
-                if (dragStart != null && dragEnd != null) {
-                    Rectangle rectangle = new Rectangle(Math.min(dragStart.x, dragEnd.x),
-                            Math.min(dragStart.y, dragEnd.y), Math.abs(dragEnd.x - dragStart.x) + 1,
-                            Math.abs(dragEnd.y - dragStart.y) + 1);
+                if (mapView != null && dragStartWorld != null && dragEndWorld != null) {
+                    int side = Math.max(Math.abs(dragEndWorld.x - dragStartWorld.x),
+                            Math.abs(dragEndWorld.y - dragStartWorld.y));
+                    int endX = dragStartWorld.x + (dragEndWorld.x < dragStartWorld.x ? -side : side);
+                    int endY = dragStartWorld.y + (dragEndWorld.y < dragStartWorld.y ? -side : side);
+                    Rectangle worldSquare = new Rectangle(Math.min(dragStartWorld.x, endX),
+                            Math.min(dragStartWorld.y, endY), Math.abs(endX - dragStartWorld.x) + 1,
+                            Math.abs(endY - dragStartWorld.y) + 1);
+                    Rectangle rectangle = mapView.worldToView(worldSquare);
                     g.setColor(BORDER);
                     g.drawRect(rectangle.x, rectangle.y, rectangle.width - 1, rectangle.height - 1);
                 }
