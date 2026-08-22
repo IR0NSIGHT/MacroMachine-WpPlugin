@@ -32,7 +32,6 @@ import org.pepsoft.worldpainter.painting.NibbleLayerPaint;
 import org.pepsoft.worldpainter.painting.Paint;
 
 /**
- * STARMADE MOD CREATOR: Max1M DATE: 19.08.2025 TIME: 14:54
  */
 public class CityEditToolOperation extends AbstractBrushOperation implements PaintOperation, KeyEventDispatcher
 {
@@ -60,22 +59,22 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
             """;
     private static CityEditToolOperation instance;
+    record PlacementOptions(boolean randomRotate, boolean randomSelect, boolean randomMirror)
+    {
+    }
+
     private final JPanel optionsPanel;
     private final JPanel contentPanel;
     private final JList<WPObject> list;
     private final JLabel warningLabel;
     Random random = new Random();
     JCheckBox isRandomMirroredCheckbox;
-    JCheckBox randomSelectCheckBox;
-    JCheckBox rotateCheckBox;
+    JCheckBox isRandomSelectCheckBox;
+    JCheckBox isRandomRotateCheckBox;
     JCheckBox useHighlightColorsCheckbox;
     private ObjectState uiState = new ObjectState(CityLayer.Direction.NORTH, false, 0, Integer.MAX_VALUE,
             Integer.MAX_VALUE);
-    private int lastCentreX = Integer.MAX_VALUE, lastCentreY = Integer.MAX_VALUE; // FIXME are these obsolete with state
-    // carrying xy?
-    private boolean isAutoRandomRotate = false;
-    private boolean isAutoRandomSelect = false;
-    private boolean isAutoRandomMirror = false;
+    private PlacementOptions placementOptions = new PlacementOptions(false, false, false);
 
     private Paint paint;
     private CityLayer lastLayer = null;
@@ -104,6 +103,13 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
         // Add a global key event dispatcher
         manager.addKeyEventDispatcher(this);
+    }
+
+    void setPlacementOptions(PlacementOptions placementOptions) {
+        this.placementOptions = Objects.requireNonNull(placementOptions);
+        isRandomRotateCheckBox.setSelected(placementOptions.randomRotate());
+        isRandomSelectCheckBox.setSelected(placementOptions.randomSelect());
+        isRandomMirroredCheckbox.setSelected(placementOptions.randomMirror());
     }
 
     public static void updateInstance() {
@@ -160,58 +166,55 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                 return false;
             if (e.isShiftDown() || e.isControlDown() || e.isAltDown() || e.isMetaDown())
                 return false;
-            try {
-                if (!getDimension().isEventsInhibited())
-                    getDimension().setEventsInhibited(true);
-                var oldState = uiState;
-                ObjectState newState;
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_W :
-                        newState = setCurrentStatePosition(oldState.xPos, oldState.yPos - 1, oldState);
-                        break;
-                    case KeyEvent.VK_S :
-                        newState = setCurrentStatePosition(oldState.xPos, oldState.yPos + 1, oldState);
-                        break;
-
-                    case KeyEvent.VK_A :
-                        newState = setCurrentStatePosition(oldState.xPos - 1, oldState.yPos, oldState);
-                        break;
-                    case KeyEvent.VK_D :
-                        newState = setCurrentStatePosition(oldState.xPos + 1, oldState.yPos, oldState);
-                        break;
-                    case KeyEvent.VK_C :
-                        newState = setRotation(oldState.rotation.nextRotation(), oldState);
-                        break;
-
-                    case KeyEvent.VK_X : // MIRROR
-                        newState = setIsMirrored(!oldState.mirrored, oldState);
-                        break;
-                    default :
-                        newState = oldState;
-                        break;
-                }
-                applyToMapAndUI(getSelectedLayer(), newState, oldState);
-            } catch (Exception ex) {
-                GlobalActionPanel.ErrorPopUp(ex);
-            } finally {
-                if (getDimension().isEventsInhibited())
-                    getDimension().setEventsInhibited(false);
-            }
+            handleKeyInteraction(e.getKeyCode());
         }
         return false; // return false to allow other listeners to handle the event
+    }
+
+    /** Applies one unmodified keyboard interaction from the city tool. */
+    void handleKeyInteraction(int keyCode) {
+        try {
+            if (!getDimension().isEventsInhibited())
+                getDimension().setEventsInhibited(true);
+            var oldState = uiState;
+            ObjectState newState;
+            switch (keyCode) {
+                case KeyEvent.VK_W -> newState = setCurrentStatePosition(oldState.xPos, oldState.yPos - 1, oldState);
+                case KeyEvent.VK_S -> newState = setCurrentStatePosition(oldState.xPos, oldState.yPos + 1, oldState);
+                case KeyEvent.VK_A -> newState = setCurrentStatePosition(oldState.xPos - 1, oldState.yPos, oldState);
+                case KeyEvent.VK_D -> newState = setCurrentStatePosition(oldState.xPos + 1, oldState.yPos, oldState);
+                case KeyEvent.VK_C -> newState = setRotation(oldState.rotation.nextRotation(), oldState);
+                case KeyEvent.VK_X -> // MIRROR
+                        newState = setIsMirrored(!oldState.mirrored, oldState);
+                default -> newState = oldState;
+            }
+            applyToMapAndUI(getSelectedLayer(), newState, oldState);
+        } catch (Exception ex) {
+            GlobalActionPanel.ErrorPopUp(ex);
+        } finally {
+            if (getDimension().isEventsInhibited())
+                getDimension().setEventsInhibited(false);
+        }
+    }
+
+    /** Places one building at the coordinates */
+    void placeAt(int centreX, int centreY) {
+        CityLayer layer = getSelectedLayer();
+        if (layer != null)
+            onAddAt(centreX, centreY, layer);
     }
 
     /**
      * select the next schematic from the list, apply.
      *
-     * @param direction
+     * @param direction up (dir<0) or down (dir>0) wheel
      */
     private void onMouseWheel(int direction) {
         int max = list.getModel().getSize();
         if (max == 0)
             return;
         var oldState = uiState;
-        int nextIdx = Math.max(0, Math.min((oldState.objectIndex + direction), max - 1));
+        int nextIdx = Math.clamp(oldState.objectIndex + direction, 0, max - 1);
         System.out.println("change index by direction " + direction);
         var newState = setSelectedObjectIndex(nextIdx, oldState);
         applyToUi(newState);
@@ -252,7 +255,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             } else if (inverse) {
                 onRemoveAt(centreX, centreY, cityLayer);
             } else {
-                onAddAt(centreX, centreY, cityLayer);
+                placeAt(centreX,centreY);
             }
         }
         if (getDimension().isEventsInhibited())
@@ -262,7 +265,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private void ensureLayerHasUndoManager(CityLayer layer, Dimension dimension) {
         try {
             UndoManager undoManager = getUndoManager(dimension);
-            undoManager.removeListener(layer); // gotta remove otherwise we add over and over
+            undoManager.removeListener(layer); // remove otherwise we add over and over
             layer.registerLayer(undoManager);
         } catch (IllegalAccessException | NoSuchFieldException ex) {
             GlobalActionPanel.ErrorPopUp(ex);
@@ -322,7 +325,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             int desiredRadius = Math.max(dim.x, dim.y) / 2;
             if (desiredRadius != getBrush().getRadius() && getView() != null) {
                 int diff = desiredRadius - getBrush().getRadius();
-                RadiusControl control = getView().getRadiusControl();
+                BrushControl control = getView().getBrushControl();
                 if (diff > 0) {
                     for (int i = 0; i < diff; i++) {
                         control.increaseRadiusByOne();
@@ -351,7 +354,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private void applyToMapAndUI(CityLayer layer, ObjectState newState, ObjectState oldState) {
         if (newState.equals(oldState))
             return;
-        if (layer == null || newState == null)
+        if (layer == null)
             return;
         if (oldState != null)
             layer.removeDataAt(getDimension(), oldState.xPos, oldState.yPos);
@@ -365,7 +368,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         }
     }
 
-    private void onPickAt(int centreX, int centreY, CityLayer cityLayer) {
+    private void onPickAt(int centreX, int centreY, CityLayer cityLayer) { //FIXME even at tiny brush sizes, the closest obj should be selected.
         int radius = getBrush().getRadius();
         int lastIndex = -1;
         float lastDist = Float.MAX_VALUE;
@@ -390,20 +393,14 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                 return;
             applyToUi(mapState);
 
-            getSelectedLayer().setSelected(mapState);
+            cityLayer.setSelected(mapState);
             if (getViewAsWP() != null) {
                 getViewAsWP().refreshTilesForLayer(getSelectedLayer(), false);
             }
-
-            lastCentreX = lastX;
-            lastCentreY = lastY;
-        } else {
-            lastCentreX = Integer.MAX_VALUE;
-            lastCentreY = Integer.MAX_VALUE;
         }
     }
 
-    private void onRemoveAt(int centreX, int centreY, CityLayer cityLayer) {
+    private void onRemoveAt(int centreX, int centreY, CityLayer cityLayer) { //FIXME respect brush shape (round or square) + rotation
         int radius = getBrush().getRadius();
         for (int x = centreX - radius; x < centreX + radius; x++) {
             for (int y = centreY - radius; y < centreY + radius; y++) {
@@ -415,23 +412,21 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private void onAddAt(int centreX, int centreY, CityLayer cityLayer) {
         // add new object
         var newState = setCurrentStatePosition(centreX, centreY, uiState);
-        lastCentreY = centreY;
-        lastCentreX = centreX;
 
         // set position
         applyToMapAndUI(cityLayer, newState, null);
 
         // ----------- set state for next object -----------
         var nextUiState = newState;
-        if (isAutoRandomRotate) {
+        if (placementOptions.randomRotate()) {
             nextUiState = setRotation(CityLayer.Direction.fromCompass(random.nextInt(4) * 90), nextUiState);
         }
 
-        if (isAutoRandomSelect) {
+        if (placementOptions.randomSelect()) {
             nextUiState = setSelectedObjectIndex(random.nextInt(list.getModel().getSize()), nextUiState);
         }
 
-        if (isAutoRandomMirror) {
+        if (placementOptions.randomMirror()) {
             nextUiState = setIsMirrored(random.nextBoolean(), nextUiState);
         }
         applyToUi(nextUiState);
@@ -454,15 +449,14 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         if (index < 0 || index >= list.getModel().getSize())
             return oldState;
 
-        var newState = new ObjectState(oldState.rotation, oldState.mirrored, index, oldState.xPos, oldState.yPos);
-        return newState;
+        return new ObjectState(oldState.rotation, oldState.mirrored, index, oldState.xPos, oldState.yPos);
     }
 
     /**
      * overwrites the current states position
      *
-     * @param x
-     * @param y
+     * @param x worldPos x
+     * @param y worldPos y
      */
     private ObjectState setCurrentStatePosition(int x, int y, ObjectState oldState) {
         return new ObjectState(oldState.rotation, oldState.mirrored, oldState.objectIndex, x, y);
@@ -485,18 +479,17 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             }
         });
 
-        rotateCheckBox = new JCheckBox("random rotate");
-        rotateCheckBox.setToolTipText("Randomly rotate the brush after each use");
-        rotateCheckBox.addActionListener(l -> this.isAutoRandomRotate = rotateCheckBox.isSelected());
+        isRandomRotateCheckBox = new JCheckBox("random rotate");
+        isRandomRotateCheckBox.setToolTipText("Randomly rotate the brush after each use");
+        isRandomRotateCheckBox.addActionListener(l -> updatePlacementOptions());
 
-        randomSelectCheckBox = new JCheckBox("random select");
-        randomSelectCheckBox.setToolTipText("Randomly select new schematic after each use");
-        randomSelectCheckBox.addActionListener(l -> this.isAutoRandomSelect = randomSelectCheckBox.isSelected());
+        isRandomSelectCheckBox = new JCheckBox("random select");
+        isRandomSelectCheckBox.setToolTipText("Randomly select new schematic after each use");
+        isRandomSelectCheckBox.addActionListener(l -> updatePlacementOptions());
 
         isRandomMirroredCheckbox = new JCheckBox("random mirrored");
         isRandomMirroredCheckbox.setToolTipText("Randomly select new schematic after each use");
-        isRandomMirroredCheckbox
-                .addActionListener(l -> this.isAutoRandomMirror = isRandomMirroredCheckbox.isSelected());
+        isRandomMirroredCheckbox.addActionListener(l -> updatePlacementOptions());
 
         useHighlightColorsCheckbox = new JCheckBox("use highlight colors");
         useHighlightColorsCheckbox.setToolTipText("Use the layers color instead of painting the actual schematics");
@@ -513,8 +506,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         // Put the icon into a JLabel
         JLabel previewPanel = getPreviewPanel();
         content.add(getHelpButton(HelpTitle, HELPTEXT));
-        content.add(rotateCheckBox);
-        content.add(randomSelectCheckBox);
+        content.add(isRandomRotateCheckBox);
+        content.add(isRandomSelectCheckBox);
         content.add(isRandomMirroredCheckbox);
         content.add(useHighlightColorsCheckbox);
         content.add(previewPanel);
@@ -524,6 +517,11 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
         optionsPanel.revalidate();
         optionsPanel.repaint();
+    }
+
+    private void updatePlacementOptions() {
+        placementOptions = new PlacementOptions(isRandomRotateCheckBox.isSelected(), isRandomSelectCheckBox.isSelected(),
+                isRandomMirroredCheckbox.isSelected());
     }
 
     private JLabel getPreviewPanel() {
