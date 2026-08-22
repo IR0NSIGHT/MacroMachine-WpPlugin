@@ -8,10 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.util.ArrayList;
 import java.lang.reflect.Field;
+import java.awt.Rectangle;
 import javax.vecmath.Point3i;
 
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TestDimension;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.minecraft.Material;
+import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.objects.GenericObject;
 import org.pepsoft.worldpainter.objects.MirroredObject;
 import org.pepsoft.worldpainter.objects.RotatedObject;
@@ -114,6 +117,16 @@ class CityLayerTest
         CityLayerRenderer renderer = (CityLayerRenderer) layer.getRenderer();
         assertEquals(0x123456, renderer.getPixelColour(0, 0, 0x123456, 0));
         assertEquals(0x00FFFF, renderer.getPixelColour(0, 0, 0x123456, 15));
+    }
+
+    @Test
+    void settingDataSkipsUnavailableWorldPainterTiles() {
+        CityLayer layer = layerWithObjects();
+        Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500),
+                -256, 512, 70, 123456789, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
+                org.pepsoft.worldpainter.Terrain.GRASS));
+
+        assertDoesNotThrow(() -> layer.setDataAt(dimension, 512, 0, state(0, false)));
     }
 
     private static CityLayer layerWithObjects() {

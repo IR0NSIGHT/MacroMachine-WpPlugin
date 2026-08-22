@@ -230,6 +230,8 @@ public class CityLayer extends CustomLayer implements UndoListener
 
     private void repaintWorldpainterTile(int tileX, int tileY, Dimension dimension, CityInfoDatabase database) {
         Tile tile = dimension.getTileForEditing(tileX, tileY);
+        if (tile == null)
+            return;
         tile.clearLayerData(this);
 
         // find all objects that live in tile
