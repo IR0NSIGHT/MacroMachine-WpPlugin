@@ -88,7 +88,7 @@ class CityEditToolOperationTest
         JDialog dialog = new JDialog((Frame) null, "CityLayer Options");
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.add(op.getOptionsPanel());
-        dialog.setResizable(false);
+        dialog.setResizable(true);
         dialog.setSize(220, 250);
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);

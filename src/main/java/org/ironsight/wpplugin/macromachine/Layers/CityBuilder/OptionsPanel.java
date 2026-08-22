@@ -45,6 +45,7 @@ class OptionsPanel extends JPanel
     private final JCheckBox randomSelectCheckBox = new JCheckBox("random select");
     private final JCheckBox randomRotateCheckBox = new JCheckBox("random rotate");
     private final JCheckBox useHighlightColorsCheckBox = new JCheckBox("use highlight colors");
+    private JLabel previewPanel;
     private final Consumer<CityEditToolOperation.PlacementOptions> placementOptionsChanged;
     private final Consumer<Integer> objectSelectionChanged;
     private final Consumer<Boolean> highlightColorsChanged;
@@ -74,10 +75,14 @@ class OptionsPanel extends JPanel
         for (int i = 0; i < objects.size(); i++)
             model.setElementAt(objects.get(i), i);
         list.setModel(model);
+        if (previewPanel != null)
+            previewPanel.repaint();
     }
 
     void setSelectedIndex(int index) {
         list.setSelectedIndex(index);
+        if (previewPanel != null)
+            previewPanel.repaint();
     }
 
     int getObjectCount() {
@@ -125,7 +130,8 @@ class OptionsPanel extends JPanel
         contentPanel.add(randomSelectCheckBox);
         contentPanel.add(randomMirroredCheckBox);
         contentPanel.add(useHighlightColorsCheckBox);
-        contentPanel.add(getPreviewPanel());
+        previewPanel = getPreviewPanel();
+        contentPanel.add(previewPanel);
         JScrollPane scrollPane = new JScrollPane(list);
         scrollPane.setMaximumSize(new java.awt.Dimension(1000, 300));
         contentPanel.add(scrollPane);
@@ -165,7 +171,7 @@ class OptionsPanel extends JPanel
     }
 
     private JLabel getPreviewPanel() {
-        return new JLabel() {
+        JLabel preview = new JLabel() {
             private int width = 100;
 
             @Override
@@ -190,5 +196,9 @@ class OptionsPanel extends JPanel
                 return new java.awt.Dimension(width, Math.max(100, getHeight()));
             }
         };
+        preview.setPreferredSize(new java.awt.Dimension(50, 50));
+        preview.setMaximumSize(new java.awt.Dimension(300, 300));
+        preview.setMinimumSize(new java.awt.Dimension(50, 50));
+        return preview;
     }
 }
