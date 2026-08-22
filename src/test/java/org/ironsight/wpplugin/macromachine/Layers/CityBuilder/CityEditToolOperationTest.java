@@ -140,6 +140,16 @@ class CityEditToolOperationTest
         assertNotNull(movedState);
         assertEquals(randomisedState.objectIndex, movedState.objectIndex);
 
+        operation.getBrush().setRadius(0);
+        operation.handleClick(104, 99, false, false);
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+        assertNotNull(layer.getInformationAt(100, 99));
+
+        operation.handleClick(103, 99, false, false);
+        operation.handleKeyInteraction(KeyEvent.VK_S);
+        assertNotNull(layer.getInformationAt(100, 100));
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+
         operation.handleClick(100, 99, false, false);
         operation.handleClick(400, 400, false, false);
         assertNotNull(layer.getInformationAt(100, 99));

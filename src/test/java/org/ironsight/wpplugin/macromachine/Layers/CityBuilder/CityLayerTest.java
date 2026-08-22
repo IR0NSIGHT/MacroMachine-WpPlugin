@@ -44,7 +44,6 @@ class CityLayerTest
         assertNull(layer.getObjectForState(null));
         assertNull(layer.getObjectForState(new ObjectState(CityLayer.Direction.NORTH, false, -1, 0, 0)));
         assertNull(layer.getObjectForState(new ObjectState(CityLayer.Direction.NORTH, false, 2, 0, 0)));
-        assertDoesNotThrow(() -> layer.setSelected(new ObjectState(CityLayer.Direction.NORTH, false, 2, 0, 0)));
     }
 
     @Test
@@ -103,17 +102,9 @@ class CityLayerTest
     void rendererConfigurationIsRetained() {
         CityLayer layer = layerWithObjects();
         layer.setUseHighlightColors(false);
-        layer.setIsSelectedPaint(true);
 
         assertEquals(false, layer.isUseHighlightColors());
         assertNotNull(layer.getRenderer());
-    }
-
-    @Test
-    void nullSelectionClearsLayerSelection() {
-        CityLayer layer = layerWithObjects();
-
-        assertDoesNotThrow(() -> layer.setSelected(null));
     }
 
     @Test

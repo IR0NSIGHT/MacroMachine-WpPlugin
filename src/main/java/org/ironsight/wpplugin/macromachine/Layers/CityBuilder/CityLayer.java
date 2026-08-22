@@ -45,12 +45,6 @@ public class CityLayer extends CustomLayer implements UndoListener
     private CityInfoDatabase database = new CityInfoDatabase();
     private boolean useHighlightColors = true;
     private transient CityLayerRenderer renderer = new CityLayerRenderer(this);
-    public void setIsSelectedPaint(boolean isSelectedPaint) {
-        if (renderer == null) {
-            renderer = new CityLayerRenderer(this);
-        }
-        renderer.setIsSelectedPaint(isSelectedPaint);
-    }
     public boolean isUseHighlightColors() {
         return useHighlightColors;
     }
@@ -62,23 +56,6 @@ public class CityLayer extends CustomLayer implements UndoListener
     }
     public CityLayer(String name, String description) {
         super(name, description, DataSize.NIBBLE, 50, Color.cyan);
-    }
-
-    public void setSelected(ObjectState state) {
-        WPObject object = getObjectForState(state);
-        if (object == null) {
-            if (renderer == null) {
-                renderer = new CityLayerRenderer(this);
-            }
-            renderer.setCurrentSelectBBX(null);
-            return;
-        }
-        Point3i dim = object.getDimensions();
-        Point3i offset = object.getOffset();
-
-        Rectangle bbxSelected = new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dim.x, dim.y);
-        System.out.println("SELECTED BOUNDING BOX:" + bbxSelected);
-        renderer.setCurrentSelectBBX(bbxSelected);
     }
 
     public void setDataAt(Dimension dimension, int blockX, int blockY, ObjectState state) {

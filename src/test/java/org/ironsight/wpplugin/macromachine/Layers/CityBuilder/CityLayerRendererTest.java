@@ -26,30 +26,12 @@ class CityLayerRendererTest
     }
 
     @Test
-    void selectionOverlayMixesSelectedPixelsWithRed() {
+    void selectedPixelsKeepTheirNormalColor() {
         CityLayerRenderer renderer = new CityLayerRenderer(new CityLayer("test", "test"));
         renderer.setUseHighlightColors(true);
         renderer.setBaseColor(0x101010);
-        renderer.setIsSelectedPaint(true);
-        renderer.setCurrentSelectBBX(new java.awt.Rectangle(2, 3, 4, 5));
 
         assertEquals(0x101010, renderer.getPixelColour(0, 0, 0x101010, 15));
-        assertEquals(0x570B0B, renderer.getPixelColour(2, 3, 0x101010, 15));
-        assertEquals(0x570B0B, renderer.getPixelColour(3, 4, 0x101010, 15));
-        assertEquals(0x570B0B, renderer.getPixelColour(5, 4, 0x101010, 15));
-        assertEquals(0x570B0B, renderer.getPixelColour(3, 7, 0x101010, 15));
-    }
-
-    @Test
-    void nullSelectionBoundsDisableSelectionOverlay() {
-        CityLayerRenderer renderer = new CityLayerRenderer(new CityLayer("test", "test"));
-        renderer.setUseHighlightColors(true);
-        renderer.setBaseColor(0x101010);
-        renderer.setIsSelectedPaint(true);
-        renderer.setCurrentSelectBBX(new java.awt.Rectangle(2, 3, 4, 5));
-
-        renderer.setCurrentSelectBBX(null);
-
         assertEquals(0x101010, renderer.getPixelColour(2, 3, 0x101010, 15));
     }
 }

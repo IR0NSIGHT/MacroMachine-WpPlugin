@@ -15,9 +15,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import javax.swing.*;
+import javax.vecmath.Point3i;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.pepsoft.util.swing.TiledImageViewer;
@@ -49,10 +52,10 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private PlacementOptions placementOptions = new PlacementOptions(false, false, false);
 
     private Paint paint;
-    private CityLayer lastLayer = null;
 
     private WorldPainterView overlayView;
-    private final JComponent dragOverlay = new DragOverlay();
+    private final DragOverlay dragOverlay = new DragOverlay();
+    private Long selectedObjectOutlineId;
     private TiledImageViewer.ViewListener previousViewListener;
     private final TiledImageViewer.ViewListener overlayViewListener = changedView -> {
         if (previousViewListener != null)
@@ -91,7 +94,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                 return;
 
             Point viewPoint = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), overlayView);
-            DragOverlay overlay = (DragOverlay) dragOverlay;
+            DragOverlay overlay = dragOverlay;
             switch (event.getID()) {
                 case MouseEvent.MOUSE_PRESSED -> {
                     if (SwingUtilities.isLeftMouseButton(event))
@@ -238,7 +241,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         detachDragOverlay();
         overlayView = view;
         if (view != null) {
-            ((DragOverlay) dragOverlay).setMapView(view);
+            dragOverlay.setMapView(view);
             previousViewListener = view.getViewListener();
             view.setViewListener(overlayViewListener);
             view.addComponentListener(overlayResizeListener);
@@ -261,9 +264,33 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         if (overlayView.getViewListener() == overlayViewListener)
             overlayView.setViewListener(previousViewListener);
         overlayView.repaint();
-        ((DragOverlay) dragOverlay).setMapView(null);
+        removeSelectedObjectOutline();
+        dragOverlay.clearOutlines();
+        dragOverlay.setMapView(null);
         previousViewListener = null;
         overlayView = null;
+    }
+
+    private void updateSelectedObjectOutline(CityLayer layer, ObjectState state) {
+        removeSelectedObjectOutline();
+        if (layer == null || state == null || state.xPos == Integer.MAX_VALUE || state.yPos == Integer.MAX_VALUE)
+            return;
+
+        WPObject object = layer.getObjectForState(state);
+        if (object == null)
+            return;
+
+        Point3i dimensions = object.getDimensions();
+        Point3i offset = object.getOffset();
+        selectedObjectOutlineId = dragOverlay
+                .addOutline(new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x, dimensions.y));
+    }
+
+    private void removeSelectedObjectOutline() {
+        if (selectedObjectOutlineId == null)
+            return;
+        dragOverlay.removeOutline(selectedObjectOutlineId);
+        selectedObjectOutlineId = null;
     }
 
     @Override
@@ -315,7 +342,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
     @Override
     protected void deactivate() {
-        ((DragOverlay) dragOverlay).endDrag();
+        dragOverlay.endDrag();
         detachDragOverlay();
         super.deactivate();
     }
@@ -335,11 +362,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     }
 
     protected void paintChanged(Paint ignored) {
-        if (lastLayer != null)
-            lastLayer.setIsSelectedPaint(false);
-        if (getSelectedLayer() != null)
-            getSelectedLayer().setIsSelectedPaint(true);
-        lastLayer = getSelectedLayer();
+        removeSelectedObjectOutline();
         updatePanel();
     }
 
@@ -369,7 +392,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         if (oldState != null)
             layer.removeDataAt(getDimension(), oldState.xPos, oldState.yPos);
         layer.setDataAt(getDimension(), newState.xPos, newState.yPos, newState);
-        layer.setSelected(newState);
+        updateSelectedObjectOutline(layer, newState);
 
         applyToUi(newState);
         if (getViewAsWP() != null) { // force a tile renderer update //FIXME use less frequently, this will force ALL
@@ -378,33 +401,36 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         }
     }
 
-    private void onPickAt(int centreX, int centreY, CityLayer cityLayer) { // FIXME even at tiny brush sizes, the
-                                                                           // closest obj should be selected.
-        int radius = Math.max(1, getBrush().getRadius());
-        int lastIndex = -1;
+    private void onPickAt(int centreX, int centreY, CityLayer cityLayer) {
+        int radius = getSelectionRadius(cityLayer);
+        ObjectState selectedState = null;
         float lastDist = Float.MAX_VALUE;
-        int lastX = 0, lastY = 0;
         for (int x = centreX - radius; x < centreX + radius; x++) {
             for (int y = centreY - radius; y < centreY + radius; y++) {
                 ObjectState state = cityLayer.getInformationAt(x, y);
-                if (state != null) {
-                    float currentDist = dist(centreX, centreY, x, y);
-                    if (currentDist < lastDist) {
-                        lastDist = currentDist;
-                        lastIndex = state.objectIndex;
-                        lastX = x;
-                        lastY = y;
-                    }
+                if (state == null)
+                    continue;
+                WPObject object = cityLayer.getObjectForState(state);
+                if (object == null)
+                    continue;
+                Point3i dimensions = object.getDimensions();
+                Point3i offset = object.getOffset();
+                Rectangle bounds = new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x,
+                        dimensions.y);
+                if (!bounds.contains(centreX, centreY))
+                    continue;
+
+                float currentDist = dist(centreX, centreY, x, y);
+                if (currentDist < lastDist) {
+                    lastDist = currentDist;
+                    selectedState = state;
                 }
             }
         }
-        if (lastIndex != -1) {
-            ObjectState mapState = cityLayer.getInformationAt(lastX, lastY);
-            if (mapState == null)
-                return;
-            applyToUi(mapState);
+        if (selectedState != null) {
+            applyToUi(selectedState);
 
-            cityLayer.setSelected(mapState);
+            updateSelectedObjectOutline(cityLayer, selectedState);
             if (getViewAsWP() != null) {
                 getViewAsWP().refreshTilesForLayer(getSelectedLayer(), false);
             }
@@ -413,8 +439,17 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         }
     }
 
+    private int getSelectionRadius(CityLayer cityLayer) {
+        int radius = 1;
+        for (WPObject object : cityLayer.getObjectList()) {
+            Point3i dimensions = object.getDimensions();
+            radius = Math.max(radius, Math.max(dimensions.x, dimensions.y));
+        }
+        return radius;
+    }
+
     private void deselect(CityLayer layer) {
-        layer.setSelected(null);
+        removeSelectedObjectOutline();
         applyToUi(new ObjectState(uiState.rotation, uiState.mirrored, uiState.objectIndex, Integer.MAX_VALUE,
                 Integer.MAX_VALUE));
         if (getViewAsWP() != null)
@@ -545,6 +580,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
     private static class DragOverlay extends JComponent
     {
+        private static final boolean DRAW_CHECKERBOARD = false;
         private static final int CELL_SIZE = 10;
         private static final Color LIGHT_CELL = new Color(255, 255, 255, 80);
         private static final Color DARK_CELL = new Color(255, 0, 0, 80);
@@ -553,6 +589,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         private WorldPainterView mapView;
         private Point dragStartWorld;
         private Point dragEndWorld;
+        private final Map<Long, Rectangle> outlines = new HashMap<>();
+        private long nextOutlineId;
 
         DragOverlay() {
             setOpaque(false);
@@ -590,6 +628,25 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             repaint();
         }
 
+        long addOutline(Rectangle worldRectangle) {
+            long outlineId = nextOutlineId++;
+            outlines.put(outlineId, new Rectangle(worldRectangle));
+            repaint();
+            return outlineId;
+        }
+
+        void removeOutline(long outlineId) {
+            if (outlines.remove(outlineId) != null)
+                repaint();
+        }
+
+        void clearOutlines() {
+            if (outlines.isEmpty())
+                return;
+            outlines.clear();
+            repaint();
+        }
+
         @Override
         public void paint(Graphics graphics) {
             // Set a breakpoint here to verify that Swing paints this child overlay.
@@ -601,7 +658,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             super.paintComponent(graphics);
             Graphics2D g = (Graphics2D) graphics.create();
             try {
-                if (mapView != null) {
+                if (DRAW_CHECKERBOARD && mapView != null) {
                     Rectangle worldBounds = mapView.viewToWorld(0, 0, getWidth(), getHeight());
                     int startX = Math.floorDiv(worldBounds.x, CELL_SIZE) * CELL_SIZE;
                     int startY = Math.floorDiv(worldBounds.y, CELL_SIZE) * CELL_SIZE;
@@ -617,6 +674,14 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                                     : DARK_CELL);
                             g.fillRect(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
                         }
+                    }
+                }
+
+                if (mapView != null) {
+                    g.setColor(Color.RED);
+                    for (Rectangle worldOutline : outlines.values()) {
+                        Rectangle outline = mapView.worldToView(worldOutline);
+                        g.drawRect(outline.x, outline.y, outline.width - 1, outline.height - 1);
                     }
                 }
 
