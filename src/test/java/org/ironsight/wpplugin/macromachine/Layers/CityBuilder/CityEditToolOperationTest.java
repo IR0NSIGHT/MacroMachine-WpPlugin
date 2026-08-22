@@ -36,16 +36,13 @@ class CityEditToolOperationTest
         operation.random = new Random(1234);
         operation.setPlacementOptions(new CityEditToolOperation.PlacementOptions(true, true, true));
 
-
         operation.placeAt(100, 100);
 
-        assertEquals(new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 100),
-                layer.getInformationAt(100, 100));
+        assertEquals(new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 100), layer.getInformationAt(100, 100));
 
         operation.handleKeyInteraction(KeyEvent.VK_W);
         assertNull(layer.getInformationAt(100, 100));
-        assertEquals(new ObjectState(CityLayer.Direction.SOUTH, true, 2, 100, 99),
-                layer.getInformationAt(100, 99));
+        assertEquals(new ObjectState(CityLayer.Direction.SOUTH, true, 2, 100, 99), layer.getInformationAt(100, 99));
 
         operation.handleKeyInteraction(KeyEvent.VK_A);
         operation.handleKeyInteraction(KeyEvent.VK_S);
@@ -53,8 +50,7 @@ class CityEditToolOperationTest
         operation.handleKeyInteraction(KeyEvent.VK_C);
         operation.handleKeyInteraction(KeyEvent.VK_X);
 
-        assertEquals(new ObjectState(CityLayer.Direction.WEST, false, 2, 100, 100),
-                layer.getInformationAt(100, 100));
+        assertEquals(new ObjectState(CityLayer.Direction.WEST, false, 2, 100, 100), layer.getInformationAt(100, 100));
         assertNull(layer.getInformationAt(100, 99));
     }
 

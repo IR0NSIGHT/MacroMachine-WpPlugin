@@ -116,8 +116,8 @@ class OptionsPanel extends JPanel
         randomMirroredCheckBox.addActionListener(event -> notifyPlacementOptionsChanged());
 
         useHighlightColorsCheckBox.setToolTipText("Use the layers color instead of painting the actual schematics");
-        useHighlightColorsCheckBox.addActionListener(event -> highlightColorsChanged.accept(
-                useHighlightColorsCheckBox.isSelected()));
+        useHighlightColorsCheckBox
+                .addActionListener(event -> highlightColorsChanged.accept(useHighlightColorsCheckBox.isSelected()));
 
         contentPanel.add(getHelpButton(HELP_TITLE, HELP_TEXT));
         contentPanel.add(randomRotateCheckBox);

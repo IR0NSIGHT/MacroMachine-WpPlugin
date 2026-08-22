@@ -34,8 +34,7 @@ import org.pepsoft.worldpainter.painting.Paint;
 public class CityEditToolOperation extends AbstractBrushOperation implements PaintOperation, KeyEventDispatcher
 {
     private static CityEditToolOperation instance;
-    record PlacementOptions(boolean randomRotate, boolean randomSelect, boolean randomMirror)
-    {
+    record PlacementOptions(boolean randomRotate, boolean randomSelect, boolean randomMirror) {
     }
 
     private final OptionsPanel optionsPanel;
@@ -103,17 +102,13 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         op.setBrush(SymmetricBrush.CONSTANT_SQUARE);
         op.setPaint(new NibbleLayerPaint(layer));
 
-        JFrame frame = new JFrame();
-        frame.add(op.optionsPanel);
-        frame.pack();
-        frame.setVisible(true);
-
-        frame.addMouseWheelListener(l -> {
-            int degrees = l.getWheelRotation() * 90;
-            System.out.println("wheel rotates brush");
-            var rotatedBrush = RotatedBrush.rotate(op.getBrush(), degrees);
-            op.setBrush(rotatedBrush);
-        });
+        JDialog dialog = new JDialog((Frame) null, "CityLayer Options");
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.add(op.getOptionsPanel());
+        dialog.setResizable(false);
+        dialog.setSize(220, 250);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
     }
 
     public static UndoManager getUndoManager(Dimension obj) throws IllegalAccessException, NoSuchFieldException {
@@ -148,7 +143,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                 case KeyEvent.VK_D -> newState = setCurrentStatePosition(oldState.xPos + 1, oldState.yPos, oldState);
                 case KeyEvent.VK_C -> newState = setRotation(oldState.rotation.nextRotation(), oldState);
                 case KeyEvent.VK_X -> // MIRROR
-                        newState = setIsMirrored(!oldState.mirrored, oldState);
+                    newState = setIsMirrored(!oldState.mirrored, oldState);
                 default -> newState = oldState;
             }
             applyToMapAndUI(getSelectedLayer(), newState, oldState);
@@ -170,7 +165,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     /**
      * select the next schematic from the list, apply.
      *
-     * @param direction up (dir<0) or down (dir>0) wheel
+     * @param direction
+     *            up (dir<0) or down (dir>0) wheel
      */
     private void onMouseWheel(int direction) {
         int max = optionsPanel.getObjectCount();
@@ -218,7 +214,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             } else if (inverse) {
                 onRemoveAt(centreX, centreY, cityLayer);
             } else {
-                placeAt(centreX,centreY);
+                placeAt(centreX, centreY);
             }
         }
         if (getDimension().isEventsInhibited())
@@ -331,7 +327,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         }
     }
 
-    private void onPickAt(int centreX, int centreY, CityLayer cityLayer) { //FIXME even at tiny brush sizes, the closest obj should be selected.
+    private void onPickAt(int centreX, int centreY, CityLayer cityLayer) { // FIXME even at tiny brush sizes, the
+                                                                           // closest obj should be selected.
         int radius = getBrush().getRadius();
         int lastIndex = -1;
         float lastDist = Float.MAX_VALUE;
@@ -363,7 +360,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         }
     }
 
-    private void onRemoveAt(int centreX, int centreY, CityLayer cityLayer) { //FIXME respect brush shape (round or square) + rotation
+    private void onRemoveAt(int centreX, int centreY, CityLayer cityLayer) { // FIXME respect brush shape (round or
+                                                                             // square) + rotation
         int radius = getBrush().getRadius();
         for (int x = centreX - radius; x < centreX + radius; x++) {
             for (int y = centreY - radius; y < centreY + radius; y++) {
@@ -431,8 +429,10 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     /**
      * overwrites the current states position
      *
-     * @param x worldPos x
-     * @param y worldPos y
+     * @param x
+     *            worldPos x
+     * @param y
+     *            worldPos y
      */
     private ObjectState setCurrentStatePosition(int x, int y, ObjectState oldState) {
         return new ObjectState(oldState.rotation, oldState.mirrored, oldState.objectIndex, x, y);
