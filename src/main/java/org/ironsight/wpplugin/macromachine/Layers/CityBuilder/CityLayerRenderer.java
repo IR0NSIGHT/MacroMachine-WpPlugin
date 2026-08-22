@@ -102,12 +102,15 @@ public class CityLayerRenderer implements NibbleLayerRenderer
         }
 
         if (isSelectedPaint && selectedBBX.contains(x, y)) {
-            int r = Math.min(255, ((resultColor >> 16) & 0xFF) + 0x8F);
-            int g = Math.max(0, ((resultColor >> 8) & 0xFF) - 0x8F);
-            int b = Math.max(0, (resultColor & 0xFF) - 0x8F);
+            int r = (((resultColor >> 16) & 0xFF) * 70 + 0xFF * 30) / 100;
+            int g = (((resultColor >> 8) & 0xFF) * 70) / 100;
+            int b = ((resultColor & 0xFF) * 70) / 100;
             return (r << 16) | (g << 8) | b;
         }
         return resultColor;
     }
+    private boolean isSelectionBorder(int x, int y) {
+        return false;
+}
 
 }
