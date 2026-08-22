@@ -12,7 +12,7 @@ import javax.swing.*;
 import org.pepsoft.worldpainter.layers.bo2.WPObjectListCellRenderer;
 import org.pepsoft.worldpainter.objects.WPObject;
 
-class OptionsPanel extends JPanel
+class OptionsPanel extends JPanel implements Scrollable
 {
     private static final String HELP_TITLE = "City Editor";
     private static final String HELP_TEXT = """
@@ -38,7 +38,6 @@ class OptionsPanel extends JPanel
 
             """;
 
-    private final JPanel layerContentPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 8, 8));
     private final JList<WPObject> list = new JList<>();
     private final JLabel warningLabel = new JLabel("Please select a city layer");
     private JPanel checkboxPanel;
@@ -96,14 +95,16 @@ class OptionsPanel extends JPanel
     }
 
     void showLayer(boolean hasLayer) {
-        CardLayout layout = (CardLayout) getLayout();
-        layout.show(this, hasLayer ? "content" : "warning");
+        checkboxPanel.setVisible(hasLayer);
+        previewPanel.setVisible(hasLayer);
+        listPanel.setVisible(hasLayer);
+        warningLabel.setVisible(!hasLayer);
         revalidate();
         repaint();
     }
 
     private void init() {
-        setLayout(new CardLayout());
+        setLayout(new ResponsiveFlowLayout(FlowLayout.CENTER, 8, 8));
 
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setCellRenderer(new WPObjectListCellRenderer());
@@ -145,11 +146,11 @@ class OptionsPanel extends JPanel
         listPanel.setMinimumSize(new java.awt.Dimension(200, 200));
         listPanel.setMaximumSize(new java.awt.Dimension(200, 200));
 
-        layerContentPanel.add(checkboxPanel);
-        layerContentPanel.add(previewPanel);
-        layerContentPanel.add(listPanel);
-        add(layerContentPanel, "content");
-        add(warningLabel, "warning");
+        add(checkboxPanel);
+        add(previewPanel);
+        add(listPanel);
+        add(warningLabel);
+        showLayer(false);
     }
 
     private void notifyPlacementOptionsChanged() {
@@ -190,6 +191,104 @@ class OptionsPanel extends JPanel
         preview.setMinimumSize(new java.awt.Dimension(200, 200));
         preview.setMaximumSize(new java.awt.Dimension(200, 200));
         return preview;
+    }
+
+    @Override
+    public java.awt.Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(Rectangle visibleRectangle, int orientation, int direction) {
+        return 16;
+    }
+
+    @Override
+    public int getScrollableBlockIncrement(Rectangle visibleRectangle, int orientation, int direction) {
+        return Math.max(visibleRectangle.height - 16, 16);
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportWidth() {
+        return true;
+    }
+
+    @Override
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
+    }
+
+    private static final class ResponsiveFlowLayout extends FlowLayout
+    {
+        private ResponsiveFlowLayout(int align, int horizontalGap, int verticalGap) {
+            super(align, horizontalGap, verticalGap);
+        }
+
+        @Override
+        public Dimension preferredLayoutSize(Container parent) {
+            return calculateLayoutSize(parent, false);
+        }
+
+        @Override
+        public Dimension minimumLayoutSize(Container parent) {
+            Insets insets = parent.getInsets();
+            ArrayList<Component> components = visibleComponents(parent);
+            int width = components.stream().mapToInt(component -> component.getMinimumSize().width).max().orElse(0);
+            int height = components.stream().mapToInt(component -> component.getMinimumSize().height).sum()
+                    + getVgap() * Math.max(0, components.size() - 1);
+            return new Dimension(width + insets.left + insets.right, height + insets.top + insets.bottom);
+        }
+
+        private Dimension calculateLayoutSize(Container parent, boolean minimum) {
+            Insets insets = parent.getInsets();
+            ArrayList<Component> components = visibleComponents(parent);
+            if (components.isEmpty())
+                return new Dimension(insets.left + insets.right, insets.top + insets.bottom);
+
+            int availableWidth = parent.getWidth() - insets.left - insets.right;
+            if (availableWidth <= 0)
+                availableWidth = rowWidth(components, minimum);
+
+            int rows = 1;
+            int rowWidth = 0;
+            int rowHeight = 0;
+            int height = 0;
+            for (Component component : components) {
+                Dimension size = componentSize(component, minimum);
+                if (rowWidth > 0 && rowWidth + getHgap() + size.width > availableWidth) {
+                    height += rowHeight;
+                    rows++;
+                    rowWidth = 0;
+                    rowHeight = 0;
+                }
+                rowWidth += rowWidth == 0 ? size.width : getHgap() + size.width;
+                rowHeight = Math.max(rowHeight, size.height);
+            }
+            height += rowHeight + getVgap() * (rows - 1);
+
+            int width = parent.getWidth() > 0 ? availableWidth : rowWidth(components, minimum);
+            return new Dimension(width + insets.left + insets.right, height + insets.top + insets.bottom);
+        }
+
+        private static ArrayList<Component> visibleComponents(Container parent) {
+            ArrayList<Component> components = new ArrayList<>();
+            for (Component component : parent.getComponents()) {
+                if (component.isVisible())
+                    components.add(component);
+            }
+            return components;
+        }
+
+        private int rowWidth(ArrayList<Component> components, boolean minimum) {
+            int width = 0;
+            for (Component component : components)
+                width += componentSize(component, minimum).width;
+            return width + getHgap() * Math.max(0, components.size() - 1);
+        }
+
+        private static Dimension componentSize(Component component, boolean minimum) {
+            return minimum ? component.getMinimumSize() : component.getPreferredSize();
+        }
     }
 
 }
