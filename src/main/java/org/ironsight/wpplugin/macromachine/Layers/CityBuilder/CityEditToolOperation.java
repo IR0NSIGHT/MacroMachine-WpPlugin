@@ -84,7 +84,6 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             instance.updatePanel();
     }
 
-
     public static UndoManager getUndoManager(Dimension obj) throws IllegalAccessException, NoSuchFieldException {
         Field f = obj.getClass().getDeclaredField("undoManager");
         f.setAccessible(true);
@@ -110,9 +109,9 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                 getDimension().setEventsInhibited(true);
             var oldState = uiState;
             CityLayer layer = getSelectedLayer();
-            boolean requiresSelection = keyCode == KeyEvent.VK_Q || keyCode == KeyEvent.VK_W
-                    || keyCode == KeyEvent.VK_A || keyCode == KeyEvent.VK_S || keyCode == KeyEvent.VK_D
-                    || keyCode == KeyEvent.VK_C || keyCode == KeyEvent.VK_X;
+            boolean requiresSelection = keyCode == KeyEvent.VK_Q || keyCode == KeyEvent.VK_W || keyCode == KeyEvent.VK_A
+                    || keyCode == KeyEvent.VK_S || keyCode == KeyEvent.VK_D || keyCode == KeyEvent.VK_C
+                    || keyCode == KeyEvent.VK_X;
             if (requiresSelection && (layer == null || layer.getInformationAt(oldState.xPos, oldState.yPos) == null))
                 return;
 
@@ -363,11 +362,11 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
 
     private void deselect(CityLayer layer) {
         layer.setSelected(null);
-        applyToUi(new ObjectState(uiState.rotation, uiState.mirrored, uiState.objectIndex,
-                Integer.MAX_VALUE, Integer.MAX_VALUE));
+        applyToUi(new ObjectState(uiState.rotation, uiState.mirrored, uiState.objectIndex, Integer.MAX_VALUE,
+                Integer.MAX_VALUE));
         if (getViewAsWP() != null)
             getViewAsWP().refreshTilesForLayer(layer, false);
-    } 
+    }
 
     private void deleteSelected() {
         CityLayer layer = getSelectedLayer();

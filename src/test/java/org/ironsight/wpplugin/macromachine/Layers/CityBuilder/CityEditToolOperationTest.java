@@ -28,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class CityEditToolOperationTest
 {
 
-
     static ArrayList<WPObject> loadDevelopmentSchematics() throws IOException {
         var resource = CityEditToolOperation.class.getResource("/CityBuilder/Houses");
         if (resource == null)
@@ -73,7 +72,6 @@ class CityEditToolOperationTest
             return exception;
         }
     }
-
 
     public static void main(String[] args) throws IOException {
         // set up layer

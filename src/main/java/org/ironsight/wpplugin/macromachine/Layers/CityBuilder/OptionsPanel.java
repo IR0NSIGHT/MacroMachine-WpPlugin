@@ -215,7 +215,7 @@ class OptionsPanel extends JPanel
             int layoutWidth = availableWidth > widestMinimumWidth ? availableWidth : naturalWidth;
 
             int height = wrappedHeight(components, layoutWidth, false);
-            return new Dimension(Math.max(200,layoutWidth + insets.left + insets.right) ,
+            return new Dimension(Math.max(200, layoutWidth + insets.left + insets.right),
                     height + insets.top + insets.bottom);
         }
 
