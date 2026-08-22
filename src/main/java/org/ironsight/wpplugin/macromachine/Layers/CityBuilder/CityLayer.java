@@ -291,6 +291,16 @@ public class CityLayer extends CustomLayer implements UndoListener
         return new ObjectState(getRotation(data), isMirrored(data), getObjectIdx(data), blockX, blockY);
     }
 
+    public ArrayList<ObjectState> getAllObjectStates() {
+        ArrayList<ObjectState> states = new ArrayList<>();
+        for (Point position : database.getAllData().keySet()) {
+            ObjectState state = getInformationAt(position.x, position.y);
+            if (state != null)
+                states.add(state);
+        }
+        return states;
+    }
+
     /**
      * returns an object that matches the type of scheamtic, with rotation and
      * mirror

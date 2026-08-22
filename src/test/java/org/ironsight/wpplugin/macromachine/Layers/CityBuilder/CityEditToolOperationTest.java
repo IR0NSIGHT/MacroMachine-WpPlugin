@@ -208,6 +208,17 @@ class CityEditToolOperationTest
         operation.handleKeyInteraction(KeyEvent.VK_DELETE);
         assertNull(layer.getInformationAt(300, 299));
         assertNull(layer.getInformationAt(310, 299));
+
+        ObjectState boxed = new ObjectState(CityLayer.Direction.NORTH, false, 0, 320, 320);
+        ObjectState outside = new ObjectState(CityLayer.Direction.NORTH, false, 1, 330, 320);
+        layer.setDataAt(dimension, boxed.xPos, boxed.yPos, boxed);
+        layer.setDataAt(dimension, outside.xPos, outside.yPos, outside);
+        operation.selectWithinBox(layer, new Rectangle(319, 319, 4, 4));
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+
+        assertNotNull(layer.getInformationAt(320, 319));
+        assertNotNull(layer.getInformationAt(330, 320));
+        assertNull(layer.getInformationAt(320, 320));
     }
 
     private static CityLayer layerWithObjects() {

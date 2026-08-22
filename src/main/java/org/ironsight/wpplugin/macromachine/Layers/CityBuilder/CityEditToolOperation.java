@@ -110,8 +110,14 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                         overlay.updateDrag(viewPoint);
                 }
                 case MouseEvent.MOUSE_RELEASED -> {
-                    if (SwingUtilities.isLeftMouseButton(event))
+                    if (SwingUtilities.isLeftMouseButton(event)) {
+                        if (overlay.isBoxSelection()) {
+                            CityLayer layer = getSelectedLayer();
+                            if (layer != null)
+                                selectWithinBox(layer, overlay.getDragBounds());
+                        }
                         overlay.endDrag();
+                    }
                 }
                 default -> {
                 }
@@ -312,6 +318,29 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private void clearSelection() {
         selectedStates.clear();
         clearSelectedObjectOutlines();
+    }
+
+    void selectWithinBox(CityLayer layer, Rectangle selectionBounds) {
+        clearSelection();
+        for (ObjectState state : layer.getAllObjectStates()) {
+            WPObject object = layer.getObjectForState(state);
+            if (object == null)
+                continue;
+            Point3i dimensions = object.getDimensions();
+            Point3i offset = object.getOffset();
+            Rectangle objectBounds = new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x,
+                    dimensions.y);
+            if (selectionBounds.contains(objectBounds))
+                addSelectedState(state, layer);
+        }
+
+        if (selectedStates.isEmpty()) {
+            deselect(layer);
+        } else {
+            uiState = new ArrayList<>(selectedStates.values()).getLast();
+            applyToUi(uiState);
+            refreshLayer(layer);
+        }
     }
 
     private void selectOnly(CityLayer layer, ObjectState state) {
@@ -711,6 +740,18 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             repaint();
         }
 
+        Rectangle getDragBounds() {
+            if (dragStartWorld == null || dragEndWorld == null)
+                return null;
+            return new Rectangle(Math.min(dragStartWorld.x, dragEndWorld.x), Math.min(dragStartWorld.y, dragEndWorld.y),
+                    Math.abs(dragEndWorld.x - dragStartWorld.x) + 1, Math.abs(dragEndWorld.y - dragStartWorld.y) + 1);
+        }
+
+        boolean isBoxSelection() {
+            Rectangle bounds = getDragBounds();
+            return bounds != null && bounds.width >= 2 && bounds.height >= 2;
+        }
+
         long addOutline(Rectangle worldRectangle) {
             long outlineId = nextOutlineId++;
             outlines.put(outlineId, new Rectangle(worldRectangle));
@@ -768,11 +809,8 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
                     }
                 }
 
-                if (mapView != null && dragStartWorld != null && dragEndWorld != null) {
-                    Rectangle worldSelection = new Rectangle(Math.min(dragStartWorld.x, dragEndWorld.x),
-                            Math.min(dragStartWorld.y, dragEndWorld.y), Math.abs(dragEndWorld.x - dragStartWorld.x) + 1,
-                            Math.abs(dragEndWorld.y - dragStartWorld.y) + 1);
-                    Rectangle rectangle = mapView.worldToView(worldSelection);
+                if (mapView != null && isBoxSelection()) {
+                    Rectangle rectangle = mapView.worldToView(getDragBounds());
                     g.setColor(BORDER);
                     g.drawRect(rectangle.x, rectangle.y, rectangle.width - 1, rectangle.height - 1);
                 }
