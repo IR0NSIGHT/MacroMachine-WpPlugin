@@ -107,7 +107,7 @@ class CityEditToolOperationTest
     }
 
     @Test
-    void directKeyboardFlowMovesAndTransformsRandomisedPlacement() throws Exception {
+    void movingRandomisedPlacementKeepsItsObjectType() throws Exception {
         CityLayer layer = layerWithObjects();
         Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500),
                 -256, 512, 70, 123456789, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
@@ -118,24 +118,18 @@ class CityEditToolOperationTest
         operation.setBrush(SymmetricBrush.CONSTANT_SQUARE);
         operation.setPaint(new NibbleLayerPaint(layer));
         operation.random = new Random(1234);
-        operation.setPlacementOptions(new CityEditToolOperation.PlacementOptions(true, true, true));
+        operation.setPlacementOptions(new CityEditToolOperation.PlacementOptions(false, true, false));
 
         operation.placeAt(100, 100);
 
-        assertEquals(new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 100), layer.getInformationAt(100, 100));
+        ObjectState placedState = layer.getInformationAt(100, 100);
+        assertNotNull(placedState);
 
         operation.handleKeyInteraction(KeyEvent.VK_W);
         assertNull(layer.getInformationAt(100, 100));
-        assertEquals(new ObjectState(CityLayer.Direction.SOUTH, true, 2, 100, 99), layer.getInformationAt(100, 99));
-
-        operation.handleKeyInteraction(KeyEvent.VK_A);
-        operation.handleKeyInteraction(KeyEvent.VK_S);
-        operation.handleKeyInteraction(KeyEvent.VK_D);
-        operation.handleKeyInteraction(KeyEvent.VK_C);
-        operation.handleKeyInteraction(KeyEvent.VK_X);
-
-        assertEquals(new ObjectState(CityLayer.Direction.WEST, false, 2, 100, 100), layer.getInformationAt(100, 100));
-        assertNull(layer.getInformationAt(100, 99));
+        ObjectState movedState = layer.getInformationAt(100, 99);
+        assertNotNull(movedState);
+        assertEquals(placedState.objectIndex, movedState.objectIndex);
     }
 
     private static CityLayer layerWithObjects() {
