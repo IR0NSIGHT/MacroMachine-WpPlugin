@@ -17,7 +17,6 @@ import java.util.Comparator;
 import java.util.Objects;
 import java.util.Random;
 import javax.swing.*;
-import javax.vecmath.Point3i;
 
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.pepsoft.util.undo.UndoManager;
@@ -26,7 +25,6 @@ import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.brushes.RotatedBrush;
 import org.pepsoft.worldpainter.brushes.SymmetricBrush;
-import org.pepsoft.worldpainter.layers.bo2.WPObjectListCellRenderer;
 import org.pepsoft.worldpainter.objects.WPObject;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
@@ -236,17 +234,17 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     }
 
     @Override
-    protected void brushChanged(Brush newBrush) { // aka brush rotated.
+    protected void brushChanged(Brush newBrush) {
         super.brushChanged(newBrush);
 
-        // apply brush rotation
-        final ObjectState oldState = uiState;
-        final ObjectState newState;
-        if (newBrush instanceof RotatedBrush)
+        ObjectState oldState = uiState;
+        ObjectState newState;
+        if (newBrush instanceof RotatedBrush rotatedBrush) {
             newState = setRotation(
-                    CityLayer.Direction.fromCompass((((RotatedBrush) getBrush()).getDegrees() + 360) % 360), oldState);
-        else
+                    CityLayer.Direction.fromCompass((rotatedBrush.getDegrees() + 360) % 360), oldState);
+        } else {
             newState = setRotation(CityLayer.Direction.NORTH, oldState);
+        }
         applyToUi(newState);
     }
 
@@ -269,37 +267,6 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             return;
 
         this.uiState = uiState;
-
-        { // update brush radius
-            Point3i dim;
-            { // get object that is currently selected
-                int selectedObjectIndex = uiState.objectIndex;
-                if (selectedObjectIndex < 0 || selectedObjectIndex >= layer.getObjectList().size())
-                    return;
-                WPObject object = layer.getObjectList().get(selectedObjectIndex);
-                dim = object.getDimensions();
-            }
-            int desiredRadius = Math.max(dim.x, dim.y) / 2;
-            if (desiredRadius != getBrush().getRadius() && getView() != null) {
-                int diff = desiredRadius - getBrush().getRadius();
-                BrushControl control = getView().getBrushControl();
-                if (diff > 0) {
-                    for (int i = 0; i < diff; i++) {
-                        control.increaseRadiusByOne();
-                    }
-                } else {
-                    for (int i = 0; i < -diff; i++) {
-                        control.decreaseRadiusByOne();
-                    }
-                }
-            }
-        }
-
-        SwingUtilities.invokeLater(() -> {
-            if (getViewAsWP() != null) {
-                getViewAsWP().setBrushRotation(uiState.rotation.toCompass());
-            }
-        });
 
         // update list
         optionsPanel.setSelectedIndex(uiState.objectIndex);
