@@ -240,8 +240,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         ObjectState oldState = uiState;
         ObjectState newState;
         if (newBrush instanceof RotatedBrush rotatedBrush) {
-            newState = setRotation(
-                    CityLayer.Direction.fromCompass((rotatedBrush.getDegrees() + 360) % 360), oldState);
+            newState = setRotation(CityLayer.Direction.fromCompass((rotatedBrush.getDegrees() + 360) % 360), oldState);
         } else {
             newState = setRotation(CityLayer.Direction.NORTH, oldState);
         }
