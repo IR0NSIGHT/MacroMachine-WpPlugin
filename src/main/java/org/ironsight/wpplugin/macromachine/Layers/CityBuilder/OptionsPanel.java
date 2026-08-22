@@ -38,7 +38,7 @@ class OptionsPanel extends JPanel
 
             """;
 
-    private final JPanel contentPanel = new JPanel();
+    private final JPanel contentPanel = new ScrollablePanel();
     private final JList<WPObject> list = new JList<>();
     private final JLabel warningLabel = new JLabel("Please select a city layer");
     private final JCheckBox randomMirroredCheckBox = new JCheckBox("random mirrored");
@@ -98,7 +98,8 @@ class OptionsPanel extends JPanel
     private void init() {
         setLayout(new BorderLayout());
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        add(contentPanel, BorderLayout.CENTER);
+        add(new JScrollPane(contentPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
         add(warningLabel, BorderLayout.SOUTH);
 
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -128,6 +129,34 @@ class OptionsPanel extends JPanel
         JScrollPane scrollPane = new JScrollPane(list);
         scrollPane.setMaximumSize(new java.awt.Dimension(1000, 300));
         contentPanel.add(scrollPane);
+    }
+
+    private static class ScrollablePanel extends JPanel implements Scrollable
+    {
+        @Override
+        public Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(Rectangle visibleRectangle, int orientation, int direction) {
+            return 16;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(Rectangle visibleRectangle, int orientation, int direction) {
+            return Math.max(visibleRectangle.height - 16, 16);
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
+        }
     }
 
     private void notifyPlacementOptionsChanged() {
