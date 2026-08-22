@@ -16,9 +16,12 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.UnaryOperator;
 import javax.swing.*;
 import javax.vecmath.Point3i;
 
@@ -50,12 +53,14 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     private ObjectState uiState = new ObjectState(CityLayer.Direction.NORTH, false, 0, Integer.MAX_VALUE,
             Integer.MAX_VALUE);
     private PlacementOptions placementOptions = new PlacementOptions(false, false, false);
+    private final Map<Point, ObjectState> selectedStates = new LinkedHashMap<>();
+    private final Map<Point, Long> selectedOutlineIds = new HashMap<>();
+    private boolean updatingPanelSelection;
 
     private Paint paint;
 
     private WorldPainterView overlayView;
     private final DragOverlay dragOverlay = new DragOverlay();
-    private Long selectedObjectOutlineId;
     private TiledImageViewer.ViewListener previousViewListener;
     private final TiledImageViewer.ViewListener overlayViewListener = changedView -> {
         if (previousViewListener != null)
@@ -152,31 +157,26 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         try {
             if (!getDimension().isEventsInhibited())
                 getDimension().setEventsInhibited(true);
-            var oldState = uiState;
             CityLayer layer = getSelectedLayer();
             boolean requiresSelection = keyCode == KeyEvent.VK_Q || keyCode == KeyEvent.VK_W || keyCode == KeyEvent.VK_A
                     || keyCode == KeyEvent.VK_S || keyCode == KeyEvent.VK_D || keyCode == KeyEvent.VK_C
                     || keyCode == KeyEvent.VK_X;
-            if (requiresSelection && (layer == null || layer.getInformationAt(oldState.xPos, oldState.yPos) == null))
+            if (requiresSelection && (layer == null || selectedStates.isEmpty()))
                 return;
 
-            ObjectState newState;
             switch (keyCode) {
-                case KeyEvent.VK_Q -> newState = randomizeState(oldState);
-                case KeyEvent.VK_DELETE -> {
-                    deleteSelected();
-                    return;
+                case KeyEvent.VK_Q -> applyToSelection(layer, this::randomizeState);
+                case KeyEvent.VK_DELETE -> deleteSelected();
+                case KeyEvent.VK_W -> moveSelection(layer, 0, -1);
+                case KeyEvent.VK_S -> moveSelection(layer, 0, 1);
+                case KeyEvent.VK_A -> moveSelection(layer, -1, 0);
+                case KeyEvent.VK_D -> moveSelection(layer, 1, 0);
+                case KeyEvent.VK_C ->
+                    applyToSelection(layer, state -> setRotation(state.rotation.nextRotation(), state));
+                case KeyEvent.VK_X -> applyToSelection(layer, state -> setIsMirrored(!state.mirrored, state));
+                default -> {
                 }
-                case KeyEvent.VK_W -> newState = setCurrentStatePosition(oldState.xPos, oldState.yPos - 1, oldState);
-                case KeyEvent.VK_S -> newState = setCurrentStatePosition(oldState.xPos, oldState.yPos + 1, oldState);
-                case KeyEvent.VK_A -> newState = setCurrentStatePosition(oldState.xPos - 1, oldState.yPos, oldState);
-                case KeyEvent.VK_D -> newState = setCurrentStatePosition(oldState.xPos + 1, oldState.yPos, oldState);
-                case KeyEvent.VK_C -> newState = setRotation(oldState.rotation.nextRotation(), oldState);
-                case KeyEvent.VK_X -> // MIRROR
-                    newState = setIsMirrored(!oldState.mirrored, oldState);
-                default -> newState = oldState;
             }
-            applyToMapAndUI(layer, newState, oldState);
         } catch (Exception ex) {
             GlobalActionPanel.ErrorPopUp(ex);
         } finally {
@@ -193,9 +193,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         if (ctrlDown && !rightClick) {
             placeAt(centreX, centreY);
         } else if (rightClick) {
-            if (layer.getInformationAt(uiState.xPos, uiState.yPos) != null) {
-                applyToMapAndUI(layer, setCurrentStatePosition(centreX, centreY, uiState), uiState);
-            }
+            moveSelectionTo(layer, centreX, centreY);
         } else {
             onPickAt(centreX, centreY, layer);
         }
@@ -221,12 +219,11 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         var oldState = uiState;
         int nextIdx = Math.clamp(oldState.objectIndex + direction, 0, max - 1);
         System.out.println("change index by direction " + direction);
-        var newState = setSelectedObjectIndex(nextIdx, oldState);
         CityLayer layer = getSelectedLayer();
-        if (layer != null && layer.getInformationAt(oldState.xPos, oldState.yPos) == null) {
-            applyToUi(newState);
+        if (layer != null && !selectedStates.isEmpty()) {
+            applyToSelection(layer, state -> setSelectedObjectIndex(nextIdx, state));
         } else {
-            applyToMapAndUI(layer, newState, oldState);
+            applyToUi(setSelectedObjectIndex(nextIdx, uiState));
         }
     }
 
@@ -264,33 +261,63 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         if (overlayView.getViewListener() == overlayViewListener)
             overlayView.setViewListener(previousViewListener);
         overlayView.repaint();
-        removeSelectedObjectOutline();
+        clearSelectedObjectOutlines();
+        selectedStates.clear();
         dragOverlay.clearOutlines();
         dragOverlay.setMapView(null);
         previousViewListener = null;
         overlayView = null;
     }
 
-    private void updateSelectedObjectOutline(CityLayer layer, ObjectState state) {
-        removeSelectedObjectOutline();
-        if (layer == null || state == null || state.xPos == Integer.MAX_VALUE || state.yPos == Integer.MAX_VALUE)
-            return;
+    private void updateSelectedObjectOutlines(CityLayer layer) {
+        clearSelectedObjectOutlines();
+        for (ObjectState state : selectedStates.values()) {
+            WPObject object = layer.getObjectForState(state);
+            if (object == null)
+                continue;
+            Point3i dimensions = object.getDimensions();
+            Point3i offset = object.getOffset();
+            Point anchor = new Point(state.xPos, state.yPos);
+            selectedOutlineIds.put(anchor, dragOverlay.addOutline(
+                    new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x, dimensions.y)));
+        }
+    }
 
+    private void clearSelectedObjectOutlines() {
+        for (long outlineId : selectedOutlineIds.values())
+            dragOverlay.removeOutline(outlineId);
+        selectedOutlineIds.clear();
+    }
+
+    private void addSelectedState(ObjectState state, CityLayer layer) {
+        Point anchor = new Point(state.xPos, state.yPos);
+        selectedStates.put(anchor, state);
         WPObject object = layer.getObjectForState(state);
         if (object == null)
             return;
-
         Point3i dimensions = object.getDimensions();
         Point3i offset = object.getOffset();
-        selectedObjectOutlineId = dragOverlay
-                .addOutline(new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x, dimensions.y));
+        selectedOutlineIds.put(anchor, dragOverlay
+                .addOutline(new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x, dimensions.y)));
     }
 
-    private void removeSelectedObjectOutline() {
-        if (selectedObjectOutlineId == null)
-            return;
-        dragOverlay.removeOutline(selectedObjectOutlineId);
-        selectedObjectOutlineId = null;
+    private void removeSelectedState(ObjectState state) {
+        Point anchor = new Point(state.xPos, state.yPos);
+        Long outlineId = selectedOutlineIds.remove(anchor);
+        if (outlineId != null)
+            dragOverlay.removeOutline(outlineId);
+        selectedStates.remove(anchor);
+    }
+
+    private void clearSelection() {
+        selectedStates.clear();
+        clearSelectedObjectOutlines();
+    }
+
+    private void selectOnly(CityLayer layer, ObjectState state) {
+        clearSelection();
+        addSelectedState(state, layer);
+        applyToUi(state);
     }
 
     @Override
@@ -362,7 +389,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     }
 
     protected void paintChanged(Paint ignored) {
-        removeSelectedObjectOutline();
+        clearSelection();
         updatePanel();
     }
 
@@ -378,7 +405,12 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         this.uiState = uiState;
 
         // update list
-        optionsPanel.setSelectedIndex(uiState.objectIndex);
+        updatingPanelSelection = true;
+        try {
+            optionsPanel.setSelectedIndex(uiState.objectIndex);
+        } finally {
+            updatingPanelSelection = false;
+        }
 
         optionsPanel.revalidate();
         optionsPanel.repaint();
@@ -392,13 +424,56 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         if (oldState != null)
             layer.removeDataAt(getDimension(), oldState.xPos, oldState.yPos);
         layer.setDataAt(getDimension(), newState.xPos, newState.yPos, newState);
-        updateSelectedObjectOutline(layer, newState);
-
-        applyToUi(newState);
+        selectOnly(layer, newState);
         if (getViewAsWP() != null) { // force a tile renderer update //FIXME use less frequently, this will force ALL
                                      // tiles to be rerendered.
             getViewAsWP().refreshTilesForLayer(layer, false);
         }
+    }
+
+    private void applyToSelection(CityLayer layer, UnaryOperator<ObjectState> transform) {
+        if (selectedStates.isEmpty())
+            return;
+
+        List<ObjectState> oldStates = new ArrayList<>(selectedStates.values());
+        int activeIndex = 0;
+        for (int i = 0; i < oldStates.size(); i++) {
+            ObjectState state = oldStates.get(i);
+            if (state.xPos == uiState.xPos && state.yPos == uiState.yPos) {
+                activeIndex = i;
+                break;
+            }
+        }
+        List<ObjectState> newStates = oldStates.stream().map(transform).toList();
+
+        for (ObjectState state : oldStates)
+            layer.removeDataAt(getDimension(), state.xPos, state.yPos);
+        for (ObjectState state : newStates)
+            layer.setDataAt(getDimension(), state.xPos, state.yPos, state);
+
+        selectedStates.clear();
+        for (ObjectState state : newStates)
+            selectedStates.put(new Point(state.xPos, state.yPos), state);
+        updateSelectedObjectOutlines(layer);
+
+        uiState = newStates.get(Math.min(activeIndex, newStates.size() - 1));
+        applyToUi(uiState);
+        refreshLayer(layer);
+    }
+
+    private void moveSelection(CityLayer layer, int deltaX, int deltaY) {
+        applyToSelection(layer, state -> setCurrentStatePosition(state.xPos + deltaX, state.yPos + deltaY, state));
+    }
+
+    private void moveSelectionTo(CityLayer layer, int x, int y) {
+        if (selectedStates.isEmpty())
+            return;
+        moveSelection(layer, x - uiState.xPos, y - uiState.yPos);
+    }
+
+    private void refreshLayer(CityLayer layer) {
+        if (getViewAsWP() != null)
+            getViewAsWP().refreshTilesForLayer(layer, false);
     }
 
     private void onPickAt(int centreX, int centreY, CityLayer cityLayer) {
@@ -428,11 +503,19 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
             }
         }
         if (selectedState != null) {
-            applyToUi(selectedState);
-
-            updateSelectedObjectOutline(cityLayer, selectedState);
-            if (getViewAsWP() != null) {
-                getViewAsWP().refreshTilesForLayer(getSelectedLayer(), false);
+            Point anchor = new Point(selectedState.xPos, selectedState.yPos);
+            if (selectedStates.containsKey(anchor)) {
+                removeSelectedState(selectedState);
+                if (selectedStates.isEmpty()) {
+                    deselect(cityLayer);
+                } else {
+                    uiState = new ArrayList<>(selectedStates.values()).getLast();
+                    applyToUi(uiState);
+                }
+            } else {
+                addSelectedState(selectedState, cityLayer);
+                uiState = selectedState;
+                applyToUi(uiState);
             }
         } else {
             deselect(cityLayer);
@@ -449,19 +532,19 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     }
 
     private void deselect(CityLayer layer) {
-        removeSelectedObjectOutline();
+        clearSelection();
         applyToUi(new ObjectState(uiState.rotation, uiState.mirrored, uiState.objectIndex, Integer.MAX_VALUE,
                 Integer.MAX_VALUE));
-        if (getViewAsWP() != null)
-            getViewAsWP().refreshTilesForLayer(layer, false);
+        refreshLayer(layer);
     }
 
     private void deleteSelected() {
         CityLayer layer = getSelectedLayer();
-        if (layer == null || layer.getInformationAt(uiState.xPos, uiState.yPos) == null)
+        if (layer == null || selectedStates.isEmpty())
             return;
 
-        layer.removeDataAt(getDimension(), uiState.xPos, uiState.yPos);
+        for (ObjectState state : selectedStates.values())
+            layer.removeDataAt(getDimension(), state.xPos, state.yPos);
         deselect(layer);
     }
 
@@ -495,7 +578,7 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     }
 
     private ObjectState setRotation(CityLayer.Direction rotation, ObjectState oldState) {
-        if (rotation == this.uiState.rotation)
+        if (rotation == oldState.rotation)
             return oldState;
         System.out.println("set rotation from" + oldState.rotation + " to " + rotation);
         return new ObjectState(rotation, oldState.mirrored, oldState.objectIndex, oldState.xPos, oldState.yPos);
@@ -515,13 +598,13 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
     }
 
     private void onObjectSelectionChanged(int index) {
-        ObjectState oldState = uiState;
-        ObjectState newState = setSelectedObjectIndex(index, oldState);
+        if (updatingPanelSelection)
+            return;
         CityLayer layer = getSelectedLayer();
-        if (layer != null && layer.getInformationAt(oldState.xPos, oldState.yPos) != null) {
-            applyToMapAndUI(layer, newState, oldState);
+        if (layer != null && !selectedStates.isEmpty()) {
+            applyToSelection(layer, state -> setSelectedObjectIndex(index, state));
         } else {
-            applyToUi(newState);
+            applyToUi(setSelectedObjectIndex(index, uiState));
         }
     }
 

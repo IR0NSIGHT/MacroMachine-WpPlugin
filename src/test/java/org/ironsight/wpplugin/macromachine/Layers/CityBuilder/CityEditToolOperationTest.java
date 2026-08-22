@@ -163,13 +163,51 @@ class CityEditToolOperationTest
 
         operation.handleClick(200, 200, false, true);
         assertNotNull(layer.getInformationAt(200, 200));
-        operation.handleClick(200, 200, false, false);
         operation.handleClick(201, 200, true, false);
         assertNull(layer.getInformationAt(200, 200));
         assertNotNull(layer.getInformationAt(201, 200));
 
         operation.handleKeyInteraction(KeyEvent.VK_DELETE);
         assertNull(layer.getInformationAt(201, 200));
+
+        ObjectState first = new ObjectState(CityLayer.Direction.NORTH, false, 0, 300, 300);
+        ObjectState second = new ObjectState(CityLayer.Direction.EAST, true, 1, 310, 300);
+        layer.setDataAt(dimension, first.xPos, first.yPos, first);
+        layer.setDataAt(dimension, second.xPos, second.yPos, second);
+
+        operation.handleClick(300, 300, false, false);
+        operation.handleClick(310, 300, false, false);
+        operation.handleClick(300, 300, false, false);
+        operation.handleClick(300, 300, false, false);
+
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+        ObjectState movedFirst = layer.getInformationAt(300, 299);
+        ObjectState movedSecond = layer.getInformationAt(310, 299);
+        assertNotNull(movedFirst);
+        assertNotNull(movedSecond);
+        assertEquals(first.objectIndex, movedFirst.objectIndex);
+        assertEquals(second.objectIndex, movedSecond.objectIndex);
+        assertEquals(first.rotation, movedFirst.rotation);
+        assertEquals(second.rotation, movedSecond.rotation);
+        assertEquals(first.mirrored, movedFirst.mirrored);
+        assertEquals(second.mirrored, movedSecond.mirrored);
+
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+        operation.handleKeyInteraction(KeyEvent.VK_X);
+        ObjectState rotatedFirst = layer.getInformationAt(300, 299);
+        ObjectState rotatedSecond = layer.getInformationAt(310, 299);
+        assertEquals(CityLayer.Direction.EAST, rotatedFirst.rotation);
+        assertEquals(CityLayer.Direction.SOUTH, rotatedSecond.rotation);
+        assertTrue(rotatedFirst.mirrored);
+        assertFalse(rotatedSecond.mirrored);
+
+        operation.onMouseWheel(-1);
+        assertEquals(0, layer.getInformationAt(300, 299).objectIndex);
+        assertEquals(0, layer.getInformationAt(310, 299).objectIndex);
+
+        operation.handleKeyInteraction(KeyEvent.VK_DELETE);
+        assertNull(layer.getInformationAt(300, 299));
+        assertNull(layer.getInformationAt(310, 299));
     }
 
     private static CityLayer layerWithObjects() {
