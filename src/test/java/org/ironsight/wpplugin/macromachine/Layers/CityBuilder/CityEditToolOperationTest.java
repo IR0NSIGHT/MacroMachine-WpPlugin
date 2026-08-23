@@ -80,7 +80,6 @@ class CityEditToolOperationTest
 
         // set up operation
         var op = new CityEditToolOperation();
-        op.setBrush(SymmetricBrush.CONSTANT_SQUARE);
         op.setPaint(new NibbleLayerPaint(layer));
 
         JDialog dialog = new JDialog((Frame) null, "CityLayer Options");
@@ -113,7 +112,6 @@ class CityEditToolOperationTest
         TestView view = new TestView(dimension);
         CityEditToolOperation operation = new CityEditToolOperation();
         operation.setView(view);
-        operation.setBrush(SymmetricBrush.CONSTANT_SQUARE);
         operation.setPaint(new NibbleLayerPaint(layer));
         operation.random = new Random(1234);
         operation.setPlacementOptions(new CityEditToolOperation.PlacementOptions(false, true, false));
@@ -140,7 +138,6 @@ class CityEditToolOperationTest
         assertNotNull(movedState);
         assertEquals(randomisedState.objectIndex, movedState.objectIndex);
 
-        operation.getBrush().setRadius(0);
         operation.handleClick(104, 99, false, false);
         operation.handleKeyInteraction(KeyEvent.VK_W);
         assertNotNull(layer.getInformationAt(100, 99));

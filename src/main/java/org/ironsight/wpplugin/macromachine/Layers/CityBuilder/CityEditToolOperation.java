@@ -6,15 +6,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyVetoException;
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,17 +25,15 @@ import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.brushes.RotatedBrush;
-import org.pepsoft.worldpainter.brushes.SymmetricBrush;
 import org.pepsoft.worldpainter.objects.WPObject;
-import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
+import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
 import org.pepsoft.worldpainter.painting.LayerPaint;
-import org.pepsoft.worldpainter.painting.NibbleLayerPaint;
 import org.pepsoft.worldpainter.painting.Paint;
 
 /**
  */
-public class CityEditToolOperation extends AbstractBrushOperation implements PaintOperation, KeyEventDispatcher
+public class CityEditToolOperation extends MouseOrTabletOperation implements PaintOperation, KeyEventDispatcher
 {
     private static CityEditToolOperation instance;
     record PlacementOptions(boolean randomRotate, boolean randomSelect, boolean randomMirror) {
@@ -403,20 +394,6 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         super.deactivate();
     }
 
-    @Override
-    protected void brushChanged(Brush newBrush) {
-        super.brushChanged(newBrush);
-
-        ObjectState oldState = uiState;
-        ObjectState newState;
-        if (newBrush instanceof RotatedBrush rotatedBrush) {
-            newState = setRotation(CityLayer.Direction.fromCompass((rotatedBrush.getDegrees() + 360) % 360), oldState);
-        } else {
-            newState = setRotation(CityLayer.Direction.NORTH, oldState);
-        }
-        applyToUi(newState);
-    }
-
     protected void paintChanged(Paint ignored) {
         clearSelection();
         updatePanel();
@@ -575,16 +552,6 @@ public class CityEditToolOperation extends AbstractBrushOperation implements Pai
         for (ObjectState state : selectedStates.values())
             layer.removeDataAt(getDimension(), state.xPos, state.yPos);
         deselect(layer);
-    }
-
-    private void onRemoveAt(int centreX, int centreY, CityLayer cityLayer) { // FIXME respect brush shape (round or
-                                                                             // square) + rotation
-        int radius = getBrush().getRadius();
-        for (int x = centreX - radius; x < centreX + radius; x++) {
-            for (int y = centreY - radius; y < centreY + radius; y++) {
-                cityLayer.removeDataAt(getDimension(), x, y);
-            }
-        }
     }
 
     private void onAddAt(int centreX, int centreY, CityLayer cityLayer) {
