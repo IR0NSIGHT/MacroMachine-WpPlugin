@@ -51,6 +51,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private Paint paint;
 
     private WorldPainterView overlayView;
+    private volatile boolean cursorOverMap;
     private final DragOverlay dragOverlay = new DragOverlay();
     private TiledImageViewer.ViewListener previousViewListener;
     private final TiledImageViewer.ViewListener overlayViewListener = changedView -> {
@@ -83,10 +84,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }, AWTEvent.MOUSE_WHEEL_EVENT_MASK);
 
         Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
-            if (!(e instanceof MouseEvent event) || !isActive() || overlayView == null)
+            if (!(e instanceof MouseEvent event))
                 return;
-            if (!SwingUtilities.isDescendingFrom(event.getComponent(), overlayView)
-                    && event.getComponent() != overlayView)
+            cursorOverMap = isMapComponent(overlayView, event.getComponent());
+            if (!isActive() || !cursorOverMap)
                 return;
 
             Point viewPoint = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), overlayView);
@@ -142,6 +143,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         if (e.getID() == KeyEvent.KEY_PRESSED) {
             if (!isActive() || getDimension() == null)
                 return false;
+            if (!cursorOverMap)
+                return false;
             if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_A) {
                 handleKeyInteraction(e.getKeyCode(), true);
                 return false;
@@ -151,6 +154,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             handleKeyInteraction(e.getKeyCode(), false);
         }
         return false; // return false to allow other listeners to handle the event
+    }
+
+    static boolean isMapComponent(Component mapView, Component eventComponent) {
+        return mapView != null && eventComponent != null
+                && (eventComponent == mapView || SwingUtilities.isDescendingFrom(eventComponent, mapView));
     }
 
     /** Applies one unmodified keyboard interaction from the city tool. */
@@ -285,6 +293,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     private void detachDragOverlay() {
+        cursorOverMap = false;
         if (overlayView == null)
             return;
         overlayView.removeComponentListener(overlayResizeListener);

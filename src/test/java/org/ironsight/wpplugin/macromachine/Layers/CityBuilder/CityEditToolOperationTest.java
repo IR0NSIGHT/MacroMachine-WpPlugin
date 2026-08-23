@@ -27,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CityEditToolOperationTest
 {
-
     static ArrayList<WPObject> loadDevelopmentSchematics() throws IOException {
         var resource = CityEditToolOperation.class.getResource("/CityBuilder/Houses");
         if (resource == null)
@@ -113,6 +112,14 @@ class CityEditToolOperationTest
         CityEditToolOperation operation = new CityEditToolOperation();
         operation.setView(view);
         operation.setPaint(new NibbleLayerPaint(layer));
+        JPanel mapView = new JPanel();
+        JPanel mapChild = new JPanel();
+        JPanel otherView = new JPanel();
+        mapView.add(mapChild);
+        assertFalse(CityEditToolOperation.isMapComponent(null, mapChild));
+        assertTrue(CityEditToolOperation.isMapComponent(mapView, mapView));
+        assertTrue(CityEditToolOperation.isMapComponent(mapView, mapChild));
+        assertFalse(CityEditToolOperation.isMapComponent(mapView, otherView));
         operation.random = new Random(1234);
         operation.setPlacementOptions(new CityEditToolOperation.PlacementOptions(false, true, false));
 
