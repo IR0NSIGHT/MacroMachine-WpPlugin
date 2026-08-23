@@ -52,7 +52,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     private WorldPainterView overlayView;
     private volatile boolean cursorOverMap;
-    private final DragOverlay dragOverlay = new DragOverlay();
+    private final DragOverlay dragOverlay = new DragOverlay(getIcon());
     private TiledImageViewer.ViewListener previousViewListener;
     private final TiledImageViewer.ViewListener overlayViewListener = changedView -> {
         if (previousViewListener != null)
@@ -283,8 +283,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             view.addComponentListener(overlayResizeListener);
             view.add(dragOverlay);
             view.setComponentZOrder(dragOverlay, 0);
-            updateOverlayText();
             resizeDragOverlay();
+            dragOverlay.showOverlayText("City Tool");
         }
     }
 
@@ -726,6 +726,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private static final double LABEL_WIDTH_RATIO = 0.15;
         private static final float LABEL_TEXT_SCALE = 0.9f;
         private static final float LABEL_BASE_FONT_SIZE = 14f;
+        private static final int LABEL_INTRO_DELAY_MS = 300;
+        private static final int LABEL_ICON_GAP = 4;
+        private static final Color LABEL_BACKGROUND = new Color(0, 0, 0, 26);
         private static final Color LIGHT_CELL = new Color(255, 255, 255, 80);
         private static final Color DARK_CELL = new Color(255, 0, 0, 80);
         private static final Color BORDER = new Color(255, 255, 255, 180);
@@ -737,16 +740,23 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private Point dragEndWorld;
         private final Map<Long, Rectangle> outlines = new HashMap<>();
         private long nextOutlineId;
+        private Timer labelPositionTimer;
+        private boolean centerLabel;
+        private final Image overlayIcon;
 
-        DragOverlay() {
+        DragOverlay(Image overlayIcon) {
+            this.overlayIcon = overlayIcon;
             setOpaque(false);
             setLayout(null);
-            overlayLabel.setOpaque(false);
+            overlayLabel.setOpaque(true);
+            overlayLabel.setBackground(LABEL_BACKGROUND);
             overlayLabel.setBorder(null);
             overlayLabel.setFocusable(false);
-            overlayLabel.setForeground(Color.WHITE);
+            overlayLabel.setForeground(Color.GRAY);
             overlayLabel.setFont(overlayLabelBaseFont);
             overlayLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            overlayLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
+            overlayLabel.setIconTextGap(LABEL_ICON_GAP);
             overlayLabel.setVisible(false);
             add(overlayLabel);
         }
@@ -796,6 +806,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         void setOverlayText(String text) {
+            stopLabelPositionTimer();
+            centerLabel = false;
             overlayLabel.setText(text);
             overlayLabel.setVisible(text != null && !text.isBlank());
             layoutOverlayText();
@@ -803,8 +815,41 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             repaint();
         }
 
+        void showOverlayText(String text) {
+            stopLabelPositionTimer();
+            overlayLabel.setText(text);
+            overlayLabel.setVisible(text != null && !text.isBlank());
+            centerLabel = true;
+            layoutOverlayText();
+            revalidate();
+            repaint();
+            if (!overlayLabel.isVisible()) {
+                centerLabel = false;
+                return;
+            }
+
+            Timer timer = new Timer(LABEL_INTRO_DELAY_MS, event -> {
+                if (labelPositionTimer != event.getSource())
+                    return;
+                labelPositionTimer = null;
+                centerLabel = false;
+                layoutOverlayText();
+                repaint();
+            });
+            timer.setRepeats(false);
+            labelPositionTimer = timer;
+            timer.start();
+        }
+
         void clearOverlayText() {
             setOverlayText(null);
+        }
+
+        private void stopLabelPositionTimer() {
+            if (labelPositionTimer != null) {
+                labelPositionTimer.stop();
+                labelPositionTimer = null;
+            }
         }
 
         void layoutOverlayText() {
@@ -813,13 +858,21 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             int labelWidth = Math.max(1, (int) Math.round(getWidth() * LABEL_WIDTH_RATIO));
             FontMetrics baseMetrics = overlayLabel.getFontMetrics(overlayLabelBaseFont);
             int baseTextWidth = Math.max(1, baseMetrics.stringWidth(overlayLabel.getText()));
-            float fontScale = (float) labelWidth / baseTextWidth * LABEL_TEXT_SCALE;
+            int baseIconWidth = overlayIcon == null ? 0 : baseMetrics.getHeight() + LABEL_ICON_GAP;
+            float fontScale = (float) labelWidth / (baseTextWidth + baseIconWidth) * LABEL_TEXT_SCALE;
             Font scaledFont = overlayLabelBaseFont.deriveFont(overlayLabelBaseFont.getSize2D() * fontScale);
             overlayLabel.setFont(scaledFont);
             FontMetrics scaledMetrics = overlayLabel.getFontMetrics(scaledFont);
             int labelHeight = scaledMetrics.getHeight();
-            overlayLabel.setBounds(Math.max(0, getWidth() - labelWidth - LABEL_MARGIN), LABEL_MARGIN, labelWidth,
-                    labelHeight);
+            if (overlayIcon != null) {
+                Image scaledIcon = overlayIcon.getScaledInstance(labelHeight, labelHeight, Image.SCALE_SMOOTH);
+                overlayLabel.setIcon(new ImageIcon(scaledIcon));
+            }
+            int labelX = centerLabel
+                    ? Math.max(0, (getWidth() - labelWidth) / 2)
+                    : Math.max(0, getWidth() - labelWidth - LABEL_MARGIN);
+            int labelY = centerLabel ? Math.max(0, (getHeight() - labelHeight) / 2) : LABEL_MARGIN;
+            overlayLabel.setBounds(labelX, labelY, labelWidth, labelHeight);
         }
 
         Rectangle getDragBounds() {
