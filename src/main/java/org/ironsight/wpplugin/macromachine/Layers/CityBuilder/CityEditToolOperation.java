@@ -726,7 +726,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private static final double LABEL_WIDTH_RATIO = 0.15;
         private static final float LABEL_TEXT_SCALE = 0.9f;
         private static final float LABEL_BASE_FONT_SIZE = 14f;
-        private static final int LABEL_INTRO_DELAY_MS = 300;
+        private static final float LABEL_INITIAL_SCALE = 2f;
+        private static final int LABEL_ANIMATION_START_DELAY_MS = 500;
+        private static final int LABEL_ANIMATION_DURATION_MS = 300;
+        private static final int LABEL_ANIMATION_TICK_MS = 16;
         private static final int LABEL_ICON_GAP = 4;
         private static final Color LABEL_BACKGROUND = new Color(0, 0, 0, 26);
         private static final Color LIGHT_CELL = new Color(255, 255, 255, 80);
@@ -741,7 +744,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private final Map<Long, Rectangle> outlines = new HashMap<>();
         private long nextOutlineId;
         private Timer labelPositionTimer;
-        private boolean centerLabel;
+        private float labelPositionProgress = 1f;
+        private long labelAnimationStartNanos;
+        private boolean labelAnimationStarted;
         private final Image overlayIcon;
 
         DragOverlay(Image overlayIcon) {
@@ -807,7 +812,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         void setOverlayText(String text) {
             stopLabelPositionTimer();
-            centerLabel = false;
+            labelPositionProgress = 1f;
             overlayLabel.setText(text);
             overlayLabel.setVisible(text != null && !text.isBlank());
             layoutOverlayText();
@@ -819,24 +824,33 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             stopLabelPositionTimer();
             overlayLabel.setText(text);
             overlayLabel.setVisible(text != null && !text.isBlank());
-            centerLabel = true;
+            labelPositionProgress = 0f;
             layoutOverlayText();
             revalidate();
             repaint();
             if (!overlayLabel.isVisible()) {
-                centerLabel = false;
+                labelPositionProgress = 1f;
                 return;
             }
 
-            Timer timer = new Timer(LABEL_INTRO_DELAY_MS, event -> {
+            labelAnimationStarted = false;
+            Timer timer = new Timer(LABEL_ANIMATION_TICK_MS, event -> {
                 if (labelPositionTimer != event.getSource())
                     return;
-                labelPositionTimer = null;
-                centerLabel = false;
+                if (!labelAnimationStarted) {
+                    labelAnimationStarted = true;
+                    labelAnimationStartNanos = System.nanoTime();
+                }
+                double elapsedMillis = (System.nanoTime() - labelAnimationStartNanos) / 1_000_000.0;
+                labelPositionProgress = (float) Math.min(1.0, elapsedMillis / LABEL_ANIMATION_DURATION_MS);
                 layoutOverlayText();
                 repaint();
+                if (labelPositionProgress >= 1f) {
+                    ((Timer) event.getSource()).stop();
+                    labelPositionTimer = null;
+                }
             });
-            timer.setRepeats(false);
+            timer.setInitialDelay(LABEL_ANIMATION_START_DELAY_MS);
             labelPositionTimer = timer;
             timer.start();
         }
@@ -855,7 +869,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         void layoutOverlayText() {
             if (!overlayLabel.isVisible() || getWidth() <= 0)
                 return;
-            int labelWidth = Math.max(1, (int) Math.round(getWidth() * LABEL_WIDTH_RATIO));
+            float easedProgress = labelPositionProgress * labelPositionProgress * (3f - 2f * labelPositionProgress);
+            float labelScale = LABEL_INITIAL_SCALE - (LABEL_INITIAL_SCALE - 1f) * easedProgress;
+            int baseLabelWidth = Math.max(1, (int) Math.round(getWidth() * LABEL_WIDTH_RATIO));
+            int labelWidth = Math.max(1, Math.round(baseLabelWidth * labelScale));
             FontMetrics baseMetrics = overlayLabel.getFontMetrics(overlayLabelBaseFont);
             int baseTextWidth = Math.max(1, baseMetrics.stringWidth(overlayLabel.getText()));
             int baseIconWidth = overlayIcon == null ? 0 : baseMetrics.getHeight() + LABEL_ICON_GAP;
@@ -868,10 +885,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 Image scaledIcon = overlayIcon.getScaledInstance(labelHeight, labelHeight, Image.SCALE_SMOOTH);
                 overlayLabel.setIcon(new ImageIcon(scaledIcon));
             }
-            int labelX = centerLabel
-                    ? Math.max(0, (getWidth() - labelWidth) / 2)
-                    : Math.max(0, getWidth() - labelWidth - LABEL_MARGIN);
-            int labelY = centerLabel ? Math.max(0, (getHeight() - labelHeight) / 2) : LABEL_MARGIN;
+            int centeredX = Math.max(0, (getWidth() - labelWidth) / 2);
+            int edgeX = Math.max(0, getWidth() - labelWidth - LABEL_MARGIN);
+            int centeredY = Math.max(0, (getHeight() - labelHeight) / 2);
+            int edgeY = LABEL_MARGIN;
+            int labelX = Math.round(centeredX + (edgeX - centeredX) * easedProgress);
+            int labelY = Math.round(centeredY + (edgeY - centeredY) * easedProgress);
             overlayLabel.setBounds(labelX, labelY, labelWidth, labelHeight);
         }
 
