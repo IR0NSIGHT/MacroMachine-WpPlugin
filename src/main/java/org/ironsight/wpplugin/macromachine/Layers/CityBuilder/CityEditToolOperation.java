@@ -5,6 +5,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -18,6 +19,8 @@ import java.util.function.UnaryOperator;
 import javax.swing.*;
 import javax.vecmath.Point3i;
 
+import com.github.weisj.jsvg.SVGDocument;
+import com.github.weisj.jsvg.parser.SVGLoader;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.pepsoft.util.swing.TiledImageViewer;
 import org.pepsoft.util.undo.UndoManager;
@@ -35,6 +38,8 @@ import org.pepsoft.worldpainter.painting.Paint;
  */
 public class CityEditToolOperation extends MouseOrTabletOperation implements PaintOperation, KeyEventDispatcher
 {
+    private static final int OVERLAY_ICON_SIZE = 256;
+    private static final Color OVERLAY_ICON_COLOR = Color.GRAY;
     private static CityEditToolOperation instance;
     record PlacementOptions(boolean randomRotate, boolean randomSelect, boolean randomMirror) {
     }
@@ -67,9 +72,30 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     };
 
     private static Image loadOverlayIcon() {
-        return new ImageIcon(Objects.requireNonNull(
-                CityEditToolOperation.class.getResource("/org/pepsoft/worldpainter/icons/citytool_256.png"),
-                "City Tool overlay icon not found")).getImage();
+        var svgUrl = Objects.requireNonNull(CityEditToolOperation.class.getResource("/icons/castle.svg"),
+                "City Tool overlay SVG not found");
+        SVGDocument document = Objects.requireNonNull(new SVGLoader().load(svgUrl),
+                "City Tool overlay SVG could not be loaded");
+        BufferedImage icon = new BufferedImage(OVERLAY_ICON_SIZE, OVERLAY_ICON_SIZE, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = icon.createGraphics();
+        try {
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+            var viewBox = document.viewBox();
+            graphics.scale(OVERLAY_ICON_SIZE / viewBox.getWidth(), OVERLAY_ICON_SIZE / viewBox.getHeight());
+            document.render(null, graphics);
+        } finally {
+            graphics.dispose();
+        }
+        int color = OVERLAY_ICON_COLOR.getRGB() & 0x00ffffff;
+        for (int y = 0; y < icon.getHeight(); y++) {
+            for (int x = 0; x < icon.getWidth(); x++) {
+                int argb = icon.getRGB(x, y);
+                icon.setRGB(x, y, (argb & 0xff000000) | color);
+            }
+        }
+        return icon;
     }
 
     public CityEditToolOperation() {
@@ -763,7 +789,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             overlayLabel.setBackground(LABEL_BACKGROUND);
             overlayLabel.setBorder(null);
             overlayLabel.setFocusable(false);
-            overlayLabel.setForeground(Color.GRAY);
+            overlayLabel.setForeground(OVERLAY_ICON_COLOR);
             overlayLabel.setFont(overlayLabelBaseFont);
             overlayLabel.setHorizontalAlignment(SwingConstants.CENTER);
             overlayLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
