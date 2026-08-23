@@ -216,6 +216,16 @@ class CityEditToolOperationTest
         assertNotNull(layer.getInformationAt(320, 319));
         assertNotNull(layer.getInformationAt(330, 320));
         assertNull(layer.getInformationAt(320, 320));
+
+        operation.handleKeyInteraction(KeyEvent.VK_A, true);
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+
+        assertNotNull(layer.getInformationAt(320, 318));
+        assertNotNull(layer.getInformationAt(330, 319));
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+        assertNotNull(layer.getInformationAt(320, 318));
+        assertNotNull(layer.getInformationAt(330, 319));
     }
 
     private static CityLayer layerWithObjects() {

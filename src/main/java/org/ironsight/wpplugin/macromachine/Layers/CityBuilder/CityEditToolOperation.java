@@ -142,19 +142,31 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         if (e.getID() == KeyEvent.KEY_PRESSED) {
             if (!isActive() || getDimension() == null)
                 return false;
+            if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_A) {
+                handleKeyInteraction(e.getKeyCode(), true);
+                return false;
+            }
             if (e.isShiftDown() || e.isControlDown() || e.isAltDown() || e.isMetaDown())
                 return false;
-            handleKeyInteraction(e.getKeyCode());
+            handleKeyInteraction(e.getKeyCode(), false);
         }
         return false; // return false to allow other listeners to handle the event
     }
 
     /** Applies one unmodified keyboard interaction from the city tool. */
     void handleKeyInteraction(int keyCode) {
+        handleKeyInteraction(keyCode, false);
+    }
+
+    void handleKeyInteraction(int keyCode, boolean controlDown) {
         try {
             if (!getDimension().isEventsInhibited())
                 getDimension().setEventsInhibited(true);
             CityLayer layer = getSelectedLayer();
+            if (controlDown && keyCode == KeyEvent.VK_A) {
+                selectAll(layer);
+                return;
+            }
             boolean requiresSelection = keyCode == KeyEvent.VK_Q || keyCode == KeyEvent.VK_W || keyCode == KeyEvent.VK_A
                     || keyCode == KeyEvent.VK_S || keyCode == KeyEvent.VK_D || keyCode == KeyEvent.VK_C
                     || keyCode == KeyEvent.VK_X;
@@ -164,6 +176,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             switch (keyCode) {
                 case KeyEvent.VK_Q -> applyToSelection(layer, this::randomizeState);
                 case KeyEvent.VK_DELETE -> deleteSelected();
+                case KeyEvent.VK_ESCAPE -> {
+                    if (layer != null)
+                        deselect(layer);
+                }
                 case KeyEvent.VK_W -> moveSelection(layer, 0, -1);
                 case KeyEvent.VK_S -> moveSelection(layer, 0, 1);
                 case KeyEvent.VK_A -> moveSelection(layer, -1, 0);
@@ -180,6 +196,24 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (getDimension().isEventsInhibited())
                 getDimension().setEventsInhibited(false);
         }
+    }
+
+    private void selectAll(CityLayer layer) {
+        if (layer == null)
+            return;
+
+        clearSelection();
+        for (ObjectState state : layer.getAllObjectStates())
+            addSelectedState(state, layer);
+
+        if (selectedStates.isEmpty()) {
+            deselect(layer);
+            return;
+        }
+
+        uiState = new ArrayList<>(selectedStates.values()).getLast();
+        applyToUi(uiState);
+        refreshLayer(layer);
     }
 
     void handleClick(int centreX, int centreY, boolean rightClick, boolean ctrlDown) {
