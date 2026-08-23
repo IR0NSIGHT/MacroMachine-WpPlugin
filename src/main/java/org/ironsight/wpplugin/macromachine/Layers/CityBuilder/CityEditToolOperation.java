@@ -52,7 +52,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     private WorldPainterView overlayView;
     private volatile boolean cursorOverMap;
-    private final DragOverlay dragOverlay = new DragOverlay(getIcon());
+    private final DragOverlay dragOverlay = new DragOverlay(loadOverlayIcon());
     private TiledImageViewer.ViewListener previousViewListener;
     private final TiledImageViewer.ViewListener overlayViewListener = changedView -> {
         if (previousViewListener != null)
@@ -65,6 +65,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             resizeDragOverlay();
         }
     };
+
+    private static Image loadOverlayIcon() {
+        return new ImageIcon(Objects.requireNonNull(
+                CityEditToolOperation.class.getResource("/org/pepsoft/worldpainter/icons/citytool_256.png"),
+                "City Tool overlay icon not found")).getImage();
+    }
 
     public CityEditToolOperation() {
         super("City Tool", "Edit city layers using this tool", "city-edit-tool-operation");
