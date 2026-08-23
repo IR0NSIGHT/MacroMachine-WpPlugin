@@ -283,6 +283,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             view.addComponentListener(overlayResizeListener);
             view.add(dragOverlay);
             view.setComponentZOrder(dragOverlay, 0);
+            updateOverlayText();
             resizeDragOverlay();
         }
     }
@@ -294,6 +295,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     private void detachDragOverlay() {
         cursorOverMap = false;
+        dragOverlay.clearOverlayText();
         if (overlayView == null)
             return;
         overlayView.removeComponentListener(overlayResizeListener);
@@ -440,6 +442,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     protected void paintChanged(Paint ignored) {
         clearSelection();
         updatePanel();
+        updateOverlayText();
+    }
+
+    private void updateOverlayText() {
+        if (overlayView != null)
+            dragOverlay.setOverlayText("City Tool");
+        else
+            dragOverlay.clearOverlayText();
     }
 
     private void applyToUi(ObjectState uiState) {
@@ -700,15 +710,29 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         paintChanged(paint);
     }
 
+    private static final class MouseTransparentLabel extends JLabel
+    {
+        @Override
+        public boolean contains(int x, int y) {
+            return false;
+        }
+    }
+
     private static class DragOverlay extends JComponent
     {
         private static final boolean DRAW_CHECKERBOARD = false;
         private static final int CELL_SIZE = 10;
+        private static final int LABEL_MARGIN = 8;
+        private static final double LABEL_WIDTH_RATIO = 0.15;
+        private static final float LABEL_TEXT_SCALE = 0.9f;
+        private static final float LABEL_BASE_FONT_SIZE = 14f;
         private static final Color LIGHT_CELL = new Color(255, 255, 255, 80);
         private static final Color DARK_CELL = new Color(255, 0, 0, 80);
         private static final Color BORDER = new Color(255, 255, 255, 180);
 
         private WorldPainterView mapView;
+        private final JLabel overlayLabel = new MouseTransparentLabel();
+        private final Font overlayLabelBaseFont = overlayLabel.getFont().deriveFont(Font.BOLD, LABEL_BASE_FONT_SIZE);
         private Point dragStartWorld;
         private Point dragEndWorld;
         private final Map<Long, Rectangle> outlines = new HashMap<>();
@@ -716,11 +740,32 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         DragOverlay() {
             setOpaque(false);
+            setLayout(null);
+            overlayLabel.setOpaque(false);
+            overlayLabel.setBorder(null);
+            overlayLabel.setFocusable(false);
+            overlayLabel.setForeground(Color.WHITE);
+            overlayLabel.setFont(overlayLabelBaseFont);
+            overlayLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            overlayLabel.setVisible(false);
+            add(overlayLabel);
         }
 
         @Override
         public boolean contains(int x, int y) {
             return false;
+        }
+
+        @Override
+        public void setBounds(int x, int y, int width, int height) {
+            super.setBounds(x, y, width, height);
+            layoutOverlayText();
+        }
+
+        @Override
+        public void doLayout() {
+            super.doLayout();
+            layoutOverlayText();
         }
 
         void startDrag(Point viewPoint) {
@@ -748,6 +793,33 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         void setMapView(WorldPainterView mapView) {
             this.mapView = mapView;
             repaint();
+        }
+
+        void setOverlayText(String text) {
+            overlayLabel.setText(text);
+            overlayLabel.setVisible(text != null && !text.isBlank());
+            layoutOverlayText();
+            revalidate();
+            repaint();
+        }
+
+        void clearOverlayText() {
+            setOverlayText(null);
+        }
+
+        void layoutOverlayText() {
+            if (!overlayLabel.isVisible() || getWidth() <= 0)
+                return;
+            int labelWidth = Math.max(1, (int) Math.round(getWidth() * LABEL_WIDTH_RATIO));
+            FontMetrics baseMetrics = overlayLabel.getFontMetrics(overlayLabelBaseFont);
+            int baseTextWidth = Math.max(1, baseMetrics.stringWidth(overlayLabel.getText()));
+            float fontScale = (float) labelWidth / baseTextWidth * LABEL_TEXT_SCALE;
+            Font scaledFont = overlayLabelBaseFont.deriveFont(overlayLabelBaseFont.getSize2D() * fontScale);
+            overlayLabel.setFont(scaledFont);
+            FontMetrics scaledMetrics = overlayLabel.getFontMetrics(scaledFont);
+            int labelHeight = scaledMetrics.getHeight();
+            overlayLabel.setBounds(Math.max(0, getWidth() - labelWidth - LABEL_MARGIN), LABEL_MARGIN, labelWidth,
+                    labelHeight);
         }
 
         Rectangle getDragBounds() {
