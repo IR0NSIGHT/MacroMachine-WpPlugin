@@ -27,6 +27,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CityEditToolOperationTest
 {
+    private static final Dimension TEST_DIMENSION = TestDimension
+            .createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500), -256, 512, 70, 123456789, 62,
+                    org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19, org.pepsoft.worldpainter.Terrain.GRASS));
+    private static final TestView TEST_VIEW = new TestView(TEST_DIMENSION);
+
     static ArrayList<WPObject> loadDevelopmentSchematics() throws IOException {
         var resource = CityEditToolOperation.class.getResource("/CityBuilder/Houses");
         if (resource == null)
@@ -103,12 +108,62 @@ class CityEditToolOperationTest
     }
 
     @Test
+    void copyCutAndPastePreserveSelectionLayout() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+
+        ObjectState first = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 102);
+        ObjectState second = new ObjectState(CityLayer.Direction.SOUTH, true, 1, 110, 104);
+        layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
+        layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
+
+        operation.handleClick(first.xPos, first.yPos, false, false);
+        operation.handleClick(second.xPos, second.yPos, false, false);
+        operation.handleKeyInteraction(KeyEvent.VK_C, true);
+
+        assertEquals(first, layer.getInformationAt(first.xPos, first.yPos));
+        assertEquals(second, layer.getInformationAt(second.xPos, second.yPos));
+
+        operation.setCursorWorldPosition(200, 200);
+        operation.handleKeyInteraction(KeyEvent.VK_V, true);
+
+        assertEquals(first.objectIndex, layer.getInformationAt(190, 198).objectIndex);
+        assertEquals(first.rotation, layer.getInformationAt(190, 198).rotation);
+        assertEquals(first.mirrored, layer.getInformationAt(190, 198).mirrored);
+        assertEquals(second.objectIndex, layer.getInformationAt(200, 200).objectIndex);
+        assertEquals(second.rotation, layer.getInformationAt(200, 200).rotation);
+        assertEquals(second.mirrored, layer.getInformationAt(200, 200).mirrored);
+
+        operation.handleKeyInteraction(KeyEvent.VK_X, true);
+        assertNull(layer.getInformationAt(190, 198));
+        assertNull(layer.getInformationAt(200, 200));
+
+        operation.setCursorWorldPosition(300, 300);
+        operation.handleKeyInteraction(KeyEvent.VK_V, true);
+        assertEquals(first.objectIndex, layer.getInformationAt(290, 298).objectIndex);
+        assertEquals(second.objectIndex, layer.getInformationAt(300, 300).objectIndex);
+    }
+
+    @Test
+    void pastingAnEmptyClipboardDoesNothing() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.setCursorWorldPosition(200, 200);
+
+        operation.handleKeyInteraction(KeyEvent.VK_V, true);
+
+        assertNull(layer.getInformationAt(200, 200));
+    }
+
+    @Test
     void randomisationIsAppliedOnlyWhenRequestedAndMovementKeepsObjectType() throws Exception {
         CityLayer layer = layerWithObjects();
-        Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500),
-                -256, 512, 70, 123456789, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
-                org.pepsoft.worldpainter.Terrain.GRASS));
-        TestView view = new TestView(dimension);
+        Dimension dimension = TEST_DIMENSION;
+        TestView view = TEST_VIEW;
         CityEditToolOperation operation = new CityEditToolOperation();
         operation.setView(view);
         operation.setPaint(new NibbleLayerPaint(layer));

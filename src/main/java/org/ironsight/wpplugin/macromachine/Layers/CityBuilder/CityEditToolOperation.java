@@ -26,8 +26,6 @@ import org.pepsoft.util.swing.TiledImageViewer;
 import org.pepsoft.util.undo.UndoManager;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
-import org.pepsoft.worldpainter.brushes.Brush;
-import org.pepsoft.worldpainter.brushes.RotatedBrush;
 import org.pepsoft.worldpainter.objects.WPObject;
 import org.pepsoft.worldpainter.operations.MouseOrTabletOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
@@ -43,6 +41,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private static CityEditToolOperation instance;
     record PlacementOptions(boolean randomRotate, boolean randomSelect, boolean randomMirror) {
     }
+    private record ClipboardEntry(CityLayer.Direction rotation, boolean mirrored, int objectIndex, long offsetX,
+            long offsetY) {
+    }
 
     private final OptionsPanel optionsPanel;
     Random random = new Random();
@@ -51,6 +52,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private PlacementOptions placementOptions = new PlacementOptions(false, false, false);
     private final Map<Point, ObjectState> selectedStates = new LinkedHashMap<>();
     private final Map<Point, Long> selectedOutlineIds = new HashMap<>();
+    private List<ClipboardEntry> clipboard = List.of();
+    private CityLayer clipboardLayer;
+    private volatile Point cursorWorldPosition;
+    private Timer statusMessageTimer;
     private boolean updatingPanelSelection;
 
     private Paint paint;
@@ -123,6 +128,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 return;
 
             Point viewPoint = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), overlayView);
+            if (event.getID() == MouseEvent.MOUSE_EXITED && !new Rectangle(overlayView.getSize()).contains(viewPoint)) {
+                cursorOverMap = false;
+                cursorWorldPosition = null;
+                return;
+            }
+            cursorWorldPosition = overlayView.viewToWorld(viewPoint);
             DragOverlay overlay = dragOverlay;
             switch (event.getID()) {
                 case MouseEvent.MOUSE_PRESSED -> {
@@ -177,6 +188,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 return false;
             if (!cursorOverMap)
                 return false;
+            if (e.isControlDown() && !e.isShiftDown() && !e.isAltDown() && !e.isMetaDown()) {
+                if (e.getKeyCode() == KeyEvent.VK_C || e.getKeyCode() == KeyEvent.VK_X
+                        || e.getKeyCode() == KeyEvent.VK_V) {
+                    handleKeyInteraction(e.getKeyCode(), true);
+                    return true;
+                }
+            }
             if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_A) {
                 handleKeyInteraction(e.getKeyCode(), true);
                 return false;
@@ -205,6 +223,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             CityLayer layer = getSelectedLayer();
             if (controlDown && keyCode == KeyEvent.VK_A) {
                 selectAll(layer);
+                return;
+            }
+            if (controlDown) {
+                switch (keyCode) {
+                    case KeyEvent.VK_C -> copySelection(layer);
+                    case KeyEvent.VK_X -> cutSelection(layer);
+                    case KeyEvent.VK_V -> pasteClipboard(layer);
+                    default -> {
+                    }
+                }
                 return;
             }
             boolean requiresSelection = keyCode == KeyEvent.VK_Q || keyCode == KeyEvent.VK_W || keyCode == KeyEvent.VK_A
@@ -248,15 +276,18 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         if (selectedStates.isEmpty()) {
             deselect(layer);
+            showStatusMessage(selectionStatusMessage());
             return;
         }
 
         uiState = new ArrayList<>(selectedStates.values()).getLast();
         applyToUi(uiState);
         refreshLayer(layer);
+        showStatusMessage(selectionStatusMessage());
     }
 
     void handleClick(int centreX, int centreY, boolean rightClick, boolean ctrlDown) {
+        cursorWorldPosition = new Point(centreX, centreY);
         CityLayer layer = getSelectedLayer();
         if (layer == null)
             return;
@@ -272,6 +303,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     /** Places one building at the coordinates */
     void placeAt(int centreX, int centreY) {
+        cursorWorldPosition = new Point(centreX, centreY);
         CityLayer layer = getSelectedLayer();
         if (layer != null)
             onAddAt(centreX, centreY, layer);
@@ -327,7 +359,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     private void detachDragOverlay() {
         cursorOverMap = false;
+        cursorWorldPosition = null;
+        if (statusMessageTimer != null) {
+            statusMessageTimer.stop();
+            statusMessageTimer = null;
+        }
+        optionsPanel.setStatusMessage(null);
         dragOverlay.clearOverlayText();
+        dragOverlay.clearInfoText();
         if (overlayView == null)
             return;
         overlayView.removeComponentListener(overlayResizeListener);
@@ -366,6 +405,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private void addSelectedState(ObjectState state, CityLayer layer) {
         Point anchor = new Point(state.xPos, state.yPos);
         selectedStates.put(anchor, state);
+        updateSelectionCount();
         WPObject object = layer.getObjectForState(state);
         if (object == null)
             return;
@@ -381,11 +421,17 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         if (outlineId != null)
             dragOverlay.removeOutline(outlineId);
         selectedStates.remove(anchor);
+        updateSelectionCount();
     }
 
     private void clearSelection() {
         selectedStates.clear();
         clearSelectedObjectOutlines();
+        updateSelectionCount();
+    }
+
+    private void updateSelectionCount() {
+        optionsPanel.setSelectionCount(selectedStates.size());
     }
 
     void selectWithinBox(CityLayer layer, Rectangle selectionBounds) {
@@ -404,10 +450,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         if (selectedStates.isEmpty()) {
             deselect(layer);
+            showStatusMessage(selectionStatusMessage());
         } else {
             uiState = new ArrayList<>(selectedStates.values()).getLast();
             applyToUi(uiState);
             refreshLayer(layer);
+            showStatusMessage(selectionStatusMessage());
         }
     }
 
@@ -473,6 +521,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     protected void paintChanged(Paint ignored) {
         clearSelection();
+        clearClipboard();
         updatePanel();
         updateOverlayText();
     }
@@ -545,6 +594,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         selectedStates.clear();
         for (ObjectState state : newStates)
             selectedStates.put(new Point(state.xPos, state.yPos), state);
+        updateSelectionCount();
         updateSelectedObjectOutlines(layer);
 
         uiState = newStates.get(Math.min(activeIndex, newStates.size() - 1));
@@ -602,14 +652,17 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 } else {
                     uiState = new ArrayList<>(selectedStates.values()).getLast();
                     applyToUi(uiState);
+                    showStatusMessage(selectionStatusMessage());
                 }
             } else {
                 addSelectedState(selectedState, cityLayer);
                 uiState = selectedState;
                 applyToUi(uiState);
+                showStatusMessage(selectionStatusMessage());
             }
         } else {
             deselect(cityLayer);
+            showStatusMessage(selectionStatusMessage());
         }
     }
 
@@ -637,6 +690,124 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         for (ObjectState state : selectedStates.values())
             layer.removeDataAt(getDimension(), state.xPos, state.yPos);
         deselect(layer);
+    }
+
+    private void copySelection(CityLayer layer) {
+        if (layer == null || selectedStates.isEmpty())
+            return;
+
+        ObjectState anchor = selectedStates.get(new Point(uiState.xPos, uiState.yPos));
+        if (anchor == null)
+            anchor = selectedStates.values().iterator().next();
+
+        List<ClipboardEntry> entries = new ArrayList<>(selectedStates.size());
+        addClipboardEntry(entries, anchor, anchor);
+        for (ObjectState state : selectedStates.values()) {
+            if (state.xPos != anchor.xPos || state.yPos != anchor.yPos)
+                addClipboardEntry(entries, state, anchor);
+        }
+
+        clipboard = entries;
+        clipboardLayer = layer;
+        updateClipboardCount();
+        showStatusMessage(objectCountMessage(entries.size(), "copied to clipboard"));
+    }
+
+    private void addClipboardEntry(List<ClipboardEntry> entries, ObjectState state, ObjectState anchor) {
+        long offsetX = (long) state.xPos - anchor.xPos;
+        long offsetY = (long) state.yPos - anchor.yPos;
+        entries.add(new ClipboardEntry(state.rotation, state.mirrored, state.objectIndex, offsetX, offsetY));
+    }
+
+    private void cutSelection(CityLayer layer) {
+        if (layer == null || selectedStates.isEmpty())
+            return;
+
+        copySelection(layer);
+        int count = selectedStates.size();
+        deleteSelected();
+        showStatusMessage(objectCountMessage(count, "cut to clipboard"));
+    }
+
+    private void pasteClipboard(CityLayer layer) {
+        if (layer == null || clipboard.isEmpty() || clipboardLayer != layer) {
+            if (clipboardLayer != layer)
+                clearClipboard();
+            showStatusMessage("Clipboard is empty");
+            return;
+        }
+
+        Point cursor = cursorWorldPosition;
+        if (cursor == null) {
+            showStatusMessage("Move the cursor over the map to paste");
+            return;
+        }
+
+        List<ObjectState> newStates = new ArrayList<>(clipboard.size());
+        for (ClipboardEntry entry : clipboard) {
+            if (entry.objectIndex < 0 || entry.objectIndex >= layer.getObjectList().size()) {
+                showStatusMessage("Clipboard cannot be pasted into this layer");
+                return;
+            }
+            long x = cursor.x + entry.offsetX;
+            long y = cursor.y + entry.offsetY;
+            if (x < Integer.MIN_VALUE || x > Integer.MAX_VALUE || y < Integer.MIN_VALUE || y > Integer.MAX_VALUE) {
+                showStatusMessage("Clipboard does not fit at the cursor");
+                return;
+            }
+            newStates.add(new ObjectState(entry.rotation, entry.mirrored, entry.objectIndex, (int) x, (int) y));
+        }
+
+        for (ObjectState state : newStates)
+            layer.removeDataAt(getDimension(), state.xPos, state.yPos);
+        for (ObjectState state : newStates)
+            layer.setDataAt(getDimension(), state.xPos, state.yPos, state);
+
+        clearSelection();
+        for (ObjectState state : newStates)
+            addSelectedState(state, layer);
+        uiState = newStates.getFirst();
+        applyToUi(uiState);
+        refreshLayer(layer);
+        showStatusMessage(objectCountMessage(newStates.size(), "pasted from clipboard"));
+    }
+
+    private void clearClipboard() {
+        clipboard = List.of();
+        clipboardLayer = null;
+        updateClipboardCount();
+    }
+
+    private void updateClipboardCount() {
+        optionsPanel.setClipboardCount(clipboard.size());
+    }
+
+    private static String objectCountMessage(int count, String suffix) {
+        return count == 1 ? "1 object " + suffix : count + " objects " + suffix;
+    }
+
+    private String selectionStatusMessage() {
+        return selectedStates.isEmpty() ? "No objects selected" : objectCountMessage(selectedStates.size(), "selected");
+    }
+
+    private void showStatusMessage(String message) {
+        optionsPanel.setStatusMessage(message);
+        if (statusMessageTimer != null)
+            statusMessageTimer.stop();
+        statusMessageTimer = new Timer(3000, event -> {
+            if (statusMessageTimer != event.getSource())
+                return;
+            statusMessageTimer = null;
+            optionsPanel.setStatusMessage(null);
+        });
+        statusMessageTimer.setRepeats(false);
+        statusMessageTimer.start();
+        if (overlayView != null)
+            dragOverlay.showTransientInfoText(message, 3000);
+    }
+
+    void setCursorWorldPosition(int x, int y) {
+        cursorWorldPosition = new Point(x, y);
     }
 
     private void onAddAt(int centreX, int centreY, CityLayer cityLayer) {
@@ -711,6 +882,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     private void updatePanel() {
+        updateSelectionCount();
+        updateClipboardCount();
         if (getPaint() instanceof LayerPaint layerPaint && layerPaint.getLayer() instanceof CityLayer cityLayer) {
             optionsPanel.setObjects(cityLayer.getObjectList());
             applyToUi(setSelectedObjectIndex(0, uiState)); // some safety thing to always be inside of list bound?
@@ -763,14 +936,22 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private static final int LABEL_ANIMATION_DURATION_MS = 300;
         private static final int LABEL_ANIMATION_TICK_MS = 16;
         private static final int LABEL_ICON_GAP = 4;
+        private static final int MESSAGE_FADE_DURATION_MS = 500;
+        private static final int MESSAGE_FADE_TICK_MS = 30;
+        private static final float INFO_LABEL_VERTICAL_POSITION = 0.9f;
+        private static final int INFO_LABEL_HORIZONTAL_MARGIN = 16;
+        private static final int INFO_LABEL_PADDING = 8;
         private static final Color LABEL_BACKGROUND = new Color(0, 0, 0, 26);
+        private static final Color INFO_LABEL_BACKGROUND = new Color(96, 96, 96, 180);
         private static final Color LIGHT_CELL = new Color(255, 255, 255, 80);
         private static final Color DARK_CELL = new Color(255, 0, 0, 80);
         private static final Color BORDER = new Color(255, 255, 255, 180);
 
         private WorldPainterView mapView;
         private final JLabel overlayLabel = new MouseTransparentLabel();
+        private final JLabel infoLabel = new MouseTransparentLabel();
         private final Font overlayLabelBaseFont = overlayLabel.getFont().deriveFont(Font.BOLD, LABEL_BASE_FONT_SIZE);
+        private final Font infoLabelBaseFont = infoLabel.getFont().deriveFont(Font.BOLD, LABEL_BASE_FONT_SIZE);
         private Point dragStartWorld;
         private Point dragEndWorld;
         private final Map<Long, Rectangle> outlines = new HashMap<>();
@@ -779,6 +960,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private float labelPositionProgress = 1f;
         private long labelAnimationStartNanos;
         private boolean labelAnimationStarted;
+        private Timer transientInfoTimer;
         private final Image overlayIcon;
 
         DragOverlay(Image overlayIcon) {
@@ -796,6 +978,17 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             overlayLabel.setIconTextGap(LABEL_ICON_GAP);
             overlayLabel.setVisible(false);
             add(overlayLabel);
+
+            infoLabel.setOpaque(true);
+            infoLabel.setBackground(INFO_LABEL_BACKGROUND);
+            infoLabel.setBorder(BorderFactory.createEmptyBorder(INFO_LABEL_PADDING, INFO_LABEL_PADDING,
+                    INFO_LABEL_PADDING, INFO_LABEL_PADDING));
+            infoLabel.setFocusable(false);
+            infoLabel.setForeground(Color.WHITE);
+            infoLabel.setFont(infoLabelBaseFont);
+            infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            infoLabel.setVisible(false);
+            add(infoLabel);
         }
 
         @Override
@@ -807,12 +1000,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         public void setBounds(int x, int y, int width, int height) {
             super.setBounds(x, y, width, height);
             layoutOverlayText();
+            layoutInfoText();
         }
 
         @Override
         public void doLayout() {
             super.doLayout();
             layoutOverlayText();
+            layoutInfoText();
         }
 
         void startDrag(Point viewPoint) {
@@ -844,17 +1039,62 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         void setOverlayText(String text) {
             stopLabelPositionTimer();
+            stopTransientInfoTimer();
             labelPositionProgress = 1f;
             overlayLabel.setText(text);
+            overlayLabel.setForeground(OVERLAY_ICON_COLOR);
+            overlayLabel.setBackground(LABEL_BACKGROUND);
             overlayLabel.setVisible(text != null && !text.isBlank());
             layoutOverlayText();
             revalidate();
             repaint();
         }
 
+        void showTransientInfoText(String text, int durationMs) {
+            stopTransientInfoTimer();
+            infoLabel.setText(text);
+            infoLabel.setForeground(Color.WHITE);
+            infoLabel.setBackground(INFO_LABEL_BACKGROUND);
+            infoLabel.setVisible(text != null && !text.isBlank());
+            layoutInfoText();
+            revalidate();
+            repaint();
+            if (!infoLabel.isVisible())
+                return;
+
+            long fadeStartNanos = System.nanoTime() + Math.max(0, durationMs - MESSAGE_FADE_DURATION_MS) * 1_000_000L;
+            transientInfoTimer = new Timer(MESSAGE_FADE_TICK_MS, event -> {
+                if (transientInfoTimer != event.getSource())
+                    return;
+                long now = System.nanoTime();
+                long endNanos = fadeStartNanos + MESSAGE_FADE_DURATION_MS * 1_000_000L;
+                if (now >= endNanos) {
+                    transientInfoTimer = null;
+                    ((Timer) event.getSource()).stop();
+                    clearInfoText();
+                    return;
+                }
+                if (now >= fadeStartNanos) {
+                    float alpha = (float) (endNanos - now) / (MESSAGE_FADE_DURATION_MS * 1_000_000L);
+                    int textAlpha = Math.max(0, Math.min(255, Math.round(Color.WHITE.getAlpha() * alpha)));
+                    int backgroundAlpha = Math.max(0,
+                            Math.min(255, Math.round(INFO_LABEL_BACKGROUND.getAlpha() * alpha)));
+                    infoLabel.setForeground(
+                            new Color(Color.WHITE.getRed(), Color.WHITE.getGreen(), Color.WHITE.getBlue(), textAlpha));
+                    infoLabel.setBackground(new Color(INFO_LABEL_BACKGROUND.getRed(), INFO_LABEL_BACKGROUND.getGreen(),
+                            INFO_LABEL_BACKGROUND.getBlue(), backgroundAlpha));
+                    repaint();
+                }
+            });
+            transientInfoTimer.start();
+        }
+
         void showOverlayText(String text) {
             stopLabelPositionTimer();
+            stopTransientInfoTimer();
             overlayLabel.setText(text);
+            overlayLabel.setForeground(OVERLAY_ICON_COLOR);
+            overlayLabel.setBackground(LABEL_BACKGROUND);
             overlayLabel.setVisible(text != null && !text.isBlank());
             labelPositionProgress = 0f;
             layoutOverlayText();
@@ -891,11 +1131,42 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             setOverlayText(null);
         }
 
+        void clearInfoText() {
+            stopTransientInfoTimer();
+            infoLabel.setText(null);
+            infoLabel.setForeground(Color.WHITE);
+            infoLabel.setBackground(INFO_LABEL_BACKGROUND);
+            infoLabel.setVisible(false);
+            repaint();
+        }
+
         private void stopLabelPositionTimer() {
             if (labelPositionTimer != null) {
                 labelPositionTimer.stop();
                 labelPositionTimer = null;
             }
+        }
+
+        private void stopTransientInfoTimer() {
+            if (transientInfoTimer != null) {
+                transientInfoTimer.stop();
+                transientInfoTimer = null;
+            }
+        }
+
+        private void layoutInfoText() {
+            if (!infoLabel.isVisible() || getWidth() <= 0 || getHeight() <= 0)
+                return;
+            Insets insets = infoLabel.getInsets();
+            FontMetrics metrics = infoLabel.getFontMetrics(infoLabelBaseFont);
+            int labelWidth = metrics.stringWidth(infoLabel.getText()) + insets.left + insets.right;
+            int maxWidth = Math.max(1, getWidth() - 2 * INFO_LABEL_HORIZONTAL_MARGIN);
+            labelWidth = Math.min(maxWidth, Math.max(1, labelWidth));
+            int labelHeight = metrics.getHeight() + insets.top + insets.bottom;
+            int x = Math.max(0, (getWidth() - labelWidth) / 2);
+            int y = Math.round(getHeight() * INFO_LABEL_VERTICAL_POSITION - labelHeight / 2f);
+            y = Math.max(0, Math.min(Math.max(0, getHeight() - labelHeight), y));
+            infoLabel.setBounds(x, y, labelWidth, labelHeight);
         }
 
         void layoutOverlayText() {

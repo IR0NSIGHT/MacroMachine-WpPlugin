@@ -30,6 +30,8 @@ class OptionsPanel extends JPanel
             new HelpItem("Right click", "Move the current selection to the cursor"),
             new HelpItem("Shift + mouse wheel", "Change the selected building type"),
             new HelpItem("Ctrl + A", "Select all buildings"), new HelpItem("Escape", "Clear the selection"),
+            new HelpItem("Ctrl + C", "Copy selected buildings"), new HelpItem("Ctrl + X", "Cut selected buildings"),
+            new HelpItem("Ctrl + V", "Paste buildings at the cursor"),
             new HelpItem("Q", "Randomize selected buildings using enabled random options"),
             new HelpItem("W/A/S/D", "Move selected buildings"), new HelpItem("C", "Rotate selected buildings"),
             new HelpItem("X", "Mirror selected buildings"), new HelpItem("Delete", "Delete selected buildings"));
@@ -41,6 +43,9 @@ class OptionsPanel extends JPanel
     private final JCheckBox randomSelectCheckBox = new JCheckBox("random select");
     private final JCheckBox randomRotateCheckBox = new JCheckBox("random rotate");
     private final JCheckBox useHighlightColorsCheckBox = new JCheckBox("use highlight colors");
+    private final JLabel selectionLabel = new JLabel("No objects selected");
+    private final JLabel clipboardLabel = new JLabel("No objects in clipboard");
+    private final JLabel statusLabel = new JLabel();
     private JLabel previewPanel;
     private JScrollPane listPanel;
     private final Consumer<CityEditToolOperation.PlacementOptions> placementOptionsChanged;
@@ -91,6 +96,18 @@ class OptionsPanel extends JPanel
         useHighlightColorsCheckBox.setSelected(selected);
     }
 
+    void setSelectionCount(int count) {
+        selectionLabel.setText(count == 1 ? "1 object selected" : count + " objects selected");
+    }
+
+    void setClipboardCount(int count) {
+        clipboardLabel.setText(count == 1 ? "1 object in clipboard" : count + " objects in clipboard");
+    }
+
+    void setStatusMessage(String message) {
+        statusLabel.setText(message == null ? "" : message);
+    }
+
     void showLayer(boolean hasLayer) {
         checkboxPanel.setVisible(hasLayer);
         previewPanel.setVisible(hasLayer);
@@ -122,9 +139,9 @@ class OptionsPanel extends JPanel
                 .addActionListener(event -> highlightColorsChanged.accept(useHighlightColorsCheckBox.isSelected()));
 
         checkboxPanel = new JPanel(new BorderLayout());
-        checkboxPanel.setPreferredSize(new java.awt.Dimension(200, 150));
-        checkboxPanel.setMinimumSize(new java.awt.Dimension(200, 150));
-        checkboxPanel.setMaximumSize(new java.awt.Dimension(200, 150));
+        checkboxPanel.setPreferredSize(new java.awt.Dimension(200, 190));
+        checkboxPanel.setMinimumSize(new java.awt.Dimension(200, 190));
+        checkboxPanel.setMaximumSize(new java.awt.Dimension(200, 190));
         JButton helpButton = getHelpButton(HELP_TITLE, HELP_EXPLANATION, HELP_ITEMS);
         checkboxPanel.add(helpButton, BorderLayout.NORTH);
         JPanel checkboxGrid = new JPanel(new GridLayout(0, 1));
@@ -133,6 +150,11 @@ class OptionsPanel extends JPanel
         checkboxGrid.add(randomMirroredCheckBox);
         checkboxGrid.add(useHighlightColorsCheckBox);
         checkboxPanel.add(checkboxGrid, BorderLayout.CENTER);
+        JPanel statusGrid = new JPanel(new GridLayout(0, 1));
+        statusGrid.add(selectionLabel);
+        statusGrid.add(clipboardLabel);
+        statusGrid.add(statusLabel);
+        checkboxPanel.add(statusGrid, BorderLayout.SOUTH);
 
         previewPanel = getPreviewPanel();
         listPanel = new JScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
