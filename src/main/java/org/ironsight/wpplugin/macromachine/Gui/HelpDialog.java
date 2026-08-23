@@ -94,14 +94,20 @@ public class HelpDialog extends JDialog
     }
 
     public static JButton getHelpButton(String title, String helpText) {
-        JButton button = new JButton("?");
+        JButton button = createHelpButton();
         button.addActionListener(e -> new HelpDialog(null, title, helpText).setVisible(true));
         return button;
     }
 
     public static JButton getHelpButton(String title, String explanation, List<HelpItem> helpItems) {
-        JButton button = new JButton("?");
+        JButton button = createHelpButton();
         button.addActionListener(e -> new HelpDialog(null, title, explanation, helpItems).setVisible(true));
+        return button;
+    }
+
+    private static JButton createHelpButton() {
+        JButton button = new JButton("?");
+        button.setFocusPainted(false);
         return button;
     }
 
