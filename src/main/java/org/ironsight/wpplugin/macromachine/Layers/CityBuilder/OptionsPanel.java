@@ -4,39 +4,35 @@ import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.swing.*;
 
+import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
 import org.pepsoft.worldpainter.layers.bo2.WPObjectListCellRenderer;
 import org.pepsoft.worldpainter.objects.WPObject;
 
 class OptionsPanel extends JPanel
 {
     private static final String HELP_TITLE = "City Editor";
-    private static final String HELP_TEXT = """
-            this tool is for editing City Layers, a new special type of Custom Object Layer.
-            1. Create or import a city layer (make sure your schematic offsets are centered and not 0,0,0)
-            2. select the city layer
-            3. select the city editor tool
-            4. select a custom brush (the one with the little arrow showing the rotation)
-            - Left click to place a building
-            - Right click to delete all buildings inside the brush area
+    private static final String HELP_EXPLANATION = """
+            Use the City Tool to place and edit buildings in a City Layer. Create or import a City Layer, select it and use this tool to place schematics in the map.
+            Select buildings on the map, then use the interactions below to place, move, and edit them.
+            The tool settings show you the current state of your selected building. You can change the building type by selecting a different one from the list.
 
-            - CTRL + left click to select a building type on the map
-            - CTRL + right click to move last placed building to new position
-
-            - SHIFT + mousewheel to scroll the building type list
-            - ALT + mousewheel to rotate brush
-
-            - X key : mirror last selected building on map
-            - C key : rotate last selected building on map
-            - AWSD key : move last selected building on map
-
-            Warning: This layer is NOT compatible with undo/redo. Do NOT use undo/redo with this layer.
-
+            City Layers are not compatible with undo/redo. Do not use undo/redo while editing one.
             """;
+    private static final List<HelpItem> HELP_ITEMS = List.of(new HelpItem("Ctrl + left click", "Place a new building"),
+            new HelpItem("Left click", "Select or deselect the building under the cursor"),
+            new HelpItem("Left-button drag", "Select buildings fully inside the drag rectangle"),
+            new HelpItem("Right click", "Move the current selection to the cursor"),
+            new HelpItem("Shift + mouse wheel", "Change the selected building type"),
+            new HelpItem("Ctrl + A", "Select all buildings"), new HelpItem("Escape", "Clear the selection"),
+            new HelpItem("Q", "Randomize selected buildings using enabled random options"),
+            new HelpItem("W/A/S/D", "Move selected buildings"), new HelpItem("C", "Rotate selected buildings"),
+            new HelpItem("X", "Mirror selected buildings"), new HelpItem("Delete", "Delete selected buildings"));
 
     private final JList<WPObject> list = new JList<>();
     private final JLabel warningLabel = new JLabel("Please select a city layer");
@@ -129,7 +125,8 @@ class OptionsPanel extends JPanel
         checkboxPanel.setPreferredSize(new java.awt.Dimension(200, 150));
         checkboxPanel.setMinimumSize(new java.awt.Dimension(200, 150));
         checkboxPanel.setMaximumSize(new java.awt.Dimension(200, 150));
-        checkboxPanel.add(getHelpButton(HELP_TITLE, HELP_TEXT), BorderLayout.NORTH);
+        JButton helpButton = getHelpButton(HELP_TITLE, HELP_EXPLANATION, HELP_ITEMS);
+        checkboxPanel.add(helpButton, BorderLayout.NORTH);
         JPanel checkboxGrid = new JPanel(new GridLayout(0, 1));
         checkboxGrid.add(randomRotateCheckBox);
         checkboxGrid.add(randomSelectCheckBox);
