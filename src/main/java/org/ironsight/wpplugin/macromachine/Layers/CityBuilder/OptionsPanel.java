@@ -27,13 +27,14 @@ class OptionsPanel extends JPanel
     private static final List<HelpItem> HELP_ITEMS = List.of(new HelpItem("Ctrl + left click", "Place a new building"),
             new HelpItem("Left click", "Select or deselect the building under the cursor"),
             new HelpItem("Left-button drag", "Select buildings fully inside the drag rectangle"),
-            new HelpItem("Right click", "Move the current selection to the cursor"),
+            new HelpItem("Right click", "Move the selection center to the cursor"),
             new HelpItem("Shift + mouse wheel", "Change the selected building type"),
             new HelpItem("Ctrl + A", "Select all buildings"), new HelpItem("Escape", "Clear the selection"),
             new HelpItem("Ctrl + C", "Copy selected buildings"), new HelpItem("Ctrl + X", "Cut selected buildings"),
             new HelpItem("Ctrl + V", "Paste buildings at the cursor"),
             new HelpItem("Q", "Randomize selected buildings using enabled random options"),
-            new HelpItem("W/A/S/D", "Move selected buildings"), new HelpItem("C", "Rotate selected buildings"),
+            new HelpItem("W/A/S/D", "Move selected buildings"),
+            new HelpItem("C", "Rotate selected buildings around the selection center"),
             new HelpItem("X", "Mirror selected buildings"), new HelpItem("Delete", "Delete selected buildings"));
 
     private final JList<WPObject> list = new JList<>();

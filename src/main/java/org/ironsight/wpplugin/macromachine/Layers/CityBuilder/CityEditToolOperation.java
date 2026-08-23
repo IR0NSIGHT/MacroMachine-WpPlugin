@@ -252,8 +252,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 case KeyEvent.VK_S -> moveSelection(layer, 0, 1);
                 case KeyEvent.VK_A -> moveSelection(layer, -1, 0);
                 case KeyEvent.VK_D -> moveSelection(layer, 1, 0);
-                case KeyEvent.VK_C ->
-                    applyToSelection(layer, state -> setRotation(state.rotation.nextRotation(), state));
+                case KeyEvent.VK_C -> rotateSelection(layer);
                 case KeyEvent.VK_X -> applyToSelection(layer, state -> setIsMirrored(!state.mirrored, state));
                 default -> {
                 }
@@ -609,7 +608,39 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private void moveSelectionTo(CityLayer layer, int x, int y) {
         if (selectedStates.isEmpty())
             return;
-        moveSelection(layer, x - uiState.xPos, y - uiState.yPos);
+        Point center = getSelectionCenter(new ArrayList<>(selectedStates.values()));
+        moveSelection(layer, x - center.x, y - center.y);
+    }
+
+    private void rotateSelection(CityLayer layer) {
+        if (selectedStates.isEmpty())
+            return;
+
+        Point center = getSelectionCenter(new ArrayList<>(selectedStates.values()));
+        applyToSelection(layer, state -> rotateStateAround(state, center));
+    }
+
+    private Point getSelectionCenter(List<ObjectState> states) {
+        long minX = Long.MAX_VALUE;
+        long minY = Long.MAX_VALUE;
+        long maxX = Long.MIN_VALUE;
+        long maxY = Long.MIN_VALUE;
+        for (ObjectState state : states) {
+            minX = Math.min(minX, state.xPos);
+            minY = Math.min(minY, state.yPos);
+            maxX = Math.max(maxX, state.xPos);
+            maxY = Math.max(maxY, state.yPos);
+        }
+        return new Point(Math.toIntExact(Math.floorDiv(minX + maxX, 2)),
+                Math.toIntExact(Math.floorDiv(minY + maxY, 2)));
+    }
+
+    private ObjectState rotateStateAround(ObjectState state, Point center) {
+        long relativeX = (long) state.xPos - center.x;
+        long relativeY = (long) state.yPos - center.y;
+        int x = Math.toIntExact((long) center.x + relativeY);
+        int y = Math.toIntExact((long) center.y - relativeX);
+        return new ObjectState(state.rotation.nextRotation(), state.mirrored, state.objectIndex, x, y);
     }
 
     private void refreshLayer(CityLayer layer) {
