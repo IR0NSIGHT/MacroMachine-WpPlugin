@@ -37,7 +37,7 @@ import org.pepsoft.worldpainter.painting.Paint;
 public class CityEditToolOperation extends MouseOrTabletOperation implements PaintOperation, KeyEventDispatcher
 {
     private static final int OVERLAY_ICON_SIZE = 256;
-    private static final Color OVERLAY_ICON_COLOR = Color.GRAY;
+    private static final Color OVERLAY_ICON_COLOR = Color.LIGHT_GRAY;
     private static CityEditToolOperation instance;
     record PlacementOptions(boolean randomRotate, boolean randomSelect, boolean randomMirror) {
     }
@@ -76,7 +76,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
     };
 
-    private static Image loadOverlayIcon() {
+    private static BufferedImage loadOverlayIcon() {
         var svgUrl = Objects.requireNonNull(CityEditToolOperation.class.getResource("/icons/castle.svg"),
                 "City Tool overlay SVG not found");
         SVGDocument document = Objects.requireNonNull(new SVGLoader().load(svgUrl),
@@ -93,7 +93,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         } finally {
             graphics.dispose();
         }
-        int color = OVERLAY_ICON_COLOR.getRGB() & 0x00ffffff;
+        int color = Color.WHITE.getRGB() & 0x00ffffff;
         for (int y = 0; y < icon.getHeight(); y++) {
             for (int x = 0; x < icon.getWidth(); x++) {
                 int argb = icon.getRGB(x, y);
@@ -963,8 +963,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private static final float LABEL_TEXT_SCALE = 0.9f;
         private static final float LABEL_BASE_FONT_SIZE = 14f;
         private static final float LABEL_INITIAL_SCALE = 2f;
-        private static final int LABEL_ANIMATION_START_DELAY_MS = 500;
-        private static final int LABEL_ANIMATION_DURATION_MS = 300;
+        private static final int LABEL_ANIMATION_START_DELAY_MS = 300;
+        private static final int LABEL_ANIMATION_DURATION_MS = 500;
         private static final int LABEL_ANIMATION_TICK_MS = 16;
         private static final int LABEL_ICON_GAP = 4;
         private static final int MESSAGE_FADE_DURATION_MS = 500;
@@ -992,9 +992,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private long labelAnimationStartNanos;
         private boolean labelAnimationStarted;
         private Timer transientInfoTimer;
-        private final Image overlayIcon;
+        private final BufferedImage overlayIcon;
+        private Color overlayIconColor;
+        private Image tintedOverlayIcon;
 
-        DragOverlay(Image overlayIcon) {
+        DragOverlay(BufferedImage overlayIcon) {
             this.overlayIcon = overlayIcon;
             setOpaque(false);
             setLayout(null);
@@ -1124,7 +1126,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             stopLabelPositionTimer();
             stopTransientInfoTimer();
             overlayLabel.setText(text);
-            overlayLabel.setForeground(OVERLAY_ICON_COLOR);
+            overlayLabel.setForeground(Color.WHITE);
             overlayLabel.setBackground(LABEL_BACKGROUND);
             overlayLabel.setVisible(text != null && !text.isBlank());
             labelPositionProgress = 0f;
@@ -1204,6 +1206,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (!overlayLabel.isVisible() || getWidth() <= 0)
                 return;
             float easedProgress = labelPositionProgress * labelPositionProgress * (3f - 2f * labelPositionProgress);
+            Color overlayColor = interpolateColor(Color.WHITE, OVERLAY_ICON_COLOR, easedProgress);
+            overlayLabel.setForeground(overlayColor);
             float labelScale = LABEL_INITIAL_SCALE - (LABEL_INITIAL_SCALE - 1f) * easedProgress;
             int baseLabelWidth = Math.max(1, (int) Math.round(getWidth() * LABEL_WIDTH_RATIO));
             int labelWidth = Math.max(1, Math.round(baseLabelWidth * labelScale));
@@ -1216,16 +1220,41 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             FontMetrics scaledMetrics = overlayLabel.getFontMetrics(scaledFont);
             int labelHeight = scaledMetrics.getHeight();
             if (overlayIcon != null) {
-                Image scaledIcon = overlayIcon.getScaledInstance(labelHeight, labelHeight, Image.SCALE_SMOOTH);
+                Image scaledIcon = getTintedOverlayIcon(overlayColor).getScaledInstance(labelHeight, labelHeight,
+                        Image.SCALE_SMOOTH);
                 overlayLabel.setIcon(new ImageIcon(scaledIcon));
             }
             int centeredX = Math.max(0, (getWidth() - labelWidth) / 2);
             int edgeX = Math.max(0, getWidth() - labelWidth - LABEL_MARGIN);
-            int centeredY = Math.max(0, (getHeight() - labelHeight) / 2);
+            int centeredY = Math.max(0, Math.round((getHeight() * 0.3333f) - labelHeight / 2f));
             int edgeY = LABEL_MARGIN;
             int labelX = Math.round(centeredX + (edgeX - centeredX) * easedProgress);
             int labelY = Math.round(centeredY + (edgeY - centeredY) * easedProgress);
             overlayLabel.setBounds(labelX, labelY, labelWidth, labelHeight);
+        }
+
+        private Image getTintedOverlayIcon(Color color) {
+            if (!color.equals(overlayIconColor)) {
+                BufferedImage tintedIcon = new BufferedImage(overlayIcon.getWidth(), overlayIcon.getHeight(),
+                        BufferedImage.TYPE_INT_ARGB);
+                int rgb = color.getRGB() & 0x00ffffff;
+                for (int y = 0; y < overlayIcon.getHeight(); y++) {
+                    for (int x = 0; x < overlayIcon.getWidth(); x++) {
+                        int alpha = overlayIcon.getRGB(x, y) & 0xff000000;
+                        tintedIcon.setRGB(x, y, alpha | rgb);
+                    }
+                }
+                overlayIconColor = color;
+                tintedOverlayIcon = tintedIcon;
+            }
+            return tintedOverlayIcon;
+        }
+
+        private static Color interpolateColor(Color from, Color to, float progress) {
+            int red = Math.round(from.getRed() + (to.getRed() - from.getRed()) * progress);
+            int green = Math.round(from.getGreen() + (to.getGreen() - from.getGreen()) * progress);
+            int blue = Math.round(from.getBlue() + (to.getBlue() - from.getBlue()) * progress);
+            return new Color(red, green, blue);
         }
 
         Rectangle getDragBounds() {
