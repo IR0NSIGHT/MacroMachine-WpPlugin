@@ -10,8 +10,11 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import javax.vecmath.Point3i;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IntegerTile;
@@ -255,6 +258,10 @@ public class CityLayer extends CustomLayer implements UndoListener
     }
 
     public void setObjectList(ArrayList<WPObject> newObjects) {
+        setObjectList(newObjects, Set.of());
+    }
+
+    void setObjectList(ArrayList<WPObject> newObjects, Set<Integer> preservedIndices) {
         ArrayList<Integer> oldIndicesToDelete = new ArrayList<>();
         // todo: make possible to map old idx to new idx, f.e. if index 5 of size 10 was
         // deleted, to not clear 6,7,8,9 indices bc of shift
@@ -264,6 +271,11 @@ public class CityLayer extends CustomLayer implements UndoListener
             WPObject newObj = i < newObjects.size() ? newObjects.get(i) : null;
             if (newObj == null) { // the old item doesnt exist anymore in the new list
                 oldIndicesToDelete.add(i);
+                continue;
+            }
+
+            if (preservedIndices.contains(i)) {
+                copyObjectSettings(oldObj, newObj);
                 continue;
             }
 
@@ -278,6 +290,15 @@ public class CityLayer extends CustomLayer implements UndoListener
             database.deleteAllWithValue(getValueForState(Direction.NORTH, false, schematicIdx), ID_BIT_MASK);
 
         this.objects = newObjects;
+        resetLastEdited();
+    }
+
+    static void copyObjectSettings(WPObject source, WPObject target) {
+        File targetFile = target.getAttribute(ATTRIBUTE_FILE);
+        Map<String, Serializable> sourceAttributes = source.getAttributes();
+        target.setName(source.getName());
+        target.setAttributes(sourceAttributes == null ? null : new HashMap<>(sourceAttributes));
+        target.setAttribute(ATTRIBUTE_FILE, targetFile);
     }
 
     public boolean isMirrored(int layerValue) {
