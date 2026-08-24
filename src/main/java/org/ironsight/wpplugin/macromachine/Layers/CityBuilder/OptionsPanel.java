@@ -14,17 +14,17 @@ import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
 import org.pepsoft.worldpainter.layers.bo2.WPObjectListCellRenderer;
 import org.pepsoft.worldpainter.objects.WPObject;
 
-class OptionsPanel extends JPanel
+public class OptionsPanel extends JPanel
 {
-    private static final String HELP_TITLE = "City Editor";
-    private static final String HELP_EXPLANATION = """
+    public static final String HELP_TITLE = "City Editor";
+    public static final String HELP_EXPLANATION = """
             Use the City Tool to place and edit buildings in a City Layer. Create or import a City Layer, select it and use this tool to place schematics in the map.
             Select buildings on the map, then use the interactions below to place, move, and edit them.
             The tool settings show you the current state of your selected building. You can change the building type by selecting a different one from the list.
 
             City Layers are not compatible with undo/redo. Do not use undo/redo while editing one.
             """;
-    private static final List<HelpItem> HELP_ITEMS = List.of(new HelpItem("Ctrl + left click", "Place a new building"),
+    public static final List<HelpItem> HELP_ITEMS = List.of(new HelpItem("Ctrl + left click", "Place a new building"),
             new HelpItem("Left click", "Select or deselect the building under the cursor"),
             new HelpItem("Left-button drag", "Select buildings fully inside the drag rectangle"),
             new HelpItem("Right click", "Move the selection center to the cursor"),
