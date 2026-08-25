@@ -48,6 +48,10 @@ public final class HelpDialogScreenshot
         Files.createDirectories(outputDir);
         initLookAndFeel();
         logHeadlessIfNeeded();
+        if (GraphicsEnvironment.isHeadless()) {
+            System.out.println("[HelpDialogScreenshot] Headless detected - skipping screenshots (noop OK)");
+            return 0;
+        }
 
         boolean anyFailure = false;
         for (HelpCatalog catalog : HelpCatalog.values()) {
