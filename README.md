@@ -39,33 +39,95 @@ For versions before 0.4.14:
 ### CityLayer
 CityLayer works like a Custom Object Layer, but places individual schematics at precise positions instead of painting random placements.
 
-1. Create a new custom layer named `CityLayer`.
-2. Add schematics to the layer.
-![Create a CityLayer](./imgs/tutorial/CityLayer_Showcase_Create.PNG)
-3. Select the `CityLayer`.
-4. Select the CityLayer tool with the House icon.
-5. Select a schematic in the tool options.
-![Use the CityLayer tool](./imgs/tutorial/CityLayer_Showcase_Use.PNG)
-6. Place schematics on the map. Using the 3D Preview with Auto Update is recommended.
-
 CityLayer uses each schematic's offset. Center the offset in the options for each schematic for predictable placement.
 
-Controls:
-- Left click: select a building on the map; clicking empty space deselects it.
-- Right click: move the selected building to the cursor position.
-- `Delete`: delete the selected building.
-- `Ctrl` + left click: place the selected schematic.
-- `Shift` + mouse wheel: select a different schematic.
-- `Alt` + mouse wheel: rotate the brush.
-- `W`/`A`/`S`/`D`: move the selected building.
-- `C`: rotate the selected building.
-- `X`: mirror the selected building.
+> Tip: press the `?` button in the City Tool options for the live help dialog. The full control list is defined in `OptionsPanel.HELP_ITEMS` / `HelpCatalog.CITY` and rendered to `target/help-screenshots/city-tool.png` during `mvn verify`.
 
-Options:
-- `random rotate`: randomly rotate after each placement.
-- `random select`: select another schematic after each placement.
-- `random mirrored`: randomly mirror after each placement.
+<table>
+<tr>
+<td width="50%" valign="top"><img src="imgs/tutorial/CityLayer/citylayer_createLayer.gif" width="100%" alt="Create CityLayer"></td>
+<td width="50%" valign="top">
+
+**Setup — Create & Select**
+- Create a new custom layer named `CityLayer` and add schematics.
+- Select the `CityLayer` and the House-icon City Tool, then select a schematic in the tool options.
+- Place with `Ctrl` + left click. Using the 3D Preview with Auto Update is recommended.
+
+</td>
+</tr>
+</table>
+
+#### Selection
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="imgs/tutorial/CityLayer/citylayer_setup.gif" width="100%" alt="Drag to select"><br>
+<img src="imgs/tutorial/CityLayer/citylayer_selectBuildingType.gif" width="100%" alt="Select building type" style="margin-top:8px;">
+</td>
+<td width="50%" valign="top">
+
+- `Ctrl` + left click: place a new building.
+- `Left click`: select or deselect the building under the cursor. Clicking an already selected building toggles it off; clicking empty space clears the selection.
+- `Left-button drag`: select buildings fully inside the drag rectangle. Outlines are shown while dragging.
+- `Ctrl + A`: select all buildings in the layer.
+- `Escape`: clear the selection.
+- `Shift` + mouse wheel: change the selected building type for the whole selection (or the brush when nothing is selected).
+- Selection count and status messages are shown in the tool options and as a transient overlay on the map.
+
+</td>
+</tr>
+</table>
+
+#### Transforming the selection
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="imgs/tutorial/CityLayer/citylayer_transform.gif" width="100%" alt="Transform selection"></td>
+<td width="50%" valign="top">
+
+- `Right click`: move the selection center to the cursor position.
+- `W`/`A`/`S`/`D`: move selected buildings by one block.
+- `C`: rotate selected buildings around the selection center.
+- `X`: mirror selected buildings.
+- `Q`: randomize selected buildings using the enabled random options.
+- `Delete`: delete selected buildings.
+
+</td>
+</tr>
+</table>
+
+#### Clipboard
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="imgs/tutorial/CityLayer/citylayer_copypaste.gif" width="100%" alt="Copy paste clipboard"></td>
+<td width="50%" valign="top">
+
+- `Ctrl + C`: copy selected buildings to the clipboard (offsets relative to the active building are preserved).
+- `Ctrl + X`: cut selected buildings to the clipboard.
+- `Ctrl + V`: paste the clipboard at the cursor position. Paste requires the cursor over the map and the same `CityLayer`; otherwise `Clipboard is empty` or `Move the cursor over the map to paste` is shown.
+- Clipboard count is shown in the tool options.
+
+</td>
+</tr>
+</table>
+
+#### Tool options
+
+<table>
+<tr>
+<td width="50%" valign="top"><img src="imgs/tutorial/CityLayer/citylayer_randomize.gif" width="100%" alt="Randomize"></td>
+<td width="50%" valign="top">
+
+- `random rotate`: randomly rotate after each placement or when pressing `Q` on a selection.
+- `random select`: randomly select a new schematic after each placement or when pressing `Q`.
+- `random mirrored`: randomly mirror after each placement or when pressing `Q`.
 - `use highlight colors`: show the layer color instead of the schematic.
+
+</td>
+</tr>
+</table>
 
 CityLayer is not compatible with WorldPainter undo/redo. Do not use undo/redo while editing it.
 
