@@ -51,10 +51,10 @@ CityLayer works like a Custom Object Layer, but places individual schematics at 
 CityLayer uses each schematic's offset. Center the offset in the options for each schematic for predictable placement.
 
 Controls:
-- Left click: place the selected schematic.
-- Right click: remove buildings within the brush area.
-- `Ctrl` + left click: select a building on the map.
-- `Ctrl` + right click: move the last placed building.
+- Left click: select a building on the map; clicking empty space deselects it.
+- Right click: move the selected building to the cursor position.
+- `Delete`: delete the selected building.
+- `Ctrl` + left click: place the selected schematic.
 - `Shift` + mouse wheel: select a different schematic.
 - `Alt` + mouse wheel: rotate the brush.
 - `W`/`A`/`S`/`D`: move the selected building.

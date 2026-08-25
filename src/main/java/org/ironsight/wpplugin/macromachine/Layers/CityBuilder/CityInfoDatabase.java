@@ -48,6 +48,15 @@ public class CityInfoDatabase implements Serializable
         return data != null ? new HashMap<>(data) : null;
     }
 
+    HashMap<Point, Integer> getAllData() {
+        HashMap<Point, Integer> data = new HashMap<>();
+        for (HashMap<Point, Integer> tile : tileInformation.values()) {
+            for (var entry : tile.entrySet())
+                data.put(new Point(entry.getKey()), entry.getValue());
+        }
+        return data;
+    }
+
     public void setDataAt(int blockX, int blockY, int data) {
         System.out.println("## SET DATA AT " + blockX + ", " + blockY + " data=" + data);
         Point tileId = new Point(blockX >> TILE_SIZE_BITS, blockY >> TILE_SIZE_BITS);

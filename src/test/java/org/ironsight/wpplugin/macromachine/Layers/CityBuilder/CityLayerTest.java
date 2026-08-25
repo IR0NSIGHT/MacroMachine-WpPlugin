@@ -6,12 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-import java.util.ArrayList;
+import java.awt.Rectangle;
+import java.io.File;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import javax.vecmath.Point3i;
+import java.util.Set;
 
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TestDimension;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.minecraft.Material;
+import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.objects.GenericObject;
 import org.pepsoft.worldpainter.objects.MirroredObject;
 import org.pepsoft.worldpainter.objects.RotatedObject;
@@ -41,7 +46,6 @@ class CityLayerTest
         assertNull(layer.getObjectForState(null));
         assertNull(layer.getObjectForState(new ObjectState(CityLayer.Direction.NORTH, false, -1, 0, 0)));
         assertNull(layer.getObjectForState(new ObjectState(CityLayer.Direction.NORTH, false, 2, 0, 0)));
-        assertDoesNotThrow(() -> layer.setSelected(new ObjectState(CityLayer.Direction.NORTH, false, 2, 0, 0)));
     }
 
     @Test
@@ -100,7 +104,6 @@ class CityLayerTest
     void rendererConfigurationIsRetained() {
         CityLayer layer = layerWithObjects();
         layer.setUseHighlightColors(false);
-        layer.setIsSelectedPaint(true);
 
         assertEquals(false, layer.isUseHighlightColors());
         assertNotNull(layer.getRenderer());
@@ -114,6 +117,70 @@ class CityLayerTest
         CityLayerRenderer renderer = (CityLayerRenderer) layer.getRenderer();
         assertEquals(0x123456, renderer.getPixelColour(0, 0, 0x123456, 0));
         assertEquals(0x00FFFF, renderer.getPixelColour(0, 0, 0x123456, 15));
+    }
+
+    @Test
+    void settingDataSkipsUnavailableWorldPainterTiles() {
+        CityLayer layer = layerWithObjects();
+        Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500),
+                -256, 512, 70, 123456789, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
+                org.pepsoft.worldpainter.Terrain.GRASS));
+
+        assertDoesNotThrow(() -> layer.setDataAt(dimension, 512, 0, state(0, false)));
+    }
+
+    @Test
+    void replacingAnObjectPreservesPaintedStates() {
+        CityLayer layer = layerWithObjects();
+        WPObject original = layer.getObjectList().get(0);
+        File originalFile = new File("original.schem");
+        original.setName("configured building");
+        original.setAttribute(WPObject.ATTRIBUTE_FILE, originalFile);
+        original.setAttribute(WPObject.ATTRIBUTE_OFFSET, new Point3i(2, 3, 4));
+        original.setAttribute(WPObject.ATTRIBUTE_VERTICAL_OFFSET, 7);
+        original.setAttribute(WPObject.ATTRIBUTE_Y_VARIATION, 5);
+        original.getAttributes().put("custom.setting", "preserved");
+        GenericObject replacement = new GenericObject("replacement", 4, 2, 1,
+                new Material[]{Material.DIRT, Material.DIRT, Material.DIRT, Material.DIRT, Material.DIRT, Material.DIRT,
+                        Material.DIRT, Material.DIRT});
+        File replacementFile = new File("replacement.schem");
+        replacement.setAttribute(WPObject.ATTRIBUTE_FILE, replacementFile);
+        ArrayList<WPObject> objects = new ArrayList<>();
+        objects.add(replacement);
+        ObjectState painted = new ObjectState(CityLayer.Direction.WEST, true, 0, 100, 100);
+        Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500),
+                -256, 512, 70, 123456789, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
+                org.pepsoft.worldpainter.Terrain.GRASS));
+
+        layer.setDataAt(dimension, painted.xPos, painted.yPos, painted);
+        layer.setObjectList(objects, Set.of(0));
+
+        assertEquals(painted, layer.getInformationAt(painted.xPos, painted.yPos));
+        assertEquals("configured building", replacement.getName());
+        assertEquals(new Point3i(2, 3, 4), replacement.getOffset());
+        assertEquals(7, replacement.getAttribute(WPObject.ATTRIBUTE_VERTICAL_OFFSET));
+        assertEquals(5, replacement.getAttribute(WPObject.ATTRIBUTE_Y_VARIATION));
+        assertEquals("preserved", replacement.getAttributes().get("custom.setting"));
+        assertEquals(replacementFile, replacement.getAttribute(WPObject.ATTRIBUTE_FILE));
+        assertSame(replacement, layer
+                .getObjectForState(new ObjectState(CityLayer.Direction.NORTH, false, 0, painted.xPos, painted.yPos)));
+    }
+
+    @Test
+    void ordinaryObjectListChangesStillRemovePaintedStates() {
+        CityLayer layer = layerWithObjects();
+        ArrayList<WPObject> objects = new ArrayList<>();
+        objects.add(new GenericObject("replacement", 4, 2, 1, new Material[]{Material.DIRT, Material.DIRT,
+                Material.DIRT, Material.DIRT, Material.DIRT, Material.DIRT, Material.DIRT, Material.DIRT}));
+        ObjectState painted = state(0, false);
+        Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500),
+                -256, 512, 70, 123456789, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
+                org.pepsoft.worldpainter.Terrain.GRASS));
+
+        layer.setDataAt(dimension, painted.xPos, painted.yPos, painted);
+        layer.setObjectList(objects);
+
+        assertNull(layer.getInformationAt(painted.xPos, painted.yPos));
     }
 
     private static CityLayer layerWithObjects() {

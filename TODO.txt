@@ -16,3 +16,45 @@
     inputs: slope X slope-dir X height -> frost spraypaint
             0, 0, 0 -> 0
             0, 0, 1 -> 0 [...]
+
+----------------- august 2026 ---------------
+
+- make optionspanels responsive
+    [x] CityTool
+    [ ] pathtool
+    [ ] 3d tool
+
+- style + update help for all tools
+    [x] CityTool
+    [ ] pathtool
+    [ ] 3d tool
+
+- all operations use overlay with activate-tool-animation
+    [x] CityTool
+    [ ] pathtool
+    [ ] 3d tool
+
+[ ] using 3d tool always opens the 3d preview window, regardless if macromachine window is open or not
+[ ] city tool uses worldpainters undo/redo system
+[ ] pathtool has interactive UI with custom overlay
+    [ ] draw nodes on map
+    [ ] select one or more nodes on map
+    [ ] edit properties of a node
+    [ ] move existing nodes
+    [ ] delete existing nodes
+
+[x] city layer can do copy paste of selection
+    1. select 4 objects, screen sasys "4 object selected"
+    2. press ctrl + c, screen says "4 objects copied to clipboard"
+        label in toolsetting says "4 objects in clipboard"
+    3. press ctrl + v to place clipboard to cursor position, screen says "4 objects pasted from clipboard" (or "clipboard is empty")
+    support ctrl x as well -> objects vanish and only exist in clipboard.
+
+[ ] citylayer can replace existing buildings with other schematics
+    1. go to myCityLayer -> edit
+    2. select a schematic
+    3. right click
+    4. "replace with other schematic file"
+    5. select file with filebrowser (that remembers the last visited directory)
+    6. confirm, save layer
+    7. all existing objects that were schematic-A before are not schematic-B -> keep position, rotation etc, only the schematic changes.

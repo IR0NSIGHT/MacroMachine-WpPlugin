@@ -8,6 +8,7 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
 import java.beans.PropertyVetoException;
 import java.io.Serial;
 import java.io.Serializable;
@@ -66,14 +67,25 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
     }
 
-    private static final String help = """
-            PathTool will connect clicked positions into a path and smoothly blend them into existing terrain, based on the brush you are using.
-
-            Right click: Start new path at this position
-            Left click: Advance current path to this position
-            Backspace: Delete the last point on the current path
-
+    public static final String HELP_TITLE = "Road Tool";
+    public static final String HELP_EXPLANATION = """
+            Use the Road Tool to connect clicked positions into a smooth path that is blended into existing terrain.
+            The path width follows the brush radius and is previewed on the map before applying. Use presets to start
+            quickly, then fine-tune blending, slope and transition settings below.
             """;
+    public static final List<HelpItem> HELP_ITEMS = List.of(new HelpItem("Right click", "Start new path at cursor"),
+            new HelpItem("Left click", "Advance current path to cursor"),
+            new HelpItem("Backspace", "Delete last point on current path"),
+            new HelpItem("Apply", "Commit previewed path to terrain / paint / water"),
+            new HelpItem("Brush radius", "Controls path width and transition size"),
+            new HelpItem("River / Road preset", "Apply recommended settings for rivers or roads"),
+            new HelpItem("Only downhill", "Restrict path to horizontal or downhill movement"),
+            new HelpItem("Snap to terrain", "Force path to follow terrain height"),
+            new HelpItem("Set paint", "Apply selected paint along the path"),
+            new HelpItem("Set water / Set terrain", "Choose how water level and height are edited"),
+            new HelpItem("Curve strength", "-1 to 2, 0 = straight lines"),
+            new HelpItem("Limit slope", "Max vertical blocks per 16 horizontal; 0 = unlimited"),
+            new HelpItem("Transition multiplier / profile", "Width scale and falloff shape of path edges"));
     // use flat list of floats to not create any serialization dependecies to custom
     // classes. use like a float buffer
     private static final AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES",
@@ -138,7 +150,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private void init() {
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
         optionsPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
-        optionsPanel.add(getHelpButton("Road Tool", help));
+        optionsPanel.add(getHelpButton(HELP_TITLE, HELP_EXPLANATION, HELP_ITEMS));
         {
             JPanel presetPanel = new JPanel();
             JButton riverPresetButton = new JButton("River preset");
