@@ -15,7 +15,7 @@ import org.pepsoft.worldpainter.themes.SimpleTheme;
 
 public class TestDimension
 {
-    static class DimensionParams
+    public static class DimensionParams
     {
         public DimensionParams() {
         };

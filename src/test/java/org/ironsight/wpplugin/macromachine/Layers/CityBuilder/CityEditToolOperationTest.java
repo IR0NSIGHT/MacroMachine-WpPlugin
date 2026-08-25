@@ -1,0 +1,457 @@
+package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
+
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Random;
+
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TestDimension;
+import org.junit.jupiter.api.Test;
+import org.pepsoft.worldpainter.*;
+import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.brushes.SymmetricBrush;
+import org.pepsoft.worldpainter.objects.GenericObject;
+import org.pepsoft.worldpainter.objects.WPObject;
+import org.pepsoft.minecraft.Material;
+import org.pepsoft.worldpainter.painting.NibbleLayerPaint;
+
+import javax.swing.*;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class CityEditToolOperationTest
+{
+    private static final Dimension TEST_DIMENSION = TestDimension
+            .createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500), -256, 512, 70, 123456789, 62,
+                    org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19, org.pepsoft.worldpainter.Terrain.GRASS));
+    private static final TestView TEST_VIEW = new TestView(TEST_DIMENSION);
+
+    static ArrayList<WPObject> loadDevelopmentSchematics() throws IOException {
+        var resource = CityEditToolOperation.class.getResource("/CityBuilder/Houses");
+        if (resource == null)
+            throw new IOException("Development schematic resources were not found: /CityBuilder/Houses");
+
+        try {
+            Path directory = Paths.get(resource.toURI());
+            try (var paths = Files.list(directory)) {
+                ArrayList<WPObject> schematics = new ArrayList<>();
+                var provider = new DefaultCustomObjectProvider();
+                paths.filter(Files::isRegularFile)
+                        .filter(path -> path.getFileName().toString().toLowerCase().endsWith(".schem"))
+                        .sorted(Comparator.comparing(path -> path.getFileName().toString()))
+                        .forEach(path -> {
+                            try {
+                                schematics.add(provider.loadObject(path.toFile()));
+                            } catch (IOException exception) {
+                                throw new DevelopmentSchematicLoadException(path, exception);
+                            }
+                        });
+                if (schematics.isEmpty())
+                    throw new IOException("No development schematics found in /CityBuilder/Houses");
+                return schematics;
+            } catch (DevelopmentSchematicLoadException exception) {
+                throw exception.getIOException();
+            }
+        } catch (URISyntaxException exception) {
+            throw new IOException("Could not resolve development schematic resources", exception);
+        }
+    }
+
+    private static class DevelopmentSchematicLoadException extends RuntimeException
+    {
+        private final IOException exception;
+
+        DevelopmentSchematicLoadException(Path path, IOException exception) {
+            super("Could not load development schematic: " + path, exception);
+            this.exception = exception;
+        }
+
+        IOException getIOException() {
+            return exception;
+        }
+    }
+
+    public static void main(String[] args) throws IOException {
+        // set up layer
+        CityLayer layer = new CityLayer("test-city-layer", "this is a description");
+        layer.setObjectList(loadDevelopmentSchematics());
+
+        // set up operation
+        var op = new CityEditToolOperation();
+        op.setPaint(new NibbleLayerPaint(layer));
+
+        JDialog dialog = new JDialog((Frame) null, "CityLayer Options");
+        dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        dialog.add(op.getOptionsPanel());
+        dialog.setResizable(true);
+        dialog.setSize(220, 250);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+    }
+
+    @Test
+    void developmentSchematicsLoadOnlyTopLevelFixtures() throws Exception {
+        var schematics = loadDevelopmentSchematics();
+
+        assertEquals(8, schematics.size());
+        assertEquals("Ektelion - Ukrainian house 1-converted.schem",
+                schematics.get(0).getAttribute(WPObject.ATTRIBUTE_FILE).getName());
+        assertEquals("Ektelion - Ukrainian house 9-converted.schem",
+                schematics.get(7).getAttribute(WPObject.ATTRIBUTE_FILE).getName());
+        schematics.forEach(schematic -> assertTrue(schematic.getDimensions().x > 0));
+    }
+
+    @Test
+    void copyCutAndPastePreserveSelectionLayout() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+
+        ObjectState first = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 102);
+        ObjectState second = new ObjectState(CityLayer.Direction.SOUTH, true, 1, 110, 104);
+        layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
+        layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
+
+        operation.handleClick(first.xPos, first.yPos, false, false);
+        operation.handleClick(second.xPos, second.yPos, false, false);
+        operation.handleKeyInteraction(KeyEvent.VK_C, true);
+
+        assertEquals(first, layer.getInformationAt(first.xPos, first.yPos));
+        assertEquals(second, layer.getInformationAt(second.xPos, second.yPos));
+
+        operation.setCursorWorldPosition(200, 200);
+        operation.handleKeyInteraction(KeyEvent.VK_V, true);
+
+        assertEquals(first.objectIndex, layer.getInformationAt(190, 198).objectIndex);
+        assertEquals(first.rotation, layer.getInformationAt(190, 198).rotation);
+        assertEquals(first.mirrored, layer.getInformationAt(190, 198).mirrored);
+        assertEquals(second.objectIndex, layer.getInformationAt(200, 200).objectIndex);
+        assertEquals(second.rotation, layer.getInformationAt(200, 200).rotation);
+        assertEquals(second.mirrored, layer.getInformationAt(200, 200).mirrored);
+
+        operation.handleKeyInteraction(KeyEvent.VK_X, true);
+        assertNull(layer.getInformationAt(190, 198));
+        assertNull(layer.getInformationAt(200, 200));
+
+        operation.setCursorWorldPosition(300, 300);
+        operation.handleKeyInteraction(KeyEvent.VK_V, true);
+        assertEquals(first.objectIndex, layer.getInformationAt(290, 298).objectIndex);
+        assertEquals(second.objectIndex, layer.getInformationAt(300, 300).objectIndex);
+    }
+
+    @Test
+    void pastingAnEmptyClipboardDoesNothing() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.setCursorWorldPosition(200, 200);
+
+        operation.handleKeyInteraction(KeyEvent.VK_V, true);
+
+        assertNull(layer.getInformationAt(200, 200));
+    }
+
+    @Test
+    void movingSelectionPlacesItsCenterAtTheCursor() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+
+        ObjectState first = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 102);
+        ObjectState second = new ObjectState(CityLayer.Direction.SOUTH, true, 1, 110, 104);
+        layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
+        layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
+
+        operation.handleClick(first.xPos, first.yPos, false, false);
+        operation.handleClick(second.xPos, second.yPos, false, false);
+        operation.handleClick(200, 200, true, false);
+
+        ObjectState movedFirst = layer.getInformationAt(195, 199);
+        ObjectState movedSecond = layer.getInformationAt(205, 201);
+        assertNotNull(movedFirst);
+        assertNotNull(movedSecond);
+        assertEquals(first.objectIndex, movedFirst.objectIndex);
+        assertEquals(first.rotation, movedFirst.rotation);
+        assertEquals(first.mirrored, movedFirst.mirrored);
+        assertEquals(second.objectIndex, movedSecond.objectIndex);
+        assertEquals(second.rotation, movedSecond.rotation);
+        assertEquals(second.mirrored, movedSecond.mirrored);
+    }
+
+    @Test
+    void rotatingSelectionRotatesPositionsAroundItsCenter() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+
+        ObjectState first = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 102);
+        ObjectState second = new ObjectState(CityLayer.Direction.SOUTH, true, 1, 110, 104);
+        layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
+        layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
+
+        operation.handleClick(first.xPos, first.yPos, false, false);
+        operation.handleClick(second.xPos, second.yPos, false, false);
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+
+        ObjectState rotatedFirst = layer.getInformationAt(104, 108);
+        ObjectState rotatedSecond = layer.getInformationAt(106, 98);
+        assertNotNull(rotatedFirst);
+        assertNotNull(rotatedSecond);
+        assertEquals(CityLayer.Direction.EAST, rotatedFirst.rotation);
+        assertEquals(CityLayer.Direction.WEST, rotatedSecond.rotation);
+        assertFalse(rotatedFirst.mirrored);
+        assertTrue(rotatedSecond.mirrored);
+        assertEquals(first.objectIndex, rotatedFirst.objectIndex);
+        assertEquals(second.objectIndex, rotatedSecond.objectIndex);
+    }
+
+    @Test
+    void randomisationIsAppliedOnlyWhenRequestedAndMovementKeepsObjectType() throws Exception {
+        CityLayer layer = layerWithObjects();
+        Dimension dimension = TEST_DIMENSION;
+        TestView view = TEST_VIEW;
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(view);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        JPanel mapView = new JPanel();
+        JPanel mapChild = new JPanel();
+        JPanel otherView = new JPanel();
+        mapView.add(mapChild);
+        assertFalse(CityEditToolOperation.isMapComponent(null, mapChild));
+        assertTrue(CityEditToolOperation.isMapComponent(mapView, mapView));
+        assertTrue(CityEditToolOperation.isMapComponent(mapView, mapChild));
+        assertFalse(CityEditToolOperation.isMapComponent(mapView, otherView));
+        operation.random = new Random(1234);
+        operation.setPlacementOptions(new CityEditToolOperation.PlacementOptions(false, true, false));
+
+        operation.placeAt(100, 100);
+
+        ObjectState placedState = layer.getInformationAt(100, 100);
+        assertNotNull(placedState);
+        assertEquals(0, placedState.objectIndex);
+
+        operation.onMouseWheel(1);
+        ObjectState wheelSelectedState = layer.getInformationAt(100, 100);
+        assertNotNull(wheelSelectedState);
+        assertEquals(1, wheelSelectedState.objectIndex);
+
+        operation.handleKeyInteraction(KeyEvent.VK_Q);
+        ObjectState randomisedState = layer.getInformationAt(100, 100);
+        assertNotNull(randomisedState);
+        assertEquals(2, randomisedState.objectIndex);
+
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+        assertNull(layer.getInformationAt(100, 100));
+        ObjectState movedState = layer.getInformationAt(100, 99);
+        assertNotNull(movedState);
+        assertEquals(randomisedState.objectIndex, movedState.objectIndex);
+
+        operation.handleClick(104, 99, false, false);
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+        assertNotNull(layer.getInformationAt(100, 99));
+
+        operation.handleClick(103, 99, false, false);
+        operation.handleKeyInteraction(KeyEvent.VK_S);
+        assertNotNull(layer.getInformationAt(100, 100));
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+
+        operation.handleClick(100, 99, false, false);
+        operation.handleClick(400, 400, false, false);
+        assertNotNull(layer.getInformationAt(100, 99));
+
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+        operation.handleKeyInteraction(KeyEvent.VK_X);
+        operation.handleKeyInteraction(KeyEvent.VK_Q);
+        assertNull(layer.getInformationAt(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        assertNull(layer.getInformationAt(Integer.MAX_VALUE, Integer.MAX_VALUE - 1));
+
+        operation.handleClick(200, 200, false, true);
+        assertNotNull(layer.getInformationAt(200, 200));
+        operation.handleClick(201, 200, true, false);
+        assertNull(layer.getInformationAt(200, 200));
+        assertNotNull(layer.getInformationAt(201, 200));
+
+        operation.handleKeyInteraction(KeyEvent.VK_DELETE);
+        assertNull(layer.getInformationAt(201, 200));
+
+        ObjectState first = new ObjectState(CityLayer.Direction.NORTH, false, 0, 300, 300);
+        ObjectState second = new ObjectState(CityLayer.Direction.EAST, true, 1, 310, 300);
+        layer.setDataAt(dimension, first.xPos, first.yPos, first);
+        layer.setDataAt(dimension, second.xPos, second.yPos, second);
+
+        operation.handleClick(300, 300, false, false);
+        operation.handleClick(310, 300, false, false);
+        operation.handleClick(300, 300, false, false);
+        operation.handleClick(300, 300, false, false);
+
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+        ObjectState movedFirst = layer.getInformationAt(300, 299);
+        ObjectState movedSecond = layer.getInformationAt(310, 299);
+        assertNotNull(movedFirst);
+        assertNotNull(movedSecond);
+        assertEquals(first.objectIndex, movedFirst.objectIndex);
+        assertEquals(second.objectIndex, movedSecond.objectIndex);
+        assertEquals(first.rotation, movedFirst.rotation);
+        assertEquals(second.rotation, movedSecond.rotation);
+        assertEquals(first.mirrored, movedFirst.mirrored);
+        assertEquals(second.mirrored, movedSecond.mirrored);
+
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+        operation.handleKeyInteraction(KeyEvent.VK_X);
+        ObjectState rotatedFirst = layer.getInformationAt(305, 304);
+        ObjectState rotatedSecond = layer.getInformationAt(305, 294);
+        assertEquals(CityLayer.Direction.EAST, rotatedFirst.rotation);
+        assertEquals(CityLayer.Direction.SOUTH, rotatedSecond.rotation);
+        assertTrue(rotatedFirst.mirrored);
+        assertFalse(rotatedSecond.mirrored);
+
+        operation.onMouseWheel(-1);
+        assertEquals(0, layer.getInformationAt(305, 304).objectIndex);
+        assertEquals(0, layer.getInformationAt(305, 294).objectIndex);
+
+        operation.handleKeyInteraction(KeyEvent.VK_DELETE);
+        assertNull(layer.getInformationAt(305, 304));
+        assertNull(layer.getInformationAt(305, 294));
+
+        ObjectState boxed = new ObjectState(CityLayer.Direction.NORTH, false, 0, 320, 320);
+        ObjectState outside = new ObjectState(CityLayer.Direction.NORTH, false, 1, 330, 320);
+        layer.setDataAt(dimension, boxed.xPos, boxed.yPos, boxed);
+        layer.setDataAt(dimension, outside.xPos, outside.yPos, outside);
+        operation.selectWithinBox(layer, new Rectangle(319, 319, 4, 4));
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+
+        assertNotNull(layer.getInformationAt(320, 319));
+        assertNotNull(layer.getInformationAt(330, 320));
+        assertNull(layer.getInformationAt(320, 320));
+
+        operation.handleKeyInteraction(KeyEvent.VK_A, true);
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+
+        assertNotNull(layer.getInformationAt(320, 318));
+        assertNotNull(layer.getInformationAt(330, 319));
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        operation.handleKeyInteraction(KeyEvent.VK_W);
+        assertNotNull(layer.getInformationAt(320, 318));
+        assertNotNull(layer.getInformationAt(330, 319));
+    }
+
+    private static CityLayer layerWithObjects() {
+        CityLayer layer = new CityLayer("test", "test");
+        ArrayList<WPObject> objects = new ArrayList<>();
+        objects.add(new GenericObject("building-0", 2, 1, 1, new Material[]{Material.STONE, Material.STONE}));
+        objects.add(new GenericObject("building-1", 3, 1, 1,
+                new Material[]{Material.STONE, Material.STONE, Material.STONE}));
+        objects.add(new GenericObject("building-2", 4, 1, 1,
+                new Material[]{Material.STONE, Material.STONE, Material.STONE, Material.STONE}));
+        layer.setObjectList(objects);
+        return layer;
+    }
+
+    private static class TestView extends WorldPainterView
+    {
+        private Dimension dimension;
+
+        TestView(Dimension dimension) {
+            this.dimension = dimension;
+        }
+
+        @Override
+        public Dimension getDimension() {
+            return dimension;
+        }
+
+        @Override
+        public void setDimension(Dimension dimension) {
+            this.dimension = dimension;
+        }
+
+        @Override
+        public void updateStatusBar(int x, int y) {
+        }
+
+        @Override
+        public boolean isDrawBrush() {
+            return false;
+        }
+
+        @Override
+        public void setDrawBrush(boolean drawBrush) {
+        }
+
+        @Override
+        public MapDragControl getMapDragControl() {
+            return null;
+        }
+
+        @Override
+        public BrushControl getBrushControl() {
+            return new BrushControl() {
+                @Override
+                public int getRadius() {
+                    return 0;
+                }
+
+                @Override
+                public void increaseRadius(int amount) {
+                }
+
+                @Override
+                public void increaseRadiusByOne() {
+                }
+
+                @Override
+                public void decreaseRadius(int amount) {
+                }
+
+                @Override
+                public void decreaseRadiusByOne() {
+                }
+
+                @Override
+                public void setRadius(int radius) {
+                }
+
+                @Override
+                public int getRotation() {
+                    return 0;
+                }
+
+                @Override
+                public void setRotation(int rotation) {
+                }
+            };
+        }
+
+        @Override
+        public RadiusControl getRadiusControl() {
+            return new RadiusControl() {
+                @Override
+                public void increaseRadius(int amount) {
+                }
+
+                @Override
+                public void increaseRadiusByOne() {
+                }
+
+                @Override
+                public void decreaseRadius(int amount) {
+                }
+
+                @Override
+                public void decreaseRadiusByOne() {
+                }
+            };
+        }
+    }
+}

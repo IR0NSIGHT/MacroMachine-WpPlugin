@@ -3,46 +3,111 @@ package org.ironsight.wpplugin.macromachine.Gui;
 import static org.ironsight.wpplugin.macromachine.Gui.EditActions.LayerMappingTopPanel.header1Font;
 
 import java.awt.*;
+import java.util.List;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.text.DefaultCaret;
 
 public class HelpDialog extends JDialog
 {
+    public record HelpItem(String input, String description) {
+    }
 
     public HelpDialog(Frame owner, String title, String helpText) {
+        this(owner, title, helpText, List.of(), false);
+    }
+
+    public HelpDialog(Frame owner, String title, String explanation, List<HelpItem> helpItems) {
+        this(owner, title, explanation, helpItems, true);
+    }
+
+    private HelpDialog(Frame owner, String title, String helpText, List<HelpItem> helpItems, boolean structuredHelp) {
         super(owner, "Help", true); // Modal dialog
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
-        setSize(400, 300);
-        setLocationRelativeTo(owner);
+        setMinimumSize(new Dimension(420, 300));
 
         JLabel label = new JLabel(title);
         label.setHorizontalAlignment(SwingConstants.CENTER);
-        add(label, BorderLayout.NORTH);
         label.setFont(header1Font);
+        label.setBorder(new EmptyBorder(16, 16, 0, 16));
+        add(label, BorderLayout.NORTH);
 
-        // Create the help text area
         JTextArea helpTextArea = new JTextArea(helpText);
         helpTextArea.setWrapStyleWord(true);
         helpTextArea.setLineWrap(true);
         helpTextArea.setEditable(false);
         helpTextArea.setOpaque(false);
         helpTextArea.setFont(helpTextArea.getFont().deriveFont(14f));
+        helpTextArea.setBorder(new EmptyBorder(0, 0, 0, 0));
+        helpTextArea.setCaret(new DefaultCaret() {
+            @Override
+            public void paint(Graphics graphics) {
+            }
+        });
+        helpTextArea.setCursor(Cursor.getDefaultCursor());
 
-        // Add the text area to a scroll pane
-        JScrollPane scrollPane = new JScrollPane(helpTextArea);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        add(scrollPane, BorderLayout.CENTER);
+        JPanel contentPanel = new JPanel(new BorderLayout(0, 12));
+        contentPanel.setBorder(new EmptyBorder(12, 20, 12, 20));
+        if (structuredHelp) {
+            helpTextArea.setRows(5);
+            contentPanel.add(helpTextArea, BorderLayout.NORTH);
+            contentPanel.add(createHelpTable(helpItems), BorderLayout.CENTER);
+        } else {
+            JScrollPane scrollPane = new JScrollPane(helpTextArea);
+            scrollPane.setBorder(BorderFactory.createEmptyBorder());
+            contentPanel.add(scrollPane, BorderLayout.CENTER);
+        }
+        add(contentPanel, BorderLayout.CENTER);
 
-        // Add a close button
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> dispose());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBorder(new EmptyBorder(0, 20, 12, 20));
         buttonPanel.add(closeButton);
         add(buttonPanel, BorderLayout.SOUTH);
+        getRootPane().setDefaultButton(closeButton);
+
+        setSize(structuredHelp ? new Dimension(620, 500) : new Dimension(500, 360));
+        setLocationRelativeTo(owner);
+    }
+
+    private static JScrollPane createHelpTable(List<HelpItem> helpItems) {
+        String[] columns = {"Interaction", "Effect"};
+        Object[][] rows = helpItems.stream()
+                .map(item -> new Object[]{item.input(), item.description()})
+                .toArray(Object[][]::new);
+        JTable table = new JTable(rows, columns);
+        table.setRowSelectionAllowed(false);
+        table.setFocusable(false);
+        table.setShowGrid(false);
+        table.setIntercellSpacing(new Dimension(0, 1));
+        table.setRowHeight(table.getRowHeight() + 8);
+        table.getTableHeader().setReorderingAllowed(false);
+        table.getColumnModel().getColumn(0).setPreferredWidth(180);
+        table.getColumnModel().getColumn(1).setPreferredWidth(360);
+
+        JScrollPane tableScrollPane = new JScrollPane(table);
+        tableScrollPane.setBorder(BorderFactory.createEtchedBorder());
+        tableScrollPane.getViewport().setBackground(table.getBackground());
+        return tableScrollPane;
     }
 
     public static JButton getHelpButton(String title, String helpText) {
-        JButton button = new JButton("?");
+        JButton button = createHelpButton();
         button.addActionListener(e -> new HelpDialog(null, title, helpText).setVisible(true));
+        return button;
+    }
+
+    public static JButton getHelpButton(String title, String explanation, List<HelpItem> helpItems) {
+        JButton button = createHelpButton();
+        button.addActionListener(e -> new HelpDialog(null, title, explanation, helpItems).setVisible(true));
+        return button;
+    }
+
+    private static JButton createHelpButton() {
+        JButton button = new JButton("?");
+        button.setFocusPainted(false);
         return button;
     }
 

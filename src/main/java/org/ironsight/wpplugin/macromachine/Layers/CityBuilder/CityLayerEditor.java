@@ -43,6 +43,7 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CityLayerEditor.class);
     private static final long serialVersionUID = 1L;
     private final DefaultListModel<WPObject> listModel;
+    private final Set<Integer> replacedObjectIndices = new HashSet<>();
     private javax.swing.JButton buttonAddFile;
     private javax.swing.JButton buttonEdit;
     private javax.swing.JButton buttonReloadAll;
@@ -117,6 +118,7 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         fieldName.setText(layer.getName());
         paintPicker1.setPaint(layer.getPaint());
         paintPicker1.setOpacity(layer.getOpacity());
+        replacedObjectIndices.clear();
         listModel.clear();
         for (WPObject object : layer.getObjectList()) {
             listModel.addElement(object.clone());
@@ -197,7 +199,7 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                 .mapToObj(listModel::getElementAt)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
-        layer.setObjectList(newObjects);
+        layer.setObjectList(newObjects, replacedObjectIndices);
         layer.setName(fieldName.getText());
         layer.setPaint(paintPicker1.getPaint());
         layer.setOpacity(paintPicker1.getOpacity());
@@ -227,31 +229,19 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
     }
 
     private void addFilesOrDirectory() {
-        JFileChooser fileChooser = new JFileChooser();
-
-        // use last remembered directory
-        String lastDir = prefs.get(LAST_DIR_KEY, null);
-        if (lastDir != null) {
-            File dir = new File(lastDir);
-            if (dir.exists()) {
-                fileChooser.setCurrentDirectory(dir);
-            }
-        }
-
-        Configuration config = Configuration.getInstance();
-        if ((config.getCustomObjectsDirectory() != null) && config.getCustomObjectsDirectory().isDirectory()) {
-            fileChooser.setCurrentDirectory(config.getCustomObjectsDirectory());
-        }
+        JFileChooser fileChooser = createFileChooser();
         fileChooser.setDialogTitle("Select File(s) or Directory");
         fileChooser.setMultiSelectionEnabled(true);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         CustomObjectManager.UniversalFileFilter fileFilter = CustomObjectManager.getInstance().getFileFilter();
         fileChooser.setFileFilter(fileFilter);
-        if (doWithoutExceptionReporting(() -> fileChooser.showOpenDialog(this)) == JFileChooser.APPROVE_OPTION) {
-            prefs.put(LAST_DIR_KEY, fileChooser.getSelectedFile().getParent()); // remember path for next use
+        int result = doWithoutExceptionReporting(() -> fileChooser.showOpenDialog(this));
+        rememberChooserDirectory(fileChooser);
+        if (result == JFileChooser.APPROVE_OPTION) {
 
             File[] selectedFiles = fileChooser.getSelectedFiles();
             if (selectedFiles.length > 0) {
+                Configuration config = Configuration.getInstance();
                 Platform platform = getPlatform();
                 boolean checkForNameOnlyMaterials = !platform.capabilities.contains(NAME_BASED);
                 Set<String> nameOnlyMaterialsNames = checkForNameOnlyMaterials ? new HashSet<>() : null;
@@ -316,6 +306,97 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         }
     }
 
+    private JFileChooser createFileChooser() {
+        JFileChooser fileChooser = new JFileChooser();
+
+        String lastDir = prefs.get(LAST_DIR_KEY, null);
+        File rememberedDir = lastDir == null ? null : new File(lastDir);
+        if (rememberedDir != null && rememberedDir.isDirectory()) {
+            fileChooser.setCurrentDirectory(rememberedDir);
+        } else {
+            Configuration config = Configuration.getInstance();
+            File customObjectsDirectory = config.getCustomObjectsDirectory();
+            if (customObjectsDirectory != null && customObjectsDirectory.isDirectory())
+                fileChooser.setCurrentDirectory(customObjectsDirectory);
+        }
+
+        return fileChooser;
+    }
+
+    private void rememberChooserDirectory(JFileChooser fileChooser) {
+        File currentDirectory = fileChooser.getCurrentDirectory();
+        if (currentDirectory != null && currentDirectory.isDirectory())
+            prefs.put(LAST_DIR_KEY, currentDirectory.getAbsolutePath());
+    }
+
+    private FileDialog createFileDialog(String title) {
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        FileDialog fileDialog;
+        if (owner instanceof Frame frame) {
+            fileDialog = new FileDialog(frame, title, FileDialog.LOAD);
+        } else if (owner instanceof Dialog dialog) {
+            fileDialog = new FileDialog(dialog, title, FileDialog.LOAD);
+        } else {
+            fileDialog = new FileDialog((Frame) null, title, FileDialog.LOAD);
+        }
+        String lastDir = prefs.get(LAST_DIR_KEY, null);
+        File rememberedDir = lastDir == null ? null : new File(lastDir);
+        if (rememberedDir != null && rememberedDir.isDirectory()) {
+            fileDialog.setDirectory(rememberedDir.getAbsolutePath());
+        } else {
+            Configuration config = Configuration.getInstance();
+            File customObjectsDirectory = config.getCustomObjectsDirectory();
+            if (customObjectsDirectory != null && customObjectsDirectory.isDirectory())
+                fileDialog.setDirectory(customObjectsDirectory.getAbsolutePath());
+        }
+        var fileFilter = CustomObjectManager.getInstance().getFileFilter();
+        fileDialog.setFilenameFilter((directory, name) -> fileFilter.accept(directory, name));
+        return fileDialog;
+    }
+
+    private File showFileDialog(FileDialog fileDialog) {
+        fileDialog.setVisible(true);
+        if (fileDialog.getDirectory() != null) {
+            prefs.put(LAST_DIR_KEY, fileDialog.getDirectory());
+        }
+        if (fileDialog.getFile() == null)
+            return null;
+        return new File(fileDialog.getDirectory(), fileDialog.getFile());
+    }
+
+    private void replaceSelectedObjects(int[] rows) {
+        if (rows.length == 1) {
+            replaceObjectFile(rows[0]);
+        } else if (rows.length > 1) {
+            replaceObjectsFromFolder(rows);
+        }
+    }
+
+    private void replaceObjectFile(int row) {
+        File selectedFile = showFileDialog(createFileDialog("Replace with other schematic file"));
+        if (selectedFile == null)
+            return;
+
+        try {
+            WPObject replacement = CustomObjectManager.getInstance().loadObject(selectedFile);
+            CityLayer.copyObjectSettings(listModel.getElementAt(row), replacement);
+            listModel.setElementAt(replacement, row);
+            replacedObjectIndices.add(row);
+            listObjects.setSelectedIndex(row);
+            settingsChanged();
+        } catch (IllegalArgumentException e) {
+            logger.error("IllegalArgumentException while trying to load custom object " + selectedFile, e);
+            JOptionPane.showMessageDialog(this,
+                    e.getMessage() + " while loading " + selectedFile.getName() + "; it was not added",
+                    "Illegal Argument", JOptionPane.ERROR_MESSAGE);
+        } catch (IOException e) {
+            logger.error("I/O error while trying to load custom object " + selectedFile, e);
+            JOptionPane.showMessageDialog(this,
+                    "I/O error while loading " + selectedFile.getName() + "; it was not added", "I/O Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void addFile(boolean checkForNameOnlyMaterials, Set<String> nameOnlyMaterialsNames, File file) {
         try {
             WPObject object = CustomObjectManager.getInstance().loadObject(file);
@@ -344,6 +425,74 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         }
     }
 
+    private void replaceObjectsFromFolder(int[] rows) {
+        File selectedFile = showFileDialog(createFileDialog("Select a file in the folder to scan"));
+        if (selectedFile == null)
+            return;
+
+        File folder = selectedFile.getParentFile();
+        CustomObjectManager.UniversalFileFilter fileFilter = CustomObjectManager.getInstance().getFileFilter();
+        File[] files = folder == null ? null : folder.listFiles((FilenameFilter) fileFilter);
+        if (files == null) {
+            JOptionPane.showMessageDialog(this, "The selected folder could not be read.", "Folder Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Map<String, File> filesByName = new HashMap<>();
+        for (File file : files) {
+            if (file.isFile())
+                filesByName.put(file.getName(), file);
+        }
+
+        StringBuilder missing = new StringBuilder();
+        StringBuilder errors = new StringBuilder();
+        int replaced = 0;
+        for (int row : rows) {
+            WPObject oldObject = listModel.getElementAt(row);
+            File oldFile = oldObject.getAttribute(ATTRIBUTE_FILE);
+            if (oldFile == null) {
+                missing.append(oldObject.getName()).append(" (no source filename)\n");
+                continue;
+            }
+
+            File replacementFile = filesByName.get(oldFile.getName());
+            if (replacementFile == null) {
+                missing.append(oldFile.getName()).append('\n');
+                continue;
+            }
+
+            try {
+                WPObject replacement = CustomObjectManager.getInstance().loadObject(replacementFile);
+                CityLayer.copyObjectSettings(oldObject, replacement);
+                listModel.setElementAt(replacement, row);
+                replacedObjectIndices.add(row);
+                replaced++;
+            } catch (IllegalArgumentException e) {
+                logger.error("IllegalArgumentException while trying to load custom object " + replacementFile, e);
+                errors.append(replacementFile.getName()).append(" (illegal argument)\n");
+            } catch (IOException e) {
+                logger.error("I/O error while trying to load custom object " + replacementFile, e);
+                errors.append(replacementFile.getName()).append(" (I/O error)\n");
+            }
+        }
+
+        if (replaced > 0)
+            settingsChanged();
+        if (missing.length() > 0 || errors.length() > 0) {
+            StringBuilder message = new StringBuilder();
+            message.append(replaced).append(" of ").append(rows.length).append(" schematics replaced.\n");
+            if (missing.length() > 0)
+                message.append("\nNo matching file found for:\n").append(missing);
+            if (errors.length() > 0)
+                message.append("\nFiles that could not be loaded:\n").append(errors);
+            JOptionPane.showMessageDialog(this, message, "Batch Replacement Results",
+                    replaced == 0 ? JOptionPane.ERROR_MESSAGE : JOptionPane.WARNING_MESSAGE);
+        } else {
+            showInfo(this, replaced + " schematics successfully replaced", "Success");
+        }
+    }
+
     private void removeFiles() {
         JOptionPane.showMessageDialog(this, // parent component (can be null)
                 "Removing objects or changing the order of objects will mess up your already painted schematics!", // message
@@ -355,6 +504,22 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         for (int i = selectedIndices.length - 1; i >= 0; i--) {
             listModel.removeElementAt(selectedIndices[i]);
         }
+        Set<Integer> selectedIndexSet = new HashSet<>();
+        for (int index : selectedIndices)
+            selectedIndexSet.add(index);
+        Set<Integer> adjustedReplacements = new HashSet<>();
+        for (int index : replacedObjectIndices) {
+            if (selectedIndexSet.contains(index))
+                continue;
+            int newIndex = index;
+            for (int selectedIndex : selectedIndices) {
+                if (selectedIndex < index)
+                    newIndex--;
+            }
+            adjustedReplacements.add(newIndex);
+        }
+        replacedObjectIndices.clear();
+        replacedObjectIndices.addAll(adjustedReplacements);
         settingsChanged();
     }
 
@@ -482,8 +647,20 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         buttonEdit.addActionListener(this::buttonEditActionPerformed);
 
         listObjects.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                showListPopup(evt);
+            }
+
+            @Override
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                showListPopup(evt);
+            }
+
+            @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                listObjectsMouseClicked(evt);
+                if (evt.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(evt))
+                    listObjectsMouseClicked(evt);
             }
         });
         jScrollPane1.setViewportView(listObjects);
@@ -611,6 +788,27 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
             }
         }
     } // GEN-LAST:event_listObjectsMouseClicked
+
+    private void showListPopup(java.awt.event.MouseEvent evt) {
+        if (!evt.isPopupTrigger())
+            return;
+
+        int row = listObjects.locationToIndex(evt.getPoint());
+        if (row < 0 || !listObjects.getCellBounds(row, row).contains(evt.getPoint()))
+            return;
+
+        if (!listObjects.isSelectedIndex(row))
+            listObjects.setSelectedIndex(row);
+        int[] selectedRows = listObjects.getSelectedIndices();
+        JPopupMenu popupMenu = new JPopupMenu();
+        String label = selectedRows.length == 1
+                ? "Replace with other schematic file"
+                : "Replace selected schematics from folder";
+        JMenuItem replaceItem = new JMenuItem(label);
+        replaceItem.addActionListener(event -> replaceSelectedObjects(selectedRows));
+        popupMenu.add(replaceItem);
+        popupMenu.show(listObjects, evt.getX(), evt.getY());
+    }
 
     private void buttonAddFileActionPerformed(java.awt.event.ActionEvent evt) { // GEN-FIRST:event_buttonAddFileActionPerformed
         addFilesOrDirectory();

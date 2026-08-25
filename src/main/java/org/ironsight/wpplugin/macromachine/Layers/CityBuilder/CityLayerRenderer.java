@@ -5,7 +5,6 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IntegerTile
 import org.pepsoft.worldpainter.layers.renderers.NibbleLayerRenderer;
 
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
@@ -15,16 +14,11 @@ public class CityLayerRenderer implements NibbleLayerRenderer
 {
 
     private HashMap<Point2i, IntegerTile> tiles = new HashMap<>();
-    private Rectangle2D selectedBBX = new Rectangle(0, 0, 0, 0);
     private int baseColor = 0x00FF00;
-    private boolean isSelectedPaint = false;
     private boolean useHighlightColors = false;
     private final CityLayer layer;
     public CityLayerRenderer(CityLayer layer) {
         this.layer = layer;
-    }
-    public void setIsSelectedPaint(boolean isSelectedPaint) {
-        this.isSelectedPaint = isSelectedPaint;
     }
     public void setUseHighlightColors(boolean useHighlightColors) {
         this.useHighlightColors = useHighlightColors;
@@ -35,10 +29,6 @@ public class CityLayerRenderer implements NibbleLayerRenderer
             tiles.put(key, new IntegerTile(0));
         }
         return tiles.get(key);
-    }
-
-    public void setCurrentSelectBBX(Rectangle2D bbx) {
-        selectedBBX = bbx;
     }
 
     public void setBaseColor(int rgbHex) {
@@ -101,13 +91,6 @@ public class CityLayerRenderer implements NibbleLayerRenderer
             resultColor = colorTile.getValueAt(x - tileX * TILE_SIZE, y - tileY * TILE_SIZE);
         }
 
-        if (isSelectedPaint && selectedBBX.contains(x, y)) {
-            int r = Math.min(255, ((resultColor >> 16) & 0xFF) + 0x8F);
-            int g = Math.max(0, ((resultColor >> 8) & 0xFF) - 0x8F);
-            int b = Math.max(0, (resultColor & 0xFF) - 0x8F);
-            return (r << 16) | (g << 8) | b;
-        }
         return resultColor;
     }
-
 }
