@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.swing.SwingUtilities;
+import javax.swing.JButton;
 import org.ironsight.wpplugin.macromachine.Gui.MapToolOverlay;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TestDimension;
 import org.junit.jupiter.api.Test;
@@ -98,6 +99,7 @@ class PathToolSelectionTest
                     assertEquals(expected, dimension.getAttribute(HANDLES));
                     event(view, MouseEvent.MOUSE_PRESSED, 10, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_DRAGGED, 20, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_ENTERED, 20, 10, MouseEvent.NOBUTTON, 0);
                     assertTrue(tool.dispatchKeyEvent(new KeyEvent(view, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_ESCAPE,
                             KeyEvent.CHAR_UNDEFINED)));
                     event(view, MouseEvent.MOUSE_RELEASED, 20, 10, MouseEvent.BUTTON1, 0);
@@ -144,6 +146,57 @@ class PathToolSelectionTest
                 throw new RuntimeException(exception);
             }
         });
+    }
+
+    @Test
+    void keyboardDeletionAndResetClearHandlesAndSelection() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                dimension.setAttribute(HANDLES,
+                        new ArrayList<>(List.of(10f, 10f, 70f, 4f, 30f, 30f, 70f, 6f, 50f, 50f, 70f, 8f)), true);
+                TestView view = new TestView(dimension);
+                PathTool tool = new PathTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    click(view, 30, 30);
+                    KeyEvent delete = new KeyEvent(view, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_DELETE,
+                            KeyEvent.CHAR_UNDEFINED);
+                    assertFalse(tool.dispatchKeyEvent(delete));
+                    event(view, MouseEvent.MOUSE_ENTERED, 30, 30, MouseEvent.NOBUTTON, 0);
+                    assertTrue(tool.dispatchKeyEvent(delete));
+                    assertEquals(List.of(10f, 10f, 70f, 4f, 50f, 50f, 70f, 8f), dimension.getAttribute(HANDLES));
+                    assertEquals(Set.of(), tool.selectedNodes());
+                    assertTrue(tool.dispatchKeyEvent(new KeyEvent(view, KeyEvent.KEY_PRESSED, 0,
+                            InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_A, 'a')));
+                    assertEquals(Set.of(0, 1), tool.selectedNodes());
+                    JButton reset = findButton(tool.getOptionsPanel(), "PathTool.NewPath");
+                    assertNotNull(reset);
+                    reset.doClick();
+                    assertEquals(List.of(), dimension.getAttribute(HANDLES));
+                    assertEquals(Set.of(), tool.selectedNodes());
+                    assertTrue(tool.cachedTiles.isEmpty());
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    private static JButton findButton(java.awt.Container container, String name) {
+        for (var component : container.getComponents()) {
+            if (component instanceof JButton button && name.equals(button.getName()))
+                return button;
+            if (component instanceof java.awt.Container child) {
+                JButton result = findButton(child, name);
+                if (result != null)
+                    return result;
+            }
+        }
+        return null;
     }
 
     @Test

@@ -41,8 +41,12 @@ public enum HelpCatalog {
                                     The path width follows the brush radius and is previewed on the map before applying. Use presets to start
                                     quickly, then fine-tune blending, slope and transition settings below.
                                     """,
-                            List.of(new HelpItem("Right click", "Start new path at cursor"),
-                                    new HelpItem("Left click", "Advance current path to cursor"),
+                            List.of(new HelpItem("Right click", "Append a path node"),
+                                    new HelpItem("Left click / drag",
+                                            "Toggle selection, box select, or move selected nodes"),
+                                    new HelpItem("New path", "Clear the path and preview"),
+                                    new HelpItem("Delete / Ctrl+A / Escape",
+                                            "Delete selected / select all / clear selection or cancel drag"),
                                     new HelpItem("Backspace", "Delete last point on current path"),
                                     new HelpItem("Apply", "Commit previewed path to terrain / paint / water"),
                                     new HelpItem("Brush radius", "Controls path width and transition size"),
