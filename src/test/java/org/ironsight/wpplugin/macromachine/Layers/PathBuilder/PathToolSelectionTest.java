@@ -789,11 +789,16 @@ class PathToolSelectionTest
                 tool.setView(view);
                 tool.setActive(true);
                 try {
-                    click(view, 30, 30);
                     KeyEvent delete = new KeyEvent(view, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_DELETE,
                             KeyEvent.CHAR_UNDEFINED);
+                    // No MOUSE_ENTERED: the click itself proves the cursor is over the map.
+                    click(view, 30, 30);
+                    event(view, MouseEvent.MOUSE_EXITED, -5, 30, MouseEvent.NOBUTTON, 0);
                     assertFalse(tool.dispatchKeyEvent(delete));
-                    event(view, MouseEvent.MOUSE_ENTERED, 30, 30, MouseEvent.NOBUTTON, 0);
+                    event(view, MouseEvent.MOUSE_MOVED, 30, 30, MouseEvent.NOBUTTON, 0);
+                    // Exiting into a child component (still inside the view's bounds) keeps
+                    // shortcuts active.
+                    event(view, MouseEvent.MOUSE_EXITED, 30, 30, MouseEvent.NOBUTTON, 0);
                     assertTrue(tool.dispatchKeyEvent(delete));
                     assertEquals(List.of(10f, 10f, 70f, 4f, 50f, 50f, 70f, 8f), dimension.getAttribute(HANDLES));
                     assertEquals(Set.of(), tool.selectedNodes());

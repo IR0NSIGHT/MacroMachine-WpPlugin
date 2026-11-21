@@ -189,11 +189,21 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
         @Override
         public void mouseExited(MouseEvent event) {
-            cursorOverMap = false;
+            // Moving onto a child (e.g. a HUD button) also fires an exit; only leaving the
+            // bounds counts.
+            if (!new Rectangle(event.getComponent().getSize()).contains(event.getPoint()))
+                cursorOverMap = false;
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent event) {
+            cursorOverMap = true;
         }
 
         @Override
         public void mousePressed(MouseEvent event) {
+            cursorOverMap = true;
+            reclaimKeyboardFocus();
             if (SwingUtilities.isLeftMouseButton(event) && !event.isAltDown() && !event.isShiftDown()
                     && !event.isMetaDown())
                 handleSelectionPress(event.getPoint(), event.isControlDown());
@@ -201,6 +211,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
         @Override
         public void mouseDragged(MouseEvent event) {
+            cursorOverMap = true;
             handleSelectionDrag(event.getPoint());
         }
 
@@ -279,6 +290,19 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return false;
     }
 
+    /**
+     * Clicking the map moves keyboard focus off a settings spinner/text
+     * field/dropdown so that map shortcuts (Delete, Ctrl+A, Escape) work again.
+     * Focus is left alone when shortcuts are already allowed.
+     */
+    private void reclaimKeyboardFocus() {
+        if (overlayView == null)
+            return;
+        Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (!allowsMapShortcut(overlayView, focus))
+            overlay.requestFocusInWindow();
+    }
+
     static boolean allowsMapShortcut(Component view, Component focus) {
         if (view == null)
             return false;
@@ -330,6 +354,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         view.addComponentListener(resizeListener);
         view.addMouseListener(selectionListener);
         view.addMouseMotionListener(selectionListener);
+        overlay.setFocusable(true);
         view.add(overlay);
         view.setComponentZOrder(overlay, 0);
         resizeOverlay();
