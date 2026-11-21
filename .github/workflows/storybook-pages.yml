@@ -1,11 +1,7 @@
 name: Deploy Storybook
 
+# Disabled: only runs when started by hand under Actions.
 on:
-  push:
-  pull_request:
-    branches:
-      - main
-      - feature/webUI
   workflow_dispatch:
 
 permissions:
