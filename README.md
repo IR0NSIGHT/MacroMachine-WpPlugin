@@ -12,31 +12,57 @@ Actions and Macros are saved into the plugins folder and available in all worldp
 ## Tutorials
 This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK3xeIs6RQjUkl&si=5lPTMk5lmbzcvMZM) contains tutorial videos that cover the most important steps.
 
-### Download
-#### Windows installer
+### Install (Windows)
 
-For releases containing `MacroMachine-Setup-X.Y.Z.exe`, download it from the [release page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/latest), close WorldPainter, and run it. Setup finds WorldPainter, installs MacroMachine and disables older MacroMachine JARs in your plugins folder. Then start WorldPainter as usual.
+<a href="https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/download/release-0.4.20/MacroMachine-Setup-0.4.20.exe"><img src="https://img.shields.io/badge/DOWNLOAD-MacroMachine_Installer-2ea44f?style=for-the-badge&logo=windows" alt="Download MacroMachine installer" height="50"></a>
 
-WorldPainter must use **Java 21 or newer**. Setup checks this but does not install Java. Windows asks for administrator permission only if WorldPainter is in a protected folder such as `C:\Program Files`. The installer is unsigned, so Windows may show a "Windows protected your PC" warning: click *More info* → *Run anyway*.
+1. Click the green **DOWNLOAD** button.
+2. Close WorldPainter.
+3. Open the downloaded file. If Windows says **"Windows protected your PC"**, click **More info**, then **Run anyway**.
+4. Click **Install**. If Windows asks whether to allow changes, click **Yes**.
+5. Click **Finish**. WorldPainter opens with MacroMachine.
 
-Run setup again to update or repair MacroMachine, for example after a WorldPainter update. Uninstall through **Windows Settings → Apps → MacroMachine for WorldPainter**. Your macros are kept.
+**Update:** do the same steps again.  
+**Uninstall:** Windows Settings → Apps → **MacroMachine for WorldPainter** → Uninstall. Your macros stay.
 
-Developer build and test instructions: [Windows installer](installer/windows/README.md).
+<details>
+<summary><b>Problems?</b></summary>
 
-#### Earlier releases / manual installation
+- **"WorldPainter is running"**: save your worlds, close WorldPainter, click **Retry**.
+- **"WorldPainter was not found"**: click **Browse** and pick the folder that contains `worldpainter.exe`.
+- **"MacroMachine needs Java 21 or newer"**: install a newer Java, for example from [adoptium.net](https://adoptium.net), then run setup again. If WorldPainter still uses the old Java, reinstall WorldPainter.
+- **"Administrator permission was not given"**: run setup again and click **Yes** when Windows asks.
 
-[Youtube Tutorial](https://youtu.be/FtfwxDTzWgk?si=2JaUsOgvU1c2SFsF)  
-For version 0.4.14 and newer, install the plugin using the [WorldPainter plugin installer](https://www.patreon.com/wpdude/posts/worldpainter-v0-164248344). Download plugin JAR for the latest release and point the installer to it.  
-**IF YOU HAVE INSTALLED MACROMACHINE BEFORE, YOU HAVE TO DELETE THE OLD JAR FILE IF IS 0.4.14 OR OLDER** 
+</details>
 
-For versions before 0.4.14:
-1. go to the [release page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/latest)
-2. select the top most Macro-Machine release
-3. download the Macro-Machine-Plugin-x.x.x.jar file
-4. open worldpainter
-5. go to top bar -> tools -> open plugins folder
-6. place the downloaded jar file in the folder
-7. restart worldpainter
+<details>
+<summary><b>Mac, Linux, or installing by hand</b></summary>
+
+[YouTube tutorial](https://youtu.be/FtfwxDTzWgk?si=2JaUsOgvU1c2SFsF)
+
+1. Open the [latest release](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/latest) and download `Macro-Machine-Plugin-X.Y.Z.jar`.
+2. If you had MacroMachine 0.4.14 or older: open WorldPainter, go to **Tools → Open plugins folder**, and delete the old MacroMachine `.jar` file.
+3. Install the downloaded `.jar` with the [WorldPainter plugin installer](https://www.patreon.com/wpdude/posts/worldpainter-v0-164248344).
+4. Restart WorldPainter.
+
+</details>
+
+<details>
+<summary><b>Very old versions (before 0.4.14)</b></summary>
+
+1. On the [releases page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases), download `Macro-Machine-Plugin-X.Y.Z.jar` of the version you want.
+2. Open WorldPainter and go to **Tools → Open plugins folder**.
+3. Put the downloaded `.jar` file into that folder.
+4. Restart WorldPainter.
+
+</details>
+
+<details>
+<summary><b>For developers</b></summary>
+
+How the installer is built and tested: [installer/windows/README.md](installer/windows/README.md).
+
+</details>
 
 ### Use Macros
 [Youtube Tutorial](https://youtu.be/to27vExZfoM?si=CPMGnqGgRdljYbB3)  
@@ -253,7 +279,7 @@ Q: If i click "Apply macros", nothing on my map happens
 A: check the log. usually, the macro does something under special circumstances that dont exist on your map, f.e. because the map is flat and the macro tries to paint mountains in steep areas. Use the debugger to step through each action, make sure annotations are visible.
 
 Q: I updated to the newest macromachine, now worldpainter doesnt open, it just seems to do nothing (or it flashes a window for a second)?  
-A: Check your worldpainter plugins directory (f.e. C:\Users\IR0NSIGHT\AppData\Roaming\WorldPainter\plugins). If you have 2 macromachine jar files, delete all except the version you want to use. This happens if you mix pre-0.4.14 and post-0.4.17 jar files.
+A: Check your worldpainter plugins directory (f.e. C:\Users\IR0NSIGHT\AppData\Roaming\WorldPainter\plugins). If you have 2 macromachine jar files, delete all except the version you want to use. This happens if you mix pre-0.4.14 and post-0.4.17 jar files. The Windows setup does this for you.
 
 Q: Something broke, what now?  
 A: Send a bug report to @IR0NSIGHT in the discord https://discord.gg/9kRJEMfGeE or on github here. You can find your log files in the parent folder of top bar -> tools -> open plugins folder. The logs are calles logfile0.txt usually, please include the latest log file.

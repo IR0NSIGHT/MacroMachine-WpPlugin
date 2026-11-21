@@ -30,3 +30,9 @@ jobs:
 
       - name: Run Maven verify
         run: mvn --batch-mode --no-transfer-progress verify
+
+      - name: README download button matches version
+        run: |
+          v=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          grep -qF "releases/download/release-$v/MacroMachine-Setup-$v.exe" README.md \
+            || { echo "README download button must point to MacroMachine-Setup-$v.exe"; exit 1; }
