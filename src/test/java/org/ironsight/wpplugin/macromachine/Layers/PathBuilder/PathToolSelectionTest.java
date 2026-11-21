@@ -87,6 +87,41 @@ class PathToolSelectionTest
     }
 
     @Test
+    void selectionDoesNotInvalidatePendingPreviewOrChangeHandles() throws Exception {
+        var work = new ArrayList<Runnable>();
+        var callbacks = new ArrayList<Runnable>();
+        var tool = new PathTool[]{null};
+        var dim = new Dimension[]{null};
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                dim[0] = dimension();
+                var view = new TestView(dim[0]);
+                tool[0] = new PathTool(
+                        () -> new PathPreviewWorker(work::add, callbacks::add, PathPreviewMask::calculate));
+                tool[0].setView(view);
+                tool[0].setBrush(brush());
+                tool[0].setActive(true);
+                tool[0].tick(20, 20, true, true, 1f);
+                var handles = List.copyOf(dim[0].getAttribute(HANDLES));
+                click(view, 20, 20);
+                click(view, 20, 20, InputEvent.CTRL_DOWN_MASK);
+                click(view, 90, 90, InputEvent.CTRL_DOWN_MASK);
+                assertEquals(Set.of(0), tool[0].selectedNodes());
+                assertEquals(handles, dim[0].getAttribute(HANDLES));
+                assertEquals(1, work.size());
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+        work.remove(0).run();
+        SwingUtilities.invokeAndWait(() -> {
+            callbacks.remove(0).run();
+            assertTrue(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 20, 20));
+            assertDoesNotThrow(() -> tool[0].setActive(false));
+        });
+    }
+
+    @Test
     void queuedResultsCannotReappearAfterResetOrExternalPathChange() throws Exception {
         var work = new ArrayList<Runnable>();
         var callbacks = new ArrayList<Runnable>();
@@ -540,7 +575,7 @@ class PathToolSelectionTest
     }
 
     @Test
-    void mapEventsToggleAndReplaceSelectionWithoutAppending() throws Exception {
+    void mapEventsReplaceAndAddSelectionWithoutAppending() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             try {
                 Dimension dimension = dimension();
@@ -552,9 +587,15 @@ class PathToolSelectionTest
                 try {
                     click(view, 10, 10);
                     click(view, 30, 30);
-                    assertEquals(Set.of(0, 1), tool.selectedNodes());
-                    click(view, 10, 10);
                     assertEquals(Set.of(1), tool.selectedNodes());
+                    click(view, 30, 30);
+                    assertEquals(Set.of(1), tool.selectedNodes());
+                    click(view, 10, 10, InputEvent.CTRL_DOWN_MASK);
+                    assertEquals(Set.of(0, 1), tool.selectedNodes());
+                    click(view, 10, 10, InputEvent.CTRL_DOWN_MASK);
+                    assertEquals(Set.of(0, 1), tool.selectedNodes());
+                    click(view, 80, 80, InputEvent.CTRL_DOWN_MASK);
+                    assertEquals(Set.of(0, 1), tool.selectedNodes());
                     event(view, MouseEvent.MOUSE_PRESSED, -10, -10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_DRAGGED, 20, 20, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_RELEASED, 20, 20, MouseEvent.BUTTON1, 0);
@@ -563,6 +604,55 @@ class PathToolSelectionTest
                     assertEquals(Set.of(), tool.selectedNodes());
                     tool.tick(40, 40, false, true, 1f);
                     assertEquals(List.of(10f, 10f, 70f, 4f, 30f, 30f, 70f, 6f), dimension.getAttribute(HANDLES));
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
+    void modifierCapturedForMarqueeAndNodeDrags() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                var initial = List.of(10f, 10f, 70f, 4f, 50f, 10f, 70f, 6f, 90f, 10f, 70f, 8f);
+                dimension.setAttribute(HANDLES, new ArrayList<>(initial), true);
+                TestView view = new TestView(dimension);
+                PathTool tool = synchronousTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    click(view, 10, 10);
+                    event(view, MouseEvent.MOUSE_PRESSED, 35, -10, MouseEvent.BUTTON1,
+                            InputEvent.BUTTON1_DOWN_MASK | InputEvent.CTRL_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_DRAGGED, 65, 20, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_RELEASED, 65, 20, MouseEvent.BUTTON1, 0);
+                    assertEquals(Set.of(0, 1), tool.selectedNodes());
+                    event(view, MouseEvent.MOUSE_PRESSED, 10, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    assertEquals(Set.of(0, 1), tool.selectedNodes());
+                    event(view, MouseEvent.MOUSE_RELEASED, 10, 10, MouseEvent.BUTTON1, InputEvent.CTRL_DOWN_MASK);
+                    assertEquals(Set.of(0), tool.selectedNodes());
+                    event(view, MouseEvent.MOUSE_PRESSED, 50, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_DRAGGED, 55, 10, MouseEvent.NOBUTTON,
+                            InputEvent.BUTTON1_DOWN_MASK | InputEvent.CTRL_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_RELEASED, 55, 10, MouseEvent.BUTTON1, InputEvent.CTRL_DOWN_MASK);
+                    assertEquals(Set.of(1), tool.selectedNodes());
+                    assertEquals(List.of(10f, 10f, 70f, 4f, 55f, 10f, 70f, 6f, 90f, 10f, 70f, 8f),
+                            dimension.getAttribute(HANDLES));
+                    event(view, MouseEvent.MOUSE_PRESSED, 90, 10, MouseEvent.BUTTON1,
+                            InputEvent.BUTTON1_DOWN_MASK | InputEvent.CTRL_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_DRAGGED, 95, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_RELEASED, 95, 10, MouseEvent.BUTTON1, 0);
+                    assertEquals(Set.of(1, 2), tool.selectedNodes());
+                    assertEquals(List.of(10f, 10f, 70f, 4f, 60f, 10f, 70f, 6f, 95f, 10f, 70f, 8f),
+                            dimension.getAttribute(HANDLES));
+                    event(view, MouseEvent.MOUSE_PRESSED, 75, 30, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_DRAGGED, 105, -10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_RELEASED, 105, -10, MouseEvent.BUTTON1, 0);
+                    assertEquals(Set.of(2), tool.selectedNodes());
                 } finally {
                     tool.setActive(false);
                 }
@@ -653,7 +743,7 @@ class PathToolSelectionTest
                 tool.setActive(true);
                 try {
                     click(view, 10, 10);
-                    click(view, 30, 30);
+                    click(view, 30, 30, InputEvent.CTRL_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_PRESSED, 10, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_DRAGGED, 20, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
                     assertEquals(initial, dimension.getAttribute(HANDLES));
@@ -777,8 +867,12 @@ class PathToolSelectionTest
     }
 
     private static void click(TestView view, int x, int y) {
-        event(view, MouseEvent.MOUSE_PRESSED, x, y, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
-        event(view, MouseEvent.MOUSE_RELEASED, x, y, MouseEvent.BUTTON1, 0);
+        click(view, x, y, 0);
+    }
+
+    private static void click(TestView view, int x, int y, int modifiers) {
+        event(view, MouseEvent.MOUSE_PRESSED, x, y, MouseEvent.BUTTON1, modifiers | InputEvent.BUTTON1_DOWN_MASK);
+        event(view, MouseEvent.MOUSE_RELEASED, x, y, MouseEvent.BUTTON1, modifiers);
     }
 
     private static void event(TestView view, int id, int x, int y, int button, int modifiers) {

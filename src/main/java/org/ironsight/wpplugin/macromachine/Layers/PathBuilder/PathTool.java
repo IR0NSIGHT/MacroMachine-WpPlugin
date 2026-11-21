@@ -89,7 +89,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             quickly, then fine-tune blending, slope and transition settings below.
             """;
     public static final List<HelpItem> HELP_ITEMS = List.of(new HelpItem("Right click", "Append a path node"),
-            new HelpItem("Left click / drag", "Toggle selection, box select, or move selected nodes"),
+            new HelpItem("Left click / drag", "Select one, box select, or move selected nodes"),
+            new HelpItem("Ctrl + left click / drag", "Add nodes to selection or move the selected group"),
             new HelpItem("New path", "Clear the path and preview"),
             new HelpItem("Delete / Ctrl+A / Escape", "Delete selected / select all / clear selection or cancel drag"),
             new HelpItem("Backspace", "Delete last point on current path"),
@@ -190,9 +191,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
         @Override
         public void mousePressed(MouseEvent event) {
-            if (SwingUtilities.isLeftMouseButton(event) && !event.isAltDown() && !event.isControlDown()
-                    && !event.isShiftDown() && !event.isMetaDown())
-                handleSelectionPress(event.getPoint());
+            if (SwingUtilities.isLeftMouseButton(event) && !event.isAltDown() && !event.isShiftDown()
+                    && !event.isMetaDown())
+                handleSelectionPress(event.getPoint(), event.isControlDown());
         }
 
         @Override
@@ -209,6 +210,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private Point gestureStart;
     private int pressedNode = -1;
     private boolean gestureDragged;
+    private boolean gestureAdditive;
     private ArrayList<Point4f> gesturePath;
     private ArrayList<Point4f> movedPath;
     private Point gestureWorldStart;
@@ -372,6 +374,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     void handleSelectionPress(Point point) {
+        handleSelectionPress(point, false);
+    }
+
+    void handleSelectionPress(Point point, boolean additive) {
         syncDimension();
         if (overlayView == null || overlayDimension == null)
             return;
@@ -379,6 +385,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         gestureStart = new Point(point);
         pressedNode = nearestNode(point);
         gestureDragged = false;
+        gestureAdditive = additive;
         gesturePath = getCurrentPath();
         gestureWorldStart = overlayView.viewToWorld(point);
         Toolkit.getDefaultToolkit().addAWTEventListener(gestureCapture, AWTEvent.MOUSE_EVENT_MASK);
@@ -396,7 +403,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             overlay.updateDrag(point);
         else if (pressedNode >= 0 && gestureDragged) {
             if (!selectedNodes.contains(pressedNode)) {
-                selectedNodes.clear();
+                if (!gestureAdditive)
+                    selectedNodes.clear();
                 selectedNodes.add(pressedNode);
             }
             movedPath = movedPath(point);
@@ -412,7 +420,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             handleSelectionDrag(point);
             if (gestureDragged && pressedNode < 0) {
                 Rectangle bounds = overlay.getDragBounds();
-                selectedNodes.clear();
+                if (!gestureAdditive)
+                    selectedNodes.clear();
                 var path = getCurrentPath();
                 for (int i = 0; i < path.size(); i++) {
                     Point4f node = path.get(i);
@@ -422,10 +431,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             } else if (gestureDragged && pressedNode >= 0 && movedPath != null) {
                 completeEdit(movedPath);
             } else if (!gestureDragged) {
-                if (pressedNode < 0)
+                if (!gestureAdditive)
                     selectedNodes.clear();
-                else if (!selectedNodes.add(pressedNode))
-                    selectedNodes.remove(pressedNode);
+                if (pressedNode >= 0)
+                    selectedNodes.add(pressedNode);
             }
             selectionChanged();
         } finally {
@@ -446,6 +455,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         gestureStart = null;
         pressedNode = -1;
         gestureDragged = false;
+        gestureAdditive = false;
         gesturePath = null;
         movedPath = null;
         gestureWorldStart = null;

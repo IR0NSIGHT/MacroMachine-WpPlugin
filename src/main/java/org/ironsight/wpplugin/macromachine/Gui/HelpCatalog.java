@@ -42,8 +42,9 @@ public enum HelpCatalog {
                                     quickly, then fine-tune blending, slope and transition settings below.
                                     """,
                             List.of(new HelpItem("Right click", "Append a path node"),
-                                    new HelpItem("Left click / drag",
-                                            "Toggle selection, box select, or move selected nodes"),
+                                    new HelpItem("Left click / drag", "Select one, box select, or move selected nodes"),
+                                    new HelpItem("Ctrl + left click / drag",
+                                            "Add nodes to selection or move the selected group"),
                                     new HelpItem("New path", "Clear the path and preview"),
                                     new HelpItem("Delete / Ctrl+A / Escape",
                                             "Delete selected / select all / clear selection or cancel drag"),
