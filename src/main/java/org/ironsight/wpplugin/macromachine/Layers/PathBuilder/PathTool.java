@@ -94,7 +94,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Undo / redo", "Cancel any drag and clear selection before undo or redo"),
             new HelpItem("Apply", "Commit previewed path to terrain / paint / water"),
             new HelpItem("Brush radius", "Controls path width and transition size"),
-            new HelpItem("HUD controls", "Show or hide node labels, brush radii, path line and node markers"),
+            new HelpItem("HUD controls",
+                    "Show or hide node labels, brush radii, path line, node markers and yellow preview layer"),
             new HelpItem("River / Road preset", "Apply recommended settings for rivers or roads"),
             new HelpItem("Only downhill", "Restrict path to horizontal or downhill movement"),
             new HelpItem("Snap to terrain", "Force path to follow terrain height"),
@@ -111,10 +112,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private static final int NODE_DIAMETER = 18;
     private static final int NODE_OUTLINE_DIAMETER = 20;
     private static final int NODE_HIT_RADIUS = 18;
-    private final JToggleButton showLabel = hudButton("Show label", "ShowLabel");
-    private final JToggleButton showRadius = hudButton("Show radius", "ShowRadius");
-    private final JToggleButton showLine = hudButton("Show line", "ShowLine");
-    private final JToggleButton showNodes = hudButton("Show nodes", "ShowNodes");
+    private final JToggleButton showLabel = hudButton("Label", "ShowLabel");
+    private final JToggleButton showRadius = hudButton("Radius", "ShowRadius");
+    private final JToggleButton showLine = hudButton("Line", "ShowLine");
+    private final JToggleButton showNodes = hudButton("Nodes", "ShowNodes");
+    private final JToggleButton showLayer = hudButton("Layer", "ShowLayer");
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
     private Paint paint;
     // only allow downwards movement
@@ -581,12 +583,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         editingPanel.add(newPath);
         editingPanel.add(selectionStatus);
         optionsPanel.add(editingPanel);
-        JPanel hudPanel = new JPanel(new GridLayout(2, 2, 4, 4));
+        JPanel hudPanel = new JPanel(new GridLayout(0, 2, 4, 4));
         hudPanel.setBorder(BorderFactory.createTitledBorder("HUD"));
         hudPanel.add(showLabel);
         hudPanel.add(showRadius);
         hudPanel.add(showLine);
         hudPanel.add(showNodes);
+        hudPanel.add(showLayer);
+        showLayer.addActionListener(event -> refreshPreview());
         optionsPanel.add(hudPanel);
         {
             JPanel presetPanel = new JPanel();
@@ -980,7 +984,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             cachedTiles.clear();
             dimension.clearLayerData(PreviewOperation.annotationLayer);
             var path = getCurrentPath();
-            if (!path.isEmpty())
+            if (showLayer.isSelected() && !path.isEmpty())
                 OnSmoothPath(copyPath(path), true);
             else
                 cachedTiles.clear();
@@ -1014,12 +1018,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             dimension.setEventsInhibited(true);
         try {
             setCurrentPath(path);
-            cachedTiles.clear();
-            dimension.clearLayerData(PreviewOperation.annotationLayer);
-            if (!path.isEmpty())
-                OnSmoothPath(copyPath(path), true);
-            else
-                cachedTiles.clear();
+            refreshPreview();
         } finally {
             if (!inhibited)
                 dimension.setEventsInhibited(false);

@@ -53,7 +53,7 @@ public enum HelpCatalog {
                                     new HelpItem("Apply", "Commit previewed path to terrain / paint / water"),
                                     new HelpItem("Brush radius", "Controls path width and transition size"),
                                     new HelpItem("HUD controls",
-                                            "Show or hide node labels, brush radii, path line and node markers"),
+                                            "Show or hide node labels, brush radii, path line, node markers and yellow preview layer"),
                                     new HelpItem("River / Road preset",
                                             "Apply recommended settings for rivers or roads"),
                                     new HelpItem("Only downhill", "Restrict path to horizontal or downhill movement"),

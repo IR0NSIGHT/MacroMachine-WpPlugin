@@ -57,7 +57,10 @@ class PathToolSelectionTest
                     var radius = findToggle(tool.getOptionsPanel(), "PathTool.ShowRadius");
                     var line = findToggle(tool.getOptionsPanel(), "PathTool.ShowLine");
                     var nodes = findToggle(tool.getOptionsPanel(), "PathTool.ShowNodes");
-                    for (var toggle : List.of(label, radius, line, nodes))
+                    var layer = findToggle(tool.getOptionsPanel(), "PathTool.ShowLayer");
+                    assertEquals(List.of("Label", "Radius", "Line", "Nodes", "Layer"), List.of(label.getText(),
+                            radius.getText(), line.getText(), nodes.getText(), layer.getText()));
+                    for (var toggle : List.of(label, radius, line, nodes, layer))
                         assertTrue(toggle.isSelected());
                     Point center = view.worldToView(30, 30);
                     Point ring = view.worldToView(30, 10);
@@ -85,6 +88,59 @@ class PathToolSelectionTest
                     assertEquals(70f, dimension.getHeightAt(30, 30));
                     assertEquals(0, tool.nearestNode(new Point(center.x + 18, center.y)));
                     assertEquals(-1, tool.nearestNode(new Point(center.x + 19, center.y)));
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
+    void hiddenLayerStaysClearAcrossEditsSettingsAndApply() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                TestView view = new TestView(dimension);
+                PathTool tool = new PathTool();
+                tool.setView(view);
+                tool.setBrush(brush());
+                tool.setActive(true);
+                try {
+                    tool.tick(20, 20, true, true, 1f);
+                    assertTrue(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 20, 20));
+                    var handles = List.copyOf(dimension.getAttribute(HANDLES));
+                    var layer = findToggle(tool.getOptionsPanel(), "PathTool.ShowLayer");
+                    var overlay = (MapToolOverlay) java.util.Arrays.stream(view.getComponents())
+                            .filter(MapToolOverlay.class::isInstance)
+                            .findFirst()
+                            .orElseThrow();
+                    overlay.setSize(200, 200);
+                    var before = paintOverlay(overlay);
+                    dimension.setEventsInhibited(true);
+                    layer.doClick();
+                    assertTrue(dimension.isEventsInhibited());
+                    dimension.setEventsInhibited(false);
+                    assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 20, 20));
+                    assertEquals(handles, dimension.getAttribute(HANDLES));
+                    assertEquals(70f, dimension.getHeightAt(20, 20));
+                    assertEquals(0, differentPixels(before, paintOverlay(overlay), 0, 0, 200, 200));
+                    tool.tick(60, 20, true, true, 1f);
+                    var spinner = PathTool.class.getDeclaredField("handleFactorSpinner");
+                    spinner.setAccessible(true);
+                    ((JSpinner) spinner.get(tool)).setValue(1.0d);
+                    assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
+                    dimension.setHeightAt(60, 20, 90f);
+                    findButton(tool.getOptionsPanel(), "PathTool.Apply").doClick();
+                    assertNotEquals(90f, dimension.getHeightAt(60, 20));
+                    assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
+                    tool.setActive(false);
+                    tool.setActive(true);
+                    layer.doClick();
+                    assertTrue(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
+                    findButton(tool.getOptionsPanel(), "PathTool.NewPath").doClick();
+                    assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
                 } finally {
                     tool.setActive(false);
                 }
