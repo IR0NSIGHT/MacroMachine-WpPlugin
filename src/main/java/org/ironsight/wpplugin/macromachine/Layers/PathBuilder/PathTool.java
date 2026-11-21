@@ -988,9 +988,32 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             cachedTiles.clear();
             dimension.clearLayerData(PreviewOperation.annotationLayer);
             var path = getCurrentPath();
-            if (showLayer.isSelected() && !path.isEmpty())
-                OnSmoothPath(copyPath(path), true);
-            else
+            if (showLayer.isSelected() && !path.isEmpty()) {
+                long started = measurePreview ? System.nanoTime() : 0;
+                var sampledPath = getPathFromNodes(path, handleStrength).path;
+                forceRadiusAtLeast(sampledPath, .5f);
+                var snapshot = PathPreviewMask.snapshot(sampledPath);
+                long sampled = measurePreview ? System.nanoTime() : 0;
+                var candidates = collectTilesAroundPath(sampledPath, transitionMultiplier);
+                var existing = new ArrayList<PathPreviewMask.TilePosition>();
+                for (var tile : candidates)
+                    if (dimension.getTile(tile.x, tile.y) != null)
+                        existing.add(new PathPreviewMask.TilePosition(tile.x, tile.y));
+                long collected = measurePreview ? System.nanoTime() : 0;
+                var masks = PathPreviewMask.calculate(snapshot, existing, transitionMultiplier, brushProfile);
+                long calculated = measurePreview ? System.nanoTime() : 0;
+                masks.forEach((position, bits) -> {
+                    var tile = dimension.getTileForEditing(position.x(), position.y());
+                    if (tile != null)
+                        for (int bit = bits.nextSetBit(0); bit >= 0; bit = bits.nextSetBit(bit + 1))
+                            tile.setBitLayerValue(PreviewOperation.annotationLayer, bit % TILE_SIZE, bit / TILE_SIZE,
+                                    true);
+                });
+                if (measurePreview)
+                    previewTiming = new PreviewTiming(snapshot.size(), candidates.size(), existing.size(),
+                            sampled - started, collected - sampled, calculated - collected,
+                            System.nanoTime() - calculated);
+            } else
                 cachedTiles.clear();
         } finally {
             if (!inhibited)
