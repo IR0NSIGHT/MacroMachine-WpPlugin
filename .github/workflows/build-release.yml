@@ -1,22 +1,25 @@
 name: Build Windows Release
 
 on:
-  push:
-    branches:
-      - release
+  workflow_run:
+    workflows: ["Maven Test"]
+    branches: ["release"]
+    types: [completed]
 
 permissions:
   actions: read
   contents: write
 
 concurrency:
-  group: windows-release-${{ github.event.workflow_run.head_branch }}
+  group: windows-release
   cancel-in-progress: false
 
 jobs:
   build-release:
     if: >-
       github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'release' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
       (github.event.workflow_run.event == 'push' ||
       github.event.workflow_run.event == 'workflow_dispatch')
     runs-on: windows-latest
@@ -26,6 +29,7 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Java 21
         uses: actions/setup-java@v5
@@ -34,6 +38,20 @@ jobs:
           java-version: 21
           cache: maven
 
+      - name: Verify tested release branch and existing tag
+        shell: pwsh
+        env:
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          $releaseSha = (git rev-parse refs/remotes/origin/release).Trim()
+          if ($LASTEXITCODE -ne 0 -or $releaseSha -cne $env:TESTED_SHA) { throw 'Tested SHA is not the current release branch head.' }
+          $version = (mvn help:evaluate '-Dexpression=project.version' '-q' '-DforceStdout').Trim()
+          if ($LASTEXITCODE -ne 0 -or $version -cnotmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') { throw 'Invalid release version.' }
+          $tagSha = (git rev-parse "refs/tags/release-$version^{commit}").Trim()
+          if ($LASTEXITCODE -ne 0 -or $tagSha -cne $env:TESTED_SHA) { throw 'Existing release tag does not point to the tested SHA.' }
+          "version=$version" >> $env:GITHUB_OUTPUT
+        id: release
+
       - name: Build shaded JAR
         run: mvn --batch-mode --no-transfer-progress clean package -DskipTests
 
@@ -41,10 +59,7 @@ jobs:
         id: artifact
         shell: pwsh
         run: |
-          $version = (mvn help:evaluate '-Dexpression=project.version' '-q' '-DforceStdout').Trim()
-          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($version)) {
-              throw 'Could not read the Maven project version.'
-          }
+          $version = '${{ steps.release.outputs.version }}'
 
           $jarPath = "target\Macro-Machine-Plugin-$version.jar"
           if (-not (Test-Path -LiteralPath $jarPath -PathType Leaf)) {
@@ -52,6 +67,7 @@ jobs:
           }
 
           $entries = @(jar tf $jarPath)
+          if ($LASTEXITCODE -ne 0) { throw 'Could not inspect shaded JAR.' }
           $required = @(
               'icons/action.png',
               'icons/input.png',
@@ -75,6 +91,19 @@ jobs:
           "version=$version" >> $env:GITHUB_OUTPUT
           "path=$jarPath" >> $env:GITHUB_OUTPUT
 
+      - name: Obtain pinned portable Inno Setup
+        id: inno
+        shell: pwsh
+        run: |
+          $iscc = & ./installer/windows/get-inno-setup.ps1 -Destination "$env:RUNNER_TEMP/inno-6.7.4"
+          "iscc=$iscc" >> $env:GITHUB_OUTPUT
+
+      - name: Run installer tests and compile release
+        shell: pwsh
+        run: |
+          ./installer/windows/tests/run-tests.ps1 -IsccPath '${{ steps.inno.outputs.iscc }}' -PluginJar '${{ steps.artifact.outputs.path }}' -Version '${{ steps.artifact.outputs.version }}'
+          ./installer/windows/build-installer.ps1 -PluginJar '${{ steps.artifact.outputs.path }}' -Version '${{ steps.artifact.outputs.version }}' -IsccPath '${{ steps.inno.outputs.iscc }}' -OutputDirectory target/installer
+
       - name: Upload Windows shaded JAR
         uses: actions/upload-artifact@v4
         with:
@@ -86,11 +115,21 @@ jobs:
         shell: pwsh
         run: Compress-Archive -Path defaultActions -DestinationPath default-macros.zip -Force
 
+      - name: Create checksums
+        shell: pwsh
+        run: |
+          $files = @('${{ steps.artifact.outputs.path }}', 'target/installer/MacroMachine-Setup-${{ steps.artifact.outputs.version }}.exe', 'default-macros.zip')
+          $lines = foreach ($file in $files) { $item = Get-Item -LiteralPath $file; '{0}  {1}' -f (Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $item.Name }
+          [IO.File]::WriteAllLines((Join-Path $PWD 'SHA256SUMS.txt'), [string[]]$lines, [Text.Encoding]::ASCII)
+
       - name: Upload release bundle
         uses: actions/upload-artifact@v4
         with:
           name: MacroMachine-Release-Bundle-v${{ steps.artifact.outputs.version }}
-          path: default-macros.zip
+          path: |
+            default-macros.zip
+            target/installer/MacroMachine-Setup-${{ steps.artifact.outputs.version }}.exe
+            SHA256SUMS.txt
           if-no-files-found: error
 
       - name: Create or update named GitHub Release
@@ -102,6 +141,8 @@ jobs:
           files: |
             ${{ steps.artifact.outputs.path }}
             default-macros.zip
+            target/installer/MacroMachine-Setup-${{ steps.artifact.outputs.version }}.exe
+            SHA256SUMS.txt
           fail_on_unmatched_files: true
           generate_release_notes: true
           overwrite_files: true
