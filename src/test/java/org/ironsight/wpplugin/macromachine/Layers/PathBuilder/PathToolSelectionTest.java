@@ -453,6 +453,19 @@ class PathToolSelectionTest
     private static class TestView extends WorldPainterView
     {
         private Dimension dimension;
+        private final MapDragControl mapDragControl = new MapDragControl() {
+            private boolean inhibited;
+
+            @Override
+            public boolean isMapDraggingInhibited() {
+                return inhibited;
+            }
+
+            @Override
+            public void setMapDraggingInhibited(boolean inhibited) {
+                this.inhibited = inhibited;
+            }
+        };
         TestView(Dimension dimension) {
             this.dimension = dimension;
             setSize(100, 100);
@@ -477,7 +490,7 @@ class PathToolSelectionTest
         }
         @Override
         public MapDragControl getMapDragControl() {
-            return null;
+            return mapDragControl;
         }
         @Override
         public BrushControl getBrushControl() {
