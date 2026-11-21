@@ -22,8 +22,8 @@ Rerunning setup repairs or updates the install, for example after a WorldPainter
 ```powershell
 mvn --batch-mode --no-transfer-progress verify
 $iscc = & .\installer\windows\get-inno-setup.ps1          # pinned Inno Setup 6.7.4, checksum-verified
-& .\installer\windows\tests\run-tests.ps1 -IsccPath $iscc -PluginJar .\target\Macro-Machine-Plugin-0.4.18.jar -Version 0.4.18
-& .\installer\windows\build-installer.ps1 -IsccPath $iscc -PluginJar .\target\Macro-Machine-Plugin-0.4.18.jar -Version 0.4.18
+& .\installer\windows\tests\run-tests.ps1 -IsccPath $iscc -PluginJar .\target\Macro-Machine-Plugin-0.4.19.jar -Version 0.4.19
+& .\installer\windows\build-installer.ps1 -IsccPath $iscc -PluginJar .\target\Macro-Machine-Plugin-0.4.19.jar -Version 0.4.19
 ```
 
 The test installs into a temporary fake WorldPainter (per-user, with its own AppId) and checks the following: Java 17 is blocked with nothing changed; install, repair and uninstall work; later user edits are kept; and uninstall works after WorldPainter was deleted. The release workflow runs the same test before publishing.
