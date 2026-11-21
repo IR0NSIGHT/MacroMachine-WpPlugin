@@ -114,6 +114,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private final JPanel optionsPanel = new JPanel();
     private static final int NODE_DIAMETER = 18;
     private static final int NODE_OUTLINE_DIAMETER = 20;
+    static final Color SELECTED_NODE_FILL = new Color(0, 229, 255);
+    static final Color SELECTED_NODE_HALO = new Color(10, 20, 40);
+    static final Color UNSELECTED_NODE_OUTLINE = Color.GRAY;
     private static final int NODE_HIT_RADIUS = 18;
     private final JToggleButton showLabel = hudButton("Label", "ShowLabel");
     private final JToggleButton showRadius = hudButton("Radius", "ShowRadius");
@@ -561,32 +564,53 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 for (int i = 0; i < path.size(); i++) {
                     Point4f node = path.get(i);
                     Point point = overlayView.worldToView(Math.round(node.x), Math.round(node.y));
-                    if (showNodes.isSelected()) {
-                        g.setColor(Color.WHITE);
-                        g.fillOval(point.x - NODE_DIAMETER / 2, point.y - NODE_DIAMETER / 2, NODE_DIAMETER,
-                                NODE_DIAMETER);
-                        g.setColor(selectedNodes.contains(i) ? Color.RED : Color.DARK_GRAY);
-                        g.setStroke(new BasicStroke(selectedNodes.contains(i) ? 2f : 1f));
-                        g.drawOval(point.x - NODE_OUTLINE_DIAMETER / 2, point.y - NODE_OUTLINE_DIAMETER / 2,
-                                NODE_OUTLINE_DIAMETER, NODE_OUTLINE_DIAMETER);
-                    }
-                    if (showLabel.isSelected()) {
-                        String label = Integer.toString(i + 1);
-                        int x = point.x + NODE_OUTLINE_DIAMETER / 2 + 4;
-                        int y = point.y + g.getFontMetrics().getAscent() / 2;
-                        g.setColor(Color.BLACK);
-                        g.drawString(label, x - 1, y);
-                        g.drawString(label, x + 1, y);
-                        g.drawString(label, x, y - 1);
-                        g.drawString(label, x, y + 1);
-                        g.setColor(Color.WHITE);
-                        g.drawString(label, x, y);
-                    }
+                    boolean selected = selectedNodes.contains(i);
+                    if (showNodes.isSelected())
+                        paintNode(g, point, selected);
+                    if (showLabel.isSelected())
+                        paintNodeLabel(g, point, i + 1, selected);
                 }
             } finally {
                 g.dispose();
             }
         }
+    }
+
+    static void paintNode(Graphics2D g, Point point, boolean selected) {
+        int fill = NODE_DIAMETER, outline = NODE_OUTLINE_DIAMETER;
+        g.setColor(selected ? SELECTED_NODE_FILL : Color.WHITE);
+        g.fillOval(point.x - fill / 2, point.y - fill / 2, fill, fill);
+        if (selected) {
+            g.setColor(SELECTED_NODE_HALO);
+            g.setStroke(new BasicStroke(3f));
+            g.drawOval(point.x - outline / 2, point.y - outline / 2, outline, outline);
+            g.setColor(Color.WHITE);
+            g.setStroke(new BasicStroke(1f));
+            int edge = outline + 4;
+            g.drawOval(point.x - edge / 2, point.y - edge / 2, edge, edge);
+        } else {
+            g.setColor(UNSELECTED_NODE_OUTLINE);
+            g.setStroke(new BasicStroke(1f));
+            g.drawOval(point.x - outline / 2, point.y - outline / 2, outline, outline);
+        }
+    }
+
+    static void paintNodeLabel(Graphics2D g, Point point, int number, boolean selected) {
+        String label = Integer.toString(number);
+        Font previous = g.getFont();
+        if (selected)
+            g.setFont(previous.deriveFont(Font.BOLD));
+        int x = point.x + NODE_OUTLINE_DIAMETER / 2 + 4;
+        int y = point.y + g.getFontMetrics().getAscent() / 2;
+        g.setColor(selected ? SELECTED_NODE_HALO : Color.BLACK);
+        int halo = selected ? 2 : 1;
+        for (int dx = -halo; dx <= halo; dx++)
+            for (int dy = -halo; dy <= halo; dy++)
+                if (dx != 0 || dy != 0)
+                    g.drawString(label, x + dx, y + dy);
+        g.setColor(selected ? SELECTED_NODE_FILL : Color.WHITE);
+        g.drawString(label, x, y);
+        g.setFont(previous);
     }
 
     private JToggleButton hudButton(String text, String name) {
