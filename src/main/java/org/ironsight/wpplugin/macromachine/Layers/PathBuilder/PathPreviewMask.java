@@ -8,6 +8,8 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
+import java.util.function.BooleanSupplier;
 import javax.vecmath.Point4f;
 
 /**
@@ -28,11 +30,19 @@ final class PathPreviewMask
 
     static Map<TilePosition, BitSet> calculate(List<Sample> samples, List<TilePosition> tiles, float multiplier,
             CrossSectionShape profile) {
+        return calculate(samples, tiles, multiplier, profile, () -> false);
+    }
+
+    static Map<TilePosition, BitSet> calculate(List<Sample> samples, List<TilePosition> tiles, float multiplier,
+            CrossSectionShape profile, BooleanSupplier cancelled) {
         var path = new ArrayList<Point4f>(samples.size());
-        for (var sample : samples)
+        for (var sample : samples) {
+            checkCancelled(cancelled);
             path.add(new Point4f(sample.x(), sample.y(), 0, sample.radius()));
+        }
         var result = new HashMap<TilePosition, BitSet>();
         for (var tile : tiles) {
+            checkCancelled(cancelled);
             int x = tile.x() << TILE_SIZE_BITS, y = tile.y() << TILE_SIZE_BITS;
             var subPath = PathToolBackend.getSubPathFor(new Point2i(x, y), new Point2i(x + TILE_SIZE, y + TILE_SIZE),
                     path, multiplier);
@@ -43,6 +53,7 @@ final class PathPreviewMask
             var data = new HashMap<Point2i, Point4f>();
             float minX = Float.POSITIVE_INFINITY, minY = minX, maxX = Float.NEGATIVE_INFINITY, maxY = maxX;
             for (var point : subPath) {
+                checkCancelled(cancelled);
                 var pos = new Point2i(point.x, point.y);
                 tree.insert(pos);
                 data.put(pos, point);
@@ -57,8 +68,9 @@ final class PathPreviewMask
             int right = Math.min(TILE_SIZE - 1, (int) Math.ceil(maxX - x));
             int bottom = Math.min(TILE_SIZE - 1, (int) Math.ceil(maxY - y));
             var bits = new BitSet(TILE_SIZE * TILE_SIZE);
-            for (int xx = left; xx <= right; xx++)
-                for (int yy = top; yy <= bottom; yy++) {
+            for (int yy = top; yy <= bottom; yy++) {
+                checkCancelled(cancelled);
+                for (int xx = left; xx <= right; xx++) {
                     var query = new Point2i(x + xx, y + yy);
                     var closest = data.get(tree.getClosest(query));
                     if (closest == null)
@@ -69,9 +81,16 @@ final class PathPreviewMask
                             .filterStrengthFor((float) distance, closest.w, multiplier, profile) >= 1))
                         bits.set(yy * TILE_SIZE + xx);
                 }
+            }
             if (!bits.isEmpty())
                 result.put(tile, bits);
         }
+        checkCancelled(cancelled);
         return result;
+    }
+
+    static void checkCancelled(BooleanSupplier cancelled) {
+        if (cancelled.getAsBoolean())
+            throw new CancellationException();
     }
 }

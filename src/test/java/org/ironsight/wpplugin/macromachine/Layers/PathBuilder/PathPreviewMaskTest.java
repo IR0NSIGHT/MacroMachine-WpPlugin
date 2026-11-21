@@ -1,10 +1,13 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 
 import java.util.BitSet;
 import java.util.List;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.vecmath.Point3i;
 import javax.vecmath.Point4f;
 import org.junit.jupiter.api.Test;
@@ -84,5 +87,17 @@ class PathPreviewMaskTest
         var snapshot = PathPreviewMask.snapshot(List.of(point));
         point.set(9, 9, 9, 9);
         assertEquals(List.of(new PathPreviewMask.Sample(1, 2, 4)), snapshot);
+    }
+
+    @Test
+    void cancellationDoesNotMutateInputsOrReturnPartialMasks() {
+        var samples = List.of(new PathPreviewMask.Sample(10, 10, 20));
+        var tiles = List.of(new PathPreviewMask.TilePosition(0, 0));
+        var checks = new AtomicInteger();
+        assertThrows(CancellationException.class,
+                () -> PathPreviewMask.calculate(samples, tiles, 1, new CrossSectionShape("linear", "") {
+                }, () -> checks.incrementAndGet() > 8));
+        assertEquals(List.of(new PathPreviewMask.Sample(10, 10, 20)), samples);
+        assertEquals(List.of(new PathPreviewMask.TilePosition(0, 0)), tiles);
     }
 }
