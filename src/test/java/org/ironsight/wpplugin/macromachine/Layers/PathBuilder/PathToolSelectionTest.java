@@ -10,12 +10,19 @@ import java.util.List;
 import java.util.Set;
 import javax.swing.SwingUtilities;
 import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.JSpinner;
 import org.ironsight.wpplugin.macromachine.Gui.MapToolOverlay;
+import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TestDimension;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.pepsoft.util.AttributeKey;
+import org.pepsoft.util.undo.UndoManager;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.brushes.Brush;
@@ -26,6 +33,153 @@ class PathToolSelectionTest
     private static final AttributeKey<ArrayList<Float>> HANDLES = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<>());
     private WorldPainterView previousInstance;
+
+    @Test
+    void shortcutsAllowOtherMapWindowControlsButNotEditorsOrDialogs() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            JFrame frame = new JFrame();
+            JDialog dialog = new JDialog(frame);
+            try {
+                JPanel view = new JPanel();
+                JPanel controls = new JPanel();
+                JButton button = new JButton();
+                JTextField text = new JTextField();
+                JSpinner spinner = new JSpinner();
+                frame.add(view, java.awt.BorderLayout.CENTER);
+                frame.add(controls, java.awt.BorderLayout.SOUTH);
+                controls.add(button);
+                controls.add(text);
+                controls.add(spinner);
+                JButton dialogButton = new JButton();
+                dialog.add(dialogButton);
+                assertTrue(PathTool.allowsMapShortcut(view, button));
+                assertFalse(PathTool.allowsMapShortcut(view, text));
+                assertFalse(PathTool.allowsMapShortcut(view, spinner.getEditor()));
+                assertFalse(PathTool.allowsMapShortcut(view, dialogButton));
+            } finally {
+                dialog.dispose();
+                frame.dispose();
+            }
+        });
+    }
+
+    @Test
+    void previewMovesAndResetClearsFootprintAndApplyUsesFreshBaseline() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                TestView view = new TestView(dimension);
+                PathTool tool = new PathTool();
+                tool.setView(view);
+                tool.setBrush(brush());
+                tool.setActive(true);
+                try {
+                    tool.tick(20, 20, true, true, 1f);
+                    assertTrue(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 20, 20));
+                    assertEquals(70f, dimension.getHeightAt(20, 20));
+                    event(view, MouseEvent.MOUSE_PRESSED, 20, 20, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_DRAGGED, 60, 20, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_RELEASED, 60, 20, MouseEvent.BUTTON1, 0);
+                    assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 20, 20));
+                    assertTrue(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
+                    var handles = List.copyOf(dimension.getAttribute(HANDLES));
+                    dimension.setHeightAt(100, 100, 100f);
+                    dimension.setEventsInhibited(true);
+                    findButton(tool.getOptionsPanel(), "PathTool.Apply").doClick();
+                    assertTrue(dimension.isEventsInhibited());
+                    dimension.setEventsInhibited(false);
+                    assertEquals(handles, dimension.getAttribute(HANDLES));
+                    assertEquals(100f, dimension.getHeightAt(100, 100));
+                    findButton(tool.getOptionsPanel(), "PathTool.NewPath").doClick();
+                    assertEquals(List.of(), dimension.getAttribute(HANDLES));
+                    assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    private static Brush brush() {
+        return (Brush) java.lang.reflect.Proxy.newProxyInstance(Brush.class.getClassLoader(),
+                new Class<?>[]{Brush.class}, (proxy, method, args) -> switch (method.getName()) {
+                    case "getEffectiveRadius", "getRadius" -> 4;
+                    default -> null;
+                });
+    }
+
+    @Test
+    void undoManagerRestoresHandlesAndAnnotationTogether() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                UndoManager manager = new UndoManager();
+                dimension.registerUndoManager(manager);
+                TestView view = new TestView(dimension);
+                PathTool tool = new PathTool();
+                tool.setView(view);
+                tool.setBrush(brush());
+                tool.setActive(true);
+                try {
+                    tool.tick(20, 20, true, true, 1f);
+                    dimension.armSavePoint();
+                    tool.tick(60, 20, true, true, 1f);
+                    assertEquals(8, dimension.getAttribute(HANDLES).size());
+                    assertTrue(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
+                    assertTrue(manager.undo());
+                    assertEquals(List.of(20f, 20f, 70f, 4f), dimension.getAttribute(HANDLES));
+                    assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
+                    assertTrue(manager.redo());
+                    assertEquals(List.of(20f, 20f, 70f, 4f, 60f, 20f, 70f, 4f), dimension.getAttribute(HANDLES));
+                    assertTrue(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
+                } finally {
+                    tool.setActive(false);
+                    dimension.unregisterUndoManager();
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
+    void outsideComponentReleaseFinishesDragAndRemovesCapture() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                dimension.setAttribute(HANDLES, new ArrayList<>(List.of(10f, 10f, 70f, 4f)), true);
+                TestView view = new TestView(dimension);
+                JPanel container = new JPanel(null);
+                JPanel outside = new JPanel();
+                container.add(view);
+                container.add(outside);
+                view.setBounds(0, 0, 100, 100);
+                outside.setBounds(100, 0, 100, 100);
+                PathTool tool = new PathTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    int listeners = java.awt.Toolkit.getDefaultToolkit()
+                            .getAWTEventListeners(java.awt.AWTEvent.MOUSE_EVENT_MASK).length;
+                    event(view, MouseEvent.MOUSE_PRESSED, 10, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    assertEquals(listeners + 1, java.awt.Toolkit.getDefaultToolkit()
+                            .getAWTEventListeners(java.awt.AWTEvent.MOUSE_EVENT_MASK).length);
+                    Point end = SwingUtilities.convertPoint(view, view.worldToView(20, 10), outside);
+                    outside.dispatchEvent(new MouseEvent(outside, MouseEvent.MOUSE_RELEASED, 0, 0, end.x, end.y, 1,
+                            false, MouseEvent.BUTTON1));
+                    assertEquals(List.of(20f, 10f, 70f, 4f), dimension.getAttribute(HANDLES));
+                    assertEquals(listeners, java.awt.Toolkit.getDefaultToolkit()
+                            .getAWTEventListeners(java.awt.AWTEvent.MOUSE_EVENT_MASK).length);
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
 
     @BeforeEach
     void isolateView() throws Exception {
@@ -100,10 +254,38 @@ class PathToolSelectionTest
                     event(view, MouseEvent.MOUSE_PRESSED, 10, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_DRAGGED, 20, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_ENTERED, 20, 10, MouseEvent.NOBUTTON, 0);
+                    event(view, MouseEvent.MOUSE_EXITED, 20, 10, MouseEvent.NOBUTTON, 0);
                     assertTrue(tool.dispatchKeyEvent(new KeyEvent(view, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_ESCAPE,
                             KeyEvent.CHAR_UNDEFINED)));
                     event(view, MouseEvent.MOUSE_RELEASED, 20, 10, MouseEvent.BUTTON1, 0);
                     assertEquals(expected, dimension.getAttribute(HANDLES));
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
+    void backspaceDuringDragCannotRestoreDeletedNodeOnRelease() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                dimension.setAttribute(HANDLES, new ArrayList<>(List.of(10f, 10f, 70f, 4f, 30f, 30f, 70f, 6f)), true);
+                TestView view = new TestView(dimension);
+                PathTool tool = new PathTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    event(view, MouseEvent.MOUSE_ENTERED, 10, 10, MouseEvent.NOBUTTON, 0);
+                    event(view, MouseEvent.MOUSE_PRESSED, 10, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_DRAGGED, 20, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
+                    assertTrue(tool.dispatchKeyEvent(new KeyEvent(view, KeyEvent.KEY_PRESSED, 0, 0,
+                            KeyEvent.VK_BACK_SPACE, KeyEvent.CHAR_UNDEFINED)));
+                    event(view, MouseEvent.MOUSE_RELEASED, 20, 10, MouseEvent.BUTTON1, 0);
+                    assertEquals(List.of(10f, 10f, 70f, 4f), dimension.getAttribute(HANDLES));
                 } finally {
                     tool.setActive(false);
                 }
@@ -135,10 +317,24 @@ class PathToolSelectionTest
                     event(view, MouseEvent.MOUSE_RELEASED, 20, 10, MouseEvent.BUTTON1, 0);
                     assertEquals(List.of(20f, 10f, 81f, 4f, 40f, 30f, 92f, 6f), dimension.getAttribute(HANDLES));
                     assertEquals(Set.of(0, 1), tool.selectedNodes());
+                    boolean snapEnabled = false;
+                    for (var component : tool.getOptionsPanel().getComponents())
+                        if (component instanceof javax.swing.JCheckBox checkbox
+                                && "snap to terrain".equals(checkbox.getText())) {
+                            checkbox.doClick();
+                            snapEnabled = checkbox.isSelected();
+                        }
+                    assertTrue(snapEnabled);
+                    dimension.setHeightAt(30, 10, 83f);
+                    dimension.setHeightAt(50, 30, 94f);
                     event(view, MouseEvent.MOUSE_PRESSED, 20, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_DRAGGED, 30, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_RELEASED, 30, 10, MouseEvent.BUTTON1, 0);
+                    assertEquals(List.of(30f, 10f, 83f, 4f, 50f, 30f, 94f, 6f), dimension.getAttribute(HANDLES));
+                    event(view, MouseEvent.MOUSE_PRESSED, 30, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_DRAGGED, 120, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_RELEASED, 120, 10, MouseEvent.BUTTON1, 0);
-                    assertEquals(List.of(20f, 10f, 81f, 4f, 40f, 30f, 92f, 6f), dimension.getAttribute(HANDLES));
+                    assertEquals(List.of(30f, 10f, 83f, 4f, 50f, 30f, 94f, 6f), dimension.getAttribute(HANDLES));
                 } finally {
                     tool.setActive(false);
                 }
@@ -214,6 +410,11 @@ class PathToolSelectionTest
                 assertEquals(-1, tool.nearestNode(view.worldToView(50, 50)));
                 assertEquals(1,
                         java.util.Arrays.stream(view.getComponents()).filter(MapToolOverlay.class::isInstance).count());
+                MapToolOverlay overlay = (MapToolOverlay) java.util.Arrays.stream(view.getComponents())
+                        .filter(MapToolOverlay.class::isInstance)
+                        .findFirst()
+                        .orElseThrow();
+                assertTrue(overlay.getComponent(0).isVisible());
                 click(view, 10, 10);
                 view.setDimension(dimension());
                 assertEquals(Set.of(), tool.selectedNodes());
@@ -221,6 +422,11 @@ class PathToolSelectionTest
                 assertSame(previous, view.getViewListener());
                 assertEquals(0,
                         java.util.Arrays.stream(view.getComponents()).filter(MapToolOverlay.class::isInstance).count());
+                assertFalse(overlay.getComponent(0).isVisible());
+                tool.setActive(true);
+                assertTrue(overlay.getComponent(0).isVisible());
+                tool.setActive(false);
+                assertFalse(overlay.getComponent(0).isVisible());
             } catch (Exception exception) {
                 throw new RuntimeException(exception);
             }

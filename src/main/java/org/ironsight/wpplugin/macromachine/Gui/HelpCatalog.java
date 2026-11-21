@@ -48,6 +48,8 @@ public enum HelpCatalog {
                                     new HelpItem("Delete / Ctrl+A / Escape",
                                             "Delete selected / select all / clear selection or cancel drag"),
                                     new HelpItem("Backspace", "Delete last point on current path"),
+                                    new HelpItem("Undo / redo",
+                                            "Cancel any drag and clear selection before undo or redo"),
                                     new HelpItem("Apply", "Commit previewed path to terrain / paint / water"),
                                     new HelpItem("Brush radius", "Controls path width and transition size"),
                                     new HelpItem("River / Road preset",

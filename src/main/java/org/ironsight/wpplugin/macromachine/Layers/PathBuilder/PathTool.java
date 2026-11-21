@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.JTextComponent;
 import javax.vecmath.Point3i;
 import javax.vecmath.Point4f;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
@@ -90,6 +91,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("New path", "Clear the path and preview"),
             new HelpItem("Delete / Ctrl+A / Escape", "Delete selected / select all / clear selection or cancel drag"),
             new HelpItem("Backspace", "Delete last point on current path"),
+            new HelpItem("Undo / redo", "Cancel any drag and clear selection before undo or redo"),
             new HelpItem("Apply", "Commit previewed path to terrain / paint / water"),
             new HelpItem("Brush radius", "Controls path width and transition size"),
             new HelpItem("River / Road preset", "Apply recommended settings for rivers or roads"),
@@ -205,10 +207,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     public boolean dispatchKeyEvent(KeyEvent e) {
         if (e.getID() != KeyEvent.KEY_PRESSED || !isActive() || getDimension() == null)
             return false;
-        if (!cursorOverMap || overlayView == null)
-            return false;
         Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (focus != null && focus != overlayView && !SwingUtilities.isDescendingFrom(focus, overlayView))
+        if (!allowsMapShortcut(overlayView, focus))
+            return false;
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE && gestureStart != null && !e.isShiftDown() && !e.isControlDown()
+                && !e.isAltDown() && !e.isMetaDown()) {
+            cancelGesture();
+            selectedNodes.clear();
+            selectionChanged();
+            return true;
+        }
+        if (!cursorOverMap || overlayView == null)
             return false;
         if (e.isControlDown() && !e.isShiftDown() && !e.isAltDown() && !e.isMetaDown()
                 && e.getKeyCode() == KeyEvent.VK_A) {
@@ -235,6 +244,20 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             return true;
         }
         return false;
+    }
+
+    static boolean allowsMapShortcut(Component view, Component focus) {
+        if (view == null)
+            return false;
+        if (focus == null)
+            return true;
+        Window window = SwingUtilities.getWindowAncestor(view);
+        if (window == null || window != SwingUtilities.getWindowAncestor(focus))
+            return false;
+        for (Component component = focus; component != null && component != window; component = component.getParent())
+            if (component instanceof JTextComponent || component instanceof JSpinner || component instanceof JComboBox)
+                return false;
+        return true;
     }
 
     @Override
@@ -838,6 +861,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void deleteLastPathPoint() {
+        cancelGesture();
         var pathHandles = getCurrentPath();
         if (pathHandles.isEmpty())
             return;

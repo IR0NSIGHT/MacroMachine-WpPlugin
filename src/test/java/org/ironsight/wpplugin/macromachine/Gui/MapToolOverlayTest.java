@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.awt.event.ActionEvent;
 import java.lang.reflect.Field;
 import javax.swing.JLabel;
 import javax.swing.SwingUtilities;
@@ -43,6 +44,34 @@ class MapToolOverlayTest
             overlay.clearOverlayText();
             assertFalse(restarted.isRunning());
             assertNull(timer(overlay, "labelPositionTimer"));
+            assertFalse(label.isVisible());
+        });
+    }
+
+    @Test
+    void animationCallbacksSettleAndIgnoreStoppedTimers() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            MapToolOverlay overlay = new MapToolOverlay(new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB));
+            overlay.setBounds(0, 0, 1000, 600);
+            JLabel label = (JLabel) overlay.getComponent(0);
+            overlay.showOverlayText("Road Tool");
+            Timer timer = timer(overlay, "labelPositionTimer");
+            var callback = timer.getActionListeners()[0];
+            callback.actionPerformed(new ActionEvent(timer, ActionEvent.ACTION_PERFORMED, "tick"));
+            try {
+                Field start = MapToolOverlay.class.getDeclaredField("labelAnimationStartNanos");
+                start.setAccessible(true);
+                start.setLong(overlay, System.nanoTime() - 1_000_000_000L);
+            } catch (ReflectiveOperationException exception) {
+                throw new AssertionError(exception);
+            }
+            callback.actionPerformed(new ActionEvent(timer, ActionEvent.ACTION_PERFORMED, "tick"));
+            assertEquals(842, label.getX());
+            assertEquals(8, label.getY());
+            assertEquals(Color.LIGHT_GRAY, label.getForeground());
+            assertFalse(timer.isRunning());
+            overlay.clearOverlayText();
+            callback.actionPerformed(new ActionEvent(timer, ActionEvent.ACTION_PERFORMED, "tick"));
             assertFalse(label.isVisible());
         });
     }
