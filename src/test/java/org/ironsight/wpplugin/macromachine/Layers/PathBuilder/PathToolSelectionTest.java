@@ -5,6 +5,7 @@ import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +34,70 @@ class PathToolSelectionTest
     private static final AttributeKey<ArrayList<Float>> HANDLES = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<>());
     private WorldPainterView previousInstance;
+
+    @Test
+    void overlayPaintsAndCachesRestingAndDraggedCurves() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                dimension.setAttribute(HANDLES, new ArrayList<>(List.of(10f, 10f, 70f, 4f, 70f, 10f, 70f, 4f)), true);
+                TestView view = new TestView(dimension);
+                PathTool tool = new PathTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    var overlay = (MapToolOverlay) java.util.Arrays.stream(view.getComponents())
+                            .filter(MapToolOverlay.class::isInstance)
+                            .findFirst()
+                            .orElseThrow();
+                    overlay.setSize(200, 200);
+                    var cacheField = overlay.getClass().getDeclaredField("cachedCurve");
+                    cacheField.setAccessible(true);
+                    var image = paintOverlay(overlay);
+                    Point midpoint = view.worldToView(40, 10);
+                    assertNotEquals(0, image.getRGB(midpoint.x, midpoint.y));
+                    Object resting = cacheField.get(overlay);
+                    click(view, 10, 10);
+                    paintOverlay(overlay);
+                    assertSame(resting, cacheField.get(overlay));
+                    tool.handleSelectionPress(view.worldToView(10, 10));
+                    tool.handleSelectionDrag(view.worldToView(20, 10));
+                    paintOverlay(overlay);
+                    Object dragged = cacheField.get(overlay);
+                    assertNotSame(resting, dragged);
+                    assertEquals(PathToolBackend.getPathFromNodes(
+                            List.of(new javax.vecmath.Point4f(20, 10, 70, 4), new javax.vecmath.Point4f(70, 10, 70, 4)),
+                            0).path, dragged);
+                    tool.dispatchKeyEvent(new KeyEvent(view, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_ESCAPE,
+                            KeyEvent.CHAR_UNDEFINED));
+                    paintOverlay(overlay);
+                    assertEquals(resting, cacheField.get(overlay));
+                    var spinnerField = PathTool.class.getDeclaredField("handleFactorSpinner");
+                    spinnerField.setAccessible(true);
+                    ((JSpinner) spinnerField.get(tool)).setValue(1.0d);
+                    paintOverlay(overlay);
+                    assertEquals(PathToolBackend.getPathFromNodes(
+                            List.of(new javax.vecmath.Point4f(10, 10, 70, 4), new javax.vecmath.Point4f(70, 10, 70, 4)),
+                            1).path, cacheField.get(overlay));
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    private static BufferedImage paintOverlay(MapToolOverlay overlay) {
+        var image = new BufferedImage(200, 200, BufferedImage.TYPE_INT_ARGB);
+        var graphics = image.createGraphics();
+        try {
+            overlay.paint(graphics);
+        } finally {
+            graphics.dispose();
+        }
+        return image;
+    }
 
     @Test
     void shortcutsAllowOtherMapWindowControlsButNotEditorsOrDialogs() throws Exception {

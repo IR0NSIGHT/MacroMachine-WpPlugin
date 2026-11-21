@@ -460,8 +460,22 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private class PathOverlay extends MapToolOverlay
     {
+        private List<Point4f> cachedNodes;
+        private float cachedStrength;
+        private List<Point4f> cachedCurve;
+
         PathOverlay() {
             super(loadPathIcon());
+        }
+
+        private List<Point4f> curveFor(List<Point4f> nodes) {
+            if (cachedNodes == null || !cachedNodes.equals(nodes)
+                    || Float.compare(cachedStrength, handleStrength) != 0) {
+                cachedNodes = nodes.stream().map(Point4f::new).toList();
+                cachedStrength = handleStrength;
+                cachedCurve = nodes.size() < 2 ? List.of() : getPathFromNodes(cachedNodes, handleStrength).path;
+            }
+            return cachedCurve;
         }
 
         @Override
@@ -475,14 +489,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 var path = movedPath != null ? movedPath : getCurrentPath();
                 selectedNodes.removeIf(index -> index >= path.size());
-                if (gestureDragged && movedPath != null) {
-                    g.setColor(Color.WHITE);
-                    for (int i = 1; i < path.size(); i++) {
-                        Point4f a = path.get(i - 1), b = path.get(i);
-                        Point start = overlayView.worldToView(Math.round(a.x), Math.round(a.y));
-                        Point end = overlayView.worldToView(Math.round(b.x), Math.round(b.y));
-                        g.drawLine(start.x, start.y, end.x, end.y);
-                    }
+                var curve = curveFor(path);
+                g.setColor(Color.WHITE);
+                for (int i = 1; i < curve.size(); i++) {
+                    Point4f a = curve.get(i - 1), b = curve.get(i);
+                    Point start = overlayView.worldToView(Math.round(a.x), Math.round(a.y));
+                    Point end = overlayView.worldToView(Math.round(b.x), Math.round(b.y));
+                    g.drawLine(start.x, start.y, end.x, end.y);
                 }
                 for (int i = 0; i < path.size(); i++) {
                     Point4f node = path.get(i);
@@ -637,6 +650,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     "Controls how curve the path is. 0 = straight lines, 1 = normal curves, 2 = exaggerated curves, -1 = cursive");
             handleFactorSpinner.addChangeListener(l -> {
                 handleStrength = ((Number) handleFactorSpinner.getValue()).floatValue();
+                overlay.repaint();
                 schedulePreview();
             });
             JPanel panel = new JPanel();
@@ -966,37 +980,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void OnSmoothPath(List<Point4f> pathHandles, boolean onlyPreview) {
-        if (pathHandles.size() == 0) {
+        if (pathHandles.isEmpty()) {
             return;
-        } else if (pathHandles.size() == 1) {
-            var first = pathHandles.getFirst();
-            pathHandles.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
-            pathHandles.addFirst(new Point4f(first.x + .2f, first.y, first.z, first.w));
-            pathHandles.addFirst(new Point4f(first.x + .3f, first.y, first.z, first.w));
-        } else if (pathHandles.size() == 2) {
-            // duplicate the first and last handle to get a straight line
-            var first = pathHandles.getFirst();
-            pathHandles.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
-            var last = pathHandles.getFirst();
-            pathHandles.addFirst(new Point4f(last.x + .1f, last.y, last.z, last.w));
-        } else if (pathHandles.size() == 3) {
-            var last = pathHandles.getFirst();
-            pathHandles.addFirst(new Point4f(last.x + .1f, last.y, last.z, last.w));
-        } // else: more than 4 handles, legal.
-
-        var thisPosition = pathHandles.get(pathHandles.size() - 1);
-        var lastPosition = pathHandles.get(pathHandles.size() - 2);
+        }
 
         Dimension dimension = getDimension();
 
-        if (lastPosition != null) {
+        {
             // get new path section and append it
-            var pathRes = getPathFromHandles(pathHandles, handleStrength);
+            var pathRes = getPathFromNodes(pathHandles, handleStrength);
 
             dimension.clearLayerData(PreviewOperation.annotationLayer);
-
-            if (pathHandles.size() < 4)
-                return;
 
             final var path = pathRes.path;
             // // cut off last segment that will change on next click anyways

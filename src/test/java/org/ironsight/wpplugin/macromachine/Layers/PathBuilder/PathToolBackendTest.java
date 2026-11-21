@@ -3,6 +3,7 @@ package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.IntStream;
 import javax.vecmath.Point3i;
 import javax.vecmath.Point4f;
@@ -10,6 +11,38 @@ import org.junit.jupiter.api.Test;
 
 class PathToolBackendTest
 {
+    @Test
+    void nodeInterpolationRetainsLegacyPaddingWithoutMutatingInputs() {
+        var nodes = List.of(new Point4f(10, 10, 70, 4), new Point4f(30, 40, 80, 5), new Point4f(60, 20, 90, 6),
+                new Point4f(80, 50, 100, 7));
+        for (int count = 0; count <= nodes.size(); count++) {
+            var input = new ArrayList<>(nodes.subList(0, count).stream().map(Point4f::new).toList());
+            var original = input.stream().map(Point4f::new).toList();
+            var padded = new ArrayList<>(input.stream().map(Point4f::new).toList());
+            if (count == 1) {
+                var first = padded.getFirst();
+                padded.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
+                padded.addFirst(new Point4f(first.x + .2f, first.y, first.z, first.w));
+                padded.addFirst(new Point4f(first.x + .3f, first.y, first.z, first.w));
+            } else if (count == 2) {
+                var first = padded.getFirst();
+                padded.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
+                var last = padded.getFirst();
+                padded.addFirst(new Point4f(last.x + .1f, last.y, last.z, last.w));
+            } else if (count == 3) {
+                var first = padded.getFirst();
+                padded.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
+            }
+            for (float strength : new float[]{-1f, 0f, 0.7f, 2f}) {
+                var expected = count == 0 ? List.of() : PathToolBackend.getPathFromHandles(padded, strength).path;
+                assertEquals(expected, PathToolBackend.getPathFromNodes(input, strength).path);
+                assertEquals(original, input);
+            }
+        }
+        assertNotEquals(PathToolBackend.getPathFromNodes(nodes, 0).path,
+                PathToolBackend.getPathFromNodes(nodes, 1).path);
+    }
+
     @Test
     void enforceSlopeLimit() {
         { // negative slope
