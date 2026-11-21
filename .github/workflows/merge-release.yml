@@ -62,8 +62,10 @@ jobs:
           git push -f origin ${{ github.event.workflow_run.head_sha }}:release
           git status
 
-      - name: Start release branch tests
+      # The tests already passed on this commit (this workflow only runs after they do).
+      # A dispatch is the only way a GITHUB_TOKEN push can start another workflow.
+      - name: Start Windows release build
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run unit-test.yml --ref release
+        run: gh workflow run build-release.yml --ref release
           
