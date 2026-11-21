@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -118,6 +117,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private final JToggleButton showNodes = hudButton("Nodes", "ShowNodes");
     private final JToggleButton showLayer = hudButton("Layer", "ShowLayer");
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
+    boolean measurePreview;
+    PreviewTiming previewTiming;
+    record PreviewTiming(int samples, int candidateTiles, int existingTiles, long samplingNanos, long collectionNanos,
+            long calculationNanos, long publicationNanos) {
+    }
     private Paint paint;
     // only allow downwards movement
     private boolean onlyDown;
@@ -1036,6 +1040,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
         {
             // get new path section and append it
+            long started = measurePreview ? System.nanoTime() : 0;
             var pathRes = getPathFromNodes(pathHandles, handleStrength);
 
             dimension.clearLayerData(PreviewOperation.annotationLayer);
@@ -1068,6 +1073,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
             forceRadiusAtLeast(path, .5f); // always at least 1 thick
 
+            long sampled = measurePreview ? System.nanoTime() : 0;
+
             // collect tiles where the newly added path section passed through
             Set<Point3i> newPathTiles = PathToolBackend.collectTilesAroundPath(path, transitionMultiplier);
 
@@ -1089,9 +1096,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             });
 
             // iterate all cachedTiles and all points inside the cachedTiles
-            System.out.println("PROCESSING " + newPathTiles.size() + " Tiles");
-            AtomicInteger totalProcessedPath = new AtomicInteger();
-            AtomicInteger totalTiles = new AtomicInteger();
+            long collected = measurePreview ? System.nanoTime() : 0;
             HashMap<Point3i, FloatTile> paintOutputMap = new HashMap<>();
             HashMap<Point3i, FloatTile> waterHeightMap = new HashMap<>();
             var heightInfoTiles = newPathTiles.stream().map(tilePos -> {
@@ -1109,6 +1114,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                         getTransitionMultiplier(), terrainMode == TerrainMode.CARVE); // FIXME use actual "dig down"
                                                                                       // checkbox?
             }).toList();
+            long calculated = measurePreview ? System.nanoTime() : 0;
             heightInfoTiles.forEach(heightInfoTile -> {
                 if (heightInfoTile == null)
                     return;
@@ -1133,8 +1139,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 }
             });
 
-            System.out.printf("Processed %d cachedTiles, %d path points total, current path length %d",
-                    totalTiles.get(), totalProcessedPath.get(), path.size());
+            if (measurePreview)
+                previewTiming = new PreviewTiming(path.size(), newPathTiles.size(), cachedTiles.size(),
+                        sampled - started, collected - sampled, calculated - collected, System.nanoTime() - calculated);
         }
     }
 

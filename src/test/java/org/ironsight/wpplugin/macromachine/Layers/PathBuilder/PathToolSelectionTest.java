@@ -664,7 +664,7 @@ class PathToolSelectionTest
                 org.pepsoft.worldpainter.Terrain.GRASS));
     }
 
-    private static class TestView extends WorldPainterView
+    static class TestView extends WorldPainterView
     {
         private Dimension dimension;
         private final MapDragControl mapDragControl = new MapDragControl() {
