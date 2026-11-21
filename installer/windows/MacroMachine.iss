@@ -54,6 +54,9 @@ DisableReadyPage=yes
 UninstallFilesDir={#UninstallDir}
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=commandline
+; Always start without admin rights, even when updating an install that needed them.
+; Otherwise setup could start elevated as another account and use that account's plugins folder.
+UsePreviousPrivileges=no
 ; Never offer to close WorldPainter for the user (unsaved worlds).
 CloseApplications=no
 SetupLogging=yes
@@ -279,6 +282,14 @@ begin
     Result := SaveStringToFile(AddBackslash(Dir) + VmOptionsName, '', True);
 end;
 
+{ Admin rights did not help, so asking for them again would loop. }
+function CannotWriteAsAdmin(const Dir: String): String;
+begin
+  Result := 'Setup cannot change ' + AddBackslash(Dir) + VmOptionsName + '.' + #13#10#13#10 +
+    'The file is read-only or open in another program. Close programs that may use it, ' +
+    'or clear "Read-only" in the file''s Properties, then click Install again.';
+end;
+
 { ---------- worldpainter.vmoptions ---------- }
 
 { A single-entry -classpath/a line for a MacroMachine JAR: ours, from any
@@ -449,8 +460,11 @@ begin
   if Unknown and (SuppressibleMsgBox('Setup could not find out which Java version WorldPainter uses. ' +
      'MacroMachine needs Java 21 or newer.' + #13#10#13#10 + 'Install anyway?',
      mbConfirmation, MB_YESNO, IDYES) <> IDYES) then Exit;
-  if not IsAdmin and not CanWrite(Dir) then begin
-    RelaunchElevated(Dir);
+  if not CanWrite(Dir) then begin
+    if IsAdmin then
+      SuppressibleMsgBox(CannotWriteAsAdmin(Dir), mbError, MB_OK, IDOK)
+    else
+      RelaunchElevated(Dir);
     Exit;
   end;
   Result := True;
@@ -470,7 +484,10 @@ begin
   else begin
     Result := JavaProblem(Dir, Unknown);
     if (Result = '') and not CanWrite(Dir) then
-      Result := 'Setup cannot write to ' + Dir + '. Run setup again and allow administrator permission when Windows asks.';
+      if IsAdmin then
+        Result := CannotWriteAsAdmin(Dir)
+      else
+        Result := 'Setup cannot write to ' + Dir + '. Run setup again and allow administrator permission when Windows asks.';
     { A classpath entry for a JAR that is not there (yet) is ignored by Java,
       so editing this before copying the JAR cannot break WorldPainter. }
     if Result = '' then Result := EnableInVmOptions(Dir);
