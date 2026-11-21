@@ -1,18 +1,45 @@
 ![](./imgs/MacroMachineBanner.png)
 
 # WorldPainter MacroMachine Plugin
-[plugin github page](https://github.com/IR0NSIGHT/MacroMachine-WpPlugin) <br><br>
-The _MacroMachine_ Plugin automates global operation workflows.
-Define simple actions, like applying terrain to certain slopes, and combine many actions into a Macro, that is executed with a single click across the whole map.
-Actions and Macros are saved into the plugins folder and available in all worldpainter projects.
 
-### 100 seconds overview on Youtube
-[![MacroMachine in 100 seconds](https://img.youtube.com/vi/Q5R2G-uRatc/0.jpg)](https://youtu.be/Q5R2G-uRatc?si=GLZmCLouRVHKsX-7)
+Four tools that make WorldPainter faster and easier:
 
-## Tutorials
-This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK3xeIs6RQjUkl&si=5lPTMk5lmbzcvMZM) contains tutorial videos that cover the most important steps.
+<table>
+<tr>
+<td width="50%" valign="top">
 
-### Install (Windows)
+**[3D export preview](#3d-preview)**<br>
+See exactly what you will export and how it will look in Minecraft, before you export.
+
+<img src="imgs/tutorial/preview_operation_showcase.PNG" width="100%" alt="3D export preview">
+</td>
+<td width="50%" valign="top">
+
+**[Path tool](#path-tool)**<br>
+Click to place roads and rivers. They blend smoothly into the terrain.
+
+<img src="imgs/tutorial/PathTool_Showcase.PNG" width="100%" alt="Path tool">
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+
+**[Macros](#use-macros)**<br>
+Paint your whole map with one click: snowy peaks, beaches, alpine mountains, mesas, swamps and more.
+
+<img src="imgs/tutorial/WorldPainter%20-%20test_mountain_range%20-%20Surface%2030.05.2025%2010_57_37.png" width="100%" alt="Macro result">
+</td>
+<td width="50%" valign="top">
+
+**[CityLayer](#citylayer)**<br>
+Place buildings (schematics) exactly where you want them, then move, rotate and copy them.
+
+<img src="imgs/tutorial/CityLayer/citylayer_setup.gif" width="100%" alt="CityLayer">
+</td>
+</tr>
+</table>
+
+## Install (Windows)
 
 <a href="https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/download/release-0.4.20/MacroMachine-Setup-0.4.20.exe"><img src="https://img.shields.io/badge/DOWNLOAD-MacroMachine_Installer-2ea44f?style=for-the-badge&logo=windows" alt="Download MacroMachine installer" height="50"></a>
 
@@ -22,7 +49,26 @@ This youtube [playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK
 4. Click **Install**. If Windows asks whether to allow changes, click **Yes**.
 5. Click **Finish**. WorldPainter opens with MacroMachine.
 
-**Update:** do the same steps again.  
+## Try a macro (1 minute)
+
+<a href="https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/download/release-0.4.20/default-macros.zip"><img src="https://img.shields.io/badge/DOWNLOAD-Ready--made_macros-2ea44f?style=for-the-badge" alt="Download ready-made macros" height="50"></a>
+
+1. Click the green **DOWNLOAD** button above and unzip the file (right-click → **Extract All**).
+2. In WorldPainter, click the **M** tool. The MacroMachine window opens.  
+   ![MacroMachine tool](./imgs/tutorial/macromachine_tool.PNG)
+3. Click **Import** at the bottom, open the unzipped `defaultActions` folder, select all files (**Ctrl + A**) and click **Open**.
+4. Click a macro in the list. Its description at the top right tells you what it does.
+5. Click **▶** (Start macro) at the bottom. The macro runs on your whole map.
+
+New to MacroMachine? Watch the 100-second overview:
+
+[![MacroMachine in 100 seconds](https://img.youtube.com/vi/Q5R2G-uRatc/0.jpg)](https://youtu.be/Q5R2G-uRatc?si=GLZmCLouRVHKsX-7)
+
+More videos: [tutorial playlist](https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK3xeIs6RQjUkl&si=5lPTMk5lmbzcvMZM).
+
+## More about installing
+
+**Update:** do the install steps again.  
 **Uninstall:** Windows Settings → Apps → **MacroMachine for WorldPainter** → Uninstall. Your macros stay.
 
 <details>
@@ -64,13 +110,15 @@ How the installer is built and tested: [installer/windows/README.md](installer/w
 
 </details>
 
+## Using MacroMachine
+
 ### Use Macros
 [Youtube Tutorial](https://youtu.be/to27vExZfoM?si=CPMGnqGgRdljYbB3)  
 1. Find the Macro tool and left click it. The macro panel will open.  
 ![tool](./imgs/tutorial/macromachine_tool.PNG)
 2. Select the macro you want to execute by left clicking it in the tree view.  
 ![tree view](./imgs/tutorial/apply_macro.PNG)
-3. Press "Apply Macros" on the bottom, the macro will execute globally on the whole map.
+3. Click **▶** (Start macro) at the bottom. The macro runs on the whole map.
 ![](./imgs/tutorial/WorldPainter%20-%20test_mountain_range%20-%20Surface%2030.05.2025%2010_57_37.png)
 4. Click into worldpainter or close the Macro Panel. 
 5. Deselect macro tool, reselect macro tool to open the panel again.
