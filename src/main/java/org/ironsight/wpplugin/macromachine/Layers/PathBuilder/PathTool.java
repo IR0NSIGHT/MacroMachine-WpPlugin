@@ -12,6 +12,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.AWTEventListener;
 import java.awt.image.BufferedImage;
 import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
 import java.beans.PropertyVetoException;
@@ -167,6 +168,16 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private Point gestureStart;
     private int pressedNode = -1;
     private boolean gestureDragged;
+    private ArrayList<Point4f> gesturePath;
+    private ArrayList<Point4f> movedPath;
+    private Point gestureWorldStart;
+    private final AWTEventListener gestureCapture = event -> {
+        if (event instanceof MouseEvent mouse && mouse.getID() == MouseEvent.MOUSE_RELEASED
+                && SwingUtilities.isLeftMouseButton(mouse) && gestureStart != null && overlayView != null
+                && mouse.getSource() instanceof Component source && source != overlayView) {
+            handleSelectionRelease(SwingUtilities.convertPoint(source, mouse.getPoint(), overlayView));
+        }
+    };
 
     public PathTool() {
         super("Road Tool", "Create smooth roads", "MacroMachine_RoadTool"); // ONE SHOT OP
@@ -180,6 +191,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             return false;
         if (e.isShiftDown() || e.isControlDown() || e.isAltDown() || e.isMetaDown())
             return false;
+        Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (focus != null && SwingUtilities.isDescendingFrom(focus, optionsPanel))
+            return false;
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE && gestureStart != null) {
+            cancelGesture();
+            overlay.repaint();
+            return true;
+        }
         if (e.getKeyCode() == KeyEvent.VK_BACK_SPACE)
             deleteLastPathPoint();
         return false;
@@ -259,6 +278,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         gestureStart = new Point(point);
         pressedNode = nearestNode(point);
         gestureDragged = false;
+        gesturePath = getCurrentPath();
+        gestureWorldStart = overlayView.viewToWorld(point);
+        Toolkit.getDefaultToolkit().addAWTEventListener(gestureCapture, AWTEvent.MOUSE_EVENT_MASK);
         if (pressedNode < 0)
             overlay.startDrag(point);
     }
@@ -271,6 +293,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             gestureDragged = true;
         if (pressedNode < 0 && gestureDragged)
             overlay.updateDrag(point);
+        else if (pressedNode >= 0 && gestureDragged) {
+            if (!selectedNodes.contains(pressedNode)) {
+                selectedNodes.clear();
+                selectedNodes.add(pressedNode);
+            }
+            movedPath = movedPath(point);
+            overlay.repaint();
+        }
     }
 
     void handleSelectionRelease(Point point) {
@@ -287,6 +317,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 if (bounds.contains(node.x, node.y))
                     selectedNodes.add(i);
             }
+        } else if (gestureDragged && pressedNode >= 0 && movedPath != null) {
+            completeEdit(movedPath);
         } else if (!gestureDragged) {
             if (pressedNode < 0)
                 selectedNodes.clear();
@@ -298,10 +330,37 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void cancelGesture() {
+        Toolkit.getDefaultToolkit().removeAWTEventListener(gestureCapture);
         gestureStart = null;
         pressedNode = -1;
         gestureDragged = false;
+        gesturePath = null;
+        movedPath = null;
+        gestureWorldStart = null;
         overlay.endDrag();
+    }
+
+    private ArrayList<Point4f> movedPath(Point point) {
+        Point world = overlayView.viewToWorld(point);
+        int dx = world.x - gestureWorldStart.x;
+        int dy = world.y - gestureWorldStart.y;
+        var result = new ArrayList<Point4f>();
+        for (int i = 0; i < gesturePath.size(); i++) {
+            var node = new Point4f(gesturePath.get(i));
+            if (selectedNodes.contains(i)) {
+                node.x += dx;
+                node.y += dy;
+                int x = Math.round(node.x), y = Math.round(node.y);
+                if (overlayDimension.getTile(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS) == null)
+                    return null;
+                node.z = overlayDimension.getHeightAt(x, y);
+                if (!Float.isFinite(node.z) || node.z < overlayDimension.getMinHeight()
+                        || node.z >= overlayDimension.getMaxHeight())
+                    return null;
+            }
+            result.add(node);
+        }
+        return result;
     }
 
     int nearestNode(Point point) {
@@ -342,8 +401,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             Graphics2D g = (Graphics2D) graphics.create();
             try {
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                var path = getCurrentPath();
+                var path = movedPath != null ? movedPath : getCurrentPath();
                 selectedNodes.removeIf(index -> index >= path.size());
+                if (gestureDragged && movedPath != null) {
+                    g.setColor(Color.WHITE);
+                    for (int i = 1; i < path.size(); i++) {
+                        Point4f a = path.get(i - 1), b = path.get(i);
+                        Point start = overlayView.worldToView(Math.round(a.x), Math.round(a.y));
+                        Point end = overlayView.worldToView(Math.round(b.x), Math.round(b.y));
+                        g.drawLine(start.x, start.y, end.x, end.y);
+                    }
+                }
                 for (int i = 0; i < path.size(); i++) {
                     Point4f node = path.get(i);
                     Point point = overlayView.worldToView(Math.round(node.x), Math.round(node.y));
@@ -668,7 +736,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         brushQuerschnitt.repaint();
     }
 
-    private ArrayList<Point4f> getCurrentPath() {
+    ArrayList<Point4f> getCurrentPath() {
         Dimension dimension = getView() == null ? null : getDimension();
         if (dimension == null)
             return new ArrayList<>();
@@ -729,39 +797,34 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
-        if (!inverse)
+        if (!inverse || !first || isAltDown() || isCtrlDown() || isShiftDown())
             return;
         Dimension dim = getDimension();
-        if (dim == null)
+        if (dim == null || getBrush() == null
+                || dim.getTile(centreX >> TILE_SIZE_BITS, centreY >> TILE_SIZE_BITS) == null)
             return;
-
+        cancelGesture();
         var pathHandles = getCurrentPath();
-
-        getPaint().setBrush(getBrush());
-
         int pathRadius = getBrush().getEffectiveRadius();
-        float centreZ = getDimension().getHeightAt(centreX, centreY);
-        Point4f thisPosition = new Point4f(centreX, centreY, centreZ, pathRadius);
-        if (inverse) {
-            pathHandles.clear();
-            this.cachedTiles.clear();
-        } else {
+        pathHandles.add(new Point4f(centreX, centreY, dim.getHeightAt(centreX, centreY), pathRadius));
+        completeEdit(pathHandles);
+    }
 
-            pathHandles.add(thisPosition);
-            if (!dim.isEventsInhibited())
-                dim.setEventsInhibited(true);
-
-            this.OnSmoothPath(new ArrayList<>(pathHandles), true); // generate path
-
-            if (dim.isEventsInhibited())
-                dim.setEventsInhibited(false);
+    private void completeEdit(ArrayList<Point4f> path) {
+        Dimension dimension = getDimension();
+        boolean inhibited = dimension.isEventsInhibited();
+        if (!inhibited)
+            dimension.setEventsInhibited(true);
+        try {
+            setCurrentPath(path);
+            dimension.clearLayerData(PreviewOperation.annotationLayer);
+            if (!path.isEmpty())
+                OnSmoothPath(new ArrayList<>(path.stream().map(Point4f::new).toList()), true);
+        } finally {
+            if (!inhibited)
+                dimension.setEventsInhibited(false);
         }
-        { // Push path handles to dimension attribute as flat float array (list)
-            setCurrentPath(pathHandles);
-        }
-
         SwingUtilities.invokeLater(this::updateCheckboxTexts);
-        selectedNodes.clear();
         overlay.repaint();
     }
 

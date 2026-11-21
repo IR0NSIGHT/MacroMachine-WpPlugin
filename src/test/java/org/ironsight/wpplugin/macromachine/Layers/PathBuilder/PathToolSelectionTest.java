@@ -4,6 +4,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.pepsoft.util.AttributeKey;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
+import org.pepsoft.worldpainter.brushes.Brush;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PathToolSelectionTest
@@ -63,6 +65,78 @@ class PathToolSelectionTest
                     assertEquals(Set.of(), tool.selectedNodes());
                     tool.tick(40, 40, false, true, 1f);
                     assertEquals(List.of(10f, 10f, 70f, 4f, 30f, 30f, 70f, 6f), dimension.getAttribute(HANDLES));
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
+    void oneShotPlacementAndEscapeCancellation() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                TestView view = new TestView(dimension);
+                PathTool tool = new PathTool();
+                tool.setView(view);
+                Brush brush = (Brush) java.lang.reflect.Proxy.newProxyInstance(Brush.class.getClassLoader(),
+                        new Class<?>[]{Brush.class}, (proxy, method, args) -> switch (method.getName()) {
+                            case "getEffectiveRadius", "getRadius" -> 4;
+                            default -> null;
+                        });
+                tool.setBrush(brush);
+                tool.setActive(true);
+                try {
+                    tool.tick(10, 10, true, true, 1f);
+                    tool.tick(20, 20, true, false, 1f);
+                    tool.tick(30, 30, false, true, 1f);
+                    tool.tick(30, 30, true, true, 1f);
+                    var expected = List.of(10f, 10f, 70f, 4f, 30f, 30f, 70f, 4f);
+                    assertEquals(expected, dimension.getAttribute(HANDLES));
+                    event(view, MouseEvent.MOUSE_PRESSED, 10, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_DRAGGED, 20, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
+                    assertTrue(tool.dispatchKeyEvent(new KeyEvent(view, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_ESCAPE,
+                            KeyEvent.CHAR_UNDEFINED)));
+                    event(view, MouseEvent.MOUSE_RELEASED, 20, 10, MouseEvent.BUTTON1, 0);
+                    assertEquals(expected, dimension.getAttribute(HANDLES));
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
+    void draggingGroupIsAtomicAndResamplesHeightsOnRelease() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                var initial = List.of(10f, 10f, 55f, 4f, 30f, 30f, 56f, 6f);
+                dimension.setAttribute(HANDLES, new ArrayList<>(initial), true);
+                dimension.setHeightAt(20, 10, 81f);
+                dimension.setHeightAt(40, 30, 92f);
+                TestView view = new TestView(dimension);
+                PathTool tool = new PathTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    click(view, 10, 10);
+                    click(view, 30, 30);
+                    event(view, MouseEvent.MOUSE_PRESSED, 10, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_DRAGGED, 20, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
+                    assertEquals(initial, dimension.getAttribute(HANDLES));
+                    event(view, MouseEvent.MOUSE_RELEASED, 20, 10, MouseEvent.BUTTON1, 0);
+                    assertEquals(List.of(20f, 10f, 81f, 4f, 40f, 30f, 92f, 6f), dimension.getAttribute(HANDLES));
+                    assertEquals(Set.of(0, 1), tool.selectedNodes());
+                    event(view, MouseEvent.MOUSE_PRESSED, 20, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_DRAGGED, 120, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_RELEASED, 120, 10, MouseEvent.BUTTON1, 0);
+                    assertEquals(List.of(20f, 10f, 81f, 4f, 40f, 30f, 92f, 6f), dimension.getAttribute(HANDLES));
                 } finally {
                     tool.setActive(false);
                 }
