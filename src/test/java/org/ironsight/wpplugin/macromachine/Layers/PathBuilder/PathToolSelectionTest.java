@@ -16,6 +16,7 @@ import javax.swing.JDialog;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
 import org.ironsight.wpplugin.macromachine.Gui.MapToolOverlay;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TestDimension;
@@ -34,6 +35,86 @@ class PathToolSelectionTest
     private static final AttributeKey<ArrayList<Float>> HANDLES = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<>());
     private WorldPainterView previousInstance;
+
+    @Test
+    void hudLayersAreIndependentAndDoNotChangePathOrTerrain() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                var handles = List.of(30f, 30f, 70f, 20f, 90f, 30f, 70f, 20f);
+                dimension.setAttribute(HANDLES, new ArrayList<>(handles), true);
+                TestView view = new TestView(dimension);
+                PathTool tool = new PathTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    var overlay = (MapToolOverlay) java.util.Arrays.stream(view.getComponents())
+                            .filter(MapToolOverlay.class::isInstance)
+                            .findFirst()
+                            .orElseThrow();
+                    overlay.setSize(200, 200);
+                    var label = findToggle(tool.getOptionsPanel(), "PathTool.ShowLabel");
+                    var radius = findToggle(tool.getOptionsPanel(), "PathTool.ShowRadius");
+                    var line = findToggle(tool.getOptionsPanel(), "PathTool.ShowLine");
+                    var nodes = findToggle(tool.getOptionsPanel(), "PathTool.ShowNodes");
+                    for (var toggle : List.of(label, radius, line, nodes))
+                        assertTrue(toggle.isSelected());
+                    Point center = view.worldToView(30, 30);
+                    Point ring = view.worldToView(30, 10);
+                    Point middle = view.worldToView(60, 30);
+                    var all = paintOverlay(overlay);
+                    assertNotEquals(0, all.getRGB(center.x, center.y));
+                    assertNotEquals(0, all.getRGB(ring.x, ring.y));
+                    assertNotEquals(0, all.getRGB(middle.x, middle.y));
+                    nodes.doClick();
+                    var withoutNodes = paintOverlay(overlay);
+                    assertNotEquals(all.getRGB(center.x, center.y - 5), withoutNodes.getRGB(center.x, center.y - 5));
+                    assertEquals(all.getRGB(ring.x, ring.y), withoutNodes.getRGB(ring.x, ring.y));
+                    radius.doClick();
+                    var withoutRadius = paintOverlay(overlay);
+                    assertNotEquals(withoutNodes.getRGB(ring.x, ring.y), withoutRadius.getRGB(ring.x, ring.y));
+                    assertEquals(withoutNodes.getRGB(middle.x, middle.y), withoutRadius.getRGB(middle.x, middle.y));
+                    line.doClick();
+                    var labelOnly = paintOverlay(overlay);
+                    assertNotEquals(withoutRadius.getRGB(middle.x, middle.y), labelOnly.getRGB(middle.x, middle.y));
+                    label.doClick();
+                    var empty = paintOverlay(overlay);
+                    assertTrue(differentPixels(labelOnly, empty, center.x + 14, center.y - 12, 12, 24) > 0);
+                    assertTrue(overlay.getComponent(0).isVisible());
+                    assertEquals(handles, dimension.getAttribute(HANDLES));
+                    assertEquals(70f, dimension.getHeightAt(30, 30));
+                    assertEquals(0, tool.nearestNode(new Point(center.x + 18, center.y)));
+                    assertEquals(-1, tool.nearestNode(new Point(center.x + 19, center.y)));
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    private static int differentPixels(BufferedImage a, BufferedImage b, int x, int y, int width, int height) {
+        int count = 0;
+        for (int px = x; px < x + width; px++)
+            for (int py = y; py < y + height; py++)
+                if (a.getRGB(px, py) != b.getRGB(px, py))
+                    count++;
+        return count;
+    }
+
+    private static JToggleButton findToggle(java.awt.Container container, String name) {
+        for (var component : container.getComponents()) {
+            if (component instanceof JToggleButton button && name.equals(button.getName()))
+                return button;
+            if (component instanceof java.awt.Container child) {
+                var result = findToggle(child, name);
+                if (result != null)
+                    return result;
+            }
+        }
+        return null;
+    }
 
     @Test
     void overlayPaintsAndCachesRestingAndDraggedCurves() throws Exception {
@@ -78,6 +159,18 @@ class PathToolSelectionTest
                     paintOverlay(overlay);
                     assertEquals(PathToolBackend.getPathFromNodes(
                             List.of(new javax.vecmath.Point4f(10, 10, 70, 4), new javax.vecmath.Point4f(70, 10, 70, 4)),
+                            1).path, cacheField.get(overlay));
+                    var line = findToggle(tool.getOptionsPanel(), "PathTool.ShowLine");
+                    line.doClick();
+                    Object cached = cacheField.get(overlay);
+                    dimension.setAttribute(HANDLES, new ArrayList<>(List.of(20f, 10f, 70f, 4f, 70f, 10f, 70f, 4f)),
+                            true);
+                    paintOverlay(overlay);
+                    assertSame(cached, cacheField.get(overlay));
+                    line.doClick();
+                    paintOverlay(overlay);
+                    assertEquals(PathToolBackend.getPathFromNodes(
+                            List.of(new javax.vecmath.Point4f(20, 10, 70, 4), new javax.vecmath.Point4f(70, 10, 70, 4)),
                             1).path, cacheField.get(overlay));
                 } finally {
                     tool.setActive(false);
@@ -277,7 +370,7 @@ class PathToolSelectionTest
                     assertEquals(Set.of(0, 1), tool.selectedNodes());
                     click(view, 10, 10);
                     assertEquals(Set.of(1), tool.selectedNodes());
-                    event(view, MouseEvent.MOUSE_PRESSED, 0, 0, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
+                    event(view, MouseEvent.MOUSE_PRESSED, -10, -10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_DRAGGED, 20, 20, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_RELEASED, 20, 20, MouseEvent.BUTTON1, 0);
                     assertEquals(Set.of(0), tool.selectedNodes());

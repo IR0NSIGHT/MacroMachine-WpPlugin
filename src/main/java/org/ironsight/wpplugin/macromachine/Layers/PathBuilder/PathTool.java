@@ -94,6 +94,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Undo / redo", "Cancel any drag and clear selection before undo or redo"),
             new HelpItem("Apply", "Commit previewed path to terrain / paint / water"),
             new HelpItem("Brush radius", "Controls path width and transition size"),
+            new HelpItem("HUD controls", "Show or hide node labels, brush radii, path line and node markers"),
             new HelpItem("River / Road preset", "Apply recommended settings for rivers or roads"),
             new HelpItem("Only downhill", "Restrict path to horizontal or downhill movement"),
             new HelpItem("Snap to terrain", "Force path to follow terrain height"),
@@ -107,6 +108,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private static final AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<Float>());
     private final JPanel optionsPanel = new JPanel();
+    private static final int NODE_DIAMETER = 18;
+    private static final int NODE_OUTLINE_DIAMETER = 20;
+    private static final int NODE_HIT_RADIUS = 18;
+    private final JToggleButton showLabel = hudButton("Show label", "ShowLabel");
+    private final JToggleButton showRadius = hudButton("Show radius", "ShowRadius");
+    private final JToggleButton showLine = hudButton("Show line", "ShowLine");
+    private final JToggleButton showNodes = hudButton("Show nodes", "ShowNodes");
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
     private Paint paint;
     // only allow downwards movement
@@ -439,13 +447,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         if (overlayView == null)
             return -1;
         int nearest = -1;
-        double distance = 81;
+        double distance = NODE_HIT_RADIUS * NODE_HIT_RADIUS;
         var path = getCurrentPath();
         for (int i = 0; i < path.size(); i++) {
             Point4f node = path.get(i);
             Point screen = overlayView.worldToView(Math.round(node.x), Math.round(node.y));
             double candidate = screen.distanceSq(point);
-            if (candidate <= 81 && (nearest < 0 || candidate < distance)) {
+            if (candidate <= NODE_HIT_RADIUS * NODE_HIT_RADIUS && (nearest < 0 || candidate < distance)) {
                 nearest = i;
                 distance = candidate;
             }
@@ -489,27 +497,61 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 var path = movedPath != null ? movedPath : getCurrentPath();
                 selectedNodes.removeIf(index -> index >= path.size());
-                var curve = curveFor(path);
-                g.setColor(Color.WHITE);
-                for (int i = 1; i < curve.size(); i++) {
-                    Point4f a = curve.get(i - 1), b = curve.get(i);
-                    Point start = overlayView.worldToView(Math.round(a.x), Math.round(a.y));
-                    Point end = overlayView.worldToView(Math.round(b.x), Math.round(b.y));
-                    g.drawLine(start.x, start.y, end.x, end.y);
+                if (showRadius.isSelected()) {
+                    g.setColor(new Color(255, 255, 255, 150));
+                    for (Point4f node : path) {
+                        Point left = overlayView.worldToView(Math.round(node.x - node.w), Math.round(node.y - node.w));
+                        Point right = overlayView.worldToView(Math.round(node.x + node.w), Math.round(node.y + node.w));
+                        g.drawOval(Math.min(left.x, right.x), Math.min(left.y, right.y), Math.abs(right.x - left.x),
+                                Math.abs(right.y - left.y));
+                    }
+                }
+                if (showLine.isSelected()) {
+                    var curve = curveFor(path);
+                    g.setColor(Color.WHITE);
+                    for (int i = 1; i < curve.size(); i++) {
+                        Point4f a = curve.get(i - 1), b = curve.get(i);
+                        Point start = overlayView.worldToView(Math.round(a.x), Math.round(a.y));
+                        Point end = overlayView.worldToView(Math.round(b.x), Math.round(b.y));
+                        g.drawLine(start.x, start.y, end.x, end.y);
+                    }
                 }
                 for (int i = 0; i < path.size(); i++) {
                     Point4f node = path.get(i);
                     Point point = overlayView.worldToView(Math.round(node.x), Math.round(node.y));
-                    g.setColor(Color.WHITE);
-                    g.fillOval(point.x - 4, point.y - 4, 9, 9);
-                    g.setColor(selectedNodes.contains(i) ? Color.RED : Color.DARK_GRAY);
-                    g.setStroke(new BasicStroke(selectedNodes.contains(i) ? 2f : 1f));
-                    g.drawOval(point.x - 5, point.y - 5, 10, 10);
+                    if (showNodes.isSelected()) {
+                        g.setColor(Color.WHITE);
+                        g.fillOval(point.x - NODE_DIAMETER / 2, point.y - NODE_DIAMETER / 2, NODE_DIAMETER,
+                                NODE_DIAMETER);
+                        g.setColor(selectedNodes.contains(i) ? Color.RED : Color.DARK_GRAY);
+                        g.setStroke(new BasicStroke(selectedNodes.contains(i) ? 2f : 1f));
+                        g.drawOval(point.x - NODE_OUTLINE_DIAMETER / 2, point.y - NODE_OUTLINE_DIAMETER / 2,
+                                NODE_OUTLINE_DIAMETER, NODE_OUTLINE_DIAMETER);
+                    }
+                    if (showLabel.isSelected()) {
+                        String label = Integer.toString(i + 1);
+                        int x = point.x + NODE_OUTLINE_DIAMETER / 2 + 4;
+                        int y = point.y + g.getFontMetrics().getAscent() / 2;
+                        g.setColor(Color.BLACK);
+                        g.drawString(label, x - 1, y);
+                        g.drawString(label, x + 1, y);
+                        g.drawString(label, x, y - 1);
+                        g.drawString(label, x, y + 1);
+                        g.setColor(Color.WHITE);
+                        g.drawString(label, x, y);
+                    }
                 }
             } finally {
                 g.dispose();
             }
         }
+    }
+
+    private JToggleButton hudButton(String text, String name) {
+        var button = new JToggleButton(text, true);
+        button.setName("PathTool." + name);
+        button.addActionListener(event -> overlay.repaint());
+        return button;
     }
 
     private static BufferedImage loadPathIcon() {
@@ -539,6 +581,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         editingPanel.add(newPath);
         editingPanel.add(selectionStatus);
         optionsPanel.add(editingPanel);
+        JPanel hudPanel = new JPanel(new GridLayout(2, 2, 4, 4));
+        hudPanel.setBorder(BorderFactory.createTitledBorder("HUD"));
+        hudPanel.add(showLabel);
+        hudPanel.add(showRadius);
+        hudPanel.add(showLine);
+        hudPanel.add(showNodes);
+        optionsPanel.add(hudPanel);
         {
             JPanel presetPanel = new JPanel();
             JButton riverPresetButton = new JButton("River preset");
