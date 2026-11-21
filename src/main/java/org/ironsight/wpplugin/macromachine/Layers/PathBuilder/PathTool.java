@@ -19,11 +19,14 @@ import java.beans.PropertyVetoException;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -151,6 +154,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private boolean cursorOverMap;
     private boolean controlsReady;
     private boolean previewQueued;
+    private long scheduleRevision;
+    private long previewRevision;
+    private final Supplier<PathPreviewWorker> workerFactory;
+    private PathPreviewWorker previewWorker;
+    private Dimension previewDimension;
+    private Map<PathPreviewMask.TilePosition, BitSet> previewMask = Map.of();
     private final Set<Integer> selectedNodes = new LinkedHashSet<>();
     private final PathOverlay overlay = new PathOverlay();
     private WorldPainterView overlayView;
@@ -212,7 +221,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     };
 
     public PathTool() {
+        this(PathPreviewWorker::new);
+    }
+
+    PathTool(Supplier<PathPreviewWorker> workerFactory) {
         super("Road Tool", "Create smooth roads", "MacroMachine_RoadTool"); // ONE SHOT OP
+        this.workerFactory = workerFactory;
         init();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
     }
@@ -278,12 +292,21 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     protected void activate() throws PropertyVetoException {
         super.activate();
         this.cachedTiles.clear();
+        previewWorker = workerFactory.get();
         attachOverlay();
+        if (getDimension() != null)
+            getDimension().clearLayerData(PreviewOperation.annotationLayer);
         schedulePreview();
     }
 
     @Override
     protected void deactivate() {
+        invalidatePreview();
+        clearPreview();
+        if (previewWorker != null) {
+            previewWorker.close();
+            previewWorker = null;
+        }
         detachOverlay();
         super.deactivate();
         this.cachedTiles.clear();
@@ -337,11 +360,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private void syncDimension() {
         if (overlayView != null && overlayDimension != overlayView.getDimension()) {
+            invalidatePreview();
+            clearPreview();
             overlayDimension = overlayView.getDimension();
             selectedNodes.clear();
             cancelGesture();
             cachedTiles.clear();
             selectionStatus.setText("0 nodes selected");
+            schedulePreview();
         }
     }
 
@@ -616,12 +642,16 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 var dim = getDimension();
                 if (dim == null)
                     return;
+                invalidatePreview();
+                clearPreview();
                 boolean inhibited = dim.isEventsInhibited();
                 if (!inhibited)
                     dim.setEventsInhibited(true);
                 try {
                     cachedTiles.clear();
                     OnSmoothPath(copyPath(getCurrentPath()), false);
+                    previewMask = Map.of();
+                    previewDimension = null;
                 } finally {
                     cachedTiles.clear();
                     if (!inhibited)
@@ -967,10 +997,16 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void schedulePreview() {
-        if (!controlsReady || previewQueued)
+        if (!controlsReady)
+            return;
+        invalidatePreview();
+        if (previewQueued)
             return;
         previewQueued = true;
+        long scheduled = ++scheduleRevision;
         SwingUtilities.invokeLater(() -> {
+            if (!previewQueued || scheduleRevision != scheduled)
+                return;
             previewQueued = false;
             if (isActive() && getDimension() != null)
                 refreshPreview();
@@ -978,43 +1014,79 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void refreshPreview() {
+        previewQueued = false;
+        scheduleRevision++;
+        invalidatePreview();
         Dimension dimension = getDimension();
-        if (dimension == null)
+        if (dimension == null || previewWorker == null)
             return;
+        var path = getCurrentPath();
+        if (!showLayer.isSelected() || path.isEmpty()) {
+            clearPreview();
+            return;
+        }
+        long started = measurePreview ? System.nanoTime() : 0;
+        var sampledPath = getPathFromNodes(path, handleStrength).path;
+        forceRadiusAtLeast(sampledPath, .5f);
+        var snapshot = PathPreviewMask.snapshot(sampledPath);
+        long sampled = measurePreview ? System.nanoTime() : 0;
+        var candidates = collectTilesAroundPath(sampledPath, transitionMultiplier);
+        var existing = new ArrayList<PathPreviewMask.TilePosition>();
+        for (var tile : candidates)
+            if (dimension.getTile(tile.x, tile.y) != null)
+                existing.add(new PathPreviewMask.TilePosition(tile.x, tile.y));
+        long collected = measurePreview ? System.nanoTime() : 0;
+        long revision = previewRevision;
+        float strength = handleStrength, multiplier = transitionMultiplier;
+        CrossSectionShape profile = brushProfile;
+        previewWorker.submit(snapshot, existing, multiplier, profile, masks -> {
+            if (previewRevision != revision || getDimension() != dimension || !showLayer.isSelected()
+                    || !getCurrentPath().equals(path) || Float.compare(handleStrength, strength) != 0
+                    || Float.compare(transitionMultiplier, multiplier) != 0 || brushProfile != profile)
+                return;
+            long published = measurePreview ? System.nanoTime() : 0;
+            publishPreview(dimension, masks);
+            if (measurePreview)
+                previewTiming = new PreviewTiming(snapshot.size(), candidates.size(), existing.size(),
+                        sampled - started, collected - sampled, published - collected, System.nanoTime() - published);
+        });
+    }
+
+    private void invalidatePreview() {
+        previewRevision++;
+        if (previewWorker != null)
+            previewWorker.invalidate();
+    }
+
+    private void clearPreview() {
+        if (previewDimension != null)
+            publishPreview(previewDimension, Map.of());
+    }
+
+    private void publishPreview(Dimension dimension, Map<PathPreviewMask.TilePosition, BitSet> masks) {
+        if (previewDimension != null && previewDimension != dimension)
+            clearPreview();
         boolean inhibited = dimension.isEventsInhibited();
         if (!inhibited)
             dimension.setEventsInhibited(true);
         try {
-            cachedTiles.clear();
-            dimension.clearLayerData(PreviewOperation.annotationLayer);
-            var path = getCurrentPath();
-            if (showLayer.isSelected() && !path.isEmpty()) {
-                long started = measurePreview ? System.nanoTime() : 0;
-                var sampledPath = getPathFromNodes(path, handleStrength).path;
-                forceRadiusAtLeast(sampledPath, .5f);
-                var snapshot = PathPreviewMask.snapshot(sampledPath);
-                long sampled = measurePreview ? System.nanoTime() : 0;
-                var candidates = collectTilesAroundPath(sampledPath, transitionMultiplier);
-                var existing = new ArrayList<PathPreviewMask.TilePosition>();
-                for (var tile : candidates)
-                    if (dimension.getTile(tile.x, tile.y) != null)
-                        existing.add(new PathPreviewMask.TilePosition(tile.x, tile.y));
-                long collected = measurePreview ? System.nanoTime() : 0;
-                var masks = PathPreviewMask.calculate(snapshot, existing, transitionMultiplier, brushProfile);
-                long calculated = measurePreview ? System.nanoTime() : 0;
-                masks.forEach((position, bits) -> {
-                    var tile = dimension.getTileForEditing(position.x(), position.y());
-                    if (tile != null)
-                        for (int bit = bits.nextSetBit(0); bit >= 0; bit = bits.nextSetBit(bit + 1))
-                            tile.setBitLayerValue(PreviewOperation.annotationLayer, bit % TILE_SIZE, bit / TILE_SIZE,
-                                    true);
-                });
-                if (measurePreview)
-                    previewTiming = new PreviewTiming(snapshot.size(), candidates.size(), existing.size(),
-                            sampled - started, collected - sampled, calculated - collected,
-                            System.nanoTime() - calculated);
-            } else
-                cachedTiles.clear();
+            var positions = new java.util.HashSet<>(previewMask.keySet());
+            positions.addAll(masks.keySet());
+            for (var position : positions) {
+                var previous = previewMask.getOrDefault(position, new BitSet());
+                var next = masks.getOrDefault(position, new BitSet());
+                var changed = (BitSet) previous.clone();
+                changed.xor(next);
+                if (changed.isEmpty())
+                    continue;
+                var tile = dimension.getTileForEditing(position.x(), position.y());
+                if (tile != null)
+                    for (int bit = changed.nextSetBit(0); bit >= 0; bit = changed.nextSetBit(bit + 1))
+                        tile.setBitLayerValue(PreviewOperation.annotationLayer, bit % TILE_SIZE, bit / TILE_SIZE,
+                                next.get(bit));
+            }
+            previewMask = masks;
+            previewDimension = masks.isEmpty() ? null : dimension;
         } finally {
             if (!inhibited)
                 dimension.setEventsInhibited(false);

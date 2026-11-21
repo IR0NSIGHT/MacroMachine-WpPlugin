@@ -36,6 +36,135 @@ class PathToolSelectionTest
             new ArrayList<>());
     private WorldPainterView previousInstance;
 
+    private static PathTool synchronousTool() {
+        return new PathTool(() -> new PathPreviewWorker(Runnable::run, Runnable::run, PathPreviewMask::calculate));
+    }
+
+    @Test
+    void asynchronousEditsCoalesceAndPublishOnlyOnDispatch() throws Exception {
+        var work = new ArrayList<Runnable>();
+        var callbacks = new ArrayList<Runnable>();
+        var tool = new PathTool[]{null};
+        var dim = new Dimension[]{null};
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                dim[0] = dimension();
+                tool[0] = new PathTool(
+                        () -> new PathPreviewWorker(work::add, callbacks::add, PathPreviewMask::calculate));
+                tool[0].setView(new TestView(dim[0]));
+                tool[0].setBrush(brush());
+                tool[0].setActive(true);
+                for (int i = 0; i < 10; i++)
+                    tool[0].tick(10 + i * 5, 20, true, true, 1f);
+                assertEquals(40, dim[0].getAttribute(HANDLES).size());
+                assertEquals(1, work.size());
+                assertFalse(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 10, 20));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        work.remove(0).run();
+        assertEquals(1, callbacks.size());
+        SwingUtilities.invokeAndWait(() -> {
+            dim[0].setEventsInhibited(true);
+            callbacks.remove(0).run();
+            assertTrue(dim[0].isEventsInhibited());
+            assertTrue(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 10, 20));
+            assertTrue(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 55, 20));
+            dim[0].setEventsInhibited(false);
+            dim[0].setAttribute(HANDLES, new ArrayList<>(), true);
+            tool[0].tick(70, 60, true, true, 1f);
+            assertTrue(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 10, 20));
+            assertFalse(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 70, 60));
+        });
+        work.remove(0).run();
+        SwingUtilities.invokeAndWait(() -> {
+            callbacks.remove(0).run();
+            assertFalse(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 10, 20));
+            assertTrue(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 70, 60));
+            assertDoesNotThrow(() -> tool[0].setActive(false));
+        });
+    }
+
+    @Test
+    void queuedResultsCannotReappearAfterResetOrExternalPathChange() throws Exception {
+        var work = new ArrayList<Runnable>();
+        var callbacks = new ArrayList<Runnable>();
+        var tool = new PathTool[]{null};
+        var dim = new Dimension[]{null};
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                dim[0] = dimension();
+                tool[0] = new PathTool(
+                        () -> new PathPreviewWorker(work::add, callbacks::add, PathPreviewMask::calculate));
+                tool[0].setView(new TestView(dim[0]));
+                tool[0].setBrush(brush());
+                tool[0].setActive(true);
+                tool[0].tick(20, 20, true, true, 1f);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        work.remove(0).run();
+        SwingUtilities.invokeAndWait(() -> {
+            dim[0].setAttribute(HANDLES, new ArrayList<>(), true);
+            callbacks.remove(0).run();
+            assertFalse(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 20, 20));
+            tool[0].tick(30, 20, true, true, 1f);
+        });
+        work.remove(0).run();
+        SwingUtilities.invokeAndWait(() -> {
+            findButton(tool[0].getOptionsPanel(), "PathTool.NewPath").doClick();
+            callbacks.remove(0).run();
+            assertFalse(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 30, 20));
+            assertDoesNotThrow(() -> tool[0].setActive(false));
+        });
+    }
+
+    @Test
+    void queuedResultsAreInvalidatedByLayerOffDimensionChangeDeactivateAndApply() throws Exception {
+        for (String action : List.of("off", "dimension", "deactivate", "apply")) {
+            var work = new ArrayList<Runnable>();
+            var callbacks = new ArrayList<Runnable>();
+            var tool = new PathTool[]{null};
+            var dim = new Dimension[]{null};
+            var view = new TestView[]{null};
+            SwingUtilities.invokeAndWait(() -> {
+                try {
+                    dim[0] = dimension();
+                    view[0] = new TestView(dim[0]);
+                    tool[0] = new PathTool(
+                            () -> new PathPreviewWorker(work::add, callbacks::add, PathPreviewMask::calculate));
+                    tool[0].setView(view[0]);
+                    tool[0].setBrush(brush());
+                    tool[0].setActive(true);
+                    tool[0].tick(20, 20, true, true, 1f);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            work.remove(0).run();
+            SwingUtilities.invokeAndWait(() -> {
+                switch (action) {
+                    case "off" -> findToggle(tool[0].getOptionsPanel(), "PathTool.ShowLayer").doClick();
+                    case "dimension" -> {
+                        view[0].setDimension(dimension());
+                        tool[0].selectedNodes();
+                    }
+                    case "deactivate" -> assertDoesNotThrow(() -> tool[0].setActive(false));
+                    case "apply" -> findButton(tool[0].getOptionsPanel(), "PathTool.Apply").doClick();
+                    default -> throw new AssertionError(action);
+                }
+                callbacks.remove(0).run();
+                assertFalse(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 20, 20), action);
+                assertDoesNotThrow(() -> tool[0].setActive(false));
+            });
+            var field = WorldPainterView.class.getDeclaredField("instance");
+            field.setAccessible(true);
+            field.set(null, null);
+        }
+    }
+
     @Test
     void hudLayersAreIndependentAndDoNotChangePathOrTerrain() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
@@ -44,7 +173,7 @@ class PathToolSelectionTest
                 var handles = List.of(30f, 30f, 70f, 20f, 90f, 30f, 70f, 20f);
                 dimension.setAttribute(HANDLES, new ArrayList<>(handles), true);
                 TestView view = new TestView(dimension);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setActive(true);
                 try {
@@ -103,7 +232,7 @@ class PathToolSelectionTest
             try {
                 Dimension dimension = dimension();
                 TestView view = new TestView(dimension);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setBrush(brush());
                 tool.setActive(true);
@@ -179,7 +308,7 @@ class PathToolSelectionTest
                 Dimension dimension = dimension();
                 dimension.setAttribute(HANDLES, new ArrayList<>(List.of(10f, 10f, 70f, 4f, 70f, 10f, 70f, 4f)), true);
                 TestView view = new TestView(dimension);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setActive(true);
                 try {
@@ -283,7 +412,7 @@ class PathToolSelectionTest
             try {
                 Dimension dimension = dimension();
                 TestView view = new TestView(dimension);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setBrush(brush());
                 tool.setActive(true);
@@ -332,7 +461,7 @@ class PathToolSelectionTest
                 UndoManager manager = new UndoManager();
                 dimension.registerUndoManager(manager);
                 TestView view = new TestView(dimension);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setBrush(brush());
                 tool.setActive(true);
@@ -371,7 +500,7 @@ class PathToolSelectionTest
                 container.add(outside);
                 view.setBounds(0, 0, 100, 100);
                 outside.setBounds(100, 0, 100, 100);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setActive(true);
                 try {
@@ -417,7 +546,7 @@ class PathToolSelectionTest
                 Dimension dimension = dimension();
                 dimension.setAttribute(HANDLES, new ArrayList<>(List.of(10f, 10f, 70f, 4f, 30f, 30f, 70f, 6f)), true);
                 TestView view = new TestView(dimension);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setActive(true);
                 try {
@@ -449,7 +578,7 @@ class PathToolSelectionTest
             try {
                 Dimension dimension = dimension();
                 TestView view = new TestView(dimension);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 Brush brush = (Brush) java.lang.reflect.Proxy.newProxyInstance(Brush.class.getClassLoader(),
                         new Class<?>[]{Brush.class}, (proxy, method, args) -> switch (method.getName()) {
@@ -489,7 +618,7 @@ class PathToolSelectionTest
                 Dimension dimension = dimension();
                 dimension.setAttribute(HANDLES, new ArrayList<>(List.of(10f, 10f, 70f, 4f, 30f, 30f, 70f, 6f)), true);
                 TestView view = new TestView(dimension);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setActive(true);
                 try {
@@ -519,7 +648,7 @@ class PathToolSelectionTest
                 dimension.setHeightAt(20, 10, 81f);
                 dimension.setHeightAt(40, 30, 92f);
                 TestView view = new TestView(dimension);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setActive(true);
                 try {
@@ -566,7 +695,7 @@ class PathToolSelectionTest
                 dimension.setAttribute(HANDLES,
                         new ArrayList<>(List.of(10f, 10f, 70f, 4f, 30f, 30f, 70f, 6f, 50f, 50f, 70f, 8f)), true);
                 TestView view = new TestView(dimension);
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setActive(true);
                 try {
@@ -617,7 +746,7 @@ class PathToolSelectionTest
                 dimension.setAttribute(HANDLES, new ArrayList<>(List.of(10f, 10f, 70f, 4f, 12f, 10f, 70f, 6f)), true);
                 TestView view = new TestView(dimension);
                 var previous = view.getViewListener();
-                PathTool tool = new PathTool();
+                PathTool tool = synchronousTool();
                 tool.setView(view);
                 tool.setActive(true);
                 assertEquals(0, tool.nearestNode(view.worldToView(11, 10)));
