@@ -8,6 +8,11 @@ import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.image.BufferedImage;
 import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
 import java.beans.PropertyVetoException;
 import java.io.Serial;
@@ -16,6 +21,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.swing.*;
@@ -23,12 +30,16 @@ import javax.swing.border.EmptyBorder;
 import javax.vecmath.Point3i;
 import javax.vecmath.Point4f;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
+import org.ironsight.wpplugin.macromachine.Gui.MapToolOverlay;
+import com.github.weisj.jsvg.parser.SVGLoader;
 import org.pepsoft.util.AttributeKey;
+import org.pepsoft.util.swing.TiledImageViewer;
 import org.pepsoft.util.undo.BufferKey;
 import org.pepsoft.util.undo.Cloneable;
 import org.pepsoft.util.undo.UndoListener;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
+import org.pepsoft.worldpainter.WorldPainterView;
 import org.pepsoft.worldpainter.brushes.Brush;
 import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 import org.pepsoft.worldpainter.operations.PaintOperation;
@@ -117,6 +128,45 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private CrossSectionShape brushProfile;
     private float transitionMultiplier = 2;
     private JButton applyButton;
+    private final Set<Integer> selectedNodes = new LinkedHashSet<>();
+    private final PathOverlay overlay = new PathOverlay();
+    private WorldPainterView overlayView;
+    private Dimension overlayDimension;
+    private TiledImageViewer.ViewListener previousViewListener;
+    private final TiledImageViewer.ViewListener overlayViewListener = view -> {
+        if (previousViewListener != null)
+            previousViewListener.viewChanged(view);
+        syncDimension();
+        overlay.repaint();
+    };
+    private final ComponentAdapter resizeListener = new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent event) {
+            resizeOverlay();
+        }
+    };
+    private final MouseAdapter selectionListener = new MouseAdapter() {
+        @Override
+        public void mousePressed(MouseEvent event) {
+            if (SwingUtilities.isLeftMouseButton(event) && !event.isAltDown() && !event.isControlDown()
+                    && !event.isShiftDown() && !event.isMetaDown())
+                handleSelectionPress(event.getPoint());
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent event) {
+            handleSelectionDrag(event.getPoint());
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent event) {
+            if (SwingUtilities.isLeftMouseButton(event))
+                handleSelectionRelease(event.getPoint());
+        }
+    };
+    private Point gestureStart;
+    private int pressedNode = -1;
+    private boolean gestureDragged;
 
     public PathTool() {
         super("Road Tool", "Create smooth roads", "MacroMachine_RoadTool"); // ONE SHOT OP
@@ -139,12 +189,190 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     protected void activate() throws PropertyVetoException {
         super.activate();
         this.cachedTiles.clear();
+        attachOverlay();
     }
 
     @Override
     protected void deactivate() {
+        detachOverlay();
         super.deactivate();
         this.cachedTiles.clear();
+    }
+
+    private void attachOverlay() {
+        WorldPainterView view = getView();
+        if (view == null || overlayView == view)
+            return;
+        detachOverlay();
+        overlayView = view;
+        overlayDimension = view.getDimension();
+        overlay.setMapView(view);
+        previousViewListener = view.getViewListener();
+        view.setViewListener(overlayViewListener);
+        view.addComponentListener(resizeListener);
+        view.addMouseListener(selectionListener);
+        view.addMouseMotionListener(selectionListener);
+        view.add(overlay);
+        view.setComponentZOrder(overlay, 0);
+        resizeOverlay();
+        overlay.showOverlayText("Road Tool");
+    }
+
+    private void resizeOverlay() {
+        if (overlayView != null)
+            overlay.setBounds(0, 0, overlayView.getWidth(), overlayView.getHeight());
+    }
+
+    private void detachOverlay() {
+        cancelGesture();
+        selectedNodes.clear();
+        overlay.clearOverlayText();
+        overlay.clearInfoText();
+        if (overlayView == null)
+            return;
+        overlayView.removeMouseListener(selectionListener);
+        overlayView.removeMouseMotionListener(selectionListener);
+        overlayView.removeComponentListener(resizeListener);
+        overlayView.remove(overlay);
+        if (overlayView.getViewListener() == overlayViewListener)
+            overlayView.setViewListener(previousViewListener);
+        overlayView.repaint();
+        overlay.setMapView(null);
+        overlayView = null;
+        overlayDimension = null;
+        previousViewListener = null;
+    }
+
+    private void syncDimension() {
+        if (overlayView != null && overlayDimension != overlayView.getDimension()) {
+            overlayDimension = overlayView.getDimension();
+            selectedNodes.clear();
+            cancelGesture();
+            cachedTiles.clear();
+        }
+    }
+
+    void handleSelectionPress(Point point) {
+        syncDimension();
+        if (overlayView == null || overlayDimension == null)
+            return;
+        gestureStart = new Point(point);
+        pressedNode = nearestNode(point);
+        gestureDragged = false;
+        if (pressedNode < 0)
+            overlay.startDrag(point);
+    }
+
+    void handleSelectionDrag(Point point) {
+        syncDimension();
+        if (gestureStart == null)
+            return;
+        if (gestureStart.distanceSq(point) >= 9)
+            gestureDragged = true;
+        if (pressedNode < 0 && gestureDragged)
+            overlay.updateDrag(point);
+    }
+
+    void handleSelectionRelease(Point point) {
+        syncDimension();
+        if (gestureStart == null)
+            return;
+        handleSelectionDrag(point);
+        if (gestureDragged && pressedNode < 0) {
+            Rectangle bounds = overlay.getDragBounds();
+            selectedNodes.clear();
+            var path = getCurrentPath();
+            for (int i = 0; i < path.size(); i++) {
+                Point4f node = path.get(i);
+                if (bounds.contains(node.x, node.y))
+                    selectedNodes.add(i);
+            }
+        } else if (!gestureDragged) {
+            if (pressedNode < 0)
+                selectedNodes.clear();
+            else if (!selectedNodes.add(pressedNode))
+                selectedNodes.remove(pressedNode);
+        }
+        cancelGesture();
+        overlay.repaint();
+    }
+
+    private void cancelGesture() {
+        gestureStart = null;
+        pressedNode = -1;
+        gestureDragged = false;
+        overlay.endDrag();
+    }
+
+    int nearestNode(Point point) {
+        if (overlayView == null)
+            return -1;
+        int nearest = -1;
+        double distance = 81;
+        var path = getCurrentPath();
+        for (int i = 0; i < path.size(); i++) {
+            Point4f node = path.get(i);
+            Point screen = overlayView.worldToView(Math.round(node.x), Math.round(node.y));
+            double candidate = screen.distanceSq(point);
+            if (candidate <= 81 && (nearest < 0 || candidate < distance)) {
+                nearest = i;
+                distance = candidate;
+            }
+        }
+        return nearest;
+    }
+
+    Set<Integer> selectedNodes() {
+        syncDimension();
+        return Set.copyOf(selectedNodes);
+    }
+
+    private class PathOverlay extends MapToolOverlay
+    {
+        PathOverlay() {
+            super(loadPathIcon());
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            syncDimension();
+            super.paintComponent(graphics);
+            if (overlayView == null)
+                return;
+            Graphics2D g = (Graphics2D) graphics.create();
+            try {
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                var path = getCurrentPath();
+                selectedNodes.removeIf(index -> index >= path.size());
+                for (int i = 0; i < path.size(); i++) {
+                    Point4f node = path.get(i);
+                    Point point = overlayView.worldToView(Math.round(node.x), Math.round(node.y));
+                    g.setColor(Color.WHITE);
+                    g.fillOval(point.x - 4, point.y - 4, 9, 9);
+                    g.setColor(selectedNodes.contains(i) ? Color.RED : Color.DARK_GRAY);
+                    g.setStroke(new BasicStroke(selectedNodes.contains(i) ? 2f : 1f));
+                    g.drawOval(point.x - 5, point.y - 5, 10, 10);
+                }
+            } finally {
+                g.dispose();
+            }
+        }
+    }
+
+    private static BufferedImage loadPathIcon() {
+        var url = Objects.requireNonNull(PathTool.class.getResource("/icons/waypoints.svg"));
+        var document = Objects.requireNonNull(new SVGLoader().load(url));
+        var icon = new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D graphics = icon.createGraphics();
+        try {
+            graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            var viewBox = document.viewBox();
+            graphics.scale(256 / viewBox.getWidth(), 256 / viewBox.getHeight());
+            document.render(null, graphics);
+        } finally {
+            graphics.dispose();
+        }
+        return icon;
     }
 
     private void init() {
@@ -479,6 +707,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             return;
 
         pathHandles.removeLast();
+        selectedNodes.removeIf(index -> index >= pathHandles.size());
+        overlay.repaint();
         boolean eventsWereInhibited = dimension.isEventsInhibited();
         if (!eventsWereInhibited)
             dimension.setEventsInhibited(true);
@@ -499,6 +729,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
+        if (!inverse)
+            return;
         Dimension dim = getDimension();
         if (dim == null)
             return;
@@ -529,6 +761,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
 
         SwingUtilities.invokeLater(this::updateCheckboxTexts);
+        selectedNodes.clear();
+        overlay.repaint();
     }
 
     private void OnSmoothPath(List<Point4f> pathHandles, boolean onlyPreview) {
