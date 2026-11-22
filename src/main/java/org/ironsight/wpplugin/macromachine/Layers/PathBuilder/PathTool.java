@@ -143,14 +143,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private static final int NODE_DIAMETER = 18;
     private static final int NODE_OUTLINE_DIAMETER = 20;
     /**
-     * Selection and handles: lavender (see
-     * {@link org.ironsight.wpplugin.macromachine.Gui.OverlayStyle}).
+     * Selected nodes and handles on the map: the website's light teal (#8BC4D3).
      */
-    static final Color SELECTED_NODE_FILL = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.ACCENT;
-    /** Charcoal outline under every map marking. */
+    static final Color SELECTED_NODE_FILL = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.MAP_SELECTION;
+    /**
+     * Thin dark edge behind text on the map (markings themselves have no outline).
+     */
     static final Color SELECTED_NODE_HALO = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.OUTLINE;
-    static final Color UNSELECTED_NODE_FILL = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SURFACE_SOLID;
-    static final Color UNSELECTED_NODE_OUTLINE = new Color(235, 235, 235);
+    /** Unselected nodes: flat light grey disc (#B0B0B0). */
+    static final Color UNSELECTED_NODE_FILL = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED;
     private static final int NODE_HIT_RADIUS = 18;
     private final JToggleButton showLabel = hudButton("Label", "ShowLabel");
     private final JToggleButton showRadius = hudButton("Radius", "ShowRadius");
@@ -970,14 +971,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         panel.setName("PathTool.OperationPanel");
         var heading = new JLabel(title);
         heading.setForeground(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT);
-        heading.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 13.5f));
+        heading.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 15f));
         panel.add(heading, BorderLayout.NORTH);
         styleOperationControls(controls);
         panel.add(controls, BorderLayout.CENTER);
         operationMergeNote = new JLabel();
         operationMergeNote.setName("PathTool.OperationMergeNote");
         operationMergeNote.setForeground(WARNING_COLOR);
-        operationMergeNote.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.PLAIN, 12f));
+        operationMergeNote.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.PLAIN, 13.5f));
         operationMergeNote.setVisible(false);
         var buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
         buttons.setOpaque(false);
@@ -2381,7 +2382,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             var onAccent = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.ON_ACCENT;
             overlaysButton.setSelectedIcon(LucideIcons.icon("eye", 16, onAccent));
             addButton.setSelectedIcon(LucideIcons.icon("plus", 16, onAccent));
-            setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.PLAIN, 12f)); // painted labels
+            setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.PLAIN, 14f)); // painted labels
             installStripMouse();
             updateModeButton();
         }
@@ -2625,7 +2626,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 } else
                     g.drawLine(start.x, start.y, end.x, end.y);
             }
-            strokeWithHalo(g, highlighted, 2f);
+            strokeHandle(g, highlighted, 2f);
         }
 
         /**
@@ -2738,7 +2739,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 shape.lineTo(mid, y1 - 2);
                 shape.lineTo(mid + tick, y1 - 2 - tick);
             }
-            strokeWithHalo(g, shape, 2f);
+            strokeHandle(g, shape, 2f);
         }
 
         /** Kind of zoom drag, like plotly: along one axis or a box. */
@@ -3106,7 +3107,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 } else
                     step = candidate;
             Font previous = g.getFont();
-            g.setFont(previous.deriveFont(Font.PLAIN, 9f));
+            g.setFont(previous.deriveFont(Font.PLAIN, 11f));
             g.setColor(new Color(255, 255, 255, 170));
             for (int height = (int) Math.ceil(lowest / step) * step; height <= lowest + range; height += step) {
                 int y = (int) Math.round(yAt.applyAsDouble(height));
@@ -3272,7 +3273,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             stripBottom = bottom;
             stripHeightView = editMode == EditMode.HEIGHT;
             Font previous = g.getFont();
-            g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 11.5f));
+            g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 13f));
             g.setColor(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED);
             g.drawString(switch (editMode) {
                 case RADIUS -> "Radius along the path";
@@ -3435,7 +3436,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 g.setColor(Color.WHITE);
                 g.setStroke(new BasicStroke(1.5f));
                 g.draw(line);
-                strokeWithHalo(g, highlighted, 2f);
+                strokeHandle(g, highlighted, 2f);
                 for (int i = 0; i < n; i++)
                     nodeY[i] = middle;
             }
@@ -3468,9 +3469,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 if (from.equals(to))
                     continue;
                 var line = new Line2D.Double(from, to);
-                g.setStroke(halo);
-                g.setColor(SELECTED_NODE_HALO);
-                g.draw(line);
                 g.setStroke(dotted);
                 g.setColor(PREVIEW_COLOR);
                 g.draw(line);
@@ -3493,10 +3491,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     double radius = radiusInView(circleBase.get(i), circle.value());
                     var shape = new Ellipse2D.Double(center.x - radius, center.y - radius, 2 * radius, 2 * radius);
                     // a handle's circle: blue handle styling (amber is for previewed results only)
-                    strokeWithHalo(g, shape, 2f);
+                    strokeHandle(g, shape, 2f);
                     var handle = circleHandle(center, radius, circle.side());
                     if (Math.abs(handle.x - center.x) > radius + 1)
-                        strokeWithHalo(g,
+                        strokeHandle(g,
                                 new Line2D.Double(center.x + circle.side() * radius, center.y, handle.x, handle.y), 1f);
                     paintSquareHandle(g, handle, isHovered(HitKind.OPERATION_RADIUS, i, c));
                     String text = circle.label() + " " + formatValue(circle.value());
@@ -3525,9 +3523,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 Point center = toView(after.get(i));
                 int ring = NODE_OUTLINE_DIAMETER + 10;
                 var shape = new Ellipse2D.Double(center.x - ring / 2.0, center.y - ring / 2.0, ring, ring);
-                g.setStroke(new BasicStroke(3.5f));
-                g.setColor(SELECTED_NODE_HALO);
-                g.draw(shape);
                 g.setStroke(dashed);
                 g.setColor(PREVIEW_COLOR);
                 g.draw(shape);
@@ -3550,9 +3545,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 Point center = toView(after.get(i));
                 double radius = radiusInView(after.get(i), after.get(i).w);
                 var shape = new Ellipse2D.Double(center.x - radius, center.y - radius, 2 * radius, 2 * radius);
-                g.setStroke(new BasicStroke(4f));
-                g.setColor(SELECTED_NODE_HALO);
-                g.draw(shape);
                 g.setStroke(dashed);
                 g.setColor(PREVIEW_COLOR);
                 g.draw(shape);
@@ -3578,15 +3570,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 return;
             }
             Shape outline = transform.createTransformedShape(box);
-            g.setStroke(new BasicStroke(3f));
-            g.setColor(SELECTED_NODE_HALO);
-            g.draw(outline);
             g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[]{6, 4}, 0));
             g.setColor(SELECTED_NODE_FILL);
             g.draw(outline);
-            strokeWithHalo(g, new Line2D.Double(at.apply(PathTransformBox.topCentre(box)),
+            strokeHandle(g, new Line2D.Double(at.apply(PathTransformBox.topCentre(box)),
                     at.apply(PathTransformBox.rotateHandle(box))), 1.5f);
-            strokeWithHalo(g, new Line2D.Double(at.apply(PathTransformBox.leftCentre(box)),
+            strokeHandle(g, new Line2D.Double(at.apply(PathTransformBox.leftCentre(box)),
                     at.apply(PathTransformBox.moveHandle(box))), 1.5f);
             // handles are Lucide icons turned with the box (scale arrows point along
             // their axis)
@@ -3620,10 +3609,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 if (editMode == EditMode.RADIUS) {
                     double radius = radiusInView(path.get(i));
                     var circle = new Ellipse2D.Double(center.x - radius, center.y - radius, 2 * radius, 2 * radius);
-                    strokeWithHalo(g, circle, 2f);
+                    strokeHandle(g, circle, 2f);
                     var handle = PathEditHandles.radiusHandle(center, radius);
                     if (handle.x - center.x > radius + 1)
-                        strokeWithHalo(g, new Line2D.Double(center.x + radius, center.y, handle.x, handle.y), 1f);
+                        strokeHandle(g, new Line2D.Double(center.x + radius, center.y, handle.x, handle.y), 1f);
                     paintSquareHandle(g, handle, isHovered(HitKind.RADIUS, i, 0));
                     paintHandleLabel(g, formatValue(path.get(i).w), handle);
                 } else if (editMode == EditMode.HEIGHT) {
@@ -3636,13 +3625,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     // extended right to the height gauge, which sits beside the node
                     double gap = NODE_OUTLINE_DIAMETER / 2.0 + 2, reach = 34;
                     var axis = new Point2D.Double(center.x + heightAxisOffset(), center.y);
-                    strokeWithHalo(g, new Line2D.Double(center.x - reach, center.y, center.x - gap, center.y), 1.5f);
-                    strokeWithHalo(g, new Line2D.Double(center.x + gap, center.y, axis.x + 14, center.y), 1.5f);
+                    strokeHandle(g, new Line2D.Double(center.x - reach, center.y, center.x - gap, center.y), 1.5f);
+                    strokeHandle(g, new Line2D.Double(center.x + gap, center.y, axis.x + 14, center.y), 1.5f);
                     var handle = PathEditHandles.heightHandle(axis, relative);
                     // ground label on the opposite side of the line from the handle
                     paintHandleLabel(g, "ground " + formatValue(Math.round(ground)),
                             new Point2D.Double(axis.x, handle.y <= center.y ? center.y + 20 : center.y - 2));
-                    strokeWithHalo(g, new Line2D.Double(axis, handle), 1.5f);
+                    strokeHandle(g, new Line2D.Double(axis, handle), 1.5f);
                     paintSquareHandle(g, handle, isHovered(HitKind.HEIGHT, i, 0));
                     paintHandleLabel(g, PathEditHandles.signed(Math.round(relative * 10) / 10f) + " (abs "
                             + formatValue(Math.round(node.z * 10) / 10f) + ")", handle);
@@ -3652,7 +3641,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                         continue;
                     var back = tangent.handle(-1, strength);
                     var forward = tangent.handle(1, strength);
-                    strokeWithHalo(g, new Line2D.Double(back, forward), 1.5f);
+                    strokeHandle(g, new Line2D.Double(back, forward), 1.5f);
                     paintRoundHandle(g, back, isHovered(HitKind.STRENGTH, i, -1));
                     paintRoundHandle(g, forward, isHovered(HitKind.STRENGTH, i, 1));
                     paintHandleLabel(g, String.format(Locale.ROOT, "%.2f", strength), forward);
@@ -3735,7 +3724,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     /** Blender-like header box at the top centre of the viewport. */
     private void paintHeader(Graphics2D g, String text) {
         Font previous = g.getFont();
-        g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 15f));
+        g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 16.5f));
         FontMetrics metrics = g.getFontMetrics();
         int padding = 8;
         int width = metrics.stringWidth(text) + 2 * padding, height = metrics.getHeight() + padding;
@@ -3781,11 +3770,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 : String.format(Locale.ROOT, "%.1f", value);
     }
 
-    private static void strokeWithHalo(Graphics2D g, Shape shape, float width) {
-        g.setStroke(new BasicStroke(width + 2f));
-        g.setColor(SELECTED_NODE_HALO);
-        g.draw(shape);
-        g.setStroke(new BasicStroke(width));
+    /** A handle line or ring: handle colour, no outline. */
+    private static void strokeHandle(Graphics2D g, Shape shape, float width) {
+        g.setStroke(new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
         g.setColor(SELECTED_NODE_FILL);
         g.draw(shape);
     }
@@ -3835,9 +3822,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         int x = (int) Math.round(center.getX()) - size / 2, y = (int) Math.round(center.getY()) - size / 2;
         g.setColor(hovered ? Color.WHITE : SELECTED_NODE_FILL);
         g.fillRect(x, y, size, size);
-        g.setStroke(new BasicStroke(2f));
-        g.setColor(SELECTED_NODE_HALO);
-        g.drawRect(x, y, size, size);
     }
 
     /** Transform handles: Lucide icon size (px), larger while hovered. */
@@ -3849,7 +3833,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      */
     static void paintIconHandle(Graphics2D g, String icon, Point2D center, double degrees, boolean hovered) {
         LucideIcons.paint(g, icon, center, hovered ? HOVERED_ICON_HANDLE_SIZE : ICON_HANDLE_SIZE, degrees,
-                hovered ? Color.WHITE : SELECTED_NODE_FILL, SELECTED_NODE_HALO);
+                hovered ? Color.WHITE : SELECTED_NODE_FILL, null);
     }
 
     static void paintRoundHandle(Graphics2D g, Point2D center, boolean hovered) {
@@ -3857,9 +3841,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         int x = (int) Math.round(center.getX()) - size / 2, y = (int) Math.round(center.getY()) - size / 2;
         g.setColor(hovered ? Color.WHITE : SELECTED_NODE_FILL);
         g.fillOval(x, y, size, size);
-        g.setStroke(new BasicStroke(2f));
-        g.setColor(SELECTED_NODE_HALO);
-        g.drawOval(x, y, size, size);
     }
 
     /**
@@ -3870,8 +3851,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         g.setFont(previous.deriveFont(Font.BOLD));
         int x = (int) Math.round(at.getX()), y = (int) Math.round(at.getY());
         g.setColor(SELECTED_NODE_HALO);
-        for (int dx = -2; dx <= 2; dx++)
-            for (int dy = -2; dy <= 2; dy++)
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
                 if (dx != 0 || dy != 0)
                     g.drawString(text, x + dx, y + dy);
         g.setColor(PREVIEW_COLOR);
@@ -3885,8 +3866,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         int x = (int) Math.round(handle.getX()) + HOVERED_HANDLE_SIZE / 2 + 4;
         int y = (int) Math.round(handle.getY()) - 7;
         g.setColor(SELECTED_NODE_HALO);
-        for (int dx = -2; dx <= 2; dx++)
-            for (int dy = -2; dy <= 2; dy++)
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
                 if (dx != 0 || dy != 0)
                     g.drawString(text, x + dx, y + dy);
         g.setColor(SELECTED_NODE_FILL);
@@ -3901,10 +3882,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     static void paintInsertedNode(Graphics2D g, Point point) {
         int outline = NODE_OUTLINE_DIAMETER;
         var ring = new Ellipse2D.Double(point.x - outline / 2.0, point.y - outline / 2.0, outline, outline);
-        g.setStroke(new BasicStroke(3.5f));
-        g.setColor(SELECTED_NODE_HALO);
-        g.draw(ring);
-        g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10, new float[]{4, 3}, 0));
+        g.setStroke(new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10, new float[]{4, 3}, 0));
         g.setColor(PREVIEW_COLOR);
         g.draw(ring);
     }
@@ -3922,9 +3900,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      */
     static void paintMergeWarning(Graphics2D g, Point point) {
         int ring = NODE_OUTLINE_DIAMETER + 12;
-        g.setStroke(new BasicStroke(5f));
-        g.setColor(SELECTED_NODE_HALO);
-        g.drawOval(point.x - ring / 2, point.y - ring / 2, ring, ring);
         g.setStroke(new BasicStroke(3f));
         g.setColor(WARNING_COLOR);
         g.drawOval(point.x - ring / 2, point.y - ring / 2, ring, ring);
@@ -3933,27 +3908,21 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     /** Warning colour (orange): e.g. nodes an operation will merge. */
     static final Color WARNING_COLOR = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.WARNING;
 
+    /** A node: one flat disc, teal when selected, light grey otherwise. */
     static void paintNode(Graphics2D g, Point point, boolean selected) {
-        int fill = NODE_DIAMETER, outline = NODE_OUTLINE_DIAMETER;
-        // charcoal halo first: every node reads on bright and dark terrain alike
-        g.setColor(SELECTED_NODE_HALO);
-        g.setStroke(new BasicStroke(selected ? 4f : 3.5f));
-        g.drawOval(point.x - outline / 2, point.y - outline / 2, outline, outline);
+        int size = NODE_DIAMETER;
         g.setColor(selected ? SELECTED_NODE_FILL : UNSELECTED_NODE_FILL);
-        g.fillOval(point.x - fill / 2, point.y - fill / 2, fill, fill);
-        g.setColor(selected ? SELECTED_NODE_FILL : UNSELECTED_NODE_OUTLINE);
-        g.setStroke(new BasicStroke(selected ? 2f : 1.5f));
-        g.drawOval(point.x - outline / 2, point.y - outline / 2, outline, outline);
+        g.fillOval(point.x - size / 2, point.y - size / 2, size, size);
     }
 
     static void paintNodeLabel(Graphics2D g, Point point, int number, boolean selected) {
         String label = Integer.toString(number);
         Font previous = g.getFont();
-        g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(selected ? Font.BOLD : Font.PLAIN, 11.5f));
+        g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(selected ? Font.BOLD : Font.PLAIN, 13.5f));
         int x = point.x + NODE_OUTLINE_DIAMETER / 2 + 4;
         int y = point.y + g.getFontMetrics().getAscent() / 2;
         g.setColor(SELECTED_NODE_HALO);
-        int halo = selected ? 2 : 1;
+        int halo = 1;
         for (int dx = -halo; dx <= halo; dx++)
             for (int dy = -halo; dy <= halo; dy++)
                 if (dx != 0 || dy != 0)

@@ -26,22 +26,19 @@ class PathToolNodeStyleTest
     }
 
     @Test
-    void selectedNodeIsLavenderAndUnselectedCharcoalWithALightRing() {
+    void nodesAreFlatDiscsTealWhenSelectedGreyOtherwise() {
         var center = new Point(30, 30);
         var selected = render(g -> PathTool.paintNode(g, center, true));
         var unselected = render(g -> PathTool.paintNode(g, center, false));
 
-        assertEquals(PathTool.SELECTED_NODE_FILL, at(selected, 30, 30));
-        assertEquals(PathTool.UNSELECTED_NODE_FILL, at(unselected, 30, 30));
-        // ring (radius 10): lavender for selected, light for unselected nodes
-        assertEquals(PathTool.SELECTED_NODE_FILL, at(selected, 40, 30));
-        assertEquals(PathTool.UNSELECTED_NODE_OUTLINE, at(unselected, 40, 30));
-        // charcoal halo just outside the ring keeps both readable on any terrain
-        assertEquals(PathTool.SELECTED_NODE_HALO, at(selected, 41, 30));
-        assertEquals(PathTool.SELECTED_NODE_HALO, at(unselected, 41, 30));
-        // marker never extends beyond the halo
-        assertEquals(0, at(selected, 44, 30).getAlpha());
-        assertEquals(0, at(unselected, 44, 30).getAlpha());
+        // one flat colour from the centre to the edge: no ring, no gap, no outline
+        for (int x = 30; x <= 36; x++) {
+            assertEquals(PathTool.SELECTED_NODE_FILL, at(selected, x, 30), "selected at " + x);
+            assertEquals(PathTool.UNSELECTED_NODE_FILL, at(unselected, x, 30), "unselected at " + x);
+        }
+        // nothing drawn outside the disc (no dark halo)
+        assertEquals(0, at(selected, 41, 30).getAlpha());
+        assertEquals(0, at(unselected, 41, 30).getAlpha());
     }
 
     @Test

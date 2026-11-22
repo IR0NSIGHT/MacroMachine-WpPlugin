@@ -2769,8 +2769,8 @@ class PathToolSelectionTest
         PathTool.paintSquareHandle(hover.createGraphics(), new java.awt.geom.Point2D.Double(20, 20), true);
         assertEquals(PathTool.SELECTED_NODE_FILL.getRGB(), plain.getRGB(20, 20));
         assertEquals(java.awt.Color.WHITE.getRGB(), hover.getRGB(20, 20));
-        assertEquals(0, plain.getRGB(20 + PathTool.HOVERED_HANDLE_SIZE / 2, 20), "plain handle is smaller");
-        assertNotEquals(0, hover.getRGB(20 + PathTool.HOVERED_HANDLE_SIZE / 2, 20));
+        assertEquals(0, plain.getRGB(20 + PathTool.HOVERED_HANDLE_SIZE / 2 - 1, 20), "plain handle is smaller");
+        assertNotEquals(0, hover.getRGB(20 + PathTool.HOVERED_HANDLE_SIZE / 2 - 1, 20));
         var ring = new java.awt.image.BufferedImage(40, 40, java.awt.image.BufferedImage.TYPE_INT_ARGB);
         PathTool.paintNodeHover(ring.createGraphics(), new Point(20, 20));
         assertNotEquals(0, ring.getRGB(20 + 14, 20));
@@ -2847,9 +2847,9 @@ class PathToolSelectionTest
             try {
                 Dimension dimension = dimension();
                 dimension.setHeightAt(20, 50, 60f);
-                dimension.setHeightAt(60, 50, 64f);
+                dimension.setHeightAt(85, 50, 64f);
                 dimension.setHeightAt(30, 50, 50f);
-                dimension.setAttribute(HANDLES, new ArrayList<>(List.of(20f, 50f, 60f, 4f, 60f, 50f, 64f, 4f)), true);
+                dimension.setAttribute(HANDLES, new ArrayList<>(List.of(20f, 50f, 60f, 4f, 85f, 50f, 64f, 4f)), true);
                 TestView view = new TestView(dimension);
                 PathTool tool = synchronousTool();
                 tool.setView(view);
@@ -2857,7 +2857,7 @@ class PathToolSelectionTest
                 int button = InputEvent.BUTTON1_DOWN_MASK;
                 try {
                     click(view, 20, 50);
-                    click(view, 60, 50, InputEvent.CTRL_DOWN_MASK);
+                    click(view, 85, 50, InputEvent.CTRL_DOWN_MASK);
                     click(view, 20, 50);
                     click(view, 20, 50);
                     assertEquals(PathTool.EditMode.HEIGHT, tool.editMode());
@@ -2870,15 +2870,15 @@ class PathToolSelectionTest
                     event(view, MouseEvent.MOUSE_PRESSED, axis, 50, MouseEvent.BUTTON1, button);
                     event(view, MouseEvent.MOUSE_DRAGGED, axis + 15, 20, MouseEvent.NOBUTTON, button);
                     event(view, MouseEvent.MOUSE_RELEASED, axis + 15, 20, MouseEvent.BUTTON1, 0);
-                    assertEquals(List.of(20f, 50f, 70f, 4f, 60f, 50f, 74f, 4f), dimension.getAttribute(HANDLES));
+                    assertEquals(List.of(20f, 50f, 70f, 4f, 85f, 50f, 74f, 4f), dimension.getAttribute(HANDLES));
                     assertEquals(Set.of(0, 1), tool.selectedNodes());
 
                     // moving node 0 onto lower ground keeps it 10 blocks above ground
-                    click(view, 90, 90);
+                    click(view, 50, 90);
                     event(view, MouseEvent.MOUSE_PRESSED, 20, 50, MouseEvent.BUTTON1, button);
                     event(view, MouseEvent.MOUSE_DRAGGED, 30, 50, MouseEvent.NOBUTTON, button);
                     event(view, MouseEvent.MOUSE_RELEASED, 30, 50, MouseEvent.BUTTON1, 0);
-                    assertEquals(List.of(30f, 50f, 60f, 4f, 60f, 50f, 74f, 4f), dimension.getAttribute(HANDLES));
+                    assertEquals(List.of(30f, 50f, 60f, 4f, 85f, 50f, 74f, 4f), dimension.getAttribute(HANDLES));
                 } finally {
                     tool.setActive(false);
                 }

@@ -27,7 +27,7 @@ public class MapToolOverlay extends JComponent
     private static final int LABEL_MARGIN = 8;
     private static final double LABEL_WIDTH_RATIO = 0.15;
     private static final float LABEL_TEXT_SCALE = 0.9f;
-    private static final float LABEL_BASE_FONT_SIZE = 14f;
+    private static final float LABEL_BASE_FONT_SIZE = 16f;
     private static final float LABEL_INITIAL_SCALE = 2f;
     private static final int LABEL_ANIMATION_START_DELAY_MS = 300;
     private static final int LABEL_ANIMATION_DURATION_MS = 500;

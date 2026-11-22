@@ -66,7 +66,11 @@ public final class OverlayStyle
     public static final Color ACCENT_SOFT_SOLID = new Color(66, 64, 84);
     /** Text on lavender. */
     public static final Color ON_ACCENT = new Color(22, 22, 22);
-    /** Charcoal outline that keeps map markings readable on any terrain. */
+    /**
+     * Selected nodes and handles on the map: the website's light teal (#8BC4D3).
+     */
+    public static final Color MAP_SELECTION = new Color(139, 196, 211);
+    /** Dark edge behind text on the map (keeps labels readable on any terrain). */
     public static final Color OUTLINE = new Color(22, 22, 22);
     /**
      * Previewed (not yet applied) results: amber, like WorldPainter's yellow
@@ -178,7 +182,7 @@ public final class OverlayStyle
         button.setFocusPainted(false);
         button.setRolloverEnabled(true);
         button.setForeground(TEXT);
-        button.setFont(font(Font.PLAIN, 12.5f));
+        button.setFont(font(Font.PLAIN, 14f));
         button.setBorder(new EmptyBorder(5, 12, 5, 12));
         button.setMargin(new Insets(5, 12, 5, 12));
         button.setIconTextGap(6);
@@ -194,7 +198,7 @@ public final class OverlayStyle
     public static <B extends AbstractButton> B primaryButton(B button) {
         button(button);
         button.putClientProperty(PRIMARY, Boolean.TRUE);
-        button.setFont(font(Font.BOLD, 12.5f));
+        button.setFont(font(Font.BOLD, 14f));
         return button;
     }
 
@@ -298,7 +302,7 @@ public final class OverlayStyle
                     button(button);
                 else if (inner instanceof JLabel label) {
                     label.setForeground(TEXT_MUTED);
-                    label.setFont(font(Font.BOLD, 11.5f));
+                    label.setFont(font(Font.BOLD, 13f));
                 }
         }
     }
@@ -337,7 +341,7 @@ public final class OverlayStyle
         item.setOpaque(true);
         item.setBackground(SURFACE_SOLID);
         item.setForeground(TEXT);
-        item.setFont(font(Font.PLAIN, 12.5f));
+        item.setFont(font(Font.PLAIN, 14f));
         item.setBorder(new EmptyBorder(6, 10, 6, 14));
     }
 
@@ -375,7 +379,7 @@ public final class OverlayStyle
             field.setSelectionColor(ACCENT_SOFT_SOLID);
             field.setSelectedTextColor(TEXT);
             field.setBorder(new EmptyBorder(3, 6, 3, 4));
-            field.setFont(font(Font.PLAIN, 12.5f));
+            field.setFont(font(Font.PLAIN, 14f));
             // visible keyboard focus: lavender edge while typing
             field.addFocusListener(new java.awt.event.FocusAdapter() {
                 @Override
@@ -395,14 +399,14 @@ public final class OverlayStyle
     /** Label text inside surfaces. */
     public static JLabel label(JLabel label, boolean muted) {
         label.setForeground(muted ? TEXT_MUTED : TEXT);
-        label.setFont(font(Font.PLAIN, 12.5f));
+        label.setFont(font(Font.PLAIN, 14f));
         return label;
     }
 
     /** Small plain button, e.g. the strip's "Reset zoom". */
     public static JButton smallButton(JButton button) {
         button(button);
-        button.setFont(font(Font.PLAIN, 11f));
+        button.setFont(font(Font.PLAIN, 12.5f));
         button.setBorder(new EmptyBorder(2, 8, 2, 8));
         return button;
     }
