@@ -24,6 +24,28 @@ test('included tools use four SVG icon links with descriptions instead of thumbn
   assert.doesNotMatch(strip, /→|↗|tool-shortcut-image|tutorial\//);
 });
 
+test('landing uses a plain introduction, then tools, examples, and modest project information', () => {
+  const home = html.get('index.html');
+  assert.match(home, /<h1>MacroMachine<\/h1>/);
+  assert.ok(home.indexOf('id="tools"') < home.indexOf('id="in-action"'));
+  assert.ok(home.indexOf('id="in-action"') < home.indexOf('id="project"'));
+  assert.match(home, /<figure class="screenshot home-preview">/);
+  assert.match(home, /id="download"><button[^>]*disabled/);
+  assert.equal([...home.matchAll(/<button[^>]*disabled/g)].length, 1);
+  for (const content of html.values()) assert.doesNotMatch(content, /closing-cta|cta-orbit|world-window|window-chrome|art-ribbon|floating-label|gradient-text|card-arrow/);
+  for (const feature of features) assert.ok(html.get(`${feature.slug}.html`).includes(`<h1>${escape(feature.name)}</h1>`));
+});
+
+test('landing introduction positions the plugin within the WorldPainter and World Machine workflow', () => {
+  const home = html.get('index.html');
+  const intro = home.match(/<p class="hero-description">([^<]+)<\/p>/)?.[1];
+  assert.ok(intro);
+  assert.match(intro, /plugin that runs inside WorldPainter/);
+  assert.match(intro, /fills gaps in a WorldPainter \+ World Machine workflow/);
+  for (const capability of ['individual schematic placement', 'terrain-aware connected roads and rivers', 'reusable layer-editing macros', 'live 3D feedback based on exports']) assert.ok(intro.includes(capability), capability);
+  assert.match(home, /<meta name="description" content="[^"]*WorldPainter \+ World Machine workflow/);
+});
+
 test('all local links, fragments, scripts, stylesheets, and image sources resolve', async () => {
   for (const [page, content] of html) {
     for (const match of content.matchAll(/(?:href|src|data-image|data-showcase-src|data-showcase-link)="([^"]+)"/g)) {
@@ -47,6 +69,7 @@ test('copies all source images but displays only documentation images in the gal
   assert.ok(images.length >= 30);
   const gallery = html.get('gallery.html').split('<div class="gallery-grid">')[1].split('</section>')[0];
   const documented = documentationImages(images);
+  assert.equal(documented.length, 24);
   for (const image of images) {
     assert.equal(gallery.includes(`src="${imageUrl(image)}"`), documented.includes(image), `Gallery inclusion: ${image}`);
     await assert.doesNotReject(access(join(output, 'assets/images', image)));

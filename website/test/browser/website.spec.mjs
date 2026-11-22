@@ -66,12 +66,41 @@ test('gallery filtering and image dialog work with focus restoration', async ({ 
 
 test('placeholder is honest and feature links lead to real pages', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: 'Download MacroMachine', exact: false }).click();
   await expect(page.locator('#download button')).toBeDisabled();
   await expect(page.locator('#download-note')).toContainText('placeholder');
   await page.locator('.feature-card[href="citylayer.html"]').click();
   await expect(page).toHaveURL(/citylayer\.html$/);
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Place and edit');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('CityLayer');
+});
+
+test('landing screenshot keeps its proportions and does not move on hover', async ({ page }) => {
+  await page.goto('/');
+  const image = page.locator('.home-preview .image-expand img');
+  await expect(image).toBeVisible();
+  const before = await image.evaluate((element) => ({
+    ratio: element.getBoundingClientRect().width / element.getBoundingClientRect().height,
+    naturalRatio: element.naturalWidth / element.naturalHeight,
+    transform: getComputedStyle(element).transform,
+  }));
+  expect(before.ratio).toBeCloseTo(before.naturalRatio, 2);
+  expect(before.transform).toBe('none');
+  await image.hover();
+  await expect(image).toHaveCSS('transform', 'none');
+});
+
+test('review pages render at the current viewport', async ({ page }, testInfo) => {
+  for (const slug of ['index', 'citylayer', '3d-preview', 'gallery', 'get-started']) {
+    await page.goto(`/${slug}.html`);
+    await page.locator('img').evaluateAll(async (images) => {
+      await Promise.all(images.map((image) => {
+        image.loading = 'eager';
+        return image.decode().catch(() => {});
+      }));
+    });
+    if (slug === 'citylayer') await expect(page.locator('.feature-story.with-media').first()).toBeVisible();
+    if (slug === '3d-preview') await expect(page.locator('.feature-story.text-story').first()).toBeVisible();
+    await page.screenshot({ path: testInfo.outputPath(`${slug}.png`), fullPage: true });
+  }
 });
 
 test('mobile menu opens, follows links, and closes with Escape', async ({ page }, testInfo) => {
@@ -93,7 +122,7 @@ test('landing page is usable without JavaScript and respects reduced motion', as
   const page = await context.newPage();
   await page.goto('http://127.0.0.1:4173/');
   await page.locator('.feature-card[href="citylayer.html"]').click();
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Place and edit');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('CityLayer');
   await context.close();
 });
 
