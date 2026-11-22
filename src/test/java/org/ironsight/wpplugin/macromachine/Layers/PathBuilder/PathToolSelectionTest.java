@@ -1263,6 +1263,9 @@ class PathToolSelectionTest
                     assertEquals(0, colourPixels(radius, strip, PathTool.PROFILE_WATER), "no water in the radius view");
                     // height view: terrain and the water above it, read from the dimension
                     tool.setEditMode(PathTool.EditMode.HEIGHT);
+                    paintOverlay300(overlay);
+                    strip = tool.stripBounds(); // the height view's strip is taller
+                    overlay.clearInfoText(); // the editor's info message would cover the short strip
                     var height = paintOverlay300(overlay);
                     assertTrue(colourPixels(height, strip, PathTool.PROFILE_WATER) > 20, "water drawn");
                     assertTrue(colourPixels(height, strip, PathTool.PROFILE_TERRAIN) > 100, "terrain drawn");
@@ -1429,15 +1432,15 @@ class PathToolSelectionTest
                     overlay.setSize(300, 300);
                     view.setSize(300, 300);
                     paintOverlay300(overlay); // establishes the strip mapping
-                    int stripTop = tool.stripBounds().y;
+                    int stripTop = tool.stripBounds().y; // 60 px tall: 20% of 300
                     // left half dragged as a rectangle -> zoomed to roughly that half
                     int left = 8 + 24, right = 300 - 8 - 24, middle = (left + right) / 2;
                     overlay.dispatchEvent(new MouseEvent(overlay, MouseEvent.MOUSE_PRESSED, 0,
-                            InputEvent.BUTTON1_DOWN_MASK, left, stripTop + 30, 1, false, MouseEvent.BUTTON1));
+                            InputEvent.BUTTON1_DOWN_MASK, left, stripTop + 22, 1, false, MouseEvent.BUTTON1));
                     overlay.dispatchEvent(new MouseEvent(overlay, MouseEvent.MOUSE_DRAGGED, 0,
-                            InputEvent.BUTTON1_DOWN_MASK, middle, stripTop + 90, 1, false, MouseEvent.NOBUTTON));
+                            InputEvent.BUTTON1_DOWN_MASK, middle, stripTop + 52, 1, false, MouseEvent.NOBUTTON));
                     overlay.dispatchEvent(new MouseEvent(overlay, MouseEvent.MOUSE_RELEASED, 0, 0, middle,
-                            stripTop + 90, 1, false, MouseEvent.BUTTON1));
+                            stripTop + 52, 1, false, MouseEvent.BUTTON1));
                     double[] zoom = tool.stripZoom();
                     assertEquals(0, zoom[0], 0.01);
                     assertEquals(0.5, zoom[1], 0.02);
@@ -1446,30 +1449,30 @@ class PathToolSelectionTest
                     // wheel in at the right edge of the visible part, then out again
                     paintOverlay300(overlay);
                     overlay.dispatchEvent(new java.awt.event.MouseWheelEvent(overlay, MouseEvent.MOUSE_WHEEL, 0, 0,
-                            right, stripTop + 60, 0, false, java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, -1));
+                            right, stripTop + 40, 0, false, java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, -1));
                     zoom = tool.stripZoom();
                     assertEquals(0.5, zoom[1], 0.02, "zooms around the mouse: its position stays put");
                     assertEquals(0.4, zoom[1] - zoom[0], 0.02);
                     for (int notch = 0; notch < 20; notch++)
                         overlay.dispatchEvent(new java.awt.event.MouseWheelEvent(overlay, MouseEvent.MOUSE_WHEEL, 0, 0,
-                                right, stripTop + 60, 0, false, java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1,
+                                right, stripTop + 40, 0, false, java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1,
                                 1));
                     zoom = tool.stripZoom();
                     assertEquals(0, zoom[0], 1e-9, "zooming out stops at the whole path");
                     assertEquals(1, zoom[1], 1e-9);
                     // reset
                     overlay.dispatchEvent(new java.awt.event.MouseWheelEvent(overlay, MouseEvent.MOUSE_WHEEL, 0, 0,
-                            middle, stripTop + 60, 0, false, java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, -1));
+                            middle, stripTop + 40, 0, false, java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, -1));
                     reset.doClick();
                     assertEquals(0, tool.stripZoom()[0]);
                     assertEquals(1, tool.stripZoom()[1]);
                     assertFalse(reset.isEnabled());
                     // the strip takes its clicks: even in add mode nothing is added below it
                     tool.addModeToggle().doClick();
-                    assertTrue(overlay.contains(middle, stripTop + 60));
+                    assertTrue(overlay.contains(middle, stripTop + 40));
                     int nodes = dimension.getAttribute(HANDLES).size();
-                    SwingUtilities.getDeepestComponentAt(view, middle, stripTop + 60);
-                    assertSame(overlay, javax.swing.SwingUtilities.getDeepestComponentAt(view, middle, stripTop + 60),
+                    SwingUtilities.getDeepestComponentAt(view, middle, stripTop + 40);
+                    assertSame(overlay, javax.swing.SwingUtilities.getDeepestComponentAt(view, middle, stripTop + 40),
                             "the strip (overlay) is the mouse target, not the map");
                     assertEquals(nodes, dimension.getAttribute(HANDLES).size());
                 } finally {
@@ -1656,11 +1659,11 @@ class PathToolSelectionTest
                     overlay.setSize(300, 400);
                     var image = new BufferedImage(300, 400, BufferedImage.TYPE_INT_ARGB);
                     overlay.paint(image.createGraphics());
-                    assertEquals(PathTool.UNRAVELLED_HEIGHT, tool.stripBounds().height, "radius view: normal height");
+                    assertEquals(80, tool.stripBounds().height, "radius view: 20% of the viewport");
                     tool.setEditMode(PathTool.EditMode.HEIGHT);
                     overlay.paint(image.createGraphics());
                     int grown = tool.stripBounds().height;
-                    assertTrue(grown > PathTool.UNRAVELLED_HEIGHT, "grows to fit the height axis: " + grown);
+                    assertTrue(grown > 80, "grows to fit the height axis: " + grown);
                     assertTrue(grown <= 200, "at most half the viewport");
                     assertEquals(400 - 8, tool.stripBounds().y + grown, "still anchored at the bottom");
                     var perBlock = tool.stripPixelsPerBlock();

@@ -3158,8 +3158,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             double innerWidth = getWidth() - 16 - 48;
             double perBlock = innerWidth / Math.max(1e-9, (zoomTo - zoomFrom) * length);
             int needed = (int) Math.ceil(blocks * perBlock) + 22 + 14;
-            int maximum = Math.max(UNRAVELLED_HEIGHT, getHeight() / 2);
-            return Math.max(UNRAVELLED_HEIGHT, Math.min(maximum, needed));
+            return Math.max(stripMinimumHeight(), Math.min(stripMaximumHeight(), needed));
+        }
+
+        /** The strip takes at least 20% of the viewport's height... */
+        int stripMinimumHeight() {
+            return (int) Math.round(getHeight() * STRIP_MIN_SHARE);
+        }
+
+        /** ...and at most half of it. */
+        int stripMaximumHeight() {
+            return Math.max(stripMinimumHeight(), (int) Math.round(getHeight() * STRIP_MAX_SHARE));
         }
 
         /**
@@ -3254,7 +3263,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 return;
             stripHeight = editMode == EditMode.HEIGHT
                     ? heightViewStripHeight(curve, first, last, length)
-                    : UNRAVELLED_HEIGHT;
+                    : stripMinimumHeight();
             reserveStripSpace(stripHeight + 12);
 
             Rectangle strip = unravelledBounds();
@@ -3820,6 +3829,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     static final Color HOVER_GLOW = new Color(255, 255, 255, 150);
     /** Height of the unravelled path strip at the bottom of the viewport. */
     static final int UNRAVELLED_HEIGHT = 120;
+    /** Share of the viewport's height the path profile strip takes: 20% to 50%. */
+    static final double STRIP_MIN_SHARE = 0.2, STRIP_MAX_SHARE = 0.5;
     static final Color PROFILE_TERRAIN = new Color(136, 110, 84, 235);
     static final Color PROFILE_WATER = new Color(64, 128, 214, 235);
     /**
