@@ -2101,12 +2101,11 @@ class PathToolSelectionTest
                     assertTrue(dialog.isResizable(), "no size restrictions");
                     assertEquals(java.awt.Dialog.ModalityType.MODELESS, dialog.getModalityType(), "map stays usable");
                     assertTrue(checkbox(tool, "Only downhill").isSelected(), "river preset applied");
-                    for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "set water:",
+                    for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "Set water",
                             "Carve river bed", "Transition multiplier", "Transition profile"))
                         assertTrue(settingShown(tool, option), option + " for a river");
                     assertTrue(checkbox(tool, "Carve river bed").isSelected(), "river preset carves");
-                    assertFalse(presetButton(tool, "River preset").getParent().isVisible(), "no presets for a river");
-                    assertFalse(settingShown(tool, "set terrain:"), "a river only carves or not");
+                    assertTrue(checkbox(tool, "Set water").isSelected(), "river preset sets water");
                     assertFalse(settingShown(tool, "Curve strength"), "no curve strength for a river");
                     assertFalse(settingShown(tool, "Flatten road"), "no road option for a river");
                     assertFalse(settingShown(tool, "Limit slope to x/16 blocks"), "no slope limit for a river");
@@ -2114,18 +2113,16 @@ class PathToolSelectionTest
                     assertEquals("Apply as road", dialog.getTitle());
                     assertFalse(checkbox(tool, "Only downhill").isSelected(), "road preset applied");
                     assertTrue(checkbox(tool, "Set paint").isSelected());
-                    for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "set water:",
+                    for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "Set water",
                             "Flatten road", "Curve strength", "Limit slope to x/16 blocks", "Transition multiplier",
                             "Transition profile"))
                         assertTrue(settingShown(tool, option), option + " for a road");
-                    assertFalse(settingShown(tool, "set terrain:"), "a road only flattens or not");
                     assertTrue(checkbox(tool, "Flatten road").isSelected(), "road preset flattens");
                     assertEquals(1.7, ((Number) settingSpinner(tool, "Curve strength").getValue()).doubleValue(), 1e-6);
                     assertFalse(settingShown(tool, "Carve river bed"), "no river option for a road");
-                    assertFalse(presetButton(tool, "Road preset").getParent().isVisible(), "no presets for a road");
-                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.Settings").doClick();
-                    assertTrue(presetButton(tool, "Road preset").getParent().isVisible(), "presets in Path settings");
-                    assertTrue(settingShown(tool, "set terrain:"));
+                    assertFalse(checkbox(tool, "Set water").isSelected(), "road preset leaves water alone");
+                    assertNull(findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.Settings"),
+                            "no plain path settings");
 
                     // Apply from the dialog builds the path as before
                     dimension.setHeightAt(40, 20, 90f);
@@ -2170,15 +2167,6 @@ class PathToolSelectionTest
                     && panel.getComponent(1) instanceof javax.swing.JSpinner spinner)
                 return spinner;
         throw new AssertionError("no spinner " + text);
-    }
-
-    private static JButton presetButton(PathTool tool, String text) {
-        for (var row : tool.pathSettingsPanel().getComponents())
-            if (row instanceof javax.swing.JPanel panel)
-                for (var child : panel.getComponents())
-                    if (child instanceof JButton button && text.equals(button.getText()))
-                        return button;
-        throw new AssertionError("no button " + text);
     }
 
     /** An entry of the viewport's Path menu. */

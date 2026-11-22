@@ -60,11 +60,10 @@ public final class PathToolScreenshot
             state.slopeSpinner = spinners.get(1);
             state.slopeSpinner.setValue((double) slopeLimit);
             if (mode.equals("river") || mode.equals("road")) {
-                String buttonText = mode.equals("river") ? "River preset" : "Road preset";
-                JButton presetButton = findButton(frame, buttonText);
-                if (presetButton == null)
-                    throw new IllegalStateException("Road options panel does not contain " + buttonText);
-                presetButton.doClick();
+                if (mode.equals("river"))
+                    pathTool.applyRiverPreset();
+                else
+                    pathTool.applyRoadPreset();
             }
             if (state.dropdown.getItemCount() != 6)
                 throw new IllegalStateException("Expected six transition profiles");

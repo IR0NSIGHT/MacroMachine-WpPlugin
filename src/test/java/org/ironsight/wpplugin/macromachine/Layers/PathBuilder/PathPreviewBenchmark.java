@@ -101,7 +101,7 @@ public class PathPreviewBenchmark
                             default -> null;
                         }));
                 setActive(state.tool, true);
-                ((JButton) find(state.tool.pathSettingsPanel(), "River preset", false)).doClick();
+                state.tool.applyRiverPreset();
                 if (!layer)
                     state.tool.overlayParts()
                             .stream()
