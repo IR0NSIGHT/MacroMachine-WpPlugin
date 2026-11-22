@@ -40,22 +40,26 @@ import javax.swing.plaf.basic.BasicSpinnerUI;
  */
 public final class OverlayStyle
 {
-    /** Panels, labels, buttons on the map (translucent charcoal). */
-    public static final Color SURFACE = new Color(22, 22, 22, 232);
+    /**
+     * Panels, labels, buttons on the map: website surface #222222, nearly opaque.
+     */
+    public static final Color SURFACE = new Color(34, 34, 34, 240);
     /** Popups (opaque: windows cannot be translucent everywhere): panel #222222. */
     public static final Color SURFACE_SOLID = new Color(34, 34, 34);
-    public static final Color SURFACE_HOVER = new Color(46, 46, 46, 240);
-    public static final Color SURFACE_PRESSED = new Color(58, 58, 58, 245);
+    public static final Color SURFACE_HOVER = new Color(43, 43, 43, 245);
+    public static final Color SURFACE_PRESSED = new Color(52, 52, 52, 250);
     /** Text fields inside surfaces. */
     public static final Color FIELD = new Color(22, 22, 22);
-    public static final Color HAIRLINE = new Color(255, 255, 255, 26);
+    public static final Color HAIRLINE = new Color(255, 255, 255, 56);
     /** Popup and field borders. */
-    public static final Color BORDER = new Color(58, 58, 58);
+    public static final Color BORDER = new Color(83, 83, 83);
     public static final Color TEXT = Color.WHITE;
     public static final Color TEXT_MUTED = new Color(176, 176, 176);
     public static final Color TEXT_DISABLED = new Color(110, 110, 110);
     /** Lavender: selection, handles, active toggles, primary buttons. */
     public static final Color ACCENT = new Color(205, 199, 255);
+    /** Lavender lightened towards white (website --accent-hover). */
+    public static final Color ACCENT_HOVER = new Color(225, 221, 255);
     /** Lavender behind active toggles. */
     public static final Color ACCENT_SOFT = new Color(205, 199, 255, 44);
     /** Menu selection on #222222. */
@@ -70,7 +74,7 @@ public final class OverlayStyle
      */
     public static final Color PREVIEW = new Color(251, 191, 36);
     public static final Color WARNING = new Color(251, 146, 60);
-    public static final Color DANGER = new Color(232, 104, 104);
+    public static final Color DANGER = new Color(229, 107, 107);
     /** Website green (actions / paths). */
     public static final Color SUCCESS = new Color(132, 188, 133);
     /**
@@ -82,7 +86,7 @@ public final class OverlayStyle
     /** Panels and labels: near-square corners (website cards). */
     public static final int RADIUS = 4;
     /** Outline of secondary (outlined) buttons. */
-    public static final Color BUTTON_OUTLINE = new Color(255, 255, 255, 64);
+    public static final Color BUTTON_OUTLINE = new Color(255, 255, 255, 102);
 
     private static Font baseFont;
 
@@ -97,8 +101,11 @@ public final class OverlayStyle
             String[] families = GraphicsEnvironment.isHeadless()
                     ? new String[0]
                     : GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
-            boolean segoe = Arrays.asList(families).contains("Segoe UI");
-            baseFont = new Font(segoe ? "Segoe UI" : Font.DIALOG, Font.PLAIN, 12);
+            var installed = Arrays.asList(families);
+            String family = installed.contains("Inter")
+                    ? "Inter"
+                    : installed.contains("Segoe UI") ? "Segoe UI" : Font.DIALOG;
+            baseFont = new Font(family, Font.PLAIN, 12);
         }
         return baseFont.deriveFont(style, size);
     }
@@ -205,10 +212,13 @@ public final class OverlayStyle
                     : model.isPressed() && model.isArmed()
                             ? SURFACE_PRESSED
                             : model.isRollover() ? SURFACE_HOVER : SURFACE;
-            if (primary && button.isEnabled())
+            // primary actions and active toggles: solid lavender (website's primary
+            // button / pressed filter chip), lighter on hover
+            boolean lavender = button.isEnabled() && (primary || model.isSelected());
+            if (lavender)
                 fill = model.isPressed() && model.isArmed()
                         ? ACCENT.darker()
-                        : model.isRollover() ? new Color(222, 218, 255) : ACCENT;
+                        : model.isRollover() ? ACCENT_HOVER : ACCENT;
             // pill shaped (website buttons): lavender for primary actions, outlined
             // charcoal for the rest; an active toggle gets a lavender tint and edge
             Graphics2D g = (Graphics2D) graphics.create();
@@ -217,19 +227,18 @@ public final class OverlayStyle
                 double w = button.getWidth(), h = button.getHeight();
                 g.setColor(fill);
                 g.fill(pill(0, 0, w, h));
-                if (!primary) {
-                    if (model.isSelected()) {
-                        g.setColor(ACCENT_SOFT);
-                        g.fill(pill(0, 0, w, h));
-                    }
-                    g.setColor(model.isSelected() ? ACCENT : BUTTON_OUTLINE);
+                if (!lavender) {
+                    g.setColor(model.isRollover() && button.isEnabled() ? TEXT : BUTTON_OUTLINE);
                     g.setStroke(new BasicStroke(1f));
                     g.draw(pill(0.5, 0.5, w - 1, h - 1));
                 }
             } finally {
                 g.dispose();
             }
-            button.setForeground(!button.isEnabled() ? TEXT_DISABLED : primary ? ON_ACCENT : TEXT);
+            button.setForeground(!button.isEnabled() ? TEXT_DISABLED : lavender ? ON_ACCENT : TEXT);
+            for (Component child : button.getComponents())
+                if (child instanceof JLabel label)
+                    label.setForeground(button.getForeground());
             ((Graphics2D) graphics).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
                     RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             super.paint(graphics, component);

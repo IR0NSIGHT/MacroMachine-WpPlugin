@@ -2377,6 +2377,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     overlaysButton, overlaysMenuButton, addButton))
                 org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.button(control);
             overlaysMenuButton.setBorder(new EmptyBorder(5, 6, 5, 6));
+            // active toggles are solid lavender: their icons switch to charcoal
+            var onAccent = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.ON_ACCENT;
+            overlaysButton.setSelectedIcon(LucideIcons.icon("eye", 16, onAccent));
+            addButton.setSelectedIcon(LucideIcons.icon("plus", 16, onAccent));
             setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.PLAIN, 12f)); // painted labels
             installStripMouse();
             updateModeButton();
