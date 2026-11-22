@@ -1999,6 +1999,21 @@ class PathToolSelectionTest
         });
     }
 
+    @Test
+    void directionArrowFollowsTheSmoothLineNotTheBlockStaircase() {
+        // a shallow straight segment (1 block up per 5 across), sampled per block
+        var nodes = List.of(new javax.vecmath.Point4f(10, 50, 70, 4), new javax.vecmath.Point4f(90, 66, 70, 4));
+        List<javax.vecmath.Point4f> curve = PathToolBackend.getPathFromNodes(nodes, 0).path;
+        int middle = curve.size() / 2;
+        double expected = Math.toDegrees(Math.atan2(16, 80));
+        for (double zoom : new double[]{1, 4}) { // pixels per block
+            var direction = PathTool.arrowTangent(curve, 0, curve.size() - 1, middle,
+                    sample -> new java.awt.geom.Point2D.Double(sample.x * zoom, sample.y * zoom));
+            double degrees = Math.toDegrees(Math.atan2(direction[1], direction[0]));
+            assertEquals(expected, degrees, 3, "at " + zoom + " px per block");
+        }
+    }
+
     /** A transform handle of the current selection, in view coordinates. */
     private static Point viewHandle(PathTool tool, TestView view, String which) {
         var nodes = new ArrayList<java.awt.geom.Point2D.Double>();

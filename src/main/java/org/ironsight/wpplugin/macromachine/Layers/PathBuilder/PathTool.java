@@ -2593,12 +2593,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 if (from.distance(to) < MIN_ARROW_SEGMENT_PX)
                     continue;
                 int middle = (first[j] + last[j] + 1) / 2;
-                Point before = toView(curve.get(Math.max(0, middle - 2)));
-                Point after = toView(curve.get(Math.min(curve.size() - 1, middle + 2)));
-                double dx = after.x - before.x, dy = after.y - before.y, length = Math.hypot(dx, dy);
-                if (length < 1e-6)
+                double[] direction = arrowTangent(curve, first[j], Math.min(curve.size() - 1, last[j] + 1), middle,
+                        sample -> toViewExact(new Point2D.Double(sample.x, sample.y)));
+                if (direction == null)
                     continue;
-                paintChevron(g, toView(curve.get(middle)), dx / length, dy / length,
+                paintChevron(g, toView(curve.get(middle)), direction[0], direction[1],
                         PathEditHandles.segmentSelected(j, shownSelection()));
             }
         }
@@ -3742,6 +3741,33 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private float displayedStrength() {
         return dragStrength != null ? dragStrength : handleStrength;
+    }
+
+    /**
+     * Distance (px) on either side of a direction arrow over which the curve's
+     * direction is measured. The curve is sampled per block, so its direction over
+     * just a few samples follows the block staircase (snapping to 0, 27, 45...
+     * degrees) instead of the smooth line.
+     */
+    static final double ARROW_TANGENT_PX = 12;
+
+    /**
+     * Unit direction of the curve at sample {@code middle} on screen, measured
+     * between the samples about {@link #ARROW_TANGENT_PX} before and after it,
+     * staying within samples {@code from}..{@code to} of the segment; {@code null}
+     * where it has no length.
+     */
+    static double[] arrowTangent(List<Point4f> curve, int from, int to, int middle,
+            java.util.function.Function<Point4f, Point2D> toScreen) {
+        Point2D centre = toScreen.apply(curve.get(middle));
+        int before = middle, after = middle;
+        while (before > from && toScreen.apply(curve.get(before)).distance(centre) < ARROW_TANGENT_PX)
+            before--;
+        while (after < to && toScreen.apply(curve.get(after)).distance(centre) < ARROW_TANGENT_PX)
+            after++;
+        Point2D a = toScreen.apply(curve.get(before)), b = toScreen.apply(curve.get(after));
+        double dx = b.getX() - a.getX(), dy = b.getY() - a.getY(), length = Math.hypot(dx, dy);
+        return length < 1e-6 ? null : new double[]{dx / length, dy / length};
     }
 
     /** Segments shorter than this on screen get no direction arrow. */
