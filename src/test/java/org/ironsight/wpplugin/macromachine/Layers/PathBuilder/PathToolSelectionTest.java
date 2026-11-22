@@ -1090,7 +1090,7 @@ class PathToolSelectionTest
                     findComponent(view, JPanel.class, "PathTool.OperationPanel").setVisible(false);
                     var image = paintOverlay300(overlay);
                     int cyan = 0, amber = 0; // handle colour (lavender) vs preview amber
-                    var handle = PathTool.SELECTED_NODE_FILL;
+                    var handle = PathTool.HANDLE_COLOR;
                     for (int x = 0; x < 300; x++)
                         for (int y = 60; y < 300; y++) {
                             var color = new java.awt.Color(image.getRGB(x, y), true);
@@ -2790,10 +2790,13 @@ class PathToolSelectionTest
         assertEquals(PathTool.HANDLE_HOVER.getRGB(), hover.getRGB(20, 20));
         assertEquals(0, plain.getRGB(20 + PathTool.HOVERED_HANDLE_SIZE / 2 - 1, 20), "plain handle is smaller");
         assertNotEquals(0, hover.getRGB(20 + PathTool.HOVERED_HANDLE_SIZE / 2 - 1, 20));
-        var ring = new java.awt.image.BufferedImage(40, 40, java.awt.image.BufferedImage.TYPE_INT_ARGB);
-        PathTool.paintNodeHover(ring.createGraphics(), new Point(20, 20));
-        assertNotEquals(0, ring.getRGB(20 + 14, 20));
-        assertEquals(0, ring.getRGB(20, 20), "glow ring leaves the marker untouched");
+        // a hovered node: white and bigger ring
+        var node = new java.awt.image.BufferedImage(40, 40, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        var hoveredNode = new java.awt.image.BufferedImage(40, 40, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        PathTool.paintNode(node.createGraphics(), new Point(20, 20), false, false);
+        PathTool.paintNode(hoveredNode.createGraphics(), new Point(20, 20), false, true);
+        assertEquals(0, node.getRGB(20 + 11, 20), "plain ring is smaller");
+        assertEquals(PathTool.HANDLE_HOVER.getRGB(), hoveredNode.getRGB(20 + 11, 20));
     }
 
     @Test

@@ -152,7 +152,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * hovered.
      */
     static final Color HANDLE_COLOR = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT;
-    static final Color HANDLE_HOVER = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.MAP_SELECTION;
+    /** Hovered things (nodes, handles) turn primary text colour and grow. */
+    static final Color HANDLE_HOVER = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT;
     /**
      * Thin dark edge behind text on the map (markings themselves have no outline).
      */
@@ -3707,9 +3708,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     if (shows(showNodes) && inserted)
                         paintInsertedNode(g, point);
                     else if (shows(showNodes))
-                        paintNode(g, point, selected);
-                    if (shows(showNodes) && isHovered(HitKind.NODE, i, 0))
-                        paintNodeHover(g, point);
+                        paintNode(g, point, selected, isHovered(HitKind.NODE, i, 0));
                     if (shows(showLabel))
                         paintNodeLabel(g, point, i + 1, selected);
                 }
@@ -3827,17 +3826,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return hovered != null && hovered.kind() == kind && hovered.node() == node && hovered.side() == side;
     }
 
-    /**
-     * Soft glow ring around a hovered node; marker and hit area keep their size.
-     */
-    static void paintNodeHover(Graphics2D g, Point point) {
-        int ring = NODE_OUTLINE_DIAMETER + 8;
-        g.setStroke(new BasicStroke(4f));
-        g.setColor(HOVER_GLOW);
-        g.drawOval(point.x - ring / 2, point.y - ring / 2, ring, ring);
-    }
-
-    static final Color HOVER_GLOW = new Color(255, 255, 255, 150);
     /** Height of the unravelled path strip at the bottom of the viewport. */
     static final int UNRAVELLED_HEIGHT = 120;
     /** Share of the viewport's height the path profile strip takes: 20% to 50%. */
@@ -3965,9 +3953,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * otherwise.
      */
     static void paintNode(Graphics2D g, Point point, boolean selected) {
-        double size = NODE_DIAMETER - 2;
-        g.setColor(selected ? SELECTED_NODE_FILL : UNSELECTED_NODE_FILL);
-        g.setStroke(new BasicStroke(selected ? 3f : 2f));
+        paintNode(g, point, selected, false);
+    }
+
+    /**
+     * Hovered: the ring turns primary text colour (white) and grows; hit area
+     * unchanged.
+     */
+    static void paintNode(Graphics2D g, Point point, boolean selected, boolean hovered) {
+        double size = NODE_DIAMETER - 2 + (hovered ? 6 : 0);
+        g.setColor(hovered ? HANDLE_HOVER : selected ? SELECTED_NODE_FILL : UNSELECTED_NODE_FILL);
+        g.setStroke(new BasicStroke(selected || hovered ? 3f : 2f));
         g.draw(new Ellipse2D.Double(point.x - size / 2, point.y - size / 2, size, size));
     }
 
