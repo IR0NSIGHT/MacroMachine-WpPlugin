@@ -106,7 +106,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Click selected node",
                     "Cycle radius, curve strength, height-above-ground and transform handles"),
             new HelpItem("Transform editor",
-                    "Box around the selection: drag a corner to scale, the top handle to rotate, the bottom handle to move; drag the pivot (crosshair) to rotate / scale around another point; typed numbers are degrees or the scale factor"),
+                    "Box around the selection: drag a corner to scale, the top handle to rotate, the bottom handle to move (nodes themselves do not drag here); drag the pivot (crosshair) to rotate / scale around another point; typed numbers are degrees or the scale factor"),
             new HelpItem("Drag radius / tangent / height handle",
                     "Scale radius of selected nodes / change curve strength / raise or lower selected nodes"),
             new HelpItem("Shift while dragging", "Precise drag: nodes and handles move at 1/10 speed"),
@@ -1767,7 +1767,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         if (pressedNode < 0 && gestureDragged)
             overlay.updateDrag(point);
-        else if (pressedNode >= 0 && gestureDragged) {
+        else if (pressedNode >= 0 && gestureDragged && editMode != EditMode.TRANSFORM) {
+            // (the Transform editor moves only with its move handle, which carries the
+            // pivot)
             if (!selectedNodes.contains(pressedNode)) {
                 if (!gestureAdditive)
                     selectedNodes.clear();

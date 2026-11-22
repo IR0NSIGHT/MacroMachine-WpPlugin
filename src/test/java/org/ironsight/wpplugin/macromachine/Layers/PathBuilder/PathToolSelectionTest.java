@@ -1798,6 +1798,13 @@ class PathToolSelectionTest
                     overlay.setSize(200, 200);
                     paintOverlay(overlay); // box and handles paint
 
+                    // dragging a node does nothing here: only the move handle moves (with the
+                    // pivot)
+                    drag(tool, view.worldToView(40, 60), view.worldToView(50, 70));
+                    assertNodes(dimension, 40, 60, 72, 60, 30, 70, 80, 60, 70);
+                    assertEquals(Set.of(0, 2), tool.selectedNodes());
+                    assertEquals(PathTool.EditMode.TRANSFORM, tool.editMode());
+
                     // rotate: the handle above the box, dragged to the right of the pivot (60, 60)
                     var rotate = viewHandle(tool, view, "rotate");
                     assertEquals(PathTool.HitKind.TRANSFORM_ROTATE, tool.hitTest(rotate).kind());
