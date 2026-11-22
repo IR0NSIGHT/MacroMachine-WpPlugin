@@ -1815,14 +1815,27 @@ class PathToolSelectionTest
                     var corner = viewHandle(tool, view, "corner0");
                     assertEquals(PathTool.HitKind.TRANSFORM_SCALE, tool.hitTest(corner).kind());
                     Point pivotView = view.worldToView(60, 80);
-                    drag(tool, corner, new Point((corner.x + pivotView.x) / 2, (corner.y + pivotView.y) / 2));
+                    // mid drag the box fits the scaled nodes as tightly as at rest (the padding
+                    // does not scale with them)
+                    Point half = new Point((corner.x + pivotView.x) / 2, (corner.y + pivotView.y) / 2);
+                    tool.handleSelectionPress(corner);
+                    tool.handleSelectionDrag(half);
+                    var during = tool.shownTransformBox(tool.movedPathForTest()).box();
+                    tool.handleSelectionRelease(half);
+                    var after = tool.shownTransformBox(tool.getCurrentPath()).box();
+                    assertEquals(after.getWidth(), during.getWidth(), 1e-6, "no jump on release");
+                    assertEquals(after.getHeight(), during.getHeight(), 1e-6);
                     assertNodes(dimension, 60, 60, 72, 60, 30, 70, 60, 80, 70);
                     assertEquals(-90, tool.transformBoxAngle(), 1e-9, "scaling keeps the box angle");
 
                     // move: the handle below the box; the placed pivot moves along
                     var move = viewHandle(tool, view, "move");
                     assertEquals(PathTool.HitKind.TRANSFORM_MOVE, tool.hitTest(move).kind());
-                    drag(tool, move, new Point(move.x + 10, move.y));
+                    // the pivot travels with the selection while dragging, not only on release
+                    tool.handleSelectionPress(move);
+                    tool.handleSelectionDrag(new Point(move.x + 10, move.y));
+                    assertEquals(new java.awt.geom.Point2D.Double(70, 80), tool.displayedPivot());
+                    tool.handleSelectionRelease(new Point(move.x + 10, move.y));
                     assertNodes(dimension, 70, 60, 72, 60, 30, 70, 70, 80, 70);
                     assertEquals(new java.awt.geom.Point2D.Double(70, 80), tool.transformPivotWorld());
                     assertEquals(-90, tool.transformBoxAngle(), 1e-9, "moving keeps the box angle");

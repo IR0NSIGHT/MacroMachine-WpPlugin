@@ -376,6 +376,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private boolean gestureAdditive;
     private ArrayList<Point4f> gesturePath;
     private ArrayList<Point4f> movedPath;
+
+    /** The path as dragged so far (exposed for tests). */
+    List<Point4f> movedPathForTest() {
+        return movedPath;
+    }
     private Point gestureWorldStart;
     /**
      * Virtual cursor (view coordinates) driving node/handle drags. It follows the
@@ -2002,6 +2007,39 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return handleStrength;
     }
 
+    /**
+     * Pivot as shown (world): while it is dragged, where it is dragged to; during a
+     * move, carried along with the selection; otherwise where it is.
+     */
+    Point2D.Double displayedPivot() {
+        if (draggedPivot != null)
+            return draggedPivot;
+        if (transformPivotStart == null)
+            return transformPivotWorld();
+        if (transformOp == HitKind.TRANSFORM_MOVE)
+            return new Point2D.Double(transformPivotStart.x + transformMoveX, transformPivotStart.y + transformMoveY);
+        return transformPivotStart;
+    }
+
+    /**
+     * The transform box as drawn: {@code box} in the frame that {@code frame} maps
+     * to the view.
+     */
+    record ShownBox(java.awt.geom.AffineTransform frame, java.awt.geom.Rectangle2D.Double box) {
+    }
+
+    /**
+     * Always the tight box around the nodes as drawn ({@code path}: moved while
+     * dragging), turned by the box angle plus the rotation so far, so it never runs
+     * ahead of the nodes and nothing jumps on release. {@code null} without a
+     * selection.
+     */
+    ShownBox shownTransformBox(List<Point4f> path) {
+        double angle = transformBoxAngle() + (transformOp == HitKind.TRANSFORM_ROTATE ? transformDegrees : 0);
+        var box = PathTransformBox.box(viewNodes(path), selectedNodes, angle);
+        return box == null ? null : new ShownBox(PathTransformBox.frame(angle), box);
+    }
+
     /** Angle of the transform box: 0 (axis aligned) for a new selection. */
     double transformBoxAngle() {
         return transformAngleSelection.equals(selectedNodes) ? transformAngle : 0;
@@ -3461,16 +3499,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
          * handles follow the transform.
          */
         private void paintTransformBox(Graphics2D g, List<Point4f> path) {
-            var transformView = transformViewNow();
-            var base = transformView != null && gesturePath != null ? gesturePath : path;
-            double angle = transformBoxAngle();
-            var box = PathTransformBox.box(viewNodes(base), selectedNodes, angle);
-            if (box == null)
+            var shown = shownTransformBox(path);
+            if (shown == null)
                 return;
-            var transform = transformView != null
-                    ? new java.awt.geom.AffineTransform(transformView)
-                    : new java.awt.geom.AffineTransform();
-            transform.concatenate(PathTransformBox.frame(angle));
+            var box = shown.box();
+            var transform = shown.frame();
             java.util.function.UnaryOperator<Point2D> at = p -> transform.transform(p, null);
             Shape outline = transform.createTransformedShape(box);
             g.setStroke(new BasicStroke(3f));
@@ -3494,10 +3527,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     isHovered(HitKind.TRANSFORM_ROTATE, -1, 0));
             paintIconHandle(g, "move", at.apply(PathTransformBox.moveHandle(box)), turned,
                     isHovered(HitKind.TRANSFORM_MOVE, -1, 0));
-            Point2D pivot = toViewExact(draggedPivot != null
-                    ? draggedPivot
-                    : transformPivotStart != null ? transformPivotStart : transformPivotWorld());
-            paintIconHandle(g, "crosshair", pivot, 0, isHovered(HitKind.TRANSFORM_PIVOT, -1, 0));
+            paintIconHandle(g, "crosshair", toViewExact(displayedPivot()), 0,
+                    isHovered(HitKind.TRANSFORM_PIVOT, -1, 0));
         }
 
         private void paintEditHandles(Graphics2D g, List<Point4f> path) {
