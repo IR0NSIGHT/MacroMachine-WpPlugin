@@ -4210,7 +4210,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 refreshPreview();
                 overlay.showTransientInfoText("Path applied", 1800);
             });
-            pathSettingsPanel.add(applyButton);
+            // not a settings row: the dialog keeps it bottom right (see
+            // openPathSettings)
         }
 
         {
@@ -4495,6 +4496,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return pathSettingsPanel;
     }
 
+    /** Apply as road / river: the settings dialog's Apply button (for tests). */
+    JButton applyButton() {
+        return applyButton;
+    }
+
     JDialog pathSettingsDialog() {
         return pathSettingsDialog;
     }
@@ -4534,7 +4540,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             pathSettingsDialog.setName("PathTool.PathSettingsDialog");
             pathSettingsDialog.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
             pathSettingsDialog.setResizable(true);
-            pathSettingsDialog.setContentPane(new JScrollPane(pathSettingsPanel));
+            // settings scroll; Apply stays bottom right, outside the scrolling part
+            JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            footer.add(applyButton);
+            JPanel content = new JPanel(new BorderLayout());
+            content.add(new JScrollPane(pathSettingsPanel), BorderLayout.CENTER);
+            content.add(footer, BorderLayout.SOUTH);
+            pathSettingsDialog.setContentPane(content);
             pathSettingsDialog.pack();
             if (owner != null)
                 pathSettingsDialog.setLocationRelativeTo(owner);

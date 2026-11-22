@@ -188,7 +188,7 @@ class PathToolSelectionTest
                         tool[0].selectedNodes();
                     }
                     case "deactivate" -> assertDoesNotThrow(() -> tool[0].setActive(false));
-                    case "apply" -> findButton(tool[0].pathSettingsPanel(), "PathTool.Apply").doClick();
+                    case "apply" -> tool[0].applyButton().doClick();
                     default -> throw new AssertionError(action);
                 }
                 callbacks.remove(0).run();
@@ -301,7 +301,7 @@ class PathToolSelectionTest
                     ((JSpinner) spinner.get(tool)).setValue(1.0d);
                     assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
                     dimension.setHeightAt(60, 20, 90f);
-                    findButton(tool.pathSettingsPanel(), "PathTool.Apply").doClick();
+                    tool.applyButton().doClick();
                     assertNotEquals(90f, dimension.getHeightAt(60, 20));
                     assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
                     tool.setActive(false);
@@ -2077,7 +2077,7 @@ class PathToolSelectionTest
                     // the tool settings panel is empty: everything moved into the viewport
                     assertEquals(0, tool.getOptionsPanel().getComponentCount());
                     assertNotNull(pathItem(tool, "PathTool.Help"));
-                    assertNotNull(findButton(tool.pathSettingsPanel(), "PathTool.Apply"));
+                    assertNotNull(tool.applyButton());
                     // toolbar: Node, Segment, Path
                     var segment = findComponent(view, JButton.class, "PathTool.SegmentMenu");
                     var pathButton = findComponent(view, JButton.class, "PathTool.PathMenu");
@@ -2100,6 +2100,14 @@ class PathToolSelectionTest
                     assertEquals("Apply as river", dialog.getTitle());
                     assertTrue(dialog.isResizable(), "no size restrictions");
                     assertEquals(java.awt.Dialog.ModalityType.MODELESS, dialog.getModalityType(), "map stays usable");
+                    // Apply sits bottom right, outside the scrolling settings
+                    var content = dialog.getContentPane();
+                    content.validate();
+                    var apply = SwingUtilities.convertRectangle(tool.applyButton().getParent(),
+                            tool.applyButton().getBounds(), content);
+                    assertTrue(content.getWidth() - apply.getMaxX() < 16, "Apply at the right edge");
+                    assertTrue(content.getHeight() - apply.getMaxY() < 16, "Apply at the bottom");
+                    assertNull(SwingUtilities.getAncestorOfClass(javax.swing.JScrollPane.class, tool.applyButton()));
                     assertTrue(checkbox(tool, "Only downhill").isSelected(), "river preset applied");
                     for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "Set water",
                             "Carve river bed", "Transition multiplier", "Transition profile"))
@@ -2126,7 +2134,7 @@ class PathToolSelectionTest
 
                     // Apply from the dialog builds the path as before
                     dimension.setHeightAt(40, 20, 90f);
-                    findButton(tool.pathSettingsPanel(), "PathTool.Apply").doClick();
+                    tool.applyButton().doClick();
                     assertNotEquals(90f, dimension.getHeightAt(40, 20), "terrain flattened along the road");
 
                     // the dialog goes away with the tool
@@ -2513,7 +2521,7 @@ class PathToolSelectionTest
                     var handles = List.copyOf(dimension.getAttribute(HANDLES));
                     dimension.setHeightAt(100, 100, 100f);
                     dimension.setEventsInhibited(true);
-                    findButton(tool.pathSettingsPanel(), "PathTool.Apply").doClick();
+                    tool.applyButton().doClick();
                     assertTrue(dimension.isEventsInhibited());
                     dimension.setEventsInhibited(false);
                     assertEquals(handles, dimension.getAttribute(HANDLES));
