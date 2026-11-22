@@ -1444,6 +1444,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         overlay.repaint();
     }
 
+    /**
+     * Cursor for a hovered element; nodes do not drag in the Transform editor (only
+     * its move handle does), so there they only show they can be clicked.
+     */
+    int hoverCursor(Hit hit) {
+        return hit.kind() == HitKind.NODE && editMode == EditMode.TRANSFORM ? Cursor.HAND_CURSOR : hit.kind().cursor;
+    }
+
     private boolean cursorOverridden;
 
     /**
@@ -1454,7 +1462,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         if (overlayView == null)
             return;
         Cursor wanted = hovered != null
-                ? Cursor.getPredefinedCursor(hovered.kind().cursor)
+                ? Cursor.getPredefinedCursor(hoverCursor(hovered))
                 : addMode.isSelected() ? Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR) : null;
         if (wanted == null) {
             if (cursorOverridden)

@@ -1804,6 +1804,11 @@ class PathToolSelectionTest
                     assertNodes(dimension, 40, 60, 72, 60, 30, 70, 80, 60, 70);
                     assertEquals(Set.of(0, 2), tool.selectedNodes());
                     assertEquals(PathTool.EditMode.TRANSFORM, tool.editMode());
+                    var nodeHit = tool.hitTest(view.worldToView(40, 60));
+                    assertEquals(java.awt.Cursor.HAND_CURSOR, tool.hoverCursor(nodeHit), "no move cursor on nodes");
+                    tool.setEditMode(PathTool.EditMode.RADIUS);
+                    assertEquals(java.awt.Cursor.MOVE_CURSOR, tool.hoverCursor(nodeHit), "nodes drag elsewhere");
+                    tool.setEditMode(PathTool.EditMode.TRANSFORM);
 
                     // rotate: the handle above the box, dragged to the right of the pivot (60, 60)
                     var rotate = viewHandle(tool, view, "rotate");
