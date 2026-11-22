@@ -118,8 +118,8 @@ public class PathProfileDemo
                     overlay.paint(g);
                     g.dispose();
                     // the strip only
-                    ImageIO.write(image.getSubimage(0, 620 - PathTool.UNRAVELLED_HEIGHT - 16, 900,
-                            PathTool.UNRAVELLED_HEIGHT + 16), "png", new File(args[0]));
+                    ImageIO.write(image.getSubimage(0, tool.stripBounds().y - 8, 900, tool.stripBounds().height + 16),
+                            "png", new File(args[0]));
                 }
             } catch (Exception exception) {
                 throw new RuntimeException(exception);

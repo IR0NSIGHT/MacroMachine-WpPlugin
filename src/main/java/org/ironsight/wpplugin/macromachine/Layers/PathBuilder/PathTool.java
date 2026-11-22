@@ -1847,6 +1847,16 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return new double[]{overlay.pixelsPerBlock(), (overlay.stripBottom - overlay.stripTop) / overlay.stripRange};
     }
 
+    /** The strip's bounds as last painted (exposed for tests). */
+    Rectangle stripBounds() {
+        return overlay.unravelledBounds();
+    }
+
+    /** Where node {@code index} was last drawn in the strip (exposed for tests). */
+    Point stripNodePoint(int index) {
+        return overlay.stripNodes[index];
+    }
+
     /** The dropdown next to the overlays button (exposed for tests). */
     JPopupMenu overlaysMenu() {
         return overlay.overlaysMenu();
@@ -2422,6 +2432,33 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             repaint();
         }
 
+        /** Node markers as last painted in the strip, by node index. */
+        private Point[] stripNodes = new Point[0];
+
+        /**
+         * A plain click on a node in the strip selects just that node (nothing else: no
+         * toggling, no editor cycling). Ignored while an operation is previewed, whose
+         * node numbers can differ from the path's.
+         */
+        void selectStripNodeAt(Point point) {
+            if (operationPreview != null)
+                return;
+            int nearest = -1;
+            double best = NODE_HIT_RADIUS * NODE_HIT_RADIUS;
+            for (int i = 0; i < stripNodes.length; i++) {
+                double distance = stripNodes[i].distanceSq(point);
+                if (distance <= best) {
+                    best = distance;
+                    nearest = i;
+                }
+            }
+            if (nearest < 0 || nearest >= getCurrentPath().size())
+                return;
+            selectedNodes.clear();
+            selectedNodes.add(nearest);
+            selectionChanged();
+        }
+
         /** Middle-mouse panning of the strip (like WorldPainter's map). */
         private Point panStart;
         private double panFrom, panCentre;
@@ -2514,6 +2551,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     var drag = zoomDrag(start, event.getPoint());
                     if (drag != null)
                         zoomStripTo(zoomBand(start, event.getPoint(), drag), drag);
+                    else
+                        selectStripNodeAt(event.getPoint());
                     repaint();
                 }
 
@@ -2595,8 +2634,63 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
          * for tests).
          */
         Rectangle unravelledBounds() {
-            int height = UNRAVELLED_HEIGHT;
-            return new Rectangle(8, getHeight() - height - 8, Math.max(0, getWidth() - 16), height);
+            return new Rectangle(8, getHeight() - stripHeight - 8, Math.max(0, getWidth() - 16), stripHeight);
+        }
+
+        /**
+         * Current strip height: grows in the height view to fit the whole height axis.
+         */
+        private int stripHeight = UNRAVELLED_HEIGHT;
+
+        /**
+         * Keeps info messages and the reset button clear of the strip (layout outside
+         * painting).
+         */
+        private void reserveStripSpace(int reserve) {
+            if (reserve == lastBottomReserve)
+                return;
+            lastBottomReserve = reserve;
+            SwingUtilities.invokeLater(() -> {
+                setBottomReserve(reserve);
+                resetZoomButton.setVisible(reserve > 0);
+                layoutResetZoomButton();
+            });
+        }
+
+        /**
+         * Height view: blocks are square, so the strip needs (height range in blocks) x
+         * (pixels per block at the current zoom) to show the whole height axis. It
+         * grows to that, from the normal height up to half the viewport; beyond that
+         * the view is panned / zoomed vertically.
+         */
+        private int heightViewStripHeight(List<Point4f> curve, int first, int last, double length) {
+            var resolved = new ArrayList<Point4f>(curve.size());
+            for (Point4f sample : curve)
+                resolved.add(new Point4f(sample));
+            if (overlayDimension != null)
+                resolveHeights(resolved, overlayDimension);
+            double low = Double.MAX_VALUE, high = -Double.MAX_VALUE;
+            for (int k = first; k <= last; k++) {
+                Point4f sample = curve.get(k);
+                Float ground = groundAt(sample);
+                var values = new ArrayList<Integer>(List.of(blockOf(sample.z), blockOf(resolved.get(k).z)));
+                if (ground != null) {
+                    values.add(Math.round(ground));
+                    if (overlayDimension != null)
+                        values.add(overlayDimension.getWaterLevelAt(Math.round(sample.x), Math.round(sample.y)));
+                }
+                for (int value : values) {
+                    low = Math.min(low, value);
+                    high = Math.max(high, value + 1);
+                }
+            }
+            // same span as the painted profile: a band of ground below, a little air above
+            double blocks = high + 2 - (low - Math.max(3, (high - low) * 0.3));
+            double innerWidth = getWidth() - 16 - 48;
+            double perBlock = innerWidth / Math.max(1e-9, (zoomTo - zoomFrom) * length);
+            int needed = (int) Math.ceil(blocks * perBlock) + 22 + 14;
+            int maximum = Math.max(UNRAVELLED_HEIGHT, getHeight() / 2);
+            return Math.max(UNRAVELLED_HEIGHT, Math.min(maximum, needed));
         }
 
         /**
@@ -2609,17 +2703,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
          */
         private void paintUnravelled(Graphics2D g, List<Point4f> path) {
             boolean visible = shows(showProfile) && path.size() >= 2;
-            int reserve = visible ? UNRAVELLED_HEIGHT + 12 : 0;
-            if (reserve != lastBottomReserve) {
-                lastBottomReserve = reserve;
-                SwingUtilities.invokeLater(() -> { // no layout while painting
-                    setBottomReserve(reserve);
-                    resetZoomButton.setVisible(reserve > 0);
-                    layoutResetZoomButton();
-                });
-            }
-            if (!visible)
+            if (!visible) {
+                reserveStripSpace(0);
                 return;
+            }
             var curve = curveFor(path);
             int[] segments = cachedSegments;
             int n = path.size();
@@ -2640,6 +2727,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             double length = along[last];
             if (length <= 0)
                 return;
+            stripHeight = editMode == EditMode.HEIGHT
+                    ? heightViewStripHeight(curve, first, last, length)
+                    : UNRAVELLED_HEIGHT;
+            reserveStripSpace(stripHeight + 12);
 
             Rectangle strip = unravelledBounds();
             g.setColor(new Color(20, 20, 20, 175));
@@ -2818,14 +2909,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 for (int i = 0; i < n; i++)
                     nodeY[i] = middle;
             }
+            var points = new Point[n];
             for (int i = 0; i < n; i++) {
                 var point = new Point((int) Math.round(xAt.applyAsDouble(along[nodeSample[i]])),
                         (int) Math.round(nodeY[i]));
+                points[i] = point;
                 boolean selected = selection.contains(i);
                 paintNode(g, point, selected);
                 if (shows(showLabel))
                     paintNodeLabel(g, point, i + 1, selected);
             }
+            stripNodes = points;
             var drag = zoomDragStart != null && zoomDragNow != null ? zoomDrag(zoomDragStart, zoomDragNow) : null;
             if (drag != null)
                 paintZoomBand(g, zoomBand(zoomDragStart, zoomDragNow, drag), drag);

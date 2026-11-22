@@ -1252,8 +1252,8 @@ class PathToolSelectionTest
                     var overlay = (MapToolOverlay) findComponent(view, JButton.class, "PathTool.EditorMode")
                             .getParent();
                     overlay.setSize(300, 300);
-                    var strip = new java.awt.Rectangle(8, 300 - PathTool.UNRAVELLED_HEIGHT - 8, 284,
-                            PathTool.UNRAVELLED_HEIGHT);
+                    paintOverlay300(overlay);
+                    var strip = tool.stripBounds(); // grows in the height view
                     // radius view: strip drawn, no water
                     var radius = paintOverlay300(overlay);
                     assertNotEquals(0, radius.getRGB(strip.x + 4, strip.y + 4), "strip background");
@@ -1341,8 +1341,8 @@ class PathToolSelectionTest
                             .getParent();
                     overlay.setSize(300, 300);
                     tool.setEditMode(PathTool.EditMode.HEIGHT);
-                    var strip = new java.awt.Rectangle(8, 300 - PathTool.UNRAVELLED_HEIGHT - 8, 284,
-                            PathTool.UNRAVELLED_HEIGHT);
+                    paintOverlay300(overlay);
+                    var strip = tool.stripBounds(); // grows in the height view
                     // falling path: green only
                     dimension.setAttribute(HANDLES,
                             new ArrayList<>(List.of(20f, 60f, 90f, 4f, 60f, 60f, 80f, 4f, 100f, 60f, 70f, 4f)), true);
@@ -1426,7 +1426,7 @@ class PathToolSelectionTest
                     overlay.setSize(300, 300);
                     view.setSize(300, 300);
                     paintOverlay300(overlay); // establishes the strip mapping
-                    int stripTop = 300 - PathTool.UNRAVELLED_HEIGHT - 8;
+                    int stripTop = tool.stripBounds().y;
                     // left half dragged as a rectangle -> zoomed to roughly that half
                     int left = 8 + 24, right = 300 - 8 - 24, middle = (left + right) / 2;
                     overlay.dispatchEvent(new MouseEvent(overlay, MouseEvent.MOUSE_PRESSED, 0,
@@ -1502,7 +1502,8 @@ class PathToolSelectionTest
                             .getParent();
                     overlay.setSize(300, 300);
                     tool.setEditMode(PathTool.EditMode.HEIGHT);
-                    int top = 300 - PathTool.UNRAVELLED_HEIGHT - 8;
+                    paintOverlay300(overlay);
+                    int top = tool.stripBounds().y;
                     paintOverlay300(overlay);
                     for (int step = 0; step < 4; step++) {
                         var perBlock = tool.stripPixelsPerBlock();
@@ -1542,7 +1543,8 @@ class PathToolSelectionTest
                             .getParent();
                     overlay.setSize(300, 300);
                     tool.setEditMode(PathTool.EditMode.HEIGHT);
-                    int top = 300 - PathTool.UNRAVELLED_HEIGHT - 8;
+                    paintOverlay300(overlay);
+                    int top = tool.stripBounds().y;
                     var reset = findComponent(view, JButton.class, "PathTool.ProfileResetZoom");
                     // a 30 degree drag still counts as horizontal: no height centre set
                     paintOverlay300(overlay);
@@ -1591,6 +1593,85 @@ class PathToolSelectionTest
     }
 
     @Test
+    void clickingANodeInTheStripSelectsJustThatNode() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                dimension.setAttribute(HANDLES,
+                        new ArrayList<>(List.of(20f, 60f, 70f, 4f, 60f, 60f, 70f, 4f, 100f, 60f, 70f, 4f)), true);
+                TestView view = new TestView(dimension);
+                PathTool tool = synchronousTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    var overlay = (MapToolOverlay) findComponent(view, JButton.class, "PathTool.EditorMode")
+                            .getParent();
+                    overlay.setSize(300, 300);
+                    click(view, 20, 60);
+                    click(view, 100, 60, InputEvent.CTRL_DOWN_MASK);
+                    assertEquals(Set.of(0, 2), tool.selectedNodes());
+                    paintOverlay300(overlay);
+                    Point node2 = tool.stripNodePoint(1);
+                    // plain click on node 2 in the strip: only node 2 selected
+                    dragOnStrip(overlay, node2.x + 2, node2.y + 1, node2.x + 2, node2.y + 1);
+                    assertEquals(Set.of(1), tool.selectedNodes());
+                    // a Ctrl+click is still just a click there: no adding
+                    Point node3 = tool.stripNodePoint(2);
+                    overlay.dispatchEvent(new MouseEvent(overlay, MouseEvent.MOUSE_PRESSED, 0,
+                            InputEvent.BUTTON1_DOWN_MASK | InputEvent.CTRL_DOWN_MASK, node3.x, node3.y, 1, false,
+                            MouseEvent.BUTTON1));
+                    overlay.dispatchEvent(new MouseEvent(overlay, MouseEvent.MOUSE_RELEASED, 0,
+                            InputEvent.CTRL_DOWN_MASK, node3.x, node3.y, 1, false, MouseEvent.BUTTON1));
+                    assertEquals(Set.of(2), tool.selectedNodes());
+                    // clicking empty strip space leaves the selection alone
+                    dragOnStrip(overlay, (node2.x + node3.x) / 2, 300 - 20, (node2.x + node3.x) / 2, 300 - 20);
+                    assertEquals(Set.of(2), tool.selectedNodes());
+                    assertEquals(12, dimension.getAttribute(HANDLES).size(), "no node added or moved");
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
+    void heightViewStripGrowsToFitTheHeightAxisUpToHalfTheViewport() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                // a steep path: 60 blocks of height over 80 blocks of length
+                dimension.setAttribute(HANDLES, new ArrayList<>(List.of(20f, 60f, 40f, 4f, 100f, 60f, 100f, 4f)), true);
+                TestView view = new TestView(dimension);
+                PathTool tool = synchronousTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    var overlay = (MapToolOverlay) findComponent(view, JButton.class, "PathTool.EditorMode")
+                            .getParent();
+                    overlay.setSize(300, 400);
+                    var image = new BufferedImage(300, 400, BufferedImage.TYPE_INT_ARGB);
+                    overlay.paint(image.createGraphics());
+                    assertEquals(PathTool.UNRAVELLED_HEIGHT, tool.stripBounds().height, "radius view: normal height");
+                    tool.setEditMode(PathTool.EditMode.HEIGHT);
+                    overlay.paint(image.createGraphics());
+                    int grown = tool.stripBounds().height;
+                    assertTrue(grown > PathTool.UNRAVELLED_HEIGHT, "grows to fit the height axis: " + grown);
+                    assertTrue(grown <= 200, "at most half the viewport");
+                    assertEquals(400 - 8, tool.stripBounds().y + grown, "still anchored at the bottom");
+                    var perBlock = tool.stripPixelsPerBlock();
+                    assertEquals(perBlock[0], perBlock[1], 1e-6, "blocks stay square");
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
     void stripZoomDragsLikePlotlyHorizontalVerticalOrBox() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             try {
@@ -1606,7 +1687,7 @@ class PathToolSelectionTest
                     overlay.setSize(300, 300);
                     tool.setEditMode(PathTool.EditMode.HEIGHT);
                     paintOverlay300(overlay);
-                    int top = 300 - PathTool.UNRAVELLED_HEIGHT - 8, left = 32, right = 268, middle = 150;
+                    int top = tool.stripBounds().y, left = 32, right = 268, middle = 150;
                     var reset = findComponent(view, JButton.class, "PathTool.ProfileResetZoom");
 
                     // horizontal drag (moves < 8 px vertically): distance only
