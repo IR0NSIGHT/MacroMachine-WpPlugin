@@ -1887,17 +1887,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     g.fillOval(0, 10, 5, 5);
                     g.fillOval(11, 1, 5, 5);
                 }
-                case TRANSFORM -> {
-                    g.setStroke(new BasicStroke(1f));
-                    g.drawRect(2, 5, 11, 9);
-                    g.drawLine(7, 5, 7, 1);
-                    g.setColor(SELECTED_NODE_FILL);
-                    g.fillOval(5, 0, 4, 4);
-                    g.fillRect(0, 3, 4, 4);
-                    g.fillRect(11, 3, 4, 4);
-                    g.fillRect(0, 12, 4, 4);
-                    g.fillRect(11, 12, 4, 4);
-                }
+                case TRANSFORM -> LucideIcons.paint(g, "scaling", new Point2D.Double(size / 2.0, size / 2.0), size, 0,
+                        SELECTED_NODE_HALO, null);
                 case HEIGHT -> {
                     g.drawLine(0, 12, 15, 12);
                     g.drawLine(10, 12, 10, 4);
@@ -3461,19 +3452,21 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     at.apply(PathTransformBox.rotateHandle(box))), 1.5f);
             strokeWithHalo(g, new Line2D.Double(at.apply(PathTransformBox.bottomCentre(box)),
                     at.apply(PathTransformBox.moveHandle(box))), 1.5f);
+            // handles are Lucide icons turned with the box (scale arrows point out of
+            // their corner)
+            double turned = -Math.toDegrees(Math.atan2(transform.getShearY(), transform.getScaleX()));
             for (int corner = 0; corner < 4; corner++)
-                paintSquareHandle(g, at.apply(PathTransformBox.corner(box, corner)),
+                paintIconHandle(g, corner % 2 == 0 ? "move-diagonal-2" : "move-diagonal",
+                        at.apply(PathTransformBox.corner(box, corner)), turned,
                         isHovered(HitKind.TRANSFORM_SCALE, -1, corner));
-            var rotate = at.apply(PathTransformBox.rotateHandle(box));
-            paintRoundHandle(g, rotate, isHovered(HitKind.TRANSFORM_ROTATE, -1, 0));
-            paintRotateGlyph(g, rotate);
-            var move = at.apply(PathTransformBox.moveHandle(box));
-            paintSquareHandle(g, move, isHovered(HitKind.TRANSFORM_MOVE, -1, 0));
-            paintMoveGlyph(g, move);
+            paintIconHandle(g, "rotate-ccw", at.apply(PathTransformBox.rotateHandle(box)), turned,
+                    isHovered(HitKind.TRANSFORM_ROTATE, -1, 0));
+            paintIconHandle(g, "move", at.apply(PathTransformBox.moveHandle(box)), turned,
+                    isHovered(HitKind.TRANSFORM_MOVE, -1, 0));
             Point2D pivot = draggedPivot != null
                     ? toViewExact(draggedPivot)
                     : transformPivotView != null ? transformPivotView : toViewExact(transformPivotWorld());
-            paintPivot(g, pivot, isHovered(HitKind.TRANSFORM_PIVOT, -1, 0));
+            paintIconHandle(g, "crosshair", pivot, 0, isHovered(HitKind.TRANSFORM_PIVOT, -1, 0));
         }
 
         private void paintEditHandles(Graphics2D g, List<Point4f> path) {
@@ -3710,41 +3703,16 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         g.drawRect(x, y, size, size);
     }
 
-    /** Curved arrow on the rotate handle. */
-    static void paintRotateGlyph(Graphics2D g, Point2D center) {
-        double r = 3.5;
-        g.setStroke(new BasicStroke(1.5f));
-        g.setColor(SELECTED_NODE_HALO);
-        g.draw(new java.awt.geom.Arc2D.Double(center.getX() - r, center.getY() - r, 2 * r, 2 * r, 30, 270,
-                java.awt.geom.Arc2D.OPEN));
-    }
+    /** Transform handles: Lucide icon size (px), larger while hovered. */
+    static final int ICON_HANDLE_SIZE = 20, HOVERED_ICON_HANDLE_SIZE = 24;
 
-    /** Four-way arrow on the move handle. */
-    static void paintMoveGlyph(Graphics2D g, Point2D center) {
-        double x = center.getX(), y = center.getY(), r = 4;
-        g.setStroke(new BasicStroke(1.5f));
-        g.setColor(SELECTED_NODE_HALO);
-        g.draw(new Line2D.Double(x - r, y, x + r, y));
-        g.draw(new Line2D.Double(x, y - r, x, y + r));
-    }
-
-    /** Pivot: ring with a crosshair, in the handle styling. */
-    static void paintPivot(Graphics2D g, Point2D center, boolean hovered) {
-        double r = hovered ? 8 : 6, arm = r + 5, x = center.getX(), y = center.getY();
-        var ring = new Ellipse2D.Double(x - r, y - r, 2 * r, 2 * r);
-        var cross = new Path2D.Double();
-        cross.moveTo(x - arm, y);
-        cross.lineTo(x + arm, y);
-        cross.moveTo(x, y - arm);
-        cross.lineTo(x, y + arm);
-        g.setStroke(new BasicStroke(4f));
-        g.setColor(SELECTED_NODE_HALO);
-        g.draw(ring);
-        g.draw(cross);
-        g.setStroke(new BasicStroke(2f));
-        g.setColor(hovered ? Color.WHITE : SELECTED_NODE_FILL);
-        g.draw(ring);
-        g.draw(cross);
+    /**
+     * A handle drawn as a Lucide icon in the handle styling: cyan with a dark
+     * outline, white and larger while hovered.
+     */
+    static void paintIconHandle(Graphics2D g, String icon, Point2D center, double degrees, boolean hovered) {
+        LucideIcons.paint(g, icon, center, hovered ? HOVERED_ICON_HANDLE_SIZE : ICON_HANDLE_SIZE, degrees,
+                hovered ? Color.WHITE : SELECTED_NODE_FILL, SELECTED_NODE_HALO);
     }
 
     static void paintRoundHandle(Graphics2D g, Point2D center, boolean hovered) {
