@@ -73,7 +73,8 @@ jobs:
               'org/pepsoft/worldpainter/icons/citytool.png',
               'org/pepsoft/worldpainter/icons/macrooperation.png',
               'org/pepsoft/worldpainter/icons/macroselectionlayer.png',
-              'org/pepsoft/worldpainter/icons/roadtool.png',
+              'org/pepsoft/worldpainter/icons/pathtool.png',
+              'icons/waypoints.svg',
               'org.pepsoft.worldpainter.plugins',
               'org.ironsight.wpplugin.macromachine.properties'
           )

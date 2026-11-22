@@ -103,7 +103,12 @@ public class PathPreviewBenchmark
                 setActive(state.tool, true);
                 ((JButton) find(state.tool.getOptionsPanel(), "River preset", false)).doClick();
                 if (!layer)
-                    ((JToggleButton) find(state.tool.getOptionsPanel(), "PathTool.ShowLayer", true)).doClick();
+                    state.tool.overlayParts()
+                            .stream()
+                            .filter(part -> "PathTool.ShowLayer".equals(part.getName()))
+                            .findFirst()
+                            .orElseThrow()
+                            .doClick();
                 var initial = new ArrayList<Float>();
                 for (int i = 0; i < 19; i++) {
                     initial.add((float) x(i));
@@ -123,7 +128,7 @@ public class PathPreviewBenchmark
                 state.awaiting = first;
                 state.expected = 19;
                 times[0] = System.nanoTime();
-                state.tool.tick(x(19), y(19), true, true, 1f);
+                state.tool.addNode(x(19), y(19));
                 times[1] = System.nanoTime();
             });
             if (layer)
@@ -151,7 +156,7 @@ public class PathPreviewBenchmark
                 times[3] = System.nanoTime();
                 for (int i = 20; i < 30; i++) {
                     long begin = System.nanoTime();
-                    state.tool.tick(x(i), y(i), true, true, 1f);
+                    state.tool.addNode(x(i), y(i));
                     times[14] = System.nanoTime();
                     times[i - 16] = times[14] - begin;
                 }

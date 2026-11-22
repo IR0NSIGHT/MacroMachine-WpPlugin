@@ -43,7 +43,7 @@ public final class PathToolScreenshot
         CaptureState state = new CaptureState();
         SwingUtilities.invokeAndWait(() -> {
             PathTool pathTool = new PathTool();
-            JFrame frame = new JFrame("Road Tool Options");
+            JFrame frame = new JFrame("Path Tool Options");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.setResizable(false);
             frame.add(pathTool.getOptionsPanel());

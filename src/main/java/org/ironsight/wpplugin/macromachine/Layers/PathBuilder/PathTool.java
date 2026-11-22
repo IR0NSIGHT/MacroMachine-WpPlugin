@@ -13,6 +13,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.AWTEventListener;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
 import java.beans.PropertyVetoException;
@@ -22,6 +26,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashSet;
@@ -82,23 +87,37 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
     }
 
-    public static final String HELP_TITLE = "Road Tool";
+    public static final String HELP_TITLE = "Path Tool";
     public static final String HELP_EXPLANATION = """
-            Use the Road Tool to connect clicked positions into a smooth path that is blended into existing terrain.
+            Use the Path Tool to connect clicked positions into a smooth path that is blended into existing terrain.
             The path width follows the brush radius and is previewed on the map before applying. Use presets to start
             quickly, then fine-tune blending, slope and transition settings below.
             """;
-    public static final List<HelpItem> HELP_ITEMS = List.of(new HelpItem("Right click", "Append a path node"),
+    public static final List<HelpItem> HELP_ITEMS = List.of(
+            new HelpItem("Ctrl + left click (empty map)", "Add a node after the last selected node (or at the end)"),
+            new HelpItem("Double-tap Ctrl / Add button",
+                    "Add mode: left click on empty map adds nodes; Esc or double-tap to leave"),
             new HelpItem("Left click / drag", "Select one, box select, or move selected nodes"),
-            new HelpItem("Ctrl + left click / drag", "Add nodes to selection or move the selected group"),
+            new HelpItem("Ctrl + left click / drag",
+                    "Toggle node in selection, add box to selection, or move the group"),
+            new HelpItem("Node / Segment menus (top left)",
+                    "Node: randomize position, randomize radius, snap to terrain, only downhill. Segment: subdivide. Preview, then Apply (Enter) or Cancel (Esc); type a number for the main value, Tab for the next"),
+            new HelpItem("Editor button (top left)", "Shows the current editor; click to pick another"),
+            new HelpItem("Click selected node", "Cycle radius, curve strength and height-above-ground handles"),
+            new HelpItem("Drag radius / tangent / height handle",
+                    "Scale radius of selected nodes / change curve strength / raise or lower selected nodes"),
+            new HelpItem("Shift while dragging", "Precise drag: nodes and handles move at 1/10 speed"),
+            new HelpItem("Type a number (nodes selected)",
+                    "Sets radius / height above ground / curve strength of the selected nodes; - negates, / inverts; Enter or left click applies, Esc or right click cancels"),
             new HelpItem("New path", "Clear the path and preview"),
+            new HelpItem("Reverse direction", "Reverse node order, e.g. so a river flows the other way"),
             new HelpItem("Delete / Ctrl+A / Escape", "Delete selected / select all / clear selection or cancel drag"),
             new HelpItem("Backspace", "Delete last point on current path"),
             new HelpItem("Undo / redo", "Cancel any drag and clear selection before undo or redo"),
             new HelpItem("Apply", "Commit previewed path to terrain / paint / water"),
             new HelpItem("Brush radius", "Controls path width and transition size"),
-            new HelpItem("HUD controls",
-                    "Show or hide node labels, brush radii, path line, node markers and yellow preview layer"),
+            new HelpItem("Overlays (top left)",
+                    "Toggle all overlays; the arrow lists each part with toggle / Only / All but buttons"),
             new HelpItem("River / Road preset", "Apply recommended settings for rivers or roads"),
             new HelpItem("Only downhill", "Restrict path to horizontal or downhill movement"),
             new HelpItem("Snap to terrain", "Force path to follow terrain height"),
@@ -123,6 +142,27 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private final JToggleButton showLine = hudButton("Line", "ShowLine");
     private final JToggleButton showNodes = hudButton("Nodes", "ShowNodes");
     private final JToggleButton showLayer = hudButton("Layer", "ShowLayer");
+    private final JToggleButton showDirection = hudButton("Direction", "ShowDirection");
+    private final JToggleButton showProfile = hudButton("Profile", "ShowProfile");
+    /**
+     * Master switch for all Path Tool overlays (Blender-style), shown in the
+     * viewport.
+     */
+    private final JToggleButton showOverlays = hudButton("Overlays", "ShowOverlays");
+    /**
+     * Sticky add mode: plain left clicks on empty map add nodes. Toggled by
+     * double-tapping Ctrl or the viewport "Add" button; off on every activation.
+     */
+    private final JToggleButton addMode = addModeSwitch();
+    /**
+     * Double-tap Ctrl detection: press/release times of a clean (uninterrupted)
+     * tap.
+     */
+    private boolean ctrlHeld;
+    private boolean ctrlTapInterrupted;
+    private long ctrlPressedAt;
+    private long lastCtrlTapAt;
+    static final long CTRL_TAP_MAX_HOLD_MS = 300, CTRL_DOUBLE_TAP_MS = 400;
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
     boolean measurePreview;
     PreviewTiming previewTiming;
@@ -164,6 +204,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private PathPreviewWorker previewWorker;
     private Dimension previewDimension;
     private Map<PathPreviewMask.TilePosition, BitSet> previewMask = Map.of();
+    /**
+     * Set when the map's preview layer may no longer match {@link #previewMask}
+     * (undo / redo restore whole tiles, preview bits included). The next publish
+     * then clears the whole layer first instead of only writing the difference,
+     * which would leave restored old preview bits behind as residue.
+     */
+    private boolean previewLayerUntrusted;
+    private org.pepsoft.util.undo.UndoManager observedUndoManager;
     private final Set<Integer> selectedNodes = new LinkedHashSet<>();
     private final PathOverlay overlay = new PathOverlay();
     private WorldPainterView overlayView;
@@ -191,36 +239,93 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         public void mouseExited(MouseEvent event) {
             // Moving onto a child (e.g. a HUD button) also fires an exit; only leaving the
             // bounds counts.
-            if (!new Rectangle(event.getComponent().getSize()).contains(event.getPoint()))
+            if (!new Rectangle(event.getComponent().getSize()).contains(event.getPoint())) {
                 cursorOverMap = false;
+                setHovered(null);
+            }
         }
 
         @Override
         public void mouseMoved(MouseEvent event) {
             cursorOverMap = true;
+            if (gestureStart == null)
+                setHovered(hitTest(event.getPoint()));
         }
 
         @Override
         public void mousePressed(MouseEvent event) {
             cursorOverMap = true;
             reclaimKeyboardFocus();
-            if (SwingUtilities.isLeftMouseButton(event) && !event.isAltDown() && !event.isShiftDown()
-                    && !event.isMetaDown())
-                handleSelectionPress(event.getPoint(), event.isControlDown());
+            interruptCtrlTap();
+            if (keyboardTransform && SwingUtilities.isLeftMouseButton(event)) {
+                commitKeyboardTransform(); // like Blender: the confirming click selects nothing
+                return;
+            }
+            if (SwingUtilities.isLeftMouseButton(event) && !event.isAltDown() && !event.isMetaDown())
+                handleSelectionPress(event.getPoint(), event.isControlDown(), event.isShiftDown());
         }
 
         @Override
         public void mouseDragged(MouseEvent event) {
             cursorOverMap = true;
-            handleSelectionDrag(event.getPoint());
+            handleSelectionDrag(event.getPoint(), event.isShiftDown());
         }
 
         @Override
         public void mouseReleased(MouseEvent event) {
             if (SwingUtilities.isLeftMouseButton(event))
-                handleSelectionRelease(event.getPoint());
+                handleSelectionRelease(event.getPoint(), event.isShiftDown());
         }
     };
+    /**
+     * Which handles selected nodes show; clicking an already-selected node cycles
+     * through these (cf. Inkscape).
+     */
+    enum EditMode {
+        RADIUS("Radius", "Radius handles"), CURVE("Curve strength",
+                "Curve strength handles"), HEIGHT("Height above ground", "Height above ground handles");
+
+        final String title;
+        final String label;
+
+        EditMode(String title, String label) {
+            this.title = title;
+            this.label = label;
+        }
+
+        EditMode next() {
+            return values()[(ordinal() + 1) % values().length];
+        }
+    }
+
+    private EditMode editMode = EditMode.RADIUS;
+    private int radiusHandleNode = -1;
+    private int strengthHandleNode = -1;
+    private int heightHandleNode = -1;
+    private int randomizeHandleNode = -1;
+    private int circleHandleIndex = -1;
+    private float randomizeDragStart;
+    private int strengthHandleSide;
+    /**
+     * Curve strength while a tangent handle is dragged; committed to the spinner on
+     * release.
+     */
+    private Float dragStrength;
+    /**
+     * Blender-style typed value during a handle drag; {@code null} until a number
+     * key is typed.
+     */
+    private NumericInput numericInput;
+    /**
+     * Typed-value transform started from the keyboard (no mouse drag): typing a
+     * number with nodes selected in an editor, like Blender after pressing S.
+     */
+    private boolean keyboardTransform;
+    /**
+     * Header text shown while a handle is dragged (operation and value), or
+     * {@code null}.
+     */
+    private String gestureHeader;
     private Point gestureStart;
     private int pressedNode = -1;
     private boolean gestureDragged;
@@ -228,11 +333,23 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private ArrayList<Point4f> gesturePath;
     private ArrayList<Point4f> movedPath;
     private Point gestureWorldStart;
+    /**
+     * Virtual cursor (view coordinates) driving node/handle drags. It follows the
+     * mouse 1:1, or at {@link #PRECISE_DRAG_SCALE} while Shift is held (Blender
+     * style), so toggling Shift mid-drag never makes the dragged item jump.
+     */
+    private Point2D.Double gestureCursor;
+    private Point gestureLastRaw;
+    private boolean gesturePrecise;
+    /** World units per view pixel, captured on press. */
+    private double worldPerPixelX = 1, worldPerPixelY = 1;
+    static final double PRECISE_DRAG_SCALE = 0.1;
     private final AWTEventListener gestureCapture = event -> {
         if (event instanceof MouseEvent mouse && mouse.getID() == MouseEvent.MOUSE_RELEASED
                 && SwingUtilities.isLeftMouseButton(mouse) && gestureStart != null && overlayView != null
                 && mouse.getSource() instanceof Component source && source != overlayView) {
-            handleSelectionRelease(SwingUtilities.convertPoint(source, mouse.getPoint(), overlayView));
+            handleSelectionRelease(SwingUtilities.convertPoint(source, mouse.getPoint(), overlayView),
+                    mouse.isShiftDown());
         }
     };
 
@@ -241,7 +358,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     PathTool(Supplier<PathPreviewWorker> workerFactory) {
-        super("Road Tool", "Create smooth roads", "MacroMachine_RoadTool"); // ONE SHOT OP
+        super("Path Tool", "Create smooth roads and rivers", "MacroMachine_RoadTool"); // ONE SHOT OP
         this.workerFactory = workerFactory;
         init();
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
@@ -249,10 +366,43 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
-        if (e.getID() != KeyEvent.KEY_PRESSED || !isActive() || getDimension() == null)
+        if (!isActive() || getDimension() == null)
             return false;
         Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (operationPanel != null && !operationFields.isEmpty()
+                && (focus == null || allowsMapShortcut(overlayView, focus))) {
+            if (operationTyping != null) {
+                if (e.getID() == KeyEvent.KEY_TYPED)
+                    return true;
+                if (e.getID() == KeyEvent.KEY_PRESSED)
+                    return handleOperationTyping(e);
+            } else if (e.getID() == KeyEvent.KEY_PRESSED && cursorOverMap && gestureStart == null && !e.isControlDown()
+                    && !e.isAltDown() && !e.isMetaDown() && NumericInput.startsTyping(e.getKeyCode(), e.getKeyChar())) {
+                operationTyping = new NumericInput();
+                operationTypingRevert = operationFields.get(operationFieldIndex).spinner().getValue();
+                return handleOperationTyping(e);
+            }
+        }
+        if (operationPanel != null && e.getID() == KeyEvent.KEY_PRESSED
+                && (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_ESCAPE)
+                && (focus == null || SwingUtilities.isDescendingFrom(focus, operationPanel)
+                        || allowsMapShortcut(overlayView, focus))) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER)
+                applyOperation();
+            else
+                closeOperation();
+            return true;
+        }
         if (!allowsMapShortcut(overlayView, focus))
+            return false;
+        trackCtrlTaps(e);
+        if (handleDragActive() || keyboardTransform) {
+            if (e.getID() == KeyEvent.KEY_TYPED)
+                return numericInput != null; // typed characters belong to the numeric input
+            if (e.getID() == KeyEvent.KEY_PRESSED && handleNumericKey(e))
+                return true;
+        }
+        if (e.getID() != KeyEvent.KEY_PRESSED)
             return false;
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE && gestureStart != null && !e.isShiftDown() && !e.isControlDown()
                 && !e.isAltDown() && !e.isMetaDown()) {
@@ -263,6 +413,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         if (!cursorOverMap || overlayView == null)
             return false;
+        if (operationPanel == null && !selectedNodes.isEmpty() && gestureStart == null && !e.isControlDown()
+                && !e.isAltDown() && !e.isMetaDown() && NumericInput.startsTyping(e.getKeyCode(), e.getKeyChar())) {
+            startKeyboardTransform();
+            handleNumericKey(e);
+            return true;
+        }
         if (e.isControlDown() && !e.isShiftDown() && !e.isAltDown() && !e.isMetaDown()
                 && e.getKeyCode() == KeyEvent.VK_A) {
             selectedNodes.clear();
@@ -273,6 +429,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         if (e.isShiftDown() || e.isControlDown() || e.isAltDown() || e.isMetaDown())
             return false;
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE && addMode.isSelected() && gestureStart == null) {
+            addMode.setSelected(false);
+            return true;
+        }
         if (e.getKeyCode() == KeyEvent.VK_ESCAPE && (gestureStart != null || !selectedNodes.isEmpty())) {
             cancelGesture();
             selectedNodes.clear();
@@ -303,6 +463,696 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             overlay.requestFocusInWindow();
     }
 
+    /**
+     * Double-tapping Ctrl (two quick, clean taps with the mouse over the map)
+     * toggles add mode. Key auto-repeat while holding Ctrl, a long hold, any other
+     * key or a mouse press in between do not count.
+     */
+    private void trackCtrlTaps(KeyEvent e) {
+        boolean ctrl = e.getKeyCode() == KeyEvent.VK_CONTROL;
+        long now = e.getWhen() != 0 ? e.getWhen() : System.currentTimeMillis();
+        if (e.getID() == KeyEvent.KEY_PRESSED) {
+            if (!ctrl) {
+                interruptCtrlTap();
+                return;
+            }
+            if (ctrlHeld)
+                return; // auto-repeat
+            ctrlHeld = true;
+            ctrlTapInterrupted = false;
+            ctrlPressedAt = now;
+        } else if (e.getID() == KeyEvent.KEY_RELEASED && ctrl) {
+            ctrlHeld = false;
+            boolean tap = !ctrlTapInterrupted && now - ctrlPressedAt <= CTRL_TAP_MAX_HOLD_MS;
+            if (tap && lastCtrlTapAt != 0 && now - lastCtrlTapAt <= CTRL_DOUBLE_TAP_MS && cursorOverMap
+                    && gestureStart == null) {
+                lastCtrlTapAt = 0;
+                addMode.setSelected(!addMode.isSelected());
+            } else
+                lastCtrlTapAt = tap ? now : 0;
+        }
+    }
+
+    private void interruptCtrlTap() {
+        ctrlTapInterrupted = true;
+        lastCtrlTapAt = 0;
+    }
+
+    private boolean handleDragActive() {
+        return gestureStart != null && (radiusHandleNode >= 0 || heightHandleNode >= 0 || strengthHandleNode >= 0
+                || randomizeHandleNode >= 0);
+    }
+
+    /**
+     * Blender's "type a number" during a transform: number keys start numeric
+     * input, Enter confirms (like releasing the mouse), Escape falls through to
+     * cancel the drag.
+     */
+    private boolean handleNumericKey(KeyEvent e) {
+        int code = e.getKeyCode();
+        if (code == KeyEvent.VK_ENTER) {
+            if (keyboardTransform)
+                commitKeyboardTransform();
+            else {
+                gestureDragged = true;
+                handleSelectionRelease(gestureLastRaw, gesturePrecise);
+            }
+            return true;
+        }
+        if (code == KeyEvent.VK_ESCAPE) {
+            if (!keyboardTransform)
+                return false; // falls through to cancelling the drag
+            cancelKeyboardTransform();
+            return true;
+        }
+        if (numericInput == null) {
+            if (!NumericInput.starts(code, e.getKeyChar()))
+                return false;
+            numericInput = new NumericInput();
+        }
+        if (numericInput.handleKey(code, e.getKeyChar(), e.isControlDown())) {
+            if (keyboardTransform)
+                updateKeyboardTransform();
+            else {
+                gestureDragged = true; // typing alone (without moving) is a transform too
+                handleSelectionDrag(gestureLastRaw, gesturePrecise);
+            }
+        }
+        return true; // while typing, other keys do nothing
+    }
+
+    /**
+     * Starts typing a value for the current editor on the selected nodes. The typed
+     * number is absolute: it becomes the radius, the height above ground (blocks)
+     * or the curve strength of all selected nodes.
+     */
+    private void startKeyboardTransform() {
+        cancelGesture();
+        keyboardTransform = true;
+        gesturePath = getCurrentPath();
+        numericInput = new NumericInput();
+    }
+
+    /**
+     * Live preview of the typed value; the header shows the current value until
+     * typing starts.
+     */
+    private void updateKeyboardTransform() {
+        int reference = selectedNodes.stream().min(Integer::compare).orElse(0);
+        boolean edited = numericInput.edited();
+        switch (editMode) {
+            case RADIUS -> {
+                float current = gesturePath.get(reference).w;
+                movedPath = edited ? radiusSetPath((float) numericInput.apply(current)) : null;
+                gestureHeader = header("Radius", formatValue(current));
+            }
+            case HEIGHT -> {
+                Float ground = groundAt(gesturePath.get(reference));
+                float current = ground == null ? 0 : Math.round((gesturePath.get(reference).z - ground) * 10) / 10f;
+                movedPath = edited ? heightSetPath((float) numericInput.apply(current)) : null;
+                gestureHeader = header("Height above ground", PathEditHandles.signed(current));
+            }
+            case CURVE -> {
+                dragStrength = edited ? clampStrength(numericInput.apply(handleStrength)) : null;
+                gestureHeader = header("Curve strength", String.format(Locale.ROOT, "%.2f", handleStrength));
+            }
+        }
+        overlay.repaint();
+    }
+
+    /** Enter or a left click on the map applies the typed value. */
+    private void commitKeyboardTransform() {
+        var base = gesturePath;
+        var path = movedPath;
+        Float strength = dragStrength;
+        cancelGesture();
+        if (path != null && !path.equals(base))
+            completeEdit(path);
+        if (strength != null)
+            handleFactorSpinner.setValue(Math.round(strength * 100) / 100.0);
+        overlay.repaint();
+    }
+
+    /** Escape or a right click cancels; the selection stays (like Blender). */
+    private void cancelKeyboardTransform() {
+        cancelGesture();
+        overlay.repaint();
+    }
+
+    boolean typingValue() {
+        return keyboardTransform;
+    }
+
+    // ------------------------------------------------------------- Node / Segment
+    // menu operations
+
+    /** Preview of the Node / Segment operation being adjusted, or {@code null}. */
+    private PathOperations.Result operationPreview;
+    /**
+     * Neighbouring nodes of the preview on the same block: merged on apply
+     * (warning).
+     */
+    private List<int[]> operationMerges = List.of();
+    private JLabel operationMergeNote;
+    /**
+     * Path when the operation was opened (old node positions for the movement
+     * lines).
+     */
+    private List<Point4f> operationBase;
+    private JPanel operationPanel;
+    private Runnable operationRefresh;
+
+    /** "Node" menu: operations on the selected nodes (exposed for tests). */
+    JPopupMenu nodeMenu() {
+        var menu = new JPopupMenu();
+        boolean any = !selectedNodes.isEmpty();
+        menu.add(operationItem("Randomize position...", "PathTool.Node.Randomize", any, "Select nodes first",
+                this::openRandomize));
+        menu.add(operationItem("Randomize radius...", "PathTool.Node.RandomizeRadius", any, "Select nodes first",
+                this::openRandomizeRadius));
+        menu.add(operationItem("Snap to terrain...", "PathTool.Node.Snap", any, "Select nodes first",
+                this::openSnapToTerrain));
+        menu.add(operationItem("Only downhill...", "PathTool.Node.OnlyDownhill", any, "Select nodes first",
+                this::openOnlyDownhill));
+        return menu;
+    }
+
+    /**
+     * "Segment" menu: operations on segments between two selected nodes (exposed
+     * for tests).
+     */
+    JPopupMenu segmentMenu() {
+        var menu = new JPopupMenu();
+        boolean any = !PathOperations.selectedSegments(getCurrentPath().size(), selectedNodes).isEmpty();
+        menu.add(operationItem("Subdivide...", "PathTool.Segment.Subdivide", any, "Select two neighbouring nodes first",
+                this::openSubdivide));
+        return menu;
+    }
+
+    private static JMenuItem operationItem(String text, String name, boolean enabled, String disabledHint,
+            Runnable action) {
+        var item = new JMenuItem(text);
+        item.setName(name);
+        item.setEnabled(enabled);
+        if (!enabled)
+            item.setToolTipText(disabledHint);
+        item.addActionListener(event -> action.run());
+        return item;
+    }
+
+    private static JSpinner operationSpinner(String name, SpinnerNumberModel model) {
+        var spinner = new JSpinner(model);
+        spinner.setName(name);
+        // live preview while typing, not only on Enter / focus loss
+        if (spinner.getEditor() instanceof JSpinner.DefaultEditor editor
+                && editor.getTextField().getFormatter() instanceof javax.swing.text.DefaultFormatter formatter)
+            formatter.setCommitsOnValidEdit(true);
+        return spinner;
+    }
+
+    private static JPanel operationForm(Object... labelsAndControls) {
+        var form = new JPanel(new GridLayout(0, 2, 6, 4));
+        form.setOpaque(false);
+        for (int i = 0; i < labelsAndControls.length; i += 2) {
+            form.add(new JLabel((String) labelsAndControls[i]));
+            form.add((Component) labelsAndControls[i + 1]);
+        }
+        return form;
+    }
+
+    private void refreshOperation() {
+        if (operationRefresh != null)
+            operationRefresh.run();
+    }
+
+    void openSubdivide() {
+        var base = getCurrentPath();
+        var selection = Set.copyOf(selectedNodes);
+        float strength = handleStrength;
+        var cuts = operationSpinner("PathTool.Subdivide.Cuts", new SpinnerNumberModel(1, 1, 32, 1));
+        openOperation("Subdivide", operationForm("Number of cuts", cuts),
+                () -> PathOperations.subdivide(base, selection, ((Number) cuts.getValue()).intValue(), strength));
+        cuts.addChangeListener(event -> refreshOperation());
+        typeableFields(new TypeableField("Number of cuts", cuts));
+    }
+
+    /**
+     * Draggable radius circle of an open Node operation (Randomize position's
+     * range, Randomize radius' min and max): a value of its own (blocks),
+     * independent of the nodes' radius, living only while the operation is open.
+     * Drawn around every selected node, with its handle on the right ({@code side}
+     * 1) or left (-1).
+     */
+    record OperationCircle(JSpinner spinner, int side, String label) {
+        float value() {
+            return ((Number) spinner.getValue()).floatValue();
+        }
+    }
+
+    private List<OperationCircle> operationCircles = List.of();
+    private List<Point4f> circleBase;
+    private Set<Integer> circleSelection;
+
+    private void showOperationCircles(List<Point4f> base, Set<Integer> selection, OperationCircle... circles) {
+        circleBase = base;
+        circleSelection = selection;
+        operationCircles = List.of(circles);
+        for (OperationCircle circle : circles)
+            circle.spinner().addChangeListener(event -> overlay.repaint());
+        overlay.repaint();
+    }
+
+    void openRandomize() {
+        var base = getCurrentPath();
+        var selection = Set.copyOf(selectedNodes);
+        var radius = operationSpinner("PathTool.Randomize.Radius", new SpinnerNumberModel(4.0, 0.0, 1000.0, 0.5));
+        var seed = operationSpinner("PathTool.Randomize.Seed", new SpinnerNumberModel(1, 0, 99999, 1));
+        openOperation("Randomize position", operationForm("Radius (blocks)", radius, "Seed", seed),
+                () -> keepHeightAboveGround(base, PathOperations.randomize(base, selection,
+                        ((Number) radius.getValue()).doubleValue(), ((Number) seed.getValue()).longValue())));
+        showOperationCircles(base, selection, new OperationCircle(radius, 1, "random"));
+        typeableFields(new TypeableField("Radius (blocks)", radius));
+        radius.addChangeListener(event -> refreshOperation());
+        seed.addChangeListener(event -> refreshOperation());
+    }
+
+    /**
+     * Gives every selected node a random radius between min and max (blocks), e.g.
+     * so a river widens and narrows. Min and max are draggable circles (min handle
+     * left, max handle right) and cannot cross.
+     */
+    void openRandomizeRadius() {
+        var base = getCurrentPath();
+        var selection = Set.copyOf(selectedNodes);
+        float current = (float) selection.stream().mapToDouble(i -> base.get(i).w).average().orElse(4);
+        double low = Math.max(1, Math.round(current * 0.5 * 2) / 2.0),
+                high = Math.max(low, Math.round(current * 1.5 * 2) / 2.0);
+        var min = operationSpinner("PathTool.RandomizeRadius.Min", new SpinnerNumberModel(low, 1.0, 1000.0, 0.5));
+        var max = operationSpinner("PathTool.RandomizeRadius.Max", new SpinnerNumberModel(high, 1.0, 1000.0, 0.5));
+        var seed = operationSpinner("PathTool.RandomizeRadius.Seed", new SpinnerNumberModel(1, 0, 99999, 1));
+        openOperation("Randomize radius",
+                operationForm("Min radius (blocks)", min, "Max radius (blocks)", max, "Seed", seed),
+                () -> PathOperations.randomizeRadius(base, selection, ((Number) min.getValue()).doubleValue(),
+                        ((Number) max.getValue()).doubleValue(), ((Number) seed.getValue()).longValue()));
+        // min and max cannot cross: the value being changed stops at the other one
+        min.addChangeListener(event -> {
+            if (((Number) min.getValue()).doubleValue() > ((Number) max.getValue()).doubleValue())
+                min.setValue(max.getValue());
+            refreshOperation();
+        });
+        max.addChangeListener(event -> {
+            if (((Number) max.getValue()).doubleValue() < ((Number) min.getValue()).doubleValue())
+                max.setValue(min.getValue());
+            refreshOperation();
+        });
+        seed.addChangeListener(event -> refreshOperation());
+        showOperationCircles(base, selection, new OperationCircle(min, -1, "min"), new OperationCircle(max, 1, "max"));
+        typeableFields(new TypeableField("Min radius (blocks)", min), new TypeableField("Max radius (blocks)", max));
+    }
+
+    /** Screen radius of a circle of {@code radius} blocks around a node. */
+    private double radiusInView(Point4f node, float radius) {
+        Point center = overlayView.worldToView(Math.round(node.x), Math.round(node.y));
+        Point edge = overlayView.worldToView(Math.round(node.x + radius), Math.round(node.y));
+        return center.distance(edge);
+    }
+
+    /**
+     * Handle of a circle: on its right or left edge, never closer than the minimum
+     * offset.
+     */
+    private static Point2D.Double circleHandle(Point2D center, double radiusPx, int side) {
+        var right = PathEditHandles.radiusHandle(center, radiusPx);
+        return side > 0 ? right : new Point2D.Double(2 * center.getX() - right.x, right.y);
+    }
+
+    /**
+     * The operation circle handle under {@code point}: node index and circle index
+     * (as side).
+     */
+    private Hit operationCircleHandleAt(Point point) {
+        if (operationCircles.isEmpty())
+            return null;
+        var view = viewNodes(circleBase);
+        double best = PathEditHandles.HANDLE_HIT_RADIUS * PathEditHandles.HANDLE_HIT_RADIUS;
+        Hit hit = null;
+        for (int c = 0; c < operationCircles.size(); c++) {
+            OperationCircle circle = operationCircles.get(c);
+            for (int i : circleSelection) {
+                if (i >= circleBase.size())
+                    continue;
+                double distance = circleHandle(view.get(i), radiusInView(circleBase.get(i), circle.value()),
+                        circle.side()).distanceSq(point);
+                if (distance <= best) {
+                    best = distance;
+                    hit = new Hit(HitKind.OPERATION_RADIUS, i, c);
+                }
+            }
+        }
+        return hit;
+    }
+
+    void openSnapToTerrain() {
+        var base = getCurrentPath();
+        var selection = Set.copyOf(selectedNodes);
+        var radius = operationSpinner("PathTool.Snap.Radius", new SpinnerNumberModel(8, 1, 64, 1));
+        var target = new JComboBox<>(PathOperations.SnapTarget.values());
+        target.setName("PathTool.Snap.Target");
+        openOperation("Snap to terrain", operationForm("Search radius (blocks)", radius, "Snap to", target),
+                () -> keepHeightAboveGround(base,
+                        PathOperations.snapToTerrain(base, selection, ((Number) radius.getValue()).intValue(),
+                                (PathOperations.SnapTarget) target.getSelectedItem(), this::groundAt)));
+        radius.addChangeListener(event -> refreshOperation());
+        target.addActionListener(event -> refreshOperation());
+        showOperationCircles(base, selection, new OperationCircle(radius, 1, "search"));
+        typeableFields(new TypeableField("Search radius (blocks)", radius));
+    }
+
+    /**
+     * Moved nodes keep their height above ground (like dragged nodes); a node moved
+     * off the map stays where it was.
+     */
+    private PathOperations.Result keepHeightAboveGround(List<Point4f> base, PathOperations.Result result) {
+        var path = new ArrayList<Point4f>(result.path().size());
+        for (int i = 0; i < result.path().size(); i++) {
+            var node = new Point4f(result.path().get(i));
+            var original = base.get(i);
+            if (node.x != original.x || node.y != original.y) {
+                Float oldGround = groundAt(original), newGround = groundAt(node);
+                if (newGround == null)
+                    node = new Point4f(original);
+                else
+                    node.z = clampHeight(newGround + (oldGround == null ? 0 : original.z - oldGround));
+            }
+            path.add(node);
+        }
+        return new PathOperations.Result(path, result.selection());
+    }
+
+    /**
+     * Opens the operation's settings panel (bottom left of the map, like Blender's
+     * "Adjust Last Operation") with a live preview; Apply / Enter commits, Cancel /
+     * Escape or clicking the map discards.
+     */
+    /**
+     * Lowers the selected nodes so the path never rises along its direction (node 1
+     * to n): each selected node ends up no higher than the node before it.
+     */
+    void openOnlyDownhill() {
+        var base = getCurrentPath();
+        var selection = Set.copyOf(selectedNodes);
+        var note = new JLabel(
+                "<html>Lowers selected nodes so the path never rises along its direction<br>(node 1 to n) and never floats above the terrain.</html>");
+        openOperation("Only downhill", note, () -> PathOperations.onlyDownhill(base, selection, this::groundAt));
+    }
+
+    private String operationTitle;
+
+    private void openOperation(String title, JComponent controls, Supplier<PathOperations.Result> compute) {
+        closeOperation();
+        cancelGesture();
+        operationTitle = title;
+        var panel = new JPanel(new BorderLayout(4, 4));
+        panel.setName("PathTool.OperationPanel");
+        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(title),
+                new EmptyBorder(2, 4, 4, 4)));
+        panel.add(controls, BorderLayout.CENTER);
+        operationMergeNote = new JLabel();
+        operationMergeNote.setName("PathTool.OperationMergeNote");
+        operationMergeNote.setForeground(WARNING_COLOR.darker());
+        operationMergeNote.setVisible(false);
+        var buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+        buttons.setOpaque(false);
+        var cancel = new JButton("Cancel");
+        cancel.setName("PathTool.OperationCancel");
+        cancel.addActionListener(event -> closeOperation());
+        var apply = new JButton("Apply");
+        apply.setName("PathTool.OperationApply");
+        apply.addActionListener(event -> applyOperation());
+        buttons.add(cancel);
+        buttons.add(apply);
+        var south = new JPanel(new BorderLayout(0, 4));
+        south.setOpaque(false);
+        south.add(operationMergeNote, BorderLayout.NORTH);
+        south.add(buttons, BorderLayout.SOUTH);
+        panel.add(south, BorderLayout.SOUTH);
+        operationPanel = panel;
+        operationBase = getCurrentPath();
+        operationRefresh = () -> {
+            operationPreview = compute.get();
+            // only clumps this operation creates (not neighbours that already shared a
+            // block)
+            operationMerges = PathOperations.createdCoincidentRuns(operationBase, operationPreview);
+            updateMergeNote();
+            overlay.repaint();
+        };
+        overlay.showOperationPanel(panel);
+        operationRefresh.run();
+    }
+
+    /**
+     * Tells which nodes will be merged (1-based, e.g. "3+4"), or hides the note.
+     */
+    private void updateMergeNote() {
+        if (operationMergeNote == null)
+            return;
+        var groups = new ArrayList<String>();
+        for (int[] run : operationMerges) {
+            var numbers = new ArrayList<String>();
+            for (int index : run)
+                numbers.add(Integer.toString(index + 1));
+            groups.add(String.join("+", numbers));
+        }
+        boolean show = !groups.isEmpty();
+        String text = show ? "Merges nodes on the same block: " + String.join(", ", groups) : "";
+        if (show == operationMergeNote.isVisible() && text.equals(operationMergeNote.getText()))
+            return;
+        operationMergeNote.setText(text);
+        operationMergeNote.setVisible(show);
+        overlay.relayoutOperationPanel();
+    }
+
+    String operationMergeNote() {
+        return operationMergeNote != null && operationMergeNote.isVisible() ? operationMergeNote.getText() : null;
+    }
+
+    void applyOperation() {
+        commitSpinnerEdits(operationPanel);
+        refreshOperation();
+        var result = operationPreview == null ? null : PathOperations.mergeRuns(operationPreview, operationMerges);
+        closeOperation();
+        if (result == null)
+            return;
+        if (!result.path().equals(getCurrentPath()))
+            completeEdit(result.path());
+        selectedNodes.clear();
+        selectedNodes.addAll(result.selection());
+        selectionChanged();
+    }
+
+    void closeOperation() {
+        if (operationPanel != null)
+            overlay.hideOperationPanel(operationPanel);
+        operationPanel = null;
+        operationPreview = null;
+        operationMerges = List.of();
+        operationMergeNote = null;
+        operationRefresh = null;
+        operationBase = null;
+        operationCircles = List.of(); // operation circles only live as long as their operation
+        operationFields = List.of();
+        operationTyping = null;
+        circleBase = null;
+        circleSelection = null;
+        overlay.repaint();
+    }
+
+    private static void commitSpinnerEdits(Component component) {
+        if (component instanceof JSpinner spinner) {
+            try {
+                spinner.commitEdit();
+            } catch (java.text.ParseException ignored) {
+                // keep the last valid value
+            }
+        } else if (component instanceof Container container)
+            for (Component child : container.getComponents())
+                commitSpinnerEdits(child);
+    }
+
+    private static String headerLabel(OperationCircle circle) {
+        return switch (circle.label()) {
+            case "min" -> "Min radius (blocks)";
+            case "max" -> "Max radius (blocks)";
+            case "search" -> "Search radius (blocks)";
+            default -> "Randomize radius (blocks)";
+        };
+    }
+
+    /** A number of the open operation that can be typed into the viewport. */
+    record TypeableField(String label, JSpinner spinner) {
+    }
+
+    /**
+     * Fields typing in the viewport goes to; the first is the most important, Tab
+     * cycles.
+     */
+    private List<TypeableField> operationFields = List.of();
+    private int operationFieldIndex;
+    private NumericInput operationTyping;
+    private Object operationTypingRevert;
+
+    private void typeableFields(TypeableField... fields) {
+        operationFields = List.of(fields);
+        operationFieldIndex = 0;
+        operationTyping = null;
+    }
+
+    /**
+     * Sets a spinner within its model's bounds and number type (Integer models get
+     * whole numbers).
+     */
+    private static void setSpinnerNumber(JSpinner spinner, double value) {
+        var model = (SpinnerNumberModel) spinner.getModel();
+        double clamped = Math.max(((Number) model.getMinimum()).doubleValue(),
+                Math.min(((Number) model.getMaximum()).doubleValue(), value));
+        spinner.setValue(model.getValue() instanceof Integer ? (Object) (int) Math.round(clamped) : (Object) clamped);
+    }
+
+    /**
+     * Typing a number into the viewport while an operation is open (Blender style):
+     * digits edit the current field live, Tab moves to the next field, Enter
+     * applies the operation, Escape restores the field's previous value.
+     */
+    private boolean handleOperationTyping(KeyEvent e) {
+        int code = e.getKeyCode();
+        var field = operationFields.get(operationFieldIndex);
+        if (code == KeyEvent.VK_ENTER) {
+            operationTyping = null;
+            applyOperation();
+            return true;
+        }
+        if (code == KeyEvent.VK_ESCAPE) {
+            field.spinner().setValue(operationTypingRevert);
+            operationTyping = null;
+            overlay.repaint();
+            return true;
+        }
+        if (code == KeyEvent.VK_TAB) {
+            operationFieldIndex = (operationFieldIndex + 1) % operationFields.size();
+            operationTyping = new NumericInput();
+            operationTypingRevert = operationFields.get(operationFieldIndex).spinner().getValue();
+            overlay.repaint();
+            return true;
+        }
+        if (operationTyping.handleKey(code, e.getKeyChar(), e.isControlDown())) {
+            double before = ((Number) operationTypingRevert).doubleValue();
+            if (operationTyping.edited())
+                setSpinnerNumber(field.spinner(), operationTyping.apply(before));
+            else
+                field.spinner().setValue(operationTypingRevert);
+            overlay.repaint();
+        }
+        return true; // while typing, other keys do nothing
+    }
+
+    /**
+     * Header shown at the top of the viewport, always: the live text while dragging
+     * or typing, otherwise which value is being edited and its current value.
+     */
+    String viewportHeader() {
+        if (gestureHeader != null)
+            return gestureHeader;
+        String typing = operationTypingHeader();
+        return typing != null ? typing : idleHeader();
+    }
+
+    /**
+     * Which value the current editor / open operation edits, with its current
+     * value.
+     */
+    private String idleHeader() {
+        if (operationPanel != null) {
+            if (operationFields.isEmpty()) {
+                // no number to type: show what the operation will change
+                if (operationPreview == null || operationBase == null)
+                    return operationTitle;
+                int changed = 0;
+                for (int i = 0; i < Math.min(operationBase.size(), operationPreview.path().size()); i++)
+                    if (!operationBase.get(i).equals(operationPreview.path().get(i)))
+                        changed++;
+                return operationTitle + ": " + changed + (changed == 1 ? " node changes" : " nodes change");
+            }
+            var parts = new ArrayList<String>();
+            for (TypeableField field : operationFields)
+                parts.add(field.label() + ": " + formatValue(((Number) field.spinner().getValue()).floatValue()));
+            return String.join("   ", parts);
+        }
+        if (editMode == EditMode.CURVE)
+            return editMode.title + ": " + String.format(Locale.ROOT, "%.2f", handleStrength);
+        var path = getCurrentPath();
+        var values = new ArrayList<Float>();
+        for (int i : selectedNodes) {
+            if (i >= path.size())
+                continue;
+            if (editMode == EditMode.RADIUS)
+                values.add(path.get(i).w);
+            else {
+                Float ground = groundAt(path.get(i));
+                if (ground != null)
+                    values.add(Math.round((path.get(i).z - ground) * 10) / 10f);
+            }
+        }
+        if (values.isEmpty())
+            return editMode.title + ": (select nodes)";
+        float low = values.stream().min(Float::compare).orElseThrow();
+        float high = values.stream().max(Float::compare).orElseThrow();
+        java.util.function.Function<Float, String> format = editMode == EditMode.HEIGHT
+                ? PathEditHandles::signed
+                : PathTool::formatValue;
+        String value = Math.abs(high - low) < 0.05f
+                ? format.apply(low)
+                : format.apply(low) + " - " + format.apply(high);
+        return editMode.title + ": " + value;
+    }
+
+    /** Header while typing into an operation field, or {@code null}. */
+    String operationTypingHeader() {
+        if (operationTyping == null || operationFields.isEmpty())
+            return null;
+        var field = operationFields.get(operationFieldIndex);
+        String text = field.label() + ": "
+                + operationTyping.display(formatValue(((Number) operationTypingRevert).floatValue()));
+        if (operationFields.size() > 1)
+            text += "   (Tab: " + operationFields.get((operationFieldIndex + 1) % operationFields.size()).label() + ")";
+        return text;
+    }
+
+    /** Value spinner of the open operation's first circle (exposed for tests). */
+    JSpinner randomizeRadiusSpinner() {
+        return operationCircles.isEmpty() ? null : operationCircles.get(0).spinner();
+    }
+
+    List<OperationCircle> operationCircles() {
+        return operationCircles;
+    }
+
+    PathOperations.Result operationPreview() {
+        return operationPreview;
+    }
+
+    /**
+     * Selection to draw: the previewed operation's (indices of the preview path) or
+     * the real one.
+     */
+    private Set<Integer> shownSelection() {
+        return operationPreview != null ? operationPreview.selection() : selectedNodes;
+    }
+
+    /** Header text of the running handle drag (exposed for tests). */
+    String gestureHeader() {
+        return gestureHeader;
+    }
+
     static boolean allowsMapShortcut(Component view, Component focus) {
         if (view == null)
             return false;
@@ -321,8 +1171,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     protected void activate() throws PropertyVetoException {
         super.activate();
         this.cachedTiles.clear();
+        // overlay switches are not persisted: every activation starts with all on. Done
+        // before the preview worker exists, so the switches' listeners trigger no
+        // preview
+        // work; the schedulePreview() below covers it.
+        showOverlays.setSelected(true);
+        addMode.setSelected(false);
+        for (JToggleButton overlaySwitch : overlayParts())
+            overlaySwitch.setSelected(true);
         previewWorker = workerFactory.get();
         attachOverlay();
+        observeUndo(getDimension());
         if (getDimension() != null)
             getDimension().clearLayerData(PreviewOperation.annotationLayer);
         schedulePreview();
@@ -330,6 +1189,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     @Override
     protected void deactivate() {
+        observeUndo(null);
         invalidatePreview();
         clearPreview();
         if (previewWorker != null) {
@@ -358,7 +1218,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         view.add(overlay);
         view.setComponentZOrder(overlay, 0);
         resizeOverlay();
-        overlay.showOverlayText("Road Tool");
+        overlay.showOverlayText("Path Tool");
     }
 
     private void resizeOverlay() {
@@ -367,7 +1227,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void detachOverlay() {
+        closeOperation();
         cancelGesture();
+        setHovered(null); // restores the map's own cursor
         selectedNodes.clear();
         cursorOverMap = false;
         selectionStatus.setText("0 nodes selected");
@@ -392,6 +1254,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         if (overlayView != null && overlayDimension != overlayView.getDimension()) {
             invalidatePreview();
             clearPreview();
+            previewLayerUntrusted = false;
+            observeUndo(isActive() ? overlayView.getDimension() : null);
             overlayDimension = overlayView.getDimension();
             selectedNodes.clear();
             cancelGesture();
@@ -406,27 +1270,391 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     void handleSelectionPress(Point point, boolean additive) {
+        handleSelectionPress(point, additive, false);
+    }
+
+    /**
+     * @param shift
+     *            Shift held on press: only starts a (precise) gesture on a node or
+     *            handle; Shift+press on empty map is left to WorldPainter.
+     */
+    void handleSelectionPress(Point point, boolean additive, boolean shift) {
         syncDimension();
         if (overlayView == null || overlayDimension == null)
             return;
+        Hit hit = hitTest(point);
+        if (hit == null || hit.kind() != HitKind.OPERATION_RADIUS) {
+            closeOperation(); // clicking the map discards a previewed operation
+            hit = hitTest(point);
+        }
         cancelGesture();
         gestureStart = new Point(point);
-        pressedNode = nearestNode(point);
+        pressedNode = hit != null && hit.kind() == HitKind.NODE ? hit.node() : -1;
         gestureDragged = false;
         gestureAdditive = additive;
         gesturePath = getCurrentPath();
         gestureWorldStart = overlayView.viewToWorld(point);
+        Point far = overlayView.viewToWorld(new Point(point.x + 1024, point.y + 1024));
+        worldPerPixelX = (far.x - gestureWorldStart.x) / 1024.0;
+        worldPerPixelY = (far.y - gestureWorldStart.y) / 1024.0;
+        gestureCursor = new Point2D.Double(point.x, point.y);
+        gestureLastRaw = new Point(point);
+        if (hit != null) {
+            switch (hit.kind()) {
+                case RADIUS -> radiusHandleNode = hit.node();
+                case STRENGTH -> {
+                    strengthHandleNode = hit.node();
+                    strengthHandleSide = hit.side();
+                }
+                case HEIGHT -> heightHandleNode = hit.node();
+                case OPERATION_RADIUS -> {
+                    randomizeHandleNode = hit.node();
+                    circleHandleIndex = hit.side();
+                    randomizeDragStart = operationCircles.get(hit.side()).value();
+                }
+                case NODE -> {
+                }
+            }
+        }
+        if (shift && hit == null) {
+            cancelGesture();
+            return;
+        }
+        setHovered(hit); // the grabbed element stays highlighted while dragging
         Toolkit.getDefaultToolkit().addAWTEventListener(gestureCapture, AWTEvent.MOUSE_EVENT_MASK);
-        if (pressedNode < 0)
+        if (hit == null)
             overlay.startDrag(point);
     }
 
+    /** World position of the virtual cursor, with sub-block precision. */
+    private Point2D.Double gestureWorld() {
+        return new Point2D.Double(gestureWorldStart.x + (gestureCursor.x - gestureStart.x) * worldPerPixelX,
+                gestureWorldStart.y + (gestureCursor.y - gestureStart.y) * worldPerPixelY);
+    }
+
+    /** Something on the map that reacts to the mouse. */
+    enum HitKind {
+        NODE(Cursor.MOVE_CURSOR), RADIUS(Cursor.HAND_CURSOR), STRENGTH(Cursor.HAND_CURSOR), HEIGHT(
+                Cursor.N_RESIZE_CURSOR), OPERATION_RADIUS(Cursor.HAND_CURSOR);
+
+        final int cursor;
+
+        HitKind(int cursor) {
+            this.cursor = cursor;
+        }
+    }
+
+    /**
+     * @param side
+     *            for tangent handles: -1 backward, +1 forward; otherwise 0
+     */
+    record Hit(HitKind kind, int node, int side) {
+    }
+
+    /** Element under the mouse (or being dragged), highlighted as interactive. */
+    private Hit hovered;
+    private Cursor cursorBeforeHover;
+
+    Hit hovered() {
+        return hovered;
+    }
+
+    private void setHovered(Hit hit) {
+        if (Objects.equals(hit, hovered))
+            return;
+        hovered = hit;
+        updateCursor();
+        overlay.repaint();
+    }
+
+    private boolean cursorOverridden;
+
+    /**
+     * Cursor for the hovered element, a crosshair on empty map in add mode, else
+     * the map's own.
+     */
+    private void updateCursor() {
+        if (overlayView == null)
+            return;
+        Cursor wanted = hovered != null
+                ? Cursor.getPredefinedCursor(hovered.kind().cursor)
+                : addMode.isSelected() ? Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR) : null;
+        if (wanted == null) {
+            if (cursorOverridden)
+                overlayView.setCursor(cursorBeforeHover);
+            cursorOverridden = false;
+            return;
+        }
+        if (!cursorOverridden)
+            cursorBeforeHover = overlayView.getCursor();
+        cursorOverridden = true;
+        overlayView.setCursor(wanted);
+    }
+
+    /**
+     * What a press at {@code point} would grab: a handle of a selected node or a
+     * node. A handle wins over a node only when the point is closer to the handle
+     * than to that node's centre, so handles stay grabbable inside a node's
+     * generous hit area without blocking clicks on a neighbouring node they happen
+     * to overlap. Shared by pressing and hovering, so hover feedback always matches
+     * the press.
+     */
+    Hit hitTest(Point point) {
+        syncDimension();
+        if (overlayView == null || overlayDimension == null)
+            return null;
+        Hit circle = operationCircleHandleAt(point);
+        if (circle != null)
+            return circle;
+        var path = getCurrentPath();
+        int node = nearestNode(point);
+        var view = viewNodes(path);
+        double best = PathEditHandles.HANDLE_HIT_RADIUS * PathEditHandles.HANDLE_HIT_RADIUS;
+        if (node >= 0)
+            best = Math.min(best, view.get(node).distanceSq(point) - 1e-9);
+        Hit hit = null;
+        for (int i : showOverlays.isSelected() && operationPreview == null ? selectedNodes : Set.<Integer>of()) {
+            if (i >= path.size())
+                continue;
+            if (editMode == EditMode.RADIUS) {
+                double distance = PathEditHandles.radiusHandle(view.get(i), radiusInView(path.get(i)))
+                        .distanceSq(point);
+                if (distance <= best) {
+                    best = distance;
+                    hit = new Hit(HitKind.RADIUS, i, 0);
+                }
+            } else if (editMode == EditMode.CURVE) {
+                var tangent = PathEditHandles.tangent(view, i);
+                if (tangent == null)
+                    continue;
+                for (int side : new int[]{-1, 1}) {
+                    double distance = tangent.handle(side, handleStrength).distanceSq(point);
+                    if (distance <= best) {
+                        best = distance;
+                        hit = new Hit(HitKind.STRENGTH, i, side);
+                    }
+                }
+            } else {
+                Float ground = groundAt(path.get(i));
+                if (ground == null)
+                    continue;
+                var axis = new Point2D.Double(view.get(i).x + heightAxisOffset(), view.get(i).y);
+                double distance = PathEditHandles.heightHandle(axis, path.get(i).z - ground).distanceSq(point);
+                if (distance <= best) {
+                    best = distance;
+                    hit = new Hit(HitKind.HEIGHT, i, 0);
+                }
+            }
+        }
+        return hit != null ? hit : node >= 0 ? new Hit(HitKind.NODE, node, 0) : null;
+    }
+
+    /** Terrain height under a node, or {@code null} where the map has no tile. */
+    private Float groundAt(Point4f node) {
+        return groundAt(Math.round(node.x), Math.round(node.y));
+    }
+
+    private Float groundAt(int x, int y) {
+        if (overlayDimension == null || overlayDimension.getTile(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS) == null)
+            return null;
+        float ground = overlayDimension.getHeightAt(x, y);
+        return Float.isFinite(ground) ? ground : null;
+    }
+
+    private float clampHeight(float z) {
+        return Math.max(overlayDimension.getMinHeight(), Math.min(overlayDimension.getMaxHeight() - 1, z));
+    }
+
+    /**
+     * Shifts the height of all selected nodes by the same amount; the dragged node
+     * lands on a whole number of blocks above/below ground.
+     */
+    /**
+     * Height change the mouse asks for: the dragged node lands on a whole number of
+     * blocks above/below ground. {@code null} where the node has no ground.
+     */
+    private Float mouseHeightDelta() {
+        Point2D center = viewNodes(gesturePath).get(heightHandleNode);
+        Point4f dragged = gesturePath.get(heightHandleNode);
+        Float ground = groundAt(dragged);
+        if (ground == null)
+            return null;
+        float oldRelative = dragged.z - ground;
+        double moved = PathEditHandles.relativeHeightAt(center, gestureCursor)
+                - PathEditHandles.relativeHeightAt(center, gestureStart);
+        return Math.round(oldRelative + moved) - oldRelative;
+    }
+
+    /** Shifts the height of all selected nodes by {@code delta} blocks. */
+    private ArrayList<Point4f> raisedPath(float delta) {
+        var result = new ArrayList<Point4f>(gesturePath.size());
+        for (int i = 0; i < gesturePath.size(); i++) {
+            var node = new Point4f(gesturePath.get(i));
+            if (selectedNodes.contains(i))
+                node.z = clampHeight(node.z + delta);
+            result.add(node);
+        }
+        return result;
+    }
+
+    private List<Point2D.Double> viewNodes(List<Point4f> path) {
+        var result = new ArrayList<Point2D.Double>(path.size());
+        for (Point4f node : path) {
+            Point point = overlayView.worldToView(Math.round(node.x), Math.round(node.y));
+            result.add(new Point2D.Double(point.x, point.y));
+        }
+        return result;
+    }
+
+    private double radiusInView(Point4f node) {
+        Point center = overlayView.worldToView(Math.round(node.x), Math.round(node.y));
+        Point edge = overlayView.worldToView(Math.round(node.x + node.w), Math.round(node.y));
+        return center.distance(edge);
+    }
+
+    /**
+     * Scale factor the mouse asks for, in world coordinates (immune to
+     * panning/zooming).
+     */
+    private float mouseScaleFactor() {
+        Point4f dragged = gesturePath.get(radiusHandleNode);
+        return PathEditHandles.scaleFactor(new Point2D.Float(dragged.x, dragged.y), gestureWorldStart, gestureWorld());
+    }
+
+    /**
+     * Scales the radius of all selected nodes by a mouse-driven factor; the dragged
+     * node snaps to whole blocks.
+     */
+    private ArrayList<Point4f> resizedPath(float factor) {
+        var result = new ArrayList<Point4f>(gesturePath.size());
+        for (int i = 0; i < gesturePath.size(); i++) {
+            var node = new Point4f(gesturePath.get(i));
+            if (selectedNodes.contains(i))
+                node.w = PathEditHandles.scaledRadius(node.w, factor, i == radiusHandleNode);
+            result.add(node);
+        }
+        return result;
+    }
+
+    /** Sets the radius of all selected nodes (typed value, to 0.01, at least 1). */
+    private ArrayList<Point4f> radiusSetPath(float radius) {
+        float value = Math.max(1f, Math.round(radius * 100) / 100f);
+        var result = new ArrayList<Point4f>(gesturePath.size());
+        for (int i = 0; i < gesturePath.size(); i++) {
+            var node = new Point4f(gesturePath.get(i));
+            if (selectedNodes.contains(i))
+                node.w = value;
+            result.add(node);
+        }
+        return result;
+    }
+
+    /**
+     * Puts all selected nodes {@code relative} blocks above (negative: below) their
+     * ground.
+     */
+    private ArrayList<Point4f> heightSetPath(float relative) {
+        float value = Math.round(relative * 100) / 100f;
+        var result = new ArrayList<Point4f>(gesturePath.size());
+        for (int i = 0; i < gesturePath.size(); i++) {
+            var node = new Point4f(gesturePath.get(i));
+            Float ground = selectedNodes.contains(i) ? groundAt(node) : null;
+            if (ground != null)
+                node.z = clampHeight(ground + value);
+            result.add(node);
+        }
+        return result;
+    }
+
+    private static float clampStrength(double strength) {
+        double clamped = Math.max(PathEditHandles.MIN_STRENGTH, Math.min(PathEditHandles.MAX_STRENGTH, strength));
+        return Math.round(clamped * 100) / 100f;
+    }
+
+    private boolean typing() {
+        return numericInput != null && numericInput.edited();
+    }
+
+    /**
+     * Header text like Blender's: operation and value, the typed text with a cursor
+     * while typing.
+     */
+    private String header(String operation, String mouseValue) {
+        return operation + ": " + (numericInput == null ? mouseValue : numericInput.display(mouseValue));
+    }
+
     void handleSelectionDrag(Point point) {
+        handleSelectionDrag(point, false);
+    }
+
+    void handleSelectionDrag(Point point, boolean precise) {
         syncDimension();
         if (gestureStart == null)
             return;
+        double scale = precise ? PRECISE_DRAG_SCALE : 1;
+        gestureCursor.x += (point.x - gestureLastRaw.x) * scale;
+        gestureCursor.y += (point.y - gestureLastRaw.y) * scale;
+        gestureLastRaw = new Point(point);
         if (gestureStart.distanceSq(point) >= 9)
             gestureDragged = true;
+        boolean editsGeometry = radiusHandleNode >= 0 || strengthHandleNode >= 0 || heightHandleNode >= 0
+                || randomizeHandleNode >= 0 || pressedNode >= 0;
+        if (editsGeometry && precise && !gesturePrecise)
+            overlay.showTransientInfoText("Precise drag", 1200);
+        gesturePrecise = precise;
+        // typed numbers are absolute values; the mouse value is shown until typing
+        if (randomizeHandleNode >= 0) {
+            if (gestureDragged && circleHandleIndex >= 0 && circleHandleIndex < operationCircles.size()) {
+                OperationCircle circle = operationCircles.get(circleHandleIndex);
+                var model = (SpinnerNumberModel) circle.spinner().getModel();
+                double lowest = ((Number) model.getMinimum()).doubleValue();
+                double highest = ((Number) model.getMaximum()).doubleValue();
+                Point4f node = circleBase.get(randomizeHandleNode);
+                var center = new Point2D.Double(node.x, node.y);
+                // grows/shrinks by how far the handle moved away from the node: no jump on grab
+                double moved = center.distance(gestureWorld()) - center.distance(gestureWorldStart);
+                float mouse = (float) Math.min(highest,
+                        Math.max(lowest, Math.round((randomizeDragStart + moved) * 2) / 2.0));
+                double value = typing() ? Math.min(highest, Math.max(lowest, numericInput.apply(mouse))) : mouse;
+                setSpinnerNumber(circle.spinner(), value);
+                gestureHeader = header(headerLabel(circle), formatValue(mouse));
+                overlay.repaint();
+            }
+            return;
+        }
+        if (radiusHandleNode >= 0) {
+            if (gestureDragged) {
+                var mousePath = resizedPath(mouseScaleFactor());
+                float mouse = mousePath.get(radiusHandleNode).w;
+                movedPath = typing() ? radiusSetPath((float) numericInput.apply(mouse)) : mousePath;
+                gestureHeader = header("Radius", formatValue(mouse));
+                overlay.repaint();
+            }
+            return;
+        }
+        if (heightHandleNode >= 0) {
+            if (gestureDragged) {
+                Float delta = mouseHeightDelta();
+                Float ground = groundAt(gesturePath.get(heightHandleNode));
+                if (delta != null && ground != null) {
+                    float mouse = Math.round((gesturePath.get(heightHandleNode).z + delta - ground) * 10) / 10f;
+                    movedPath = typing() ? heightSetPath((float) numericInput.apply(mouse)) : raisedPath(delta);
+                    gestureHeader = header("Height above ground", PathEditHandles.signed(mouse));
+                }
+                overlay.repaint();
+            }
+            return;
+        }
+        if (strengthHandleNode >= 0) {
+            var tangent = PathEditHandles.tangent(viewNodes(gesturePath), strengthHandleNode);
+            if (gestureDragged && tangent != null) {
+                float mouse = tangent.strengthAt(strengthHandleSide, gestureCursor);
+                dragStrength = typing() ? clampStrength(numericInput.apply(mouse)) : mouse;
+                gestureHeader = header("Curve strength", String.format(Locale.ROOT, "%.2f", mouse));
+                overlay.repaint();
+            }
+            return;
+        }
         if (pressedNode < 0 && gestureDragged)
             overlay.updateDrag(point);
         else if (pressedNode >= 0 && gestureDragged) {
@@ -435,17 +1663,37 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     selectedNodes.clear();
                 selectedNodes.add(pressedNode);
             }
-            movedPath = movedPath(point);
+            movedPath = movedPath();
             overlay.repaint();
         }
     }
 
     void handleSelectionRelease(Point point) {
+        handleSelectionRelease(point, false);
+    }
+
+    void handleSelectionRelease(Point point, boolean precise) {
         syncDimension();
         if (gestureStart == null)
             return;
         try {
-            handleSelectionDrag(point);
+            handleSelectionDrag(point, precise);
+            if (randomizeHandleNode >= 0)
+                return; // the spinner already holds the new radius; Apply commits the operation
+            if (radiusHandleNode >= 0 || heightHandleNode >= 0) {
+                if (gestureDragged && movedPath != null && !movedPath.equals(gesturePath))
+                    completeEdit(movedPath);
+                return;
+            }
+            if (strengthHandleNode >= 0) {
+                if (gestureDragged && dragStrength != null)
+                    handleFactorSpinner.setValue(Math.round(dragStrength * 100) / 100.0);
+                return;
+            }
+            if (!gestureDragged && pressedNode >= 0 && !gestureAdditive && selectedNodes.contains(pressedNode)) {
+                setEditMode(editMode.next());
+                return;
+            }
             if (gestureDragged && pressedNode < 0) {
                 Rectangle bounds = overlay.getDragBounds();
                 if (!gestureAdditive)
@@ -458,17 +1706,81 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 }
             } else if (gestureDragged && pressedNode >= 0 && movedPath != null) {
                 completeEdit(movedPath);
+            } else if (!gestureDragged && pressedNode < 0 && (gestureAdditive || addMode.isSelected())) {
+                // Ctrl+click on empty map, or any click there in add mode, adds a node
+                Point world = overlayView.viewToWorld(gestureStart);
+                addNode(world.x, world.y);
+                return;
             } else if (!gestureDragged) {
                 if (!gestureAdditive)
                     selectedNodes.clear();
-                if (pressedNode >= 0)
-                    selectedNodes.add(pressedNode);
+                if (pressedNode >= 0 && !selectedNodes.add(pressedNode))
+                    selectedNodes.remove(pressedNode); // Ctrl+click toggles
             }
             selectionChanged();
         } finally {
             cancelGesture();
+            setHovered(cursorOverMap ? hitTest(point) : null);
             overlay.repaint();
         }
+    }
+
+    /**
+     * Switches the editor (handles shown on selected nodes). The mode persists
+     * across selections until changed by clicking a selected node or via the editor
+     * menu.
+     */
+    void setEditMode(EditMode mode) {
+        if (keyboardTransform)
+            cancelKeyboardTransform();
+        editMode = Objects.requireNonNull(mode);
+        overlay.resetStripHeightZoom();
+        overlay.updateModeButton();
+        overlay.showTransientInfoText(editMode == EditMode.HEIGHT && snapToTerrain
+                ? editMode.label + " (ignored while 'snap to terrain' is on)"
+                : editMode.label, 2400);
+        overlay.repaint();
+    }
+
+    /** Small glyph per editor, drawn in the selection colours. */
+    static Icon editModeIcon(EditMode mode) {
+        int size = 16;
+        var image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setStroke(new BasicStroke(1.5f));
+            g.setColor(SELECTED_NODE_HALO);
+            switch (mode) {
+                case RADIUS -> {
+                    g.drawOval(1, 1, 13, 13);
+                    g.fillOval(6, 6, 4, 4);
+                    g.setColor(SELECTED_NODE_FILL);
+                    g.fillRect(11, 5, 5, 5);
+                    g.setColor(SELECTED_NODE_HALO);
+                    g.drawRect(11, 5, 4, 4);
+                }
+                case CURVE -> {
+                    g.drawLine(1, 13, 15, 3);
+                    g.fillOval(6, 6, 4, 4);
+                    g.setColor(SELECTED_NODE_FILL);
+                    g.fillOval(0, 10, 5, 5);
+                    g.fillOval(11, 1, 5, 5);
+                }
+                case HEIGHT -> {
+                    g.drawLine(0, 12, 15, 12);
+                    g.drawLine(10, 12, 10, 4);
+                    g.fillOval(2, 10, 4, 4);
+                    g.setColor(SELECTED_NODE_FILL);
+                    g.fillRect(8, 1, 5, 5);
+                    g.setColor(SELECTED_NODE_HALO);
+                    g.drawRect(8, 1, 4, 4);
+                }
+            }
+        } finally {
+            g.dispose();
+        }
+        return new ImageIcon(image);
     }
 
     private void selectionChanged() {
@@ -487,13 +1799,67 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         gesturePath = null;
         movedPath = null;
         gestureWorldStart = null;
+        gestureCursor = null;
+        gestureLastRaw = null;
+        gesturePrecise = false;
+        radiusHandleNode = -1;
+        strengthHandleNode = -1;
+        heightHandleNode = -1;
+        randomizeHandleNode = -1;
+        circleHandleIndex = -1;
+        strengthHandleSide = 0;
+        dragStrength = null;
+        numericInput = null;
+        keyboardTransform = false;
+        gestureHeader = null;
         overlay.endDrag();
     }
 
-    private ArrayList<Point4f> movedPath(Point point) {
-        Point world = overlayView.viewToWorld(point);
-        int dx = world.x - gestureWorldStart.x;
-        int dy = world.y - gestureWorldStart.y;
+    EditMode editMode() {
+        return editMode;
+    }
+
+    /** The dropdown the editor button opens (exposed for tests). */
+    JPopupMenu editorMenu() {
+        return overlay.editorMenu();
+    }
+
+    /**
+     * Strip zoom state as {from, to} fractions of the path length (exposed for
+     * tests).
+     */
+    double[] stripZoom() {
+        return new double[]{overlay.zoomFrom, overlay.zoomTo};
+    }
+
+    /**
+     * Height zoom of the strip, or {@code null} when automatic (exposed for tests).
+     */
+    Double stripZoomCentre() {
+        return overlay.zoomCentre;
+    }
+
+    /**
+     * Pixels per block along the path and in height in the last painted strip
+     * (exposed for tests).
+     */
+    double[] stripPixelsPerBlock() {
+        return new double[]{overlay.pixelsPerBlock(), (overlay.stripBottom - overlay.stripTop) / overlay.stripRange};
+    }
+
+    /** The dropdown next to the overlays button (exposed for tests). */
+    JPopupMenu overlaysMenu() {
+        return overlay.overlaysMenu();
+    }
+
+    float curveStrength() {
+        return handleStrength;
+    }
+
+    private ArrayList<Point4f> movedPath() {
+        Point2D.Double world = gestureWorld();
+        int dx = (int) Math.round(world.x - gestureWorldStart.x);
+        int dy = (int) Math.round(world.y - gestureWorldStart.y);
         var result = new ArrayList<Point4f>();
         for (int i = 0; i < gesturePath.size(); i++) {
             var node = new Point4f(gesturePath.get(i));
@@ -503,10 +1869,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 int x = Math.round(node.x), y = Math.round(node.y);
                 if (overlayDimension.getTile(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS) == null)
                     return null;
-                node.z = overlayDimension.getHeightAt(x, y);
-                if (!Float.isFinite(node.z) || node.z < overlayDimension.getMinHeight()
-                        || node.z >= overlayDimension.getMaxHeight())
+                float ground = overlayDimension.getHeightAt(x, y);
+                if (!Float.isFinite(ground) || ground < overlayDimension.getMinHeight()
+                        || ground >= overlayDimension.getMaxHeight())
                     return null;
+                // keep the node's height above/below ground
+                Float oldGround = groundAt(gesturePath.get(i));
+                float relative = oldGround == null ? 0 : gesturePath.get(i).z - oldGround;
+                node.z = clampHeight(ground + relative);
             }
             result.add(node);
         }
@@ -541,19 +1911,1081 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         private List<Point4f> cachedNodes;
         private float cachedStrength;
         private List<Point4f> cachedCurve;
+        /**
+         * Per curve sample: last node passed, see
+         * {@link PathEditHandles#segmentIndices}.
+         */
+        private int[] cachedSegments;
+        /**
+         * Editor button: mode icon and name, with a painted dropdown arrow on the
+         * right.
+         */
+        private final DropdownButton modeButton = new DropdownButton("");
+        private final JToggleButton overlaysButton = new JToggleButton(overlaysIcon());
+        private final JButton overlaysMenuButton = new JButton(DROPDOWN_ARROW);
+        private final DropdownButton nodeMenuButton = new DropdownButton("Node");
+        private final DropdownButton segmentMenuButton = new DropdownButton("Segment");
+        private JPanel shownOperationPanel;
+        private final JToggleButton addButton = new JToggleButton("Add", addIcon());
 
         PathOverlay() {
             super(loadPathIcon());
+            modeButton.setName("PathTool.EditorMode");
+            modeButton.setToolTipText("Editor for selected nodes (also: click a selected node to cycle)");
+            modeButton.addActionListener(event -> {
+                if (modeButton.isShowing())
+                    editorMenu().show(modeButton, 0, modeButton.getHeight());
+            });
+            add(modeButton);
+
+            overlaysButton.setName("PathTool.OverlaysButton");
+            overlaysButton.setModel(showOverlays.getModel());
+            overlaysButton.setFocusable(false);
+            overlaysButton.setToolTipText("Show overlays (nodes, path line, radii, labels, handles, preview layer)");
+            add(overlaysButton);
+            overlaysMenuButton.setName("PathTool.OverlaysMenu");
+            overlaysMenuButton.setFocusable(false);
+            overlaysMenuButton.setMargin(new Insets(2, 3, 2, 3));
+            overlaysMenuButton.setToolTipText("Choose which overlays to show");
+            overlaysMenuButton.addActionListener(event -> {
+                if (overlaysMenuButton.isShowing())
+                    overlaysMenu().show(overlaysMenuButton, 0, overlaysMenuButton.getHeight());
+            });
+            add(overlaysMenuButton);
+            nodeMenuButton.setName("PathTool.NodeMenu");
+            nodeMenuButton.setToolTipText("Operations on the selected nodes");
+            nodeMenuButton.addActionListener(event -> {
+                if (nodeMenuButton.isShowing())
+                    nodeMenu().show(nodeMenuButton, 0, nodeMenuButton.getHeight());
+            });
+            add(nodeMenuButton);
+            segmentMenuButton.setName("PathTool.SegmentMenu");
+            segmentMenuButton.setToolTipText("Operations on segments between two selected nodes");
+            segmentMenuButton.addActionListener(event -> {
+                if (segmentMenuButton.isShowing())
+                    segmentMenu().show(segmentMenuButton, 0, segmentMenuButton.getHeight());
+            });
+            add(segmentMenuButton);
+            addButton.setName("PathTool.AddButton");
+            addButton.setModel(addMode.getModel());
+            addButton.setFocusable(false);
+            addButton.setToolTipText(
+                    "Add mode: left click on empty map adds a node (double-tap Ctrl). Ctrl+click always adds.");
+            add(addButton);
+            installStripMouse();
+            updateModeButton();
+        }
+
+        /**
+         * One row of buttons per overlay part, each a single click: the part's toggle
+         * button (sharing the switch's model) toggles it, "Only" shows only this part,
+         * "All but" shows everything except it; "All" in the title row shows all. Plain
+         * buttons, not menu items, so the popup stays open while clicking (menu items
+         * close it, and WorldPainter's look and feel ignores the "do not close" hint).
+         * It closes on a click outside or Escape.
+         */
+        JPopupMenu overlaysMenu() {
+            var menu = new JPopupMenu("Overlays");
+            var rows = new JPanel(new GridBagLayout());
+            rows.setOpaque(false);
+            rows.setBorder(new EmptyBorder(4, 6, 4, 6));
+            var cell = new GridBagConstraints();
+            cell.insets = new Insets(2, 2, 2, 2);
+            cell.fill = GridBagConstraints.HORIZONTAL;
+
+            var title = new JLabel("Overlays");
+            title.setFont(title.getFont().deriveFont(Font.BOLD));
+            cell.gridy = 0;
+            cell.gridx = 0;
+            cell.gridwidth = 2;
+            rows.add(title, cell);
+            var all = overlayMenuButton("All", "PathTool.Overlays.All", "Show all overlays");
+            all.addActionListener(event -> showOverlayParts(part -> true));
+            cell.gridx = 2;
+            cell.gridwidth = 1;
+            rows.add(all, cell);
+
+            for (JToggleButton part : overlayParts()) {
+                cell.gridy++;
+                var toggle = new JToggleButton(overlayPartTitle(part));
+                toggle.setModel(part.getModel());
+                toggle.setName(part.getName());
+                toggle.setFocusable(false);
+                toggle.setToolTipText("Show / hide " + overlayPartTitle(part).toLowerCase(Locale.ROOT));
+                cell.gridx = 0;
+                rows.add(toggle, cell);
+                var only = overlayMenuButton("Only", part.getName() + ".Only", "Show only this");
+                only.addActionListener(event -> showOverlayParts(other -> other == part));
+                cell.gridx = 1;
+                rows.add(only, cell);
+                var allBut = overlayMenuButton("All but", part.getName() + ".AllBut", "Show all but this");
+                allBut.addActionListener(event -> showOverlayParts(other -> other != part));
+                cell.gridx = 2;
+                rows.add(allBut, cell);
+            }
+            menu.add(rows);
+            return menu;
+        }
+
+        private JButton overlayMenuButton(String text, String name, String tooltip) {
+            var button = new JButton(text);
+            button.setName(name);
+            button.setFocusable(false);
+            button.setToolTipText(tooltip);
+            return button;
+        }
+
+        void updateModeButton() {
+            // the overlay is created during field initialisation, before editMode is set
+            EditMode mode = editMode == null ? EditMode.RADIUS : editMode;
+            modeButton.setContent("Editor: " + mode.title, editModeIcon(mode));
+            layoutModeButton();
+        }
+
+        JPopupMenu editorMenu() {
+            var menu = new JPopupMenu();
+            var group = new ButtonGroup();
+            for (EditMode mode : EditMode.values()) {
+                var item = new JRadioButtonMenuItem(mode.title, editModeIcon(mode), mode == editMode);
+                item.setName("PathTool.EditorMode." + mode.name());
+                item.addActionListener(event -> setEditMode(mode));
+                group.add(item);
+                menu.add(item);
+            }
+            return menu;
+        }
+
+        private void layoutModeButton() {
+            java.awt.Dimension size = modeButton.getPreferredSize();
+            // Node / Segment menus first (like Blender's Vertex / Edge menus), then the
+            // editor
+            nodeMenuButton.setBounds(8, 8, nodeMenuButton.getPreferredSize().width, size.height);
+            segmentMenuButton.setBounds(nodeMenuButton.getX() + nodeMenuButton.getWidth() + 4, 8,
+                    segmentMenuButton.getPreferredSize().width, size.height);
+            modeButton.setBounds(segmentMenuButton.getX() + segmentMenuButton.getWidth() + 8, 8, size.width,
+                    size.height);
+            layoutOperationPanel();
+            layoutResetZoomButton();
+            int x = modeButton.getX() + size.width + 8;
+            int toggleWidth = overlaysButton.getPreferredSize().width;
+            overlaysButton.setBounds(x, 8, toggleWidth, size.height);
+            overlaysMenuButton.setBounds(x + toggleWidth, 8, overlaysMenuButton.getPreferredSize().width, size.height);
+            int addX = overlaysMenuButton.getX() + overlaysMenuButton.getWidth() + 8;
+            addButton.setBounds(addX, 8, addButton.getPreferredSize().width, size.height);
+            // lay out the dropdowns' text and arrow for their new size now (null layout:
+            // nothing else re-validates them, leaving truncated text)
+            for (DropdownButton dropdown : List.of(nodeMenuButton, segmentMenuButton, modeButton))
+                dropdown.validate();
+            repaint();
+        }
+
+        /** Bottom of the toolbar row (the header and operation panel go below it). */
+        int toolbarBottom() {
+            return modeButton.getY() + modeButton.getHeight();
+        }
+
+        /** Right edge of the open operation panel, or 0. */
+        int operationPanelRight() {
+            return shownOperationPanel == null ? 0 : shownOperationPanel.getX() + shownOperationPanel.getWidth();
+        }
+
+        void relayoutOperationPanel() {
+            layoutOperationPanel();
+            repaint();
+        }
+
+        void showOperationPanel(JPanel panel) {
+            shownOperationPanel = panel;
+            add(panel);
+            layoutOperationPanel();
+            revalidate();
+            repaint();
+        }
+
+        void hideOperationPanel(JPanel panel) {
+            remove(panel);
+            if (shownOperationPanel == panel)
+                shownOperationPanel = null;
+            repaint();
+        }
+
+        /**
+         * Top left, right below the toolbar. (Blender puts its "Adjust Last Operation"
+         * panel bottom left, but there WorldPainter draws its compass and scale bar.)
+         */
+        private void layoutOperationPanel() {
+            if (shownOperationPanel == null)
+                return;
+            java.awt.Dimension size = shownOperationPanel.getPreferredSize();
+            int y = modeButton.getY() + modeButton.getHeight() + 8;
+            shownOperationPanel.setBounds(8, y, size.width, size.height);
+            shownOperationPanel.validate();
+        }
+
+        @Override
+        public void setBounds(int x, int y, int width, int height) {
+            super.setBounds(x, y, width, height);
+            layoutModeButton();
+        }
+
+        /** Mouse-transparent like the base overlay, except over the editor button. */
+        @Override
+        public boolean contains(int x, int y) {
+            // the profile strip takes its clicks (they must not select or add nodes below
+            // it)
+            if (lastBottomReserve > 0 && unravelledBounds().contains(x, y))
+                return true;
+            if (shownOperationPanel != null && shownOperationPanel.getBounds().contains(x, y))
+                return true;
+            for (Component control : List.of(nodeMenuButton, segmentMenuButton, modeButton, overlaysButton,
+                    overlaysMenuButton, addButton))
+                if (control.isVisible() && control.getBounds().contains(x, y))
+                    return true;
+            return false;
         }
 
         private List<Point4f> curveFor(List<Point4f> nodes) {
-            if (cachedNodes == null || !cachedNodes.equals(nodes)
-                    || Float.compare(cachedStrength, handleStrength) != 0) {
+            float strength = displayedStrength();
+            if (cachedNodes == null || !cachedNodes.equals(nodes) || Float.compare(cachedStrength, strength) != 0) {
                 cachedNodes = nodes.stream().map(Point4f::new).toList();
-                cachedStrength = handleStrength;
-                cachedCurve = nodes.size() < 2 ? List.of() : getPathFromNodes(cachedNodes, handleStrength).path;
+                cachedStrength = strength;
+                cachedCurve = nodes.size() < 2 ? List.of() : getPathFromNodes(cachedNodes, strength).path;
+                cachedSegments = PathEditHandles.segmentIndices(cachedNodes, cachedCurve);
             }
             return cachedCurve;
+        }
+
+        /**
+         * One chevron per segment at its middle sample, pointing along the curve from
+         * the lower to the higher node index (the flow direction for rivers). Segments
+         * too short on screen for an arrow are skipped.
+         */
+        private void paintDirectionArrows(Graphics2D g, List<Point4f> path) {
+            var curve = curveFor(path);
+            int[] segments = cachedSegments;
+            int count = Math.max(0, path.size() - 1);
+            int[] first = new int[count], last = new int[count];
+            java.util.Arrays.fill(first, -1);
+            for (int k = 0; k < segments.length; k++) {
+                int segment = segments[k];
+                if (segment < 0 || segment >= count)
+                    continue;
+                if (first[segment] < 0)
+                    first[segment] = k;
+                last[segment] = k;
+            }
+            for (int j = 0; j < count; j++) {
+                if (first[j] < 0)
+                    continue;
+                Point from = toView(path.get(j)), to = toView(path.get(j + 1));
+                if (from.distance(to) < MIN_ARROW_SEGMENT_PX)
+                    continue;
+                int middle = (first[j] + last[j] + 1) / 2;
+                Point before = toView(curve.get(Math.max(0, middle - 2)));
+                Point after = toView(curve.get(Math.min(curve.size() - 1, middle + 2)));
+                double dx = after.x - before.x, dy = after.y - before.y, length = Math.hypot(dx, dy);
+                if (length < 1e-6)
+                    continue;
+                paintChevron(g, toView(curve.get(middle)), dx / length, dy / length,
+                        PathEditHandles.segmentSelected(j, shownSelection()));
+            }
+        }
+
+        private Point toView(Point4f point) {
+            return overlayView.worldToView(Math.round(point.x), Math.round(point.y));
+        }
+
+        /**
+         * Curve as screen lines; segments between two selected nodes go on top,
+         * highlighted.
+         */
+        private void paintCurve(Graphics2D g, List<Point4f> path) {
+            var curve = curveFor(path);
+            var highlighted = new Path2D.Double();
+            g.setColor(Color.WHITE);
+            g.setStroke(new BasicStroke(1f));
+            for (int i = 1; i < curve.size(); i++) {
+                Point4f a = curve.get(i - 1), b = curve.get(i);
+                Point start = overlayView.worldToView(Math.round(a.x), Math.round(a.y));
+                Point end = overlayView.worldToView(Math.round(b.x), Math.round(b.y));
+                if (PathEditHandles.segmentSelected(cachedSegments[i - 1], shownSelection())) {
+                    highlighted.moveTo(start.x, start.y);
+                    highlighted.lineTo(end.x, end.y);
+                } else
+                    g.drawLine(start.x, start.y, end.x, end.y);
+            }
+            strokeWithHalo(g, highlighted, 2f);
+        }
+
+        /**
+         * Visible part of the path in the strip (fractions of its length), and height
+         * zoom.
+         */
+        private double zoomFrom = 0, zoomTo = 1;
+        /**
+         * Height view: blocks are square (one scale for distance and height); this is
+         * the height at the strip's vertical centre, {@code null} = centred on the
+         * profile.
+         */
+        private Double zoomCentre;
+        private Point zoomDragStart, zoomDragNow;
+        /**
+         * Last strip mapping, for turning mouse positions back into path distance /
+         * height.
+         */
+        private double stripLength = 1, stripLeft, stripRight = 1, stripTop, stripBottom = 1, stripLowest,
+                stripRange = 1;
+        private boolean stripHeightView;
+        private final JButton resetZoomButton = new JButton("Reset zoom");
+
+        boolean stripZoomed() {
+            return zoomFrom > 0 || zoomTo < 1 || zoomCentre != null;
+        }
+
+        void resetStripZoom() {
+            zoomFrom = 0;
+            zoomTo = 1;
+            zoomCentre = null;
+            resetZoomButton.setEnabled(false);
+            repaint();
+        }
+
+        void resetStripHeightZoom() {
+            zoomCentre = null;
+            resetZoomButton.setEnabled(stripZoomed());
+        }
+
+        private double fractionAt(double x) {
+            return zoomFrom + (x - stripLeft) / (stripRight - stripLeft) * (zoomTo - zoomFrom);
+        }
+
+        private double heightAt(double y) {
+            return stripLowest + (stripBottom - y) / (stripBottom - stripTop) * stripRange;
+        }
+
+        /** Smallest visible part: about 8 blocks of path. */
+        private double minimumZoomWidth() {
+            return Math.min(1, 8 / Math.max(1, stripLength));
+        }
+
+        /**
+         * Zooms the strip to a rectangle dragged on it (distance; in the height view
+         * also height).
+         */
+        /**
+         * What a zoom drag will select. Axis drags are unmistakable: a band across the
+         * whole strip with bracket edges and a double-headed arrow along the axis; a
+         * box drag is a dashed rectangle.
+         */
+        private void paintZoomBand(Graphics2D g, Rectangle box, ZoomDrag drag) {
+            g.setColor(new Color(0, 229, 255, 45));
+            g.fill(box);
+            if (drag == ZoomDrag.BOX) {
+                g.setStroke(
+                        new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10, new float[]{4, 3}, 0));
+                g.setColor(SELECTED_NODE_FILL);
+                g.draw(box);
+                return;
+            }
+            boolean horizontal = drag == ZoomDrag.HORIZONTAL;
+            int tick = 6;
+            var shape = new Path2D.Double();
+            if (horizontal) {
+                int x0 = box.x, x1 = box.x + box.width, y0 = box.y, y1 = box.y + box.height,
+                        mid = box.y + box.height / 2;
+                for (int x : new int[]{x0, x1}) { // bracket edges |- ... -|
+                    int inward = x == x0 ? tick : -tick;
+                    shape.moveTo(x + inward, y0);
+                    shape.lineTo(x, y0);
+                    shape.lineTo(x, y1);
+                    shape.lineTo(x + inward, y1);
+                }
+                shape.moveTo(x0 + 2, mid); // <---->
+                shape.lineTo(x1 - 2, mid);
+                shape.moveTo(x0 + 2 + tick, mid - tick);
+                shape.lineTo(x0 + 2, mid);
+                shape.lineTo(x0 + 2 + tick, mid + tick);
+                shape.moveTo(x1 - 2 - tick, mid - tick);
+                shape.lineTo(x1 - 2, mid);
+                shape.lineTo(x1 - 2 - tick, mid + tick);
+            } else {
+                int y0 = box.y, y1 = box.y + box.height, x0 = box.x, x1 = box.x + box.width,
+                        mid = box.x + box.width / 2;
+                for (int y : new int[]{y0, y1}) {
+                    int inward = y == y0 ? tick : -tick;
+                    shape.moveTo(x0, y + inward);
+                    shape.lineTo(x0, y);
+                    shape.lineTo(x1, y);
+                    shape.lineTo(x1, y + inward);
+                }
+                shape.moveTo(mid, y0 + 2);
+                shape.lineTo(mid, y1 - 2);
+                shape.moveTo(mid - tick, y0 + 2 + tick);
+                shape.lineTo(mid, y0 + 2);
+                shape.lineTo(mid + tick, y0 + 2 + tick);
+                shape.moveTo(mid - tick, y1 - 2 - tick);
+                shape.lineTo(mid, y1 - 2);
+                shape.lineTo(mid + tick, y1 - 2 - tick);
+            }
+            strokeWithHalo(g, shape, 2f);
+        }
+
+        /** Kind of zoom drag, like plotly: along one axis or a box. */
+        enum ZoomDrag {
+            HORIZONTAL, VERTICAL, BOX
+        }
+
+        /**
+         * Below this many pixels along an axis, a drag counts as not moving along it
+         * (plotly: 8).
+         */
+        static final int ZOOM_DRAG_THRESHOLD = 8;
+
+        /**
+         * Classifies a drag; {@code null} for a click (or vertical outside the height
+         * view).
+         */
+        ZoomDrag zoomDrag(Point start, Point end) {
+            int dx = Math.abs(end.x - start.x), dy = Math.abs(end.y - start.y);
+            if (dx < ZOOM_DRAG_THRESHOLD && dy < ZOOM_DRAG_THRESHOLD)
+                return null;
+            // lenient: within ~22 degrees of an axis (or barely moving across it) counts as
+            // a drag along that axis
+            if (dy < AXIS_DRAG_SLACK_PX || dy < dx * AXIS_DRAG_RATIO)
+                return ZoomDrag.HORIZONTAL;
+            if (dx < AXIS_DRAG_SLACK_PX || dx < dy * AXIS_DRAG_RATIO)
+                return stripHeightView ? ZoomDrag.VERTICAL : null;
+            return stripHeightView ? ZoomDrag.BOX : ZoomDrag.HORIZONTAL;
+        }
+
+        /** Movement across an axis below which a drag counts as along that axis. */
+        static final int AXIS_DRAG_SLACK_PX = 12;
+        /** ... or below this share of the movement along it (tan 22 degrees). */
+        static final double AXIS_DRAG_RATIO = 0.4;
+
+        /** The band a drag selects: full strip height / width for single-axis drags. */
+        Rectangle zoomBand(Point start, Point end, ZoomDrag drag) {
+            var box = new Rectangle(start);
+            box.add(end);
+            return switch (drag) {
+                case HORIZONTAL -> new Rectangle(box.x, (int) stripTop, box.width, (int) (stripBottom - stripTop));
+                case VERTICAL -> new Rectangle((int) stripLeft, box.y, (int) (stripRight - stripLeft), box.height);
+                case BOX -> box;
+            };
+        }
+
+        /**
+         * Shows {@code width} (fraction of the path) centred on {@code centre}, within
+         * the path.
+         */
+        private void showDistance(double centre, double width) {
+            width = Math.max(minimumZoomWidth(), Math.min(1, width));
+            zoomFrom = Math.max(0, Math.min(1 - width, centre - width / 2));
+            zoomTo = zoomFrom + width;
+        }
+
+        /**
+         * Pixels per block along the path (in the height view also vertically: square
+         * blocks).
+         */
+        private double pixelsPerBlock() {
+            return (stripRight - stripLeft) / Math.max(1e-9, (zoomTo - zoomFrom) * stripLength);
+        }
+
+        /**
+         * Zooms to a dragged band. Horizontal: that distance range. In the height view
+         * blocks stay square, so vertical and box drags set one scale for both axes:
+         * vertical = the dragged heights fill the strip, box = the whole box fits; both
+         * centre on the dragged area.
+         */
+        void zoomStripTo(Rectangle box, ZoomDrag drag) {
+            double from = fractionAt(box.x), to = fractionAt(box.x + box.width);
+            double viewWidth = stripRight - stripLeft, viewHeight = stripBottom - stripTop;
+            switch (drag) {
+                case HORIZONTAL -> showDistance((from + to) / 2, to - from);
+                case VERTICAL -> {
+                    double blocksTall = Math.max(2, heightAt(box.y) - heightAt(box.y + box.height));
+                    double perBlock = viewHeight / blocksTall;
+                    showDistance((zoomFrom + zoomTo) / 2, viewWidth / perBlock / stripLength);
+                    zoomCentre = heightAt(box.y + box.height / 2.0);
+                }
+                case BOX -> {
+                    double blocksWide = Math.max(1e-9, (to - from) * stripLength);
+                    double blocksTall = Math.max(2, heightAt(box.y) - heightAt(box.y + box.height));
+                    double perBlock = Math.min(viewWidth / blocksWide, viewHeight / blocksTall);
+                    double centreHeight = heightAt(box.y + box.height / 2.0);
+                    showDistance((from + to) / 2, viewWidth / perBlock / stripLength);
+                    zoomCentre = centreHeight;
+                }
+            }
+            resetZoomButton.setEnabled(stripZoomed());
+            repaint();
+        }
+
+        /** Middle-mouse panning of the strip (like WorldPainter's map). */
+        private Point panStart;
+        private double panFrom, panCentre;
+
+        void startStripPan(Point point) {
+            panStart = point;
+            panFrom = zoomFrom;
+            panCentre = zoomCentre != null ? zoomCentre : stripLowest + stripRange / 2;
+            setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+        }
+
+        /**
+         * Moves the visible part with the mouse: along the path, and in height in the
+         * height view.
+         */
+        void panStripTo(Point point) {
+            double width = zoomTo - zoomFrom;
+            double shift = (point.x - panStart.x) / (stripRight - stripLeft) * width;
+            zoomFrom = Math.max(0, Math.min(1 - width, panFrom - shift));
+            zoomTo = zoomFrom + width;
+            if (stripHeightView) {
+                double perBlock = (stripBottom - stripTop) / stripRange;
+                zoomCentre = panCentre + (point.y - panStart.y) / perBlock;
+            }
+            resetZoomButton.setEnabled(stripZoomed());
+            repaint();
+        }
+
+        /**
+         * Mouse wheel: zooms in (rotation < 0) or out around the mouse position; the
+         * block under the mouse stays where it is (both axes in the height view).
+         */
+        void zoomStripAround(Point mouse, int rotation) {
+            double factor = rotation > 0 ? 1.25 : 0.8;
+            double at = fractionAt(mouse.x), share = (mouse.x - stripLeft) / (stripRight - stripLeft);
+            double oldWidth = zoomTo - zoomFrom;
+            double width = Math.max(minimumZoomWidth(), Math.min(1, oldWidth * factor));
+            double from = Math.max(0, Math.min(1 - width, at - share * width));
+            zoomFrom = from;
+            zoomTo = from + width;
+            if (stripHeightView) {
+                if (zoomFrom <= 0 && zoomTo >= 1 && rotation > 0)
+                    zoomCentre = null; // fully out: centred on the profile again
+                else {
+                    double underMouse = heightAt(mouse.y);
+                    double range = stripRange * width / oldWidth;
+                    double lowest = underMouse - (stripBottom - mouse.y) / (stripBottom - stripTop) * range;
+                    zoomCentre = lowest + range / 2;
+                }
+            }
+            resetZoomButton.setEnabled(stripZoomed());
+            repaint();
+        }
+
+        private void installStripMouse() {
+            var mouse = new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent event) {
+                    if (!unravelledBounds().contains(event.getPoint()))
+                        return;
+                    if (SwingUtilities.isLeftMouseButton(event)) {
+                        zoomDragStart = event.getPoint();
+                        zoomDragNow = null;
+                    } else if (SwingUtilities.isMiddleMouseButton(event))
+                        startStripPan(event.getPoint());
+                }
+
+                @Override
+                public void mouseDragged(MouseEvent event) {
+                    if (panStart != null)
+                        panStripTo(event.getPoint());
+                    else if (zoomDragStart != null) {
+                        zoomDragNow = event.getPoint();
+                        repaint();
+                    }
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent event) {
+                    if (panStart != null && SwingUtilities.isMiddleMouseButton(event)) {
+                        panStart = null;
+                        setCursor(null);
+                        return;
+                    }
+                    if (zoomDragStart == null)
+                        return;
+                    var start = zoomDragStart;
+                    zoomDragStart = null;
+                    zoomDragNow = null;
+                    var drag = zoomDrag(start, event.getPoint());
+                    if (drag != null)
+                        zoomStripTo(zoomBand(start, event.getPoint(), drag), drag);
+                    repaint();
+                }
+
+                @Override
+                public void mouseWheelMoved(java.awt.event.MouseWheelEvent event) {
+                    if (unravelledBounds().contains(event.getPoint()))
+                        zoomStripAround(event.getPoint(), event.getWheelRotation());
+                }
+            };
+            // listeners make the strip itself the mouse target: clicks, drags and the wheel
+            // there no longer reach the map below (contains() limits this to the strip)
+            addMouseListener(mouse);
+            addMouseMotionListener(mouse);
+            addMouseWheelListener(mouse);
+            resetZoomButton.setName("PathTool.ProfileResetZoom");
+            resetZoomButton.setFocusable(false);
+            resetZoomButton.setMargin(new Insets(0, 4, 0, 4));
+            resetZoomButton.setFont(resetZoomButton.getFont().deriveFont(10f));
+            resetZoomButton.setEnabled(false);
+            resetZoomButton.setVisible(false);
+            resetZoomButton.addActionListener(event -> resetStripZoom());
+            add(resetZoomButton);
+        }
+
+        private void layoutResetZoomButton() {
+            Rectangle strip = unravelledBounds();
+            java.awt.Dimension size = resetZoomButton.getPreferredSize();
+            resetZoomButton.setBounds(strip.x + strip.width - size.width - 6, strip.y + 2, size.width,
+                    Math.min(size.height, 16));
+        }
+
+        /** Block a height belongs to, rounded like WorldPainter's int heights. */
+        private static int blockOf(float height) {
+            return Math.round(height);
+        }
+
+        /**
+         * Surface of a height profile block by block: flat across each block's column
+         * at the top of its block, with vertical steps between blocks.
+         */
+        private static Path2D blockSteps(List<Point4f> samples, int from, int to, double[] columnLeft,
+                double[] columnRight, java.util.function.DoubleUnaryOperator yAt) {
+            var steps = new Path2D.Double();
+            for (int k = from; k <= to; k++) {
+                double y = yAt.applyAsDouble(blockOf(samples.get(k).z) + 1);
+                if (k == from)
+                    steps.moveTo(columnLeft[k], y);
+                else
+                    steps.lineTo(columnLeft[k], y);
+                steps.lineTo(columnRight[k], y);
+            }
+            return steps;
+        }
+
+        /** Block height numbers along the left edge, spaced to stay readable. */
+        private static void paintHeightScale(Graphics2D g, Rectangle strip, double lowest, double range,
+                java.util.function.DoubleUnaryOperator yAt) {
+            double pixelsPerBlock = (yAt.applyAsDouble(lowest) - yAt.applyAsDouble(lowest + range)) / range;
+            int step = 1;
+            for (int candidate : new int[]{1, 2, 5, 10, 20, 50, 100})
+                if (candidate * pixelsPerBlock >= 16) {
+                    step = candidate;
+                    break;
+                } else
+                    step = candidate;
+            Font previous = g.getFont();
+            g.setFont(previous.deriveFont(Font.PLAIN, 9f));
+            g.setColor(new Color(255, 255, 255, 170));
+            for (int height = (int) Math.ceil(lowest / step) * step; height <= lowest + range; height += step) {
+                int y = (int) Math.round(yAt.applyAsDouble(height));
+                g.drawLine(strip.x + 2, y, strip.x + 6, y);
+                g.drawString(Integer.toString(height), strip.x + 2, y - 2);
+            }
+            g.setFont(previous);
+        }
+
+        /**
+         * Bounds of the unravelled path strip at the bottom of the viewport (exposed
+         * for tests).
+         */
+        Rectangle unravelledBounds() {
+            int height = UNRAVELLED_HEIGHT;
+            return new Rectangle(8, getHeight() - height - 8, Math.max(0, getWidth() - 16), height);
+        }
+
+        /**
+         * The path unravelled into a horizontal strip at the bottom of the viewport:
+         * nodes in order along the path, spaced by their distance along the curve, in
+         * the path's own styling. Each editor has its own view: radius as a ribbon
+         * around the line, height above ground as an elevation profile with terrain and
+         * water read from the dimension, curve strength as the plain linked list of
+         * nodes.
+         */
+        private void paintUnravelled(Graphics2D g, List<Point4f> path) {
+            boolean visible = shows(showProfile) && path.size() >= 2;
+            int reserve = visible ? UNRAVELLED_HEIGHT + 12 : 0;
+            if (reserve != lastBottomReserve) {
+                lastBottomReserve = reserve;
+                SwingUtilities.invokeLater(() -> { // no layout while painting
+                    setBottomReserve(reserve);
+                    resetZoomButton.setVisible(reserve > 0);
+                    layoutResetZoomButton();
+                });
+            }
+            if (!visible)
+                return;
+            var curve = curveFor(path);
+            int[] segments = cachedSegments;
+            int n = path.size();
+            // first curve sample of every node, and distance along the curve per sample
+            int[] nodeSample = new int[n];
+            for (int i = 0, k = 0; i < n; i++) {
+                while (k < segments.length && segments[k] < i)
+                    k++;
+                nodeSample[i] = Math.min(k, curve.size() - 1);
+            }
+            int first = nodeSample[0], last = curve.size() - 1;
+            if (last <= first)
+                return;
+            double[] along = new double[curve.size()];
+            for (int k = first + 1; k <= last; k++)
+                along[k] = along[k - 1]
+                        + Math.hypot(curve.get(k).x - curve.get(k - 1).x, curve.get(k).y - curve.get(k - 1).y);
+            double length = along[last];
+            if (length <= 0)
+                return;
+
+            Rectangle strip = unravelledBounds();
+            g.setColor(new Color(20, 20, 20, 175));
+            g.fillRoundRect(strip.x, strip.y, strip.width, strip.height, 10, 10);
+            int left = strip.x + 24, right = strip.x + strip.width - 24;
+            int top = strip.y + 22, bottom = strip.y + strip.height - 14;
+            // zoom: the visible part of the path (fractions of its length)
+            double x0 = zoomFrom, x1 = zoomTo;
+            java.util.function.DoubleUnaryOperator xAt = s -> left + (s / length - x0) / (x1 - x0) * (right - left);
+            stripLength = length;
+            stripLeft = left;
+            stripRight = right;
+            stripTop = top;
+            stripBottom = bottom;
+            stripHeightView = editMode == EditMode.HEIGHT;
+            Font previous = g.getFont();
+            g.setFont(previous.deriveFont(Font.BOLD, 11f));
+            g.setColor(Color.WHITE);
+            g.drawString(switch (editMode) {
+                case RADIUS -> "Radius along the path";
+                case HEIGHT -> "Height along the path (terrain, water, path)";
+                case CURVE -> String.format(Locale.ROOT, "Path (curve strength %.2f)", displayedStrength());
+            }, strip.x + 10, strip.y + 15);
+            g.setFont(previous);
+            Shape oldClip = g.getClip();
+            g.clipRect(strip.x + 2, strip.y + 18, strip.width - 4, strip.height - 20);
+
+            // y of each node in the strip, depending on the editor
+            double[] nodeY = new double[n];
+            Set<Integer> selection = shownSelection();
+            if (editMode == EditMode.HEIGHT) {
+                // resolved heights: what Apply would really generate
+                var resolved = new ArrayList<Point4f>(curve.size());
+                for (Point4f sample : curve)
+                    resolved.add(new Point4f(sample));
+                if (overlayDimension != null)
+                    resolveHeights(resolved, overlayDimension);
+                // everything in whole blocks, like Minecraft: a column's surface is the top of
+                // its block (height rounded like WorldPainter, + 1); water fills its blocks up
+                // to the water level; the path's surface is the top of its rounded block
+                var terrain = new Integer[curve.size()];
+                var water = new Integer[curve.size()];
+                double low = Double.MAX_VALUE, high = -Double.MAX_VALUE;
+                for (int k = first; k <= last; k++) {
+                    Point4f sample = curve.get(k);
+                    Float ground = groundAt(sample);
+                    if (ground != null) {
+                        terrain[k] = Math.round(ground);
+                        if (overlayDimension != null) {
+                            int level = overlayDimension.getWaterLevelAt(Math.round(sample.x), Math.round(sample.y));
+                            water[k] = level > terrain[k] ? level : null;
+                        }
+                    }
+                    for (Integer value : new Integer[]{terrain[k], water[k], blockOf(sample.z),
+                            blockOf(resolved.get(k).z)})
+                        if (value != null) {
+                            low = Math.min(low, value);
+                            high = Math.max(high, value + 1);
+                        }
+                }
+                // square blocks: the height scale is the distance scale; centred on the
+                // profile (keeping a band of ground below it) unless zoomed elsewhere
+                double perBlock = (right - left) / Math.max(1e-9, (x1 - x0) * length);
+                double range = (bottom - top) / perBlock;
+                double autoCentre = (low - Math.max(3, (high - low) * 0.3) + high + 2) / 2;
+                double lowest = (zoomCentre != null ? zoomCentre : autoCentre) - range / 2;
+                stripLowest = lowest;
+                stripRange = range;
+                java.util.function.DoubleUnaryOperator yAt = v -> bottom - (v - lowest) / range * (bottom - top);
+                // column of every block along the path: halfway to its neighbours
+                double[] columnLeft = new double[curve.size()], columnRight = new double[curve.size()];
+                for (int k = first; k <= last; k++) {
+                    columnLeft[k] = xAt.applyAsDouble(k > first ? (along[k - 1] + along[k]) / 2 : along[k]);
+                    columnRight[k] = xAt.applyAsDouble(k < last ? (along[k] + along[k + 1]) / 2 : along[k]);
+                }
+                var terrainShape = new Path2D.Double();
+                var waterShape = new Path2D.Double();
+                for (int k = first; k <= last; k++) {
+                    if (terrain[k] == null)
+                        continue;
+                    double width = columnRight[k] - columnLeft[k], ground = yAt.applyAsDouble(terrain[k] + 1);
+                    // ground fills down to the strip's edge (clipped), so it never ends in a gap
+                    double floor = strip.y + strip.height;
+                    terrainShape.append(new java.awt.geom.Rectangle2D.Double(columnLeft[k], ground, width,
+                            Math.max(0, floor - ground)), false);
+                    if (water[k] != null) {
+                        double surface = yAt.applyAsDouble(water[k] + 1);
+                        waterShape.append(
+                                new java.awt.geom.Rectangle2D.Double(columnLeft[k], surface, width, ground - surface),
+                                false);
+                    }
+                }
+                g.setColor(PROFILE_TERRAIN);
+                g.fill(terrainShape);
+                g.setColor(PROFILE_WATER);
+                g.fill(waterShape);
+                // zoomed in far enough: outline every block and label block heights
+                double pixelsPerBlockX = (right - left) / Math.max(1e-9, (x1 - x0) * length);
+                double pixelsPerBlockY = (bottom - top) / range;
+                if (pixelsPerBlockX >= BLOCK_GRID_MIN_PX && pixelsPerBlockY >= BLOCK_GRID_MIN_PX) {
+                    g.setStroke(new BasicStroke(1f));
+                    g.setColor(new Color(0, 0, 0, 70));
+                    int firstBlock = (int) Math.floor(lowest);
+                    for (int k = first; k <= last; k++) {
+                        if (terrain[k] == null || columnRight[k] < left || columnLeft[k] > right)
+                            continue;
+                        int topBlock = water[k] != null ? water[k] : terrain[k];
+                        for (int block = firstBlock; block <= topBlock; block++)
+                            g.draw(new java.awt.geom.Rectangle2D.Double(columnLeft[k], yAt.applyAsDouble(block + 1),
+                                    columnRight[k] - columnLeft[k], pixelsPerBlockY));
+                    }
+                }
+                paintHeightScale(g, strip, lowest, range, yAt);
+                // where the resolved heights differ from the nodes' own curve (e.g. snap to
+                // terrain overriding raised nodes), show that curve faint and dotted
+                boolean differs = false;
+                for (int k = first; k <= last; k++)
+                    differs |= blockOf(curve.get(k).z) != blockOf(resolved.get(k).z);
+                if (differs) {
+                    g.setColor(new Color(255, 255, 255, 140));
+                    g.setStroke(new BasicStroke(1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10,
+                            new float[]{1, 3}, 0));
+                    g.draw(blockSteps(curve, first, last, columnLeft, columnRight, yAt));
+                }
+                // resolved height per segment, block by block: red where it rises from the
+                // previous node, green where it falls or stays level; selected segments get a
+                // cyan underlay
+                for (int i = 0; i + 1 < n; i++) {
+                    int from = nodeSample[i], to = nodeSample[i + 1];
+                    if (to <= from)
+                        continue;
+                    var segment = blockSteps(resolved, from, to, columnLeft, columnRight, yAt);
+                    if (PathEditHandles.segmentSelected(i, selection)) {
+                        g.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                        g.setColor(SELECTED_NODE_FILL);
+                        g.draw(segment);
+                    }
+                    boolean rises = blockOf(resolved.get(to).z) > blockOf(resolved.get(from).z);
+                    g.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g.setColor(rises ? SLOPE_UP_COLOR : SLOPE_DOWN_COLOR);
+                    g.draw(segment);
+                }
+                for (int i = 0; i < n; i++)
+                    nodeY[i] = yAt.applyAsDouble(blockOf(path.get(i).z) + 1);
+            } else {
+                double middle = (top + bottom) / 2.0;
+                if (editMode == EditMode.RADIUS) {
+                    double widest = 1;
+                    for (int k = first; k <= last; k++)
+                        widest = Math.max(widest, curve.get(k).w);
+                    double scale = (bottom - top) / 2.0 / widest;
+                    var ribbon = new Path2D.Double();
+                    ribbon.moveTo(xAt.applyAsDouble(along[first]), middle - curve.get(first).w * scale);
+                    for (int k = first + 1; k <= last; k++)
+                        ribbon.lineTo(xAt.applyAsDouble(along[k]), middle - curve.get(k).w * scale);
+                    for (int k = last; k >= first; k--)
+                        ribbon.lineTo(xAt.applyAsDouble(along[k]), middle + curve.get(k).w * scale);
+                    ribbon.closePath();
+                    g.setColor(new Color(255, 255, 255, 60));
+                    g.fill(ribbon);
+                    g.setColor(new Color(255, 255, 255, 150));
+                    g.setStroke(new BasicStroke(1f));
+                    g.draw(ribbon);
+                }
+                var line = new Path2D.Double();
+                var highlighted = new Path2D.Double();
+                for (int i = 0; i + 1 < n; i++) {
+                    var target = PathEditHandles.segmentSelected(i, selection) ? highlighted : line;
+                    target.moveTo(xAt.applyAsDouble(along[nodeSample[i]]), middle);
+                    target.lineTo(xAt.applyAsDouble(along[nodeSample[i + 1]]), middle);
+                }
+                g.setColor(Color.WHITE);
+                g.setStroke(new BasicStroke(1.5f));
+                g.draw(line);
+                strokeWithHalo(g, highlighted, 2f);
+                for (int i = 0; i < n; i++)
+                    nodeY[i] = middle;
+            }
+            for (int i = 0; i < n; i++) {
+                var point = new Point((int) Math.round(xAt.applyAsDouble(along[nodeSample[i]])),
+                        (int) Math.round(nodeY[i]));
+                boolean selected = selection.contains(i);
+                paintNode(g, point, selected);
+                if (shows(showLabel))
+                    paintNodeLabel(g, point, i + 1, selected);
+            }
+            var drag = zoomDragStart != null && zoomDragNow != null ? zoomDrag(zoomDragStart, zoomDragNow) : null;
+            if (drag != null)
+                paintZoomBand(g, zoomBand(zoomDragStart, zoomDragNow, drag), drag);
+            g.setClip(oldClip);
+        }
+
+        /**
+         * Dotted line from each node's old to its previewed position (randomize, snap),
+         * drawn below the nodes; keeps dense node clusters readable. Only for
+         * operations that keep the node count (not subdivide).
+         */
+        private void paintMovementLines(Graphics2D g, List<Point4f> before, List<Point4f> after) {
+            if (before.size() != after.size())
+                return;
+            var dotted = new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10, new float[]{1, 4}, 0);
+            var halo = new BasicStroke(3.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10, new float[]{1, 4}, 0);
+            for (int i = 0; i < before.size(); i++) {
+                Point from = toView(before.get(i)), to = toView(after.get(i));
+                if (from.equals(to))
+                    continue;
+                var line = new Line2D.Double(from, to);
+                g.setStroke(halo);
+                g.setColor(SELECTED_NODE_HALO);
+                g.draw(line);
+                g.setStroke(dotted);
+                g.setColor(PREVIEW_COLOR);
+                g.draw(line);
+            }
+        }
+
+        /**
+         * The open operation's circles around every selected (original) node, each with
+         * its handle, in the blue handle styling: things the user drags and edits are
+         * blue; amber is reserved for previewed, not yet applied results.
+         */
+        private void paintOperationCircles(Graphics2D g) {
+            var view = viewNodes(circleBase);
+            for (int c = 0; c < operationCircles.size(); c++) {
+                OperationCircle circle = operationCircles.get(c);
+                for (int i : circleSelection) {
+                    if (i >= circleBase.size())
+                        continue;
+                    Point2D.Double center = view.get(i);
+                    double radius = radiusInView(circleBase.get(i), circle.value());
+                    var shape = new Ellipse2D.Double(center.x - radius, center.y - radius, 2 * radius, 2 * radius);
+                    // a handle's circle: blue handle styling (amber is for previewed results only)
+                    strokeWithHalo(g, shape, 2f);
+                    var handle = circleHandle(center, radius, circle.side());
+                    if (Math.abs(handle.x - center.x) > radius + 1)
+                        strokeWithHalo(g,
+                                new Line2D.Double(center.x + circle.side() * radius, center.y, handle.x, handle.y), 1f);
+                    paintSquareHandle(g, handle, isHovered(HitKind.OPERATION_RADIUS, i, c));
+                    String text = circle.label() + " " + formatValue(circle.value());
+                    if (circle.side() > 0)
+                        paintHandleLabel(g, text, handle);
+                    else
+                        paintHandleLabel(g, text, new Point2D.Double(
+                                handle.x - g.getFontMetrics().stringWidth(text) - 2 * (HOVERED_HANDLE_SIZE / 2 + 4),
+                                handle.y));
+                }
+            }
+        }
+
+        /**
+         * Heights an operation would change, in the preview style: a dashed amber ring
+         * around the node and the change in blocks ("-3").
+         */
+        private void paintPreviewHeights(Graphics2D g, List<Point4f> before, List<Point4f> after) {
+            if (before.size() != after.size())
+                return;
+            var dashed = new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10, new float[]{4, 3}, 0);
+            for (int i = 0; i < after.size(); i++) {
+                float change = after.get(i).z - before.get(i).z;
+                if (Math.abs(change) < 0.05f)
+                    continue;
+                Point center = toView(after.get(i));
+                int ring = NODE_OUTLINE_DIAMETER + 10;
+                var shape = new Ellipse2D.Double(center.x - ring / 2.0, center.y - ring / 2.0, ring, ring);
+                g.setStroke(new BasicStroke(3.5f));
+                g.setColor(SELECTED_NODE_HALO);
+                g.draw(shape);
+                g.setStroke(dashed);
+                g.setColor(PREVIEW_COLOR);
+                g.draw(shape);
+                paintPreviewLabel(g, PathEditHandles.signed(Math.round(change * 10) / 10f),
+                        new Point2D.Double(center.x + ring / 2.0, center.y + ring / 2.0 + 12));
+            }
+        }
+
+        /**
+         * Radii an operation would change, in the preview style (dashed amber), on top
+         * of the regular radius circles.
+         */
+        private void paintPreviewRadii(Graphics2D g, List<Point4f> before, List<Point4f> after) {
+            if (before.size() != after.size())
+                return;
+            var dashed = new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10, new float[]{6, 4}, 0);
+            for (int i = 0; i < after.size(); i++) {
+                if (Float.compare(before.get(i).w, after.get(i).w) == 0)
+                    continue;
+                Point center = toView(after.get(i));
+                double radius = radiusInView(after.get(i), after.get(i).w);
+                var shape = new Ellipse2D.Double(center.x - radius, center.y - radius, 2 * radius, 2 * radius);
+                g.setStroke(new BasicStroke(4f));
+                g.setColor(SELECTED_NODE_HALO);
+                g.draw(shape);
+                g.setStroke(dashed);
+                g.setColor(PREVIEW_COLOR);
+                g.draw(shape);
+            }
+        }
+
+        private void paintEditHandles(Graphics2D g, List<Point4f> path) {
+            var view = viewNodes(path);
+            float strength = displayedStrength();
+            for (int i : selectedNodes) {
+                if (i >= path.size())
+                    continue;
+                Point2D.Double center = view.get(i);
+                if (editMode == EditMode.RADIUS) {
+                    double radius = radiusInView(path.get(i));
+                    var circle = new Ellipse2D.Double(center.x - radius, center.y - radius, 2 * radius, 2 * radius);
+                    strokeWithHalo(g, circle, 2f);
+                    var handle = PathEditHandles.radiusHandle(center, radius);
+                    if (handle.x - center.x > radius + 1)
+                        strokeWithHalo(g, new Line2D.Double(center.x + radius, center.y, handle.x, handle.y), 1f);
+                    paintSquareHandle(g, handle, isHovered(HitKind.RADIUS, i, 0));
+                    paintHandleLabel(g, formatValue(path.get(i).w), handle);
+                } else if (editMode == EditMode.HEIGHT) {
+                    Point4f node = path.get(i);
+                    Float ground = groundAt(node);
+                    if (ground == null)
+                        continue;
+                    float relative = node.z - ground;
+                    // ground level: horizontal line through the node (gap for the marker),
+                    // extended right to the height gauge, which sits beside the node
+                    double gap = NODE_OUTLINE_DIAMETER / 2.0 + 2, reach = 34;
+                    var axis = new Point2D.Double(center.x + heightAxisOffset(), center.y);
+                    strokeWithHalo(g, new Line2D.Double(center.x - reach, center.y, center.x - gap, center.y), 1.5f);
+                    strokeWithHalo(g, new Line2D.Double(center.x + gap, center.y, axis.x + 14, center.y), 1.5f);
+                    var handle = PathEditHandles.heightHandle(axis, relative);
+                    // ground label on the opposite side of the line from the handle
+                    paintHandleLabel(g, "ground " + formatValue(Math.round(ground)),
+                            new Point2D.Double(axis.x, handle.y <= center.y ? center.y + 20 : center.y - 2));
+                    strokeWithHalo(g, new Line2D.Double(axis, handle), 1.5f);
+                    paintSquareHandle(g, handle, isHovered(HitKind.HEIGHT, i, 0));
+                    paintHandleLabel(g, PathEditHandles.signed(Math.round(relative * 10) / 10f) + " (abs "
+                            + formatValue(Math.round(node.z * 10) / 10f) + ")", handle);
+                } else {
+                    var tangent = PathEditHandles.tangent(view, i);
+                    if (tangent == null)
+                        continue;
+                    var back = tangent.handle(-1, strength);
+                    var forward = tangent.handle(1, strength);
+                    strokeWithHalo(g, new Line2D.Double(back, forward), 1.5f);
+                    paintRoundHandle(g, back, isHovered(HitKind.STRENGTH, i, -1));
+                    paintRoundHandle(g, forward, isHovered(HitKind.STRENGTH, i, 1));
+                    paintHandleLabel(g, String.format(Locale.ROOT, "%.2f", strength), forward);
+                }
+            }
         }
 
         @Override
@@ -565,9 +2997,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             Graphics2D g = (Graphics2D) graphics.create();
             try {
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                var path = movedPath != null ? movedPath : getCurrentPath();
-                selectedNodes.removeIf(index -> index >= path.size());
-                if (showRadius.isSelected()) {
+                var path = movedPath != null
+                        ? movedPath
+                        : operationPreview != null ? operationPreview.path() : getCurrentPath();
+                if (operationPreview == null)
+                    selectedNodes.removeIf(index -> index >= path.size());
+                if (shows(showRadius)) {
                     g.setColor(new Color(255, 255, 255, 150));
                     for (Point4f node : path) {
                         Point left = overlayView.worldToView(Math.round(node.x - node.w), Math.round(node.y - node.w));
@@ -576,30 +3011,243 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                                 Math.abs(right.y - left.y));
                     }
                 }
-                if (showLine.isSelected()) {
-                    var curve = curveFor(path);
-                    g.setColor(Color.WHITE);
-                    for (int i = 1; i < curve.size(); i++) {
-                        Point4f a = curve.get(i - 1), b = curve.get(i);
-                        Point start = overlayView.worldToView(Math.round(a.x), Math.round(a.y));
-                        Point end = overlayView.worldToView(Math.round(b.x), Math.round(b.y));
-                        g.drawLine(start.x, start.y, end.x, end.y);
-                    }
-                }
+                if (shows(showLine))
+                    paintCurve(g, path);
+                if (shows(showDirection))
+                    paintDirectionArrows(g, path);
+                if (operationPreview != null && operationBase != null && movedPath == null)
+                    paintMovementLines(g, operationBase, operationPreview.path());
                 for (int i = 0; i < path.size(); i++) {
                     Point4f node = path.get(i);
                     Point point = overlayView.worldToView(Math.round(node.x), Math.round(node.y));
-                    boolean selected = selectedNodes.contains(i);
-                    if (showNodes.isSelected())
+                    boolean selected = shownSelection().contains(i);
+                    if (operationPreview != null && merging(i))
+                        paintMergeWarning(g, point);
+                    boolean inserted = operationPreview != null && operationPreview.inserted().contains(i);
+                    if (shows(showNodes) && inserted)
+                        paintInsertedNode(g, point);
+                    else if (shows(showNodes))
                         paintNode(g, point, selected);
-                    if (showLabel.isSelected())
+                    if (shows(showNodes) && isHovered(HitKind.NODE, i, 0))
+                        paintNodeHover(g, point);
+                    if (shows(showLabel))
                         paintNodeLabel(g, point, i + 1, selected);
                 }
+                if (showOverlays.isSelected() && operationPreview == null)
+                    paintEditHandles(g, path);
+                if (operationPreview != null && operationBase != null) {
+                    paintPreviewRadii(g, operationBase, operationPreview.path());
+                    paintPreviewHeights(g, operationBase, operationPreview.path());
+                }
+                if (!operationCircles.isEmpty())
+                    paintOperationCircles(g);
+                paintUnravelled(g, path);
+                String header = viewportHeader();
+                if (header != null)
+                    paintHeader(g, header);
             } finally {
                 g.dispose();
             }
         }
     }
+
+    /** Horizontal distance of the height gauge from its node, in digit widths. */
+    static final int HEIGHT_AXIS_OFFSET_CHARS = 5;
+
+    double heightAxisOffset() {
+        Font font = overlay.getFont();
+        int digit = font == null ? 7 : overlay.getFontMetrics(font).charWidth('0');
+        return HEIGHT_AXIS_OFFSET_CHARS * digit;
+    }
+
+    /** Blender-like header box at the top centre of the viewport. */
+    private void paintHeader(Graphics2D g, String text) {
+        Font previous = g.getFont();
+        g.setFont(previous.deriveFont(Font.BOLD, 15f));
+        FontMetrics metrics = g.getFontMetrics();
+        int padding = 8;
+        int width = metrics.stringWidth(text) + 2 * padding, height = metrics.getHeight() + padding;
+        // below the toolbar (it is too wide to share the top row), centred, but right
+        // of an
+        // open operation panel
+        int x = Math.max((overlay.getWidth() - width) / 2, overlay.operationPanelRight() + 8);
+        int y = overlay.toolbarBottom() + 8;
+        g.setColor(new Color(30, 30, 30, 210));
+        g.fillRoundRect(x, y, width, height, 8, 8);
+        g.setColor(Color.WHITE);
+        g.drawString(text, x + padding, y + padding / 2 + metrics.getAscent());
+        g.setFont(previous);
+    }
+
+    private float displayedStrength() {
+        return dragStrength != null ? dragStrength : handleStrength;
+    }
+
+    /** Segments shorter than this on screen get no direction arrow. */
+    static final int MIN_ARROW_SEGMENT_PX = 24;
+
+    /**
+     * A single ">" chevron centred on {@code center}, pointing along (dirX, dirY).
+     */
+    static void paintChevron(Graphics2D g, Point center, double dirX, double dirY, boolean highlighted) {
+        double length = 5, spread = 5;
+        double tipX = center.x + dirX * length, tipY = center.y + dirY * length;
+        double backX = center.x - dirX * length, backY = center.y - dirY * length;
+        var chevron = new Path2D.Double();
+        chevron.moveTo(backX - dirY * spread, backY + dirX * spread);
+        chevron.lineTo(tipX, tipY);
+        chevron.lineTo(backX + dirY * spread, backY - dirX * spread);
+        // same colour as the segment's line, no outline
+        g.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+        g.setColor(highlighted ? SELECTED_NODE_FILL : Color.WHITE);
+        g.draw(chevron);
+    }
+
+    static String formatValue(float value) {
+        return value == Math.rint(value)
+                ? Integer.toString(Math.round(value))
+                : String.format(Locale.ROOT, "%.1f", value);
+    }
+
+    private static void strokeWithHalo(Graphics2D g, Shape shape, float width) {
+        g.setStroke(new BasicStroke(width + 2f));
+        g.setColor(SELECTED_NODE_HALO);
+        g.draw(shape);
+        g.setStroke(new BasicStroke(width));
+        g.setColor(SELECTED_NODE_FILL);
+        g.draw(shape);
+    }
+
+    private boolean isHovered(HitKind kind, int node, int side) {
+        return hovered != null && hovered.kind() == kind && hovered.node() == node && hovered.side() == side;
+    }
+
+    /**
+     * Soft glow ring around a hovered node; marker and hit area keep their size.
+     */
+    static void paintNodeHover(Graphics2D g, Point point) {
+        int ring = NODE_OUTLINE_DIAMETER + 8;
+        g.setStroke(new BasicStroke(4f));
+        g.setColor(HOVER_GLOW);
+        g.drawOval(point.x - ring / 2, point.y - ring / 2, ring, ring);
+    }
+
+    static final Color HOVER_GLOW = new Color(255, 255, 255, 150);
+    /** Height of the unravelled path strip at the bottom of the viewport. */
+    static final int UNRAVELLED_HEIGHT = 120;
+    static final Color PROFILE_TERRAIN = new Color(150, 120, 85, 220);
+    static final Color PROFILE_WATER = new Color(60, 130, 230, 235);
+    /**
+     * Block outlines in the height profile appear from this many pixels per block.
+     */
+    static final double BLOCK_GRID_MIN_PX = 6;
+    /**
+     * Height view: segment rising from its previous node (red) / falling or level
+     * (green).
+     */
+    static final Color SLOPE_UP_COLOR = new Color(230, 60, 60);
+    static final Color SLOPE_DOWN_COLOR = new Color(70, 200, 90);
+    private int lastBottomReserve = -1;
+
+    /**
+     * Preview styling (amber): results of an operation that are not applied yet.
+     * Handles and everything the user drags or edits use the blue handle styling
+     * instead.
+     */
+    static final Color PREVIEW_COLOR = new Color(255, 200, 40);
+    /** Drawn handle size (px); hovered handles grow to signal interactivity. */
+    static final int HANDLE_SIZE = 12, HOVERED_HANDLE_SIZE = 16;
+
+    static void paintSquareHandle(Graphics2D g, Point2D center, boolean hovered) {
+        int size = hovered ? HOVERED_HANDLE_SIZE : HANDLE_SIZE;
+        int x = (int) Math.round(center.getX()) - size / 2, y = (int) Math.round(center.getY()) - size / 2;
+        g.setColor(hovered ? Color.WHITE : SELECTED_NODE_FILL);
+        g.fillRect(x, y, size, size);
+        g.setStroke(new BasicStroke(2f));
+        g.setColor(SELECTED_NODE_HALO);
+        g.drawRect(x, y, size, size);
+    }
+
+    static void paintRoundHandle(Graphics2D g, Point2D center, boolean hovered) {
+        int size = hovered ? HOVERED_HANDLE_SIZE : HANDLE_SIZE;
+        int x = (int) Math.round(center.getX()) - size / 2, y = (int) Math.round(center.getY()) - size / 2;
+        g.setColor(hovered ? Color.WHITE : SELECTED_NODE_FILL);
+        g.fillOval(x, y, size, size);
+        g.setStroke(new BasicStroke(2f));
+        g.setColor(SELECTED_NODE_HALO);
+        g.drawOval(x, y, size, size);
+    }
+
+    /**
+     * Label of a previewed result: amber text with a dark halo (preview styling).
+     */
+    static void paintPreviewLabel(Graphics2D g, String text, Point2D at) {
+        Font previous = g.getFont();
+        g.setFont(previous.deriveFont(Font.BOLD));
+        int x = (int) Math.round(at.getX()), y = (int) Math.round(at.getY());
+        g.setColor(SELECTED_NODE_HALO);
+        for (int dx = -2; dx <= 2; dx++)
+            for (int dy = -2; dy <= 2; dy++)
+                if (dx != 0 || dy != 0)
+                    g.drawString(text, x + dx, y + dy);
+        g.setColor(PREVIEW_COLOR);
+        g.drawString(text, x, y);
+        g.setFont(previous);
+    }
+
+    private static void paintHandleLabel(Graphics2D g, String text, Point2D handle) {
+        Font previous = g.getFont();
+        g.setFont(previous.deriveFont(Font.BOLD));
+        int x = (int) Math.round(handle.getX()) + HOVERED_HANDLE_SIZE / 2 + 4;
+        int y = (int) Math.round(handle.getY()) - 7;
+        g.setColor(SELECTED_NODE_HALO);
+        for (int dx = -2; dx <= 2; dx++)
+            for (int dy = -2; dy <= 2; dy++)
+                if (dx != 0 || dy != 0)
+                    g.drawString(text, x + dx, y + dy);
+        g.setColor(SELECTED_NODE_FILL);
+        g.drawString(text, x, y);
+        g.setFont(previous);
+    }
+
+    /**
+     * A node an operation would insert, not yet applied: dashed amber ring with a
+     * dark halo, the style of the randomize radius, instead of the filled marker.
+     */
+    static void paintInsertedNode(Graphics2D g, Point point) {
+        int outline = NODE_OUTLINE_DIAMETER;
+        var ring = new Ellipse2D.Double(point.x - outline / 2.0, point.y - outline / 2.0, outline, outline);
+        g.setStroke(new BasicStroke(3.5f));
+        g.setColor(SELECTED_NODE_HALO);
+        g.draw(ring);
+        g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10, new float[]{4, 3}, 0));
+        g.setColor(PREVIEW_COLOR);
+        g.draw(ring);
+    }
+
+    private boolean merging(int index) {
+        for (int[] run : operationMerges)
+            if (index >= run[0] && index <= run[run.length - 1])
+                return true;
+        return false;
+    }
+
+    /**
+     * Warning (orange) ring around a node that the operation will merge with a
+     * neighbour.
+     */
+    static void paintMergeWarning(Graphics2D g, Point point) {
+        int ring = NODE_OUTLINE_DIAMETER + 12;
+        g.setStroke(new BasicStroke(5f));
+        g.setColor(SELECTED_NODE_HALO);
+        g.drawOval(point.x - ring / 2, point.y - ring / 2, ring, ring);
+        g.setStroke(new BasicStroke(3f));
+        g.setColor(WARNING_COLOR);
+        g.drawOval(point.x - ring / 2, point.y - ring / 2, ring, ring);
+    }
+
+    /** Warning colour (orange): e.g. nodes an operation will merge. */
+    static final Color WARNING_COLOR = new Color(255, 120, 0);
 
     static void paintNode(Graphics2D g, Point point, boolean selected) {
         int fill = NODE_DIAMETER, outline = NODE_OUTLINE_DIAMETER;
@@ -638,11 +3286,185 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         g.setFont(previous);
     }
 
+    /**
+     * Overlay switches are plain state holders: the viewport's overlay button and
+     * menu share their {@link ButtonModel}, so listeners sit on the model and fire
+     * whichever control changed it.
+     */
     private JToggleButton hudButton(String text, String name) {
         var button = new JToggleButton(text, true);
         button.setName("PathTool." + name);
-        button.addActionListener(event -> overlay.repaint());
+        button.getModel().addItemListener(event -> overlay.repaint());
         return button;
+    }
+
+    private JToggleButton addModeSwitch() {
+        var toggle = new JToggleButton("Add", false);
+        toggle.setName("PathTool.AddMode");
+        toggle.getModel().addItemListener(event -> {
+            updateCursor();
+            overlay.showTransientInfoText(toggle.isSelected()
+                    ? "Add mode: left click adds nodes (double-tap Ctrl or Esc to leave)"
+                    : "Add mode off", 2400);
+            overlay.repaint();
+        });
+        return toggle;
+    }
+
+    /** The add-mode switch (exposed for tests). */
+    JToggleButton addModeToggle() {
+        return addMode;
+    }
+
+    /** Plus sign for the viewport "Add" button. */
+    static Icon addIcon() {
+        var image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.setColor(SELECTED_NODE_HALO);
+            g.drawLine(8, 3, 8, 13);
+            g.drawLine(3, 8, 13, 8);
+        } finally {
+            g.dispose();
+        }
+        return new ImageIcon(image);
+    }
+
+    /**
+     * Sets every overlay part on or off by {@code shown}; switches the master
+     * switch on, so the choice is visible.
+     */
+    private void showOverlayParts(java.util.function.Predicate<JToggleButton> shown) {
+        showOverlays.setSelected(true);
+        for (JToggleButton part : overlayParts())
+            part.setSelected(shown.test(part));
+    }
+
+    /**
+     * Whether an overlay part is drawn: its own switch and the master switch are
+     * on.
+     */
+    private boolean shows(JToggleButton part) {
+        return showOverlays.isSelected() && part.isSelected();
+    }
+
+    /** The individual overlay switches, in menu order (exposed for tests). */
+    List<JToggleButton> overlayParts() {
+        return List.of(showLabel, showRadius, showLine, showDirection, showNodes, showLayer, showProfile);
+    }
+
+    JToggleButton overlaysSwitch() {
+        return showOverlays;
+    }
+
+    private static String overlayPartTitle(JToggleButton part) {
+        return switch (part.getText()) {
+            case "Label" -> "Node labels";
+            case "Radius" -> "Radius circles";
+            case "Line" -> "Path line";
+            case "Direction" -> "Flow direction (arrows)";
+            case "Profile" -> "Path profile (bottom)";
+            case "Nodes" -> "Nodes";
+            case "Layer" -> "Preview layer (yellow)";
+            default -> part.getText();
+        };
+    }
+
+    /**
+     * Downward triangle marking dropdown buttons. Painted rather than a text glyph
+     * such as U+25BE, which WorldPainter's UI font lacks (it showed as an empty
+     * box).
+     */
+    static final Icon DROPDOWN_ARROW = new Icon() {
+        @Override
+        public void paintIcon(Component component, Graphics graphics, int x, int y) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            try {
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setColor(component != null && !component.isEnabled()
+                        ? Color.GRAY
+                        : component != null ? component.getForeground() : Color.DARK_GRAY);
+                g.fillPolygon(new int[]{x, x + 8, x + 4}, new int[]{y + 1, y + 1, y + 6}, 3);
+            } finally {
+                g.dispose();
+            }
+        }
+
+        @Override
+        public int getIconWidth() {
+            return 8;
+        }
+
+        @Override
+        public int getIconHeight() {
+            return 7;
+        }
+    };
+
+    /**
+     * Button with a painted dropdown arrow on its right (text glyphs may be missing
+     * in the font).
+     */
+    static class DropdownButton extends JButton
+    {
+        /*
+         * Text/icon and arrow are child labels laid out side by side, so they can never
+         * overlap: look and feels differ in whether they honour button margins
+         * (painting the arrow into a margin overlapped the text in WorldPainter). The
+         * button's own text stays empty; the labels have no mouse listeners, so clicks
+         * and rollover still reach the button.
+         */
+        private final JLabel content = new JLabel();
+        private final JLabel arrow = new JLabel(DROPDOWN_ARROW);
+
+        DropdownButton(String text) {
+            setLayout(new BorderLayout(6, 0));
+            setFocusable(false);
+            content.setText(text);
+            content.setHorizontalTextPosition(SwingConstants.RIGHT);
+            add(content, BorderLayout.CENTER);
+            add(arrow, BorderLayout.EAST);
+        }
+
+        void setContent(String text, Icon icon) {
+            content.setText(text);
+            content.setIcon(icon);
+            revalidate();
+            repaint();
+        }
+
+        JLabel contentLabel() {
+            return content;
+        }
+
+        JLabel arrowLabel() {
+            return arrow;
+        }
+
+        /** Sized by its labels (plus the look and feel's border / margin insets). */
+        @Override
+        public java.awt.Dimension getPreferredSize() {
+            return getLayout().preferredLayoutSize(this);
+        }
+    }
+
+    /** Two overlapping circles, like Blender's overlay icon. */
+    static Icon overlaysIcon() {
+        var image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setStroke(new BasicStroke(1.5f));
+            g.setColor(SELECTED_NODE_HALO);
+            g.drawOval(1, 3, 9, 9);
+            g.setColor(SELECTED_NODE_FILL.darker());
+            g.drawOval(6, 3, 9, 9);
+        } finally {
+            g.dispose();
+        }
+        return new ImageIcon(image);
     }
 
     private static BufferedImage loadPathIcon() {
@@ -670,17 +3492,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         newPath.setName("PathTool.NewPath");
         newPath.addActionListener(e -> resetPath());
         editingPanel.add(newPath);
+        JButton reversePath = new JButton("Reverse direction");
+        reversePath.setName("PathTool.ReversePath");
+        reversePath.setToolTipText("Reverse the node order, so the path (and a river) flows the other way");
+        reversePath.addActionListener(e -> reversePath());
+        editingPanel.add(reversePath);
         editingPanel.add(selectionStatus);
         optionsPanel.add(editingPanel);
-        JPanel hudPanel = new JPanel(new GridLayout(0, 2, 4, 4));
-        hudPanel.setBorder(BorderFactory.createTitledBorder("HUD"));
-        hudPanel.add(showLabel);
-        hudPanel.add(showRadius);
-        hudPanel.add(showLine);
-        hudPanel.add(showNodes);
-        hudPanel.add(showLayer);
-        showLayer.addActionListener(event -> refreshPreview());
-        optionsPanel.add(hudPanel);
+        // overlay switches live in the viewport (see PathOverlay); the yellow layer
+        // follows both its own switch and the master switch
+        showLayer.getModel().addItemListener(event -> refreshPreview());
+        showOverlays.getModel().addItemListener(event -> refreshPreview());
         {
             JPanel presetPanel = new JPanel();
             JButton riverPresetButton = new JButton("River preset");
@@ -980,6 +3802,23 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return optionsPanel;
     }
 
+    /**
+     * The heights the generated path really gets: snap to terrain, only downhill,
+     * fixed height and the slope limit applied to the sampled curve (mutates it).
+     * Shared by Apply and the unravelled height view, so both always agree.
+     */
+    void resolveHeights(List<Point4f> path, Dimension dimension) {
+        if (snapToTerrain)
+            PathToolBackend.forcePathToMinPos(path,
+                    point4f -> dimension.getHeightAt(Math.round(point4f.x), Math.round(point4f.y)));
+        if (onlyDown)
+            PathToolBackend.forcePathOnlyDownhill(path);
+        if (fixHeightTo)
+            PathToolBackend.forcePathToHeight(path, getFixHeight());
+        if (slopeLimit != 0)
+            PathToolBackend.enforceSlopeLimit(path, slopeLimit);
+    }
+
     private float getFixHeight() {
         var currentPath = getCurrentPath();
         return currentPath.isEmpty() ? 62 : currentPath.get(currentPath.size() - 1).z;
@@ -1042,6 +3881,26 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         selectionChanged();
     }
 
+    /**
+     * Reverses the node order (flow direction); selected nodes stay selected. Goes
+     * through the normal edit path, so it refreshes the preview and can be undone.
+     */
+    void reversePath() {
+        var path = getCurrentPath();
+        if (path.size() < 2)
+            return;
+        cancelGesture();
+        java.util.Collections.reverse(path);
+        int last = path.size() - 1;
+        var remapped = new LinkedHashSet<Integer>();
+        for (int index : selectedNodes)
+            remapped.add(last - index);
+        selectedNodes.clear();
+        selectedNodes.addAll(remapped);
+        completeEdit(path);
+        overlay.showTransientInfoText("Path direction reversed", 1800);
+    }
+
     private void resetPath() {
         cancelGesture();
         selectedNodes.clear();
@@ -1080,7 +3939,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         if (dimension == null || previewWorker == null)
             return;
         var path = getCurrentPath();
-        if (!showLayer.isSelected() || path.isEmpty()) {
+        if (!shows(showLayer) || path.isEmpty()) {
             clearPreview();
             return;
         }
@@ -1099,7 +3958,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         float strength = handleStrength, multiplier = transitionMultiplier;
         CrossSectionShape profile = brushProfile;
         previewWorker.submit(snapshot, existing, multiplier, profile, masks -> {
-            if (previewRevision != revision || getDimension() != dimension || !showLayer.isSelected()
+            if (previewRevision != revision || getDimension() != dimension || !shows(showLayer)
                     || !getCurrentPath().equals(path) || Float.compare(handleStrength, strength) != 0
                     || Float.compare(transitionMultiplier, multiplier) != 0 || brushProfile != profile)
                 return;
@@ -1129,6 +3988,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         if (!inhibited)
             dimension.setEventsInhibited(true);
         try {
+            if (previewLayerUntrusted) {
+                dimension.clearLayerData(PreviewOperation.annotationLayer);
+                previewMask = Map.of();
+                previewLayerUntrusted = false;
+            }
             var positions = new java.util.HashSet<>(previewMask.keySet());
             positions.addAll(masks.keySet());
             for (var position : positions) {
@@ -1156,15 +4020,48 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
         if (!inverse || !first || isAltDown() || isCtrlDown() || isShiftDown())
             return;
+        // right click is kept free (for a future context menu); it only cancels typing
+        if (keyboardTransform)
+            cancelKeyboardTransform();
+    }
+
+    /**
+     * Adds exactly one node at a world position: after the highest selected node,
+     * or at the end when nothing is selected; the new node becomes the selection
+     * then. Used by Ctrl+click and by clicks in add mode.
+     */
+    void addNode(int centreX, int centreY) {
         Dimension dim = getDimension();
-        if (dim == null || getBrush() == null
-                || dim.getTile(centreX >> TILE_SIZE_BITS, centreY >> TILE_SIZE_BITS) == null)
+        if (dim == null || dim.getTile(centreX >> TILE_SIZE_BITS, centreY >> TILE_SIZE_BITS) == null)
             return;
         cancelGesture();
         var pathHandles = getCurrentPath();
-        int pathRadius = getBrush().getEffectiveRadius();
-        pathHandles.add(new Point4f(centreX, centreY, dim.getHeightAt(centreX, centreY), pathRadius));
+        float pathRadius = getBrush() != null
+                ? getBrush().getEffectiveRadius()
+                : pathHandles.isEmpty() ? 5 : pathHandles.get(pathHandles.size() - 1).w;
+        int index = insertionIndex(selectedNodes, pathHandles.size());
+        pathHandles.add(index, new Point4f(centreX, centreY, dim.getHeightAt(centreX, centreY), pathRadius));
+        boolean inserting = !selectedNodes.isEmpty();
         completeEdit(pathHandles);
+        if (inserting) {
+            // continue from the new node, so repeated inserts keep their order
+            selectedNodes.clear();
+            selectedNodes.add(index);
+            selectionChanged();
+        }
+    }
+
+    /**
+     * Where a new node goes: right after the selected node with the highest index
+     * (inserting into a segment, or appending after the last node), or at the end
+     * when nothing is selected. Always exactly one node.
+     */
+    static int insertionIndex(Set<Integer> selectedNodes, int pathSize) {
+        return selectedNodes.stream()
+                .filter(index -> index < pathSize)
+                .max(Integer::compare)
+                .map(index -> index + 1)
+                .orElse(pathSize);
     }
 
     private void completeEdit(ArrayList<Point4f> path) {
@@ -1214,16 +4111,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             // pathHandles.size()));
 
             // mutate path with filters based on user input
-            if (snapToTerrain)
-                PathToolBackend.forcePathToMinPos(path,
-                        point4f -> dimension.getHeightAt(Math.round(point4f.x), Math.round(point4f.y)));
-            if (onlyDown)
-                PathToolBackend.forcePathOnlyDownhill(path);
-            if (fixHeightTo)
-                PathToolBackend.forcePathToHeight(path, getFixHeight());
-
-            if (slopeLimit != 0)
-                PathToolBackend.enforceSlopeLimit(path, slopeLimit);
+            resolveHeights(path, dimension);
 
             forceRadiusAtLeast(path, .5f); // always at least 1 thick
 
@@ -1329,10 +4217,53 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     @Override
     public void undoPerformed() {
+        afterUndoOrRedo();
     }
 
     @Override
     public void redoPerformed() {
+        afterUndoOrRedo();
+    }
+
+    /**
+     * Undo / redo restored tiles (preview bits included) and possibly the path.
+     * Nothing is written to the map here, so WorldPainter's redo history stays
+     * intact; the next preview update clears the layer completely and redraws it.
+     */
+    void afterUndoOrRedo() {
+        closeOperation();
+        cancelGesture();
+        invalidatePreview();
+        Dimension dimension = getDimension();
+        if (dimension != null) {
+            previewLayerUntrusted = true;
+            previewDimension = dimension; // so clearing on deactivation also clears restored bits
+        }
+        int size = getCurrentPath().size();
+        selectedNodes.removeIf(index -> index >= size);
+        overlay.repaint();
+    }
+
+    /**
+     * Listens to undo / redo of the dimension being edited (only while the tool is
+     * active).
+     */
+    private void observeUndo(Dimension dimension) {
+        org.pepsoft.util.undo.UndoManager manager = null;
+        if (dimension != null)
+            try {
+                manager = org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityEditToolOperation
+                        .getUndoManager(dimension);
+            } catch (ReflectiveOperationException | RuntimeException ignored) {
+                // no undo manager (e.g. tests): nothing to observe
+            }
+        if (manager == observedUndoManager)
+            return;
+        if (observedUndoManager != null)
+            observedUndoManager.removeListener(this);
+        observedUndoManager = manager;
+        if (manager != null)
+            manager.addListener(this);
     }
 
     @Override
@@ -1342,7 +4273,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             PathTool pathTool = new PathTool();
-            JFrame frame = new JFrame("Road Tool Options");
+            JFrame frame = new JFrame("Path Tool Options");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.add(pathTool.getOptionsPanel());
             frame.pack();

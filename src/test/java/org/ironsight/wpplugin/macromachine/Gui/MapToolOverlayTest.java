@@ -54,7 +54,7 @@ class MapToolOverlayTest
             MapToolOverlay overlay = new MapToolOverlay(new BufferedImage(2, 2, BufferedImage.TYPE_INT_ARGB));
             overlay.setBounds(0, 0, 1000, 600);
             JLabel label = (JLabel) overlay.getComponent(0);
-            overlay.showOverlayText("Road Tool");
+            overlay.showOverlayText("Path Tool");
             Timer timer = timer(overlay, "labelPositionTimer");
             var callback = timer.getActionListeners()[0];
             callback.actionPerformed(new ActionEvent(timer, ActionEvent.ACTION_PERFORMED, "tick"));

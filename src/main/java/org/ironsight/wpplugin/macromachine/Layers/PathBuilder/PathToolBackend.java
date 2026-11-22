@@ -36,7 +36,15 @@ public class PathToolBackend
 
     static PathResult getPathFromNodes(List<Point4f> nodes, float handleStrength) {
         var handles = new ArrayList<Point4f>();
-        nodes.forEach(node -> handles.add(new Point4f(node)));
+        for (Point4f node : nodes) {
+            // consecutive nodes on the same block are one point of the curve: a zero length
+            // segment breaks the curve maths ("not strictly monotone" with -ea, a
+            // degenerate curve without). Moving, snapping, randomizing or subdividing can
+            // put neighbouring nodes on the same block.
+            if (!handles.isEmpty() && sameBlock(handles.getLast(), node))
+                continue;
+            handles.add(new Point4f(node));
+        }
         if (handles.isEmpty())
             return new PathResult(List.of(), new HashMap<>());
         if (handles.size() == 1) {
@@ -54,6 +62,10 @@ public class PathToolBackend
             handles.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
         }
         return getPathFromHandles(handles, handleStrength);
+    }
+
+    private static boolean sameBlock(Point4f a, Point4f b) {
+        return Math.round(a.x) == Math.round(b.x) && Math.round(a.y) == Math.round(b.y);
     }
 
     static PathResult getPathFromHandles(List<Point4f> handles, float handleStrength) {

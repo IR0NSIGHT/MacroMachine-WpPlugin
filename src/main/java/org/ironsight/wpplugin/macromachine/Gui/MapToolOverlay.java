@@ -249,6 +249,19 @@ public class MapToolOverlay extends JComponent
         }
     }
 
+    /**
+     * Space kept free at the bottom (e.g. for a profile strip); info messages stay
+     * above it.
+     */
+    private int bottomReserve;
+
+    public void setBottomReserve(int pixels) {
+        if (bottomReserve == pixels)
+            return;
+        bottomReserve = pixels;
+        layoutInfoText();
+    }
+
     private void layoutInfoText() {
         if (!infoLabel.isVisible() || getWidth() <= 0 || getHeight() <= 0)
             return;
@@ -260,7 +273,7 @@ public class MapToolOverlay extends JComponent
         int labelHeight = metrics.getHeight() + insets.top + insets.bottom;
         int x = Math.max(0, (getWidth() - labelWidth) / 2);
         int y = Math.round(getHeight() * INFO_LABEL_VERTICAL_POSITION - labelHeight / 2f);
-        y = Math.max(0, Math.min(Math.max(0, getHeight() - labelHeight), y));
+        y = Math.max(0, Math.min(Math.max(0, getHeight() - labelHeight - bottomReserve), y));
         infoLabel.setBounds(x, y, labelWidth, labelHeight);
     }
 
