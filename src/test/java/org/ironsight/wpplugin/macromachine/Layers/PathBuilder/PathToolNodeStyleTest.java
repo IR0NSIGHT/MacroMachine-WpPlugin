@@ -26,17 +26,18 @@ class PathToolNodeStyleTest
     }
 
     @Test
-    void nodesAreFlatDiscsTealWhenSelectedGreyOtherwise() {
+    void nodesAreHollowRingsPlumWhenSelectedGreyOtherwise() {
         var center = new Point(30, 30);
         var selected = render(g -> PathTool.paintNode(g, center, true));
         var unselected = render(g -> PathTool.paintNode(g, center, false));
 
-        // one flat colour from the centre to the edge: no ring, no gap, no outline
-        for (int x = 30; x <= 36; x++) {
-            assertEquals(PathTool.SELECTED_NODE_FILL, at(selected, x, 30), "selected at " + x);
-            assertEquals(PathTool.UNSELECTED_NODE_FILL, at(unselected, x, 30), "unselected at " + x);
-        }
-        // nothing drawn outside the disc (no dark halo)
+        // hollow: nothing in the middle
+        assertEquals(0, at(selected, 30, 30).getAlpha());
+        assertEquals(0, at(unselected, 30, 30).getAlpha());
+        // the ring (radius 8) in the path group's colours
+        assertEquals(PathTool.SELECTED_NODE_FILL, at(selected, 38, 30));
+        assertEquals(PathTool.UNSELECTED_NODE_FILL, at(unselected, 38, 30));
+        // no halo outside the ring
         assertEquals(0, at(selected, 41, 30).getAlpha());
         assertEquals(0, at(unselected, 41, 30).getAlpha());
     }
@@ -47,9 +48,9 @@ class PathToolNodeStyleTest
         var selected = render(g -> PathTool.paintNodeLabel(g, center, 8, true));
         var unselected = render(g -> PathTool.paintNodeLabel(g, center, 8, false));
 
-        assertTrue(contains(selected, PathTool.SELECTED_NODE_FILL));
-        assertFalse(contains(unselected, PathTool.SELECTED_NODE_FILL));
-        assertTrue(contains(unselected, Color.WHITE));
+        assertTrue(contains(selected, org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.MAP_SELECTION_TEXT));
+        assertFalse(contains(unselected, org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.MAP_SELECTION_TEXT));
+        assertTrue(contains(unselected, org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED));
         // both sit on a dark chip, not on outlined text
         var chip = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SURFACE;
         assertTrue(contains(selected, chip));

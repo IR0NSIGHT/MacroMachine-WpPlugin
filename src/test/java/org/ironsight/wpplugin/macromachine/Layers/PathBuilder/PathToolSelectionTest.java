@@ -239,7 +239,8 @@ class PathToolSelectionTest
                     assertNotEquals(0, all.getRGB(middle.x, middle.y));
                     nodes.doClick();
                     var withoutNodes = paintOverlay(overlay);
-                    assertNotEquals(all.getRGB(center.x, center.y - 5), withoutNodes.getRGB(center.x, center.y - 5));
+                    // on the node's ring (nodes are hollow)
+                    assertNotEquals(all.getRGB(center.x, center.y - 8), withoutNodes.getRGB(center.x, center.y - 8));
                     assertEquals(all.getRGB(ring.x, ring.y), withoutNodes.getRGB(ring.x, ring.y));
                     radius.doClick();
                     var withoutRadius = paintOverlay(overlay);
@@ -1772,7 +1773,7 @@ class PathToolSelectionTest
         PathTool.paintInsertedNode(inserted.createGraphics(), new Point(20, 20));
         PathTool.paintNode(normal.createGraphics(), new Point(20, 20), true);
         assertEquals(0, inserted.getRGB(20, 20), "hollow: no filled marker");
-        assertNotEquals(0, normal.getRGB(20, 20));
+        assertNotEquals(0, normal.getRGB(28, 20), "a normal node is a plum ring");
         int amber = 0;
         for (int x = 0; x < 40; x++)
             for (int y = 0; y < 40; y++)
@@ -2141,9 +2142,9 @@ class PathToolSelectionTest
                 for (int y = 0; y < 40; y++) {
                     int rgb = image.getRGB(x, y);
                     if (rgb >>> 24 == 0xFF)
-                        assertEquals(
-                                image == right ? java.awt.Color.WHITE.getRGB() : PathTool.SELECTED_NODE_FILL.getRGB(),
-                                rgb, "pixel " + x + "," + y);
+                        assertEquals(image == right
+                                ? PathTool.UNSELECTED_NODE_FILL.getRGB()
+                                : PathTool.SELECTED_NODE_FILL.getRGB(), rgb, "pixel " + x + "," + y);
                 }
     }
 
@@ -2785,8 +2786,8 @@ class PathToolSelectionTest
         var hover = new java.awt.image.BufferedImage(40, 40, java.awt.image.BufferedImage.TYPE_INT_ARGB);
         PathTool.paintSquareHandle(plain.createGraphics(), new java.awt.geom.Point2D.Double(20, 20), false);
         PathTool.paintSquareHandle(hover.createGraphics(), new java.awt.geom.Point2D.Double(20, 20), true);
-        assertEquals(PathTool.SELECTED_NODE_FILL.getRGB(), plain.getRGB(20, 20));
-        assertEquals(java.awt.Color.WHITE.getRGB(), hover.getRGB(20, 20));
+        assertEquals(PathTool.HANDLE_COLOR.getRGB(), plain.getRGB(20, 20));
+        assertEquals(PathTool.HANDLE_HOVER.getRGB(), hover.getRGB(20, 20));
         assertEquals(0, plain.getRGB(20 + PathTool.HOVERED_HANDLE_SIZE / 2 - 1, 20), "plain handle is smaller");
         assertNotEquals(0, hover.getRGB(20 + PathTool.HOVERED_HANDLE_SIZE / 2 - 1, 20));
         var ring = new java.awt.image.BufferedImage(40, 40, java.awt.image.BufferedImage.TYPE_INT_ARGB);

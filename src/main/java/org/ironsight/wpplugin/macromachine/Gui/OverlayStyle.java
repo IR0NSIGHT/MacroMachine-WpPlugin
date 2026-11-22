@@ -66,10 +66,10 @@ public final class OverlayStyle
     public static final Color ACCENT_SOFT_SOLID = new Color(66, 64, 84);
     /** Text on lavender. */
     public static final Color ON_ACCENT = new Color(22, 22, 22);
-    /**
-     * Selected nodes and handles on the map: the website's light teal (#8BC4D3).
-     */
-    public static final Color MAP_SELECTION = new Color(139, 196, 211);
+    /** Selected nodes, segments and arrows on the map: website plum (#A349A4). */
+    public static final Color MAP_SELECTION = new Color(163, 73, 164);
+    /** Plum tint for text on dark chips (website --macro-tint #D49BD5). */
+    public static final Color MAP_SELECTION_TEXT = new Color(212, 155, 213);
     /** Dark edge behind text on the map (keeps labels readable on any terrain). */
     public static final Color OUTLINE = new Color(22, 22, 22);
     /**
