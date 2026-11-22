@@ -106,7 +106,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Click selected node",
                     "Cycle radius, curve strength, height-above-ground and transform handles"),
             new HelpItem("Transform editor",
-                    "Box around the selection: drag a corner to scale, the top handle to rotate, the bottom handle to move (nodes themselves do not drag here); drag the pivot (crosshair) to rotate / scale around another point; typed numbers are degrees or the scale factor"),
+                    "Box around the selection: drag a corner to scale, the top handle to rotate, the bottom handle to move (nodes themselves do not drag here); drag the pivot (crosshair) to rotate / scale around another point; typed numbers are degrees or the scale factor. A single node only gets the move handle"),
             new HelpItem("Drag radius / tangent / height handle",
                     "Scale radius of selected nodes / change curve strength / raise or lower selected nodes"),
             new HelpItem("Shift while dragging", "Precise drag: nodes and handles move at 1/10 speed"),
@@ -462,8 +462,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         if (!cursorOverMap || overlayView == null)
             return false;
-        if (operationPanel == null && !selectedNodes.isEmpty() && gestureStart == null && !e.isControlDown()
-                && !e.isAltDown() && !e.isMetaDown() && NumericInput.startsTyping(e.getKeyCode(), e.getKeyChar())) {
+        if (operationPanel == null && !selectedNodes.isEmpty()
+                && !(editMode == EditMode.TRANSFORM && selectedNodes.size() < 2) && gestureStart == null
+                && !e.isControlDown() && !e.isAltDown() && !e.isMetaDown()
+                && NumericInput.startsTyping(e.getKeyCode(), e.getKeyChar())) {
             startKeyboardTransform();
             handleNumericKey(e);
             return true;
@@ -1493,7 +1495,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 double angle = transformBoxAngle();
                 var box = PathTransformBox.box(view, selectedNodes, angle);
                 var frame = PathTransformBox.frame(angle);
-                if (box != null) {
+                if (box != null && selectedNodes.size() < 2) {
+                    double distance = frame.transform(PathTransformBox.singleMoveHandle(box), null).distanceSq(point);
+                    if (distance <= best)
+                        hit = new Hit(HitKind.TRANSFORM_MOVE, -1, 0);
+                } else if (box != null) {
                     var candidates = new ArrayList<Hit>();
                     var points = new ArrayList<Point2D>();
                     for (int corner = 0; corner < 4; corner++) {
@@ -3507,6 +3513,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             var box = shown.box();
             var transform = shown.frame();
             java.util.function.UnaryOperator<Point2D> at = p -> transform.transform(p, null);
+            if (selectedNodes.size() < 2) {
+                // a single node only moves: no box, rotate, scale or pivot
+                paintIconHandle(g, "move", at.apply(PathTransformBox.singleMoveHandle(box)), 0,
+                        isHovered(HitKind.TRANSFORM_MOVE, -1, 0));
+                return;
+            }
             Shape outline = transform.createTransformedShape(box);
             g.setStroke(new BasicStroke(3f));
             g.setColor(SELECTED_NODE_HALO);

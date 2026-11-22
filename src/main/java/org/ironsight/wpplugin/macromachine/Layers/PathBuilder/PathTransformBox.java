@@ -99,6 +99,17 @@ final class PathTransformBox
         return new Point2D.Double(box.getCenterX(), box.getMaxY() + STEM);
     }
 
+    /** Distance of the move handle below a single selected node (px). */
+    static final double SINGLE_MOVE_OFFSET = 26;
+
+    /**
+     * A single selected node only gets the move handle: just below the node (no
+     * box, no stem).
+     */
+    static Point2D.Double singleMoveHandle(Rectangle2D box) {
+        return new Point2D.Double(box.getCenterX(), box.getCenterY() + SINGLE_MOVE_OFFSET);
+    }
+
     static Point2D.Double centre(Rectangle2D box) {
         return new Point2D.Double(box.getCenterX(), box.getCenterY());
     }

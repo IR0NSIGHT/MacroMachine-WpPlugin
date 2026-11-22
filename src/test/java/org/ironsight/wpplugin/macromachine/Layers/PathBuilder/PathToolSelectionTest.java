@@ -1858,6 +1858,25 @@ class PathToolSelectionTest
                     click(view, 60, 30);
                     assertEquals(new java.awt.geom.Point2D.Double(60, 30), tool.transformPivotWorld());
                     assertEquals(0, tool.transformBoxAngle(), "a new selection gets an axis-aligned box");
+
+                    // a single node only gets the move handle, just below it
+                    Point single = view.worldToView(60, 30);
+                    var box = PathTransformBox.box(List.of(new java.awt.geom.Point2D.Double(single.x, single.y)),
+                            Set.of(0), 0);
+                    for (var other : List.of(PathTransformBox.rotateHandle(box), PathTransformBox.corner(box, 2),
+                            PathTransformBox.moveHandle(box))) {
+                        var hit = tool.hitTest(toPoint(other));
+                        assertTrue(hit == null || hit.kind() == PathTool.HitKind.NODE, "only the move handle: " + hit);
+                    }
+                    var singleMove = viewHandle(tool, view, "move");
+                    assertEquals(single.y + PathTransformBox.SINGLE_MOVE_OFFSET, singleMove.y, 1);
+                    assertEquals(PathTool.HitKind.TRANSFORM_MOVE, tool.hitTest(singleMove).kind());
+                    drag(tool, singleMove, new Point(singleMove.x + 5, singleMove.y));
+                    assertNodes(dimension, 70, 100, 72, 65, 30, 70, 70, 80, 70);
+                    // no typed rotation for a single node
+                    assertFalse(type(tool, view, KeyEvent.VK_5, '5'));
+                    assertEquals("Transform: 1 node", tool.viewportHeader());
+                    paintOverlay(overlay);
                 } finally {
                     tool.setActive(false);
                 }
@@ -1935,7 +1954,9 @@ class PathToolSelectionTest
         var box = PathTransformBox.box(nodes, tool.selectedNodes(), angle);
         var handle = PathTransformBox.frame(angle).transform(switch (which) {
             case "rotate" -> PathTransformBox.rotateHandle(box);
-            case "move" -> PathTransformBox.moveHandle(box);
+            case "move" -> tool.selectedNodes().size() < 2
+                    ? PathTransformBox.singleMoveHandle(box)
+                    : PathTransformBox.moveHandle(box);
             default -> PathTransformBox.corner(box, Integer.parseInt(which.substring("corner".length())));
         }, null);
         return new Point((int) Math.round(handle.getX()), (int) Math.round(handle.getY()));
