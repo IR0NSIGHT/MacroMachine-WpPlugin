@@ -4127,14 +4127,23 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private void init() {
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
         optionsPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
-        optionsPanel.add(getHelpButton(HELP_TITLE, HELP_EXPLANATION, HELP_ITEMS));
+        // Lucide icons in the website's text grey (this panel uses WorldPainter's light
+        // look)
+        var ink = new Color(64, 64, 64);
+        var help = getHelpButton(HELP_TITLE, HELP_EXPLANATION, HELP_ITEMS);
+        help.setText(null);
+        help.setIcon(LucideIcons.icon("circle-help", 16, ink));
+        help.setToolTipText("Path Tool help: mouse, keys and editors");
+        optionsPanel.add(help);
         JPanel editingPanel = new JPanel();
         JButton newPath = new JButton("New path");
         newPath.setName("PathTool.NewPath");
+        newPath.setIcon(LucideIcons.icon("file-plus", 16, ink));
         newPath.addActionListener(e -> resetPath());
         editingPanel.add(newPath);
         JButton reversePath = new JButton("Reverse direction");
         reversePath.setName("PathTool.ReversePath");
+        reversePath.setIcon(LucideIcons.icon("arrow-left-right", 16, ink));
         reversePath.setToolTipText("Reverse the node order, so the path (and a river) flows the other way");
         reversePath.addActionListener(e -> reversePath());
         editingPanel.add(reversePath);
@@ -4144,6 +4153,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         // viewport)
         JButton settings = new JButton("Path settings...");
         settings.setName("PathTool.PathSettings");
+        settings.setIcon(LucideIcons.icon("settings-2", 16, ink));
         settings.setToolTipText("Presets, terrain / water / paint, slope, transition and Apply");
         settings.addActionListener(e -> openPathSettings(null));
         JPanel settingsRow = new JPanel();
