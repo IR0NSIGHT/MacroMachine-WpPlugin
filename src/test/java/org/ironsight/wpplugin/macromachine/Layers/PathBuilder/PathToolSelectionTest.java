@@ -1847,6 +1847,63 @@ class PathToolSelectionTest
         });
     }
 
+    @Test
+    void transformBoxPivotAndNodesStayTogetherWhenTheMapPansMidTransform() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                dimension.setAttribute(HANDLES, new ArrayList<>(List.of(40f, 60f, 70f, 4f, 80f, 60f, 70f, 4f)), true);
+                TestView view = new TestView(dimension);
+                view.setSize(300, 300);
+                PathTool tool = synchronousTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    click(view, 40, 60);
+                    click(view, 80, 60, InputEvent.CTRL_DOWN_MASK);
+                    tool.setEditMode(PathTool.EditMode.TRANSFORM);
+                    // a rotate drag in progress, then the map pans (middle mouse / wheel zoom)
+                    var rotate = viewHandle(tool, view, "rotate");
+                    tool.handleSelectionPress(rotate);
+                    Point mouse = view.worldToView(104, 60);
+                    tool.handleSelectionDrag(mouse);
+                    view.moveBy(37, 21);
+                    // the box is the original box under the transform: it must carry the
+                    // original node to where the (moved) node is drawn now
+                    Point original = view.worldToView(40, 60);
+                    var carried = tool.transformViewNow()
+                            .transform(new java.awt.geom.Point2D.Double(original.x, original.y), null);
+                    Point drawn = view.worldToView(60, 40); // node 0 turned a quarter clockwise around (60, 60)
+                    assertEquals(drawn.x, carried.getX(), 1.01, "box follows the nodes after panning");
+                    assertEquals(drawn.y, carried.getY(), 1.01);
+                    assertEquals(view.worldToView(60, 60), toPoint(tool.toViewExact(tool.transformPivotWorld())),
+                            "pivot stays on its block after panning");
+                    tool.handleSelectionRelease(mouse); // the mouse did not move on screen
+                    assertNodes(dimension, 60, 40, 70, 60, 80, 70);
+
+                    // typed rotation, then the view zooms
+                    type(tool, view, "90");
+                    view.setZoom(1);
+                    var typed = tool.transformViewNow().transform(toDouble(view.worldToView(60, 40)), null);
+                    assertEquals(view.worldToView(40, 60).x, typed.getX(), 1.01, "typed rotation after zooming");
+                    assertEquals(view.worldToView(40, 60).y, typed.getY(), 1.01);
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    private static Point toPoint(java.awt.geom.Point2D point) {
+        return new Point((int) Math.round(point.getX()), (int) Math.round(point.getY()));
+    }
+
+    private static java.awt.geom.Point2D.Double toDouble(Point point) {
+        return new java.awt.geom.Point2D.Double(point.x, point.y);
+    }
+
     /** A transform handle of the current selection, in view coordinates. */
     private static Point viewHandle(PathTool tool, TestView view, String which) {
         var nodes = new ArrayList<java.awt.geom.Point2D.Double>();

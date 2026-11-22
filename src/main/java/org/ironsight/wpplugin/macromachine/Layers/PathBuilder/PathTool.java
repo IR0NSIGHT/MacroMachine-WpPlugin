@@ -327,13 +327,18 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private double transformDegrees;
     /** Transform handle being dragged, or {@code null}. */
     private HitKind transformKind;
-    /** Pivot in the view when the transform drag started. */
-    private Point2D.Double transformPivotView;
     /**
-     * Transform of the drag so far, in view coordinates (moves the box with the
-     * nodes).
+     * Pivot (world) when the transform started. The transform itself is kept in
+     * world terms (pivot, degrees, factor, offset) and turned into view coordinates
+     * only when used, so panning or zooming the map mid-transform keeps box, pivot
+     * and nodes together.
      */
-    private java.awt.geom.AffineTransform transformView;
+    private Point2D.Double transformPivotStart;
+    /** Where the handle was grabbed (world, not rounded to blocks). */
+    private Point2D.Double transformGrabWorld;
+    /** Kind of transform applied so far (rotate, scale, move), or {@code null}. */
+    private HitKind transformOp;
+    private double transformFactor = 1;
     /** Pivot while it is dragged (world). */
     private Point2D.Double draggedPivot;
     /** World offset of a move drag (whole blocks). */
@@ -618,10 +623,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             }
             case TRANSFORM -> {
                 // typing without a drag rotates around the pivot (degrees, counter-clockwise)
-                transformPivotView = toViewExact(transformPivotWorld());
+                transformPivotStart = transformPivotWorld();
                 transformDegrees = edited ? numericInput.apply(0) : 0;
-                transformView = edited ? PathTransformBox.rotation(transformPivotView, transformDegrees) : null;
-                movedPath = transformView == null ? null : transformedPath(transformView);
+                transformOp = edited ? HitKind.TRANSFORM_ROTATE : null;
+                movedPath = transformOp == null ? null : transformedPath(transformViewNow());
                 gestureHeader = header("Rotate", "0\u00b0");
             }
         }
@@ -1367,7 +1372,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 case HEIGHT -> heightHandleNode = hit.node();
                 case TRANSFORM_MOVE, TRANSFORM_ROTATE, TRANSFORM_SCALE, TRANSFORM_PIVOT -> {
                     transformKind = hit.kind();
-                    transformPivotView = toViewExact(transformPivotWorld());
+                    transformPivotStart = transformPivotWorld();
+                    transformGrabWorld = toWorldExact(point);
                 }
                 case OPERATION_RADIUS -> {
                     randomizeHandleNode = hit.node();
@@ -1929,8 +1935,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         heightHandleNode = -1;
         randomizeHandleNode = -1;
         transformKind = null;
-        transformView = null;
-        transformPivotView = null;
+        transformOp = null;
+        transformPivotStart = null;
+        transformGrabWorld = null;
+        transformFactor = 1;
+        transformDegrees = 0;
         draggedPivot = null;
         transformMoveX = transformMoveY = 0;
         circleHandleIndex = -1;
@@ -2082,39 +2091,60 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return result;
     }
 
-    /** Mouse (or typed value) to transform while a transform handle is dragged. */
+    /**
+     * The transform so far in current view coordinates (rebuilt from its world
+     * terms on every use), or {@code null} before anything was transformed.
+     */
+    java.awt.geom.AffineTransform transformViewNow() {
+        if (transformOp == null || transformPivotStart == null)
+            return null;
+        var pivot = toViewExact(transformPivotStart);
+        return switch (transformOp) {
+            case TRANSFORM_ROTATE -> PathTransformBox.rotation(pivot, transformDegrees);
+            case TRANSFORM_SCALE -> PathTransformBox.scaling(pivot, transformFactor);
+            case TRANSFORM_MOVE -> {
+                var from = toViewExact(new Point2D.Double(0, 0));
+                var to = toViewExact(new Point2D.Double(transformMoveX, transformMoveY));
+                yield java.awt.geom.AffineTransform.getTranslateInstance(to.x - from.x, to.y - from.y);
+            }
+            default -> null;
+        };
+    }
+
+    /**
+     * Mouse (or typed value) to transform while a transform handle is dragged. All
+     * in world coordinates: where the handle was grabbed plus how far the mouse
+     * moved since (Shift: precise).
+     */
     private void updateTransformDrag() {
-        var offset = new Point2D.Double(gestureCursor.x - gestureStart.x, gestureCursor.y - gestureStart.y);
+        var grab = transformGrabWorld;
+        var now = new Point2D.Double(grab.x + (gestureCursor.x - gestureStart.x) * worldPerPixelX,
+                grab.y + (gestureCursor.y - gestureStart.y) * worldPerPixelY);
         switch (transformKind) {
             case TRANSFORM_PIVOT -> {
-                draggedPivot = toWorldExact(
-                        new Point2D.Double(transformPivotView.x + offset.x, transformPivotView.y + offset.y));
-                draggedPivot = new Point2D.Double(Math.round(draggedPivot.x), Math.round(draggedPivot.y));
+                draggedPivot = new Point2D.Double(Math.round(transformPivotStart.x + now.x - grab.x),
+                        Math.round(transformPivotStart.y + now.y - grab.y));
                 gestureHeader = "Pivot: " + Math.round(draggedPivot.x) + ", " + Math.round(draggedPivot.y);
             }
             case TRANSFORM_MOVE -> {
-                Point2D.Double world = gestureWorld();
-                transformMoveX = (int) Math.round(world.x - gestureWorldStart.x);
-                transformMoveY = (int) Math.round(world.y - gestureWorldStart.y);
-                var from = toViewExact(new Point2D.Double(0, 0));
-                var to = toViewExact(new Point2D.Double(transformMoveX, transformMoveY));
-                transformView = java.awt.geom.AffineTransform.getTranslateInstance(to.x - from.x, to.y - from.y);
-                movedPath = transformedPath(transformView);
+                transformMoveX = (int) Math.round(now.x - grab.x);
+                transformMoveY = (int) Math.round(now.y - grab.y);
+                transformOp = HitKind.TRANSFORM_MOVE;
+                movedPath = transformedPath(transformViewNow());
                 gestureHeader = "Move: " + transformMoveX + ", " + transformMoveY;
             }
             case TRANSFORM_ROTATE -> {
-                double mouse = PathTransformBox.rotationDegrees(transformPivotView, gestureStart, gestureCursor);
-                double degrees = typing() ? numericInput.apply(mouse) : mouse;
-                transformDegrees = degrees;
-                transformView = PathTransformBox.rotation(transformPivotView, degrees);
-                movedPath = transformedPath(transformView);
+                double mouse = PathTransformBox.rotationDegrees(transformPivotStart, grab, now);
+                transformDegrees = typing() ? numericInput.apply(mouse) : mouse;
+                transformOp = HitKind.TRANSFORM_ROTATE;
+                movedPath = transformedPath(transformViewNow());
                 gestureHeader = header("Rotate", formatValue((float) mouse) + "\u00b0");
             }
             case TRANSFORM_SCALE -> {
-                double mouse = PathTransformBox.scaleFactor(transformPivotView, gestureStart, gestureCursor);
-                double factor = typing() ? PathTransformBox.clampScale(numericInput.apply(mouse)) : mouse;
-                transformView = PathTransformBox.scaling(transformPivotView, factor);
-                movedPath = transformedPath(transformView);
+                double mouse = PathTransformBox.scaleFactor(transformPivotStart, grab, now);
+                transformFactor = typing() ? PathTransformBox.clampScale(numericInput.apply(mouse)) : mouse;
+                transformOp = HitKind.TRANSFORM_SCALE;
+                movedPath = transformedPath(transformViewNow());
                 gestureHeader = header("Scale", String.format(Locale.ROOT, "%.2f", mouse) + "\u00d7");
             }
             default -> {
@@ -3431,6 +3461,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
          * handles follow the transform.
          */
         private void paintTransformBox(Graphics2D g, List<Point4f> path) {
+            var transformView = transformViewNow();
             var base = transformView != null && gesturePath != null ? gesturePath : path;
             double angle = transformBoxAngle();
             var box = PathTransformBox.box(viewNodes(base), selectedNodes, angle);
@@ -3463,9 +3494,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     isHovered(HitKind.TRANSFORM_ROTATE, -1, 0));
             paintIconHandle(g, "move", at.apply(PathTransformBox.moveHandle(box)), turned,
                     isHovered(HitKind.TRANSFORM_MOVE, -1, 0));
-            Point2D pivot = draggedPivot != null
-                    ? toViewExact(draggedPivot)
-                    : transformPivotView != null ? transformPivotView : toViewExact(transformPivotWorld());
+            Point2D pivot = toViewExact(draggedPivot != null
+                    ? draggedPivot
+                    : transformPivotStart != null ? transformPivotStart : transformPivotWorld());
             paintIconHandle(g, "crosshair", pivot, 0, isHovered(HitKind.TRANSFORM_PIVOT, -1, 0));
         }
 
