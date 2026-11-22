@@ -263,6 +263,10 @@ public final class OverlayStyle
 
     /** Dark popup menu: graphite, hairline border, accent selection. */
     public static JPopupMenu popup(JPopupMenu menu) {
+        // the basic UI fills the popup (padding included) with its background:
+        // WorldPainter's look and feel paints the padding white
+        menu.setUI(new javax.swing.plaf.basic.BasicPopupMenuUI());
+        menu.setOpaque(true);
         menu.setBackground(SURFACE_SOLID);
         menu.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(BORDER),
                 new EmptyBorder(4, 0, 4, 0)));
