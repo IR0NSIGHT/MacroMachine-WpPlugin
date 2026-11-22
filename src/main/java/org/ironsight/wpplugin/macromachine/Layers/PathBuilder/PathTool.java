@@ -38,6 +38,11 @@ import javax.swing.text.JTextComponent;
 import javax.vecmath.Point3i;
 import javax.vecmath.Point4f;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
+import org.ironsight.wpplugin.macromachine.operations.ProviderType;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IoParameter;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainProvider;
 import org.ironsight.wpplugin.macromachine.Gui.MapToolOverlay;
 import com.github.weisj.jsvg.parser.SVGLoader;
 import org.pepsoft.util.AttributeKey;
@@ -140,16 +145,55 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new ArrayList<Float>());
     private static final AttributeKey<ArrayList<Float>> RIVER_SETTINGS_KEY = new AttributeKey<>(
             "PATHTOOL-RIVER-SETTINGS", new ArrayList<Float>());
+    /**
+     * The river's riverbed / transition paints: per paint "on", the output's
+     * provider type, its save data (plain values) and the value to paint.
+     */
+    private static final AttributeKey<ArrayList<Object>> RIVER_PAINTS_KEY = new AttributeKey<>("PATHTOOL-RIVER-PAINTS",
+            new ArrayList<Object>());
+
+    /**
+     * Painting with an action output (a terrain, a layer, ...) at {@code value}, as
+     * a MappingAction would.
+     */
+    record OutputPaint(boolean enabled, IPositionValueSetter output, int value) {
+        static final OutputPaint RIVERBED = new OutputPaint(true, new TerrainProvider(),
+                org.pepsoft.worldpainter.Terrain.GRAVEL.ordinal());
+        static final OutputPaint RIVER_TRANSITION = new OutputPaint(true, new TerrainProvider(),
+                org.pepsoft.worldpainter.Terrain.SAND.ordinal());
+
+        List<Object> toData() {
+            return List.of(enabled, output.getProviderType().name(), IoParameter.unwrap(output.getSaveData()), value);
+        }
+
+        /** The paint stored at {@code offset} of {@code data}, or {@code fallback}. */
+        static OutputPaint fromData(List<Object> data, int offset, OutputPaint fallback) {
+            try {
+                if (data == null || data.size() < offset + 4)
+                    return fallback;
+                var output = ProviderType.fromType((Object[]) data.get(offset + 2),
+                        ProviderType.valueOf((String) data.get(offset + 1)));
+                if (!(output instanceof IPositionValueSetter setter))
+                    return fallback;
+                return new OutputPaint((Boolean) data.get(offset), setter, (Integer) data.get(offset + 3));
+            } catch (RuntimeException unreadable) {
+                return fallback;
+            }
+        }
+    }
 
     /**
      * What an Apply dialog remembers. Curve strength is not part of it: it shapes
      * the path itself. {@code profile} indexes the transition profiles.
      */
     record ApplySettings(boolean onlyDown, boolean snapToTerrain, boolean usePaint, boolean setWater,
-            boolean changeTerrain, float transition, float slopeLimit, int profile) {
+            boolean changeTerrain, float transition, float slopeLimit, int profile, OutputPaint riverbed,
+            OutputPaint riverTransition) {
         private static final float VERSION = 1;
-        static final ApplySettings ROAD = new ApplySettings(false, true, true, false, true, 1f, 4f, 2);
-        static final ApplySettings RIVER = new ApplySettings(true, true, false, true, true, 5f, 0f, 3);
+        static final ApplySettings ROAD = new ApplySettings(false, true, true, false, true, 1f, 4f, 2,
+                OutputPaint.RIVERBED, OutputPaint.RIVER_TRANSITION);
+        static final ApplySettings RIVER = new ApplySettings(true, true, false, true, true, 5f, 0f, 3,
+                OutputPaint.RIVERBED, OutputPaint.RIVER_TRANSITION);
 
         ArrayList<Float> toFloats() {
             return new ArrayList<>(List.of(VERSION, flag(onlyDown), flag(snapToTerrain), flag(usePaint), flag(setWater),
@@ -161,7 +205,19 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             if (data == null || data.size() != 9 || data.get(0) != VERSION)
                 return fallback;
             return new ApplySettings(data.get(1) != 0, data.get(2) != 0, data.get(3) != 0, data.get(4) != 0,
-                    data.get(5) != 0, data.get(6), data.get(7), Math.round(data.get(8)));
+                    data.get(5) != 0, data.get(6), data.get(7), Math.round(data.get(8)), fallback.riverbed(),
+                    fallback.riverTransition());
+        }
+
+        ArrayList<Object> paintData() {
+            var data = new ArrayList<Object>(riverbed.toData());
+            data.addAll(riverTransition.toData());
+            return data;
+        }
+
+        ApplySettings withPaintData(List<Object> data) {
+            return new ApplySettings(onlyDown, snapToTerrain, usePaint, setWater, changeTerrain, transition, slopeLimit,
+                    profile, OutputPaint.fromData(data, 0, riverbed), OutputPaint.fromData(data, 4, riverTransition));
         }
 
         private static float flag(boolean value) {
@@ -260,6 +316,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JCheckBox carveRiverCheckbox;
     /** Set water, never below an existing water level (else leave water alone). */
     private JCheckBox setWaterCheckbox;
+    /** River only: paint the bed / the transition with an action output. */
+    private OutputPaintRow riverbedPaintRow, riverTransitionPaintRow;
 
     /** Which tool the settings dialog was opened for. */
     enum SettingsKind {
@@ -4320,6 +4378,19 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 settingChanged();
             });
             pathSettingsPanel.add(carveRiverCheckbox);
+
+            riverbedPaintRow = new OutputPaintRow("Paint riverbed with",
+                    "Paints the bed under the water (inside the path radius) with this output and value",
+                    this::refreshOutputs);
+            riverbedPaintRow.set(OutputPaint.RIVERBED);
+            riverbedPaintRow.onChange(this::settingChanged);
+            pathSettingsPanel.add(riverbedPaintRow);
+            riverTransitionPaintRow = new OutputPaintRow("Paint transition with",
+                    "Paints the banks (the transition around the radius) with this output and value",
+                    this::refreshOutputs);
+            riverTransitionPaintRow.set(OutputPaint.RIVER_TRANSITION);
+            riverTransitionPaintRow.onChange(this::settingChanged);
+            pathSettingsPanel.add(riverTransitionPaintRow);
         }
         {
             fixHeightCheckbox = new JCheckBox("fixHeightCheckbox");
@@ -4517,6 +4588,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             limitSlopeSpinner.setValue((double) settings.slopeLimit());
             if (settings.profile() >= 0 && settings.profile() < profilesDropdown.getItemCount())
                 profilesDropdown.setSelectedIndex(settings.profile());
+            riverbedPaintRow.set(settings.riverbed());
+            riverTransitionPaintRow.set(settings.riverTransition());
         } finally {
             loadingSettings = false;
         }
@@ -4528,7 +4601,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     ApplySettings currentSettings() {
         return new ApplySettings(onlyDown, snapToTerrain, usePaint, waterMode != WaterMode.DONT_SET_WATER,
                 terrainMode != TerrainMode.DONT_CHANGE, ((Number) transitionMultiSpinner.getValue()).floatValue(),
-                slopeLimit, profilesDropdown.getSelectedIndex());
+                slopeLimit, profilesDropdown.getSelectedIndex(), riverbedPaintRow.get(), riverTransitionPaintRow.get());
     }
 
     private static AttributeKey<ArrayList<Float>> settingsKey(SettingsKind kind) {
@@ -4539,18 +4612,36 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     ApplySettings storedSettings(SettingsKind kind) {
         var fallback = kind == SettingsKind.RIVER ? ApplySettings.RIVER : ApplySettings.ROAD;
         Dimension dimension = getView() == null ? null : getDimension();
-        return dimension == null
-                ? fallback
-                : ApplySettings.fromFloats(dimension.getAttribute(settingsKey(kind)), fallback);
+        if (dimension == null)
+            return fallback;
+        var settings = ApplySettings.fromFloats(dimension.getAttribute(settingsKey(kind)), fallback);
+        return kind == SettingsKind.RIVER ? settings.withPaintData(dimension.getAttribute(RIVER_PAINTS_KEY)) : settings;
     }
 
     private void storeSettings() {
         Dimension dimension = getView() == null ? null : getDimension();
         if (dimension == null || !controlsReady || loadingSettings)
             return;
-        var data = currentSettings().toFloats();
+        var settings = currentSettings();
+        var data = settings.toFloats();
         if (!data.equals(dimension.getAttribute(settingsKey(settingsKind))))
             dimension.setAttribute(settingsKey(settingsKind), data, true);
+        if (settingsKind == SettingsKind.RIVER) {
+            var paints = settings.paintData();
+            if (!paintDataEquals(paints, dimension.getAttribute(RIVER_PAINTS_KEY)))
+                dimension.setAttribute(RIVER_PAINTS_KEY, paints, true);
+        }
+    }
+
+    /** Equal paint data (the save data are arrays, compared by content). */
+    private static boolean paintDataEquals(List<Object> a, List<Object> b) {
+        return b != null && java.util.Arrays.deepEquals(a.toArray(), b.toArray());
+    }
+
+    /** The river's output pickers list the terrains and this world's layers. */
+    private void refreshOutputs() {
+        if (getView() != null && getDimension() != null)
+            InputOutputProvider.INSTANCE.updateFrom(getDimension());
     }
 
     /** A setting was edited: remember it for this dialog and update the preview. */
@@ -4628,6 +4719,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             row.setVisible(kind != SettingsKind.RIVER);
         flattenRoadCheckbox.setVisible(kind == SettingsKind.ROAD);
         carveRiverCheckbox.setVisible(kind == SettingsKind.RIVER);
+        usePaintCheckbox.setVisible(kind == SettingsKind.ROAD);
+        riverbedPaintRow.setVisible(kind == SettingsKind.RIVER);
+        riverTransitionPaintRow.setVisible(kind == SettingsKind.RIVER);
         if (pathSettingsDialog == null) {
             Window owner = overlayView == null ? null : SwingUtilities.getWindowAncestor(overlayView);
             pathSettingsDialog = new JDialog(owner, Dialog.ModalityType.MODELESS);
@@ -5041,6 +5135,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                                                                                       // checkbox?
             }).toList();
             long calculated = measurePreview ? System.nanoTime() : 0;
+            // river paints: the bed is where the water goes (inside the radius), the
+            // transition the rest
+            var riverbed = riverbedPaintRow.get();
+            var riverTransition = riverTransitionPaintRow.get();
+            boolean paintRiver = !onlyPreview && settingsKind == SettingsKind.RIVER;
+            if (paintRiver)
+                for (var paint : List.of(riverbed, riverTransition))
+                    if (paint.enabled() && paint.output() != null)
+                        paint.output().prepareForDimension(dimension);
             heightInfoTiles.forEach(heightInfoTile -> {
                 if (heightInfoTile == null)
                     return;
@@ -5054,7 +5157,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     PathToolBackend.writeWaterHeightDataToDimension(waterHeightTile, wpTile,
                             waterMode == WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL);
                 }
-                if (!onlyPreview && usePaint && getPaint() != null) {
+                if (paintRiver) {
+                    var tilePos = new Point3i(wpTile.getX(), wpTile.getY(), 0);
+                    if (riverbed.enabled() && riverbed.output() != null)
+                        PathToolBackend.writeOutputToDimension(paintOutputMap.get(tilePos), waterHeightMap.get(tilePos),
+                                dimension, riverbed.output(), riverbed.value(), true);
+                    if (riverTransition.enabled() && riverTransition.output() != null)
+                        PathToolBackend.writeOutputToDimension(paintOutputMap.get(tilePos), waterHeightMap.get(tilePos),
+                                dimension, riverTransition.output(), riverTransition.value(), false);
+                } else if (!onlyPreview && usePaint && getPaint() != null) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());
                 }

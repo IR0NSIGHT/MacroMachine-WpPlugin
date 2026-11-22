@@ -191,6 +191,28 @@ public class PathToolBackend
             }
     }
 
+    /**
+     * Writes {@code value} through an action output where the path reaches: the bed
+     * ({@code bed}: inside the radius, where {@code water} is set) or the
+     * transition around it.
+     */
+    static void writeOutputToDimension(FloatTile strength, FloatTile water, Dimension out,
+            org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter output, int value,
+            boolean bed) {
+        if (strength == null || water == null || out == null || output == null)
+            return;
+        int tileX = strength.tilePosX << TILE_SIZE_BITS;
+        int tileY = strength.tilePosY << TILE_SIZE_BITS;
+        for (int xx = 0; xx < TILE_SIZE; xx++)
+            for (int yy = 0; yy < TILE_SIZE; yy++) {
+                if (strength.getValueAt(xx, yy) <= 0)
+                    continue;
+                boolean inside = water.getValueAt(xx, yy) != IGNORE_VALUE;
+                if (inside == bed)
+                    output.setValueAt(out, xx + tileX, yy + tileY, value);
+            }
+    }
+
     static void forcePathOnlyDownhill(List<Point4f> path) {
         float previousZ = Float.MAX_VALUE;
         for (Point4f point : path) {

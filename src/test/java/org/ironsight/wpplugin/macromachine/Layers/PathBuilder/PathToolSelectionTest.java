@@ -2109,9 +2109,11 @@ class PathToolSelectionTest
                     assertEquals(tool.applyButton().getParent(), cancel.getParent(), "Cancel next to Apply");
                     assertTrue(cancel.getX() < tool.applyButton().getX(), "Apply rightmost");
                     assertTrue(checkbox(tool, "Only downhill").isSelected(), "river preset applied");
-                    for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "Set water",
-                            "Carve river bed", "Transition multiplier", "Transition profile"))
+                    for (String option : List.of("Only downhill", "snap to terrain", "Set water", "Carve river bed",
+                            "Paint riverbed with", "Paint transition with", "Transition multiplier",
+                            "Transition profile"))
                         assertTrue(settingShown(tool, option), option + " for a river");
+                    assertFalse(settingShown(tool, "Set paint"), "a river paints bed and transition instead");
                     assertTrue(checkbox(tool, "Carve river bed").isSelected(), "river preset carves");
                     assertTrue(checkbox(tool, "Set water").isSelected(), "river preset sets water");
                     assertFalse(settingShown(tool, "Curve strength"), "no curve strength for a river");
@@ -2128,6 +2130,8 @@ class PathToolSelectionTest
                     assertTrue(checkbox(tool, "Flatten road").isSelected(), "road preset flattens");
                     assertEquals(1.7, ((Number) settingSpinner(tool, "Curve strength").getValue()).doubleValue(), 1e-6);
                     assertFalse(settingShown(tool, "Carve river bed"), "no river option for a road");
+                    assertFalse(settingShown(tool, "Paint riverbed with"), "no river paint for a road");
+                    assertFalse(settingShown(tool, "Paint transition with"), "no river paint for a road");
                     assertFalse(checkbox(tool, "Set water").isSelected(), "road preset leaves water alone");
                     assertNull(findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.Settings"),
                             "no plain path settings");
@@ -2137,7 +2141,7 @@ class PathToolSelectionTest
                     checkbox(tool, "Only downhill").doClick();
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
                     assertTrue(checkbox(tool, "Carve river bed").isSelected(), "river keeps its own settings");
-                    checkbox(tool, "Set paint").doClick();
+                    checkbox(tool, "Paint riverbed with").doClick();
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
                     assertEquals(6d,
                             ((Number) settingSpinner(tool, "Limit slope to x/16 blocks").getValue()).doubleValue());
@@ -2147,12 +2151,15 @@ class PathToolSelectionTest
                     tool.addNode(20, 20);
                     tool.addNode(60, 20);
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
-                    assertTrue(checkbox(tool, "Set paint").isSelected(), "river settings survive a new path");
+                    assertFalse(checkbox(tool, "Paint riverbed with").isSelected(),
+                            "river settings survive a new path");
                     PathTool other = synchronousTool();
                     other.setView(view);
                     assertTrue(other.storedSettings(PathTool.SettingsKind.ROAD).onlyDown());
                     assertEquals(6f, other.storedSettings(PathTool.SettingsKind.ROAD).slopeLimit());
-                    assertTrue(other.storedSettings(PathTool.SettingsKind.RIVER).usePaint());
+                    assertFalse(other.storedSettings(PathTool.SettingsKind.RIVER).riverbed().enabled());
+                    assertEquals(new org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainProvider(),
+                            other.storedSettings(PathTool.SettingsKind.RIVER).riverTransition().output());
 
                     // Cancel closes and restores the settings the dialog opened with
                     checkbox(tool, "Set water").doClick();
@@ -2168,6 +2175,16 @@ class PathToolSelectionTest
                     dimension.setHeightAt(40, 20, 90f);
                     tool.applyButton().doClick();
                     assertNotEquals(90f, dimension.getHeightAt(40, 20), "terrain flattened along the road");
+
+                    // a river paints its bed and its transition with their outputs
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
+                    checkbox(tool, "Paint riverbed with").doClick(); // back on: gravel
+                    tool.applyButton().doClick();
+                    assertEquals(org.pepsoft.worldpainter.Terrain.GRAVEL, dimension.getTerrainAt(40, 20), "riverbed");
+                    boolean sand = false;
+                    for (int y = 21; y < 100 && !sand; y++)
+                        sand = dimension.getTerrainAt(40, y) == org.pepsoft.worldpainter.Terrain.SAND;
+                    assertTrue(sand, "transition painted with sand");
 
                     // the dialog goes away with the tool
                     tool.setActive(false);
@@ -2193,7 +2210,8 @@ class PathToolSelectionTest
                 return row.isVisible();
             if (row instanceof javax.swing.JPanel panel)
                 for (var child : panel.getComponents())
-                    if (child instanceof javax.swing.JLabel label && text.equals(label.getText()))
+                    if (child instanceof javax.swing.JLabel label && text.equals(label.getText())
+                            || child instanceof javax.swing.AbstractButton button && text.equals(button.getText()))
                         return row.isVisible();
         }
         throw new AssertionError("no setting " + text);
@@ -2217,9 +2235,14 @@ class PathToolSelectionTest
     }
 
     private static javax.swing.JCheckBox checkbox(PathTool tool, String text) {
-        for (var component : tool.pathSettingsPanel().getComponents())
+        for (var component : tool.pathSettingsPanel().getComponents()) {
             if (component instanceof javax.swing.JCheckBox box && text.equals(box.getText()))
                 return box;
+            if (component instanceof javax.swing.JPanel row) // checkbox heading a row
+                for (var child : row.getComponents())
+                    if (child instanceof javax.swing.JCheckBox box && text.equals(box.getText()))
+                        return box;
+        }
         throw new AssertionError("no checkbox " + text);
     }
 
