@@ -132,6 +132,42 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     // classes. use like a float buffer
     private static final AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<Float>());
+    /**
+     * Settings of Apply as road / river, stored like the nodes (flat floats on the
+     * dimension) but separate from them: a new path keeps them.
+     */
+    private static final AttributeKey<ArrayList<Float>> ROAD_SETTINGS_KEY = new AttributeKey<>("PATHTOOL-ROAD-SETTINGS",
+            new ArrayList<Float>());
+    private static final AttributeKey<ArrayList<Float>> RIVER_SETTINGS_KEY = new AttributeKey<>(
+            "PATHTOOL-RIVER-SETTINGS", new ArrayList<Float>());
+
+    /**
+     * What an Apply dialog remembers. Curve strength is not part of it: it shapes
+     * the path itself. {@code profile} indexes the transition profiles.
+     */
+    record ApplySettings(boolean onlyDown, boolean snapToTerrain, boolean usePaint, boolean setWater,
+            boolean changeTerrain, float transition, float slopeLimit, int profile) {
+        private static final float VERSION = 1;
+        static final ApplySettings ROAD = new ApplySettings(false, true, true, false, true, 1f, 4f, 2);
+        static final ApplySettings RIVER = new ApplySettings(true, true, false, true, true, 5f, 0f, 3);
+
+        ArrayList<Float> toFloats() {
+            return new ArrayList<>(List.of(VERSION, flag(onlyDown), flag(snapToTerrain), flag(usePaint), flag(setWater),
+                    flag(changeTerrain), transition, slopeLimit, (float) profile));
+        }
+
+        /** The stored settings, or {@code fallback} if none (or unreadable). */
+        static ApplySettings fromFloats(List<Float> data, ApplySettings fallback) {
+            if (data == null || data.size() != 9 || data.get(0) != VERSION)
+                return fallback;
+            return new ApplySettings(data.get(1) != 0, data.get(2) != 0, data.get(3) != 0, data.get(4) != 0,
+                    data.get(5) != 0, data.get(6), data.get(7), Math.round(data.get(8)));
+        }
+
+        private static float flag(boolean value) {
+            return value ? 1 : 0;
+        }
+    }
     private final JPanel optionsPanel = new JPanel();
     /**
      * Generation settings (presets, modes, slope, transition, Apply): hosted by the
@@ -235,6 +271,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * slope limit instead of resetting it.
      */
     private SettingsKind settingsKind = SettingsKind.ROAD;
+    /**
+     * The settings when the dialog opened (or last applied): what Cancel restores.
+     */
+    private ApplySettings settingsAtOpen;
+    /** True while settings are pushed into the controls (no storing meanwhile). */
+    private boolean loadingSettings;
     private JPanel brushQuerschnitt;
     private JComboBox<CrossSectionShape> profilesDropdown;
     private CrossSectionShape brushProfile;
@@ -4208,6 +4250,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                         dim.setEventsInhibited(false);
                 }
                 refreshPreview();
+                settingsAtOpen = currentSettings();
                 overlay.showTransientInfoText("Path applied", 1800);
             });
             // not a settings row: the dialog keeps it bottom right (see
@@ -4219,7 +4262,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             onlyDownCheckbox.setToolTipText("If active, the path will only move horizontally or downwards.");
             onlyDownCheckbox.addActionListener(l -> {
                 this.onlyDown = onlyDownCheckbox.isSelected();
-                schedulePreview();
+                settingChanged();
             });
             this.onlyDown = onlyDownCheckbox.isSelected();
             pathSettingsPanel.add(onlyDownCheckbox);
@@ -4229,7 +4272,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             minCheckbox.setToolTipText("if active, the path will follow the terrain instead of building 'bridges'.");
             minCheckbox.addActionListener(l -> {
                 this.snapToTerrain = minCheckbox.isSelected();
-                schedulePreview();
+                settingChanged();
             });
             this.snapToTerrain = minCheckbox.isSelected();
             pathSettingsPanel.add(minCheckbox);
@@ -4240,7 +4283,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             usePaintCheckbox.setToolTipText("set currently selected paint along the path");
             usePaintCheckbox.addActionListener(l -> {
                 this.usePaint = usePaintCheckbox.isSelected();
-                schedulePreview();
+                settingChanged();
             });
             this.usePaint = usePaintCheckbox.isSelected();
             pathSettingsPanel.add(usePaintCheckbox);
@@ -4253,7 +4296,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 waterMode = setWaterCheckbox.isSelected()
                         ? WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL
                         : WaterMode.DONT_SET_WATER;
-                schedulePreview();
+                settingChanged();
             });
             pathSettingsPanel.add(setWaterCheckbox);
         }
@@ -4264,7 +4307,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     + " only paint (and water) are set.</html>");
             flattenRoadCheckbox.addActionListener(l -> {
                 terrainMode = flattenRoadCheckbox.isSelected() ? TerrainMode.FLATTEN : TerrainMode.DONT_CHANGE;
-                schedulePreview();
+                settingChanged();
             });
             pathSettingsPanel.add(flattenRoadCheckbox);
 
@@ -4274,7 +4317,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     + " terrain stays as it is; only water (and paint) are set.</html>");
             carveRiverCheckbox.addActionListener(l -> {
                 terrainMode = carveRiverCheckbox.isSelected() ? TerrainMode.CARVE : TerrainMode.DONT_CHANGE;
-                schedulePreview();
+                settingChanged();
             });
             pathSettingsPanel.add(carveRiverCheckbox);
         }
@@ -4283,7 +4326,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             fixHeightCheckbox.setToolTipText("If active, the path will only move at the specified height.");
             fixHeightCheckbox.addActionListener(l -> {
                 this.fixHeightTo = fixHeightCheckbox.isSelected();
-                schedulePreview();
+                settingChanged();
             });
             this.fixHeightTo = fixHeightCheckbox.isSelected();
             // pathSettingsPanel.add(fixHeightCheckbox); // FIXME: disabled because it
@@ -4297,7 +4340,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             handleFactorSpinner.addChangeListener(l -> {
                 handleStrength = ((Number) handleFactorSpinner.getValue()).floatValue();
                 overlay.repaint();
-                schedulePreview();
+                settingChanged();
             });
             JPanel panel = new JPanel();
             panel.add(new JLabel("Curve strength"));
@@ -4313,7 +4356,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 slopeLimit = ((Number) limitSlopeSpinner.getValue()).floatValue();
                 if (slopePreview != null)
                     slopePreview.repaint();
-                schedulePreview();
+                settingChanged();
             });
             slopeLimit = ((Number) limitSlopeSpinner.getValue()).floatValue();
             JPanel panel = new JPanel();
@@ -4343,7 +4386,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 transitionMultiplier = ((Number) transitionMultiSpinner.getValue()).floatValue() + 1;
                 if (brushQuerschnitt != null)
                     brushQuerschnitt.repaint();
-                schedulePreview();
+                settingChanged();
             });
             transitionMultiSpinner.setValue(1d);
             JPanel panel = new JPanel();
@@ -4430,7 +4473,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             profilesDropdown.addActionListener(l -> {
                 this.brushProfile = (CrossSectionShape) profilesDropdown.getSelectedItem();
                 brushQuerschnitt.repaint();
-                schedulePreview();
+                settingChanged();
             });
             profilesDropdown.setSelectedItem(model.getElementAt(3));
             this.brushProfile = (CrossSectionShape) profilesDropdown.getSelectedItem();
@@ -4451,33 +4494,79 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         controlsReady = true;
     }
 
-    private void applyPreset(boolean onlyDown, boolean snapToTerrain, boolean usePaint, WaterMode waterMode,
-            TerrainMode terrainMode, float transition, Float slopeLimit, String transitionProfile) {
-        // curve strength belongs to the path's shape: no preset touches it
-        this.onlyDown = onlyDown;
-        this.snapToTerrain = snapToTerrain;
-        this.usePaint = usePaint;
-        this.waterMode = waterMode;
-        this.terrainMode = terrainMode;
-        onlyDownCheckbox.setSelected(onlyDown);
-        minCheckbox.setSelected(snapToTerrain);
-        usePaintCheckbox.setSelected(usePaint);
-        setWaterCheckbox.setSelected(waterMode != WaterMode.DONT_SET_WATER);
-        flattenRoadCheckbox.setSelected(terrainMode == TerrainMode.FLATTEN);
-        carveRiverCheckbox.setSelected(terrainMode == TerrainMode.CARVE);
-        transitionMultiSpinner.setValue((double) transition);
-        if (slopeLimit != null)
-            limitSlopeSpinner.setValue((double) slopeLimit);
-        if (transitionProfile != null) {
-            for (int i = 0; i < profilesDropdown.getItemCount(); i++) {
-                if (transitionProfile.equals(String.valueOf(profilesDropdown.getItemAt(i)))) {
-                    profilesDropdown.setSelectedIndex(i);
-                    break;
-                }
-            }
+    /** Pushes {@code settings} into the controls (and the fields behind them). */
+    private void showSettings(ApplySettings settings) {
+        loadingSettings = true;
+        try {
+            onlyDown = settings.onlyDown();
+            snapToTerrain = settings.snapToTerrain();
+            usePaint = settings.usePaint();
+            waterMode = settings.setWater()
+                    ? WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL
+                    : WaterMode.DONT_SET_WATER;
+            terrainMode = !settings.changeTerrain()
+                    ? TerrainMode.DONT_CHANGE
+                    : settingsKind == SettingsKind.RIVER ? TerrainMode.CARVE : TerrainMode.FLATTEN;
+            onlyDownCheckbox.setSelected(onlyDown);
+            minCheckbox.setSelected(snapToTerrain);
+            usePaintCheckbox.setSelected(usePaint);
+            setWaterCheckbox.setSelected(settings.setWater());
+            flattenRoadCheckbox.setSelected(terrainMode == TerrainMode.FLATTEN);
+            carveRiverCheckbox.setSelected(terrainMode == TerrainMode.CARVE);
+            transitionMultiSpinner.setValue((double) settings.transition());
+            limitSlopeSpinner.setValue((double) settings.slopeLimit());
+            if (settings.profile() >= 0 && settings.profile() < profilesDropdown.getItemCount())
+                profilesDropdown.setSelectedIndex(settings.profile());
+        } finally {
+            loadingSettings = false;
         }
         updateCheckboxTexts();
         schedulePreview();
+    }
+
+    /** The settings the controls show now. */
+    ApplySettings currentSettings() {
+        return new ApplySettings(onlyDown, snapToTerrain, usePaint, waterMode != WaterMode.DONT_SET_WATER,
+                terrainMode != TerrainMode.DONT_CHANGE, ((Number) transitionMultiSpinner.getValue()).floatValue(),
+                slopeLimit, profilesDropdown.getSelectedIndex());
+    }
+
+    private static AttributeKey<ArrayList<Float>> settingsKey(SettingsKind kind) {
+        return kind == SettingsKind.RIVER ? RIVER_SETTINGS_KEY : ROAD_SETTINGS_KEY;
+    }
+
+    /** The stored settings of {@code kind} (its preset if none are stored yet). */
+    ApplySettings storedSettings(SettingsKind kind) {
+        var fallback = kind == SettingsKind.RIVER ? ApplySettings.RIVER : ApplySettings.ROAD;
+        Dimension dimension = getView() == null ? null : getDimension();
+        return dimension == null
+                ? fallback
+                : ApplySettings.fromFloats(dimension.getAttribute(settingsKey(kind)), fallback);
+    }
+
+    private void storeSettings() {
+        Dimension dimension = getView() == null ? null : getDimension();
+        if (dimension == null || !controlsReady || loadingSettings)
+            return;
+        var data = currentSettings().toFloats();
+        if (!data.equals(dimension.getAttribute(settingsKey(settingsKind))))
+            dimension.setAttribute(settingsKey(settingsKind), data, true);
+    }
+
+    /** A setting was edited: remember it for this dialog and update the preview. */
+    private void settingChanged() {
+        storeSettings();
+        schedulePreview();
+    }
+
+    /** Cancel (or closing the dialog): back to the settings it opened with. */
+    void cancelPathSettings() {
+        if (settingsAtOpen != null) {
+            showSettings(settingsAtOpen);
+            storeSettings();
+        }
+        if (pathSettingsDialog != null)
+            pathSettingsDialog.setVisible(false);
     }
 
     private void updateCheckboxTexts() {
@@ -4506,16 +4595,21 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     /**
-     * Road preset: flatten, paint, slope limit, triangle transition.
+     * Road preset into the controls: flatten, paint, slope limit, triangle
+     * transition (for screenshots and benchmarks; not stored).
      */
     void applyRoadPreset() {
-        applyPreset(false, true, true, WaterMode.DONT_SET_WATER, TerrainMode.FLATTEN, 1f, 4f, "Triangle");
+        settingsKind = SettingsKind.ROAD;
+        showSettings(ApplySettings.ROAD);
     }
 
-    /** River preset: carve, set water, only downhill, wide transition. */
+    /**
+     * River preset into the controls: carve, set water, only downhill, wide
+     * transition (for screenshots and benchmarks; not stored).
+     */
     void applyRiverPreset() {
-        applyPreset(true, true, false, WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL, TerrainMode.CARVE, 5f, null,
-                null);
+        settingsKind = SettingsKind.RIVER;
+        showSettings(ApplySettings.RIVER);
     }
 
     /**
@@ -4526,10 +4620,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * the slope limit.
      */
     void openPathSettings(String title, SettingsKind kind) {
-        if (settingsKind != kind) {
-            settingsKind = kind;
-            schedulePreview();
-        }
+        // each dialog brings back its own stored settings
+        settingsKind = kind;
+        settingsAtOpen = storedSettings(kind);
+        showSettings(settingsAtOpen);
         for (var row : roadOnlyRows)
             row.setVisible(kind != SettingsKind.RIVER);
         flattenRoadCheckbox.setVisible(kind == SettingsKind.ROAD);
@@ -4538,10 +4632,21 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             Window owner = overlayView == null ? null : SwingUtilities.getWindowAncestor(overlayView);
             pathSettingsDialog = new JDialog(owner, Dialog.ModalityType.MODELESS);
             pathSettingsDialog.setName("PathTool.PathSettingsDialog");
-            pathSettingsDialog.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+            pathSettingsDialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+            pathSettingsDialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override
+                public void windowClosing(java.awt.event.WindowEvent event) {
+                    cancelPathSettings();
+                }
+            });
             pathSettingsDialog.setResizable(true);
             // settings scroll; Apply stays bottom right, outside the scrolling part
             JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JButton cancel = new JButton("Cancel");
+            cancel.setName("PathTool.Cancel");
+            cancel.setToolTipText("Close without applying; settings go back to how they were");
+            cancel.addActionListener(event -> cancelPathSettings());
+            footer.add(cancel);
             footer.add(applyButton);
             JPanel content = new JPanel(new BorderLayout());
             content.add(new JScrollPane(pathSettingsPanel), BorderLayout.CENTER);
@@ -4571,16 +4676,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 this::reversePath));
         menu.addSeparator();
         menu.add(operationItem("Apply as road...", "PathTool.Path.ApplyRoad", any, "Place at least two nodes first",
-                () -> {
-                    applyRoadPreset();
-                    openPathSettings("Apply as road", SettingsKind.ROAD);
-                }));
+                () -> openPathSettings("Apply as road", SettingsKind.ROAD)));
         menu.add(operationItem("Apply as river...", "PathTool.Path.ApplyRiver", any, "Place at least two nodes first",
-                () -> {
-                    applyRiverPreset();
-                    openPathSettings("Apply as river", SettingsKind.RIVER);
-                }));
-        menu.addSeparator();
+                () -> openPathSettings("Apply as river", SettingsKind.RIVER)));
         menu.addSeparator();
         menu.add(operationItem("Help...", "PathTool.Help", true, null,
                 () -> new org.ironsight.wpplugin.macromachine.Gui.HelpDialog(null, HELP_TITLE, HELP_EXPLANATION,

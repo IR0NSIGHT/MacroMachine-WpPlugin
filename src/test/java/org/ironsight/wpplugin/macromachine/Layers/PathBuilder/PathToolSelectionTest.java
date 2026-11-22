@@ -2089,12 +2089,9 @@ class PathToolSelectionTest
                     tool.addNode(20, 20);
                     tool.addNode(60, 20);
                     settingSpinner(tool, "Curve strength").setValue(1.7);
-                    settingSpinner(tool, "Limit slope to x/16 blocks").setValue(6d);
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
-                    // presets leave the curve strength and the river's hidden slope limit alone
+                    // the dialogs leave the curve strength alone
                     assertEquals(1.7, ((Number) settingSpinner(tool, "Curve strength").getValue()).doubleValue(), 1e-6);
-                    assertEquals(6d,
-                            ((Number) settingSpinner(tool, "Limit slope to x/16 blocks").getValue()).doubleValue());
                     var dialog = tool.pathSettingsDialog();
                     assertTrue(dialog.isVisible());
                     assertEquals("Apply as river", dialog.getTitle());
@@ -2108,6 +2105,9 @@ class PathToolSelectionTest
                     assertTrue(content.getWidth() - apply.getMaxX() < 16, "Apply at the right edge");
                     assertTrue(content.getHeight() - apply.getMaxY() < 16, "Apply at the bottom");
                     assertNull(SwingUtilities.getAncestorOfClass(javax.swing.JScrollPane.class, tool.applyButton()));
+                    var cancel = findButton(dialog, "PathTool.Cancel");
+                    assertEquals(tool.applyButton().getParent(), cancel.getParent(), "Cancel next to Apply");
+                    assertTrue(cancel.getX() < tool.applyButton().getX(), "Apply rightmost");
                     assertTrue(checkbox(tool, "Only downhill").isSelected(), "river preset applied");
                     for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "Set water",
                             "Carve river bed", "Transition multiplier", "Transition profile"))
@@ -2131,6 +2131,38 @@ class PathToolSelectionTest
                     assertFalse(checkbox(tool, "Set water").isSelected(), "road preset leaves water alone");
                     assertNull(findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.Settings"),
                             "no plain path settings");
+
+                    // each dialog keeps its own settings, stored on the dimension like the nodes
+                    settingSpinner(tool, "Limit slope to x/16 blocks").setValue(6d);
+                    checkbox(tool, "Only downhill").doClick();
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
+                    assertTrue(checkbox(tool, "Carve river bed").isSelected(), "river keeps its own settings");
+                    checkbox(tool, "Set paint").doClick();
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
+                    assertEquals(6d,
+                            ((Number) settingSpinner(tool, "Limit slope to x/16 blocks").getValue()).doubleValue());
+                    assertTrue(checkbox(tool, "Only downhill").isSelected(), "road settings remembered");
+                    // a new path keeps them ("global"), and so does a new tool on the same world
+                    pathItem(tool, "PathTool.NewPath").doClick();
+                    tool.addNode(20, 20);
+                    tool.addNode(60, 20);
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
+                    assertTrue(checkbox(tool, "Set paint").isSelected(), "river settings survive a new path");
+                    PathTool other = synchronousTool();
+                    other.setView(view);
+                    assertTrue(other.storedSettings(PathTool.SettingsKind.ROAD).onlyDown());
+                    assertEquals(6f, other.storedSettings(PathTool.SettingsKind.ROAD).slopeLimit());
+                    assertTrue(other.storedSettings(PathTool.SettingsKind.RIVER).usePaint());
+
+                    // Cancel closes and restores the settings the dialog opened with
+                    checkbox(tool, "Set water").doClick();
+                    assertFalse(checkbox(tool, "Set water").isSelected());
+                    findButton(dialog, "PathTool.Cancel").doClick();
+                    assertFalse(dialog.isVisible());
+                    assertTrue(tool.storedSettings(PathTool.SettingsKind.RIVER).setWater(), "cancelled edit dropped");
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
+                    checkbox(tool, "Only downhill").doClick(); // back to the road preset
+                    settingSpinner(tool, "Limit slope to x/16 blocks").setValue(4d);
 
                     // Apply from the dialog builds the path as before
                     dimension.setHeightAt(40, 20, 90f);
