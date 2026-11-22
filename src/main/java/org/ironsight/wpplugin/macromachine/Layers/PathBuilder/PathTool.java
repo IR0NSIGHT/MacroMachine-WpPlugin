@@ -218,6 +218,19 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private CellPreviewPanel slopePreview;
     /** Settings rows a river does not use (curve strength, slope limit). */
     private final List<JComponent> roadOnlyRows = new ArrayList<>();
+    /** The "set terrain" row (plain settings; road and river get a checkbox). */
+    private JPanel terrainRow;
+    /** Road only: flatten the ground along the road (else leave it untouched). */
+    private JCheckBox flattenRoadCheckbox;
+    /**
+     * River only: carve a bed below the water (else leave the ground untouched).
+     */
+    private JCheckBox carveRiverCheckbox;
+
+    /** Which tool the path settings dialog was opened for. */
+    enum SettingsKind {
+        PATH, ROAD, RIVER
+    }
     private JPanel brushQuerschnitt;
     private JComboBox<CrossSectionShape> profilesDropdown;
     private CrossSectionShape brushProfile;
@@ -4256,12 +4269,32 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             terrainModeDropdown.setToolTipText("Controls how terrain height is changed along the path.");
             terrainModeDropdown.addActionListener(l -> {
                 this.terrainMode = (TerrainMode) terrainModeDropdown.getSelectedItem();
+                if (flattenRoadCheckbox != null) {
+                    flattenRoadCheckbox.setSelected(terrainMode == TerrainMode.FLATTEN);
+                    carveRiverCheckbox.setSelected(terrainMode == TerrainMode.CARVE);
+                }
                 schedulePreview();
             });
-            JPanel panel = new JPanel();
-            panel.add(new JLabel("set terrain:"));
-            panel.add(terrainModeDropdown);
-            pathSettingsPanel.add(panel);
+            terrainRow = new JPanel();
+            terrainRow.add(new JLabel("set terrain:"));
+            terrainRow.add(terrainModeDropdown);
+            pathSettingsPanel.add(terrainRow);
+
+            flattenRoadCheckbox = new JCheckBox("Flatten road", terrainMode == TerrainMode.FLATTEN);
+            flattenRoadCheckbox.setToolTipText("<html>On: the ground under the road is set to the road height and"
+                    + " blends back into the terrain<br>across the transition. Off: the terrain stays as it is;"
+                    + " only paint (and water) are set.</html>");
+            flattenRoadCheckbox.addActionListener(l -> terrainModeDropdown
+                    .setSelectedItem(flattenRoadCheckbox.isSelected() ? TerrainMode.FLATTEN : TerrainMode.DONT_CHANGE));
+            pathSettingsPanel.add(flattenRoadCheckbox);
+
+            carveRiverCheckbox = new JCheckBox("Carve river bed", terrainMode == TerrainMode.CARVE);
+            carveRiverCheckbox.setToolTipText("<html>On: digs a bed below the water, one block deep at the banks and"
+                    + " deeper towards the middle,<br>blending into the terrain across the transition. Off: the"
+                    + " terrain stays as it is; only water (and paint) are set.</html>");
+            carveRiverCheckbox.addActionListener(l -> terrainModeDropdown
+                    .setSelectedItem(carveRiverCheckbox.isSelected() ? TerrainMode.CARVE : TerrainMode.DONT_CHANGE));
+            pathSettingsPanel.add(carveRiverCheckbox);
         }
         {
             fixHeightCheckbox = new JCheckBox("fixHeightCheckbox");
@@ -4502,17 +4535,21 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * {@code title} names the tool it was opened for ("Apply as road"), or null.
      */
     void openPathSettings(String title) {
-        openPathSettings(title, false);
+        openPathSettings(title, SettingsKind.PATH);
     }
 
     /**
-     * {@code river}: show only what a river uses (only downhill, snap to terrain,
-     * paint, water, terrain, transition); a road and the plain settings also get
-     * curve strength and the slope limit.
+     * A river shows only what it uses (only downhill, snap to terrain, paint,
+     * water, terrain, transition); a road also gets curve strength and the slope
+     * limit. Instead of the terrain dropdown a road gets "Flatten road" and a river
+     * "Carve river bed"; the plain settings show everything but those checkboxes.
      */
-    void openPathSettings(String title, boolean river) {
+    void openPathSettings(String title, SettingsKind kind) {
         for (var row : roadOnlyRows)
-            row.setVisible(!river);
+            row.setVisible(kind != SettingsKind.RIVER);
+        terrainRow.setVisible(kind == SettingsKind.PATH);
+        flattenRoadCheckbox.setVisible(kind == SettingsKind.ROAD);
+        carveRiverCheckbox.setVisible(kind == SettingsKind.RIVER);
         if (pathSettingsDialog == null) {
             Window owner = overlayView == null ? null : SwingUtilities.getWindowAncestor(overlayView);
             pathSettingsDialog = new JDialog(owner, Dialog.ModalityType.MODELESS);
@@ -4546,12 +4583,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         menu.add(operationItem("Apply as road...", "PathTool.Path.ApplyRoad", any, "Place at least two nodes first",
                 () -> {
                     applyRoadPreset();
-                    openPathSettings("Apply as road");
+                    openPathSettings("Apply as road", SettingsKind.ROAD);
                 }));
         menu.add(operationItem("Apply as river...", "PathTool.Path.ApplyRiver", any, "Place at least two nodes first",
                 () -> {
                     applyRiverPreset();
-                    openPathSettings("Apply as river", true);
+                    openPathSettings("Apply as river", SettingsKind.RIVER);
                 }));
         menu.addSeparator();
         menu.add(operationItem("Path settings...", "PathTool.Path.Settings", true, null, () -> openPathSettings(null)));

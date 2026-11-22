@@ -2096,18 +2096,24 @@ class PathToolSelectionTest
                     assertEquals(java.awt.Dialog.ModalityType.MODELESS, dialog.getModalityType(), "map stays usable");
                     assertTrue(checkbox(tool, "Only downhill").isSelected(), "river preset applied");
                     for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "set water:",
-                            "set terrain:", "Transition multiplier", "Transition profile"))
+                            "Carve river bed", "Transition multiplier", "Transition profile"))
                         assertTrue(settingShown(tool, option), option + " for a river");
+                    assertTrue(checkbox(tool, "Carve river bed").isSelected(), "river preset carves");
+                    assertFalse(settingShown(tool, "set terrain:"), "a river only carves or not");
                     assertFalse(settingShown(tool, "Curve strength"), "no curve strength for a river");
+                    assertFalse(settingShown(tool, "Flatten road"), "no road option for a river");
                     assertFalse(settingShown(tool, "Limit slope to x/16 blocks"), "no slope limit for a river");
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
                     assertEquals("Apply as road", dialog.getTitle());
                     assertFalse(checkbox(tool, "Only downhill").isSelected(), "road preset applied");
                     assertTrue(checkbox(tool, "Set paint").isSelected());
                     for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "set water:",
-                            "set terrain:", "Curve strength", "Limit slope to x/16 blocks", "Transition multiplier",
+                            "Flatten road", "Curve strength", "Limit slope to x/16 blocks", "Transition multiplier",
                             "Transition profile"))
                         assertTrue(settingShown(tool, option), option + " for a road");
+                    assertFalse(settingShown(tool, "set terrain:"), "a road only flattens or not");
+                    assertTrue(checkbox(tool, "Flatten road").isSelected(), "road preset flattens");
+                    assertFalse(settingShown(tool, "Carve river bed"), "no river option for a road");
 
                     // Apply from the dialog builds the path as before
                     dimension.setHeightAt(40, 20, 90f);
