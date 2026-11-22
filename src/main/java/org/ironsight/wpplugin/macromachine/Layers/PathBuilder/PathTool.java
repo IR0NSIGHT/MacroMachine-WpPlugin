@@ -148,7 +148,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     static final Color SELECTED_NODE_FILL = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.MAP_SELECTION;
     /**
      * Helper geometry and its handles (radius circles, tangents, height gauge,
-     * transform box, operation circles): the primary text colour; plum while
+     * transform box, operation circles): the primary text colour (white); while
      * hovered.
      */
     static final Color HANDLE_COLOR = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT;
@@ -161,7 +161,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     /**
      * Path group (nodes, segments, arrows) when not selected: light grey (#B0B0B0).
      */
-    static final Color UNSELECTED_NODE_FILL = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED;
+    static final Color UNSELECTED_NODE_FILL = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.MAP_INACTIVE;
+    /** The unselected path in the (dark) profile strip. */
+    static final Color STRIP_INACTIVE = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.MAP_INACTIVE_ON_DARK;
     private static final int NODE_HIT_RADIUS = 18;
     private final JToggleButton showLabel = hudButton("Label", "ShowLabel");
     private final JToggleButton showRadius = hudButton("Radius", "ShowRadius");
@@ -3453,7 +3455,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     target.moveTo(xAt.applyAsDouble(along[nodeSample[i]]), middle);
                     target.lineTo(xAt.applyAsDouble(along[nodeSample[i + 1]]), middle);
                 }
-                g.setColor(UNSELECTED_NODE_FILL);
+                g.setColor(STRIP_INACTIVE);
                 g.setStroke(new BasicStroke(1.5f));
                 g.draw(line);
                 strokeHandle(g, highlighted, 2f);
@@ -3466,7 +3468,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                         (int) Math.round(nodeY[i]));
                 points[i] = point;
                 boolean selected = selection.contains(i);
-                paintNode(g, point, selected);
+                paintNode(g, point, selected, false, STRIP_INACTIVE);
                 if (shows(showLabel))
                     paintNodeLabel(g, point, i + 1, selected);
             }
@@ -3961,13 +3963,20 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * unchanged.
      */
     static void paintNode(Graphics2D g, Point point, boolean selected, boolean hovered) {
+        paintNode(g, point, selected, hovered, UNSELECTED_NODE_FILL);
+    }
+
+    /**
+     * {@code inactive}: colour of an unselected node (lighter on the dark strip).
+     */
+    static void paintNode(Graphics2D g, Point point, boolean selected, boolean hovered, Color inactive) {
         double size = NODE_DIAMETER - 2 + (hovered ? 6 : 0);
-        g.setColor(hovered ? HANDLE_HOVER : selected ? SELECTED_NODE_FILL : UNSELECTED_NODE_FILL);
+        g.setColor(hovered ? HANDLE_HOVER : selected ? SELECTED_NODE_FILL : inactive);
         g.setStroke(new BasicStroke(selected || hovered ? 3f : 2f));
         g.draw(new Ellipse2D.Double(point.x - size / 2, point.y - size / 2, size, size));
     }
 
-    /** Node number: a chip above right of the node, plum text when selected. */
+    /** Node number: a chip above right of the node, hot pink text when selected. */
     static void paintNodeLabel(Graphics2D g, Point point, int number, boolean selected) {
         // above right of the node: handles sit straight right of it
         paintChip(g, Integer.toString(number), point.x + NODE_DIAMETER / 2.0 - 2, point.y - NODE_DIAMETER / 2.0 - 7,
