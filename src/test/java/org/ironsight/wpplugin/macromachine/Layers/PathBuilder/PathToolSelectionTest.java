@@ -1881,6 +1881,13 @@ class PathToolSelectionTest
                     assertEquals(new java.awt.geom.Point2D.Double(60, 30), tool.transformPivotWorld());
                     assertEquals(0, tool.transformBoxAngle(), "a new selection gets an axis-aligned box");
 
+                    // a single selected node can always be dragged to a new position
+                    assertEquals(java.awt.Cursor.MOVE_CURSOR, tool.hoverCursor(tool.hitTest(view.worldToView(60, 30))));
+                    drag(tool, view.worldToView(60, 30), view.worldToView(62, 33));
+                    assertNodes(dimension, 70, 100, 72, 62, 33, 70, 70, 80, 70);
+                    drag(tool, view.worldToView(62, 33), view.worldToView(60, 30));
+                    assertNodes(dimension, 70, 100, 72, 60, 30, 70, 70, 80, 70);
+
                     // a single node only gets the move handle, just below it
                     Point single = view.worldToView(60, 30);
                     var box = PathTransformBox.box(List.of(new java.awt.geom.Point2D.Double(single.x, single.y)),

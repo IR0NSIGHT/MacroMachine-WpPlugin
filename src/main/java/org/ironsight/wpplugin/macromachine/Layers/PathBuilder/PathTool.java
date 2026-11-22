@@ -106,7 +106,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Click selected node",
                     "Cycle radius, curve strength, height-above-ground and transform handles"),
             new HelpItem("Transform editor",
-                    "Box around the selection: drag the corner arrow to scale, the side / bottom arrows to stretch along the box, the top handle to rotate, the left handle to move (nodes themselves do not drag here); drag the pivot (crosshair) to rotate / scale around another point, double-click it to put it back in the centre; typed numbers are degrees or the scale factor. A single node only gets the move handle"),
+                    "Box around the selection: drag the corner arrow to scale, the side / bottom arrows to stretch along the box, the top handle to rotate, the left handle to move (a group does not drag by its nodes; a single node does); drag the pivot (crosshair) to rotate / scale around another point, double-click it to put it back in the centre; typed numbers are degrees or the scale factor. A single node only gets the move handle"),
             new HelpItem("Drag radius / tangent / height handle",
                     "Scale radius of selected nodes / change curve strength / raise or lower selected nodes"),
             new HelpItem("Shift while dragging", "Precise drag: nodes and handles move at 1/10 speed"),
@@ -1497,7 +1497,19 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * its move handle does), so there they only show they can be clicked.
      */
     int hoverCursor(Hit hit) {
-        return hit.kind() == HitKind.NODE && editMode == EditMode.TRANSFORM ? Cursor.HAND_CURSOR : hit.kind().cursor;
+        return hit.kind() == HitKind.NODE && !nodeDrags(hit.node(), false) ? Cursor.HAND_CURSOR : hit.kind().cursor;
+    }
+
+    /**
+     * Whether dragging {@code node} moves it. Always outside the Transform editor;
+     * there only when it is (or becomes, by a plain press) the single selected
+     * node: a group moves with the move handle, which carries the pivot along.
+     */
+    boolean nodeDrags(int node, boolean additive) {
+        if (editMode != EditMode.TRANSFORM)
+            return true;
+        boolean selected = selectedNodes.contains(node);
+        return selected ? selectedNodes.size() == 1 : !additive;
     }
 
     private boolean cursorOverridden;
@@ -1831,9 +1843,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         if (pressedNode < 0 && gestureDragged)
             overlay.updateDrag(point);
-        else if (pressedNode >= 0 && gestureDragged && editMode != EditMode.TRANSFORM) {
-            // (the Transform editor moves only with its move handle, which carries the
-            // pivot)
+        else if (pressedNode >= 0 && gestureDragged && nodeDrags(pressedNode, gestureAdditive)) {
             if (!selectedNodes.contains(pressedNode)) {
                 if (!gestureAdditive)
                     selectedNodes.clear();
