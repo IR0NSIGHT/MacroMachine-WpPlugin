@@ -231,6 +231,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     enum SettingsKind {
         PATH, ROAD, RIVER
     }
+
+    /**
+     * The tool the settings were last opened for: a river ignores the (hidden)
+     * slope limit instead of resetting it.
+     */
+    private SettingsKind settingsKind = SettingsKind.PATH;
     private JPanel brushQuerschnitt;
     private JComboBox<CrossSectionShape> profilesDropdown;
     private CrossSectionShape brushProfile;
@@ -4470,8 +4476,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void applyPreset(boolean onlyDown, boolean snapToTerrain, boolean usePaint, WaterMode waterMode,
-            TerrainMode terrainMode, float curveStrength, float transition, float slopeLimit,
-            String transitionProfile) {
+            TerrainMode terrainMode, float transition, Float slopeLimit, String transitionProfile) {
+        // curve strength belongs to the path's shape: no preset touches it
         this.onlyDown = onlyDown;
         this.snapToTerrain = snapToTerrain;
         this.usePaint = usePaint;
@@ -4482,9 +4488,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         usePaintCheckbox.setSelected(usePaint);
         waterModeDropdown.setSelectedItem(waterMode);
         terrainModeDropdown.setSelectedItem(terrainMode);
-        handleFactorSpinner.setValue((double) curveStrength);
         transitionMultiSpinner.setValue((double) transition);
-        limitSlopeSpinner.setValue((double) slopeLimit);
+        if (slopeLimit != null)
+            limitSlopeSpinner.setValue((double) slopeLimit);
         if (transitionProfile != null) {
             for (int i = 0; i < profilesDropdown.getItemCount(); i++) {
                 if (transitionProfile.equals(String.valueOf(profilesDropdown.getItemAt(i)))) {
@@ -4518,15 +4524,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     /**
-     * Road preset: flatten, paint, gentle curves, slope limit, triangle transition.
+     * Road preset: flatten, paint, slope limit, triangle transition.
      */
     void applyRoadPreset() {
-        applyPreset(false, true, true, WaterMode.DONT_SET_WATER, TerrainMode.FLATTEN, .3f, 1f, 4f, "Triangle");
+        applyPreset(false, true, true, WaterMode.DONT_SET_WATER, TerrainMode.FLATTEN, 1f, 4f, "Triangle");
     }
 
     /** River preset: carve, set water, only downhill, wide transition. */
     void applyRiverPreset() {
-        applyPreset(true, true, false, WaterMode.SET_WATER, TerrainMode.CARVE, 1f, 5f, 0f, null);
+        applyPreset(true, true, false, WaterMode.SET_WATER, TerrainMode.CARVE, 5f, null, null);
     }
 
     /**
@@ -4545,6 +4551,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * "Carve river bed"; the plain settings show everything but those checkboxes.
      */
     void openPathSettings(String title, SettingsKind kind) {
+        if (settingsKind != kind) {
+            settingsKind = kind;
+            schedulePreview();
+        }
         for (var row : roadOnlyRows)
             row.setVisible(kind != SettingsKind.RIVER);
         terrainRow.setVisible(kind == SettingsKind.PATH);
@@ -4612,7 +4622,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             PathToolBackend.forcePathOnlyDownhill(path);
         if (fixHeightTo)
             PathToolBackend.forcePathToHeight(path, getFixHeight());
-        if (slopeLimit != 0)
+        if (slopeLimit != 0 && settingsKind != SettingsKind.RIVER)
             PathToolBackend.enforceSlopeLimit(path, slopeLimit);
     }
 

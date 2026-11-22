@@ -2088,7 +2088,13 @@ class PathToolSelectionTest
 
                     tool.addNode(20, 20);
                     tool.addNode(60, 20);
+                    settingSpinner(tool, "Curve strength").setValue(1.7);
+                    settingSpinner(tool, "Limit slope to x/16 blocks").setValue(6d);
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
+                    // presets leave the curve strength and the river's hidden slope limit alone
+                    assertEquals(1.7, ((Number) settingSpinner(tool, "Curve strength").getValue()).doubleValue(), 1e-6);
+                    assertEquals(6d,
+                            ((Number) settingSpinner(tool, "Limit slope to x/16 blocks").getValue()).doubleValue());
                     var dialog = tool.pathSettingsDialog();
                     assertTrue(dialog.isVisible());
                     assertEquals("Apply as river", dialog.getTitle());
@@ -2113,6 +2119,7 @@ class PathToolSelectionTest
                         assertTrue(settingShown(tool, option), option + " for a road");
                     assertFalse(settingShown(tool, "set terrain:"), "a road only flattens or not");
                     assertTrue(checkbox(tool, "Flatten road").isSelected(), "road preset flattens");
+                    assertEquals(1.7, ((Number) settingSpinner(tool, "Curve strength").getValue()).doubleValue(), 1e-6);
                     assertFalse(settingShown(tool, "Carve river bed"), "no river option for a road");
 
                     // Apply from the dialog builds the path as before
@@ -2148,6 +2155,16 @@ class PathToolSelectionTest
                         return row.isVisible();
         }
         throw new AssertionError("no setting " + text);
+    }
+
+    /** The spinner in the settings row labelled {@code text}. */
+    private static javax.swing.JSpinner settingSpinner(PathTool tool, String text) {
+        for (var row : tool.pathSettingsPanel().getComponents())
+            if (row instanceof javax.swing.JPanel panel && panel.getComponentCount() == 2
+                    && panel.getComponent(0) instanceof javax.swing.JLabel label && text.equals(label.getText())
+                    && panel.getComponent(1) instanceof javax.swing.JSpinner spinner)
+                return spinner;
+        throw new AssertionError("no spinner " + text);
     }
 
     /** An entry of the viewport's Path menu. */
