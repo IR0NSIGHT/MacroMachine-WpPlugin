@@ -218,6 +218,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private CellPreviewPanel slopePreview;
     /** Settings rows a river does not use (curve strength, slope limit). */
     private final List<JComponent> roadOnlyRows = new ArrayList<>();
+    /**
+     * River / road preset buttons (plain settings only: Apply as … sets its own).
+     */
+    private JPanel presetRow;
     /** The "set terrain" row (plain settings; road and river get a checkbox). */
     private JPanel terrainRow;
     /** Road only: flatten the ground along the road (else leave it untouched). */
@@ -4187,7 +4191,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         showLayer.getModel().addItemListener(event -> refreshPreview());
         showOverlays.getModel().addItemListener(event -> refreshPreview());
         {
-            JPanel presetPanel = new JPanel();
+            JPanel presetPanel = presetRow = new JPanel();
             JButton riverPresetButton = new JButton("River preset");
             riverPresetButton.addActionListener(l -> applyRiverPreset());
             presetPanel.add(riverPresetButton);
@@ -4558,6 +4562,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         for (var row : roadOnlyRows)
             row.setVisible(kind != SettingsKind.RIVER);
         terrainRow.setVisible(kind == SettingsKind.PATH);
+        presetRow.setVisible(kind == SettingsKind.PATH);
         flattenRoadCheckbox.setVisible(kind == SettingsKind.ROAD);
         carveRiverCheckbox.setVisible(kind == SettingsKind.RIVER);
         if (pathSettingsDialog == null) {

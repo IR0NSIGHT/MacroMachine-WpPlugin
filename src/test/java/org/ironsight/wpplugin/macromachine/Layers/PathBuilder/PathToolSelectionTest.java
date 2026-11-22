@@ -2105,6 +2105,7 @@ class PathToolSelectionTest
                             "Carve river bed", "Transition multiplier", "Transition profile"))
                         assertTrue(settingShown(tool, option), option + " for a river");
                     assertTrue(checkbox(tool, "Carve river bed").isSelected(), "river preset carves");
+                    assertFalse(presetButton(tool, "River preset").getParent().isVisible(), "no presets for a river");
                     assertFalse(settingShown(tool, "set terrain:"), "a river only carves or not");
                     assertFalse(settingShown(tool, "Curve strength"), "no curve strength for a river");
                     assertFalse(settingShown(tool, "Flatten road"), "no road option for a river");
@@ -2121,6 +2122,10 @@ class PathToolSelectionTest
                     assertTrue(checkbox(tool, "Flatten road").isSelected(), "road preset flattens");
                     assertEquals(1.7, ((Number) settingSpinner(tool, "Curve strength").getValue()).doubleValue(), 1e-6);
                     assertFalse(settingShown(tool, "Carve river bed"), "no river option for a road");
+                    assertFalse(presetButton(tool, "Road preset").getParent().isVisible(), "no presets for a road");
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.Settings").doClick();
+                    assertTrue(presetButton(tool, "Road preset").getParent().isVisible(), "presets in Path settings");
+                    assertTrue(settingShown(tool, "set terrain:"));
 
                     // Apply from the dialog builds the path as before
                     dimension.setHeightAt(40, 20, 90f);
@@ -2165,6 +2170,15 @@ class PathToolSelectionTest
                     && panel.getComponent(1) instanceof javax.swing.JSpinner spinner)
                 return spinner;
         throw new AssertionError("no spinner " + text);
+    }
+
+    private static JButton presetButton(PathTool tool, String text) {
+        for (var row : tool.pathSettingsPanel().getComponents())
+            if (row instanceof javax.swing.JPanel panel)
+                for (var child : panel.getComponents())
+                    if (child instanceof JButton button && text.equals(button.getText()))
+                        return button;
+        throw new AssertionError("no button " + text);
     }
 
     /** An entry of the viewport's Path menu. */
