@@ -106,7 +106,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Click selected node",
                     "Cycle radius, curve strength, height-above-ground and transform handles"),
             new HelpItem("Transform editor",
-                    "Box around the selection: drag the corner arrow to scale, the side / bottom arrows to stretch along the box, the top handle to rotate, the left handle to move (nodes themselves do not drag here); drag the pivot (crosshair) to rotate / scale around another point; typed numbers are degrees or the scale factor. A single node only gets the move handle"),
+                    "Box around the selection: drag the corner arrow to scale, the side / bottom arrows to stretch along the box, the top handle to rotate, the left handle to move (nodes themselves do not drag here); drag the pivot (crosshair) to rotate / scale around another point, double-click it to put it back in the centre; typed numbers are degrees or the scale factor. A single node only gets the move handle"),
             new HelpItem("Drag radius / tangent / height handle",
                     "Scale radius of selected nodes / change curve strength / raise or lower selected nodes"),
             new HelpItem("Shift while dragging", "Precise drag: nodes and handles move at 1/10 speed"),
@@ -1531,7 +1531,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     for (int k = 0; k < candidates.size(); k++) {
                         double distance = points.get(k).distance(point);
                         distance *= distance;
-                        if (distance <= best) {
+                        // a handle exactly over a node wins the tie: nodes do not drag here
+                        if (distance <= best + 2e-9) {
                             best = distance;
                             hit = candidates.get(k);
                         }
@@ -1815,8 +1816,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             if (randomizeHandleNode >= 0)
                 return; // the spinner already holds the new radius; Apply commits the operation
             if (transformKind != null) {
-                if (!gestureDragged)
+                if (!gestureDragged) {
+                    if (transformKind == HitKind.TRANSFORM_PIVOT)
+                        pivotClicked();
                     return;
+                }
                 if (transformKind == HitKind.TRANSFORM_PIVOT) {
                     if (draggedPivot != null) {
                         transformPivot = draggedPivot;
@@ -2078,6 +2082,24 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         double angle = transformBoxAngle() + degrees;
         transformAngle = angle - 360 * Math.floor((angle + 180) / 360);
         transformAngleSelection = Set.copyOf(selectedNodes);
+    }
+
+    private long lastPivotClickAt;
+
+    /**
+     * A click on the pivot; the second of a double click puts it back on the box
+     * centre.
+     */
+    private void pivotClicked() {
+        long now = System.currentTimeMillis();
+        Object interval = Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
+        long limit = interval instanceof Integer value ? value : 500;
+        if (now - lastPivotClickAt <= limit) {
+            lastPivotClickAt = 0;
+            transformPivot = null;
+            overlay.showTransientInfoText("Pivot reset to the centre", 1500);
+        } else
+            lastPivotClickAt = now;
     }
 
     /** The pivot was placed by the user for the current selection. */

@@ -1822,6 +1822,16 @@ class PathToolSelectionTest
                     assertEquals(PathTool.HitKind.TRANSFORM_PIVOT, tool.hitTest(pivot).kind());
                     drag(tool, pivot, view.worldToView(60, 80));
                     assertEquals(new java.awt.geom.Point2D.Double(60, 80), tool.transformPivotWorld());
+                    // double click: back to the box centre; drag it out again for the rest
+                    Point placed = view.worldToView(60, 80);
+                    tool.handleSelectionPress(placed);
+                    tool.handleSelectionRelease(placed);
+                    assertEquals(new java.awt.geom.Point2D.Double(60, 80), tool.transformPivotWorld(), "one click");
+                    tool.handleSelectionPress(placed);
+                    tool.handleSelectionRelease(placed);
+                    assertEquals(new java.awt.geom.Point2D.Double(60, 60), tool.transformPivotWorld(), "double click");
+                    drag(tool, view.worldToView(60, 60), placed);
+                    assertEquals(new java.awt.geom.Point2D.Double(60, 80), tool.transformPivotWorld());
 
                     // scale: the corner arrow halfway towards the pivot
                     var corner = viewHandle(tool, view, "scale");
