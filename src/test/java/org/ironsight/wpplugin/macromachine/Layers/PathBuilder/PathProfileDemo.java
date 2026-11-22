@@ -84,6 +84,54 @@ public class PathProfileDemo
                 frame.setLocationRelativeTo(null);
                 frame.setVisible(true);
 
+                if (args.length > 0 && args[0].equals("bench")) {
+                    // repaint cost of the overlay (map overlay + strip) in the height view
+                    MapToolOverlay overlay = null;
+                    for (var component : view.getComponents())
+                        if (component instanceof MapToolOverlay found)
+                            overlay = found;
+                    overlay.setSize(900, 620);
+                    var image = new BufferedImage(900, 620, BufferedImage.TYPE_INT_ARGB);
+                    for (String phase : new String[]{"zoomed out", "strip only", "no strip", "all off", "zoomed in"}) {
+                        for (var part : tool.overlayParts())
+                            part.setSelected(phase.equals("strip only")
+                                    ? part.getName().equals("PathTool.ShowProfile")
+                                    : !(phase.equals("no strip") && part.getName().equals("PathTool.ShowProfile")));
+                        tool.overlaysSwitch().setSelected(!phase.equals("all off"));
+                        if (phase.equals("zoomed in"))
+                            for (int notch = 0; notch < 10; notch++)
+                                overlay.dispatchEvent(new java.awt.event.MouseWheelEvent(overlay,
+                                        java.awt.event.MouseEvent.MOUSE_WHEEL, 0, 0, 330, 560, 0, false,
+                                        java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, -1));
+                        for (int warm = 0; warm < 30; warm++)
+                            overlay.paint(image.createGraphics());
+                        long started = System.nanoTime();
+                        int runs = 200;
+                        for (int run = 0; run < runs; run++) {
+                            var g = image.createGraphics();
+                            overlay.paint(g);
+                            g.dispose();
+                        }
+                        System.out.printf("BENCH %s: %.2f ms per repaint%n", phase,
+                                (System.nanoTime() - started) / 1e6 / runs);
+                        try { // the overlay's own drawing only, without its child components
+                            var own = overlay.getClass().getDeclaredMethod("paintComponent", java.awt.Graphics.class);
+                            own.setAccessible(true);
+                            long ownStarted = System.nanoTime();
+                            for (int run = 0; run < runs; run++) {
+                                var g = image.createGraphics();
+                                own.invoke(overlay, g);
+                                g.dispose();
+                            }
+                            System.out.printf("BENCH %s (own drawing only): %.2f ms%n", phase,
+                                    (System.nanoTime() - ownStarted) / 1e6 / runs);
+                        } catch (ReflectiveOperationException exception) {
+                            throw new RuntimeException(exception);
+                        }
+                    }
+                    frame.dispose();
+                    return;
+                }
                 if (args.length > 0) {
                     MapToolOverlay overlay = null;
                     for (var component : view.getComponents())

@@ -2429,7 +2429,19 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 }
             }
             resetZoomButton.setEnabled(stripZoomed());
-            repaint();
+            repaintStrip();
+        }
+
+        /**
+         * Repaints only the strip's area (zoom, pan, drag band), not the whole overlay
+         * with its toolbar and the map below. In the height view the strip can change
+         * height, so the bottom half (its maximum) is repainted.
+         */
+        void repaintStrip() {
+            if (stripHeightView)
+                repaint(0, Math.max(0, getHeight() / 2 - 16), getWidth(), getHeight());
+            else
+                repaint(unravelledBounds());
         }
 
         /** Node markers as last painted in the strip, by node index. */
@@ -2484,7 +2496,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 zoomCentre = panCentre + (point.y - panStart.y) / perBlock;
             }
             resetZoomButton.setEnabled(stripZoomed());
-            repaint();
+            repaintStrip();
         }
 
         /**
@@ -2510,7 +2522,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 }
             }
             resetZoomButton.setEnabled(stripZoomed());
-            repaint();
+            repaintStrip();
         }
 
         private void installStripMouse() {
@@ -2532,7 +2544,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                         panStripTo(event.getPoint());
                     else if (zoomDragStart != null) {
                         zoomDragNow = event.getPoint();
-                        repaint();
+                        repaintStrip();
                     }
                 }
 
@@ -2553,7 +2565,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                         zoomStripTo(zoomBand(start, event.getPoint(), drag), drag);
                     else
                         selectStripNodeAt(event.getPoint());
-                    repaint();
+                    repaintStrip();
                 }
 
                 @Override
@@ -2593,11 +2605,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
          * Surface of a height profile block by block: flat across each block's column
          * at the top of its block, with vertical steps between blocks.
          */
-        private static Path2D blockSteps(List<Point4f> samples, int from, int to, double[] columnLeft,
-                double[] columnRight, java.util.function.DoubleUnaryOperator yAt) {
+        private static Path2D blockSteps(int[] blocks, int from, int to, double[] columnLeft, double[] columnRight,
+                java.util.function.DoubleUnaryOperator yAt) {
             var steps = new Path2D.Double();
             for (int k = from; k <= to; k++) {
-                double y = yAt.applyAsDouble(blockOf(samples.get(k).z) + 1);
+                double y = yAt.applyAsDouble(blocks[k] + 1);
                 if (k == from)
                     steps.moveTo(columnLeft[k], y);
                 else
@@ -2605,6 +2617,81 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 steps.lineTo(columnRight[k], y);
             }
             return steps;
+        }
+
+        private static void closeRun(Path2D shape, double x, double floor) {
+            shape.lineTo(x, floor);
+            shape.closePath();
+        }
+
+        /** Closes a water run: back along the terrain surface under it. */
+        private static void closeWaterRun(Path2D shape, HeightProfile profile, int end, double[] columnLeft,
+                double[] columnRight, java.util.function.DoubleUnaryOperator yAt) {
+            int k = end;
+            while (k >= 0 && profile.water()[k] != null && profile.terrain()[k] != null) {
+                double groundY = yAt.applyAsDouble(profile.terrain()[k] + 1);
+                shape.lineTo(columnRight[k], groundY);
+                shape.lineTo(columnLeft[k], groundY);
+                k--;
+            }
+            shape.closePath();
+        }
+
+        /**
+         * Block data of the height view along the sampled curve: terrain and water
+         * blocks, the resolved and the requested path block per sample, and the height
+         * range.
+         */
+        record HeightProfile(List<Point4f> curve, long revision, Dimension dimension, Integer[] terrain,
+                Integer[] water, int[] resolved, int[] requested, boolean differs, double low, double high) {
+        }
+
+        private HeightProfile cachedProfile;
+
+        /**
+         * The height profile, recomputed only when the curve, the settings or the
+         * terrain may have changed (every such change refreshes the preview and bumps
+         * its revision).
+         */
+        HeightProfile heightProfile(List<Point4f> curve, int first, int last) {
+            var cached = cachedProfile;
+            if (cached != null && cached.curve() == curve && cached.revision() == previewRevision
+                    && cached.dimension() == overlayDimension)
+                return cached;
+            var resolvedCurve = new ArrayList<Point4f>(curve.size());
+            for (Point4f sample : curve)
+                resolvedCurve.add(new Point4f(sample));
+            if (overlayDimension != null)
+                resolveHeights(resolvedCurve, overlayDimension);
+            var terrain = new Integer[curve.size()];
+            var water = new Integer[curve.size()];
+            int[] resolved = new int[curve.size()], requested = new int[curve.size()];
+            boolean differs = false;
+            double low = Double.MAX_VALUE, high = -Double.MAX_VALUE;
+            for (int k = first; k <= last; k++) {
+                Point4f sample = curve.get(k);
+                resolved[k] = blockOf(resolvedCurve.get(k).z);
+                requested[k] = blockOf(sample.z);
+                differs |= resolved[k] != requested[k];
+                low = Math.min(low, Math.min(resolved[k], requested[k]));
+                high = Math.max(high, Math.max(resolved[k], requested[k]) + 1);
+                Float ground = groundAt(sample);
+                if (ground == null)
+                    continue;
+                terrain[k] = Math.round(ground);
+                low = Math.min(low, terrain[k]);
+                high = Math.max(high, terrain[k] + 1);
+                if (overlayDimension != null) {
+                    int level = overlayDimension.getWaterLevelAt(Math.round(sample.x), Math.round(sample.y));
+                    if (level > terrain[k]) {
+                        water[k] = level;
+                        high = Math.max(high, level + 1);
+                    }
+                }
+            }
+            cachedProfile = new HeightProfile(curve, previewRevision, overlayDimension, terrain, water, resolved,
+                    requested, differs, low, high);
+            return cachedProfile;
         }
 
         /** Block height numbers along the left edge, spaced to stay readable. */
@@ -2664,26 +2751,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
          * the view is panned / zoomed vertically.
          */
         private int heightViewStripHeight(List<Point4f> curve, int first, int last, double length) {
-            var resolved = new ArrayList<Point4f>(curve.size());
-            for (Point4f sample : curve)
-                resolved.add(new Point4f(sample));
-            if (overlayDimension != null)
-                resolveHeights(resolved, overlayDimension);
-            double low = Double.MAX_VALUE, high = -Double.MAX_VALUE;
-            for (int k = first; k <= last; k++) {
-                Point4f sample = curve.get(k);
-                Float ground = groundAt(sample);
-                var values = new ArrayList<Integer>(List.of(blockOf(sample.z), blockOf(resolved.get(k).z)));
-                if (ground != null) {
-                    values.add(Math.round(ground));
-                    if (overlayDimension != null)
-                        values.add(overlayDimension.getWaterLevelAt(Math.round(sample.x), Math.round(sample.y)));
-                }
-                for (int value : values) {
-                    low = Math.min(low, value);
-                    high = Math.max(high, value + 1);
-                }
-            }
+            HeightProfile profile = heightProfile(curve, first, last);
+            double low = profile.low(), high = profile.high();
             // same span as the painted profile: a band of ground below, a little air above
             double blocks = high + 2 - (low - Math.max(3, (high - low) * 0.3));
             double innerWidth = getWidth() - 16 - 48;
@@ -2701,7 +2770,63 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
          * water read from the dimension, curve strength as the plain linked list of
          * nodes.
          */
+        /** The strip as last rendered, reused while nothing it shows has changed. */
+        private BufferedImage stripImage;
+        private List<Object> stripImageKey;
+        private int stripImageTop;
+
+        /**
+         * Everything the strip's picture depends on. Repaints for other reasons (hover,
+         * info message animations, drags on the map) reuse the rendered strip instead
+         * of rasterising terrain, water and the profile again.
+         */
+        private List<Object> stripKey(List<Point4f> path) {
+            return java.util.Arrays.asList(curveFor(path), path, previewRevision, overlayDimension, zoomFrom, zoomTo,
+                    zoomCentre, getWidth(), getHeight(), editMode, Set.copyOf(shownSelection()), shows(showLabel),
+                    displayedStrength(), operationPreview);
+        }
+
         private void paintUnravelled(Graphics2D g, List<Point4f> path) {
+            if (!(shows(showProfile) && path.size() >= 2)) {
+                reserveStripSpace(0);
+                return;
+            }
+            var key = stripKey(path);
+            int regionTop = Math.max(0, getHeight() / 2 - 16); // the strip never reaches above this
+            if (stripImage == null || !key.equals(stripImageKey) || stripImage.getWidth() != Math.max(1, getWidth())
+                    || stripImageTop != regionTop) {
+                // in the screen's own format, so drawing the cached picture needs no conversion
+                var image = g.getDeviceConfiguration()
+                        .createCompatibleImage(Math.max(1, getWidth()), Math.max(1, getHeight() - regionTop),
+                                Transparency.TRANSLUCENT);
+                Graphics2D target = image.createGraphics();
+                try {
+                    target.setRenderingHints(g.getRenderingHints());
+                    target.setFont(g.getFont());
+                    target.translate(0, -regionTop);
+                    renderStrip(target, path);
+                } finally {
+                    target.dispose();
+                }
+                stripImage = image;
+                stripImageKey = key;
+                stripImageTop = regionTop;
+            }
+            Rectangle strip = unravelledBounds();
+            g.drawImage(stripImage, strip.x, strip.y, strip.x + strip.width, strip.y + strip.height, strip.x,
+                    strip.y - stripImageTop, strip.x + strip.width, strip.y + strip.height - stripImageTop, null);
+            // the zoom drag band is live on top of the cached picture
+            var drag = zoomDragStart != null && zoomDragNow != null ? zoomDrag(zoomDragStart, zoomDragNow) : null;
+            if (drag != null) {
+                Shape oldClip = g.getClip();
+                g.clipRect(strip.x + 2, strip.y + 18, strip.width - 4, strip.height - 20);
+                paintZoomBand(g, zoomBand(zoomDragStart, zoomDragNow, drag), drag);
+                g.setClip(oldClip);
+            }
+        }
+
+        /** Draws the strip (into the cached picture). */
+        private void renderStrip(Graphics2D g, List<Point4f> path) {
             boolean visible = shows(showProfile) && path.size() >= 2;
             if (!visible) {
                 reserveStripSpace(0);
@@ -2762,35 +2887,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             double[] nodeY = new double[n];
             Set<Integer> selection = shownSelection();
             if (editMode == EditMode.HEIGHT) {
-                // resolved heights: what Apply would really generate
-                var resolved = new ArrayList<Point4f>(curve.size());
-                for (Point4f sample : curve)
-                    resolved.add(new Point4f(sample));
-                if (overlayDimension != null)
-                    resolveHeights(resolved, overlayDimension);
-                // everything in whole blocks, like Minecraft: a column's surface is the top of
-                // its block (height rounded like WorldPainter, + 1); water fills its blocks up
-                // to the water level; the path's surface is the top of its rounded block
-                var terrain = new Integer[curve.size()];
-                var water = new Integer[curve.size()];
-                double low = Double.MAX_VALUE, high = -Double.MAX_VALUE;
-                for (int k = first; k <= last; k++) {
-                    Point4f sample = curve.get(k);
-                    Float ground = groundAt(sample);
-                    if (ground != null) {
-                        terrain[k] = Math.round(ground);
-                        if (overlayDimension != null) {
-                            int level = overlayDimension.getWaterLevelAt(Math.round(sample.x), Math.round(sample.y));
-                            water[k] = level > terrain[k] ? level : null;
-                        }
-                    }
-                    for (Integer value : new Integer[]{terrain[k], water[k], blockOf(sample.z),
-                            blockOf(resolved.get(k).z)})
-                        if (value != null) {
-                            low = Math.min(low, value);
-                            high = Math.max(high, value + 1);
-                        }
-                }
+                // block data along the path, cached: sampled once per path / settings / terrain
+                // state, not on every repaint
+                HeightProfile profile = heightProfile(curve, first, last);
+                double low = profile.low(), high = profile.high();
                 // square blocks: the height scale is the distance scale; centred on the
                 // profile (keeping a band of ground below it) unless zoomed elsewhere
                 double perBlock = (right - left) / Math.max(1e-9, (x1 - x0) * length);
@@ -2800,75 +2900,104 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 stripLowest = lowest;
                 stripRange = range;
                 java.util.function.DoubleUnaryOperator yAt = v -> bottom - (v - lowest) / range * (bottom - top);
+                // only the columns that are visible (zoomed in: a small part of the path)
+                int from = first, to = last;
+                while (from < last && xAt.applyAsDouble(along[from + 1]) < strip.x)
+                    from++;
+                while (to > from && xAt.applyAsDouble(along[to - 1]) > strip.x + strip.width)
+                    to--;
                 // column of every block along the path: halfway to its neighbours
                 double[] columnLeft = new double[curve.size()], columnRight = new double[curve.size()];
-                for (int k = first; k <= last; k++) {
+                for (int k = from; k <= to; k++) {
                     columnLeft[k] = xAt.applyAsDouble(k > first ? (along[k - 1] + along[k]) / 2 : along[k]);
                     columnRight[k] = xAt.applyAsDouble(k < last ? (along[k] + along[k + 1]) / 2 : along[k]);
                 }
+                // terrain and water as one stepped outline each (not a shape per block)
+                double floor = strip.y + strip.height;
                 var terrainShape = new Path2D.Double();
                 var waterShape = new Path2D.Double();
-                for (int k = first; k <= last; k++) {
-                    if (terrain[k] == null)
+                boolean inTerrain = false, inWater = false;
+                for (int k = from; k <= to; k++) {
+                    Integer ground = profile.terrain()[k];
+                    if (ground == null) {
+                        if (inTerrain)
+                            closeRun(terrainShape, columnRight[k - 1], floor);
+                        if (inWater)
+                            closeWaterRun(waterShape, profile, k - 1, columnLeft, columnRight, yAt);
+                        inTerrain = inWater = false;
                         continue;
-                    double width = columnRight[k] - columnLeft[k], ground = yAt.applyAsDouble(terrain[k] + 1);
-                    // ground fills down to the strip's edge (clipped), so it never ends in a gap
-                    double floor = strip.y + strip.height;
-                    terrainShape.append(new java.awt.geom.Rectangle2D.Double(columnLeft[k], ground, width,
-                            Math.max(0, floor - ground)), false);
-                    if (water[k] != null) {
-                        double surface = yAt.applyAsDouble(water[k] + 1);
-                        waterShape.append(
-                                new java.awt.geom.Rectangle2D.Double(columnLeft[k], surface, width, ground - surface),
-                                false);
+                    }
+                    double groundY = yAt.applyAsDouble(ground + 1);
+                    if (!inTerrain) {
+                        terrainShape.moveTo(columnLeft[k], floor);
+                        inTerrain = true;
+                    }
+                    terrainShape.lineTo(columnLeft[k], groundY);
+                    terrainShape.lineTo(columnRight[k], groundY);
+                    Integer level = profile.water()[k];
+                    if (level != null) {
+                        double surfaceY = yAt.applyAsDouble(level + 1);
+                        if (!inWater) {
+                            waterShape.moveTo(columnLeft[k], surfaceY);
+                            inWater = true;
+                        }
+                        waterShape.lineTo(columnLeft[k], surfaceY);
+                        waterShape.lineTo(columnRight[k], surfaceY);
+                    } else if (inWater) {
+                        closeWaterRun(waterShape, profile, k - 1, columnLeft, columnRight, yAt);
+                        inWater = false;
                     }
                 }
+                if (inTerrain)
+                    closeRun(terrainShape, columnRight[to], floor);
+                if (inWater)
+                    closeWaterRun(waterShape, profile, to, columnLeft, columnRight, yAt);
                 g.setColor(PROFILE_TERRAIN);
                 g.fill(terrainShape);
                 g.setColor(PROFILE_WATER);
                 g.fill(waterShape);
-                // zoomed in far enough: outline every block and label block heights
-                double pixelsPerBlockX = (right - left) / Math.max(1e-9, (x1 - x0) * length);
-                double pixelsPerBlockY = (bottom - top) / range;
-                if (pixelsPerBlockX >= BLOCK_GRID_MIN_PX && pixelsPerBlockY >= BLOCK_GRID_MIN_PX) {
+                // zoomed in far enough: block grid as lines (one per visible row and column
+                // edge), clipped to terrain and water, instead of an outline per block
+                if (perBlock >= BLOCK_GRID_MIN_PX) {
+                    Shape clipBefore = g.getClip();
+                    var solid = new java.awt.geom.Area(terrainShape);
+                    solid.add(new java.awt.geom.Area(waterShape));
+                    g.clip(solid);
                     g.setStroke(new BasicStroke(1f));
                     g.setColor(new Color(0, 0, 0, 70));
-                    int firstBlock = (int) Math.floor(lowest);
-                    for (int k = first; k <= last; k++) {
-                        if (terrain[k] == null || columnRight[k] < left || columnLeft[k] > right)
-                            continue;
-                        int topBlock = water[k] != null ? water[k] : terrain[k];
-                        for (int block = firstBlock; block <= topBlock; block++)
-                            g.draw(new java.awt.geom.Rectangle2D.Double(columnLeft[k], yAt.applyAsDouble(block + 1),
-                                    columnRight[k] - columnLeft[k], pixelsPerBlockY));
+                    for (int block = (int) Math.floor(lowest); block <= lowest + range + 1; block++) {
+                        int y = (int) Math.round(yAt.applyAsDouble(block));
+                        g.drawLine(strip.x, y, strip.x + strip.width, y);
                     }
+                    for (int k = from; k <= to; k++) {
+                        int x = (int) Math.round(columnLeft[k]);
+                        g.drawLine(x, strip.y, x, (int) floor);
+                    }
+                    g.setClip(clipBefore);
                 }
                 paintHeightScale(g, strip, lowest, range, yAt);
                 // where the resolved heights differ from the nodes' own curve (e.g. snap to
                 // terrain overriding raised nodes), show that curve faint and dotted
-                boolean differs = false;
-                for (int k = first; k <= last; k++)
-                    differs |= blockOf(curve.get(k).z) != blockOf(resolved.get(k).z);
-                if (differs) {
+                if (profile.differs()) {
                     g.setColor(new Color(255, 255, 255, 140));
                     g.setStroke(new BasicStroke(1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10,
                             new float[]{1, 3}, 0));
-                    g.draw(blockSteps(curve, first, last, columnLeft, columnRight, yAt));
+                    g.draw(blockSteps(profile.requested(), from, to, columnLeft, columnRight, yAt));
                 }
                 // resolved height per segment, block by block: red where it rises from the
                 // previous node, green where it falls or stays level; selected segments get a
                 // cyan underlay
                 for (int i = 0; i + 1 < n; i++) {
-                    int from = nodeSample[i], to = nodeSample[i + 1];
-                    if (to <= from)
+                    int start = Math.max(nodeSample[i], from), stop = Math.min(nodeSample[i + 1], to);
+                    if (stop <= start)
                         continue;
-                    var segment = blockSteps(resolved, from, to, columnLeft, columnRight, yAt);
+                    var segment = blockSteps(profile.resolved(), start, stop, columnLeft, columnRight, yAt);
                     if (PathEditHandles.segmentSelected(i, selection)) {
                         g.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                         g.setColor(SELECTED_NODE_FILL);
                         g.draw(segment);
                     }
-                    boolean rises = blockOf(resolved.get(to).z) > blockOf(resolved.get(from).z);
+                    boolean rises = profile.resolved()[nodeSample[i + 1]] > profile.resolved()[nodeSample[i]];
                     g.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                     g.setColor(rises ? SLOPE_UP_COLOR : SLOPE_DOWN_COLOR);
                     g.draw(segment);
@@ -2920,9 +3049,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     paintNodeLabel(g, point, i + 1, selected);
             }
             stripNodes = points;
-            var drag = zoomDragStart != null && zoomDragNow != null ? zoomDrag(zoomDragStart, zoomDragNow) : null;
-            if (drag != null)
-                paintZoomBand(g, zoomBand(zoomDragStart, zoomDragNow, drag), drag);
             g.setClip(oldClip);
         }
 
