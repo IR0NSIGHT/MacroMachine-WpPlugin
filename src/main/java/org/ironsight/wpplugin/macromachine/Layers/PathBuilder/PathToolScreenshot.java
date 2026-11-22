@@ -46,7 +46,7 @@ public final class PathToolScreenshot
             JFrame frame = new JFrame("Path Tool Options");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             frame.setResizable(false);
-            frame.add(pathTool.getOptionsPanel());
+            frame.add(pathTool.pathSettingsPanel()); // the generation settings (path settings dialog)
             frame.pack();
             frame.setSize(Math.max(420, frame.getWidth()), frame.getHeight());
             frame.setLocation(100, 100);

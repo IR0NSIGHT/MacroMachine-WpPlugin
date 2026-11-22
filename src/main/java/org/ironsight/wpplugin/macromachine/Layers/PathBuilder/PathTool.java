@@ -100,8 +100,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Left click / drag", "Select one, box select, or move selected nodes"),
             new HelpItem("Ctrl + left click / drag",
                     "Toggle node in selection, add box to selection, or move the group"),
-            new HelpItem("Node / Segment menus (top left)",
-                    "Node: randomize position, randomize radius, snap to terrain, only downhill. Segment: subdivide. Preview, then Apply (Enter) or Cancel (Esc); type a number for the main value, Tab for the next"),
+            new HelpItem("Node / Segment / Path menus (top left)",
+                    "Node: randomize position, randomize radius, snap to terrain, only downhill. Segment: subdivide. Path: apply as road / river (settings dialog). Preview, then Apply (Enter) or Cancel (Esc); type a number for the main value, Tab for the next"),
             new HelpItem("Editor button (top left)", "Shows the current editor; click to pick another"),
             new HelpItem("Click selected node", "Cycle radius, curve strength and height-above-ground handles"),
             new HelpItem("Drag radius / tangent / height handle",
@@ -131,6 +131,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private static final AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<Float>());
     private final JPanel optionsPanel = new JPanel();
+    /**
+     * Generation settings (presets, modes, slope, transition, Apply): hosted by the
+     * path settings dialog.
+     */
+    private final JPanel pathSettingsPanel = new JPanel();
+    private JDialog pathSettingsDialog;
     private static final int NODE_DIAMETER = 18;
     private static final int NODE_OUTLINE_DIAMETER = 20;
     static final Color SELECTED_NODE_FILL = new Color(0, 229, 255);
@@ -1189,6 +1195,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     @Override
     protected void deactivate() {
+        if (pathSettingsDialog != null)
+            pathSettingsDialog.setVisible(false);
         observeUndo(null);
         invalidatePreview();
         clearPreview();
@@ -1935,6 +1943,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         private final JButton overlaysMenuButton = new JButton(DROPDOWN_ARROW);
         private final DropdownButton nodeMenuButton = new DropdownButton("Node");
         private final DropdownButton segmentMenuButton = new DropdownButton("Segment");
+        private final DropdownButton pathMenuButton = new DropdownButton("Path");
         private JPanel shownOperationPanel;
         private final JToggleButton addButton = new JToggleButton("Add", addIcon());
 
@@ -1976,6 +1985,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     segmentMenu().show(segmentMenuButton, 0, segmentMenuButton.getHeight());
             });
             add(segmentMenuButton);
+            pathMenuButton.setName("PathTool.PathMenu");
+            pathMenuButton.setToolTipText("Build the path: apply as road or river, path settings");
+            pathMenuButton.addActionListener(event -> {
+                if (pathMenuButton.isShowing())
+                    pathMenu().show(pathMenuButton, 0, pathMenuButton.getHeight());
+            });
+            add(pathMenuButton);
             addButton.setName("PathTool.AddButton");
             addButton.setModel(addMode.getModel());
             addButton.setFocusable(false);
@@ -2072,8 +2088,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             nodeMenuButton.setBounds(8, 8, nodeMenuButton.getPreferredSize().width, size.height);
             segmentMenuButton.setBounds(nodeMenuButton.getX() + nodeMenuButton.getWidth() + 4, 8,
                     segmentMenuButton.getPreferredSize().width, size.height);
-            modeButton.setBounds(segmentMenuButton.getX() + segmentMenuButton.getWidth() + 8, 8, size.width,
-                    size.height);
+            pathMenuButton.setBounds(segmentMenuButton.getX() + segmentMenuButton.getWidth() + 4, 8,
+                    pathMenuButton.getPreferredSize().width, size.height);
+            modeButton.setBounds(pathMenuButton.getX() + pathMenuButton.getWidth() + 8, 8, size.width, size.height);
             layoutOperationPanel();
             layoutResetZoomButton();
             int x = modeButton.getX() + size.width + 8;
@@ -2084,7 +2101,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             addButton.setBounds(addX, 8, addButton.getPreferredSize().width, size.height);
             // lay out the dropdowns' text and arrow for their new size now (null layout:
             // nothing else re-validates them, leaving truncated text)
-            for (DropdownButton dropdown : List.of(nodeMenuButton, segmentMenuButton, modeButton))
+            for (DropdownButton dropdown : List.of(nodeMenuButton, segmentMenuButton, pathMenuButton, modeButton))
                 dropdown.validate();
             repaint();
         }
@@ -2147,8 +2164,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 return true;
             if (shownOperationPanel != null && shownOperationPanel.getBounds().contains(x, y))
                 return true;
-            for (Component control : List.of(nodeMenuButton, segmentMenuButton, modeButton, overlaysButton,
-                    overlaysMenuButton, addButton))
+            for (Component control : List.of(nodeMenuButton, segmentMenuButton, pathMenuButton, modeButton,
+                    overlaysButton, overlaysMenuButton, addButton))
                 if (control.isVisible() && control.getBounds().contains(x, y))
                     return true;
             return false;
@@ -3719,6 +3736,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         editingPanel.add(reversePath);
         editingPanel.add(selectionStatus);
         optionsPanel.add(editingPanel);
+        // generation settings live in the "Path settings" dialog (Path menu in the
+        // viewport)
+        JButton settings = new JButton("Path settings...");
+        settings.setName("PathTool.PathSettings");
+        settings.setToolTipText("Presets, terrain / water / paint, slope, transition and Apply");
+        settings.addActionListener(e -> openPathSettings(null));
+        JPanel settingsRow = new JPanel();
+        settingsRow.add(settings);
+        optionsPanel.add(settingsRow);
+        pathSettingsPanel.setLayout(new BoxLayout(pathSettingsPanel, BoxLayout.Y_AXIS));
+        pathSettingsPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
         // overlay switches live in the viewport (see PathOverlay); the yellow layer
         // follows both its own switch and the master switch
         showLayer.getModel().addItemListener(event -> refreshPreview());
@@ -3726,14 +3754,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         {
             JPanel presetPanel = new JPanel();
             JButton riverPresetButton = new JButton("River preset");
-            riverPresetButton.addActionListener(
-                    l -> applyPreset(true, true, false, WaterMode.SET_WATER, TerrainMode.CARVE, 1f, 5f, 0f, null));
+            riverPresetButton.addActionListener(l -> applyRiverPreset());
             presetPanel.add(riverPresetButton);
             JButton roadPresetButton = new JButton("Road preset");
-            roadPresetButton.addActionListener(l -> applyPreset(false, true, true, WaterMode.DONT_SET_WATER,
-                    TerrainMode.FLATTEN, .3f, 1f, 4f, "Triangle"));
+            roadPresetButton.addActionListener(l -> applyRoadPreset());
             presetPanel.add(roadPresetButton);
-            optionsPanel.add(presetPanel);
+            pathSettingsPanel.add(presetPanel);
         }
         {
             applyButton = new JButton("Apply");
@@ -3761,7 +3787,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 refreshPreview();
                 overlay.showTransientInfoText("Path applied", 1800);
             });
-            optionsPanel.add(applyButton);
+            pathSettingsPanel.add(applyButton);
         }
 
         {
@@ -3772,7 +3798,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 schedulePreview();
             });
             this.onlyDown = onlyDownCheckbox.isSelected();
-            optionsPanel.add(onlyDownCheckbox);
+            pathSettingsPanel.add(onlyDownCheckbox);
         }
         {
             minCheckbox = new JCheckBox("snap to terrain");
@@ -3782,7 +3808,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 schedulePreview();
             });
             this.snapToTerrain = minCheckbox.isSelected();
-            optionsPanel.add(minCheckbox);
+            pathSettingsPanel.add(minCheckbox);
         }
         {
             usePaintCheckbox = new JCheckBox("usePaintCheckbox");
@@ -3793,7 +3819,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 schedulePreview();
             });
             this.usePaint = usePaintCheckbox.isSelected();
-            optionsPanel.add(usePaintCheckbox);
+            pathSettingsPanel.add(usePaintCheckbox);
         }
         {
             waterModeDropdown = new JComboBox<>(WaterMode.values());
@@ -3806,7 +3832,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             JPanel panel = new JPanel();
             panel.add(new JLabel("set water:"));
             panel.add(waterModeDropdown);
-            optionsPanel.add(panel);
+            pathSettingsPanel.add(panel);
         }
         {
             terrainModeDropdown = new JComboBox<>(TerrainMode.values());
@@ -3819,7 +3845,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             JPanel panel = new JPanel();
             panel.add(new JLabel("set terrain:"));
             panel.add(terrainModeDropdown);
-            optionsPanel.add(panel);
+            pathSettingsPanel.add(panel);
         }
         {
             fixHeightCheckbox = new JCheckBox("fixHeightCheckbox");
@@ -3829,7 +3855,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 schedulePreview();
             });
             this.fixHeightTo = fixHeightCheckbox.isSelected();
-            // optionsPanel.add(fixHeightCheckbox); // FIXME: disabled because it causes
+            // pathSettingsPanel.add(fixHeightCheckbox); // FIXME: disabled because it
+            // causes
             // wierd artifacts across tile lines
         }
         {
@@ -3844,7 +3871,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             JPanel panel = new JPanel();
             panel.add(new JLabel("Curve strength"));
             panel.add(handleFactorSpinner);
-            optionsPanel.add(panel);
+            pathSettingsPanel.add(panel);
         }
         {
             limitSlopeSpinner = new JSpinner(new SpinnerNumberModel(0d, 0d, 100d, 1d));
@@ -3860,7 +3887,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             JPanel panel = new JPanel();
             panel.add(new JLabel("Limit slope to x/16 blocks"));
             panel.add(limitSlopeSpinner);
-            optionsPanel.add(panel);
+            pathSettingsPanel.add(panel);
 
             slopePreview = new CellPreviewPanel((x, y) -> {
                 if (slopeLimit == 0)
@@ -3872,7 +3899,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 return y == hypotenuseRow;
             });
             slopePreview.setToolTipText("Shows the maximum allowed slope; 0 means unlimited");
-            optionsPanel.add(slopePreview);
+            pathSettingsPanel.add(slopePreview);
         }
         {
             transitionMultiSpinner = new JSpinner(new SpinnerNumberModel(1d, 0d, 100d, .25d));
@@ -3888,7 +3915,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             JPanel panel = new JPanel();
             panel.add(new JLabel("Transition multiplier"));
             panel.add(transitionMultiSpinner);
-            optionsPanel.add(panel);
+            pathSettingsPanel.add(panel);
         }
         {
             brushQuerschnitt = new JPanel() {
@@ -3921,7 +3948,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             brushQuerschnitt.setMinimumSize(new java.awt.Dimension(0, 48));
             brushQuerschnitt.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 48));
             brushQuerschnitt.setToolTipText("Shows the cross section of the brush strength. Red area = 100% strength");
-            optionsPanel.add(brushQuerschnitt);
+            pathSettingsPanel.add(brushQuerschnitt);
         }
         {
             DefaultComboBoxModel<CrossSectionShape> model = new DefaultComboBoxModel<>();
@@ -3976,7 +4003,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             JPanel panel = new JPanel();
             panel.add(new JLabel("Transition profile"));
             panel.add(profilesDropdown);
-            optionsPanel.add(panel);
+            pathSettingsPanel.add(panel);
         }
 
         updateCheckboxTexts();
@@ -4020,6 +4047,69 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     @Override
     public JPanel getOptionsPanel() {
         return optionsPanel;
+    }
+
+    /** The generation settings (exposed for tests). */
+    JPanel pathSettingsPanel() {
+        return pathSettingsPanel;
+    }
+
+    JDialog pathSettingsDialog() {
+        return pathSettingsDialog;
+    }
+
+    /**
+     * Road preset: flatten, paint, gentle curves, slope limit, triangle transition.
+     */
+    void applyRoadPreset() {
+        applyPreset(false, true, true, WaterMode.DONT_SET_WATER, TerrainMode.FLATTEN, .3f, 1f, 4f, "Triangle");
+    }
+
+    /** River preset: carve, set water, only downhill, wide transition. */
+    void applyRiverPreset() {
+        applyPreset(true, true, false, WaterMode.SET_WATER, TerrainMode.CARVE, 1f, 5f, 0f, null);
+    }
+
+    /**
+     * Opens the path settings in a non-modal, freely resizable dialog (no size
+     * restrictions; the map stays usable and its preview follows the settings).
+     * {@code title} names the tool it was opened for ("Apply as road"), or null.
+     */
+    void openPathSettings(String title) {
+        if (pathSettingsDialog == null) {
+            Window owner = overlayView == null ? null : SwingUtilities.getWindowAncestor(overlayView);
+            pathSettingsDialog = new JDialog(owner, Dialog.ModalityType.MODELESS);
+            pathSettingsDialog.setName("PathTool.PathSettingsDialog");
+            pathSettingsDialog.setDefaultCloseOperation(WindowConstants.HIDE_ON_CLOSE);
+            pathSettingsDialog.setResizable(true);
+            pathSettingsDialog.setContentPane(new JScrollPane(pathSettingsPanel));
+            pathSettingsDialog.pack();
+            if (owner != null)
+                pathSettingsDialog.setLocationRelativeTo(owner);
+        }
+        pathSettingsDialog.setTitle(title == null ? "Path settings" : title);
+        if (!pathSettingsDialog.isVisible())
+            pathSettingsDialog.setVisible(true);
+        pathSettingsDialog.toFront();
+    }
+
+    /** "Path" menu: what to build from the path (exposed for tests). */
+    JPopupMenu pathMenu() {
+        var menu = new JPopupMenu();
+        boolean any = getCurrentPath().size() >= 2;
+        menu.add(operationItem("Apply as road...", "PathTool.Path.ApplyRoad", any, "Place at least two nodes first",
+                () -> {
+                    applyRoadPreset();
+                    openPathSettings("Apply as road");
+                }));
+        menu.add(operationItem("Apply as river...", "PathTool.Path.ApplyRiver", any, "Place at least two nodes first",
+                () -> {
+                    applyRiverPreset();
+                    openPathSettings("Apply as river");
+                }));
+        menu.addSeparator();
+        menu.add(operationItem("Path settings...", "PathTool.Path.Settings", true, null, () -> openPathSettings(null)));
+        return menu;
     }
 
     /**

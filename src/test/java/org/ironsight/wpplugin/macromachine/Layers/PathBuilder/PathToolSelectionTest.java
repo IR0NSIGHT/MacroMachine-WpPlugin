@@ -188,7 +188,7 @@ class PathToolSelectionTest
                         tool[0].selectedNodes();
                     }
                     case "deactivate" -> assertDoesNotThrow(() -> tool[0].setActive(false));
-                    case "apply" -> findButton(tool[0].getOptionsPanel(), "PathTool.Apply").doClick();
+                    case "apply" -> findButton(tool[0].pathSettingsPanel(), "PathTool.Apply").doClick();
                     default -> throw new AssertionError(action);
                 }
                 callbacks.remove(0).run();
@@ -300,7 +300,7 @@ class PathToolSelectionTest
                     ((JSpinner) spinner.get(tool)).setValue(1.0d);
                     assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
                     dimension.setHeightAt(60, 20, 90f);
-                    findButton(tool.getOptionsPanel(), "PathTool.Apply").doClick();
+                    findButton(tool.pathSettingsPanel(), "PathTool.Apply").doClick();
                     assertNotEquals(90f, dimension.getHeightAt(60, 20));
                     assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
                     tool.setActive(false);
@@ -1358,7 +1358,7 @@ class PathToolSelectionTest
                     var resolved = new ArrayList<javax.vecmath.Point4f>(
                             PathToolBackend.getPathFromNodes(List.of(new javax.vecmath.Point4f(20, 60, 70, 4),
                                     new javax.vecmath.Point4f(100, 60, 90, 4)), 0f).path);
-                    for (var component : tool.getOptionsPanel().getComponents())
+                    for (var component : tool.pathSettingsPanel().getComponents())
                         if (component instanceof javax.swing.JCheckBox box && "snap to terrain".equals(box.getText()))
                             box.doClick();
                     tool.resolveHeights(resolved, dimension);
@@ -1776,6 +1776,71 @@ class PathToolSelectionTest
     }
 
     @Test
+    void pathMenuAppliesAsRoadOrRiverInAResizableSettingsDialog() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                TestView view = new TestView(dimension);
+                PathTool tool = synchronousTool();
+                tool.setView(view);
+                tool.setBrush(brush());
+                tool.setActive(true);
+                try {
+                    // the side panel keeps only the essentials; settings moved to the dialog
+                    assertNull(findButton(tool.getOptionsPanel(), "PathTool.Apply"));
+                    assertNotNull(findButton(tool.getOptionsPanel(), "PathTool.NewPath"));
+                    assertNotNull(findButton(tool.getOptionsPanel(), "PathTool.PathSettings"));
+                    assertNotNull(findButton(tool.pathSettingsPanel(), "PathTool.Apply"));
+                    // toolbar: Node, Segment, Path
+                    var segment = findComponent(view, JButton.class, "PathTool.SegmentMenu");
+                    var pathButton = findComponent(view, JButton.class, "PathTool.PathMenu");
+                    assertNotNull(pathButton);
+                    assertTrue(pathButton.getX() > segment.getX());
+                    assertFalse(findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad")
+                            .isEnabled(), "needs a path");
+
+                    tool.addNode(20, 20);
+                    tool.addNode(60, 20);
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
+                    var dialog = tool.pathSettingsDialog();
+                    assertTrue(dialog.isVisible());
+                    assertEquals("Apply as river", dialog.getTitle());
+                    assertTrue(dialog.isResizable(), "no size restrictions");
+                    assertEquals(java.awt.Dialog.ModalityType.MODELESS, dialog.getModalityType(), "map stays usable");
+                    assertTrue(checkbox(tool, "Only downhill").isSelected(), "river preset applied");
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
+                    assertEquals("Apply as road", dialog.getTitle());
+                    assertFalse(checkbox(tool, "Only downhill").isSelected(), "road preset applied");
+                    assertTrue(checkbox(tool, "Set paint").isSelected());
+
+                    // Apply from the dialog builds the path as before
+                    dimension.setHeightAt(40, 20, 90f);
+                    findButton(tool.pathSettingsPanel(), "PathTool.Apply").doClick();
+                    assertNotEquals(90f, dimension.getHeightAt(40, 20), "terrain flattened along the road");
+
+                    // the dialog goes away with the tool
+                    tool.setActive(false);
+                    assertFalse(dialog.isVisible());
+                    tool.setActive(true);
+                } finally {
+                    tool.setActive(false);
+                    if (tool.pathSettingsDialog() != null)
+                        tool.pathSettingsDialog().dispose();
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    private static javax.swing.JCheckBox checkbox(PathTool tool, String text) {
+        for (var component : tool.pathSettingsPanel().getComponents())
+            if (component instanceof javax.swing.JCheckBox box && text.equals(box.getText()))
+                return box;
+        throw new AssertionError("no checkbox " + text);
+    }
+
+    @Test
     void chevronPointsAlongDirection() {
         var right = new BufferedImage(40, 40, BufferedImage.TYPE_INT_ARGB);
         var left = new BufferedImage(40, 40, BufferedImage.TYPE_INT_ARGB);
@@ -2105,7 +2170,7 @@ class PathToolSelectionTest
                     var handles = List.copyOf(dimension.getAttribute(HANDLES));
                     dimension.setHeightAt(100, 100, 100f);
                     dimension.setEventsInhibited(true);
-                    findButton(tool.getOptionsPanel(), "PathTool.Apply").doClick();
+                    findButton(tool.pathSettingsPanel(), "PathTool.Apply").doClick();
                     assertTrue(dimension.isEventsInhibited());
                     dimension.setEventsInhibited(false);
                     assertEquals(handles, dimension.getAttribute(HANDLES));
@@ -2766,7 +2831,7 @@ class PathToolSelectionTest
                     assertEquals(List.of(20f, 10f, 81f, 4f, 40f, 30f, 92f, 6f), dimension.getAttribute(HANDLES));
                     assertEquals(Set.of(0, 1), tool.selectedNodes());
                     boolean snapEnabled = false;
-                    for (var component : tool.getOptionsPanel().getComponents())
+                    for (var component : tool.pathSettingsPanel().getComponents())
                         if (component instanceof javax.swing.JCheckBox checkbox
                                 && "snap to terrain".equals(checkbox.getText())) {
                             checkbox.doClick();
