@@ -2098,10 +2098,19 @@ class PathToolSelectionTest
                     assertTrue(dialog.isResizable(), "no size restrictions");
                     assertEquals(java.awt.Dialog.ModalityType.MODELESS, dialog.getModalityType(), "map stays usable");
                     assertTrue(checkbox(tool, "Only downhill").isSelected(), "river preset applied");
+                    for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "set water:",
+                            "set terrain:", "Transition multiplier", "Transition profile"))
+                        assertTrue(settingShown(tool, option), option + " for a river");
+                    assertFalse(settingShown(tool, "Curve strength"), "no curve strength for a river");
+                    assertFalse(settingShown(tool, "Limit slope to x/16 blocks"), "no slope limit for a river");
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
                     assertEquals("Apply as road", dialog.getTitle());
                     assertFalse(checkbox(tool, "Only downhill").isSelected(), "road preset applied");
                     assertTrue(checkbox(tool, "Set paint").isSelected());
+                    for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "set water:",
+                            "set terrain:", "Curve strength", "Limit slope to x/16 blocks", "Transition multiplier",
+                            "Transition profile"))
+                        assertTrue(settingShown(tool, option), option + " for a road");
 
                     // Apply from the dialog builds the path as before
                     dimension.setHeightAt(40, 20, 90f);
@@ -2121,6 +2130,21 @@ class PathToolSelectionTest
                 throw new RuntimeException(exception);
             }
         });
+    }
+
+    /**
+     * Whether the settings dialog shows the checkbox or labelled row {@code text}.
+     */
+    private static boolean settingShown(PathTool tool, String text) {
+        for (var row : tool.pathSettingsPanel().getComponents()) {
+            if (row instanceof javax.swing.AbstractButton button && text.equals(button.getText()))
+                return row.isVisible();
+            if (row instanceof javax.swing.JPanel panel)
+                for (var child : panel.getComponents())
+                    if (child instanceof javax.swing.JLabel label && text.equals(label.getText()))
+                        return row.isVisible();
+        }
+        throw new AssertionError("no setting " + text);
     }
 
     private static javax.swing.JCheckBox checkbox(PathTool tool, String text) {

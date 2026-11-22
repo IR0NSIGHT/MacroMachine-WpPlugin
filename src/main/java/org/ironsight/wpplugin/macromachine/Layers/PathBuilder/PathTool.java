@@ -217,6 +217,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JSpinner handleFactorSpinner;
     private JSpinner transitionMultiSpinner;
     private CellPreviewPanel slopePreview;
+    /** Settings rows a river does not use (curve strength, slope limit). */
+    private final List<JComponent> roadOnlyRows = new ArrayList<>();
     private JPanel brushQuerschnitt;
     private JComboBox<CrossSectionShape> profilesDropdown;
     private CrossSectionShape brushProfile;
@@ -4319,6 +4321,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             panel.add(new JLabel("Curve strength"));
             panel.add(handleFactorSpinner);
             pathSettingsPanel.add(panel);
+            roadOnlyRows.add(panel);
         }
         {
             limitSlopeSpinner = new JSpinner(new SpinnerNumberModel(0d, 0d, 100d, 1d));
@@ -4335,6 +4338,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             panel.add(new JLabel("Limit slope to x/16 blocks"));
             panel.add(limitSlopeSpinner);
             pathSettingsPanel.add(panel);
+            roadOnlyRows.add(panel);
 
             slopePreview = new CellPreviewPanel((x, y) -> {
                 if (slopeLimit == 0)
@@ -4347,6 +4351,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             });
             slopePreview.setToolTipText("Shows the maximum allowed slope; 0 means unlimited");
             pathSettingsPanel.add(slopePreview);
+            roadOnlyRows.add(slopePreview);
         }
         {
             transitionMultiSpinner = new JSpinner(new SpinnerNumberModel(1d, 0d, 100d, .25d));
@@ -4453,6 +4458,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             pathSettingsPanel.add(panel);
         }
 
+        // one left edge for every row: BoxLayout misplaces rows when checkboxes (left)
+        // and panels (centre) are mixed
+        for (var row : pathSettingsPanel.getComponents()) {
+            ((JComponent) row).setAlignmentX(Component.LEFT_ALIGNMENT);
+            if (row instanceof JPanel panel && panel.getLayout() instanceof FlowLayout flow)
+                flow.setAlignment(FlowLayout.LEFT);
+        }
         updateCheckboxTexts();
         controlsReady = true;
     }
@@ -4523,6 +4535,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * {@code title} names the tool it was opened for ("Apply as road"), or null.
      */
     void openPathSettings(String title) {
+        openPathSettings(title, false);
+    }
+
+    /**
+     * {@code river}: show only what a river uses (only downhill, snap to terrain,
+     * paint, water, terrain, transition); a road and the plain settings also get
+     * curve strength and the slope limit.
+     */
+    void openPathSettings(String title, boolean river) {
+        for (var row : roadOnlyRows)
+            row.setVisible(!river);
         if (pathSettingsDialog == null) {
             Window owner = overlayView == null ? null : SwingUtilities.getWindowAncestor(overlayView);
             pathSettingsDialog = new JDialog(owner, Dialog.ModalityType.MODELESS);
@@ -4535,6 +4558,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 pathSettingsDialog.setLocationRelativeTo(owner);
         }
         pathSettingsDialog.setTitle(title == null ? "Path settings" : title);
+        pathSettingsPanel.revalidate();
+        // fit the shown rows, but never shrink a dialog the user made bigger
+        var fit = pathSettingsDialog.getPreferredSize();
+        var size = pathSettingsDialog.getSize();
+        pathSettingsDialog.setSize(Math.max(fit.width, size.width), Math.max(fit.height, size.height));
         if (!pathSettingsDialog.isVisible())
             pathSettingsDialog.setVisible(true);
         pathSettingsDialog.toFront();
@@ -4552,7 +4580,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         menu.add(operationItem("Apply as river...", "PathTool.Path.ApplyRiver", any, "Place at least two nodes first",
                 () -> {
                     applyRiverPreset();
-                    openPathSettings("Apply as river");
+                    openPathSettings("Apply as river", true);
                 }));
         menu.addSeparator();
         menu.add(operationItem("Path settings...", "PathTool.Path.Settings", true, null, () -> openPathSettings(null)));
