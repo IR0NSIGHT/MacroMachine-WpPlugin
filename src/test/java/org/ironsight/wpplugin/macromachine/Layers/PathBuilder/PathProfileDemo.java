@@ -148,6 +148,22 @@ public class PathProfileDemo
                                     java.awt.event.MouseEvent.MOUSE_WHEEL, 0, 0, 330, 560, 0, false,
                                     java.awt.event.MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, -1));
                     }
+                    boolean transform = args.length > 1 && args[1].startsWith("transform");
+                    if (transform) { // Transform editor; "transform:rotate" mid rotate drag
+                        tool.setEditMode(PathTool.EditMode.TRANSFORM);
+                        if (args[1].endsWith("rotate")) {
+                            var nodes = new java.util.ArrayList<java.awt.geom.Point2D.Double>();
+                            for (var node : tool.getCurrentPath()) {
+                                var point = view.worldToView(Math.round(node.x), Math.round(node.y));
+                                nodes.add(new java.awt.geom.Point2D.Double(point.x, point.y));
+                            }
+                            var box = PathTransformBox.box(nodes, tool.selectedNodes());
+                            var handle = PathTransformBox.rotateHandle(box);
+                            var start = new java.awt.Point((int) handle.x, (int) handle.y);
+                            tool.handleSelectionPress(start);
+                            tool.handleSelectionDrag(new java.awt.Point(start.x + 60, start.y + 20));
+                        }
+                    }
                     if (args.length > 1 && args[1].startsWith("band:")) { // a drag in progress
                         overlay.paint(new BufferedImage(900, 620, BufferedImage.TYPE_INT_ARGB).createGraphics());
                         boolean horizontal = args[1].endsWith("h");
@@ -166,7 +182,9 @@ public class PathProfileDemo
                     overlay.paint(g);
                     g.dispose();
                     // the strip only
-                    ImageIO.write(image.getSubimage(0, tool.stripBounds().y - 8, 900, tool.stripBounds().height + 16),
+                    ImageIO.write(transform
+                            ? image
+                            : image.getSubimage(0, tool.stripBounds().y - 8, 900, tool.stripBounds().height + 16),
                             "png", new File(args[0]));
                 }
             } catch (Exception exception) {

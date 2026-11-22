@@ -1776,6 +1776,113 @@ class PathToolSelectionTest
     }
 
     @Test
+    void transformEditorRotatesScalesAndMovesAroundADraggablePivot() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                dimension.setAttribute(HANDLES,
+                        new ArrayList<>(List.of(40f, 60f, 72f, 4f, 60f, 30f, 70f, 4f, 80f, 60f, 70f, 4f)), true);
+                TestView view = new TestView(dimension);
+                PathTool tool = synchronousTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    click(view, 40, 60);
+                    click(view, 80, 60, InputEvent.CTRL_DOWN_MASK);
+                    tool.setEditMode(PathTool.EditMode.TRANSFORM);
+                    assertEquals("Transform: 2 nodes", tool.viewportHeader());
+                    var overlay = (MapToolOverlay) java.util.Arrays.stream(view.getComponents())
+                            .filter(MapToolOverlay.class::isInstance)
+                            .findFirst()
+                            .orElseThrow();
+                    overlay.setSize(200, 200);
+                    paintOverlay(overlay); // box and handles paint
+
+                    // rotate: the handle above the box, dragged to the right of the pivot (60, 60)
+                    var rotate = viewHandle(tool, view, "rotate");
+                    assertEquals(PathTool.HitKind.TRANSFORM_ROTATE, tool.hitTest(rotate).kind());
+                    drag(tool, rotate, view.worldToView(104, 60));
+                    assertNodes(dimension, 60, 40, 72, 60, 30, 70, 60, 80, 70);
+                    assertEquals(-90, tool.transformBoxAngle(), 1e-9, "the box turned with the nodes");
+
+                    // pivot: dragged onto the second selected node
+                    Point pivot = view.worldToView(60, 60);
+                    assertEquals(PathTool.HitKind.TRANSFORM_PIVOT, tool.hitTest(pivot).kind());
+                    drag(tool, pivot, view.worldToView(60, 80));
+                    assertEquals(new java.awt.geom.Point2D.Double(60, 80), tool.transformPivotWorld());
+
+                    // scale: top left corner halfway towards the pivot
+                    var corner = viewHandle(tool, view, "corner0");
+                    assertEquals(PathTool.HitKind.TRANSFORM_SCALE, tool.hitTest(corner).kind());
+                    Point pivotView = view.worldToView(60, 80);
+                    drag(tool, corner, new Point((corner.x + pivotView.x) / 2, (corner.y + pivotView.y) / 2));
+                    assertNodes(dimension, 60, 60, 72, 60, 30, 70, 60, 80, 70);
+                    assertEquals(-90, tool.transformBoxAngle(), 1e-9, "scaling keeps the box angle");
+
+                    // move: the handle below the box; the placed pivot moves along
+                    var move = viewHandle(tool, view, "move");
+                    assertEquals(PathTool.HitKind.TRANSFORM_MOVE, tool.hitTest(move).kind());
+                    drag(tool, move, new Point(move.x + 10, move.y));
+                    assertNodes(dimension, 70, 60, 72, 60, 30, 70, 70, 80, 70);
+                    assertEquals(new java.awt.geom.Point2D.Double(70, 80), tool.transformPivotWorld());
+                    assertEquals(-90, tool.transformBoxAngle(), 1e-9, "moving keeps the box angle");
+
+                    // typing a number rotates by that many degrees around the pivot
+                    type(tool, view, "180");
+                    assertEquals("Rotate: 180|", tool.viewportHeader());
+                    assertTrue(type(tool, view, KeyEvent.VK_ENTER, KeyEvent.CHAR_UNDEFINED));
+                    assertNodes(dimension, 70, 100, 72, 60, 30, 70, 70, 80, 70);
+                    assertEquals(90, tool.transformBoxAngle(), 1e-9);
+
+                    // a new selection gets its own centre as the pivot again
+                    click(view, 60, 30);
+                    assertEquals(new java.awt.geom.Point2D.Double(60, 30), tool.transformPivotWorld());
+                    assertEquals(0, tool.transformBoxAngle(), "a new selection gets an axis-aligned box");
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    /** A transform handle of the current selection, in view coordinates. */
+    private static Point viewHandle(PathTool tool, TestView view, String which) {
+        var nodes = new ArrayList<java.awt.geom.Point2D.Double>();
+        for (var node : tool.getCurrentPath()) {
+            Point point = view.worldToView(Math.round(node.x), Math.round(node.y));
+            nodes.add(new java.awt.geom.Point2D.Double(point.x, point.y));
+        }
+        double angle = tool.transformBoxAngle();
+        var box = PathTransformBox.box(nodes, tool.selectedNodes(), angle);
+        var handle = PathTransformBox.frame(angle).transform(switch (which) {
+            case "rotate" -> PathTransformBox.rotateHandle(box);
+            case "move" -> PathTransformBox.moveHandle(box);
+            default -> PathTransformBox.corner(box, Integer.parseInt(which.substring("corner".length())));
+        }, null);
+        return new Point((int) Math.round(handle.getX()), (int) Math.round(handle.getY()));
+    }
+
+    private static void drag(PathTool tool, Point from, Point to) {
+        tool.handleSelectionPress(from);
+        tool.handleSelectionDrag(new Point((from.x + to.x) / 2, (from.y + to.y) / 2));
+        tool.handleSelectionDrag(to);
+        tool.handleSelectionRelease(to);
+    }
+
+    /** x, y, z per node. */
+    private static void assertNodes(Dimension dimension, float... expected) {
+        var handles = dimension.getAttribute(HANDLES);
+        assertEquals(expected.length / 3 * 4, handles.size(), handles.toString());
+        for (int i = 0; i < expected.length / 3; i++) {
+            assertEquals(expected[3 * i], handles.get(4 * i), "x of node " + i + " in " + handles);
+            assertEquals(expected[3 * i + 1], handles.get(4 * i + 1), "y of node " + i + " in " + handles);
+            assertEquals(expected[3 * i + 2], handles.get(4 * i + 2), "z of node " + i + " in " + handles);
+        }
+    }
+
+    @Test
     void pathMenuAppliesAsRoadOrRiverInAResizableSettingsDialog() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             try {
@@ -2343,6 +2450,8 @@ class PathToolSelectionTest
                     click(view, 10, 10);
                     assertEquals(PathTool.EditMode.HEIGHT, tool.editMode());
                     click(view, 10, 10);
+                    assertEquals(PathTool.EditMode.TRANSFORM, tool.editMode());
+                    click(view, 10, 10);
                     assertEquals(PathTool.EditMode.RADIUS, tool.editMode());
                     click(view, 10, 10);
                     assertEquals(PathTool.EditMode.CURVE, tool.editMode());
@@ -2360,10 +2469,10 @@ class PathToolSelectionTest
                     click(view, 10, 10);
                     assertEquals(PathTool.EditMode.HEIGHT, tool.editMode());
                     click(view, 10, 10);
-                    assertEquals(PathTool.EditMode.RADIUS, tool.editMode());
+                    assertEquals(PathTool.EditMode.TRANSFORM, tool.editMode());
                     click(view, 80, 80);
                     assertEquals(Set.of(1), tool.selectedNodes());
-                    assertEquals(PathTool.EditMode.RADIUS, tool.editMode());
+                    assertEquals(PathTool.EditMode.TRANSFORM, tool.editMode());
                 } finally {
                     tool.setActive(false);
                 }
@@ -2436,8 +2545,8 @@ class PathToolSelectionTest
                     // cycling by clicking a selected node updates the button too
                     click(view, 60, 60);
                     click(view, 60, 60);
-                    assertEquals(PathTool.EditMode.RADIUS, tool.editMode());
-                    assertTrue(label.getText().contains("Radius"), label.getText());
+                    assertEquals(PathTool.EditMode.TRANSFORM, tool.editMode());
+                    assertTrue(label.getText().contains("Transform"), label.getText());
                 } finally {
                     tool.setActive(false);
                 }

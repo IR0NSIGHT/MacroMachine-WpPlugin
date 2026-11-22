@@ -103,7 +103,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Node / Segment / Path menus (top left)",
                     "Node: randomize position, randomize radius, snap to terrain, only downhill. Segment: subdivide. Path: apply as road / river (settings dialog). Preview, then Apply (Enter) or Cancel (Esc); type a number for the main value, Tab for the next"),
             new HelpItem("Editor button (top left)", "Shows the current editor; click to pick another"),
-            new HelpItem("Click selected node", "Cycle radius, curve strength and height-above-ground handles"),
+            new HelpItem("Click selected node",
+                    "Cycle radius, curve strength, height-above-ground and transform handles"),
+            new HelpItem("Transform editor",
+                    "Box around the selection: drag a corner to scale, the top handle to rotate, the bottom handle to move; drag the pivot (crosshair) to rotate / scale around another point; typed numbers are degrees or the scale factor"),
             new HelpItem("Drag radius / tangent / height handle",
                     "Scale radius of selected nodes / change curve strength / raise or lower selected nodes"),
             new HelpItem("Shift while dragging", "Precise drag: nodes and handles move at 1/10 speed"),
@@ -288,8 +291,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * through these (cf. Inkscape).
      */
     enum EditMode {
-        RADIUS("Radius", "Radius handles"), CURVE("Curve strength",
-                "Curve strength handles"), HEIGHT("Height above ground", "Height above ground handles");
+        RADIUS("Radius", "Radius handles"), CURVE("Curve strength", "Curve strength handles"), HEIGHT(
+                "Height above ground", "Height above ground handles"), TRANSFORM("Transform",
+                        "Transform: move, rotate and scale the selection");
 
         final String title;
         final String label;
@@ -305,6 +309,35 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private EditMode editMode = EditMode.RADIUS;
+    /**
+     * Transform editor: pivot for rotating and scaling (world coordinates), set by
+     * dragging it; belongs to the selection it was placed for, otherwise the box
+     * centre is the pivot.
+     */
+    private Point2D.Double transformPivot;
+    private Set<Integer> transformPivotSelection = Set.of();
+    /**
+     * Angle of the transform box (degrees, counter-clockwise on screen): rotating
+     * turns the box with the nodes; it lines up with the axes again only for a new
+     * selection.
+     */
+    private double transformAngle;
+    private Set<Integer> transformAngleSelection = Set.of();
+    /** Rotation of the current rotate drag / typed rotation (degrees). */
+    private double transformDegrees;
+    /** Transform handle being dragged, or {@code null}. */
+    private HitKind transformKind;
+    /** Pivot in the view when the transform drag started. */
+    private Point2D.Double transformPivotView;
+    /**
+     * Transform of the drag so far, in view coordinates (moves the box with the
+     * nodes).
+     */
+    private java.awt.geom.AffineTransform transformView;
+    /** Pivot while it is dragged (world). */
+    private Point2D.Double draggedPivot;
+    /** World offset of a move drag (whole blocks). */
+    private int transformMoveX, transformMoveY;
     private int radiusHandleNode = -1;
     private int strengthHandleNode = -1;
     private int heightHandleNode = -1;
@@ -506,7 +539,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private boolean handleDragActive() {
         return gestureStart != null && (radiusHandleNode >= 0 || heightHandleNode >= 0 || strengthHandleNode >= 0
-                || randomizeHandleNode >= 0);
+                || randomizeHandleNode >= 0 || transformKind == HitKind.TRANSFORM_ROTATE
+                || transformKind == HitKind.TRANSFORM_SCALE);
     }
 
     /**
@@ -582,6 +616,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 dragStrength = edited ? clampStrength(numericInput.apply(handleStrength)) : null;
                 gestureHeader = header("Curve strength", String.format(Locale.ROOT, "%.2f", handleStrength));
             }
+            case TRANSFORM -> {
+                // typing without a drag rotates around the pivot (degrees, counter-clockwise)
+                transformPivotView = toViewExact(transformPivotWorld());
+                transformDegrees = edited ? numericInput.apply(0) : 0;
+                transformView = edited ? PathTransformBox.rotation(transformPivotView, transformDegrees) : null;
+                movedPath = transformView == null ? null : transformedPath(transformView);
+                gestureHeader = header("Rotate", "0\u00b0");
+            }
         }
         overlay.repaint();
     }
@@ -591,9 +633,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var base = gesturePath;
         var path = movedPath;
         Float strength = dragStrength;
+        double degrees = transformDegrees;
         cancelGesture();
-        if (path != null && !path.equals(base))
+        if (path != null && !path.equals(base)) {
+            if (editMode == EditMode.TRANSFORM)
+                turnTransformBox(degrees);
             completeEdit(path);
+        }
         if (strength != null)
             handleFactorSpinner.setValue(Math.round(strength * 100) / 100.0);
         overlay.repaint();
@@ -1095,6 +1141,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         if (editMode == EditMode.CURVE)
             return editMode.title + ": " + String.format(Locale.ROOT, "%.2f", handleStrength);
+        if (editMode == EditMode.TRANSFORM)
+            return selectedNodes.isEmpty()
+                    ? editMode.title + ": (select nodes)"
+                    : editMode.title + ": " + selectedNodes.size() + (selectedNodes.size() == 1 ? " node" : " nodes");
         var path = getCurrentPath();
         var values = new ArrayList<Float>();
         for (int i : selectedNodes) {
@@ -1315,6 +1365,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     strengthHandleSide = hit.side();
                 }
                 case HEIGHT -> heightHandleNode = hit.node();
+                case TRANSFORM_MOVE, TRANSFORM_ROTATE, TRANSFORM_SCALE, TRANSFORM_PIVOT -> {
+                    transformKind = hit.kind();
+                    transformPivotView = toViewExact(transformPivotWorld());
+                }
                 case OPERATION_RADIUS -> {
                     randomizeHandleNode = hit.node();
                     circleHandleIndex = hit.side();
@@ -1343,7 +1397,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     /** Something on the map that reacts to the mouse. */
     enum HitKind {
         NODE(Cursor.MOVE_CURSOR), RADIUS(Cursor.HAND_CURSOR), STRENGTH(Cursor.HAND_CURSOR), HEIGHT(
-                Cursor.N_RESIZE_CURSOR), OPERATION_RADIUS(Cursor.HAND_CURSOR);
+                Cursor.N_RESIZE_CURSOR), OPERATION_RADIUS(Cursor.HAND_CURSOR), TRANSFORM_MOVE(
+                        Cursor.MOVE_CURSOR), TRANSFORM_ROTATE(Cursor.HAND_CURSOR), TRANSFORM_SCALE(
+                                Cursor.HAND_CURSOR), TRANSFORM_PIVOT(Cursor.MOVE_CURSOR);
 
         final int cursor;
 
@@ -1421,6 +1477,36 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         if (node >= 0)
             best = Math.min(best, view.get(node).distanceSq(point) - 1e-9);
         Hit hit = null;
+        if (editMode == EditMode.TRANSFORM) {
+            if (showOverlays.isSelected() && operationPreview == null) {
+                double angle = transformBoxAngle();
+                var box = PathTransformBox.box(view, selectedNodes, angle);
+                var frame = PathTransformBox.frame(angle);
+                if (box != null) {
+                    var candidates = new ArrayList<Hit>();
+                    var points = new ArrayList<Point2D>();
+                    for (int corner = 0; corner < 4; corner++) {
+                        candidates.add(new Hit(HitKind.TRANSFORM_SCALE, -1, corner));
+                        points.add(frame.transform(PathTransformBox.corner(box, corner), null));
+                    }
+                    candidates.add(new Hit(HitKind.TRANSFORM_ROTATE, -1, 0));
+                    points.add(frame.transform(PathTransformBox.rotateHandle(box), null));
+                    candidates.add(new Hit(HitKind.TRANSFORM_MOVE, -1, 0));
+                    points.add(frame.transform(PathTransformBox.moveHandle(box), null));
+                    candidates.add(new Hit(HitKind.TRANSFORM_PIVOT, -1, 0));
+                    points.add(toViewExact(transformPivotWorld()));
+                    for (int k = 0; k < candidates.size(); k++) {
+                        double distance = points.get(k).distance(point);
+                        distance *= distance;
+                        if (distance <= best) {
+                            best = distance;
+                            hit = candidates.get(k);
+                        }
+                    }
+                }
+            }
+            return hit != null ? hit : node >= 0 ? new Hit(HitKind.NODE, node, 0) : null;
+        }
         for (int i : showOverlays.isSelected() && operationPreview == null ? selectedNodes : Set.<Integer>of()) {
             if (i >= path.size())
                 continue;
@@ -1606,7 +1692,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         if (gestureStart.distanceSq(point) >= 9)
             gestureDragged = true;
         boolean editsGeometry = radiusHandleNode >= 0 || strengthHandleNode >= 0 || heightHandleNode >= 0
-                || randomizeHandleNode >= 0 || pressedNode >= 0;
+                || randomizeHandleNode >= 0 || pressedNode >= 0 || transformKind != null;
         if (editsGeometry && precise && !gesturePrecise)
             overlay.showTransientInfoText("Precise drag", 1200);
         gesturePrecise = precise;
@@ -1628,6 +1714,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 gestureHeader = header(headerLabel(circle), formatValue(mouse));
                 overlay.repaint();
             }
+            return;
+        }
+        if (transformKind != null) {
+            if (gestureDragged)
+                updateTransformDrag();
             return;
         }
         if (radiusHandleNode >= 0) {
@@ -1688,6 +1779,27 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             handleSelectionDrag(point, precise);
             if (randomizeHandleNode >= 0)
                 return; // the spinner already holds the new radius; Apply commits the operation
+            if (transformKind != null) {
+                if (!gestureDragged)
+                    return;
+                if (transformKind == HitKind.TRANSFORM_PIVOT) {
+                    if (draggedPivot != null) {
+                        transformPivot = draggedPivot;
+                        transformPivotSelection = Set.copyOf(selectedNodes);
+                    }
+                    return;
+                }
+                if (movedPath != null && !movedPath.equals(gesturePath)) {
+                    // a placed pivot travels with a moved selection
+                    if (transformKind == HitKind.TRANSFORM_MOVE && customPivot())
+                        transformPivot = new Point2D.Double(transformPivot.x + transformMoveX,
+                                transformPivot.y + transformMoveY);
+                    // the box keeps its orientation (rotating turns it further)
+                    turnTransformBox(transformKind == HitKind.TRANSFORM_ROTATE ? transformDegrees : 0);
+                    completeEdit(movedPath);
+                }
+                return;
+            }
             if (radiusHandleNode >= 0 || heightHandleNode >= 0) {
                 if (gestureDragged && movedPath != null && !movedPath.equals(gesturePath))
                     completeEdit(movedPath);
@@ -1775,6 +1887,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     g.fillOval(0, 10, 5, 5);
                     g.fillOval(11, 1, 5, 5);
                 }
+                case TRANSFORM -> {
+                    g.setStroke(new BasicStroke(1f));
+                    g.drawRect(2, 5, 11, 9);
+                    g.drawLine(7, 5, 7, 1);
+                    g.setColor(SELECTED_NODE_FILL);
+                    g.fillOval(5, 0, 4, 4);
+                    g.fillRect(0, 3, 4, 4);
+                    g.fillRect(11, 3, 4, 4);
+                    g.fillRect(0, 12, 4, 4);
+                    g.fillRect(11, 12, 4, 4);
+                }
                 case HEIGHT -> {
                     g.drawLine(0, 12, 15, 12);
                     g.drawLine(10, 12, 10, 4);
@@ -1814,6 +1937,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         strengthHandleNode = -1;
         heightHandleNode = -1;
         randomizeHandleNode = -1;
+        transformKind = null;
+        transformView = null;
+        transformPivotView = null;
+        draggedPivot = null;
+        transformMoveX = transformMoveY = 0;
         circleHandleIndex = -1;
         strengthHandleSide = 0;
         dragStrength = null;
@@ -1872,6 +2000,136 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     float curveStrength() {
         return handleStrength;
+    }
+
+    /** Angle of the transform box: 0 (axis aligned) for a new selection. */
+    double transformBoxAngle() {
+        return transformAngleSelection.equals(selectedNodes) ? transformAngle : 0;
+    }
+
+    /**
+     * After a transform of the current selection: keeps the box angle, turned by
+     * {@code degrees}.
+     */
+    private void turnTransformBox(double degrees) {
+        double angle = transformBoxAngle() + degrees;
+        transformAngle = angle - 360 * Math.floor((angle + 180) / 360);
+        transformAngleSelection = Set.copyOf(selectedNodes);
+    }
+
+    /** The pivot was placed by the user for the current selection. */
+    private boolean customPivot() {
+        return transformPivot != null && transformPivotSelection.equals(selectedNodes);
+    }
+
+    /**
+     * Pivot for rotating and scaling (world): placed by the user, else the
+     * selection's centre.
+     */
+    Point2D.Double transformPivotWorld() {
+        if (customPivot())
+            return new Point2D.Double(transformPivot.x, transformPivot.y);
+        var path = getCurrentPath();
+        if (overlayView != null) {
+            double angle = transformBoxAngle();
+            var box = PathTransformBox.box(viewNodes(path), selectedNodes, angle);
+            if (box != null)
+                return toWorldExact(PathTransformBox.frame(angle).transform(PathTransformBox.centre(box), null));
+        }
+        double minX = Double.MAX_VALUE, minY = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+        for (int i : selectedNodes) {
+            if (i >= path.size())
+                continue;
+            minX = Math.min(minX, path.get(i).x);
+            minY = Math.min(minY, path.get(i).y);
+            maxX = Math.max(maxX, path.get(i).x);
+            maxY = Math.max(maxY, path.get(i).y);
+        }
+        return minX > maxX ? new Point2D.Double() : new Point2D.Double((minX + maxX) / 2, (minY + maxY) / 2);
+    }
+
+    /**
+     * World to view without rounding to blocks (the map view is a scale and an
+     * offset).
+     */
+    Point2D.Double toViewExact(Point2D world) {
+        Point origin = overlayView.worldToView(0, 0), far = overlayView.worldToView(1024, 1024);
+        return new Point2D.Double(origin.x + (far.x - origin.x) / 1024.0 * world.getX(),
+                origin.y + (far.y - origin.y) / 1024.0 * world.getY());
+    }
+
+    private Point2D.Double toWorldExact(Point2D view) {
+        Point origin = overlayView.worldToView(0, 0), far = overlayView.worldToView(1024, 1024);
+        return new Point2D.Double((view.getX() - origin.x) * 1024.0 / (far.x - origin.x),
+                (view.getY() - origin.y) * 1024.0 / (far.y - origin.y));
+    }
+
+    /**
+     * Applies a view-space transform to the selected nodes: they land on whole
+     * blocks and keep their height above ground; {@code null} if a node would leave
+     * the map. Radii stay as they are.
+     */
+    private ArrayList<Point4f> transformedPath(java.awt.geom.AffineTransform view) {
+        var result = new ArrayList<Point4f>(gesturePath.size());
+        for (int i = 0; i < gesturePath.size(); i++) {
+            var node = new Point4f(gesturePath.get(i));
+            if (selectedNodes.contains(i)) {
+                var moved = toWorldExact(view.transform(toViewExact(new Point2D.Double(node.x, node.y)), null));
+                int x = (int) Math.round(moved.x), y = (int) Math.round(moved.y);
+                Float ground = groundAt(x, y);
+                if (ground == null || ground < overlayDimension.getMinHeight()
+                        || ground >= overlayDimension.getMaxHeight())
+                    return null;
+                Float oldGround = groundAt(gesturePath.get(i));
+                float relative = oldGround == null ? 0 : node.z - oldGround;
+                node.x = x;
+                node.y = y;
+                node.z = clampHeight(ground + relative);
+            }
+            result.add(node);
+        }
+        return result;
+    }
+
+    /** Mouse (or typed value) to transform while a transform handle is dragged. */
+    private void updateTransformDrag() {
+        var offset = new Point2D.Double(gestureCursor.x - gestureStart.x, gestureCursor.y - gestureStart.y);
+        switch (transformKind) {
+            case TRANSFORM_PIVOT -> {
+                draggedPivot = toWorldExact(
+                        new Point2D.Double(transformPivotView.x + offset.x, transformPivotView.y + offset.y));
+                draggedPivot = new Point2D.Double(Math.round(draggedPivot.x), Math.round(draggedPivot.y));
+                gestureHeader = "Pivot: " + Math.round(draggedPivot.x) + ", " + Math.round(draggedPivot.y);
+            }
+            case TRANSFORM_MOVE -> {
+                Point2D.Double world = gestureWorld();
+                transformMoveX = (int) Math.round(world.x - gestureWorldStart.x);
+                transformMoveY = (int) Math.round(world.y - gestureWorldStart.y);
+                var from = toViewExact(new Point2D.Double(0, 0));
+                var to = toViewExact(new Point2D.Double(transformMoveX, transformMoveY));
+                transformView = java.awt.geom.AffineTransform.getTranslateInstance(to.x - from.x, to.y - from.y);
+                movedPath = transformedPath(transformView);
+                gestureHeader = "Move: " + transformMoveX + ", " + transformMoveY;
+            }
+            case TRANSFORM_ROTATE -> {
+                double mouse = PathTransformBox.rotationDegrees(transformPivotView, gestureStart, gestureCursor);
+                double degrees = typing() ? numericInput.apply(mouse) : mouse;
+                transformDegrees = degrees;
+                transformView = PathTransformBox.rotation(transformPivotView, degrees);
+                movedPath = transformedPath(transformView);
+                gestureHeader = header("Rotate", formatValue((float) mouse) + "\u00b0");
+            }
+            case TRANSFORM_SCALE -> {
+                double mouse = PathTransformBox.scaleFactor(transformPivotView, gestureStart, gestureCursor);
+                double factor = typing() ? PathTransformBox.clampScale(numericInput.apply(mouse)) : mouse;
+                transformView = PathTransformBox.scaling(transformPivotView, factor);
+                movedPath = transformedPath(transformView);
+                gestureHeader = header("Scale", String.format(Locale.ROOT, "%.2f", mouse) + "\u00d7");
+            }
+            default -> {
+            }
+        }
+        overlay.repaint();
     }
 
     private ArrayList<Point4f> movedPath() {
@@ -2895,6 +3153,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 case RADIUS -> "Radius along the path";
                 case HEIGHT -> "Height along the path (terrain, water, path)";
                 case CURVE -> String.format(Locale.ROOT, "Path (curve strength %.2f)", displayedStrength());
+                case TRANSFORM -> "Path";
             }, strip.x + 10, strip.y + 15);
             g.setFont(previous);
             Shape oldClip = g.getClip();
@@ -3175,7 +3434,53 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             }
         }
 
+        /**
+         * Transform editor: box around the selection with scale handles on the corners,
+         * rotate handle above, move handle below and the pivot. While dragging, box and
+         * handles follow the transform.
+         */
+        private void paintTransformBox(Graphics2D g, List<Point4f> path) {
+            var base = transformView != null && gesturePath != null ? gesturePath : path;
+            double angle = transformBoxAngle();
+            var box = PathTransformBox.box(viewNodes(base), selectedNodes, angle);
+            if (box == null)
+                return;
+            var transform = transformView != null
+                    ? new java.awt.geom.AffineTransform(transformView)
+                    : new java.awt.geom.AffineTransform();
+            transform.concatenate(PathTransformBox.frame(angle));
+            java.util.function.UnaryOperator<Point2D> at = p -> transform.transform(p, null);
+            Shape outline = transform.createTransformedShape(box);
+            g.setStroke(new BasicStroke(3f));
+            g.setColor(SELECTED_NODE_HALO);
+            g.draw(outline);
+            g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[]{6, 4}, 0));
+            g.setColor(SELECTED_NODE_FILL);
+            g.draw(outline);
+            strokeWithHalo(g, new Line2D.Double(at.apply(PathTransformBox.topCentre(box)),
+                    at.apply(PathTransformBox.rotateHandle(box))), 1.5f);
+            strokeWithHalo(g, new Line2D.Double(at.apply(PathTransformBox.bottomCentre(box)),
+                    at.apply(PathTransformBox.moveHandle(box))), 1.5f);
+            for (int corner = 0; corner < 4; corner++)
+                paintSquareHandle(g, at.apply(PathTransformBox.corner(box, corner)),
+                        isHovered(HitKind.TRANSFORM_SCALE, -1, corner));
+            var rotate = at.apply(PathTransformBox.rotateHandle(box));
+            paintRoundHandle(g, rotate, isHovered(HitKind.TRANSFORM_ROTATE, -1, 0));
+            paintRotateGlyph(g, rotate);
+            var move = at.apply(PathTransformBox.moveHandle(box));
+            paintSquareHandle(g, move, isHovered(HitKind.TRANSFORM_MOVE, -1, 0));
+            paintMoveGlyph(g, move);
+            Point2D pivot = draggedPivot != null
+                    ? toViewExact(draggedPivot)
+                    : transformPivotView != null ? transformPivotView : toViewExact(transformPivotWorld());
+            paintPivot(g, pivot, isHovered(HitKind.TRANSFORM_PIVOT, -1, 0));
+        }
+
         private void paintEditHandles(Graphics2D g, List<Point4f> path) {
+            if (editMode == EditMode.TRANSFORM) {
+                paintTransformBox(g, path);
+                return;
+            }
             var view = viewNodes(path);
             float strength = displayedStrength();
             for (int i : selectedNodes) {
@@ -3403,6 +3708,43 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         g.setStroke(new BasicStroke(2f));
         g.setColor(SELECTED_NODE_HALO);
         g.drawRect(x, y, size, size);
+    }
+
+    /** Curved arrow on the rotate handle. */
+    static void paintRotateGlyph(Graphics2D g, Point2D center) {
+        double r = 3.5;
+        g.setStroke(new BasicStroke(1.5f));
+        g.setColor(SELECTED_NODE_HALO);
+        g.draw(new java.awt.geom.Arc2D.Double(center.getX() - r, center.getY() - r, 2 * r, 2 * r, 30, 270,
+                java.awt.geom.Arc2D.OPEN));
+    }
+
+    /** Four-way arrow on the move handle. */
+    static void paintMoveGlyph(Graphics2D g, Point2D center) {
+        double x = center.getX(), y = center.getY(), r = 4;
+        g.setStroke(new BasicStroke(1.5f));
+        g.setColor(SELECTED_NODE_HALO);
+        g.draw(new Line2D.Double(x - r, y, x + r, y));
+        g.draw(new Line2D.Double(x, y - r, x, y + r));
+    }
+
+    /** Pivot: ring with a crosshair, in the handle styling. */
+    static void paintPivot(Graphics2D g, Point2D center, boolean hovered) {
+        double r = hovered ? 8 : 6, arm = r + 5, x = center.getX(), y = center.getY();
+        var ring = new Ellipse2D.Double(x - r, y - r, 2 * r, 2 * r);
+        var cross = new Path2D.Double();
+        cross.moveTo(x - arm, y);
+        cross.lineTo(x + arm, y);
+        cross.moveTo(x, y - arm);
+        cross.lineTo(x, y + arm);
+        g.setStroke(new BasicStroke(4f));
+        g.setColor(SELECTED_NODE_HALO);
+        g.draw(ring);
+        g.draw(cross);
+        g.setStroke(new BasicStroke(2f));
+        g.setColor(hovered ? Color.WHITE : SELECTED_NODE_FILL);
+        g.draw(ring);
+        g.draw(cross);
     }
 
     static void paintRoundHandle(Graphics2D g, Point2D center, boolean hovered) {
