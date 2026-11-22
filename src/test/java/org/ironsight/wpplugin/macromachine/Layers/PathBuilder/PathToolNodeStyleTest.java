@@ -26,25 +26,26 @@ class PathToolNodeStyleTest
     }
 
     @Test
-    void selectedNodeHasCyanFillDarkHaloAndWhiteEdge() {
+    void selectedNodeIsLavenderAndUnselectedCharcoalWithALightRing() {
         var center = new Point(30, 30);
         var selected = render(g -> PathTool.paintNode(g, center, true));
         var unselected = render(g -> PathTool.paintNode(g, center, false));
 
         assertEquals(PathTool.SELECTED_NODE_FILL, at(selected, 30, 30));
-        assertEquals(Color.WHITE, at(unselected, 30, 30));
-        // outline ring (radius 10): dark halo vs subdued gray
-        assertEquals(PathTool.SELECTED_NODE_HALO, at(selected, 40, 30));
+        assertEquals(PathTool.UNSELECTED_NODE_FILL, at(unselected, 30, 30));
+        // ring (radius 10): lavender for selected, light for unselected nodes
+        assertEquals(PathTool.SELECTED_NODE_FILL, at(selected, 40, 30));
         assertEquals(PathTool.UNSELECTED_NODE_OUTLINE, at(unselected, 40, 30));
-        // thin white outer edge (radius 12) only for selected nodes
-        assertEquals(Color.WHITE, at(selected, 42, 30));
-        assertEquals(0, at(unselected, 42, 30).getAlpha());
-        // marker never extends beyond the white edge
+        // charcoal halo just outside the ring keeps both readable on any terrain
+        assertEquals(PathTool.SELECTED_NODE_HALO, at(selected, 41, 30));
+        assertEquals(PathTool.SELECTED_NODE_HALO, at(unselected, 41, 30));
+        // marker never extends beyond the halo
         assertEquals(0, at(selected, 44, 30).getAlpha());
+        assertEquals(0, at(unselected, 44, 30).getAlpha());
     }
 
     @Test
-    void selectedLabelUsesCyanEmphasis() {
+    void selectedLabelUsesAccentEmphasis() {
         var center = new Point(10, 30);
         var selected = render(g -> PathTool.paintNodeLabel(g, center, 8, true));
         var unselected = render(g -> PathTool.paintNodeLabel(g, center, 8, false));

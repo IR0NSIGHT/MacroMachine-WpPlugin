@@ -9,9 +9,12 @@ import org.pepsoft.worldpainter.WorldPainterView;
 
 public class MapToolOverlay extends JComponent
 {
-    private static final Color OVERLAY_ICON_COLOR = Color.LIGHT_GRAY;
+    private static final Color OVERLAY_ICON_COLOR = OverlayStyle.TEXT_MUTED;
 
-    private static final class MouseTransparentLabel extends JLabel
+    /**
+     * Mouse transparent, drawn as a rounded dark surface like the viewport header.
+     */
+    private static final class MouseTransparentLabel extends OverlayStyle.SurfaceLabel
     {
         @Override
         public boolean contains(int x, int y) {
@@ -35,17 +38,17 @@ public class MapToolOverlay extends JComponent
     private static final float INFO_LABEL_VERTICAL_POSITION = 0.9f;
     private static final int INFO_LABEL_HORIZONTAL_MARGIN = 16;
     private static final int INFO_LABEL_PADDING = 8;
-    private static final Color LABEL_BACKGROUND = new Color(0, 0, 0, 26);
-    private static final Color INFO_LABEL_BACKGROUND = new Color(96, 96, 96, 180);
+    private static final Color LABEL_BACKGROUND = OverlayStyle.SURFACE;
+    private static final Color INFO_LABEL_BACKGROUND = OverlayStyle.SURFACE;
+    private static final Color INFO_TEXT = OverlayStyle.TEXT;
     private static final Color LIGHT_CELL = new Color(255, 255, 255, 80);
     private static final Color DARK_CELL = new Color(255, 0, 0, 80);
-    private static final Color BORDER = new Color(255, 255, 255, 180);
 
     private WorldPainterView mapView;
     private final JLabel overlayLabel = new MouseTransparentLabel();
     private final JLabel infoLabel = new MouseTransparentLabel();
-    private final Font overlayLabelBaseFont = overlayLabel.getFont().deriveFont(Font.BOLD, LABEL_BASE_FONT_SIZE);
-    private final Font infoLabelBaseFont = infoLabel.getFont().deriveFont(Font.BOLD, LABEL_BASE_FONT_SIZE);
+    private final Font overlayLabelBaseFont = OverlayStyle.font(Font.BOLD, LABEL_BASE_FONT_SIZE);
+    private final Font infoLabelBaseFont = OverlayStyle.font(Font.BOLD, LABEL_BASE_FONT_SIZE);
     private Point dragStartWorld;
     private Point dragEndWorld;
     private final Map<Long, Rectangle> outlines = new HashMap<>();
@@ -77,10 +80,10 @@ public class MapToolOverlay extends JComponent
 
         infoLabel.setOpaque(true);
         infoLabel.setBackground(INFO_LABEL_BACKGROUND);
-        infoLabel.setBorder(BorderFactory.createEmptyBorder(INFO_LABEL_PADDING, INFO_LABEL_PADDING, INFO_LABEL_PADDING,
-                INFO_LABEL_PADDING));
+        infoLabel.setBorder(BorderFactory.createEmptyBorder(INFO_LABEL_PADDING, 2 * INFO_LABEL_PADDING - 2,
+                INFO_LABEL_PADDING, 2 * INFO_LABEL_PADDING - 2));
         infoLabel.setFocusable(false);
-        infoLabel.setForeground(Color.WHITE);
+        infoLabel.setForeground(INFO_TEXT);
         infoLabel.setFont(infoLabelBaseFont);
         infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
         infoLabel.setVisible(false);
@@ -149,7 +152,7 @@ public class MapToolOverlay extends JComponent
     public void showTransientInfoText(String text, int durationMs) {
         stopTransientInfoTimer();
         infoLabel.setText(text);
-        infoLabel.setForeground(Color.WHITE);
+        infoLabel.setForeground(INFO_TEXT);
         infoLabel.setBackground(INFO_LABEL_BACKGROUND);
         infoLabel.setVisible(text != null && !text.isBlank());
         layoutInfoText();
@@ -172,10 +175,10 @@ public class MapToolOverlay extends JComponent
             }
             if (now >= fadeStartNanos) {
                 float alpha = (float) (endNanos - now) / (MESSAGE_FADE_DURATION_MS * 1_000_000L);
-                int textAlpha = Math.max(0, Math.min(255, Math.round(Color.WHITE.getAlpha() * alpha)));
+                int textAlpha = Math.max(0, Math.min(255, Math.round(INFO_TEXT.getAlpha() * alpha)));
                 int backgroundAlpha = Math.max(0, Math.min(255, Math.round(INFO_LABEL_BACKGROUND.getAlpha() * alpha)));
                 infoLabel.setForeground(
-                        new Color(Color.WHITE.getRed(), Color.WHITE.getGreen(), Color.WHITE.getBlue(), textAlpha));
+                        new Color(INFO_TEXT.getRed(), INFO_TEXT.getGreen(), INFO_TEXT.getBlue(), textAlpha));
                 infoLabel.setBackground(new Color(INFO_LABEL_BACKGROUND.getRed(), INFO_LABEL_BACKGROUND.getGreen(),
                         INFO_LABEL_BACKGROUND.getBlue(), backgroundAlpha));
                 repaint();
@@ -188,7 +191,7 @@ public class MapToolOverlay extends JComponent
         stopLabelPositionTimer();
         stopTransientInfoTimer();
         overlayLabel.setText(text);
-        overlayLabel.setForeground(Color.WHITE);
+        overlayLabel.setForeground(OverlayStyle.TEXT);
         overlayLabel.setBackground(LABEL_BACKGROUND);
         overlayLabel.setVisible(text != null && !text.isBlank());
         labelPositionProgress = 0f;
@@ -229,7 +232,7 @@ public class MapToolOverlay extends JComponent
     public void clearInfoText() {
         stopTransientInfoTimer();
         infoLabel.setText(null);
-        infoLabel.setForeground(Color.WHITE);
+        infoLabel.setForeground(INFO_TEXT);
         infoLabel.setBackground(INFO_LABEL_BACKGROUND);
         infoLabel.setVisible(false);
         repaint();
@@ -281,7 +284,7 @@ public class MapToolOverlay extends JComponent
         if (!overlayLabel.isVisible() || getWidth() <= 0)
             return;
         float easedProgress = labelPositionProgress * labelPositionProgress * (3f - 2f * labelPositionProgress);
-        Color overlayColor = interpolateColor(Color.WHITE, OVERLAY_ICON_COLOR, easedProgress);
+        Color overlayColor = interpolateColor(OverlayStyle.TEXT, OVERLAY_ICON_COLOR, easedProgress);
         overlayLabel.setForeground(overlayColor);
         float labelScale = LABEL_INITIAL_SCALE - (LABEL_INITIAL_SCALE - 1f) * easedProgress;
         int baseLabelWidth = Math.max(1, (int) Math.round(getWidth() * LABEL_WIDTH_RATIO));
@@ -402,8 +405,12 @@ public class MapToolOverlay extends JComponent
             }
 
             if (mapView != null && isBoxSelection()) {
+                // box selection: soft accent fill with an accent edge
                 Rectangle rectangle = mapView.worldToView(getDragBounds());
-                g.setColor(BORDER);
+                g.setColor(new Color(OverlayStyle.ACCENT.getRed(), OverlayStyle.ACCENT.getGreen(),
+                        OverlayStyle.ACCENT.getBlue(), 28));
+                g.fillRect(rectangle.x, rectangle.y, rectangle.width, rectangle.height);
+                g.setColor(OverlayStyle.ACCENT);
                 g.drawRect(rectangle.x, rectangle.y, rectangle.width - 1, rectangle.height - 1);
             }
         } finally {

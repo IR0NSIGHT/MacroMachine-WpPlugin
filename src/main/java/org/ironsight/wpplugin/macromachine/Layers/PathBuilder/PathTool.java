@@ -142,9 +142,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JDialog pathSettingsDialog;
     private static final int NODE_DIAMETER = 18;
     private static final int NODE_OUTLINE_DIAMETER = 20;
-    static final Color SELECTED_NODE_FILL = new Color(0, 229, 255);
-    static final Color SELECTED_NODE_HALO = new Color(10, 20, 40);
-    static final Color UNSELECTED_NODE_OUTLINE = Color.GRAY;
+    /**
+     * Selection and handles: lavender (see
+     * {@link org.ironsight.wpplugin.macromachine.Gui.OverlayStyle}).
+     */
+    static final Color SELECTED_NODE_FILL = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.ACCENT;
+    /** Charcoal outline under every map marking. */
+    static final Color SELECTED_NODE_HALO = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.OUTLINE;
+    static final Color UNSELECTED_NODE_FILL = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SURFACE_SOLID;
+    static final Color UNSELECTED_NODE_OUTLINE = new Color(235, 235, 235);
     private static final int NODE_HIT_RADIUS = 18;
     private final JToggleButton showLabel = hudButton("Label", "ShowLabel");
     private final JToggleButton showRadius = hudButton("Radius", "ShowRadius");
@@ -731,7 +737,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private static JSpinner operationSpinner(String name, SpinnerNumberModel model) {
-        var spinner = new JSpinner(model);
+        var spinner = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.spinner(new JSpinner(model));
         spinner.setName(name);
         // live preview while typing, not only on Enter / focus loss
         if (spinner.getEditor() instanceof JSpinner.DefaultEditor editor
@@ -744,7 +750,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var form = new JPanel(new GridLayout(0, 2, 6, 4));
         form.setOpaque(false);
         for (int i = 0; i < labelsAndControls.length; i += 2) {
-            form.add(new JLabel((String) labelsAndControls[i]));
+            form.add(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle
+                    .label(new JLabel((String) labelsAndControls[i]), true));
             form.add((Component) labelsAndControls[i + 1]);
         }
         return form;
@@ -938,25 +945,46 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private String operationTitle;
 
+    /**
+     * Labels and notes inside an operation panel: light text on the dark surface.
+     */
+    private static void styleOperationControls(java.awt.Container container) {
+        if (container instanceof JComponent component && !(container instanceof JSpinner))
+            component.setOpaque(false);
+        for (Component child : container.getComponents()) {
+            if (child instanceof JLabel label) {
+                if (label.getForeground() == null || label.getForeground() instanceof javax.swing.plaf.UIResource)
+                    org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.label(label, true);
+            } else if (child instanceof AbstractButton button)
+                org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.button(button);
+            else if (child instanceof java.awt.Container inner && !(child instanceof JSpinner))
+                styleOperationControls(inner);
+        }
+    }
+
     private void openOperation(String title, JComponent controls, Supplier<PathOperations.Result> compute) {
         closeOperation();
         cancelGesture();
         operationTitle = title;
-        var panel = new JPanel(new BorderLayout(4, 4));
+        JPanel panel = new org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SurfacePanel(new BorderLayout(8, 8));
         panel.setName("PathTool.OperationPanel");
-        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder(title),
-                new EmptyBorder(2, 4, 4, 4)));
+        var heading = new JLabel(title);
+        heading.setForeground(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT);
+        heading.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 13.5f));
+        panel.add(heading, BorderLayout.NORTH);
+        styleOperationControls(controls);
         panel.add(controls, BorderLayout.CENTER);
         operationMergeNote = new JLabel();
         operationMergeNote.setName("PathTool.OperationMergeNote");
-        operationMergeNote.setForeground(WARNING_COLOR.darker());
+        operationMergeNote.setForeground(WARNING_COLOR);
+        operationMergeNote.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.PLAIN, 12f));
         operationMergeNote.setVisible(false);
         var buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
         buttons.setOpaque(false);
-        var cancel = new JButton("Cancel");
+        var cancel = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.button(new JButton("Cancel"));
         cancel.setName("PathTool.OperationCancel");
         cancel.addActionListener(event -> closeOperation());
-        var apply = new JButton("Apply");
+        var apply = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.primaryButton(new JButton("Apply"));
         apply.setName("PathTool.OperationApply");
         apply.addActionListener(event -> applyOperation());
         buttons.add(cancel);
@@ -1903,45 +1931,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     /** Small glyph per editor, drawn in the selection colours. */
     static Icon editModeIcon(EditMode mode) {
-        int size = 16;
-        var image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = image.createGraphics();
-        try {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g.setStroke(new BasicStroke(1.5f));
-            g.setColor(SELECTED_NODE_HALO);
-            switch (mode) {
-                case RADIUS -> {
-                    g.drawOval(1, 1, 13, 13);
-                    g.fillOval(6, 6, 4, 4);
-                    g.setColor(SELECTED_NODE_FILL);
-                    g.fillRect(11, 5, 5, 5);
-                    g.setColor(SELECTED_NODE_HALO);
-                    g.drawRect(11, 5, 4, 4);
-                }
-                case CURVE -> {
-                    g.drawLine(1, 13, 15, 3);
-                    g.fillOval(6, 6, 4, 4);
-                    g.setColor(SELECTED_NODE_FILL);
-                    g.fillOval(0, 10, 5, 5);
-                    g.fillOval(11, 1, 5, 5);
-                }
-                case TRANSFORM -> LucideIcons.paint(g, "scaling", new Point2D.Double(size / 2.0, size / 2.0), size, 0,
-                        SELECTED_NODE_HALO, null);
-                case HEIGHT -> {
-                    g.drawLine(0, 12, 15, 12);
-                    g.drawLine(10, 12, 10, 4);
-                    g.fillOval(2, 10, 4, 4);
-                    g.setColor(SELECTED_NODE_FILL);
-                    g.fillRect(8, 1, 5, 5);
-                    g.setColor(SELECTED_NODE_HALO);
-                    g.drawRect(8, 1, 4, 4);
-                }
-            }
-        } finally {
-            g.dispose();
-        }
-        return new ImageIcon(image);
+        return LucideIcons.icon(switch (mode) {
+            case RADIUS -> "radius";
+            case CURVE -> "spline";
+            case HEIGHT -> "arrow-up-from-line";
+            case TRANSFORM -> "scaling";
+        }, 16, org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT);
     }
 
     private void selectionChanged() {
@@ -2328,7 +2323,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             modeButton.setToolTipText("Editor for selected nodes (also: click a selected node to cycle)");
             modeButton.addActionListener(event -> {
                 if (modeButton.isShowing())
-                    editorMenu().show(modeButton, 0, modeButton.getHeight());
+                    org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.popup(editorMenu())
+                            .show(modeButton, 0, modeButton.getHeight());
             });
             add(modeButton);
 
@@ -2343,28 +2339,32 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             overlaysMenuButton.setToolTipText("Choose which overlays to show");
             overlaysMenuButton.addActionListener(event -> {
                 if (overlaysMenuButton.isShowing())
-                    overlaysMenu().show(overlaysMenuButton, 0, overlaysMenuButton.getHeight());
+                    org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.popup(overlaysMenu())
+                            .show(overlaysMenuButton, 0, overlaysMenuButton.getHeight());
             });
             add(overlaysMenuButton);
             nodeMenuButton.setName("PathTool.NodeMenu");
             nodeMenuButton.setToolTipText("Operations on the selected nodes");
             nodeMenuButton.addActionListener(event -> {
                 if (nodeMenuButton.isShowing())
-                    nodeMenu().show(nodeMenuButton, 0, nodeMenuButton.getHeight());
+                    org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.popup(nodeMenu())
+                            .show(nodeMenuButton, 0, nodeMenuButton.getHeight());
             });
             add(nodeMenuButton);
             segmentMenuButton.setName("PathTool.SegmentMenu");
             segmentMenuButton.setToolTipText("Operations on segments between two selected nodes");
             segmentMenuButton.addActionListener(event -> {
                 if (segmentMenuButton.isShowing())
-                    segmentMenu().show(segmentMenuButton, 0, segmentMenuButton.getHeight());
+                    org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.popup(segmentMenu())
+                            .show(segmentMenuButton, 0, segmentMenuButton.getHeight());
             });
             add(segmentMenuButton);
             pathMenuButton.setName("PathTool.PathMenu");
             pathMenuButton.setToolTipText("Build the path: apply as road or river, path settings");
             pathMenuButton.addActionListener(event -> {
                 if (pathMenuButton.isShowing())
-                    pathMenu().show(pathMenuButton, 0, pathMenuButton.getHeight());
+                    org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.popup(pathMenu())
+                            .show(pathMenuButton, 0, pathMenuButton.getHeight());
             });
             add(pathMenuButton);
             addButton.setName("PathTool.AddButton");
@@ -2373,6 +2373,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             addButton.setToolTipText(
                     "Add mode: left click on empty map adds a node (double-tap Ctrl). Ctrl+click always adds.");
             add(addButton);
+            for (AbstractButton control : List.of(nodeMenuButton, segmentMenuButton, pathMenuButton, modeButton,
+                    overlaysButton, overlaysMenuButton, addButton))
+                org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.button(control);
+            overlaysMenuButton.setBorder(new EmptyBorder(5, 6, 5, 6));
+            setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.PLAIN, 12f)); // painted labels
             installStripMouse();
             updateModeButton();
         }
@@ -2680,7 +2685,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
          * box drag is a dashed rectangle.
          */
         private void paintZoomBand(Graphics2D g, Rectangle box, ZoomDrag drag) {
-            g.setColor(new Color(0, 229, 255, 45));
+            g.setColor(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.ACCENT_SOFT);
             g.fill(box);
             if (drag == ZoomDrag.BOX) {
                 g.setStroke(
@@ -2973,8 +2978,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             addMouseWheelListener(mouse);
             resetZoomButton.setName("PathTool.ProfileResetZoom");
             resetZoomButton.setFocusable(false);
-            resetZoomButton.setMargin(new Insets(0, 4, 0, 4));
-            resetZoomButton.setFont(resetZoomButton.getFont().deriveFont(10f));
+            org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.smallButton(resetZoomButton);
             resetZoomButton.setEnabled(false);
             resetZoomButton.setVisible(false);
             resetZoomButton.addActionListener(event -> resetStripZoom());
@@ -3250,8 +3254,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             reserveStripSpace(stripHeight + 12);
 
             Rectangle strip = unravelledBounds();
-            g.setColor(new Color(20, 20, 20, 175));
-            g.fillRoundRect(strip.x, strip.y, strip.width, strip.height, 10, 10);
+            org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.paintSurface(g, strip.x, strip.y, strip.width,
+                    strip.height, org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SURFACE);
             int left = strip.x + 24, right = strip.x + strip.width - 24;
             int top = strip.y + 22, bottom = strip.y + strip.height - 14;
             // zoom: the visible part of the path (fractions of its length)
@@ -3264,8 +3268,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             stripBottom = bottom;
             stripHeightView = editMode == EditMode.HEIGHT;
             Font previous = g.getFont();
-            g.setFont(previous.deriveFont(Font.BOLD, 11f));
-            g.setColor(Color.WHITE);
+            g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 11.5f));
+            g.setColor(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED);
             g.drawString(switch (editMode) {
                 case RADIUS -> "Radius along the path";
                 case HEIGHT -> "Height along the path (terrain, water, path)";
@@ -3727,7 +3731,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     /** Blender-like header box at the top centre of the viewport. */
     private void paintHeader(Graphics2D g, String text) {
         Font previous = g.getFont();
-        g.setFont(previous.deriveFont(Font.BOLD, 15f));
+        g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 15f));
         FontMetrics metrics = g.getFontMetrics();
         int padding = 8;
         int width = metrics.stringWidth(text) + 2 * padding, height = metrics.getHeight() + padding;
@@ -3736,9 +3740,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         // open operation panel
         int x = Math.max((overlay.getWidth() - width) / 2, overlay.operationPanelRight() + 8);
         int y = overlay.toolbarBottom() + 8;
-        g.setColor(new Color(30, 30, 30, 210));
-        g.fillRoundRect(x, y, width, height, 8, 8);
-        g.setColor(Color.WHITE);
+        org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.paintSurface(g, x, y, width, height,
+                org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SURFACE);
+        g.setColor(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT);
         g.drawString(text, x + padding, y + padding / 2 + metrics.getAscent());
         g.setFont(previous);
     }
@@ -3799,8 +3803,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     static final Color HOVER_GLOW = new Color(255, 255, 255, 150);
     /** Height of the unravelled path strip at the bottom of the viewport. */
     static final int UNRAVELLED_HEIGHT = 120;
-    static final Color PROFILE_TERRAIN = new Color(150, 120, 85, 220);
-    static final Color PROFILE_WATER = new Color(60, 130, 230, 235);
+    static final Color PROFILE_TERRAIN = new Color(136, 110, 84, 235);
+    static final Color PROFILE_WATER = new Color(64, 128, 214, 235);
     /**
      * Block outlines in the height profile appear from this many pixels per block.
      */
@@ -3809,8 +3813,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * Height view: segment rising from its previous node (red) / falling or level
      * (green).
      */
-    static final Color SLOPE_UP_COLOR = new Color(230, 60, 60);
-    static final Color SLOPE_DOWN_COLOR = new Color(70, 200, 90);
+    static final Color SLOPE_UP_COLOR = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.DANGER;
+    static final Color SLOPE_DOWN_COLOR = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SUCCESS;
     private int lastBottomReserve = -1;
 
     /**
@@ -3818,7 +3822,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * Handles and everything the user drags or edits use the blue handle styling
      * instead.
      */
-    static final Color PREVIEW_COLOR = new Color(255, 200, 40);
+    static final Color PREVIEW_COLOR = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.PREVIEW;
     /** Drawn handle size (px); hovered handles grow to signal interactivity. */
     static final int HANDLE_SIZE = 12, HOVERED_HANDLE_SIZE = 16;
 
@@ -3923,35 +3927,28 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     /** Warning colour (orange): e.g. nodes an operation will merge. */
-    static final Color WARNING_COLOR = new Color(255, 120, 0);
+    static final Color WARNING_COLOR = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.WARNING;
 
     static void paintNode(Graphics2D g, Point point, boolean selected) {
         int fill = NODE_DIAMETER, outline = NODE_OUTLINE_DIAMETER;
-        g.setColor(selected ? SELECTED_NODE_FILL : Color.WHITE);
+        // charcoal halo first: every node reads on bright and dark terrain alike
+        g.setColor(SELECTED_NODE_HALO);
+        g.setStroke(new BasicStroke(selected ? 4f : 3.5f));
+        g.drawOval(point.x - outline / 2, point.y - outline / 2, outline, outline);
+        g.setColor(selected ? SELECTED_NODE_FILL : UNSELECTED_NODE_FILL);
         g.fillOval(point.x - fill / 2, point.y - fill / 2, fill, fill);
-        if (selected) {
-            g.setColor(SELECTED_NODE_HALO);
-            g.setStroke(new BasicStroke(3f));
-            g.drawOval(point.x - outline / 2, point.y - outline / 2, outline, outline);
-            g.setColor(Color.WHITE);
-            g.setStroke(new BasicStroke(1f));
-            int edge = outline + 4;
-            g.drawOval(point.x - edge / 2, point.y - edge / 2, edge, edge);
-        } else {
-            g.setColor(UNSELECTED_NODE_OUTLINE);
-            g.setStroke(new BasicStroke(1f));
-            g.drawOval(point.x - outline / 2, point.y - outline / 2, outline, outline);
-        }
+        g.setColor(selected ? SELECTED_NODE_FILL : UNSELECTED_NODE_OUTLINE);
+        g.setStroke(new BasicStroke(selected ? 2f : 1.5f));
+        g.drawOval(point.x - outline / 2, point.y - outline / 2, outline, outline);
     }
 
     static void paintNodeLabel(Graphics2D g, Point point, int number, boolean selected) {
         String label = Integer.toString(number);
         Font previous = g.getFont();
-        if (selected)
-            g.setFont(previous.deriveFont(Font.BOLD));
+        g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(selected ? Font.BOLD : Font.PLAIN, 11.5f));
         int x = point.x + NODE_OUTLINE_DIAMETER / 2 + 4;
         int y = point.y + g.getFontMetrics().getAscent() / 2;
-        g.setColor(selected ? SELECTED_NODE_HALO : Color.BLACK);
+        g.setColor(SELECTED_NODE_HALO);
         int halo = selected ? 2 : 1;
         for (int dx = -halo; dx <= halo; dx++)
             for (int dy = -halo; dy <= halo; dy++)
@@ -3994,18 +3991,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     /** Plus sign for the viewport "Add" button. */
     static Icon addIcon() {
-        var image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = image.createGraphics();
-        try {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            g.setColor(SELECTED_NODE_HALO);
-            g.drawLine(8, 3, 8, 13);
-            g.drawLine(3, 8, 13, 8);
-        } finally {
-            g.dispose();
-        }
-        return new ImageIcon(image);
+        return LucideIcons.icon("plus", 16, org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT);
     }
 
     /**
@@ -4053,31 +4039,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * such as U+25BE, which WorldPainter's UI font lacks (it showed as an empty
      * box).
      */
-    static final Icon DROPDOWN_ARROW = new Icon() {
-        @Override
-        public void paintIcon(Component component, Graphics graphics, int x, int y) {
-            Graphics2D g = (Graphics2D) graphics.create();
-            try {
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g.setColor(component != null && !component.isEnabled()
-                        ? Color.GRAY
-                        : component != null ? component.getForeground() : Color.DARK_GRAY);
-                g.fillPolygon(new int[]{x, x + 8, x + 4}, new int[]{y + 1, y + 1, y + 6}, 3);
-            } finally {
-                g.dispose();
-            }
-        }
-
-        @Override
-        public int getIconWidth() {
-            return 8;
-        }
-
-        @Override
-        public int getIconHeight() {
-            return 7;
-        }
-    };
+    static final Icon DROPDOWN_ARROW = LucideIcons.icon("chevron-down", 14,
+            org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED);
 
     /**
      * Button with a painted dropdown arrow on its right (text glyphs may be missing
@@ -4124,23 +4087,21 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         public java.awt.Dimension getPreferredSize() {
             return getLayout().preferredLayoutSize(this);
         }
+
+        /**
+         * Lays its labels out right away: otherwise they keep the layout of an older
+         * size or font until the next validation pass and show clipped text.
+         */
+        @Override
+        public void setBounds(int x, int y, int width, int height) {
+            super.setBounds(x, y, width, height);
+            doLayout();
+        }
     }
 
-    /** Two overlapping circles, like Blender's overlay icon. */
+    /** Overlay visibility (Lucide eye). */
     static Icon overlaysIcon() {
-        var image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = image.createGraphics();
-        try {
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g.setStroke(new BasicStroke(1.5f));
-            g.setColor(SELECTED_NODE_HALO);
-            g.drawOval(1, 3, 9, 9);
-            g.setColor(SELECTED_NODE_FILL.darker());
-            g.drawOval(6, 3, 9, 9);
-        } finally {
-            g.dispose();
-        }
-        return new ImageIcon(image);
+        return LucideIcons.icon("eye", 16, org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT);
     }
 
     private static BufferedImage loadPathIcon() {

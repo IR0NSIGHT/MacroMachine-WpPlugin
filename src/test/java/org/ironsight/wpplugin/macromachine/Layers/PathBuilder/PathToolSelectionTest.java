@@ -1088,18 +1088,21 @@ class PathToolSelectionTest
                     overlay.setSize(300, 300);
                     findComponent(view, JPanel.class, "PathTool.OperationPanel").setVisible(false);
                     var image = paintOverlay300(overlay);
-                    int cyan = 0, amber = 0;
+                    int cyan = 0, amber = 0; // handle colour (lavender) vs preview amber
+                    var handle = PathTool.SELECTED_NODE_FILL;
                     for (int x = 0; x < 300; x++)
                         for (int y = 60; y < 300; y++) {
                             var color = new java.awt.Color(image.getRGB(x, y), true);
                             if (color.getAlpha() < 200)
                                 continue;
-                            if (color.getRed() < 60 && color.getGreen() > 180 && color.getBlue() > 200)
+                            if (Math.abs(color.getRed() - handle.getRed()) < 20
+                                    && Math.abs(color.getGreen() - handle.getGreen()) < 20
+                                    && Math.abs(color.getBlue() - handle.getBlue()) < 20)
                                 cyan++;
                             if (color.getRed() > 200 && color.getGreen() > 140 && color.getBlue() < 120)
                                 amber++;
                         }
-                    assertTrue(cyan > 100, "blue search circle and handle (" + cyan + " px)");
+                    assertTrue(cyan > 100, "handle coloured search circle and handle (" + cyan + " px)");
                     assertEquals(0, amber, "no preview styling without a previewed result");
                 } finally {
                     tool.setActive(false);

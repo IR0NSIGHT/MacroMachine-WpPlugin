@@ -37,7 +37,7 @@ class MapToolOverlayTest
             assertEquals(842, label.getX());
             assertEquals(8, label.getY());
             assertEquals(150, label.getWidth());
-            assertEquals(Color.LIGHT_GRAY, label.getForeground());
+            assertEquals(OverlayStyle.TEXT_MUTED, label.getForeground());
 
             overlay.showOverlayText("City Tool");
             Timer restarted = timer(overlay, "labelPositionTimer");
@@ -68,7 +68,7 @@ class MapToolOverlayTest
             callback.actionPerformed(new ActionEvent(timer, ActionEvent.ACTION_PERFORMED, "tick"));
             assertEquals(842, label.getX());
             assertEquals(8, label.getY());
-            assertEquals(Color.LIGHT_GRAY, label.getForeground());
+            assertEquals(OverlayStyle.TEXT_MUTED, label.getForeground());
             assertFalse(timer.isRunning());
             overlay.clearOverlayText();
             callback.actionPerformed(new ActionEvent(timer, ActionEvent.ACTION_PERFORMED, "tick"));
