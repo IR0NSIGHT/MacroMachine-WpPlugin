@@ -150,7 +150,7 @@ class PathToolSelectionTest
         });
         work.remove(0).run();
         SwingUtilities.invokeAndWait(() -> {
-            findButton(tool[0].getOptionsPanel(), "PathTool.NewPath").doClick();
+            pathItem(tool[0], "PathTool.NewPath").doClick();
             callbacks.remove(0).run();
             assertFalse(dim[0].getBitLayerValueAt(PreviewOperation.annotationLayer, 30, 20));
             assertDoesNotThrow(() -> tool[0].setActive(false));
@@ -311,7 +311,7 @@ class PathToolSelectionTest
                     layer.doClick();
                     layer.doClick(); // off and on again refreshes the preview synchronously
                     assertTrue(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
-                    findButton(tool.getOptionsPanel(), "PathTool.NewPath").doClick();
+                    pathItem(tool, "PathTool.NewPath").doClick();
                     assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
                 } finally {
                     tool.setActive(false);
@@ -428,14 +428,12 @@ class PathToolSelectionTest
                 try {
                     click(view, 10, 10);
                     click(view, 40, 10, InputEvent.CTRL_DOWN_MASK);
-                    var reverse = findButton(tool.getOptionsPanel(), "PathTool.ReversePath");
-                    assertNotNull(reverse);
-                    reverse.doClick();
+                    pathItem(tool, "PathTool.ReversePath").doClick();
                     assertEquals(List.of(70f, 10f, 70f, 8f, 40f, 10f, 70f, 6f, 10f, 10f, 70f, 4f),
                             dimension.getAttribute(HANDLES));
                     // same nodes stay selected under their new indices
                     assertEquals(Set.of(2, 1), tool.selectedNodes());
-                    reverse.doClick();
+                    pathItem(tool, "PathTool.ReversePath").doClick();
                     assertEquals(initial, dimension.getAttribute(HANDLES));
                     assertEquals(Set.of(0, 1), tool.selectedNodes());
                 } finally {
@@ -2076,10 +2074,9 @@ class PathToolSelectionTest
                 tool.setBrush(brush());
                 tool.setActive(true);
                 try {
-                    // the side panel keeps only the essentials; settings moved to the dialog
-                    assertNull(findButton(tool.getOptionsPanel(), "PathTool.Apply"));
-                    assertNotNull(findButton(tool.getOptionsPanel(), "PathTool.NewPath"));
-                    assertNotNull(findButton(tool.getOptionsPanel(), "PathTool.PathSettings"));
+                    // the tool settings panel is empty: everything moved into the viewport
+                    assertEquals(0, tool.getOptionsPanel().getComponentCount());
+                    assertNotNull(pathItem(tool, "PathTool.Help"));
                     assertNotNull(findButton(tool.pathSettingsPanel(), "PathTool.Apply"));
                     // toolbar: Node, Segment, Path
                     var segment = findComponent(view, JButton.class, "PathTool.SegmentMenu");
@@ -2145,6 +2142,13 @@ class PathToolSelectionTest
                         return row.isVisible();
         }
         throw new AssertionError("no setting " + text);
+    }
+
+    /** An entry of the viewport's Path menu. */
+    private static javax.swing.JMenuItem pathItem(PathTool tool, String name) {
+        var item = findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, name);
+        assertNotNull(item, name);
+        return item;
     }
 
     private static javax.swing.JCheckBox checkbox(PathTool tool, String text) {
@@ -2489,7 +2493,7 @@ class PathToolSelectionTest
                     dimension.setEventsInhibited(false);
                     assertEquals(handles, dimension.getAttribute(HANDLES));
                     assertEquals(100f, dimension.getHeightAt(100, 100));
-                    findButton(tool.getOptionsPanel(), "PathTool.NewPath").doClick();
+                    pathItem(tool, "PathTool.NewPath").doClick();
                     assertEquals(List.of(), dimension.getAttribute(HANDLES));
                     assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
                 } finally {
@@ -3204,9 +3208,7 @@ class PathToolSelectionTest
                     assertTrue(tool.dispatchKeyEvent(new KeyEvent(view, KeyEvent.KEY_PRESSED, 0,
                             InputEvent.CTRL_DOWN_MASK, KeyEvent.VK_A, 'a')));
                     assertEquals(Set.of(0, 1), tool.selectedNodes());
-                    JButton reset = findButton(tool.getOptionsPanel(), "PathTool.NewPath");
-                    assertNotNull(reset);
-                    reset.doClick();
+                    pathItem(tool, "PathTool.NewPath").doClick();
                     assertEquals(List.of(), dimension.getAttribute(HANDLES));
                     assertEquals(Set.of(), tool.selectedNodes());
                     assertTrue(tool.cachedTiles.isEmpty());

@@ -1,7 +1,6 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
 import static java.lang.Math.PI;
-import static org.ironsight.wpplugin.macromachine.Gui.HelpDialog.getHelpButton;
 import static org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathToolBackend.*;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
@@ -101,7 +100,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Ctrl + left click / drag",
                     "Toggle node in selection, add box to selection, or move the group"),
             new HelpItem("Node / Segment / Path menus (top left)",
-                    "Node: randomize position, randomize radius, snap to terrain, only downhill. Segment: subdivide. Path: apply as road / river (settings dialog). Preview, then Apply (Enter) or Cancel (Esc); type a number for the main value, Tab for the next"),
+                    "Node: randomize position, randomize radius, snap to terrain, only downhill. Segment: subdivide. Path: new path, reverse direction, apply as road / river (settings dialog), help. Preview, then Apply (Enter) or Cancel (Esc); type a number for the main value, Tab for the next"),
             new HelpItem("Editor button (top left)", "Shows the current editor; click to pick another"),
             new HelpItem("Click selected node",
                     "Cycle radius, curve strength, height-above-ground and transform handles"),
@@ -4160,40 +4159,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void init() {
-        optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
-        optionsPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
-        // Lucide icons in the website's text grey (this panel uses WorldPainter's light
-        // look)
-        var ink = new Color(64, 64, 64);
-        var help = getHelpButton(HELP_TITLE, HELP_EXPLANATION, HELP_ITEMS);
-        help.setText(null);
-        help.setIcon(LucideIcons.icon("circle-help", 16, ink));
-        help.setToolTipText("Path Tool help: mouse, keys and editors");
-        optionsPanel.add(help);
-        JPanel editingPanel = new JPanel();
-        JButton newPath = new JButton("New path");
-        newPath.setName("PathTool.NewPath");
-        newPath.setIcon(LucideIcons.icon("file-plus", 16, ink));
-        newPath.addActionListener(e -> resetPath());
-        editingPanel.add(newPath);
-        JButton reversePath = new JButton("Reverse direction");
-        reversePath.setName("PathTool.ReversePath");
-        reversePath.setIcon(LucideIcons.icon("arrow-left-right", 16, ink));
-        reversePath.setToolTipText("Reverse the node order, so the path (and a river) flows the other way");
-        reversePath.addActionListener(e -> reversePath());
-        editingPanel.add(reversePath);
-        editingPanel.add(selectionStatus);
-        optionsPanel.add(editingPanel);
-        // generation settings live in the "Path settings" dialog (Path menu in the
-        // viewport)
-        JButton settings = new JButton("Path settings...");
-        settings.setName("PathTool.PathSettings");
-        settings.setIcon(LucideIcons.icon("settings-2", 16, ink));
-        settings.setToolTipText("Presets, terrain / water / paint, slope, transition and Apply");
-        settings.addActionListener(e -> openPathSettings(null));
-        JPanel settingsRow = new JPanel();
-        settingsRow.add(settings);
-        optionsPanel.add(settingsRow);
+        // the tool settings panel stays empty: everything lives in the viewport
+        // (Node / Segment / Path menus, overlays) and the path settings dialog
         pathSettingsPanel.setLayout(new BoxLayout(pathSettingsPanel, BoxLayout.Y_AXIS));
         pathSettingsPanel.setBorder(new EmptyBorder(8, 8, 8, 8));
         // overlay switches live in the viewport (see PathOverlay); the yellow layer
@@ -4572,6 +4539,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     JPopupMenu pathMenu() {
         var menu = new JPopupMenu();
         boolean any = getCurrentPath().size() >= 2;
+        menu.add(operationItem("New path", "PathTool.NewPath", true, null, this::resetPath));
+        menu.add(operationItem("Reverse direction", "PathTool.ReversePath", any, "Place at least two nodes first",
+                this::reversePath));
+        menu.addSeparator();
         menu.add(operationItem("Apply as road...", "PathTool.Path.ApplyRoad", any, "Place at least two nodes first",
                 () -> {
                     applyRoadPreset();
@@ -4584,6 +4555,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 }));
         menu.addSeparator();
         menu.add(operationItem("Path settings...", "PathTool.Path.Settings", true, null, () -> openPathSettings(null)));
+        menu.addSeparator();
+        menu.add(operationItem("Help...", "PathTool.Help", true, null,
+                () -> new org.ironsight.wpplugin.macromachine.Gui.HelpDialog(null, HELP_TITLE, HELP_EXPLANATION,
+                        HELP_ITEMS).setVisible(true)));
         return menu;
     }
 
