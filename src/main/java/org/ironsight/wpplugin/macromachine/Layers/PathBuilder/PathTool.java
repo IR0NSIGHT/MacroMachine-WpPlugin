@@ -3844,35 +3844,39 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     /**
-     * Label of a previewed result: amber text with a dark halo (preview styling).
+     * Label of a previewed result: a chip with amber text ({@code at}: text
+     * baseline start).
      */
     static void paintPreviewLabel(Graphics2D g, String text, Point2D at) {
-        Font previous = g.getFont();
-        g.setFont(previous.deriveFont(Font.BOLD));
-        int x = (int) Math.round(at.getX()), y = (int) Math.round(at.getY());
-        g.setColor(SELECTED_NODE_HALO);
-        for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
-                if (dx != 0 || dy != 0)
-                    g.drawString(text, x + dx, y + dy);
-        g.setColor(PREVIEW_COLOR);
-        g.drawString(text, x, y);
-        g.setFont(previous);
+        paintChip(g, text, at.getX(), at.getY() - 4, PREVIEW_COLOR, true);
     }
 
+    /** Value next to a handle: a chip with text in the handle colour. */
     private static void paintHandleLabel(Graphics2D g, String text, Point2D handle) {
+        paintChip(g, text, handle.getX() + HOVERED_HANDLE_SIZE / 2.0 + 4, handle.getY() - 11, SELECTED_NODE_FILL, true);
+    }
+
+    /**
+     * A label on the map: a small dark chip like the viewport header (no outlined
+     * text), left edge at {@code left}, vertically centred on {@code centreY}.
+     */
+    static void paintChip(Graphics2D g, String text, double left, double centreY, Color textColour, boolean bold) {
         Font previous = g.getFont();
-        g.setFont(previous.deriveFont(Font.BOLD));
-        int x = (int) Math.round(handle.getX()) + HOVERED_HANDLE_SIZE / 2 + 4;
-        int y = (int) Math.round(handle.getY()) - 7;
-        g.setColor(SELECTED_NODE_HALO);
-        for (int dx = -1; dx <= 1; dx++)
-            for (int dy = -1; dy <= 1; dy++)
-                if (dx != 0 || dy != 0)
-                    g.drawString(text, x + dx, y + dy);
-        g.setColor(SELECTED_NODE_FILL);
-        g.drawString(text, x, y);
+        Object textHint = g.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING);
+        g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(bold ? Font.BOLD : Font.PLAIN, 12.5f));
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        FontMetrics metrics = g.getFontMetrics();
+        int padX = 6, padY = 2;
+        int width = metrics.stringWidth(text) + 2 * padX;
+        int height = metrics.getAscent() + metrics.getDescent() + 2 * padY;
+        int x = (int) Math.round(left), y = (int) Math.round(centreY - height / 2.0);
+        org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.paintSurface(g, x, y, width, height,
+                org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SURFACE);
+        g.setColor(textColour);
+        g.drawString(text, x + padX, y + padY + metrics.getAscent());
         g.setFont(previous);
+        if (textHint != null)
+            g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, textHint);
     }
 
     /**
@@ -3915,21 +3919,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         g.fillOval(point.x - size / 2, point.y - size / 2, size, size);
     }
 
+    /** Node number: a chip above right of the node, teal text when selected. */
     static void paintNodeLabel(Graphics2D g, Point point, int number, boolean selected) {
-        String label = Integer.toString(number);
-        Font previous = g.getFont();
-        g.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(selected ? Font.BOLD : Font.PLAIN, 13.5f));
-        int x = point.x + NODE_OUTLINE_DIAMETER / 2 + 4;
-        int y = point.y + g.getFontMetrics().getAscent() / 2;
-        g.setColor(SELECTED_NODE_HALO);
-        int halo = 1;
-        for (int dx = -halo; dx <= halo; dx++)
-            for (int dy = -halo; dy <= halo; dy++)
-                if (dx != 0 || dy != 0)
-                    g.drawString(label, x + dx, y + dy);
-        g.setColor(selected ? SELECTED_NODE_FILL : Color.WHITE);
-        g.drawString(label, x, y);
-        g.setFont(previous);
+        // above right of the node: handles sit straight right of it
+        paintChip(g, Integer.toString(number), point.x + NODE_DIAMETER / 2.0 - 2, point.y - NODE_DIAMETER / 2.0 - 7,
+                selected ? SELECTED_NODE_FILL : org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT, selected);
     }
 
     /**

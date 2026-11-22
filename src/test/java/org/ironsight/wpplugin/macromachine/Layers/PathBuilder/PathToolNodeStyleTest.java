@@ -48,9 +48,13 @@ class PathToolNodeStyleTest
         var unselected = render(g -> PathTool.paintNodeLabel(g, center, 8, false));
 
         assertTrue(contains(selected, PathTool.SELECTED_NODE_FILL));
-        assertTrue(contains(selected, PathTool.SELECTED_NODE_HALO));
         assertFalse(contains(unselected, PathTool.SELECTED_NODE_FILL));
         assertTrue(contains(unselected, Color.WHITE));
+        // both sit on a dark chip, not on outlined text
+        var chip = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SURFACE;
+        assertTrue(contains(selected, chip));
+        assertTrue(contains(unselected, chip));
+        assertFalse(contains(selected, PathTool.SELECTED_NODE_HALO), "no outline");
     }
 
     private static boolean contains(BufferedImage image, Color color) {
