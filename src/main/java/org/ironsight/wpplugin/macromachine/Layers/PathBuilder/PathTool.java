@@ -106,7 +106,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Click selected node",
                     "Cycle radius, curve strength, height-above-ground and transform handles"),
             new HelpItem("Transform editor",
-                    "Box around the selection: drag a corner to scale, the top handle to rotate, the bottom handle to move (nodes themselves do not drag here); drag the pivot (crosshair) to rotate / scale around another point; typed numbers are degrees or the scale factor. A single node only gets the move handle"),
+                    "Box around the selection: drag the corner arrow to scale, the side / bottom arrows to stretch along the box, the top handle to rotate, the left handle to move (nodes themselves do not drag here); drag the pivot (crosshair) to rotate / scale around another point; typed numbers are degrees or the scale factor. A single node only gets the move handle"),
             new HelpItem("Drag radius / tangent / height handle",
                     "Scale radius of selected nodes / change curve strength / raise or lower selected nodes"),
             new HelpItem("Shift while dragging", "Precise drag: nodes and handles move at 1/10 speed"),
@@ -338,7 +338,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private Point2D.Double transformGrabWorld;
     /** Kind of transform applied so far (rotate, scale, move), or {@code null}. */
     private HitKind transformOp;
-    private double transformFactor = 1;
+    /** Scale so far along the box's x / y axes (uniform: both). */
+    private double transformScaleX = 1, transformScaleY = 1;
+    /**
+     * Scale handle being dragged: uniform, box x or box y
+     * (PathTransformBox.SCALE_*).
+     */
+    private int transformScaleAxis;
     /** Pivot while it is dragged (world). */
     private Point2D.Double draggedPivot;
     /** World offset of a move drag (whole blocks). */
@@ -1379,6 +1385,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 case HEIGHT -> heightHandleNode = hit.node();
                 case TRANSFORM_MOVE, TRANSFORM_ROTATE, TRANSFORM_SCALE, TRANSFORM_PIVOT -> {
                     transformKind = hit.kind();
+                    transformScaleAxis = hit.side();
                     transformPivotStart = transformPivotWorld();
                     transformGrabWorld = toWorldExact(point);
                 }
@@ -1510,9 +1517,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 } else if (box != null) {
                     var candidates = new ArrayList<Hit>();
                     var points = new ArrayList<Point2D>();
-                    for (int corner = 0; corner < 4; corner++) {
-                        candidates.add(new Hit(HitKind.TRANSFORM_SCALE, -1, corner));
-                        points.add(frame.transform(PathTransformBox.corner(box, corner), null));
+                    for (int axis : new int[]{PathTransformBox.SCALE_UNIFORM, PathTransformBox.SCALE_X,
+                            PathTransformBox.SCALE_Y}) {
+                        candidates.add(new Hit(HitKind.TRANSFORM_SCALE, -1, axis));
+                        points.add(frame.transform(PathTransformBox.scaleHandle(box, axis), null));
                     }
                     candidates.add(new Hit(HitKind.TRANSFORM_ROTATE, -1, 0));
                     points.add(frame.transform(PathTransformBox.rotateHandle(box), null));
@@ -1959,7 +1967,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         transformOp = null;
         transformPivotStart = null;
         transformGrabWorld = null;
-        transformFactor = 1;
+        transformScaleX = transformScaleY = 1;
+        transformScaleAxis = 0;
         transformDegrees = 0;
         draggedPivot = null;
         transformMoveX = transformMoveY = 0;
@@ -2155,7 +2164,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var pivot = toViewExact(transformPivotStart);
         return switch (transformOp) {
             case TRANSFORM_ROTATE -> PathTransformBox.rotation(pivot, transformDegrees);
-            case TRANSFORM_SCALE -> PathTransformBox.scaling(pivot, transformFactor);
+            case TRANSFORM_SCALE ->
+                PathTransformBox.axisScaling(pivot, transformScaleX, transformScaleY, transformBoxAngle());
             case TRANSFORM_MOVE -> {
                 var from = toViewExact(new Point2D.Double(0, 0));
                 var to = toViewExact(new Point2D.Double(transformMoveX, transformMoveY));
@@ -2195,11 +2205,21 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 gestureHeader = header("Rotate", formatValue((float) mouse) + "\u00b0");
             }
             case TRANSFORM_SCALE -> {
-                double mouse = PathTransformBox.scaleFactor(transformPivotStart, grab, now);
-                transformFactor = typing() ? PathTransformBox.clampScale(numericInput.apply(mouse)) : mouse;
+                int axis = transformScaleAxis;
+                double mouse = axis == PathTransformBox.SCALE_UNIFORM
+                        ? PathTransformBox.scaleFactor(transformPivotStart, grab, now)
+                        : PathTransformBox.axisScaleFactor(transformPivotStart, grab, now, transformBoxAngle(), axis);
+                double factor = typing() ? PathTransformBox.clampScale(numericInput.apply(mouse)) : mouse;
+                transformScaleX = axis == PathTransformBox.SCALE_Y ? 1 : factor;
+                transformScaleY = axis == PathTransformBox.SCALE_X ? 1 : factor;
                 transformOp = HitKind.TRANSFORM_SCALE;
                 movedPath = transformedPath(transformViewNow());
-                gestureHeader = header("Scale", String.format(Locale.ROOT, "%.2f", mouse) + "\u00d7");
+                String label = switch (axis) {
+                    case PathTransformBox.SCALE_X -> "Scale X";
+                    case PathTransformBox.SCALE_Y -> "Scale Y";
+                    default -> "Scale";
+                };
+                gestureHeader = header(label, String.format(Locale.ROOT, "%.2f", mouse) + "\u00d7");
             }
             default -> {
             }
@@ -3536,15 +3556,18 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             g.draw(outline);
             strokeWithHalo(g, new Line2D.Double(at.apply(PathTransformBox.topCentre(box)),
                     at.apply(PathTransformBox.rotateHandle(box))), 1.5f);
-            strokeWithHalo(g, new Line2D.Double(at.apply(PathTransformBox.bottomCentre(box)),
+            strokeWithHalo(g, new Line2D.Double(at.apply(PathTransformBox.leftCentre(box)),
                     at.apply(PathTransformBox.moveHandle(box))), 1.5f);
-            // handles are Lucide icons turned with the box (scale arrows point out of
-            // their corner)
+            // handles are Lucide icons turned with the box (scale arrows point along
+            // their axis)
             double turned = -Math.toDegrees(Math.atan2(transform.getShearY(), transform.getScaleX()));
-            for (int corner = 0; corner < 4; corner++)
-                paintIconHandle(g, corner % 2 == 0 ? "move-diagonal-2" : "move-diagonal",
-                        at.apply(PathTransformBox.corner(box, corner)), turned,
-                        isHovered(HitKind.TRANSFORM_SCALE, -1, corner));
+            paintIconHandle(g, "move-diagonal-2",
+                    at.apply(PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_UNIFORM)), turned,
+                    isHovered(HitKind.TRANSFORM_SCALE, -1, PathTransformBox.SCALE_UNIFORM));
+            paintIconHandle(g, "move-horizontal", at.apply(PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_X)),
+                    turned, isHovered(HitKind.TRANSFORM_SCALE, -1, PathTransformBox.SCALE_X));
+            paintIconHandle(g, "move-vertical", at.apply(PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_Y)),
+                    turned, isHovered(HitKind.TRANSFORM_SCALE, -1, PathTransformBox.SCALE_Y));
             paintIconHandle(g, "rotate-ccw", at.apply(PathTransformBox.rotateHandle(box)), turned,
                     isHovered(HitKind.TRANSFORM_ROTATE, -1, 0));
             paintIconHandle(g, "move", at.apply(PathTransformBox.moveHandle(box)), turned,

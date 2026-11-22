@@ -94,9 +94,34 @@ final class PathTransformBox
         return new Point2D.Double(box.getCenterX(), box.getMinY() - STEM);
     }
 
-    /** The move handle, on a stem below the box. */
+    static Point2D.Double leftCentre(Rectangle2D box) {
+        return new Point2D.Double(box.getMinX(), box.getCenterY());
+    }
+
+    static Point2D.Double rightCentre(Rectangle2D box) {
+        return new Point2D.Double(box.getMaxX(), box.getCenterY());
+    }
+
+    /** The move handle, on a stem left of the box. */
     static Point2D.Double moveHandle(Rectangle2D box) {
-        return new Point2D.Double(box.getCenterX(), box.getMaxY() + STEM);
+        return new Point2D.Double(box.getMinX() - STEM, box.getCenterY());
+    }
+
+    /**
+     * Scale handles: uniform (bottom right corner), along the box's x and y axes.
+     */
+    static final int SCALE_UNIFORM = 0, SCALE_X = 1, SCALE_Y = 2;
+
+    /**
+     * Where the scale handle {@code kind} sits: corner, right edge, bottom edge.
+     */
+    static Point2D.Double scaleHandle(Rectangle2D box, int kind) {
+        return switch (kind) {
+            case SCALE_UNIFORM -> corner(box, 2);
+            case SCALE_X -> rightCentre(box);
+            case SCALE_Y -> bottomCentre(box);
+            default -> throw new IllegalArgumentException("scale handle " + kind);
+        };
     }
 
     /** Distance of the move handle below a single selected node (px). */
@@ -154,6 +179,37 @@ final class PathTransformBox
     }
 
     /** Uniform scaling by {@code factor} around {@code pivot}. */
+    /**
+     * Scale factor along one axis of a box turned by {@code degrees}
+     * ({@link #SCALE_X} or {@link #SCALE_Y}): how much further from the pivot the
+     * cursor is along that axis than where the drag started; to 0.01, at least
+     * {@link #MIN_SCALE}; 1 when grabbed level with the pivot.
+     */
+    static double axisScaleFactor(Point2D pivot, Point2D start, Point2D now, double degrees, int axis) {
+        var back = frame(-degrees);
+        var from = back.deltaTransform(new Point2D.Double(start.getX() - pivot.getX(), start.getY() - pivot.getY()),
+                null);
+        var to = back.deltaTransform(new Point2D.Double(now.getX() - pivot.getX(), now.getY() - pivot.getY()), null);
+        double grabbed = axis == SCALE_X ? from.getX() : from.getY();
+        double current = axis == SCALE_X ? to.getX() : to.getY();
+        if (Math.abs(grabbed) < 1e-9)
+            return 1;
+        return clampScale(Math.round(current / grabbed * 100) / 100.0);
+    }
+
+    /**
+     * Scaling by {@code sx} and {@code sy} along the axes of a box turned by
+     * {@code degrees}, around {@code pivot}.
+     */
+    static AffineTransform axisScaling(Point2D pivot, double sx, double sy, double degrees) {
+        var transform = AffineTransform.getTranslateInstance(pivot.getX(), pivot.getY());
+        transform.concatenate(frame(degrees));
+        transform.scale(sx, sy);
+        transform.concatenate(frame(-degrees));
+        transform.translate(-pivot.getX(), -pivot.getY());
+        return transform;
+    }
+
     static AffineTransform scaling(Point2D pivot, double factor) {
         var transform = AffineTransform.getTranslateInstance(pivot.getX(), pivot.getY());
         transform.scale(factor, factor);

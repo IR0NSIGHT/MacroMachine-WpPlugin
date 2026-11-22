@@ -1823,8 +1823,8 @@ class PathToolSelectionTest
                     drag(tool, pivot, view.worldToView(60, 80));
                     assertEquals(new java.awt.geom.Point2D.Double(60, 80), tool.transformPivotWorld());
 
-                    // scale: top left corner halfway towards the pivot
-                    var corner = viewHandle(tool, view, "corner0");
+                    // scale: the corner arrow halfway towards the pivot
+                    var corner = viewHandle(tool, view, "scale");
                     assertEquals(PathTool.HitKind.TRANSFORM_SCALE, tool.hitTest(corner).kind());
                     Point pivotView = view.worldToView(60, 80);
                     // mid drag the box fits the scaled nodes as tightly as at rest (the padding
@@ -1840,7 +1840,7 @@ class PathToolSelectionTest
                     assertNodes(dimension, 60, 60, 72, 60, 30, 70, 60, 80, 70);
                     assertEquals(-90, tool.transformBoxAngle(), 1e-9, "scaling keeps the box angle");
 
-                    // move: the handle below the box; the placed pivot moves along
+                    // move: the handle left of the box; the placed pivot moves along
                     var move = viewHandle(tool, view, "move");
                     assertEquals(PathTool.HitKind.TRANSFORM_MOVE, tool.hitTest(move).kind());
                     // the pivot travels with the selection while dragging, not only on release
@@ -1948,6 +1948,44 @@ class PathToolSelectionTest
         return new java.awt.geom.Point2D.Double(point.x, point.y);
     }
 
+    @Test
+    void transformEditorStretchesAlongTheBoxAxes() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                dimension.setAttribute(HANDLES,
+                        new ArrayList<>(List.of(40f, 60f, 70f, 4f, 80f, 60f, 70f, 4f, 60f, 70f, 70f, 4f)), true);
+                TestView view = new TestView(dimension);
+                view.setSize(300, 300);
+                PathTool tool = synchronousTool();
+                tool.setView(view);
+                tool.setActive(true);
+                try {
+                    click(view, 40, 60);
+                    click(view, 80, 60, InputEvent.CTRL_DOWN_MASK);
+                    click(view, 60, 70, InputEvent.CTRL_DOWN_MASK);
+                    tool.setEditMode(PathTool.EditMode.TRANSFORM);
+                    // pivot: centre of the box around (40..80, 60..70) = (60, 65)
+                    var stretchX = viewHandle(tool, view, "scaleX");
+                    assertEquals(PathTool.HitKind.TRANSFORM_SCALE, tool.hitTest(stretchX).kind());
+                    Point pivot = view.worldToView(60, 65);
+                    drag(tool, stretchX, new Point(pivot.x + 2 * (stretchX.x - pivot.x), stretchX.y + 30));
+                    assertNodes(dimension, 20, 60, 70, 100, 60, 70, 60, 70, 70); // only x doubled
+                    assertEquals("Transform: 3 nodes", tool.viewportHeader());
+
+                    var stretchY = viewHandle(tool, view, "scaleY");
+                    assertEquals(PathTool.HitKind.TRANSFORM_SCALE, tool.hitTest(stretchY).kind());
+                    drag(tool, stretchY, new Point(stretchY.x - 40, pivot.y + 2 * (stretchY.y - pivot.y)));
+                    assertNodes(dimension, 20, 55, 70, 100, 55, 70, 60, 75, 70); // only y doubled
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
     /** A transform handle of the current selection, in view coordinates. */
     private static Point viewHandle(PathTool tool, TestView view, String which) {
         var nodes = new ArrayList<java.awt.geom.Point2D.Double>();
@@ -1962,7 +2000,10 @@ class PathToolSelectionTest
             case "move" -> tool.selectedNodes().size() < 2
                     ? PathTransformBox.singleMoveHandle(box)
                     : PathTransformBox.moveHandle(box);
-            default -> PathTransformBox.corner(box, Integer.parseInt(which.substring("corner".length())));
+            case "scale" -> PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_UNIFORM);
+            case "scaleX" -> PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_X);
+            case "scaleY" -> PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_Y);
+            default -> throw new IllegalArgumentException(which);
         }, null);
         return new Point((int) Math.round(handle.getX()), (int) Math.round(handle.getY()));
     }
