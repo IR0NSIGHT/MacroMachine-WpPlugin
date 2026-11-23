@@ -126,7 +126,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     "Toggle all overlays; the arrow lists each part with toggle / Only / All but buttons"),
             new HelpItem("Only downhill", "Restrict path to horizontal or downhill movement"),
             new HelpItem("Snap to terrain", "Force path to follow terrain height"),
-            new HelpItem("Set paint", "Apply selected paint along the path"),
+            new HelpItem("Set paint", "Paint the road with the chosen output (terrain, layer, ...) and value"),
             new HelpItem("Set water", "Fill water up to the path height; higher water stays"),
             new HelpItem("Flatten road / Carve river bed", "Level the ground under a road / dig a bed under a river"),
             new HelpItem("Curve strength", "-1 to 2, 0 = straight lines"),
@@ -153,6 +153,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     /** Apply as paint: its settings and its paint, stored like the river's. */
     private static final AttributeKey<ArrayList<Float>> PAINT_SETTINGS_KEY = new AttributeKey<>(
             "PATHTOOL-PAINT-SETTINGS", new ArrayList<Float>());
+    private static final AttributeKey<ArrayList<Object>> ROAD_PAINTS_KEY = new AttributeKey<>("PATHTOOL-ROAD-PAINTS",
+            new ArrayList<Object>());
     private static final AttributeKey<ArrayList<Object>> PAINT_PAINTS_KEY = new AttributeKey<>("PATHTOOL-PAINT-PAINTS",
             new ArrayList<Object>());
 
@@ -312,7 +314,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JCheckBox onlyDownCheckbox;
     private JCheckBox minCheckbox;
     private JCheckBox fixHeightCheckbox;
-    private JCheckBox usePaintCheckbox;
+    /** Road only: "Set paint" with an action output and its value. */
+    private OutputPaintRow roadPaintRow;
     private JSpinner limitSlopeSpinner;
     private JSpinner handleFactorSpinner;
     private JSpinner transitionMultiSpinner;
@@ -4348,15 +4351,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             pathSettingsPanel.add(minCheckbox);
         }
         {
-            usePaintCheckbox = new JCheckBox("usePaintCheckbox");
-            usePaintCheckbox.setSelected(true);
-            usePaintCheckbox.setToolTipText("set currently selected paint along the path");
-            usePaintCheckbox.addActionListener(l -> {
-                this.usePaint = usePaintCheckbox.isSelected();
+            roadPaintRow = new OutputPaintRow("Set paint",
+                    "Paints the road (inside the path radius) with this output and value", this::refreshOutputs);
+            roadPaintRow.set(OutputPaint.PATH);
+            roadPaintRow.onChange(() -> {
+                usePaint = roadPaintRow.get().enabled();
                 settingChanged();
             });
-            this.usePaint = usePaintCheckbox.isSelected();
-            pathSettingsPanel.add(usePaintCheckbox);
+            usePaint = roadPaintRow.get().enabled();
+            pathSettingsPanel.add(roadPaintRow);
         }
         {
             setWaterCheckbox = new JCheckBox("Set water", waterMode != WaterMode.DONT_SET_WATER);
@@ -4600,7 +4603,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     : settingsKind == SettingsKind.RIVER ? TerrainMode.CARVE : TerrainMode.FLATTEN;
             onlyDownCheckbox.setSelected(onlyDown);
             minCheckbox.setSelected(snapToTerrain);
-            usePaintCheckbox.setSelected(usePaint);
             setWaterCheckbox.setSelected(waterMode != WaterMode.DONT_SET_WATER);
             flattenRoadCheckbox.setSelected(terrainMode == TerrainMode.FLATTEN);
             carveRiverCheckbox.setSelected(terrainMode == TerrainMode.CARVE);
@@ -4611,6 +4613,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             riverbedPaintRow.set(settings.riverbed());
             riverTransitionPaintRow.set(settings.riverTransition());
             pathPaintRow.set(settings.paint());
+            roadPaintRow.set(new OutputPaint(usePaint, settings.paint().output(), settings.paint().value()));
         } finally {
             loadingSettings = false;
         }
@@ -4623,7 +4626,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return new ApplySettings(onlyDown, snapToTerrain, usePaint, waterMode != WaterMode.DONT_SET_WATER,
                 terrainMode != TerrainMode.DONT_CHANGE, ((Number) transitionMultiSpinner.getValue()).floatValue(),
                 slopeLimit, profilesDropdown.getSelectedIndex(), riverbedPaintRow.get(), riverTransitionPaintRow.get(),
-                pathPaintRow.get());
+                settingsKind == SettingsKind.ROAD ? roadPaintRow.get() : pathPaintRow.get());
     }
 
     private static AttributeKey<ArrayList<Float>> settingsKey(SettingsKind kind) {
@@ -4634,10 +4637,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         };
     }
 
-    /** Where the paints of {@code kind} are stored (none for a road). */
+    /** Where the paints of {@code kind} are stored. */
     private static AttributeKey<ArrayList<Object>> paintsKey(SettingsKind kind) {
         return switch (kind) {
-            case ROAD -> null;
+            case ROAD -> ROAD_PAINTS_KEY;
             case RIVER -> RIVER_PAINTS_KEY;
             case PAINT -> PAINT_PAINTS_KEY;
         };
@@ -4705,7 +4708,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private void updateCheckboxTexts() {
         onlyDownCheckbox.setText("Only downhill");
         fixHeightCheckbox.setText("Fix height to: " + getFixHeight());
-        usePaintCheckbox.setText("Set paint");
     }
 
     @Override
@@ -4765,7 +4767,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             row.setVisible(kind == SettingsKind.ROAD);
         flattenRoadCheckbox.setVisible(kind == SettingsKind.ROAD);
         carveRiverCheckbox.setVisible(kind == SettingsKind.RIVER);
-        usePaintCheckbox.setVisible(kind == SettingsKind.ROAD);
+        roadPaintRow.setVisible(kind == SettingsKind.ROAD);
         onlyDownCheckbox.setVisible(kind == SettingsKind.RIVER);
         setWaterCheckbox.setVisible(kind == SettingsKind.RIVER);
         riverbedPaintRow.setVisible(kind == SettingsKind.RIVER);
@@ -5199,6 +5201,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                         paint.output().prepareForDimension(dimension);
             if (paintPath)
                 pathPaint.output().prepareForDimension(dimension);
+            var roadPaint = roadPaintRow.get();
+            boolean paintRoad = !onlyPreview && settingsKind == SettingsKind.ROAD && roadPaint.enabled()
+                    && roadPaint.output() != null;
+            if (paintRoad)
+                roadPaint.output().prepareForDimension(dimension);
             heightInfoTiles.forEach(heightInfoTile -> {
                 if (heightInfoTile == null)
                     return;
@@ -5224,9 +5231,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     var tilePos = new Point3i(wpTile.getX(), wpTile.getY(), 0);
                     PathToolBackend.writeOutputToDimension(paintOutputMap.get(tilePos), waterHeightMap.get(tilePos),
                             dimension, pathPaint.output(), pathPaint.value(), true);
-                } else if (!onlyPreview && usePaint && getPaint() != null) {
-                    var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
-                    PathToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());
+                } else if (paintRoad) {
+                    var tilePos = new Point3i(wpTile.getX(), wpTile.getY(), 0);
+                    PathToolBackend.writeOutputToDimension(paintOutputMap.get(tilePos), waterHeightMap.get(tilePos),
+                            dimension, roadPaint.output(), roadPaint.value(), true);
                 }
                 if (onlyPreview) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));

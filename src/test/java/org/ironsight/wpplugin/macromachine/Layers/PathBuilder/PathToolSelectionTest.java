@@ -2175,6 +2175,8 @@ class PathToolSelectionTest
                     dimension.setHeightAt(40, 20, 90f);
                     tool.applyButton().doClick();
                     assertNotEquals(90f, dimension.getHeightAt(40, 20), "terrain flattened along the road");
+                    assertEquals(org.pepsoft.worldpainter.Terrain.GRAVEL, dimension.getTerrainAt(40, 20),
+                            "road painted with its paint");
 
                     // a river paints its bed and its transition with their outputs
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
