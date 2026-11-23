@@ -69,7 +69,11 @@ ad hoc.
    children, so it works as the panel background) and includes the 12 px gap
    to the next group in its bottom inset.
 2. **Build the content** (rows as `FlowLayout(LEFT)` panels with `JLabel` +
-   control, checkboxes, etc.), then call `DialogStyle.apply(content)` once it
+   control, checkboxes, etc.; a row that can get wider than the dialog –
+   pickers with names of any length – uses `GridBagLayout` with the last
+   field taking the rest of the width (`weightx 1`, `fill HORIZONTAL`, a small
+   minimum width) instead: the dialog tracks the viewport width, so a
+   `FlowLayout` row would wrap onto a second line that is cut off), then call `DialogStyle.apply(content)` once it
    is complete. It walks the tree:
    - `JPanel` → transparent, white foreground
    - `JLabel` → white, control font
@@ -127,6 +131,10 @@ ad hoc.
   must not `revalidate()` synchronously inside `setBounds` (lost during
   layout) – `invokeLater(this::revalidate)`; the dialog validates twice before
   fitting its size.
-- Not covered yet (stay in WorldPainter's look): tooltips (global
-  `UIManager` only – would need component subclasses overriding
-  `createToolTip`) and dialogs opened by shared pickers.
+- Tooltips: the tooltip *window* is WorldPainter's (dark grey), its default
+  text black – unreadable. `apply` turns every tooltip into HTML carrying its
+  own colours (`darkTooltip`: white on `#2B2B2B`, padded), and a
+  `"ToolTipText"` property listener converts tooltips set later (dynamic
+  status tooltips). Tests should check tooltips with `contains`, not equality.
+- Not covered yet (stay in WorldPainter's look): dialogs opened by shared
+  pickers.

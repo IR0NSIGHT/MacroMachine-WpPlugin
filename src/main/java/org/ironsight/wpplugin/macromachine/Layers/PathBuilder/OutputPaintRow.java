@@ -1,6 +1,8 @@
 package org.ironsight.wpplugin.macromachine.Layers.PathBuilder;
 
-import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.util.Arrays;
 import java.util.Collection;
 import javax.swing.*;
@@ -35,7 +37,9 @@ class OutputPaintRow extends JPanel
      * output list for the current world).
      */
     OutputPaintRow(String text, String tooltip, Runnable beforePick) {
-        super(new FlowLayout(FlowLayout.LEFT));
+        // one line, never wrapping: the value dropdown takes the rest of the width
+        // and shrinks when it is short (a wrapped line would be cut off)
+        super(new GridBagLayout());
         enabled = new JCheckBox(text);
         enabled.setToolTipText(tooltip);
         enabled.addActionListener(event -> changed());
@@ -63,9 +67,22 @@ class OutputPaintRow extends JPanel
                 ? empty.getListCellRendererComponent(list, "", index, selected, focus)
                 : renderer.getListCellRendererComponent(list, value, index, selected, focus));
         values.addActionListener(event -> changed());
-        add(enabled);
-        add(outputPicker);
-        add(values);
+        values.setMinimumSize(new java.awt.Dimension(60, values.getPreferredSize().height));
+        add(enabled, cell(0, 0));
+        add(outputPicker, cell(1, 8));
+        var fill = cell(2, 8);
+        fill.weightx = 1;
+        fill.fill = GridBagConstraints.HORIZONTAL;
+        add(values, fill);
+    }
+
+    private static GridBagConstraints cell(int column, int left) {
+        var cell = new GridBagConstraints();
+        cell.gridx = column;
+        cell.gridy = 0;
+        cell.anchor = GridBagConstraints.WEST;
+        cell.insets = new Insets(4, left, 4, 0);
+        return cell;
     }
 
     /**
@@ -105,7 +122,7 @@ class OutputPaintRow extends JPanel
         labelOnly = true;
         enabled.setSelected(true);
         enabled.setVisible(false);
-        add(new JLabel(enabled.getText()), 0);
+        add(new JLabel(enabled.getText()), cell(0, 0), 0); // the hidden checkbox's cell
     }
 
     void onChange(Runnable onChange) {

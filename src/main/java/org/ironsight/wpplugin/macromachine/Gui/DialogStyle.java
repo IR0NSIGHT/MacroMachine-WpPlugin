@@ -62,6 +62,8 @@ public final class DialogStyle
     }
 
     private static void style(Component component) {
+        if (component instanceof JComponent c)
+            darkTooltip(c);
         if (component instanceof IoSelectLabel picker) {
             outputPicker(picker);
             return; // its content is the shared renderer's, restyled there
@@ -206,6 +208,45 @@ public final class DialogStyle
         } finally {
             g.dispose();
         }
+    }
+
+    // ---- tooltips
+
+    /** Marks tooltip text already in the dialog look. */
+    private static final String TOOLTIP_MARK = "<!--dialog-->";
+
+    /**
+     * The tooltip window is WorldPainter's (its look and feel paints it; only
+     * {@code UIManager} could change it, for all of WorldPainter): the text brings
+     * its own colours instead – white on the raised surface, padded – so it reads
+     * on whatever the tooltip window paints. Tooltips set later are converted too.
+     */
+    public static void darkTooltip(JComponent component) {
+        component.setToolTipText(tooltipHtml(component.getToolTipText()));
+        if (!Boolean.TRUE.equals(component.getClientProperty(TOOLTIP_MARK))) {
+            component.putClientProperty(TOOLTIP_MARK, Boolean.TRUE);
+            component.addPropertyChangeListener(JComponent.TOOL_TIP_TEXT_KEY, event -> {
+                var text = (String) event.getNewValue();
+                var html = tooltipHtml(text);
+                if (text != null && !text.equals(html))
+                    component.setToolTipText(html);
+            });
+        }
+    }
+
+    static String tooltipHtml(String text) {
+        if (text == null || text.isEmpty() || text.contains(TOOLTIP_MARK))
+            return text;
+        String body;
+        if (text.regionMatches(true, 0, "<html>", 0, 6)) {
+            body = text.substring(6);
+            int end = body.toLowerCase(java.util.Locale.ROOT).lastIndexOf("</html>");
+            if (end >= 0)
+                body = body.substring(0, end);
+        } else
+            body = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+        return "<html>" + TOOLTIP_MARK + "<div style='background:#2B2B2B;color:#FFFFFF;padding:4px 6px;"
+                + "font-family:" + controlFont().getFamily() + ";font-size:11px'>" + body + "</div></html>";
     }
 
     // ---- spinners

@@ -2160,7 +2160,7 @@ class PathToolSelectionTest
                     rising.set(6, rising.get(2) + 4); // node 2 four blocks above node 1
                     dimension.setAttribute(HANDLES, rising, true);
                     tool.updateDownhillStatus();
-                    assertTrue(status.getToolTipText().startsWith("Node 2 is 4 blocks higher than node 1"),
+                    assertTrue(status.getToolTipText().contains("Node 2 is 4 blocks higher than node 1"),
                             status.getToolTipText());
                     dimension.setAttribute(HANDLES, level, true);
                     tool.updateDownhillStatus();
@@ -2179,6 +2179,16 @@ class PathToolSelectionTest
                     assertTrue(checkbox(tool, "Flatten road").isSelected(), "road preset flattens");
                     assertEquals("Road", settingGroup(tool, "Flatten road"));
                     assertEquals("Paint path", settingGroup(tool, "Set paint"));
+                    // a narrow dialog never wraps the paint row: the value dropdown stays
+                    // on the line, shrunk to the width left
+                    var roadPaint = settingComponent(tool.pathSettingsPanel(), "Set paint").getParent();
+                    var narrow = tool.pathSettingsDialog().getSize();
+                    tool.pathSettingsDialog().setSize(330, narrow.height);
+                    tool.pathSettingsDialog().validate();
+                    var dropdown = ((OutputPaintRow) roadPaint).valueDropdown().getBounds();
+                    assertTrue(dropdown.width > 0 && dropdown.getMaxX() <= roadPaint.getWidth(), dropdown.toString());
+                    assertTrue(dropdown.getMaxY() <= roadPaint.getHeight(), "on the row's one line: " + dropdown);
+                    tool.pathSettingsDialog().setSize(narrow);
                     // the road's cross section: level in its paint across a hillside
                     var roadColumns = tool.crossSectionView().getColumns();
                     var roadMiddle = roadColumns.get(roadColumns.size() / 2);
