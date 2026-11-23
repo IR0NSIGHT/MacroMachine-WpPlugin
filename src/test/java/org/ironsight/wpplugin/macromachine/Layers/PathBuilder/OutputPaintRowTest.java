@@ -6,6 +6,7 @@ import javax.swing.SwingUtilities;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.ActionFilterIO;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.BitLayerBinarySpraypaintApplicator;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IntermediateValueIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.StonePaletteApplicator;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainProvider;
 import org.junit.jupiter.api.Test;
 import org.pepsoft.worldpainter.layers.Frost;
@@ -17,6 +18,7 @@ class OutputPaintRowTest
         assertTrue(OutputPaintRow.paintable(new TerrainProvider()));
         assertFalse(OutputPaintRow.paintable(new ActionFilterIO()), "the action filter only steers actions");
         assertFalse(OutputPaintRow.paintable(new IntermediateValueIO()), "intermediate values only steer actions");
+        assertFalse(OutputPaintRow.paintable(new StonePaletteApplicator()), "no stone palette");
     }
 
     @Test

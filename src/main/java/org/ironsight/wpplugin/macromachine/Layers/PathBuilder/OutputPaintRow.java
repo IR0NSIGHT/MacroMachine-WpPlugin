@@ -12,6 +12,7 @@ import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingVal
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IMappingValueProvider;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.InputOutputProvider;
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.IntermediateValueIO;
+import org.ironsight.wpplugin.macromachine.operations.ValueProviders.StonePaletteApplicator;
 
 /**
  * "[x] Paint riverbed with [output] [value]": a checkbox, the output picker of
@@ -67,8 +68,8 @@ class OutputPaintRow extends JPanel
     }
 
     /**
-     * The action outputs that write into the world: no action filter, no
-     * intermediate value (those only steer other actions).
+     * The action outputs a path paints with: no action filter, no intermediate
+     * value (those only steer other actions), no stone palette.
      */
     static IMappingValueProvider paintableOutputs() {
         var all = InputOutputProvider.INSTANCE.asOutputProvider();
@@ -91,7 +92,8 @@ class OutputPaintRow extends JPanel
     }
 
     static boolean paintable(IMappingValue output) {
-        return !output.isVirtual() && !(output instanceof IntermediateValueIO);
+        return !output.isVirtual() && !(output instanceof IntermediateValueIO)
+                && !(output instanceof StonePaletteApplicator);
     }
 
     void onChange(Runnable onChange) {
