@@ -2136,6 +2136,16 @@ class PathToolSelectionTest
                     assertEquals(PathTool.CROSS_SECTION_GRASS, bank.surface());
                     assertEquals(riverWater + PathTool.SECTION_BANK, section.maxHeight());
                     assertEquals(middle.terrainHeight(), section.minHeight());
+                    // a wide transition never widens the dialog: no horizontal scroll bar
+                    var scroll = (javax.swing.JScrollPane) SwingUtilities
+                            .getAncestorOfClass(javax.swing.JScrollPane.class, tool.pathSettingsPanel());
+                    assertEquals(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER,
+                            scroll.getHorizontalScrollBarPolicy());
+                    int before = tool.pathSettingsDialog().getPreferredSize().width;
+                    settingSpinner(tool, "Transition multiplier").setValue(20d);
+                    tool.pathSettingsDialog().validate();
+                    assertEquals(before, tool.pathSettingsDialog().getPreferredSize().width);
+                    settingSpinner(tool, "Transition multiplier").setValue(5d);
                     // behind "Only downhill": do the nodes already run downhill?
                     var status = tool.downhillStatus();
                     assertTrue(status.getParent().isVisible(), "shown with the river's only downhill");

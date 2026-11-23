@@ -33,7 +33,8 @@ class CrossSectionViewTest
         assertEquals(58, view.minHeight());
         var size = view.getPreferredSize();
         assertEquals((64 - 58 + 3) * BLOCK, size.height, "a block of sky above, one of ground below");
-        assertEquals(CrossSectionView.LABEL_WIDTH + 3 * BLOCK, size.width);
+        assertEquals(CrossSectionView.LABEL_WIDTH + CrossSectionView.PREFERRED_COLUMNS * BLOCK, size.width,
+                "the width does not follow the columns: the container sets it");
         assertTrue(new CrossSectionView.Column(60, 62, SAND).hasWater());
         assertFalse(new CrossSectionView.Column(62, 62, SAND).hasWater(), "water no higher than the terrain");
         assertFalse(new CrossSectionView.Column(60, NO_WATER, SAND).hasWater());

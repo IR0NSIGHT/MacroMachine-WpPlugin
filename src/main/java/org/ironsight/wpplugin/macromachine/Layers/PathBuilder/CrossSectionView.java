@@ -17,6 +17,8 @@ public class CrossSectionView extends JPanel
     public static final int BLOCK = 5;
     /** Width of the height labels left of the section. */
     static final int LABEL_WIDTH = 34;
+    /** Columns the preferred width has room for; more are cut off at both ends. */
+    static final int PREFERRED_COLUMNS = 40;
     /** A column without water. */
     public static final int NO_WATER = Integer.MIN_VALUE;
 
@@ -99,7 +101,9 @@ public class CrossSectionView extends JPanel
     public Dimension getPreferredSize() {
         if (isPreferredSizeSet())
             return super.getPreferredSize();
-        return new Dimension(LABEL_WIDTH + columns.size() * BLOCK, Math.max(2 * BLOCK, rows() * BLOCK));
+        // the container sets the width: columns that do not fit are cut off at
+        // both ends, the middle stays shown
+        return new Dimension(LABEL_WIDTH + PREFERRED_COLUMNS * BLOCK, Math.max(2 * BLOCK, rows() * BLOCK));
     }
 
     @Override

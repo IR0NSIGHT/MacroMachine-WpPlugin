@@ -242,7 +242,39 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * Generation settings (presets, modes, slope, transition, Apply): hosted by the
      * path settings dialog.
      */
-    private final JPanel pathSettingsPanel = new JPanel();
+    private final JPanel pathSettingsPanel = new WidthTrackingPanel();
+
+    /**
+     * Scrolls only vertically: the dialog sets the width, wide content (the cross
+     * section) is cut to it instead of growing a horizontal scroll bar.
+     */
+    static class WidthTrackingPanel extends JPanel implements Scrollable
+    {
+        @Override
+        public java.awt.Dimension getPreferredScrollableViewportSize() {
+            return getPreferredSize();
+        }
+
+        @Override
+        public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return 16;
+        }
+
+        @Override
+        public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+            return orientation == SwingConstants.VERTICAL ? visibleRect.height : visibleRect.width;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportWidth() {
+            return true;
+        }
+
+        @Override
+        public boolean getScrollableTracksViewportHeight() {
+            return false;
+        }
+    }
     /**
      * The settings dialog's groups: River / Road, Paint path, Blend with terrain.
      */
@@ -4914,7 +4946,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             footer.add(cancel);
             footer.add(applyButton);
             JPanel content = new JPanel(new BorderLayout());
-            content.add(new JScrollPane(pathSettingsPanel), BorderLayout.CENTER);
+            content.add(new JScrollPane(pathSettingsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
             content.add(footer, BorderLayout.SOUTH);
             pathSettingsDialog.setContentPane(content);
             pathSettingsDialog.pack();
