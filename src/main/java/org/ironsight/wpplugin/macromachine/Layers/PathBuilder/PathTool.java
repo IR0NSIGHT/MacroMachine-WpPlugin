@@ -282,10 +282,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             blendGroup = settingsGroup("Blend with terrain");
 
     private static JPanel settingsGroup(String title) {
-        var group = new JPanel();
-        group.setLayout(new BoxLayout(group, BoxLayout.Y_AXIS));
-        group.setBorder(BorderFactory.createTitledBorder(title));
-        return group;
+        return org.ironsight.wpplugin.macromachine.Gui.DialogStyle.group(title);
     }
 
     private List<JPanel> settingsGroups() {
@@ -4939,7 +4936,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             });
             pathSettingsDialog.setResizable(true);
             // settings scroll; Apply stays bottom right, outside the scrolling part
-            JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
             JButton cancel = new JButton("Cancel");
             cancel.setName("PathTool.Cancel");
             cancel.setToolTipText("Close without applying; settings go back to how they were");
@@ -4950,6 +4947,16 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             content.add(new JScrollPane(pathSettingsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
             content.add(footer, BorderLayout.SOUTH);
+            // the dialog's own dark look, whatever WorldPainter's look and feel is
+            org.ironsight.wpplugin.macromachine.Gui.DialogStyle.apply(content);
+            org.ironsight.wpplugin.macromachine.Gui.DialogStyle.primaryButton(applyButton);
+            content.setBackground(org.ironsight.wpplugin.macromachine.Gui.DialogStyle.WINDOW);
+            content.setOpaque(true);
+            int padding = org.ironsight.wpplugin.macromachine.Gui.DialogStyle.PADDING;
+            pathSettingsPanel.setBorder(new EmptyBorder(padding, padding, 0, padding));
+            footer.setBorder(new EmptyBorder(4, padding - 8, padding - 4, padding - 8)); // FlowLayout adds 8 at the
+                                                                                         // edges
+            crossSectionView.setForeground(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED);
             pathSettingsDialog.setContentPane(content);
             pathSettingsDialog.pack();
             if (owner != null)

@@ -2102,8 +2102,12 @@ class PathToolSelectionTest
                     content.validate();
                     var apply = SwingUtilities.convertRectangle(tool.applyButton().getParent(),
                             tool.applyButton().getBounds(), content);
-                    assertTrue(content.getWidth() - apply.getMaxX() < 16, "Apply at the right edge");
-                    assertTrue(content.getHeight() - apply.getMaxY() < 16, "Apply at the bottom");
+                    assertTrue(content.getWidth()
+                            - apply.getMaxX() <= org.ironsight.wpplugin.macromachine.Gui.DialogStyle.PADDING + 4,
+                            "Apply at the right edge (window padding)");
+                    assertTrue(content.getHeight()
+                            - apply.getMaxY() <= org.ironsight.wpplugin.macromachine.Gui.DialogStyle.PADDING + 4,
+                            "Apply at the bottom (window padding)");
                     assertNull(SwingUtilities.getAncestorOfClass(javax.swing.JScrollPane.class, tool.applyButton()));
                     var cancel = findButton(dialog, "PathTool.Cancel");
                     assertEquals(tool.applyButton().getParent(), cancel.getParent(), "Cancel next to Apply");

@@ -181,7 +181,7 @@ public class CrossSectionView extends JPanel
             }
             // the highest and lowest height, as lines across and labels left
             g.setClip(null);
-            g.setFont(g.getFont().deriveFont(10f));
+            g.setFont(g.getFont().deriveFont(11f));
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             int left = Math.max(LABEL_WIDTH, xOf(0)), right = Math.min(getWidth() - 1, xOf(columns.size()));
             g.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[]{3, 3}, 0));
