@@ -3069,7 +3069,9 @@ class PathToolSelectionTest
                     // Node / Segment menus come first (top left), then the editor button
                     var nodeMenu = findComponent(view, javax.swing.JButton.class, "PathTool.NodeMenu");
                     var segmentMenu = findComponent(view, javax.swing.JButton.class, "PathTool.SegmentMenu");
-                    assertEquals(new Point(8, 8), nodeMenu.getLocation());
+                    // two characters in from the left, clear of WorldPainter's corner icon
+                    int twoChars = 2 * nodeMenu.getFontMetrics(nodeMenu.getFont()).charWidth('M');
+                    assertEquals(new Point(8 + twoChars, 8), nodeMenu.getLocation());
                     assertTrue(segmentMenu.getX() > nodeMenu.getX());
                     assertTrue(button.getX() > segmentMenu.getX() + segmentMenu.getWidth());
                     // dropdown arrows are painted, not font glyphs (U+25BE rendered as an empty

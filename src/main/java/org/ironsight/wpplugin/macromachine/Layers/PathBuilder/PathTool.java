@@ -2774,7 +2774,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             java.awt.Dimension size = modeButton.getPreferredSize();
             // Node / Segment menus first (like Blender's Vertex / Edge menus), then the
             // editor
-            nodeMenuButton.setBounds(8, 8, nodeMenuButton.getPreferredSize().width, size.height);
+            // two characters in from the left: WorldPainter draws an icon in the view's
+            // top left corner that would cover the Node menu
+            var metrics = nodeMenuButton.getFontMetrics(nodeMenuButton.getFont());
+            int left = 8 + 2 * metrics.charWidth('M');
+            nodeMenuButton.setBounds(left, 8, nodeMenuButton.getPreferredSize().width, size.height);
             segmentMenuButton.setBounds(nodeMenuButton.getX() + nodeMenuButton.getWidth() + 4, 8,
                     segmentMenuButton.getPreferredSize().width, size.height);
             pathMenuButton.setBounds(segmentMenuButton.getX() + segmentMenuButton.getWidth() + 4, 8,
