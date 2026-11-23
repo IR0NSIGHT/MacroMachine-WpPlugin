@@ -397,7 +397,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     /** Pixels per block in the river's cross section. */
     static final int SECTION_BLOCK = 5;
     /** How far (blocks) the terrain beside the river lies above its water. */
-    static final int SECTION_BANK = 6;
+    static final int SECTION_BANK = 12;
 
     /**
      * The river cross section's height: bank, deepest carve, the sand bed and one
