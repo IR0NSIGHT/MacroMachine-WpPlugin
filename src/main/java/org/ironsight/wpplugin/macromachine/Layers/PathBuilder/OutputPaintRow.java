@@ -28,6 +28,7 @@ class OutputPaintRow extends JPanel
     private Runnable onChange = () -> {
     };
     private boolean updating;
+    private boolean labelOnly;
 
     /**
      * {@code beforePick} runs on the press that opens the output picker (fills the
@@ -96,6 +97,17 @@ class OutputPaintRow extends JPanel
                 && !(output instanceof StonePaletteApplicator);
     }
 
+    /**
+     * No checkbox: the row always paints, its text becomes a plain label (Apply as
+     * paint).
+     */
+    void labelOnly() {
+        labelOnly = true;
+        enabled.setSelected(true);
+        enabled.setVisible(false);
+        add(new JLabel(enabled.getText()), 0);
+    }
+
     void onChange(Runnable onChange) {
         this.onChange = onChange;
     }
@@ -109,7 +121,7 @@ class OutputPaintRow extends JPanel
     void set(PathTool.OutputPaint paint) {
         updating = true;
         try {
-            enabled.setSelected(paint.enabled());
+            enabled.setSelected(labelOnly || paint.enabled());
             output = paint.output();
             outputPicker.SetSelected(output);
             fillValues(paint.value());

@@ -105,7 +105,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Ctrl + left click / drag",
                     "Toggle node in selection, add box to selection, or move the group"),
             new HelpItem("Node / Segment / Path menus (top left)",
-                    "Node: randomize position, randomize radius, snap to terrain, only downhill. Segment: subdivide. Path: new path, reverse direction, apply as road / river (settings dialog), help. Preview, then Apply (Enter) or Cancel (Esc); type a number for the main value, Tab for the next"),
+                    "Node: randomize position, randomize radius, snap to terrain, only downhill. Segment: subdivide. Path: new path, reverse direction, apply as road / river / paint (settings dialog), help. Preview, then Apply (Enter) or Cancel (Esc); type a number for the main value, Tab for the next"),
             new HelpItem("Editor button (top left)", "Shows the current editor; click to pick another"),
             new HelpItem("Click selected node",
                     "Cycle radius, curve strength, height-above-ground and transform handles"),
@@ -151,6 +151,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      */
     private static final AttributeKey<ArrayList<Object>> RIVER_PAINTS_KEY = new AttributeKey<>("PATHTOOL-RIVER-PAINTS",
             new ArrayList<Object>());
+    /** Apply as paint: its settings and its paint, stored like the river's. */
+    private static final AttributeKey<ArrayList<Float>> PAINT_SETTINGS_KEY = new AttributeKey<>(
+            "PATHTOOL-PAINT-SETTINGS", new ArrayList<Float>());
+    private static final AttributeKey<ArrayList<Object>> PAINT_PAINTS_KEY = new AttributeKey<>("PATHTOOL-PAINT-PAINTS",
+            new ArrayList<Object>());
 
     /**
      * Painting with an action output (a terrain, a layer, ...) at {@code value}, as
@@ -161,6 +166,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 org.pepsoft.worldpainter.Terrain.GRAVEL.ordinal());
         static final OutputPaint RIVER_TRANSITION = new OutputPaint(true, new TerrainProvider(),
                 org.pepsoft.worldpainter.Terrain.SAND.ordinal());
+        static final OutputPaint PATH = new OutputPaint(true, new TerrainProvider(),
+                org.pepsoft.worldpainter.Terrain.GRAVEL.ordinal());
 
         List<Object> toData() {
             return List.of(enabled, output.getProviderType().name(), IoParameter.unwrap(output.getSaveData()), value);
@@ -188,12 +195,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      */
     record ApplySettings(boolean onlyDown, boolean snapToTerrain, boolean usePaint, boolean setWater,
             boolean changeTerrain, float transition, float slopeLimit, int profile, OutputPaint riverbed,
-            OutputPaint riverTransition) {
+            OutputPaint riverTransition, OutputPaint paint) {
         private static final float VERSION = 1;
         static final ApplySettings ROAD = new ApplySettings(false, true, true, false, true, 1f, 4f, 2,
-                OutputPaint.RIVERBED, OutputPaint.RIVER_TRANSITION);
+                OutputPaint.RIVERBED, OutputPaint.RIVER_TRANSITION, OutputPaint.PATH);
         static final ApplySettings RIVER = new ApplySettings(true, true, false, true, true, 5f, 0f, 3,
-                OutputPaint.RIVERBED, OutputPaint.RIVER_TRANSITION);
+                OutputPaint.RIVERBED, OutputPaint.RIVER_TRANSITION, OutputPaint.PATH);
+        /** Only the paint: no heights, no terrain, no water, no transition. */
+        static final ApplySettings PAINT = new ApplySettings(false, false, false, false, false, 0f, 0f, 3,
+                OutputPaint.RIVERBED, OutputPaint.RIVER_TRANSITION, OutputPaint.PATH);
 
         ArrayList<Float> toFloats() {
             return new ArrayList<>(List.of(VERSION, flag(onlyDown), flag(snapToTerrain), flag(usePaint), flag(setWater),
@@ -206,18 +216,20 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 return fallback;
             return new ApplySettings(data.get(1) != 0, data.get(2) != 0, data.get(3) != 0, data.get(4) != 0,
                     data.get(5) != 0, data.get(6), data.get(7), Math.round(data.get(8)), fallback.riverbed(),
-                    fallback.riverTransition());
+                    fallback.riverTransition(), fallback.paint());
         }
 
         ArrayList<Object> paintData() {
             var data = new ArrayList<Object>(riverbed.toData());
             data.addAll(riverTransition.toData());
+            data.addAll(paint.toData());
             return data;
         }
 
         ApplySettings withPaintData(List<Object> data) {
             return new ApplySettings(onlyDown, snapToTerrain, usePaint, setWater, changeTerrain, transition, slopeLimit,
-                    profile, OutputPaint.fromData(data, 0, riverbed), OutputPaint.fromData(data, 4, riverTransition));
+                    profile, OutputPaint.fromData(data, 0, riverbed), OutputPaint.fromData(data, 4, riverTransition),
+                    OutputPaint.fromData(data, 8, paint));
         }
 
         private static float flag(boolean value) {
@@ -318,10 +330,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JCheckBox setWaterCheckbox;
     /** River only: paint the bed / the transition with an action output. */
     private OutputPaintRow riverbedPaintRow, riverTransitionPaintRow;
+    /** Apply as paint: what the path is painted with. */
+    private OutputPaintRow pathPaintRow;
 
     /** Which tool the settings dialog was opened for. */
     enum SettingsKind {
-        ROAD, RIVER
+        ROAD, RIVER, PAINT
     }
 
     /**
@@ -4391,6 +4405,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             riverTransitionPaintRow.set(OutputPaint.RIVER_TRANSITION);
             riverTransitionPaintRow.onChange(this::settingChanged);
             pathSettingsPanel.add(riverTransitionPaintRow);
+
+            pathPaintRow = new OutputPaintRow("Paint with",
+                    "Paints the path (inside its radius) with this output and value", this::refreshOutputs);
+            pathPaintRow.labelOnly(); // Apply as paint always paints
+            pathPaintRow.set(OutputPaint.PATH);
+            pathPaintRow.onChange(this::settingChanged);
+            pathSettingsPanel.add(pathPaintRow);
         }
         {
             fixHeightCheckbox = new JCheckBox("fixHeightCheckbox");
@@ -4568,13 +4589,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         try {
             // a road neither runs only downhill nor sets water (not in its dialog)
             boolean river = settingsKind == SettingsKind.RIVER;
+            // Apply as paint changes no heights, terrain or water and has no transition
+            boolean paintOnly = settingsKind == SettingsKind.PAINT;
             onlyDown = river && settings.onlyDown();
-            snapToTerrain = settings.snapToTerrain();
-            usePaint = settings.usePaint();
+            snapToTerrain = !paintOnly && settings.snapToTerrain();
+            usePaint = !paintOnly && settings.usePaint();
             waterMode = river && settings.setWater()
                     ? WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL
                     : WaterMode.DONT_SET_WATER;
-            terrainMode = !settings.changeTerrain()
+            terrainMode = paintOnly || !settings.changeTerrain()
                     ? TerrainMode.DONT_CHANGE
                     : settingsKind == SettingsKind.RIVER ? TerrainMode.CARVE : TerrainMode.FLATTEN;
             onlyDownCheckbox.setSelected(onlyDown);
@@ -4583,12 +4606,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             setWaterCheckbox.setSelected(waterMode != WaterMode.DONT_SET_WATER);
             flattenRoadCheckbox.setSelected(terrainMode == TerrainMode.FLATTEN);
             carveRiverCheckbox.setSelected(terrainMode == TerrainMode.CARVE);
-            transitionMultiSpinner.setValue((double) settings.transition());
+            transitionMultiSpinner.setValue(paintOnly ? 0d : (double) settings.transition());
             limitSlopeSpinner.setValue((double) settings.slopeLimit());
             if (settings.profile() >= 0 && settings.profile() < profilesDropdown.getItemCount())
                 profilesDropdown.setSelectedIndex(settings.profile());
             riverbedPaintRow.set(settings.riverbed());
             riverTransitionPaintRow.set(settings.riverTransition());
+            pathPaintRow.set(settings.paint());
         } finally {
             loadingSettings = false;
         }
@@ -4600,21 +4624,39 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     ApplySettings currentSettings() {
         return new ApplySettings(onlyDown, snapToTerrain, usePaint, waterMode != WaterMode.DONT_SET_WATER,
                 terrainMode != TerrainMode.DONT_CHANGE, ((Number) transitionMultiSpinner.getValue()).floatValue(),
-                slopeLimit, profilesDropdown.getSelectedIndex(), riverbedPaintRow.get(), riverTransitionPaintRow.get());
+                slopeLimit, profilesDropdown.getSelectedIndex(), riverbedPaintRow.get(), riverTransitionPaintRow.get(),
+                pathPaintRow.get());
     }
 
     private static AttributeKey<ArrayList<Float>> settingsKey(SettingsKind kind) {
-        return kind == SettingsKind.RIVER ? RIVER_SETTINGS_KEY : ROAD_SETTINGS_KEY;
+        return switch (kind) {
+            case ROAD -> ROAD_SETTINGS_KEY;
+            case RIVER -> RIVER_SETTINGS_KEY;
+            case PAINT -> PAINT_SETTINGS_KEY;
+        };
+    }
+
+    /** Where the paints of {@code kind} are stored (none for a road). */
+    private static AttributeKey<ArrayList<Object>> paintsKey(SettingsKind kind) {
+        return switch (kind) {
+            case ROAD -> null;
+            case RIVER -> RIVER_PAINTS_KEY;
+            case PAINT -> PAINT_PAINTS_KEY;
+        };
     }
 
     /** The stored settings of {@code kind} (its preset if none are stored yet). */
     ApplySettings storedSettings(SettingsKind kind) {
-        var fallback = kind == SettingsKind.RIVER ? ApplySettings.RIVER : ApplySettings.ROAD;
+        var fallback = switch (kind) {
+            case ROAD -> ApplySettings.ROAD;
+            case RIVER -> ApplySettings.RIVER;
+            case PAINT -> ApplySettings.PAINT;
+        };
         Dimension dimension = getView() == null ? null : getDimension();
         if (dimension == null)
             return fallback;
         var settings = ApplySettings.fromFloats(dimension.getAttribute(settingsKey(kind)), fallback);
-        return kind == SettingsKind.RIVER ? settings.withPaintData(dimension.getAttribute(RIVER_PAINTS_KEY)) : settings;
+        return paintsKey(kind) == null ? settings : settings.withPaintData(dimension.getAttribute(paintsKey(kind)));
     }
 
     private void storeSettings() {
@@ -4627,10 +4669,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var data = settings.toFloats();
         if (!data.equals(dimension.getAttribute(settingsKey(settingsKind))))
             dimension.setAttribute(settingsKey(settingsKind), data, true);
-        if (settingsKind == SettingsKind.RIVER) {
+        var paintsKey = paintsKey(settingsKind);
+        if (paintsKey != null) {
             var paints = settings.paintData();
-            if (!paintDataEquals(paints, dimension.getAttribute(RIVER_PAINTS_KEY)))
-                dimension.setAttribute(RIVER_PAINTS_KEY, paints, true);
+            if (!paintDataEquals(paints, dimension.getAttribute(paintsKey)))
+                dimension.setAttribute(paintsKey, paints, true);
         }
     }
 
@@ -4716,8 +4759,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         settingsKind = kind;
         settingsAtOpen = storedSettings(kind);
         showSettings(settingsAtOpen);
+        // Apply as paint shows only its paint; road and river start from every row
+        for (var row : pathSettingsPanel.getComponents())
+            row.setVisible(kind != SettingsKind.PAINT);
+        pathPaintRow.setVisible(kind == SettingsKind.PAINT);
         for (var row : roadOnlyRows)
-            row.setVisible(kind != SettingsKind.RIVER);
+            row.setVisible(kind == SettingsKind.ROAD);
         flattenRoadCheckbox.setVisible(kind == SettingsKind.ROAD);
         carveRiverCheckbox.setVisible(kind == SettingsKind.RIVER);
         usePaintCheckbox.setVisible(kind == SettingsKind.ROAD);
@@ -4776,6 +4823,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 () -> openPathSettings("Apply as road", SettingsKind.ROAD)));
         menu.add(operationItem("Apply as river...", "PathTool.Path.ApplyRiver", any, "Place at least two nodes first",
                 () -> openPathSettings("Apply as river", SettingsKind.RIVER)));
+        menu.add(operationItem("Apply as paint...", "PathTool.Path.ApplyPaint", any, "Place at least two nodes first",
+                () -> openPathSettings("Apply as paint", SettingsKind.PAINT)));
         menu.addSeparator();
         menu.add(operationItem("Help...", "PathTool.Help", true, null,
                 () -> new org.ironsight.wpplugin.macromachine.Gui.HelpDialog(null, HELP_TITLE, HELP_EXPLANATION,
@@ -4796,7 +4845,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             PathToolBackend.forcePathOnlyDownhill(path);
         if (fixHeightTo)
             PathToolBackend.forcePathToHeight(path, getFixHeight());
-        if (slopeLimit != 0 && settingsKind != SettingsKind.RIVER)
+        if (slopeLimit != 0 && settingsKind == SettingsKind.ROAD)
             PathToolBackend.enforceSlopeLimit(path, slopeLimit);
     }
 
@@ -5143,10 +5192,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             var riverbed = riverbedPaintRow.get();
             var riverTransition = riverTransitionPaintRow.get();
             boolean paintRiver = !onlyPreview && settingsKind == SettingsKind.RIVER;
+            // Apply as paint: the path itself (inside the radius, like a riverbed)
+            var pathPaint = pathPaintRow.get();
+            boolean paintPath = !onlyPreview && settingsKind == SettingsKind.PAINT && pathPaint.output() != null;
             if (paintRiver)
                 for (var paint : List.of(riverbed, riverTransition))
                     if (paint.enabled() && paint.output() != null)
                         paint.output().prepareForDimension(dimension);
+            if (paintPath)
+                pathPaint.output().prepareForDimension(dimension);
             heightInfoTiles.forEach(heightInfoTile -> {
                 if (heightInfoTile == null)
                     return;
@@ -5168,6 +5222,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     if (riverTransition.enabled() && riverTransition.output() != null)
                         PathToolBackend.writeOutputToDimension(paintOutputMap.get(tilePos), waterHeightMap.get(tilePos),
                                 dimension, riverTransition.output(), riverTransition.value(), false);
+                } else if (paintPath) {
+                    var tilePos = new Point3i(wpTile.getX(), wpTile.getY(), 0);
+                    PathToolBackend.writeOutputToDimension(paintOutputMap.get(tilePos), waterHeightMap.get(tilePos),
+                            dimension, pathPaint.output(), pathPaint.value(), true);
                 } else if (!onlyPreview && usePaint && getPaint() != null) {
                     var paintTile = paintOutputMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writePaintDataToDimension(paintTile, dimension, getPaint());

@@ -2186,6 +2186,30 @@ class PathToolSelectionTest
                         sand = dimension.getTerrainAt(40, y) == org.pepsoft.worldpainter.Terrain.SAND;
                     assertTrue(sand, "transition painted with sand");
 
+                    // Apply as paint: only a paint, no heights, terrain or water change
+                    pathItem(tool, "PathTool.NewPath").doClick();
+                    tool.addNode(20, 70);
+                    tool.addNode(60, 70);
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyPaint").doClick();
+                    assertEquals("Apply as paint", dialog.getTitle());
+                    assertTrue(settingShown(tool, "Paint with"));
+                    for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "Set water",
+                            "Flatten road", "Carve river bed", "Paint riverbed with", "Paint transition with",
+                            "Limit slope to x/16 blocks", "Transition multiplier", "Transition profile"))
+                        assertFalse(settingShown(tool, option), "no " + option + " when painting");
+                    dimension.setHeightAt(40, 70, 77f);
+                    int water = dimension.getWaterLevelAt(40, 70);
+                    assertNotEquals(org.pepsoft.worldpainter.Terrain.GRAVEL, dimension.getTerrainAt(40, 70));
+                    tool.applyButton().doClick();
+                    assertEquals(org.pepsoft.worldpainter.Terrain.GRAVEL, dimension.getTerrainAt(40, 70), "painted");
+                    assertEquals(77f, dimension.getHeightAt(40, 70), "height untouched");
+                    assertEquals(water, dimension.getWaterLevelAt(40, 70), "water untouched");
+                    // a road afterwards still has its own rows
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
+                    assertTrue(settingShown(tool, "Transition multiplier"));
+                    assertFalse(settingShown(tool, "Paint with"));
+                    findButton(dialog, "PathTool.Cancel").doClick();
+
                     // the dialog goes away with the tool
                     tool.setActive(false);
                     assertFalse(dialog.isVisible());
