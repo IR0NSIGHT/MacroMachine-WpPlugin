@@ -17,7 +17,10 @@ public class CrossSectionView extends JPanel
     public static final int BLOCK = 5;
     /** Width of the height labels left of the section. */
     static final int LABEL_WIDTH = 34;
-    /** Columns the preferred width has room for; more are cut off at both ends. */
+    /**
+     * Columns the preferred width has room for at full block size; more shrink the
+     * blocks.
+     */
     static final int PREFERRED_COLUMNS = 40;
     /** A column without water. */
     public static final int NO_WATER = Integer.MIN_VALUE;
@@ -97,13 +100,23 @@ public class CrossSectionView extends JPanel
         return columns.isEmpty() ? 0 : maxHeight() - minHeight() + 3;
     }
 
+    /**
+     * Pixels per block: {@link #BLOCK}, smaller when the columns would not fit the
+     * width; blocks stay square, so the section gets lower instead of cut off.
+     */
+    float block() {
+        int area = getWidth() - LABEL_WIDTH;
+        if (columns.isEmpty() || area <= 0)
+            return BLOCK;
+        return Math.min(BLOCK, area / (float) columns.size());
+    }
+
     @Override
     public Dimension getPreferredSize() {
         if (isPreferredSizeSet())
             return super.getPreferredSize();
-        // the container sets the width: columns that do not fit are cut off at
-        // both ends, the middle stays shown
-        return new Dimension(LABEL_WIDTH + PREFERRED_COLUMNS * BLOCK, Math.max(2 * BLOCK, rows() * BLOCK));
+        // the container sets the width; the height follows the block size it allows
+        return new Dimension(LABEL_WIDTH + PREFERRED_COLUMNS * BLOCK, Math.max(1, Math.round(rows() * block())));
     }
 
     @Override
@@ -116,9 +129,17 @@ public class CrossSectionView extends JPanel
         return new Dimension(LABEL_WIDTH, getPreferredSize().height);
     }
 
+    @Override
+    public void setBounds(int x, int y, int width, int height) {
+        boolean resized = width != getWidth();
+        super.setBounds(x, y, width, height);
+        if (resized)
+            revalidate(); // a new width, a new block size and height
+    }
+
     /** The pixel row of the top of block {@code height}. */
     int rowOf(int height) {
-        return (maxHeight() + 1 - height) * BLOCK;
+        return Math.round((maxHeight() + 1 - height) * block());
     }
 
     /**
@@ -126,8 +147,9 @@ public class CrossSectionView extends JPanel
      * labels.
      */
     int xOf(int index) {
-        int area = getWidth() - LABEL_WIDTH;
-        return LABEL_WIDTH + (area - columns.size() * BLOCK) / 2 + index * BLOCK;
+        float block = block();
+        float area = getWidth() - LABEL_WIDTH;
+        return LABEL_WIDTH + Math.round((area - columns.size() * block) / 2 + index * block);
     }
 
     @Override
@@ -141,30 +163,30 @@ public class CrossSectionView extends JPanel
             g.clipRect(LABEL_WIDTH, 0, getWidth() - LABEL_WIDTH, height);
             for (int i = 0; i < columns.size(); i++) {
                 var column = columns.get(i);
-                int x = xOf(i);
-                int surface = rowOf(column.terrainHeight());
+                int x = xOf(i), width = xOf(i + 1) - x;
+                int surface = rowOf(column.terrainHeight()), below = rowOf(column.terrainHeight() - 1);
                 g.setColor(sky);
-                g.fillRect(x, 0, BLOCK, surface);
+                g.fillRect(x, 0, width, surface);
                 if (column.hasWater()) {
                     int waterRow = rowOf(column.waterHeight());
                     g.setColor(water);
-                    g.fillRect(x, waterRow, BLOCK, surface - waterRow);
+                    g.fillRect(x, waterRow, width, surface - waterRow);
                 }
                 g.setColor(column.surface());
-                g.fillRect(x, surface, BLOCK, BLOCK);
+                g.fillRect(x, surface, width, below - surface);
                 g.setColor(subsurface);
-                g.fillRect(x, surface + BLOCK, BLOCK, height - surface - BLOCK);
+                g.fillRect(x, below, width, height - below);
             }
             // the highest and lowest height, as lines across and labels left
             g.setClip(null);
             g.setFont(g.getFont().deriveFont(10f));
             g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            int left = xOf(0), right = xOf(columns.size());
+            int left = Math.max(LABEL_WIDTH, xOf(0)), right = Math.min(getWidth() - 1, xOf(columns.size()));
             g.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10, new float[]{3, 3}, 0));
             g.setColor(new Color(0, 0, 0, 120));
-            int maxRow = rowOf(maxHeight()), minRow = rowOf(minHeight()) + BLOCK - 1;
-            g.drawLine(Math.max(LABEL_WIDTH, left), maxRow, right, maxRow);
-            g.drawLine(Math.max(LABEL_WIDTH, left), minRow, right, minRow);
+            int maxRow = rowOf(maxHeight()), minRow = rowOf(minHeight() - 1) - 1;
+            g.drawLine(left, maxRow, right, maxRow);
+            g.drawLine(left, minRow, right, minRow);
             g.setColor(getForeground());
             var metrics = g.getFontMetrics();
             g.drawString(String.valueOf(maxHeight()), 2,

@@ -60,4 +60,19 @@ class CrossSectionViewTest
         assertEquals(GRASS.getRGB(), image.getRGB(bank, view.rowOf(64) + 2));
         assertEquals(DIRT.getRGB(), image.getRGB(bank, view.rowOf(60) + 2));
     }
+
+    @Test
+    void tooManyColumnsShrinkTheBlocksInsteadOfCuttingThemOff() {
+        var view = new CrossSectionView();
+        var columns = new java.util.ArrayList<CrossSectionView.Column>();
+        for (int i = 0; i < 200; i++)
+            columns.add(new CrossSectionView.Column(60 + i % 10, NO_WATER, GRASS));
+        view.setColumns(columns);
+        int fullHeight = (69 - 60 + 3) * BLOCK;
+        view.setSize(CrossSectionView.LABEL_WIDTH + 100, fullHeight);
+        assertEquals(0.5f, view.block(), 1e-6f, "200 columns in 100 pixels");
+        assertEquals(CrossSectionView.LABEL_WIDTH, view.xOf(0), "all columns shown");
+        assertEquals(view.getWidth(), view.xOf(200));
+        assertEquals(fullHeight / 10, view.getPreferredSize().height, "lower by the same factor");
+    }
 }
