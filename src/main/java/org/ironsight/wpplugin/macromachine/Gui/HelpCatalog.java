@@ -78,7 +78,7 @@ public enum HelpCatalog {
                                     new HelpItem("Snap to terrain", "Force path to follow terrain height"),
                                     new HelpItem("Set paint",
                                             "Paint the road with the chosen output (terrain, layer, ...) and value"),
-                                    new HelpItem("Set water", "Fill water up to the path height; higher water stays"),
+                                    new HelpItem("Set water", "Set the water level to the path height"),
                                     new HelpItem("Flatten road / Carve river bed",
                                             "Level the ground under a road / dig a bed under a river"),
                                     new HelpItem("Curve strength", "-1 to 2, 0 = straight lines"),

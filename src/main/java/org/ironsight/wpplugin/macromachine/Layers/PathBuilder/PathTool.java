@@ -127,7 +127,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Only downhill", "Restrict path to horizontal or downhill movement"),
             new HelpItem("Snap to terrain", "Force path to follow terrain height"),
             new HelpItem("Set paint", "Paint the road with the chosen output (terrain, layer, ...) and value"),
-            new HelpItem("Set water", "Fill water up to the path height; higher water stays"),
+            new HelpItem("Set water", "Set the water level to the path height"),
             new HelpItem("Flatten road / Carve river bed", "Level the ground under a road / dig a bed under a river"),
             new HelpItem("Curve strength", "-1 to 2, 0 = straight lines"),
             new HelpItem("Limit slope", "Max vertical blocks per 16 horizontal; 0 = unlimited"),
@@ -349,7 +349,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * River only: carve a bed below the water (else leave the ground untouched).
      */
     private JCheckBox carveRiverCheckbox;
-    /** Set water, never below an existing water level (else leave water alone). */
+    /** Set the water level to the path height (else leave water alone). */
     private JCheckBox setWaterCheckbox;
     /** River only: paint the bed / the transition with an action output. */
     private OutputPaintRow riverbedPaintRow, riverTransitionPaintRow;
@@ -4392,12 +4392,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         {
             setWaterCheckbox = new JCheckBox("Set water", waterMode != WaterMode.DONT_SET_WATER);
-            setWaterCheckbox.setToolTipText(
-                    "Fills water up to the path height inside the path radius; water that is already higher stays as it is");
+            setWaterCheckbox.setToolTipText("Sets the water level to the path height inside the path radius");
             setWaterCheckbox.addActionListener(l -> {
-                waterMode = setWaterCheckbox.isSelected()
-                        ? WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL
-                        : WaterMode.DONT_SET_WATER;
+                waterMode = setWaterCheckbox.isSelected() ? WaterMode.SET_WATER : WaterMode.DONT_SET_WATER;
                 settingChanged();
             });
             pathSettingsPanel.add(setWaterCheckbox);
@@ -4640,9 +4637,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             onlyDown = river && settings.onlyDown();
             snapToTerrain = !paintOnly && settings.snapToTerrain();
             usePaint = !paintOnly && settings.usePaint();
-            waterMode = river && settings.setWater()
-                    ? WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL
-                    : WaterMode.DONT_SET_WATER;
+            waterMode = river && settings.setWater() ? WaterMode.SET_WATER : WaterMode.DONT_SET_WATER;
             terrainMode = paintOnly || !settings.changeTerrain()
                     ? TerrainMode.DONT_CHANGE
                     : settingsKind == SettingsKind.RIVER ? TerrainMode.CARVE : TerrainMode.FLATTEN;

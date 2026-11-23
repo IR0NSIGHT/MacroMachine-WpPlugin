@@ -2201,7 +2201,9 @@ class PathToolSelectionTest
                     // a river paints its bed and its transition with their outputs
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
                     checkbox(tool, "Paint riverbed with").doClick(); // back on: gravel
+                    dimension.setWaterLevelAt(40, 20, 250);
                     tool.applyButton().doClick();
+                    assertTrue(dimension.getWaterLevelAt(40, 20) < 250, "set water replaces higher water");
                     assertEquals(org.pepsoft.worldpainter.Terrain.GRAVEL, dimension.getTerrainAt(40, 20), "riverbed");
                     boolean sand = false;
                     for (int y = 21; y < 100 && !sand; y++)
