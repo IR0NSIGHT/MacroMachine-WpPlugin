@@ -2116,6 +2116,20 @@ class PathToolSelectionTest
                             "Transition profile"))
                         assertTrue(settingShown(tool, option), option + " for a river");
                     assertFalse(settingShown(tool, "Set paint"), "a river paints bed and transition instead");
+                    // behind "Only downhill": do the nodes already run downhill?
+                    var status = tool.downhillStatus();
+                    assertTrue(status.getParent().isVisible(), "shown with the river's only downhill");
+                    assertEquals(-1, PathTool.firstRisingNode(tool.getCurrentPath()), "two nodes at ground level");
+                    assertTrue(status.getToolTipText().contains("already run only downhill"), status.getToolTipText());
+                    var level = new ArrayList<>(dimension.getAttribute(HANDLES));
+                    var rising = new ArrayList<>(level);
+                    rising.set(6, rising.get(2) + 4); // node 2 four blocks above node 1
+                    dimension.setAttribute(HANDLES, rising, true);
+                    tool.updateDownhillStatus();
+                    assertTrue(status.getToolTipText().startsWith("Node 2 is 4 blocks higher than node 1"),
+                            status.getToolTipText());
+                    dimension.setAttribute(HANDLES, level, true);
+                    tool.updateDownhillStatus();
                     assertTrue(checkbox(tool, "Carve river bed").isSelected(), "river preset carves");
                     assertTrue(checkbox(tool, "Set water").isSelected(), "river preset sets water");
                     assertFalse(settingShown(tool, "Flatten road"), "no road option for a river");

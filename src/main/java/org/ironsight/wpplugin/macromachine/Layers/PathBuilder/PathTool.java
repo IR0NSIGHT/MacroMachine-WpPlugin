@@ -312,6 +312,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private float slopeLimit = 0;
     private float handleStrength = 0f;
     private JCheckBox onlyDownCheckbox;
+    /** "Only downhill" and, behind it, whether the nodes already run downhill. */
+    private JPanel onlyDownRow;
+    private JLabel downhillStatus;
+    static final Color STATUS_OK = new Color(46, 160, 67);
+    static final Color STATUS_BAD = new Color(207, 34, 46);
     private JCheckBox minCheckbox;
     private JCheckBox fixHeightCheckbox;
     /** Road only: "Set paint" with an action output and its value. */
@@ -4338,7 +4343,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 settingChanged();
             });
             this.onlyDown = onlyDownCheckbox.isSelected();
-            pathSettingsPanel.add(onlyDownCheckbox);
+            downhillStatus = new JLabel();
+            downhillStatus.setName("PathTool.DownhillStatus");
+            downhillStatus.setBorder(new EmptyBorder(0, 4, 0, 0));
+            onlyDownRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+            onlyDownRow.add(onlyDownCheckbox);
+            onlyDownRow.add(downhillStatus);
+            pathSettingsPanel.add(onlyDownRow);
         }
         {
             minCheckbox = new JCheckBox("snap to terrain");
@@ -4768,7 +4779,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         flattenRoadCheckbox.setVisible(kind == SettingsKind.ROAD);
         carveRiverCheckbox.setVisible(kind == SettingsKind.RIVER);
         roadPaintRow.setVisible(kind == SettingsKind.ROAD);
-        onlyDownCheckbox.setVisible(kind == SettingsKind.RIVER);
+        onlyDownRow.setVisible(kind == SettingsKind.RIVER);
+        updateDownhillStatus();
         setWaterCheckbox.setVisible(kind == SettingsKind.RIVER);
         riverbedPaintRow.setVisible(kind == SettingsKind.RIVER);
         riverTransitionPaintRow.setVisible(kind == SettingsKind.RIVER);
@@ -4875,6 +4887,47 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return pathHandles;
     }
 
+    /**
+     * The first node (index) higher than the node before it, or -1 if the nodes
+     * only run downhill or level.
+     */
+    static int firstRisingNode(List<Point4f> nodes) {
+        for (int i = 1; i < nodes.size(); i++)
+            if (nodes.get(i).z > nodes.get(i - 1).z)
+                return i;
+        return -1;
+    }
+
+    /** Green check or red x behind "Only downhill": do the nodes already comply? */
+    void updateDownhillStatus() {
+        if (downhillStatus == null)
+            return;
+        var nodes = getCurrentPath();
+        if (nodes.size() < 2) {
+            downhillStatus.setIcon(null);
+            downhillStatus.setToolTipText(null);
+            return;
+        }
+        int rising = firstRisingNode(nodes);
+        if (rising < 0) {
+            downhillStatus.setIcon(LucideIcons.icon("check", 16, STATUS_OK));
+            downhillStatus.setToolTipText(
+                    "The nodes already run only downhill (or level): " + "'Only downhill' changes nothing.");
+        } else {
+            float rise = nodes.get(rising).z - nodes.get(rising - 1).z;
+            downhillStatus.setIcon(LucideIcons.icon("x", 16, STATUS_BAD));
+            downhillStatus.setToolTipText(String.format(Locale.ROOT,
+                    "Node %d is %s higher than node %d: the nodes run uphill there. "
+                            + "'Only downhill' lowers the river so it never flows uphill.",
+                    rising + 1, rise == Math.round(rise) ? Math.round(rise) + " blocks" : rise + " blocks", rising));
+        }
+    }
+
+    /** The downhill status label (for tests). */
+    JLabel downhillStatus() {
+        return downhillStatus;
+    }
+
     private void setCurrentPath(ArrayList<Point4f> pathHandles) {
         Dimension dimension = getView() == null ? null : getDimension();
         if (pathHandles != null && dimension != null) {
@@ -4962,6 +5015,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void refreshPreview() {
+        updateDownhillStatus();
         previewQueued = false;
         scheduleRevision++;
         invalidatePreview();
