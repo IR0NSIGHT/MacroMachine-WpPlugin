@@ -698,6 +698,53 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     public PathTool() {
         this(PathPreviewWorker::new);
+        starterPath = true;
+    }
+
+    /**
+     * A new path, and switching to the tool without nodes, start from six nodes
+     * across the middle of the view instead of an empty canvas (tests build their
+     * paths themselves and turn this on where they test it).
+     */
+    private boolean starterPath;
+    static final int STARTER_NODES = 6;
+
+    void useStarterPath(boolean use) {
+        starterPath = use;
+    }
+
+    /**
+     * Six nodes in a row across the middle of the view (half its width, at least
+     * two radii apart), radius {@link #NEW_NODE_RADIUS}, on the terrain; positions
+     * without a tile are left out.
+     */
+    ArrayList<Point4f> starterNodes() {
+        var nodes = new ArrayList<Point4f>();
+        WorldPainterView view = getView();
+        Dimension dimension = view == null ? null : getDimension();
+        if (dimension == null)
+            return nodes;
+        int middle = view.getHeight() / 2;
+        Point centre = view.viewToWorld(new Point(view.getWidth() / 2, middle));
+        Point left = view.viewToWorld(new Point(0, middle)),
+                right = view.viewToWorld(new Point(view.getWidth(), middle));
+        float spacing = Math.max(2 * NEW_NODE_RADIUS, (right.x - left.x) / 2f / (STARTER_NODES - 1));
+        for (int i = 0; i < STARTER_NODES; i++) {
+            int x = Math.round(centre.x + (i - (STARTER_NODES - 1) / 2f) * spacing), y = centre.y;
+            if (dimension.getTile(x >> TILE_SIZE_BITS, y >> TILE_SIZE_BITS) != null)
+                nodes.add(new Point4f(x, y, dimension.getHeightAt(x, y), NEW_NODE_RADIUS));
+        }
+        return nodes;
+    }
+
+    /** Starts over: the starter nodes (or none) with curve strength 1. */
+    private void startPath() {
+        if (!starterPath) {
+            completeEdit(new ArrayList<>());
+            return;
+        }
+        handleFactorSpinner.setValue(1d);
+        completeEdit(starterNodes());
     }
 
     PathTool(Supplier<PathPreviewWorker> workerFactory) {
@@ -1578,6 +1625,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             overlaySwitch.setSelected(true);
         previewWorker = workerFactory.get();
         attachOverlay();
+        // never an empty canvas: no nodes yet, the starter path
+        if (starterPath && getDimension() != null && getCurrentPath().isEmpty())
+            startPath();
         observeUndo(getDimension());
         if (getDimension() != null)
             getDimension().clearLayerData(PreviewOperation.annotationLayer);
@@ -5138,7 +5188,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         cancelGesture();
         selectedNodes.clear();
         cachedTiles.clear();
-        completeEdit(new ArrayList<>());
+        startPath();
         selectionChanged();
         overlay.showTransientInfoText("New path", 1800);
     }

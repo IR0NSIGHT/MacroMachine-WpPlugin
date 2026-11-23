@@ -2834,6 +2834,58 @@ class PathToolSelectionTest
     }
 
     @Test
+    void newPathAndAnEmptyStartPlaceSixNodesInTheMiddleOfTheView() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                TestView view = new TestView(dimension);
+                view.setSize(120, 120); // the test world is one tile: blocks 0 to 127
+                PathTool tool = synchronousTool();
+                tool.useStarterPath(true);
+                tool.setView(view);
+                tool.setBrush(brush());
+                tool.setActive(true);
+                try {
+                    // switching to the tool without nodes: the starter path
+                    var nodes = tool.getCurrentPath();
+                    var centre = view.viewToWorld(new Point(60, 60));
+                    assertEquals(PathTool.STARTER_NODES, nodes.size());
+                    float meanX = 0;
+                    for (var node : nodes) {
+                        assertEquals(8f, node.w, "radius 8");
+                        assertEquals(centre.y, node.y, 0.5f, "across the middle");
+                        assertEquals(dimension.getHeightAt(Math.round(node.x), Math.round(node.y)), node.z,
+                                "on the terrain");
+                        meanX += node.x / nodes.size();
+                    }
+                    assertEquals(centre.x, meanX, 1f, "centred in the view");
+                    for (int i = 1; i < nodes.size(); i++)
+                        assertTrue(nodes.get(i).x - nodes.get(i - 1).x >= 16, "at least two radii apart");
+                    assertEquals(1f, tool.curveStrength(), 1e-6f);
+                    // New path: the starter path again, curve strength back to 1
+                    curveSpinner(tool).setValue(0.3d);
+                    tool.addNode(40, 20);
+                    pathItem(tool, "PathTool.NewPath").doClick();
+                    assertEquals(PathTool.STARTER_NODES, tool.getCurrentPath().size());
+                    assertEquals(1f, tool.curveStrength(), 1e-6f);
+                } finally {
+                    tool.setActive(false);
+                }
+                // switching to the tool with nodes keeps them
+                dimension.setAttribute(HANDLES, new ArrayList<>(List.of(20f, 20f, 70f, 4f, 60f, 20f, 70f, 4f)), true);
+                tool.setActive(true);
+                try {
+                    assertEquals(List.of(20f, 20f, 70f, 4f, 60f, 20f, 70f, 4f), dimension.getAttribute(HANDLES));
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
     void undoingAnApplyKeepsTheApplySettings() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             try {
