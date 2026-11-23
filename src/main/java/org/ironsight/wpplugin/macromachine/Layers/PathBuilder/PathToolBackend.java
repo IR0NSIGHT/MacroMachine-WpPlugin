@@ -91,7 +91,46 @@ public class PathToolBackend
             }
         }
 
+        monotoneHeightAndRadius(curve, handles, handlesToPathIndex);
         return new PathResult(curve, handlesToPathIndex);
+    }
+
+    /**
+     * Height and radius between the nodes from a monotone cubic over the distance
+     * along the curve, not from the Bézier curve: that one swings past the nodes
+     * (higher than both nodes around it, or lower). The Bézier keeps the path's
+     * horizontal shape. Mutates the curve's points.
+     */
+    static void monotoneHeightAndRadius(List<Point4f> curve, List<Point4f> handles,
+            Map<Point4f, Integer> handlesToPathIndex) {
+        if (curve.isEmpty())
+            return;
+        float[] along = new float[curve.size()];
+        for (int i = 1; i < curve.size(); i++) {
+            Point4f a = curve.get(i - 1), b = curve.get(i);
+            along[i] = along[i - 1] + (float) Math.hypot(b.x - a.x, b.y - a.y);
+        }
+        int count = 0;
+        float[] knots = new float[handles.size()], heights = new float[handles.size()],
+                radii = new float[handles.size()];
+        for (Point4f handle : handles) {
+            Integer index = handlesToPathIndex.get(handle);
+            if (index == null || count > 0 && along[index] <= knots[count - 1])
+                continue;
+            knots[count] = along[index];
+            heights[count] = handle.z;
+            radii[count] = handle.w;
+            count++;
+        }
+        if (count < 2)
+            return;
+        knots = java.util.Arrays.copyOf(knots, count);
+        float[] z = MonotoneCubic.interpolate(knots, java.util.Arrays.copyOf(heights, count), along);
+        float[] w = MonotoneCubic.interpolate(knots, java.util.Arrays.copyOf(radii, count), along);
+        for (int i = 0; i < curve.size(); i++) {
+            curve.get(i).z = z[i];
+            curve.get(i).w = w[i];
+        }
     }
 
     /**
