@@ -394,59 +394,57 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         g.fillRect(width - (x + width / 2), top, 1, height);
     }
 
-    /** Pixels per block in the river's cross section. */
-    static final int SECTION_BLOCK = 5;
     /** How far (blocks) the terrain beside the river lies above its water. */
     static final int SECTION_BANK = 12;
+    static final Color CROSS_SECTION_DIRT = new Color(134, 96, 67);
+    /** The river and its transition cut open (Apply as river). */
+    private final CrossSectionView riverSection = new CrossSectionView();
 
-    /**
-     * The river cross section's height: bank, deepest carve, the sand bed and one
-     * block of ground.
-     */
-    int riverSectionHeight() {
-        return Math.max(2 * CROSS_SECTION_HEIGHT,
-                SECTION_BLOCK * (SECTION_BANK + Math.round(averageRadius()) + 1 + 1 + 1));
+    /** The river's water level: the nodes' mean height (62 without nodes). */
+    int sectionWaterLevel() {
+        var nodes = getCurrentPath();
+        return nodes.isEmpty() ? 62 : (int) Math.round(nodes.stream().mapToDouble(n -> n.z).average().orElse(62));
     }
 
     /**
-     * The river and its transition cut open, to scale ({@link #SECTION_BLOCK}
-     * pixels a block): green ground and grey sky; the river carved into it as the
-     * apply does (one block deep at the banks, one deeper for every block towards
-     * the middle) filled with blue water on a sand bed; beside it the terrain
-     * blends from the water level up to the bank.
+     * The river and its transition as the apply builds them, one column a block
+     * from bank to bank: inside the radius the water at the path height over the
+     * carved bed (one block deep at the banks, one deeper for every block towards
+     * the middle) of sand; beside it the terrain blends from the water level up to
+     * the bank ({@link #SECTION_BANK} blocks higher).
      */
-    private void paintRiverSection(Graphics g, int width, int height) {
-        g.setColor(CROSS_SECTION_SKY);
-        g.fillRect(0, 0, width, height);
+    List<CrossSectionView.Column> riverColumns() {
         float radius = averageRadius();
-        int water = SECTION_BANK * SECTION_BLOCK; // pixel row of the water surface
-        int centre = width / 2;
-        for (int block = 0; block * SECTION_BLOCK < centre + SECTION_BLOCK; block++) {
-            float distance = block + 0.5f;
-            int ground, carved = 0;
+        int water = sectionWaterLevel();
+        int half = (int) Math.ceil(radius * getTransitionMultiplier()) + 2;
+        var columns = new ArrayList<CrossSectionView.Column>();
+        for (int i = -half; i < half; i++) {
+            float distance = Math.abs(i + 0.5f);
             if (distance <= radius) {
-                ground = water;
-                if (terrainMode == TerrainMode.CARVE)
-                    carved = Math.round(radius - distance + 1) * SECTION_BLOCK;
+                int bed = terrainMode == TerrainMode.CARVE ? water - Math.round(radius - distance + 1) : water;
+                columns.add(new CrossSectionView.Column(bed, water, CROSS_SECTION_SAND));
             } else {
                 float strength = distance > radius * getTransitionMultiplier()
                         ? 0
                         : filterStrengthFor(distance, radius, getTransitionMultiplier(), brushProfile);
-                ground = water - Math.round((1 - strength) * SECTION_BANK) * SECTION_BLOCK;
-            }
-            for (int x : new int[]{centre + block * SECTION_BLOCK, centre - (block + 1) * SECTION_BLOCK}) {
-                g.setColor(CROSS_SECTION_GRASS);
-                g.fillRect(x, ground, SECTION_BLOCK, height - ground);
-                if (distance <= radius) {
-                    g.setColor(CROSS_SECTION_WATER);
-                    g.fillRect(x, water, SECTION_BLOCK, carved);
-                    if (carved > 0) {
-                        g.setColor(CROSS_SECTION_SAND);
-                        g.fillRect(x, water + carved, SECTION_BLOCK, SECTION_BLOCK);
-                    }
-                }
+                int ground = water + Math.round((1 - strength) * SECTION_BANK);
+                columns.add(new CrossSectionView.Column(ground, CrossSectionView.NO_WATER, CROSS_SECTION_GRASS));
             }
         }
+        return columns;
+    }
+
+    /** The cross sections follow the transition, profile, carving and nodes. */
+    private void refreshCrossSection() {
+        if (brushQuerschnitt != null)
+            brushQuerschnitt.repaint();
+        if (brushProfile != null && settingsKind == SettingsKind.RIVER)
+            riverSection.setColumns(riverColumns());
+    }
+
+    /** The river's cross section (for tests). */
+    CrossSectionView riverSection() {
+        return riverSection;
     }
 
     /** The nodes' mean radius in blocks (8 without nodes). */
@@ -4495,7 +4493,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     "Digs a bed below the water: one block deep at the banks, deeper towards the middle, blending into the terrain around it");
             carveRiverCheckbox.addActionListener(l -> {
                 terrainMode = carveRiverCheckbox.isSelected() ? TerrainMode.CARVE : TerrainMode.DONT_CHANGE;
-                brushQuerschnitt.repaint();
+                refreshCrossSection();
                 settingChanged();
             });
             pathSettingsPanel.add(carveRiverCheckbox);
@@ -4580,8 +4578,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     "<html>How far beyond the path the terrain blends into it, in path radii.<br>0 = a hard edge, 1 = the blend reaches one path radius beyond the edge, 5 = five radii.</html>");
             transitionMultiSpinner.addChangeListener(l -> {
                 transitionMultiplier = ((Number) transitionMultiSpinner.getValue()).floatValue() + 1;
-                if (brushQuerschnitt != null)
-                    brushQuerschnitt.repaint();
+                refreshCrossSection();
                 settingChanged();
             });
             transitionMultiSpinner.setValue(1d);
@@ -4599,10 +4596,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     super.paint(g);
                     if (brushProfile == null)
                         return;
-                    if (settingsKind == SettingsKind.RIVER) {
-                        paintRiverSection(g, getWidth(), getHeight());
-                        return;
-                    }
                     // a road: a red strip on a black blend
                     g.setColor(Color.WHITE);
                     g.fillRect(0, 0, getWidth(), getHeight());
@@ -4619,6 +4612,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             setCrossSectionHeight(CROSS_SECTION_HEIGHT);
             brushQuerschnitt.setName("PathTool.CrossSection");
             pathSettingsPanel.add(brushQuerschnitt);
+            riverSection.setName("PathTool.RiverSection");
+            riverSection.setSubsurfaceColor(CROSS_SECTION_DIRT);
+            riverSection.setWaterColor(CROSS_SECTION_WATER);
+            riverSection.setSkyColor(CROSS_SECTION_SKY);
+            riverSection.setToolTipText("Cross section of the river and its transition, one square a block:"
+                    + " the terrain blends down to the river, carved out and filled with water on its sand bed."
+                    + " Left: the highest and lowest height.");
+            pathSettingsPanel.add(riverSection);
         }
         {
             DefaultComboBoxModel<CrossSectionShape> model = new DefaultComboBoxModel<>();
@@ -4665,7 +4666,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             profilesDropdown.setName("PathTool.TransitionProfiles");
             profilesDropdown.addActionListener(l -> {
                 this.brushProfile = (CrossSectionShape) profilesDropdown.getSelectedItem();
-                brushQuerschnitt.repaint();
+                refreshCrossSection();
                 settingChanged();
             });
             profilesDropdown.setSelectedItem(model.getElementAt(3));
@@ -4682,7 +4683,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
         // three groups: the tool's own options (River / Road), "Paint path" and
         // "Blend with terrain"
-        var blendRows = Set.of(transitionMultiSpinner.getParent(), brushQuerschnitt, profilesDropdown.getParent());
+        var blendRows = Set.of(transitionMultiSpinner.getParent(), brushQuerschnitt, riverSection,
+                profilesDropdown.getParent());
         var paintRows = Set.<Component>of(roadPaintRow, riverbedPaintRow, riverTransitionPaintRow, pathPaintRow);
         for (var row : pathSettingsPanel.getComponents()) {
             pathSettingsPanel.remove(row);
@@ -4891,12 +4893,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         setWaterCheckbox.setVisible(kind == SettingsKind.RIVER);
         riverbedPaintRow.setVisible(kind == SettingsKind.RIVER);
         riverTransitionPaintRow.setVisible(kind == SettingsKind.RIVER);
-        brushQuerschnitt.setToolTipText(kind == SettingsKind.RIVER
-                ? "Cross section of the river and its transition, one square a block: the terrain (green) blends"
-                        + " down to the river, carved out and filled with water (blue) on its bed (sand)"
-                : "Cross section of the road: red is the road itself, black the blend into the terrain");
-        setCrossSectionHeight(kind == SettingsKind.RIVER ? riverSectionHeight() : CROSS_SECTION_HEIGHT);
-        brushQuerschnitt.repaint();
+        brushQuerschnitt
+                .setToolTipText("Cross section of the road: red is the road itself, black the blend into the terrain");
+        if (kind != SettingsKind.PAINT) {
+            brushQuerschnitt.setVisible(kind == SettingsKind.ROAD);
+            riverSection.setVisible(kind == SettingsKind.RIVER);
+        }
+        refreshCrossSection();
         ((javax.swing.border.TitledBorder) optionsGroup.getBorder())
                 .setTitle(kind == SettingsKind.RIVER ? "River" : "Road");
         for (var group : settingsGroups())
@@ -4987,7 +4990,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     protected void brushChanged(Brush newBrush) {
         super.brushChanged(newBrush);
         brushQuerschnitt.revalidate();
-        brushQuerschnitt.repaint();
+        refreshCrossSection();
     }
 
     ArrayList<Point4f> getCurrentPath() {
@@ -5132,6 +5135,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     }
 
     private void refreshPreview() {
+        refreshCrossSection();
         updateDownhillStatus();
         previewQueued = false;
         scheduleRevision++;
