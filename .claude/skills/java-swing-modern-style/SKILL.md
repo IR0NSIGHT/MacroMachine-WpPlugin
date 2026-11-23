@@ -127,6 +127,11 @@ ad hoc.
   (`invokeLater`), renderer wrappers recolour every returned cell. Do not edit
   the shared classes for the dark look – the action editor still uses them in
   WorldPainter's style.
+- Never let a vertical scroll bar come and go around content whose height
+  depends on its width: the bar changes the width, the height follows, the
+  bar flips again – the dialog flickers between two sizes. Use
+  `VERTICAL_SCROLLBAR_ALWAYS` (the dialog scroll bar paints no thumb when
+  there is nothing to scroll) and take `SCROLLBAR_WIDTH` off the right padding.
 - Components whose height depends on their width (e.g. `CrossSectionView`)
   must not `revalidate()` synchronously inside `setBounds` (lost during
   layout) – `invokeLater(this::revalidate)`; the dialog validates twice before

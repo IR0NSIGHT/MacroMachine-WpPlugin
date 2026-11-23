@@ -4932,7 +4932,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             footer.add(cancel);
             footer.add(applyButton);
             JPanel content = new JPanel(new BorderLayout());
-            content.add(new JScrollPane(pathSettingsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+            // the scroll bar always takes its place (its thumb shows only when there is
+            // something to scroll): one that comes and goes changes the content's width,
+            // the cross section's height follows that width and flipped it back and forth
+            content.add(new JScrollPane(pathSettingsPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER), BorderLayout.CENTER);
             content.add(footer, BorderLayout.SOUTH);
             // the dialog's own dark look, whatever WorldPainter's look and feel is
@@ -4941,7 +4944,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             content.setBackground(org.ironsight.wpplugin.macromachine.Gui.DialogStyle.WINDOW);
             content.setOpaque(true);
             int padding = org.ironsight.wpplugin.macromachine.Gui.DialogStyle.PADDING;
-            pathSettingsPanel.setBorder(new EmptyBorder(padding, padding, 0, padding));
+            // the always present scroll bar is part of the right padding
+            pathSettingsPanel.setBorder(new EmptyBorder(padding, padding, 0,
+                    padding - org.ironsight.wpplugin.macromachine.Gui.DialogStyle.SCROLLBAR_WIDTH));
             footer.setBorder(new EmptyBorder(4, padding - 8, padding - 4, padding - 8)); // FlowLayout adds 8 at the
                                                                                          // edges
             crossSectionView.setForeground(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED);

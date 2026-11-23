@@ -2745,6 +2745,49 @@ class PathToolSelectionTest
     }
 
     @Test
+    void riverDialogSettlesAtEveryHeight() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                TestView view = new TestView(dimension);
+                PathTool tool = synchronousTool();
+                tool.setView(view);
+                tool.setBrush(brush());
+                tool.setActive(true);
+                try {
+                    tool.addNode(20, 70);
+                    tool.addNode(60, 70);
+                    tool.openPathSettings("Apply as river", PathTool.SettingsKind.RIVER);
+                    // a wide blend: the section's blocks shrink to fit, its height follows its
+                    // width
+                    settingSpinner(tool, "Transition multiplier").setValue(20d);
+                    var dialog = tool.pathSettingsDialog();
+                    var section = tool.crossSectionView();
+                    int width = dialog.getWidth();
+                    // the cross section's height follows its width; a scroll bar coming and
+                    // going changes that width: at some height this flipped back and forth
+                    for (int height = 200; height <= dialog.getPreferredSize().height + 60; height += 2) {
+                        dialog.setSize(width, height);
+                        var sizes = new ArrayList<String>();
+                        for (int pass = 0; pass < 6; pass++) {
+                            section.invalidate(); // what its deferred revalidate does
+                            dialog.validate();
+                            sizes.add(section.getWidth() + "x" + section.getHeight());
+                        }
+                        assertEquals(sizes.get(3), sizes.get(5), "dialog height " + height + ": " + sizes);
+                        assertEquals(sizes.get(4), sizes.get(5), "dialog height " + height + ": " + sizes);
+                    }
+                    tool.cancelPathSettings();
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
     void undoingAnApplyKeepsTheApplySettings() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             try {

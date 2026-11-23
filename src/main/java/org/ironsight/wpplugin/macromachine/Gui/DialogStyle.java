@@ -37,6 +37,8 @@ public final class DialogStyle
     public static final Color OUTLINE_STRONG = new Color(255, 255, 255, 70);
     /** Between related elements / groups, and the window padding. */
     public static final int GAP = 12, PADDING = 20;
+    /** Width of the thin scroll bars. */
+    public static final int SCROLLBAR_WIDTH = 10;
     /** Rounding of panels and of controls. */
     public static final int PANEL_RADIUS = 8, CONTROL_RADIUS = 6;
 
@@ -604,7 +606,9 @@ public final class DialogStyle
 
             @Override
             protected void paintThumb(Graphics graphics, JComponent component, Rectangle bounds) {
-                if (bounds.isEmpty())
+                var model = scrollbar.getModel();
+                // nothing to scroll: no thumb (the bar may stay in place, see scrollPane)
+                if (bounds.isEmpty() || model.getExtent() >= model.getMaximum() - model.getMinimum())
                     return;
                 var g = (Graphics2D) graphics.create();
                 try {
@@ -617,7 +621,7 @@ public final class DialogStyle
                 }
             }
         });
-        bar.setPreferredSize(new Dimension(10, 10));
+        bar.setPreferredSize(new Dimension(SCROLLBAR_WIDTH, SCROLLBAR_WIDTH));
         bar.setUnitIncrement(16);
     }
 }
