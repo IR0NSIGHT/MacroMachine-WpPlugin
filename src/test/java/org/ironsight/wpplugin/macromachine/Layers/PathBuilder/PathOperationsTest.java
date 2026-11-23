@@ -54,7 +54,7 @@ class PathOperationsTest
     void onlyClumpsTheOperationCreatedAreMerged() {
         // nodes 2+3 already share a block before the operation
         var before = List.of(n(0, 0, 60, 4), n(10, 0, 60, 4), n(10, 0, 60, 4), n(20, 0, 60, 4), n(30, 0, 60, 4));
-        var heightOnly = PathOperations.onlyDownhill(before, Set.of(0, 1, 2, 3, 4), (x, y) -> null);
+        var heightOnly = PathOperations.onlyDownhill(before, Set.of(0, 1, 2, 3, 4));
         assertEquals(List.of(), PathOperations.createdCoincidentRuns(before, heightOnly), "pre-existing: left alone");
         // moving node 5 onto node 4 creates a clump
         var moved = new java.util.ArrayList<>(before);
@@ -175,23 +175,15 @@ class PathOperationsTest
     @Test
     void onlyDownhillLowersSelectedNodesAlongThePath() {
         var nodes = List.of(n(0, 0, 80, 4), n(10, 0, 90, 4), n(20, 0, 85, 4), n(30, 0, 70, 4), n(40, 0, 75, 4));
-        var all = PathOperations.onlyDownhill(nodes, Set.of(0, 1, 2, 3, 4), (x, y) -> null).path();
+        var all = PathOperations.onlyDownhill(nodes, Set.of(0, 1, 2, 3, 4)).path();
         float[] expected = {80, 80, 80, 70, 70};
         for (int i = 0; i < 5; i++)
             assertEquals(expected[i], all.get(i).z, "z " + i);
         // unselected nodes keep their height but still constrain the next node
-        var some = PathOperations.onlyDownhill(nodes, Set.of(2, 4), (x, y) -> null).path();
-        // never above the terrain: ground 75 under node 1 and 4 pulls them (and what
-        // follows) down
-        var grounded = PathOperations
-                .onlyDownhill(nodes, Set.of(0, 1, 2, 3, 4), (x, y) -> x == 0 || x == 30 ? 75f : 200f)
-                .path();
-        assertEquals(75f, grounded.get(0).z, "node 1: min(80, ground 75)");
-        assertEquals(75f, grounded.get(1).z, "node 2: previous 75");
-        assertEquals(70f, grounded.get(3).z, "node 4: own 70 below ground 75");
-        assertEquals(60f,
-                PathOperations.onlyDownhill(List.of(n(0, 0, 80, 4)), Set.of(0), (x, y) -> 60f).path().get(0).z,
-                "a single node goes down to the ground");
+        var some = PathOperations.onlyDownhill(nodes, Set.of(2, 4)).path();
+        // only the path counts, not the terrain: a single node keeps its height
+        assertEquals(80f, PathOperations.onlyDownhill(List.of(n(0, 0, 80, 4)), Set.of(0)).path().get(0).z,
+                "a single node stays where it is");
         assertEquals(90f, some.get(1).z, "unselected");
         assertEquals(85f, some.get(2).z, "already below its predecessor (90)");
         assertEquals(70f, some.get(4).z, "lowered to node 4 (70)");

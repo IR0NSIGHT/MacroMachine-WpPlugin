@@ -2788,6 +2788,52 @@ class PathToolSelectionTest
     }
 
     @Test
+    void loweredBanksDoNotRevealHiddenWater() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                // land at 70 over a hidden water level of 62; a lake column: 58 under 62
+                Dimension dimension = dimension();
+                dimension.setHeightAt(60, 80, 58f);
+                assertEquals(62, dimension.getWaterLevelAt(60, 80));
+                TestView view = new TestView(dimension);
+                PathTool tool = synchronousTool();
+                tool.setView(view);
+                tool.setBrush(brush());
+                tool.setActive(true);
+                try {
+                    // a river at 55 (not snapped up to the land): its banks blend from 55 up to
+                    // the land, many below 62
+                    dimension.setAttribute(HANDLES, new ArrayList<>(List.of(20f, 70f, 55f, 4f, 100f, 70f, 55f, 4f)),
+                            true);
+                    tool.openPathSettings("Apply as river", PathTool.SettingsKind.RIVER);
+                    if (checkbox(tool, "Snap to terrain").isSelected())
+                        checkbox(tool, "Snap to terrain").doClick();
+                    settingSpinner(tool, "Transition multiplier").setValue(3d);
+                    tool.applyButton().doClick();
+                    int lowered = 0;
+                    for (int y = 75; y <= 86; y++) {
+                        if (y == 80)
+                            continue;
+                        int height = dimension.getIntHeightAt(60, y);
+                        if (height < 62)
+                            lowered++;
+                        assertTrue(dimension.getWaterLevelAt(60, y) <= height, "no water revealed on the bank at y " + y
+                                + ": terrain " + height + ", water " + dimension.getWaterLevelAt(60, y));
+                    }
+                    assertTrue(lowered > 0, "the bank was lowered below the hidden water");
+                    assertEquals(62, dimension.getWaterLevelAt(60, 80), "a lake keeps its water");
+                    assertEquals(55, dimension.getWaterLevelAt(60, 70), "the river itself sets its water");
+                    tool.cancelPathSettings();
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
     void undoingAnApplyKeepsTheApplySettings() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             try {

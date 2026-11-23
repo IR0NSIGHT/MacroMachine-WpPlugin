@@ -1222,8 +1222,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var base = getCurrentPath();
         var selection = Set.copyOf(selectedNodes);
         var note = new JLabel(
-                "<html>Lowers selected nodes so the path never rises along its direction<br>(node 1 to n) and never floats above the terrain.</html>");
-        openOperation("Only downhill", note, () -> PathOperations.onlyDownhill(base, selection, this::groundAt));
+                "<html>Lowers selected nodes so the path never rises along its direction<br>(node 1 to n).</html>");
+        openOperation("Only downhill", note, () -> PathOperations.onlyDownhill(base, selection));
     }
 
     private String operationTitle;
@@ -5415,7 +5415,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 if (wpTile == null)
                     return;
                 if (!onlyPreview && terrainMode != TerrainMode.DONT_CHANGE)
-                    PathToolBackend.writeHeightMapDataToTile(heightInfoTile, wpTile);
+                    PathToolBackend.writeHeightMapDataToTile(heightInfoTile,
+                            waterHeightMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0)), wpTile);
                 if (!onlyPreview && waterMode != WaterMode.DONT_SET_WATER) {
                     var waterHeightTile = waterHeightMap.get(new Point3i(wpTile.getX(), wpTile.getY(), 0));
                     PathToolBackend.writeWaterHeightDataToDimension(waterHeightTile, wpTile,

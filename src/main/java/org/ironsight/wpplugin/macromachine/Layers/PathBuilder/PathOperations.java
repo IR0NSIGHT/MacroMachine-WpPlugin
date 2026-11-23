@@ -260,24 +260,18 @@ final class PathOperations
     }
 
     /**
-     * Lowers selected nodes so the path never rises along its direction and never
-     * floats above the terrain: walking from node 1 to n, each selected node
-     * becomes {@code min(previous node, itself, terrain height here)} (the previous
-     * node may itself just have been lowered). Unselected nodes keep their height
-     * but still count as the previous node. Blocks without terrain skip the terrain
-     * term.
+     * Lowers selected nodes so the path never rises along its direction: walking
+     * from node 1 to n, each selected node becomes {@code min(previous node,
+     * itself)} (the previous node may itself just have been lowered). Only the path
+     * counts, not the terrain (following the terrain is snap to terrain's job).
+     * Unselected nodes keep their height but still count as the previous node.
      */
-    static Result onlyDownhill(List<Point4f> nodes, Set<Integer> selection, HeightAt terrain) {
+    static Result onlyDownhill(List<Point4f> nodes, Set<Integer> selection) {
         var path = new ArrayList<Point4f>(nodes.size());
         for (int i = 0; i < nodes.size(); i++) {
             var node = new Point4f(nodes.get(i));
-            if (selection.contains(i)) {
-                if (i > 0)
-                    node.z = Math.min(node.z, path.get(i - 1).z);
-                Float ground = terrain.at(Math.round(node.x), Math.round(node.y));
-                if (ground != null)
-                    node.z = Math.min(node.z, ground);
-            }
+            if (selection.contains(i) && i > 0)
+                node.z = Math.min(node.z, path.get(i - 1).z);
             path.add(node);
         }
         return new Result(path, new LinkedHashSet<>(selection));

@@ -188,11 +188,30 @@ public class PathToolBackend
     }
 
     static void writeHeightMapDataToTile(FloatTile in, Tile out) {
+        writeHeightMapDataToTile(in, null, out);
+    }
+
+    /**
+     * Writes the new terrain. In the transition (outside the path radius, where
+     * {@code pathWater} is {@link FloatTile#IGNORE_VALUE}) land stays land: a
+     * column that was dry (its water level not above its terrain) and is lowered
+     * below that water level gets its water lowered to the new terrain, so the
+     * lowered bank does not reveal water that was hidden under the land. Columns
+     * that were under water keep it.
+     */
+    static void writeHeightMapDataToTile(FloatTile in, FloatTile pathWater, Tile out) {
         for (int xx = 0; xx < TILE_SIZE; xx++)
             for (int yy = 0; yy < TILE_SIZE; yy++) {
                 float value = in.getValueAt(xx, yy);
-                if (value != IGNORE_VALUE)
-                    out.setHeight(xx, yy, value);
+                if (value == IGNORE_VALUE)
+                    continue;
+                boolean transition = pathWater == null || pathWater.getValueAt(xx, yy) == IGNORE_VALUE;
+                int level = out.getWaterLevel(xx, yy);
+                boolean wasLand = level <= out.getIntHeight(xx, yy);
+                out.setHeight(xx, yy, value);
+                int height = out.getIntHeight(xx, yy);
+                if (transition && wasLand && level > height)
+                    out.setWaterLevel(xx, yy, height);
             }
     }
 
