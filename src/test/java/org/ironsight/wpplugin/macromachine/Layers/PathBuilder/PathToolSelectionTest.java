@@ -2120,11 +2120,13 @@ class PathToolSelectionTest
                     assertEquals("Blend with terrain", settingGroup(tool, "Transition multiplier"));
                     assertEquals("Blend with terrain", settingGroup(tool, "Transition profile"));
                     assertTrue(settingSpinner(tool, "Transition multiplier").getToolTipText().contains("path radii"));
-                    // the river's cross section: a blue dip from the top
+                    // the river's cross section: a dip in green ground, water at the bottom
                     var section = crossSection(tool);
-                    assertEquals(PathTool.CROSS_SECTION_WATER.getRGB(), section.getRGB(section.getWidth() / 2, 1));
-                    assertEquals(PathTool.CROSS_SECTION_WATER.getRGB(),
-                            section.getRGB(section.getWidth() / 2, section.getHeight() - 2));
+                    int mid = section.getWidth() / 2, bottom = section.getHeight() - 1;
+                    assertEquals(PathTool.CROSS_SECTION_SKY.getRGB(), section.getRGB(mid, 1));
+                    assertEquals(PathTool.CROSS_SECTION_SKY.getRGB(), section.getRGB(mid, bottom - 1));
+                    assertEquals(PathTool.CROSS_SECTION_WATER.getRGB(), section.getRGB(mid, bottom));
+                    assertEquals(PathTool.CROSS_SECTION_GRASS.getRGB(), section.getRGB(0, bottom));
                     // behind "Only downhill": do the nodes already run downhill?
                     var status = tool.downhillStatus();
                     assertTrue(status.getParent().isVisible(), "shown with the river's only downhill");
