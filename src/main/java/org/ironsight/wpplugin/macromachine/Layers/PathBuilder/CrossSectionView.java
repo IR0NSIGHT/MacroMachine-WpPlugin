@@ -133,8 +133,10 @@ public class CrossSectionView extends JPanel
     public void setBounds(int x, int y, int width, int height) {
         boolean resized = width != getWidth();
         super.setBounds(x, y, width, height);
+        // a new width, a new block size and height; asked for after this layout,
+        // which would otherwise drop the request
         if (resized)
-            revalidate(); // a new width, a new block size and height
+            SwingUtilities.invokeLater(this::revalidate);
     }
 
     /** The pixel row of the top of block {@code height}. */

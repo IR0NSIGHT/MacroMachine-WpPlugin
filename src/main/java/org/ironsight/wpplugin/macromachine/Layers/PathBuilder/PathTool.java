@@ -4925,7 +4925,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 .setTitle(kind == SettingsKind.RIVER ? "River" : "Road");
         for (var group : settingsGroups())
             group.setVisible(java.util.Arrays.stream(group.getComponents()).anyMatch(Component::isVisible));
-        if (pathSettingsDialog == null) {
+        boolean created = pathSettingsDialog == null;
+        if (created) {
             Window owner = overlayView == null ? null : SwingUtilities.getWindowAncestor(overlayView);
             pathSettingsDialog = new JDialog(owner, Dialog.ModalityType.MODELESS);
             pathSettingsDialog.setName("PathTool.PathSettingsDialog");
@@ -4956,9 +4957,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         pathSettingsDialog.setTitle(title);
         pathSettingsPanel.revalidate();
+        // the cross section's height follows its width: lay out once to give it the
+        // width, then again for the height that width allows
+        pathSettingsDialog.validate();
+        crossSectionView.invalidate();
+        pathSettingsDialog.validate();
         // fit the shown rows, but never shrink a dialog the user made bigger
         var fit = pathSettingsDialog.getPreferredSize();
-        var size = pathSettingsDialog.getSize();
+        var size = created ? fit : pathSettingsDialog.getSize();
         pathSettingsDialog.setSize(Math.max(fit.width, size.width), Math.max(fit.height, size.height));
         if (!pathSettingsDialog.isVisible())
             pathSettingsDialog.setVisible(true);
