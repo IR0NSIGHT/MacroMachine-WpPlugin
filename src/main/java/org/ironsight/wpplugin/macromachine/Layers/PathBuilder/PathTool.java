@@ -306,7 +306,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private JSpinner handleFactorSpinner;
     private JSpinner transitionMultiSpinner;
     private CellPreviewPanel slopePreview;
-    /** Settings rows a river does not use (curve strength, slope limit). */
+    /** Settings rows a river does not use (slope limit). */
     private final List<JComponent> roadOnlyRows = new ArrayList<>();
     /** Road only: flatten the ground along the road (else leave it untouched). */
     private JCheckBox flattenRoadCheckbox;
@@ -4411,13 +4411,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             handleFactorSpinner.addChangeListener(l -> {
                 handleStrength = ((Number) handleFactorSpinner.getValue()).floatValue();
                 overlay.repaint();
-                settingChanged();
+                schedulePreview(); // the path's shape, not an Apply setting
             });
-            JPanel panel = new JPanel();
-            panel.add(new JLabel("Curve strength"));
-            panel.add(handleFactorSpinner);
-            pathSettingsPanel.add(panel);
-            roadOnlyRows.add(panel);
+            // not in the Apply dialogs: the curve strength is edited on the map (curve
+            // handles, typed values); this spinner only holds it
         }
         {
             limitSlopeSpinner = new JSpinner(new SpinnerNumberModel(0d, 0d, 100d, 1d));
@@ -4569,10 +4566,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private void showSettings(ApplySettings settings) {
         loadingSettings = true;
         try {
-            onlyDown = settings.onlyDown();
+            // a road neither runs only downhill nor sets water (not in its dialog)
+            boolean river = settingsKind == SettingsKind.RIVER;
+            onlyDown = river && settings.onlyDown();
             snapToTerrain = settings.snapToTerrain();
             usePaint = settings.usePaint();
-            waterMode = settings.setWater()
+            waterMode = river && settings.setWater()
                     ? WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL
                     : WaterMode.DONT_SET_WATER;
             terrainMode = !settings.changeTerrain()
@@ -4581,7 +4580,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             onlyDownCheckbox.setSelected(onlyDown);
             minCheckbox.setSelected(snapToTerrain);
             usePaintCheckbox.setSelected(usePaint);
-            setWaterCheckbox.setSelected(settings.setWater());
+            setWaterCheckbox.setSelected(waterMode != WaterMode.DONT_SET_WATER);
             flattenRoadCheckbox.setSelected(terrainMode == TerrainMode.FLATTEN);
             carveRiverCheckbox.setSelected(terrainMode == TerrainMode.CARVE);
             transitionMultiSpinner.setValue((double) settings.transition());
@@ -4620,7 +4619,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private void storeSettings() {
         Dimension dimension = getView() == null ? null : getDimension();
-        if (dimension == null || !controlsReady || loadingSettings)
+        // only edits made in an open Apply dialog belong to its settings
+        if (dimension == null || !controlsReady || loadingSettings || pathSettingsDialog == null
+                || !pathSettingsDialog.isVisible())
             return;
         var settings = currentSettings();
         var data = settings.toFloats();
@@ -4706,9 +4707,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     /**
      * Opens the settings of Apply as road / river in a non-modal, freely resizable
      * dialog (the map stays usable and its preview follows the settings). A river
-     * shows only what it uses (only downhill, snap to terrain, paint, water, carve,
-     * transition); a road gets flatten instead of carve, plus curve strength and
-     * the slope limit.
+     * gets only downhill, snap to terrain, water, carve, riverbed / transition
+     * paint and the transition; a road snap to terrain, paint, flatten, the slope
+     * limit and the transition.
      */
     void openPathSettings(String title, SettingsKind kind) {
         // each dialog brings back its own stored settings
@@ -4720,6 +4721,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         flattenRoadCheckbox.setVisible(kind == SettingsKind.ROAD);
         carveRiverCheckbox.setVisible(kind == SettingsKind.RIVER);
         usePaintCheckbox.setVisible(kind == SettingsKind.ROAD);
+        onlyDownCheckbox.setVisible(kind == SettingsKind.RIVER);
+        setWaterCheckbox.setVisible(kind == SettingsKind.RIVER);
         riverbedPaintRow.setVisible(kind == SettingsKind.RIVER);
         riverTransitionPaintRow.setVisible(kind == SettingsKind.RIVER);
         if (pathSettingsDialog == null) {
