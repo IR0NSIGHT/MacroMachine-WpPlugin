@@ -2122,17 +2122,20 @@ class PathToolSelectionTest
                     assertTrue(settingSpinner(tool, "Transition multiplier").getToolTipText().contains("path radii"));
                     // the river's cross section: a dip in green ground, water at the bottom
                     var section = crossSection(tool);
-                    // twice as high: the carved bed (sand) below the water line
-                    assertEquals(2 * PathTool.CROSS_SECTION_HEIGHT, section.getHeight());
-                    int mid = section.getWidth() / 2, waterLine = PathTool.CROSS_SECTION_HEIGHT - 1;
-                    assertEquals(PathTool.CROSS_SECTION_SKY.getRGB(), section.getRGB(mid, 1));
-                    assertEquals(PathTool.CROSS_SECTION_SKY.getRGB(), section.getRGB(mid, waterLine - 1));
-                    assertEquals(PathTool.CROSS_SECTION_WATER.getRGB(), section.getRGB(mid, waterLine));
-                    assertEquals(PathTool.CROSS_SECTION_GRASS.getRGB(), section.getRGB(0, waterLine));
-                    assertEquals(PathTool.CROSS_SECTION_SAND.getRGB(), section.getRGB(mid, waterLine + 2));
-                    assertEquals(PathTool.CROSS_SECTION_SAND.getRGB(), section.getRGB(mid, section.getHeight() - 2),
-                            "deepest in the middle");
-                    assertEquals(PathTool.CROSS_SECTION_GRASS.getRGB(), section.getRGB(0, section.getHeight() - 2));
+                    // to scale: sky, then the carved river (water), its sand bed and ground
+                    assertEquals(tool.riverSectionHeight(), section.getHeight());
+                    int mid = section.getWidth() / 2;
+                    var column = new java.util.ArrayList<Integer>();
+                    for (int y = 0; y < section.getHeight(); y++)
+                        if (column.isEmpty() || column.get(column.size() - 1) != section.getRGB(mid, y))
+                            column.add(section.getRGB(mid, y));
+                    assertEquals(
+                            List.of(PathTool.CROSS_SECTION_SKY.getRGB(), PathTool.CROSS_SECTION_WATER.getRGB(),
+                                    PathTool.CROSS_SECTION_SAND.getRGB(), PathTool.CROSS_SECTION_GRASS.getRGB()),
+                            column);
+                    int surface = PathTool.SECTION_BANK * PathTool.SECTION_BLOCK;
+                    assertEquals(PathTool.CROSS_SECTION_WATER.getRGB(), section.getRGB(mid, surface));
+                    assertEquals(PathTool.CROSS_SECTION_SKY.getRGB(), section.getRGB(mid, surface - 1));
                     // behind "Only downhill": do the nodes already run downhill?
                     var status = tool.downhillStatus();
                     assertTrue(status.getParent().isVisible(), "shown with the river's only downhill");
