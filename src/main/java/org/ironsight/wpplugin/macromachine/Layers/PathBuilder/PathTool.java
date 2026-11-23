@@ -374,7 +374,31 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private boolean loadingSettings;
     private JPanel brushQuerschnitt;
     static final Color CROSS_SECTION_WATER = new Color(52, 120, 220), CROSS_SECTION_GRASS = new Color(86, 160, 58),
-            CROSS_SECTION_SKY = new Color(214, 220, 226);
+            CROSS_SECTION_SKY = new Color(214, 220, 226), CROSS_SECTION_SAND = new Color(219, 200, 140);
+    /** The cross section's blend part; a river adds as much below for its bed. */
+    static final int CROSS_SECTION_HEIGHT = 48;
+
+    private void setCrossSectionHeight(int height) {
+        brushQuerschnitt.setPreferredSize(new java.awt.Dimension(0, height));
+        brushQuerschnitt.setMinimumSize(new java.awt.Dimension(0, height));
+        brushQuerschnitt.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, height));
+        brushQuerschnitt.revalidate();
+    }
+
+    /**
+     * Column {@code x} right of the cross section's middle and its mirror left of
+     * it.
+     */
+    private static void fillMirrored(Graphics g, int width, int x, int top, int height) {
+        g.fillRect(x + width / 2, top, 1, height);
+        g.fillRect(width - (x + width / 2), top, 1, height);
+    }
+
+    /** The nodes' mean radius in blocks (8 without nodes). */
+    float averageRadius() {
+        var nodes = getCurrentPath();
+        return nodes.isEmpty() ? 8f : (float) nodes.stream().mapToDouble(n -> n.w).average().orElse(8);
+    }
     private JComboBox<CrossSectionShape> profilesDropdown;
     private CrossSectionShape brushProfile;
     private float transitionMultiplier = 2;
@@ -4416,6 +4440,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     "Digs a bed below the water: one block deep at the banks, deeper towards the middle, blending into the terrain around it");
             carveRiverCheckbox.addActionListener(l -> {
                 terrainMode = carveRiverCheckbox.isSelected() ? TerrainMode.CARVE : TerrainMode.DONT_CHANGE;
+                brushQuerschnitt.repaint();
                 settingChanged();
             });
             pathSettingsPanel.add(carveRiverCheckbox);
@@ -4524,27 +4549,35 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     g.fillRect(0, 0, getWidth(), getHeight());
 
                     // a river is a dip in green ground: sky grey above it, the water a
-                    // blue line at the bottom; a road is a red strip on a black blend
+                    // blue line at its bottom and, below that, the carved bed in sand;
+                    // a road is a red strip on a black blend
+                    int blend = CROSS_SECTION_HEIGHT;
+                    float radiusPx = getWidth() / (2f * Math.max(1f, getTransitionMultiplier()));
+                    float radiusBlocks = averageRadius();
                     for (int x = 0; x < getWidth() / 2f; x++) {
                         float strengthAtX = filterStrengthFor(x * transitionMultiplier, getWidth() / 2f,
                                 getTransitionMultiplier(), brushProfile);
-                        int height = Math.round(getHeight() * strengthAtX);
-                        boolean centre = height > getHeight() * 0.99f;
+                        int height = Math.round(blend * strengthAtX);
+                        boolean centre = height > blend * 0.99f;
                         g.setColor(river ? CROSS_SECTION_SKY : centre ? Color.RED : Color.BLACK);
-                        int top = river ? 0 : getHeight() - height;
-                        g.fillRect(x + getWidth() / 2, top, 1, height);
-                        g.fillRect(getWidth() - (x + getWidth() / 2), top, 1, height);
+                        int top = river ? 0 : blend - height;
+                        fillMirrored(g, getWidth(), x, top, height);
                         if (river && centre) {
                             g.setColor(CROSS_SECTION_WATER);
-                            g.fillRect(x + getWidth() / 2, getHeight() - 1, 1, 1);
-                            g.fillRect(getWidth() - (x + getWidth() / 2), getHeight() - 1, 1, 1);
+                            fillMirrored(g, getWidth(), x, blend - 1, 1);
+                            if (terrainMode == TerrainMode.CARVE) {
+                                // as carved: one block deep at the banks, one block deeper
+                                // for every block towards the middle
+                                float toBank = radiusBlocks * Math.max(0, 1 - x / radiusPx);
+                                int depth = Math.round((getHeight() - blend) * (toBank + 1) / (radiusBlocks + 1));
+                                g.setColor(CROSS_SECTION_SAND);
+                                fillMirrored(g, getWidth(), x, blend, depth);
+                            }
                         }
                     }
                 }
             };
-            brushQuerschnitt.setPreferredSize(new java.awt.Dimension(0, 48));
-            brushQuerschnitt.setMinimumSize(new java.awt.Dimension(0, 48));
-            brushQuerschnitt.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 48));
+            setCrossSectionHeight(CROSS_SECTION_HEIGHT);
             brushQuerschnitt.setName("PathTool.CrossSection");
             pathSettingsPanel.add(brushQuerschnitt);
         }
@@ -4820,8 +4853,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         riverbedPaintRow.setVisible(kind == SettingsKind.RIVER);
         riverTransitionPaintRow.setVisible(kind == SettingsKind.RIVER);
         brushQuerschnitt.setToolTipText(kind == SettingsKind.RIVER
-                ? "Cross section of the river: the dip it cuts into the terrain (green), with the water (blue) at the bottom"
+                ? "Cross section of the river: the dip it cuts into the terrain (green), the water (blue) at its bottom"
+                        + " and the carved bed (sand) below the water"
                 : "Cross section of the road: red is the road itself, black the blend into the terrain");
+        setCrossSectionHeight(kind == SettingsKind.RIVER ? 2 * CROSS_SECTION_HEIGHT : CROSS_SECTION_HEIGHT);
         brushQuerschnitt.repaint();
         ((javax.swing.border.TitledBorder) optionsGroup.getBorder())
                 .setTitle(kind == SettingsKind.RIVER ? "River" : "Road");

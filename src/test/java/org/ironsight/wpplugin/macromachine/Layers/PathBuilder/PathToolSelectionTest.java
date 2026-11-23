@@ -2122,11 +2122,17 @@ class PathToolSelectionTest
                     assertTrue(settingSpinner(tool, "Transition multiplier").getToolTipText().contains("path radii"));
                     // the river's cross section: a dip in green ground, water at the bottom
                     var section = crossSection(tool);
-                    int mid = section.getWidth() / 2, bottom = section.getHeight() - 1;
+                    // twice as high: the carved bed (sand) below the water line
+                    assertEquals(2 * PathTool.CROSS_SECTION_HEIGHT, section.getHeight());
+                    int mid = section.getWidth() / 2, waterLine = PathTool.CROSS_SECTION_HEIGHT - 1;
                     assertEquals(PathTool.CROSS_SECTION_SKY.getRGB(), section.getRGB(mid, 1));
-                    assertEquals(PathTool.CROSS_SECTION_SKY.getRGB(), section.getRGB(mid, bottom - 1));
-                    assertEquals(PathTool.CROSS_SECTION_WATER.getRGB(), section.getRGB(mid, bottom));
-                    assertEquals(PathTool.CROSS_SECTION_GRASS.getRGB(), section.getRGB(0, bottom));
+                    assertEquals(PathTool.CROSS_SECTION_SKY.getRGB(), section.getRGB(mid, waterLine - 1));
+                    assertEquals(PathTool.CROSS_SECTION_WATER.getRGB(), section.getRGB(mid, waterLine));
+                    assertEquals(PathTool.CROSS_SECTION_GRASS.getRGB(), section.getRGB(0, waterLine));
+                    assertEquals(PathTool.CROSS_SECTION_SAND.getRGB(), section.getRGB(mid, waterLine + 2));
+                    assertEquals(PathTool.CROSS_SECTION_SAND.getRGB(), section.getRGB(mid, section.getHeight() - 2),
+                            "deepest in the middle");
+                    assertEquals(PathTool.CROSS_SECTION_GRASS.getRGB(), section.getRGB(0, section.getHeight() - 2));
                     // behind "Only downhill": do the nodes already run downhill?
                     var status = tool.downhillStatus();
                     assertTrue(status.getParent().isVisible(), "shown with the river's only downhill");
@@ -2264,8 +2270,9 @@ class PathToolSelectionTest
      */
     private static java.awt.image.BufferedImage crossSection(PathTool tool) {
         var panel = findComponent(tool.pathSettingsPanel(), javax.swing.JPanel.class, "PathTool.CrossSection");
-        panel.setSize(200, 48);
-        var image = new java.awt.image.BufferedImage(200, 48, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        int height = panel.getPreferredSize().height;
+        panel.setSize(200, height);
+        var image = new java.awt.image.BufferedImage(200, height, java.awt.image.BufferedImage.TYPE_INT_ARGB);
         var g = image.createGraphics();
         panel.paint(g);
         g.dispose();
