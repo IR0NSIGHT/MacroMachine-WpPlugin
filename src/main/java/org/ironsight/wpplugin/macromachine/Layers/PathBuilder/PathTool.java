@@ -137,31 +137,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private static final AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<Float>());
     /**
-     * Settings of Apply as road / river, stored like the nodes (flat floats on the
-     * dimension) but separate from them: a new path keeps them.
-     */
-    private static final AttributeKey<ArrayList<Float>> ROAD_SETTINGS_KEY = new AttributeKey<>("PATHTOOL-ROAD-SETTINGS",
-            new ArrayList<Float>());
-    private static final AttributeKey<ArrayList<Float>> RIVER_SETTINGS_KEY = new AttributeKey<>(
-            "PATHTOOL-RIVER-SETTINGS", new ArrayList<Float>());
-    /**
-     * The river's riverbed / transition paints: per paint "on", the output's
-     * provider type, its save data (plain values) and the value to paint.
-     */
-    private static final AttributeKey<ArrayList<Object>> RIVER_PAINTS_KEY = new AttributeKey<>("PATHTOOL-RIVER-PAINTS",
-            new ArrayList<Object>());
-    /** Apply as paint: its settings and its paint, stored like the river's. */
-    private static final AttributeKey<ArrayList<Float>> PAINT_SETTINGS_KEY = new AttributeKey<>(
-            "PATHTOOL-PAINT-SETTINGS", new ArrayList<Float>());
-    private static final AttributeKey<ArrayList<Object>> ROAD_PAINTS_KEY = new AttributeKey<>("PATHTOOL-ROAD-PAINTS",
-            new ArrayList<Object>());
-    private static final AttributeKey<ArrayList<Object>> PAINT_PAINTS_KEY = new AttributeKey<>("PATHTOOL-PAINT-PAINTS",
-            new ArrayList<Object>());
-    /**
-     * Where the Apply settings live now: outside WorldPainter's undo (undoing an
-     * Apply must not drop the settings it was made with), still saved with the
-     * world. The keys above are the undoable ones of older worlds, only read when
-     * nothing is stored here yet (WorldPainter keeps a key either undoable or not).
+     * The Apply dialogs' settings (flat floats) and paints (per paint "on", the
+     * output's provider type, its save data and the value), stored on the dimension
+     * apart from the nodes (a new path keeps them) and outside WorldPainter's undo
+     * (undoing an Apply must not drop the settings it was made with).
      */
     private static final AttributeKey<ArrayList<Float>> ROAD_SETTINGS = new AttributeKey<>(
             "PATHTOOL-ROAD-APPLY-SETTINGS", new ArrayList<Float>()),
@@ -4794,30 +4773,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         };
     }
 
-    /** The undoable keys older worlds stored the settings under. */
-    private static AttributeKey<ArrayList<Float>> legacySettingsKey(SettingsKind kind) {
-        return switch (kind) {
-            case ROAD -> ROAD_SETTINGS_KEY;
-            case RIVER -> RIVER_SETTINGS_KEY;
-            case PAINT -> PAINT_SETTINGS_KEY;
-        };
-    }
-
-    private static AttributeKey<ArrayList<Object>> legacyPaintsKey(SettingsKind kind) {
-        return switch (kind) {
-            case ROAD -> ROAD_PAINTS_KEY;
-            case RIVER -> RIVER_PAINTS_KEY;
-            case PAINT -> PAINT_PAINTS_KEY;
-        };
-    }
-
-    /** {@code key}'s value, else (older worlds) the legacy key's. */
-    private static <T extends List<?>> T storedOrLegacy(Dimension dimension, AttributeKey<T> key,
-            AttributeKey<T> legacy) {
-        T value = dimension.getAttribute(key);
-        return value == null || value.isEmpty() ? dimension.getAttribute(legacy) : value;
-    }
-
     /** The stored settings of {@code kind} (its preset if none are stored yet). */
     ApplySettings storedSettings(SettingsKind kind) {
         var fallback = switch (kind) {
@@ -4828,9 +4783,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         Dimension dimension = getView() == null ? null : getDimension();
         if (dimension == null)
             return fallback;
-        var settings = ApplySettings.fromFloats(storedOrLegacy(dimension, settingsKey(kind), legacySettingsKey(kind)),
-                fallback);
-        return settings.withPaintData(storedOrLegacy(dimension, paintsKey(kind), legacyPaintsKey(kind)));
+        var settings = ApplySettings.fromFloats(dimension.getAttribute(settingsKey(kind)), fallback);
+        return settings.withPaintData(dimension.getAttribute(paintsKey(kind)));
     }
 
     private void storeSettings() {
