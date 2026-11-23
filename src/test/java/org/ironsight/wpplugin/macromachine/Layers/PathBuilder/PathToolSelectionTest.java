@@ -2120,6 +2120,11 @@ class PathToolSelectionTest
                     assertEquals("Blend with terrain", settingGroup(tool, "Transition multiplier"));
                     assertEquals("Blend with terrain", settingGroup(tool, "Transition profile"));
                     assertTrue(settingSpinner(tool, "Transition multiplier").getToolTipText().contains("path radii"));
+                    // the river's cross section: a blue dip from the top
+                    var section = crossSection(tool);
+                    assertEquals(PathTool.CROSS_SECTION_WATER.getRGB(), section.getRGB(section.getWidth() / 2, 1));
+                    assertEquals(PathTool.CROSS_SECTION_WATER.getRGB(),
+                            section.getRGB(section.getWidth() / 2, section.getHeight() - 2));
                     // behind "Only downhill": do the nodes already run downhill?
                     var status = tool.downhillStatus();
                     assertTrue(status.getParent().isVisible(), "shown with the river's only downhill");
@@ -2149,6 +2154,9 @@ class PathToolSelectionTest
                     assertTrue(checkbox(tool, "Flatten road").isSelected(), "road preset flattens");
                     assertEquals("Road", settingGroup(tool, "Flatten road"));
                     assertEquals("Paint path", settingGroup(tool, "Set paint"));
+                    var roadSection = crossSection(tool);
+                    assertEquals(java.awt.Color.RED.getRGB(),
+                            roadSection.getRGB(roadSection.getWidth() / 2, roadSection.getHeight() - 2));
                     assertEquals(1.7f, tool.curveStrength(), 1e-6f);
                     assertFalse(settingShown(tool, "Carve river bed"), "no river option for a road");
                     assertFalse(settingShown(tool, "Paint riverbed with"), "no river paint for a road");
@@ -2252,6 +2260,16 @@ class PathToolSelectionTest
     /**
      * Whether the settings dialog shows the checkbox or labelled row {@code text}.
      */
+    private static java.awt.image.BufferedImage crossSection(PathTool tool) {
+        var panel = findComponent(tool.pathSettingsPanel(), javax.swing.JPanel.class, "PathTool.CrossSection");
+        panel.setSize(200, 48);
+        var image = new java.awt.image.BufferedImage(200, 48, java.awt.image.BufferedImage.TYPE_INT_ARGB);
+        var g = image.createGraphics();
+        panel.paint(g);
+        g.dispose();
+        return image;
+    }
+
     private static boolean settingShown(PathTool tool, String text) {
         var setting = settingComponent(tool.pathSettingsPanel(), text);
         if (setting == null)

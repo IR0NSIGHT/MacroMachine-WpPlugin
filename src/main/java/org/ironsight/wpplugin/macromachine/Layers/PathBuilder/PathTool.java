@@ -373,6 +373,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     /** True while settings are pushed into the controls (no storing meanwhile). */
     private boolean loadingSettings;
     private JPanel brushQuerschnitt;
+    static final Color CROSS_SECTION_WATER = new Color(52, 120, 220), CROSS_SECTION_GRASS = new Color(86, 160, 58);
     private JComboBox<CrossSectionShape> profilesDropdown;
     private CrossSectionShape brushProfile;
     private float transitionMultiplier = 2;
@@ -4495,7 +4496,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         {
             transitionMultiSpinner = new JSpinner(new SpinnerNumberModel(1d, 0d, 100d, .25d));
             transitionMultiSpinner.setToolTipText(
-                    "<html>How far beyond the path the terrain blends into it, in path radii.<br>0 = a hard edge, 1 = the blend reaches one path radius beyond the edge, 5 = five radii.<br>The picture below shows the cross section: red is the path itself, black the blend.</html>");
+                    "<html>How far beyond the path the terrain blends into it, in path radii.<br>0 = a hard edge, 1 = the blend reaches one path radius beyond the edge, 5 = five radii.</html>");
             transitionMultiSpinner.addChangeListener(l -> {
                 transitionMultiplier = ((Number) transitionMultiSpinner.getValue()).floatValue() + 1;
                 if (brushQuerschnitt != null)
@@ -4520,27 +4521,27 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     g.setColor(Color.WHITE);
                     g.fillRect(0, 0, getWidth(), getHeight());
 
-                    g.setColor(Color.BLACK);
+                    // a river is a dip: water blue in the middle, grass green banks,
+                    // drawn from the top; a road is a red strip on a black blend
+                    boolean river = settingsKind == SettingsKind.RIVER;
                     for (int x = 0; x < getWidth() / 2f; x++) {
                         float strengthAtX = filterStrengthFor(x * transitionMultiplier, getWidth() / 2f,
                                 getTransitionMultiplier(), brushProfile);
                         int height = Math.round(getHeight() * strengthAtX);
-                        if (height > getHeight() * 0.99f)
-                            g.setColor(Color.RED);
-                        else
-                            g.setColor(Color.BLACK);
-
-                        g.fillRect(x + getWidth() / 2, getHeight() - height, 1, getHeight());
-                        g.fillRect(getWidth() - (x + getWidth() / 2), getHeight() - height, 1, getHeight());
-
-                        // g.fillRect(getW x + getWidth()/2, getHeight() - height, 1, getHeight());
+                        boolean centre = height > getHeight() * 0.99f;
+                        g.setColor(river
+                                ? centre ? CROSS_SECTION_WATER : CROSS_SECTION_GRASS
+                                : centre ? Color.RED : Color.BLACK);
+                        int top = river ? 0 : getHeight() - height;
+                        g.fillRect(x + getWidth() / 2, top, 1, height);
+                        g.fillRect(getWidth() - (x + getWidth() / 2), top, 1, height);
                     }
                 }
             };
             brushQuerschnitt.setPreferredSize(new java.awt.Dimension(0, 48));
             brushQuerschnitt.setMinimumSize(new java.awt.Dimension(0, 48));
             brushQuerschnitt.setMaximumSize(new java.awt.Dimension(Integer.MAX_VALUE, 48));
-            brushQuerschnitt.setToolTipText("Shows the cross section of the brush strength. Red area = 100% strength");
+            brushQuerschnitt.setName("PathTool.CrossSection");
             pathSettingsPanel.add(brushQuerschnitt);
         }
         {
@@ -4814,6 +4815,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         setWaterCheckbox.setVisible(kind == SettingsKind.RIVER);
         riverbedPaintRow.setVisible(kind == SettingsKind.RIVER);
         riverTransitionPaintRow.setVisible(kind == SettingsKind.RIVER);
+        brushQuerschnitt.setToolTipText(kind == SettingsKind.RIVER
+                ? "Cross section of the river: blue is the river itself, green the banks blending into the terrain"
+                : "Cross section of the road: red is the road itself, black the blend into the terrain");
+        brushQuerschnitt.repaint();
         ((javax.swing.border.TitledBorder) optionsGroup.getBorder())
                 .setTitle(kind == SettingsKind.RIVER ? "River" : "Road");
         for (var group : settingsGroups())
