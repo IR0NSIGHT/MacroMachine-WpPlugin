@@ -1342,7 +1342,7 @@ class PathToolSelectionTest
     }
 
     @Test
-    void heightViewDrawsResolvedHeightsTintedBySlope() throws Exception {
+    void heightViewDrawsThePathsOwnHeightsTintedBySlope() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             try {
                 Dimension dimension = dimension();
@@ -1367,17 +1367,14 @@ class PathToolSelectionTest
                     dimension.setAttribute(HANDLES,
                             new ArrayList<>(List.of(20f, 60f, 70f, 4f, 60f, 60f, 80f, 4f, 100f, 60f, 90f, 4f)), true);
                     assertTrue(colourPixels(paintOverlay300(overlay), strip, PathTool.SLOPE_UP_COLOR) > 20, "red");
-                    // the resolved heights are what Apply generates: with snap to terrain the
-                    // rising nodes are overridden by the (flat) ground -> no rise left
-                    var resolved = new ArrayList<javax.vecmath.Point4f>(
-                            PathToolBackend.getPathFromNodes(List.of(new javax.vecmath.Point4f(20, 60, 70, 4),
-                                    new javax.vecmath.Point4f(100, 60, 90, 4)), 0f).path);
-                    checkbox(tool, "Snap to terrain").doClick();
-                    tool.resolveHeights(resolved, dimension);
-                    for (var sample : resolved)
-                        assertEquals(dimension.getHeightAt(Math.round(sample.x), Math.round(sample.y)), sample.z);
-                    assertEquals(0, colourPixels(paintOverlay300(overlay), strip, PathTool.SLOPE_UP_COLOR),
-                            "flat resolved path is not red");
+                    // the Apply settings only act when applying: with snap to terrain set the
+                    // view still shows the nodes' own rising curve
+                    tool.openPathSettings("Apply as road", PathTool.SettingsKind.ROAD);
+                    if (!checkbox(tool, "Snap to terrain").isSelected())
+                        checkbox(tool, "Snap to terrain").doClick();
+                    tool.cancelPathSettings();
+                    assertTrue(colourPixels(paintOverlay300(overlay), strip, PathTool.SLOPE_UP_COLOR) > 20,
+                            "still the nodes' rising curve");
                 } finally {
                     tool.setActive(false);
                 }

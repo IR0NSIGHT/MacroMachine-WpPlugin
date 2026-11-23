@@ -3353,11 +3353,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
         /**
          * Block data of the height view along the sampled curve: terrain and water
-         * blocks, the resolved and the requested path block per sample, and the height
-         * range.
+         * blocks, the path's own block per sample (the curve through its nodes; the
+         * Apply settings only act when applying) and the height range.
          */
         record HeightProfile(List<Point4f> curve, long revision, Dimension dimension, Integer[] terrain,
-                Integer[] water, int[] resolved, int[] requested, boolean differs, double low, double high) {
+                Integer[] water, int[] heights, double low, double high) {
         }
 
         private HeightProfile cachedProfile;
@@ -3372,23 +3372,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             if (cached != null && cached.curve() == curve && cached.revision() == previewRevision
                     && cached.dimension() == overlayDimension)
                 return cached;
-            var resolvedCurve = new ArrayList<Point4f>(curve.size());
-            for (Point4f sample : curve)
-                resolvedCurve.add(new Point4f(sample));
-            if (overlayDimension != null)
-                resolveHeights(resolvedCurve, overlayDimension);
             var terrain = new Integer[curve.size()];
             var water = new Integer[curve.size()];
-            int[] resolved = new int[curve.size()], requested = new int[curve.size()];
-            boolean differs = false;
+            int[] heights = new int[curve.size()];
             double low = Double.MAX_VALUE, high = -Double.MAX_VALUE;
             for (int k = first; k <= last; k++) {
                 Point4f sample = curve.get(k);
-                resolved[k] = blockOf(resolvedCurve.get(k).z);
-                requested[k] = blockOf(sample.z);
-                differs |= resolved[k] != requested[k];
-                low = Math.min(low, Math.min(resolved[k], requested[k]));
-                high = Math.max(high, Math.max(resolved[k], requested[k]) + 1);
+                heights[k] = blockOf(sample.z);
+                low = Math.min(low, heights[k]);
+                high = Math.max(high, heights[k] + 1);
                 Float ground = groundAt(sample);
                 if (ground == null)
                     continue;
@@ -3403,8 +3395,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     }
                 }
             }
-            cachedProfile = new HeightProfile(curve, previewRevision, overlayDimension, terrain, water, resolved,
-                    requested, differs, low, high);
+            cachedProfile = new HeightProfile(curve, previewRevision, overlayDimension, terrain, water, heights, low,
+                    high);
             return cachedProfile;
         }
 
@@ -3700,28 +3692,20 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     g.setClip(clipBefore);
                 }
                 paintHeightScale(g, strip, lowest, range, yAt);
-                // where the resolved heights differ from the nodes' own curve (e.g. snap to
-                // terrain overriding raised nodes), show that curve faint and dotted
-                if (profile.differs()) {
-                    g.setColor(new Color(255, 255, 255, 140));
-                    g.setStroke(new BasicStroke(1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 10,
-                            new float[]{1, 3}, 0));
-                    g.draw(blockSteps(profile.requested(), from, to, columnLeft, columnRight, yAt));
-                }
-                // resolved height per segment, block by block: red where it rises from the
+                // the path's height per segment, block by block: red where it rises from the
                 // previous node, green where it falls or stays level; selected segments get a
                 // cyan underlay
                 for (int i = 0; i + 1 < n; i++) {
                     int start = Math.max(nodeSample[i], from), stop = Math.min(nodeSample[i + 1], to);
                     if (stop <= start)
                         continue;
-                    var segment = blockSteps(profile.resolved(), start, stop, columnLeft, columnRight, yAt);
+                    var segment = blockSteps(profile.heights(), start, stop, columnLeft, columnRight, yAt);
                     if (PathEditHandles.segmentSelected(i, selection)) {
                         g.setStroke(new BasicStroke(6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                         g.setColor(SELECTED_NODE_FILL);
                         g.draw(segment);
                     }
-                    boolean rises = profile.resolved()[nodeSample[i + 1]] > profile.resolved()[nodeSample[i]];
+                    boolean rises = profile.heights()[nodeSample[i + 1]] > profile.heights()[nodeSample[i]];
                     g.setStroke(new BasicStroke(2.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
                     g.setColor(rises ? SLOPE_UP_COLOR : SLOPE_DOWN_COLOR);
                     g.draw(segment);
@@ -5015,7 +4999,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     /**
      * The heights the generated path really gets: snap to terrain, only downhill,
      * fixed height and the slope limit applied to the sampled curve (mutates it).
-     * Shared by Apply and the unravelled height view, so both always agree.
+     * Only Apply uses them: until then the path knows its nodes' heights only.
      */
     void resolveHeights(List<Point4f> path, Dimension dimension) {
         if (snapToTerrain)
