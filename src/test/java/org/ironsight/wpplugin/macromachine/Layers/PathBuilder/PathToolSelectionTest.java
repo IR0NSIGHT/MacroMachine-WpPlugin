@@ -2888,10 +2888,10 @@ class PathToolSelectionTest
                     assertEquals(8, dimension.getAttribute(HANDLES).size());
                     assertTrue(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
                     assertTrue(manager.undo());
-                    assertEquals(List.of(20f, 20f, 70f, 4f), dimension.getAttribute(HANDLES));
+                    assertEquals(List.of(20f, 20f, 70f, 8f), dimension.getAttribute(HANDLES));
                     assertFalse(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
                     assertTrue(manager.redo());
-                    assertEquals(List.of(20f, 20f, 70f, 4f, 60f, 20f, 70f, 4f), dimension.getAttribute(HANDLES));
+                    assertEquals(List.of(20f, 20f, 70f, 8f, 60f, 20f, 70f, 8f), dimension.getAttribute(HANDLES));
                     assertTrue(dimension.getBitLayerValueAt(PreviewOperation.annotationLayer, 60, 20));
                 } finally {
                     tool.setActive(false);
@@ -3439,7 +3439,7 @@ class PathToolSelectionTest
                     tool.tick(20, 20, true, false, 1f);
                     tool.tick(30, 30, false, true, 1f);
                     tool.addNode(30, 30);
-                    var expected = List.of(10f, 10f, 70f, 4f, 30f, 30f, 70f, 4f);
+                    var expected = List.of(10f, 10f, 70f, 8f, 30f, 30f, 70f, 8f); // radius 8, not the brush's 4
                     assertEquals(expected, dimension.getAttribute(HANDLES));
                     event(view, MouseEvent.MOUSE_PRESSED, 10, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);
                     event(view, MouseEvent.MOUSE_DRAGGED, 20, 10, MouseEvent.NOBUTTON, InputEvent.BUTTON1_DOWN_MASK);

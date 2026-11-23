@@ -94,7 +94,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     public static final String HELP_TITLE = "Path Tool";
     public static final String HELP_EXPLANATION = """
             Use the Path Tool to connect clicked positions into a smooth path that is blended into existing terrain.
-            The path width follows the brush radius and is previewed on the map before applying. Use presets to start
+            New nodes start with a radius of 8 blocks (change it in the radius editor); the path is previewed on the map before applying. Use presets to start
             quickly, then fine-tune blending, slope and transition settings below.
             """;
     public static final List<HelpItem> HELP_ITEMS = List.of(
@@ -121,7 +121,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Backspace", "Delete last point on current path"),
             new HelpItem("Undo / redo", "Cancel any drag and clear selection before undo or redo"),
             new HelpItem("Apply", "Commit previewed path to terrain / paint / water"),
-            new HelpItem("Brush radius", "Controls path width and transition size"),
             new HelpItem("Overlays (top left)",
                     "Toggle all overlays; the arrow lists each part with toggle / Only / All but buttons"),
             new HelpItem("Only downhill", "Restrict path to horizontal or downhill movement"),
@@ -5262,15 +5261,16 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * or at the end when nothing is selected; the new node becomes the selection
      * then. Used by Ctrl+click and by clicks in add mode.
      */
+    /** The radius every new node starts with. */
+    static final float NEW_NODE_RADIUS = 8;
+
     void addNode(int centreX, int centreY) {
         Dimension dim = getDimension();
         if (dim == null || dim.getTile(centreX >> TILE_SIZE_BITS, centreY >> TILE_SIZE_BITS) == null)
             return;
         cancelGesture();
         var pathHandles = getCurrentPath();
-        float pathRadius = getBrush() != null
-                ? getBrush().getEffectiveRadius()
-                : pathHandles.isEmpty() ? 5 : pathHandles.get(pathHandles.size() - 1).w;
+        float pathRadius = NEW_NODE_RADIUS; // never the brush radius
         int index = insertionIndex(selectedNodes, pathHandles.size());
         pathHandles.add(index, new Point4f(centreX, centreY, dim.getHeightAt(centreX, centreY), pathRadius));
         boolean inserting = !selectedNodes.isEmpty();

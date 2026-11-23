@@ -38,7 +38,7 @@ public enum HelpCatalog {
                     new HelpItem("Delete", "Delete selected buildings"))), ROAD("path-tool", "Path Tool",
                             """
                                     Use the Path Tool to connect clicked positions into a smooth path that is blended into existing terrain.
-                                    The path width follows the brush radius and is previewed on the map before applying. Use presets to start
+                                    New nodes start with a radius of 8 blocks (change it in the radius editor); the path is previewed on the map before applying. Use presets to start
                                     quickly, then fine-tune blending, slope and transition settings below.
                                     """,
                             List.of(new HelpItem("Ctrl + left click (empty map)",
@@ -71,7 +71,6 @@ public enum HelpCatalog {
                                     new HelpItem("Undo / redo",
                                             "Cancel any drag and clear selection before undo or redo"),
                                     new HelpItem("Apply", "Commit previewed path to terrain / paint / water"),
-                                    new HelpItem("Brush radius", "Controls path width and transition size"),
                                     new HelpItem("Overlays (top left)",
                                             "Toggle all overlays; the arrow lists each part with toggle / Only / All but buttons"),
                                     new HelpItem("Only downhill", "Restrict path to horizontal or downhill movement"),
