@@ -1224,6 +1224,15 @@ class PathToolSelectionTest
                     assertEquals(Set.of(0, 1, 2), tool.selectedNodes());
                     findComponent(tool.nodeMenu(), javax.swing.JMenuItem.class, "PathTool.Node.OnlyDownhill").doClick();
                     assertEquals("Only downhill: 2 nodes change", tool.viewportHeader());
+                    // its note is light text on the dark panel, not the look and feel's black
+                    var operationPanel = findComponent(view, JPanel.class, "PathTool.OperationPanel");
+                    var notes = new ArrayList<javax.swing.JLabel>();
+                    collectLabels(operationPanel, notes);
+                    var note = notes.stream()
+                            .filter(l -> l.getText().contains("never rises"))
+                            .findFirst()
+                            .orElseThrow();
+                    assertEquals(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED, note.getForeground());
                     assertEquals(initial, dimension.getAttribute(HANDLES), "only previewed");
                     operationButton(view, "PathTool.OperationApply").doClick();
                     assertEquals(List.of(20f, 60f, 80f, 4f, 60f, 60f, 80f, 4f, 100f, 60f, 80f, 4f),
@@ -2304,6 +2313,15 @@ class PathToolSelectionTest
     /**
      * Whether the settings dialog shows the checkbox or labelled row {@code text}.
      */
+    private static void collectLabels(java.awt.Container container, List<javax.swing.JLabel> labels) {
+        for (var child : container.getComponents()) {
+            if (child instanceof javax.swing.JLabel label)
+                labels.add(label);
+            if (child instanceof java.awt.Container inner)
+                collectLabels(inner, labels);
+        }
+    }
+
     private static boolean settingShown(PathTool tool, String text) {
         var setting = settingComponent(tool.pathSettingsPanel(), text);
         if (setting == null)

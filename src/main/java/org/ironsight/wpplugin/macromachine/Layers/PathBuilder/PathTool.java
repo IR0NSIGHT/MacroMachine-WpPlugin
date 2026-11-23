@@ -1239,17 +1239,30 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * Labels and notes inside an operation panel: light text on the dark surface.
      */
     private static void styleOperationControls(java.awt.Container container) {
+        // the controls may be a bare text (Only downhill's note), not a panel of them
+        if (container instanceof JLabel label) {
+            styleOperationLabel(label);
+            return;
+        }
         if (container instanceof JComponent component && !(container instanceof JSpinner))
             component.setOpaque(false);
         for (Component child : container.getComponents()) {
-            if (child instanceof JLabel label) {
-                if (label.getForeground() == null || label.getForeground() instanceof javax.swing.plaf.UIResource)
-                    org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.label(label, true);
-            } else if (child instanceof AbstractButton button)
+            if (child instanceof JLabel label)
+                styleOperationLabel(label);
+            else if (child instanceof AbstractButton button)
                 org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.button(button);
             else if (child instanceof java.awt.Container inner && !(child instanceof JSpinner))
                 styleOperationControls(inner);
         }
+    }
+
+    /**
+     * Texts on the operation panel: muted light text (unless coloured on purpose).
+     */
+    private static void styleOperationLabel(JLabel label) {
+        label.setOpaque(false);
+        if (label.getForeground() == null || label.getForeground() instanceof javax.swing.plaf.UIResource)
+            org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.label(label, true);
     }
 
     private void openOperation(String title, JComponent controls, Supplier<PathOperations.Result> compute) {
