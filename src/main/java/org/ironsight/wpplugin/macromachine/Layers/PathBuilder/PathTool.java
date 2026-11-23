@@ -157,6 +157,20 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new ArrayList<Object>());
     private static final AttributeKey<ArrayList<Object>> PAINT_PAINTS_KEY = new AttributeKey<>("PATHTOOL-PAINT-PAINTS",
             new ArrayList<Object>());
+    /**
+     * Where the Apply settings live now: outside WorldPainter's undo (undoing an
+     * Apply must not drop the settings it was made with), still saved with the
+     * world. The keys above are the undoable ones of older worlds, only read when
+     * nothing is stored here yet (WorldPainter keeps a key either undoable or not).
+     */
+    private static final AttributeKey<ArrayList<Float>> ROAD_SETTINGS = new AttributeKey<>(
+            "PATHTOOL-ROAD-APPLY-SETTINGS", new ArrayList<Float>()),
+            RIVER_SETTINGS = new AttributeKey<>("PATHTOOL-RIVER-APPLY-SETTINGS", new ArrayList<Float>()),
+            PAINT_SETTINGS = new AttributeKey<>("PATHTOOL-PAINT-APPLY-SETTINGS", new ArrayList<Float>());
+    private static final AttributeKey<ArrayList<Object>> ROAD_PAINTS = new AttributeKey<>("PATHTOOL-ROAD-APPLY-PAINTS",
+            new ArrayList<Object>()),
+            RIVER_PAINTS = new AttributeKey<>("PATHTOOL-RIVER-APPLY-PAINTS", new ArrayList<Object>()),
+            PAINT_PAINTS = new AttributeKey<>("PATHTOOL-PAINT-APPLY-PAINTS", new ArrayList<Object>());
 
     /**
      * Painting with an action output (a terrain, a layer, ...) at {@code value}, as
@@ -4765,19 +4779,43 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private static AttributeKey<ArrayList<Float>> settingsKey(SettingsKind kind) {
         return switch (kind) {
-            case ROAD -> ROAD_SETTINGS_KEY;
-            case RIVER -> RIVER_SETTINGS_KEY;
-            case PAINT -> PAINT_SETTINGS_KEY;
+            case ROAD -> ROAD_SETTINGS;
+            case RIVER -> RIVER_SETTINGS;
+            case PAINT -> PAINT_SETTINGS;
         };
     }
 
     /** Where the paints of {@code kind} are stored. */
     private static AttributeKey<ArrayList<Object>> paintsKey(SettingsKind kind) {
         return switch (kind) {
+            case ROAD -> ROAD_PAINTS;
+            case RIVER -> RIVER_PAINTS;
+            case PAINT -> PAINT_PAINTS;
+        };
+    }
+
+    /** The undoable keys older worlds stored the settings under. */
+    private static AttributeKey<ArrayList<Float>> legacySettingsKey(SettingsKind kind) {
+        return switch (kind) {
+            case ROAD -> ROAD_SETTINGS_KEY;
+            case RIVER -> RIVER_SETTINGS_KEY;
+            case PAINT -> PAINT_SETTINGS_KEY;
+        };
+    }
+
+    private static AttributeKey<ArrayList<Object>> legacyPaintsKey(SettingsKind kind) {
+        return switch (kind) {
             case ROAD -> ROAD_PAINTS_KEY;
             case RIVER -> RIVER_PAINTS_KEY;
             case PAINT -> PAINT_PAINTS_KEY;
         };
+    }
+
+    /** {@code key}'s value, else (older worlds) the legacy key's. */
+    private static <T extends List<?>> T storedOrLegacy(Dimension dimension, AttributeKey<T> key,
+            AttributeKey<T> legacy) {
+        T value = dimension.getAttribute(key);
+        return value == null || value.isEmpty() ? dimension.getAttribute(legacy) : value;
     }
 
     /** The stored settings of {@code kind} (its preset if none are stored yet). */
@@ -4790,8 +4828,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         Dimension dimension = getView() == null ? null : getDimension();
         if (dimension == null)
             return fallback;
-        var settings = ApplySettings.fromFloats(dimension.getAttribute(settingsKey(kind)), fallback);
-        return paintsKey(kind) == null ? settings : settings.withPaintData(dimension.getAttribute(paintsKey(kind)));
+        var settings = ApplySettings.fromFloats(storedOrLegacy(dimension, settingsKey(kind), legacySettingsKey(kind)),
+                fallback);
+        return settings.withPaintData(storedOrLegacy(dimension, paintsKey(kind), legacyPaintsKey(kind)));
     }
 
     private void storeSettings() {
@@ -4802,14 +4841,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             return;
         var settings = currentSettings();
         var data = settings.toFloats();
+        // not undoable: undoing an Apply keeps the settings it was made with
         if (!data.equals(dimension.getAttribute(settingsKey(settingsKind))))
-            dimension.setAttribute(settingsKey(settingsKind), data, true);
-        var paintsKey = paintsKey(settingsKind);
-        if (paintsKey != null) {
-            var paints = settings.paintData();
-            if (!paintDataEquals(paints, dimension.getAttribute(paintsKey)))
-                dimension.setAttribute(paintsKey, paints, true);
-        }
+            dimension.setAttribute(settingsKey(settingsKind), data, false);
+        var paints = settings.paintData();
+        if (!paintDataEquals(paints, dimension.getAttribute(paintsKey(settingsKind))))
+            dimension.setAttribute(paintsKey(settingsKind), paints, false);
     }
 
     /** Equal paint data (the save data are arrays, compared by content). */

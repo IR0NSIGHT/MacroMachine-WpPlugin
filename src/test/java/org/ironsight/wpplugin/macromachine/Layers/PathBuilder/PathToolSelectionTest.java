@@ -2745,6 +2745,42 @@ class PathToolSelectionTest
     }
 
     @Test
+    void undoingAnApplyKeepsTheApplySettings() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                UndoManager manager = new UndoManager();
+                dimension.registerUndoManager(manager);
+                TestView view = new TestView(dimension);
+                PathTool tool = synchronousTool();
+                tool.setView(view);
+                tool.setBrush(brush());
+                tool.setActive(true);
+                try {
+                    tool.addNode(20, 70);
+                    tool.addNode(60, 70);
+                    dimension.armSavePoint();
+                    // apply as river with a changed setting, then undo the result
+                    tool.openPathSettings("Apply as river", PathTool.SettingsKind.RIVER);
+                    settingSpinner(tool, "Transition multiplier").setValue(3d);
+                    tool.applyButton().doClick();
+                    dimension.armSavePoint();
+                    assertTrue(manager.undo());
+                    // reopened for another try: the settings it was applied with
+                    tool.openPathSettings("Apply as river", PathTool.SettingsKind.RIVER);
+                    assertEquals(3d, ((Number) settingSpinner(tool, "Transition multiplier").getValue()).doubleValue());
+                    assertEquals(3f, tool.storedSettings(PathTool.SettingsKind.RIVER).transition());
+                } finally {
+                    tool.setActive(false);
+                    dimension.unregisterUndoManager();
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
     void undoManagerRestoresHandlesAndAnnotationTogether() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             try {
