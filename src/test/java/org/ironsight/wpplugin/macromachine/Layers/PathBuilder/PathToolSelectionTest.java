@@ -1363,9 +1363,7 @@ class PathToolSelectionTest
                     var resolved = new ArrayList<javax.vecmath.Point4f>(
                             PathToolBackend.getPathFromNodes(List.of(new javax.vecmath.Point4f(20, 60, 70, 4),
                                     new javax.vecmath.Point4f(100, 60, 90, 4)), 0f).path);
-                    for (var component : tool.pathSettingsPanel().getComponents())
-                        if (component instanceof javax.swing.JCheckBox box && "snap to terrain".equals(box.getText()))
-                            box.doClick();
+                    checkbox(tool, "snap to terrain").doClick();
                     tool.resolveHeights(resolved, dimension);
                     for (var sample : resolved)
                         assertEquals(dimension.getHeightAt(Math.round(sample.x), Math.round(sample.y)), sample.z);
@@ -2116,6 +2114,12 @@ class PathToolSelectionTest
                             "Transition profile"))
                         assertTrue(settingShown(tool, option), option + " for a river");
                     assertFalse(settingShown(tool, "Set paint"), "a river paints bed and transition instead");
+                    assertEquals("River", settingGroup(tool, "Only downhill"));
+                    assertEquals("River", settingGroup(tool, "Carve river bed"));
+                    assertEquals("Paint path", settingGroup(tool, "Paint riverbed with"));
+                    assertEquals("Blend with terrain", settingGroup(tool, "Transition multiplier"));
+                    assertEquals("Blend with terrain", settingGroup(tool, "Transition profile"));
+                    assertTrue(settingSpinner(tool, "Transition multiplier").getToolTipText().contains("path radii"));
                     // behind "Only downhill": do the nodes already run downhill?
                     var status = tool.downhillStatus();
                     assertTrue(status.getParent().isVisible(), "shown with the river's only downhill");
@@ -2143,6 +2147,8 @@ class PathToolSelectionTest
                     for (String option : List.of("Only downhill", "Set water"))
                         assertFalse(settingShown(tool, option), "no " + option + " for a road");
                     assertTrue(checkbox(tool, "Flatten road").isSelected(), "road preset flattens");
+                    assertEquals("Road", settingGroup(tool, "Flatten road"));
+                    assertEquals("Paint path", settingGroup(tool, "Set paint"));
                     assertEquals(1.7f, tool.curveStrength(), 1e-6f);
                     assertFalse(settingShown(tool, "Carve river bed"), "no river option for a road");
                     assertFalse(settingShown(tool, "Paint riverbed with"), "no river paint for a road");
@@ -2245,16 +2251,39 @@ class PathToolSelectionTest
      * Whether the settings dialog shows the checkbox or labelled row {@code text}.
      */
     private static boolean settingShown(PathTool tool, String text) {
-        for (var row : tool.pathSettingsPanel().getComponents()) {
-            if (row instanceof javax.swing.AbstractButton button && text.equals(button.getText()))
-                return row.isVisible();
-            if (row instanceof javax.swing.JPanel panel)
-                for (var child : panel.getComponents())
-                    if (child instanceof javax.swing.JLabel label && text.equals(label.getText())
-                            || child instanceof javax.swing.AbstractButton button && text.equals(button.getText()))
-                        return row.isVisible();
+        var setting = settingComponent(tool.pathSettingsPanel(), text);
+        if (setting == null)
+            throw new AssertionError("no setting " + text);
+        for (java.awt.Component c = setting; c != tool.pathSettingsPanel(); c = c.getParent())
+            if (!c.isVisible())
+                return false;
+        return true;
+    }
+
+    /**
+     * The checkbox / button or label with {@code text} anywhere in the settings.
+     */
+    private static java.awt.Component settingComponent(java.awt.Container container, String text) {
+        for (var child : container.getComponents()) {
+            if (child instanceof javax.swing.AbstractButton button && text.equals(button.getText())
+                    || child instanceof javax.swing.JLabel label && text.equals(label.getText()))
+                return child;
+            if (child instanceof java.awt.Container inner) {
+                var found = settingComponent(inner, text);
+                if (found != null)
+                    return found;
+            }
         }
-        throw new AssertionError("no setting " + text);
+        return null;
+    }
+
+    /** The title of the settings group holding {@code text}. */
+    private static String settingGroup(PathTool tool, String text) {
+        for (java.awt.Component c = settingComponent(tool.pathSettingsPanel(), text); c != null; c = c.getParent())
+            if (c instanceof javax.swing.JComponent component
+                    && component.getBorder() instanceof javax.swing.border.TitledBorder titled)
+                return titled.getTitle();
+        return null;
     }
 
     /** The (dialog-less) spinner holding the curve strength. */
@@ -2270,11 +2299,11 @@ class PathToolSelectionTest
 
     /** The spinner in the settings row labelled {@code text}. */
     private static javax.swing.JSpinner settingSpinner(PathTool tool, String text) {
-        for (var row : tool.pathSettingsPanel().getComponents())
-            if (row instanceof javax.swing.JPanel panel && panel.getComponentCount() == 2
-                    && panel.getComponent(0) instanceof javax.swing.JLabel label && text.equals(label.getText())
-                    && panel.getComponent(1) instanceof javax.swing.JSpinner spinner)
-                return spinner;
+        var label = settingComponent(tool.pathSettingsPanel(), text);
+        if (label != null)
+            for (var sibling : label.getParent().getComponents())
+                if (sibling instanceof javax.swing.JSpinner spinner)
+                    return spinner;
         throw new AssertionError("no spinner " + text);
     }
 
@@ -2286,14 +2315,8 @@ class PathToolSelectionTest
     }
 
     private static javax.swing.JCheckBox checkbox(PathTool tool, String text) {
-        for (var component : tool.pathSettingsPanel().getComponents()) {
-            if (component instanceof javax.swing.JCheckBox box && text.equals(box.getText()))
-                return box;
-            if (component instanceof javax.swing.JPanel row) // checkbox heading a row
-                for (var child : row.getComponents())
-                    if (child instanceof javax.swing.JCheckBox box && text.equals(box.getText()))
-                        return box;
-        }
+        if (settingComponent(tool.pathSettingsPanel(), text) instanceof javax.swing.JCheckBox box)
+            return box;
         throw new AssertionError("no checkbox " + text);
     }
 
@@ -3293,14 +3316,9 @@ class PathToolSelectionTest
                     event(view, MouseEvent.MOUSE_RELEASED, 20, 10, MouseEvent.BUTTON1, 0);
                     assertEquals(List.of(20f, 10f, 81f, 4f, 40f, 30f, 92f, 6f), dimension.getAttribute(HANDLES));
                     assertEquals(Set.of(0, 1), tool.selectedNodes());
-                    boolean snapEnabled = false;
-                    for (var component : tool.pathSettingsPanel().getComponents())
-                        if (component instanceof javax.swing.JCheckBox checkbox
-                                && "snap to terrain".equals(checkbox.getText())) {
-                            checkbox.doClick();
-                            snapEnabled = checkbox.isSelected();
-                        }
-                    assertTrue(snapEnabled);
+                    var snap = checkbox(tool, "snap to terrain");
+                    snap.doClick();
+                    assertTrue(snap.isSelected());
                     dimension.setHeightAt(30, 10, 83f);
                     dimension.setHeightAt(50, 30, 94f);
                     event(view, MouseEvent.MOUSE_PRESSED, 20, 10, MouseEvent.BUTTON1, InputEvent.BUTTON1_DOWN_MASK);

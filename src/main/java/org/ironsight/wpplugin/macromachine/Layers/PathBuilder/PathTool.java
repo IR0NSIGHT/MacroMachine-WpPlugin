@@ -243,6 +243,22 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * path settings dialog.
      */
     private final JPanel pathSettingsPanel = new JPanel();
+    /**
+     * The settings dialog's groups: River / Road, Paint path, Blend with terrain.
+     */
+    private final JPanel optionsGroup = settingsGroup("River"), paintGroup = settingsGroup("Paint path"),
+            blendGroup = settingsGroup("Blend with terrain");
+
+    private static JPanel settingsGroup(String title) {
+        var group = new JPanel();
+        group.setLayout(new BoxLayout(group, BoxLayout.Y_AXIS));
+        group.setBorder(BorderFactory.createTitledBorder(title));
+        return group;
+    }
+
+    private List<JPanel> settingsGroups() {
+        return List.of(optionsGroup, paintGroup, blendGroup);
+    }
     private JDialog pathSettingsDialog;
     private static final int NODE_DIAMETER = 18;
     private static final int NODE_OUTLINE_DIAMETER = 20;
@@ -4482,7 +4498,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         {
             transitionMultiSpinner = new JSpinner(new SpinnerNumberModel(1d, 0d, 100d, .25d));
             transitionMultiSpinner.setToolTipText(
-                    "How many times bigger the transition is compared to the brush radius. 0 = no transition, 1 = one brush radius width transition");
+                    "<html>How far beyond the path the terrain blends into it, in path radii.<br>0 = a hard edge, 1 = the blend reaches one path radius beyond the edge, 5 = five radii.<br>The picture below shows the cross section: red is the path itself, black the blend.</html>");
             transitionMultiSpinner.addChangeListener(l -> {
                 transitionMultiplier = ((Number) transitionMultiSpinner.getValue()).floatValue() + 1;
                 if (brushQuerschnitt != null)
@@ -4491,7 +4507,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             });
             transitionMultiSpinner.setValue(1d);
             JPanel panel = new JPanel();
-            panel.add(new JLabel("Transition multiplier"));
+            var label = new JLabel("Transition multiplier");
+            label.setToolTipText(transitionMultiSpinner.getToolTipText());
+            panel.add(label);
             panel.add(transitionMultiSpinner);
             pathSettingsPanel.add(panel);
         }
@@ -4578,18 +4596,34 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             });
             profilesDropdown.setSelectedItem(model.getElementAt(3));
             this.brushProfile = (CrossSectionShape) profilesDropdown.getSelectedItem();
+            profilesDropdown.setToolTipText(
+                    "<html>The shape of the blend from the path edge out into the terrain:<br>Triangle: an even slope<br>Sinus: a smooth S-curve, soft at both ends<br>Square Root / Logarithmic: stays near the path height, then drops steeply at the outer end<br>Quadratic / Cubic: drops steeply right at the path, then runs out flat into the terrain</html>");
             JPanel panel = new JPanel();
-            panel.add(new JLabel("Transition profile"));
+            var label = new JLabel("Transition profile");
+            label.setToolTipText(profilesDropdown.getToolTipText());
+            panel.add(label);
             panel.add(profilesDropdown);
             pathSettingsPanel.add(panel);
         }
 
-        // one left edge for every row: BoxLayout misplaces rows when checkboxes (left)
-        // and panels (centre) are mixed
+        // three groups: the tool's own options (River / Road), "Paint path" and
+        // "Blend with terrain"
+        var blendRows = Set.of(transitionMultiSpinner.getParent(), brushQuerschnitt, profilesDropdown.getParent());
+        var paintRows = Set.<Component>of(roadPaintRow, riverbedPaintRow, riverTransitionPaintRow, pathPaintRow);
         for (var row : pathSettingsPanel.getComponents()) {
-            ((JComponent) row).setAlignmentX(Component.LEFT_ALIGNMENT);
-            if (row instanceof JPanel panel && panel.getLayout() instanceof FlowLayout flow)
-                flow.setAlignment(FlowLayout.LEFT);
+            pathSettingsPanel.remove(row);
+            (blendRows.contains(row) ? blendGroup : paintRows.contains(row) ? paintGroup : optionsGroup).add(row);
+        }
+        for (var group : settingsGroups()) {
+            group.setAlignmentX(Component.LEFT_ALIGNMENT);
+            pathSettingsPanel.add(group);
+            // one left edge for every row: BoxLayout misplaces rows when checkboxes
+            // (left) and panels (centre) are mixed
+            for (var row : group.getComponents()) {
+                ((JComponent) row).setAlignmentX(Component.LEFT_ALIGNMENT);
+                if (row instanceof JPanel panel && panel.getLayout() instanceof FlowLayout flow)
+                    flow.setAlignment(FlowLayout.LEFT);
+            }
         }
         updateCheckboxTexts();
         controlsReady = true;
@@ -4771,8 +4805,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         settingsAtOpen = storedSettings(kind);
         showSettings(settingsAtOpen);
         // Apply as paint shows only its paint; road and river start from every row
-        for (var row : pathSettingsPanel.getComponents())
-            row.setVisible(kind != SettingsKind.PAINT);
+        for (var group : settingsGroups())
+            for (var row : group.getComponents())
+                row.setVisible(kind != SettingsKind.PAINT);
         pathPaintRow.setVisible(kind == SettingsKind.PAINT);
         for (var row : roadOnlyRows)
             row.setVisible(kind == SettingsKind.ROAD);
@@ -4784,6 +4819,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         setWaterCheckbox.setVisible(kind == SettingsKind.RIVER);
         riverbedPaintRow.setVisible(kind == SettingsKind.RIVER);
         riverTransitionPaintRow.setVisible(kind == SettingsKind.RIVER);
+        ((javax.swing.border.TitledBorder) optionsGroup.getBorder())
+                .setTitle(kind == SettingsKind.RIVER ? "River" : "Road");
+        for (var group : settingsGroups())
+            group.setVisible(java.util.Arrays.stream(group.getComponents()).anyMatch(Component::isVisible));
         if (pathSettingsDialog == null) {
             Window owner = overlayView == null ? null : SwingUtilities.getWindowAncestor(overlayView);
             pathSettingsDialog = new JDialog(owner, Dialog.ModalityType.MODELESS);
