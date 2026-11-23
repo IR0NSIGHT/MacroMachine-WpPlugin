@@ -2122,7 +2122,7 @@ class PathToolSelectionTest
                     assertTrue(settingSpinner(tool, "Transition multiplier").getToolTipText().contains("path radii"));
                     // the river's cross section: one column a block, water over the carved
                     // sand bed in the middle, grass banks 12 blocks above the water
-                    var section = tool.riverSection();
+                    var section = tool.crossSectionView();
                     assertTrue(section.isVisible());
                     var columns = section.getColumns();
                     var middle = columns.get(columns.size() / 2);
@@ -2165,9 +2165,18 @@ class PathToolSelectionTest
                     assertTrue(checkbox(tool, "Flatten road").isSelected(), "road preset flattens");
                     assertEquals("Road", settingGroup(tool, "Flatten road"));
                     assertEquals("Paint path", settingGroup(tool, "Set paint"));
-                    var roadSection = crossSection(tool);
-                    assertEquals(java.awt.Color.RED.getRGB(),
-                            roadSection.getRGB(roadSection.getWidth() / 2, roadSection.getHeight() - 2));
+                    // the road's cross section: level in its paint across a hillside
+                    var roadColumns = tool.crossSectionView().getColumns();
+                    var roadMiddle = roadColumns.get(roadColumns.size() / 2);
+                    assertEquals(tool.sectionWaterLevel(), roadMiddle.terrainHeight());
+                    assertEquals(PathTool.CROSS_SECTION_ROAD, roadMiddle.surface());
+                    assertEquals(roadMiddle.terrainHeight(),
+                            roadColumns.get(roadColumns.size() / 2 - 1).terrainHeight(), "level road");
+                    assertFalse(roadMiddle.hasWater());
+                    assertTrue(roadColumns.get(0).terrainHeight() > roadMiddle.terrainHeight(), "hillside up left");
+                    assertTrue(roadColumns.get(roadColumns.size() - 1).terrainHeight() < roadMiddle.terrainHeight(),
+                            "hillside down right");
+                    assertEquals(PathTool.CROSS_SECTION_GRASS, roadColumns.get(0).surface());
                     assertEquals(1.7f, tool.curveStrength(), 1e-6f);
                     assertFalse(settingShown(tool, "Carve river bed"), "no river option for a road");
                     assertFalse(settingShown(tool, "Paint riverbed with"), "no river paint for a road");
@@ -2271,17 +2280,6 @@ class PathToolSelectionTest
     /**
      * Whether the settings dialog shows the checkbox or labelled row {@code text}.
      */
-    private static java.awt.image.BufferedImage crossSection(PathTool tool) {
-        var panel = findComponent(tool.pathSettingsPanel(), javax.swing.JPanel.class, "PathTool.CrossSection");
-        int height = panel.getPreferredSize().height;
-        panel.setSize(200, height);
-        var image = new java.awt.image.BufferedImage(200, height, java.awt.image.BufferedImage.TYPE_INT_ARGB);
-        var g = image.createGraphics();
-        panel.paint(g);
-        g.dispose();
-        return image;
-    }
-
     private static boolean settingShown(PathTool tool, String text) {
         var setting = settingComponent(tool.pathSettingsPanel(), text);
         if (setting == null)
