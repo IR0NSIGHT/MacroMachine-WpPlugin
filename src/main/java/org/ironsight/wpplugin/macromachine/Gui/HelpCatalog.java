@@ -53,7 +53,7 @@ public enum HelpCatalog {
                                     new HelpItem("Editor button (top left)",
                                             "Shows the current editor; click to pick another"),
                                     new HelpItem("Click selected node",
-                                            "Cycle radius, curve strength, height-above-ground and transform handles"),
+                                            "Cycle radius, curve strength, height and transform handles"),
                                     new HelpItem("Transform editor",
                                             "Box around the selection: drag the corner arrow to scale, the side / bottom arrows to stretch along the box, the top handle to rotate, the left handle to move (a group does not drag by its nodes; a single node does); drag the pivot (crosshair) to rotate / scale around another point, double-click it to put it back in the centre; typed numbers are degrees or the scale factor. A single node only gets the move handle"),
                                     new HelpItem("Drag radius / tangent / height handle",

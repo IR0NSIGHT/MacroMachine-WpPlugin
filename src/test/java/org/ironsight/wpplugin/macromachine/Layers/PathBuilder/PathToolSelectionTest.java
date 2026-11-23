@@ -543,13 +543,13 @@ class PathToolSelectionTest
                     // height editor: 5 -> every selected node 5 blocks above its own ground
                     tool.setEditMode(PathTool.EditMode.HEIGHT);
                     type(tool, view, "5");
-                    assertEquals("Height above ground: 5|", tool.gestureHeader());
+                    assertEquals("Height: 5|", tool.gestureHeader());
                     assertTrue(type(tool, view, KeyEvent.VK_ENTER, '\n'));
                     assertEquals(List.of(50f, 50f, 75f, 4f, 90f, 90f, 65f, 4f), dimension.getAttribute(HANDLES));
                     // '-' negates once typing: 2 then '-' = 2 blocks below ground
                     type(tool, view, "2");
                     assertTrue(type(tool, view, KeyEvent.VK_MINUS, '-'));
-                    assertEquals("Height above ground: -(2|)", tool.gestureHeader());
+                    assertEquals("Height: -(2|)", tool.gestureHeader());
                     assertTrue(type(tool, view, KeyEvent.VK_ENTER, '\n'));
                     assertEquals(List.of(50f, 50f, 68f, 4f, 90f, 90f, 58f, 4f), dimension.getAttribute(HANDLES));
 
@@ -1178,12 +1178,12 @@ class PathToolSelectionTest
                     click(view, 100, 60, InputEvent.CTRL_DOWN_MASK);
                     assertEquals("Radius: 4 - 10", tool.viewportHeader(), "range for differing values");
                     tool.setEditMode(PathTool.EditMode.HEIGHT);
-                    assertEquals("Height above ground: +2 - +5", tool.viewportHeader());
+                    assertEquals("Height: +2 - +5", tool.viewportHeader());
                     // typing shows the typed text in the same place
                     type(tool, view, "3");
-                    assertEquals("Height above ground: 3|", tool.viewportHeader());
+                    assertEquals("Height: 3|", tool.viewportHeader());
                     assertTrue(type(tool, view, KeyEvent.VK_ENTER, KeyEvent.CHAR_UNDEFINED));
-                    assertEquals("Height above ground: +3", tool.viewportHeader());
+                    assertEquals("Height: +3", tool.viewportHeader());
                     tool.setEditMode(PathTool.EditMode.CURVE);
                     assertEquals("Curve strength: 0.00", tool.viewportHeader());
                     // an open operation shows its values
@@ -2872,7 +2872,8 @@ class PathToolSelectionTest
                     assertFalse(height.isSelected());
                     height.doClick();
                     assertEquals(PathTool.EditMode.HEIGHT, tool.editMode());
-                    assertTrue(label.getText().contains("Height above ground"), label.getText());
+                    assertTrue(label.getText().contains("Editor: Height"), label.getText());
+                    assertFalse(label.getText().contains("above ground"), label.getText());
                     assertTrue(findComponent(tool.editorMenu(), javax.swing.JRadioButtonMenuItem.class,
                             "PathTool.EditorMode.HEIGHT").isSelected());
 

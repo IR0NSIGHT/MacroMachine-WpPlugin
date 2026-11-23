@@ -107,8 +107,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             new HelpItem("Node / Segment / Path menus (top left)",
                     "Node: randomize position, randomize radius, snap to terrain, only downhill. Segment: subdivide. Path: new path, reverse direction, apply as road / river / paint (settings dialog), help. Preview, then Apply (Enter) or Cancel (Esc); type a number for the main value, Tab for the next"),
             new HelpItem("Editor button (top left)", "Shows the current editor; click to pick another"),
-            new HelpItem("Click selected node",
-                    "Cycle radius, curve strength, height-above-ground and transform handles"),
+            new HelpItem("Click selected node", "Cycle radius, curve strength, height and transform handles"),
             new HelpItem("Transform editor",
                     "Box around the selection: drag the corner arrow to scale, the side / bottom arrows to stretch along the box, the top handle to rotate, the left handle to move (a group does not drag by its nodes; a single node does); drag the pivot (crosshair) to rotate / scale around another point, double-click it to put it back in the centre; typed numbers are degrees or the scale factor. A single node only gets the move handle"),
             new HelpItem("Drag radius / tangent / height handle",
@@ -442,9 +441,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * through these (cf. Inkscape).
      */
     enum EditMode {
-        RADIUS("Radius", "Radius handles"), CURVE("Curve strength", "Curve strength handles"), HEIGHT(
-                "Height above ground", "Height above ground handles"), TRANSFORM("Transform",
-                        "Transform: move, rotate and scale the selection");
+        RADIUS("Radius", "Radius handles"), CURVE("Curve strength", "Curve strength handles"), HEIGHT("Height",
+                "Height handles"), TRANSFORM("Transform", "Transform: move, rotate and scale the selection");
 
         final String title;
         final String label;
@@ -779,7 +777,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 Float ground = groundAt(gesturePath.get(reference));
                 float current = ground == null ? 0 : Math.round((gesturePath.get(reference).z - ground) * 10) / 10f;
                 movedPath = edited ? heightSetPath((float) numericInput.apply(current)) : null;
-                gestureHeader = header("Height above ground", PathEditHandles.signed(current));
+                gestureHeader = header("Height", PathEditHandles.signed(current));
             }
             case CURVE -> {
                 dragStrength = edited ? clampStrength(numericInput.apply(handleStrength)) : null;
@@ -1957,7 +1955,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 if (delta != null && ground != null) {
                     float mouse = Math.round((gesturePath.get(heightHandleNode).z + delta - ground) * 10) / 10f;
                     movedPath = typing() ? heightSetPath((float) numericInput.apply(mouse)) : raisedPath(delta);
-                    gestureHeader = header("Height above ground", PathEditHandles.signed(mouse));
+                    gestureHeader = header("Height", PathEditHandles.signed(mouse));
                 }
                 overlay.repaint();
             }
