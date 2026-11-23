@@ -4353,7 +4353,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
         {
             onlyDownCheckbox = new JCheckBox("onlyDownCheckbox");
-            onlyDownCheckbox.setToolTipText("If active, the path will only move horizontally or downwards.");
+            onlyDownCheckbox.setToolTipText(
+                    "The path never rises: every position is at most as high as the one before it, so the river flows downhill or level");
             onlyDownCheckbox.addActionListener(l -> {
                 this.onlyDown = onlyDownCheckbox.isSelected();
                 settingChanged();
@@ -4368,8 +4369,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             pathSettingsPanel.add(onlyDownRow);
         }
         {
-            minCheckbox = new JCheckBox("snap to terrain");
-            minCheckbox.setToolTipText("if active, the path will follow the terrain instead of building 'bridges'.");
+            minCheckbox = new JCheckBox("Snap to terrain");
+            minCheckbox.setToolTipText(
+                    "Every position in the path follows the terrain height, even if the path would float below or above the terrain");
             minCheckbox.addActionListener(l -> {
                 this.snapToTerrain = minCheckbox.isSelected();
                 settingChanged();
@@ -4379,7 +4381,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         {
             roadPaintRow = new OutputPaintRow("Set paint",
-                    "Paints the road (inside the path radius) with this output and value", this::refreshOutputs);
+                    "Paints the road (inside the path radius) with the chosen output and value", this::refreshOutputs);
             roadPaintRow.set(OutputPaint.PATH);
             roadPaintRow.onChange(() -> {
                 usePaint = roadPaintRow.get().enabled();
@@ -4390,8 +4392,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         {
             setWaterCheckbox = new JCheckBox("Set water", waterMode != WaterMode.DONT_SET_WATER);
-            setWaterCheckbox.setToolTipText("<html>Fills water up to the path height inside its radius."
-                    + "<br>Existing water that is already higher stays as it is.</html>");
+            setWaterCheckbox.setToolTipText(
+                    "Fills water up to the path height inside the path radius; water that is already higher stays as it is");
             setWaterCheckbox.addActionListener(l -> {
                 waterMode = setWaterCheckbox.isSelected()
                         ? WaterMode.SET_WATER_RESPECT_EXISTING_WATERLEVEL
@@ -4402,9 +4404,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         {
             flattenRoadCheckbox = new JCheckBox("Flatten road", terrainMode == TerrainMode.FLATTEN);
-            flattenRoadCheckbox.setToolTipText("<html>On: the ground under the road is set to the road height and"
-                    + " blends back into the terrain<br>across the transition. Off: the terrain stays as it is;"
-                    + " only paint (and water) are set.</html>");
+            flattenRoadCheckbox.setToolTipText(
+                    "The ground under the road is set to the road height and blends into the terrain around it");
             flattenRoadCheckbox.addActionListener(l -> {
                 terrainMode = flattenRoadCheckbox.isSelected() ? TerrainMode.FLATTEN : TerrainMode.DONT_CHANGE;
                 settingChanged();
@@ -4412,9 +4413,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             pathSettingsPanel.add(flattenRoadCheckbox);
 
             carveRiverCheckbox = new JCheckBox("Carve river bed", terrainMode == TerrainMode.CARVE);
-            carveRiverCheckbox.setToolTipText("<html>On: digs a bed below the water, one block deep at the banks and"
-                    + " deeper towards the middle,<br>blending into the terrain across the transition. Off: the"
-                    + " terrain stays as it is; only water (and paint) are set.</html>");
+            carveRiverCheckbox.setToolTipText(
+                    "Digs a bed below the water: one block deep at the banks, deeper towards the middle, blending into the terrain around it");
             carveRiverCheckbox.addActionListener(l -> {
                 terrainMode = carveRiverCheckbox.isSelected() ? TerrainMode.CARVE : TerrainMode.DONT_CHANGE;
                 settingChanged();
@@ -4422,13 +4422,13 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             pathSettingsPanel.add(carveRiverCheckbox);
 
             riverbedPaintRow = new OutputPaintRow("Paint riverbed with",
-                    "Paints the bed under the water (inside the path radius) with this output and value",
+                    "Paints the riverbed (inside the path radius) with the chosen output and value",
                     this::refreshOutputs);
             riverbedPaintRow.set(OutputPaint.RIVERBED);
             riverbedPaintRow.onChange(this::settingChanged);
             pathSettingsPanel.add(riverbedPaintRow);
             riverTransitionPaintRow = new OutputPaintRow("Paint transition with",
-                    "Paints the banks (the transition around the radius) with this output and value",
+                    "Paints the banks (the blend around the riverbed) with the chosen output and value",
                     this::refreshOutputs);
             riverTransitionPaintRow.set(OutputPaint.RIVER_TRANSITION);
             riverTransitionPaintRow.onChange(this::settingChanged);
@@ -4443,7 +4443,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         }
         {
             fixHeightCheckbox = new JCheckBox("fixHeightCheckbox");
-            fixHeightCheckbox.setToolTipText("If active, the path will only move at the specified height.");
+            fixHeightCheckbox.setToolTipText("The whole path stays at the given height");
             fixHeightCheckbox.addActionListener(l -> {
                 this.fixHeightTo = fixHeightCheckbox.isSelected();
                 settingChanged();

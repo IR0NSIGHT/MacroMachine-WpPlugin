@@ -1363,7 +1363,7 @@ class PathToolSelectionTest
                     var resolved = new ArrayList<javax.vecmath.Point4f>(
                             PathToolBackend.getPathFromNodes(List.of(new javax.vecmath.Point4f(20, 60, 70, 4),
                                     new javax.vecmath.Point4f(100, 60, 90, 4)), 0f).path);
-                    checkbox(tool, "snap to terrain").doClick();
+                    checkbox(tool, "Snap to terrain").doClick();
                     tool.resolveHeights(resolved, dimension);
                     for (var sample : resolved)
                         assertEquals(dimension.getHeightAt(Math.round(sample.x), Math.round(sample.y)), sample.z);
@@ -2109,7 +2109,7 @@ class PathToolSelectionTest
                     assertEquals(tool.applyButton().getParent(), cancel.getParent(), "Cancel next to Apply");
                     assertTrue(cancel.getX() < tool.applyButton().getX(), "Apply rightmost");
                     assertTrue(checkbox(tool, "Only downhill").isSelected(), "river preset applied");
-                    for (String option : List.of("Only downhill", "snap to terrain", "Set water", "Carve river bed",
+                    for (String option : List.of("Only downhill", "Snap to terrain", "Set water", "Carve river bed",
                             "Paint riverbed with", "Paint transition with", "Transition multiplier",
                             "Transition profile"))
                         assertTrue(settingShown(tool, option), option + " for a river");
@@ -2141,7 +2141,7 @@ class PathToolSelectionTest
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
                     assertEquals("Apply as road", dialog.getTitle());
                     assertTrue(checkbox(tool, "Set paint").isSelected(), "road preset applied");
-                    for (String option : List.of("snap to terrain", "Set paint", "Flatten road",
+                    for (String option : List.of("Snap to terrain", "Set paint", "Flatten road",
                             "Limit slope to x/16 blocks", "Transition multiplier", "Transition profile"))
                         assertTrue(settingShown(tool, option), option + " for a road");
                     for (String option : List.of("Only downhill", "Set water"))
@@ -2158,14 +2158,14 @@ class PathToolSelectionTest
 
                     // each dialog keeps its own settings, stored on the dimension like the nodes
                     settingSpinner(tool, "Limit slope to x/16 blocks").setValue(6d);
-                    checkbox(tool, "snap to terrain").doClick();
+                    checkbox(tool, "Snap to terrain").doClick();
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
                     assertTrue(checkbox(tool, "Carve river bed").isSelected(), "river keeps its own settings");
                     checkbox(tool, "Paint riverbed with").doClick();
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
                     assertEquals(6d,
                             ((Number) settingSpinner(tool, "Limit slope to x/16 blocks").getValue()).doubleValue());
-                    assertFalse(checkbox(tool, "snap to terrain").isSelected(), "road settings remembered");
+                    assertFalse(checkbox(tool, "Snap to terrain").isSelected(), "road settings remembered");
                     // a new path keeps them ("global"), and so does a new tool on the same world
                     pathItem(tool, "PathTool.NewPath").doClick();
                     tool.addNode(20, 20);
@@ -2188,7 +2188,7 @@ class PathToolSelectionTest
                     assertFalse(dialog.isVisible());
                     assertTrue(tool.storedSettings(PathTool.SettingsKind.RIVER).setWater(), "cancelled edit dropped");
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
-                    checkbox(tool, "snap to terrain").doClick(); // back to the road preset
+                    checkbox(tool, "Snap to terrain").doClick(); // back to the road preset
                     settingSpinner(tool, "Limit slope to x/16 blocks").setValue(4d);
 
                     // Apply from the dialog builds the path as before
@@ -2215,7 +2215,7 @@ class PathToolSelectionTest
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyPaint").doClick();
                     assertEquals("Apply as paint", dialog.getTitle());
                     assertTrue(settingShown(tool, "Paint with"));
-                    for (String option : List.of("Only downhill", "snap to terrain", "Set paint", "Set water",
+                    for (String option : List.of("Only downhill", "Snap to terrain", "Set paint", "Set water",
                             "Flatten road", "Carve river bed", "Paint riverbed with", "Paint transition with",
                             "Limit slope to x/16 blocks", "Transition multiplier", "Transition profile"))
                         assertFalse(settingShown(tool, option), "no " + option + " when painting");
@@ -3316,7 +3316,7 @@ class PathToolSelectionTest
                     event(view, MouseEvent.MOUSE_RELEASED, 20, 10, MouseEvent.BUTTON1, 0);
                     assertEquals(List.of(20f, 10f, 81f, 4f, 40f, 30f, 92f, 6f), dimension.getAttribute(HANDLES));
                     assertEquals(Set.of(0, 1), tool.selectedNodes());
-                    var snap = checkbox(tool, "snap to terrain");
+                    var snap = checkbox(tool, "Snap to terrain");
                     snap.doClick();
                     assertTrue(snap.isSelected());
                     dimension.setHeightAt(30, 10, 83f);
