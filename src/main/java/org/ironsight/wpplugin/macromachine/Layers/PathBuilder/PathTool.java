@@ -342,7 +342,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     // only allow downwards movement
     private boolean onlyDown;
     private boolean snapToTerrain;
-    private boolean fixHeightTo;
     private boolean usePaint;
     private WaterMode waterMode = WaterMode.DONT_SET_WATER;
     private TerrainMode terrainMode = TerrainMode.FLATTEN;
@@ -355,7 +354,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     static final Color STATUS_OK = new Color(46, 160, 67);
     static final Color STATUS_BAD = new Color(207, 34, 46);
     private JCheckBox minCheckbox;
-    private JCheckBox fixHeightCheckbox;
     /** Road only: "Set paint" with an action output and its value. */
     private OutputPaintRow roadPaintRow;
     private JSpinner limitSlopeSpinner;
@@ -4606,18 +4604,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             pathSettingsPanel.add(pathPaintRow);
         }
         {
-            fixHeightCheckbox = new JCheckBox("fixHeightCheckbox");
-            fixHeightCheckbox.setToolTipText("The whole path stays at the given height");
-            fixHeightCheckbox.addActionListener(l -> {
-                this.fixHeightTo = fixHeightCheckbox.isSelected();
-                settingChanged();
-            });
-            this.fixHeightTo = fixHeightCheckbox.isSelected();
-            // pathSettingsPanel.add(fixHeightCheckbox); // FIXME: disabled because it
-            // causes
-            // wierd artifacts across tile lines
-        }
-        {
             handleFactorSpinner = new JSpinner(new SpinnerNumberModel(handleStrength, -1d, 2d, 0.1d));
             handleFactorSpinner.setToolTipText(
                     "Controls how curve the path is. 0 = straight lines, 1 = normal curves, 2 = exaggerated curves, -1 = cursive");
@@ -4886,7 +4872,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private void updateCheckboxTexts() {
         onlyDownCheckbox.setText("Only downhill");
-        fixHeightCheckbox.setText("Fix height to: " + getFixHeight());
     }
 
     @Override
@@ -5047,8 +5032,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     /**
      * The heights the generated path really gets: snap to terrain, only downhill,
-     * fixed height and the slope limit applied to the sampled curve (mutates it).
-     * Only Apply uses them: until then the path knows its nodes' heights only.
+     * and the slope limit applied to the sampled curve (mutates it). Only Apply
+     * uses them: until then the path knows its nodes' heights only.
      */
     void resolveHeights(List<Point4f> path, Dimension dimension) {
         if (snapToTerrain)
@@ -5056,15 +5041,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     point4f -> dimension.getHeightAt(Math.round(point4f.x), Math.round(point4f.y)));
         if (onlyDown)
             PathToolBackend.forcePathOnlyDownhill(path);
-        if (fixHeightTo)
-            PathToolBackend.forcePathToHeight(path, getFixHeight());
         if (slopeLimit != 0 && settingsKind == SettingsKind.ROAD)
             PathToolBackend.enforceSlopeLimit(path, slopeLimit);
-    }
-
-    private float getFixHeight() {
-        var currentPath = getCurrentPath();
-        return currentPath.isEmpty() ? 62 : currentPath.get(currentPath.size() - 1).z;
     }
 
     @Override

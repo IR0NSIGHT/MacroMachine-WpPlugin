@@ -279,12 +279,6 @@ public class PathToolBackend
         }
     }
 
-    static void forcePathToHeight(List<Point4f> path, float height) {
-        for (Point4f point : path) {
-            point.z = height;
-        }
-    }
-
     static void forceRadiusAtLeast(List<Point4f> path, float minRadius) {
         for (Point4f point : path) {
             point.w = Math.max(point.w, minRadius);

@@ -119,21 +119,6 @@ class PathToolBackendTest
     }
 
     @Test
-    void forcePathToHeight() {
-        var path = new ArrayList<Point4f>();
-        path.add(new Point4f(12, 14, 100, 0));
-        path.add(new Point4f(12, 15, 101, 0));
-        path.add(new Point4f(12, 16, 90, 0));
-        path.add(new Point4f(12, 17, 100, 0));
-
-        PathToolBackend.forcePathToHeight(path, 17);
-        assertEquals(path.get(0), new Point4f(12, 14, 17, 0));
-        assertEquals(path.get(1), new Point4f(12, 15, 17, 0));
-        assertEquals(path.get(2), new Point4f(12, 16, 17, 0));
-        assertEquals(path.get(3), new Point4f(12, 17, 17, 0));
-    }
-
-    @Test
     void collectTilesAroundPath() {
     }
 
