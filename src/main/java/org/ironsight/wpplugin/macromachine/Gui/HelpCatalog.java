@@ -62,7 +62,7 @@ public enum HelpCatalog {
                                             "Precise drag: nodes and handles move at 1/10 speed"),
                                     new HelpItem("Type a number (nodes selected)",
                                             "Sets radius / height above ground / curve strength of the selected nodes; - negates, / inverts; Enter or left click applies, Esc or right click cancels"),
-                                    new HelpItem("New path", "Clear the path and preview"),
+                                    new HelpItem("New path", "Start over with six nodes across the middle of the view"),
                                     new HelpItem("Reverse direction",
                                             "Reverse node order, e.g. so a river flows the other way"),
                                     new HelpItem("Delete / Ctrl+A / Escape",
