@@ -18,6 +18,12 @@ npm run build
 
 Deploy the contents of `dist/` to any static host, including a subdirectory. All internal links and assets use relative URLs. The build and preview have no npm dependencies and require no plugin backend.
 
+## GitHub Pages
+
+The [public website workflow](../.github/workflows/website-pages.yml) replaces the former Storybook deployment at <https://ir0nsight.github.io/MacroMachine-WpPlugin/>.
+
+Pushes to `public-website` and pull requests targeting `master` run the build, structural tests, and desktop/mobile browser checks. After merging into `master`, the workflow publishes `website/dist` through the existing `github-pages` environment. That environment permits deployments from `master` only; feature branches never replace the live site. Run the workflow manually from `master` to redeploy without another commit.
+
 ## Verify
 
 ```sh

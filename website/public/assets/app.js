@@ -22,6 +22,36 @@ document.addEventListener('keydown', (event) => {
 });
 
 const tabs = [...document.querySelectorAll('[data-showcase-src]')];
+const hero = document.querySelector('.home-preview');
+if (hero) {
+  const slides = [...hero.querySelectorAll('[data-hero-slide]')];
+  const selectors = [...hero.querySelectorAll('[data-hero-select]')];
+  const details = [...hero.querySelectorAll('[data-hero-detail]')];
+  const track = hero.querySelector('[data-hero-track]');
+  const status = hero.querySelector('.hero-status');
+  let current = 0;
+  function updateSlide(index, announce = false) {
+    current = index;
+    slides.forEach((slide, i) => {
+      slide.toggleAttribute('data-active', i === current);
+      slide.inert = i !== current;
+      slide.setAttribute('aria-hidden', String(i !== current));
+    });
+    selectors.forEach((button, i) => button.setAttribute('aria-pressed', String(i === current)));
+    details.forEach((detail, i) => { detail.hidden = i !== current; });
+    if (announce) status.textContent = slides[current].getAttribute('aria-label');
+  }
+  selectors.forEach((button, index) => button.addEventListener('click', () => {
+    track.scrollTo({ left: index * track.clientWidth, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+  }));
+  track.addEventListener('scroll', () => {
+    const index = Math.min(slides.length - 1, Math.max(0, Math.round(track.scrollLeft / track.clientWidth)));
+    if (index !== current) updateSlide(index, true);
+  });
+  new ResizeObserver(() => { track.scrollTo({ left: current * track.clientWidth, behavior: 'instant' }); }).observe(track);
+  updateSlide(0);
+  hero.querySelector('[data-hero-controls]').hidden = false;
+}
 function selectTab(tab) {
   tabs.forEach((item) => {
     item.setAttribute('aria-selected', String(item === tab));
