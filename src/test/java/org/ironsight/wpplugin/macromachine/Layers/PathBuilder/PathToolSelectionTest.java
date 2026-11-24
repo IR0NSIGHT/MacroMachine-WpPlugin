@@ -1372,7 +1372,7 @@ class PathToolSelectionTest
                     tool.openPathSettings("Apply as road", PathTool.SettingsKind.ROAD);
                     if (!checkbox(tool, "Snap to terrain").isSelected())
                         checkbox(tool, "Snap to terrain").doClick();
-                    tool.cancelPathSettings();
+                    tool.closePathSettings();
                     assertTrue(colourPixels(paintOverlay300(overlay), strip, PathTool.SLOPE_UP_COLOR) > 20,
                             "still the nodes' rising curve");
                 } finally {
@@ -2115,9 +2115,15 @@ class PathToolSelectionTest
                             - apply.getMaxY() <= org.ironsight.wpplugin.macromachine.Gui.DialogStyle.PADDING + 4,
                             "Apply at the bottom (window padding)");
                     assertNull(SwingUtilities.getAncestorOfClass(javax.swing.JScrollPane.class, tool.applyButton()));
-                    var cancel = findButton(dialog, "PathTool.Cancel");
-                    assertEquals(tool.applyButton().getParent(), cancel.getParent(), "Cancel next to Apply");
-                    assertTrue(cancel.getX() < tool.applyButton().getX(), "Apply rightmost");
+                    var close = findButton(dialog, "PathTool.Close");
+                    assertEquals("Close", close.getText());
+                    assertEquals(tool.applyButton().getParent(), close.getParent(), "Close next to Apply");
+                    assertTrue(close.getX() < tool.applyButton().getX(), "Apply rightmost");
+                    var reset = findButton(dialog, "PathTool.Reset");
+                    var resetAt = SwingUtilities.convertRectangle(reset.getParent(), reset.getBounds(), content);
+                    var closeAt = SwingUtilities.convertRectangle(close.getParent(), close.getBounds(), content);
+                    assertTrue(resetAt.x < content.getWidth() / 2 && resetAt.getMaxX() < closeAt.x,
+                            "Reset bottom left, away from Close");
                     assertTrue(checkbox(tool, "Only downhill").isSelected(), "river preset applied");
                     for (String option : List.of("Only downhill", "Snap to terrain", "Set water", "Carve river bed",
                             "Paint riverbed with", "Paint transition with", "Transition multiplier",
@@ -2239,12 +2245,22 @@ class PathToolSelectionTest
                     assertEquals(new org.ironsight.wpplugin.macromachine.operations.ValueProviders.TerrainProvider(),
                             other.storedSettings(PathTool.SettingsKind.RIVER).riverTransition().output());
 
-                    // Cancel closes and restores the settings the dialog opened with
+                    // Close only closes: the change stays
                     checkbox(tool, "Set water").doClick();
                     assertFalse(checkbox(tool, "Set water").isSelected());
-                    findButton(dialog, "PathTool.Cancel").doClick();
+                    findButton(dialog, "PathTool.Close").doClick();
                     assertFalse(dialog.isVisible());
-                    assertTrue(tool.storedSettings(PathTool.SettingsKind.RIVER).setWater(), "cancelled edit dropped");
+                    assertFalse(tool.storedSettings(PathTool.SettingsKind.RIVER).setWater(), "kept after Close");
+                    // Reset: this dialog's defaults again, the road keeps its settings
+                    var roadBefore = tool.storedSettings(PathTool.SettingsKind.ROAD);
+                    findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRiver").doClick();
+                    assertFalse(checkbox(tool, "Set water").isSelected(), "reopened with the kept change");
+                    findButton(dialog, "PathTool.Reset").doClick();
+                    assertTrue(checkbox(tool, "Set water").isSelected());
+                    assertEquals(PathTool.ApplySettings.RIVER.toFloats(),
+                            tool.storedSettings(PathTool.SettingsKind.RIVER).toFloats());
+                    assertEquals(roadBefore.toFloats(), tool.storedSettings(PathTool.SettingsKind.ROAD).toFloats());
+                    findButton(dialog, "PathTool.Close").doClick();
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
                     checkbox(tool, "Snap to terrain").doClick(); // back to the road preset
                     settingSpinner(tool, "Limit slope to x/16 blocks").setValue(4d);
@@ -2290,7 +2306,7 @@ class PathToolSelectionTest
                     findComponent(tool.pathMenu(), javax.swing.JMenuItem.class, "PathTool.Path.ApplyRoad").doClick();
                     assertTrue(settingShown(tool, "Transition multiplier"));
                     assertFalse(settingShown(tool, "Paint with"));
-                    findButton(dialog, "PathTool.Cancel").doClick();
+                    findButton(dialog, "PathTool.Close").doClick();
 
                     // the dialog goes away with the tool
                     tool.setActive(false);
@@ -2777,7 +2793,7 @@ class PathToolSelectionTest
                         assertEquals(sizes.get(3), sizes.get(5), "dialog height " + height + ": " + sizes);
                         assertEquals(sizes.get(4), sizes.get(5), "dialog height " + height + ": " + sizes);
                     }
-                    tool.cancelPathSettings();
+                    tool.closePathSettings();
                 } finally {
                     tool.setActive(false);
                 }
@@ -2823,7 +2839,7 @@ class PathToolSelectionTest
                     assertTrue(lowered > 0, "the bank was lowered below the hidden water");
                     assertEquals(62, dimension.getWaterLevelAt(60, 80), "a lake keeps its water");
                     assertEquals(55, dimension.getWaterLevelAt(60, 70), "the river itself sets its water");
-                    tool.cancelPathSettings();
+                    tool.closePathSettings();
                 } finally {
                     tool.setActive(false);
                 }

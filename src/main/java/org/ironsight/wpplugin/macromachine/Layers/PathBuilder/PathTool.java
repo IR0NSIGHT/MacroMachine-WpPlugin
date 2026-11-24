@@ -385,10 +385,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * slope limit instead of resetting it.
      */
     private SettingsKind settingsKind = SettingsKind.ROAD;
-    /**
-     * The settings when the dialog opened (or last applied): what Cancel restores.
-     */
-    private ApplySettings settingsAtOpen;
     /** True while settings are pushed into the controls (no storing meanwhile). */
     private boolean loadingSettings;
     static final Color CROSS_SECTION_WATER = new Color(52, 120, 220), CROSS_SECTION_GRASS = new Color(86, 160, 58),
@@ -4508,7 +4504,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                         dim.setEventsInhibited(false);
                 }
                 refreshPreview();
-                settingsAtOpen = currentSettings();
                 overlay.showTransientInfoText("Path applied", 1800);
             });
             // not a settings row: the dialog keeps it bottom right (see
@@ -4814,11 +4809,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     /** The stored settings of {@code kind} (its preset if none are stored yet). */
     ApplySettings storedSettings(SettingsKind kind) {
-        var fallback = switch (kind) {
-            case ROAD -> ApplySettings.ROAD;
-            case RIVER -> ApplySettings.RIVER;
-            case PAINT -> ApplySettings.PAINT;
-        };
+        var fallback = preset(kind);
         Dimension dimension = getView() == null ? null : getDimension();
         if (dimension == null)
             return fallback;
@@ -4860,14 +4851,33 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         schedulePreview();
     }
 
-    /** Cancel (or closing the dialog): back to the settings it opened with. */
-    void cancelPathSettings() {
-        if (settingsAtOpen != null) {
-            showSettings(settingsAtOpen);
-            storeSettings();
-        }
+    /**
+     * Close (or the window's close box): just closes; the settings stay as they
+     * are.
+     */
+    void closePathSettings() {
         if (pathSettingsDialog != null)
             pathSettingsDialog.setVisible(false);
+    }
+
+    /**
+     * Reset: the open dialog back to its defaults, paints included (the other
+     * dialogs keep theirs).
+     */
+    void resetPathSettings() {
+        showSettings(preset(settingsKind));
+        storeSettings();
+        refreshCrossSection();
+        updateDownhillStatus();
+    }
+
+    /** The defaults of a dialog. */
+    static ApplySettings preset(SettingsKind kind) {
+        return switch (kind) {
+            case ROAD -> ApplySettings.ROAD;
+            case RIVER -> ApplySettings.RIVER;
+            case PAINT -> ApplySettings.PAINT;
+        };
     }
 
     private void updateCheckboxTexts() {
@@ -4921,8 +4931,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     void openPathSettings(String title, SettingsKind kind) {
         // each dialog brings back its own stored settings
         settingsKind = kind;
-        settingsAtOpen = storedSettings(kind);
-        showSettings(settingsAtOpen);
+        showSettings(storedSettings(kind));
         // Apply as paint shows only its paint; road and river start from every row
         for (var group : settingsGroups())
             for (var row : group.getComponents())
@@ -4957,18 +4966,28 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             pathSettingsDialog.addWindowListener(new java.awt.event.WindowAdapter() {
                 @Override
                 public void windowClosing(java.awt.event.WindowEvent event) {
-                    cancelPathSettings();
+                    closePathSettings();
                 }
             });
             pathSettingsDialog.setResizable(true);
             // settings scroll; Apply stays bottom right, outside the scrolling part
-            JPanel footer = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-            JButton cancel = new JButton("Cancel");
-            cancel.setName("PathTool.Cancel");
-            cancel.setToolTipText("Close without applying; settings go back to how they were");
-            cancel.addActionListener(event -> cancelPathSettings());
-            footer.add(cancel);
-            footer.add(applyButton);
+            // Reset bottom left, away from Close and Apply bottom right
+            JPanel footer = new JPanel(new BorderLayout());
+            JPanel footerLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+            JPanel footerRight = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+            JButton reset = new JButton("Reset");
+            reset.setName("PathTool.Reset");
+            reset.setToolTipText("Back to this dialog's default settings");
+            reset.addActionListener(event -> resetPathSettings());
+            footerLeft.add(reset);
+            JButton close = new JButton("Close");
+            close.setName("PathTool.Close");
+            close.setToolTipText("Close without applying; the settings stay as they are");
+            close.addActionListener(event -> closePathSettings());
+            footerRight.add(close);
+            footerRight.add(applyButton);
+            footer.add(footerLeft, BorderLayout.WEST);
+            footer.add(footerRight, BorderLayout.EAST);
             JPanel content = new JPanel(new BorderLayout());
             // the scroll bar always takes its place (its thumb shows only when there is
             // something to scroll): one that comes and goes changes the content's width,
