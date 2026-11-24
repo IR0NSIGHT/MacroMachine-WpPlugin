@@ -1,0 +1,21 @@
+{
+  "name": "macromachine-public-website",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs && node serve.mjs",
+    "preview": "node serve.mjs",
+    "test": "node --test test/site.test.mjs",
+    "verify": "npm run build && npm test",
+    "test:browser": "playwright test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.1"
+  }
+}

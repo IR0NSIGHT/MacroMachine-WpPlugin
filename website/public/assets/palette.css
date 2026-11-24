@@ -1,0 +1,72 @@
+/*
+ * MacroMachine palette, traced from the Java Swing dialog.
+ *
+ * Exact UI colors:
+ *   src/main/java/org/ironsight/wpplugin/macromachine/Gui/IDisplayUnitCellRenderer.java
+ *     selection RGB(205,199,255), default white/dark gray,
+ *     interpolated RGB(232,232,232) / RGB(176,176,176).
+ *   src/main/java/org/ironsight/wpplugin/macromachine/Gui/IconManager.java
+ *     Loads the following icons used by TreeView/DisplayUnitRenderer.java:
+ *     src/main/resources/icons/macro.png   #743E74 / #A349A4
+ *     src/main/resources/icons/action.png  #558B57 / #84BC85
+ *     src/main/resources/icons/input.png   #1B0073 / #5E37AF
+ *     src/main/resources/icons/output.png  #006073 / #559EB2
+ *   MappingGridPanel.java uses Color.RED; AnnotationSetter.java uses Color.ORANGE.
+ *
+ * Website adaptation: neutral charcoal surfaces; original selection lavender;
+ * original icon hues in decorative shapes; lighter same-hue tints for text and
+ * badges on dark surfaces. No color changes are made to the Java application.
+ */
+:root {
+  --swing-selection: #cdc7ff;
+  --swing-macro-dark: #743e74;
+  --swing-macro: #a349a4;
+  --swing-action-dark: #558b57;
+  --swing-action: #84bc85;
+  --swing-input-dark: #1b0073;
+  --swing-input: #5e37af;
+  --swing-output-dark: #006073;
+  --swing-output: #559eb2;
+  --swing-white: #ffffff;
+  --swing-light: #e8e8e8;
+  --swing-muted: #b0b0b0;
+  --swing-text: #404040;
+  --swing-red: #ff0000;
+  --swing-orange: #ffc800;
+
+  --macro-tint: #d49bd5;
+  --action-tint: #9bcd9c;
+  --input-tint: #baa7e5;
+  --output-tint: #8bc4d3;
+  --warning: #e5c46b;
+  --danger: #e56b6b;
+
+  --bg: #161616;
+  --surface: #222222;
+  --surface-raised: #2b2b2b;
+  --text: var(--swing-white);
+  --muted: var(--swing-muted);
+  --text-subtle: #969696;
+  --line: color-mix(in srgb, var(--text) 15%, transparent);
+  --border: color-mix(in srgb, var(--text) 22%, transparent);
+  --border-strong: color-mix(in srgb, var(--text) 40%, transparent);
+  --light-bg: var(--swing-light);
+  --light-text: var(--swing-text);
+  --light-muted: #626262;
+  --light-line: color-mix(in srgb, var(--light-text) 25%, transparent);
+  --light-border: color-mix(in srgb, var(--light-text) 45%, transparent);
+  --image-bg: var(--swing-light);
+  --accent: var(--swing-selection);
+  --accent-hover: color-mix(in srgb, var(--swing-selection) 65%, white);
+  --accent-ink: #181621;
+  --link: var(--swing-selection);
+  --shadow: #00000080;
+  --shadow-soft: #00000040;
+  --scrim: #000000e8;
+}
+
+.accent-macro { --accent: var(--macro-tint); --accent-strong: var(--swing-macro); }
+.accent-action { --accent: var(--action-tint); --accent-strong: var(--swing-action-dark); }
+.accent-input { --accent: var(--input-tint); --accent-strong: var(--swing-input); }
+.accent-output { --accent: var(--output-tint); --accent-strong: var(--swing-output-dark); }
+.accent-selection { --accent: var(--swing-selection); --accent-strong: var(--swing-input); }
