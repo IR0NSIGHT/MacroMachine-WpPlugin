@@ -77,6 +77,11 @@ Versioning and release process
 
 The `wp-build-N` tags are separate build/deployment markers and should not be used in place of the versioned `release-X.Y.Z` tag.
 
+Merging
+
+- Pull requests are squash-merged into `master`: one commit per pull request. No merge commits, no rebase merges.
+- Rebase a feature branch onto the current `master` before opening or updating its pull request.
+
 Adding new agents or tasks
 
 - Store reusable agent prompts or templates in `docs/agents/` or `.agents/` (create these folders if desired).
