@@ -465,9 +465,17 @@ class CityEditToolOperationTest
         // the picker chooses the next house; the selected house keeps its type ...
         assertEquals(0, layer.getInformationAt(100, 180).objectIndex);
         assertEquals(2, operation.nextHouse().objectIndex);
-        // ... until Set type gives the card's type to the selected house
-        clickNamed(operation.typeCardForTest(), "CityTool.TypeCard.SetType");
-        assertEquals(2, layer.getInformationAt(100, 180).objectIndex);
+        // ... Change type opens the picker for the selection: its pick goes to the
+        // house
+        clickNamed(operation.typeCardForTest(), "CityTool.TypeCard.ChangeType");
+        assertTrue(operation.typeGridOpen());
+        operation.pickTypeInGrid(1);
+        assertFalse(operation.typeGridOpen());
+        assertEquals(1, layer.getInformationAt(100, 180).objectIndex);
+        // closing it without a pick changes nothing
+        operation.changeTypeOfSelection();
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        assertEquals(1, layer.getInformationAt(100, 180).objectIndex);
         // bright mode is kept for the next time the picker opens
         operation.openTypeGrid();
         assertTrue(operation.typeGridOpen());
@@ -1127,53 +1135,28 @@ class CityEditToolOperationTest
     }
 
     @Test
-    void selectedHousesGetOneCardPerSchematicAsManyAsFit() {
+    void addModeNeverHasASelection() {
         CityLayer layer = layerWithObjects();
         CityEditToolOperation operation = new CityEditToolOperation();
         operation.setView(TEST_VIEW);
         operation.setPaint(new NibbleLayerPaint(layer));
-        int[][] houses = {{0, 100, 520}, {0, 110, 520}, {1, 120, 520}, {2, 130, 520}};
-        for (int[] house : houses)
-            layer.setDataAt(TEST_DIMENSION, house[1], house[2],
-                    new ObjectState(CityLayer.Direction.NORTH, false, house[0], house[1], house[2]));
-        var cards = operation.selectionCardsForTest();
+        layer.setDataAt(TEST_DIMENSION, 100, 520, new ObjectState(CityLayer.Direction.NORTH, false, 2, 100, 520));
         operation.handleClick(100, 520, false);
-        assertTrue(cards.isVisible());
-        for (int i = 1; i < houses.length; i++)
-            operation.handleClick(houses[i][1], houses[i][2], true);
-        // three schematics among four houses: three cards, the first standing for two
-        // houses
-        var groups = cards.groups();
-        assertEquals(List.of(0, 1, 2), List.copyOf(groups.keySet()));
-        assertEquals(2, groups.get(0).size());
-        cards.setSize(1000, cards.preferredHeight());
-        assertEquals(3, cards.shownCards());
-        // narrow: two fit, one of them becomes "+N more"
-        cards.setSize(2 * 150 + 8, cards.preferredHeight());
-        assertEquals(1, cards.shownCards());
-        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
-        assertFalse(cards.isVisible(), "nothing selected: no selection cards");
-    }
-
-    @Test
-    void selectingHousesKeepsTheSchematicCard() {
-        CityLayer layer = layerWithObjects();
-        CityEditToolOperation operation = new CityEditToolOperation();
-        operation.setView(TEST_VIEW);
-        operation.setPaint(new NibbleLayerPaint(layer));
-        layer.setDataAt(TEST_DIMENSION, 100, 520, new ObjectState(CityLayer.Direction.EAST, true, 2, 100, 520));
+        assertEquals(1, operation.selection().size());
+        // entering add mode lets go of the selection
+        operation.addModeToggle().setSelected(true);
+        assertTrue(operation.selection().isEmpty());
+        // a house placed in add mode is not selected: Change type, turning, mirroring
+        // cannot reach it
         operation.setType(1);
-        var before = operation.nextHouse();
+        operation.placeAt(300, 520);
+        assertTrue(operation.selection().isEmpty());
+        assertTrue(operation.addModeToggle().isSelected());
+        assertEquals(1, layer.getInformationAt(300, 520).objectIndex);
+        // selecting a house leaves add mode
         operation.handleClick(100, 520, false);
-        // the house is selected; the card keeps the user's schematic, turn and
-        // mirroring
-        assertEquals(1, operation.selectionCardsForTest().groups().size());
-        var after = operation.nextHouse();
-        assertEquals(before.objectIndex, after.objectIndex);
-        assertEquals(before.rotation, after.rotation);
-        assertEquals(before.mirrored, after.mirrored);
-        // only Set type changes the house
-        assertEquals(2, layer.getInformationAt(100, 520).objectIndex);
+        assertEquals(1, operation.selection().size());
+        assertFalse(operation.addModeToggle().isSelected());
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {
