@@ -544,6 +544,25 @@ public final class DialogStyle
                 SwingUtilities.invokeLater(restyle);
         });
         restyle.run();
+        // setting a value re-renders the text in the light look's dark grey, often
+        // without changing the background (it stays white): keep the text light
+        keepPickerTextLight(inner);
+    }
+
+    private static void keepPickerTextLight(Component component) {
+        if (component instanceof JLabel label) {
+            label.addPropertyChangeListener("foreground", event -> {
+                if (!TEXT.equals(label.getForeground()))
+                    label.setForeground(TEXT);
+            });
+            label.addPropertyChangeListener("font", event -> {
+                if (!controlFont().equals(label.getFont()))
+                    label.setFont(controlFont());
+            });
+        }
+        if (component instanceof Container container)
+            for (Component child : container.getComponents())
+                keepPickerTextLight(child);
     }
 
     private static void restylePickerContent(Component component) {

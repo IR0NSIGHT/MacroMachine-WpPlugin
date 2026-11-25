@@ -2902,6 +2902,65 @@ class PathToolSelectionTest
     }
 
     @Test
+    void outputPickersKeepTheLightTextWhenTheDialogSetsThem() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                PathTool tool = synchronousTool();
+                tool.setView(new TestView(dimension));
+                tool.setBrush(brush());
+                tool.setActive(true);
+                try {
+                    tool.addNode(20, 20);
+                    tool.addNode(60, 20);
+                    var apply = javax.swing.JMenuItem.class;
+                    findComponent(tool.pathMenu(), apply, "PathTool.Path.ApplyRiver").doClick();
+                    var dialog = tool.pathSettingsDialog();
+                    assertPickerTextLight(dialog, "opened");
+                    // reopening and Reset set the pickers again, without a hover
+                    findButton(dialog, "PathTool.Close").doClick();
+                    findComponent(tool.pathMenu(), apply, "PathTool.Path.ApplyRiver").doClick();
+                    assertPickerTextLight(dialog, "reopened");
+                    findButton(dialog, "PathTool.Reset").doClick();
+                    assertPickerTextLight(dialog, "after Reset");
+                    dialog.dispose();
+                } finally {
+                    tool.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    private static void assertPickerTextLight(java.awt.Container root, String when) {
+        var pickers = new ArrayList<org.ironsight.wpplugin.macromachine.Gui.EditActions.IoSelectLabel>();
+        collect(root, org.ironsight.wpplugin.macromachine.Gui.EditActions.IoSelectLabel.class, pickers);
+        int labels = 0;
+        for (var picker : pickers) {
+            if (!picker.isShowing())
+                continue;
+            var texts = new ArrayList<javax.swing.JLabel>();
+            collect(picker, javax.swing.JLabel.class, texts);
+            for (var label : texts)
+                if (label.getText() != null && !label.getText().isEmpty()) {
+                    labels++;
+                    assertEquals(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT, label.getForeground(),
+                            "\"" + label.getText() + "\" " + when);
+                }
+        }
+        assertTrue(labels >= 2, "the river's two pickers show their text");
+    }
+
+    private static <T> void collect(java.awt.Component component, Class<T> type, List<T> found) {
+        if (type.isInstance(component))
+            found.add(type.cast(component));
+        if (component instanceof java.awt.Container container)
+            for (java.awt.Component child : container.getComponents())
+                collect(child, type, found);
+    }
+
+    @Test
     void curveStrengthIsSavedWithThePath() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             try {

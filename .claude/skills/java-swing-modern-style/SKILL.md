@@ -124,7 +124,11 @@ ad hoc.
   `DisplayUnitRenderer`, `MappingPointCellRenderer`) are restyled from the
   outside: listeners added after theirs win (hover), a `"background"`
   property listener re-applies the dark look after they re-render
-  (`invokeLater`), renderer wrappers recolour every returned cell. Do not edit
+  (`invokeLater`), renderer wrappers recolour every returned cell. A
+  `"background"` listener alone is not enough: setting a value from code
+  (reopening, Reset) re-renders the text dark grey while the background stays
+  white – no change, no event – so the text stays dark until hovered. Also
+  listen on the labels' `"foreground"` and `"font"` and set them back. Do not edit
   the shared classes for the dark look – the action editor still uses them in
   WorldPainter's style.
 - Never let a vertical scroll bar come and go around content whose height
