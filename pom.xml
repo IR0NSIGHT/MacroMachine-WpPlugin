@@ -440,6 +440,10 @@
                                 </argument>
                                 <argLine>-ea</argLine>
                                 <argLine>-Dsun.awt.disablegrab=true</argLine>
+                                <!-- Own configuration folder (%APPDATA%\WorldPainter [DEV]): a newer installed
+                                     WorldPainter may have a default platform this version does not know (New world
+                                     then fails), and test runs must not overwrite the real configuration: -->
+                                <argument>-Dorg.pepsoft.worldpainter.classifier=dev</argument>
                                 <!-- These exports are needed from Java 9+ to make the JIDE GUI framework work: -->
                                 <argument>--add-exports</argument>
                                 <argument>java.desktop/com.sun.java.swing.plaf.windows=ALL-UNNAMED</argument>
