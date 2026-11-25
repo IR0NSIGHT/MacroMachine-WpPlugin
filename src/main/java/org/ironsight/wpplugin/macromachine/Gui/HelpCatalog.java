@@ -16,8 +16,9 @@ import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
 public enum HelpCatalog {
     CITY("city-tool", "City Tool",
             """
-                    Use the City Tool to place and edit buildings in a City Layer. Pick the City Layer in the Layer menu                     (or import one from a file), then click houses to select them.
-                    The Schematics menu sets the type of the selected houses (or of the next house you add) and                     rotates, mirrors and randomizes them. Selected houses get a transform box: drag the move handle                     to move them, the rotate handle to turn them in quarter turns, the scale handles to spread them                     apart or pack them together. The crosshair is the pivot: drag it, click it to centre it again.
+                    Use the City Tool to place and edit buildings in a City Layer. Pick the City Layer in the Layer menu (or import one from a file), then click houses to select them.
+                    Click the card showing the current schematic to pick another one from a grid: it becomes the type of the selected houses (or of the next house you add). The Schematics menu rotates, mirrors and randomizes them.
+                    Selected houses get a transform box: drag the move handle to move them, the rotate handle to turn them (a group turns by any angle, each house facing the nearest quarter turn), the scale handles to spread them apart or pack them together. The crosshair is the pivot: drag it, click it to centre it again.
 
                     City Layers are not compatible with undo/redo. Do not use undo/redo while editing one.
                     """,

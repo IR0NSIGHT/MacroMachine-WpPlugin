@@ -4410,7 +4410,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * such as U+25BE, which WorldPainter's UI font lacks (it showed as an empty
      * box).
      */
-    static final Icon DROPDOWN_ARROW = LucideIcons.icon("chevron-down", 14,
+    public static final Icon DROPDOWN_ARROW = LucideIcons.icon("chevron-down", 14,
             org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED);
 
     /**

@@ -460,7 +460,7 @@ class CityEditToolOperationTest
     }
 
     @Test
-    void schematicsMenuSetsTypeMirrorsAndSwitchesRandomOptions() {
+    void typeGridSetsTypeAndSchematicsMenuMirrorsAndSwitchesRandomOptions() {
         CityLayer layer = layerWithObjects();
         CityEditToolOperation operation = new CityEditToolOperation();
         operation.setView(TEST_VIEW);
@@ -469,8 +469,13 @@ class CityEditToolOperationTest
         layer.setDataAt(TEST_DIMENSION, house.xPos, house.yPos, house);
         operation.handleClick(100, 180, false, false);
 
-        clickMenuItem(operation.schematicsMenu(), "CityTool.Type.2");
+        operation.openTypeGrid();
+        operation.pickTypeInGrid(2);
         assertEquals(2, layer.getInformationAt(100, 180).objectIndex);
+        assertFalse(operation.typeGridOpen());
+        for (var child : operation.schematicsMenu().getComponents())
+            if (child instanceof JMenuItem item && item.getName() != null)
+                assertFalse(item.getName().startsWith("CityTool.Type."), "the type is picked in the grid");
 
         clickMenuItem(operation.schematicsMenu(), "CityTool.RandomMirroring");
         assertEquals(new CityEditToolOperation.PlacementOptions(false, false, true), operation.placementOptions());
@@ -479,6 +484,54 @@ class CityEditToolOperationTest
 
         clickMenuItem(operation.schematicsMenu(), "CityTool.Mirror");
         assertTrue(layer.getInformationAt(100, 180).mirrored);
+    }
+
+    @Test
+    void groupRotationTurnsPositionsByAnyAngleAndHousesByTheNearestQuarterTurn() {
+        ObjectState east = new ObjectState(CityLayer.Direction.NORTH, false, 0, 110, 100);
+        ObjectState south = new ObjectState(CityLayer.Direction.WEST, true, 1, 100, 110);
+        var pivot = new Point2D.Double(100, 100);
+
+        // 30 degrees counter-clockwise on screen: positions turn, houses keep facing
+        // north
+        ObjectState turned = CityEditToolOperation.rotateAround(pivot, 30).apply(east);
+        assertEquals(109, turned.xPos);
+        assertEquals(95, turned.yPos);
+        assertEquals(CityLayer.Direction.NORTH, turned.rotation);
+        // 60 degrees: past 45, each house takes a quarter turn
+        turned = CityEditToolOperation.rotateAround(pivot, 60).apply(south);
+        assertEquals(109, turned.xPos);
+        assertEquals(105, turned.yPos);
+        assertEquals(CityLayer.Direction.NORTH, turned.rotation);
+        assertTrue(turned.mirrored);
+        // 90 degrees matches the quarter turn of the C key
+        assertEquals(CityEditToolOperation.rotateAround(new Point(100, 100), 1).apply(east),
+                CityEditToolOperation.rotateAround(pivot, 90).apply(east));
+        assertEquals(CityEditToolOperation.rotateAround(new Point(100, 100), -1).apply(south),
+                CityEditToolOperation.rotateAround(pivot, -90).apply(south));
+    }
+
+    @Test
+    void overlaySwitchesDriveTheLayersHighlightColors() {
+        CityLayer layer = layerWithObjects();
+        layer.setUseHighlightColors(false);
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        var highlight = operation.overlayParts().get(0);
+        var outlines = operation.overlayParts().get(1);
+        assertEquals("CityTool.Overlays.HighlightColors", highlight.getName());
+        assertEquals("CityTool.Overlays.Outlines", outlines.getName());
+        assertFalse(highlight.isSelected(), "the switch shows the layer's setting");
+
+        highlight.setSelected(true);
+        assertTrue(layer.isUseHighlightColors());
+        operation.overlaysSwitch().setSelected(false);
+        assertFalse(layer.isUseHighlightColors(), "all overlays off: the schematics' blocks show");
+        operation.overlaysSwitch().setSelected(true);
+        assertTrue(layer.isUseHighlightColors());
+        outlines.setSelected(false);
+        assertTrue(layer.isUseHighlightColors());
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {

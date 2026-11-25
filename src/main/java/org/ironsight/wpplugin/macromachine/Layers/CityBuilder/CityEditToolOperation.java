@@ -62,12 +62,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 {
     public static final String HELP_TITLE = "City Tool";
     public static final String HELP_EXPLANATION = """
-            Use the City Tool to place and edit buildings in a City Layer. Pick the City Layer in the Layer menu \
-            (or import one from a file), then click houses to select them.
-            The Schematics menu sets the type of the selected houses (or of the next house you add) and \
-            rotates, mirrors and randomizes them. Selected houses get a transform box: drag the move handle \
-            to move them, the rotate handle to turn them in quarter turns, the scale handles to spread them \
-            apart or pack them together. The crosshair is the pivot: drag it, click it to centre it again.
+            Use the City Tool to place and edit buildings in a City Layer. Pick the City Layer in the Layer menu (or import one from a file), then click houses to select them.
+            Click the card showing the current schematic to pick another one from a grid: it becomes the type of the selected houses (or of the next house you add). The Schematics menu rotates, mirrors and randomizes them.
+            Selected houses get a transform box: drag the move handle to move them, the rotate handle to turn them (a group turns by any angle, each house facing the nearest quarter turn), the scale handles to spread them apart or pack them together. The crosshair is the pivot: drag it, click it to centre it again.
 
             City Layers are not compatible with undo/redo. Do not use undo/redo while editing one.
             """;
@@ -93,7 +90,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     /** Hit radius of the transform handles (px). */
     static final double HANDLE_HIT_RADIUS = 12;
     /** Thumbnails in the Schematics menu (px). */
-    static final int MENU_THUMBNAIL = 32;
+    static final int GRID_TILE = 150;
+    /** Outline of every house (overlay part): white, half transparent. */
+    static final Color OUTLINE_COLOR = new Color(255, 255, 255, 140);
     /** The current type's preview card below the toolbar (px). */
     static final int CARD_THUMBNAIL = 72;
 
@@ -121,6 +120,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private final JPanel optionsPanel = new JPanel();
     private final JToggleButton addMode = new JToggleButton("Add", false);
     private final JToggleButton showOverlays = new JToggleButton("", true);
+    /**
+     * Overlay part: the layer paints in its color instead of the schematics'
+     * blocks.
+     */
+    private final JToggleButton showHighlight = new JToggleButton("Highlight colors", true);
+    /** Overlay part: an outline around every house of the layer. */
+    private final JToggleButton showOutlines = new JToggleButton("Outlines", true);
     private final CityOverlay overlay = new CityOverlay();
     private WorldPainterView overlayView;
     private volatile boolean cursorOverMap;
@@ -256,7 +262,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             overlay.repaint();
         });
         showOverlays.setName("CityTool.Overlays");
-        showOverlays.getModel().addItemListener(event -> overlay.repaint());
+        showOverlays.getModel().addItemListener(event -> {
+            applyHighlightColors();
+            overlay.repaint();
+        });
+        showHighlight.setName("CityTool.Overlays.HighlightColors");
+        showHighlight.getModel().addItemListener(event -> applyHighlightColors());
+        showOutlines.setName("CityTool.Overlays.Outlines");
+        showOutlines.getModel().addItemListener(event -> overlay.repaint());
 
         Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
             if (e instanceof MouseWheelEvent ev && isActive()
@@ -346,7 +359,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 return;
             }
             if (keyCode == KeyEvent.VK_ESCAPE) {
-                if (gestureStart != null)
+                if (overlay.typeGridOpen())
+                    overlay.closeTypeGrid();
+                else if (gestureStart != null)
                     cancelGesture();
                 else if (addMode.isSelected())
                     addMode.setSelected(false);
@@ -682,7 +697,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     protected void activate() throws PropertyVetoException {
         super.activate();
         addMode.setSelected(false);
+        // overlay switches are not persisted: every activation starts with all on,
+        // highlight colors as the layer has them
+        syncHighlightFromLayer();
         showOverlays.setSelected(true);
+        showOutlines.setSelected(true);
         attachOverlay();
         updatePanel();
     }
@@ -699,6 +718,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         clearSelection();
         clearClipboard();
         customPivot = null;
+        overlay.closeTypeGrid();
+        // a newly chosen layer shows its own highlight colors setting, unless the
+        // overlays are off (then it is shown without them too)
+        if (showOverlays.isSelected())
+            syncHighlightFromLayer();
+        else
+            applyHighlightColors();
         updatePanel();
     }
 
@@ -807,6 +833,28 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             for (int i = 0; i < turns; i++)
                 turned = rotateStateAround(turned, pivot);
             return turned;
+        };
+    }
+
+    /**
+     * Turns the houses' positions by {@code degrees} counter-clockwise on screen
+     * around {@code pivot} (any angle); each house turns by the nearest whole
+     * number of quarter turns, so the houses stay aligned to the block grid.
+     */
+    static UnaryOperator<ObjectState> rotateAround(Point2D pivot, double degrees) {
+        double radians = Math.toRadians(degrees);
+        double cos = Math.cos(radians), sin = Math.sin(radians);
+        int turns = Math.floorMod((int) Math.round(degrees / 90), 4);
+        return state -> {
+            double relativeX = state.xPos - pivot.getX(), relativeY = state.yPos - pivot.getY();
+            // y points down on screen: counter-clockwise is (x, y) -> (x cos + y sin, -x
+            // sin + y cos)
+            int x = (int) Math.round(pivot.getX() + relativeX * cos + relativeY * sin);
+            int y = (int) Math.round(pivot.getY() - relativeX * sin + relativeY * cos);
+            CityLayer.Direction rotation = state.rotation;
+            for (int i = 0; i < turns; i++)
+                rotation = rotation.nextRotation();
+            return new ObjectState(rotation, state.mirrored, state.objectIndex, x, y);
         };
     }
 
@@ -1022,12 +1070,57 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return new ObjectState(oldState.rotation, oldState.mirrored, index, oldState.xPos, oldState.yPos);
     }
 
-    private void setUseHighlightColors(boolean selected) {
+    private boolean syncingHighlight;
+
+    /** The "Highlight colors" overlay switch shows the layer's setting. */
+    private void syncHighlightFromLayer() {
         CityLayer layer = getSelectedLayer();
         if (layer == null)
             return;
-        layer.setUseHighlightColors(selected);
+        syncingHighlight = true;
+        try {
+            showHighlight.setSelected(layer.isUseHighlightColors());
+        } finally {
+            syncingHighlight = false;
+        }
+    }
+
+    /**
+     * The layer paints in its color while the overlays and their "Highlight colors"
+     * part are on, else its schematics' blocks.
+     */
+    private void applyHighlightColors() {
+        CityLayer layer = getSelectedLayer();
+        if (layer == null || syncingHighlight)
+            return;
+        boolean wanted = showOverlays.isSelected() && showHighlight.isSelected();
+        if (layer.isUseHighlightColors() == wanted)
+            return;
+        layer.setUseHighlightColors(wanted);
         refreshLayer(layer);
+    }
+
+    /**
+     * Whether an overlay part is drawn: its own switch and the master switch are
+     * on.
+     */
+    private boolean shows(JToggleButton part) {
+        return showOverlays.isSelected() && part.isSelected();
+    }
+
+    /** The individual overlay switches, in menu order (exposed for tests). */
+    List<JToggleButton> overlayParts() {
+        return List.of(showHighlight, showOutlines);
+    }
+
+    /**
+     * Sets every overlay part on or off by {@code shown}; switches the master
+     * switch on, so the choice is visible.
+     */
+    private void showOverlayParts(java.util.function.Predicate<JToggleButton> shown) {
+        showOverlays.setSelected(true);
+        for (JToggleButton part : overlayParts())
+            part.setSelected(shown.test(part));
     }
 
     /**
@@ -1260,9 +1353,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             case ROTATE -> {
                 Point2D.Double pivot = pivotWorld();
                 double degrees = PathTransformBox.rotationDegrees(toViewExact(pivot), gestureStart, point);
-                int turns = (int) Math.round(degrees / 90);
-                gestureTransform = rotateAround(new Point((int) Math.round(pivot.x), (int) Math.round(pivot.y)), turns);
-                gestureHeader = "Rotate " + Math.floorMod(turns * 90, 360) + "°";
+                if (selectedStates.size() > 1) {
+                    // a group turns by any angle; each house faces the nearest quarter turn
+                    gestureTransform = rotateAround(pivot, degrees);
+                    gestureHeader = "Rotate " + Math.round(degrees) + "°";
+                } else {
+                    int turns = (int) Math.round(degrees / 90);
+                    gestureTransform = rotateAround(new Point((int) Math.round(pivot.x), (int) Math.round(pivot.y)),
+                            turns);
+                    gestureHeader = "Rotate " + Math.floorMod(turns * 90, 360) + "°";
+                }
             }
             case SCALE -> {
                 Point2D.Double pivot = pivotWorld();
@@ -1395,34 +1495,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return item;
     }
 
-    /** Small top-down picture of schematic {@code index}, or null. */
-    private static Icon thumbnail(CityLayer layer, int index, int size) {
-        Image image = layer.getSchematicImage(new ObjectState(CityLayer.Direction.NORTH, false, index, 0, 0));
-        if (image == null)
-            return null;
-        int width = image.getWidth(null), height = image.getHeight(null);
-        double scale = Math.min((double) size / width, (double) size / height);
-        var icon = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = icon.createGraphics();
-        try {
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            int w = Math.max(1, (int) Math.round(width * scale)), h = Math.max(1, (int) Math.round(height * scale));
-            g.drawImage(image, (size - w) / 2, (size - h) / 2, w, h, null);
-        } finally {
-            g.dispose();
-        }
-        return new ImageIcon(icon);
-    }
-
     static String schematicName(WPObject object, int index) {
         String name = object == null ? null : object.getName();
         return name == null || name.isBlank() ? "Schematic " + (index + 1) : name;
     }
 
     /**
-     * "Schematics" menu: the type of the selected houses (or the next house),
-     * rotate / mirror / delete, randomizing now and for new houses (exposed for
-     * tests).
+     * "Schematics" menu: rotate / mirror / delete, randomizing now and for new
+     * houses (exposed for tests). The type is picked in the grid the type card
+     * opens.
      */
     JPopupMenu schematicsMenu() {
         var menu = new JPopupMenu();
@@ -1434,23 +1515,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             }));
             return menu;
         }
-        menu.add(heading(any ? "Type of the selected houses" : "Type of the next house"));
-        var group = new ButtonGroup();
-        var objects = layer.getObjectList();
-        for (int i = 0; i < objects.size(); i++) {
-            int index = i;
-            var type = new JRadioButtonMenuItem(schematicName(objects.get(i), i), thumbnail(layer, i, MENU_THUMBNAIL),
-                    i == uiState.objectIndex);
-            type.setName("CityTool.Type." + i);
-            type.addActionListener(event -> setType(index));
-            group.add(type);
-            menu.add(type);
-        }
-        if (objects.isEmpty())
-            menu.add(item("The layer has no schematics (edit the layer to add some)", "CityTool.NoTypes", false, null,
-                    () -> {
-                    }));
-        menu.addSeparator();
         menu.add(item("Rotate 90° (C)", "CityTool.Rotate", any, needSelection,
                 () -> edit(() -> rotateSelection(layer))));
         menu.add(item("Mirror (X)", "CityTool.Mirror", any, needSelection, () -> edit(() -> mirrorSelection(layer))));
@@ -1504,9 +1568,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             menu.add(choice);
         }
         menu.addSeparator();
-        if (current != null)
-            menu.add(toggleItem("Highlight colors", "CityTool.HighlightColors", current.isUseHighlightColors(),
-                    "Paint the layer in its color instead of the schematics' blocks", this::setUseHighlightColors));
         menu.add(item("Help...", "CityTool.Help", true, null,
                 () -> new HelpDialog(null, HELP_TITLE, HELP_EXPLANATION, HELP_ITEMS).setVisible(true)));
         return menu;
@@ -1541,6 +1602,31 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return addMode;
     }
 
+    /**
+     * Opens the schematic picker over the whole viewport (what clicking the type
+     * card does).
+     */
+    void openTypeGrid() {
+        overlay.openTypeGrid();
+    }
+
+    boolean typeGridOpen() {
+        return overlay.typeGridOpen();
+    }
+
+    /**
+     * Picks a schematic in the open picker (exposed for tests): like clicking its
+     * tile.
+     */
+    void pickTypeInGrid(int index) {
+        overlay.typeGrid.pick(index);
+    }
+
+    /** The overlays dropdown next to the eye button (exposed for tests). */
+    JPopupMenu overlaysMenu() {
+        return overlay.overlaysMenu();
+    }
+
     JToggleButton overlaysSwitch() {
         return showOverlays;
     }
@@ -1570,14 +1656,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private final PathTool.DropdownButton schematicsButton = new PathTool.DropdownButton("Schematics");
         private final PathTool.DropdownButton layerButton = new PathTool.DropdownButton("Layer");
         private final JToggleButton overlaysButton = new JToggleButton(LucideIcons.icon("eye", 16, OverlayStyle.TEXT));
+        private final JButton overlaysMenuButton = new JButton(PathTool.DROPDOWN_ARROW);
         private final JToggleButton addButton = new JToggleButton("Add",
                 LucideIcons.icon("plus", 16, OverlayStyle.TEXT));
         private final TypeCard typeCard = new TypeCard();
+        private final TypeGrid typeGrid = new TypeGrid();
 
         CityOverlay() {
             super(loadOverlayIcon());
             schematicsButton.setName("CityTool.SchematicsMenu");
-            schematicsButton.setToolTipText("Type, rotation, mirroring and randomizing of the houses");
+            schematicsButton.setToolTipText("Rotation, mirroring and randomizing of the houses");
             schematicsButton.addActionListener(event -> {
                 if (schematicsButton.isShowing())
                     OverlayStyle.popup(schematicsMenu()).show(schematicsButton, 0, schematicsButton.getHeight());
@@ -1593,28 +1681,119 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             overlaysButton.setName("CityTool.OverlaysButton");
             overlaysButton.setModel(showOverlays.getModel());
             overlaysButton.setFocusable(false);
-            overlaysButton.setToolTipText("Show overlays (selected houses, transform box)");
+            overlaysButton
+                    .setToolTipText("Show overlays (highlight colors, house outlines, selected houses, transform box)");
             add(overlaysButton);
+            overlaysMenuButton.setName("CityTool.OverlaysMenu");
+            overlaysMenuButton.setFocusable(false);
+            overlaysMenuButton.setToolTipText("Choose which overlays to show");
+            overlaysMenuButton.addActionListener(event -> {
+                if (overlaysMenuButton.isShowing())
+                    OverlayStyle.popup(overlaysMenu()).show(overlaysMenuButton, 0, overlaysMenuButton.getHeight());
+            });
+            add(overlaysMenuButton);
             addButton.setName("CityTool.AddButton");
             addButton.setModel(addMode.getModel());
             addButton.setFocusable(false);
             addButton.setToolTipText("Add mode: left click on empty map places a house. Ctrl+click always places.");
             add(addButton);
-            for (AbstractButton control : List.of(schematicsButton, layerButton, overlaysButton, addButton))
+            for (AbstractButton control : List.of(schematicsButton, layerButton, overlaysButton, overlaysMenuButton,
+                    addButton))
                 OverlayStyle.button(control);
+            overlaysMenuButton.setBorder(new EmptyBorder(5, 6, 5, 6));
             overlaysButton.setSelectedIcon(LucideIcons.icon("eye", 16, OverlayStyle.ON_ACCENT));
             addButton.setSelectedIcon(LucideIcons.icon("plus", 16, OverlayStyle.ON_ACCENT));
             typeCard.setName("CityTool.TypeCard");
-            typeCard.setToolTipText("Type of the selected houses (or the next house): click to change");
+            typeCard.setToolTipText("Type of the selected houses (or the next house): click to choose another");
             typeCard.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent event) {
-                    if (typeCard.isShowing())
-                        OverlayStyle.popup(schematicsMenu()).show(typeCard, 0, typeCard.getHeight());
+                    openTypeGrid();
                 }
             });
             add(typeCard);
+            typeGrid.setName("CityTool.TypeGrid");
+            typeGrid.setVisible(false);
+            add(typeGrid);
             setFont(OverlayStyle.font(Font.PLAIN, 14f));
+        }
+
+        /**
+         * One row per overlay part: its toggle (sharing the switch's model), "Only" and
+         * "All but"; "All" in the title row. Plain buttons, not menu items, so the
+         * popup stays open while clicking (as in the Path Tool).
+         */
+        JPopupMenu overlaysMenu() {
+            var menu = new JPopupMenu("Overlays");
+            var rows = new JPanel(new GridBagLayout());
+            rows.setOpaque(false);
+            rows.setBorder(new EmptyBorder(4, 6, 4, 6));
+            var cell = new GridBagConstraints();
+            cell.insets = new Insets(2, 2, 2, 2);
+            cell.fill = GridBagConstraints.HORIZONTAL;
+            var title = new JLabel("Overlays");
+            title.setFont(title.getFont().deriveFont(Font.BOLD));
+            cell.gridy = 0;
+            cell.gridx = 0;
+            cell.gridwidth = 2;
+            rows.add(title, cell);
+            var all = overlayMenuButton("All", "CityTool.Overlays.All", "Show all overlays");
+            all.addActionListener(event -> showOverlayParts(part -> true));
+            cell.gridx = 2;
+            cell.gridwidth = 1;
+            rows.add(all, cell);
+            for (JToggleButton part : overlayParts()) {
+                cell.gridy++;
+                var toggle = new JToggleButton(part.getText());
+                toggle.setModel(part.getModel());
+                toggle.setName(part.getName());
+                toggle.setFocusable(false);
+                toggle.setToolTipText(part == showHighlight
+                        ? "Paint the layer in its color instead of the schematics' blocks"
+                        : "Outline every house of the layer");
+                cell.gridx = 0;
+                rows.add(toggle, cell);
+                var only = overlayMenuButton("Only", part.getName() + ".Only", "Show only this");
+                only.addActionListener(event -> showOverlayParts(other -> other == part));
+                cell.gridx = 1;
+                rows.add(only, cell);
+                var allBut = overlayMenuButton("All but", part.getName() + ".AllBut", "Show all but this");
+                allBut.addActionListener(event -> showOverlayParts(other -> other != part));
+                cell.gridx = 2;
+                rows.add(allBut, cell);
+            }
+            menu.add(rows);
+            return menu;
+        }
+
+        private JButton overlayMenuButton(String text, String name, String tooltip) {
+            var button = new JButton(text);
+            button.setName(name);
+            button.setFocusable(false);
+            button.setToolTipText(tooltip);
+            return button;
+        }
+
+        void openTypeGrid() {
+            CityLayer layer = getSelectedLayer();
+            if (layer == null || layer.getObjectList().isEmpty())
+                return;
+            typeGrid.open(layer);
+            typeGrid.setBounds(0, 0, getWidth(), getHeight());
+            setComponentZOrder(typeGrid, 0);
+            typeGrid.setVisible(true);
+            repaint();
+        }
+
+        void closeTypeGrid() {
+            if (!typeGrid.isVisible())
+                return;
+            typeGrid.setVisible(false);
+            repaint();
+        }
+
+        boolean typeGridOpen() {
+            return typeGrid.isVisible();
         }
 
         /** Buttons and card follow the chosen layer and type. */
@@ -1636,11 +1815,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             layerButton.setBounds(schematicsButton.getX() + schematicsButton.getWidth() + 4, 8,
                     layerButton.getPreferredSize().width, height);
             int x = layerButton.getX() + layerButton.getWidth() + 8;
-            overlaysButton.setBounds(x, 8, overlaysButton.getPreferredSize().width, height);
-            x = overlaysButton.getX() + overlaysButton.getWidth() + 8;
+            int toggleWidth = overlaysButton.getPreferredSize().width;
+            overlaysButton.setBounds(x, 8, toggleWidth, height);
+            overlaysMenuButton.setBounds(x + toggleWidth, 8, overlaysMenuButton.getPreferredSize().width, height);
+            x = overlaysMenuButton.getX() + overlaysMenuButton.getWidth() + 8;
             addButton.setBounds(x, 8, addButton.getPreferredSize().width, height);
             var card = typeCard.getPreferredSize();
             typeCard.setBounds(8, toolbarBottom() + 8, card.width, card.height);
+            if (typeGrid.isVisible())
+                typeGrid.setBounds(0, 0, getWidth(), getHeight());
             for (PathTool.DropdownButton dropdown : List.of(schematicsButton, layerButton))
                 dropdown.validate();
             repaint();
@@ -1659,7 +1842,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         /** Mouse-transparent like the base overlay, except over the HUD controls. */
         @Override
         public boolean contains(int x, int y) {
-            for (Component control : List.of(schematicsButton, layerButton, overlaysButton, addButton, typeCard))
+            if (typeGrid.isVisible())
+                return true; // the picker covers the whole viewport
+            for (Component control : List.of(schematicsButton, layerButton, overlaysButton, overlaysMenuButton,
+                    addButton, typeCard))
                 if (control.isVisible() && control.getBounds().contains(x, y))
                     return true;
             return false;
@@ -1685,6 +1871,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         private void paintHouses(Graphics2D g, CityLayer layer) {
+            if (shows(showOutlines))
+                paintOutlines(g, layer);
             if (hovered != null && hovered.kind() == HitKind.HOUSE
                     && !selectedStates.containsKey(new Point(hovered.house().xPos, hovered.house().yPos))) {
                 g.setColor(OverlayStyle.TEXT);
@@ -1707,6 +1895,21 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             for (ObjectState house : shown)
                 g.draw(toView(footprint(layer, house)));
             paintTransformBox(g, layer, shown);
+        }
+
+        /**
+         * A thin outline around every house of the layer in view (selected ones get
+         * their own outline on top).
+         */
+        private void paintOutlines(Graphics2D g, CityLayer layer) {
+            var visible = new Rectangle(0, 0, getWidth(), getHeight());
+            g.setColor(OUTLINE_COLOR);
+            g.setStroke(new BasicStroke(1f));
+            for (ObjectState house : layer.getAllObjectStates()) {
+                var bounds = toView(footprint(layer, house));
+                if (bounds.intersects(visible))
+                    g.draw(bounds);
+            }
         }
 
         /**
@@ -1838,6 +2041,183 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             while (end > 0 && metrics.stringWidth(text.substring(0, end) + ellipsis) > width)
                 end--;
             return text.substring(0, end) + ellipsis;
+        }
+    }
+
+    /**
+     * Schematic picker across the whole viewport: a grid of the layer's schematics
+     * (top-down picture, name, size); the current one in lavender. Clicking a tile
+     * picks it; clicking elsewhere or Esc closes; the wheel scrolls.
+     */
+    private class TypeGrid extends JComponent
+    {
+        private static final int MARGIN = 32, HEADER = 84, GAP = 12, PICTURE = 126;
+        private static final int TILE_HEIGHT = GRID_TILE + 34;
+        private final List<Image> pictures = new ArrayList<>();
+        private final List<String> names = new ArrayList<>();
+        private final List<String> sizes = new ArrayList<>();
+        private int hover = -1;
+        private int scroll;
+
+        TypeGrid() {
+            setOpaque(false);
+            var mouse = new MouseAdapter() {
+                @Override
+                public void mouseMoved(MouseEvent event) {
+                    int index = tileAt(event.getPoint());
+                    if (index != hover) {
+                        hover = index;
+                        setCursor(Cursor.getPredefinedCursor(index >= 0 ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+                        repaint();
+                    }
+                }
+
+                @Override
+                public void mouseExited(MouseEvent event) {
+                    hover = -1;
+                    repaint();
+                }
+
+                @Override
+                public void mouseClicked(MouseEvent event) {
+                    if (!SwingUtilities.isLeftMouseButton(event))
+                        return;
+                    int index = tileAt(event.getPoint());
+                    if (index >= 0)
+                        pick(index);
+                    else
+                        overlay.closeTypeGrid();
+                }
+
+                @Override
+                public void mouseWheelMoved(MouseWheelEvent event) {
+                    scroll = Math.max(0, Math.min(maxScroll(), scroll + event.getWheelRotation() * 60));
+                    hover = tileAt(event.getPoint());
+                    repaint();
+                }
+            };
+            addMouseListener(mouse);
+            addMouseMotionListener(mouse);
+            addMouseWheelListener(mouse);
+        }
+
+        void open(CityLayer layer) {
+            pictures.clear();
+            names.clear();
+            sizes.clear();
+            var objects = layer.getObjectList();
+            for (int i = 0; i < objects.size(); i++) {
+                pictures.add(layer.getSchematicImage(new ObjectState(CityLayer.Direction.NORTH, false, i, 0, 0)));
+                names.add(schematicName(objects.get(i), i));
+                var dimensions = objects.get(i).getDimensions();
+                sizes.add(dimensions.x + " × " + dimensions.y + " blocks, " + dimensions.z + " high");
+            }
+            hover = -1;
+            scroll = 0;
+        }
+
+        void pick(int index) {
+            setType(index);
+            overlay.closeTypeGrid();
+        }
+
+        private int columns() {
+            return Math.max(1, (getWidth() - 2 * MARGIN + GAP) / (GRID_TILE + GAP));
+        }
+
+        private Rectangle tileBounds(int index) {
+            int columns = columns();
+            int gridWidth = columns * GRID_TILE + (columns - 1) * GAP;
+            int left = Math.max(MARGIN, (getWidth() - gridWidth) / 2);
+            int row = index / columns, column = index % columns;
+            return new Rectangle(left + column * (GRID_TILE + GAP), HEADER + row * (TILE_HEIGHT + GAP) - scroll,
+                    GRID_TILE, TILE_HEIGHT);
+        }
+
+        private int maxScroll() {
+            int rows = (pictures.size() + columns() - 1) / columns();
+            int content = rows * (TILE_HEIGHT + GAP) - GAP;
+            return Math.max(0, content - (getHeight() - HEADER - MARGIN));
+        }
+
+        private int tileAt(Point point) {
+            if (point.y < HEADER - GAP)
+                return -1;
+            for (int i = 0; i < pictures.size(); i++)
+                if (tileBounds(i).contains(point))
+                    return i;
+            return -1;
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            Graphics2D g = (Graphics2D) graphics.create();
+            try {
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g.setColor(new Color(22, 22, 22, 235));
+                g.fillRect(0, 0, getWidth(), getHeight());
+
+                g.setFont(OverlayStyle.font(Font.BOLD, 20f));
+                g.setColor(OverlayStyle.TEXT);
+                g.drawString("Choose a schematic", MARGIN, 40);
+                g.setFont(OverlayStyle.font(Font.PLAIN, 13f));
+                g.setColor(OverlayStyle.TEXT_MUTED);
+                int selected = selectedStates.size();
+                String target = selected > 1
+                        ? "For the " + selected + " selected houses"
+                        : selected == 1 ? "For the selected house" : "For the next house you place";
+                g.drawString(target + " · Esc or a click outside closes", MARGIN, 62);
+                LucideIcons.paint(g, "x", new Point2D.Double(getWidth() - MARGIN, 36), 20, 0, OverlayStyle.TEXT_MUTED,
+                        null);
+
+                g.clipRect(0, HEADER - GAP, getWidth(), getHeight());
+                for (int i = 0; i < pictures.size(); i++) {
+                    Rectangle tile = tileBounds(i);
+                    if (tile.y > getHeight() || tile.y + tile.height < HEADER - GAP)
+                        continue;
+                    paintTile(g, i, tile);
+                }
+            } finally {
+                g.dispose();
+            }
+        }
+
+        private void paintTile(Graphics2D g, int index, Rectangle tile) {
+            boolean current = index == uiState.objectIndex, hovered = index == hover;
+            OverlayStyle.paintSurface(g, tile.x, tile.y, tile.width, tile.height,
+                    current
+                            ? OverlayStyle.ACCENT_SOFT_SOLID
+                            : hovered ? OverlayStyle.SURFACE_HOVER : OverlayStyle.SURFACE);
+            if (current || hovered) {
+                g.setColor(current ? OverlayStyle.ACCENT : OverlayStyle.TEXT);
+                g.setStroke(new BasicStroke(current ? 2f : 1f));
+                g.draw(OverlayStyle.rounded(tile.x + 1, tile.y + 1, tile.width - 2, tile.height - 2));
+            }
+            Image picture = pictures.get(index);
+            if (picture != null) {
+                int width = picture.getWidth(null), height = picture.getHeight(null);
+                double scale = Math.min((double) PICTURE / width, (double) PICTURE / height);
+                int w = Math.max(1, (int) Math.round(width * scale)), h = Math.max(1, (int) Math.round(height * scale));
+                var quality = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                g.drawImage(picture, tile.x + (tile.width - w) / 2, tile.y + 12 + (PICTURE - h) / 2, w, h, null);
+                if (quality != null)
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, quality);
+            }
+            int y = tile.y + 12 + PICTURE + 4;
+            g.setFont(OverlayStyle.font(Font.BOLD, 13f));
+            var metrics = g.getFontMetrics();
+            g.setColor(OverlayStyle.TEXT);
+            g.drawString(TypeCard.clip(names.get(index), metrics, tile.width - 16), tile.x + 8,
+                    y + metrics.getAscent());
+            y += metrics.getHeight();
+            g.setFont(OverlayStyle.font(Font.PLAIN, 11.5f));
+            metrics = g.getFontMetrics();
+            g.setColor(OverlayStyle.TEXT_MUTED);
+            g.drawString(TypeCard.clip(sizes.get(index), metrics, tile.width - 16), tile.x + 8,
+                    y + metrics.getAscent());
         }
     }
 }

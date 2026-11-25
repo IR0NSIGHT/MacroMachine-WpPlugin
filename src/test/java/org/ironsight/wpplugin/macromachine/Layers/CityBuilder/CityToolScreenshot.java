@@ -66,19 +66,21 @@ public final class CityToolScreenshot
         });
         Thread.sleep(1500); // the tool name label animates into the corner
         save(view, new File(out, "city-hud.png"));
-        for (String menu : List.of("schematics", "layer")) {
+        for (String menu : List.of("schematics", "layer", "overlays")) {
             var shown = new JPopupMenu[1];
             SwingUtilities.invokeAndWait(() -> {
-                shown[0] = OverlayStyle
-                        .popup(menu.equals("schematics") ? operation.schematicsMenu() : operation.layerMenu());
+                shown[0] = OverlayStyle.popup(menu.equals("schematics")
+                        ? operation.schematicsMenu()
+                        : menu.equals("layer") ? operation.layerMenu() : operation.overlaysMenu());
                 shown[0].show(view, 40, 50);
             });
             Thread.sleep(500);
-            var robot = new Robot();
-            var bounds = new Rectangle(shown[0].getLocationOnScreen(), shown[0].getSize());
-            ImageIO.write(robot.createScreenCapture(bounds), "png", new File(out, "city-" + menu + "-menu.png"));
+            save(shown[0], new File(out, "city-" + menu + "-menu.png"));
             SwingUtilities.invokeAndWait(() -> shown[0].setVisible(false));
         }
+        SwingUtilities.invokeAndWait(operation::openTypeGrid);
+        Thread.sleep(300);
+        save(view, new File(out, "city-type-grid.png"));
         System.exit(0);
     }
 
