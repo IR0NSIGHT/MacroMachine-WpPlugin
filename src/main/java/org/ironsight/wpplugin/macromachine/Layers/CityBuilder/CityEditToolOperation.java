@@ -342,8 +342,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         // typing into a field (the picker's search, a spinner) is no map shortcut; a
         // hidden field that kept the focus (the closed picker's search) does not count
         Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (isActive() && overlayView != null && focus != null && focus.isShowing()
-                && !PathTool.allowsMapShortcut(overlayView, focus))
+        if (isActive() && overlayView != null && !shortcutAllowed(overlayView, focus))
             return false;
         if (isActive() && getDimension() != null)
             ctrlTaps.onKey(e);
@@ -371,10 +370,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     /**
-     * Whether a key with {@code focus} on it may be a map shortcut (exposed for
-     * tests).
+     * Whether a key with {@code focus} on it may be a map shortcut (the key
+     * dispatcher and tests).
      */
-    static boolean shortcutAllowedForTest(Component view, Component focus) {
+    static boolean shortcutAllowed(Component view, Component focus) {
         return focus == null || !focus.isShowing() || PathTool.allowsMapShortcut(view, focus);
     }
 
@@ -2038,7 +2037,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     /**
      * How the next house will be placed: type, rotation, mirroring (exposed for
-     * tests).
+     * dispatcher and tests).
      */
     ObjectState nextHouse() {
         return uiState;

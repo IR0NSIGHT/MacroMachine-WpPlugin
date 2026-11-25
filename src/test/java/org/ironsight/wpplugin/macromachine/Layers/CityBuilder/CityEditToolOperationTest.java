@@ -1119,7 +1119,7 @@ class CityEditToolOperationTest
         assertFalse(operation.typeGridOpen());
         var hiddenSearch = OperationPanelLookup.find(operation.typeGridComponent(), "CityTool.TypeGrid.Search");
         assertFalse(hiddenSearch.isShowing());
-        assertTrue(CityEditToolOperation.shortcutAllowedForTest(TEST_VIEW, hiddenSearch));
+        assertTrue(CityEditToolOperation.shortcutAllowed(TEST_VIEW, hiddenSearch));
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {
