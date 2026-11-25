@@ -150,6 +150,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private final JToggleButton showOutlines = new JToggleButton("Outlines", true);
     /** Overlay part: the ">" on the front edge of house outlines. */
     private final JToggleButton showFacing = new JToggleButton("Facing arrows", true);
+    /** Overlay part: the schematic card under the toolbar. */
+    private final JToggleButton showCard = new JToggleButton("Schematic card", true);
     private final CityOverlay overlay = new CityOverlay();
     private WorldPainterView overlayView;
     private volatile boolean cursorOverMap;
@@ -295,7 +297,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         showOverlays.setName("CityTool.Overlays");
         showOverlays.getModel().addItemListener(event -> {
             applyHighlightColors();
-            overlay.repaint();
+            overlay.refresh();
         });
         showHighlight.setName("CityTool.Overlays.HighlightColors");
         showHighlight.getModel().addItemListener(event -> applyHighlightColors());
@@ -303,6 +305,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         showOutlines.getModel().addItemListener(event -> overlay.repaint());
         showFacing.setName("CityTool.Overlays.Facing");
         showFacing.getModel().addItemListener(event -> overlay.repaint());
+        showCard.setName("CityTool.Overlays.Card");
+        showCard.getModel().addItemListener(event -> overlay.refresh());
 
         Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
             if (e instanceof MouseWheelEvent ev && isActive()
@@ -843,6 +847,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         showOverlays.setSelected(true);
         showOutlines.setSelected(true);
         showFacing.setSelected(true);
+        showCard.setSelected(true);
         attachOverlay();
         updatePanel();
     }
@@ -1472,7 +1477,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     /** The individual overlay switches, in menu order (exposed for tests). */
     List<JToggleButton> overlayParts() {
-        return List.of(showHighlight, showOutlines, showFacing);
+        return List.of(showHighlight, showOutlines, showFacing, showCard);
     }
 
     /**
@@ -2350,7 +2355,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         ? "Paint the layer in its color instead of the schematics' blocks"
                         : part == showOutlines
                                 ? "Outline every house of the layer"
-                                : "A \">\" on the front edge of each house outline (which way it faces)");
+                                : part == showFacing
+                                        ? "A \">\" on the front edge of each house outline (which way it faces)"
+                                        : "The schematic card under the toolbar (type, views, rotate / mirror / Set type)");
                 cell.gridx = 0;
                 rows.add(toggle, cell);
                 var only = overlayMenuButton("Only", part.getName() + ".Only", "Show only this");
@@ -2403,7 +2410,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         void refresh() {
             CityLayer layer = getSelectedLayer();
             schematicsButton.setEnabled(layer != null);
-            typeCard.setVisible(layer != null && !layer.getObjectList().isEmpty());
+            typeCard.setVisible(layer != null && !layer.getObjectList().isEmpty() && shows(showCard));
             typeCard.repaint();
             layoutToolbar();
         }

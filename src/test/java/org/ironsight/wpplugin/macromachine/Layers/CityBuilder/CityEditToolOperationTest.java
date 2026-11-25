@@ -528,6 +528,18 @@ class CityEditToolOperationTest
         assertEquals("CityTool.Overlays.HighlightColors", highlight.getName());
         assertEquals("CityTool.Overlays.Outlines", outlines.getName());
         assertEquals("CityTool.Overlays.Facing", operation.overlayParts().get(2).getName());
+        // the schematic card is an overlay part too: hidden by its switch and by the
+        // eye
+        var card = operation.typeCardForTest();
+        assertEquals("CityTool.Overlays.Card", operation.overlayParts().get(3).getName());
+        assertTrue(card.isVisible());
+        operation.overlayParts().get(3).setSelected(false);
+        assertFalse(card.isVisible());
+        operation.overlayParts().get(3).setSelected(true);
+        operation.overlaysSwitch().setSelected(false);
+        assertFalse(card.isVisible());
+        operation.overlaysSwitch().setSelected(true);
+        assertTrue(card.isVisible());
         assertFalse(highlight.isSelected(), "the switch shows the layer's setting");
 
         highlight.setSelected(true);
