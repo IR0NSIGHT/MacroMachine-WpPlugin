@@ -1908,11 +1908,33 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         CityLayerLibrary.select(layer, this::setPaint);
     }
 
+    /** Whether the tool's paint is {@code layer} (the very same layer). */
+    private boolean painting(CityLayer layer) {
+        return getPaint() instanceof LayerPaint layerPaint && layerPaint.getLayer() == layer;
+    }
+
+    /**
+     * Selects a layer that was just added to the world. WorldPainter may build its
+     * button only after the import returns, so selecting right away can find
+     * nothing: then again once the import has settled, and if WorldPainter still
+     * does not hand it over, the tool takes the layer's paint itself.
+     */
+    void selectNewLayer(CityLayer layer) {
+        selectLayer(layer);
+        if (painting(layer))
+            return;
+        SwingUtilities.invokeLater(() -> {
+            selectLayer(layer);
+            if (!painting(layer))
+                setPaint(org.pepsoft.worldpainter.painting.PaintFactory.createLayerPaint(layer));
+        });
+    }
+
     private void useTutorialLayer() {
         try {
             CityLayer layer = CityLayerLibrary.addTutorialLayer(getDimension());
             if (layer != null)
-                selectLayer(layer);
+                selectNewLayer(layer);
         } catch (Exception ex) {
             GlobalActionPanel.ErrorPopUp(ex);
         }
@@ -1922,7 +1944,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         try {
             CityLayer layer = CityLayerLibrary.importFromFile(getDimension());
             if (layer != null)
-                selectLayer(layer);
+                selectNewLayer(layer);
         } catch (Exception ex) {
             GlobalActionPanel.ErrorPopUp(ex);
         }

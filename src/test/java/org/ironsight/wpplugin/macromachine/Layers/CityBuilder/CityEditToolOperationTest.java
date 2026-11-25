@@ -960,6 +960,17 @@ class CityEditToolOperationTest
         assertEquals(CityLayer.Direction.NORTH, layer.getInformationAt(100, 440).rotation);
     }
 
+    @Test
+    void aNewLayerEndsUpSelected() throws Exception {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        SwingUtilities.invokeAndWait(() -> operation.selectNewLayer(layer));
+        SwingUtilities.invokeAndWait(() -> {
+        }); // the second attempt runs later on the event thread
+        assertSame(layer, ((LayerPaint) operation.getPaint()).getLayer());
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {
