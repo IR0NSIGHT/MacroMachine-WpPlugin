@@ -1884,8 +1884,20 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return menu;
     }
 
+    /**
+     * Makes {@code layer} WorldPainter's paint, and the tool's. WorldPainter only
+     * hands a paint to the tool when a layer button becomes selected: if its button
+     * already is (WorldPainter and the tool disagree, e.g. after another world was
+     * opened), nothing would happen, so the tool then takes the layer itself.
+     */
     void selectLayer(CityLayer layer) {
         CityLayerLibrary.select(layer, this::setPaint);
+        if (!painting(layer))
+            setPaint(org.pepsoft.worldpainter.painting.PaintFactory.createLayerPaint(layer));
+        if (getSelectedLayer() != layer)
+            System.err.println("City Tool: could not select layer '" + layer.getName() + "' (paint "
+                    + (painting(layer) ? "set" : "not set") + ", in this world: "
+                    + CityLayerLibrary.inWorld(layer, getView() == null ? null : getDimension()) + ")");
     }
 
     /** Whether the tool's paint is {@code layer} (the very same layer). */
