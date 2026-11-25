@@ -1201,6 +1201,23 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
     }
 
+    /**
+     * The view every card shows large (picker tiles, the picker's preview card, the
+     * card on the map): one setting, so schematics compare from the same side.
+     * Hovering a small view previews it on that card only.
+     */
+    private HouseView cardView = HouseView.TOP;
+
+    /** A small view was clicked on some card: all cards show it large. */
+    void setCardView(HouseView view) {
+        cardView = view;
+        overlay.repaint();
+    }
+
+    HouseView cardView() {
+        return cardView;
+    }
+
     /** What a Randomize operation of the Schematics menu changes. */
     enum Randomized {
         ROTATION("Randomize rotation",
@@ -2678,8 +2695,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         /** The tile content of the next house, kept while the house does not change. */
         private TypeGrid.TileContent cached;
         private Object cachedKey;
-        /** The view the card shows large. */
-        private HouseView view = HouseView.TOP;
         /** The small view under the mouse: shown large while hovered. */
         private HouseView hoverView;
         /** The mouse is on the large view (it is clickable: it opens the picker). */
@@ -2699,7 +2714,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          */
         private TypeGrid.TileContent content(CityLayer layer) {
             Object key = java.util.List.of(layer, layer.getObjectList(), uiState.objectIndex, uiState.rotation,
-                    uiState.mirrored, cardWidth(), view, String.valueOf(hoverView));
+                    uiState.mirrored, cardWidth(), cardView, String.valueOf(hoverView));
             if (!key.equals(cachedKey)) {
                 WPObject object = layer.getObjectForState(uiState);
                 if (object == null)
@@ -2712,7 +2727,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 cached = new TypeGrid.TileContent(layer.getSchematicImage(uiState), new int[]{size.x, size.y, size.z},
                         SchematicViews.front(upright), SchematicViews.side(upright),
                         TypeGrid.wrap(title(), getFontMetrics(TypeGrid.nameFont()), cardWidth() - 16), uiState.rotation,
-                        hoverView != null ? hoverView : view, view, hoverView);
+                        hoverView != null ? hoverView : cardView, cardView, hoverView);
                 cachedKey = key;
             }
             return cached;
@@ -2741,8 +2756,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         void clicked(Point point) {
             int small = TypeGrid.thumbAt(new Rectangle(0, 0, getWidth(), getHeight()), point);
             if (small >= 0) {
-                view = HouseView.values()[small];
-                repaint();
+                setCardView(HouseView.values()[small]);
             } else
                 overlay.openTypeGrid(false);
         }
@@ -2854,13 +2868,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          * hovered.
          */
         private HouseView previewHoverThumb;
-        /** The view the preview card shows large: its own, not its tile's. */
-        private HouseView previewView = HouseView.TOP;
         /** The small view under the mouse and its tile: shown large while hovered. */
         private HouseView hoverThumb;
         private int hoverThumbTile = -1;
-        /** The view each tile shows large (top unless a small view was clicked). */
-        private final Map<Integer, HouseView> tileViews = new java.util.HashMap<>();
         /** Each name broken into lines that fit the tile, so it shows in full. */
         private final List<List<String>> nameLines = new ArrayList<>();
         /** Width (x), length (y) and height (z) in blocks per schematic. */
@@ -3085,17 +3095,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     var preview = previewBounds();
                     int previewSmall = preview.isEmpty() ? -1 : thumbAt(preview, event.getPoint());
                     if (previewSmall >= 0 && previewIndex() >= 0) {
-                        // a small view on the preview card: shown large there (its tile keeps its own)
-                        previewView = HouseView.values()[previewSmall];
-                        repaint();
+                        // a small view on the preview card: every card shows it
+                        setCardView(HouseView.values()[previewSmall]);
                         return;
                     }
                     int index = tileAt(event.getPoint());
                     int view = index >= 0 && index == pressedTile ? thumbAt(tileBounds(index), event.getPoint()) : -1;
                     if (view >= 0) {
-                        // a small view: shown large in this tile; no pick, no tick
-                        tileViews.put(index, HouseView.values()[view]);
-                        repaint();
+                        // a small view: every card shows it large; no pick, no tick
+                        setCardView(HouseView.values()[view]);
                     } else if (index >= 0 && index == pressedTile && pickingRandomPool()) {
                         // Add random: a click anywhere on a tile ticks it; the picker stays open
                         toggleRandomPool(index);
@@ -3151,7 +3159,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             }
             int lines = nameLines.stream().mapToInt(List::size).max().orElse(1);
             tileHeight = tileHeight(lines);
-            tileViews.clear();
             previewed = -1;
             hover = -1;
             scroll = 0;
@@ -3355,7 +3362,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         /** The view tile {@code index} shows large (exposed for tests). */
         HouseView tileViewForTest(int index) {
-            return tileViews.getOrDefault(index, HouseView.TOP);
+            return cardView;
         }
 
         int previewIndexForTest() {
@@ -3364,7 +3371,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         /** The view the preview card shows large (exposed for tests). */
         HouseView previewViewForTest() {
-            return previewView;
+            return cardView;
         }
 
         /** The preview card's bounds (empty without a preview). */
@@ -3479,10 +3486,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private TileContent content(int index) {
             return new TileContent(pictures.get(index), sizes.get(index), fronts.get(index), sides.get(index),
                     nameLines.get(index), CityLayer.Direction.NORTH,
-                    index == hoverThumbTile && hoverThumb != null
-                            ? hoverThumb
-                            : tileViews.getOrDefault(index, HouseView.TOP),
-                    tileViews.getOrDefault(index, HouseView.TOP), index == hoverThumbTile ? hoverThumb : null);
+                    index == hoverThumbTile && hoverThumb != null ? hoverThumb : cardView, cardView,
+                    index == hoverThumbTile ? hoverThumb : null);
         }
 
         // ---- tile layout: a square large view, three small views in a row, the name
@@ -3539,7 +3544,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (index < 0 || bounds.isEmpty())
                 return;
             var small = content(index);
-            HouseView chosen = previewView;
+            HouseView chosen = cardView;
             var content = new TileContent(small.picture(), small.size(), small.front(), small.side(),
                     wrap(names.get(index), getFontMetrics(nameFont()), bounds.width - 16), small.facing(),
                     previewHoverThumb != null ? previewHoverThumb : chosen, chosen, previewHoverThumb);

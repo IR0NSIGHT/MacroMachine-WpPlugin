@@ -1078,8 +1078,9 @@ class CityEditToolOperationTest
                 new Point((int) side.getCenterX(), (int) side.getCenterY()));
         assertTrue(operation.typeGridOpen());
         assertEquals(CityEditToolOperation.HouseView.SIDE, grid.previewViewForTest());
-        // the preview card has its own view: its tile and the grid keep theirs
-        assertEquals(CityEditToolOperation.HouseView.TOP, grid.tileViewForTest(grid.previewIndexForTest()));
+        // one view for all cards: the tiles and the map card switch along
+        assertEquals(CityEditToolOperation.HouseView.SIDE, grid.tileViewForTest(grid.previewIndexForTest()));
+        assertEquals(CityEditToolOperation.HouseView.SIDE, operation.cardContentForTest().view());
         // too narrow for tiles and the preview: no preview
         grid.setSize(500, 1000);
         assertTrue(grid.previewBounds().isEmpty());
