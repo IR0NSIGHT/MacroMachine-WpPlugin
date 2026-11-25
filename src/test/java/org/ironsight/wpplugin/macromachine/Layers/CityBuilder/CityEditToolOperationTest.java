@@ -725,6 +725,8 @@ class CityEditToolOperationTest
         clickMenuItem(operation.schematicsMenu(), "CityTool.RandomizeRotation");
         var panel = operation.operationPanel();
         assertNotNull(panel);
+        var description = (javax.swing.JLabel) OperationPanelLookup.find(panel, "CityTool.OperationDescription");
+        assertTrue(description.getText().contains("ticked rotations"), "the panel says what Apply does");
         clickNamed(panel, "CityTool.Randomize.Allowed.0"); // untick 0 degrees
         clickNamed(panel, "CityTool.Randomize.Allowed.2"); // untick 180 degrees
         clickNamed(panel, "CityTool.OperationApply");

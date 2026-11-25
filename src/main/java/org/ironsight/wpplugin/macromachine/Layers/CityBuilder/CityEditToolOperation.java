@@ -1108,12 +1108,19 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     /** What a Randomize operation of the Schematics menu changes. */
     enum Randomized {
-        ROTATION("Randomize rotation"), MIRRORING("Randomize mirroring"), TYPE("Randomize type");
+        ROTATION("Randomize rotation",
+                "Turns each selected house to one of the ticked rotations, at random. Positions stay."), MIRRORING(
+                        "Randomize mirroring",
+                        "Mirrors each selected house or not, at random, among the ticked options. Positions stay."), TYPE(
+                                "Randomize type",
+                                "Gives each selected house one of the ticked schematics, at random. Position, rotation and mirroring stay.");
 
         final String title;
+        final String description;
 
-        Randomized(String title) {
+        Randomized(String title, String description) {
             this.title = title;
+            this.description = description;
         }
     }
 
@@ -1191,8 +1198,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         note.setName("CityTool.Randomize.Note");
         note.setForeground(OverlayStyle.WARNING);
         note.setVisible(false);
-        operationPanel = OperationPanel.create("CityTool", what.title, controls, note, this::closeOperation,
-                this::applyOperation);
+        operationPanel = OperationPanel.create("CityTool", what.title, what.description, controls, note,
+                this::closeOperation, this::applyOperation);
         operationRefresh = () -> {
             var allowedValues = new ArrayList<Object>();
             for (int i = 0; i < states.size(); i++)

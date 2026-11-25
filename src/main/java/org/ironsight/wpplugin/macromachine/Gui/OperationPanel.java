@@ -22,6 +22,9 @@ import javax.swing.JSpinner;
  */
 public final class OperationPanel
 {
+    /** Width the description wraps at (px). */
+    static final int DESCRIPTION_WIDTH = 240;
+
     private OperationPanel() {
     }
 
@@ -29,17 +32,28 @@ public final class OperationPanel
      * @param namePrefix
      *            component names: {@code <prefix>.OperationPanel},
      *            {@code <prefix>.OperationCancel}, {@code <prefix>.OperationApply}
+     * @param description
+     *            what Apply will do, in a sentence or two: shown under the title
      * @param note
      *            shown above the buttons (e.g. a warning), or {@code null}
      */
-    public static JPanel create(String namePrefix, String title, JComponent controls, JComponent note, Runnable cancel,
-            Runnable apply) {
+    public static JPanel create(String namePrefix, String title, String description, JComponent controls,
+            JComponent note, Runnable cancel, Runnable apply) {
         JPanel panel = new OverlayStyle.SurfacePanel(new BorderLayout(8, 8));
         panel.setName(namePrefix + ".OperationPanel");
         var heading = new JLabel(title);
         heading.setForeground(OverlayStyle.TEXT);
         heading.setFont(OverlayStyle.font(Font.BOLD, 15f));
-        panel.add(heading, BorderLayout.NORTH);
+        var explanation = new JLabel("<html><div style='width:" + DESCRIPTION_WIDTH + "px'>"
+                + description.replace("&", "&amp;").replace("<", "&lt;") + "</div></html>");
+        explanation.setName(namePrefix + ".OperationDescription");
+        OverlayStyle.label(explanation, true);
+        explanation.setFont(OverlayStyle.font(Font.PLAIN, 13f));
+        var top = new JPanel(new BorderLayout(0, 4));
+        top.setOpaque(false);
+        top.add(heading, BorderLayout.NORTH);
+        top.add(explanation, BorderLayout.CENTER);
+        panel.add(top, BorderLayout.NORTH);
         styleControls(controls);
         panel.add(controls, BorderLayout.CENTER);
         var buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));

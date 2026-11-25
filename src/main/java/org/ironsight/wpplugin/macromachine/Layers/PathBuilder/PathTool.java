@@ -1046,7 +1046,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var selection = Set.copyOf(selectedNodes);
         float strength = handleStrength;
         var cuts = operationSpinner("PathTool.Subdivide.Cuts", new SpinnerNumberModel(1, 1, 32, 1));
-        openOperation("Subdivide", operationForm("Number of cuts", cuts),
+        openOperation("Subdivide",
+                "Adds evenly spaced nodes between neighbouring selected nodes; the path keeps its shape.",
+                operationForm("Number of cuts", cuts),
                 () -> PathOperations.subdivide(base, selection, ((Number) cuts.getValue()).intValue(), strength));
         cuts.addChangeListener(event -> refreshOperation());
         typeableFields(new TypeableField("Number of cuts", cuts));
@@ -1083,7 +1085,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var selection = Set.copyOf(selectedNodes);
         var radius = operationSpinner("PathTool.Randomize.Radius", new SpinnerNumberModel(4.0, 0.0, 1000.0, 0.5));
         var seed = operationSpinner("PathTool.Randomize.Seed", new SpinnerNumberModel(1, 0, 99999, 1));
-        openOperation("Randomize position", operationForm("Radius (blocks)", radius, "Seed", seed),
+        openOperation("Randomize position", "Moves each selected node to a random spot within the radius around it.",
+                operationForm("Radius (blocks)", radius, "Seed", seed),
                 () -> keepHeightAboveGround(base, PathOperations.randomize(base, selection,
                         ((Number) radius.getValue()).doubleValue(), ((Number) seed.getValue()).longValue())));
         showOperationCircles(base, selection, new OperationCircle(radius, 1, "random"));
@@ -1106,7 +1109,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var min = operationSpinner("PathTool.RandomizeRadius.Min", new SpinnerNumberModel(low, 1.0, 1000.0, 0.5));
         var max = operationSpinner("PathTool.RandomizeRadius.Max", new SpinnerNumberModel(high, 1.0, 1000.0, 0.5));
         var seed = operationSpinner("PathTool.RandomizeRadius.Seed", new SpinnerNumberModel(1, 0, 99999, 1));
-        openOperation("Randomize radius",
+        openOperation("Randomize radius", "Gives each selected node a random radius between min and max.",
                 operationForm("Min radius (blocks)", min, "Max radius (blocks)", max, "Seed", seed),
                 () -> PathOperations.randomizeRadius(base, selection, ((Number) min.getValue()).doubleValue(),
                         ((Number) max.getValue()).doubleValue(), ((Number) seed.getValue()).longValue()));
@@ -1174,7 +1177,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var radius = operationSpinner("PathTool.Snap.Radius", new SpinnerNumberModel(8, 1, 64, 1));
         var target = new JComboBox<>(PathOperations.SnapTarget.values());
         target.setName("PathTool.Snap.Target");
-        openOperation("Snap to terrain", operationForm("Search radius (blocks)", radius, "Snap to", target),
+        openOperation("Snap to terrain",
+                "Moves each selected node to the lowest, highest or median terrain within the search radius around it.",
+                operationForm("Search radius (blocks)", radius, "Snap to", target),
                 () -> keepHeightAboveGround(base,
                         PathOperations.snapToTerrain(base, selection, ((Number) radius.getValue()).intValue(),
                                 (PathOperations.SnapTarget) target.getSelectedItem(), this::groundAt)));
@@ -1217,14 +1222,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     void openOnlyDownhill() {
         var base = getCurrentPath();
         var selection = Set.copyOf(selectedNodes);
-        var note = new JLabel(
-                "<html>Lowers selected nodes so the path never rises along its direction<br>(node 1 to n).</html>");
-        openOperation("Only downhill", note, () -> PathOperations.onlyDownhill(base, selection));
+        openOperation("Only downhill",
+                "Lowers selected nodes so the path never rises along its direction (node 1 to n).", new JPanel(),
+                () -> PathOperations.onlyDownhill(base, selection));
     }
 
     private String operationTitle;
 
-    private void openOperation(String title, JComponent controls, Supplier<PathOperations.Result> compute) {
+    private void openOperation(String title, String description, JComponent controls,
+            Supplier<PathOperations.Result> compute) {
         closeOperation();
         cancelGesture();
         operationTitle = title;
@@ -1233,8 +1239,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         operationMergeNote.setForeground(WARNING_COLOR);
         operationMergeNote.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.PLAIN, 13.5f));
         operationMergeNote.setVisible(false);
-        JPanel panel = org.ironsight.wpplugin.macromachine.Gui.OperationPanel.create("PathTool", title, controls,
-                operationMergeNote, this::closeOperation, this::applyOperation);
+        JPanel panel = org.ironsight.wpplugin.macromachine.Gui.OperationPanel.create("PathTool", title, description,
+                controls, operationMergeNote, this::closeOperation, this::applyOperation);
         operationPanel = panel;
         operationBase = getCurrentPath();
         operationRefresh = () -> {
