@@ -931,6 +931,35 @@ class CityEditToolOperationTest
         }
     }
 
+    @Test
+    void theNextHouseCanBeTurnedAndMirroredBeforePlacingIt() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        assertEquals(CityLayer.Direction.NORTH, operation.nextHouse().rotation);
+
+        // nothing selected: C and X set up the next house
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+        assertEquals(CityLayer.Direction.WEST, operation.nextHouse().rotation);
+        operation.handleKeyInteraction(KeyEvent.VK_X);
+        assertTrue(operation.nextHouse().mirrored);
+        operation.turnNext(-1);
+        operation.turnNext(-1); // the card's clockwise button, twice
+        assertEquals(CityLayer.Direction.EAST, operation.nextHouse().rotation);
+
+        operation.placeAt(100, 440);
+        ObjectState placed = layer.getInformationAt(100, 440);
+        assertEquals(CityLayer.Direction.EAST, placed.rotation);
+        assertTrue(placed.mirrored);
+        // the next one keeps the chosen rotation
+        assertEquals(CityLayer.Direction.EAST, operation.nextHouse().rotation);
+
+        // with a selection, the card's buttons turn the selected houses in place
+        operation.turnNext(1);
+        assertEquals(CityLayer.Direction.NORTH, layer.getInformationAt(100, 440).rotation);
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {

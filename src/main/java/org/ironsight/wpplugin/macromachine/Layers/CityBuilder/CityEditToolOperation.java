@@ -92,8 +92,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             new HelpItem("Ctrl + V", "Paste buildings at the cursor"),
             new HelpItem("Q", "Randomize selected buildings using the random options of the Add menu"),
             new HelpItem("W/A/S/D", "Move selected buildings"),
-            new HelpItem("C", "Rotate selected buildings around the selection center"),
-            new HelpItem("X", "Mirror selected buildings"), new HelpItem("Delete", "Delete selected buildings"));
+            new HelpItem("C",
+                    "Rotate selected buildings around the selection center; nothing selected: the next building"),
+            new HelpItem("X", "Mirror selected buildings; nothing selected: the next building"),
+            new HelpItem("Delete", "Delete selected buildings"));
 
     private static final int OVERLAY_ICON_SIZE = 256;
     /** Hit radius of the transform handles (px). */
@@ -188,6 +190,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             trackCursor(event.getPoint());
             if (gestureStart == null)
                 setHovered(hitTest(event.getPoint()));
+            if (addMode.isSelected())
+                overlay.repaint(); // the preview of the next house follows the mouse
         }
 
         @Override
@@ -406,6 +410,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     addMode.setSelected(false);
                 else if (layer != null)
                     deselect(layer);
+                return;
+            }
+            // C / X with nothing selected turn or mirror the next house
+            if ((keyCode == KeyEvent.VK_C || keyCode == KeyEvent.VK_X) && layer != null && selectedStates.isEmpty()) {
+                if (keyCode == KeyEvent.VK_C)
+                    turnNext(1);
+                else
+                    mirrorNext();
                 return;
             }
             boolean requiresSelection = keyCode == KeyEvent.VK_Q || keyCode == KeyEvent.VK_W || keyCode == KeyEvent.VK_A
@@ -1916,6 +1928,47 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
     }
 
+    /**
+     * Turns the selected houses in place, or the next house without a selection, by
+     * {@code quarterTurns} counter-clockwise on screen (negative: clockwise).
+     */
+    void turnNext(int quarterTurns) {
+        CityLayer layer = getSelectedLayer();
+        if (layer == null)
+            return;
+        UnaryOperator<ObjectState> turn = state -> {
+            CityLayer.Direction rotation = state.rotation;
+            for (int i = 0; i < Math.floorMod(quarterTurns, 4); i++)
+                rotation = rotation.counterClockwise();
+            return setRotation(rotation, state);
+        };
+        if (!selectedStates.isEmpty())
+            edit(() -> applyToSelection(layer, turn));
+        else
+            applyToUi(turn.apply(uiState));
+        overlay.repaint();
+    }
+
+    /** Mirrors the selected houses, or the next house without a selection. */
+    void mirrorNext() {
+        CityLayer layer = getSelectedLayer();
+        if (layer == null)
+            return;
+        if (!selectedStates.isEmpty())
+            edit(() -> mirrorSelection(layer));
+        else
+            applyToUi(setIsMirrored(!uiState.mirrored, uiState));
+        overlay.repaint();
+    }
+
+    /**
+     * How the next house will be placed: type, rotation, mirroring (exposed for
+     * tests).
+     */
+    ObjectState nextHouse() {
+        return uiState;
+    }
+
     /** Switches between "Add" and "Add random" (and turns add mode on). */
     void setAddRandom(boolean random) {
         addRandom = random;
@@ -2310,6 +2363,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 CityLayer layer = getSelectedLayer();
                 if (layer != null && showOverlays.isSelected())
                     paintHouses(g, layer);
+                if (layer != null)
+                    paintNextHouse(g, layer);
                 String header = viewportHeader();
                 if (header != null)
                     paintHeader(g, header);
@@ -2343,6 +2398,28 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             for (ObjectState house : shown)
                 drawOutline(g, toView(footprint(layer, house)), house);
             paintTransformBox(g, layer);
+        }
+
+        /**
+         * Add mode: the house a click would place, at the mouse, as a preview (amber,
+         * dashed) with its facing, so its rotation can be set before placing it. Not
+         * for Add random (the type is picked on the click) or over another house.
+         */
+        private void paintNextHouse(Graphics2D g, CityLayer layer) {
+            Point cursor = cursorWorldPosition;
+            if (!addMode.isSelected() || addRandom || cursor == null || !cursorOverMap || gestureStart != null
+                    || hovered != null || typeGrid.isVisible() || layer.getObjectList().isEmpty())
+                return;
+            var next = new ObjectState(uiState.rotation, uiState.mirrored, uiState.objectIndex, cursor.x, cursor.y);
+            var bounds = toView(footprint(layer, next));
+            g.setColor(OverlayStyle.PREVIEW);
+            g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10, new float[]{5, 3}, 0));
+            g.draw(bounds);
+            var arrow = facingArrow(bounds, next.rotation);
+            if (arrow != null) {
+                g.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(arrow);
+            }
         }
 
         /**
@@ -2414,10 +2491,64 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      */
     private class TypeCard extends JComponent
     {
+        /** Height of the button row under the texts (px). */
+        private static final int BUTTON_ROW = 30;
+        private final List<JButton> buttons = new ArrayList<>();
+
         TypeCard() {
             setOpaque(false);
+            setLayout(null);
             setBorder(new EmptyBorder(8, 8, 8, 8));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            addButton("rotate-ccw", "CityTool.TypeCard.RotateLeft",
+                    "Turn a quarter counter-clockwise: the selected houses, or the next house (C)", () -> turnNext(1));
+            addButton("rotate-cw", "CityTool.TypeCard.RotateRight",
+                    "Turn a quarter clockwise: the selected houses, or the next house", () -> turnNext(-1));
+            addButton("flip-horizontal-2", "CityTool.TypeCard.Mirror",
+                    "Mirror the selected houses, or the next house (X)", this::mirror);
+        }
+
+        private void mirror() {
+            mirrorNext();
+        }
+
+        private void addButton(String icon, String name, String tooltip, Runnable action) {
+            var button = OverlayStyle.button(new JButton(LucideIcons.icon(icon, 16, OverlayStyle.TEXT)));
+            button.setName(name);
+            button.setToolTipText(tooltip);
+            button.setFocusable(false);
+            button.setBorder(new EmptyBorder(4, 9, 4, 9));
+            button.setCursor(Cursor.getDefaultCursor());
+            button.addActionListener(event -> action.run());
+            buttons.add(button);
+            add(button);
+        }
+
+        @Override
+        public void doLayout() {
+            int x = 8, y = getHeight() - 8 - BUTTON_ROW + 3;
+            for (JButton button : buttons) {
+                var size = button.getPreferredSize();
+                button.setBounds(x, y, size.width, BUTTON_ROW - 6);
+                x += size.width + 4;
+            }
+        }
+
+        @Override
+        public void setBounds(int x, int y, int width, int height) {
+            super.setBounds(x, y, width, height);
+            doLayout();
+        }
+
+        /**
+         * The buttons are hidden while picking for Add random (the card shows the pool
+         * then).
+         */
+        void updateButtons() {
+            boolean shown = !pickingRandomPool();
+            for (JButton button : buttons)
+                if (button.isVisible() != shown)
+                    button.setVisible(shown);
         }
 
         private String title() {
@@ -2440,9 +2571,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             var titleMetrics = getFontMetrics(OverlayStyle.font(Font.BOLD, 13f));
             var subtitleMetrics = getFontMetrics(OverlayStyle.font(Font.PLAIN, 12f));
             int text = Math.max(titleMetrics.stringWidth(title()), subtitleMetrics.stringWidth(subtitle()));
-            int width = Math.min(320, Math.max(CARD_THUMBNAIL, text) + 16);
-            return new java.awt.Dimension(width,
-                    CARD_THUMBNAIL + 16 + titleMetrics.getHeight() + subtitleMetrics.getHeight() + 4);
+            int row = 0;
+            for (JButton button : buttons)
+                row += button.getPreferredSize().width + 4;
+            int width = Math.min(320, Math.max(Math.max(CARD_THUMBNAIL, row - 4), text) + 16);
+            boolean withButtons = !pickingRandomPool();
+            return new java.awt.Dimension(width, CARD_THUMBNAIL + 16 + titleMetrics.getHeight()
+                    + subtitleMetrics.getHeight() + 4 + (withButtons ? BUTTON_ROW : 0));
         }
 
         @Override
@@ -2450,6 +2585,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             CityLayer layer = getSelectedLayer();
             if (layer == null)
                 return;
+            updateButtons();
             Graphics2D g = (Graphics2D) graphics.create();
             try {
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
