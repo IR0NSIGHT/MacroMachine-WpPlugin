@@ -41,7 +41,7 @@ Place buildings (schematics) exactly where you want them, then move, rotate and 
 
 ## Install (Windows)
 
-<a href="https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/download/release-0.4.21/MacroMachine-Setup-0.4.21.exe"><img src="https://img.shields.io/badge/DOWNLOAD-MacroMachine_Installer-2ea44f?style=for-the-badge&logo=windows" alt="Download MacroMachine installer" height="50"></a>
+<a href="https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/download/release-0.4.20/MacroMachine-Setup-0.4.20.exe"><img src="https://img.shields.io/badge/DOWNLOAD-MacroMachine_Installer-2ea44f?style=for-the-badge&logo=windows" alt="Download MacroMachine installer" height="50"></a>
 
 1. Click the green **DOWNLOAD** button.
 2. Close WorldPainter.
@@ -51,7 +51,7 @@ Place buildings (schematics) exactly where you want them, then move, rotate and 
 
 ## Try a macro (1 minute)
 
-<a href="https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/download/release-0.4.21/default-macros.zip"><img src="https://img.shields.io/badge/DOWNLOAD-Ready--made_macros-2ea44f?style=for-the-badge" alt="Download ready-made macros" height="50"></a>
+<a href="https://github.com/IR0NSIGHT/MacroMachine-WpPlugin/releases/download/release-0.4.20/default-macros.zip"><img src="https://img.shields.io/badge/DOWNLOAD-Ready--made_macros-2ea44f?style=for-the-badge" alt="Download ready-made macros" height="50"></a>
 
 1. Click the green **DOWNLOAD** button above and unzip the file (right-click → **Extract All**).
 2. In WorldPainter, click the **M** tool. The MacroMachine window opens.  
