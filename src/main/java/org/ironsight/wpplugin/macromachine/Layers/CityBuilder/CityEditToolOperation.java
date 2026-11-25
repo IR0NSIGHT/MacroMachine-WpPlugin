@@ -104,7 +104,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     /** Outline of every house (overlay part): white, half transparent. */
     static final Color OUTLINE_COLOR = new Color(255, 255, 255, 140);
     /** The current type's preview card below the toolbar (px). */
-    static final int CARD_THUMBNAIL = 72;
 
     private static CityEditToolOperation instance;
 
@@ -2623,18 +2622,54 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return selectedStates.size() > 1 ? selectedStates.size() + " selected · " + rotation : rotation;
         }
 
-        @Override
-        public java.awt.Dimension getPreferredSize() {
-            var titleMetrics = getFontMetrics(OverlayStyle.font(Font.BOLD, 13f));
-            var subtitleMetrics = getFontMetrics(OverlayStyle.font(Font.PLAIN, 12f));
-            int text = Math.max(titleMetrics.stringWidth(title()), subtitleMetrics.stringWidth(subtitle()));
+        /** The tile content of the next house, kept while the house does not change. */
+        private TypeGrid.TileContent cached;
+        private Object cachedKey;
+
+        /** Width of the card: a picker tile, wider if the button row needs it. */
+        private int cardWidth() {
             int row = 0;
             for (JButton button : buttons)
                 row += button.getPreferredSize().width + 4;
-            int width = Math.min(320, Math.max(Math.max(CARD_THUMBNAIL, row - 4), text) + 16);
+            return Math.max(GRID_TILE, row - 4 + 16);
+        }
+
+        /**
+         * The next house as a picker tile shows it (turned and mirrored as it will be
+         * placed).
+         */
+        private TypeGrid.TileContent content(CityLayer layer) {
+            Object key = java.util.List.of(layer, layer.getObjectList(), uiState.objectIndex, uiState.rotation,
+                    uiState.mirrored, cardWidth());
+            if (!key.equals(cachedKey)) {
+                WPObject object = layer.getObjectForState(uiState);
+                if (object == null)
+                    return null;
+                var size = object.getDimensions();
+                cached = new TypeGrid.TileContent(layer.getSchematicImage(uiState), new int[]{size.x, size.y, size.z},
+                        SchematicViews.front(object), SchematicViews.side(object),
+                        TypeGrid.wrap(title(), getFontMetrics(TypeGrid.nameFont()), cardWidth() - 16),
+                        uiState.rotation);
+                cachedKey = key;
+            }
+            return cached;
+        }
+
+        /** Height of the tile part: the picker's tile for this name. */
+        private int tileHeight(CityLayer layer) {
+            var content = content(layer);
+            return overlay.typeGrid.tileHeight(content == null ? 1 : content.nameLines().size());
+        }
+
+        @Override
+        public java.awt.Dimension getPreferredSize() {
+            CityLayer layer = getSelectedLayer();
+            if (layer == null)
+                return new java.awt.Dimension(cardWidth(), BUTTON_ROW);
+            var subtitleMetrics = getFontMetrics(OverlayStyle.font(Font.PLAIN, 12f));
             boolean withButtons = !pickingRandomPool();
-            return new java.awt.Dimension(width, CARD_THUMBNAIL + 16 + titleMetrics.getHeight()
-                    + subtitleMetrics.getHeight() + 4 + (withButtons ? BUTTON_ROW : 0));
+            return new java.awt.Dimension(cardWidth(),
+                    tileHeight(layer) - 4 + subtitleMetrics.getHeight() + (withButtons ? BUTTON_ROW : 8));
         }
 
         @Override
@@ -2643,36 +2678,20 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (layer == null)
                 return;
             updateButtons();
+            var content = content(layer);
+            if (content == null)
+                return;
             Graphics2D g = (Graphics2D) graphics.create();
             try {
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                // the picker's bright mode carries over, so dark schematics show here too
+                // exactly a picker tile (bright mode included), on a surface reaching the
+                // buttons
                 var grid = overlay.typeGrid;
-                OverlayStyle.paintSurface(g, 0, 0, getWidth(), getHeight(), grid.tileFill(false, false));
-                if (grid.bright()) {
-                    g.setColor(grid.tileEdge(false, false));
-                    g.setStroke(new BasicStroke(1f));
-                    g.draw(OverlayStyle.rounded(0.5, 0.5, getWidth() - 1, getHeight() - 1));
-                }
-                Image image = layer.getSchematicImage(uiState);
-                if (image != null) {
-                    int width = image.getWidth(null), height = image.getHeight(null);
-                    double scale = Math.min((double) CARD_THUMBNAIL / width, (double) CARD_THUMBNAIL / height);
-                    int w = Math.max(1, (int) Math.round(width * scale)),
-                            h = Math.max(1, (int) Math.round(height * scale));
-                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                    g.drawImage(image, (getWidth() - w) / 2, 8 + (CARD_THUMBNAIL - h) / 2, w, h, null);
-                }
-                int y = 8 + CARD_THUMBNAIL + 4;
-                g.setFont(OverlayStyle.font(Font.BOLD, 13f));
-                var metrics = g.getFontMetrics();
-                g.setColor(grid.text());
-                g.drawString(clip(title(), metrics, getWidth() - 16), 8, y + metrics.getAscent());
-                y += metrics.getHeight();
+                grid.paintTileContent(g, new Rectangle(0, 0, getWidth(), getHeight()), content, false, false);
+                int y = tileHeight(layer) - 8;
                 g.setFont(OverlayStyle.font(Font.PLAIN, 12f));
-                metrics = g.getFontMetrics();
+                var metrics = g.getFontMetrics();
                 g.setColor(grid.muted());
                 g.drawString(clip(subtitle(), metrics, getWidth() - 16), 8, y + metrics.getAscent());
             } finally {
@@ -3186,16 +3205,43 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             }
         }
 
+        /**
+         * What a tile shows: top view, its sizes, front and side view, the name's
+         * lines.
+         */
+        record TileContent(Image picture, int[] size, Image front, Image side, List<String> nameLines,
+                CityLayer.Direction facing) {
+        }
+
+        private TileContent content(int index) {
+            return new TileContent(pictures.get(index), sizes.get(index), fronts.get(index), sides.get(index),
+                    nameLines.get(index), CityLayer.Direction.NORTH);
+        }
+
+        /** Height of a tile whose name takes {@code lines} lines. */
+        int tileHeight(int lines) {
+            return TILE_HEIGHT_WITHOUT_NAME + lines * getFontMetrics(nameFont()).getHeight();
+        }
+
         private void paintTile(Graphics2D g, int index, Rectangle tile) {
-            boolean current = index == uiState.objectIndex, hovered = index == hover;
+            paintTileContent(g, tile, content(index), index == uiState.objectIndex, index == hover);
+            if (pickingRandomPool())
+                paintCheckbox(g, index);
+        }
+
+        /**
+         * A tile: surface, the top view with its measurements, the front and side views
+         * and the name. Shared by the picker and the type card.
+         */
+        void paintTileContent(Graphics2D g, Rectangle tile, TileContent content, boolean current, boolean hovered) {
             OverlayStyle.paintSurface(g, tile.x, tile.y, tile.width, tile.height, tileFill(current, hovered));
             if (current || hovered || bright()) {
                 g.setColor(tileEdge(current, hovered));
                 g.setStroke(new BasicStroke(current ? 2f : 1f));
                 g.draw(OverlayStyle.rounded(tile.x + 1, tile.y + 1, tile.width - 2, tile.height - 2));
             }
-            Image picture = pictures.get(index);
-            int[] size = sizes.get(index);
+            Image picture = content.picture();
+            int[] size = content.size();
             if (picture != null) {
                 // the picture shows the house with a margin of CityLayer's image space;
                 // the measurements span the house itself
@@ -3213,24 +3259,28 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, quality);
                 double margin = (width - size[0]) / 2.0 * scale;
                 double marginY = (height - size[1]) / 2.0 * scale;
-                paintMeasurements(g,
-                        new Rectangle2D.Double(imageX + margin, imageY + marginY, size[0] * scale, size[1] * scale),
-                        size);
+                var house = new Rectangle2D.Double(imageX + margin, imageY + marginY, size[0] * scale, size[1] * scale);
+                paintMeasurements(g, house, size);
+                // which side is the front: the map outlines' ">", subtle, without the outline
+                var facing = facingArrow(house, content.facing());
+                if (facing != null) {
+                    g.setColor(muted());
+                    g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                    g.draw(facing);
+                }
             }
-            if (pickingRandomPool())
-                paintCheckbox(g, index);
-            paintElevations(g, index, tile);
+            paintElevations(g, content.front(), content.side(), tile);
             int y = tile.y + 10 + PICTURE + 6 + VIEWS + 8;
             g.setFont(nameFont());
             var metrics = g.getFontMetrics();
             g.setColor(text());
-            for (String line : nameLines.get(index)) {
+            for (String line : content.nameLines()) {
                 g.drawString(line, tile.x + 8, y + metrics.getAscent());
                 y += metrics.getHeight();
             }
         }
 
-        private static Font nameFont() {
+        static Font nameFont() {
             return OverlayStyle.font(Font.BOLD, 13f);
         }
 
@@ -3272,7 +3322,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          * The front and side views side by side under the top view, each scaled to fit
          * its half of the row (blocks stay square), labelled "front" / "side".
          */
-        private void paintElevations(Graphics2D g, int index, Rectangle tile) {
+        private void paintElevations(Graphics2D g, Image front, Image side, Rectangle tile) {
             int top = tile.y + 10 + PICTURE + 6, half = (tile.width - 16 - 8) / 2;
             g.setFont(OverlayStyle.font(Font.PLAIN, 10.5f));
             var metrics = g.getFontMetrics();
@@ -3280,7 +3330,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             var quality = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
             g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
             for (int k = 0; k < 2; k++) {
-                Image view = (k == 0 ? fronts : sides).get(index);
+                Image view = k == 0 ? front : side;
                 int left = tile.x + 8 + k * (half + 8);
                 int width = view.getWidth(null), height = view.getHeight(null);
                 double scale = Math.min((double) half / width, (double) pictureHeight / height);
