@@ -752,6 +752,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      * WorldPainter turns each step clockwise, so EAST faces right. {@code null}
      * where the outline is too small to carry one.
      */
+    /** Space between a house's front edge and its ">" (px). */
+    static final double FACING_GAP = 4;
+
     static java.awt.geom.Path2D.Double facingArrow(Rectangle2D bounds, CityLayer.Direction rotation) {
         double size = Math.min(bounds.getWidth(), bounds.getHeight());
         if (size < 6)
@@ -764,8 +767,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             case WEST -> dx = -1;
         }
         double half = (dx != 0 ? bounds.getWidth() : bounds.getHeight()) / 2;
-        // middle of the front edge, the chevron's tip out from it
-        double edgeX = bounds.getCenterX() + dx * half, edgeY = bounds.getCenterY() + dy * half;
+        // a little way out from the middle of the front edge ("| >", not "|>"), the
+        // chevron's tip further out
+        double gap = FACING_GAP;
+        double edgeX = bounds.getCenterX() + dx * (half + gap), edgeY = bounds.getCenterY() + dy * (half + gap);
         double head = Math.min(8, Math.max(4, size * 0.3));
         double tipX = edgeX + dx * head, tipY = edgeY + dy * head;
         var chevron = new java.awt.geom.Path2D.Double();
@@ -2113,6 +2118,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return List.copyOf(overlay.typeGrid.visible);
     }
 
+    /** What the type card shows for the next house (exposed for tests). */
+    TypeGrid.TileContent cardContentForTest() {
+        return overlay.typeCard.content(getSelectedLayer());
+    }
+
     /** The type card (exposed for tests). */
     JComponent typeCardForTest() {
         return overlay.typeCard;
@@ -2658,8 +2668,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 if (object == null)
                     return null;
                 var size = object.getDimensions();
+                // front and side are the house's own, whichever way it is turned: drawn from
+                // the unturned (but mirrored) house; the top view shows the turn
+                WPObject upright = layer.getObjectForState(
+                        new ObjectState(CityLayer.Direction.NORTH, uiState.mirrored, uiState.objectIndex, 0, 0));
                 cached = new TypeGrid.TileContent(layer.getSchematicImage(uiState), new int[]{size.x, size.y, size.z},
-                        SchematicViews.front(object), SchematicViews.side(object),
+                        SchematicViews.front(upright), SchematicViews.side(upright),
                         TypeGrid.wrap(title(), getFontMetrics(TypeGrid.nameFont()), cardWidth() - 16),
                         uiState.rotation);
                 cachedKey = key;

@@ -848,19 +848,19 @@ class CityEditToolOperationTest
     @Test
     void theFacingArrowPointsAlongTheHousesForwardAxis() {
         var bounds = new java.awt.geom.Rectangle2D.Double(0, 0, 40, 40);
-        // a ">" outside the front edge: its tip 8 px out from the edge's middle
-        assertEquals(new Point2D.Double(20, -8),
+        // a ">" a little way out from the front edge: 4 px gap, then 8 px to its tip
+        assertEquals(new Point2D.Double(20, -12),
                 tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.NORTH)));
-        assertEquals(new Point2D.Double(48, 20),
+        assertEquals(new Point2D.Double(52, 20),
                 tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.EAST)));
-        assertEquals(new Point2D.Double(20, 48),
+        assertEquals(new Point2D.Double(20, 52),
                 tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.SOUTH)));
-        assertEquals(new Point2D.Double(-8, 20),
+        assertEquals(new Point2D.Double(-12, 20),
                 tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.WEST)));
-        // its arms start on the edge itself (attached to the box)
+        // its arms start off the edge, not on it ("| >")
         var arms = points(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.EAST));
-        assertEquals(40, arms.get(0).x);
-        assertEquals(40, arms.get(2).x);
+        assertEquals(44, arms.get(0).x);
+        assertEquals(44, arms.get(2).x);
         assertNull(CityEditToolOperation.facingArrow(new java.awt.geom.Rectangle2D.Double(0, 0, 4, 30),
                 CityLayer.Direction.NORTH), "too small for an arrow");
     }
@@ -998,6 +998,27 @@ class CityEditToolOperationTest
         var side = SchematicViews.side(object);
         assertEquals(1, side.getWidth());
         assertEquals(2, side.getHeight());
+    }
+
+    @Test
+    void theCardsFrontAndSideViewsStayTheHousesOwnWhenItIsTurned() {
+        // 3 wide (x), 1 deep (y), 1 high: a wide front, a narrow side
+        var house = new GenericObject("wide", 3, 1, 1, new Material[]{Material.STONE, Material.STONE, Material.STONE});
+        CityLayer layer = new CityLayer("views", "test");
+        var objects = new ArrayList<WPObject>();
+        objects.add(house);
+        layer.setObjectList(objects);
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        var before = operation.cardContentForTest();
+        operation.turnNext(1); // a quarter turn: the top view turns ...
+        var after = operation.cardContentForTest();
+        assertNotEquals(before.picture().getWidth(null), after.picture().getWidth(null));
+        // ... the front stays the 3 wide face, the side the 1 deep one
+        assertEquals(3, after.front().getWidth(null));
+        assertEquals(1, after.side().getWidth(null));
+        assertEquals(CityLayer.Direction.WEST, after.facing());
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {
