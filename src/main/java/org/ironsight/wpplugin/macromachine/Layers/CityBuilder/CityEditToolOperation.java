@@ -2277,8 +2277,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         return;
                     pressed = false;
                     int index = tileAt(event.getPoint());
-                    if (index >= 0 && index == pressedTile && onCheckbox(index, event.getPoint())) {
-                        // ticking a schematic for Add random keeps the picker open
+                    if (index >= 0 && index == pressedTile && pickingRandomPool()) {
+                        // Add random: a click anywhere on a tile ticks it; the picker stays open
                         toggleRandomPool(index);
                         repaint();
                     } else if (index >= 0 && index == pressedTile)
@@ -2324,14 +2324,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private Rectangle checkbox(int index) {
             Rectangle tile = tileBounds(index);
             return new Rectangle(tile.x + 6, tile.y + 6, 22, 22);
-        }
-
-        private boolean onCheckbox(int index, Point point) {
-            if (!pickingRandomPool())
-                return false;
-            var box = checkbox(index);
-            box.grow(4, 4); // a little forgiving
-            return box.contains(point);
         }
 
         private void paintCheckbox(Graphics2D g, int index) {
@@ -2440,7 +2432,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         : selected == 1 ? "For the selected house" : "For the next house you place";
                 if (pickingRandomPool())
                     target = "Add random: tick the schematics to pick from (" + randomPool.size()
-                            + " ticked); click a picture to make it the current one";
+                            + " ticked): click a schematic to tick it";
                 g.drawString(target + " · Esc or a click outside closes", MARGIN, 62);
                 LucideIcons.paint(g, "x", new Point2D.Double(getWidth() - MARGIN, 36), 20, 0, muted(), null);
 

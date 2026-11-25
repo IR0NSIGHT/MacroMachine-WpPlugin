@@ -655,7 +655,7 @@ class CityEditToolOperationTest
     }
 
     @Test
-    void theCheckboxOfAPickerTileTicksWithoutPicking() {
+    void inAddRandomAClickOnAPickerTileTicksIt() {
         CityLayer layer = layerWithObjects();
         CityEditToolOperation operation = new CityEditToolOperation();
         operation.setView(TEST_VIEW);
@@ -670,10 +670,15 @@ class CityEditToolOperationTest
         pressAndRelease(grid, new Point(118, 101), new Point(119, 101));
         assertTrue(operation.typeGridOpen(), "ticking keeps the picker open");
         assertEquals(Set.of(0), operation.randomPool());
-        // the picture of the same tile picks it as the current type and closes
+        // a click on the picture counts as a click on the checkbox: unticks, picker
+        // stays open
+        pressAndRelease(grid, new Point(176, 150), new Point(176, 150));
+        assertTrue(operation.typeGridOpen());
+        assertEquals(Set.of(), operation.randomPool());
+        // outside add mode a click on a tile picks it again
+        operation.addModeToggle().setSelected(false);
         pressAndRelease(grid, new Point(176, 150), new Point(176, 150));
         assertFalse(operation.typeGridOpen());
-        assertEquals(Set.of(0), operation.randomPool());
     }
 
     private static Point pressAndRelease(javax.swing.JComponent grid, Point press, Point release) {
