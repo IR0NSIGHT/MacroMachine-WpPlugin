@@ -487,8 +487,17 @@ public class CityLayer extends CustomLayer implements UndoListener
             }
         }
 
+        /**
+         * A quarter turn clockwise on screen: the next step of WorldPainter's
+         * RotatedObject, which turns clockwise.
+         */
         public CityLayer.Direction nextRotation() {
             return fromCompass(this.rotateSteps * 90 + 90);
+        }
+
+        /** A quarter turn counter-clockwise on screen. */
+        public CityLayer.Direction counterClockwise() {
+            return fromCompass((this.rotateSteps * 90 + 270) % 360);
         }
     }
 }

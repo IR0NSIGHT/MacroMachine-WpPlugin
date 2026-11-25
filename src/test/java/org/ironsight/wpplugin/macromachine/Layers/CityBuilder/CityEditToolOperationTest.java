@@ -210,8 +210,8 @@ class CityEditToolOperationTest
         ObjectState rotatedSecond = layer.getInformationAt(106, 98);
         assertNotNull(rotatedFirst);
         assertNotNull(rotatedSecond);
-        assertEquals(CityLayer.Direction.EAST, rotatedFirst.rotation);
-        assertEquals(CityLayer.Direction.WEST, rotatedSecond.rotation);
+        assertEquals(CityLayer.Direction.WEST, rotatedFirst.rotation);
+        assertEquals(CityLayer.Direction.EAST, rotatedSecond.rotation);
         assertFalse(rotatedFirst.mirrored);
         assertTrue(rotatedSecond.mirrored);
         assertEquals(first.objectIndex, rotatedFirst.objectIndex);
@@ -315,8 +315,8 @@ class CityEditToolOperationTest
         operation.handleKeyInteraction(KeyEvent.VK_X);
         ObjectState rotatedFirst = layer.getInformationAt(305, 304);
         ObjectState rotatedSecond = layer.getInformationAt(305, 294);
-        assertEquals(CityLayer.Direction.EAST, rotatedFirst.rotation);
-        assertEquals(CityLayer.Direction.SOUTH, rotatedSecond.rotation);
+        assertEquals(CityLayer.Direction.WEST, rotatedFirst.rotation);
+        assertEquals(CityLayer.Direction.NORTH, rotatedSecond.rotation);
         assertTrue(rotatedFirst.mirrored);
         assertFalse(rotatedSecond.mirrored);
 
@@ -360,7 +360,7 @@ class CityEditToolOperationTest
         ObjectState turned = CityEditToolOperation.rotateAround(new Point(100, 100), 1).apply(house);
         assertEquals(100, turned.xPos);
         assertEquals(90, turned.yPos);
-        assertEquals(CityLayer.Direction.EAST, turned.rotation);
+        assertEquals(CityLayer.Direction.WEST, turned.rotation);
         assertTrue(turned.mirrored);
         assertEquals(house, CityEditToolOperation.rotateAround(new Point(100, 100), 4).apply(house));
         assertEquals(CityEditToolOperation.rotateAround(new Point(100, 100), 3).apply(house),
@@ -512,7 +512,7 @@ class CityEditToolOperationTest
         turned = CityEditToolOperation.rotateAround(pivot, 60).apply(south);
         assertEquals(109, turned.xPos);
         assertEquals(105, turned.yPos);
-        assertEquals(CityLayer.Direction.NORTH, turned.rotation);
+        assertEquals(CityLayer.Direction.SOUTH, turned.rotation);
         assertTrue(turned.mirrored);
         // 90 degrees matches the quarter turn of the C key
         assertEquals(CityEditToolOperation.rotateAround(new Point(100, 100), 1).apply(east),
@@ -542,6 +542,52 @@ class CityEditToolOperationTest
         assertTrue(layer.isUseHighlightColors());
         outlines.setSelected(false);
         assertTrue(layer.isUseHighlightColors());
+    }
+
+    @Test
+    void housesTurnTheSameWayAsTheirPositions() {
+        // a two block house: stone in the west, dirt in the east
+        CityLayer layer = new CityLayer("turn", "test");
+        var objects = new ArrayList<WPObject>();
+        objects.add(new GenericObject("house", 2, 1, 1, new Material[]{Material.STONE, Material.DIRT}));
+        layer.setObjectList(objects);
+        ObjectState house = new ObjectState(CityLayer.Direction.NORTH, false, 0, 10, 0);
+
+        // a quarter turn counter-clockwise on screen: east of the pivot moves north ...
+        ObjectState turned = CityEditToolOperation.rotateStateAround(house, new Point(0, 0));
+        assertEquals(new Point(0, -10), new Point(turned.xPos, turned.yPos));
+        // ... and the house's east end turns to the north as well
+        WPObject object = layer.getObjectForState(turned);
+        assertEquals(1, object.getDimensions().x);
+        assertEquals(2, object.getDimensions().y);
+        assertEquals(Material.DIRT, object.getMaterial(0, 0, 0));
+        assertEquals(Material.STONE, object.getMaterial(0, 1, 0));
+        // a group turned by 90 degrees agrees with the quarter turn
+        assertEquals(turned, CityEditToolOperation.rotateAround(new Point2D.Double(0, 0), 90).apply(house));
+    }
+
+    @Test
+    void theTransformBoxKeepsTheAngleTheGroupWasTurnedBy() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        layer.setDataAt(TEST_DIMENSION, 100, 220, new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 220));
+        layer.setDataAt(TEST_DIMENSION, 120, 220, new ObjectState(CityLayer.Direction.NORTH, false, 1, 120, 220));
+        operation.handleClick(100, 220, false, false);
+        operation.handleClick(120, 220, false, true);
+        assertEquals(0, operation.boxAngle());
+
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+        assertEquals(90, operation.boxAngle());
+        // moving keeps the angle, a new selection starts upright
+        operation.handleKeyInteraction(KeyEvent.VK_D);
+        assertEquals(90, operation.boxAngle());
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        operation.handleKeyInteraction(KeyEvent.VK_A, true);
+        assertEquals(0, operation.boxAngle());
+        assertEquals(-90, CityEditToolOperation.normalizeDegrees(270));
+        assertEquals(180, CityEditToolOperation.normalizeDegrees(-180));
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {
