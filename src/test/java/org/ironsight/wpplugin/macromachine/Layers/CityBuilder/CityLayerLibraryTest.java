@@ -12,6 +12,8 @@ class CityLayerLibraryTest
         assertTrue(CityLayerLibrary.hasTutorialLayer());
         CityLayer layer = CityLayerLibrary.readTutorialLayer();
         assertEquals("tutorial_houses", layer.getName());
+        assertTrue(layer.getAllObjectStates().isEmpty(),
+                "no houses from the world the file was saved in, only the schematics");
         assertFalse(layer.getObjectList().isEmpty(), "the schematics travel inside the layer file");
         for (WPObject object : layer.getObjectList())
             assertTrue(object.getDimensions().x > 0, object.getName());

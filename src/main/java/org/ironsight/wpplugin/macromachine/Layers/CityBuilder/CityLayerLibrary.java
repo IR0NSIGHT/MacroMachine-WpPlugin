@@ -105,10 +105,15 @@ final class CityLayerLibrary
         var before = cityLayers(dimension);
         ((Action) privateField(app, "ACTION_IMPORT_LAYER"))
                 .actionPerformed(new ActionEvent(app, ActionEvent.ACTION_PERFORMED, "importLayer"));
+        CityLayer imported = null;
         for (CityLayer layer : cityLayers(dimension))
-            if (!before.contains(layer))
-                return layer;
-        return null;
+            if (!before.contains(layer)) {
+                // its house positions belong to the world the file was saved in
+                layer.forgetPlacements();
+                if (imported == null)
+                    imported = layer;
+            }
+        return imported;
     }
 
     /**
@@ -143,6 +148,8 @@ final class CityLayerLibrary
                 var in = new ObjectInputStream(new GZIPInputStream(new BufferedInputStream(stream)))) {
             if (in.readObject() instanceof CityLayer layer) {
                 layer.setName(TUTORIAL_LAYER_NAME);
+                // the file was saved from a world with houses: only its schematics come along
+                layer.forgetPlacements();
                 return layer;
             }
             throw new IOException("The tutorial layer file holds no City Layer");

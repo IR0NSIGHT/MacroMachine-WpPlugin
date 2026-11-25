@@ -253,6 +253,17 @@ public class CityLayer extends CustomLayer implements UndoListener
         }
     }
 
+    /**
+     * Forgets where houses stand, keeping the schematics: for a layer coming into
+     * another world (from a layer file), whose house positions belong to the world
+     * it was saved in. Without this the City Tool would show houses that are not on
+     * this world's map.
+     */
+    public void forgetPlacements() {
+        database = new CityInfoDatabase();
+        resetLastEdited();
+    }
+
     public ArrayList<WPObject> getObjectList() {
         return objects;
     }
