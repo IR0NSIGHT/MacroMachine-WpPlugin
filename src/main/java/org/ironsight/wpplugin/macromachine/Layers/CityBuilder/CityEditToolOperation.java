@@ -33,6 +33,7 @@ import javax.vecmath.Point3i;
 import com.github.weisj.jsvg.SVGDocument;
 import com.github.weisj.jsvg.parser.SVGLoader;
 import org.ironsight.wpplugin.macromachine.Gui.CtrlDoubleTap;
+import org.ironsight.wpplugin.macromachine.Gui.DialogStyle;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.Gui.HelpDialog;
 import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
@@ -334,8 +335,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
-        if (isActive() && getDimension() != null && PathTool.allowsMapShortcut(overlayView,
+        // typing into a field (the picker's search, a spinner) is no map shortcut
+        if (isActive() && overlayView != null && !PathTool.allowsMapShortcut(overlayView,
                 KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()))
+            return false;
+        if (isActive() && getDimension() != null)
             ctrlTaps.onKey(e);
         if (e.getID() == KeyEvent.KEY_PRESSED) {
             if (!isActive() || getDimension() == null)
@@ -1952,6 +1956,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return TypeGrid.wrap(text, metrics, width);
     }
 
+    /**
+     * The schematics the picker shows after search and filters (exposed for tests).
+     */
+    List<Integer> typeGridVisible() {
+        return List.copyOf(overlay.typeGrid.visible);
+    }
+
     /** The picker itself (exposed for tests). */
     JComponent typeGridComponent() {
         return overlay.typeGrid;
@@ -2445,7 +2456,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      */
     private class TypeGrid extends JComponent
     {
-        private static final int MARGIN = 32, HEADER = 84, GAP = 12, PICTURE = 126;
+        private static final int MARGIN = 32, HEADER = 118, GAP = 12, PICTURE = 126;
+        /** The search and size filter row, between the subtitle and the tiles. */
+        private static final int FILTER_ROW_Y = 74, FILTER_ROW_HEIGHT = 28;
         /** Tile height without the name (picture, measurements, padding). */
         private static final int TILE_HEIGHT_WITHOUT_NAME = 10 + PICTURE + 8 + 10;
         /** All tiles are as tall as the longest name needs (one line at least). */
@@ -2467,6 +2480,36 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          */
         private final JToggleButton brightToggle = new JToggleButton("Bright",
                 LucideIcons.icon("sun", 16, OverlayStyle.TEXT));
+        /** Search by name: every word typed must appear in the name (any case). */
+        private final JTextField search = new JTextField() {
+            @Override
+            protected void paintComponent(Graphics graphics) {
+                super.paintComponent(graphics);
+                if (!getText().isEmpty())
+                    return;
+                var g = (Graphics2D) graphics.create();
+                try {
+                    g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g.setColor(OverlayStyle.TEXT_DISABLED);
+                    g.setFont(getFont());
+                    var insets = getInsets();
+                    g.drawString("Search schematics", insets.left,
+                            (getHeight() + g.getFontMetrics().getAscent() - g.getFontMetrics().getDescent()) / 2);
+                } finally {
+                    g.dispose();
+                }
+            }
+        };
+        /**
+         * Size filters: width (x), length (y), height; each on when its checkbox is
+         * ticked.
+         */
+        private final JCheckBox[] sizeFilters = {new JCheckBox("Width"), new JCheckBox("Length"),
+                new JCheckBox("Height")};
+        private final JSpinner[] sizeMin = new JSpinner[3], sizeMax = new JSpinner[3];
+        private final JPanel filterRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        /** The schematics the search and filters let through, in layer order. */
+        private final List<Integer> visible = new ArrayList<>();
         /**
          * Add random: tick or untick every schematic at once (only shown with the
          * checkboxes).
@@ -2487,21 +2530,91 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             OverlayStyle.button(brightToggle);
             brightToggle.setSelectedIcon(LucideIcons.icon("sun", 16, OverlayStyle.ON_ACCENT));
             add(brightToggle);
+            search.setName("CityTool.TypeGrid.Search");
+            search.setColumns(16);
+            search.setFont(OverlayStyle.font(Font.PLAIN, 13.5f));
+            search.setBackground(OverlayStyle.FIELD);
+            search.setForeground(OverlayStyle.TEXT);
+            search.setCaretColor(OverlayStyle.TEXT);
+            search.setSelectionColor(OverlayStyle.ACCENT_SOFT_SOLID);
+            search.setSelectedTextColor(OverlayStyle.TEXT);
+            search.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(OverlayStyle.BORDER),
+                    new EmptyBorder(3, 8, 3, 8)));
+            search.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+                @Override
+                public void insertUpdate(javax.swing.event.DocumentEvent event) {
+                    refilter();
+                }
+
+                @Override
+                public void removeUpdate(javax.swing.event.DocumentEvent event) {
+                    refilter();
+                }
+
+                @Override
+                public void changedUpdate(javax.swing.event.DocumentEvent event) {
+                    refilter();
+                }
+            });
+            filterRow.setOpaque(false);
+            filterRow.add(search);
+            String[] names = {"Width", "Length", "Height"};
+            for (int axis = 0; axis < 3; axis++) {
+                sizeFilters[axis].setName("CityTool.TypeGrid.Filter." + names[axis]);
+                sizeFilters[axis].setToolTipText(
+                        "Only schematics whose " + names[axis].toLowerCase(Locale.ROOT) + " (blocks) is in the range");
+                DialogStyle.checkBox(sizeFilters[axis]);
+                sizeFilters[axis].addActionListener(event -> refilter());
+                sizeMin[axis] = OverlayStyle.spinner(new JSpinner(new SpinnerNumberModel(0, 0, 9999, 1)));
+                sizeMin[axis].setName("CityTool.TypeGrid.Filter." + names[axis] + ".Min");
+                sizeMax[axis] = OverlayStyle.spinner(new JSpinner(new SpinnerNumberModel(9999, 0, 9999, 1)));
+                sizeMax[axis].setName("CityTool.TypeGrid.Filter." + names[axis] + ".Max");
+                for (JSpinner spinner : List.of(sizeMin[axis], sizeMax[axis])) {
+                    ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().setColumns(3);
+                    spinner.addChangeListener(event -> {
+                        // changing a range switches its filter on
+                        int index = java.util.Arrays.asList(sizeMin).indexOf(spinner);
+                        int a = index >= 0 ? index : java.util.Arrays.asList(sizeMax).indexOf(spinner);
+                        if (!sizeFilters[a].isSelected())
+                            sizeFilters[a].setSelected(true);
+                        refilter();
+                    });
+                }
+                var dash = new JLabel("\u2013");
+                OverlayStyle.label(dash, true);
+                filterRow.add(Box.createHorizontalStrut(8));
+                filterRow.add(sizeFilters[axis]);
+                filterRow.add(sizeMin[axis]);
+                filterRow.add(dash);
+                filterRow.add(sizeMax[axis]);
+            }
+            add(filterRow);
+            // Esc in a field closes the picker like everywhere else on it
+            var escape = new java.awt.event.KeyAdapter() {
+                @Override
+                public void keyPressed(KeyEvent event) {
+                    if (event.getKeyCode() == KeyEvent.VK_ESCAPE)
+                        overlay.closeTypeGrid();
+                }
+            };
+            search.addKeyListener(escape);
+            for (int axis = 0; axis < 3; axis++)
+                for (JSpinner spinner : List.of(sizeMin[axis], sizeMax[axis]))
+                    ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().addKeyListener(escape);
             selectAll.setName("CityTool.TypeGrid.SelectAll");
             selectAll.setFocusable(false);
-            selectAll.setToolTipText("Tick every schematic for Add random");
+            selectAll.setToolTipText("Tick every schematic shown for Add random");
             selectAll.addActionListener(event -> {
-                for (int i = 0; i < pictures.size(); i++)
-                    randomPool.add(i);
+                randomPool.addAll(visible); // the tiles the search and filters show
                 overlay.refresh();
                 repaint();
             });
             add(selectAll);
             deselectAll.setName("CityTool.TypeGrid.DeselectAll");
             deselectAll.setFocusable(false);
-            deselectAll.setToolTipText("Untick every schematic");
+            deselectAll.setToolTipText("Untick every schematic shown");
             deselectAll.addActionListener(event -> {
-                randomPool.clear();
+                randomPool.removeAll(visible);
                 overlay.refresh();
                 repaint();
             });
@@ -2581,6 +2694,53 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             tileHeight = TILE_HEIGHT_WITHOUT_NAME + lines * getFontMetrics(nameFont()).getHeight();
             hover = -1;
             scroll = 0;
+            resetFilters();
+            SwingUtilities.invokeLater(search::requestFocusInWindow); // type to search right away
+        }
+
+        /**
+         * No search, filters off, ranges spanning the layer's smallest to largest
+         * schematic.
+         */
+        private void resetFilters() {
+            search.setText("");
+            for (int axis = 0; axis < 3; axis++) {
+                int low = Integer.MAX_VALUE, high = 0;
+                for (int[] size : sizes) {
+                    low = Math.min(low, size[axis]);
+                    high = Math.max(high, size[axis]);
+                }
+                if (sizes.isEmpty())
+                    low = 0;
+                sizeFilters[axis].setSelected(false);
+                sizeMin[axis].setValue(low);
+                sizeMax[axis].setValue(high);
+                sizeFilters[axis].setSelected(false); // setting the ranges switched it on
+            }
+            refilter();
+        }
+
+        /** The schematics shown: matching the search and every ticked size range. */
+        private void refilter() {
+            visible.clear();
+            String[] words = search.getText().trim().toLowerCase(Locale.ROOT).split("\\s+");
+            for (int i = 0; i < names.size(); i++) {
+                String name = names.get(i).toLowerCase(Locale.ROOT);
+                boolean matches = true;
+                for (String word : words)
+                    matches &= word.isEmpty() || name.contains(word);
+                for (int axis = 0; axis < 3 && matches; axis++)
+                    if (sizeFilters[axis].isSelected()) {
+                        int size = sizes.get(i)[axis];
+                        matches = size >= ((Number) sizeMin[axis].getValue()).intValue()
+                                && size <= ((Number) sizeMax[axis].getValue()).intValue();
+                    }
+                if (matches)
+                    visible.add(i);
+            }
+            scroll = Math.min(scroll, maxScroll());
+            hover = -1;
+            repaint();
         }
 
         /**
@@ -2621,6 +2781,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             var size = brightToggle.getPreferredSize();
             // left of the close cross, level with the title
             brightToggle.setBounds(width - MARGIN - 24 - size.width, 36 - size.height / 2, size.width, size.height);
+            var row = filterRow.getPreferredSize();
+            filterRow.setBounds(MARGIN - 6, FILTER_ROW_Y, Math.min(row.width, width - 2 * MARGIN), FILTER_ROW_HEIGHT);
+            filterRow.validate();
             // left of Bright: Deselect all, then Select all
             var deselect = deselectAll.getPreferredSize();
             deselectAll.setBounds(brightToggle.getX() - 8 - deselect.width, 36 - deselect.height / 2, deselect.width,
@@ -2661,6 +2824,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         private Rectangle tileBounds(int index) {
+            int slot = visible.indexOf(index);
+            if (slot < 0)
+                return new Rectangle(-10000, -10000, 0, 0); // filtered out
+            index = slot;
             int columns = columns();
             int gridWidth = columns * GRID_TILE + (columns - 1) * GAP;
             int left = Math.max(MARGIN, (getWidth() - gridWidth) / 2);
@@ -2670,7 +2837,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         private int maxScroll() {
-            int rows = (pictures.size() + columns() - 1) / columns();
+            int rows = (visible.size() + columns() - 1) / columns();
             int content = rows * (tileHeight + GAP) - GAP;
             return Math.max(0, content - (getHeight() - HEADER - MARGIN));
         }
@@ -2678,7 +2845,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private int tileAt(Point point) {
             if (point.y < HEADER - GAP)
                 return -1;
-            for (int i = 0; i < pictures.size(); i++)
+            for (int i : visible)
                 if (tileBounds(i).contains(point))
                     return i;
             return -1;
@@ -2691,6 +2858,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 // the select buttons belong to the checkboxes: only in add mode with Add random
+                for (JCheckBox filter : sizeFilters)
+                    if (!text().equals(filter.getForeground()))
+                        filter.setForeground(text());
                 boolean ticking = pickingRandomPool();
                 if (selectAll.isVisible() != ticking) {
                     selectAll.setVisible(ticking);
@@ -2715,7 +2885,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 LucideIcons.paint(g, "x", new Point2D.Double(getWidth() - MARGIN, 36), 20, 0, muted(), null);
 
                 g.clipRect(0, HEADER - GAP, getWidth(), getHeight());
-                for (int i = 0; i < pictures.size(); i++) {
+                if (visible.isEmpty()) {
+                    g.setFont(OverlayStyle.font(Font.PLAIN, 14f));
+                    g.setColor(muted());
+                    g.drawString("No schematic matches the search and filters", MARGIN, HEADER + 24);
+                }
+                for (int i : visible) {
                     Rectangle tile = tileBounds(i);
                     if (tile.y > getHeight() || tile.y + tile.height < HEADER - GAP)
                         continue;

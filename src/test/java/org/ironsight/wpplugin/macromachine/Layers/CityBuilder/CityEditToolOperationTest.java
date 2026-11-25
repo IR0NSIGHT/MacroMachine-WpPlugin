@@ -666,19 +666,19 @@ class CityEditToolOperationTest
         var grid = operation.typeGridComponent();
         grid.setSize(1000, 800);
         // 1000 px wide: five tiles of 150 px with 12 px gaps, centred: the first starts
-        // at x 101,
-        // y 84; its checkbox is 6 px in, 22 px wide
-        pressAndRelease(grid, new Point(118, 101), new Point(119, 101));
+        // at x 101, y 118 (below the search and filter row); its checkbox is 6 px in,
+        // 22 px wide
+        pressAndRelease(grid, new Point(118, 135), new Point(119, 135));
         assertTrue(operation.typeGridOpen(), "ticking keeps the picker open");
         assertEquals(Set.of(0), operation.randomPool());
         // a click on the picture counts as a click on the checkbox: unticks, picker
         // stays open
-        pressAndRelease(grid, new Point(176, 150), new Point(176, 150));
+        pressAndRelease(grid, new Point(176, 190), new Point(176, 190));
         assertTrue(operation.typeGridOpen());
         assertEquals(Set.of(), operation.randomPool());
         // outside add mode a click on a tile picks it again
         operation.addModeToggle().setSelected(false);
-        pressAndRelease(grid, new Point(176, 150), new Point(176, 150));
+        pressAndRelease(grid, new Point(176, 190), new Point(176, 190));
         assertFalse(operation.typeGridOpen());
     }
 
@@ -703,6 +703,44 @@ class CityEditToolOperationTest
         deselectAll.doClick();
         assertEquals(Set.of(), operation.randomPool());
         assertTrue(operation.typeGridOpen());
+    }
+
+    @Test
+    void thePickerSearchesByNameAndFiltersBySize() {
+        CityLayer layer = layerWithObjects(); // building-0..2: 2, 3 and 4 blocks wide, 1 long, 1 high
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.openTypeGrid();
+        var grid = operation.typeGridComponent();
+        assertEquals(List.of(0, 1, 2), operation.typeGridVisible());
+
+        var search = (javax.swing.JTextField) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Search");
+        search.setText("BUILDING 1");
+        assertEquals(List.of(1), operation.typeGridVisible(), "every word, any case");
+        search.setText("");
+
+        var width = (javax.swing.JCheckBox) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filter.Width");
+        var min = (javax.swing.JSpinner) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filter.Width.Min");
+        var max = (javax.swing.JSpinner) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filter.Width.Max");
+        assertFalse(width.isSelected());
+        assertEquals(2, min.getValue(), "ranges start at the layer's smallest ...");
+        assertEquals(4, max.getValue(), "... and largest size");
+        max.setValue(3);
+        assertTrue(width.isSelected(), "changing a range switches its filter on");
+        assertEquals(List.of(0, 1), operation.typeGridVisible());
+        min.setValue(3);
+        assertEquals(List.of(1), operation.typeGridVisible());
+        width.doClick();
+        assertEquals(List.of(0, 1, 2), operation.typeGridVisible(), "unticked: no filter");
+
+        // select all ticks only what is shown
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        operation.setAddRandom(true);
+        operation.openTypeGrid();
+        search.setText("building-2");
+        ((javax.swing.JButton) OperationPanelLookup.find(grid, "CityTool.TypeGrid.SelectAll")).doClick();
+        assertEquals(Set.of(2), operation.randomPool());
     }
 
     private static Point pressAndRelease(javax.swing.JComponent grid, Point press, Point release) {
