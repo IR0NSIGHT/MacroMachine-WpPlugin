@@ -2129,16 +2129,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      * card does): the pick is the next house's type.
      */
     void openTypeGrid() {
-        overlay.openTypeGrid(false);
-    }
-
-    /**
-     * Change type (card): opens the picker; the schematic picked there goes to the
-     * selected houses (closing it without a pick changes nothing).
-     */
-    void changeTypeOfSelection() {
-        if (getSelectedLayer() != null && !selectedStates.isEmpty())
-            overlay.openTypeGrid(true);
+        overlay.openTypeGrid();
     }
 
     boolean typeGridOpen() {
@@ -2383,11 +2374,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return button;
         }
 
-        void openTypeGrid(boolean forSelection) {
+        void openTypeGrid() {
             CityLayer layer = getSelectedLayer();
             if (layer == null || layer.getObjectList().isEmpty())
                 return;
-            typeGrid.forSelection = forSelection;
             typeGrid.open(layer);
             typeGrid.setBounds(0, 0, getWidth(), getHeight());
             setComponentZOrder(typeGrid, 0);
@@ -2631,14 +2621,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     "Turn a quarter clockwise: the selected houses, or the next house", () -> turnNext(-1));
             addButton("flip-horizontal-2", "CityTool.TypeCard.Mirror",
                     "Mirror the selected houses, or the next house (X)", this::mirror);
-            applyType = OverlayStyle.button(new JButton("Change type"));
-            applyType.setName("CityTool.TypeCard.ChangeType");
-            applyType.setToolTipText("Pick a schematic for the selected houses");
+            applyType = OverlayStyle.button(new JButton("Set type"));
+            applyType.setName("CityTool.TypeCard.SetType");
+            applyType.setToolTipText("Give the schematic shown on the card to the selected houses");
             applyType.setFocusable(false);
             applyType.setFont(OverlayStyle.font(Font.PLAIN, 12.5f));
             applyType.setBorder(new EmptyBorder(4, 9, 4, 9));
             applyType.setCursor(Cursor.getDefaultCursor());
-            applyType.addActionListener(event -> changeTypeOfSelection());
+            applyType.addActionListener(event -> applyTypeToSelection());
             buttons.add(applyType);
             add(applyType);
         }
@@ -2770,7 +2760,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (small >= 0) {
                 setCardView(HouseView.values()[small]);
             } else
-                overlay.openTypeGrid(false);
+                overlay.openTypeGrid();
         }
 
         /** Height of the tile part: the picker's tile for this name. */
@@ -3254,9 +3244,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         OverlayStyle.ON_ACCENT, null);
         }
 
-        /** Opened by Change type: the pick goes to the selected houses. */
-        private boolean forSelection;
-
         /** Choose / Enter: the selected schematic, as a double click on it. */
         void chooseSelected() {
             int index = previewIndex();
@@ -3266,8 +3253,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         void pick(int index) {
             setNextType(index);
-            if (forSelection)
-                applyTypeToSelection();
             overlay.closeTypeGrid();
         }
 
@@ -3456,8 +3441,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 g.setFont(OverlayStyle.font(Font.PLAIN, 13f));
                 g.setColor(muted());
                 int selected = selectedStates.size();
-                String target = forSelection && selected > 0
-                        ? "Change type: for the " + (selected == 1 ? "selected house" : selected + " selected houses")
+                String target = selected > 0
+                        ? "For the card (Set type gives it to the selected houses)"
                         : "For the next house you place";
                 if (pickingRandomPool())
                     target = "Add random: tick the schematics to pick from (" + randomPool.size()
