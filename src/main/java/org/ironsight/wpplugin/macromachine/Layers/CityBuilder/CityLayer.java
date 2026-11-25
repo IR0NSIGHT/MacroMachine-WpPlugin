@@ -11,6 +11,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.Serial;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +49,20 @@ public class CityLayer extends CustomLayer implements UndoListener
     private CityInfoDatabase database = new CityInfoDatabase();
     private boolean useHighlightColors = true;
     private transient CityLayerRenderer renderer = new CityLayerRenderer(this);
+    /*
+     * Undo: the house list is a buffer of the undo manager of the dimension the
+     * layer is edited in (WorldPainter's own mechanism: it keeps a copy per undo
+     * step and hands the right one back on undo / redo). All runtime only, so the
+     * saved layer stays exactly as before.
+     */
+    /** The undo manager the house list is registered with (null: none). */
+    private transient UndoManager undoManager;
+    /** The house list's key in {@link #undoManager}. */
+    private transient BufferKey<CityInfoDatabase> undoKey;
+    /** The house list as it was when registered: undo beyond that returns to it. */
+    private transient CityInfoDatabase undoBaseline;
+    /** Told after undo / redo restored the house list (the City Tool). */
+    private transient Runnable afterUndoRestored;
     public boolean isUseHighlightColors() {
         return useHighlightColors;
     }
@@ -65,7 +80,9 @@ public class CityLayer extends CustomLayer implements UndoListener
         if (state == null || state.objectIndex < 0 || state.objectIndex >= objects.size())
             return;
 
-        database.setDataAt(blockX, blockY, getValueForState(state.rotation, state.mirrored, state.objectIndex));
+        trackUndo(undoManagerOf(dimension));
+        editableDatabase().setDataAt(blockX, blockY,
+                getValueForState(state.rotation, state.mirrored, state.objectIndex));
         resetLastEdited();
         WPObject paintedSchem = getObjectForState(state);
         if (paintedSchem == null)
@@ -222,7 +239,8 @@ public class CityLayer extends CustomLayer implements UndoListener
     public void removeDataAt(Dimension dimension, int blockX, int blockY) {
         WPObject paintedSchem = getObjectForState(getInformationAt(blockX, blockY));
         if (paintedSchem != null) {
-            database.setDataAt(blockX, blockY, NO_DATA);
+            trackUndo(undoManagerOf(dimension));
+            editableDatabase().setDataAt(blockX, blockY, NO_DATA);
             resetLastEdited();
             Point3i dims = paintedSchem.getDimensions();
             for (int tileX = (blockX - dims.x) >> TILE_SIZE_BITS; tileX <= (blockX
@@ -242,7 +260,7 @@ public class CityLayer extends CustomLayer implements UndoListener
      * this world's map.
      */
     public void forgetPlacements() {
-        database = new CityInfoDatabase();
+        editableDatabase().clear();
         resetLastEdited();
     }
 
@@ -280,7 +298,7 @@ public class CityLayer extends CustomLayer implements UndoListener
         }
 
         for (int schematicIdx : oldIndicesToDelete)
-            database.deleteAllWithValue(getValueForState(Direction.NORTH, false, schematicIdx), ID_BIT_MASK);
+            editableDatabase().deleteAllWithValue(getValueForState(Direction.NORTH, false, schematicIdx), ID_BIT_MASK);
 
         this.objects = newObjects;
         resetLastEdited();
@@ -415,31 +433,97 @@ public class CityLayer extends CustomLayer implements UndoListener
 
     @Override
     public void savePointArmed() {
-        System.out.println("SAVE POINT ARMED");
     }
 
     @Override
     public void savePointCreated() {
-        System.out.println("SAVE POINT CREATED");
     }
 
     @Override
     public void undoPerformed() {
-        System.out.println("UNDO PERFORMED");
     }
 
     @Override
     public void redoPerformed() {
-        System.out.println("REDO PERFORMED");
     }
 
+    /**
+     * Undo or redo changed the house list: take the manager's copy for this step
+     * (the tiles' layer data is restored by WorldPainter itself).
+     */
     @Override
     public void bufferChanged(BufferKey<?> key) {
-        System.out.println("BUFFER CHANGED " + key);
+        if (undoManager == null || key != undoKey)
+            return;
+        CityInfoDatabase restored = undoManager.getBuffer(undoKey);
+        // undone to before the list was registered: it was as registered then
+        database = restored != null ? restored : undoBaseline;
+        resetLastEdited();
+        if (afterUndoRestored != null)
+            afterUndoRestored.run();
     }
 
-    public void registerLayer(UndoManager manager) {
-        manager.addListener(this);
+    /**
+     * {@code action} runs after undo / redo restored the house list (the undo
+     * manager tells its general listeners before it restores buffers).
+     */
+    public void setAfterUndoRestored(Runnable action) {
+        afterUndoRestored = action;
+    }
+
+    /**
+     * Registers the house list with {@code manager} (the undo manager of the
+     * dimension being edited), so undo / redo take it along with the tiles. Moving
+     * to another manager (another world or dimension) leaves the old one. A null
+     * manager (none, e.g. in tests) changes nothing.
+     */
+    public void trackUndo(UndoManager manager) {
+        if (manager == null || manager == undoManager)
+            return;
+        if (undoManager != null)
+            undoManager.removeBuffer(undoKey);
+        undoManager = manager;
+        undoKey = new BufferKey<>() {
+            @Override
+            public String toString() {
+                return "CityLayer houses of " + getName();
+            }
+        };
+        undoBaseline = database;
+        manager.addBuffer(undoKey, database, this);
+        // the next change starts a new undo step: the registered list stays as it was
+        manager.armSavePoint();
+    }
+
+    /** The undo manager the house list is registered with (null: none). */
+    UndoManager trackedUndoManager() {
+        return undoManager;
+    }
+
+    /**
+     * The house list to change: with undo, the manager's copy for the current step
+     * (it keeps the previous one), else the list itself.
+     */
+    private CityInfoDatabase editableDatabase() {
+        if (undoManager != null)
+            database = undoManager.getBufferForEditing(undoKey);
+        return database;
+    }
+
+    /**
+     * The undo manager of {@code dimension} (WorldPainter keeps it private): null
+     * if it has none or cannot be reached.
+     */
+    public static UndoManager undoManagerOf(Dimension dimension) {
+        if (dimension == null)
+            return null;
+        try {
+            Field field = Dimension.class.getDeclaredField("undoManager");
+            field.setAccessible(true);
+            return (UndoManager) field.get(dimension);
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            return null;
+        }
     }
 
     @Override

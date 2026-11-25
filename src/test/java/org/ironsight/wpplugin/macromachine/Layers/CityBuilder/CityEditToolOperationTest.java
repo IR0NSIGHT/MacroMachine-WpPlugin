@@ -34,7 +34,8 @@ class CityEditToolOperationTest
     private static final Dimension TEST_DIMENSION = TestDimension
             .createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500), -256, 512, 70, 123456789, 62,
                     org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19, org.pepsoft.worldpainter.Terrain.GRASS));
-    private static final TestView TEST_VIEW = new TestView(TEST_DIMENSION);
+    /** WorldPainter allows one view per JVM: other City tests borrow this one. */
+    static final TestView TEST_VIEW = new TestView(TEST_DIMENSION);
 
     static ArrayList<WPObject> loadDevelopmentSchematics() throws IOException {
         var resource = CityEditToolOperation.class.getResource("/CityBuilder/Houses");
@@ -1172,7 +1173,7 @@ class CityEditToolOperationTest
         return layer;
     }
 
-    private static class TestView extends WorldPainterView
+    static class TestView extends WorldPainterView
     {
         private Dimension dimension;
 

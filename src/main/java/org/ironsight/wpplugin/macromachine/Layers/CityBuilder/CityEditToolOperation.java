@@ -47,6 +47,8 @@ import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTool;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTransformBox;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.TransformBoxEditor;
 import org.pepsoft.util.swing.TiledImageViewer;
+import org.pepsoft.util.undo.BufferKey;
+import org.pepsoft.util.undo.UndoListener;
 import org.pepsoft.util.undo.UndoManager;
 import org.pepsoft.worldpainter.*;
 import org.pepsoft.worldpainter.Dimension;
@@ -340,9 +342,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     public static UndoManager getUndoManager(Dimension obj) throws IllegalAccessException, NoSuchFieldException {
-        Field f = obj.getClass().getDeclaredField("undoManager");
-        f.setAccessible(true);
-        return (UndoManager) f.get(obj);
+        return CityLayer.undoManagerOf(obj);
     }
 
     @Override
@@ -400,6 +400,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (!getDimension().isEventsInhibited())
                 getDimension().setEventsInhibited(true);
             CityLayer layer = getSelectedLayer();
+            ensureLayerHasUndoManager(layer, getDimension());
             if (controlDown && keyCode == KeyEvent.VK_A) {
                 selectAll(layer);
                 return;
@@ -458,12 +459,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         } finally {
             if (getDimension().isEventsInhibited())
                 getDimension().setEventsInhibited(false);
+            endUndoStep();
         }
     }
 
     /** Runs an edit of the layer with WorldPainter's events held back. */
     private void edit(Runnable change) {
         Dimension dimension = getDimension();
+        ensureLayerHasUndoManager(getSelectedLayer(), dimension);
         boolean inhibited = dimension.isEventsInhibited();
         if (!inhibited)
             dimension.setEventsInhibited(true);
@@ -474,6 +477,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         } finally {
             if (!inhibited && dimension.isEventsInhibited())
                 dimension.setEventsInhibited(false);
+            endUndoStep();
         }
     }
 
@@ -839,14 +843,110 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         // selection, add mode); a right click does nothing
     }
 
+    /**
+     * Undo / redo take the layer's houses along (the layer registers them with the
+     * dimension's undo manager), and the tool hears of them.
+     */
     private void ensureLayerHasUndoManager(CityLayer layer, Dimension dimension) {
-        try {
-            UndoManager undoManager = getUndoManager(dimension);
-            undoManager.removeListener(layer); // remove otherwise we add over and over
-            layer.registerLayer(undoManager);
-        } catch (IllegalAccessException | NoSuchFieldException ex) {
-            GlobalActionPanel.ErrorPopUp(ex);
+        UndoManager manager = CityLayer.undoManagerOf(dimension);
+        if (layer != null) {
+            layer.trackUndo(manager);
+            layer.setAfterUndoRestored(() -> {
+                if (getSelectedLayer() == layer)
+                    syncSelectionWithHouses();
+            });
         }
+        observeUndo(manager);
+    }
+
+    /** The undo manager the tool listens to (null: none). */
+    private UndoManager observedUndoManager;
+    /** Hears undo / redo of the dimension being edited. */
+    private final UndoListener undoWatcher = new UndoListener() {
+        @Override
+        public void savePointArmed() {
+        }
+
+        @Override
+        public void savePointCreated() {
+        }
+
+        @Override
+        public void undoPerformed() {
+            afterUndoOrRedo();
+        }
+
+        @Override
+        public void redoPerformed() {
+            afterUndoOrRedo();
+        }
+
+        @Override
+        public void bufferChanged(BufferKey<?> key) {
+        }
+    };
+
+    private void observeUndo(UndoManager manager) {
+        if (manager == observedUndoManager)
+            return;
+        if (observedUndoManager != null)
+            observedUndoManager.removeListener(undoWatcher);
+        observedUndoManager = manager;
+        if (manager != null)
+            manager.addListener(undoWatcher);
+    }
+
+    /**
+     * Undo or redo: a drag or an open panel ends (they were made for the houses
+     * before).
+     */
+    void afterUndoOrRedo() {
+        cancelGesture();
+        closeOperation();
+        overlay.repaint();
+    }
+
+    /**
+     * The houses were restored (undo / redo): selected houses that are gone are let
+     * go, the others show as they are now. Nothing is written (a write would end
+     * redo).
+     */
+    void syncSelectionWithHouses() {
+        CityLayer layer = getSelectedLayer();
+        if (layer == null)
+            return;
+        var restored = new java.util.LinkedHashMap<Point, ObjectState>();
+        for (Point position : selectedStates.keySet()) {
+            ObjectState house = layer.getInformationAt(position.x, position.y);
+            if (house != null)
+                restored.put(position, house);
+        }
+        if (!restored.equals(selectedStates)) {
+            selectedStates.clear();
+            selectedStates.putAll(restored);
+            selectionToken = new Object();
+        }
+        ObjectState active = selectedStates.get(new Point(uiState.xPos, uiState.yPos));
+        if (active != null)
+            applyToUi(active);
+        else if (!selectedStates.isEmpty())
+            applyToUi(new ArrayList<>(selectedStates.values()).getLast());
+        else
+            applyToUi(new ObjectState(uiState.rotation, uiState.mirrored, uiState.objectIndex, Integer.MAX_VALUE,
+                    Integer.MAX_VALUE));
+        refreshLayer(layer);
+        overlay.repaint();
+    }
+
+    /**
+     * Ends the undo step of a finished action: the next change starts a new one
+     * (WorldPainter does this for its own mouse operations, the tool's overlay,
+     * buttons and keys are not those).
+     */
+    private void endUndoStep() {
+        Dimension dimension = getDimension();
+        if (dimension != null)
+            dimension.armSavePoint();
     }
 
     @Override
@@ -862,10 +962,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         showCard.setSelected(true);
         attachOverlay();
         updatePanel();
+        if (getView() != null && getDimension() != null)
+            ensureLayerHasUndoManager(getSelectedLayer(), getDimension());
     }
 
     @Override
     protected void deactivate() {
+        observeUndo(null);
         closeOperation();
         overlay.endDrag();
         detachOverlay();
