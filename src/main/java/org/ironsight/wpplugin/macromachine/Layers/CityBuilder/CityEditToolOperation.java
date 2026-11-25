@@ -1,28 +1,45 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyVetoException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.UnaryOperator;
+import java.util.stream.IntStream;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.vecmath.Point3i;
 
 import com.github.weisj.jsvg.SVGDocument;
 import com.github.weisj.jsvg.parser.SVGLoader;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.ironsight.wpplugin.macromachine.Gui.HelpDialog;
+import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
 import org.ironsight.wpplugin.macromachine.Gui.MapToolOverlay;
+import org.ironsight.wpplugin.macromachine.Gui.OverlayStyle;
+import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.LucideIcons;
+import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTool;
+import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTransformBox;
 import org.pepsoft.util.swing.TiledImageViewer;
 import org.pepsoft.util.undo.UndoManager;
 import org.pepsoft.worldpainter.*;
@@ -34,47 +51,178 @@ import org.pepsoft.worldpainter.painting.LayerPaint;
 import org.pepsoft.worldpainter.painting.Paint;
 
 /**
+ * City Tool: places and edits the houses (schematics) of a City Layer. Like the
+ * Path Tool, all controls float on the map: the "Schematics" menu (type of the
+ * selected or next house, rotate / mirror, randomizing), the "Layer" menu
+ * (tutorial layer, import, the dimension's City Layers), overlays and add mode.
+ * Houses are selected like path nodes and get the transform box (move, rotate
+ * in quarter turns, spread by scaling their positions).
  */
 public class CityEditToolOperation extends MouseOrTabletOperation implements PaintOperation, KeyEventDispatcher
 {
+    public static final String HELP_TITLE = "City Tool";
+    public static final String HELP_EXPLANATION = """
+            Use the City Tool to place and edit buildings in a City Layer. Pick the City Layer in the Layer menu \
+            (or import one from a file), then click houses to select them.
+            The Schematics menu sets the type of the selected houses (or of the next house you add) and \
+            rotates, mirrors and randomizes them. Selected houses get a transform box: drag the move handle \
+            to move them, the rotate handle to turn them in quarter turns, the scale handles to spread them \
+            apart or pack them together. The crosshair is the pivot: drag it, click it to centre it again.
+
+            City Layers are not compatible with undo/redo. Do not use undo/redo while editing one.
+            """;
+    public static final List<HelpItem> HELP_ITEMS = List.of(
+            new HelpItem("Left click", "Select the building under the cursor"),
+            new HelpItem("Ctrl + left click",
+                    "Add or remove a building from the selection; on empty map: place a new building"),
+            new HelpItem("Add (button)", "Every click on empty map places a new building"),
+            new HelpItem("Left-button drag on a building", "Move the selection"),
+            new HelpItem("Left-button drag on empty map", "Select buildings fully inside the drag rectangle"),
+            new HelpItem("Right click", "Move the selection center to the cursor"),
+            new HelpItem("Shift + mouse wheel", "Change the selected building type"),
+            new HelpItem("Ctrl + A", "Select all buildings"),
+            new HelpItem("Escape", "Leave add mode, else clear the selection"),
+            new HelpItem("Ctrl + C", "Copy selected buildings"), new HelpItem("Ctrl + X", "Cut selected buildings"),
+            new HelpItem("Ctrl + V", "Paste buildings at the cursor"),
+            new HelpItem("Q", "Randomize selected buildings using the random options of the Schematics menu"),
+            new HelpItem("W/A/S/D", "Move selected buildings"),
+            new HelpItem("C", "Rotate selected buildings around the selection center"),
+            new HelpItem("X", "Mirror selected buildings"), new HelpItem("Delete", "Delete selected buildings"));
+
     private static final int OVERLAY_ICON_SIZE = 256;
+    /** Hit radius of the transform handles (px). */
+    static final double HANDLE_HIT_RADIUS = 12;
+    /** Thumbnails in the Schematics menu (px). */
+    static final int MENU_THUMBNAIL = 32;
+    /** The current type's preview card below the toolbar (px). */
+    static final int CARD_THUMBNAIL = 72;
+
     private static CityEditToolOperation instance;
+
+    /** What new houses (and Q) randomize. */
     record PlacementOptions(boolean randomRotate, boolean randomSelect, boolean randomMirror) {
     }
     private record ClipboardEntry(CityLayer.Direction rotation, boolean mirrored, int objectIndex, long offsetX,
             long offsetY) {
     }
 
-    private final OptionsPanel optionsPanel;
     Random random = new Random();
     private ObjectState uiState = new ObjectState(CityLayer.Direction.NORTH, false, 0, Integer.MAX_VALUE,
             Integer.MAX_VALUE);
     private PlacementOptions placementOptions = new PlacementOptions(false, false, false);
     private final Map<Point, ObjectState> selectedStates = new LinkedHashMap<>();
-    private final Map<Point, Long> selectedOutlineIds = new HashMap<>();
     private List<ClipboardEntry> clipboard = List.of();
     private CityLayer clipboardLayer;
     private volatile Point cursorWorldPosition;
-    private Timer statusMessageTimer;
-    private boolean updatingPanelSelection;
 
     private Paint paint;
 
+    /** WorldPainter's tool settings stay empty: everything lives on the map. */
+    private final JPanel optionsPanel = new JPanel();
+    private final JToggleButton addMode = new JToggleButton("Add", false);
+    private final JToggleButton showOverlays = new JToggleButton("", true);
+    private final CityOverlay overlay = new CityOverlay();
     private WorldPainterView overlayView;
     private volatile boolean cursorOverMap;
-    private final MapToolOverlay dragOverlay = new MapToolOverlay(loadOverlayIcon());
     private TiledImageViewer.ViewListener previousViewListener;
     private final TiledImageViewer.ViewListener overlayViewListener = changedView -> {
         if (previousViewListener != null)
             previousViewListener.viewChanged(changedView);
-        dragOverlay.repaint();
+        overlay.repaint();
     };
-    private final java.awt.event.ComponentAdapter overlayResizeListener = new java.awt.event.ComponentAdapter() {
+    private final ComponentAdapter overlayResizeListener = new ComponentAdapter() {
         @Override
-        public void componentResized(java.awt.event.ComponentEvent event) {
-            resizeDragOverlay();
+        public void componentResized(ComponentEvent event) {
+            resizeOverlay();
         }
     };
+    private final MouseAdapter mapMouse = new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent event) {
+            cursorOverMap = true;
+        }
+
+        @Override
+        public void mouseExited(MouseEvent event) {
+            // moving onto a HUD button also fires an exit; only leaving the bounds counts
+            if (!new Rectangle(event.getComponent().getSize()).contains(event.getPoint())) {
+                cursorOverMap = false;
+                cursorWorldPosition = null;
+                setHovered(null);
+            }
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent event) {
+            cursorOverMap = true;
+            trackCursor(event.getPoint());
+            if (gestureStart == null)
+                setHovered(hitTest(event.getPoint()));
+        }
+
+        @Override
+        public void mousePressed(MouseEvent event) {
+            cursorOverMap = true;
+            trackCursor(event.getPoint());
+            if (SwingUtilities.isLeftMouseButton(event) && !event.isAltDown() && !event.isMetaDown())
+                handlePress(event.getPoint(), event.isControlDown(), event.isShiftDown());
+        }
+
+        @Override
+        public void mouseDragged(MouseEvent event) {
+            cursorOverMap = true;
+            trackCursor(event.getPoint());
+            handleDrag(event.getPoint());
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent event) {
+            if (SwingUtilities.isLeftMouseButton(event))
+                handleRelease(event.getPoint());
+        }
+    };
+
+    // ---- gesture state (view coordinates unless named "world") ----
+
+    /** Something on the map that reacts to the mouse. */
+    enum HitKind {
+        HOUSE(Cursor.MOVE_CURSOR), MOVE(Cursor.MOVE_CURSOR), ROTATE(Cursor.HAND_CURSOR), SCALE(
+                Cursor.HAND_CURSOR), PIVOT(Cursor.MOVE_CURSOR);
+
+        final int cursor;
+
+        HitKind(int cursor) {
+            this.cursor = cursor;
+        }
+    }
+
+    /**
+     * @param side
+     *            scale handles: PathTransformBox.SCALE_*; otherwise 0
+     * @param house
+     *            the house under the mouse for {@link HitKind#HOUSE}
+     */
+    record Hit(HitKind kind, int side, ObjectState house) {
+    }
+
+    private Hit hovered;
+    private Cursor cursorBeforeHover;
+    private boolean cursorOverridden;
+    private Point gestureStart;
+    private Point gestureWorldStart;
+    private Hit gestureHit;
+    private boolean gestureAdditive;
+    private boolean gestureDragged;
+    /** The transform the current drag would apply to the selection, or null. */
+    private UnaryOperator<ObjectState> gestureTransform;
+    private String gestureHeader;
+    /**
+     * Pivot placed by dragging it (world); belongs to the selection it was placed
+     * for.
+     */
+    private Point2D.Double customPivot;
+    private Set<Point> customPivotSelection = Set.of();
+    private Point2D.Double draggedPivot;
 
     private static BufferedImage loadOverlayIcon() {
         var svgUrl = Objects.requireNonNull(CityEditToolOperation.class.getResource("/icons/castle.svg"),
@@ -93,21 +241,22 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         } finally {
             graphics.dispose();
         }
-        int color = Color.WHITE.getRGB() & 0x00ffffff;
-        for (int y = 0; y < icon.getHeight(); y++) {
-            for (int x = 0; x < icon.getWidth(); x++) {
-                int argb = icon.getRGB(x, y);
-                icon.setRGB(x, y, (argb & 0xff000000) | color);
-            }
-        }
         return icon;
     }
 
     public CityEditToolOperation() {
         super("City Tool", "Edit city layers using this tool", "city-edit-tool-operation");
         instance = this;
-        optionsPanel = new OptionsPanel(this::setPlacementOptions, this::onObjectSelectionChanged,
-                this::setUseHighlightColors, this::getSelectedLayer, () -> uiState);
+        addMode.setName("CityTool.AddMode");
+        addMode.getModel().addItemListener(event -> {
+            updateCursor();
+            overlay.showTransientInfoText(addMode.isSelected()
+                    ? "Add mode: left click on empty map places a house (Esc to leave)"
+                    : "Add mode off", 2400);
+            overlay.repaint();
+        });
+        showOverlays.setName("CityTool.Overlays");
+        showOverlays.getModel().addItemListener(event -> overlay.repaint());
 
         Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
             if (e instanceof MouseWheelEvent ev && isActive()
@@ -120,54 +269,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             }
         }, AWTEvent.MOUSE_WHEEL_EVENT_MASK);
 
-        Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
-            if (!(e instanceof MouseEvent event))
-                return;
-            cursorOverMap = isMapComponent(overlayView, event.getComponent());
-            if (!isActive() || !cursorOverMap)
-                return;
-
-            Point viewPoint = SwingUtilities.convertPoint(event.getComponent(), event.getPoint(), overlayView);
-            if (event.getID() == MouseEvent.MOUSE_EXITED && !new Rectangle(overlayView.getSize()).contains(viewPoint)) {
-                cursorOverMap = false;
-                cursorWorldPosition = null;
-                return;
-            }
-            cursorWorldPosition = overlayView.viewToWorld(viewPoint);
-            MapToolOverlay overlay = dragOverlay;
-            switch (event.getID()) {
-                case MouseEvent.MOUSE_PRESSED -> {
-                    if (SwingUtilities.isLeftMouseButton(event))
-                        overlay.startDrag(viewPoint);
-                }
-                case MouseEvent.MOUSE_DRAGGED -> {
-                    if (overlay.isDragging())
-                        overlay.updateDrag(viewPoint);
-                }
-                case MouseEvent.MOUSE_RELEASED -> {
-                    if (SwingUtilities.isLeftMouseButton(event)) {
-                        if (overlay.isBoxSelection()) {
-                            CityLayer layer = getSelectedLayer();
-                            if (layer != null)
-                                selectWithinBox(layer, overlay.getDragBounds());
-                        }
-                        overlay.endDrag();
-                    }
-                }
-                default -> {
-                }
-            }
-        }, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
-
-        KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-
-        // Add a global key event dispatcher
-        manager.addKeyEventDispatcher(this);
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(this);
     }
 
     void setPlacementOptions(PlacementOptions placementOptions) {
         this.placementOptions = Objects.requireNonNull(placementOptions);
-        optionsPanel.setPlacementOptions(placementOptions);
+    }
+
+    PlacementOptions placementOptions() {
+        return placementOptions;
     }
 
     public static void updateInstance() {
@@ -235,6 +345,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 }
                 return;
             }
+            if (keyCode == KeyEvent.VK_ESCAPE) {
+                if (gestureStart != null)
+                    cancelGesture();
+                else if (addMode.isSelected())
+                    addMode.setSelected(false);
+                else if (layer != null)
+                    deselect(layer);
+                return;
+            }
             boolean requiresSelection = keyCode == KeyEvent.VK_Q || keyCode == KeyEvent.VK_W || keyCode == KeyEvent.VK_A
                     || keyCode == KeyEvent.VK_S || keyCode == KeyEvent.VK_D || keyCode == KeyEvent.VK_C
                     || keyCode == KeyEvent.VK_X;
@@ -244,16 +363,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             switch (keyCode) {
                 case KeyEvent.VK_Q -> applyToSelection(layer, this::randomizeState);
                 case KeyEvent.VK_DELETE -> deleteSelected();
-                case KeyEvent.VK_ESCAPE -> {
-                    if (layer != null)
-                        deselect(layer);
-                }
                 case KeyEvent.VK_W -> moveSelection(layer, 0, -1);
                 case KeyEvent.VK_S -> moveSelection(layer, 0, 1);
                 case KeyEvent.VK_A -> moveSelection(layer, -1, 0);
                 case KeyEvent.VK_D -> moveSelection(layer, 1, 0);
                 case KeyEvent.VK_C -> rotateSelection(layer);
-                case KeyEvent.VK_X -> applyToSelection(layer, state -> setIsMirrored(!state.mirrored, state));
+                case KeyEvent.VK_X -> mirrorSelection(layer);
                 default -> {
                 }
             }
@@ -265,13 +380,29 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
     }
 
+    /** Runs an edit of the layer with WorldPainter's events held back. */
+    private void edit(Runnable change) {
+        Dimension dimension = getDimension();
+        boolean inhibited = dimension.isEventsInhibited();
+        if (!inhibited)
+            dimension.setEventsInhibited(true);
+        try {
+            change.run();
+        } catch (Exception ex) {
+            GlobalActionPanel.ErrorPopUp(ex);
+        } finally {
+            if (!inhibited && dimension.isEventsInhibited())
+                dimension.setEventsInhibited(false);
+        }
+    }
+
     private void selectAll(CityLayer layer) {
         if (layer == null)
             return;
 
         clearSelection();
         for (ObjectState state : layer.getAllObjectStates())
-            addSelectedState(state, layer);
+            addSelectedState(state);
 
         if (selectedStates.isEmpty()) {
             deselect(layer);
@@ -285,27 +416,57 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         showStatusMessage(selectionStatusMessage());
     }
 
+    /**
+     * A click at a world position: right click moves the selection there; Ctrl +
+     * left click toggles the house there in the selection, on empty map it places a
+     * house; a plain left click selects only the house there (or adds one in add
+     * mode, else clears the selection).
+     */
     void handleClick(int centreX, int centreY, boolean rightClick, boolean ctrlDown) {
         cursorWorldPosition = new Point(centreX, centreY);
         CityLayer layer = getSelectedLayer();
         if (layer == null)
             return;
 
-        if (ctrlDown && !rightClick) {
-            placeAt(centreX, centreY);
-        } else if (rightClick) {
+        if (rightClick) {
             moveSelectionTo(layer, centreX, centreY);
-        } else {
-            onPickAt(centreX, centreY, layer);
+            return;
+        }
+        ObjectState house = houseAt(layer, centreX, centreY);
+        if (house == null) {
+            if (ctrlDown || addMode.isSelected())
+                placeAt(centreX, centreY);
+            else {
+                deselect(layer);
+                showStatusMessage(selectionStatusMessage());
+            }
+        } else if (ctrlDown)
+            toggleSelected(layer, house);
+        else {
+            selectOnly(house);
+            refreshLayer(layer);
+            showStatusMessage(selectionStatusMessage());
         }
     }
 
-    /** Places one building at the coordinates */
+    /**
+     * Places one building at the coordinates (randomized as the Schematics menu
+     * says).
+     */
     void placeAt(int centreX, int centreY) {
         cursorWorldPosition = new Point(centreX, centreY);
         CityLayer layer = getSelectedLayer();
-        if (layer != null)
-            onAddAt(centreX, centreY, layer);
+        if (layer == null || layer.getObjectList().isEmpty())
+            return;
+        ObjectState template = randomizeState(uiState);
+        var newState = setCurrentStatePosition(centreX, centreY, template);
+        edit(() -> {
+            layer.setDataAt(getDimension(), newState.xPos, newState.yPos, newState);
+            selectOnly(newState);
+            // the next house is randomized afresh, from the type the user chose
+            uiState = setCurrentStatePosition(newState.xPos, newState.yPos, uiState);
+            refreshLayer(layer);
+        });
     }
 
     /**
@@ -315,153 +476,144 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      *            up (dir<0) or down (dir>0) wheel
      */
     void onMouseWheel(int direction) {
-        int max = optionsPanel.getObjectCount();
+        CityLayer layer = getSelectedLayer();
+        int max = layer == null ? 0 : layer.getObjectList().size();
         if (max == 0)
             return;
-        var oldState = uiState;
-        int nextIdx = Math.clamp(oldState.objectIndex + direction, 0, max - 1);
-        System.out.println("change index by direction " + direction);
+        int nextIdx = Math.clamp(uiState.objectIndex + direction, 0, max - 1);
+        setType(nextIdx);
+    }
+
+    /**
+     * Sets the type of the selected houses, or of the next house without a
+     * selection.
+     */
+    void setType(int index) {
         CityLayer layer = getSelectedLayer();
-        if (layer != null && !selectedStates.isEmpty()) {
-            applyToSelection(layer, state -> setSelectedObjectIndex(nextIdx, state));
-        } else {
-            applyToUi(setSelectedObjectIndex(nextIdx, uiState));
-        }
+        if (layer == null)
+            return;
+        if (!selectedStates.isEmpty())
+            applyToSelection(layer, state -> setSelectedObjectIndex(index, state));
+        else
+            applyToUi(setSelectedObjectIndex(index, uiState));
     }
 
     @Override
     public void interrupt() {
     }
 
-    private void attachDragOverlay() {
+    // ---- overlay lifecycle ----
+
+    private void attachOverlay() {
         WorldPainterView view = getView();
         if (view == null || overlayView == view)
             return;
-        detachDragOverlay();
+        detachOverlay();
         overlayView = view;
-        if (view != null) {
-            dragOverlay.setMapView(view);
-            previousViewListener = view.getViewListener();
-            view.setViewListener(overlayViewListener);
-            view.addComponentListener(overlayResizeListener);
-            view.add(dragOverlay);
-            view.setComponentZOrder(dragOverlay, 0);
-            resizeDragOverlay();
-            dragOverlay.showOverlayText("City Tool");
-        }
+        overlay.setMapView(view);
+        previousViewListener = view.getViewListener();
+        view.setViewListener(overlayViewListener);
+        view.addComponentListener(overlayResizeListener);
+        view.addMouseListener(mapMouse);
+        view.addMouseMotionListener(mapMouse);
+        view.add(overlay);
+        view.setComponentZOrder(overlay, 0);
+        resizeOverlay();
+        overlay.refresh();
+        overlay.showOverlayText("City Tool");
     }
 
-    private void resizeDragOverlay() {
+    private void resizeOverlay() {
         if (overlayView != null)
-            dragOverlay.setBounds(0, 0, overlayView.getWidth(), overlayView.getHeight());
+            overlay.setBounds(0, 0, overlayView.getWidth(), overlayView.getHeight());
     }
 
-    private void detachDragOverlay() {
+    private void detachOverlay() {
+        cancelGesture();
+        setHovered(null);
         cursorOverMap = false;
         cursorWorldPosition = null;
-        if (statusMessageTimer != null) {
-            statusMessageTimer.stop();
-            statusMessageTimer = null;
-        }
-        optionsPanel.setStatusMessage(null);
-        dragOverlay.clearOverlayText();
-        dragOverlay.clearInfoText();
+        overlay.clearOverlayText();
+        overlay.clearInfoText();
         if (overlayView == null)
             return;
+        overlayView.removeMouseListener(mapMouse);
+        overlayView.removeMouseMotionListener(mapMouse);
         overlayView.removeComponentListener(overlayResizeListener);
-        overlayView.remove(dragOverlay);
+        overlayView.remove(overlay);
         if (overlayView.getViewListener() == overlayViewListener)
             overlayView.setViewListener(previousViewListener);
         overlayView.repaint();
-        clearSelectedObjectOutlines();
         selectedStates.clear();
-        dragOverlay.clearOutlines();
-        dragOverlay.setMapView(null);
+        overlay.setMapView(null);
         previousViewListener = null;
         overlayView = null;
     }
 
-    private void updateSelectedObjectOutlines(CityLayer layer) {
-        clearSelectedObjectOutlines();
-        for (ObjectState state : selectedStates.values()) {
-            WPObject object = layer.getObjectForState(state);
-            if (object == null)
-                continue;
-            Point3i dimensions = object.getDimensions();
-            Point3i offset = object.getOffset();
-            Point anchor = new Point(state.xPos, state.yPos);
-            selectedOutlineIds.put(anchor, dragOverlay.addOutline(
-                    new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x, dimensions.y)));
-        }
-    }
+    // ---- selection ----
 
-    private void clearSelectedObjectOutlines() {
-        for (long outlineId : selectedOutlineIds.values())
-            dragOverlay.removeOutline(outlineId);
-        selectedOutlineIds.clear();
-    }
-
-    private void addSelectedState(ObjectState state, CityLayer layer) {
-        Point anchor = new Point(state.xPos, state.yPos);
-        selectedStates.put(anchor, state);
-        updateSelectionCount();
-        WPObject object = layer.getObjectForState(state);
-        if (object == null)
-            return;
-        Point3i dimensions = object.getDimensions();
-        Point3i offset = object.getOffset();
-        selectedOutlineIds.put(anchor, dragOverlay
-                .addOutline(new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x, dimensions.y)));
+    private void addSelectedState(ObjectState state) {
+        selectedStates.put(new Point(state.xPos, state.yPos), state);
+        overlay.repaint();
     }
 
     private void removeSelectedState(ObjectState state) {
-        Point anchor = new Point(state.xPos, state.yPos);
-        Long outlineId = selectedOutlineIds.remove(anchor);
-        if (outlineId != null)
-            dragOverlay.removeOutline(outlineId);
-        selectedStates.remove(anchor);
-        updateSelectionCount();
+        selectedStates.remove(new Point(state.xPos, state.yPos));
+        overlay.repaint();
     }
 
     private void clearSelection() {
         selectedStates.clear();
-        clearSelectedObjectOutlines();
-        updateSelectionCount();
+        overlay.repaint();
     }
 
-    private void updateSelectionCount() {
-        optionsPanel.setSelectionCount(selectedStates.size());
+    /** The selected houses (exposed for tests). */
+    List<ObjectState> selection() {
+        return List.copyOf(selectedStates.values());
     }
 
     void selectWithinBox(CityLayer layer, Rectangle selectionBounds) {
-        clearSelection();
-        for (ObjectState state : layer.getAllObjectStates()) {
-            WPObject object = layer.getObjectForState(state);
-            if (object == null)
-                continue;
-            Point3i dimensions = object.getDimensions();
-            Point3i offset = object.getOffset();
-            Rectangle objectBounds = new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x,
-                    dimensions.y);
-            if (selectionBounds.contains(objectBounds))
-                addSelectedState(state, layer);
-        }
+        selectWithinBox(layer, selectionBounds, false);
+    }
+
+    void selectWithinBox(CityLayer layer, Rectangle selectionBounds, boolean additive) {
+        if (!additive)
+            clearSelection();
+        for (ObjectState state : layer.getAllObjectStates())
+            if (selectionBounds.contains(footprint(layer, state)))
+                addSelectedState(state);
 
         if (selectedStates.isEmpty()) {
             deselect(layer);
-            showStatusMessage(selectionStatusMessage());
         } else {
             uiState = new ArrayList<>(selectedStates.values()).getLast();
             applyToUi(uiState);
             refreshLayer(layer);
-            showStatusMessage(selectionStatusMessage());
         }
+        showStatusMessage(selectionStatusMessage());
     }
 
-    private void selectOnly(CityLayer layer, ObjectState state) {
+    private void selectOnly(ObjectState state) {
         clearSelection();
-        addSelectedState(state, layer);
+        addSelectedState(state);
         applyToUi(state);
+    }
+
+    private void toggleSelected(CityLayer layer, ObjectState house) {
+        if (selectedStates.containsKey(new Point(house.xPos, house.yPos))) {
+            removeSelectedState(house);
+            if (selectedStates.isEmpty()) {
+                deselect(layer);
+            } else {
+                uiState = new ArrayList<>(selectedStates.values()).getLast();
+                applyToUi(uiState);
+            }
+        } else {
+            addSelectedState(house);
+            uiState = house;
+            applyToUi(uiState);
+        }
+        showStatusMessage(selectionStatusMessage());
     }
 
     @Override
@@ -476,22 +628,44 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return null;
     }
 
-    private float dist(int x1, int y1, int x2, int y2) {
-        int dx = x1 - x2;
-        int dy = y1 - y2;
-        return (float) Math.sqrt(dx * dx + dy * dy);
+    /** World rectangle a house covers on the map. */
+    static Rectangle footprint(CityLayer layer, ObjectState state) {
+        WPObject object = layer.getObjectForState(state);
+        if (object == null)
+            return new Rectangle(state.xPos, state.yPos, 1, 1);
+        Point3i dimensions = object.getDimensions();
+        Point3i offset = object.getOffset();
+        return new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x, dimensions.y);
+    }
+
+    /**
+     * The house whose footprint covers a world position; of several, the smallest
+     * (a house standing inside a bigger one stays clickable).
+     */
+    static ObjectState houseAt(CityLayer layer, int x, int y) {
+        ObjectState best = null;
+        long bestArea = Long.MAX_VALUE;
+        for (ObjectState state : layer.getAllObjectStates()) {
+            Rectangle bounds = footprint(layer, state);
+            long area = (long) bounds.width * bounds.height;
+            if (bounds.contains(x, y) && area < bestArea) {
+                best = state;
+                bestArea = area;
+            }
+        }
+        return best;
     }
 
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
-        if (!getDimension().isEventsInhibited())
-            getDimension().setEventsInhibited(true);
+        // left clicks and drags are handled by the map mouse listener (handles, box
+        // selection); right click moves the selection to the cursor
+        if (!inverse || !first)
+            return;
         if (getPaint() instanceof LayerPaint layerPaint && layerPaint.getLayer() instanceof CityLayer cityLayer) {
             ensureLayerHasUndoManager(cityLayer, getDimension());
-            handleClick(centreX, centreY, inverse, this.isCtrlDown());
+            edit(() -> handleClick(centreX, centreY, true, false));
         }
-        if (getDimension().isEventsInhibited())
-            getDimension().setEventsInhibited(false);
     }
 
     private void ensureLayerHasUndoManager(CityLayer layer, Dimension dimension) {
@@ -507,67 +681,33 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     @Override
     protected void activate() throws PropertyVetoException {
         super.activate();
-        attachDragOverlay();
+        addMode.setSelected(false);
+        showOverlays.setSelected(true);
+        attachOverlay();
         updatePanel();
     }
 
     @Override
     protected void deactivate() {
-        dragOverlay.endDrag();
-        detachDragOverlay();
+        overlay.endDrag();
+        detachOverlay();
         super.deactivate();
     }
 
     protected void paintChanged(Paint ignored) {
+        cancelGesture();
         clearSelection();
         clearClipboard();
+        customPivot = null;
         updatePanel();
-        updateOverlayText();
-    }
-
-    private void updateOverlayText() {
-        if (overlayView != null)
-            dragOverlay.setOverlayText("City Tool");
-        else
-            dragOverlay.clearOverlayText();
     }
 
     private void applyToUi(ObjectState uiState) {
-        // deliberate let uiState == this.uiState pass, brush radius must be forced back
-        // to current selected obj.
-
-        System.out.println("### City Tool UI state changed to:" + uiState);
         CityLayer layer = getSelectedLayer();
         if (layer == null)
             return;
-
         this.uiState = uiState;
-
-        // update list
-        updatingPanelSelection = true;
-        try {
-            optionsPanel.setSelectedIndex(uiState.objectIndex);
-        } finally {
-            updatingPanelSelection = false;
-        }
-
-        optionsPanel.revalidate();
-        optionsPanel.repaint();
-    }
-
-    private void applyToMapAndUI(CityLayer layer, ObjectState newState, ObjectState oldState) {
-        if (newState.equals(oldState))
-            return;
-        if (layer == null)
-            return;
-        if (oldState != null)
-            layer.removeDataAt(getDimension(), oldState.xPos, oldState.yPos);
-        layer.setDataAt(getDimension(), newState.xPos, newState.yPos, newState);
-        selectOnly(layer, newState);
-        if (getViewAsWP() != null) { // force a tile renderer update //FIXME use less frequently, this will force ALL
-                                     // tiles to be rerendered.
-            getViewAsWP().refreshTilesForLayer(layer, false);
-        }
+        overlay.refresh();
     }
 
     private void applyToSelection(CityLayer layer, UnaryOperator<ObjectState> transform) {
@@ -593,16 +733,17 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         selectedStates.clear();
         for (ObjectState state : newStates)
             selectedStates.put(new Point(state.xPos, state.yPos), state);
-        updateSelectionCount();
-        updateSelectedObjectOutlines(layer);
 
         uiState = newStates.get(Math.min(activeIndex, newStates.size() - 1));
         applyToUi(uiState);
         refreshLayer(layer);
+        overlay.repaint();
     }
 
     private void moveSelection(CityLayer layer, int deltaX, int deltaY) {
-        applyToSelection(layer, state -> setCurrentStatePosition(state.xPos + deltaX, state.yPos + deltaY, state));
+        applyToSelection(layer, moveBy(deltaX, deltaY));
+        if (customPivot != null)
+            movePivot(deltaX, deltaY);
     }
 
     private void moveSelectionTo(CityLayer layer, int x, int y) {
@@ -620,6 +761,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         applyToSelection(layer, state -> rotateStateAround(state, center));
     }
 
+    private void mirrorSelection(CityLayer layer) {
+        applyToSelection(layer, state -> setIsMirrored(!state.mirrored, state));
+    }
+
     private Point getSelectionCenter(List<ObjectState> states) {
         long minX = Long.MAX_VALUE;
         long minY = Long.MAX_VALUE;
@@ -635,7 +780,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 Math.toIntExact(Math.floorDiv(minY + maxY, 2)));
     }
 
-    private ObjectState rotateStateAround(ObjectState state, Point center) {
+    /** A quarter turn counter-clockwise on screen around {@code center}. */
+    static ObjectState rotateStateAround(ObjectState state, Point center) {
         long relativeX = (long) state.xPos - center.x;
         long relativeY = (long) state.yPos - center.y;
         int x = Math.toIntExact((long) center.x + relativeY);
@@ -643,67 +789,64 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return new ObjectState(state.rotation.nextRotation(), state.mirrored, state.objectIndex, x, y);
     }
 
+    // ---- transforms (pure, so tests and the drag preview share them) ----
+
+    static UnaryOperator<ObjectState> moveBy(int deltaX, int deltaY) {
+        return state -> new ObjectState(state.rotation, state.mirrored, state.objectIndex, state.xPos + deltaX,
+                state.yPos + deltaY);
+    }
+
+    /**
+     * {@code quarterTurns} quarter turns counter-clockwise on screen around
+     * {@code pivot}.
+     */
+    static UnaryOperator<ObjectState> rotateAround(Point pivot, int quarterTurns) {
+        int turns = Math.floorMod(quarterTurns, 4);
+        return state -> {
+            ObjectState turned = state;
+            for (int i = 0; i < turns; i++)
+                turned = rotateStateAround(turned, pivot);
+            return turned;
+        };
+    }
+
+    /**
+     * Spreads (factor above 1) or packs (below 1) the houses' positions around
+     * {@code pivot}; the houses keep their size.
+     */
+    static UnaryOperator<ObjectState> scaleAround(Point2D pivot, double scaleX, double scaleY) {
+        return state -> new ObjectState(state.rotation, state.mirrored, state.objectIndex,
+                (int) Math.round(pivot.getX() + (state.xPos - pivot.getX()) * scaleX),
+                (int) Math.round(pivot.getY() + (state.yPos - pivot.getY()) * scaleY));
+    }
+
+    /** Whether the transform would put two houses on the same spot. */
+    static boolean collides(Collection<ObjectState> states, UnaryOperator<ObjectState> transform) {
+        var anchors = new HashSet<Point>();
+        for (ObjectState state : states) {
+            ObjectState moved = transform.apply(state);
+            if (!anchors.add(new Point(moved.xPos, moved.yPos)))
+                return true;
+        }
+        return false;
+    }
+
+    /** Applies a transform to the selection (if it keeps the houses apart). */
+    boolean transformSelection(UnaryOperator<ObjectState> transform) {
+        CityLayer layer = getSelectedLayer();
+        if (layer == null || selectedStates.isEmpty())
+            return false;
+        if (collides(selectedStates.values(), transform)) {
+            showStatusMessage("Not applied: two houses would land on the same spot");
+            return false;
+        }
+        edit(() -> applyToSelection(layer, transform));
+        return true;
+    }
+
     private void refreshLayer(CityLayer layer) {
         if (getViewAsWP() != null)
             getViewAsWP().refreshTilesForLayer(layer, false);
-    }
-
-    private void onPickAt(int centreX, int centreY, CityLayer cityLayer) {
-        int radius = getSelectionRadius(cityLayer);
-        ObjectState selectedState = null;
-        float lastDist = Float.MAX_VALUE;
-        for (int x = centreX - radius; x < centreX + radius; x++) {
-            for (int y = centreY - radius; y < centreY + radius; y++) {
-                ObjectState state = cityLayer.getInformationAt(x, y);
-                if (state == null)
-                    continue;
-                WPObject object = cityLayer.getObjectForState(state);
-                if (object == null)
-                    continue;
-                Point3i dimensions = object.getDimensions();
-                Point3i offset = object.getOffset();
-                Rectangle bounds = new Rectangle(state.xPos + offset.x, state.yPos + offset.y, dimensions.x,
-                        dimensions.y);
-                if (!bounds.contains(centreX, centreY))
-                    continue;
-
-                float currentDist = dist(centreX, centreY, x, y);
-                if (currentDist < lastDist) {
-                    lastDist = currentDist;
-                    selectedState = state;
-                }
-            }
-        }
-        if (selectedState != null) {
-            Point anchor = new Point(selectedState.xPos, selectedState.yPos);
-            if (selectedStates.containsKey(anchor)) {
-                removeSelectedState(selectedState);
-                if (selectedStates.isEmpty()) {
-                    deselect(cityLayer);
-                } else {
-                    uiState = new ArrayList<>(selectedStates.values()).getLast();
-                    applyToUi(uiState);
-                    showStatusMessage(selectionStatusMessage());
-                }
-            } else {
-                addSelectedState(selectedState, cityLayer);
-                uiState = selectedState;
-                applyToUi(uiState);
-                showStatusMessage(selectionStatusMessage());
-            }
-        } else {
-            deselect(cityLayer);
-            showStatusMessage(selectionStatusMessage());
-        }
-    }
-
-    private int getSelectionRadius(CityLayer cityLayer) {
-        int radius = 1;
-        for (WPObject object : cityLayer.getObjectList()) {
-            Point3i dimensions = object.getDimensions();
-            radius = Math.max(radius, Math.max(dimensions.x, dimensions.y));
-        }
-        return radius;
     }
 
     private void deselect(CityLayer layer) {
@@ -740,7 +883,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         clipboard = entries;
         clipboardLayer = layer;
-        updateClipboardCount();
         showStatusMessage(objectCountMessage(entries.size(), "copied to clipboard"));
     }
 
@@ -796,7 +938,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         clearSelection();
         for (ObjectState state : newStates)
-            addSelectedState(state, layer);
+            addSelectedState(state);
         uiState = newStates.getFirst();
         applyToUi(uiState);
         refreshLayer(layer);
@@ -806,11 +948,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private void clearClipboard() {
         clipboard = List.of();
         clipboardLayer = null;
-        updateClipboardCount();
-    }
-
-    private void updateClipboardCount() {
-        optionsPanel.setClipboardCount(clipboard.size());
     }
 
     private static String objectCountMessage(int count, String suffix) {
@@ -822,37 +959,28 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     private void showStatusMessage(String message) {
-        optionsPanel.setStatusMessage(message);
-        if (statusMessageTimer != null)
-            statusMessageTimer.stop();
-        statusMessageTimer = new Timer(3000, event -> {
-            if (statusMessageTimer != event.getSource())
-                return;
-            statusMessageTimer = null;
-            optionsPanel.setStatusMessage(null);
-        });
-        statusMessageTimer.setRepeats(false);
-        statusMessageTimer.start();
         if (overlayView != null)
-            dragOverlay.showTransientInfoText(message, 3000);
+            overlay.showTransientInfoText(message, 3000);
     }
 
     void setCursorWorldPosition(int x, int y) {
         cursorWorldPosition = new Point(x, y);
     }
 
-    private void onAddAt(int centreX, int centreY, CityLayer cityLayer) {
-        var newState = setCurrentStatePosition(centreX, centreY, uiState);
-        applyToMapAndUI(cityLayer, newState, null);
+    private void trackCursor(Point viewPoint) {
+        if (overlayView != null)
+            cursorWorldPosition = overlayView.viewToWorld(viewPoint);
     }
 
+    /** The state with the random parts the Schematics menu asks for. */
     private ObjectState randomizeState(ObjectState oldState) {
         ObjectState newState = oldState;
+        CityLayer layer = getSelectedLayer();
         if (placementOptions.randomRotate()) {
             newState = setRotation(CityLayer.Direction.fromCompass(random.nextInt(4) * 90), newState);
         }
-        if (placementOptions.randomSelect()) {
-            newState = setSelectedObjectIndex(random.nextInt(optionsPanel.getObjectCount()), newState);
+        if (placementOptions.randomSelect() && layer != null && !layer.getObjectList().isEmpty()) {
+            newState = setSelectedObjectIndex(random.nextInt(layer.getObjectList().size()), newState);
         }
         if (placementOptions.randomMirror()) {
             newState = setIsMirrored(random.nextBoolean(), newState);
@@ -860,10 +988,23 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return newState;
     }
 
+    /** Randomizes one property of the selected houses (Schematics menu). */
+    void randomizeSelection(boolean rotation, boolean type, boolean mirror) {
+        CityLayer layer = getSelectedLayer();
+        if (layer == null || selectedStates.isEmpty())
+            return;
+        var saved = placementOptions;
+        placementOptions = new PlacementOptions(rotation, type, mirror);
+        try {
+            edit(() -> applyToSelection(layer, this::randomizeState));
+        } finally {
+            placementOptions = saved;
+        }
+    }
+
     private ObjectState setRotation(CityLayer.Direction rotation, ObjectState oldState) {
         if (rotation == oldState.rotation)
             return oldState;
-        System.out.println("set rotation from" + oldState.rotation + " to " + rotation);
         return new ObjectState(rotation, oldState.mirrored, oldState.objectIndex, oldState.xPos, oldState.yPos);
     }
 
@@ -874,21 +1015,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private ObjectState setSelectedObjectIndex(int index, ObjectState oldState) {
         if (index == oldState.objectIndex)
             return oldState;
-        if (index < 0 || index >= getSelectedLayer().getObjectList().size())
+        CityLayer layer = getSelectedLayer();
+        if (layer == null || index < 0 || index >= layer.getObjectList().size())
             return oldState;
 
         return new ObjectState(oldState.rotation, oldState.mirrored, index, oldState.xPos, oldState.yPos);
-    }
-
-    private void onObjectSelectionChanged(int index) {
-        if (updatingPanelSelection)
-            return;
-        CityLayer layer = getSelectedLayer();
-        if (layer != null && !selectedStates.isEmpty()) {
-            applyToSelection(layer, state -> setSelectedObjectIndex(index, state));
-        } else {
-            applyToUi(setSelectedObjectIndex(index, uiState));
-        }
     }
 
     private void setUseHighlightColors(boolean selected) {
@@ -896,8 +1027,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         if (layer == null)
             return;
         layer.setUseHighlightColors(selected);
-        if (getViewAsWP() != null)
-            getViewAsWP().refreshTilesForLayer(layer, false);
+        refreshLayer(layer);
     }
 
     /**
@@ -913,18 +1043,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     private void updatePanel() {
-        updateSelectionCount();
-        updateClipboardCount();
-        if (getPaint() instanceof LayerPaint layerPaint && layerPaint.getLayer() instanceof CityLayer cityLayer) {
-            optionsPanel.setObjects(cityLayer.getObjectList());
-            applyToUi(setSelectedObjectIndex(0, uiState)); // some safety thing to always be inside of list bound?
-            optionsPanel.setHighlightColorsSelected(cityLayer.isUseHighlightColors());
-            optionsPanel.showLayer(true);
-        } else {
-            optionsPanel.showLayer(false);
-        }
-        optionsPanel.revalidate();
-        optionsPanel.repaint();
+        CityLayer layer = getSelectedLayer();
+        if (layer != null && (uiState.objectIndex < 0 || uiState.objectIndex >= layer.getObjectList().size()))
+            uiState = new ObjectState(uiState.rotation, uiState.mirrored, 0, uiState.xPos, uiState.yPos);
+        overlay.refresh();
     }
 
     private WorldPainter getViewAsWP() {
@@ -946,4 +1068,776 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         paintChanged(paint);
     }
 
+    // ---- mouse gestures on the map ----
+
+    /**
+     * The houses as the map shows them now: moved along while a transform is
+     * dragged.
+     */
+    private List<ObjectState> shownSelection() {
+        var states = new ArrayList<>(selectedStates.values());
+        if (gestureTransform == null)
+            return states;
+        return states.stream().map(gestureTransform).toList();
+    }
+
+    private Point2D.Double toViewExact(Point2D world) {
+        // worldToView rounds; go through a far point for the scale
+        Point origin = overlayView.worldToView(0, 0);
+        Point far = overlayView.worldToView(1024, 1024);
+        double scaleX = (far.x - origin.x) / 1024.0, scaleY = (far.y - origin.y) / 1024.0;
+        return new Point2D.Double(origin.x + world.getX() * scaleX, origin.y + world.getY() * scaleY);
+    }
+
+    private Point2D.Double toWorldExact(Point2D view) {
+        Point origin = overlayView.viewToWorld(new Point(0, 0));
+        Point far = overlayView.viewToWorld(new Point(1024, 1024));
+        double scaleX = (far.x - origin.x) / 1024.0, scaleY = (far.y - origin.y) / 1024.0;
+        return new Point2D.Double(origin.x + view.getX() * scaleX, origin.y + view.getY() * scaleY);
+    }
+
+    /** View rectangle of a world rectangle. */
+    private Rectangle2D.Double toView(Rectangle world) {
+        var topLeft = toViewExact(new Point2D.Double(world.x, world.y));
+        var bottomRight = toViewExact(new Point2D.Double(world.x + world.width, world.y + world.height));
+        return new Rectangle2D.Double(topLeft.x, topLeft.y, bottomRight.x - topLeft.x, bottomRight.y - topLeft.y);
+    }
+
+    /** Transform box (view) around the houses' footprints; null without houses. */
+    private Rectangle2D.Double transformBox(CityLayer layer, List<ObjectState> houses) {
+        var corners = new ArrayList<Point2D.Double>();
+        for (ObjectState house : houses) {
+            var bounds = toView(footprint(layer, house));
+            corners.add(new Point2D.Double(bounds.getMinX(), bounds.getMinY()));
+            corners.add(new Point2D.Double(bounds.getMaxX(), bounds.getMaxY()));
+        }
+        return PathTransformBox.box(corners, IntStream.range(0, corners.size()).boxed().toList());
+    }
+
+    /** Centre of the selection's footprints (world). */
+    private Point2D.Double selectionCentre(CityLayer layer) {
+        Rectangle union = null;
+        for (ObjectState house : selectedStates.values()) {
+            Rectangle bounds = footprint(layer, house);
+            union = union == null ? bounds : union.union(bounds);
+        }
+        return union == null ? null : new Point2D.Double(union.getCenterX(), union.getCenterY());
+    }
+
+    /**
+     * Pivot for rotating and scaling (world): placed by the user, else the
+     * selection's centre.
+     */
+    Point2D.Double pivotWorld() {
+        if (draggedPivot != null)
+            return draggedPivot;
+        if (customPivot != null && customPivotSelection.equals(selectedStates.keySet()))
+            return customPivot;
+        CityLayer layer = getSelectedLayer();
+        return layer == null ? null : selectionCentre(layer);
+    }
+
+    private void movePivot(int deltaX, int deltaY) {
+        if (customPivot == null || !customPivotSelection.equals(selectedStates.keySet()))
+            return;
+        customPivot = new Point2D.Double(customPivot.x + deltaX, customPivot.y + deltaY);
+    }
+
+    /** What a press at {@code point} grabs: a transform handle, else a house. */
+    Hit hitTest(Point point) {
+        CityLayer layer = getSelectedLayer();
+        if (overlayView == null || layer == null)
+            return null;
+        if (showOverlays.isSelected() && !selectedStates.isEmpty()) {
+            var box = transformBox(layer, shownSelection());
+            if (box != null) {
+                var candidates = new ArrayList<Hit>();
+                var points = new ArrayList<Point2D>();
+                candidates.add(new Hit(HitKind.MOVE, 0, null));
+                points.add(PathTransformBox.moveHandle(box));
+                candidates.add(new Hit(HitKind.ROTATE, 0, null));
+                points.add(PathTransformBox.rotateHandle(box));
+                if (selectedStates.size() > 1) {
+                    for (int axis : new int[]{PathTransformBox.SCALE_UNIFORM, PathTransformBox.SCALE_X,
+                            PathTransformBox.SCALE_Y}) {
+                        candidates.add(new Hit(HitKind.SCALE, axis, null));
+                        points.add(PathTransformBox.scaleHandle(box, axis));
+                    }
+                    candidates.add(new Hit(HitKind.PIVOT, 0, null));
+                    points.add(toViewExact(pivotWorld()));
+                }
+                Hit best = null;
+                double bestDistance = HANDLE_HIT_RADIUS * HANDLE_HIT_RADIUS;
+                for (int i = 0; i < candidates.size(); i++) {
+                    double distance = points.get(i).distanceSq(point);
+                    if (distance <= bestDistance) {
+                        bestDistance = distance;
+                        best = candidates.get(i);
+                    }
+                }
+                if (best != null)
+                    return best;
+            }
+        }
+        Point world = overlayView.viewToWorld(point);
+        ObjectState house = houseAt(layer, world.x, world.y);
+        return house == null ? null : new Hit(HitKind.HOUSE, 0, house);
+    }
+
+    private void setHovered(Hit hit) {
+        if (Objects.equals(hit, hovered))
+            return;
+        hovered = hit;
+        updateCursor();
+        overlay.repaint();
+    }
+
+    /**
+     * Cursor for the hovered element, a crosshair on empty map in add mode, else
+     * the map's own.
+     */
+    private void updateCursor() {
+        if (overlayView == null)
+            return;
+        Cursor wanted = hovered != null
+                ? Cursor.getPredefinedCursor(hovered.kind().cursor)
+                : addMode.isSelected() ? Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR) : null;
+        if (wanted == null) {
+            if (cursorOverridden)
+                overlayView.setCursor(cursorBeforeHover);
+            cursorOverridden = false;
+            return;
+        }
+        if (!cursorOverridden)
+            cursorBeforeHover = overlayView.getCursor();
+        cursorOverridden = true;
+        overlayView.setCursor(wanted);
+    }
+
+    void handlePress(Point point, boolean additive, boolean shift) {
+        CityLayer layer = getSelectedLayer();
+        if (overlayView == null || layer == null || getDimension() == null)
+            return;
+        ensureLayerHasUndoManager(layer, getDimension());
+        cancelGesture();
+        Hit hit = hitTest(point);
+        if (shift && hit == null)
+            return; // Shift + drag on empty map stays WorldPainter's
+        gestureStart = new Point(point);
+        gestureWorldStart = overlayView.viewToWorld(point);
+        gestureHit = hit;
+        gestureAdditive = additive;
+        gestureDragged = false;
+        setHovered(hit); // the grabbed element stays highlighted while dragging
+        if (hit == null)
+            overlay.startDrag(point);
+    }
+
+    void handleDrag(Point point) {
+        if (gestureStart == null || overlayView == null)
+            return;
+        if (gestureStart.distanceSq(point) >= 9)
+            gestureDragged = true;
+        if (!gestureDragged)
+            return;
+        if (gestureHit == null) {
+            overlay.updateDrag(point);
+            return;
+        }
+        Point world = overlayView.viewToWorld(point);
+        switch (gestureHit.kind()) {
+            case HOUSE, MOVE -> {
+                if (gestureHit.kind() == HitKind.HOUSE
+                        && !selectedStates.containsKey(new Point(gestureHit.house().xPos, gestureHit.house().yPos))) {
+                    if (!gestureAdditive)
+                        clearSelection();
+                    addSelectedState(gestureHit.house());
+                }
+                int deltaX = world.x - gestureWorldStart.x, deltaY = world.y - gestureWorldStart.y;
+                gestureTransform = moveBy(deltaX, deltaY);
+                gestureHeader = "Move " + deltaX + ", " + deltaY;
+            }
+            case ROTATE -> {
+                Point2D.Double pivot = pivotWorld();
+                double degrees = PathTransformBox.rotationDegrees(toViewExact(pivot), gestureStart, point);
+                int turns = (int) Math.round(degrees / 90);
+                gestureTransform = rotateAround(new Point((int) Math.round(pivot.x), (int) Math.round(pivot.y)), turns);
+                gestureHeader = "Rotate " + Math.floorMod(turns * 90, 360) + "°";
+            }
+            case SCALE -> {
+                Point2D.Double pivot = pivotWorld();
+                var pivotView = toViewExact(pivot);
+                int axis = gestureHit.side();
+                double scaleX = 1, scaleY = 1;
+                if (axis == PathTransformBox.SCALE_UNIFORM)
+                    scaleX = scaleY = PathTransformBox.scaleFactor(pivotView, gestureStart, point);
+                else if (axis == PathTransformBox.SCALE_X)
+                    scaleX = PathTransformBox.axisScaleFactor(pivotView, gestureStart, point, 0, axis);
+                else
+                    scaleY = PathTransformBox.axisScaleFactor(pivotView, gestureStart, point, 0, axis);
+                gestureTransform = scaleAround(pivot, scaleX, scaleY);
+                gestureHeader = axis == PathTransformBox.SCALE_UNIFORM
+                        ? String.format(Locale.ROOT, "Spread %.2f", scaleX)
+                        : axis == PathTransformBox.SCALE_X
+                                ? String.format(Locale.ROOT, "Spread X %.2f", scaleX)
+                                : String.format(Locale.ROOT, "Spread Y %.2f", scaleY);
+            }
+            case PIVOT -> {
+                draggedPivot = toWorldExact(point);
+                gestureHeader = "Pivot";
+            }
+        }
+        overlay.repaint();
+    }
+
+    void handleRelease(Point point) {
+        if (gestureStart == null)
+            return;
+        CityLayer layer = getSelectedLayer();
+        try {
+            handleDrag(point);
+            if (layer == null)
+                return;
+            if (gestureHit == null) {
+                if (gestureDragged) {
+                    Rectangle bounds = overlay.getDragBounds();
+                    if (bounds != null)
+                        selectWithinBox(layer, bounds, gestureAdditive);
+                } else {
+                    Point world = overlayView.viewToWorld(gestureStart);
+                    edit(() -> handleClick(world.x, world.y, false, gestureAdditive));
+                }
+                return;
+            }
+            switch (gestureHit.kind()) {
+                case HOUSE -> {
+                    if (!gestureDragged) {
+                        var house = gestureHit.house();
+                        if (gestureAdditive)
+                            toggleSelected(layer, house);
+                        else {
+                            selectOnly(house);
+                            showStatusMessage(selectionStatusMessage());
+                        }
+                        return;
+                    }
+                    commitGestureTransform(true);
+                }
+                case MOVE -> commitGestureTransform(true);
+                case ROTATE, SCALE -> commitGestureTransform(false);
+                case PIVOT -> {
+                    if (gestureDragged && draggedPivot != null) {
+                        customPivot = draggedPivot;
+                        customPivotSelection = Set.copyOf(selectedStates.keySet());
+                    } else
+                        customPivot = null; // a click puts the pivot back in the centre
+                }
+            }
+        } finally {
+            cancelGesture();
+            setHovered(cursorOverMap ? hitTest(point) : null);
+            overlay.repaint();
+        }
+    }
+
+    private void commitGestureTransform(boolean move) {
+        if (gestureTransform == null)
+            return;
+        var transform = gestureTransform;
+        boolean pivotFollows = move && customPivot != null && customPivotSelection.equals(selectedStates.keySet());
+        ObjectState probe = selectedStates.values().iterator().next();
+        ObjectState moved = transform.apply(probe);
+        if (transformSelection(transform) && pivotFollows) {
+            customPivot = new Point2D.Double(customPivot.x + moved.xPos - probe.xPos,
+                    customPivot.y + moved.yPos - probe.yPos);
+            customPivotSelection = Set.copyOf(selectedStates.keySet());
+        }
+    }
+
+    private void cancelGesture() {
+        gestureStart = null;
+        gestureWorldStart = null;
+        gestureHit = null;
+        gestureDragged = false;
+        gestureTransform = null;
+        gestureHeader = null;
+        draggedPivot = null;
+        overlay.endDrag();
+        overlay.repaint();
+    }
+
+    // ---- menus ----
+
+    private static JMenuItem item(String text, String name, boolean enabled, String disabledHint, Runnable action) {
+        var item = new JMenuItem(text);
+        item.setName(name);
+        item.setEnabled(enabled);
+        if (!enabled)
+            item.setToolTipText(disabledHint);
+        item.addActionListener(event -> action.run());
+        return item;
+    }
+
+    private static JMenuItem heading(String text) {
+        var item = new JMenuItem(text);
+        item.setEnabled(false);
+        item.setFont(OverlayStyle.font(Font.BOLD, 12f));
+        return item;
+    }
+
+    /** A switch in a menu: the lavender dot shows it is on. */
+    private static JRadioButtonMenuItem toggleItem(String text, String name, boolean on, String tooltip,
+            java.util.function.Consumer<Boolean> changed) {
+        var item = new JRadioButtonMenuItem(text, on);
+        item.setName(name);
+        item.setToolTipText(tooltip);
+        item.addActionListener(event -> changed.accept(item.isSelected()));
+        return item;
+    }
+
+    /** Small top-down picture of schematic {@code index}, or null. */
+    private static Icon thumbnail(CityLayer layer, int index, int size) {
+        Image image = layer.getSchematicImage(new ObjectState(CityLayer.Direction.NORTH, false, index, 0, 0));
+        if (image == null)
+            return null;
+        int width = image.getWidth(null), height = image.getHeight(null);
+        double scale = Math.min((double) size / width, (double) size / height);
+        var icon = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = icon.createGraphics();
+        try {
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            int w = Math.max(1, (int) Math.round(width * scale)), h = Math.max(1, (int) Math.round(height * scale));
+            g.drawImage(image, (size - w) / 2, (size - h) / 2, w, h, null);
+        } finally {
+            g.dispose();
+        }
+        return new ImageIcon(icon);
+    }
+
+    static String schematicName(WPObject object, int index) {
+        String name = object == null ? null : object.getName();
+        return name == null || name.isBlank() ? "Schematic " + (index + 1) : name;
+    }
+
+    /**
+     * "Schematics" menu: the type of the selected houses (or the next house),
+     * rotate / mirror / delete, randomizing now and for new houses (exposed for
+     * tests).
+     */
+    JPopupMenu schematicsMenu() {
+        var menu = new JPopupMenu();
+        CityLayer layer = getSelectedLayer();
+        boolean any = !selectedStates.isEmpty();
+        String needSelection = "Select houses first";
+        if (layer == null) {
+            menu.add(item("Choose a City Layer in the Layer menu", "CityTool.NoLayer", false, null, () -> {
+            }));
+            return menu;
+        }
+        menu.add(heading(any ? "Type of the selected houses" : "Type of the next house"));
+        var group = new ButtonGroup();
+        var objects = layer.getObjectList();
+        for (int i = 0; i < objects.size(); i++) {
+            int index = i;
+            var type = new JRadioButtonMenuItem(schematicName(objects.get(i), i), thumbnail(layer, i, MENU_THUMBNAIL),
+                    i == uiState.objectIndex);
+            type.setName("CityTool.Type." + i);
+            type.addActionListener(event -> setType(index));
+            group.add(type);
+            menu.add(type);
+        }
+        if (objects.isEmpty())
+            menu.add(item("The layer has no schematics (edit the layer to add some)", "CityTool.NoTypes", false, null,
+                    () -> {
+                    }));
+        menu.addSeparator();
+        menu.add(item("Rotate 90° (C)", "CityTool.Rotate", any, needSelection,
+                () -> edit(() -> rotateSelection(layer))));
+        menu.add(item("Mirror (X)", "CityTool.Mirror", any, needSelection, () -> edit(() -> mirrorSelection(layer))));
+        menu.add(item("Delete (Del)", "CityTool.Delete", any, needSelection, () -> edit(this::deleteSelected)));
+        menu.addSeparator();
+        menu.add(item("Randomize rotation", "CityTool.RandomizeRotation", any, needSelection,
+                () -> randomizeSelection(true, false, false)));
+        menu.add(item("Randomize mirroring", "CityTool.RandomizeMirroring", any, needSelection,
+                () -> randomizeSelection(false, false, true)));
+        menu.add(item("Randomize type", "CityTool.RandomizeType", any, needSelection,
+                () -> randomizeSelection(false, true, false)));
+        menu.addSeparator();
+        menu.add(heading("New houses and Q get a random"));
+        var options = placementOptions;
+        menu.add(toggleItem("Rotation", "CityTool.RandomRotation", options.randomRotate(),
+                "New houses (and Q) get a random rotation",
+                on -> setPlacementOptions(new PlacementOptions(on, options.randomSelect(), options.randomMirror()))));
+        menu.add(toggleItem("Mirroring", "CityTool.RandomMirroring", options.randomMirror(),
+                "New houses (and Q) are mirrored at random",
+                on -> setPlacementOptions(new PlacementOptions(options.randomRotate(), options.randomSelect(), on))));
+        menu.add(toggleItem("Type", "CityTool.RandomType", options.randomSelect(),
+                "New houses (and Q) get a random schematic",
+                on -> setPlacementOptions(new PlacementOptions(options.randomRotate(), on, options.randomMirror()))));
+        return menu;
+    }
+
+    /**
+     * "Layer" menu: the tutorial layer, WorldPainter's layer import, the
+     * dimension's City Layers alphabetically (exposed for tests).
+     */
+    JPopupMenu layerMenu() {
+        var menu = new JPopupMenu();
+        Dimension dimension = getView() == null ? null : getDimension();
+        CityLayer current = getSelectedLayer();
+        boolean tutorial = CityLayerLibrary.hasTutorialLayer();
+        menu.add(item("Tutorial layer", "CityTool.TutorialLayer", tutorial && dimension != null,
+                "The tutorial layer is not bundled yet", this::useTutorialLayer));
+        menu.add(item("Import from file...", "CityTool.ImportLayer", dimension != null, "Open a world first",
+                this::importLayerFromFile));
+        menu.addSeparator();
+        var layers = CityLayerLibrary.cityLayers(dimension);
+        if (layers.isEmpty())
+            menu.add(item("No City Layers in this dimension", "CityTool.NoLayers", false, null, () -> {
+            }));
+        var group = new ButtonGroup();
+        for (CityLayer layer : layers) {
+            var choice = new JRadioButtonMenuItem(layer.getName(), layer == current);
+            choice.setName("CityTool.Layer." + layer.getName());
+            choice.addActionListener(event -> selectLayer(layer));
+            group.add(choice);
+            menu.add(choice);
+        }
+        menu.addSeparator();
+        if (current != null)
+            menu.add(toggleItem("Highlight colors", "CityTool.HighlightColors", current.isUseHighlightColors(),
+                    "Paint the layer in its color instead of the schematics' blocks", this::setUseHighlightColors));
+        menu.add(item("Help...", "CityTool.Help", true, null,
+                () -> new HelpDialog(null, HELP_TITLE, HELP_EXPLANATION, HELP_ITEMS).setVisible(true)));
+        return menu;
+    }
+
+    void selectLayer(CityLayer layer) {
+        CityLayerLibrary.select(layer, this::setPaint);
+    }
+
+    private void useTutorialLayer() {
+        try {
+            CityLayer layer = CityLayerLibrary.addTutorialLayer(getDimension());
+            if (layer != null)
+                selectLayer(layer);
+        } catch (Exception ex) {
+            GlobalActionPanel.ErrorPopUp(ex);
+        }
+    }
+
+    private void importLayerFromFile() {
+        try {
+            CityLayer layer = CityLayerLibrary.importFromFile(getDimension());
+            if (layer != null)
+                selectLayer(layer);
+        } catch (Exception ex) {
+            GlobalActionPanel.ErrorPopUp(ex);
+        }
+    }
+
+    /** The add-mode switch (exposed for tests). */
+    JToggleButton addModeToggle() {
+        return addMode;
+    }
+
+    JToggleButton overlaysSwitch() {
+        return showOverlays;
+    }
+
+    // ---- the floating HUD ----
+
+    /**
+     * Header text at the top centre: the running drag, add mode, or what to do
+     * first.
+     */
+    String viewportHeader() {
+        if (gestureHeader != null)
+            return gestureHeader;
+        CityLayer layer = getSelectedLayer();
+        if (layer == null)
+            return "Choose a City Layer in the Layer menu";
+        if (layer.getObjectList().isEmpty())
+            return "This City Layer has no schematics: edit the layer to add some";
+        if (addMode.isSelected())
+            return "Click on the map to place: "
+                    + schematicName(layer.getObjectList().get(uiState.objectIndex), uiState.objectIndex);
+        return null;
+    }
+
+    private class CityOverlay extends MapToolOverlay
+    {
+        private final PathTool.DropdownButton schematicsButton = new PathTool.DropdownButton("Schematics");
+        private final PathTool.DropdownButton layerButton = new PathTool.DropdownButton("Layer");
+        private final JToggleButton overlaysButton = new JToggleButton(LucideIcons.icon("eye", 16, OverlayStyle.TEXT));
+        private final JToggleButton addButton = new JToggleButton("Add",
+                LucideIcons.icon("plus", 16, OverlayStyle.TEXT));
+        private final TypeCard typeCard = new TypeCard();
+
+        CityOverlay() {
+            super(loadOverlayIcon());
+            schematicsButton.setName("CityTool.SchematicsMenu");
+            schematicsButton.setToolTipText("Type, rotation, mirroring and randomizing of the houses");
+            schematicsButton.addActionListener(event -> {
+                if (schematicsButton.isShowing())
+                    OverlayStyle.popup(schematicsMenu()).show(schematicsButton, 0, schematicsButton.getHeight());
+            });
+            add(schematicsButton);
+            layerButton.setName("CityTool.LayerMenu");
+            layerButton.setToolTipText("Choose, import or load the tutorial City Layer");
+            layerButton.addActionListener(event -> {
+                if (layerButton.isShowing())
+                    OverlayStyle.popup(layerMenu()).show(layerButton, 0, layerButton.getHeight());
+            });
+            add(layerButton);
+            overlaysButton.setName("CityTool.OverlaysButton");
+            overlaysButton.setModel(showOverlays.getModel());
+            overlaysButton.setFocusable(false);
+            overlaysButton.setToolTipText("Show overlays (selected houses, transform box)");
+            add(overlaysButton);
+            addButton.setName("CityTool.AddButton");
+            addButton.setModel(addMode.getModel());
+            addButton.setFocusable(false);
+            addButton.setToolTipText("Add mode: left click on empty map places a house. Ctrl+click always places.");
+            add(addButton);
+            for (AbstractButton control : List.of(schematicsButton, layerButton, overlaysButton, addButton))
+                OverlayStyle.button(control);
+            overlaysButton.setSelectedIcon(LucideIcons.icon("eye", 16, OverlayStyle.ON_ACCENT));
+            addButton.setSelectedIcon(LucideIcons.icon("plus", 16, OverlayStyle.ON_ACCENT));
+            typeCard.setName("CityTool.TypeCard");
+            typeCard.setToolTipText("Type of the selected houses (or the next house): click to change");
+            typeCard.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent event) {
+                    if (typeCard.isShowing())
+                        OverlayStyle.popup(schematicsMenu()).show(typeCard, 0, typeCard.getHeight());
+                }
+            });
+            add(typeCard);
+            setFont(OverlayStyle.font(Font.PLAIN, 14f));
+        }
+
+        /** Buttons and card follow the chosen layer and type. */
+        void refresh() {
+            CityLayer layer = getSelectedLayer();
+            schematicsButton.setEnabled(layer != null);
+            typeCard.setVisible(layer != null && !layer.getObjectList().isEmpty());
+            typeCard.repaint();
+            layoutToolbar();
+        }
+
+        private void layoutToolbar() {
+            int height = schematicsButton.getPreferredSize().height;
+            // two characters in from the left: WorldPainter draws an icon in the view's
+            // top left corner
+            var metrics = schematicsButton.getFontMetrics(schematicsButton.getFont());
+            int left = 8 + 2 * metrics.charWidth('M');
+            schematicsButton.setBounds(left, 8, schematicsButton.getPreferredSize().width, height);
+            layerButton.setBounds(schematicsButton.getX() + schematicsButton.getWidth() + 4, 8,
+                    layerButton.getPreferredSize().width, height);
+            int x = layerButton.getX() + layerButton.getWidth() + 8;
+            overlaysButton.setBounds(x, 8, overlaysButton.getPreferredSize().width, height);
+            x = overlaysButton.getX() + overlaysButton.getWidth() + 8;
+            addButton.setBounds(x, 8, addButton.getPreferredSize().width, height);
+            var card = typeCard.getPreferredSize();
+            typeCard.setBounds(8, toolbarBottom() + 8, card.width, card.height);
+            for (PathTool.DropdownButton dropdown : List.of(schematicsButton, layerButton))
+                dropdown.validate();
+            repaint();
+        }
+
+        int toolbarBottom() {
+            return schematicsButton.getY() + schematicsButton.getHeight();
+        }
+
+        @Override
+        public void setBounds(int x, int y, int width, int height) {
+            super.setBounds(x, y, width, height);
+            layoutToolbar();
+        }
+
+        /** Mouse-transparent like the base overlay, except over the HUD controls. */
+        @Override
+        public boolean contains(int x, int y) {
+            for (Component control : List.of(schematicsButton, layerButton, overlaysButton, addButton, typeCard))
+                if (control.isVisible() && control.getBounds().contains(x, y))
+                    return true;
+            return false;
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            super.paintComponent(graphics);
+            if (overlayView == null)
+                return;
+            Graphics2D g = (Graphics2D) graphics.create();
+            try {
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                CityLayer layer = getSelectedLayer();
+                if (layer != null && showOverlays.isSelected())
+                    paintHouses(g, layer);
+                String header = viewportHeader();
+                if (header != null)
+                    paintHeader(g, header);
+            } finally {
+                g.dispose();
+            }
+        }
+
+        private void paintHouses(Graphics2D g, CityLayer layer) {
+            if (hovered != null && hovered.kind() == HitKind.HOUSE
+                    && !selectedStates.containsKey(new Point(hovered.house().xPos, hovered.house().yPos))) {
+                g.setColor(OverlayStyle.TEXT);
+                g.setStroke(new BasicStroke(1.5f));
+                g.draw(toView(footprint(layer, hovered.house())));
+            }
+            if (selectedStates.isEmpty())
+                return;
+            if (gestureTransform != null) {
+                // where the houses were: dashed, quiet
+                g.setColor(OverlayStyle.TEXT_MUTED);
+                g.setStroke(
+                        new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND, 10, new float[]{4, 3}, 0));
+                for (ObjectState house : selectedStates.values())
+                    g.draw(toView(footprint(layer, house)));
+            }
+            var shown = shownSelection();
+            g.setColor(OverlayStyle.MAP_SELECTION);
+            g.setStroke(new BasicStroke(2f));
+            for (ObjectState house : shown)
+                g.draw(toView(footprint(layer, house)));
+            paintTransformBox(g, layer, shown);
+        }
+
+        /**
+         * Transform box around the selection: rotate handle above, move handle left,
+         * scale handles on the corner and edges and the pivot (scale and pivot only for
+         * several houses: one house has nothing to spread).
+         */
+        private void paintTransformBox(Graphics2D g, CityLayer layer, List<ObjectState> shown) {
+            var box = transformBox(layer, shown);
+            if (box == null)
+                return;
+            g.setStroke(new BasicStroke(1.5f));
+            g.setColor(OverlayStyle.TEXT);
+            g.draw(box);
+            g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g.draw(new Line2D.Double(PathTransformBox.topCentre(box), PathTransformBox.rotateHandle(box)));
+            g.draw(new Line2D.Double(PathTransformBox.leftCentre(box), PathTransformBox.moveHandle(box)));
+            PathTool.paintIconHandle(g, "rotate-ccw", PathTransformBox.rotateHandle(box), 0,
+                    isHovered(HitKind.ROTATE, 0));
+            PathTool.paintIconHandle(g, "move", PathTransformBox.moveHandle(box), 0, isHovered(HitKind.MOVE, 0));
+            if (selectedStates.size() < 2)
+                return;
+            PathTool.paintIconHandle(g, "move-diagonal-2",
+                    PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_UNIFORM), 0,
+                    isHovered(HitKind.SCALE, PathTransformBox.SCALE_UNIFORM));
+            PathTool.paintIconHandle(g, "move-horizontal", PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_X),
+                    0, isHovered(HitKind.SCALE, PathTransformBox.SCALE_X));
+            PathTool.paintIconHandle(g, "move-vertical", PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_Y), 0,
+                    isHovered(HitKind.SCALE, PathTransformBox.SCALE_Y));
+            Point2D.Double pivot = pivotWorld();
+            if (pivot != null)
+                PathTool.paintIconHandle(g, "crosshair", toViewExact(pivot), 0, isHovered(HitKind.PIVOT, 0));
+        }
+
+        private boolean isHovered(HitKind kind, int side) {
+            return hovered != null && hovered.kind() == kind && hovered.side() == side;
+        }
+
+        /** Blender-like header box at the top centre, below the toolbar. */
+        private void paintHeader(Graphics2D g, String text) {
+            g.setFont(OverlayStyle.font(Font.BOLD, 16.5f));
+            FontMetrics metrics = g.getFontMetrics();
+            int padding = 8;
+            int width = metrics.stringWidth(text) + 2 * padding, height = metrics.getHeight() + padding;
+            int cardRight = typeCard.isVisible() ? typeCard.getX() + typeCard.getWidth() : 0;
+            int x = Math.max((getWidth() - width) / 2, cardRight + 8);
+            int y = toolbarBottom() + 8;
+            OverlayStyle.paintSurface(g, x, y, width, height, OverlayStyle.SURFACE);
+            g.setColor(OverlayStyle.TEXT);
+            g.drawString(text, x + padding, y + padding / 2 + metrics.getAscent());
+        }
+    }
+
+    /**
+     * The current type (selected house or the next one): thumbnail and name; opens
+     * the Schematics menu.
+     */
+    private class TypeCard extends JComponent
+    {
+        TypeCard() {
+            setOpaque(false);
+            setBorder(new EmptyBorder(8, 8, 8, 8));
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+
+        private String title() {
+            CityLayer layer = getSelectedLayer();
+            if (layer == null || uiState.objectIndex >= layer.getObjectList().size())
+                return "";
+            return schematicName(layer.getObjectList().get(uiState.objectIndex), uiState.objectIndex);
+        }
+
+        private String subtitle() {
+            String mirrored = uiState.mirrored ? ", mirrored" : "";
+            String rotation = uiState.rotation.toCompass() + "°" + mirrored;
+            return selectedStates.size() > 1 ? selectedStates.size() + " selected · " + rotation : rotation;
+        }
+
+        @Override
+        public java.awt.Dimension getPreferredSize() {
+            var titleMetrics = getFontMetrics(OverlayStyle.font(Font.BOLD, 13f));
+            var subtitleMetrics = getFontMetrics(OverlayStyle.font(Font.PLAIN, 12f));
+            int text = Math.max(titleMetrics.stringWidth(title()), subtitleMetrics.stringWidth(subtitle()));
+            int width = Math.min(320, Math.max(CARD_THUMBNAIL, text) + 16);
+            return new java.awt.Dimension(width,
+                    CARD_THUMBNAIL + 16 + titleMetrics.getHeight() + subtitleMetrics.getHeight() + 4);
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            CityLayer layer = getSelectedLayer();
+            if (layer == null)
+                return;
+            Graphics2D g = (Graphics2D) graphics.create();
+            try {
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                OverlayStyle.paintSurface(g, 0, 0, getWidth(), getHeight(), OverlayStyle.SURFACE);
+                Image image = layer.getSchematicImage(uiState);
+                if (image != null) {
+                    int width = image.getWidth(null), height = image.getHeight(null);
+                    double scale = Math.min((double) CARD_THUMBNAIL / width, (double) CARD_THUMBNAIL / height);
+                    int w = Math.max(1, (int) Math.round(width * scale)),
+                            h = Math.max(1, (int) Math.round(height * scale));
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                    g.drawImage(image, (getWidth() - w) / 2, 8 + (CARD_THUMBNAIL - h) / 2, w, h, null);
+                }
+                int y = 8 + CARD_THUMBNAIL + 4;
+                g.setFont(OverlayStyle.font(Font.BOLD, 13f));
+                var metrics = g.getFontMetrics();
+                g.setColor(OverlayStyle.TEXT);
+                g.drawString(clip(title(), metrics, getWidth() - 16), 8, y + metrics.getAscent());
+                y += metrics.getHeight();
+                g.setFont(OverlayStyle.font(Font.PLAIN, 12f));
+                metrics = g.getFontMetrics();
+                g.setColor(OverlayStyle.TEXT_MUTED);
+                g.drawString(clip(subtitle(), metrics, getWidth() - 16), 8, y + metrics.getAscent());
+            } finally {
+                g.dispose();
+            }
+        }
+
+        private static String clip(String text, FontMetrics metrics, int width) {
+            if (metrics.stringWidth(text) <= width)
+                return text;
+            String ellipsis = "…";
+            int end = text.length();
+            while (end > 0 && metrics.stringWidth(text.substring(0, end) + ellipsis) > width)
+                end--;
+            return text.substring(0, end) + ellipsis;
+        }
+    }
 }

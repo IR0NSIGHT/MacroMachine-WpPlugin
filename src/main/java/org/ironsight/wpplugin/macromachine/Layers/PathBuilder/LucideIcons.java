@@ -25,7 +25,7 @@ import javax.swing.ImageIcon;
  * {@code currentColor} on a 24 x 24 grid, which is replaced before parsing.
  * Parsed documents are cached per colour and stroke width.
  */
-final class LucideIcons
+public final class LucideIcons
 {
     private static final Map<String, SVGDocument> DOCUMENTS = new ConcurrentHashMap<>();
     private static final double GRID = 24;
@@ -59,7 +59,7 @@ final class LucideIcons
      * turned by {@code degrees} (counter-clockwise on screen). With a {@code halo}
      * colour it gets an outline of about 1.5 px, so it stays readable on any map.
      */
-    static void paint(Graphics2D g, String name, Point2D centre, double size, double degrees, Color colour,
+    public static void paint(Graphics2D g, String name, Point2D centre, double size, double degrees, Color colour,
             Color halo) {
         Graphics2D target = (Graphics2D) g.create();
         try {
@@ -79,7 +79,7 @@ final class LucideIcons
     }
 
     /** The icon as a Swing icon, e.g. for menus and buttons. */
-    static Icon icon(String name, int size, Color colour) {
+    public static Icon icon(String name, int size, Color colour) {
         var image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
         try {

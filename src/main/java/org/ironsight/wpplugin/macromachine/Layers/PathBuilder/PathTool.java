@@ -4213,7 +4213,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * A handle drawn as a Lucide icon in the handle styling: cyan with a dark
      * outline, white and larger while hovered.
      */
-    static void paintIconHandle(Graphics2D g, String icon, Point2D center, double degrees, boolean hovered) {
+    public static void paintIconHandle(Graphics2D g, String icon, Point2D center, double degrees, boolean hovered) {
         LucideIcons.paint(g, icon, center, hovered ? HOVERED_ICON_HANDLE_SIZE : ICON_HANDLE_SIZE, degrees,
                 hovered ? HANDLE_HOVER : HANDLE_COLOR, null);
     }
@@ -4417,7 +4417,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * Button with a painted dropdown arrow on its right (text glyphs may be missing
      * in the font).
      */
-    static class DropdownButton extends JButton
+    public static class DropdownButton extends JButton
     {
         /*
          * Text/icon and arrow are child labels laid out side by side, so they can never
@@ -4429,7 +4429,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         private final JLabel content = new JLabel();
         private final JLabel arrow = new JLabel(DROPDOWN_ARROW);
 
-        DropdownButton(String text) {
+        public DropdownButton(String text) {
             setLayout(new BorderLayout(6, 0));
             setFocusable(false);
             content.setText(text);
@@ -4438,7 +4438,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             add(arrow, BorderLayout.EAST);
         }
 
-        void setContent(String text, Icon icon) {
+        public void setContent(String text, Icon icon) {
             content.setText(text);
             content.setIcon(icon);
             revalidate();

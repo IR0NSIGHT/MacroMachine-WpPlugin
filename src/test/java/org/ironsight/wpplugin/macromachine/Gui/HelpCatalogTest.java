@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.OptionsPanel;
+import org.ironsight.wpplugin.macromachine.Layers.CityBuilder.CityEditToolOperation;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTool;
 import org.junit.jupiter.api.Test;
 
@@ -36,10 +36,10 @@ public class HelpCatalogTest
     }
 
     @Test
-    void cityHelpStaysInSyncWithOptionsPanel() {
-        assertEquals(OptionsPanel.HELP_TITLE, HelpCatalog.CITY.getTitle());
-        assertEquals(OptionsPanel.HELP_ITEMS, HelpCatalog.CITY.getHelpItems(),
-                "HelpCatalog CITY drifted from OptionsPanel.HELP_ITEMS — update both");
+    void cityHelpStaysInSyncWithCityTool() {
+        assertEquals(CityEditToolOperation.HELP_TITLE, HelpCatalog.CITY.getTitle());
+        assertEquals(CityEditToolOperation.HELP_ITEMS, HelpCatalog.CITY.getHelpItems(),
+                "HelpCatalog CITY drifted from CityEditToolOperation.HELP_ITEMS — update both");
     }
 
     @Test
