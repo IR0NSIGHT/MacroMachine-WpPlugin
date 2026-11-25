@@ -2012,7 +2012,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             try {
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                OverlayStyle.paintSurface(g, 0, 0, getWidth(), getHeight(), OverlayStyle.SURFACE);
+                // the picker's bright mode carries over, so dark schematics show here too
+                var grid = overlay.typeGrid;
+                OverlayStyle.paintSurface(g, 0, 0, getWidth(), getHeight(), grid.tileFill(false, false));
+                if (grid.bright()) {
+                    g.setColor(grid.tileEdge(false, false));
+                    g.setStroke(new BasicStroke(1f));
+                    g.draw(OverlayStyle.rounded(0.5, 0.5, getWidth() - 1, getHeight() - 1));
+                }
                 Image image = layer.getSchematicImage(uiState);
                 if (image != null) {
                     int width = image.getWidth(null), height = image.getHeight(null);
@@ -2026,12 +2033,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 int y = 8 + CARD_THUMBNAIL + 4;
                 g.setFont(OverlayStyle.font(Font.BOLD, 13f));
                 var metrics = g.getFontMetrics();
-                g.setColor(OverlayStyle.TEXT);
+                g.setColor(grid.text());
                 g.drawString(clip(title(), metrics, getWidth() - 16), 8, y + metrics.getAscent());
                 y += metrics.getHeight();
                 g.setFont(OverlayStyle.font(Font.PLAIN, 12f));
                 metrics = g.getFontMetrics();
-                g.setColor(OverlayStyle.TEXT_MUTED);
+                g.setColor(grid.muted());
                 g.drawString(clip(subtitle(), metrics, getWidth() - 16), 8, y + metrics.getAscent());
             } finally {
                 g.dispose();
@@ -2080,7 +2087,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             brightToggle.setName("CityTool.TypeGrid.Bright");
             brightToggle.setFocusable(false);
             brightToggle.setToolTipText("Bright background, for dark schematics");
-            brightToggle.getModel().addItemListener(event -> repaint());
+            brightToggle.getModel().addItemListener(event -> {
+                repaint();
+                overlay.typeCard.repaint(); // the card follows the picker's bright mode
+            });
             OverlayStyle.button(brightToggle);
             brightToggle.setSelectedIcon(LucideIcons.icon("sun", 16, OverlayStyle.ON_ACCENT));
             add(brightToggle);

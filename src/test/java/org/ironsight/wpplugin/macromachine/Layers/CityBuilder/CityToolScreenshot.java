@@ -84,6 +84,9 @@ public final class CityToolScreenshot
         SwingUtilities.invokeAndWait(() -> operation.typeGridBrightToggle().doClick());
         Thread.sleep(300);
         save(view, new File(out, "city-type-grid-bright.png"));
+        SwingUtilities.invokeAndWait(() -> operation.handleKeyInteraction(java.awt.event.KeyEvent.VK_ESCAPE));
+        Thread.sleep(300);
+        save(view, new File(out, "city-hud-bright.png"));
         System.exit(0);
     }
 
