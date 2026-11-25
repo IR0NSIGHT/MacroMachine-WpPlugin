@@ -726,16 +726,18 @@ class CityEditToolOperationTest
         assertFalse(width.isShowing() || width.getParent().isVisible(), "hidden until the filter button is on");
         filters.doClick();
         assertTrue(width.getParent().isVisible());
-        var min = (javax.swing.JSpinner) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filter.Width.Min");
-        var max = (javax.swing.JSpinner) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filter.Width.Max");
+        var range = (org.ironsight.wpplugin.macromachine.Gui.RangeSlider) OperationPanelLookup.find(grid,
+                "CityTool.TypeGrid.Filter.Width.Range");
         assertFalse(width.isSelected());
-        assertEquals(2, min.getValue(), "ranges start at the layer's smallest ...");
-        assertEquals(4, max.getValue(), "... and largest size");
-        max.setValue(3);
-        assertTrue(width.isSelected(), "changing a range switches its filter on");
+        assertEquals(2, range.getLow(), "the slider spans the layer's smallest ...");
+        assertEquals(4, range.getHigh(), "... and largest size");
+        assertEquals(2, range.getMinimum());
+        assertEquals(4, range.getMaximum());
+        range.setValues(2, 3);
+        assertTrue(width.isSelected(), "moving a handle switches its filter on");
         assertEquals(List.of(0, 1), operation.typeGridVisible());
         assertEquals("1", filters.getText(), "the button counts the active filters");
-        min.setValue(3);
+        range.setValues(3, 3);
         assertEquals(List.of(1), operation.typeGridVisible());
         width.doClick();
         assertEquals(List.of(0, 1, 2), operation.typeGridVisible(), "unticked: no filter");
@@ -874,6 +876,34 @@ class CityEditToolOperationTest
             points.add(new Point2D.Double(coordinates[0], coordinates[1]));
         }
         return points;
+    }
+
+    @Test
+    void theRangeSliderDragsTheNearestHandleAndKeepsThemApart() {
+        var slider = new org.ironsight.wpplugin.macromachine.Gui.RangeSlider(0, 100);
+        slider.setSize(216, 30); // 8 px padding: one value per 2 px
+        var changes = new java.util.concurrent.atomic.AtomicInteger();
+        slider.addChangeListener(event -> changes.incrementAndGet());
+        drag(slider, 10, 50); // grabs the low handle (at 0)
+        assertEquals(21, slider.getLow()); // (50 - 8) / 2
+        drag(slider, 200, 120); // grabs the high handle (at 100)
+        assertEquals(56, slider.getHigh());
+        drag(slider, 50, 190); // the low handle stops at the high one
+        assertEquals(56, slider.getLow());
+        assertTrue(changes.get() > 0);
+        slider.setValues(80, 10);
+        assertEquals(10, slider.getLow());
+        assertEquals(80, slider.getHigh());
+    }
+
+    private static void drag(javax.swing.JComponent component, int fromX, int toX) {
+        long when = System.currentTimeMillis();
+        component.dispatchEvent(new java.awt.event.MouseEvent(component, java.awt.event.MouseEvent.MOUSE_PRESSED, when,
+                java.awt.event.InputEvent.BUTTON1_DOWN_MASK, fromX, 20, 1, false, java.awt.event.MouseEvent.BUTTON1));
+        component.dispatchEvent(new java.awt.event.MouseEvent(component, java.awt.event.MouseEvent.MOUSE_DRAGGED,
+                when + 20, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, toX, 20, 0, false, 0));
+        component.dispatchEvent(new java.awt.event.MouseEvent(component, java.awt.event.MouseEvent.MOUSE_RELEASED,
+                when + 40, 0, toX, 20, 1, false, java.awt.event.MouseEvent.BUTTON1));
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {

@@ -41,6 +41,7 @@ import org.ironsight.wpplugin.macromachine.Gui.MapToolOverlay;
 import org.ironsight.wpplugin.macromachine.Gui.OperationPanel;
 import org.ironsight.wpplugin.macromachine.Gui.OverlayStyle;
 import org.ironsight.wpplugin.macromachine.Gui.PreciseDrag;
+import org.ironsight.wpplugin.macromachine.Gui.RangeSlider;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.LucideIcons;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTool;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTransformBox;
@@ -2511,7 +2512,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          */
         private final JCheckBox[] sizeFilters = {new JCheckBox("Width"), new JCheckBox("Length"),
                 new JCheckBox("Height")};
-        private final JSpinner[] sizeMin = new JSpinner[3], sizeMax = new JSpinner[3];
+        private final RangeSlider[] sizeRanges = new RangeSlider[3];
         private final JPanel filterRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         private final JPanel searchRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         /**
@@ -2590,28 +2591,20 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         "Only schematics whose " + names[axis].toLowerCase(Locale.ROOT) + " (blocks) is in the range");
                 DialogStyle.checkBox(sizeFilters[axis]);
                 sizeFilters[axis].addActionListener(event -> refilter());
-                sizeMin[axis] = OverlayStyle.spinner(new JSpinner(new SpinnerNumberModel(0, 0, 9999, 1)));
-                sizeMin[axis].setName("CityTool.TypeGrid.Filter." + names[axis] + ".Min");
-                sizeMax[axis] = OverlayStyle.spinner(new JSpinner(new SpinnerNumberModel(9999, 0, 9999, 1)));
-                sizeMax[axis].setName("CityTool.TypeGrid.Filter." + names[axis] + ".Max");
-                for (JSpinner spinner : List.of(sizeMin[axis], sizeMax[axis])) {
-                    ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().setColumns(3);
-                    spinner.addChangeListener(event -> {
-                        // changing a range switches its filter on
-                        int index = java.util.Arrays.asList(sizeMin).indexOf(spinner);
-                        int a = index >= 0 ? index : java.util.Arrays.asList(sizeMax).indexOf(spinner);
-                        if (!sizeFilters[a].isSelected())
-                            sizeFilters[a].setSelected(true);
-                        refilter();
-                    });
-                }
-                var dash = new JLabel("\u2013");
-                OverlayStyle.label(dash, true);
+                int filter = axis;
+                sizeRanges[axis] = new RangeSlider(0, 1);
+                sizeRanges[axis].setName("CityTool.TypeGrid.Filter." + names[axis] + ".Range");
+                sizeRanges[axis].setToolTipText(
+                        "Drag the handles: smallest and largest " + names[axis].toLowerCase(Locale.ROOT) + " (blocks)");
+                sizeRanges[axis].addChangeListener(event -> {
+                    // moving a handle switches its filter on
+                    if (!sizeFilters[filter].isSelected())
+                        sizeFilters[filter].setSelected(true);
+                    refilter();
+                });
                 filterRow.add(Box.createHorizontalStrut(8));
                 filterRow.add(sizeFilters[axis]);
-                filterRow.add(sizeMin[axis]);
-                filterRow.add(dash);
-                filterRow.add(sizeMax[axis]);
+                filterRow.add(sizeRanges[axis]);
             }
             add(filterRow);
             // Esc in a field closes the picker like everywhere else on it
@@ -2623,9 +2616,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 }
             };
             search.addKeyListener(escape);
-            for (int axis = 0; axis < 3; axis++)
-                for (JSpinner spinner : List.of(sizeMin[axis], sizeMax[axis]))
-                    ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField().addKeyListener(escape);
             selectAll.setName("CityTool.TypeGrid.SelectAll");
             selectAll.setFocusable(false);
             selectAll.setToolTipText("Tick every schematic shown for Add random");
@@ -2739,10 +2729,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 }
                 if (sizes.isEmpty())
                     low = 0;
-                sizeFilters[axis].setSelected(false);
-                sizeMin[axis].setValue(low);
-                sizeMax[axis].setValue(high);
-                sizeFilters[axis].setSelected(false); // setting the ranges switched it on
+                sizeRanges[axis].setRange(low, high);
+                sizeRanges[axis].setValues(low, high);
+                sizeFilters[axis].setSelected(false); // setting the range switched it on
             }
             refilter();
         }
@@ -2759,8 +2748,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 for (int axis = 0; axis < 3 && matches; axis++)
                     if (sizeFilters[axis].isSelected()) {
                         int size = sizes.get(i)[axis];
-                        matches = size >= ((Number) sizeMin[axis].getValue()).intValue()
-                                && size <= ((Number) sizeMax[axis].getValue()).intValue();
+                        matches = size >= sizeRanges[axis].getLow() && size <= sizeRanges[axis].getHigh();
                     }
                 if (matches)
                     visible.add(i);
@@ -2901,6 +2889,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 for (JCheckBox filter : sizeFilters)
                     if (!text().equals(filter.getForeground()))
                         filter.setForeground(text());
+                for (RangeSlider range : sizeRanges)
+                    if (!muted().equals(range.getForeground()))
+                        range.setForeground(muted());
                 boolean ticking = pickingRandomPool();
                 if (selectAll.isVisible() != ticking) {
                     selectAll.setVisible(ticking);
