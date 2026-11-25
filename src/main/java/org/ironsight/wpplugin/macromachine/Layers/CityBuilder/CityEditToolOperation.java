@@ -487,8 +487,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return;
         }
 
-        uiState = new ArrayList<>(selectedStates.values()).getLast();
-        applyToUi(uiState);
+        focus(new ArrayList<>(selectedStates.values()).getLast());
         refreshLayer(layer);
         showStatusMessage(selectionStatusMessage());
     }
@@ -562,7 +561,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         int max = layer == null ? 0 : layer.getObjectList().size();
         if (max == 0)
             return;
-        int nextIdx = Math.clamp(uiState.objectIndex + direction, 0, max - 1);
+        // the selected houses' type steps on (the active house's), else the card's
+        ObjectState active = selectedStates.get(new Point(uiState.xPos, uiState.yPos));
+        int current = active != null ? active.objectIndex : uiState.objectIndex;
+        int nextIdx = Math.clamp(current + direction, 0, max - 1);
         setType(nextIdx);
     }
 
@@ -671,8 +673,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         if (selectedStates.isEmpty()) {
             deselect(layer);
         } else {
-            uiState = new ArrayList<>(selectedStates.values()).getLast();
-            applyToUi(uiState);
+            focus(new ArrayList<>(selectedStates.values()).getLast());
             refreshLayer(layer);
         }
         showStatusMessage(selectionStatusMessage());
@@ -681,7 +682,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private void selectOnly(ObjectState state) {
         clearSelection();
         addSelectedState(state);
-        applyToUi(state);
+        focus(state);
     }
 
     private void toggleSelected(CityLayer layer, ObjectState house) {
@@ -690,13 +691,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (selectedStates.isEmpty()) {
                 deselect(layer);
             } else {
-                uiState = new ArrayList<>(selectedStates.values()).getLast();
-                applyToUi(uiState);
+                focus(new ArrayList<>(selectedStates.values()).getLast());
             }
         } else {
             addSelectedState(house);
-            uiState = house;
-            applyToUi(uiState);
+            focus(house);
         }
         showStatusMessage(selectionStatusMessage());
     }
@@ -878,6 +877,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         updatePanel();
     }
 
+    /**
+     * {@code house} becomes the active selected house (copy's anchor). The card
+     * keeps its schematic, rotation and mirroring: they change only by the user's
+     * choice (picker, turning, mirroring), never by selecting.
+     */
+    private void focus(ObjectState house) {
+        applyToUi(setCurrentStatePosition(house.xPos, house.yPos, uiState));
+    }
+
     private void applyToUi(ObjectState uiState) {
         CityLayer layer = getSelectedLayer();
         if (layer == null)
@@ -910,8 +918,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         for (ObjectState state : newStates)
             selectedStates.put(new Point(state.xPos, state.yPos), state);
 
-        uiState = newStates.get(Math.min(activeIndex, newStates.size() - 1));
-        applyToUi(uiState);
+        focus(newStates.get(Math.min(activeIndex, newStates.size() - 1)));
         refreshLayer(layer);
         overlay.selectionChanged();
     }
@@ -1155,8 +1162,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         clearSelection();
         for (ObjectState state : newStates)
             addSelectedState(state);
-        uiState = newStates.getFirst();
-        applyToUi(uiState);
+        focus(newStates.getFirst());
         refreshLayer(layer);
         showStatusMessage(objectCountMessage(newStates.size(), "pasted from clipboard"));
     }

@@ -1155,6 +1155,27 @@ class CityEditToolOperationTest
         assertFalse(cards.isVisible(), "nothing selected: no selection cards");
     }
 
+    @Test
+    void selectingHousesKeepsTheSchematicCard() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        layer.setDataAt(TEST_DIMENSION, 100, 520, new ObjectState(CityLayer.Direction.EAST, true, 2, 100, 520));
+        operation.setType(1);
+        var before = operation.nextHouse();
+        operation.handleClick(100, 520, false);
+        // the house is selected; the card keeps the user's schematic, turn and
+        // mirroring
+        assertEquals(1, operation.selectionCardsForTest().groups().size());
+        var after = operation.nextHouse();
+        assertEquals(before.objectIndex, after.objectIndex);
+        assertEquals(before.rotation, after.rotation);
+        assertEquals(before.mirrored, after.mirrored);
+        // only Set type changes the house
+        assertEquals(2, layer.getInformationAt(100, 520).objectIndex);
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {
