@@ -34,6 +34,40 @@ public class PathToolBackend
         }
     }
 
+    static PathResult getPathFromNodes(List<Point4f> nodes, float handleStrength) {
+        var handles = new ArrayList<Point4f>();
+        for (Point4f node : nodes) {
+            // consecutive nodes on the same block are one point of the curve: a zero length
+            // segment breaks the curve maths ("not strictly monotone" with -ea, a
+            // degenerate curve without). Moving, snapping, randomizing or subdividing can
+            // put neighbouring nodes on the same block.
+            if (!handles.isEmpty() && sameBlock(handles.getLast(), node))
+                continue;
+            handles.add(new Point4f(node));
+        }
+        if (handles.isEmpty())
+            return new PathResult(List.of(), new HashMap<>());
+        if (handles.size() == 1) {
+            var first = handles.getFirst();
+            handles.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
+            handles.addFirst(new Point4f(first.x + .2f, first.y, first.z, first.w));
+            handles.addFirst(new Point4f(first.x + .3f, first.y, first.z, first.w));
+        } else if (handles.size() == 2) {
+            var first = handles.getFirst();
+            handles.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
+            var last = handles.getFirst();
+            handles.addFirst(new Point4f(last.x + .1f, last.y, last.z, last.w));
+        } else if (handles.size() == 3) {
+            var first = handles.getFirst();
+            handles.addFirst(new Point4f(first.x + .1f, first.y, first.z, first.w));
+        }
+        return getPathFromHandles(handles, handleStrength);
+    }
+
+    private static boolean sameBlock(Point4f a, Point4f b) {
+        return Math.round(a.x) == Math.round(b.x) && Math.round(a.y) == Math.round(b.y);
+    }
+
     static PathResult getPathFromHandles(List<Point4f> handles, float handleStrength) {
         var api = RiverTool.create();
         var handlesData = handles.stream()
@@ -57,7 +91,46 @@ public class PathToolBackend
             }
         }
 
+        monotoneHeightAndRadius(curve, handles, handlesToPathIndex);
         return new PathResult(curve, handlesToPathIndex);
+    }
+
+    /**
+     * Height and radius between the nodes from a monotone cubic over the distance
+     * along the curve, not from the Bézier curve: that one swings past the nodes
+     * (higher than both nodes around it, or lower). The Bézier keeps the path's
+     * horizontal shape. Mutates the curve's points.
+     */
+    static void monotoneHeightAndRadius(List<Point4f> curve, List<Point4f> handles,
+            Map<Point4f, Integer> handlesToPathIndex) {
+        if (curve.isEmpty())
+            return;
+        float[] along = new float[curve.size()];
+        for (int i = 1; i < curve.size(); i++) {
+            Point4f a = curve.get(i - 1), b = curve.get(i);
+            along[i] = along[i - 1] + (float) Math.hypot(b.x - a.x, b.y - a.y);
+        }
+        int count = 0;
+        float[] knots = new float[handles.size()], heights = new float[handles.size()],
+                radii = new float[handles.size()];
+        for (Point4f handle : handles) {
+            Integer index = handlesToPathIndex.get(handle);
+            if (index == null || count > 0 && along[index] <= knots[count - 1])
+                continue;
+            knots[count] = along[index];
+            heights[count] = handle.z;
+            radii[count] = handle.w;
+            count++;
+        }
+        if (count < 2)
+            return;
+        knots = java.util.Arrays.copyOf(knots, count);
+        float[] z = MonotoneCubic.interpolate(knots, java.util.Arrays.copyOf(heights, count), along);
+        float[] w = MonotoneCubic.interpolate(knots, java.util.Arrays.copyOf(radii, count), along);
+        for (int i = 0; i < curve.size(); i++) {
+            curve.get(i).z = z[i];
+            curve.get(i).w = w[i];
+        }
     }
 
     /**
@@ -115,11 +188,30 @@ public class PathToolBackend
     }
 
     static void writeHeightMapDataToTile(FloatTile in, Tile out) {
+        writeHeightMapDataToTile(in, null, out);
+    }
+
+    /**
+     * Writes the new terrain. In the transition (outside the path radius, where
+     * {@code pathWater} is {@link FloatTile#IGNORE_VALUE}) land stays land: a
+     * column that was dry (its water level not above its terrain) and is lowered
+     * below that water level gets its water lowered to the new terrain, so the
+     * lowered bank does not reveal water that was hidden under the land. Columns
+     * that were under water keep it.
+     */
+    static void writeHeightMapDataToTile(FloatTile in, FloatTile pathWater, Tile out) {
         for (int xx = 0; xx < TILE_SIZE; xx++)
             for (int yy = 0; yy < TILE_SIZE; yy++) {
                 float value = in.getValueAt(xx, yy);
-                if (value != IGNORE_VALUE)
-                    out.setHeight(xx, yy, value);
+                if (value == IGNORE_VALUE)
+                    continue;
+                boolean transition = pathWater == null || pathWater.getValueAt(xx, yy) == IGNORE_VALUE;
+                int level = out.getWaterLevel(xx, yy);
+                boolean wasLand = level <= out.getIntHeight(xx, yy);
+                out.setHeight(xx, yy, value);
+                int height = out.getIntHeight(xx, yy);
+                if (transition && wasLand && level > height)
+                    out.setWaterLevel(xx, yy, height);
             }
     }
 
@@ -157,17 +249,33 @@ public class PathToolBackend
             }
     }
 
+    /**
+     * Writes {@code value} through an action output where the path reaches: the bed
+     * ({@code bed}: inside the radius, where {@code water} is set) or the
+     * transition around it.
+     */
+    static void writeOutputToDimension(FloatTile strength, FloatTile water, Dimension out,
+            org.ironsight.wpplugin.macromachine.operations.ValueProviders.IPositionValueSetter output, int value,
+            boolean bed) {
+        if (strength == null || water == null || out == null || output == null)
+            return;
+        int tileX = strength.tilePosX << TILE_SIZE_BITS;
+        int tileY = strength.tilePosY << TILE_SIZE_BITS;
+        for (int xx = 0; xx < TILE_SIZE; xx++)
+            for (int yy = 0; yy < TILE_SIZE; yy++) {
+                if (strength.getValueAt(xx, yy) <= 0)
+                    continue;
+                boolean inside = water.getValueAt(xx, yy) != IGNORE_VALUE;
+                if (inside == bed)
+                    output.setValueAt(out, xx + tileX, yy + tileY, value);
+            }
+    }
+
     static void forcePathOnlyDownhill(List<Point4f> path) {
         float previousZ = Float.MAX_VALUE;
         for (Point4f point : path) {
             point.z = Math.min(point.z, previousZ);
             previousZ = point.z;
-        }
-    }
-
-    static void forcePathToHeight(List<Point4f> path, float height) {
-        for (Point4f point : path) {
-            point.z = height;
         }
     }
 

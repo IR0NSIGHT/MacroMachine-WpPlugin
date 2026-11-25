@@ -228,24 +228,60 @@ CityLayer is not compatible with WorldPainter undo/redo. Do not use undo/redo wh
 Enable `Auto Update` to refresh the preview after map edits. Large areas can cause lag with Auto Update enabled. The preview performs a background test export and uses a workaround to remove the underground from the rendered result.
 
 ### Path Tool
-Place roads or rivers with the path tool, or create slopes with full control over maximum degrees. The path is automatically merged into existing terrain with a smooth transition between terrain and path.
+Build roads and rivers along a path you shape on the map. The path blends into the terrain around it, carves a river bed, sets water and paints the path with any terrain or layer.
 
-1. Select the Path Tool (Road Icon)
-2. Left Click in the map to place a node. Brush radius decides the size of the node.
-3. Left Click again to place the next node and connect to the previous node
-4. Use undo to delete the last node
-5. Right click to reset and start a new path
+![Path Tool overview](./imgs/pathtool/overview.png)
 
+#### Placing and selecting nodes
+- Select the Path Tool (path icon). A new path starts with six nodes across the middle of the view, so there is always something to grab. Path > New path starts over the same way.
+- `Ctrl` + left click on the map adds a node after the last selected node (or at the end). The **Add** button, or tapping `Ctrl` twice, switches to adding nodes with plain clicks.
+- Left click or drag selects nodes (box selection); drag selected nodes to move them. `Shift` while dragging moves at 1/10 speed for precise placement.
+- `Delete` removes the selected nodes, `Ctrl+A` selects all, `Escape` clears the selection. Undo and redo work as everywhere in WorldPainter.
+- New nodes have a radius of 8 blocks.
 
-Options:
-- "only downhill": the path is guarenteed to only go down in height, but never upwards. Use this for rivers.
-- "snap to terrain": the path will try to follow the terrain height as close as possible without creating tall walls to bridge depressions. Use this for roads
-- "Use paint": the path will apply
-the selected paint to the map (f.e. terrain cobblestone)
-- "Curve Strength": how curved the path is. 0 = straight lines, hard edges. 1 = smooth bezier curve. I use 0.4 for roads, 1 for rivers.
-- "Limit slope": the path is guaranteed to never have a steeper slope than this value. Limit to 4 blocks per 16: for 16 blocks walking along the path, the path can only rise/go down by 4 blocks. 16/16 compares to stairs. 8/16 compares to slabs. I use 4/16 for roads.  
-- "Transition multiplier"
+#### Node operations
+The **Node**, **Segment** and **Path** menus (top left) hold the operations. Each one previews on the map before you apply it (`Enter`) or cancel it (`Esc`); type a number to set its main value.
 
+![Node menu](./imgs/pathtool/node-menu.png)
+
+- Node: randomize position, randomize radius, snap to terrain, only downhill.
+- Segment: subdivide.
+- Path: new path, reverse direction (e.g. so a river flows the other way), apply as road / river / paint, help.
+
+#### Editors
+The editor button (top left) picks what the handles on the selected nodes edit: **Radius**, **Curve strength**, **Height** or **Transform** (move, rotate and scale several nodes). Clicking a selected node cycles through them. Curve strength only bends the path sideways; the height between nodes always runs smoothly from one node's height to the next, without overshooting.
+
+![Transform editor](./imgs/pathtool/transform.png)
+
+The strip at the bottom unrolls the path: in the Height editor it shows the terrain, the water and the path's height block by block, red where it rises and green where it falls.
+
+![Height editor](./imgs/pathtool/height-editor.png)
+
+#### Apply as river / road / paint
+Path > Apply as river, Apply as road or Apply as paint opens its settings. The map preview follows the settings; **Apply** builds the path into the world (undo takes it back). Each dialog remembers its settings, **Reset** brings back its defaults, **Close** just closes it.
+
+![Apply as river](./imgs/pathtool/apply-river.png) ![Apply as road](./imgs/pathtool/apply-road.png)
+
+River:
+- **Only downhill**: the river never rises along its direction. The check or cross behind it tells whether the nodes already run downhill.
+- **Snap to terrain**: every position follows the terrain height. Snap runs first, then only downhill, so either works on its own.
+- **Set water**: sets the water level to the path height inside the path radius.
+- **Carve river bed**: digs a bed below the water, one block deep at the banks and deeper towards the middle.
+- **Paint riverbed with / Paint transition with**: any terrain or layer and its value, for the bed and for the banks.
+
+Road:
+- **Snap to terrain**, **Flatten road** (the ground under the road is set to its height) and **Set paint** with any terrain or layer.
+- **Limit slope to x/16 blocks**: at most x blocks up or down per 16 blocks along the road (16/16 is a staircase, 8/16 slabs, 4/16 a gentle road). 0 = no limit.
+
+Paint: only paints the path with the chosen terrain or layer; heights and water stay as they are.
+
+Blend with terrain (river and road): **Transition multiplier** sets how far beyond the path the terrain blends into it, in path radii; **Transition profile** sets the shape of that blend. The cross section below them shows the result to scale, one square per block.
+
+![River on the map](./imgs/pathtool/result-river-map.png)
+
+*The height strip shows the path as planned by its nodes; Snap to terrain lowered the river into the terrain on Apply.*
+
+![River in 3D](./imgs/pathtool/result-river-3d.jpg)
 
 ### Edit Macros
 [Youtube Tutorial](https://youtu.be/jog4qHFP4WI?si=gqlX9unvOYhtRQ4x)  

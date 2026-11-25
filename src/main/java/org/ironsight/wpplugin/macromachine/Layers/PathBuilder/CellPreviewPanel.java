@@ -9,6 +9,9 @@ public class CellPreviewPanel extends JPanel
 {
     public static final int CELL_SIZE = 6;
     public static final int HEIGHT = 48;
+    /** Dark checker cells, the drawn ones lavender (the dialogs' look). */
+    static final Color EMPTY = new Color(0x16, 0x16, 0x16), EMPTY_ALTERNATE = new Color(0x1C, 0x1C, 0x1C),
+            DRAWN = new Color(205, 199, 255), DRAWN_ALTERNATE = new Color(185, 178, 245);
     private final CellDrawer cellDrawer;
 
     public CellPreviewPanel(CellDrawer cellDrawer) {
@@ -31,15 +34,15 @@ public class CellPreviewPanel extends JPanel
         super.paintComponent(g);
         int columns = getCellColumns();
         int rows = getCellRows();
-        g.setColor(Color.WHITE);
+        g.setColor(EMPTY);
         g.fillRect(0, 0, getWidth(), getHeight());
 
         for (int x = 0; x < columns; x++) {
             for (int y = 0; y < rows; y++) {
                 boolean alternate = (x + y) % 2 == 1;
                 g.setColor(cellDrawer.drawCell(x, y)
-                        ? (alternate ? new Color(224, 0, 0) : Color.RED)
-                        : (alternate ? new Color(232, 232, 232) : Color.WHITE));
+                        ? (alternate ? DRAWN_ALTERNATE : DRAWN)
+                        : (alternate ? EMPTY_ALTERNATE : EMPTY));
                 g.fillRect(x * CELL_SIZE, getHeight() - (y + 1) * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             }
         }
