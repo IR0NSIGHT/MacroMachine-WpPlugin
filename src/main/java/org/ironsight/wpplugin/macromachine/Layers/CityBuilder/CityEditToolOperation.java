@@ -398,7 +398,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 return;
             }
             if (keyCode == KeyEvent.VK_ESCAPE) {
-                if (operationPanel != null)
+                if (overlay.lightboxOpen())
+                    overlay.closeLightbox();
+                else if (operationPanel != null)
                     closeOperation();
                 else if (overlay.typeGridOpen())
                     overlay.closeTypeGrid();
@@ -1190,6 +1192,17 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return newState;
     }
 
+    /** Which view of a house a card shows large. */
+    enum HouseView {
+        FRONT("front"), SIDE("side"), TOP("top");
+
+        final String label;
+
+        HouseView(String label) {
+            this.label = label;
+        }
+    }
+
     /** What a Randomize operation of the Schematics menu changes. */
     enum Randomized {
         ROTATION("Randomize rotation",
@@ -1843,6 +1856,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             }));
             return menu;
         }
+        menu.add(item("Choose schematic...", "CityTool.ChooseSchematic", true, null, () -> openTypeGrid()));
+        menu.addSeparator();
         menu.add(item("Rotate 90° (C)", "CityTool.Rotate", any, needSelection,
                 () -> edit(() -> rotateSelection(layer))));
         menu.add(item("Mirror (X)", "CityTool.Mirror", any, needSelection, () -> edit(() -> mirrorSelection(layer))));
@@ -2128,6 +2143,72 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return overlay.typeCard;
     }
 
+    /**
+     * One view of the next house, enlarged over the map: a dark backdrop and a
+     * large square with the view and its dimension lines. A click anywhere or Esc
+     * closes it.
+     */
+    private class ViewLightbox extends JComponent
+    {
+        private TypeGrid.TileContent content;
+        private String title = "";
+
+        ViewLightbox() {
+            setOpaque(false);
+            setVisible(false);
+            setName("CityTool.EnlargedView");
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseReleased(MouseEvent event) {
+                    overlay.closeLightbox();
+                }
+            });
+        }
+
+        void show(TypeGrid.TileContent content, String title) {
+            this.content = content;
+            this.title = title;
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            if (content == null)
+                return;
+            var grid = overlay.typeGrid;
+            Graphics2D g = (Graphics2D) graphics.create();
+            try {
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g.setColor(grid.bright() ? new Color(232, 232, 232, 230) : new Color(22, 22, 22, 220));
+                g.fillRect(0, 0, getWidth(), getHeight());
+                int size = Math.max(160, Math.min(getWidth(), getHeight()) - 140);
+                var area = new Rectangle((getWidth() - size) / 2, (getHeight() - size) / 2 + 12, size, size);
+                OverlayStyle.paintSurface(g, area.x - 12, area.y - 44, area.width + 24, area.height + 56,
+                        grid.tileFill(false, false));
+                g.setFont(OverlayStyle.font(Font.BOLD, 16f));
+                g.setColor(grid.text());
+                g.drawString(title + " \u00b7 " + content.view().label, area.x, area.y - 18);
+                g.setFont(OverlayStyle.font(Font.PLAIN, 12f));
+                g.setColor(grid.muted());
+                String hint = "Esc or a click closes";
+                g.drawString(hint, area.x + area.width - g.getFontMetrics().stringWidth(hint), area.y - 18);
+                grid.paintMainView(g, area, content, content.view());
+            } finally {
+                g.dispose();
+            }
+        }
+    }
+
+    /** Whether the enlarged view is open (exposed for tests). */
+    boolean enlargedViewOpen() {
+        return overlay.lightboxOpen();
+    }
+
+    /** Clicks the type card at {@code point} (exposed for tests). */
+    void clickTypeCard(Point point) {
+        overlay.typeCard.clicked(point);
+    }
+
     /** The picker itself (exposed for tests). */
     JComponent typeGridComponent() {
         return overlay.typeGrid;
@@ -2243,7 +2324,20 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             overlaysButton.setSelectedIcon(LucideIcons.icon("eye", 16, OverlayStyle.ON_ACCENT));
             addButton.setSelectedIcon(LucideIcons.icon("plus", 16, OverlayStyle.ON_ACCENT));
             typeCard.setName("CityTool.TypeCard");
-            typeCard.setToolTipText("Type of the selected houses (or the next house): click to choose another");
+            typeCard.setToolTipText(
+                    "The next house: click a small view to show it large, the large view to enlarge it, the name to choose another schematic");
+            typeCard.addMouseMotionListener(new MouseAdapter() {
+                @Override
+                public void mouseMoved(MouseEvent event) {
+                    typeCard.hovered(event.getPoint());
+                }
+            });
+            typeCard.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseExited(MouseEvent event) {
+                    typeCard.hovered(null);
+                }
+            });
             typeCard.addMouseListener(new MouseAdapter() {
                 // press and release on the card (mouseClicked is lost when the mouse moves
                 // a pixel in between)
@@ -2257,7 +2351,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 @Override
                 public void mouseReleased(MouseEvent event) {
                     if (pressed && SwingUtilities.isLeftMouseButton(event) && typeCard.contains(event.getPoint()))
-                        openTypeGrid(false);
+                        typeCard.clicked(event.getPoint());
                     pressed = false;
                 }
             });
@@ -2349,6 +2443,30 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return typeGrid.isVisible();
         }
 
+        /** The card's large view, enlarged over the map (click or Esc closes it). */
+        private final ViewLightbox lightbox = new ViewLightbox();
+
+        void enlarge(TypeGrid.TileContent content, String title) {
+            lightbox.show(content, title);
+            lightbox.setBounds(0, 0, getWidth(), getHeight());
+            if (lightbox.getParent() == null)
+                add(lightbox);
+            setComponentZOrder(lightbox, 0);
+            lightbox.setVisible(true);
+            repaint();
+        }
+
+        boolean lightboxOpen() {
+            return lightbox.isVisible();
+        }
+
+        void closeLightbox() {
+            if (lightbox.isVisible()) {
+                lightbox.setVisible(false);
+                repaint();
+            }
+        }
+
         /** Buttons and card follow the chosen layer and type. */
         void refresh() {
             CityLayer layer = getSelectedLayer();
@@ -2405,8 +2523,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         /** Mouse-transparent like the base overlay, except over the HUD controls. */
         @Override
         public boolean contains(int x, int y) {
-            if (typeGrid.isVisible())
-                return true; // the picker covers the whole viewport
+            if (typeGrid.isVisible() || lightbox.isVisible())
+                return true; // the picker / the enlarged view covers the whole viewport
             if (operationPanelContains(x, y))
                 return true;
             for (Component control : List.of(schematicsButton, layerButton, overlaysButton, overlaysMenuButton,
@@ -2647,6 +2765,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         /** The tile content of the next house, kept while the house does not change. */
         private TypeGrid.TileContent cached;
         private Object cachedKey;
+        /** The view the card shows large. */
+        private HouseView view = HouseView.TOP;
+        /** The small view under the mouse: shown large while hovered. */
+        private HouseView hoverView;
 
         /** Width of the card: a picker tile, wider if the button row needs it. */
         private int cardWidth() {
@@ -2662,7 +2784,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          */
         private TypeGrid.TileContent content(CityLayer layer) {
             Object key = java.util.List.of(layer, layer.getObjectList(), uiState.objectIndex, uiState.rotation,
-                    uiState.mirrored, cardWidth());
+                    uiState.mirrored, cardWidth(), view, String.valueOf(hoverView));
             if (!key.equals(cachedKey)) {
                 WPObject object = layer.getObjectForState(uiState);
                 if (object == null)
@@ -2674,17 +2796,49 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         new ObjectState(CityLayer.Direction.NORTH, uiState.mirrored, uiState.objectIndex, 0, 0));
                 cached = new TypeGrid.TileContent(layer.getSchematicImage(uiState), new int[]{size.x, size.y, size.z},
                         SchematicViews.front(upright), SchematicViews.side(upright),
-                        TypeGrid.wrap(title(), getFontMetrics(TypeGrid.nameFont()), cardWidth() - 16),
-                        uiState.rotation);
+                        TypeGrid.wrap(title(), getFontMetrics(TypeGrid.nameFont()), cardWidth() - 16), uiState.rotation,
+                        hoverView != null ? hoverView : view, view);
                 cachedKey = key;
             }
             return cached;
         }
 
+        /**
+         * The mouse is at {@code point} (null: gone): a small view under it is shown
+         * large.
+         */
+        void hovered(Point point) {
+            int small = point == null ? -1 : TypeGrid.thumbAt(new Rectangle(0, 0, getWidth(), getHeight()), point);
+            HouseView thumb = small >= 0 ? HouseView.values()[small] : null;
+            if (thumb != hoverView) {
+                hoverView = thumb;
+                repaint();
+            }
+        }
+
+        /**
+         * A click on the card: a small view becomes the large one, the large view opens
+         * enlarged over the map, anywhere else opens the schematic picker.
+         */
+        void clicked(Point point) {
+            var tile = new Rectangle(0, 0, getWidth(), getHeight());
+            int small = TypeGrid.thumbAt(tile, point);
+            if (small >= 0) {
+                view = HouseView.values()[small];
+                repaint();
+            } else if (TypeGrid.mainRect(tile).contains(point)) {
+                CityLayer layer = getSelectedLayer();
+                var content = layer == null ? null : content(layer);
+                if (content != null)
+                    overlay.enlarge(content, title());
+            } else
+                overlay.openTypeGrid(false);
+        }
+
         /** Height of the tile part: the picker's tile for this name. */
         private int tileHeight(CityLayer layer) {
             var content = content(layer);
-            return overlay.typeGrid.tileHeight(content == null ? 1 : content.nameLines().size());
+            return overlay.typeGrid.tileHeight(cardWidth(), content == null ? 1 : content.nameLines().size());
         }
 
         @Override
@@ -2741,9 +2895,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      * (top-down picture, name, size); the current one in lavender. Clicking a tile
      * picks it; clicking elsewhere or Esc closes; the wheel scrolls.
      */
-    private class TypeGrid extends JComponent
+    class TypeGrid extends JComponent
     {
-        private static final int MARGIN = 32, GAP = 12, PICTURE = 126;
+        private static final int MARGIN = 32, GAP = 12;
         /** The search and size filter row, between the subtitle and the tiles. */
         private static final int FILTER_ROW_Y = 74, FILTER_ROW_HEIGHT = 28;
 
@@ -2752,17 +2906,23 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return filterRow.isVisible() ? 152 : 118;
         }
         /** Tile height without the name (picture, measurements, padding). */
-        /** Height of the front / side view row under the top view (px). */
-        private static final int VIEWS = 46;
-        private static final int TILE_HEIGHT_WITHOUT_NAME = 10 + PICTURE + 6 + VIEWS + 8 + 10;
+        /** Space between the three small views (px). */
+        static final int THUMB_GAP = 6;
+        /** Height of the labels under the small views (px). */
+        static final int THUMB_LABEL = 13;
         /** All tiles are as tall as the longest name needs (one line at least). */
-        private int tileHeight = TILE_HEIGHT_WITHOUT_NAME + 18;
+        private int tileHeight = 300;
         /** Room left of and below the picture for its measurements (px). */
         private static final int MEASURE_LEFT = 34, MEASURE_BOTTOM = 22;
         private final List<Image> pictures = new ArrayList<>();
         /** Per schematic: its front and side view (see SchematicViews). */
         private final List<Image> fronts = new ArrayList<>(), sides = new ArrayList<>();
         private final List<String> names = new ArrayList<>();
+        /** The small view under the mouse and its tile: shown large while hovered. */
+        private HouseView hoverThumb;
+        private int hoverThumbTile = -1;
+        /** The view each tile shows large (top unless a small view was clicked). */
+        private final Map<Integer, HouseView> tileViews = new java.util.HashMap<>();
         /** Each name broken into lines that fit the tile, so it shows in full. */
         private final List<List<String>> nameLines = new ArrayList<>();
         /** Width (x), length (y) and height (z) in blocks per schematic. */
@@ -2933,6 +3093,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         setCursor(Cursor.getPredefinedCursor(index >= 0 ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
                         repaint();
                     }
+                    // a small view under the mouse is shown large while hovered
+                    int small = index >= 0 ? thumbAt(tileBounds(index), event.getPoint()) : -1;
+                    HouseView thumb = small >= 0 ? HouseView.values()[small] : null;
+                    if (thumb != hoverThumb || index != hoverThumbTile) {
+                        hoverThumb = thumb;
+                        hoverThumbTile = index;
+                        repaint();
+                    }
                 }
 
                 @Override
@@ -2958,7 +3126,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         return;
                     pressed = false;
                     int index = tileAt(event.getPoint());
-                    if (index >= 0 && index == pressedTile && pickingRandomPool()) {
+                    int view = index >= 0 && index == pressedTile ? thumbAt(tileBounds(index), event.getPoint()) : -1;
+                    if (view >= 0) {
+                        // a small view: shown large in this tile; no pick, no tick
+                        tileViews.put(index, HouseView.values()[view]);
+                        repaint();
+                    } else if (index >= 0 && index == pressedTile && pickingRandomPool()) {
                         // Add random: a click anywhere on a tile ticks it; the picker stays open
                         toggleRandomPool(index);
                         repaint();
@@ -3000,7 +3173,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 sizes.add(new int[]{dimensions.x, dimensions.y, dimensions.z});
             }
             int lines = nameLines.stream().mapToInt(List::size).max().orElse(1);
-            tileHeight = TILE_HEIGHT_WITHOUT_NAME + lines * getFontMetrics(nameFont()).getHeight();
+            tileHeight = tileHeight(lines);
+            tileViews.clear();
             hover = -1;
             scroll = 0;
             resetFilters();
@@ -3232,21 +3406,65 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         /**
-         * What a tile shows: top view, its sizes, front and side view, the name's
-         * lines.
+         * What a tile shows: the top view (with a margin), the size, the front and side
+         * views, the name's lines, which way the top view faces and which view is
+         * large.
          */
         record TileContent(Image picture, int[] size, Image front, Image side, List<String> nameLines,
-                CityLayer.Direction facing) {
+                CityLayer.Direction facing, HouseView view, HouseView chosen) {
         }
 
         private TileContent content(int index) {
             return new TileContent(pictures.get(index), sizes.get(index), fronts.get(index), sides.get(index),
-                    nameLines.get(index), CityLayer.Direction.NORTH);
+                    nameLines.get(index), CityLayer.Direction.NORTH,
+                    index == hoverThumbTile && hoverThumb != null
+                            ? hoverThumb
+                            : tileViews.getOrDefault(index, HouseView.TOP),
+                    tileViews.getOrDefault(index, HouseView.TOP));
         }
 
-        /** Height of a tile whose name takes {@code lines} lines. */
+        // ---- tile layout: a square large view, three small views in a row, the name
+
+        static int mainSize(int width) {
+            return width - 16;
+        }
+
+        static int thumbSize(int width) {
+            return (width - 16 - 2 * THUMB_GAP) / 3;
+        }
+
+        static Rectangle mainRect(Rectangle tile) {
+            int size = mainSize(tile.width);
+            return new Rectangle(tile.x + 8, tile.y + 8, size, size);
+        }
+
+        /** Small view {@code k}: 0 front, 1 side, 2 top. */
+        static Rectangle thumbRect(Rectangle tile, int k) {
+            int size = thumbSize(tile.width);
+            return new Rectangle(tile.x + 8 + k * (size + THUMB_GAP), tile.y + 8 + mainSize(tile.width) + 6, size,
+                    size);
+        }
+
+        /** The small view under {@code point}, or -1. */
+        static int thumbAt(Rectangle tile, Point point) {
+            for (int k = 0; k < 3; k++)
+                if (thumbRect(tile, k).contains(point))
+                    return k;
+            return -1;
+        }
+
+        static int nameTop(Rectangle tile) {
+            return tile.y + 8 + mainSize(tile.width) + 6 + thumbSize(tile.width) + THUMB_LABEL + 6;
+        }
+
+        /** Height of a tile {@code width} wide whose name takes {@code lines} lines. */
+        int tileHeight(int width, int lines) {
+            return 8 + mainSize(width) + 6 + thumbSize(width) + THUMB_LABEL + 6
+                    + lines * getFontMetrics(nameFont()).getHeight() + 10;
+        }
+
         int tileHeight(int lines) {
-            return TILE_HEIGHT_WITHOUT_NAME + lines * getFontMetrics(nameFont()).getHeight();
+            return tileHeight(GRID_TILE, lines);
         }
 
         private void paintTile(Graphics2D g, int index, Rectangle tile) {
@@ -3256,8 +3474,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         /**
-         * A tile: surface, the top view with its measurements, the front and side views
-         * and the name. Shared by the picker and the type card.
+         * A tile: surface, the large view with its measurements, the three small views
+         * (the large one marked) and the name. Shared by the picker and the type card.
          */
         void paintTileContent(Graphics2D g, Rectangle tile, TileContent content, boolean current, boolean hovered) {
             OverlayStyle.paintSurface(g, tile.x, tile.y, tile.width, tile.height, tileFill(current, hovered));
@@ -3266,27 +3484,52 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 g.setStroke(new BasicStroke(current ? 2f : 1f));
                 g.draw(OverlayStyle.rounded(tile.x + 1, tile.y + 1, tile.width - 2, tile.height - 2));
             }
-            Image picture = content.picture();
+            paintMainView(g, mainRect(tile), content, content.view());
+            paintThumbnails(g, tile, content);
+            int y = nameTop(tile);
+            g.setFont(nameFont());
+            var metrics = g.getFontMetrics();
+            g.setColor(text());
+            for (String line : content.nameLines()) {
+                g.drawString(line, tile.x + 8, y + metrics.getAscent());
+                y += metrics.getHeight();
+            }
+        }
+
+        /**
+         * One view large in {@code area}, with dimension lines: top view width and
+         * length (height in the corner) and the front's ">"; front view width and
+         * height; side view length and height.
+         */
+        void paintMainView(Graphics2D g, Rectangle area, TileContent content, HouseView view) {
             int[] size = content.size();
-            if (picture != null) {
-                // the picture shows the house with a margin of CityLayer's image space;
-                // the measurements span the house itself
-                int width = picture.getWidth(null), height = picture.getHeight(null);
-                int areaX = tile.x + MEASURE_LEFT, areaY = tile.y + 10;
-                int areaWidth = tile.width - MEASURE_LEFT - 10, areaHeight = PICTURE - MEASURE_BOTTOM + 8;
-                double scale = Math.min((double) areaWidth / width, (double) areaHeight / height);
-                int w = Math.max(1, (int) Math.round(width * scale)), h = Math.max(1, (int) Math.round(height * scale));
-                int imageX = areaX + (areaWidth - w) / 2, imageY = areaY + (areaHeight - h) / 2;
-                var quality = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                g.drawImage(picture, imageX, imageY, w, h, null);
-                if (quality != null)
-                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, quality);
-                double margin = (width - size[0]) / 2.0 * scale;
-                double marginY = (height - size[1]) / 2.0 * scale;
-                var house = new Rectangle2D.Double(imageX + margin, imageY + marginY, size[0] * scale, size[1] * scale);
-                paintMeasurements(g, house, size);
+            Image picture = switch (view) {
+                case TOP -> content.picture();
+                case FRONT -> content.front();
+                case SIDE -> content.side();
+            };
+            if (picture == null)
+                return;
+            int across = view == HouseView.SIDE ? size[1] : size[0];
+            int up = view == HouseView.TOP ? size[1] : size[2];
+            int width = picture.getWidth(null), height = picture.getHeight(null);
+            int areaX = area.x + MEASURE_LEFT, areaY = area.y + 12;
+            int areaWidth = area.width - MEASURE_LEFT - 4, areaHeight = area.height - MEASURE_BOTTOM - 12;
+            double scale = Math.min((double) areaWidth / width, (double) areaHeight / height);
+            int w = Math.max(1, (int) Math.round(width * scale)), h = Math.max(1, (int) Math.round(height * scale));
+            int imageX = areaX + (areaWidth - w) / 2, imageY = areaY + (areaHeight - h) / 2;
+            var quality = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            g.drawImage(picture, imageX, imageY, w, h, null);
+            if (quality != null)
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, quality);
+            // the top view has a margin around the house; the measurements span the house
+            double marginX = (width - across) / 2.0 * scale, marginY = (height - up) / 2.0 * scale;
+            var house = new Rectangle2D.Double(imageX + marginX, imageY + marginY, across * scale, up * scale);
+            paintMeasurements(g, house, Integer.toString(across),
+                    view == HouseView.TOP ? Integer.toString(up) : up + "h",
+                    view == HouseView.TOP ? size[2] + "h" : null);
+            if (view == HouseView.TOP) {
                 // which side is the front: the map outlines' ">", subtle, without the outline
                 var facing = facingArrow(house, content.facing());
                 if (facing != null) {
@@ -3295,15 +3538,49 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     g.draw(facing);
                 }
             }
-            paintElevations(g, content.front(), content.side(), tile);
-            int y = tile.y + 10 + PICTURE + 6 + VIEWS + 8;
-            g.setFont(nameFont());
+        }
+
+        /**
+         * The three small views, labelled; the one shown large is marked in lavender.
+         */
+        private void paintThumbnails(Graphics2D g, Rectangle tile, TileContent content) {
+            g.setFont(OverlayStyle.font(Font.PLAIN, 10.5f));
             var metrics = g.getFontMetrics();
-            g.setColor(text());
-            for (String line : content.nameLines()) {
-                g.drawString(line, tile.x + 8, y + metrics.getAscent());
-                y += metrics.getHeight();
+            var quality = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            for (HouseView view : HouseView.values()) {
+                var box = thumbRect(tile, view.ordinal());
+                boolean chosen = view == content.chosen(), previewed = view == content.view() && !chosen;
+                // the chosen one in the "selected" style: lavender tint and edge
+                g.setColor(chosen
+                        ? (bright() ? new Color(229, 226, 255) : OverlayStyle.ACCENT_SOFT_SOLID)
+                        : bright() ? new Color(0, 0, 0, 18) : new Color(255, 255, 255, 14));
+                g.fill(OverlayStyle.rounded(box.x, box.y, box.width, box.height));
+                g.setColor(chosen
+                        ? (bright() ? OverlayStyle.INDIGO : OverlayStyle.ACCENT)
+                        : previewed ? text() : bright() ? new Color(0, 0, 0, 50) : OverlayStyle.HAIRLINE);
+                g.setStroke(new BasicStroke(chosen ? 2f : previewed ? 1.5f : 1f));
+                g.draw(OverlayStyle.rounded(box.x + 0.5, box.y + 0.5, box.width - 1, box.height - 1));
+                Image image = switch (view) {
+                    case TOP -> content.picture();
+                    case FRONT -> content.front();
+                    case SIDE -> content.side();
+                };
+                if (image != null) {
+                    int pad = 4, room = box.width - 2 * pad;
+                    double scale = Math.min((double) room / image.getWidth(null),
+                            (double) room / image.getHeight(null));
+                    int w = Math.max(1, (int) Math.round(image.getWidth(null) * scale)),
+                            h = Math.max(1, (int) Math.round(image.getHeight(null) * scale));
+                    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+                    g.drawImage(image, box.x + (box.width - w) / 2, box.y + (box.height - h) / 2, w, h, null);
+                }
+                g.setColor(chosen || previewed ? text() : muted());
+                g.drawString(view.label, box.x + (box.width - metrics.stringWidth(view.label)) / 2,
+                        box.y + box.height + metrics.getAscent());
             }
+            if (quality != null)
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, quality);
         }
 
         static Font nameFont() {
@@ -3345,63 +3622,33 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         /**
-         * The front and side views side by side under the top view, each scaled to fit
-         * its half of the row (blocks stay square), labelled "front" / "side".
+         * Dimension lines like a technical drawing: {@code across} below the house,
+         * {@code up} on its left, {@code corner} (e.g. the height "12h") in the corner
+         * between them.
          */
-        private void paintElevations(Graphics2D g, Image front, Image side, Rectangle tile) {
-            int top = tile.y + 10 + PICTURE + 6, half = (tile.width - 16 - 8) / 2;
-            g.setFont(OverlayStyle.font(Font.PLAIN, 10.5f));
-            var metrics = g.getFontMetrics();
-            int pictureHeight = VIEWS - metrics.getHeight();
-            var quality = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-            for (int k = 0; k < 2; k++) {
-                Image view = k == 0 ? front : side;
-                int left = tile.x + 8 + k * (half + 8);
-                int width = view.getWidth(null), height = view.getHeight(null);
-                double scale = Math.min((double) half / width, (double) pictureHeight / height);
-                int w = Math.max(1, (int) Math.round(width * scale)), h = Math.max(1, (int) Math.round(height * scale));
-                // standing on the bottom of its slot, centred
-                g.drawImage(view, left + (half - w) / 2, top + pictureHeight - h, w, h, null);
-                g.setColor(muted());
-                String label = k == 0 ? "front" : "side";
-                g.drawString(label, left + (half - metrics.stringWidth(label)) / 2,
-                        top + pictureHeight + metrics.getAscent());
-            }
-            if (quality != null)
-                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, quality);
-        }
-
-        /**
-         * Dimension lines like a technical drawing: the width (x) below the house, its
-         * length (y) on the left, the height in the corner between them ("12h").
-         */
-        private void paintMeasurements(Graphics2D g, Rectangle2D.Double house, int[] size) {
+        private void paintMeasurements(Graphics2D g, Rectangle2D.Double house, String across, String up,
+                String corner) {
             g.setFont(OverlayStyle.font(Font.PLAIN, 11.5f));
             var metrics = g.getFontMetrics();
             g.setStroke(new BasicStroke(1f));
             g.setColor(muted());
             int tick = 3;
-            // width: a line below the house with end ticks, the number under its middle
             double lineY = house.getMaxY() + 6;
             g.draw(new Line2D.Double(house.getMinX(), lineY, house.getMaxX(), lineY));
             g.draw(new Line2D.Double(house.getMinX(), lineY - tick, house.getMinX(), lineY + tick));
             g.draw(new Line2D.Double(house.getMaxX(), lineY - tick, house.getMaxX(), lineY + tick));
-            String width = Integer.toString(size[0]);
             float textY = (float) (lineY + 3 + metrics.getAscent());
-            g.drawString(width, (float) (house.getCenterX() - metrics.stringWidth(width) / 2.0), textY);
-            // length: a line left of the house, the number left of its middle
+            g.drawString(across, (float) (house.getCenterX() - metrics.stringWidth(across) / 2.0), textY);
             double lineX = house.getMinX() - 6;
             g.draw(new Line2D.Double(lineX, house.getMinY(), lineX, house.getMaxY()));
             g.draw(new Line2D.Double(lineX - tick, house.getMinY(), lineX + tick, house.getMinY()));
             g.draw(new Line2D.Double(lineX - tick, house.getMaxY(), lineX + tick, house.getMaxY()));
-            String length = Integer.toString(size[1]);
-            g.drawString(length, (float) (lineX - 4 - metrics.stringWidth(length)),
+            g.drawString(up, (float) (lineX - 4 - metrics.stringWidth(up)),
                     (float) (house.getCenterY() + metrics.getAscent() / 2.0 - 1));
-            // height: in the bottom left corner, level with the width
-            String height = size[2] + "h";
-            g.setColor(text());
-            g.drawString(height, (float) (lineX - 4 - metrics.stringWidth(height)), textY);
+            if (corner != null) {
+                g.setColor(text());
+                g.drawString(corner, (float) (lineX - 4 - metrics.stringWidth(corner)), textY);
+            }
         }
     }
 }

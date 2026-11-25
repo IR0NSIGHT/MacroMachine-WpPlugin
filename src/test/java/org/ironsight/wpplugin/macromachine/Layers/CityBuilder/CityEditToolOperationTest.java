@@ -1021,6 +1021,35 @@ class CityEditToolOperationTest
         assertEquals(CityLayer.Direction.WEST, after.facing());
     }
 
+    @Test
+    void theCardsSmallViewsSwitchTheLargeOneAndTheLargeOneEnlarges() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        var card = operation.typeCardForTest();
+        card.setSize(card.getPreferredSize());
+        var tile = new Rectangle(0, 0, card.getWidth(), card.getHeight());
+        assertEquals(CityEditToolOperation.HouseView.TOP, operation.cardContentForTest().view());
+
+        // small view "front" (the first): shown large, chosen
+        var front = CityEditToolOperation.TypeGrid.thumbRect(tile, 0);
+        operation.clickTypeCard(new Point((int) front.getCenterX(), (int) front.getCenterY()));
+        assertEquals(CityEditToolOperation.HouseView.FRONT, operation.cardContentForTest().view());
+        assertEquals(CityEditToolOperation.HouseView.FRONT, operation.cardContentForTest().chosen());
+
+        // the large view opens enlarged; Esc closes it
+        var main = CityEditToolOperation.TypeGrid.mainRect(tile);
+        operation.clickTypeCard(new Point((int) main.getCenterX(), (int) main.getCenterY()));
+        assertTrue(operation.enlargedViewOpen());
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        assertFalse(operation.enlargedViewOpen());
+
+        // the name (below the small views) opens the picker
+        operation.clickTypeCard(new Point(20, card.getHeight() - 45));
+        assertTrue(operation.typeGridOpen());
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {
