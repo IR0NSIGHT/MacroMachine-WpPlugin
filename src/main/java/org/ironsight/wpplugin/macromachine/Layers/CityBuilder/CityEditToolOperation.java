@@ -3088,6 +3088,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 @Override
                 public void mouseMoved(MouseEvent event) {
                     int index = tileAt(event.getPoint());
+                    if (index >= 0)
+                        previewed = index;
                     if (index != hover) {
                         hover = index;
                         setCursor(Cursor.getPredefinedCursor(index >= 0 ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
@@ -3137,7 +3139,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         repaint();
                     } else if (index >= 0 && index == pressedTile)
                         pick(index);
-                    else if (index < 0 && pressedTile < 0)
+                    else if (index < 0 && pressedTile < 0 && !previewBounds().contains(event.getPoint()))
                         overlay.closeTypeGrid();
                 }
 
@@ -3175,6 +3177,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             int lines = nameLines.stream().mapToInt(List::size).max().orElse(1);
             tileHeight = tileHeight(lines);
             tileViews.clear();
+            previewed = -1;
             hover = -1;
             scroll = 0;
             resetFilters();
@@ -3321,7 +3324,51 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         private int columns() {
-            return Math.max(1, (getWidth() - 2 * MARGIN + GAP) / (GRID_TILE + GAP));
+            int reserve = previewWidth() > 0 ? previewWidth() + GAP : 0;
+            return Math.max(1, (getWidth() - 2 * MARGIN - reserve + GAP) / (GRID_TILE + GAP));
+        }
+
+        /**
+         * The tile last under the mouse: the preview shows it (the current type at
+         * first).
+         */
+        private int previewed = -1;
+
+        /**
+         * Width of the preview card on the right: three tiles, smaller where the
+         * viewport is too short for it, 0 (no preview) where it leaves no room for a
+         * column of tiles.
+         */
+        int previewWidth() {
+            int width = 3 * GRID_TILE + 2 * GAP;
+            int room = getHeight() - header() - MARGIN;
+            int lines = previewLines(width);
+            while (width > GRID_TILE && tileHeight(width, lines) > room) {
+                width -= 12;
+                lines = previewLines(width);
+            }
+            if (width < GRID_TILE || getWidth() < 2 * MARGIN + GRID_TILE + GAP + width)
+                return 0;
+            return width;
+        }
+
+        private int previewLines(int width) {
+            int index = previewIndex();
+            return index < 0 ? 1 : wrap(names.get(index), getFontMetrics(nameFont()), width - 16).size();
+        }
+
+        /** The schematic the preview shows, or -1. */
+        private int previewIndex() {
+            int index = hover >= 0 ? hover : previewed >= 0 ? previewed : uiState.objectIndex;
+            return index >= 0 && index < names.size() ? index : -1;
+        }
+
+        /** The preview card's bounds (empty without a preview). */
+        Rectangle previewBounds() {
+            int width = previewWidth();
+            if (width == 0)
+                return new Rectangle();
+            return new Rectangle(getWidth() - MARGIN - width, header(), width, tileHeight(width, previewLines(width)));
         }
 
         private Rectangle tileBounds(int index) {
@@ -3331,7 +3378,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             index = slot;
             int columns = columns();
             int gridWidth = columns * GRID_TILE + (columns - 1) * GAP;
-            int left = Math.max(MARGIN, (getWidth() - gridWidth) / 2);
+            int reserve = previewWidth() > 0 ? previewWidth() + GAP : 0;
+            int left = Math.max(MARGIN, (getWidth() - reserve - gridWidth) / 2);
             int row = index / columns, column = index % columns;
             return new Rectangle(left + column * (GRID_TILE + GAP), header() + row * (tileHeight + GAP) - scroll,
                     GRID_TILE, tileHeight);
@@ -3400,6 +3448,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         continue;
                     paintTile(g, i, tile);
                 }
+                paintPreview(g);
             } finally {
                 g.dispose();
             }
@@ -3465,6 +3514,22 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         int tileHeight(int lines) {
             return tileHeight(GRID_TILE, lines);
+        }
+
+        /**
+         * The hovered (or last hovered) schematic as a large card on the right: the
+         * same tile, three tiles wide, with its large view as the tile shows it.
+         */
+        private void paintPreview(Graphics2D g) {
+            int index = previewIndex();
+            var bounds = previewBounds();
+            if (index < 0 || bounds.isEmpty())
+                return;
+            var small = content(index);
+            var content = new TileContent(small.picture(), small.size(), small.front(), small.side(),
+                    wrap(names.get(index), getFontMetrics(nameFont()), bounds.width - 16), small.facing(), small.view(),
+                    small.chosen());
+            paintTileContent(g, bounds, content, false, false);
         }
 
         private void paintTile(Graphics2D g, int index, Rectangle tile) {

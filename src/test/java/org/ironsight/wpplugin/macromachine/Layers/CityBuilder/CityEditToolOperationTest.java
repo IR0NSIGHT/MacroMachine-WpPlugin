@@ -1050,6 +1050,25 @@ class CityEditToolOperationTest
         assertTrue(operation.typeGridOpen());
     }
 
+    @Test
+    void thePickerShowsALargePreviewOnTheRightThatClicksDoNotClose() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.openTypeGrid();
+        var grid = (CityEditToolOperation.TypeGrid) operation.typeGridComponent();
+        grid.setSize(1400, 1000);
+        var preview = grid.previewBounds();
+        assertEquals(3 * 150 + 2 * 12, preview.width, "three tiles wide");
+        assertEquals(1400 - 32, preview.x + preview.width, "on the right");
+        pressAndRelease(grid, new Point(preview.x + 20, preview.y + 20), new Point(preview.x + 20, preview.y + 20));
+        assertTrue(operation.typeGridOpen(), "a click on the preview does not close the picker");
+        // too narrow for tiles and the preview: no preview
+        grid.setSize(500, 1000);
+        assertTrue(grid.previewBounds().isEmpty());
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {
