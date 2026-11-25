@@ -2902,6 +2902,37 @@ class PathToolSelectionTest
     }
 
     @Test
+    void curveStrengthIsSavedWithThePath() throws Exception {
+        SwingUtilities.invokeAndWait(() -> {
+            try {
+                Dimension dimension = dimension();
+                dimension.setAttribute(HANDLES, new ArrayList<>(List.of(20f, 20f, 70f, 4f, 60f, 20f, 70f, 4f)), true);
+                PathTool tool = synchronousTool();
+                tool.setView(new TestView(dimension));
+                tool.setBrush(brush());
+                tool.setActive(true);
+                try {
+                    curveSpinner(tool).setValue(1.4d);
+                } finally {
+                    tool.setActive(false);
+                }
+                // a world reopened: a fresh tool on the same dimension gets the strength back
+                PathTool reopened = synchronousTool();
+                reopened.setView(new TestView(dimension));
+                reopened.setBrush(brush());
+                reopened.setActive(true);
+                try {
+                    assertEquals(1.4f, reopened.curveStrength(), 1e-6f);
+                } finally {
+                    reopened.setActive(false);
+                }
+            } catch (Exception exception) {
+                throw new RuntimeException(exception);
+            }
+        });
+    }
+
+    @Test
     void undoingAnApplyKeepsTheApplySettings() throws Exception {
         SwingUtilities.invokeAndWait(() -> {
             try {

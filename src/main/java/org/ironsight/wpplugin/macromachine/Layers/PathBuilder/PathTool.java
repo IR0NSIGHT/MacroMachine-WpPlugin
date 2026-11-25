@@ -136,6 +136,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private static final AttributeKey<ArrayList<Float>> PATHHANDLES_KEY = new AttributeKey<>("PATHTOOL-PATHHANDLES",
             new ArrayList<Float>());
     /**
+     * The path's curve strength, saved with the world next to its nodes. Outside
+     * undo, like the Apply settings: undo never changed it.
+     */
+    private static final AttributeKey<Float> CURVE_STRENGTH_KEY = new AttributeKey<>("PATHTOOL-CURVE-STRENGTH", 0f);
+    /**
      * The Apply dialogs' settings (flat floats) and paints (per paint "on", the
      * output's provider type, its save data and the value), stored on the dimension
      * apart from the nodes (a new path keeps them) and outside WorldPainter's undo
@@ -729,6 +734,20 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                 nodes.add(new Point4f(x, y, dimension.getHeightAt(x, y), NEW_NODE_RADIUS));
         }
         return nodes;
+    }
+
+    /** The curve strength saved with the dimension's path, into the spinner. */
+    private void loadCurveStrength() {
+        Dimension dimension = getView() == null ? null : getDimension();
+        if (dimension != null)
+            handleFactorSpinner.setValue(Math.round(dimension.getAttribute(CURVE_STRENGTH_KEY) * 100) / 100.0);
+    }
+
+    /** Saves the curve strength with the dimension's path (outside undo). */
+    private void storeCurveStrength() {
+        Dimension dimension = getView() == null ? null : getDimension();
+        if (dimension != null && Float.compare(dimension.getAttribute(CURVE_STRENGTH_KEY), handleStrength) != 0)
+            dimension.setAttribute(CURVE_STRENGTH_KEY, handleStrength, false);
     }
 
     /** Starts over: the starter nodes (or none) with curve strength 1. */
@@ -1619,6 +1638,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             overlaySwitch.setSelected(true);
         previewWorker = workerFactory.get();
         attachOverlay();
+        loadCurveStrength();
         // never an empty canvas: no nodes yet, the starter path
         if (starterPath && getDimension() != null && getCurrentPath().isEmpty())
             startPath();
@@ -4604,6 +4624,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     "Controls how curve the path is. 0 = straight lines, 1 = normal curves, 2 = exaggerated curves, -1 = cursive");
             handleFactorSpinner.addChangeListener(l -> {
                 handleStrength = ((Number) handleFactorSpinner.getValue()).floatValue();
+                storeCurveStrength();
                 overlay.repaint();
                 schedulePreview(); // the path's shape, not an Apply setting
             });
