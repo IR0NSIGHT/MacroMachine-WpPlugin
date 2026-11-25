@@ -3550,15 +3550,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             for (HouseView view : HouseView.values()) {
                 var box = thumbRect(tile, view.ordinal());
                 boolean chosen = view == content.chosen(), previewed = view == content.view() && !chosen;
-                // the chosen one in the "selected" style: lavender tint and edge
-                g.setColor(chosen
-                        ? (bright() ? new Color(229, 226, 255) : OverlayStyle.ACCENT_SOFT_SOLID)
-                        : bright() ? new Color(0, 0, 0, 18) : new Color(255, 255, 255, 14));
+                // the chosen one only hinted at: a thin, faint lavender edge
+                g.setColor(bright() ? new Color(0, 0, 0, 18) : new Color(255, 255, 255, 14));
                 g.fill(OverlayStyle.rounded(box.x, box.y, box.width, box.height));
                 g.setColor(chosen
-                        ? (bright() ? OverlayStyle.INDIGO : OverlayStyle.ACCENT)
+                        ? (bright() ? new Color(94, 55, 175, 150) : new Color(205, 199, 255, 150))
                         : previewed ? text() : bright() ? new Color(0, 0, 0, 50) : OverlayStyle.HAIRLINE);
-                g.setStroke(new BasicStroke(chosen ? 2f : previewed ? 1.5f : 1f));
+                g.setStroke(new BasicStroke(previewed ? 1.5f : 1f));
                 g.draw(OverlayStyle.rounded(box.x + 0.5, box.y + 0.5, box.width - 1, box.height - 1));
                 Image image = switch (view) {
                     case TOP -> content.picture();
@@ -3575,7 +3573,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                             RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     g.drawImage(image, box.x + (box.width - w) / 2, box.y + (box.height - h) / 2, w, h, null);
                 }
-                g.setColor(chosen || previewed ? text() : muted());
+                g.setColor(previewed ? text() : muted());
                 g.drawString(view.label, box.x + (box.width - metrics.stringWidth(view.label)) / 2,
                         box.y + box.height + metrics.getAscent());
             }
