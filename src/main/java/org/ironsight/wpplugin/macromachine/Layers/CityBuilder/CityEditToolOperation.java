@@ -2467,6 +2467,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          */
         private final JToggleButton brightToggle = new JToggleButton("Bright",
                 LucideIcons.icon("sun", 16, OverlayStyle.TEXT));
+        /**
+         * Add random: tick or untick every schematic at once (only shown with the
+         * checkboxes).
+         */
+        private final JButton selectAll = OverlayStyle.smallButton(new JButton("Select all"));
+        private final JButton deselectAll = OverlayStyle.smallButton(new JButton("Deselect all"));
 
         TypeGrid() {
             setOpaque(false);
@@ -2481,6 +2487,25 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             OverlayStyle.button(brightToggle);
             brightToggle.setSelectedIcon(LucideIcons.icon("sun", 16, OverlayStyle.ON_ACCENT));
             add(brightToggle);
+            selectAll.setName("CityTool.TypeGrid.SelectAll");
+            selectAll.setFocusable(false);
+            selectAll.setToolTipText("Tick every schematic for Add random");
+            selectAll.addActionListener(event -> {
+                for (int i = 0; i < pictures.size(); i++)
+                    randomPool.add(i);
+                overlay.refresh();
+                repaint();
+            });
+            add(selectAll);
+            deselectAll.setName("CityTool.TypeGrid.DeselectAll");
+            deselectAll.setFocusable(false);
+            deselectAll.setToolTipText("Untick every schematic");
+            deselectAll.addActionListener(event -> {
+                randomPool.clear();
+                overlay.refresh();
+                repaint();
+            });
+            add(deselectAll);
             var mouse = new MouseAdapter() {
                 @Override
                 public void mouseMoved(MouseEvent event) {
@@ -2538,6 +2563,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         void open(CityLayer layer) {
+            selectAll.setVisible(pickingRandomPool());
+            deselectAll.setVisible(pickingRandomPool());
             pictures.clear();
             names.clear();
             nameLines.clear();
@@ -2594,6 +2621,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             var size = brightToggle.getPreferredSize();
             // left of the close cross, level with the title
             brightToggle.setBounds(width - MARGIN - 24 - size.width, 36 - size.height / 2, size.width, size.height);
+            // left of Bright: Deselect all, then Select all
+            var deselect = deselectAll.getPreferredSize();
+            deselectAll.setBounds(brightToggle.getX() - 8 - deselect.width, 36 - deselect.height / 2, deselect.width,
+                    deselect.height);
+            var select = selectAll.getPreferredSize();
+            selectAll.setBounds(deselectAll.getX() - 4 - select.width, 36 - select.height / 2, select.width,
+                    select.height);
         }
 
         // ---- palette: charcoal, or light in bright mode ----
@@ -2656,6 +2690,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             try {
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                // the select buttons belong to the checkboxes: only in add mode with Add random
+                boolean ticking = pickingRandomPool();
+                if (selectAll.isVisible() != ticking) {
+                    selectAll.setVisible(ticking);
+                    deselectAll.setVisible(ticking);
+                }
                 g.setColor(bright() ? new Color(232, 232, 232, 245) : new Color(22, 22, 22, 235));
                 g.fillRect(0, 0, getWidth(), getHeight());
 

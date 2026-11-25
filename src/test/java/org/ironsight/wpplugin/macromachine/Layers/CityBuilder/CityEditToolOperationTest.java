@@ -682,6 +682,29 @@ class CityEditToolOperationTest
         assertFalse(operation.typeGridOpen());
     }
 
+    @Test
+    void thePickerSelectsAndDeselectsAllForAddRandom() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.openTypeGrid();
+        var grid = operation.typeGridComponent();
+        var selectAll = (javax.swing.JButton) OperationPanelLookup.find(grid, "CityTool.TypeGrid.SelectAll");
+        var deselectAll = (javax.swing.JButton) OperationPanelLookup.find(grid, "CityTool.TypeGrid.DeselectAll");
+        assertFalse(selectAll.isVisible(), "no checkboxes outside Add random");
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+
+        operation.setAddRandom(true);
+        operation.openTypeGrid();
+        assertTrue(selectAll.isVisible());
+        selectAll.doClick();
+        assertEquals(Set.of(0, 1, 2), operation.randomPool());
+        deselectAll.doClick();
+        assertEquals(Set.of(), operation.randomPool());
+        assertTrue(operation.typeGridOpen());
+    }
+
     private static Point pressAndRelease(javax.swing.JComponent grid, Point press, Point release) {
         long when = System.currentTimeMillis();
         grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_PRESSED, when,
