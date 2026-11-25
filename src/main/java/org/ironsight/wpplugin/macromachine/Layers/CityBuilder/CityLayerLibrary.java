@@ -35,7 +35,7 @@ final class CityLayerLibrary
      * The tutorial layer: a WorldPainter layer file (gzipped serialized layer, as
      * WorldPainter exports it), bundled with the plugin.
      */
-    static final String TUTORIAL_LAYER_RESOURCE = "/CityBuilder/tutorial.layer";
+    static final String TUTORIAL_LAYER_RESOURCE = "/CityBuilder/Ektelion_Ukr-PeasantVillage.layer";
 
     private CityLayerLibrary() {
     }
