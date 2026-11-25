@@ -906,6 +906,31 @@ class CityEditToolOperationTest
                 when + 40, 0, toX, 20, 1, false, java.awt.event.MouseEvent.BUTTON1));
     }
 
+    @Test
+    void openingAnotherWorldWipesSelectionAndClipboard() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        layer.setDataAt(TEST_DIMENSION, 100, 400, new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 400));
+        operation.handleClick(100, 400, false, false);
+        operation.handleKeyInteraction(KeyEvent.VK_C, true);
+        assertEquals(1, operation.selection().size());
+
+        Dimension other = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(64, 64), -64,
+                320, 70, 7, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
+                org.pepsoft.worldpainter.Terrain.GRASS));
+        TEST_VIEW.setDimension(other);
+        try {
+            operation.setCursorWorldPosition(10, 10);
+            operation.handleKeyInteraction(KeyEvent.VK_V, true); // the clipboard is gone
+            assertTrue(operation.selection().isEmpty(), "the selection belonged to the previous world");
+            assertNull(layer.getInformationAt(10, 10));
+        } finally {
+            TEST_VIEW.setDimension(TEST_DIMENSION);
+        }
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {

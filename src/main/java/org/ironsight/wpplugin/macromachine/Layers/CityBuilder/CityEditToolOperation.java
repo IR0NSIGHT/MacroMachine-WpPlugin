@@ -157,6 +157,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private final TiledImageViewer.ViewListener overlayViewListener = changedView -> {
         if (previousViewListener != null)
             previousViewListener.viewChanged(changedView);
+        syncWorld();
         overlay.repaint();
     };
     private final ComponentAdapter overlayResizeListener = new ComponentAdapter() {
@@ -688,10 +689,56 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     private CityLayer getSelectedLayer() {
-        if (getPaint() instanceof LayerPaint layerPaint && layerPaint.getLayer() instanceof CityLayer cityLayer) {
+        syncWorld();
+        if (getPaint() instanceof LayerPaint layerPaint && layerPaint.getLayer() instanceof CityLayer cityLayer
+                && inThisWorld(cityLayer))
             return cityLayer;
-        }
         return null;
+    }
+
+    /** The world (dimension) the tool's state belongs to. */
+    private Dimension knownDimension;
+    /**
+     * Last answer of {@link #inThisWorld}: the layer it was asked about, and the
+     * answer.
+     */
+    private CityLayer checkedLayer;
+    private boolean checkedLayerInWorld;
+
+    /**
+     * WorldPainter may keep the paint of the previous world when another one is
+     * opened: a City Layer of another world is no layer of this one (its houses
+     * would show, and dragging them would write them into this map).
+     */
+    private boolean inThisWorld(CityLayer layer) {
+        if (layer != checkedLayer) {
+            checkedLayer = layer;
+            checkedLayerInWorld = getView() == null || CityLayerLibrary.inWorld(layer, getDimension());
+        }
+        return checkedLayerInWorld;
+    }
+
+    /**
+     * Another world was opened: the selection, clipboard, picks for Add random and
+     * open panels belong to the previous one.
+     */
+    private void syncWorld() {
+        Dimension dimension = getView() == null ? null : getDimension();
+        if (dimension == knownDimension)
+            return;
+        boolean switched = knownDimension != null;
+        knownDimension = dimension;
+        checkedLayer = null;
+        if (!switched)
+            return;
+        cancelGesture();
+        clearSelection();
+        clearClipboard();
+        transformEditor.resetPivot();
+        randomPool.clear();
+        closeOperation();
+        overlay.closeTypeGrid();
+        overlay.refresh();
     }
 
     /**
@@ -796,6 +843,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     protected void paintChanged(Paint ignored) {
+        checkedLayer = null;
         cancelGesture();
         clearSelection();
         clearClipboard();

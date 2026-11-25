@@ -134,6 +134,19 @@ final class CityLayerLibrary
         return dimension.getCustomLayers();
     }
 
+    /**
+     * Whether {@code layer} is one of the open world's custom layers (the very same
+     * object). Without WorldPainter's GUI (tests) every layer counts.
+     */
+    static boolean inWorld(CityLayer layer, Dimension dimension) {
+        if (app() == null || dimension == null)
+            return true;
+        for (Layer custom : customLayers(dimension))
+            if (custom == layer)
+                return true;
+        return false;
+    }
+
     /** Whether the plugin bundles the tutorial layer. */
     static boolean hasTutorialLayer() {
         return CityLayerLibrary.class.getResource(TUTORIAL_LAYER_RESOURCE) != null;
