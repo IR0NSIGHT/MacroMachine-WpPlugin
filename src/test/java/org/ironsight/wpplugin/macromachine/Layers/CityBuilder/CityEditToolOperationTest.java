@@ -769,6 +769,33 @@ class CityEditToolOperationTest
         ((javax.swing.AbstractButton) component).doClick();
     }
 
+    @Test
+    void theFacingArrowPointsAlongTheHousesForwardAxis() {
+        var bounds = new java.awt.geom.Rectangle2D.Double(0, 0, 40, 40);
+        // the tip is the point farthest along the facing
+        assertEquals(new Point2D.Double(20, 5),
+                tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.NORTH)));
+        assertEquals(new Point2D.Double(35, 20),
+                tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.EAST)));
+        assertEquals(new Point2D.Double(20, 35),
+                tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.SOUTH)));
+        assertEquals(new Point2D.Double(5, 20),
+                tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.WEST)));
+        assertNull(CityEditToolOperation.facingArrow(new java.awt.geom.Rectangle2D.Double(0, 0, 6, 30),
+                CityLayer.Direction.NORTH), "too small for an arrow");
+    }
+
+    /** The arrow's tip: the second point of its shaft. */
+    private static Point2D.Double tip(java.awt.geom.Path2D.Double arrow) {
+        var points = new ArrayList<Point2D.Double>();
+        var coordinates = new double[6];
+        for (var it = arrow.getPathIterator(null); !it.isDone(); it.next()) {
+            it.currentSegment(coordinates);
+            points.add(new Point2D.Double(coordinates[0], coordinates[1]));
+        }
+        return points.get(1);
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {

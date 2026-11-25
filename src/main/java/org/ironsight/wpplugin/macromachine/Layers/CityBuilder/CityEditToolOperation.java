@@ -685,6 +685,37 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return null;
     }
 
+    /**
+     * Arrow from the middle of a house's outline (view) towards its front: an
+     * unrotated schematic faces north (up on the map); WorldPainter turns each step
+     * clockwise, so EAST faces right. {@code null} where the outline is too small
+     * to carry one.
+     */
+    static java.awt.geom.Path2D.Double facingArrow(Rectangle2D bounds, CityLayer.Direction rotation) {
+        double size = Math.min(bounds.getWidth(), bounds.getHeight());
+        if (size < 10)
+            return null;
+        double dx = 0, dy = 0;
+        switch (rotation) {
+            case NORTH -> dy = -1;
+            case EAST -> dx = 1;
+            case SOUTH -> dy = 1;
+            case WEST -> dx = -1;
+        }
+        double cx = bounds.getCenterX(), cy = bounds.getCenterY();
+        double reach = (dx != 0 ? bounds.getWidth() : bounds.getHeight()) / 2 * 0.75;
+        double head = Math.min(8, size * 0.25);
+        double tipX = cx + dx * reach, tipY = cy + dy * reach;
+        var arrow = new java.awt.geom.Path2D.Double();
+        arrow.moveTo(cx - dx * Math.min(reach, head), cy - dy * Math.min(reach, head));
+        arrow.lineTo(tipX, tipY);
+        // head: back from the tip, spread across the facing
+        arrow.moveTo(tipX - dx * head - dy * head, tipY - dy * head + dx * head);
+        arrow.lineTo(tipX, tipY);
+        arrow.lineTo(tipX - dx * head + dy * head, tipY - dy * head - dx * head);
+        return arrow;
+    }
+
     /** World rectangle a house covers on the map. */
     static Rectangle footprint(CityLayer layer, ObjectState state) {
         WPObject object = layer.getObjectForState(state);
@@ -2205,7 +2236,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     && !selectedStates.containsKey(new Point(hovered.house().xPos, hovered.house().yPos))) {
                 g.setColor(OverlayStyle.TEXT);
                 g.setStroke(new BasicStroke(1.5f));
-                g.draw(toView(footprint(layer, hovered.house())));
+                drawOutline(g, toView(footprint(layer, hovered.house())), hovered.house());
             }
             if (selectedStates.isEmpty())
                 return;
@@ -2221,7 +2252,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             g.setColor(OverlayStyle.MAP_SELECTION);
             g.setStroke(new BasicStroke(2f));
             for (ObjectState house : shown)
-                g.draw(toView(footprint(layer, house)));
+                drawOutline(g, toView(footprint(layer, house)), house);
             paintTransformBox(g, layer);
         }
 
@@ -2236,7 +2267,22 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             for (ObjectState house : layer.getAllObjectStates()) {
                 var bounds = toView(footprint(layer, house));
                 if (bounds.intersects(visible))
-                    g.draw(bounds);
+                    drawOutline(g, bounds, house);
+            }
+        }
+
+        /**
+         * A house's outline with the arrow of its facing (see {@link #facingArrow}).
+         */
+        private void drawOutline(Graphics2D g, Rectangle2D.Double bounds, ObjectState house) {
+            g.draw(bounds);
+            var arrow = facingArrow(bounds, house.rotation);
+            if (arrow != null) {
+                var stroke = g.getStroke();
+                g.setStroke(new BasicStroke(Math.max(1.5f, ((BasicStroke) stroke).getLineWidth()),
+                        BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(arrow);
+                g.setStroke(stroke);
             }
         }
 
