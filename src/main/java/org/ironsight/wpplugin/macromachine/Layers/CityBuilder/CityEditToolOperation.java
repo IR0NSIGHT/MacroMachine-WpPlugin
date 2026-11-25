@@ -84,7 +84,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             new HelpItem("Shift while dragging", "Precise drag: a tenth of the mouse's speed"),
             new HelpItem("Left-button drag on a building", "Move the selection"),
             new HelpItem("Left-button drag on empty map", "Select buildings fully inside the drag rectangle"),
-            new HelpItem("Right click", "Move the selection center to the cursor"),
             new HelpItem("Shift + mouse wheel", "Change the selected building type"),
             new HelpItem("Ctrl + A", "Select all buildings"),
             new HelpItem("Escape", "Leave add mode, else clear the selection"),
@@ -483,21 +482,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     /**
-     * A click at a world position: right click moves the selection there; Ctrl +
-     * left click toggles the house there in the selection, on empty map it places a
-     * house; a plain left click selects only the house there (or adds one in add
-     * mode, else clears the selection).
+     * A left click at a world position: with Ctrl it toggles the house there in the
+     * selection, on empty map it places a house; a plain click selects only the
+     * house there (or adds one in add mode, else clears the selection).
      */
-    void handleClick(int centreX, int centreY, boolean rightClick, boolean ctrlDown) {
+    void handleClick(int centreX, int centreY, boolean ctrlDown) {
         cursorWorldPosition = new Point(centreX, centreY);
         CityLayer layer = getSelectedLayer();
         if (layer == null)
             return;
 
-        if (rightClick) {
-            moveSelectionTo(layer, centreX, centreY);
-            return;
-        }
         ObjectState house = houseAt(layer, centreX, centreY);
         if (house == null) {
             if (ctrlDown || addMode.isSelected())
@@ -812,14 +806,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     @Override
     protected void tick(int centreX, int centreY, boolean inverse, boolean first, float dynamicLevel) {
-        // left clicks and drags are handled by the map mouse listener (handles, box
-        // selection); right click moves the selection to the cursor
-        if (!inverse || !first)
-            return;
-        if (getPaint() instanceof LayerPaint layerPaint && layerPaint.getLayer() instanceof CityLayer cityLayer) {
-            ensureLayerHasUndoManager(cityLayer, getDimension());
-            edit(() -> handleClick(centreX, centreY, true, false));
-        }
+        // every click and drag is handled by the map mouse listener (handles, box
+        // selection, add mode); a right click does nothing
     }
 
     private void ensureLayerHasUndoManager(CityLayer layer, Dimension dimension) {
@@ -913,13 +901,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private void moveSelection(CityLayer layer, int deltaX, int deltaY) {
         applyToSelection(layer, moveBy(deltaX, deltaY));
         transformEditor.movePivot(selectionToken, deltaX, deltaY);
-    }
-
-    private void moveSelectionTo(CityLayer layer, int x, int y) {
-        if (selectedStates.isEmpty())
-            return;
-        Point center = getSelectionCenter(new ArrayList<>(selectedStates.values()));
-        moveSelection(layer, x - center.x, y - center.y);
     }
 
     private void rotateSelection(CityLayer layer) {
@@ -1760,7 +1741,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         selectWithinBox(layer, bounds, gestureAdditive);
                 } else {
                     Point world = overlayView.viewToWorld(gestureStart);
-                    edit(() -> handleClick(world.x, world.y, false, gestureAdditive));
+                    edit(() -> handleClick(world.x, world.y, gestureAdditive));
                 }
                 return;
             }

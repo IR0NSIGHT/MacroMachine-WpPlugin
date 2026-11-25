@@ -31,7 +31,6 @@ public enum HelpCatalog {
                     new HelpItem("Shift while dragging", "Precise drag: a tenth of the mouse's speed"),
                     new HelpItem("Left-button drag on a building", "Move the selection"),
                     new HelpItem("Left-button drag on empty map", "Select buildings fully inside the drag rectangle"),
-                    new HelpItem("Right click", "Move the selection center to the cursor"),
                     new HelpItem("Shift + mouse wheel", "Change the selected building type"),
                     new HelpItem("Ctrl + A", "Select all buildings"),
                     new HelpItem("Escape", "Leave add mode, else clear the selection"),

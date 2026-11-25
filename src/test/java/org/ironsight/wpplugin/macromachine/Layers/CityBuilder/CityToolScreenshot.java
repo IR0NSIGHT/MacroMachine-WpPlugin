@@ -60,9 +60,9 @@ public final class CityToolScreenshot
             for (int[] house : houses)
                 layer.setDataAt(dimension, house[0], house[1],
                         new ObjectState(CityLayer.Direction.NORTH, false, house[2], house[0], house[1]));
-            operation.handleClick(300, 300, false, false);
-            operation.handleClick(360, 300, false, true);
-            operation.handleClick(330, 380, false, true);
+            operation.handleClick(300, 300, false);
+            operation.handleClick(360, 300, true);
+            operation.handleClick(330, 380, true);
         });
         Thread.sleep(1500); // the tool name label animates into the corner
         save(view, new File(out, "city-hud.png"));

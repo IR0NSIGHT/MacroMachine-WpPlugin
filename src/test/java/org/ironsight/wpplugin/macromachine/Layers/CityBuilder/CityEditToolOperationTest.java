@@ -123,8 +123,8 @@ class CityEditToolOperationTest
         layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
         layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
 
-        operation.handleClick(first.xPos, first.yPos, false, false);
-        operation.handleClick(second.xPos, second.yPos, false, true);
+        operation.handleClick(first.xPos, first.yPos, false);
+        operation.handleClick(second.xPos, second.yPos, true);
         operation.handleKeyInteraction(KeyEvent.VK_C, true);
 
         assertEquals(first, layer.getInformationAt(first.xPos, first.yPos));
@@ -164,31 +164,20 @@ class CityEditToolOperationTest
     }
 
     @Test
-    void movingSelectionPlacesItsCenterAtTheCursor() {
+    void aRightClickDoesNothing() {
         CityLayer layer = layerWithObjects();
         CityEditToolOperation operation = new CityEditToolOperation();
         operation.setView(TEST_VIEW);
         operation.setPaint(new NibbleLayerPaint(layer));
+        ObjectState house = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 102);
+        layer.setDataAt(TEST_DIMENSION, house.xPos, house.yPos, house);
+        operation.handleClick(house.xPos, house.yPos, false);
 
-        ObjectState first = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 102);
-        ObjectState second = new ObjectState(CityLayer.Direction.SOUTH, true, 1, 110, 104);
-        layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
-        layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
+        operation.tick(200, 200, true, true, 1f); // WorldPainter's right click
 
-        operation.handleClick(first.xPos, first.yPos, false, false);
-        operation.handleClick(second.xPos, second.yPos, false, true);
-        operation.handleClick(200, 200, true, false);
-
-        ObjectState movedFirst = layer.getInformationAt(195, 199);
-        ObjectState movedSecond = layer.getInformationAt(205, 201);
-        assertNotNull(movedFirst);
-        assertNotNull(movedSecond);
-        assertEquals(first.objectIndex, movedFirst.objectIndex);
-        assertEquals(first.rotation, movedFirst.rotation);
-        assertEquals(first.mirrored, movedFirst.mirrored);
-        assertEquals(second.objectIndex, movedSecond.objectIndex);
-        assertEquals(second.rotation, movedSecond.rotation);
-        assertEquals(second.mirrored, movedSecond.mirrored);
+        assertEquals(house, layer.getInformationAt(100, 102), "the selection stays where it is");
+        assertNull(layer.getInformationAt(200, 200));
+        assertEquals(1, operation.selection().size());
     }
 
     @Test
@@ -203,8 +192,8 @@ class CityEditToolOperationTest
         layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
         layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
 
-        operation.handleClick(first.xPos, first.yPos, false, false);
-        operation.handleClick(second.xPos, second.yPos, false, true);
+        operation.handleClick(first.xPos, first.yPos, false);
+        operation.handleClick(second.xPos, second.yPos, true);
         operation.handleKeyInteraction(KeyEvent.VK_C);
 
         ObjectState rotatedFirst = layer.getInformationAt(104, 108);
@@ -261,17 +250,17 @@ class CityEditToolOperationTest
         assertNotNull(movedState);
         assertEquals(randomisedState.objectIndex, movedState.objectIndex);
 
-        operation.handleClick(104, 99, false, false);
+        operation.handleClick(104, 99, false);
         operation.handleKeyInteraction(KeyEvent.VK_W);
         assertNotNull(layer.getInformationAt(100, 99));
 
-        operation.handleClick(103, 99, false, false);
+        operation.handleClick(103, 99, false);
         operation.handleKeyInteraction(KeyEvent.VK_S);
         assertNotNull(layer.getInformationAt(100, 100));
         operation.handleKeyInteraction(KeyEvent.VK_W);
 
-        operation.handleClick(100, 99, false, false);
-        operation.handleClick(400, 400, false, false);
+        operation.handleClick(100, 99, false);
+        operation.handleClick(400, 400, false);
         assertNotNull(layer.getInformationAt(100, 99));
 
         operation.handleKeyInteraction(KeyEvent.VK_W);
@@ -281,9 +270,9 @@ class CityEditToolOperationTest
         assertNull(layer.getInformationAt(Integer.MAX_VALUE, Integer.MAX_VALUE));
         assertNull(layer.getInformationAt(Integer.MAX_VALUE, Integer.MAX_VALUE - 1));
 
-        operation.handleClick(200, 200, false, true);
+        operation.handleClick(200, 200, true);
         assertNotNull(layer.getInformationAt(200, 200));
-        operation.handleClick(201, 200, true, false);
+        operation.handleKeyInteraction(KeyEvent.VK_D);
         assertNull(layer.getInformationAt(200, 200));
         assertNotNull(layer.getInformationAt(201, 200));
 
@@ -295,10 +284,10 @@ class CityEditToolOperationTest
         layer.setDataAt(dimension, first.xPos, first.yPos, first);
         layer.setDataAt(dimension, second.xPos, second.yPos, second);
 
-        operation.handleClick(300, 300, false, false);
-        operation.handleClick(310, 300, false, true);
-        operation.handleClick(300, 300, false, true);
-        operation.handleClick(300, 300, false, true);
+        operation.handleClick(300, 300, false);
+        operation.handleClick(310, 300, true);
+        operation.handleClick(300, 300, true);
+        operation.handleClick(300, 300, true);
 
         operation.handleKeyInteraction(KeyEvent.VK_W);
         ObjectState movedFirst = layer.getInformationAt(300, 299);
@@ -382,8 +371,8 @@ class CityEditToolOperationTest
         ObjectState second = new ObjectState(CityLayer.Direction.NORTH, false, 1, 110, 100);
         layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
         layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
-        operation.handleClick(100, 100, false, false);
-        operation.handleClick(110, 100, false, true);
+        operation.handleClick(100, 100, false);
+        operation.handleClick(110, 100, true);
 
         assertFalse(
                 operation.transformSelection(CityEditToolOperation.scaleAround(new Point2D.Double(105, 100), 0.01, 1)));
@@ -408,20 +397,20 @@ class CityEditToolOperationTest
         layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
         layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
 
-        operation.handleClick(100, 140, false, false);
-        operation.handleClick(110, 140, false, false);
+        operation.handleClick(100, 140, false);
+        operation.handleClick(110, 140, false);
         assertEquals(List.of(second), operation.selection());
-        operation.handleClick(100, 140, false, true);
+        operation.handleClick(100, 140, true);
         assertEquals(2, operation.selection().size());
-        operation.handleClick(110, 140, false, true);
+        operation.handleClick(110, 140, true);
         assertEquals(List.of(first), operation.selection());
         // a plain click on empty map clears the selection; in add mode it places a
         // house
-        operation.handleClick(150, 150, false, false);
+        operation.handleClick(150, 150, false);
         assertTrue(operation.selection().isEmpty());
         assertNull(layer.getInformationAt(150, 150));
         operation.addModeToggle().setSelected(true);
-        operation.handleClick(150, 150, false, false);
+        operation.handleClick(150, 150, false);
         assertNotNull(layer.getInformationAt(150, 150));
     }
 
@@ -468,7 +457,7 @@ class CityEditToolOperationTest
         operation.setPaint(new NibbleLayerPaint(layer));
         ObjectState house = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 180);
         layer.setDataAt(TEST_DIMENSION, house.xPos, house.yPos, house);
-        operation.handleClick(100, 180, false, false);
+        operation.handleClick(100, 180, false);
 
         operation.openTypeGrid();
         operation.pickTypeInGrid(2);
@@ -581,8 +570,8 @@ class CityEditToolOperationTest
         operation.setPaint(new NibbleLayerPaint(layer));
         layer.setDataAt(TEST_DIMENSION, 100, 220, new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 220));
         layer.setDataAt(TEST_DIMENSION, 120, 220, new ObjectState(CityLayer.Direction.NORTH, false, 1, 120, 220));
-        operation.handleClick(100, 220, false, false);
-        operation.handleClick(120, 220, false, true);
+        operation.handleClick(100, 220, false);
+        operation.handleClick(120, 220, true);
         assertEquals(0, operation.boxAngle());
 
         operation.handleKeyInteraction(KeyEvent.VK_C);
@@ -918,7 +907,7 @@ class CityEditToolOperationTest
         operation.setView(TEST_VIEW);
         operation.setPaint(new NibbleLayerPaint(layer));
         layer.setDataAt(TEST_DIMENSION, 100, 400, new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 400));
-        operation.handleClick(100, 400, false, false);
+        operation.handleClick(100, 400, false);
         operation.handleKeyInteraction(KeyEvent.VK_C, true);
         assertEquals(1, operation.selection().size());
 
