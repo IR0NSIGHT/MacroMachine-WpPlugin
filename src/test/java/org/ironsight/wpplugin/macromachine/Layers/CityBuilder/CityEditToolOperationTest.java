@@ -465,9 +465,17 @@ class CityEditToolOperationTest
         // the picker chooses the next house; the selected house keeps its type ...
         assertEquals(0, layer.getInformationAt(100, 180).objectIndex);
         assertEquals(2, operation.nextHouse().objectIndex);
-        // ... until Apply type
-        operation.applyTypeToSelection();
-        assertEquals(2, layer.getInformationAt(100, 180).objectIndex);
+        // ... Change type opens the picker for the selection: its pick goes to the
+        // house
+        clickNamed(operation.typeCardForTest(), "CityTool.TypeCard.ChangeType");
+        assertTrue(operation.typeGridOpen());
+        operation.pickTypeInGrid(1);
+        assertFalse(operation.typeGridOpen());
+        assertEquals(1, layer.getInformationAt(100, 180).objectIndex);
+        // closing it without a pick changes nothing
+        operation.changeTypeOfSelection();
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        assertEquals(1, layer.getInformationAt(100, 180).objectIndex);
         // bright mode is kept for the next time the picker opens
         operation.openTypeGrid();
         assertTrue(operation.typeGridOpen());
@@ -971,6 +979,25 @@ class CityEditToolOperationTest
         SwingUtilities.invokeAndWait(() -> {
         }); // the second attempt runs later on the event thread
         assertSame(layer, ((LayerPaint) operation.getPaint()).getLayer());
+    }
+
+    @Test
+    void schematicViewsShadeSlopesAndShowFrontAndSide() {
+        // an L: two blocks high on the west, one on the east
+        var object = new GenericObject("l", 2, 1, 2,
+                new Material[]{Material.STONE, Material.STONE, Material.STONE, Material.AIR});
+        int[][] top = SchematicViews.top(object);
+        assertNotEquals(0, top[0][0]);
+        assertNotEquals(0, top[1][0]);
+        assertNotEquals(top[0][0], top[1][0], "the step between the two heights is shaded");
+        var front = SchematicViews.front(object);
+        assertEquals(2, front.getWidth());
+        assertEquals(2, front.getHeight());
+        assertEquals(0, front.getRGB(1, 0) >>> 24, "nothing on top of the low half");
+        assertNotEquals(0, front.getRGB(0, 0) >>> 24);
+        var side = SchematicViews.side(object);
+        assertEquals(1, side.getWidth());
+        assertEquals(2, side.getHeight());
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {

@@ -99,60 +99,42 @@ public class CityLayer extends CustomLayer implements UndoListener
         Point3i dims = schematic.getDimensions();
         int space = 3;
         BufferedImage img = new BufferedImage(2 * space + dims.x, 2 * space + dims.y, TYPE_INT_ARGB);
-        Graphics2D g2d = img.createGraphics();
-        paintObjectToImage(g2d, space, space, schematic);
-        g2d.dispose();
+        paintObjectToImage(img, space, space, schematic);
         return img;
     }
 
+    /**
+     * The house's shaded top view (see {@link SchematicViews#top}) into the map's
+     * colour tile.
+     */
     private void paintObjectToColorTile(IntegerTile colorTile, WPObject object, int objectTilePosX,
             int objectTilePosY) {
-        int height = object.getDimensions().z;
+        int[][] colours = SchematicViews.top(object);
         int offsetX = object.getOffset().x;
         int offsetY = object.getOffset().y;
-        for (int x = 0; x < object.getDimensions().x; x++) {
-            for (int y = 0; y < object.getDimensions().y; y++) {
-                for (int z = object.getDimensions().z - 1; z >= 0; z--) {
-                    Material mat = object.getMaterial(x, y, z);
-                    if (mat != null && mat != Material.AIR) {
-                        double value = (Math.sqrt(1f * z / height)) * 0.5f + 0.5f;
-                        Color base = new Color(mat.colour);
-                        Color darkenFactor = new Color((int) (Math.max(0, Math.min(255, value * base.getRed()))),
-                                (int) (Math.max(0, Math.min(255, value * base.getGreen()))),
-                                (int) (Math.max(0, Math.min(255, value * base.getBlue()))));
-                        int pixelPosInTileX = objectTilePosX + x + offsetX;
-                        int pixelPosInTileY = objectTilePosY + y + offsetY;
-                        if (pixelPosInTileX < 0 || pixelPosInTileY < 0 || pixelPosInTileX >= TILE_SIZE
-                                || pixelPosInTileY >= TILE_SIZE)
-                            break; // dont try to paint outside the colorTiles bounds.
-                        colorTile.setValueAt(pixelPosInTileX, pixelPosInTileY, darkenFactor.getRGB());
-                        break;
-                    }
-                }
+        for (int x = 0; x < colours.length; x++)
+            for (int y = 0; y < colours[x].length; y++) {
+                if (colours[x][y] == 0)
+                    continue;
+                int pixelPosInTileX = objectTilePosX + x + offsetX;
+                int pixelPosInTileY = objectTilePosY + y + offsetY;
+                if (pixelPosInTileX < 0 || pixelPosInTileY < 0 || pixelPosInTileX >= TILE_SIZE
+                        || pixelPosInTileY >= TILE_SIZE)
+                    continue; // outside the colour tile
+                colorTile.setValueAt(pixelPosInTileX, pixelPosInTileY, colours[x][y]);
             }
-        }
     }
 
-    private void paintObjectToImage(Graphics2D graphics2D, int width, int heightPx, WPObject object) {
-        int height = object.getDimensions().z;
-        for (int x = 0; x < object.getDimensions().x; x++) {
-            for (int y = 0; y < object.getDimensions().y; y++) {
-                int totalPosY = y;
-                for (int z = object.getDimensions().z - 1; z >= 0; z--) {
-                    Material mat = object.getMaterial(x, y, z);
-                    if (mat != null && mat != Material.AIR) {
-                        double value = (Math.sqrt(1f * z / height)) * 0.5f + 0.5f;
-                        Color base = new Color(mat.colour);
-                        Color darkenFactor = new Color((int) (Math.max(0, Math.min(255, value * base.getRed()))),
-                                (int) (Math.max(0, Math.min(255, value * base.getGreen()))),
-                                (int) (Math.max(0, Math.min(255, value * base.getBlue()))));
-                        graphics2D.setColor(darkenFactor);
-                        graphics2D.fillRect(x + width, heightPx + totalPosY, 1, 1);
-                        break;
-                    }
-                }
-            }
-        }
+    /**
+     * The house's shaded top view into an image, {@code left} / {@code top} pixels
+     * in.
+     */
+    private void paintObjectToImage(BufferedImage image, int left, int top, WPObject object) {
+        int[][] colours = SchematicViews.top(object);
+        for (int x = 0; x < colours.length; x++)
+            for (int y = 0; y < colours[x].length; y++)
+                if (colours[x][y] != 0)
+                    image.setRGB(left + x, top + y, colours[x][y]);
     }
 
     private void paintObjectIntoTile(Tile tile, WPObject object, Point objectGlobalPos) {

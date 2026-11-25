@@ -2071,10 +2071,19 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     /**
      * Opens the schematic picker over the whole viewport (what clicking the type
-     * card does).
+     * card does): the pick is the next house's type.
      */
     void openTypeGrid() {
-        overlay.openTypeGrid();
+        overlay.openTypeGrid(false);
+    }
+
+    /**
+     * Change type (card): opens the picker; the schematic picked there goes to the
+     * selected houses (closing it without a pick changes nothing).
+     */
+    void changeTypeOfSelection() {
+        if (getSelectedLayer() != null && !selectedStates.isEmpty())
+            overlay.openTypeGrid(true);
     }
 
     boolean typeGridOpen() {
@@ -2091,6 +2100,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      */
     List<Integer> typeGridVisible() {
         return List.copyOf(overlay.typeGrid.visible);
+    }
+
+    /** The type card (exposed for tests). */
+    JComponent typeCardForTest() {
+        return overlay.typeCard;
     }
 
     /** The picker itself (exposed for tests). */
@@ -2222,7 +2236,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 @Override
                 public void mouseReleased(MouseEvent event) {
                     if (pressed && SwingUtilities.isLeftMouseButton(event) && typeCard.contains(event.getPoint()))
-                        openTypeGrid();
+                        openTypeGrid(false);
                     pressed = false;
                 }
             });
@@ -2291,10 +2305,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return button;
         }
 
-        void openTypeGrid() {
+        void openTypeGrid(boolean forSelection) {
             CityLayer layer = getSelectedLayer();
             if (layer == null || layer.getObjectList().isEmpty())
                 return;
+            typeGrid.forSelection = forSelection;
             typeGrid.open(layer);
             typeGrid.setBounds(0, 0, getWidth(), getHeight());
             setComponentZOrder(typeGrid, 0);
@@ -2535,14 +2550,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     "Turn a quarter clockwise: the selected houses, or the next house", () -> turnNext(-1));
             addButton("flip-horizontal-2", "CityTool.TypeCard.Mirror",
                     "Mirror the selected houses, or the next house (X)", this::mirror);
-            applyType = OverlayStyle.button(new JButton("Apply type"));
-            applyType.setName("CityTool.TypeCard.ApplyType");
-            applyType.setToolTipText("Give this schematic to the selected houses");
+            applyType = OverlayStyle.button(new JButton("Change type"));
+            applyType.setName("CityTool.TypeCard.ChangeType");
+            applyType.setToolTipText("Pick a schematic for the selected houses");
             applyType.setFocusable(false);
             applyType.setFont(OverlayStyle.font(Font.PLAIN, 12.5f));
             applyType.setBorder(new EmptyBorder(4, 9, 4, 9));
             applyType.setCursor(Cursor.getDefaultCursor());
-            applyType.addActionListener(event -> applyTypeToSelection());
+            applyType.addActionListener(event -> changeTypeOfSelection());
             buttons.add(applyType);
             add(applyType);
         }
@@ -2692,12 +2707,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return filterRow.isVisible() ? 152 : 118;
         }
         /** Tile height without the name (picture, measurements, padding). */
-        private static final int TILE_HEIGHT_WITHOUT_NAME = 10 + PICTURE + 8 + 10;
+        /** Height of the front / side view row under the top view (px). */
+        private static final int VIEWS = 46;
+        private static final int TILE_HEIGHT_WITHOUT_NAME = 10 + PICTURE + 6 + VIEWS + 8 + 10;
         /** All tiles are as tall as the longest name needs (one line at least). */
         private int tileHeight = TILE_HEIGHT_WITHOUT_NAME + 18;
         /** Room left of and below the picture for its measurements (px). */
         private static final int MEASURE_LEFT = 34, MEASURE_BOTTOM = 22;
         private final List<Image> pictures = new ArrayList<>();
+        /** Per schematic: its front and side view (see SchematicViews). */
+        private final List<Image> fronts = new ArrayList<>(), sides = new ArrayList<>();
         private final List<String> names = new ArrayList<>();
         /** Each name broken into lines that fit the tile, so it shows in full. */
         private final List<List<String>> nameLines = new ArrayList<>();
@@ -2920,12 +2939,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             selectAll.setVisible(pickingRandomPool());
             deselectAll.setVisible(pickingRandomPool());
             pictures.clear();
+            fronts.clear();
+            sides.clear();
             names.clear();
             nameLines.clear();
             sizes.clear();
             var objects = layer.getObjectList();
             for (int i = 0; i < objects.size(); i++) {
                 pictures.add(layer.getSchematicImage(new ObjectState(CityLayer.Direction.NORTH, false, i, 0, 0)));
+                fronts.add(SchematicViews.front(objects.get(i)));
+                sides.add(SchematicViews.side(objects.get(i)));
                 names.add(schematicName(objects.get(i), i));
                 nameLines.add(wrap(names.get(i), getFontMetrics(nameFont()), GRID_TILE - 16));
                 var dimensions = objects.get(i).getDimensions();
@@ -3015,9 +3038,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         OverlayStyle.ON_ACCENT, null);
         }
 
+        /** Opened by Change type: the pick goes to the selected houses. */
+        private boolean forSelection;
+
         void pick(int index) {
-            // the next house's type; the selected houses get it with Apply type on the card
             setNextType(index);
+            if (forSelection)
+                applyTypeToSelection();
             overlay.closeTypeGrid();
         }
 
@@ -3133,8 +3160,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 g.setFont(OverlayStyle.font(Font.PLAIN, 13f));
                 g.setColor(muted());
                 int selected = selectedStates.size();
-                String target = selected > 0
-                        ? "For the next house you place (Apply type on the card gives it to the selected houses)"
+                String target = forSelection && selected > 0
+                        ? "Change type: for the " + (selected == 1 ? "selected house" : selected + " selected houses")
                         : "For the next house you place";
                 if (pickingRandomPool())
                     target = "Add random: tick the schematics to pick from (" + randomPool.size()
@@ -3192,7 +3219,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             }
             if (pickingRandomPool())
                 paintCheckbox(g, index);
-            int y = tile.y + 10 + PICTURE + 8;
+            paintElevations(g, index, tile);
+            int y = tile.y + 10 + PICTURE + 6 + VIEWS + 8;
             g.setFont(nameFont());
             var metrics = g.getFontMetrics();
             g.setColor(text());
@@ -3238,6 +3266,34 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (!line.isEmpty() || lines.isEmpty())
                 lines.add(line.toString());
             return lines;
+        }
+
+        /**
+         * The front and side views side by side under the top view, each scaled to fit
+         * its half of the row (blocks stay square), labelled "front" / "side".
+         */
+        private void paintElevations(Graphics2D g, int index, Rectangle tile) {
+            int top = tile.y + 10 + PICTURE + 6, half = (tile.width - 16 - 8) / 2;
+            g.setFont(OverlayStyle.font(Font.PLAIN, 10.5f));
+            var metrics = g.getFontMetrics();
+            int pictureHeight = VIEWS - metrics.getHeight();
+            var quality = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+            for (int k = 0; k < 2; k++) {
+                Image view = (k == 0 ? fronts : sides).get(index);
+                int left = tile.x + 8 + k * (half + 8);
+                int width = view.getWidth(null), height = view.getHeight(null);
+                double scale = Math.min((double) half / width, (double) pictureHeight / height);
+                int w = Math.max(1, (int) Math.round(width * scale)), h = Math.max(1, (int) Math.round(height * scale));
+                // standing on the bottom of its slot, centred
+                g.drawImage(view, left + (half - w) / 2, top + pictureHeight - h, w, h, null);
+                g.setColor(muted());
+                String label = k == 0 ? "front" : "side";
+                g.drawString(label, left + (half - metrics.stringWidth(label)) / 2,
+                        top + pictureHeight + metrics.getAscent());
+            }
+            if (quality != null)
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, quality);
         }
 
         /**
