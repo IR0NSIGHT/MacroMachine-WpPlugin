@@ -37,6 +37,7 @@ import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.Gui.HelpDialog;
 import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
 import org.ironsight.wpplugin.macromachine.Gui.MapToolOverlay;
+import org.ironsight.wpplugin.macromachine.Gui.OperationPanel;
 import org.ironsight.wpplugin.macromachine.Gui.OverlayStyle;
 import org.ironsight.wpplugin.macromachine.Gui.PreciseDrag;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.LucideIcons;
@@ -385,7 +386,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 return;
             }
             if (keyCode == KeyEvent.VK_ESCAPE) {
-                if (overlay.typeGridOpen())
+                if (operationPanel != null)
+                    closeOperation();
+                else if (overlay.typeGridOpen())
                     overlay.closeTypeGrid();
                 else if (gestureStart != null)
                     cancelGesture();
@@ -747,6 +750,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     @Override
     protected void deactivate() {
+        closeOperation();
         overlay.endDrag();
         detachOverlay();
         super.deactivate();
@@ -759,6 +763,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         transformEditor.resetPivot();
         randomPool.clear(); // indices belong to the old layer
         overlay.closeTypeGrid();
+        closeOperation();
         // a newly chosen layer shows its own highlight colors setting, unless the
         // overlays are off (then it is shown without them too)
         if (showOverlays.isSelected())
@@ -1101,18 +1106,158 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return newState;
     }
 
-    /** Randomizes one property of the selected houses (Schematics menu). */
-    void randomizeSelection(boolean rotation, boolean type, boolean mirror) {
+    /** What a Randomize operation of the Schematics menu changes. */
+    enum Randomized {
+        ROTATION("Randomize rotation"), MIRRORING("Randomize mirroring"), TYPE("Randomize type");
+
+        final String title;
+
+        Randomized(String title) {
+            this.title = title;
+        }
+    }
+
+    /** The open Randomize panel, or {@code null}. */
+    private JPanel operationPanel;
+    /**
+     * The open Randomize operation's result, previewed on the map, or {@code null}.
+     */
+    private UnaryOperator<ObjectState> operationPreview;
+    private Runnable operationRefresh;
+
+    /**
+     * Opens the panel of a Randomize operation (shared with the Path Tool's
+     * operations): a checkbox per allowed final state (quarter turns, mirrored or
+     * not, the layer's schematics) and a seed; the selection previews the result,
+     * Apply commits it, Cancel / Escape / a click on the map discards it.
+     */
+    void openRandomize(Randomized what) {
         CityLayer layer = getSelectedLayer();
         if (layer == null || selectedStates.isEmpty())
             return;
-        var saved = placementOptions;
-        placementOptions = new PlacementOptions(rotation, type, mirror);
-        try {
-            edit(() -> applyToSelection(layer, this::randomizeState));
-        } finally {
-            placementOptions = saved;
+        closeOperation();
+        var houses = new ArrayList<>(selectedStates.values());
+        var states = new ArrayList<JCheckBox>();
+        var values = new ArrayList<Object>();
+        switch (what) {
+            case ROTATION -> {
+                for (CityLayer.Direction direction : CityLayer.Direction.values()) {
+                    states.add(new JCheckBox(direction.toCompass() + "\u00b0", true));
+                    values.add(direction);
+                }
+            }
+            case MIRRORING -> {
+                states.add(new JCheckBox("Unmirrored", true));
+                values.add(false);
+                states.add(new JCheckBox("Mirrored", true));
+                values.add(true);
+            }
+            case TYPE -> {
+                var objects = layer.getObjectList();
+                for (int i = 0; i < objects.size(); i++) {
+                    states.add(new JCheckBox(schematicName(objects.get(i), i), true));
+                    values.add(i);
+                }
+            }
         }
+        var list = new JPanel();
+        list.setLayout(new BoxLayout(list, BoxLayout.Y_AXIS));
+        for (int i = 0; i < states.size(); i++) {
+            states.get(i).setName("CityTool.Randomize.Allowed." + i);
+            states.get(i).setAlignmentX(Component.LEFT_ALIGNMENT);
+            list.add(states.get(i));
+        }
+        var seed = OverlayStyle.spinner(new JSpinner(new SpinnerNumberModel(1, 0, 99999, 1)));
+        seed.setName("CityTool.Randomize.Seed");
+        var seedRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        seedRow.add(new JLabel("Seed"));
+        seedRow.add(seed);
+        var controls = new JPanel(new BorderLayout(0, 8));
+        controls.add(new JLabel("Allowed results:"), BorderLayout.NORTH);
+        JComponent allowed = list;
+        if (states.size() > 8) {
+            // many schematics: a scrolling list
+            var scroll = new JScrollPane(list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            scroll.setBorder(BorderFactory.createEmptyBorder());
+            scroll.getViewport().setOpaque(false);
+            scroll.setOpaque(false);
+            scroll.setPreferredSize(new java.awt.Dimension(list.getPreferredSize().width + 20, 220));
+            allowed = scroll;
+        }
+        controls.add(allowed, BorderLayout.CENTER);
+        controls.add(seedRow, BorderLayout.SOUTH);
+        var note = new JLabel("Tick at least one");
+        note.setName("CityTool.Randomize.Note");
+        note.setForeground(OverlayStyle.WARNING);
+        note.setVisible(false);
+        operationPanel = OperationPanel.create("CityTool", what.title, controls, note, this::closeOperation,
+                this::applyOperation);
+        operationRefresh = () -> {
+            var allowedValues = new ArrayList<Object>();
+            for (int i = 0; i < states.size(); i++)
+                if (states.get(i).isSelected())
+                    allowedValues.add(values.get(i));
+            note.setVisible(allowedValues.isEmpty());
+            var apply = OperationPanel.find(operationPanel, "CityTool.OperationApply");
+            if (apply != null)
+                apply.setEnabled(!allowedValues.isEmpty());
+            operationPreview = allowedValues.isEmpty()
+                    ? null
+                    : randomized(houses, what, allowedValues, ((Number) seed.getValue()).longValue());
+            overlay.relayoutOperationPanel();
+            overlay.repaint();
+        };
+        for (JCheckBox state : states)
+            state.addActionListener(event -> operationRefresh.run());
+        seed.addChangeListener(event -> operationRefresh.run());
+        overlay.showOperationPanel(operationPanel);
+        operationRefresh.run();
+    }
+
+    /**
+     * Each house gets one of the {@code allowed} values of {@code what}, at random
+     * (the same {@code seed} gives the same result).
+     */
+    static UnaryOperator<ObjectState> randomized(List<ObjectState> houses, Randomized what, List<Object> allowed,
+            long seed) {
+        var random = new Random(seed);
+        var results = new java.util.HashMap<Point, ObjectState>();
+        for (ObjectState house : houses) {
+            Object value = allowed.get(random.nextInt(allowed.size()));
+            ObjectState result = switch (what) {
+                case ROTATION -> new ObjectState((CityLayer.Direction) value, house.mirrored, house.objectIndex,
+                        house.xPos, house.yPos);
+                case MIRRORING ->
+                    new ObjectState(house.rotation, (Boolean) value, house.objectIndex, house.xPos, house.yPos);
+                case TYPE -> new ObjectState(house.rotation, house.mirrored, (Integer) value, house.xPos, house.yPos);
+            };
+            results.put(new Point(house.xPos, house.yPos), result);
+        }
+        return state -> results.getOrDefault(new Point(state.xPos, state.yPos), state);
+    }
+
+    /** Apply of the open Randomize panel. */
+    void applyOperation() {
+        var result = operationPreview;
+        closeOperation();
+        if (result != null)
+            transformSelection(result);
+    }
+
+    /** Closes the Randomize panel without changing anything. */
+    void closeOperation() {
+        if (operationPanel != null)
+            overlay.hideOperationPanel(operationPanel);
+        operationPanel = null;
+        operationPreview = null;
+        operationRefresh = null;
+        overlay.repaint();
+    }
+
+    /** The open Randomize panel (exposed for tests), or {@code null}. */
+    JPanel operationPanel() {
+        return operationPanel;
     }
 
     private ObjectState setRotation(CityLayer.Direction rotation, ObjectState oldState) {
@@ -1234,9 +1379,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      */
     private List<ObjectState> shownSelection() {
         var states = new ArrayList<>(selectedStates.values());
-        if (gestureTransform == null)
+        var shown = gestureTransform != null ? gestureTransform : operationPreview;
+        if (shown == null)
             return states;
-        return states.stream().map(gestureTransform).toList();
+        return states.stream().map(shown).toList();
     }
 
     private Point2D.Double toViewExact(Point2D world) {
@@ -1393,6 +1539,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         if (overlayView == null || layer == null || getDimension() == null)
             return;
         ensureLayerHasUndoManager(layer, getDimension());
+        closeOperation(); // clicking the map discards a previewed operation
         cancelGesture();
         Hit hit = hitTest(point);
         if (shift && hit == null)
@@ -1586,12 +1733,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         menu.add(item("Mirror (X)", "CityTool.Mirror", any, needSelection, () -> edit(() -> mirrorSelection(layer))));
         menu.add(item("Delete (Del)", "CityTool.Delete", any, needSelection, () -> edit(this::deleteSelected)));
         menu.addSeparator();
-        menu.add(item("Randomize rotation", "CityTool.RandomizeRotation", any, needSelection,
-                () -> randomizeSelection(true, false, false)));
-        menu.add(item("Randomize mirroring", "CityTool.RandomizeMirroring", any, needSelection,
-                () -> randomizeSelection(false, false, true)));
-        menu.add(item("Randomize type", "CityTool.RandomizeType", any, needSelection,
-                () -> randomizeSelection(false, true, false)));
+        menu.add(item("Randomize rotation...", "CityTool.RandomizeRotation", any, needSelection,
+                () -> openRandomize(Randomized.ROTATION)));
+        menu.add(item("Randomize mirroring...", "CityTool.RandomizeMirroring", any, needSelection,
+                () -> openRandomize(Randomized.MIRRORING)));
+        menu.add(item("Randomize type...", "CityTool.RandomizeType", any, needSelection,
+                () -> openRandomize(Randomized.TYPE)));
         return menu;
     }
 
@@ -1987,6 +2134,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     height);
             var card = typeCard.getPreferredSize();
             typeCard.setBounds(8, toolbarBottom() + 8, card.width, card.height);
+            layoutOperationPanel();
             if (typeGrid.isVisible())
                 typeGrid.setBounds(0, 0, getWidth(), getHeight());
             for (PathTool.DropdownButton dropdown : List.of(schematicsButton, layerButton))
@@ -1996,6 +2144,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         int toolbarBottom() {
             return schematicsButton.getY() + schematicsButton.getHeight();
+        }
+
+        /** Operation panels go below the type card (or the toolbar without one). */
+        @Override
+        protected int operationPanelTop() {
+            return typeCard.isVisible() ? typeCard.getY() + typeCard.getHeight() + 8 : toolbarBottom() + 8;
         }
 
         @Override
@@ -2009,6 +2163,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         public boolean contains(int x, int y) {
             if (typeGrid.isVisible())
                 return true; // the picker covers the whole viewport
+            if (operationPanelContains(x, y))
+                return true;
             for (Component control : List.of(schematicsButton, layerButton, overlaysButton, overlaysMenuButton,
                     addButton, addMenuButton, typeCard))
                 if (control.isVisible() && control.getBounds().contains(x, y))
@@ -2046,7 +2202,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             }
             if (selectedStates.isEmpty())
                 return;
-            if (gestureTransform != null) {
+            if (gestureTransform != null || operationPreview != null) {
                 // where the houses were: dashed, quiet
                 g.setColor(OverlayStyle.TEXT_MUTED);
                 g.setStroke(
@@ -2102,7 +2258,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             int padding = 8;
             int width = metrics.stringWidth(text) + 2 * padding, height = metrics.getHeight() + padding;
             int cardRight = typeCard.isVisible() ? typeCard.getX() + typeCard.getWidth() : 0;
-            int x = Math.max((getWidth() - width) / 2, cardRight + 8);
+            int x = Math.max((getWidth() - width) / 2, Math.max(cardRight, operationPanelRight()) + 8);
             int y = toolbarBottom() + 8;
             OverlayStyle.paintSurface(g, x, y, width, height, OverlayStyle.SURFACE);
             g.setColor(OverlayStyle.TEXT);

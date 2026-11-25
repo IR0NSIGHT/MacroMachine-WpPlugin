@@ -709,6 +709,64 @@ class CityEditToolOperationTest
         assertEquals("Supercalifragilisticexpialidocious-house-without-spaces", String.join("", long_));
     }
 
+    @Test
+    void randomizePanelsPickOnlyAllowedFinalStates() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        for (int i = 0; i < 12; i++)
+            layer.setDataAt(TEST_DIMENSION, 100 + 10 * i, 320,
+                    new ObjectState(CityLayer.Direction.NORTH, false, 0, 100 + 10 * i, 320));
+        operation.handleKeyInteraction(KeyEvent.VK_A, true);
+        assertEquals(12, operation.selection().size());
+
+        // rotation: only 90 and 270 degrees allowed
+        clickMenuItem(operation.schematicsMenu(), "CityTool.RandomizeRotation");
+        var panel = operation.operationPanel();
+        assertNotNull(panel);
+        clickNamed(panel, "CityTool.Randomize.Allowed.0"); // untick 0 degrees
+        clickNamed(panel, "CityTool.Randomize.Allowed.2"); // untick 180 degrees
+        clickNamed(panel, "CityTool.OperationApply");
+        assertNull(operation.operationPanel());
+        var rotations = new java.util.HashSet<CityLayer.Direction>();
+        for (ObjectState house : operation.selection())
+            rotations.add(house.rotation);
+        assertEquals(Set.of(CityLayer.Direction.EAST, CityLayer.Direction.WEST), rotations);
+
+        // type: only schematic 2; nothing ticked disables Apply
+        clickMenuItem(operation.schematicsMenu(), "CityTool.RandomizeType");
+        panel = operation.operationPanel();
+        clickNamed(panel, "CityTool.Randomize.Allowed.0");
+        clickNamed(panel, "CityTool.Randomize.Allowed.1");
+        clickNamed(panel, "CityTool.Randomize.Allowed.2");
+        assertFalse(OperationPanelLookup.find(panel, "CityTool.OperationApply").isEnabled());
+        clickNamed(panel, "CityTool.Randomize.Allowed.2");
+        clickNamed(panel, "CityTool.OperationApply");
+        for (ObjectState house : operation.selection())
+            assertEquals(2, house.objectIndex);
+
+        // mirroring: Cancel changes nothing
+        clickMenuItem(operation.schematicsMenu(), "CityTool.RandomizeMirroring");
+        clickNamed(operation.operationPanel(), "CityTool.Randomize.Allowed.0"); // only mirrored
+        clickNamed(operation.operationPanel(), "CityTool.OperationCancel");
+        for (ObjectState house : operation.selection())
+            assertFalse(house.mirrored);
+    }
+
+    private static final class OperationPanelLookup
+    {
+        static java.awt.Component find(java.awt.Container container, String name) {
+            return org.ironsight.wpplugin.macromachine.Gui.OperationPanel.find(container, name);
+        }
+    }
+
+    private static void clickNamed(java.awt.Container container, String name) {
+        var component = OperationPanelLookup.find(container, name);
+        assertNotNull(component, name);
+        ((javax.swing.AbstractButton) component).doClick();
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {

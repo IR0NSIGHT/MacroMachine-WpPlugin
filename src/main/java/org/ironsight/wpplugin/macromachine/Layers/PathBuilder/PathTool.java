@@ -1224,68 +1224,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private String operationTitle;
 
-    /**
-     * Labels and notes inside an operation panel: light text on the dark surface.
-     */
-    private static void styleOperationControls(java.awt.Container container) {
-        // the controls may be a bare text (Only downhill's note), not a panel of them
-        if (container instanceof JLabel label) {
-            styleOperationLabel(label);
-            return;
-        }
-        if (container instanceof JComponent component && !(container instanceof JSpinner))
-            component.setOpaque(false);
-        for (Component child : container.getComponents()) {
-            if (child instanceof JLabel label)
-                styleOperationLabel(label);
-            else if (child instanceof AbstractButton button)
-                org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.button(button);
-            else if (child instanceof java.awt.Container inner && !(child instanceof JSpinner))
-                styleOperationControls(inner);
-        }
-    }
-
-    /**
-     * Texts on the operation panel: muted light text (unless coloured on purpose).
-     */
-    private static void styleOperationLabel(JLabel label) {
-        label.setOpaque(false);
-        if (label.getForeground() == null || label.getForeground() instanceof javax.swing.plaf.UIResource)
-            org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.label(label, true);
-    }
-
     private void openOperation(String title, JComponent controls, Supplier<PathOperations.Result> compute) {
         closeOperation();
         cancelGesture();
         operationTitle = title;
-        JPanel panel = new org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SurfacePanel(new BorderLayout(8, 8));
-        panel.setName("PathTool.OperationPanel");
-        var heading = new JLabel(title);
-        heading.setForeground(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT);
-        heading.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 15f));
-        panel.add(heading, BorderLayout.NORTH);
-        styleOperationControls(controls);
-        panel.add(controls, BorderLayout.CENTER);
         operationMergeNote = new JLabel();
         operationMergeNote.setName("PathTool.OperationMergeNote");
         operationMergeNote.setForeground(WARNING_COLOR);
         operationMergeNote.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.PLAIN, 13.5f));
         operationMergeNote.setVisible(false);
-        var buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
-        buttons.setOpaque(false);
-        var cancel = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.button(new JButton("Cancel"));
-        cancel.setName("PathTool.OperationCancel");
-        cancel.addActionListener(event -> closeOperation());
-        var apply = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.primaryButton(new JButton("Apply"));
-        apply.setName("PathTool.OperationApply");
-        apply.addActionListener(event -> applyOperation());
-        buttons.add(cancel);
-        buttons.add(apply);
-        var south = new JPanel(new BorderLayout(0, 4));
-        south.setOpaque(false);
-        south.add(operationMergeNote, BorderLayout.NORTH);
-        south.add(buttons, BorderLayout.SOUTH);
-        panel.add(south, BorderLayout.SOUTH);
+        JPanel panel = org.ironsight.wpplugin.macromachine.Gui.OperationPanel.create("PathTool", title, controls,
+                operationMergeNote, this::closeOperation, this::applyOperation);
         operationPanel = panel;
         operationBase = getCurrentPath();
         operationRefresh = () -> {
@@ -2518,7 +2467,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         private final DropdownButton nodeMenuButton = new DropdownButton("Node");
         private final DropdownButton segmentMenuButton = new DropdownButton("Segment");
         private final DropdownButton pathMenuButton = new DropdownButton("Path");
-        private JPanel shownOperationPanel;
         private final JToggleButton addButton = new JToggleButton("Add", addIcon());
 
         PathOverlay() {
@@ -2703,42 +2651,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             return modeButton.getY() + modeButton.getHeight();
         }
 
-        /** Right edge of the open operation panel, or 0. */
-        int operationPanelRight() {
-            return shownOperationPanel == null ? 0 : shownOperationPanel.getX() + shownOperationPanel.getWidth();
-        }
-
-        void relayoutOperationPanel() {
-            layoutOperationPanel();
-            repaint();
-        }
-
-        void showOperationPanel(JPanel panel) {
-            shownOperationPanel = panel;
-            add(panel);
-            layoutOperationPanel();
-            revalidate();
-            repaint();
-        }
-
-        void hideOperationPanel(JPanel panel) {
-            remove(panel);
-            if (shownOperationPanel == panel)
-                shownOperationPanel = null;
-            repaint();
-        }
-
-        /**
-         * Top left, right below the toolbar. (Blender puts its "Adjust Last Operation"
-         * panel bottom left, but there WorldPainter draws its compass and scale bar.)
-         */
-        private void layoutOperationPanel() {
-            if (shownOperationPanel == null)
-                return;
-            java.awt.Dimension size = shownOperationPanel.getPreferredSize();
-            int y = modeButton.getY() + modeButton.getHeight() + 8;
-            shownOperationPanel.setBounds(8, y, size.width, size.height);
-            shownOperationPanel.validate();
+        /** The operation panel goes right below the toolbar. */
+        @Override
+        protected int operationPanelTop() {
+            return modeButton.getY() + modeButton.getHeight() + 8;
         }
 
         @Override
@@ -2754,7 +2670,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             // it)
             if (lastBottomReserve > 0 && unravelledBounds().contains(x, y))
                 return true;
-            if (shownOperationPanel != null && shownOperationPanel.getBounds().contains(x, y))
+            if (operationPanelContains(x, y))
                 return true;
             for (Component control : List.of(nodeMenuButton, segmentMenuButton, pathMenuButton, modeButton,
                     overlaysButton, overlaysMenuButton, addButton))

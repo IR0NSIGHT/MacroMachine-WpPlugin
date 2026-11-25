@@ -78,6 +78,13 @@ public final class CityToolScreenshot
             save(shown[0], new File(out, "city-" + menu + "-menu.png"));
             SwingUtilities.invokeAndWait(() -> shown[0].setVisible(false));
         }
+        SwingUtilities.invokeAndWait(() -> operation.openRandomize(CityEditToolOperation.Randomized.ROTATION));
+        Thread.sleep(300);
+        save(view, new File(out, "city-randomize-rotation.png"));
+        SwingUtilities.invokeAndWait(() -> operation.openRandomize(CityEditToolOperation.Randomized.TYPE));
+        Thread.sleep(300);
+        save(view, new File(out, "city-randomize-type.png"));
+        SwingUtilities.invokeAndWait(operation::closeOperation);
         SwingUtilities.invokeAndWait(operation::openTypeGrid);
         Thread.sleep(300);
         save(view, new File(out, "city-type-grid.png"));
