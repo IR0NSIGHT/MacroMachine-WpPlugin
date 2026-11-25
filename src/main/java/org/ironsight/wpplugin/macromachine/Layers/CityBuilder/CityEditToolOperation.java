@@ -3294,14 +3294,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         private Color muted() {
-            return bright() ? new Color(96, 96, 96) : OverlayStyle.TEXT_MUTED;
+            return bright() ? new Color(74, 74, 74) : OverlayStyle.TEXT_MUTED;
         }
 
         private Color tileFill(boolean current, boolean hovered) {
             if (bright())
                 return current
-                        ? new Color(229, 226, 255)
-                        : hovered ? new Color(238, 238, 244) : new Color(250, 250, 250);
+                        ? new Color(207, 202, 232)
+                        : hovered ? new Color(223, 223, 230) : new Color(214, 214, 214);
             return current
                     ? OverlayStyle.ACCENT_SOFT_SOLID
                     : hovered ? OverlayStyle.SURFACE_HOVER : OverlayStyle.SURFACE;
@@ -3428,7 +3428,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     selectAll.setVisible(ticking);
                     deselectAll.setVisible(ticking);
                 }
-                g.setColor(bright() ? new Color(232, 232, 232, 245) : new Color(22, 22, 22, 235));
+                g.setColor(bright() ? new Color(189, 189, 189, 245) : new Color(22, 22, 22, 235));
                 g.fillRect(0, 0, getWidth(), getHeight());
 
                 g.setFont(OverlayStyle.font(Font.BOLD, 20f));
