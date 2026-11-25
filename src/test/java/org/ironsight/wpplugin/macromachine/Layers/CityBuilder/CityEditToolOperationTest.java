@@ -614,7 +614,14 @@ class CityEditToolOperationTest
                 java.awt.event.MouseEvent.BUTTON1));
         grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_RELEASED, when + 80, 0,
                 press.x + 2, press.y + 1, 1, false, java.awt.event.MouseEvent.BUTTON1));
-        assertFalse(operation.typeGridOpen(), "the tile was picked and the picker closed");
+        assertTrue(operation.typeGridOpen(), "one click selects ...");
+        // ... and a second one (a double click) chooses it
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_PRESSED, when + 120,
+                java.awt.event.InputEvent.BUTTON1_DOWN_MASK, press.x, press.y, 2, false,
+                java.awt.event.MouseEvent.BUTTON1));
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_RELEASED, when + 160, 0,
+                press.x + 1, press.y, 2, false, java.awt.event.MouseEvent.BUTTON1));
+        assertFalse(operation.typeGridOpen(), "the tile was chosen and the picker closed");
     }
 
     @Test
@@ -678,8 +685,10 @@ class CityEditToolOperationTest
         pressAndRelease(grid, new Point(176, 190), new Point(176, 190));
         assertTrue(operation.typeGridOpen());
         assertEquals(Set.of(), operation.randomPool());
-        // outside add mode a click on a tile picks it again
+        // outside add mode a click selects, a double click chooses
         operation.addModeToggle().setSelected(false);
+        pressAndRelease(grid, new Point(176, 190), new Point(176, 190));
+        assertTrue(operation.typeGridOpen());
         pressAndRelease(grid, new Point(176, 190), new Point(176, 190));
         assertFalse(operation.typeGridOpen());
     }
@@ -1066,6 +1075,26 @@ class CityEditToolOperationTest
         // too narrow for tiles and the preview: no preview
         grid.setSize(500, 1000);
         assertTrue(grid.previewBounds().isEmpty());
+    }
+
+    @Test
+    void aPickerClickSelectsForThePreviewAndChooseUsesIt() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.openTypeGrid();
+        var grid = operation.typeGridComponent();
+        grid.setSize(1000, 800);
+        // hovering does not change the preview
+        grid.dispatchEvent(
+                new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, 176, 190, 0, false));
+        // one click on the first tile selects it; Choose uses it
+        pressAndRelease(grid, new Point(176, 190), new Point(176, 190));
+        assertTrue(operation.typeGridOpen());
+        clickNamed(grid, "CityTool.TypeGrid.Choose");
+        assertFalse(operation.typeGridOpen());
+        assertEquals(0, operation.nextHouse().objectIndex);
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {

@@ -2856,6 +2856,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          * charcoal. Kept while the tool lives, so the picker reopens the way it was
          * left.
          */
+        private final JButton chooseButton = new JButton("Choose");
         private final JToggleButton brightToggle = new JToggleButton("Bright",
                 LucideIcons.icon("sun", 16, OverlayStyle.TEXT));
         /** Search by name: every word typed must appear in the name (any case). */
@@ -2913,6 +2914,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             OverlayStyle.button(brightToggle);
             brightToggle.setSelectedIcon(LucideIcons.icon("sun", 16, OverlayStyle.ON_ACCENT));
             add(brightToggle);
+            OverlayStyle.primaryButton(chooseButton);
+            chooseButton.setName("CityTool.TypeGrid.Choose");
+            chooseButton.setFocusable(false);
+            chooseButton.setToolTipText("Use the selected schematic (or double-click a schematic, or press Enter)");
+            chooseButton.addActionListener(event -> chooseSelected());
+            add(chooseButton);
             search.setName("CityTool.TypeGrid.Search");
             search.setColumns(16);
             search.setFont(OverlayStyle.font(Font.PLAIN, 13.5f));
@@ -2988,6 +2995,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 }
             };
             search.addKeyListener(escape);
+            search.addActionListener(event -> chooseSelected()); // Enter
             selectAll.setName("CityTool.TypeGrid.SelectAll");
             selectAll.setFocusable(false);
             selectAll.setToolTipText("Tick every schematic shown for Add random");
@@ -3010,8 +3018,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 @Override
                 public void mouseMoved(MouseEvent event) {
                     int index = tileAt(event.getPoint());
-                    if (index >= 0)
-                        previewed = index;
                     if (index != hover) {
                         hover = index;
                         setCursor(Cursor.getPredefinedCursor(index >= 0 ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
@@ -3036,6 +3042,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 // press and release, not mouseClicked: Swing drops the click when the
                 // mouse moves even a pixel in between, so many clicks did nothing
                 private int pressedTile = -1;
+                /** For double clicks: the tile clicked last and when. */
+                private int lastClickedTile = -1;
+                private long lastClickAt;
                 private boolean pressed;
 
                 @Override
@@ -3058,10 +3067,22 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     } else if (index >= 0 && index == pressedTile && pickingRandomPool()) {
                         // Add random: a click anywhere on a tile ticks it; the picker stays open
                         toggleRandomPool(index);
+                        previewed = index;
                         repaint();
-                    } else if (index >= 0 && index == pressedTile)
-                        pick(index);
-                    else if (index < 0 && pressedTile < 0 && !previewBounds().contains(event.getPoint()))
+                    } else if (index >= 0 && index == pressedTile) {
+                        // one click selects (the preview shows it), a second one chooses it
+                        long now = System.currentTimeMillis();
+                        Object interval = Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
+                        long limit = interval instanceof Integer value ? value : 500;
+                        if (index == lastClickedTile && now - lastClickAt <= limit)
+                            pick(index);
+                        else {
+                            previewed = index;
+                            lastClickedTile = index;
+                            lastClickAt = now;
+                            repaint();
+                        }
+                    } else if (index < 0 && pressedTile < 0 && !previewBounds().contains(event.getPoint()))
                         overlay.closeTypeGrid();
                 }
 
@@ -3185,6 +3206,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         /** Opened by Change type: the pick goes to the selected houses. */
         private boolean forSelection;
 
+        /** Choose / Enter: the selected schematic, as a double click on it. */
+        void chooseSelected() {
+            int index = previewIndex();
+            if (index >= 0)
+                pick(index);
+        }
+
         void pick(int index) {
             setNextType(index);
             if (forSelection)
@@ -3202,6 +3230,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             var size = brightToggle.getPreferredSize();
             // left of the close cross, level with the title
             brightToggle.setBounds(width - MARGIN - 24 - size.width, 36 - size.height / 2, size.width, size.height);
+            var choose = chooseButton.getPreferredSize();
+            var preview = previewBounds();
+            if (preview.isEmpty())
+                chooseButton.setBounds(brightToggle.getX() - 8 - choose.width, 36 - choose.height / 2, choose.width,
+                        choose.height);
+            else
+                chooseButton.setBounds(preview.x + preview.width - choose.width, preview.y + preview.height + 8,
+                        choose.width, choose.height);
             var searchSize = searchRow.getPreferredSize();
             searchRow.setBounds(MARGIN - 6, FILTER_ROW_Y, Math.min(searchSize.width, width - 2 * MARGIN),
                     FILTER_ROW_HEIGHT + 4);
@@ -3251,7 +3287,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         /**
-         * The tile last under the mouse: the preview shows it (the current type at
+         * The tile selected with a click: the preview shows it (the current type at
          * first).
          */
         private int previewed = -1;
@@ -3281,7 +3317,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         /** The schematic the preview shows, or -1. */
         private int previewIndex() {
-            int index = hover >= 0 ? hover : previewed >= 0 ? previewed : uiState.objectIndex;
+            int index = previewed >= 0 ? previewed : uiState.objectIndex;
             return index >= 0 && index < names.size() ? index : -1;
         }
 
@@ -3336,6 +3372,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     if (!muted().equals(range.getForeground()))
                         range.setForeground(muted());
                 boolean ticking = pickingRandomPool();
+                if (chooseButton.isVisible() == ticking)
+                    chooseButton.setVisible(!ticking);
+                // the button follows the preview's height (the name may take more lines)
+                var preview = previewBounds();
+                if (!preview.isEmpty() && chooseButton.getY() != preview.y + preview.height + 8)
+                    chooseButton.setLocation(chooseButton.getX(), preview.y + preview.height + 8);
                 if (selectAll.isVisible() != ticking) {
                     selectAll.setVisible(ticking);
                     deselectAll.setVisible(ticking);
@@ -3355,7 +3397,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 if (pickingRandomPool())
                     target = "Add random: tick the schematics to pick from (" + randomPool.size()
                             + " ticked): click a schematic to tick it";
-                g.drawString(target + " · Esc or a click outside closes", MARGIN, 62);
+                String how = pickingRandomPool()
+                        ? " · Esc or a click outside closes"
+                        : " · click to select, double-click or Choose to use · Esc closes";
+                g.drawString(target + how, MARGIN, 62);
                 LucideIcons.paint(g, "x", new Point2D.Double(getWidth() - MARGIN, 36), 20, 0, muted(), null);
 
                 g.clipRect(0, header() - GAP, getWidth(), getHeight());
@@ -3455,7 +3500,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         private void paintTile(Graphics2D g, int index, Rectangle tile) {
-            paintTileContent(g, tile, content(index), index == uiState.objectIndex, index == hover);
+            paintTileContent(g, tile, content(index), index == previewIndex(), index == hover);
             if (pickingRandomPool())
                 paintCheckbox(g, index);
         }
