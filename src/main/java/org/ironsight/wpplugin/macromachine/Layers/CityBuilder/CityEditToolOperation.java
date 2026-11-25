@@ -32,11 +32,13 @@ import javax.vecmath.Point3i;
 
 import com.github.weisj.jsvg.SVGDocument;
 import com.github.weisj.jsvg.parser.SVGLoader;
+import org.ironsight.wpplugin.macromachine.Gui.CtrlDoubleTap;
 import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
 import org.ironsight.wpplugin.macromachine.Gui.HelpDialog;
 import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
 import org.ironsight.wpplugin.macromachine.Gui.MapToolOverlay;
 import org.ironsight.wpplugin.macromachine.Gui.OverlayStyle;
+import org.ironsight.wpplugin.macromachine.Gui.PreciseDrag;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.LucideIcons;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTool;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTransformBox;
@@ -72,7 +74,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             new HelpItem("Left click", "Select the building under the cursor"),
             new HelpItem("Ctrl + left click",
                     "Add or remove a building from the selection; on empty map: place a new building"),
-            new HelpItem("Add (button)", "Every click on empty map places a new building"),
+            new HelpItem("Add (button) or double-tap Ctrl", "Every click on empty map places a new building"),
+            new HelpItem("Shift while dragging", "Precise drag: a tenth of the mouse's speed"),
             new HelpItem("Left-button drag on a building", "Move the selection"),
             new HelpItem("Left-button drag on empty map", "Select buildings fully inside the drag rectangle"),
             new HelpItem("Right click", "Move the selection center to the cursor"),
@@ -119,6 +122,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     /** WorldPainter's tool settings stay empty: everything lives on the map. */
     private final JPanel optionsPanel = new JPanel();
     private final JToggleButton addMode = new JToggleButton("Add", false);
+    /** Double-tapping Ctrl toggles add mode, as in the Path Tool. */
+    private final CtrlDoubleTap ctrlTaps = new CtrlDoubleTap(() -> this.cursorOverMap && this.gestureStart == null,
+            () -> addMode.setSelected(!addMode.isSelected()));
+    /** Shift during a drag: a tenth of the mouse's speed, as in the Path Tool. */
+    private final PreciseDrag preciseDrag = new PreciseDrag();
     private final JToggleButton showOverlays = new JToggleButton("", true);
     /**
      * Overlay part: the layer paints in its color instead of the schematics'
@@ -169,6 +177,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         @Override
         public void mousePressed(MouseEvent event) {
             cursorOverMap = true;
+            ctrlTaps.interrupt();
             trackCursor(event.getPoint());
             if (SwingUtilities.isLeftMouseButton(event) && !event.isAltDown() && !event.isMetaDown())
                 handlePress(event.getPoint(), event.isControlDown(), event.isShiftDown());
@@ -178,13 +187,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         public void mouseDragged(MouseEvent event) {
             cursorOverMap = true;
             trackCursor(event.getPoint());
-            handleDrag(event.getPoint());
+            handleDrag(event.getPoint(), event.isShiftDown());
         }
 
         @Override
         public void mouseReleased(MouseEvent event) {
             if (SwingUtilities.isLeftMouseButton(event))
-                handleRelease(event.getPoint());
+                handleRelease(event.getPoint(), event.isShiftDown());
         }
     };
 
@@ -317,6 +326,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
+        if (isActive() && getDimension() != null && PathTool.allowsMapShortcut(overlayView,
+                KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()))
+            ctrlTaps.onKey(e);
         if (e.getID() == KeyEvent.KEY_PRESSED) {
             if (!isActive() || getDimension() == null)
                 return false;
@@ -1396,14 +1408,26 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         gestureHit = hit;
         gestureAdditive = additive;
         gestureDragged = false;
+        preciseDrag.start(point);
         setHovered(hit); // the grabbed element stays highlighted while dragging
         if (hit == null)
             overlay.startDrag(point);
     }
 
     void handleDrag(Point point) {
+        handleDrag(point, false);
+    }
+
+    /**
+     * @param precise
+     *            Shift held: handles and houses follow at a tenth of the mouse's
+     *            speed (box selection follows the mouse)
+     */
+    void handleDrag(Point point, boolean precise) {
         if (gestureStart == null || overlayView == null)
             return;
+        boolean wasPrecise = preciseDrag.precise();
+        Point2D.Double cursor = preciseDrag.update(point, precise);
         if (gestureStart.distanceSq(point) >= 9)
             gestureDragged = true;
         if (!gestureDragged)
@@ -1412,7 +1436,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             overlay.updateDrag(point);
             return;
         }
-        Point world = overlayView.viewToWorld(point);
+        if (precise && !wasPrecise)
+            overlay.showTransientInfoText("Precise drag", 1200);
+        // the virtual cursor: whole pixels for the view geometry, exact for world
+        // positions
+        point = new Point((int) Math.round(cursor.x), (int) Math.round(cursor.y));
+        Point2D.Double exact = toWorldExact(cursor);
+        Point world = new Point((int) Math.round(exact.x), (int) Math.round(exact.y));
+        var startExact = toWorldExact(new Point2D.Double(gestureStart.x, gestureStart.y));
+        Point worldStart = new Point((int) Math.round(startExact.x), (int) Math.round(startExact.y));
         switch (gestureHit.kind()) {
             case HOUSE, MOVE -> {
                 if (gestureHit.kind() == HitKind.HOUSE
@@ -1421,7 +1453,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         clearSelection();
                     addSelectedState(gestureHit.house());
                 }
-                int deltaX = world.x - gestureWorldStart.x, deltaY = world.y - gestureWorldStart.y;
+                int deltaX = world.x - worldStart.x, deltaY = world.y - worldStart.y;
                 gestureTransform = moveBy(deltaX, deltaY);
                 gestureHeader = "Move " + deltaX + ", " + deltaY;
             }
@@ -1459,7 +1491,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                                 : String.format(Locale.ROOT, "Spread Y %.2f", scaleY);
             }
             case PIVOT -> {
-                draggedPivot = toWorldExact(point);
+                draggedPivot = exact;
                 gestureHeader = "Pivot";
             }
         }
@@ -1467,11 +1499,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     void handleRelease(Point point) {
+        handleRelease(point, false);
+    }
+
+    void handleRelease(Point point, boolean precise) {
         if (gestureStart == null)
             return;
         CityLayer layer = getSelectedLayer();
         try {
-            handleDrag(point);
+            handleDrag(point, precise);
             if (layer == null)
                 return;
             if (gestureHit == null) {

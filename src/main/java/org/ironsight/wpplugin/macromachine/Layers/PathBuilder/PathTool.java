@@ -328,15 +328,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * double-tapping Ctrl or the viewport "Add" button; off on every activation.
      */
     private final JToggleButton addMode = addModeSwitch();
-    /**
-     * Double-tap Ctrl detection: press/release times of a clean (uninterrupted)
-     * tap.
-     */
-    private boolean ctrlHeld;
-    private boolean ctrlTapInterrupted;
-    private long ctrlPressedAt;
-    private long lastCtrlTapAt;
-    static final long CTRL_TAP_MAX_HOLD_MS = 300, CTRL_DOUBLE_TAP_MS = 400;
+    /** Double-tapping Ctrl toggles add mode (shared with the other map tools). */
+    private final org.ironsight.wpplugin.macromachine.Gui.CtrlDoubleTap ctrlTaps = new org.ironsight.wpplugin.macromachine.Gui.CtrlDoubleTap(
+            () -> this.cursorOverMap && this.gestureStart == null, () -> addMode.setSelected(!addMode.isSelected()));
+    static final long CTRL_TAP_MAX_HOLD_MS = org.ironsight.wpplugin.macromachine.Gui.CtrlDoubleTap.MAX_HOLD_MS,
+            CTRL_DOUBLE_TAP_MS = org.ironsight.wpplugin.macromachine.Gui.CtrlDoubleTap.DOUBLE_TAP_MS;
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
     boolean measurePreview;
     PreviewTiming previewTiming;
@@ -685,7 +681,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private boolean gesturePrecise;
     /** World units per view pixel, captured on press. */
     private double worldPerPixelX = 1, worldPerPixelY = 1;
-    static final double PRECISE_DRAG_SCALE = 0.1;
+    static final double PRECISE_DRAG_SCALE = org.ironsight.wpplugin.macromachine.Gui.PreciseDrag.SCALE;
     private final AWTEventListener gestureCapture = event -> {
         if (event instanceof MouseEvent mouse && mouse.getID() == MouseEvent.MOUSE_RELEASED
                 && SwingUtilities.isLeftMouseButton(mouse) && gestureStart != null && overlayView != null
@@ -874,33 +870,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * key or a mouse press in between do not count.
      */
     private void trackCtrlTaps(KeyEvent e) {
-        boolean ctrl = e.getKeyCode() == KeyEvent.VK_CONTROL;
-        long now = e.getWhen() != 0 ? e.getWhen() : System.currentTimeMillis();
-        if (e.getID() == KeyEvent.KEY_PRESSED) {
-            if (!ctrl) {
-                interruptCtrlTap();
-                return;
-            }
-            if (ctrlHeld)
-                return; // auto-repeat
-            ctrlHeld = true;
-            ctrlTapInterrupted = false;
-            ctrlPressedAt = now;
-        } else if (e.getID() == KeyEvent.KEY_RELEASED && ctrl) {
-            ctrlHeld = false;
-            boolean tap = !ctrlTapInterrupted && now - ctrlPressedAt <= CTRL_TAP_MAX_HOLD_MS;
-            if (tap && lastCtrlTapAt != 0 && now - lastCtrlTapAt <= CTRL_DOUBLE_TAP_MS && cursorOverMap
-                    && gestureStart == null) {
-                lastCtrlTapAt = 0;
-                addMode.setSelected(!addMode.isSelected());
-            } else
-                lastCtrlTapAt = tap ? now : 0;
-        }
+        ctrlTaps.onKey(e);
     }
 
     private void interruptCtrlTap() {
-        ctrlTapInterrupted = true;
-        lastCtrlTapAt = 0;
+        ctrlTaps.interrupt();
     }
 
     private boolean handleDragActive() {
@@ -1610,7 +1584,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return gestureHeader;
     }
 
-    static boolean allowsMapShortcut(Component view, Component focus) {
+    public static boolean allowsMapShortcut(Component view, Component focus) {
         if (view == null)
             return false;
         if (focus == null)
