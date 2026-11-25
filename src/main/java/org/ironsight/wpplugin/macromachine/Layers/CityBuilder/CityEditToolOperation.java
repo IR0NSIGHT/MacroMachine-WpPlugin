@@ -1214,7 +1214,21 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         seedRow.add(new JLabel("Seed"));
         seedRow.add(seed);
         var controls = new JPanel(new BorderLayout(0, 8));
-        controls.add(new JLabel("Allowed results:"), BorderLayout.NORTH);
+        var header = new JPanel(new BorderLayout(8, 0));
+        header.add(new JLabel("Allowed results:"), BorderLayout.WEST);
+        JButton selectAll = null, deselectAll = null;
+        if (what == Randomized.TYPE) {
+            // many schematics: tick or untick them all at once
+            selectAll = OverlayStyle.smallButton(new JButton("Select all"));
+            selectAll.setName("CityTool.Randomize.SelectAll");
+            deselectAll = OverlayStyle.smallButton(new JButton("Deselect all"));
+            deselectAll.setName("CityTool.Randomize.DeselectAll");
+            var all = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
+            all.add(selectAll);
+            all.add(deselectAll);
+            header.add(all, BorderLayout.EAST);
+        }
+        controls.add(header, BorderLayout.NORTH);
         JComponent allowed = list;
         if (states.size() > 8) {
             // many schematics: a scrolling list
@@ -1251,6 +1265,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         };
         for (JCheckBox state : states)
             state.addActionListener(event -> operationRefresh.run());
+        if (selectAll != null) {
+            selectAll.addActionListener(event -> {
+                states.forEach(state -> state.setSelected(true));
+                operationRefresh.run();
+            });
+            deselectAll.addActionListener(event -> {
+                states.forEach(state -> state.setSelected(false));
+                operationRefresh.run();
+            });
+        }
         seed.addChangeListener(event -> operationRefresh.run());
         overlay.showOperationPanel(operationPanel);
         operationRefresh.run();

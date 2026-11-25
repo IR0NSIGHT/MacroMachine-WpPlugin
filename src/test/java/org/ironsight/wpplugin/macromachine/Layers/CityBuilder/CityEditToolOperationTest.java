@@ -740,10 +740,14 @@ class CityEditToolOperationTest
         // type: only schematic 2; nothing ticked disables Apply
         clickMenuItem(operation.schematicsMenu(), "CityTool.RandomizeType");
         panel = operation.operationPanel();
-        clickNamed(panel, "CityTool.Randomize.Allowed.0");
-        clickNamed(panel, "CityTool.Randomize.Allowed.1");
-        clickNamed(panel, "CityTool.Randomize.Allowed.2");
+        clickNamed(panel, "CityTool.Randomize.DeselectAll");
+        for (int i = 0; i < 3; i++)
+            assertFalse(((javax.swing.JCheckBox) OperationPanelLookup.find(panel, "CityTool.Randomize.Allowed." + i))
+                    .isSelected());
         assertFalse(OperationPanelLookup.find(panel, "CityTool.OperationApply").isEnabled());
+        clickNamed(panel, "CityTool.Randomize.SelectAll");
+        assertTrue(OperationPanelLookup.find(panel, "CityTool.OperationApply").isEnabled());
+        clickNamed(panel, "CityTool.Randomize.DeselectAll");
         clickNamed(panel, "CityTool.Randomize.Allowed.2");
         clickNamed(panel, "CityTool.OperationApply");
         for (ObjectState house : operation.selection())
