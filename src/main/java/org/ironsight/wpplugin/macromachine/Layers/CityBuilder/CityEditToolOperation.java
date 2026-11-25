@@ -1971,6 +1971,22 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         overlay.repaint();
     }
 
+    /** The type of the next house to place; the selected houses keep theirs. */
+    void setNextType(int index) {
+        if (getSelectedLayer() != null)
+            applyToUi(setSelectedObjectIndex(index, uiState));
+    }
+
+    /** Apply type (card): the next house's type for every selected house. */
+    void applyTypeToSelection() {
+        CityLayer layer = getSelectedLayer();
+        if (layer == null || selectedStates.isEmpty())
+            return;
+        int index = uiState.objectIndex;
+        edit(() -> applyToSelection(layer, state -> setSelectedObjectIndex(index, state)));
+        showStatusMessage(objectCountMessage(selectedStates.size(), "got the type"));
+    }
+
     /** Mirrors the selected houses, or the next house without a selection. */
     void mirrorNext() {
         CityLayer layer = getSelectedLayer();
@@ -2525,6 +2541,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         /** Height of the button row under the texts (px). */
         private static final int BUTTON_ROW = 30;
         private final List<JButton> buttons = new ArrayList<>();
+        private final JButton applyType;
 
         TypeCard() {
             setOpaque(false);
@@ -2537,6 +2554,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     "Turn a quarter clockwise: the selected houses, or the next house", () -> turnNext(-1));
             addButton("flip-horizontal-2", "CityTool.TypeCard.Mirror",
                     "Mirror the selected houses, or the next house (X)", this::mirror);
+            applyType = OverlayStyle.button(new JButton("Apply type"));
+            applyType.setName("CityTool.TypeCard.ApplyType");
+            applyType.setToolTipText("Give this schematic to the selected houses");
+            applyType.setFocusable(false);
+            applyType.setFont(OverlayStyle.font(Font.PLAIN, 12.5f));
+            applyType.setBorder(new EmptyBorder(4, 9, 4, 9));
+            applyType.setCursor(Cursor.getDefaultCursor());
+            applyType.addActionListener(event -> applyTypeToSelection());
+            buttons.add(applyType);
+            add(applyType);
         }
 
         private void mirror() {
@@ -2580,6 +2607,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             for (JButton button : buttons)
                 if (button.isVisible() != shown)
                     button.setVisible(shown);
+            boolean any = !selectedStates.isEmpty();
+            if (applyType.isEnabled() != any)
+                applyType.setEnabled(any);
         }
 
         private String title() {
@@ -3005,7 +3035,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         void pick(int index) {
-            setType(index);
+            // the next house's type; the selected houses get it with Apply type on the card
+            setNextType(index);
             overlay.closeTypeGrid();
         }
 
@@ -3121,9 +3152,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 g.setFont(OverlayStyle.font(Font.PLAIN, 13f));
                 g.setColor(muted());
                 int selected = selectedStates.size();
-                String target = selected > 1
-                        ? "For the " + selected + " selected houses"
-                        : selected == 1 ? "For the selected house" : "For the next house you place";
+                String target = selected > 0
+                        ? "For the next house you place (Apply type on the card gives it to the selected houses)"
+                        : "For the next house you place";
                 if (pickingRandomPool())
                     target = "Add random: tick the schematics to pick from (" + randomPool.size()
                             + " ticked): click a schematic to tick it";

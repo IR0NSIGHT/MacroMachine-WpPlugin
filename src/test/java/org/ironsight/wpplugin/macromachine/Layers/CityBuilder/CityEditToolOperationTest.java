@@ -472,8 +472,13 @@ class CityEditToolOperationTest
 
         operation.openTypeGrid();
         operation.pickTypeInGrid(2);
-        assertEquals(2, layer.getInformationAt(100, 180).objectIndex);
         assertFalse(operation.typeGridOpen());
+        // the picker chooses the next house; the selected house keeps its type ...
+        assertEquals(0, layer.getInformationAt(100, 180).objectIndex);
+        assertEquals(2, operation.nextHouse().objectIndex);
+        // ... until Apply type
+        operation.applyTypeToSelection();
+        assertEquals(2, layer.getInformationAt(100, 180).objectIndex);
         // bright mode is kept for the next time the picker opens
         operation.openTypeGrid();
         assertTrue(operation.typeGridOpen());
