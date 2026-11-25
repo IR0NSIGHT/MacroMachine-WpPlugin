@@ -2052,10 +2052,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private class TypeGrid extends JComponent
     {
         private static final int MARGIN = 32, HEADER = 84, GAP = 12, PICTURE = 126;
-        private static final int TILE_HEIGHT = GRID_TILE + 34;
+        private static final int TILE_HEIGHT = GRID_TILE + 22;
+        /** Room left of and below the picture for its measurements (px). */
+        private static final int MEASURE_LEFT = 34, MEASURE_BOTTOM = 22;
         private final List<Image> pictures = new ArrayList<>();
         private final List<String> names = new ArrayList<>();
-        private final List<String> sizes = new ArrayList<>();
+        /** Width (x), length (y) and height (z) in blocks per schematic. */
+        private final List<int[]> sizes = new ArrayList<>();
         private int hover = -1;
         private int scroll;
 
@@ -2110,7 +2113,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 pictures.add(layer.getSchematicImage(new ObjectState(CityLayer.Direction.NORTH, false, i, 0, 0)));
                 names.add(schematicName(objects.get(i), i));
                 var dimensions = objects.get(i).getDimensions();
-                sizes.add(dimensions.x + " × " + dimensions.y + " blocks, " + dimensions.z + " high");
+                sizes.add(new int[]{dimensions.x, dimensions.y, dimensions.z});
             }
             hover = -1;
             scroll = 0;
@@ -2195,29 +2198,66 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 g.draw(OverlayStyle.rounded(tile.x + 1, tile.y + 1, tile.width - 2, tile.height - 2));
             }
             Image picture = pictures.get(index);
+            int[] size = sizes.get(index);
             if (picture != null) {
+                // the picture shows the house with a margin of CityLayer's image space;
+                // the measurements span the house itself
                 int width = picture.getWidth(null), height = picture.getHeight(null);
-                double scale = Math.min((double) PICTURE / width, (double) PICTURE / height);
+                int areaX = tile.x + MEASURE_LEFT, areaY = tile.y + 10;
+                int areaWidth = tile.width - MEASURE_LEFT - 10, areaHeight = PICTURE - MEASURE_BOTTOM + 8;
+                double scale = Math.min((double) areaWidth / width, (double) areaHeight / height);
                 int w = Math.max(1, (int) Math.round(width * scale)), h = Math.max(1, (int) Math.round(height * scale));
+                int imageX = areaX + (areaWidth - w) / 2, imageY = areaY + (areaHeight - h) / 2;
                 var quality = g.getRenderingHint(RenderingHints.KEY_INTERPOLATION);
                 g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                         RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
-                g.drawImage(picture, tile.x + (tile.width - w) / 2, tile.y + 12 + (PICTURE - h) / 2, w, h, null);
+                g.drawImage(picture, imageX, imageY, w, h, null);
                 if (quality != null)
                     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, quality);
+                double margin = (width - size[0]) / 2.0 * scale;
+                double marginY = (height - size[1]) / 2.0 * scale;
+                paintMeasurements(g,
+                        new Rectangle2D.Double(imageX + margin, imageY + marginY, size[0] * scale, size[1] * scale),
+                        size);
             }
-            int y = tile.y + 12 + PICTURE + 4;
+            int y = tile.y + 10 + PICTURE + 8;
             g.setFont(OverlayStyle.font(Font.BOLD, 13f));
             var metrics = g.getFontMetrics();
             g.setColor(OverlayStyle.TEXT);
             g.drawString(TypeCard.clip(names.get(index), metrics, tile.width - 16), tile.x + 8,
                     y + metrics.getAscent());
-            y += metrics.getHeight();
+        }
+
+        /**
+         * Dimension lines like a technical drawing: the width (x) below the house, its
+         * length (y) on the left, the height in the corner between them ("12h").
+         */
+        private void paintMeasurements(Graphics2D g, Rectangle2D.Double house, int[] size) {
             g.setFont(OverlayStyle.font(Font.PLAIN, 11.5f));
-            metrics = g.getFontMetrics();
+            var metrics = g.getFontMetrics();
+            g.setStroke(new BasicStroke(1f));
             g.setColor(OverlayStyle.TEXT_MUTED);
-            g.drawString(TypeCard.clip(sizes.get(index), metrics, tile.width - 16), tile.x + 8,
-                    y + metrics.getAscent());
+            int tick = 3;
+            // width: a line below the house with end ticks, the number under its middle
+            double lineY = house.getMaxY() + 6;
+            g.draw(new Line2D.Double(house.getMinX(), lineY, house.getMaxX(), lineY));
+            g.draw(new Line2D.Double(house.getMinX(), lineY - tick, house.getMinX(), lineY + tick));
+            g.draw(new Line2D.Double(house.getMaxX(), lineY - tick, house.getMaxX(), lineY + tick));
+            String width = Integer.toString(size[0]);
+            float textY = (float) (lineY + 3 + metrics.getAscent());
+            g.drawString(width, (float) (house.getCenterX() - metrics.stringWidth(width) / 2.0), textY);
+            // length: a line left of the house, the number left of its middle
+            double lineX = house.getMinX() - 6;
+            g.draw(new Line2D.Double(lineX, house.getMinY(), lineX, house.getMaxY()));
+            g.draw(new Line2D.Double(lineX - tick, house.getMinY(), lineX + tick, house.getMinY()));
+            g.draw(new Line2D.Double(lineX - tick, house.getMaxY(), lineX + tick, house.getMaxY()));
+            String length = Integer.toString(size[1]);
+            g.drawString(length, (float) (lineX - 4 - metrics.stringWidth(length)),
+                    (float) (house.getCenterY() + metrics.getAscent() / 2.0 - 1));
+            // height: in the bottom left corner, level with the width
+            String height = size[2] + "h";
+            g.setColor(OverlayStyle.TEXT);
+            g.drawString(height, (float) (lineX - 4 - metrics.stringWidth(height)), textY);
         }
     }
 }
