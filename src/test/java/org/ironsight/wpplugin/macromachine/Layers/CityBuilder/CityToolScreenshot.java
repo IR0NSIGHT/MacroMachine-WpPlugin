@@ -81,6 +81,9 @@ public final class CityToolScreenshot
         SwingUtilities.invokeAndWait(operation::openTypeGrid);
         Thread.sleep(300);
         save(view, new File(out, "city-type-grid.png"));
+        SwingUtilities.invokeAndWait(() -> operation.typeGridBrightToggle().doClick());
+        Thread.sleep(300);
+        save(view, new File(out, "city-type-grid-bright.png"));
         System.exit(0);
     }
 

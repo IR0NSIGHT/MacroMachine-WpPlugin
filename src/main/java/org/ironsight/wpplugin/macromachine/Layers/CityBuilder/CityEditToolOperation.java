@@ -1614,6 +1614,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return overlay.typeGridOpen();
     }
 
+    /** The picker's bright-mode switch (exposed for tests). */
+    JToggleButton typeGridBrightToggle() {
+        return overlay.typeGrid.brightToggle;
+    }
+
     /**
      * Picks a schematic in the open picker (exposed for tests): like clicking its
      * tile.
@@ -2061,9 +2066,24 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private final List<int[]> sizes = new ArrayList<>();
         private int hover = -1;
         private int scroll;
+        /**
+         * Bright mode: light backdrop and tiles, for dark schematics that vanish on
+         * charcoal. Kept while the tool lives, so the picker reopens the way it was
+         * left.
+         */
+        private final JToggleButton brightToggle = new JToggleButton("Bright",
+                LucideIcons.icon("sun", 16, OverlayStyle.TEXT));
 
         TypeGrid() {
             setOpaque(false);
+            setLayout(null);
+            brightToggle.setName("CityTool.TypeGrid.Bright");
+            brightToggle.setFocusable(false);
+            brightToggle.setToolTipText("Bright background, for dark schematics");
+            brightToggle.getModel().addItemListener(event -> repaint());
+            OverlayStyle.button(brightToggle);
+            brightToggle.setSelectedIcon(LucideIcons.icon("sun", 16, OverlayStyle.ON_ACCENT));
+            add(brightToggle);
             var mouse = new MouseAdapter() {
                 @Override
                 public void mouseMoved(MouseEvent event) {
@@ -2124,6 +2144,44 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             overlay.closeTypeGrid();
         }
 
+        boolean bright() {
+            return brightToggle.isSelected();
+        }
+
+        @Override
+        public void setBounds(int x, int y, int width, int height) {
+            super.setBounds(x, y, width, height);
+            var size = brightToggle.getPreferredSize();
+            // left of the close cross, level with the title
+            brightToggle.setBounds(width - MARGIN - 24 - size.width, 36 - size.height / 2, size.width, size.height);
+        }
+
+        // ---- palette: charcoal, or light in bright mode ----
+
+        private Color text() {
+            return bright() ? new Color(22, 22, 22) : OverlayStyle.TEXT;
+        }
+
+        private Color muted() {
+            return bright() ? new Color(96, 96, 96) : OverlayStyle.TEXT_MUTED;
+        }
+
+        private Color tileFill(boolean current, boolean hovered) {
+            if (bright())
+                return current
+                        ? new Color(229, 226, 255)
+                        : hovered ? new Color(238, 238, 244) : new Color(250, 250, 250);
+            return current
+                    ? OverlayStyle.ACCENT_SOFT_SOLID
+                    : hovered ? OverlayStyle.SURFACE_HOVER : OverlayStyle.SURFACE;
+        }
+
+        private Color tileEdge(boolean current, boolean hovered) {
+            if (bright())
+                return current ? OverlayStyle.INDIGO : hovered ? new Color(60, 60, 60) : new Color(0, 0, 0, 40);
+            return current ? OverlayStyle.ACCENT : OverlayStyle.TEXT;
+        }
+
         private int columns() {
             return Math.max(1, (getWidth() - 2 * MARGIN + GAP) / (GRID_TILE + GAP));
         }
@@ -2158,21 +2216,20 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             try {
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                g.setColor(new Color(22, 22, 22, 235));
+                g.setColor(bright() ? new Color(232, 232, 232, 245) : new Color(22, 22, 22, 235));
                 g.fillRect(0, 0, getWidth(), getHeight());
 
                 g.setFont(OverlayStyle.font(Font.BOLD, 20f));
-                g.setColor(OverlayStyle.TEXT);
+                g.setColor(text());
                 g.drawString("Choose a schematic", MARGIN, 40);
                 g.setFont(OverlayStyle.font(Font.PLAIN, 13f));
-                g.setColor(OverlayStyle.TEXT_MUTED);
+                g.setColor(muted());
                 int selected = selectedStates.size();
                 String target = selected > 1
                         ? "For the " + selected + " selected houses"
                         : selected == 1 ? "For the selected house" : "For the next house you place";
                 g.drawString(target + " · Esc or a click outside closes", MARGIN, 62);
-                LucideIcons.paint(g, "x", new Point2D.Double(getWidth() - MARGIN, 36), 20, 0, OverlayStyle.TEXT_MUTED,
-                        null);
+                LucideIcons.paint(g, "x", new Point2D.Double(getWidth() - MARGIN, 36), 20, 0, muted(), null);
 
                 g.clipRect(0, HEADER - GAP, getWidth(), getHeight());
                 for (int i = 0; i < pictures.size(); i++) {
@@ -2188,12 +2245,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
         private void paintTile(Graphics2D g, int index, Rectangle tile) {
             boolean current = index == uiState.objectIndex, hovered = index == hover;
-            OverlayStyle.paintSurface(g, tile.x, tile.y, tile.width, tile.height,
-                    current
-                            ? OverlayStyle.ACCENT_SOFT_SOLID
-                            : hovered ? OverlayStyle.SURFACE_HOVER : OverlayStyle.SURFACE);
-            if (current || hovered) {
-                g.setColor(current ? OverlayStyle.ACCENT : OverlayStyle.TEXT);
+            OverlayStyle.paintSurface(g, tile.x, tile.y, tile.width, tile.height, tileFill(current, hovered));
+            if (current || hovered || bright()) {
+                g.setColor(tileEdge(current, hovered));
                 g.setStroke(new BasicStroke(current ? 2f : 1f));
                 g.draw(OverlayStyle.rounded(tile.x + 1, tile.y + 1, tile.width - 2, tile.height - 2));
             }
@@ -2223,7 +2277,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             int y = tile.y + 10 + PICTURE + 8;
             g.setFont(OverlayStyle.font(Font.BOLD, 13f));
             var metrics = g.getFontMetrics();
-            g.setColor(OverlayStyle.TEXT);
+            g.setColor(text());
             g.drawString(TypeCard.clip(names.get(index), metrics, tile.width - 16), tile.x + 8,
                     y + metrics.getAscent());
         }
@@ -2236,7 +2290,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             g.setFont(OverlayStyle.font(Font.PLAIN, 11.5f));
             var metrics = g.getFontMetrics();
             g.setStroke(new BasicStroke(1f));
-            g.setColor(OverlayStyle.TEXT_MUTED);
+            g.setColor(muted());
             int tick = 3;
             // width: a line below the house with end ticks, the number under its middle
             double lineY = house.getMaxY() + 6;
@@ -2256,7 +2310,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     (float) (house.getCenterY() + metrics.getAscent() / 2.0 - 1));
             // height: in the bottom left corner, level with the width
             String height = size[2] + "h";
-            g.setColor(OverlayStyle.TEXT);
+            g.setColor(text());
             g.drawString(height, (float) (lineX - 4 - metrics.stringWidth(height)), textY);
         }
     }

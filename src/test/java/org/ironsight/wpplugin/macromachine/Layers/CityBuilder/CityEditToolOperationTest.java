@@ -473,6 +473,16 @@ class CityEditToolOperationTest
         operation.pickTypeInGrid(2);
         assertEquals(2, layer.getInformationAt(100, 180).objectIndex);
         assertFalse(operation.typeGridOpen());
+        // bright mode is kept for the next time the picker opens
+        operation.openTypeGrid();
+        assertTrue(operation.typeGridOpen());
+        assertFalse(operation.typeGridBrightToggle().isSelected());
+        operation.typeGridBrightToggle().doClick();
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        assertFalse(operation.typeGridOpen());
+        operation.openTypeGrid();
+        assertTrue(operation.typeGridBrightToggle().isSelected());
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
         for (var child : operation.schematicsMenu().getComponents())
             if (child instanceof JMenuItem item && item.getName() != null)
                 assertFalse(item.getName().startsWith("CityTool.Type."), "the type is picked in the grid");
