@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.Random;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TestDimension;
@@ -487,9 +488,9 @@ class CityEditToolOperationTest
             if (child instanceof JMenuItem item && item.getName() != null)
                 assertFalse(item.getName().startsWith("CityTool.Type."), "the type is picked in the grid");
 
-        clickMenuItem(operation.schematicsMenu(), "CityTool.RandomMirroring");
+        clickMenuItem(operation.addMenu(), "CityTool.RandomMirroring");
         assertEquals(new CityEditToolOperation.PlacementOptions(false, false, true), operation.placementOptions());
-        clickMenuItem(operation.schematicsMenu(), "CityTool.RandomMirroring");
+        clickMenuItem(operation.addMenu(), "CityTool.RandomMirroring");
         assertEquals(new CityEditToolOperation.PlacementOptions(false, false, false), operation.placementOptions());
 
         clickMenuItem(operation.schematicsMenu(), "CityTool.Mirror");
@@ -611,6 +612,78 @@ class CityEditToolOperationTest
         grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_RELEASED, when + 80, 0,
                 press.x + 2, press.y + 1, 1, false, java.awt.event.MouseEvent.BUTTON1));
         assertFalse(operation.typeGridOpen(), "the tile was picked and the picker closed");
+    }
+
+    @Test
+    void addRandomPlacesARandomPickOfTheTickedSchematics() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.random = new Random(42);
+
+        clickMenuItem(operation.addMenu(), "CityTool.Add.Random");
+        assertTrue(operation.addRandom());
+        assertTrue(operation.addModeToggle().isSelected(), "choosing Add random turns add mode on");
+        assertTrue(operation.pickingRandomPool());
+
+        // nothing ticked: nothing is placed
+        operation.placeAt(100, 260);
+        assertNull(layer.getInformationAt(100, 260));
+
+        operation.toggleRandomPool(1);
+        operation.toggleRandomPool(2);
+        operation.toggleRandomPool(0);
+        operation.toggleRandomPool(0); // unticked again
+        assertEquals(Set.of(1, 2), operation.randomPool());
+        var placed = new java.util.HashSet<Integer>();
+        for (int i = 0; i < 20; i++) {
+            operation.placeAt(100 + 10 * i, 260);
+            placed.add(layer.getInformationAt(100 + 10 * i, 260).objectIndex);
+        }
+        assertEquals(Set.of(1, 2), placed, "only the ticked schematics, both of them");
+
+        // plain Add places the current type again; no checkboxes outside add mode
+        clickMenuItem(operation.addMenu(), "CityTool.Add.Plain");
+        assertFalse(operation.addRandom());
+        assertFalse(operation.pickingRandomPool());
+        operation.placeAt(100, 290);
+        assertEquals(0, layer.getInformationAt(100, 290).objectIndex);
+        operation.setAddRandom(true);
+        operation.addModeToggle().setSelected(false);
+        assertFalse(operation.pickingRandomPool(), "the checkboxes only matter in add mode");
+    }
+
+    @Test
+    void theCheckboxOfAPickerTileTicksWithoutPicking() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.setAddRandom(true);
+        operation.openTypeGrid();
+        var grid = operation.typeGridComponent();
+        grid.setSize(1000, 800);
+        // 1000 px wide: five tiles of 150 px with 12 px gaps, centred: the first starts
+        // at x 101,
+        // y 84; its checkbox is 6 px in, 22 px wide
+        pressAndRelease(grid, new Point(118, 101), new Point(119, 101));
+        assertTrue(operation.typeGridOpen(), "ticking keeps the picker open");
+        assertEquals(Set.of(0), operation.randomPool());
+        // the picture of the same tile picks it as the current type and closes
+        pressAndRelease(grid, new Point(176, 150), new Point(176, 150));
+        assertFalse(operation.typeGridOpen());
+        assertEquals(Set.of(0), operation.randomPool());
+    }
+
+    private static Point pressAndRelease(javax.swing.JComponent grid, Point press, Point release) {
+        long when = System.currentTimeMillis();
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_PRESSED, when,
+                java.awt.event.InputEvent.BUTTON1_DOWN_MASK, press.x, press.y, 1, false,
+                java.awt.event.MouseEvent.BUTTON1));
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_RELEASED, when + 50, 0,
+                release.x, release.y, 1, false, java.awt.event.MouseEvent.BUTTON1));
+        return press;
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {

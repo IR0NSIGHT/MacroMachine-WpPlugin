@@ -76,6 +76,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             new HelpItem("Ctrl + left click",
                     "Add or remove a building from the selection; on empty map: place a new building"),
             new HelpItem("Add (button) or double-tap Ctrl", "Every click on empty map places a new building"),
+            new HelpItem("Add random (Add dropdown)",
+                    "Every new building is a random pick of the schematics ticked in the picker"),
             new HelpItem("Shift while dragging", "Precise drag: a tenth of the mouse's speed"),
             new HelpItem("Left-button drag on a building", "Move the selection"),
             new HelpItem("Left-button drag on empty map", "Select buildings fully inside the drag rectangle"),
@@ -85,7 +87,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             new HelpItem("Escape", "Leave add mode, else clear the selection"),
             new HelpItem("Ctrl + C", "Copy selected buildings"), new HelpItem("Ctrl + X", "Cut selected buildings"),
             new HelpItem("Ctrl + V", "Paste buildings at the cursor"),
-            new HelpItem("Q", "Randomize selected buildings using the random options of the Schematics menu"),
+            new HelpItem("Q", "Randomize selected buildings using the random options of the Add menu"),
             new HelpItem("W/A/S/D", "Move selected buildings"),
             new HelpItem("C", "Rotate selected buildings around the selection center"),
             new HelpItem("X", "Mirror selected buildings"), new HelpItem("Delete", "Delete selected buildings"));
@@ -123,6 +125,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     /** WorldPainter's tool settings stay empty: everything lives on the map. */
     private final JPanel optionsPanel = new JPanel();
     private final JToggleButton addMode = new JToggleButton("Add", false);
+    /**
+     * "Add random": every house placed is a random pick from the schematics ticked
+     * in the picker ({@link #randomPool}), instead of the current type.
+     */
+    private boolean addRandom;
+    /** Schematics (indices) ticked for "Add random"; per layer. */
+    private final java.util.TreeSet<Integer> randomPool = new java.util.TreeSet<>();
     /** Double-tapping Ctrl toggles add mode, as in the Path Tool. */
     private final CtrlDoubleTap ctrlTaps = new CtrlDoubleTap(() -> this.cursorOverMap && this.gestureStart == null,
             () -> addMode.setSelected(!addMode.isSelected()));
@@ -491,12 +500,22 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         if (layer == null || layer.getObjectList().isEmpty())
             return;
         ObjectState template = randomizeState(uiState);
+        if (addRandom) {
+            randomPool.removeIf(index -> index >= layer.getObjectList().size());
+            if (randomPool.isEmpty()) {
+                showStatusMessage("Add random: tick schematics in the picker first (click the schematic card)");
+                return;
+            }
+            var pool = new ArrayList<>(randomPool);
+            template = setSelectedObjectIndex(pool.get(random.nextInt(pool.size())), template);
+        }
         var newState = setCurrentStatePosition(centreX, centreY, template);
+        ObjectState chosen = uiState;
         edit(() -> {
             layer.setDataAt(getDimension(), newState.xPos, newState.yPos, newState);
             selectOnly(newState);
-            // the next house is randomized afresh, from the type the user chose
-            uiState = setCurrentStatePosition(newState.xPos, newState.yPos, uiState);
+            // the next house starts again from what the user chose, not from a random pick
+            uiState = setCurrentStatePosition(newState.xPos, newState.yPos, chosen);
             refreshLayer(layer);
         });
     }
@@ -738,6 +757,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         clearSelection();
         clearClipboard();
         transformEditor.resetPivot();
+        randomPool.clear(); // indices belong to the old layer
         overlay.closeTypeGrid();
         // a newly chosen layer shows its own highlight colors setting, unless the
         // overlays are off (then it is shown without them too)
@@ -1572,18 +1592,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 () -> randomizeSelection(false, false, true)));
         menu.add(item("Randomize type", "CityTool.RandomizeType", any, needSelection,
                 () -> randomizeSelection(false, true, false)));
-        menu.addSeparator();
-        menu.add(heading("New houses and Q get a random"));
-        var options = placementOptions;
-        menu.add(toggleItem("Rotation", "CityTool.RandomRotation", options.randomRotate(),
-                "New houses (and Q) get a random rotation",
-                on -> setPlacementOptions(new PlacementOptions(on, options.randomSelect(), options.randomMirror()))));
-        menu.add(toggleItem("Mirroring", "CityTool.RandomMirroring", options.randomMirror(),
-                "New houses (and Q) are mirrored at random",
-                on -> setPlacementOptions(new PlacementOptions(options.randomRotate(), options.randomSelect(), on))));
-        menu.add(toggleItem("Type", "CityTool.RandomType", options.randomSelect(),
-                "New houses (and Q) get a random schematic",
-                on -> setPlacementOptions(new PlacementOptions(options.randomRotate(), on, options.randomMirror()))));
         return menu;
     }
 
@@ -1641,6 +1649,73 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         } catch (Exception ex) {
             GlobalActionPanel.ErrorPopUp(ex);
         }
+    }
+
+    /** Switches between "Add" and "Add random" (and turns add mode on). */
+    void setAddRandom(boolean random) {
+        addRandom = random;
+        overlay.refresh();
+        if (addMode.isSelected())
+            overlay.repaint();
+        else
+            addMode.setSelected(true);
+        if (random && randomPool.isEmpty())
+            showStatusMessage("Add random: tick the schematics to pick from in the picker (click the schematic card)");
+    }
+
+    boolean addRandom() {
+        return addRandom;
+    }
+
+    /** Ticks or unticks a schematic for "Add random". */
+    void toggleRandomPool(int index) {
+        if (!randomPool.remove(index))
+            randomPool.add(index);
+        overlay.refresh();
+    }
+
+    /** The schematics ticked for "Add random" (exposed for tests). */
+    Set<Integer> randomPool() {
+        return Set.copyOf(randomPool);
+    }
+
+    /** The picker shows checkboxes: add mode with "Add random". */
+    boolean pickingRandomPool() {
+        return addMode.isSelected() && addRandom;
+    }
+
+    /**
+     * "Add" dropdown: plain add or random add, and what new houses get at random
+     * (exposed for tests).
+     */
+    JPopupMenu addMenu() {
+        var menu = new JPopupMenu();
+        var group = new ButtonGroup();
+        var plain = new JRadioButtonMenuItem("Add", !addRandom);
+        plain.setName("CityTool.Add.Plain");
+        plain.setToolTipText("Each click places the current schematic");
+        plain.addActionListener(event -> setAddRandom(false));
+        var random = new JRadioButtonMenuItem("Add random", addRandom);
+        random.setName("CityTool.Add.Random");
+        random.setToolTipText("Each click places a random pick of the schematics ticked in the picker");
+        random.addActionListener(event -> setAddRandom(true));
+        group.add(plain);
+        group.add(random);
+        menu.add(plain);
+        menu.add(random);
+        menu.addSeparator();
+        menu.add(heading("New houses and Q get a random"));
+        var options = placementOptions;
+        menu.add(toggleItem("Rotation", "CityTool.RandomRotation", options.randomRotate(),
+                "New houses (and Q) get a random rotation",
+                on -> setPlacementOptions(new PlacementOptions(on, options.randomSelect(), options.randomMirror()))));
+        menu.add(toggleItem("Mirroring", "CityTool.RandomMirroring", options.randomMirror(),
+                "New houses (and Q) are mirrored at random",
+                on -> setPlacementOptions(new PlacementOptions(options.randomRotate(), options.randomSelect(), on))));
+        menu.add(toggleItem("Type", "CityTool.RandomType", options.randomSelect(),
+                "New houses (and Q) get a random schematic (Add random picks from the ticked ones)",
+                on -> setPlacementOptions(new PlacementOptions(options.randomRotate(), on, options.randomMirror()))));
+        return menu;
     }
 
     /** The add-mode switch (exposed for tests). */
@@ -1701,6 +1776,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return "Choose a City Layer in the Layer menu";
         if (layer.getObjectList().isEmpty())
             return "This City Layer has no schematics: edit the layer to add some";
+        if (addMode.isSelected() && addRandom)
+            return randomPool.isEmpty()
+                    ? "Add random: tick schematics in the picker (click the schematic card)"
+                    : "Click on the map to place a random pick of " + randomPool.size()
+                            + (randomPool.size() == 1 ? " schematic" : " schematics");
         if (addMode.isSelected())
             return "Click on the map to place: "
                     + schematicName(layer.getObjectList().get(uiState.objectIndex), uiState.objectIndex);
@@ -1713,6 +1793,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private final PathTool.DropdownButton layerButton = new PathTool.DropdownButton("Layer");
         private final JToggleButton overlaysButton = new JToggleButton(LucideIcons.icon("eye", 16, OverlayStyle.TEXT));
         private final JButton overlaysMenuButton = new JButton(PathTool.DROPDOWN_ARROW);
+        private final JButton addMenuButton = new JButton(PathTool.DROPDOWN_ARROW);
         private final JToggleButton addButton = new JToggleButton("Add",
                 LucideIcons.icon("plus", 16, OverlayStyle.TEXT));
         private final TypeCard typeCard = new TypeCard();
@@ -1753,10 +1834,19 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             addButton.setFocusable(false);
             addButton.setToolTipText("Add mode: left click on empty map places a house. Ctrl+click always places.");
             add(addButton);
+            addMenuButton.setName("CityTool.AddMenu");
+            addMenuButton.setFocusable(false);
+            addMenuButton.setToolTipText("Add or Add random (a random pick of the schematics ticked in the picker)");
+            addMenuButton.addActionListener(event -> {
+                if (addMenuButton.isShowing())
+                    OverlayStyle.popup(addMenu()).show(addMenuButton, 0, addMenuButton.getHeight());
+            });
+            add(addMenuButton);
             for (AbstractButton control : List.of(schematicsButton, layerButton, overlaysButton, overlaysMenuButton,
-                    addButton))
+                    addButton, addMenuButton))
                 OverlayStyle.button(control);
             overlaysMenuButton.setBorder(new EmptyBorder(5, 6, 5, 6));
+            addMenuButton.setBorder(new EmptyBorder(5, 6, 5, 6));
             overlaysButton.setSelectedIcon(LucideIcons.icon("eye", 16, OverlayStyle.ON_ACCENT));
             addButton.setSelectedIcon(LucideIcons.icon("plus", 16, OverlayStyle.ON_ACCENT));
             typeCard.setName("CityTool.TypeCard");
@@ -1886,7 +1976,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             overlaysButton.setBounds(x, 8, toggleWidth, height);
             overlaysMenuButton.setBounds(x + toggleWidth, 8, overlaysMenuButton.getPreferredSize().width, height);
             x = overlaysMenuButton.getX() + overlaysMenuButton.getWidth() + 8;
+            addButton.setText(addRandom ? "Add random" : "Add");
             addButton.setBounds(x, 8, addButton.getPreferredSize().width, height);
+            addMenuButton.setBounds(addButton.getX() + addButton.getWidth(), 8, addMenuButton.getPreferredSize().width,
+                    height);
             var card = typeCard.getPreferredSize();
             typeCard.setBounds(8, toolbarBottom() + 8, card.width, card.height);
             if (typeGrid.isVisible())
@@ -1912,7 +2005,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (typeGrid.isVisible())
                 return true; // the picker covers the whole viewport
             for (Component control : List.of(schematicsButton, layerButton, overlaysButton, overlaysMenuButton,
-                    addButton, typeCard))
+                    addButton, addMenuButton, typeCard))
                 if (control.isVisible() && control.getBounds().contains(x, y))
                     return true;
             return false;
@@ -2032,6 +2125,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
 
         private String subtitle() {
+            if (pickingRandomPool())
+                return "Add random: " + randomPool.size() + " ticked";
             String mirrored = uiState.mirrored ? ", mirrored" : "";
             String rotation = uiState.rotation.toCompass() + "°" + mirrored;
             return selectedStates.size() > 1 ? selectedStates.size() + " selected · " + rotation : rotation;
@@ -2172,7 +2267,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         return;
                     pressed = false;
                     int index = tileAt(event.getPoint());
-                    if (index >= 0 && index == pressedTile)
+                    if (index >= 0 && index == pressedTile && onCheckbox(index, event.getPoint())) {
+                        // ticking a schematic for Add random keeps the picker open
+                        toggleRandomPool(index);
+                        repaint();
+                    } else if (index >= 0 && index == pressedTile)
                         pick(index);
                     else if (index < 0 && pressedTile < 0)
                         overlay.closeTypeGrid();
@@ -2203,6 +2302,37 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             }
             hover = -1;
             scroll = 0;
+        }
+
+        /**
+         * The checkbox of tile {@code index} (only shown while picking for Add random).
+         */
+        private Rectangle checkbox(int index) {
+            Rectangle tile = tileBounds(index);
+            return new Rectangle(tile.x + 6, tile.y + 6, 22, 22);
+        }
+
+        private boolean onCheckbox(int index, Point point) {
+            if (!pickingRandomPool())
+                return false;
+            var box = checkbox(index);
+            box.grow(4, 4); // a little forgiving
+            return box.contains(point);
+        }
+
+        private void paintCheckbox(Graphics2D g, int index) {
+            var box = checkbox(index);
+            boolean ticked = randomPool.contains(index);
+            var shape = new java.awt.geom.RoundRectangle2D.Double(box.x + 0.5, box.y + 0.5, box.width - 1,
+                    box.height - 1, 6, 6);
+            g.setColor(ticked ? OverlayStyle.ACCENT : bright() ? Color.WHITE : OverlayStyle.FIELD);
+            g.fill(shape);
+            g.setStroke(new BasicStroke(1.5f));
+            g.setColor(ticked ? OverlayStyle.ACCENT : muted());
+            g.draw(shape);
+            if (ticked)
+                LucideIcons.paint(g, "check", new Point2D.Double(box.getCenterX(), box.getCenterY()), 16, 0,
+                        OverlayStyle.ON_ACCENT, null);
         }
 
         void pick(int index) {
@@ -2294,6 +2424,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 String target = selected > 1
                         ? "For the " + selected + " selected houses"
                         : selected == 1 ? "For the selected house" : "For the next house you place";
+                if (pickingRandomPool())
+                    target = "Add random: tick the schematics to pick from (" + randomPool.size()
+                            + " ticked); click a picture to make it the current one";
                 g.drawString(target + " · Esc or a click outside closes", MARGIN, 62);
                 LucideIcons.paint(g, "x", new Point2D.Double(getWidth() - MARGIN, 36), 20, 0, muted(), null);
 
@@ -2340,6 +2473,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         new Rectangle2D.Double(imageX + margin, imageY + marginY, size[0] * scale, size[1] * scale),
                         size);
             }
+            if (pickingRandomPool())
+                paintCheckbox(g, index);
             int y = tile.y + 10 + PICTURE + 8;
             g.setFont(OverlayStyle.font(Font.BOLD, 13f));
             var metrics = g.getFontMetrics();
