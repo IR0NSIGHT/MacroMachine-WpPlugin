@@ -1126,6 +1126,35 @@ class CityEditToolOperationTest
         assertTrue(CityEditToolOperation.shortcutAllowed(TEST_VIEW, hiddenSearch));
     }
 
+    @Test
+    void selectedHousesGetOneCardPerSchematicAsManyAsFit() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        int[][] houses = {{0, 100, 520}, {0, 110, 520}, {1, 120, 520}, {2, 130, 520}};
+        for (int[] house : houses)
+            layer.setDataAt(TEST_DIMENSION, house[1], house[2],
+                    new ObjectState(CityLayer.Direction.NORTH, false, house[0], house[1], house[2]));
+        var cards = operation.selectionCardsForTest();
+        operation.handleClick(100, 520, false);
+        assertTrue(cards.isVisible());
+        for (int i = 1; i < houses.length; i++)
+            operation.handleClick(houses[i][1], houses[i][2], true);
+        // three schematics among four houses: three cards, the first standing for two
+        // houses
+        var groups = cards.groups();
+        assertEquals(List.of(0, 1, 2), List.copyOf(groups.keySet()));
+        assertEquals(2, groups.get(0).size());
+        cards.setSize(1000, cards.preferredHeight());
+        assertEquals(3, cards.shownCards());
+        // narrow: two fit, one of them becomes "+N more"
+        cards.setSize(2 * 150 + 8, cards.preferredHeight());
+        assertEquals(1, cards.shownCards());
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        assertFalse(cards.isVisible(), "nothing selected: no selection cards");
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {

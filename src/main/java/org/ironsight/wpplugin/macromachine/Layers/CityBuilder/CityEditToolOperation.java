@@ -637,19 +637,19 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private void addSelectedState(ObjectState state) {
         selectedStates.put(new Point(state.xPos, state.yPos), state);
         selectionToken = new Object();
-        overlay.repaint();
+        overlay.selectionChanged();
     }
 
     private void removeSelectedState(ObjectState state) {
         selectedStates.remove(new Point(state.xPos, state.yPos));
         selectionToken = new Object();
-        overlay.repaint();
+        overlay.selectionChanged();
     }
 
     private void clearSelection() {
         selectedStates.clear();
         selectionToken = new Object(); // the next selection starts with an upright box
-        overlay.repaint();
+        overlay.selectionChanged();
     }
 
     /** The selected houses (exposed for tests). */
@@ -913,7 +913,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         uiState = newStates.get(Math.min(activeIndex, newStates.size() - 1));
         applyToUi(uiState);
         refreshLayer(layer);
-        overlay.repaint();
+        overlay.selectionChanged();
     }
 
     private void moveSelection(CityLayer layer, int deltaX, int deltaY) {
@@ -1221,6 +1221,26 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      * Hovering a small view previews it on that card only.
      */
     private HouseView cardView = HouseView.TOP;
+
+    /**
+     * What a card shows for a house in {@code state}: its top view as it stands
+     * (turned, mirrored), its own front and side (from the unturned house), its
+     * name wrapped to {@code width}, the shared large view (or the {@code hovered}
+     * small view). Shared by the schematic card and the selection cards.
+     */
+    TypeGrid.TileContent tileContent(CityLayer layer, ObjectState state, int width, HouseView hovered) {
+        WPObject object = layer.getObjectForState(state);
+        if (object == null)
+            return null;
+        var size = object.getDimensions();
+        WPObject upright = layer
+                .getObjectForState(new ObjectState(CityLayer.Direction.NORTH, state.mirrored, state.objectIndex, 0, 0));
+        String name = schematicName(layer.getObjectList().get(state.objectIndex), state.objectIndex);
+        return new TypeGrid.TileContent(layer.getSchematicImage(state), new int[]{size.x, size.y, size.z},
+                SchematicViews.front(upright), SchematicViews.side(upright),
+                TypeGrid.wrap(name, overlay.getFontMetrics(TypeGrid.nameFont()), width - 16), state.rotation,
+                hovered != null ? hovered : cardView, cardView, hovered);
+    }
 
     /** A small view was clicked on some card: all cards show it large. */
     void setCardView(HouseView view) {
@@ -2163,6 +2183,164 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return overlay.typeCard;
     }
 
+    /**
+     * Cards of the selected houses, one per schematic among them (in selection
+     * order), right of the schematic card: as many as fit, the last one "+N more"
+     * if not all do. Each like a picker tile (its small views preview on hover and
+     * switch all cards on click), with how many houses it stands for.
+     */
+    class SelectionCards extends JComponent
+    {
+        private static final int CARD_GAP = 8, COUNT_LINE = 16;
+        /** Hovered small view: which card, which view. */
+        private int hoverCard = -1;
+        private HouseView hoverThumb;
+
+        SelectionCards() {
+            setOpaque(false);
+            setVisible(false);
+            var mouse = new MouseAdapter() {
+                @Override
+                public void mouseMoved(MouseEvent event) {
+                    int card = cardAt(event.getPoint());
+                    int small = card < 0 ? -1 : TypeGrid.thumbAt(cardBounds(card), event.getPoint());
+                    HouseView thumb = small >= 0 ? HouseView.values()[small] : null;
+                    if (card != hoverCard || thumb != hoverThumb) {
+                        hoverCard = thumb == null ? -1 : card;
+                        hoverThumb = thumb;
+                        repaint();
+                    }
+                }
+
+                @Override
+                public void mouseExited(MouseEvent event) {
+                    hoverCard = -1;
+                    hoverThumb = null;
+                    repaint();
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent event) {
+                    int card = cardAt(event.getPoint());
+                    int small = card < 0 ? -1 : TypeGrid.thumbAt(cardBounds(card), event.getPoint());
+                    if (small >= 0 && SwingUtilities.isLeftMouseButton(event))
+                        setCardView(HouseView.values()[small]);
+                }
+            };
+            addMouseListener(mouse);
+            addMouseMotionListener(mouse);
+        }
+
+        /**
+         * The selected houses by schematic: the first house of each type and how many.
+         */
+        java.util.LinkedHashMap<Integer, java.util.List<ObjectState>> groups() {
+            var groups = new java.util.LinkedHashMap<Integer, java.util.List<ObjectState>>();
+            for (ObjectState house : selectedStates.values())
+                groups.computeIfAbsent(house.objectIndex, index -> new ArrayList<>()).add(house);
+            return groups;
+        }
+
+        /** How many cards fit across. */
+        int capacity() {
+            return Math.max(1, (getWidth() + CARD_GAP) / (GRID_TILE + CARD_GAP));
+        }
+
+        /**
+         * The cards shown: all groups if they fit, else as many as fit minus one for
+         * "+N more".
+         */
+        int shownCards() {
+            int groups = groups().size();
+            return groups <= capacity() ? groups : Math.max(0, capacity() - 1);
+        }
+
+        Rectangle cardBounds(int card) {
+            return new Rectangle(card * (GRID_TILE + CARD_GAP), 0, GRID_TILE, getHeight());
+        }
+
+        int cardAt(Point point) {
+            for (int card = 0; card < shownCards(); card++)
+                if (cardBounds(card).contains(point))
+                    return card;
+            return -1;
+        }
+
+        /**
+         * Whether {@code (x, y)} is on a card (the space between and beside them lets
+         * clicks through).
+         */
+        boolean cardsContain(int x, int y) {
+            int cards = shownCards() + (groups().size() > shownCards() ? 1 : 0);
+            for (int card = 0; card < cards; card++)
+                if (cardBounds(card).contains(x, y))
+                    return true;
+            return false;
+        }
+
+        int preferredHeight() {
+            CityLayer layer = getSelectedLayer();
+            int lines = 1;
+            if (layer != null)
+                for (int index : groups().keySet())
+                    if (index < layer.getObjectList().size())
+                        lines = Math.max(
+                                lines, TypeGrid
+                                        .wrap(schematicName(layer.getObjectList().get(index), index),
+                                                overlay.getFontMetrics(TypeGrid.nameFont()), GRID_TILE - 16)
+                                        .size());
+            return overlay.typeGrid.tileHeight(GRID_TILE, lines) + COUNT_LINE;
+        }
+
+        @Override
+        public boolean contains(int x, int y) {
+            return cardsContain(x, y);
+        }
+
+        @Override
+        protected void paintComponent(Graphics graphics) {
+            CityLayer layer = getSelectedLayer();
+            if (layer == null)
+                return;
+            var grid = overlay.typeGrid;
+            Graphics2D g = (Graphics2D) graphics.create();
+            try {
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                var groups = new ArrayList<>(groups().values());
+                int shown = shownCards();
+                for (int card = 0; card < shown; card++) {
+                    var houses = groups.get(card);
+                    var content = tileContent(layer, houses.get(0), GRID_TILE, card == hoverCard ? hoverThumb : null);
+                    if (content == null)
+                        continue;
+                    var bounds = cardBounds(card);
+                    grid.paintTileContent(g, bounds, content, false, false);
+                    g.setFont(OverlayStyle.font(Font.PLAIN, 12f));
+                    g.setColor(grid.muted());
+                    String count = houses.size() == 1 ? "selected" : houses.size() + " selected";
+                    g.drawString(count, bounds.x + 8, bounds.y + bounds.height - 8);
+                }
+                if (groups.size() > shown) {
+                    // the rest: how many more types
+                    var bounds = cardBounds(shown);
+                    OverlayStyle.paintSurface(g, bounds.x, bounds.y, bounds.width, 44, grid.tileFill(false, false));
+                    g.setFont(OverlayStyle.font(Font.BOLD, 13f));
+                    g.setColor(grid.text());
+                    String more = "+" + (groups.size() - shown) + " more";
+                    g.drawString(more, bounds.x + 12, bounds.y + 27);
+                }
+            } finally {
+                g.dispose();
+            }
+        }
+    }
+
+    /** The selection cards (exposed for tests). */
+    SelectionCards selectionCardsForTest() {
+        return overlay.selectionCards;
+    }
+
     /** Clicks the type card at {@code point} (exposed for tests). */
     void clickTypeCard(Point point) {
         overlay.typeCard.clicked(point);
@@ -2230,6 +2408,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private final JToggleButton addButton = new JToggleButton("Add",
                 LucideIcons.icon("plus", 16, OverlayStyle.TEXT));
         private final TypeCard typeCard = new TypeCard();
+        private final SelectionCards selectionCards = new SelectionCards();
         private final TypeGrid typeGrid = new TypeGrid();
 
         CityOverlay() {
@@ -2315,6 +2494,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 }
             });
             add(typeCard);
+            selectionCards.setName("CityTool.SelectionCards");
+            add(selectionCards);
             typeGrid.setName("CityTool.TypeGrid");
             typeGrid.setVisible(false);
             add(typeGrid);
@@ -2406,6 +2587,28 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return typeGrid.isVisible();
         }
 
+        /** The selection changed: its cards follow. */
+        void selectionChanged() {
+            layoutSelectionCards();
+            repaint();
+        }
+
+        /**
+         * The selection cards right of the schematic card (top left without it), as
+         * wide as the viewport lets them be.
+         */
+        void layoutSelectionCards() {
+            CityLayer layer = getSelectedLayer();
+            boolean shown = layer != null && !selectedStates.isEmpty() && shows(showCard);
+            selectionCards.setVisible(shown);
+            if (!shown)
+                return;
+            int x = typeCard.isVisible() ? typeCard.getX() + typeCard.getWidth() + 8 : 8;
+            int y = toolbarBottom() + 8;
+            selectionCards.setBounds(x, y, Math.max(0, getWidth() - x - 8), selectionCards.preferredHeight());
+            selectionCards.repaint();
+        }
+
         /** Buttons and card follow the chosen layer and type. */
         void refresh() {
             CityLayer layer = getSelectedLayer();
@@ -2435,6 +2638,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     height);
             var card = typeCard.getPreferredSize();
             typeCard.setBounds(8, toolbarBottom() + 8, card.width, card.height);
+            layoutSelectionCards();
             layoutOperationPanel();
             if (typeGrid.isVisible())
                 typeGrid.setBounds(0, 0, getWidth(), getHeight());
@@ -2465,6 +2669,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (typeGrid.isVisible())
                 return true; // the picker covers the whole viewport
             if (operationPanelContains(x, y))
+                return true;
+            if (selectionCards.isVisible()
+                    && selectionCards.cardsContain(x - selectionCards.getX(), y - selectionCards.getY()))
                 return true;
             for (Component control : List.of(schematicsButton, layerButton, overlaysButton, overlaysMenuButton,
                     addButton, addMenuButton, typeCard))
@@ -2698,7 +2905,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 return "Add random: " + randomPool.size() + " ticked";
             String mirrored = uiState.mirrored ? ", mirrored" : "";
             String rotation = uiState.rotation.toCompass() + "°" + mirrored;
-            return selectedStates.size() > 1 ? selectedStates.size() + " selected · " + rotation : rotation;
+            return rotation; // the selection has its own cards
         }
 
         /** The tile content of the next house, kept while the house does not change. */
@@ -2725,18 +2932,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             Object key = java.util.List.of(layer, layer.getObjectList(), uiState.objectIndex, uiState.rotation,
                     uiState.mirrored, cardWidth(), cardView, String.valueOf(hoverView));
             if (!key.equals(cachedKey)) {
-                WPObject object = layer.getObjectForState(uiState);
-                if (object == null)
+                cached = tileContent(layer, uiState, cardWidth(), hoverView);
+                if (cached == null)
                     return null;
-                var size = object.getDimensions();
-                // front and side are the house's own, whichever way it is turned: drawn from
-                // the unturned (but mirrored) house; the top view shows the turn
-                WPObject upright = layer.getObjectForState(
-                        new ObjectState(CityLayer.Direction.NORTH, uiState.mirrored, uiState.objectIndex, 0, 0));
-                cached = new TypeGrid.TileContent(layer.getSchematicImage(uiState), new int[]{size.x, size.y, size.z},
-                        SchematicViews.front(upright), SchematicViews.side(upright),
-                        TypeGrid.wrap(title(), getFontMetrics(TypeGrid.nameFont()), cardWidth() - 16), uiState.rotation,
-                        hoverView != null ? hoverView : cardView, cardView, hoverView);
                 cachedKey = key;
             }
             return cached;
@@ -2804,7 +3002,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 // buttons
                 var grid = overlay.typeGrid;
                 var tile = new Rectangle(0, 0, getWidth(), getHeight());
-                grid.paintTileContent(g, tile, content, false, false);
+                grid.paintTileContent(g, tile, content, false, false, true);
                 if (mainHovered) {
                     // the large view is clickable (it opens the picker): hover style
                     var main = TypeGrid.mainRect(tile);
@@ -3566,8 +3764,26 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          * (the large one marked) and the name. Shared by the picker and the type card.
          */
         void paintTileContent(Graphics2D g, Rectangle tile, TileContent content, boolean current, boolean hovered) {
-            OverlayStyle.paintSurface(g, tile.x, tile.y, tile.width, tile.height, tileFill(current, hovered));
-            if (current || hovered || bright()) {
+            paintTileContent(g, tile, content, current, hovered, false);
+        }
+
+        /**
+         * @param chosen
+         *            the schematic card (the user's choice, which Set type can give to
+         *            the selected houses): a faint lavender background and edge, so it
+         *            reads apart from the selection cards
+         */
+        void paintTileContent(Graphics2D g, Rectangle tile, TileContent content, boolean current, boolean hovered,
+                boolean chosen) {
+            Color fill = !chosen
+                    ? tileFill(current, hovered)
+                    : bright() ? new Color(204, 199, 226) : new Color(44, 42, 60, 240);
+            OverlayStyle.paintSurface(g, tile.x, tile.y, tile.width, tile.height, fill);
+            if (chosen) {
+                g.setColor(bright() ? new Color(94, 55, 175, 120) : new Color(205, 199, 255, 110));
+                g.setStroke(new BasicStroke(1f));
+                g.draw(OverlayStyle.rounded(tile.x + 0.5, tile.y + 0.5, tile.width - 1, tile.height - 1));
+            } else if (current || hovered || bright()) {
                 g.setColor(tileEdge(current, hovered));
                 g.setStroke(new BasicStroke(current ? 2f : 1f));
                 g.draw(OverlayStyle.rounded(tile.x + 1, tile.y + 1, tile.width - 2, tile.height - 2));
