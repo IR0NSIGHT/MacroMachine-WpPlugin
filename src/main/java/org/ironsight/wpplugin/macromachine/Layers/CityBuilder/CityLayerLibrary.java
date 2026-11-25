@@ -35,7 +35,9 @@ final class CityLayerLibrary
      * The tutorial layer: a WorldPainter layer file (gzipped serialized layer, as
      * WorldPainter exports it), bundled with the plugin.
      */
-    static final String TUTORIAL_LAYER_RESOURCE = "/CityBuilder/Ektelion_Ukr-PeasantVillage.layer";
+    static final String TUTORIAL_LAYER_RESOURCE = "/CityBuilder/tutorial_houses.layer";
+    /** The name the tutorial layer gets in the world. */
+    static final String TUTORIAL_LAYER_NAME = "tutorial_houses";
 
     private CityLayerLibrary() {
     }
@@ -65,7 +67,7 @@ final class CityLayerLibrary
         if (dimension == null)
             return List.of();
         var layers = new ArrayList<CityLayer>();
-        for (Layer layer : dimension.getCustomLayers())
+        for (Layer layer : customLayers(dimension))
             if (layer instanceof CityLayer city)
                 layers.add(city);
         layers.sort(Comparator.comparing((CityLayer layer) -> layer.getName().toLowerCase(Locale.ROOT))
@@ -109,6 +111,24 @@ final class CityLayerLibrary
         return null;
     }
 
+    /**
+     * The custom layers loaded now: WorldPainter's own list while its GUI runs
+     * (layers just imported or created are only copied into the dimension when the
+     * world is saved), else the dimension's.
+     */
+    @SuppressWarnings("unchecked")
+    private static List<? extends Layer> customLayers(Dimension dimension) {
+        Object app = app();
+        if (app != null) {
+            try {
+                return (List<? extends Layer>) app.getClass().getMethod("getCustomLayers").invoke(app);
+            } catch (ReflectiveOperationException | ClassCastException ex) {
+                // fall back to the dimension's list
+            }
+        }
+        return dimension.getCustomLayers();
+    }
+
     /** Whether the plugin bundles the tutorial layer. */
     static boolean hasTutorialLayer() {
         return CityLayerLibrary.class.getResource(TUTORIAL_LAYER_RESOURCE) != null;
@@ -121,8 +141,10 @@ final class CityLayerLibrary
             throw new IOException("The tutorial layer is not bundled: " + TUTORIAL_LAYER_RESOURCE);
         try (InputStream stream = url.openStream();
                 var in = new ObjectInputStream(new GZIPInputStream(new BufferedInputStream(stream)))) {
-            if (in.readObject() instanceof CityLayer layer)
+            if (in.readObject() instanceof CityLayer layer) {
+                layer.setName(TUTORIAL_LAYER_NAME);
                 return layer;
+            }
             throw new IOException("The tutorial layer file holds no City Layer");
         }
     }

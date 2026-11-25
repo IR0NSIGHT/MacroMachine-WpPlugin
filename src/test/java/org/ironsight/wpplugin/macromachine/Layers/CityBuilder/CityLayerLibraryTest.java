@@ -11,7 +11,7 @@ class CityLayerLibraryTest
     void theTutorialLayerIsBundledAndLoadsAsACityLayerWithItsSchematics() throws Exception {
         assertTrue(CityLayerLibrary.hasTutorialLayer());
         CityLayer layer = CityLayerLibrary.readTutorialLayer();
-        assertNotNull(layer.getName());
+        assertEquals("tutorial_houses", layer.getName());
         assertFalse(layer.getObjectList().isEmpty(), "the schematics travel inside the layer file");
         for (WPObject object : layer.getObjectList())
             assertTrue(object.getDimensions().x > 0, object.getName());
