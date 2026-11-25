@@ -339,9 +339,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
-        // typing into a field (the picker's search, a spinner) is no map shortcut
-        if (isActive() && overlayView != null && !PathTool.allowsMapShortcut(overlayView,
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()))
+        // typing into a field (the picker's search, a spinner) is no map shortcut; a
+        // hidden field that kept the focus (the closed picker's search) does not count
+        Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+        if (isActive() && overlayView != null && focus != null && focus.isShowing()
+                && !PathTool.allowsMapShortcut(overlayView, focus))
             return false;
         if (isActive() && getDimension() != null)
             ctrlTaps.onKey(e);
@@ -366,6 +368,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             handleKeyInteraction(e.getKeyCode(), false);
         }
         return false; // return false to allow other listeners to handle the event
+    }
+
+    /**
+     * Whether a key with {@code focus} on it may be a map shortcut (exposed for
+     * tests).
+     */
+    static boolean shortcutAllowedForTest(Component view, Component focus) {
+        return focus == null || !focus.isShowing() || PathTool.allowsMapShortcut(view, focus);
     }
 
     static boolean isMapComponent(Component mapView, Component eventComponent) {
@@ -2390,6 +2400,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (!typeGrid.isVisible())
                 return;
             typeGrid.setVisible(false);
+            // the search field had the focus: back to the map, so its shortcuts work again
+            if (overlayView != null)
+                overlayView.requestFocusInWindow();
             repaint();
         }
 
