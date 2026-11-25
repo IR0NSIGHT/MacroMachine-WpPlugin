@@ -1660,6 +1660,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return overlay.typeGridOpen();
     }
 
+    /** The picker itself (exposed for tests). */
+    JComponent typeGridComponent() {
+        return overlay.typeGrid;
+    }
+
     /** The picker's bright-mode switch (exposed for tests). */
     JToggleButton typeGridBrightToggle() {
         return overlay.typeGrid.brightToggle;
@@ -1757,9 +1762,20 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             typeCard.setName("CityTool.TypeCard");
             typeCard.setToolTipText("Type of the selected houses (or the next house): click to choose another");
             typeCard.addMouseListener(new MouseAdapter() {
+                // press and release on the card (mouseClicked is lost when the mouse moves
+                // a pixel in between)
+                private boolean pressed;
+
                 @Override
-                public void mouseClicked(MouseEvent event) {
-                    openTypeGrid();
+                public void mousePressed(MouseEvent event) {
+                    pressed = SwingUtilities.isLeftMouseButton(event);
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent event) {
+                    if (pressed && SwingUtilities.isLeftMouseButton(event) && typeCard.contains(event.getPoint()))
+                        openTypeGrid();
+                    pressed = false;
                 }
             });
             add(typeCard);
@@ -2139,14 +2155,26 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     repaint();
                 }
 
+                // press and release, not mouseClicked: Swing drops the click when the
+                // mouse moves even a pixel in between, so many clicks did nothing
+                private int pressedTile = -1;
+                private boolean pressed;
+
                 @Override
-                public void mouseClicked(MouseEvent event) {
-                    if (!SwingUtilities.isLeftMouseButton(event))
+                public void mousePressed(MouseEvent event) {
+                    pressed = SwingUtilities.isLeftMouseButton(event);
+                    pressedTile = pressed ? tileAt(event.getPoint()) : -1;
+                }
+
+                @Override
+                public void mouseReleased(MouseEvent event) {
+                    if (!pressed || !SwingUtilities.isLeftMouseButton(event))
                         return;
+                    pressed = false;
                     int index = tileAt(event.getPoint());
-                    if (index >= 0)
+                    if (index >= 0 && index == pressedTile)
                         pick(index);
-                    else
+                    else if (index < 0 && pressedTile < 0)
                         overlay.closeTypeGrid();
                 }
 

@@ -588,6 +588,31 @@ class CityEditToolOperationTest
         assertEquals(0, operation.boxAngle());
     }
 
+    @Test
+    void aClickOnAPickerTileCountsEvenWhenTheMouseMovesAPixel() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.openTypeGrid();
+        var grid = operation.typeGridComponent();
+        grid.setSize(1000, 800);
+        // the first tile sits top left below the header; press on it, release two
+        // pixels away
+        int x = grid.getWidth() / 2, y = 120;
+        Point press = null;
+        for (int px = 0; px < grid.getWidth() && press == null; px += 4)
+            if (grid.getComponentAt(px, y) == grid)
+                press = new Point(px + 60, y);
+        long when = System.currentTimeMillis();
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_PRESSED, when,
+                java.awt.event.InputEvent.BUTTON1_DOWN_MASK, press.x, press.y, 1, false,
+                java.awt.event.MouseEvent.BUTTON1));
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_RELEASED, when + 80, 0,
+                press.x + 2, press.y + 1, 1, false, java.awt.event.MouseEvent.BUTTON1));
+        assertFalse(operation.typeGridOpen(), "the tile was picked and the picker closed");
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {
