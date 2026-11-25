@@ -93,8 +93,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             new HelpItem("Q", "Randomize selected buildings using the random options of the Add menu"),
             new HelpItem("W/A/S/D", "Move selected buildings"),
             new HelpItem("C",
-                    "Rotate selected buildings around the selection center; nothing selected: the next building"),
-            new HelpItem("X", "Mirror selected buildings; nothing selected: the next building"),
+                    "Rotate selected buildings around the selection center; in add mode or with nothing selected: the next building"),
+            new HelpItem("X", "Mirror selected buildings; in add mode or with nothing selected: the next building"),
             new HelpItem("Delete", "Delete selected buildings"));
 
     private static final int OVERLAY_ICON_SIZE = 256;
@@ -412,8 +412,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     deselect(layer);
                 return;
             }
-            // C / X with nothing selected turn or mirror the next house
-            if ((keyCode == KeyEvent.VK_C || keyCode == KeyEvent.VK_X) && layer != null && selectedStates.isEmpty()) {
+            // C / X in add mode or with nothing selected turn or mirror the next house
+            if ((keyCode == KeyEvent.VK_C || keyCode == KeyEvent.VK_X) && layer != null && setsUpNextHouse()) {
                 if (keyCode == KeyEvent.VK_C)
                     turnNext(1);
                 else
@@ -1964,7 +1964,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 rotation = rotation.counterClockwise();
             return setRotation(rotation, state);
         };
-        if (!selectedStates.isEmpty())
+        if (!setsUpNextHouse())
             edit(() -> applyToSelection(layer, turn));
         else
             applyToUi(turn.apply(uiState));
@@ -1976,7 +1976,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         CityLayer layer = getSelectedLayer();
         if (layer == null)
             return;
-        if (!selectedStates.isEmpty())
+        if (!setsUpNextHouse())
             edit(() -> mirrorSelection(layer));
         else
             applyToUi(setIsMirrored(!uiState.mirrored, uiState));
@@ -1989,6 +1989,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      */
     ObjectState nextHouse() {
         return uiState;
+    }
+
+    /**
+     * Turning and mirroring set up the next house in add mode (a house just placed
+     * is selected, but the next one is what is being prepared) or with nothing
+     * selected; otherwise they change the selected houses.
+     */
+    private boolean setsUpNextHouse() {
+        return addMode.isSelected() || selectedStates.isEmpty();
     }
 
     /** Switches between "Add" and "Add random" (and turns add mode on). */

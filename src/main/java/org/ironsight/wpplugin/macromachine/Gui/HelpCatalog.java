@@ -41,8 +41,9 @@ public enum HelpCatalog {
                     new HelpItem("Q", "Randomize selected buildings using the random options of the Add menu"),
                     new HelpItem("W/A/S/D", "Move selected buildings"),
                     new HelpItem("C",
-                            "Rotate selected buildings around the selection center; nothing selected: the next building"),
-                    new HelpItem("X", "Mirror selected buildings; nothing selected: the next building"),
+                            "Rotate selected buildings around the selection center; in add mode or with nothing selected: the next building"),
+                    new HelpItem("X",
+                            "Mirror selected buildings; in add mode or with nothing selected: the next building"),
                     new HelpItem("Delete", "Delete selected buildings"))), ROAD("path-tool", "Path Tool",
                             """
                                     Use the Path Tool to connect clicked positions into a smooth path that is blended into existing terrain.

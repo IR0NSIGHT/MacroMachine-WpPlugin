@@ -958,6 +958,14 @@ class CityEditToolOperationTest
         // with a selection, the card's buttons turn the selected houses in place
         operation.turnNext(1);
         assertEquals(CityLayer.Direction.NORTH, layer.getInformationAt(100, 440).rotation);
+
+        // add mode: the house just placed stays as it is, C prepares the next one
+        operation.addModeToggle().setSelected(true);
+        operation.placeAt(140, 440);
+        CityLayer.Direction placedRotation = layer.getInformationAt(140, 440).rotation;
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+        assertEquals(placedRotation, layer.getInformationAt(140, 440).rotation, "the placed house is not turned");
+        assertEquals(placedRotation.counterClockwise(), operation.nextHouse().rotation);
     }
 
     @Test
