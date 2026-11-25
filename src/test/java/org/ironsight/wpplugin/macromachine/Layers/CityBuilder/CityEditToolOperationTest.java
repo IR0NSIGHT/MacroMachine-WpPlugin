@@ -1022,7 +1022,7 @@ class CityEditToolOperationTest
     }
 
     @Test
-    void theCardsSmallViewsSwitchTheLargeOneAndTheLargeOneEnlarges() {
+    void theCardsSmallViewsSwitchTheLargeOneAndTheLargeOneOpensThePicker() {
         CityLayer layer = layerWithObjects();
         CityEditToolOperation operation = new CityEditToolOperation();
         operation.setView(TEST_VIEW);
@@ -1038,14 +1038,13 @@ class CityEditToolOperationTest
         assertEquals(CityEditToolOperation.HouseView.FRONT, operation.cardContentForTest().view());
         assertEquals(CityEditToolOperation.HouseView.FRONT, operation.cardContentForTest().chosen());
 
-        // the large view opens enlarged; Esc closes it
+        // the large view opens the picker
         var main = CityEditToolOperation.TypeGrid.mainRect(tile);
         operation.clickTypeCard(new Point((int) main.getCenterX(), (int) main.getCenterY()));
-        assertTrue(operation.enlargedViewOpen());
+        assertTrue(operation.typeGridOpen());
         operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
-        assertFalse(operation.enlargedViewOpen());
 
-        // the name (below the small views) opens the picker
+        // so does the name (below the small views)
         operation.clickTypeCard(new Point(20, card.getHeight() - 45));
         assertTrue(operation.typeGridOpen());
     }

@@ -398,9 +398,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 return;
             }
             if (keyCode == KeyEvent.VK_ESCAPE) {
-                if (overlay.lightboxOpen())
-                    overlay.closeLightbox();
-                else if (operationPanel != null)
+                if (operationPanel != null)
                     closeOperation();
                 else if (overlay.typeGridOpen())
                     overlay.closeTypeGrid();
@@ -2143,67 +2141,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return overlay.typeCard;
     }
 
-    /**
-     * One view of the next house, enlarged over the map: a dark backdrop and a
-     * large square with the view and its dimension lines. A click anywhere or Esc
-     * closes it.
-     */
-    private class ViewLightbox extends JComponent
-    {
-        private TypeGrid.TileContent content;
-        private String title = "";
-
-        ViewLightbox() {
-            setOpaque(false);
-            setVisible(false);
-            setName("CityTool.EnlargedView");
-            addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseReleased(MouseEvent event) {
-                    overlay.closeLightbox();
-                }
-            });
-        }
-
-        void show(TypeGrid.TileContent content, String title) {
-            this.content = content;
-            this.title = title;
-        }
-
-        @Override
-        protected void paintComponent(Graphics graphics) {
-            if (content == null)
-                return;
-            var grid = overlay.typeGrid;
-            Graphics2D g = (Graphics2D) graphics.create();
-            try {
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                g.setColor(grid.bright() ? new Color(232, 232, 232, 230) : new Color(22, 22, 22, 220));
-                g.fillRect(0, 0, getWidth(), getHeight());
-                int size = Math.max(160, Math.min(getWidth(), getHeight()) - 140);
-                var area = new Rectangle((getWidth() - size) / 2, (getHeight() - size) / 2 + 12, size, size);
-                OverlayStyle.paintSurface(g, area.x - 12, area.y - 44, area.width + 24, area.height + 56,
-                        grid.tileFill(false, false));
-                g.setFont(OverlayStyle.font(Font.BOLD, 16f));
-                g.setColor(grid.text());
-                g.drawString(title + " \u00b7 " + content.view().label, area.x, area.y - 18);
-                g.setFont(OverlayStyle.font(Font.PLAIN, 12f));
-                g.setColor(grid.muted());
-                String hint = "Esc or a click closes";
-                g.drawString(hint, area.x + area.width - g.getFontMetrics().stringWidth(hint), area.y - 18);
-                grid.paintMainView(g, area, content, content.view());
-            } finally {
-                g.dispose();
-            }
-        }
-    }
-
-    /** Whether the enlarged view is open (exposed for tests). */
-    boolean enlargedViewOpen() {
-        return overlay.lightboxOpen();
-    }
-
     /** Clicks the type card at {@code point} (exposed for tests). */
     void clickTypeCard(Point point) {
         overlay.typeCard.clicked(point);
@@ -2443,30 +2380,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return typeGrid.isVisible();
         }
 
-        /** The card's large view, enlarged over the map (click or Esc closes it). */
-        private final ViewLightbox lightbox = new ViewLightbox();
-
-        void enlarge(TypeGrid.TileContent content, String title) {
-            lightbox.show(content, title);
-            lightbox.setBounds(0, 0, getWidth(), getHeight());
-            if (lightbox.getParent() == null)
-                add(lightbox);
-            setComponentZOrder(lightbox, 0);
-            lightbox.setVisible(true);
-            repaint();
-        }
-
-        boolean lightboxOpen() {
-            return lightbox.isVisible();
-        }
-
-        void closeLightbox() {
-            if (lightbox.isVisible()) {
-                lightbox.setVisible(false);
-                repaint();
-            }
-        }
-
         /** Buttons and card follow the chosen layer and type. */
         void refresh() {
             CityLayer layer = getSelectedLayer();
@@ -2523,8 +2436,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         /** Mouse-transparent like the base overlay, except over the HUD controls. */
         @Override
         public boolean contains(int x, int y) {
-            if (typeGrid.isVisible() || lightbox.isVisible())
-                return true; // the picker / the enlarged view covers the whole viewport
+            if (typeGrid.isVisible())
+                return true; // the picker covers the whole viewport
             if (operationPanelContains(x, y))
                 return true;
             for (Component control : List.of(schematicsButton, layerButton, overlaysButton, overlaysMenuButton,
@@ -2769,6 +2682,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         private HouseView view = HouseView.TOP;
         /** The small view under the mouse: shown large while hovered. */
         private HouseView hoverView;
+        /** The mouse is on the large view (it is clickable: it opens the picker). */
+        private boolean mainHovered;
 
         /** Width of the card: a picker tile, wider if the button row needs it. */
         private int cardWidth() {
@@ -2810,27 +2725,24 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         void hovered(Point point) {
             int small = point == null ? -1 : TypeGrid.thumbAt(new Rectangle(0, 0, getWidth(), getHeight()), point);
             HouseView thumb = small >= 0 ? HouseView.values()[small] : null;
-            if (thumb != hoverView) {
+            boolean onMain = point != null
+                    && TypeGrid.mainRect(new Rectangle(0, 0, getWidth(), getHeight())).contains(point);
+            if (thumb != hoverView || onMain != mainHovered) {
                 hoverView = thumb;
+                mainHovered = onMain;
                 repaint();
             }
         }
 
         /**
-         * A click on the card: a small view becomes the large one, the large view opens
-         * enlarged over the map, anywhere else opens the schematic picker.
+         * A click on the card: a small view becomes the large one; the large view (or
+         * anywhere else) opens the schematic picker.
          */
         void clicked(Point point) {
-            var tile = new Rectangle(0, 0, getWidth(), getHeight());
-            int small = TypeGrid.thumbAt(tile, point);
+            int small = TypeGrid.thumbAt(new Rectangle(0, 0, getWidth(), getHeight()), point);
             if (small >= 0) {
                 view = HouseView.values()[small];
                 repaint();
-            } else if (TypeGrid.mainRect(tile).contains(point)) {
-                CityLayer layer = getSelectedLayer();
-                var content = layer == null ? null : content(layer);
-                if (content != null)
-                    overlay.enlarge(content, title());
             } else
                 overlay.openTypeGrid(false);
         }
@@ -2868,7 +2780,17 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 // exactly a picker tile (bright mode included), on a surface reaching the
                 // buttons
                 var grid = overlay.typeGrid;
-                grid.paintTileContent(g, new Rectangle(0, 0, getWidth(), getHeight()), content, false, false);
+                var tile = new Rectangle(0, 0, getWidth(), getHeight());
+                grid.paintTileContent(g, tile, content, false, false);
+                if (mainHovered) {
+                    // the large view is clickable (it opens the picker): hover style
+                    var main = TypeGrid.mainRect(tile);
+                    g.setColor(grid.bright() ? new Color(0, 0, 0, 14) : new Color(255, 255, 255, 16));
+                    g.fill(OverlayStyle.rounded(main.x, main.y, main.width, main.height));
+                    g.setColor(grid.text());
+                    g.setStroke(new BasicStroke(1.5f));
+                    g.draw(OverlayStyle.rounded(main.x + 0.75, main.y + 0.75, main.width - 1.5, main.height - 1.5));
+                }
                 int y = tileHeight(layer) - 8;
                 g.setFont(OverlayStyle.font(Font.PLAIN, 12f));
                 var metrics = g.getFontMetrics();
