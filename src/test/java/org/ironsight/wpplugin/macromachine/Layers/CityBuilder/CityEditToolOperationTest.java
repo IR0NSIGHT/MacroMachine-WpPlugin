@@ -533,6 +533,7 @@ class CityEditToolOperationTest
         var outlines = operation.overlayParts().get(1);
         assertEquals("CityTool.Overlays.HighlightColors", highlight.getName());
         assertEquals("CityTool.Overlays.Outlines", outlines.getName());
+        assertEquals("CityTool.Overlays.Facing", operation.overlayParts().get(2).getName());
         assertFalse(highlight.isSelected(), "the switch shows the layer's setting");
 
         highlight.setSelected(true);
@@ -772,28 +773,36 @@ class CityEditToolOperationTest
     @Test
     void theFacingArrowPointsAlongTheHousesForwardAxis() {
         var bounds = new java.awt.geom.Rectangle2D.Double(0, 0, 40, 40);
-        // the tip is the point farthest along the facing
-        assertEquals(new Point2D.Double(20, 5),
+        // a ">" outside the front edge: its tip 8 px out from the edge's middle
+        assertEquals(new Point2D.Double(20, -8),
                 tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.NORTH)));
-        assertEquals(new Point2D.Double(35, 20),
+        assertEquals(new Point2D.Double(48, 20),
                 tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.EAST)));
-        assertEquals(new Point2D.Double(20, 35),
+        assertEquals(new Point2D.Double(20, 48),
                 tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.SOUTH)));
-        assertEquals(new Point2D.Double(5, 20),
+        assertEquals(new Point2D.Double(-8, 20),
                 tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.WEST)));
-        assertNull(CityEditToolOperation.facingArrow(new java.awt.geom.Rectangle2D.Double(0, 0, 6, 30),
+        // its arms start on the edge itself (attached to the box)
+        var arms = points(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.EAST));
+        assertEquals(40, arms.get(0).x);
+        assertEquals(40, arms.get(2).x);
+        assertNull(CityEditToolOperation.facingArrow(new java.awt.geom.Rectangle2D.Double(0, 0, 4, 30),
                 CityLayer.Direction.NORTH), "too small for an arrow");
     }
 
-    /** The arrow's tip: the second point of its shaft. */
+    /** The chevron's tip: its middle point. */
     private static Point2D.Double tip(java.awt.geom.Path2D.Double arrow) {
+        return points(arrow).get(1);
+    }
+
+    private static List<Point2D.Double> points(java.awt.geom.Path2D.Double arrow) {
         var points = new ArrayList<Point2D.Double>();
         var coordinates = new double[6];
         for (var it = arrow.getPathIterator(null); !it.isDone(); it.next()) {
             it.currentSegment(coordinates);
             points.add(new Point2D.Double(coordinates[0], coordinates[1]));
         }
-        return points.get(1);
+        return points;
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {

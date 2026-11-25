@@ -146,6 +146,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private final JToggleButton showHighlight = new JToggleButton("Highlight colors", true);
     /** Overlay part: an outline around every house of the layer. */
     private final JToggleButton showOutlines = new JToggleButton("Outlines", true);
+    /** Overlay part: the ">" on the front edge of house outlines. */
+    private final JToggleButton showFacing = new JToggleButton("Facing arrows", true);
     private final CityOverlay overlay = new CityOverlay();
     private WorldPainterView overlayView;
     private volatile boolean cursorOverMap;
@@ -294,6 +296,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         showHighlight.getModel().addItemListener(event -> applyHighlightColors());
         showOutlines.setName("CityTool.Overlays.Outlines");
         showOutlines.getModel().addItemListener(event -> overlay.repaint());
+        showFacing.setName("CityTool.Overlays.Facing");
+        showFacing.getModel().addItemListener(event -> overlay.repaint());
 
         Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
             if (e instanceof MouseWheelEvent ev && isActive()
@@ -686,14 +690,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     /**
-     * Arrow from the middle of a house's outline (view) towards its front: an
-     * unrotated schematic faces north (up on the map); WorldPainter turns each step
-     * clockwise, so EAST faces right. {@code null} where the outline is too small
-     * to carry one.
+     * A {@code >} on the outside of a house's front edge (view), like
+     * {@code |   |>}: an unrotated schematic faces north (up on the map);
+     * WorldPainter turns each step clockwise, so EAST faces right. {@code null}
+     * where the outline is too small to carry one.
      */
     static java.awt.geom.Path2D.Double facingArrow(Rectangle2D bounds, CityLayer.Direction rotation) {
         double size = Math.min(bounds.getWidth(), bounds.getHeight());
-        if (size < 10)
+        if (size < 6)
             return null;
         double dx = 0, dy = 0;
         switch (rotation) {
@@ -702,18 +706,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             case SOUTH -> dy = 1;
             case WEST -> dx = -1;
         }
-        double cx = bounds.getCenterX(), cy = bounds.getCenterY();
-        double reach = (dx != 0 ? bounds.getWidth() : bounds.getHeight()) / 2 * 0.75;
-        double head = Math.min(8, size * 0.25);
-        double tipX = cx + dx * reach, tipY = cy + dy * reach;
-        var arrow = new java.awt.geom.Path2D.Double();
-        arrow.moveTo(cx - dx * Math.min(reach, head), cy - dy * Math.min(reach, head));
-        arrow.lineTo(tipX, tipY);
-        // head: back from the tip, spread across the facing
-        arrow.moveTo(tipX - dx * head - dy * head, tipY - dy * head + dx * head);
-        arrow.lineTo(tipX, tipY);
-        arrow.lineTo(tipX - dx * head + dy * head, tipY - dy * head - dx * head);
-        return arrow;
+        double half = (dx != 0 ? bounds.getWidth() : bounds.getHeight()) / 2;
+        // middle of the front edge, the chevron's tip out from it
+        double edgeX = bounds.getCenterX() + dx * half, edgeY = bounds.getCenterY() + dy * half;
+        double head = Math.min(8, Math.max(4, size * 0.3));
+        double tipX = edgeX + dx * head, tipY = edgeY + dy * head;
+        var chevron = new java.awt.geom.Path2D.Double();
+        chevron.moveTo(edgeX - dy * head, edgeY + dx * head);
+        chevron.lineTo(tipX, tipY);
+        chevron.lineTo(edgeX + dy * head, edgeY - dx * head);
+        return chevron;
     }
 
     /** World rectangle a house covers on the map. */
@@ -775,6 +777,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         syncHighlightFromLayer();
         showOverlays.setSelected(true);
         showOutlines.setSelected(true);
+        showFacing.setSelected(true);
         attachOverlay();
         updatePanel();
     }
@@ -1358,7 +1361,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     /** The individual overlay switches, in menu order (exposed for tests). */
     List<JToggleButton> overlayParts() {
-        return List.of(showHighlight, showOutlines);
+        return List.of(showHighlight, showOutlines, showFacing);
     }
 
     /**
@@ -2097,7 +2100,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 toggle.setFocusable(false);
                 toggle.setToolTipText(part == showHighlight
                         ? "Paint the layer in its color instead of the schematics' blocks"
-                        : "Outline every house of the layer");
+                        : part == showOutlines
+                                ? "Outline every house of the layer"
+                                : "A \">\" on the front edge of each house outline (which way it faces)");
                 cell.gridx = 0;
                 rows.add(toggle, cell);
                 var only = overlayMenuButton("Only", part.getName() + ".Only", "Show only this");
@@ -2276,7 +2281,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          */
         private void drawOutline(Graphics2D g, Rectangle2D.Double bounds, ObjectState house) {
             g.draw(bounds);
-            var arrow = facingArrow(bounds, house.rotation);
+            var arrow = shows(showFacing) ? facingArrow(bounds, house.rotation) : null;
             if (arrow != null) {
                 var stroke = g.getStroke();
                 g.setStroke(new BasicStroke(Math.max(1.5f, ((BasicStroke) stroke).getLineWidth()),
