@@ -459,21 +459,13 @@ class CityEditToolOperationTest
         layer.setDataAt(TEST_DIMENSION, house.xPos, house.yPos, house);
         operation.handleClick(100, 180, false);
 
+        // with a house selected, the card's picker changes its type
         operation.openTypeGrid();
-        operation.pickTypeInGrid(2);
-        assertFalse(operation.typeGridOpen());
-        // the picker chooses the next house; the selected house keeps its type ...
-        assertEquals(0, layer.getInformationAt(100, 180).objectIndex);
-        assertEquals(2, operation.nextHouse().objectIndex);
-        // ... Change type opens the picker for the selection: its pick goes to the
-        // house
-        clickNamed(operation.typeCardForTest(), "CityTool.TypeCard.ChangeType");
-        assertTrue(operation.typeGridOpen());
         operation.pickTypeInGrid(1);
         assertFalse(operation.typeGridOpen());
         assertEquals(1, layer.getInformationAt(100, 180).objectIndex);
         // closing it without a pick changes nothing
-        operation.changeTypeOfSelection();
+        operation.openTypeGrid();
         operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
         assertEquals(1, layer.getInformationAt(100, 180).objectIndex);
         // bright mode is kept for the next time the picker opens

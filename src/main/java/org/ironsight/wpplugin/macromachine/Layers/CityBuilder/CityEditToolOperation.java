@@ -2142,20 +2142,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     /**
-     * Opens the schematic picker over the whole viewport (what clicking the type
-     * card does): the pick is the next house's type.
+     * Opens the schematic picker over the whole viewport (what clicking the card's
+     * large view does): the pick goes to the selected houses, or with none selected
+     * is the next house's type (closing it without a pick changes nothing).
      */
     void openTypeGrid() {
-        overlay.openTypeGrid(false);
-    }
-
-    /**
-     * Change type (card): opens the picker; the schematic picked there goes to the
-     * selected houses (closing it without a pick changes nothing).
-     */
-    void changeTypeOfSelection() {
-        if (getSelectedLayer() != null && !selectedStates.isEmpty())
-            overlay.openTypeGrid(true);
+        overlay.openTypeGrid(getSelectedLayer() != null && !selectedStates.isEmpty());
     }
 
     boolean typeGridOpen() {
@@ -2637,7 +2629,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         /** Height of the button row under the texts (px). */
         private static final int BUTTON_ROW = 30;
         private final List<JButton> buttons = new ArrayList<>();
-        private final JButton applyType;
 
         TypeCard() {
             setOpaque(false);
@@ -2650,16 +2641,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     "Turn a quarter clockwise: the selected houses, or the next house", () -> turnNext(-1));
             addButton("flip-horizontal-2", "CityTool.TypeCard.Mirror",
                     "Mirror the selected houses, or the next house (X)", this::mirror);
-            applyType = OverlayStyle.button(new JButton("Change type"));
-            applyType.setName("CityTool.TypeCard.ChangeType");
-            applyType.setToolTipText("Pick a schematic for the selected houses");
-            applyType.setFocusable(false);
-            applyType.setFont(OverlayStyle.font(Font.PLAIN, 12.5f));
-            applyType.setBorder(new EmptyBorder(4, 9, 4, 9));
-            applyType.setCursor(Cursor.getDefaultCursor());
-            applyType.addActionListener(event -> changeTypeOfSelection());
-            buttons.add(applyType);
-            add(applyType);
         }
 
         private void mirror() {
@@ -2703,9 +2684,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             for (JButton button : buttons)
                 if (button.isVisible() != shown)
                     button.setVisible(shown);
-            boolean any = !selectedStates.isEmpty();
-            if (applyType.isEnabled() != any)
-                applyType.setEnabled(any);
         }
 
         private String title() {
@@ -2789,7 +2767,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (small >= 0) {
                 setCardView(HouseView.values()[small]);
             } else
-                overlay.openTypeGrid(false);
+                openTypeGrid();
         }
 
         /** Height of the tile part: the picker's tile for this name. */
@@ -3273,7 +3251,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         OverlayStyle.ON_ACCENT, null);
         }
 
-        /** Opened by Change type: the pick goes to the selected houses. */
+        /** Opened with houses selected: the pick goes to them. */
         private boolean forSelection;
 
         /** Choose / Enter: the selected schematic, as a double click on it. */
