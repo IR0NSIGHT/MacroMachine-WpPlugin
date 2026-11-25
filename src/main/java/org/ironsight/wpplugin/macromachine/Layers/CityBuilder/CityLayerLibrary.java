@@ -133,9 +133,11 @@ final class CityLayerLibrary
      */
     static CityLayer addTutorialLayer(Dimension dimension) throws IOException, ReflectiveOperationException {
         CityLayer tutorial = readTutorialLayer();
-        for (CityLayer layer : cityLayers(dimension))
-            if (layer.getName().equals(tutorial.getName()))
-                return layer;
+        // pressed before: never a second copy. The same layer id (it survives renaming)
+        // or the same name is the tutorial layer already in the world.
+        CityLayer present = presentTutorialLayer(dimension, tutorial);
+        if (present != null)
+            return present;
         Object app = app();
         if (app == null)
             return null;
@@ -143,6 +145,22 @@ final class CityLayerLibrary
         Method importLayer = controller.getClass().getDeclaredMethod("importCustomLayer", CustomLayer.class);
         importLayer.setAccessible(true);
         importLayer.invoke(controller, tutorial);
+        if (presentTutorialLayer(dimension, tutorial) == null)
+            throw new IOException("WorldPainter did not add the tutorial layer to this dimension");
         return tutorial;
+    }
+
+    /**
+     * The tutorial layer if the dimension has it already (same layer id or name),
+     * else {@code null}.
+     */
+    static CityLayer presentTutorialLayer(Dimension dimension, CityLayer tutorial) {
+        for (CityLayer layer : cityLayers(dimension))
+            if (layer.getId().equals(tutorial.getId()))
+                return layer;
+        for (CityLayer layer : cityLayers(dimension))
+            if (layer.getName().equals(tutorial.getName()))
+                return layer;
+        return null;
     }
 }
