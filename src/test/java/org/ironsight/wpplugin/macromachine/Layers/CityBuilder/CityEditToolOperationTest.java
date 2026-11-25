@@ -720,7 +720,12 @@ class CityEditToolOperationTest
         assertEquals(List.of(1), operation.typeGridVisible(), "every word, any case");
         search.setText("");
 
+        // the size filters hide behind the filter button
+        var filters = (javax.swing.JToggleButton) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filters");
         var width = (javax.swing.JCheckBox) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filter.Width");
+        assertFalse(width.isShowing() || width.getParent().isVisible(), "hidden until the filter button is on");
+        filters.doClick();
+        assertTrue(width.getParent().isVisible());
         var min = (javax.swing.JSpinner) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filter.Width.Min");
         var max = (javax.swing.JSpinner) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filter.Width.Max");
         assertFalse(width.isSelected());
@@ -729,6 +734,7 @@ class CityEditToolOperationTest
         max.setValue(3);
         assertTrue(width.isSelected(), "changing a range switches its filter on");
         assertEquals(List.of(0, 1), operation.typeGridVisible());
+        assertEquals("1", filters.getText(), "the button counts the active filters");
         min.setValue(3);
         assertEquals(List.of(1), operation.typeGridVisible());
         width.doClick();

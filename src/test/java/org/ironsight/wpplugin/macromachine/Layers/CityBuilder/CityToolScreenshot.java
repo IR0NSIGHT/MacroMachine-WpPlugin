@@ -88,6 +88,12 @@ public final class CityToolScreenshot
         SwingUtilities.invokeAndWait(operation::openTypeGrid);
         Thread.sleep(300);
         save(view, new File(out, "city-type-grid.png"));
+        SwingUtilities.invokeAndWait(() -> ((AbstractButton) org.ironsight.wpplugin.macromachine.Gui.OperationPanel
+                .find(operation.typeGridComponent(), "CityTool.TypeGrid.Filters")).doClick());
+        Thread.sleep(300);
+        save(view, new File(out, "city-type-grid-filters.png"));
+        SwingUtilities.invokeAndWait(() -> ((AbstractButton) org.ironsight.wpplugin.macromachine.Gui.OperationPanel
+                .find(operation.typeGridComponent(), "CityTool.TypeGrid.Filters")).doClick());
         SwingUtilities.invokeAndWait(() -> operation.typeGridBrightToggle().doClick());
         Thread.sleep(300);
         save(view, new File(out, "city-type-grid-bright.png"));

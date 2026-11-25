@@ -2456,9 +2456,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
      */
     private class TypeGrid extends JComponent
     {
-        private static final int MARGIN = 32, HEADER = 118, GAP = 12, PICTURE = 126;
+        private static final int MARGIN = 32, GAP = 12, PICTURE = 126;
         /** The search and size filter row, between the subtitle and the tiles. */
         private static final int FILTER_ROW_Y = 74, FILTER_ROW_HEIGHT = 28;
+
+        /** Top of the tiles: below the search row, and the size filters while shown. */
+        private int header() {
+            return filterRow.isVisible() ? 152 : 118;
+        }
         /** Tile height without the name (picture, measurements, padding). */
         private static final int TILE_HEIGHT_WITHOUT_NAME = 10 + PICTURE + 8 + 10;
         /** All tiles are as tall as the longest name needs (one line at least). */
@@ -2508,6 +2513,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 new JCheckBox("Height")};
         private final JSpinner[] sizeMin = new JSpinner[3], sizeMax = new JSpinner[3];
         private final JPanel filterRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        private final JPanel searchRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        /**
+         * Shows / hides the size filters; counts the active ones while they are hidden.
+         */
+        private final JToggleButton filterButton = new JToggleButton(LucideIcons.icon("funnel", 16, OverlayStyle.TEXT));
         /** The schematics the search and filters let through, in layer order. */
         private final List<Integer> visible = new ArrayList<>();
         /**
@@ -2557,7 +2567,22 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 }
             });
             filterRow.setOpaque(false);
-            filterRow.add(search);
+            filterRow.setVisible(false);
+            searchRow.setOpaque(false);
+            searchRow.add(search);
+            filterButton.setName("CityTool.TypeGrid.Filters");
+            filterButton.setFocusable(false);
+            filterButton.setToolTipText("Filter by size (width, length, height)");
+            OverlayStyle.button(filterButton);
+            filterButton.setSelectedIcon(LucideIcons.icon("funnel", 16, OverlayStyle.ON_ACCENT));
+            filterButton.setBorder(new EmptyBorder(4, 8, 4, 8));
+            filterButton.addActionListener(event -> {
+                filterRow.setVisible(filterButton.isSelected());
+                setBounds(getBounds()); // the tiles move below (or back up to) the filter row
+                refilter();
+            });
+            searchRow.add(filterButton);
+            add(searchRow);
             String[] names = {"Width", "Length", "Height"};
             for (int axis = 0; axis < 3; axis++) {
                 sizeFilters[axis].setName("CityTool.TypeGrid.Filter." + names[axis]);
@@ -2704,6 +2729,8 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          */
         private void resetFilters() {
             search.setText("");
+            filterButton.setSelected(false);
+            filterRow.setVisible(false);
             for (int axis = 0; axis < 3; axis++) {
                 int low = Integer.MAX_VALUE, high = 0;
                 for (int[] size : sizes) {
@@ -2738,6 +2765,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 if (matches)
                     visible.add(i);
             }
+            int active = 0;
+            for (JCheckBox filter : sizeFilters)
+                if (filter.isSelected())
+                    active++;
+            filterButton.setText(active == 0 ? "" : Integer.toString(active));
+            filterButton.setToolTipText(active == 0
+                    ? "Filter by size (width, length, height)"
+                    : "Filter by size: " + active + (active == 1 ? " filter" : " filters") + " active");
             scroll = Math.min(scroll, maxScroll());
             hover = -1;
             repaint();
@@ -2781,8 +2816,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             var size = brightToggle.getPreferredSize();
             // left of the close cross, level with the title
             brightToggle.setBounds(width - MARGIN - 24 - size.width, 36 - size.height / 2, size.width, size.height);
+            var searchSize = searchRow.getPreferredSize();
+            searchRow.setBounds(MARGIN - 6, FILTER_ROW_Y, Math.min(searchSize.width, width - 2 * MARGIN),
+                    FILTER_ROW_HEIGHT + 4);
+            searchRow.validate();
             var row = filterRow.getPreferredSize();
-            filterRow.setBounds(MARGIN - 6, FILTER_ROW_Y, Math.min(row.width, width - 2 * MARGIN), FILTER_ROW_HEIGHT);
+            filterRow.setBounds(MARGIN - 6 - 8, FILTER_ROW_Y + 36, Math.min(row.width, width - 2 * MARGIN),
+                    FILTER_ROW_HEIGHT);
             filterRow.validate();
             // left of Bright: Deselect all, then Select all
             var deselect = deselectAll.getPreferredSize();
@@ -2832,18 +2872,18 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             int gridWidth = columns * GRID_TILE + (columns - 1) * GAP;
             int left = Math.max(MARGIN, (getWidth() - gridWidth) / 2);
             int row = index / columns, column = index % columns;
-            return new Rectangle(left + column * (GRID_TILE + GAP), HEADER + row * (tileHeight + GAP) - scroll,
+            return new Rectangle(left + column * (GRID_TILE + GAP), header() + row * (tileHeight + GAP) - scroll,
                     GRID_TILE, tileHeight);
         }
 
         private int maxScroll() {
             int rows = (visible.size() + columns() - 1) / columns();
             int content = rows * (tileHeight + GAP) - GAP;
-            return Math.max(0, content - (getHeight() - HEADER - MARGIN));
+            return Math.max(0, content - (getHeight() - header() - MARGIN));
         }
 
         private int tileAt(Point point) {
-            if (point.y < HEADER - GAP)
+            if (point.y < header() - GAP)
                 return -1;
             for (int i : visible)
                 if (tileBounds(i).contains(point))
@@ -2884,15 +2924,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 g.drawString(target + " · Esc or a click outside closes", MARGIN, 62);
                 LucideIcons.paint(g, "x", new Point2D.Double(getWidth() - MARGIN, 36), 20, 0, muted(), null);
 
-                g.clipRect(0, HEADER - GAP, getWidth(), getHeight());
+                g.clipRect(0, header() - GAP, getWidth(), getHeight());
                 if (visible.isEmpty()) {
                     g.setFont(OverlayStyle.font(Font.PLAIN, 14f));
                     g.setColor(muted());
-                    g.drawString("No schematic matches the search and filters", MARGIN, HEADER + 24);
+                    g.drawString("No schematic matches the search and filters", MARGIN, header() + 24);
                 }
                 for (int i : visible) {
                     Rectangle tile = tileBounds(i);
-                    if (tile.y > getHeight() || tile.y + tile.height < HEADER - GAP)
+                    if (tile.y > getHeight() || tile.y + tile.height < header() - GAP)
                         continue;
                     paintTile(g, i, tile);
                 }
