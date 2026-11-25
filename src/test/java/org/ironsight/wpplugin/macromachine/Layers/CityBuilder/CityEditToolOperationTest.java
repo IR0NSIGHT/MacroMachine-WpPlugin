@@ -686,6 +686,24 @@ class CityEditToolOperationTest
         return press;
     }
 
+    @Test
+    void pickerTileNamesBreakIntoLinesInsteadOfBeingCutOff() {
+        var metrics = new java.awt.image.BufferedImage(1, 1, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+                .createGraphics()
+                .getFontMetrics(new Font(Font.DIALOG, Font.BOLD, 13));
+        String name = "Ektelion - Ukrainian house 1-converted";
+        var lines = CityEditToolOperation.wrapForTest(name, metrics, 134);
+        assertTrue(lines.size() > 1);
+        assertEquals(name.replace(" ", ""), String.join("", lines).replace(" ", ""), "nothing left out");
+        for (String line : lines)
+            assertTrue(metrics.stringWidth(line) <= 134, line);
+        // a word longer than a line is broken too
+        var long_ = CityEditToolOperation.wrapForTest("Supercalifragilisticexpialidocious-house-without-spaces",
+                metrics, 134);
+        assertTrue(long_.size() > 1);
+        assertEquals("Supercalifragilisticexpialidocious-house-without-spaces", String.join("", long_));
+    }
+
     private static void clickMenuItem(JPopupMenu menu, String name) {
         for (var child : menu.getComponents())
             if (child instanceof JMenuItem item && name.equals(item.getName())) {

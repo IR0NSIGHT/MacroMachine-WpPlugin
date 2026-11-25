@@ -1735,6 +1735,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         return overlay.typeGridOpen();
     }
 
+    /** The picker's line breaking of names (exposed for tests). */
+    static List<String> wrapForTest(String text, FontMetrics metrics, int width) {
+        return TypeGrid.wrap(text, metrics, width);
+    }
+
     /** The picker itself (exposed for tests). */
     JComponent typeGridComponent() {
         return overlay.typeGrid;
@@ -2203,11 +2208,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private class TypeGrid extends JComponent
     {
         private static final int MARGIN = 32, HEADER = 84, GAP = 12, PICTURE = 126;
-        private static final int TILE_HEIGHT = GRID_TILE + 22;
+        /** Tile height without the name (picture, measurements, padding). */
+        private static final int TILE_HEIGHT_WITHOUT_NAME = 10 + PICTURE + 8 + 10;
+        /** All tiles are as tall as the longest name needs (one line at least). */
+        private int tileHeight = TILE_HEIGHT_WITHOUT_NAME + 18;
         /** Room left of and below the picture for its measurements (px). */
         private static final int MEASURE_LEFT = 34, MEASURE_BOTTOM = 22;
         private final List<Image> pictures = new ArrayList<>();
         private final List<String> names = new ArrayList<>();
+        /** Each name broken into lines that fit the tile, so it shows in full. */
+        private final List<List<String>> nameLines = new ArrayList<>();
         /** Width (x), length (y) and height (z) in blocks per schematic. */
         private final List<int[]> sizes = new ArrayList<>();
         private int hover = -1;
@@ -2292,14 +2302,18 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         void open(CityLayer layer) {
             pictures.clear();
             names.clear();
+            nameLines.clear();
             sizes.clear();
             var objects = layer.getObjectList();
             for (int i = 0; i < objects.size(); i++) {
                 pictures.add(layer.getSchematicImage(new ObjectState(CityLayer.Direction.NORTH, false, i, 0, 0)));
                 names.add(schematicName(objects.get(i), i));
+                nameLines.add(wrap(names.get(i), getFontMetrics(nameFont()), GRID_TILE - 16));
                 var dimensions = objects.get(i).getDimensions();
                 sizes.add(new int[]{dimensions.x, dimensions.y, dimensions.z});
             }
+            int lines = nameLines.stream().mapToInt(List::size).max().orElse(1);
+            tileHeight = TILE_HEIGHT_WITHOUT_NAME + lines * getFontMetrics(nameFont()).getHeight();
             hover = -1;
             scroll = 0;
         }
@@ -2387,13 +2401,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             int gridWidth = columns * GRID_TILE + (columns - 1) * GAP;
             int left = Math.max(MARGIN, (getWidth() - gridWidth) / 2);
             int row = index / columns, column = index % columns;
-            return new Rectangle(left + column * (GRID_TILE + GAP), HEADER + row * (TILE_HEIGHT + GAP) - scroll,
-                    GRID_TILE, TILE_HEIGHT);
+            return new Rectangle(left + column * (GRID_TILE + GAP), HEADER + row * (tileHeight + GAP) - scroll,
+                    GRID_TILE, tileHeight);
         }
 
         private int maxScroll() {
             int rows = (pictures.size() + columns() - 1) / columns();
-            int content = rows * (TILE_HEIGHT + GAP) - GAP;
+            int content = rows * (tileHeight + GAP) - GAP;
             return Math.max(0, content - (getHeight() - HEADER - MARGIN));
         }
 
@@ -2476,11 +2490,51 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (pickingRandomPool())
                 paintCheckbox(g, index);
             int y = tile.y + 10 + PICTURE + 8;
-            g.setFont(OverlayStyle.font(Font.BOLD, 13f));
+            g.setFont(nameFont());
             var metrics = g.getFontMetrics();
             g.setColor(text());
-            g.drawString(TypeCard.clip(names.get(index), metrics, tile.width - 16), tile.x + 8,
-                    y + metrics.getAscent());
+            for (String line : nameLines.get(index)) {
+                g.drawString(line, tile.x + 8, y + metrics.getAscent());
+                y += metrics.getHeight();
+            }
+        }
+
+        private static Font nameFont() {
+            return OverlayStyle.font(Font.BOLD, 13f);
+        }
+
+        /**
+         * {@code text} in lines of at most {@code width} pixels: broken between words,
+         * a word longer than a line broken between characters.
+         */
+        static List<String> wrap(String text, FontMetrics metrics, int width) {
+            var lines = new ArrayList<String>();
+            var line = new StringBuilder();
+            for (String word : text.trim().split("\\s+")) {
+                String candidate = line.isEmpty() ? word : line + " " + word;
+                if (metrics.stringWidth(candidate) <= width) {
+                    line.setLength(0);
+                    line.append(candidate);
+                    continue;
+                }
+                if (!line.isEmpty()) {
+                    lines.add(line.toString());
+                    line.setLength(0);
+                }
+                // a word wider than the tile: as many characters per line as fit
+                String rest = word;
+                while (metrics.stringWidth(rest) > width) {
+                    int end = 1;
+                    while (end < rest.length() && metrics.stringWidth(rest.substring(0, end + 1)) <= width)
+                        end++;
+                    lines.add(rest.substring(0, end));
+                    rest = rest.substring(end);
+                }
+                line.append(rest);
+            }
+            if (!line.isEmpty() || lines.isEmpty())
+                lines.add(line.toString());
+            return lines;
         }
 
         /**
