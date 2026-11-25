@@ -2712,7 +2712,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 cached = new TypeGrid.TileContent(layer.getSchematicImage(uiState), new int[]{size.x, size.y, size.z},
                         SchematicViews.front(upright), SchematicViews.side(upright),
                         TypeGrid.wrap(title(), getFontMetrics(TypeGrid.nameFont()), cardWidth() - 16), uiState.rotation,
-                        hoverView != null ? hoverView : view, view);
+                        hoverView != null ? hoverView : view, view, hoverView);
                 cachedKey = key;
             }
             return cached;
@@ -2790,6 +2790,15 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     g.setColor(grid.text());
                     g.setStroke(new BasicStroke(1.5f));
                     g.draw(OverlayStyle.rounded(main.x + 0.75, main.y + 0.75, main.width - 1.5, main.height - 1.5));
+                    // and says what a click does
+                    g.setFont(OverlayStyle.font(Font.BOLD, 14f));
+                    var label = g.getFontMetrics();
+                    String text = "Change type";
+                    int w = label.stringWidth(text) + 24, h = label.getHeight() + 10;
+                    int x = main.x + (main.width - w) / 2, y = main.y + (main.height - h) / 2;
+                    OverlayStyle.paintSurface(g, x, y, w, h, OverlayStyle.SURFACE);
+                    g.setColor(OverlayStyle.TEXT);
+                    g.drawString(text, x + 12, y + 5 + label.getAscent());
                 }
                 int y = tileHeight(layer) - 8;
                 g.setFont(OverlayStyle.font(Font.PLAIN, 12f));
@@ -2829,7 +2838,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
         /** Tile height without the name (picture, measurements, padding). */
         /** Space between the three small views (px). */
-        static final int THUMB_GAP = 6;
+        static final int THUMB_GAP = 0; // seamless: moving between them never leaves them
         /** Height of the labels under the small views (px). */
         static final int THUMB_LABEL = 13;
         /** All tiles are as tall as the longest name needs (one line at least). */
@@ -2840,6 +2849,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         /** Per schematic: its front and side view (see SchematicViews). */
         private final List<Image> fronts = new ArrayList<>(), sides = new ArrayList<>();
         private final List<String> names = new ArrayList<>();
+        /**
+         * The small view under the mouse on the preview card: shown large there while
+         * hovered.
+         */
+        private HouseView previewHoverThumb;
+        /** The view the preview card shows large: its own, not its tile's. */
+        private HouseView previewView = HouseView.TOP;
         /** The small view under the mouse and its tile: shown large while hovered. */
         private HouseView hoverThumb;
         private int hoverThumbTile = -1;
@@ -3023,6 +3039,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         setCursor(Cursor.getPredefinedCursor(index >= 0 ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
                         repaint();
                     }
+                    // the preview card's small views, like a tile's
+                    var preview = previewBounds();
+                    int previewSmall = preview.isEmpty() ? -1 : thumbAt(preview, event.getPoint());
+                    HouseView previewThumb = previewSmall >= 0 ? HouseView.values()[previewSmall] : null;
+                    if (previewThumb != previewHoverThumb) {
+                        previewHoverThumb = previewThumb;
+                        repaint();
+                    }
                     // a small view under the mouse is shown large while hovered
                     int small = index >= 0 ? thumbAt(tileBounds(index), event.getPoint()) : -1;
                     HouseView thumb = small >= 0 ? HouseView.values()[small] : null;
@@ -3058,6 +3082,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     if (!pressed || !SwingUtilities.isLeftMouseButton(event))
                         return;
                     pressed = false;
+                    var preview = previewBounds();
+                    int previewSmall = preview.isEmpty() ? -1 : thumbAt(preview, event.getPoint());
+                    if (previewSmall >= 0 && previewIndex() >= 0) {
+                        // a small view on the preview card: shown large there (its tile keeps its own)
+                        previewView = HouseView.values()[previewSmall];
+                        repaint();
+                        return;
+                    }
                     int index = tileAt(event.getPoint());
                     int view = index >= 0 && index == pressedTile ? thumbAt(tileBounds(index), event.getPoint()) : -1;
                     if (view >= 0) {
@@ -3321,6 +3353,20 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return index >= 0 && index < names.size() ? index : -1;
         }
 
+        /** The view tile {@code index} shows large (exposed for tests). */
+        HouseView tileViewForTest(int index) {
+            return tileViews.getOrDefault(index, HouseView.TOP);
+        }
+
+        int previewIndexForTest() {
+            return previewIndex();
+        }
+
+        /** The view the preview card shows large (exposed for tests). */
+        HouseView previewViewForTest() {
+            return previewView;
+        }
+
         /** The preview card's bounds (empty without a preview). */
         Rectangle previewBounds() {
             int width = previewWidth();
@@ -3427,7 +3473,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          * large.
          */
         record TileContent(Image picture, int[] size, Image front, Image side, List<String> nameLines,
-                CityLayer.Direction facing, HouseView view, HouseView chosen) {
+                CityLayer.Direction facing, HouseView view, HouseView chosen, HouseView hovered) {
         }
 
         private TileContent content(int index) {
@@ -3436,7 +3482,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     index == hoverThumbTile && hoverThumb != null
                             ? hoverThumb
                             : tileViews.getOrDefault(index, HouseView.TOP),
-                    tileViews.getOrDefault(index, HouseView.TOP));
+                    tileViews.getOrDefault(index, HouseView.TOP), index == hoverThumbTile ? hoverThumb : null);
         }
 
         // ---- tile layout: a square large view, three small views in a row, the name
@@ -3493,9 +3539,10 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             if (index < 0 || bounds.isEmpty())
                 return;
             var small = content(index);
+            HouseView chosen = previewView;
             var content = new TileContent(small.picture(), small.size(), small.front(), small.side(),
-                    wrap(names.get(index), getFontMetrics(nameFont()), bounds.width - 16), small.facing(), small.view(),
-                    small.chosen());
+                    wrap(names.get(index), getFontMetrics(nameFont()), bounds.width - 16), small.facing(),
+                    previewHoverThumb != null ? previewHoverThumb : chosen, chosen, previewHoverThumb);
             paintTileContent(g, bounds, content, false, false);
         }
 
@@ -3584,12 +3631,12 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                 boolean chosen = view == content.chosen(), previewed = view == content.view() && !chosen;
                 // the chosen one only hinted at: a thin, faint lavender edge
                 g.setColor(bright() ? new Color(0, 0, 0, 18) : new Color(255, 255, 255, 14));
-                g.fill(OverlayStyle.rounded(box.x, box.y, box.width, box.height));
+                g.fill(OverlayStyle.rounded(box.x + 1, box.y, box.width - 2, box.height));
                 g.setColor(chosen
                         ? (bright() ? new Color(94, 55, 175, 150) : new Color(205, 199, 255, 150))
                         : previewed ? text() : bright() ? new Color(0, 0, 0, 50) : OverlayStyle.HAIRLINE);
                 g.setStroke(new BasicStroke(previewed ? 1.5f : 1f));
-                g.draw(OverlayStyle.rounded(box.x + 0.5, box.y + 0.5, box.width - 1, box.height - 1));
+                g.draw(OverlayStyle.rounded(box.x + 1.5, box.y + 0.5, box.width - 3, box.height - 1));
                 Image image = switch (view) {
                     case TOP -> content.picture();
                     case FRONT -> content.front();
@@ -3604,6 +3651,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                     g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
                             RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
                     g.drawImage(image, box.x + (box.width - w) / 2, box.y + (box.height - h) / 2, w, h, null);
+                }
+                if (view == content.hovered()) {
+                    // hovering shows this view large: an eye on a small dark disc says so
+                    var centre = new Point2D.Double(box.getCenterX(), box.getCenterY());
+                    g.setColor(new Color(22, 22, 22, 170));
+                    g.fill(new java.awt.geom.Ellipse2D.Double(centre.x - 11, centre.y - 11, 22, 22));
+                    LucideIcons.paint(g, "eye", centre, 16, 0, OverlayStyle.TEXT, null);
                 }
                 g.setColor(previewed ? text() : muted());
                 g.drawString(view.label, box.x + (box.width - metrics.stringWidth(view.label)) / 2,

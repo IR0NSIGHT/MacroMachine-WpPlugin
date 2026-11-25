@@ -1072,6 +1072,14 @@ class CityEditToolOperationTest
         assertEquals(1400 - 32, preview.x + preview.width, "on the right");
         pressAndRelease(grid, new Point(preview.x + 20, preview.y + 20), new Point(preview.x + 20, preview.y + 20));
         assertTrue(operation.typeGridOpen(), "a click on the preview does not close the picker");
+        // its small views work like a tile's: a click shows "side" large on the card
+        var side = CityEditToolOperation.TypeGrid.thumbRect(preview, 1);
+        pressAndRelease(grid, new Point((int) side.getCenterX(), (int) side.getCenterY()),
+                new Point((int) side.getCenterX(), (int) side.getCenterY()));
+        assertTrue(operation.typeGridOpen());
+        assertEquals(CityEditToolOperation.HouseView.SIDE, grid.previewViewForTest());
+        // the preview card has its own view: its tile and the grid keep theirs
+        assertEquals(CityEditToolOperation.HouseView.TOP, grid.tileViewForTest(grid.previewIndexForTest()));
         // too narrow for tiles and the preview: no preview
         grid.setSize(500, 1000);
         assertTrue(grid.previewBounds().isEmpty());
