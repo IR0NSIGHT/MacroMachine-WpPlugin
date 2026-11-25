@@ -42,6 +42,7 @@ import org.ironsight.wpplugin.macromachine.Gui.PreciseDrag;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.LucideIcons;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTool;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTransformBox;
+import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.TransformBoxEditor;
 import org.pepsoft.util.swing.TiledImageViewer;
 import org.pepsoft.util.undo.UndoManager;
 import org.pepsoft.worldpainter.*;
@@ -232,23 +233,16 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     private UnaryOperator<ObjectState> gestureTransform;
     private String gestureHeader;
     /**
-     * Pivot placed by dragging it (world); belongs to the selection it was placed
-     * for.
+     * The transform box, shared with the Path Tool: box angle and placed pivot per
+     * selection, the running handle drag, hit testing and painting.
      */
-    private Point2D.Double customPivot;
-    private Set<Point> customPivotSelection = Set.of();
-    private Point2D.Double draggedPivot;
+    private final TransformBoxEditor transformEditor = new TransformBoxEditor();
     /**
-     * Angle of the transform box (degrees, counter-clockwise on screen), as in the
-     * Path Tool: rotating a group turns the box with it; it belongs to the
-     * selection it was turned for, a new selection starts axis-aligned.
+     * Identity of the current selection for the transform editor: replaced when the
+     * user selects other houses, kept when the selected houses are moved, turned or
+     * spread (their positions change, the selection does not).
      */
-    private double groupAngle;
-    private Set<Point> groupAngleSelection = Set.of();
-    /** Rotation of the running rotate drag of a group (degrees). */
-    private double dragDegrees;
-    /** Turn the next edit of the selection adds to the box angle (degrees). */
-    private double pendingBoxTurn;
+    private Object selectionToken = new Object();
 
     private static BufferedImage loadOverlayIcon() {
         var svgUrl = Objects.requireNonNull(CityEditToolOperation.class.getResource("/icons/castle.svg"),
@@ -592,17 +586,19 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     private void addSelectedState(ObjectState state) {
         selectedStates.put(new Point(state.xPos, state.yPos), state);
+        selectionToken = new Object();
         overlay.repaint();
     }
 
     private void removeSelectedState(ObjectState state) {
         selectedStates.remove(new Point(state.xPos, state.yPos));
+        selectionToken = new Object();
         overlay.repaint();
     }
 
     private void clearSelection() {
         selectedStates.clear();
-        groupAngleSelection = Set.of(); // the next selection starts with an upright box
+        selectionToken = new Object(); // the next selection starts with an upright box
         overlay.repaint();
     }
 
@@ -741,7 +737,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         cancelGesture();
         clearSelection();
         clearClipboard();
-        customPivot = null;
+        transformEditor.resetPivot();
         overlay.closeTypeGrid();
         // a newly chosen layer shows its own highlight colors setting, unless the
         // overlays are off (then it is shown without them too)
@@ -774,9 +770,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             }
         }
         List<ObjectState> newStates = oldStates.stream().map(transform).toList();
-        // the box keeps its angle for the edited selection (plus a turn just made)
-        double angle = boxAngle() + pendingBoxTurn;
-        pendingBoxTurn = 0;
 
         for (ObjectState state : oldStates)
             layer.removeDataAt(getDimension(), state.xPos, state.yPos);
@@ -786,8 +779,6 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         selectedStates.clear();
         for (ObjectState state : newStates)
             selectedStates.put(new Point(state.xPos, state.yPos), state);
-        groupAngle = normalizeDegrees(angle);
-        groupAngleSelection = Set.copyOf(selectedStates.keySet());
 
         uiState = newStates.get(Math.min(activeIndex, newStates.size() - 1));
         applyToUi(uiState);
@@ -797,8 +788,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
 
     private void moveSelection(CityLayer layer, int deltaX, int deltaY) {
         applyToSelection(layer, moveBy(deltaX, deltaY));
-        if (customPivot != null)
-            movePivot(deltaX, deltaY);
+        transformEditor.movePivot(selectionToken, deltaX, deltaY);
     }
 
     private void moveSelectionTo(CityLayer layer, int x, int y) {
@@ -813,30 +803,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             return;
 
         Point center = getSelectionCenter(new ArrayList<>(selectedStates.values()));
-        pendingBoxTurn = 90;
         applyToSelection(layer, state -> rotateStateAround(state, center));
+        transformEditor.turnBox(selectionToken, 90);
     }
 
     /** Angle of the transform box for the current selection (degrees). */
     double boxAngle() {
-        return groupAngleSelection.equals(selectedStates.keySet()) ? groupAngle : 0;
-    }
-
-    /** The box angle as shown: turned along while a group is rotated. */
-    private double shownBoxAngle() {
-        boolean turning = gestureHit != null && gestureHit.kind() == HitKind.ROTATE && gestureTransform != null
-                && selectedStates.size() > 1;
-        return boxAngle() + (turning ? dragDegrees : 0);
-    }
-
-    /** Degrees in (-180, 180]. */
-    static double normalizeDegrees(double degrees) {
-        double normalized = degrees % 360;
-        if (normalized <= -180)
-            normalized += 360;
-        if (normalized > 180)
-            normalized -= 360;
-        return normalized;
+        return transformEditor.boxAngle(selectionToken);
     }
 
     private void mirrorSelection(CityLayer layer) {
@@ -1296,29 +1269,56 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
     }
 
     /**
-     * Pivot for rotating and scaling (world): placed by the user, else the
-     * selection's centre.
+     * Pivot for rotating and scaling (world): placed by the user, else the centre
+     * of the (possibly turned) box.
      */
     Point2D.Double pivotWorld() {
-        if (draggedPivot != null)
-            return draggedPivot;
-        if (customPivot != null && customPivotSelection.equals(selectedStates.keySet()))
-            return customPivot;
+        return transformEditor.pivot(selectionToken, this::boxCentre);
+    }
+
+    /** The pivot as drawn: dragged, or carried along with a move. */
+    private Point2D.Double displayedPivot() {
+        return transformEditor.displayedPivot(selectionToken, this::boxCentre);
+    }
+
+    private Point2D.Double boxCentre() {
         CityLayer layer = getSelectedLayer();
         if (layer == null)
             return null;
         if (overlayView == null || selectedStates.isEmpty())
             return selectionCentre(layer);
-        // the centre of the (possibly turned) box
         double angle = boxAngle();
         var box = transformBox(layer, new ArrayList<>(selectedStates.values()), angle);
         return toWorldExact(PathTransformBox.frame(angle).transform(PathTransformBox.centre(box), null));
     }
 
-    private void movePivot(int deltaX, int deltaY) {
-        if (customPivot == null || !customPivotSelection.equals(selectedStates.keySet()))
-            return;
-        customPivot = new Point2D.Double(customPivot.x + deltaX, customPivot.y + deltaY);
+    /**
+     * The transform box as drawn: around the houses as shown, turned along while
+     * rotating.
+     */
+    private TransformBoxEditor.ShownBox shownBox(CityLayer layer) {
+        double angle = transformEditor.shownAngle(selectionToken);
+        var box = transformBox(layer, shownSelection(), angle);
+        return box == null ? null : new TransformBoxEditor.ShownBox(PathTransformBox.frame(angle), box);
+    }
+
+    private static HitKind hitKindOf(TransformBoxEditor.Handle handle) {
+        return switch (handle) {
+            case MOVE -> HitKind.MOVE;
+            case ROTATE -> HitKind.ROTATE;
+            case SCALE -> HitKind.SCALE;
+            case PIVOT -> HitKind.PIVOT;
+        };
+    }
+
+    private static TransformBoxEditor.Handle handleOf(HitKind kind) {
+        return switch (kind) {
+            case MOVE -> TransformBoxEditor.Handle.MOVE;
+            case ROTATE -> TransformBoxEditor.Handle.ROTATE;
+            case SCALE -> TransformBoxEditor.Handle.SCALE;
+            case PIVOT -> TransformBoxEditor.Handle.PIVOT;
+            case HOUSE -> null;
+        };
     }
 
     /** What a press at {@code point} grabs: a transform handle, else a house. */
@@ -1327,37 +1327,11 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         if (overlayView == null || layer == null)
             return null;
         if (showOverlays.isSelected() && !selectedStates.isEmpty()) {
-            double angle = shownBoxAngle();
-            var box = transformBox(layer, shownSelection(), angle);
-            var frame = PathTransformBox.frame(angle);
-            if (box != null) {
-                var candidates = new ArrayList<Hit>();
-                var points = new ArrayList<Point2D>();
-                candidates.add(new Hit(HitKind.MOVE, 0, null));
-                points.add(frame.transform(PathTransformBox.moveHandle(box), null));
-                candidates.add(new Hit(HitKind.ROTATE, 0, null));
-                points.add(frame.transform(PathTransformBox.rotateHandle(box), null));
-                if (selectedStates.size() > 1) {
-                    for (int axis : new int[]{PathTransformBox.SCALE_UNIFORM, PathTransformBox.SCALE_X,
-                            PathTransformBox.SCALE_Y}) {
-                        candidates.add(new Hit(HitKind.SCALE, axis, null));
-                        points.add(frame.transform(PathTransformBox.scaleHandle(box, axis), null));
-                    }
-                    candidates.add(new Hit(HitKind.PIVOT, 0, null));
-                    points.add(toViewExact(pivotWorld()));
-                }
-                Hit best = null;
-                double bestDistance = HANDLE_HIT_RADIUS * HANDLE_HIT_RADIUS;
-                for (int i = 0; i < candidates.size(); i++) {
-                    double distance = points.get(i).distanceSq(point);
-                    if (distance <= bestDistance) {
-                        bestDistance = distance;
-                        best = candidates.get(i);
-                    }
-                }
-                if (best != null)
-                    return best;
-            }
+            boolean single = selectedStates.size() < 2;
+            var handle = transformEditor.hitTest(point, shownBox(layer), single, true,
+                    single ? null : toViewExact(displayedPivot()), HANDLE_HIT_RADIUS * HANDLE_HIT_RADIUS);
+            if (handle != null)
+                return new Hit(hitKindOf(handle.handle()), handle.axis(), null);
         }
         Point world = overlayView.viewToWorld(point);
         ObjectState house = houseAt(layer, world.x, world.y);
@@ -1409,6 +1383,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         gestureAdditive = additive;
         gestureDragged = false;
         preciseDrag.start(point);
+        if (hit != null && hit.kind() != HitKind.HOUSE)
+            transformEditor.start(new TransformBoxEditor.Hit(handleOf(hit.kind()), hit.side()), pivotWorld(),
+                    toWorldExact(new Point2D.Double(point.x, point.y)), selectedStates.size() < 2);
         setHovered(hit); // the grabbed element stays highlighted while dragging
         if (hit == null)
             overlay.startDrag(point);
@@ -1438,63 +1415,32 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
         if (precise && !wasPrecise)
             overlay.showTransientInfoText("Precise drag", 1200);
-        // the virtual cursor: whole pixels for the view geometry, exact for world
-        // positions
-        point = new Point((int) Math.round(cursor.x), (int) Math.round(cursor.y));
-        Point2D.Double exact = toWorldExact(cursor);
-        Point world = new Point((int) Math.round(exact.x), (int) Math.round(exact.y));
-        var startExact = toWorldExact(new Point2D.Double(gestureStart.x, gestureStart.y));
-        Point worldStart = new Point((int) Math.round(startExact.x), (int) Math.round(startExact.y));
-        switch (gestureHit.kind()) {
-            case HOUSE, MOVE -> {
-                if (gestureHit.kind() == HitKind.HOUSE
-                        && !selectedStates.containsKey(new Point(gestureHit.house().xPos, gestureHit.house().yPos))) {
-                    if (!gestureAdditive)
-                        clearSelection();
-                    addSelectedState(gestureHit.house());
-                }
-                int deltaX = world.x - worldStart.x, deltaY = world.y - worldStart.y;
-                gestureTransform = moveBy(deltaX, deltaY);
-                gestureHeader = "Move " + deltaX + ", " + deltaY;
+        if (gestureHit.kind() == HitKind.HOUSE && !transformEditor.dragging()) {
+            // dragging a house moves the selection (the house joins it first)
+            var house = gestureHit.house();
+            if (!selectedStates.containsKey(new Point(house.xPos, house.yPos))) {
+                if (!gestureAdditive)
+                    clearSelection();
+                addSelectedState(house);
             }
-            case ROTATE -> {
-                Point2D.Double pivot = pivotWorld();
-                double degrees = PathTransformBox.rotationDegrees(toViewExact(pivot), gestureStart, point);
-                if (selectedStates.size() > 1) {
-                    // a group turns by any angle; each house faces the nearest quarter turn
-                    dragDegrees = degrees;
-                    gestureTransform = rotateAround(pivot, degrees);
-                    gestureHeader = "Rotate " + Math.round(degrees) + "°";
-                } else {
-                    int turns = (int) Math.round(degrees / 90);
-                    gestureTransform = rotateAround(new Point((int) Math.round(pivot.x), (int) Math.round(pivot.y)),
-                            turns);
-                    gestureHeader = "Rotate " + Math.floorMod(turns * 90, 360) + "°";
-                }
-            }
-            case SCALE -> {
-                Point2D.Double pivot = pivotWorld();
-                var pivotView = toViewExact(pivot);
-                int axis = gestureHit.side();
-                double scaleX = 1, scaleY = 1;
-                if (axis == PathTransformBox.SCALE_UNIFORM)
-                    scaleX = scaleY = PathTransformBox.scaleFactor(pivotView, gestureStart, point);
-                else if (axis == PathTransformBox.SCALE_X)
-                    scaleX = PathTransformBox.axisScaleFactor(pivotView, gestureStart, point, boxAngle(), axis);
-                else
-                    scaleY = PathTransformBox.axisScaleFactor(pivotView, gestureStart, point, boxAngle(), axis);
-                gestureTransform = scaleAround(pivot, scaleX, scaleY, boxAngle());
-                gestureHeader = axis == PathTransformBox.SCALE_UNIFORM
-                        ? String.format(Locale.ROOT, "Spread %.2f", scaleX)
-                        : axis == PathTransformBox.SCALE_X
-                                ? String.format(Locale.ROOT, "Spread X %.2f", scaleX)
-                                : String.format(Locale.ROOT, "Spread Y %.2f", scaleY);
-            }
-            case PIVOT -> {
-                draggedPivot = exact;
-                gestureHeader = "Pivot";
-            }
+            transformEditor.start(new TransformBoxEditor.Hit(TransformBoxEditor.Handle.MOVE, 0), pivotWorld(),
+                    toWorldExact(new Point2D.Double(gestureStart.x, gestureStart.y)), false);
         }
+        // the virtual cursor, in world terms: the editor keeps the transform there
+        var readout = transformEditor.update(toWorldExact(cursor), boxAngle(), value -> value);
+        gestureHeader = readout == null ? null : readout.label() + ": " + readout.value();
+        Point2D.Double pivot = transformEditor.pivotStart();
+        gestureTransform = switch (transformEditor.kind()) {
+            case MOVE -> moveBy(transformEditor.moveX(), transformEditor.moveY());
+            // a group turns by any angle, each house facing the nearest quarter turn; a
+            // single house turns in quarter turns (the editor snaps them)
+            case ROTATE -> selectedStates.size() > 1
+                    ? rotateAround(pivot, transformEditor.degrees())
+                    : rotateAround(new Point((int) Math.round(pivot.x), (int) Math.round(pivot.y)),
+                            (int) Math.round(transformEditor.degrees() / 90));
+            case SCALE -> scaleAround(pivot, transformEditor.scaleX(), transformEditor.scaleY(), boxAngle());
+            case PIVOT -> null;
+        };
         overlay.repaint();
     }
 
@@ -1533,26 +1479,9 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
                         }
                         return;
                     }
-                    commitGestureTransform(true);
+                    finishTransform();
                 }
-                case MOVE -> commitGestureTransform(true);
-                case ROTATE -> {
-                    // the box turns with the group (a single house keeps an upright box)
-                    pendingBoxTurn = selectedStates.size() > 1 ? dragDegrees : 0;
-                    try {
-                        commitGestureTransform(false);
-                    } finally {
-                        pendingBoxTurn = 0;
-                    }
-                }
-                case SCALE -> commitGestureTransform(false);
-                case PIVOT -> {
-                    if (gestureDragged && draggedPivot != null) {
-                        customPivot = draggedPivot;
-                        customPivotSelection = Set.copyOf(selectedStates.keySet());
-                    } else
-                        customPivot = null; // a click puts the pivot back in the centre
-                }
+                case MOVE, ROTATE, SCALE, PIVOT -> finishTransform();
             }
         } finally {
             cancelGesture();
@@ -1561,18 +1490,14 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         }
     }
 
-    private void commitGestureTransform(boolean move) {
-        if (gestureTransform == null)
-            return;
-        var transform = gestureTransform;
-        boolean pivotFollows = move && customPivot != null && customPivotSelection.equals(selectedStates.keySet());
-        ObjectState probe = selectedStates.values().iterator().next();
-        ObjectState moved = transform.apply(probe);
-        if (transformSelection(transform) && pivotFollows) {
-            customPivot = new Point2D.Double(customPivot.x + moved.xPos - probe.xPos,
-                    customPivot.y + moved.yPos - probe.yPos);
-            customPivotSelection = Set.copyOf(selectedStates.keySet());
-        }
+    /**
+     * Applies the dragged transform (if it keeps the houses apart) and lets the
+     * editor carry the pivot along / turn the box.
+     */
+    private void finishTransform() {
+        boolean applied = gestureDragged && gestureTransform != null && transformSelection(gestureTransform);
+        if (transformEditor.finish(selectionToken, gestureDragged, applied))
+            showStatusMessage("Pivot reset to the centre");
     }
 
     private void cancelGesture() {
@@ -1582,8 +1507,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
         gestureDragged = false;
         gestureTransform = null;
         gestureHeader = null;
-        draggedPivot = null;
-        dragDegrees = 0;
+        transformEditor.cancel();
         overlay.endDrag();
         overlay.repaint();
     }
@@ -2021,7 +1945,7 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
             g.setStroke(new BasicStroke(2f));
             for (ObjectState house : shown)
                 g.draw(toView(footprint(layer, house)));
-            paintTransformBox(g, layer, shown);
+            paintTransformBox(g, layer);
         }
 
         /**
@@ -2044,40 +1968,13 @@ public class CityEditToolOperation extends MouseOrTabletOperation implements Pai
          * scale handles on the corner and edges and the pivot (scale and pivot only for
          * several houses: one house has nothing to spread).
          */
-        private void paintTransformBox(Graphics2D g, CityLayer layer, List<ObjectState> shown) {
-            // turned like the Path Tool's: the box keeps the angle the group was rotated by
-            double angle = shownBoxAngle();
-            var box = transformBox(layer, shown, angle);
-            if (box == null)
-                return;
-            var frame = PathTransformBox.frame(angle);
-            java.util.function.UnaryOperator<Point2D> at = p -> frame.transform(p, null);
-            g.setStroke(new BasicStroke(1.5f));
-            g.setColor(OverlayStyle.TEXT);
-            g.draw(frame.createTransformedShape(box));
-            g.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-            g.draw(new Line2D.Double(at.apply(PathTransformBox.topCentre(box)),
-                    at.apply(PathTransformBox.rotateHandle(box))));
-            g.draw(new Line2D.Double(at.apply(PathTransformBox.leftCentre(box)),
-                    at.apply(PathTransformBox.moveHandle(box))));
-            PathTool.paintIconHandle(g, "rotate-ccw", at.apply(PathTransformBox.rotateHandle(box)), angle,
-                    isHovered(HitKind.ROTATE, 0));
-            PathTool.paintIconHandle(g, "move", at.apply(PathTransformBox.moveHandle(box)), angle,
-                    isHovered(HitKind.MOVE, 0));
-            if (selectedStates.size() < 2)
-                return;
-            PathTool.paintIconHandle(g, "move-diagonal-2",
-                    at.apply(PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_UNIFORM)), angle,
-                    isHovered(HitKind.SCALE, PathTransformBox.SCALE_UNIFORM));
-            PathTool.paintIconHandle(g, "move-horizontal",
-                    at.apply(PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_X)), angle,
-                    isHovered(HitKind.SCALE, PathTransformBox.SCALE_X));
-            PathTool.paintIconHandle(g, "move-vertical",
-                    at.apply(PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_Y)), angle,
-                    isHovered(HitKind.SCALE, PathTransformBox.SCALE_Y));
-            Point2D.Double pivot = pivotWorld();
-            if (pivot != null)
-                PathTool.paintIconHandle(g, "crosshair", toViewExact(pivot), 0, isHovered(HitKind.PIVOT, 0));
+        private void paintTransformBox(Graphics2D g, CityLayer layer) {
+            boolean single = selectedStates.size() < 2;
+            var hoveredHandle = hovered == null || hovered.kind() == HitKind.HOUSE
+                    ? null
+                    : new TransformBoxEditor.Hit(handleOf(hovered.kind()), hovered.side());
+            TransformBoxEditor.paint(g, shownBox(layer), single, true, single ? null : toViewExact(displayedPivot()),
+                    hoveredHandle);
         }
 
         private boolean isHovered(HitKind kind, int side) {

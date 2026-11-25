@@ -586,8 +586,6 @@ class CityEditToolOperationTest
         operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
         operation.handleKeyInteraction(KeyEvent.VK_A, true);
         assertEquals(0, operation.boxAngle());
-        assertEquals(-90, CityEditToolOperation.normalizeDegrees(270));
-        assertEquals(180, CityEditToolOperation.normalizeDegrees(-180));
     }
 
     private static void clickMenuItem(JPopupMenu menu, String name) {
