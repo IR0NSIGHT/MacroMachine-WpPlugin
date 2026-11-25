@@ -28,8 +28,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
+      # the Path Tool tests open Swing windows: give them a virtual display
       - name: Run Maven verify
-        run: mvn --batch-mode --no-transfer-progress verify
+        run: xvfb-run --auto-servernum mvn --batch-mode --no-transfer-progress verify
 
       - name: README download buttons match version
         run: |
