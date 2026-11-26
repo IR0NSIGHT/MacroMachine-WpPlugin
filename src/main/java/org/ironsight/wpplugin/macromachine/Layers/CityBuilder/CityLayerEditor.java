@@ -499,7 +499,9 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         }
     }
 
-    /** The answer to the removal warning: true removes, false keeps the schematics. */
+    /**
+     * The answer to the removal warning: true removes, false keeps the schematics.
+     */
     interface RemovalConfirmation
     {
         boolean confirm(CityLayerEditor editor, int housesDeleted);
@@ -540,7 +542,8 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
             adjustedReplacements.add(newIndex);
         }
 
-        int housesDeleted = layer == null ? 0
+        int housesDeleted = layer == null
+                ? 0
                 : layer.housesAt(layer.positionsLosingHouses(remaining, adjustedReplacements));
         if (!removalConfirmation.confirm(this, housesDeleted))
             return; // aborted: nothing removed
@@ -554,7 +557,9 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         settingsChanged();
     }
 
-    /** The removal warning: removing needs an explicit yes, Cancel is the default. */
+    /**
+     * The removal warning: removing needs an explicit yes, Cancel is the default.
+     */
     private static boolean askToRemove(CityLayerEditor editor, int housesDeleted) {
         String houses = housesDeleted == 0
                 ? "No houses on the map use the removed schematics or the ones listed below them."
@@ -564,15 +569,11 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
                         + " list, and removing one moves all below it up).";
         String message = "<html><body style='width: 420px'>"
                 + "<p><b>Removing schematics clears the undo history of this map.</b></p>"
-                + "<p>When you then press OK in the layer settings:</p>"
-                + "<ul>"
-                + "<li>" + houses + "</li>"
+                + "<p>When you then press OK in the layer settings:</p>" + "<ul>" + "<li>" + houses + "</li>"
                 + "<li><b>You can no longer undo anything you did on this map before</b>: not only City Layer"
-                + " edits, but all painting (terrain, height, other layers). This cannot be taken back.</li>"
-                + "</ul>"
+                + " edits, but all painting (terrain, height, other layers). This cannot be taken back.</li>" + "</ul>"
                 + "<p>Choose Cancel to keep the schematics. Cancel in the layer settings also takes back the"
-                + " removal.</p>"
-                + "</body></html>";
+                + " removal.</p>" + "</body></html>";
         Object[] options = {"Remove and clear undo history", "Cancel"};
         int answer = JOptionPane.showOptionDialog(editor, message, "Remove schematics: undo history will be cleared",
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);

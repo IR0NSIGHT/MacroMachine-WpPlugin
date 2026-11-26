@@ -231,7 +231,10 @@ class CityLayerUndoTest
         assertEquals(List.of(house(2, 140, 100), house(0, 300, 300)), sorted(layer.getAllObjectStates()));
     }
 
-    /** The same through the City Tool, the way the bug showed (on the next mouse move). */
+    /**
+     * The same through the City Tool, the way the bug showed (on the next mouse
+     * move).
+     */
     @Test
     void theToolKeepsWorkingAfterUndoingPastItsFirstEdit() {
         Dimension dimension = dimensionWithUndo();
@@ -291,10 +294,10 @@ class CityLayerUndoTest
     }
 
     /**
-     * The first house edit while another change's step is still open (no save
-     * point armed) starts an undo step of its own: undo takes the house away and
-     * leaves that change, the next undo takes the change, and the houses are the
-     * ones from before, not the edited list.
+     * The first house edit while another change's step is still open (no save point
+     * armed) starts an undo step of its own: undo takes the house away and leaves
+     * that change, the next undo takes the change, and the houses are the ones from
+     * before, not the edited list.
      */
     @Test
     void aFirstEditIntoAnOpenStepUndoesToTheHousesFromBefore() {
@@ -452,7 +455,8 @@ class CityLayerUndoTest
         layer.clearUndoHistory(dimension);
         assertTrue(layer.getAllObjectStates().isEmpty());
 
-        // without the clear, undo would bring them back as the schematics now at 1 and (none) 2
+        // without the clear, undo would bring them back as the schematics now at 1 and
+        // (none) 2
         assertFalse(manager.undo(), "nothing before the change is left to undo");
         assertTrue(layer.getAllObjectStates().isEmpty());
 
@@ -497,7 +501,8 @@ class CityLayerUndoTest
         assertEquals(3, schematicList(editor).getModel().getSize(), "Cancel removes nothing");
         editor.commit();
         assertEquals(List.of(house(1, 100, 100)), layer.getAllObjectStates());
-        // the history is kept: the placing can still be undone (OK's repaint may add a step first)
+        // the history is kept: the placing can still be undone (OK's repaint may add a
+        // step first)
         for (int steps = 0; steps < 3 && !layer.getAllObjectStates().isEmpty(); steps++)
             assertTrue(manager.undo(), "the undo history is kept");
         assertTrue(layer.getAllObjectStates().isEmpty());

@@ -298,9 +298,9 @@ public class CityLayer extends CustomLayer implements UndoListener
     /**
      * The positions in the current schematic list whose houses
      * {@link #setObjectList(ArrayList, Set)} deletes for {@code newObjects}: houses
-     * keep their schematic by its position, so a position that is gone or now
-     * holds another file loses its houses. Removing a schematic shifts all below
-     * it, so their houses go too.
+     * keep their schematic by its position, so a position that is gone or now holds
+     * another file loses its houses. Removing a schematic shifts all below it, so
+     * their houses go too.
      */
     // todo: map old to new positions (removing 5 of 10 need not clear 6..9)
     List<Integer> positionsLosingHouses(List<WPObject> newObjects, Set<Integer> preservedIndices) {
@@ -321,7 +321,10 @@ public class CityLayer extends CustomLayer implements UndoListener
         return positions;
     }
 
-    /** How many houses stand on the map with a schematic at one of {@code positions}. */
+    /**
+     * How many houses stand on the map with a schematic at one of
+     * {@code positions}.
+     */
     int housesAt(Collection<Integer> positions) {
         int count = 0;
         for (ObjectState state : getAllObjectStates())
