@@ -109,6 +109,66 @@ public class MapToolOverlay extends JComponent
         layoutInfoText();
     }
 
+    // ---- the open operation panel (see OperationPanel) ----
+
+    private JPanel shownOperationPanel;
+
+    /**
+     * Where the operation panel's top goes: below the tool's toolbar (tools
+     * override this).
+     */
+    protected int operationPanelTop() {
+        return 8;
+    }
+
+    /** Right edge of the open operation panel, or 0. */
+    public int operationPanelRight() {
+        return shownOperationPanel == null ? 0 : shownOperationPanel.getX() + shownOperationPanel.getWidth();
+    }
+
+    public void relayoutOperationPanel() {
+        layoutOperationPanel();
+        repaint();
+    }
+
+    public void showOperationPanel(JPanel panel) {
+        if (shownOperationPanel != null && shownOperationPanel != panel)
+            remove(shownOperationPanel);
+        shownOperationPanel = panel;
+        add(panel);
+        setComponentZOrder(panel, 0);
+        layoutOperationPanel();
+        revalidate();
+        repaint();
+    }
+
+    public void hideOperationPanel(JPanel panel) {
+        remove(panel);
+        if (shownOperationPanel == panel)
+            shownOperationPanel = null;
+        repaint();
+    }
+
+    /**
+     * Top left, below the toolbar. (Blender puts its "Adjust Last Operation" panel
+     * bottom left, but there WorldPainter draws its compass and scale bar.)
+     */
+    protected void layoutOperationPanel() {
+        if (shownOperationPanel == null)
+            return;
+        Dimension size = shownOperationPanel.getPreferredSize();
+        shownOperationPanel.setBounds(8, operationPanelTop(), size.width, size.height);
+        shownOperationPanel.validate();
+    }
+
+    /**
+     * Whether {@code (x, y)} is on the open operation panel (subclasses'
+     * {@code contains}).
+     */
+    protected boolean operationPanelContains(int x, int y) {
+        return shownOperationPanel != null && shownOperationPanel.getBounds().contains(x, y);
+    }
+
     public void startDrag(Point viewPoint) {
         dragStartWorld = mapView != null ? mapView.viewToWorld(viewPoint) : viewPoint;
         dragEndWorld = dragStartWorld;

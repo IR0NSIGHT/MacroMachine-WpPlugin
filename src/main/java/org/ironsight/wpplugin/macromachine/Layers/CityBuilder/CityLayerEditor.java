@@ -104,17 +104,23 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         }
         saveSettings(layer);
 
+        Dimension dim = context == null ? null : context.getDimension();
         try {
-            Dimension dim = context.getDimension();
             layer.repaintAll(dim);
         } catch (Exception ignored) {
 
+        }
+        if (clearUndoOnCommit) {
+            // after the repaint, so the map as it is now is the state undo starts from
+            layer.clearUndoHistory(dim);
+            clearUndoOnCommit = false;
         }
         CityEditToolOperation.updateInstance();
     }
 
     @Override
     public void reset() {
+        clearUndoOnCommit = false;
         fieldName.setText(layer.getName());
         paintPicker1.setPaint(layer.getPaint());
         paintPicker1.setOpacity(layer.getOpacity());
@@ -493,20 +499,37 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
         }
     }
 
-    private void removeFiles() {
-        JOptionPane.showMessageDialog(this, // parent component (can be null)
-                "Removing objects or changing the order of objects will mess up your already painted schematics!", // message
-                "Warning", // title of popup
-                JOptionPane.WARNING_MESSAGE // icon type
-        );
+    /**
+     * The answer to the removal warning: true removes, false keeps the schematics.
+     */
+    interface RemovalConfirmation
+    {
+        boolean confirm(CityLayerEditor editor, int housesDeleted);
+    }
 
+    /** Asks the user (tests answer themselves). */
+    RemovalConfirmation removalConfirmation = CityLayerEditor::askToRemove;
+
+    /**
+     * The user agreed to remove schematics: OK clears the undo history (see
+     * {@link CityLayer#clearUndoHistory}). Cancel in the layer dialog drops it
+     * along with the removal.
+     */
+    private boolean clearUndoOnCommit;
+
+    void removeFiles() {
         int[] selectedIndices = listObjects.getSelectedIndices();
-        for (int i = selectedIndices.length - 1; i >= 0; i--) {
-            listModel.removeElementAt(selectedIndices[i]);
-        }
+        if (selectedIndices.length == 0)
+            return;
+
+        // the list and the replacements as they would be after removing
         Set<Integer> selectedIndexSet = new HashSet<>();
         for (int index : selectedIndices)
             selectedIndexSet.add(index);
+        ArrayList<WPObject> remaining = new ArrayList<>();
+        for (int i = 0; i < listModel.getSize(); i++)
+            if (!selectedIndexSet.contains(i))
+                remaining.add(listModel.getElementAt(i));
         Set<Integer> adjustedReplacements = new HashSet<>();
         for (int index : replacedObjectIndices) {
             if (selectedIndexSet.contains(index))
@@ -518,9 +541,43 @@ public class CityLayerEditor extends AbstractLayerEditor<CityLayer> implements L
             }
             adjustedReplacements.add(newIndex);
         }
+
+        int housesDeleted = layer == null
+                ? 0
+                : layer.housesAt(layer.positionsLosingHouses(remaining, adjustedReplacements));
+        if (!removalConfirmation.confirm(this, housesDeleted))
+            return; // aborted: nothing removed
+        clearUndoOnCommit = true;
+
+        for (int i = selectedIndices.length - 1; i >= 0; i--) {
+            listModel.removeElementAt(selectedIndices[i]);
+        }
         replacedObjectIndices.clear();
         replacedObjectIndices.addAll(adjustedReplacements);
         settingsChanged();
+    }
+
+    /**
+     * The removal warning: removing needs an explicit yes, Cancel is the default.
+     */
+    private static boolean askToRemove(CityLayerEditor editor, int housesDeleted) {
+        String houses = housesDeleted == 0
+                ? "No houses on the map use the removed schematics or the ones listed below them."
+                : "<b>" + housesDeleted + (housesDeleted == 1 ? " house" : " houses")
+                        + " on the map will be deleted</b>: those of the removed schematics, and those of every"
+                        + " schematic listed below them (houses remember their schematic by its position in the"
+                        + " list, and removing one moves all below it up).";
+        String message = "<html><body style='width: 420px'>"
+                + "<p><b>Removing schematics clears the undo history of this map.</b></p>"
+                + "<p>When you then press OK in the layer settings:</p>" + "<ul>" + "<li>" + houses + "</li>"
+                + "<li><b>You can no longer undo anything you did on this map before</b>: not only City Layer"
+                + " edits, but all painting (terrain, height, other layers). This cannot be taken back.</li>" + "</ul>"
+                + "<p>Choose Cancel to keep the schematics. Cancel in the layer settings also takes back the"
+                + " removal.</p>" + "</body></html>";
+        Object[] options = {"Remove and clear undo history", "Cancel"};
+        int answer = JOptionPane.showOptionDialog(editor, message, "Remove schematics: undo history will be cleared",
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]);
+        return answer == 0;
     }
 
     private void reloadObjects() {

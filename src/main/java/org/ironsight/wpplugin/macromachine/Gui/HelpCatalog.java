@@ -14,27 +14,35 @@ import org.ironsight.wpplugin.macromachine.Gui.HelpDialog.HelpItem;
  * run with a minimal classpath.
  */
 public enum HelpCatalog {
-    CITY("city-tool", "City Editor",
+    CITY("city-tool", "City Tool",
             """
-                    Use the City Tool to place and edit buildings in a City Layer. Create or import a City Layer, select it and use this tool to place schematics in the map.
-                    Select buildings on the map, then use the interactions below to place, move, and edit them.
-                    The tool settings show you the current state of your selected building. You can change the building type by selecting a different one from the list.
+                    Use the City Tool to place and edit buildings in a City Layer. Pick the City Layer in the Layer menu (or import one from a file), then click houses to select them.
+                    Click the card showing the current schematic to pick another one from a grid: it becomes the type of the selected houses (or of the next house you add). The Schematics menu rotates, mirrors and randomizes them.
+                    Selected houses get a transform box: drag the move handle to move them, the rotate handle to turn them (a group turns by any angle, each house facing the nearest quarter turn), the scale handles to spread them apart or pack them together. The crosshair is the pivot: drag it, click it to centre it again.
 
                     City Layers are not compatible with undo/redo. Do not use undo/redo while editing one.
                     """,
-            List.of(new HelpItem("Ctrl + left click", "Place a new building"),
-                    new HelpItem("Left click", "Select or deselect the building under the cursor"),
-                    new HelpItem("Left-button drag", "Select buildings fully inside the drag rectangle"),
-                    new HelpItem("Right click", "Move the selection center to the cursor"),
+            List.of(new HelpItem("Left click", "Select the building under the cursor"),
+                    new HelpItem("Ctrl + left click",
+                            "Add or remove a building from the selection; on empty map: place a new building"),
+                    new HelpItem("Add (button) or double-tap Ctrl", "Every click on empty map places a new building"),
+                    new HelpItem("Add random (Add dropdown)",
+                            "Every new building is a random pick of the schematics ticked in the picker"),
+                    new HelpItem("Shift while dragging", "Precise drag: a tenth of the mouse's speed"),
+                    new HelpItem("Left-button drag on a building", "Move the selection"),
+                    new HelpItem("Left-button drag on empty map", "Select buildings fully inside the drag rectangle"),
                     new HelpItem("Shift + mouse wheel", "Change the selected building type"),
-                    new HelpItem("Ctrl + A", "Select all buildings"), new HelpItem("Escape", "Clear the selection"),
+                    new HelpItem("Ctrl + A", "Select all buildings"),
+                    new HelpItem("Escape", "Leave add mode, else clear the selection"),
                     new HelpItem("Ctrl + C", "Copy selected buildings"),
                     new HelpItem("Ctrl + X", "Cut selected buildings"),
                     new HelpItem("Ctrl + V", "Paste buildings at the cursor"),
-                    new HelpItem("Q", "Randomize selected buildings using enabled random options"),
+                    new HelpItem("Q", "Randomize selected buildings using the random options of the Add menu"),
                     new HelpItem("W/A/S/D", "Move selected buildings"),
-                    new HelpItem("C", "Rotate selected buildings around the selection center"),
-                    new HelpItem("X", "Mirror selected buildings"),
+                    new HelpItem("C",
+                            "Rotate selected buildings around the selection center; in add mode or with nothing selected: the next building"),
+                    new HelpItem("X",
+                            "Mirror selected buildings; in add mode or with nothing selected: the next building"),
                     new HelpItem("Delete", "Delete selected buildings"))), ROAD("path-tool", "Path Tool",
                             """
                                     Use the Path Tool to connect clicked positions into a smooth path that is blended into existing terrain.

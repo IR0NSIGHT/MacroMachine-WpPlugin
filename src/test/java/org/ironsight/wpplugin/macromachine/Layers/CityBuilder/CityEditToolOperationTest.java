@@ -1,6 +1,7 @@
 package org.ironsight.wpplugin.macromachine.Layers.CityBuilder;
 
 import java.awt.*;
+import java.awt.geom.Point2D;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -9,6 +10,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.Random;
 
 import org.ironsight.wpplugin.macromachine.operations.ValueProviders.TestDimension;
@@ -19,6 +22,7 @@ import org.pepsoft.worldpainter.brushes.SymmetricBrush;
 import org.pepsoft.worldpainter.objects.GenericObject;
 import org.pepsoft.worldpainter.objects.WPObject;
 import org.pepsoft.minecraft.Material;
+import org.pepsoft.worldpainter.painting.LayerPaint;
 import org.pepsoft.worldpainter.painting.NibbleLayerPaint;
 
 import javax.swing.*;
@@ -30,7 +34,8 @@ class CityEditToolOperationTest
     private static final Dimension TEST_DIMENSION = TestDimension
             .createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500), -256, 512, 70, 123456789, 62,
                     org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19, org.pepsoft.worldpainter.Terrain.GRASS));
-    private static final TestView TEST_VIEW = new TestView(TEST_DIMENSION);
+    /** WorldPainter allows one view per JVM: other City tests borrow this one. */
+    static final TestView TEST_VIEW = new TestView(TEST_DIMENSION);
 
     static ArrayList<WPObject> loadDevelopmentSchematics() throws IOException {
         var resource = CityEditToolOperation.class.getResource("/CityBuilder/Houses");
@@ -119,8 +124,8 @@ class CityEditToolOperationTest
         layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
         layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
 
-        operation.handleClick(first.xPos, first.yPos, false, false);
-        operation.handleClick(second.xPos, second.yPos, false, false);
+        operation.handleClick(first.xPos, first.yPos, false);
+        operation.handleClick(second.xPos, second.yPos, true);
         operation.handleKeyInteraction(KeyEvent.VK_C, true);
 
         assertEquals(first, layer.getInformationAt(first.xPos, first.yPos));
@@ -160,31 +165,20 @@ class CityEditToolOperationTest
     }
 
     @Test
-    void movingSelectionPlacesItsCenterAtTheCursor() {
+    void aRightClickDoesNothing() {
         CityLayer layer = layerWithObjects();
         CityEditToolOperation operation = new CityEditToolOperation();
         operation.setView(TEST_VIEW);
         operation.setPaint(new NibbleLayerPaint(layer));
+        ObjectState house = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 102);
+        layer.setDataAt(TEST_DIMENSION, house.xPos, house.yPos, house);
+        operation.handleClick(house.xPos, house.yPos, false);
 
-        ObjectState first = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 102);
-        ObjectState second = new ObjectState(CityLayer.Direction.SOUTH, true, 1, 110, 104);
-        layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
-        layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
+        operation.tick(200, 200, true, true, 1f); // WorldPainter's right click
 
-        operation.handleClick(first.xPos, first.yPos, false, false);
-        operation.handleClick(second.xPos, second.yPos, false, false);
-        operation.handleClick(200, 200, true, false);
-
-        ObjectState movedFirst = layer.getInformationAt(195, 199);
-        ObjectState movedSecond = layer.getInformationAt(205, 201);
-        assertNotNull(movedFirst);
-        assertNotNull(movedSecond);
-        assertEquals(first.objectIndex, movedFirst.objectIndex);
-        assertEquals(first.rotation, movedFirst.rotation);
-        assertEquals(first.mirrored, movedFirst.mirrored);
-        assertEquals(second.objectIndex, movedSecond.objectIndex);
-        assertEquals(second.rotation, movedSecond.rotation);
-        assertEquals(second.mirrored, movedSecond.mirrored);
+        assertEquals(house, layer.getInformationAt(100, 102), "the selection stays where it is");
+        assertNull(layer.getInformationAt(200, 200));
+        assertEquals(1, operation.selection().size());
     }
 
     @Test
@@ -199,16 +193,16 @@ class CityEditToolOperationTest
         layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
         layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
 
-        operation.handleClick(first.xPos, first.yPos, false, false);
-        operation.handleClick(second.xPos, second.yPos, false, false);
+        operation.handleClick(first.xPos, first.yPos, false);
+        operation.handleClick(second.xPos, second.yPos, true);
         operation.handleKeyInteraction(KeyEvent.VK_C);
 
         ObjectState rotatedFirst = layer.getInformationAt(104, 108);
         ObjectState rotatedSecond = layer.getInformationAt(106, 98);
         assertNotNull(rotatedFirst);
         assertNotNull(rotatedSecond);
-        assertEquals(CityLayer.Direction.EAST, rotatedFirst.rotation);
-        assertEquals(CityLayer.Direction.WEST, rotatedSecond.rotation);
+        assertEquals(CityLayer.Direction.WEST, rotatedFirst.rotation);
+        assertEquals(CityLayer.Direction.EAST, rotatedSecond.rotation);
         assertFalse(rotatedFirst.mirrored);
         assertTrue(rotatedSecond.mirrored);
         assertEquals(first.objectIndex, rotatedFirst.objectIndex);
@@ -232,7 +226,6 @@ class CityEditToolOperationTest
         assertTrue(CityEditToolOperation.isMapComponent(mapView, mapChild));
         assertFalse(CityEditToolOperation.isMapComponent(mapView, otherView));
         operation.random = new Random(1234);
-        operation.setPlacementOptions(new CityEditToolOperation.PlacementOptions(false, true, false));
 
         operation.placeAt(100, 100);
 
@@ -245,6 +238,8 @@ class CityEditToolOperationTest
         assertNotNull(wheelSelectedState);
         assertEquals(1, wheelSelectedState.objectIndex);
 
+        operation.setPlacementOptions(new CityEditToolOperation.PlacementOptions(false, true, false));
+
         operation.handleKeyInteraction(KeyEvent.VK_Q);
         ObjectState randomisedState = layer.getInformationAt(100, 100);
         assertNotNull(randomisedState);
@@ -256,17 +251,17 @@ class CityEditToolOperationTest
         assertNotNull(movedState);
         assertEquals(randomisedState.objectIndex, movedState.objectIndex);
 
-        operation.handleClick(104, 99, false, false);
+        operation.handleClick(104, 99, false);
         operation.handleKeyInteraction(KeyEvent.VK_W);
         assertNotNull(layer.getInformationAt(100, 99));
 
-        operation.handleClick(103, 99, false, false);
+        operation.handleClick(103, 99, false);
         operation.handleKeyInteraction(KeyEvent.VK_S);
         assertNotNull(layer.getInformationAt(100, 100));
         operation.handleKeyInteraction(KeyEvent.VK_W);
 
-        operation.handleClick(100, 99, false, false);
-        operation.handleClick(400, 400, false, false);
+        operation.handleClick(100, 99, false);
+        operation.handleClick(400, 400, false);
         assertNotNull(layer.getInformationAt(100, 99));
 
         operation.handleKeyInteraction(KeyEvent.VK_W);
@@ -276,9 +271,9 @@ class CityEditToolOperationTest
         assertNull(layer.getInformationAt(Integer.MAX_VALUE, Integer.MAX_VALUE));
         assertNull(layer.getInformationAt(Integer.MAX_VALUE, Integer.MAX_VALUE - 1));
 
-        operation.handleClick(200, 200, false, true);
+        operation.handleClick(200, 200, true);
         assertNotNull(layer.getInformationAt(200, 200));
-        operation.handleClick(201, 200, true, false);
+        operation.handleKeyInteraction(KeyEvent.VK_D);
         assertNull(layer.getInformationAt(200, 200));
         assertNotNull(layer.getInformationAt(201, 200));
 
@@ -290,10 +285,10 @@ class CityEditToolOperationTest
         layer.setDataAt(dimension, first.xPos, first.yPos, first);
         layer.setDataAt(dimension, second.xPos, second.yPos, second);
 
-        operation.handleClick(300, 300, false, false);
-        operation.handleClick(310, 300, false, false);
-        operation.handleClick(300, 300, false, false);
-        operation.handleClick(300, 300, false, false);
+        operation.handleClick(300, 300, false);
+        operation.handleClick(310, 300, true);
+        operation.handleClick(300, 300, true);
+        operation.handleClick(300, 300, true);
 
         operation.handleKeyInteraction(KeyEvent.VK_W);
         ObjectState movedFirst = layer.getInformationAt(300, 299);
@@ -311,8 +306,8 @@ class CityEditToolOperationTest
         operation.handleKeyInteraction(KeyEvent.VK_X);
         ObjectState rotatedFirst = layer.getInformationAt(305, 304);
         ObjectState rotatedSecond = layer.getInformationAt(305, 294);
-        assertEquals(CityLayer.Direction.EAST, rotatedFirst.rotation);
-        assertEquals(CityLayer.Direction.SOUTH, rotatedSecond.rotation);
+        assertEquals(CityLayer.Direction.WEST, rotatedFirst.rotation);
+        assertEquals(CityLayer.Direction.NORTH, rotatedSecond.rotation);
         assertTrue(rotatedFirst.mirrored);
         assertFalse(rotatedSecond.mirrored);
 
@@ -346,6 +341,826 @@ class CityEditToolOperationTest
         assertNotNull(layer.getInformationAt(330, 319));
     }
 
+    @Test
+    void transformsMoveTurnAndSpreadHousePositions() {
+        ObjectState house = new ObjectState(CityLayer.Direction.NORTH, true, 1, 110, 100);
+
+        assertEquals(new ObjectState(CityLayer.Direction.NORTH, true, 1, 113, 96),
+                CityEditToolOperation.moveBy(3, -4).apply(house));
+        // a quarter turn counter-clockwise on screen: east of the pivot becomes north
+        ObjectState turned = CityEditToolOperation.rotateAround(new Point(100, 100), 1).apply(house);
+        assertEquals(100, turned.xPos);
+        assertEquals(90, turned.yPos);
+        assertEquals(CityLayer.Direction.WEST, turned.rotation);
+        assertTrue(turned.mirrored);
+        assertEquals(house, CityEditToolOperation.rotateAround(new Point(100, 100), 4).apply(house));
+        assertEquals(CityEditToolOperation.rotateAround(new Point(100, 100), 3).apply(house),
+                CityEditToolOperation.rotateAround(new Point(100, 100), -1).apply(house));
+
+        ObjectState spread = CityEditToolOperation.scaleAround(new Point2D.Double(100, 100), 2, 0.5)
+                .apply(new ObjectState(CityLayer.Direction.SOUTH, false, 2, 110, 120));
+        assertEquals(new ObjectState(CityLayer.Direction.SOUTH, false, 2, 120, 110), spread);
+    }
+
+    @Test
+    void transformingTheSelectionRefusesToStackHouses() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        ObjectState first = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 100);
+        ObjectState second = new ObjectState(CityLayer.Direction.NORTH, false, 1, 110, 100);
+        layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
+        layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
+        operation.handleClick(100, 100, false);
+        operation.handleClick(110, 100, true);
+
+        assertFalse(
+                operation.transformSelection(CityEditToolOperation.scaleAround(new Point2D.Double(105, 100), 0.01, 1)));
+        assertEquals(first, layer.getInformationAt(100, 100));
+        assertEquals(second, layer.getInformationAt(110, 100));
+
+        assertTrue(operation.transformSelection(CityEditToolOperation.scaleAround(new Point2D.Double(100, 100), 2, 1)));
+        assertNull(layer.getInformationAt(110, 100));
+        assertEquals(1, layer.getInformationAt(120, 100).objectIndex);
+        assertEquals(0, layer.getInformationAt(100, 100).objectIndex);
+        assertEquals(2, operation.selection().size());
+    }
+
+    @Test
+    void clickSelectsOnlyTheHouseAndCtrlClickToggles() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        ObjectState first = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 140);
+        ObjectState second = new ObjectState(CityLayer.Direction.NORTH, false, 1, 110, 140);
+        layer.setDataAt(TEST_DIMENSION, first.xPos, first.yPos, first);
+        layer.setDataAt(TEST_DIMENSION, second.xPos, second.yPos, second);
+
+        operation.handleClick(100, 140, false);
+        operation.handleClick(110, 140, false);
+        assertEquals(List.of(second), operation.selection());
+        operation.handleClick(100, 140, true);
+        assertEquals(2, operation.selection().size());
+        operation.handleClick(110, 140, true);
+        assertEquals(List.of(first), operation.selection());
+        // a plain click on empty map clears the selection; in add mode it places a
+        // house
+        operation.handleClick(150, 150, false);
+        assertTrue(operation.selection().isEmpty());
+        assertNull(layer.getInformationAt(150, 150));
+        operation.addModeToggle().setSelected(true);
+        operation.handleClick(150, 150, false);
+        assertNotNull(layer.getInformationAt(150, 150));
+    }
+
+    @Test
+    void layerMenuListsTheDimensionsCityLayersAlphabeticallyAndSelectsThem() {
+        CityLayer bravo = layerWithObjects();
+        bravo.setName("bravo");
+        CityLayer alpha = layerWithObjects();
+        alpha.setName("Alpha");
+        CityLayer charlie = layerWithObjects();
+        charlie.setName("Charlie");
+        var previous = TEST_DIMENSION.getCustomLayers();
+        TEST_DIMENSION.setCustomLayers(List.of(charlie, bravo, alpha));
+        try {
+            assertEquals(List.of(alpha, bravo, charlie), CityLayerLibrary.cityLayers(TEST_DIMENSION));
+
+            CityEditToolOperation operation = new CityEditToolOperation();
+            operation.setView(TEST_VIEW);
+            var names = new ArrayList<String>();
+            for (var child : operation.layerMenu().getComponents())
+                if (child instanceof JMenuItem item && item.getName() != null)
+                    names.add(item.getName());
+            assertEquals(List.of("CityTool.TutorialLayer", "CityTool.ImportLayer", "CityTool.Layer.Alpha",
+                    "CityTool.Layer.bravo", "CityTool.Layer.Charlie", "CityTool.Help"), names);
+
+            clickMenuItem(operation.layerMenu(), "CityTool.Layer.bravo");
+            assertSame(bravo, ((LayerPaint) operation.getPaint()).getLayer());
+            var current = new ArrayList<String>();
+            for (var child : operation.layerMenu().getComponents())
+                if (child instanceof JRadioButtonMenuItem item && item.isSelected()
+                        && item.getName().startsWith("CityTool.Layer."))
+                    current.add(item.getName());
+            assertEquals(List.of("CityTool.Layer.bravo"), current);
+        } finally {
+            TEST_DIMENSION.setCustomLayers(previous);
+        }
+    }
+
+    @Test
+    void typeGridSetsTypeAndSchematicsMenuMirrorsAndSwitchesRandomOptions() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        ObjectState house = new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 180);
+        layer.setDataAt(TEST_DIMENSION, house.xPos, house.yPos, house);
+        operation.handleClick(100, 180, false);
+
+        // with a house selected, the card's picker changes its type
+        operation.openTypeGrid();
+        operation.pickTypeInGrid(1);
+        assertFalse(operation.typeGridOpen());
+        assertEquals(1, layer.getInformationAt(100, 180).objectIndex);
+        // closing it without a pick changes nothing
+        operation.openTypeGrid();
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        assertEquals(1, layer.getInformationAt(100, 180).objectIndex);
+        // bright mode is kept for the next time the picker opens
+        operation.openTypeGrid();
+        assertTrue(operation.typeGridOpen());
+        assertFalse(operation.typeGridBrightToggle().isSelected());
+        operation.typeGridBrightToggle().doClick();
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        assertFalse(operation.typeGridOpen());
+        operation.openTypeGrid();
+        assertTrue(operation.typeGridBrightToggle().isSelected());
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        for (var child : operation.schematicsMenu().getComponents())
+            if (child instanceof JMenuItem item && item.getName() != null)
+                assertFalse(item.getName().startsWith("CityTool.Type."), "the type is picked in the grid");
+
+        clickMenuItem(operation.addMenu(), "CityTool.RandomMirroring");
+        assertEquals(new CityEditToolOperation.PlacementOptions(false, false, true), operation.placementOptions());
+        clickMenuItem(operation.addMenu(), "CityTool.RandomMirroring");
+        assertEquals(new CityEditToolOperation.PlacementOptions(false, false, false), operation.placementOptions());
+
+        clickMenuItem(operation.schematicsMenu(), "CityTool.Mirror");
+        assertTrue(layer.getInformationAt(100, 180).mirrored);
+    }
+
+    @Test
+    void groupRotationTurnsPositionsByAnyAngleAndHousesByTheNearestQuarterTurn() {
+        ObjectState east = new ObjectState(CityLayer.Direction.NORTH, false, 0, 110, 100);
+        ObjectState south = new ObjectState(CityLayer.Direction.WEST, true, 1, 100, 110);
+        var pivot = new Point2D.Double(100, 100);
+
+        // 30 degrees counter-clockwise on screen: positions turn, houses keep facing
+        // north
+        ObjectState turned = CityEditToolOperation.rotateAround(pivot, 30).apply(east);
+        assertEquals(109, turned.xPos);
+        assertEquals(95, turned.yPos);
+        assertEquals(CityLayer.Direction.NORTH, turned.rotation);
+        // 60 degrees: past 45, each house takes a quarter turn
+        turned = CityEditToolOperation.rotateAround(pivot, 60).apply(south);
+        assertEquals(109, turned.xPos);
+        assertEquals(105, turned.yPos);
+        assertEquals(CityLayer.Direction.SOUTH, turned.rotation);
+        assertTrue(turned.mirrored);
+        // 90 degrees matches the quarter turn of the C key
+        assertEquals(CityEditToolOperation.rotateAround(new Point(100, 100), 1).apply(east),
+                CityEditToolOperation.rotateAround(pivot, 90).apply(east));
+        assertEquals(CityEditToolOperation.rotateAround(new Point(100, 100), -1).apply(south),
+                CityEditToolOperation.rotateAround(pivot, -90).apply(south));
+    }
+
+    @Test
+    void overlaySwitchesDriveTheLayersHighlightColors() {
+        CityLayer layer = layerWithObjects();
+        layer.setUseHighlightColors(false);
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        var highlight = operation.overlayParts().get(0);
+        var outlines = operation.overlayParts().get(1);
+        assertEquals("CityTool.Overlays.HighlightColors", highlight.getName());
+        assertEquals("CityTool.Overlays.Outlines", outlines.getName());
+        assertEquals("CityTool.Overlays.Facing", operation.overlayParts().get(2).getName());
+        // the schematic card is an overlay part too: hidden by its switch and by the
+        // eye
+        var card = operation.typeCardForTest();
+        assertEquals("CityTool.Overlays.Card", operation.overlayParts().get(3).getName());
+        assertTrue(card.isVisible());
+        operation.overlayParts().get(3).setSelected(false);
+        assertFalse(card.isVisible());
+        operation.overlayParts().get(3).setSelected(true);
+        operation.overlaysSwitch().setSelected(false);
+        assertFalse(card.isVisible());
+        operation.overlaysSwitch().setSelected(true);
+        assertTrue(card.isVisible());
+        assertFalse(highlight.isSelected(), "the switch shows the layer's setting");
+
+        highlight.setSelected(true);
+        assertTrue(layer.isUseHighlightColors());
+        operation.overlaysSwitch().setSelected(false);
+        assertFalse(layer.isUseHighlightColors(), "all overlays off: the schematics' blocks show");
+        operation.overlaysSwitch().setSelected(true);
+        assertTrue(layer.isUseHighlightColors());
+        outlines.setSelected(false);
+        assertTrue(layer.isUseHighlightColors());
+    }
+
+    @Test
+    void housesTurnTheSameWayAsTheirPositions() {
+        // a two block house: stone in the west, dirt in the east
+        CityLayer layer = new CityLayer("turn", "test");
+        var objects = new ArrayList<WPObject>();
+        objects.add(new GenericObject("house", 2, 1, 1, new Material[]{Material.STONE, Material.DIRT}));
+        layer.setObjectList(objects);
+        ObjectState house = new ObjectState(CityLayer.Direction.NORTH, false, 0, 10, 0);
+
+        // a quarter turn counter-clockwise on screen: east of the pivot moves north ...
+        ObjectState turned = CityEditToolOperation.rotateStateAround(house, new Point(0, 0));
+        assertEquals(new Point(0, -10), new Point(turned.xPos, turned.yPos));
+        // ... and the house's east end turns to the north as well
+        WPObject object = layer.getObjectForState(turned);
+        assertEquals(1, object.getDimensions().x);
+        assertEquals(2, object.getDimensions().y);
+        assertEquals(Material.DIRT, object.getMaterial(0, 0, 0));
+        assertEquals(Material.STONE, object.getMaterial(0, 1, 0));
+        // a group turned by 90 degrees agrees with the quarter turn
+        assertEquals(turned, CityEditToolOperation.rotateAround(new Point2D.Double(0, 0), 90).apply(house));
+    }
+
+    @Test
+    void theTransformBoxKeepsTheAngleTheGroupWasTurnedBy() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        layer.setDataAt(TEST_DIMENSION, 100, 220, new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 220));
+        layer.setDataAt(TEST_DIMENSION, 120, 220, new ObjectState(CityLayer.Direction.NORTH, false, 1, 120, 220));
+        operation.handleClick(100, 220, false);
+        operation.handleClick(120, 220, true);
+        assertEquals(0, operation.boxAngle());
+
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+        assertEquals(90, operation.boxAngle());
+        // moving keeps the angle, a new selection starts upright
+        operation.handleKeyInteraction(KeyEvent.VK_D);
+        assertEquals(90, operation.boxAngle());
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        operation.handleKeyInteraction(KeyEvent.VK_A, true);
+        assertEquals(0, operation.boxAngle());
+    }
+
+    @Test
+    void aClickOnAPickerTileCountsEvenWhenTheMouseMovesAPixel() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.openTypeGrid();
+        var grid = operation.typeGridComponent();
+        grid.setSize(1000, 800);
+        // the first tile sits top left below the header; press on it, release two
+        // pixels away
+        int x = grid.getWidth() / 2, y = 120;
+        Point press = null;
+        for (int px = 0; px < grid.getWidth() && press == null; px += 4)
+            if (grid.getComponentAt(px, y) == grid)
+                press = new Point(px + 60, y);
+        long when = System.currentTimeMillis();
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_PRESSED, when,
+                java.awt.event.InputEvent.BUTTON1_DOWN_MASK, press.x, press.y, 1, false,
+                java.awt.event.MouseEvent.BUTTON1));
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_RELEASED, when + 80, 0,
+                press.x + 2, press.y + 1, 1, false, java.awt.event.MouseEvent.BUTTON1));
+        assertTrue(operation.typeGridOpen(), "one click selects ...");
+        // ... and a second one (a double click) chooses it
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_PRESSED, when + 120,
+                java.awt.event.InputEvent.BUTTON1_DOWN_MASK, press.x, press.y, 2, false,
+                java.awt.event.MouseEvent.BUTTON1));
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_RELEASED, when + 160, 0,
+                press.x + 1, press.y, 2, false, java.awt.event.MouseEvent.BUTTON1));
+        assertFalse(operation.typeGridOpen(), "the tile was chosen and the picker closed");
+    }
+
+    @Test
+    void addRandomPlacesARandomPickOfTheTickedSchematics() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.random = new Random(42);
+
+        clickMenuItem(operation.addMenu(), "CityTool.Add.Random");
+        assertTrue(operation.addRandom());
+        assertTrue(operation.addModeToggle().isSelected(), "choosing Add random turns add mode on");
+        assertTrue(operation.pickingRandomPool());
+
+        // nothing ticked: nothing is placed
+        operation.placeAt(100, 260);
+        assertNull(layer.getInformationAt(100, 260));
+
+        operation.toggleRandomPool(1);
+        operation.toggleRandomPool(2);
+        operation.toggleRandomPool(0);
+        operation.toggleRandomPool(0); // unticked again
+        assertEquals(Set.of(1, 2), operation.randomPool());
+        var placed = new java.util.HashSet<Integer>();
+        for (int i = 0; i < 20; i++) {
+            operation.placeAt(100 + 10 * i, 260);
+            placed.add(layer.getInformationAt(100 + 10 * i, 260).objectIndex);
+        }
+        assertEquals(Set.of(1, 2), placed, "only the ticked schematics, both of them");
+
+        // plain Add places the current type again; no checkboxes outside add mode
+        clickMenuItem(operation.addMenu(), "CityTool.Add.Plain");
+        assertFalse(operation.addRandom());
+        assertFalse(operation.pickingRandomPool());
+        operation.placeAt(100, 290);
+        assertEquals(0, layer.getInformationAt(100, 290).objectIndex);
+        operation.setAddRandom(true);
+        operation.addModeToggle().setSelected(false);
+        assertFalse(operation.pickingRandomPool(), "the checkboxes only matter in add mode");
+    }
+
+    @Test
+    void inAddRandomAClickOnAPickerTileTicksIt() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.setAddRandom(true);
+        operation.openTypeGrid();
+        var grid = operation.typeGridComponent();
+        grid.setSize(1000, 800);
+        // 1000 px wide: five tiles of 150 px with 12 px gaps, centred: the first starts
+        // at x 101, y 118 (below the search and filter row); its checkbox is 6 px in,
+        // 22 px wide
+        pressAndRelease(grid, new Point(118, 135), new Point(119, 135));
+        assertTrue(operation.typeGridOpen(), "ticking keeps the picker open");
+        assertEquals(Set.of(0), operation.randomPool());
+        // a click on the picture counts as a click on the checkbox: unticks, picker
+        // stays open
+        pressAndRelease(grid, new Point(176, 190), new Point(176, 190));
+        assertTrue(operation.typeGridOpen());
+        assertEquals(Set.of(), operation.randomPool());
+        // outside add mode a click selects, a double click chooses
+        operation.addModeToggle().setSelected(false);
+        pressAndRelease(grid, new Point(176, 190), new Point(176, 190));
+        assertTrue(operation.typeGridOpen());
+        pressAndRelease(grid, new Point(176, 190), new Point(176, 190));
+        assertFalse(operation.typeGridOpen());
+    }
+
+    @Test
+    void thePickerSelectsAndDeselectsAllForAddRandom() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.openTypeGrid();
+        var grid = operation.typeGridComponent();
+        var selectAll = (javax.swing.JButton) OperationPanelLookup.find(grid, "CityTool.TypeGrid.SelectAll");
+        var deselectAll = (javax.swing.JButton) OperationPanelLookup.find(grid, "CityTool.TypeGrid.DeselectAll");
+        assertFalse(selectAll.isVisible(), "no checkboxes outside Add random");
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+
+        operation.setAddRandom(true);
+        operation.openTypeGrid();
+        assertTrue(selectAll.isVisible());
+        selectAll.doClick();
+        assertEquals(Set.of(0, 1, 2), operation.randomPool());
+        deselectAll.doClick();
+        assertEquals(Set.of(), operation.randomPool());
+        assertTrue(operation.typeGridOpen());
+    }
+
+    @Test
+    void thePickerSearchesByNameAndFiltersBySize() {
+        CityLayer layer = layerWithObjects(); // building-0..2: 2, 3 and 4 blocks wide, 1 long, 1 high
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.openTypeGrid();
+        var grid = operation.typeGridComponent();
+        assertEquals(List.of(0, 1, 2), operation.typeGridVisible());
+
+        var search = (javax.swing.JTextField) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Search");
+        search.setText("BUILDING 1");
+        assertEquals(List.of(1), operation.typeGridVisible(), "every word, any case");
+        search.setText("");
+
+        // the size filters hide behind the filter button
+        var filters = (javax.swing.JToggleButton) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filters");
+        var width = (javax.swing.JCheckBox) OperationPanelLookup.find(grid, "CityTool.TypeGrid.Filter.Width");
+        assertFalse(width.isShowing() || width.getParent().isVisible(), "hidden until the filter button is on");
+        filters.doClick();
+        assertTrue(width.getParent().isVisible());
+        var range = (org.ironsight.wpplugin.macromachine.Gui.RangeSlider) OperationPanelLookup.find(grid,
+                "CityTool.TypeGrid.Filter.Width.Range");
+        assertFalse(width.isSelected());
+        assertEquals(2, range.getLow(), "the slider spans the layer's smallest ...");
+        assertEquals(4, range.getHigh(), "... and largest size");
+        assertEquals(2, range.getMinimum());
+        assertEquals(4, range.getMaximum());
+        range.setValues(2, 3);
+        assertTrue(width.isSelected(), "moving a handle switches its filter on");
+        assertEquals(List.of(0, 1), operation.typeGridVisible());
+        assertEquals("1", filters.getText(), "the button counts the active filters");
+        range.setValues(3, 3);
+        assertEquals(List.of(1), operation.typeGridVisible());
+        width.doClick();
+        assertEquals(List.of(0, 1, 2), operation.typeGridVisible(), "unticked: no filter");
+
+        // select all ticks only what is shown
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        operation.setAddRandom(true);
+        operation.openTypeGrid();
+        search.setText("building-2");
+        ((javax.swing.JButton) OperationPanelLookup.find(grid, "CityTool.TypeGrid.SelectAll")).doClick();
+        assertEquals(Set.of(2), operation.randomPool());
+    }
+
+    private static Point pressAndRelease(javax.swing.JComponent grid, Point press, Point release) {
+        long when = System.currentTimeMillis();
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_PRESSED, when,
+                java.awt.event.InputEvent.BUTTON1_DOWN_MASK, press.x, press.y, 1, false,
+                java.awt.event.MouseEvent.BUTTON1));
+        grid.dispatchEvent(new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_RELEASED, when + 50, 0,
+                release.x, release.y, 1, false, java.awt.event.MouseEvent.BUTTON1));
+        return press;
+    }
+
+    @Test
+    void pickerTileNamesBreakIntoLinesInsteadOfBeingCutOff() {
+        var metrics = new java.awt.image.BufferedImage(1, 1, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+                .createGraphics()
+                .getFontMetrics(new Font(Font.DIALOG, Font.BOLD, 13));
+        String name = "Ektelion - Ukrainian house 1-converted";
+        var lines = CityEditToolOperation.wrapForTest(name, metrics, 134);
+        assertTrue(lines.size() > 1);
+        assertEquals(name.replace(" ", ""), String.join("", lines).replace(" ", ""), "nothing left out");
+        for (String line : lines)
+            assertTrue(metrics.stringWidth(line) <= 134, line);
+        // a word longer than a line is broken too
+        var long_ = CityEditToolOperation.wrapForTest("Supercalifragilisticexpialidocious-house-without-spaces",
+                metrics, 134);
+        assertTrue(long_.size() > 1);
+        assertEquals("Supercalifragilisticexpialidocious-house-without-spaces", String.join("", long_));
+    }
+
+    @Test
+    void randomizePanelsPickOnlyAllowedFinalStates() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        for (int i = 0; i < 12; i++)
+            layer.setDataAt(TEST_DIMENSION, 100 + 10 * i, 320,
+                    new ObjectState(CityLayer.Direction.NORTH, false, 0, 100 + 10 * i, 320));
+        operation.handleKeyInteraction(KeyEvent.VK_A, true);
+        assertEquals(12, operation.selection().size());
+
+        // rotation: only 90 and 270 degrees allowed
+        clickMenuItem(operation.schematicsMenu(), "CityTool.RandomizeRotation");
+        var panel = operation.operationPanel();
+        assertNotNull(panel);
+        var description = (javax.swing.JLabel) OperationPanelLookup.find(panel, "CityTool.OperationDescription");
+        assertTrue(description.getText().contains("ticked rotations"), "the panel says what Apply does");
+        clickNamed(panel, "CityTool.Randomize.Allowed.0"); // untick 0 degrees
+        clickNamed(panel, "CityTool.Randomize.Allowed.2"); // untick 180 degrees
+        clickNamed(panel, "CityTool.OperationApply");
+        assertNull(operation.operationPanel());
+        var rotations = new java.util.HashSet<CityLayer.Direction>();
+        for (ObjectState house : operation.selection())
+            rotations.add(house.rotation);
+        assertEquals(Set.of(CityLayer.Direction.EAST, CityLayer.Direction.WEST), rotations);
+
+        // type: only schematic 2; nothing ticked disables Apply
+        clickMenuItem(operation.schematicsMenu(), "CityTool.RandomizeType");
+        panel = operation.operationPanel();
+        clickNamed(panel, "CityTool.Randomize.DeselectAll");
+        for (int i = 0; i < 3; i++)
+            assertFalse(((javax.swing.JCheckBox) OperationPanelLookup.find(panel, "CityTool.Randomize.Allowed." + i))
+                    .isSelected());
+        assertFalse(OperationPanelLookup.find(panel, "CityTool.OperationApply").isEnabled());
+        clickNamed(panel, "CityTool.Randomize.SelectAll");
+        assertTrue(OperationPanelLookup.find(panel, "CityTool.OperationApply").isEnabled());
+        clickNamed(panel, "CityTool.Randomize.DeselectAll");
+        clickNamed(panel, "CityTool.Randomize.Allowed.2");
+        clickNamed(panel, "CityTool.OperationApply");
+        for (ObjectState house : operation.selection())
+            assertEquals(2, house.objectIndex);
+
+        // mirroring: Cancel changes nothing
+        clickMenuItem(operation.schematicsMenu(), "CityTool.RandomizeMirroring");
+        clickNamed(operation.operationPanel(), "CityTool.Randomize.Allowed.0"); // only mirrored
+        clickNamed(operation.operationPanel(), "CityTool.OperationCancel");
+        for (ObjectState house : operation.selection())
+            assertFalse(house.mirrored);
+    }
+
+    private static final class OperationPanelLookup
+    {
+        static java.awt.Component find(java.awt.Container container, String name) {
+            return org.ironsight.wpplugin.macromachine.Gui.OperationPanel.find(container, name);
+        }
+    }
+
+    private static void clickNamed(java.awt.Container container, String name) {
+        var component = OperationPanelLookup.find(container, name);
+        assertNotNull(component, name);
+        ((javax.swing.AbstractButton) component).doClick();
+    }
+
+    @Test
+    void theFacingArrowPointsAlongTheHousesForwardAxis() {
+        var bounds = new java.awt.geom.Rectangle2D.Double(0, 0, 40, 40);
+        // a ">" a little way out from the front edge: 4 px gap, then 8 px to its tip
+        assertEquals(new Point2D.Double(20, -12),
+                tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.NORTH)));
+        assertEquals(new Point2D.Double(52, 20),
+                tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.EAST)));
+        assertEquals(new Point2D.Double(20, 52),
+                tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.SOUTH)));
+        assertEquals(new Point2D.Double(-12, 20),
+                tip(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.WEST)));
+        // its arms start off the edge, not on it ("| >")
+        var arms = points(CityEditToolOperation.facingArrow(bounds, CityLayer.Direction.EAST));
+        assertEquals(44, arms.get(0).x);
+        assertEquals(44, arms.get(2).x);
+        assertNull(CityEditToolOperation.facingArrow(new java.awt.geom.Rectangle2D.Double(0, 0, 4, 30),
+                CityLayer.Direction.NORTH), "too small for an arrow");
+    }
+
+    /** The chevron's tip: its middle point. */
+    private static Point2D.Double tip(java.awt.geom.Path2D.Double arrow) {
+        return points(arrow).get(1);
+    }
+
+    private static List<Point2D.Double> points(java.awt.geom.Path2D.Double arrow) {
+        var points = new ArrayList<Point2D.Double>();
+        var coordinates = new double[6];
+        for (var it = arrow.getPathIterator(null); !it.isDone(); it.next()) {
+            it.currentSegment(coordinates);
+            points.add(new Point2D.Double(coordinates[0], coordinates[1]));
+        }
+        return points;
+    }
+
+    @Test
+    void theRangeSliderDragsTheNearestHandleAndKeepsThemApart() {
+        var slider = new org.ironsight.wpplugin.macromachine.Gui.RangeSlider(0, 100);
+        slider.setSize(216, 30); // 8 px padding: one value per 2 px
+        var changes = new java.util.concurrent.atomic.AtomicInteger();
+        slider.addChangeListener(event -> changes.incrementAndGet());
+        drag(slider, 10, 50); // grabs the low handle (at 0)
+        assertEquals(21, slider.getLow()); // (50 - 8) / 2
+        drag(slider, 200, 120); // grabs the high handle (at 100)
+        assertEquals(56, slider.getHigh());
+        drag(slider, 50, 190); // the low handle stops at the high one
+        assertEquals(56, slider.getLow());
+        assertTrue(changes.get() > 0);
+        slider.setValues(80, 10);
+        assertEquals(10, slider.getLow());
+        assertEquals(80, slider.getHigh());
+    }
+
+    private static void drag(javax.swing.JComponent component, int fromX, int toX) {
+        long when = System.currentTimeMillis();
+        component.dispatchEvent(new java.awt.event.MouseEvent(component, java.awt.event.MouseEvent.MOUSE_PRESSED, when,
+                java.awt.event.InputEvent.BUTTON1_DOWN_MASK, fromX, 20, 1, false, java.awt.event.MouseEvent.BUTTON1));
+        component.dispatchEvent(new java.awt.event.MouseEvent(component, java.awt.event.MouseEvent.MOUSE_DRAGGED,
+                when + 20, java.awt.event.InputEvent.BUTTON1_DOWN_MASK, toX, 20, 0, false, 0));
+        component.dispatchEvent(new java.awt.event.MouseEvent(component, java.awt.event.MouseEvent.MOUSE_RELEASED,
+                when + 40, 0, toX, 20, 1, false, java.awt.event.MouseEvent.BUTTON1));
+    }
+
+    @Test
+    void openingAnotherWorldWipesSelectionAndClipboard() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        layer.setDataAt(TEST_DIMENSION, 100, 400, new ObjectState(CityLayer.Direction.NORTH, false, 0, 100, 400));
+        operation.handleClick(100, 400, false);
+        operation.handleKeyInteraction(KeyEvent.VK_C, true);
+        assertEquals(1, operation.selection().size());
+
+        Dimension other = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(64, 64), -64,
+                320, 70, 7, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
+                org.pepsoft.worldpainter.Terrain.GRASS));
+        TEST_VIEW.setDimension(other);
+        try {
+            operation.setCursorWorldPosition(10, 10);
+            operation.handleKeyInteraction(KeyEvent.VK_V, true); // the clipboard is gone
+            assertTrue(operation.selection().isEmpty(), "the selection belonged to the previous world");
+            assertNull(layer.getInformationAt(10, 10));
+        } finally {
+            TEST_VIEW.setDimension(TEST_DIMENSION);
+        }
+    }
+
+    @Test
+    void theNextHouseCanBeTurnedAndMirroredBeforePlacingIt() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        assertEquals(CityLayer.Direction.NORTH, operation.nextHouse().rotation);
+
+        // nothing selected: C and X set up the next house
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+        assertEquals(CityLayer.Direction.WEST, operation.nextHouse().rotation);
+        operation.handleKeyInteraction(KeyEvent.VK_X);
+        assertTrue(operation.nextHouse().mirrored);
+        operation.turnNext(-1);
+        operation.turnNext(-1); // the card's clockwise button, twice
+        assertEquals(CityLayer.Direction.EAST, operation.nextHouse().rotation);
+
+        operation.placeAt(100, 440);
+        ObjectState placed = layer.getInformationAt(100, 440);
+        assertEquals(CityLayer.Direction.EAST, placed.rotation);
+        assertTrue(placed.mirrored);
+        // the next one keeps the chosen rotation
+        assertEquals(CityLayer.Direction.EAST, operation.nextHouse().rotation);
+
+        // with a selection, the card's buttons turn the selected houses in place
+        operation.turnNext(1);
+        assertEquals(CityLayer.Direction.NORTH, layer.getInformationAt(100, 440).rotation);
+
+        // add mode: the house just placed stays as it is, C prepares the next one
+        operation.addModeToggle().setSelected(true);
+        operation.placeAt(140, 440);
+        CityLayer.Direction placedRotation = layer.getInformationAt(140, 440).rotation;
+        operation.handleKeyInteraction(KeyEvent.VK_C);
+        assertEquals(placedRotation, layer.getInformationAt(140, 440).rotation, "the placed house is not turned");
+        assertEquals(placedRotation.counterClockwise(), operation.nextHouse().rotation);
+    }
+
+    @Test
+    void aNewLayerEndsUpSelected() throws Exception {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        SwingUtilities.invokeAndWait(() -> operation.selectNewLayer(layer));
+        SwingUtilities.invokeAndWait(() -> {
+        }); // the second attempt runs later on the event thread
+        assertSame(layer, ((LayerPaint) operation.getPaint()).getLayer());
+    }
+
+    @Test
+    void schematicViewsShadeSlopesAndShowFrontAndSide() {
+        // an L: two blocks high on the west, one on the east
+        var object = new GenericObject("l", 2, 1, 2,
+                new Material[]{Material.STONE, Material.STONE, Material.STONE, Material.AIR});
+        int[][] top = SchematicViews.top(object);
+        assertNotEquals(0, top[0][0]);
+        assertNotEquals(0, top[1][0]);
+        assertNotEquals(top[0][0], top[1][0], "the step between the two heights is shaded");
+        var front = SchematicViews.front(object);
+        assertEquals(2, front.getWidth());
+        assertEquals(2, front.getHeight());
+        assertEquals(0, front.getRGB(1, 0) >>> 24, "nothing on top of the low half");
+        assertNotEquals(0, front.getRGB(0, 0) >>> 24);
+        var side = SchematicViews.side(object);
+        assertEquals(1, side.getWidth());
+        assertEquals(2, side.getHeight());
+    }
+
+    @Test
+    void theCardsFrontAndSideViewsStayTheHousesOwnWhenItIsTurned() {
+        // 3 wide (x), 1 deep (y), 1 high: a wide front, a narrow side
+        var house = new GenericObject("wide", 3, 1, 1, new Material[]{Material.STONE, Material.STONE, Material.STONE});
+        CityLayer layer = new CityLayer("views", "test");
+        var objects = new ArrayList<WPObject>();
+        objects.add(house);
+        layer.setObjectList(objects);
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        var before = operation.cardContentForTest();
+        operation.turnNext(1); // a quarter turn: the top view turns ...
+        var after = operation.cardContentForTest();
+        assertNotEquals(before.picture().getWidth(null), after.picture().getWidth(null));
+        // ... the front stays the 3 wide face, the side the 1 deep one
+        assertEquals(3, after.front().getWidth(null));
+        assertEquals(1, after.side().getWidth(null));
+        assertEquals(CityLayer.Direction.WEST, after.facing());
+    }
+
+    @Test
+    void theCardsSmallViewsSwitchTheLargeOneAndTheLargeOneOpensThePicker() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        var card = operation.typeCardForTest();
+        card.setSize(card.getPreferredSize());
+        var tile = new Rectangle(0, 0, card.getWidth(), card.getHeight());
+        assertEquals(CityEditToolOperation.HouseView.TOP, operation.cardContentForTest().view());
+
+        // small view "front" (the first): shown large, chosen
+        var front = CityEditToolOperation.TypeGrid.thumbRect(tile, 0);
+        operation.clickTypeCard(new Point((int) front.getCenterX(), (int) front.getCenterY()));
+        assertEquals(CityEditToolOperation.HouseView.FRONT, operation.cardContentForTest().view());
+        assertEquals(CityEditToolOperation.HouseView.FRONT, operation.cardContentForTest().chosen());
+
+        // the large view opens the picker
+        var main = CityEditToolOperation.TypeGrid.mainRect(tile);
+        operation.clickTypeCard(new Point((int) main.getCenterX(), (int) main.getCenterY()));
+        assertTrue(operation.typeGridOpen());
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+
+        // so does the name (below the small views)
+        operation.clickTypeCard(new Point(20, card.getHeight() - 45));
+        assertTrue(operation.typeGridOpen());
+    }
+
+    @Test
+    void thePickerShowsALargePreviewOnTheRightThatClicksDoNotClose() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.openTypeGrid();
+        var grid = (CityEditToolOperation.TypeGrid) operation.typeGridComponent();
+        grid.setSize(1400, 1000);
+        var preview = grid.previewBounds();
+        assertEquals(3 * 150 + 2 * 12, preview.width, "three tiles wide");
+        assertEquals(1400 - 32, preview.x + preview.width, "on the right");
+        pressAndRelease(grid, new Point(preview.x + 20, preview.y + 20), new Point(preview.x + 20, preview.y + 20));
+        assertTrue(operation.typeGridOpen(), "a click on the preview does not close the picker");
+        // its small views work like a tile's: a click shows "side" large on the card
+        var side = CityEditToolOperation.TypeGrid.thumbRect(preview, 1);
+        pressAndRelease(grid, new Point((int) side.getCenterX(), (int) side.getCenterY()),
+                new Point((int) side.getCenterX(), (int) side.getCenterY()));
+        assertTrue(operation.typeGridOpen());
+        assertEquals(CityEditToolOperation.HouseView.SIDE, grid.previewViewForTest());
+        // one view for all cards: the tiles and the map card switch along
+        assertEquals(CityEditToolOperation.HouseView.SIDE, grid.tileViewForTest(grid.previewIndexForTest()));
+        assertEquals(CityEditToolOperation.HouseView.SIDE, operation.cardContentForTest().view());
+        // too narrow for tiles and the preview: no preview
+        grid.setSize(500, 1000);
+        assertTrue(grid.previewBounds().isEmpty());
+    }
+
+    @Test
+    void aPickerClickSelectsForThePreviewAndChooseUsesIt() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.openTypeGrid();
+        var grid = operation.typeGridComponent();
+        grid.setSize(1000, 800);
+        // hovering does not change the preview
+        grid.dispatchEvent(
+                new java.awt.event.MouseEvent(grid, java.awt.event.MouseEvent.MOUSE_MOVED, 0, 0, 176, 190, 0, false));
+        // one click on the first tile selects it; Choose uses it
+        pressAndRelease(grid, new Point(176, 190), new Point(176, 190));
+        assertTrue(operation.typeGridOpen());
+        clickNamed(grid, "CityTool.TypeGrid.Choose");
+        assertFalse(operation.typeGridOpen());
+        assertEquals(0, operation.nextHouse().objectIndex);
+    }
+
+    @Test
+    void copyAndPasteKeysReachTheToolAfterThePickerWasOpen() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        // the picker's search field takes the focus; once the picker is closed it is
+        // hidden and must not swallow the map's shortcuts
+        operation.openTypeGrid();
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        assertFalse(operation.typeGridOpen());
+        var hiddenSearch = OperationPanelLookup.find(operation.typeGridComponent(), "CityTool.TypeGrid.Search");
+        assertFalse(hiddenSearch.isShowing());
+        assertTrue(CityEditToolOperation.shortcutAllowed(TEST_VIEW, hiddenSearch));
+    }
+
+    @Test
+    void addModeNeverHasASelection() {
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(TEST_VIEW);
+        operation.setPaint(new NibbleLayerPaint(layer));
+        layer.setDataAt(TEST_DIMENSION, 100, 520, new ObjectState(CityLayer.Direction.NORTH, false, 2, 100, 520));
+        operation.handleClick(100, 520, false);
+        assertEquals(1, operation.selection().size());
+        // entering add mode lets go of the selection
+        operation.addModeToggle().setSelected(true);
+        assertTrue(operation.selection().isEmpty());
+        // a house placed in add mode is not selected: Change type, turning, mirroring
+        // cannot reach it
+        operation.setType(1);
+        operation.placeAt(300, 520);
+        assertTrue(operation.selection().isEmpty());
+        assertTrue(operation.addModeToggle().isSelected());
+        assertEquals(1, layer.getInformationAt(300, 520).objectIndex);
+        // selecting a house leaves add mode
+        operation.handleClick(100, 520, false);
+        assertEquals(1, operation.selection().size());
+        assertFalse(operation.addModeToggle().isSelected());
+    }
+
+    private static void clickMenuItem(JPopupMenu menu, String name) {
+        for (var child : menu.getComponents())
+            if (child instanceof JMenuItem item && name.equals(item.getName())) {
+                item.doClick();
+                return;
+            }
+        fail("no menu item " + name);
+    }
+
     private static CityLayer layerWithObjects() {
         CityLayer layer = new CityLayer("test", "test");
         ArrayList<WPObject> objects = new ArrayList<>();
@@ -358,7 +1173,7 @@ class CityEditToolOperationTest
         return layer;
     }
 
-    private static class TestView extends WorldPainterView
+    static class TestView extends WorldPainterView
     {
         private Dimension dimension;
 

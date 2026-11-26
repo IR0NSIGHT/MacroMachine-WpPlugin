@@ -11,8 +11,11 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.Serial;
 import java.io.Serializable;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.vecmath.Point3i;
@@ -48,6 +51,29 @@ public class CityLayer extends CustomLayer implements UndoListener
     private CityInfoDatabase database = new CityInfoDatabase();
     private boolean useHighlightColors = true;
     private transient CityLayerRenderer renderer = new CityLayerRenderer(this);
+    /*
+     * Undo: the house list is a buffer of the undo manager of the dimension the
+     * layer is edited in (WorldPainter's own mechanism: it keeps a copy per undo
+     * step and hands the right one back on undo / redo). All runtime only, so the
+     * saved layer stays exactly as before.
+     */
+    /** The undo manager the house list is registered with (null: none). */
+    private transient UndoManager undoManager;
+    /** The house list's key in {@link #undoManager}. */
+    private transient BufferKey<CityInfoDatabase> undoKey;
+    /**
+     * Whether the house list is in {@link #undoManager}'s history yet: it joins at
+     * the first edit, not when the tool picks the manager up (adding a buffer
+     * throws away what can be redone, an edit does that anyway).
+     */
+    private transient boolean undoBufferAdded;
+    /**
+     * A copy of the house list from just before it joined the history: undo steps
+     * from before that do not have it and return to this. Never edited.
+     */
+    private transient CityInfoDatabase undoBaseline;
+    /** Told after undo / redo restored the house list (the City Tool). */
+    private transient Runnable afterUndoRestored;
     public boolean isUseHighlightColors() {
         return useHighlightColors;
     }
@@ -65,7 +91,9 @@ public class CityLayer extends CustomLayer implements UndoListener
         if (state == null || state.objectIndex < 0 || state.objectIndex >= objects.size())
             return;
 
-        database.setDataAt(blockX, blockY, getValueForState(state.rotation, state.mirrored, state.objectIndex));
+        trackUndo(undoManagerOf(dimension));
+        editableDatabase().setDataAt(blockX, blockY,
+                getValueForState(state.rotation, state.mirrored, state.objectIndex));
         resetLastEdited();
         WPObject paintedSchem = getObjectForState(state);
         if (paintedSchem == null)
@@ -99,60 +127,42 @@ public class CityLayer extends CustomLayer implements UndoListener
         Point3i dims = schematic.getDimensions();
         int space = 3;
         BufferedImage img = new BufferedImage(2 * space + dims.x, 2 * space + dims.y, TYPE_INT_ARGB);
-        Graphics2D g2d = img.createGraphics();
-        paintObjectToImage(g2d, space, space, schematic);
-        g2d.dispose();
+        paintObjectToImage(img, space, space, schematic);
         return img;
     }
 
+    /**
+     * The house's shaded top view (see {@link SchematicViews#top}) into the map's
+     * colour tile.
+     */
     private void paintObjectToColorTile(IntegerTile colorTile, WPObject object, int objectTilePosX,
             int objectTilePosY) {
-        int height = object.getDimensions().z;
+        int[][] colours = SchematicViews.top(object);
         int offsetX = object.getOffset().x;
         int offsetY = object.getOffset().y;
-        for (int x = 0; x < object.getDimensions().x; x++) {
-            for (int y = 0; y < object.getDimensions().y; y++) {
-                for (int z = object.getDimensions().z - 1; z >= 0; z--) {
-                    Material mat = object.getMaterial(x, y, z);
-                    if (mat != null && mat != Material.AIR) {
-                        double value = (Math.sqrt(1f * z / height)) * 0.5f + 0.5f;
-                        Color base = new Color(mat.colour);
-                        Color darkenFactor = new Color((int) (Math.max(0, Math.min(255, value * base.getRed()))),
-                                (int) (Math.max(0, Math.min(255, value * base.getGreen()))),
-                                (int) (Math.max(0, Math.min(255, value * base.getBlue()))));
-                        int pixelPosInTileX = objectTilePosX + x + offsetX;
-                        int pixelPosInTileY = objectTilePosY + y + offsetY;
-                        if (pixelPosInTileX < 0 || pixelPosInTileY < 0 || pixelPosInTileX >= TILE_SIZE
-                                || pixelPosInTileY >= TILE_SIZE)
-                            break; // dont try to paint outside the colorTiles bounds.
-                        colorTile.setValueAt(pixelPosInTileX, pixelPosInTileY, darkenFactor.getRGB());
-                        break;
-                    }
-                }
+        for (int x = 0; x < colours.length; x++)
+            for (int y = 0; y < colours[x].length; y++) {
+                if (colours[x][y] == 0)
+                    continue;
+                int pixelPosInTileX = objectTilePosX + x + offsetX;
+                int pixelPosInTileY = objectTilePosY + y + offsetY;
+                if (pixelPosInTileX < 0 || pixelPosInTileY < 0 || pixelPosInTileX >= TILE_SIZE
+                        || pixelPosInTileY >= TILE_SIZE)
+                    continue; // outside the colour tile
+                colorTile.setValueAt(pixelPosInTileX, pixelPosInTileY, colours[x][y]);
             }
-        }
     }
 
-    private void paintObjectToImage(Graphics2D graphics2D, int width, int heightPx, WPObject object) {
-        int height = object.getDimensions().z;
-        for (int x = 0; x < object.getDimensions().x; x++) {
-            for (int y = 0; y < object.getDimensions().y; y++) {
-                int totalPosY = y;
-                for (int z = object.getDimensions().z - 1; z >= 0; z--) {
-                    Material mat = object.getMaterial(x, y, z);
-                    if (mat != null && mat != Material.AIR) {
-                        double value = (Math.sqrt(1f * z / height)) * 0.5f + 0.5f;
-                        Color base = new Color(mat.colour);
-                        Color darkenFactor = new Color((int) (Math.max(0, Math.min(255, value * base.getRed()))),
-                                (int) (Math.max(0, Math.min(255, value * base.getGreen()))),
-                                (int) (Math.max(0, Math.min(255, value * base.getBlue()))));
-                        graphics2D.setColor(darkenFactor);
-                        graphics2D.fillRect(x + width, heightPx + totalPosY, 1, 1);
-                        break;
-                    }
-                }
-            }
-        }
+    /**
+     * The house's shaded top view into an image, {@code left} / {@code top} pixels
+     * in.
+     */
+    private void paintObjectToImage(BufferedImage image, int left, int top, WPObject object) {
+        int[][] colours = SchematicViews.top(object);
+        for (int x = 0; x < colours.length; x++)
+            for (int y = 0; y < colours[x].length; y++)
+                if (colours[x][y] != 0)
+                    image.setRGB(left + x, top + y, colours[x][y]);
     }
 
     private void paintObjectIntoTile(Tile tile, WPObject object, Point objectGlobalPos) {
@@ -240,7 +250,8 @@ public class CityLayer extends CustomLayer implements UndoListener
     public void removeDataAt(Dimension dimension, int blockX, int blockY) {
         WPObject paintedSchem = getObjectForState(getInformationAt(blockX, blockY));
         if (paintedSchem != null) {
-            database.setDataAt(blockX, blockY, NO_DATA);
+            trackUndo(undoManagerOf(dimension));
+            editableDatabase().setDataAt(blockX, blockY, NO_DATA);
             resetLastEdited();
             Point3i dims = paintedSchem.getDimensions();
             for (int tileX = (blockX - dims.x) >> TILE_SIZE_BITS; tileX <= (blockX
@@ -253,6 +264,17 @@ public class CityLayer extends CustomLayer implements UndoListener
         }
     }
 
+    /**
+     * Forgets where houses stand, keeping the schematics: for a layer coming into
+     * another world (from a layer file), whose house positions belong to the world
+     * it was saved in. Without this the City Tool would show houses that are not on
+     * this world's map.
+     */
+    public void forgetPlacements() {
+        editableDatabase().clear();
+        resetLastEdited();
+    }
+
     public ArrayList<WPObject> getObjectList() {
         return objects;
     }
@@ -262,35 +284,53 @@ public class CityLayer extends CustomLayer implements UndoListener
     }
 
     void setObjectList(ArrayList<WPObject> newObjects, Set<Integer> preservedIndices) {
-        ArrayList<Integer> oldIndicesToDelete = new ArrayList<>();
-        // todo: make possible to map old idx to new idx, f.e. if index 5 of size 10 was
-        // deleted, to not clear 6,7,8,9 indices bc of shift
+        for (int i : preservedIndices)
+            if (i < getObjectList().size() && i < newObjects.size())
+                copyObjectSettings(getObjectList().get(i), newObjects.get(i));
 
-        for (int i = 0; i < getObjectList().size(); i++) {
-            WPObject oldObj = getObjectList().get(i);
-            WPObject newObj = i < newObjects.size() ? newObjects.get(i) : null;
-            if (newObj == null) { // the old item doesnt exist anymore in the new list
-                oldIndicesToDelete.add(i);
-                continue;
-            }
-
-            if (preservedIndices.contains(i)) {
-                copyObjectSettings(oldObj, newObj);
-                continue;
-            }
-
-            File oldFile = oldObj.getAttribute(ATTRIBUTE_FILE);
-            File newFile = newObj.getAttribute(ATTRIBUTE_FILE);
-            if (oldFile == null || !oldFile.equals(newFile)) { // the new item points to a different file
-                oldIndicesToDelete.add(i);
-            }
-        }
-
-        for (int schematicIdx : oldIndicesToDelete)
-            database.deleteAllWithValue(getValueForState(Direction.NORTH, false, schematicIdx), ID_BIT_MASK);
+        for (int schematicIdx : positionsLosingHouses(newObjects, preservedIndices))
+            editableDatabase().deleteAllWithValue(getValueForState(Direction.NORTH, false, schematicIdx), ID_BIT_MASK);
 
         this.objects = newObjects;
         resetLastEdited();
+    }
+
+    /**
+     * The positions in the current schematic list whose houses
+     * {@link #setObjectList(ArrayList, Set)} deletes for {@code newObjects}: houses
+     * keep their schematic by its position, so a position that is gone or now holds
+     * another file loses its houses. Removing a schematic shifts all below it, so
+     * their houses go too.
+     */
+    // todo: map old to new positions (removing 5 of 10 need not clear 6..9)
+    List<Integer> positionsLosingHouses(List<WPObject> newObjects, Set<Integer> preservedIndices) {
+        List<Integer> positions = new ArrayList<>();
+        for (int i = 0; i < getObjectList().size(); i++) {
+            WPObject newObj = i < newObjects.size() ? newObjects.get(i) : null;
+            if (newObj == null) { // the position is gone
+                positions.add(i);
+                continue;
+            }
+            if (preservedIndices.contains(i)) // replaced on purpose: houses take the new schematic
+                continue;
+            File oldFile = getObjectList().get(i).getAttribute(ATTRIBUTE_FILE);
+            File newFile = newObj.getAttribute(ATTRIBUTE_FILE);
+            if (oldFile == null || !oldFile.equals(newFile)) // another file at this position
+                positions.add(i);
+        }
+        return positions;
+    }
+
+    /**
+     * How many houses stand on the map with a schematic at one of
+     * {@code positions}.
+     */
+    int housesAt(Collection<Integer> positions) {
+        int count = 0;
+        for (ObjectState state : getAllObjectStates())
+            if (positions.contains(state.objectIndex))
+                count++;
+        return count;
     }
 
     static void copyObjectSettings(WPObject source, WPObject target) {
@@ -422,31 +462,144 @@ public class CityLayer extends CustomLayer implements UndoListener
 
     @Override
     public void savePointArmed() {
-        System.out.println("SAVE POINT ARMED");
     }
 
     @Override
     public void savePointCreated() {
-        System.out.println("SAVE POINT CREATED");
     }
 
     @Override
     public void undoPerformed() {
-        System.out.println("UNDO PERFORMED");
     }
 
     @Override
     public void redoPerformed() {
-        System.out.println("REDO PERFORMED");
     }
 
+    /**
+     * Undo or redo changed the house list: take the manager's copy for this step
+     * (the tiles' layer data is restored by WorldPainter itself).
+     */
     @Override
     public void bufferChanged(BufferKey<?> key) {
-        System.out.println("BUFFER CHANGED " + key);
+        if (undoManager == null || key != undoKey)
+            return;
+        CityInfoDatabase restored = undoManager.getBuffer(undoKey);
+        // undone to before the list was registered: it was as registered then
+        database = restored != null ? restored : undoBaseline;
+        resetLastEdited();
+        if (afterUndoRestored != null)
+            afterUndoRestored.run();
     }
 
-    public void registerLayer(UndoManager manager) {
-        manager.addListener(this);
+    /**
+     * {@code action} runs after undo / redo restored the house list (the undo
+     * manager tells its general listeners before it restores buffers).
+     */
+    public void setAfterUndoRestored(Runnable action) {
+        afterUndoRestored = action;
+    }
+
+    /**
+     * Ties the house list to {@code manager} (the undo manager of the dimension
+     * being edited), so undo / redo take it along with the tiles. It joins the
+     * history at the next edit (see {@link #editableDatabase()}): picking the
+     * manager up changes nothing, so what the user can redo stays. Moving to
+     * another manager (another world or dimension) leaves the old one. A null
+     * manager (none, e.g. in tests) changes nothing.
+     */
+    public void trackUndo(UndoManager manager) {
+        if (manager == null || manager == undoManager)
+            return;
+        if (undoManager != null && undoBufferAdded)
+            undoManager.removeBuffer(undoKey);
+        undoManager = manager;
+        undoKey = new BufferKey<>() {
+            @Override
+            public String toString() {
+                return "CityLayer houses of " + getName();
+            }
+        };
+        undoBufferAdded = false;
+        undoBaseline = null;
+    }
+
+    /**
+     * Clears the undo history of {@code dimension} (and of the undo manager the
+     * house list is registered with, if another one): after the schematic list
+     * changed, the house lists of earlier undo steps name schematics by positions
+     * that now hold others or none, so undo would bring houses back as the wrong
+     * schematic or as invisible ones. The current state stays; the next change
+     * starts a new undo step.
+     */
+    public void clearUndoHistory(Dimension dimension) {
+        UndoManager dimensionManager = undoManagerOf(dimension);
+        if (dimension != null)
+            dimension.clearUndo();
+        if (undoManager != null && undoManager != dimensionManager)
+            undoManager.clear();
+        // clear() disarms the save point: without this the next action would
+        // change the remaining step in place and could not be undone
+        if (dimensionManager != null)
+            dimensionManager.armSavePoint();
+        if (undoManager != null && undoManager != dimensionManager)
+            undoManager.armSavePoint();
+        if (undoBufferAdded)
+            undoBaseline = database.clone();
+    }
+
+    /** The undo manager the house list is registered with (null: none). */
+    UndoManager trackedUndoManager() {
+        return undoManager;
+    }
+
+    /**
+     * The house list to change: with undo, the manager's copy for the current step
+     * (it keeps the previous one), else the list itself.
+     */
+    private CityInfoDatabase editableDatabase() {
+        if (undoManager == null)
+            return database;
+        if (!undoBufferAdded) {
+            // the first edit: the list joins the history now (adding throws away
+            // the redo steps, as this edit does anyway), and the edit starts an
+            // undo step of its own, the list as it was stays in the step before.
+            // The baseline is a separate copy: the manager may hand the stored
+            // list back for editing in place (a step reopened without a save
+            // point), which must not change what earlier steps return to.
+            undoBaseline = database.clone();
+            undoManager.addBuffer(undoKey, database, this);
+            undoManager.armSavePoint();
+            undoBufferAdded = true;
+        }
+        CityInfoDatabase editable = undoManager.getBufferForEditing(undoKey);
+        if (editable == null) {
+            // addBuffer puts the list in the newest step only. Undone past that
+            // step and edited again, the step that had it is gone and the manager
+            // has no list to copy: it hands back null. Here the houses are as they
+            // were before (bufferChanged showed undoBaseline): add a copy of that to
+            // the current step, so undoBaseline stays what earlier steps return to.
+            editable = undoBaseline.clone();
+            undoManager.addBuffer(undoKey, editable, this);
+        }
+        database = editable;
+        return database;
+    }
+
+    /**
+     * The undo manager of {@code dimension} (WorldPainter keeps it private): null
+     * if it has none or cannot be reached.
+     */
+    public static UndoManager undoManagerOf(Dimension dimension) {
+        if (dimension == null)
+            return null;
+        try {
+            Field field = Dimension.class.getDeclaredField("undoManager");
+            field.setAccessible(true);
+            return (UndoManager) field.get(dimension);
+        } catch (ReflectiveOperationException | RuntimeException ex) {
+            return null;
+        }
     }
 
     @Override
@@ -487,8 +640,17 @@ public class CityLayer extends CustomLayer implements UndoListener
             }
         }
 
+        /**
+         * A quarter turn clockwise on screen: the next step of WorldPainter's
+         * RotatedObject, which turns clockwise.
+         */
         public CityLayer.Direction nextRotation() {
             return fromCompass(this.rotateSteps * 90 + 90);
+        }
+
+        /** A quarter turn counter-clockwise on screen. */
+        public CityLayer.Direction counterClockwise() {
+            return fromCompass((this.rotateSteps * 90 + 270) % 360);
         }
     }
 }

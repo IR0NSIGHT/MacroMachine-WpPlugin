@@ -328,15 +328,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * double-tapping Ctrl or the viewport "Add" button; off on every activation.
      */
     private final JToggleButton addMode = addModeSwitch();
-    /**
-     * Double-tap Ctrl detection: press/release times of a clean (uninterrupted)
-     * tap.
-     */
-    private boolean ctrlHeld;
-    private boolean ctrlTapInterrupted;
-    private long ctrlPressedAt;
-    private long lastCtrlTapAt;
-    static final long CTRL_TAP_MAX_HOLD_MS = 300, CTRL_DOUBLE_TAP_MS = 400;
+    /** Double-tapping Ctrl toggles add mode (shared with the other map tools). */
+    private final org.ironsight.wpplugin.macromachine.Gui.CtrlDoubleTap ctrlTaps = new org.ironsight.wpplugin.macromachine.Gui.CtrlDoubleTap(
+            () -> this.cursorOverMap && this.gestureStart == null, () -> addMode.setSelected(!addMode.isSelected()));
+    static final long CTRL_TAP_MAX_HOLD_MS = org.ironsight.wpplugin.macromachine.Gui.CtrlDoubleTap.MAX_HOLD_MS,
+            CTRL_DOUBLE_TAP_MS = org.ironsight.wpplugin.macromachine.Gui.CtrlDoubleTap.DOUBLE_TAP_MS;
     HashMap<Point3i, FloatTile> cachedTiles = new HashMap<>();
     boolean measurePreview;
     PreviewTiming previewTiming;
@@ -597,45 +593,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
 
     private EditMode editMode = EditMode.RADIUS;
     /**
-     * Transform editor: pivot for rotating and scaling (world coordinates), set by
-     * dragging it; belongs to the selection it was placed for, otherwise the box
-     * centre is the pivot.
+     * Transform editor (shared with the City Tool): box angle and pivot per
+     * selection, the running drag, hit testing and painting of the box.
      */
-    private Point2D.Double transformPivot;
-    private Set<Integer> transformPivotSelection = Set.of();
-    /**
-     * Angle of the transform box (degrees, counter-clockwise on screen): rotating
-     * turns the box with the nodes; it lines up with the axes again only for a new
-     * selection.
-     */
-    private double transformAngle;
-    private Set<Integer> transformAngleSelection = Set.of();
-    /** Rotation of the current rotate drag / typed rotation (degrees). */
-    private double transformDegrees;
-    /** Transform handle being dragged, or {@code null}. */
-    private HitKind transformKind;
-    /**
-     * Pivot (world) when the transform started. The transform itself is kept in
-     * world terms (pivot, degrees, factor, offset) and turned into view coordinates
-     * only when used, so panning or zooming the map mid-transform keeps box, pivot
-     * and nodes together.
-     */
-    private Point2D.Double transformPivotStart;
-    /** Where the handle was grabbed (world, not rounded to blocks). */
-    private Point2D.Double transformGrabWorld;
-    /** Kind of transform applied so far (rotate, scale, move), or {@code null}. */
-    private HitKind transformOp;
-    /** Scale so far along the box's x / y axes (uniform: both). */
-    private double transformScaleX = 1, transformScaleY = 1;
-    /**
-     * Scale handle being dragged: uniform, box x or box y
-     * (PathTransformBox.SCALE_*).
-     */
-    private int transformScaleAxis;
-    /** Pivot while it is dragged (world). */
-    private Point2D.Double draggedPivot;
-    /** World offset of a move drag (whole blocks). */
-    private int transformMoveX, transformMoveY;
+    private final TransformBoxEditor transformEditor = new TransformBoxEditor();
     private int radiusHandleNode = -1;
     private int strengthHandleNode = -1;
     private int heightHandleNode = -1;
@@ -685,7 +646,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     private boolean gesturePrecise;
     /** World units per view pixel, captured on press. */
     private double worldPerPixelX = 1, worldPerPixelY = 1;
-    static final double PRECISE_DRAG_SCALE = 0.1;
+    static final double PRECISE_DRAG_SCALE = org.ironsight.wpplugin.macromachine.Gui.PreciseDrag.SCALE;
     private final AWTEventListener gestureCapture = event -> {
         if (event instanceof MouseEvent mouse && mouse.getID() == MouseEvent.MOUSE_RELEASED
                 && SwingUtilities.isLeftMouseButton(mouse) && gestureStart != null && overlayView != null
@@ -874,39 +835,17 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * key or a mouse press in between do not count.
      */
     private void trackCtrlTaps(KeyEvent e) {
-        boolean ctrl = e.getKeyCode() == KeyEvent.VK_CONTROL;
-        long now = e.getWhen() != 0 ? e.getWhen() : System.currentTimeMillis();
-        if (e.getID() == KeyEvent.KEY_PRESSED) {
-            if (!ctrl) {
-                interruptCtrlTap();
-                return;
-            }
-            if (ctrlHeld)
-                return; // auto-repeat
-            ctrlHeld = true;
-            ctrlTapInterrupted = false;
-            ctrlPressedAt = now;
-        } else if (e.getID() == KeyEvent.KEY_RELEASED && ctrl) {
-            ctrlHeld = false;
-            boolean tap = !ctrlTapInterrupted && now - ctrlPressedAt <= CTRL_TAP_MAX_HOLD_MS;
-            if (tap && lastCtrlTapAt != 0 && now - lastCtrlTapAt <= CTRL_DOUBLE_TAP_MS && cursorOverMap
-                    && gestureStart == null) {
-                lastCtrlTapAt = 0;
-                addMode.setSelected(!addMode.isSelected());
-            } else
-                lastCtrlTapAt = tap ? now : 0;
-        }
+        ctrlTaps.onKey(e);
     }
 
     private void interruptCtrlTap() {
-        ctrlTapInterrupted = true;
-        lastCtrlTapAt = 0;
+        ctrlTaps.interrupt();
     }
 
     private boolean handleDragActive() {
         return gestureStart != null && (radiusHandleNode >= 0 || heightHandleNode >= 0 || strengthHandleNode >= 0
-                || randomizeHandleNode >= 0 || transformKind == HitKind.TRANSFORM_ROTATE
-                || transformKind == HitKind.TRANSFORM_SCALE);
+                || randomizeHandleNode >= 0 || transformEditor.kind() == TransformBoxEditor.Handle.ROTATE
+                || transformEditor.kind() == TransformBoxEditor.Handle.SCALE);
     }
 
     /**
@@ -984,10 +923,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             }
             case TRANSFORM -> {
                 // typing without a drag rotates around the pivot (degrees, counter-clockwise)
-                transformPivotStart = transformPivotWorld();
-                transformDegrees = edited ? numericInput.apply(0) : 0;
-                transformOp = edited ? HitKind.TRANSFORM_ROTATE : null;
-                movedPath = transformOp == null ? null : transformedPath(transformViewNow());
+                transformEditor.typedRotation(transformPivotWorld(), edited ? numericInput.apply(0) : 0, edited);
+                movedPath = transformEditor.op() == null ? null : transformedPath(transformViewNow());
                 gestureHeader = header("Rotate", "0\u00b0");
             }
         }
@@ -999,7 +936,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var base = gesturePath;
         var path = movedPath;
         Float strength = dragStrength;
-        double degrees = transformDegrees;
+        double degrees = transformEditor.degrees();
         cancelGesture();
         if (path != null && !path.equals(base)) {
             if (editMode == EditMode.TRANSFORM)
@@ -1109,7 +1046,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var selection = Set.copyOf(selectedNodes);
         float strength = handleStrength;
         var cuts = operationSpinner("PathTool.Subdivide.Cuts", new SpinnerNumberModel(1, 1, 32, 1));
-        openOperation("Subdivide", operationForm("Number of cuts", cuts),
+        openOperation("Subdivide",
+                "Adds evenly spaced nodes between neighbouring selected nodes; the path keeps its shape.",
+                operationForm("Number of cuts", cuts),
                 () -> PathOperations.subdivide(base, selection, ((Number) cuts.getValue()).intValue(), strength));
         cuts.addChangeListener(event -> refreshOperation());
         typeableFields(new TypeableField("Number of cuts", cuts));
@@ -1146,7 +1085,8 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var selection = Set.copyOf(selectedNodes);
         var radius = operationSpinner("PathTool.Randomize.Radius", new SpinnerNumberModel(4.0, 0.0, 1000.0, 0.5));
         var seed = operationSpinner("PathTool.Randomize.Seed", new SpinnerNumberModel(1, 0, 99999, 1));
-        openOperation("Randomize position", operationForm("Radius (blocks)", radius, "Seed", seed),
+        openOperation("Randomize position", "Moves each selected node to a random spot within the radius around it.",
+                operationForm("Radius (blocks)", radius, "Seed", seed),
                 () -> keepHeightAboveGround(base, PathOperations.randomize(base, selection,
                         ((Number) radius.getValue()).doubleValue(), ((Number) seed.getValue()).longValue())));
         showOperationCircles(base, selection, new OperationCircle(radius, 1, "random"));
@@ -1169,7 +1109,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var min = operationSpinner("PathTool.RandomizeRadius.Min", new SpinnerNumberModel(low, 1.0, 1000.0, 0.5));
         var max = operationSpinner("PathTool.RandomizeRadius.Max", new SpinnerNumberModel(high, 1.0, 1000.0, 0.5));
         var seed = operationSpinner("PathTool.RandomizeRadius.Seed", new SpinnerNumberModel(1, 0, 99999, 1));
-        openOperation("Randomize radius",
+        openOperation("Randomize radius", "Gives each selected node a random radius between min and max.",
                 operationForm("Min radius (blocks)", min, "Max radius (blocks)", max, "Seed", seed),
                 () -> PathOperations.randomizeRadius(base, selection, ((Number) min.getValue()).doubleValue(),
                         ((Number) max.getValue()).doubleValue(), ((Number) seed.getValue()).longValue()));
@@ -1237,7 +1177,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         var radius = operationSpinner("PathTool.Snap.Radius", new SpinnerNumberModel(8, 1, 64, 1));
         var target = new JComboBox<>(PathOperations.SnapTarget.values());
         target.setName("PathTool.Snap.Target");
-        openOperation("Snap to terrain", operationForm("Search radius (blocks)", radius, "Snap to", target),
+        openOperation("Snap to terrain",
+                "Moves each selected node to the lowest, highest or median terrain within the search radius around it.",
+                operationForm("Search radius (blocks)", radius, "Snap to", target),
                 () -> keepHeightAboveGround(base,
                         PathOperations.snapToTerrain(base, selection, ((Number) radius.getValue()).intValue(),
                                 (PathOperations.SnapTarget) target.getSelectedItem(), this::groundAt)));
@@ -1280,75 +1222,25 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
     void openOnlyDownhill() {
         var base = getCurrentPath();
         var selection = Set.copyOf(selectedNodes);
-        var note = new JLabel(
-                "<html>Lowers selected nodes so the path never rises along its direction<br>(node 1 to n).</html>");
-        openOperation("Only downhill", note, () -> PathOperations.onlyDownhill(base, selection));
+        openOperation("Only downhill",
+                "Lowers selected nodes so the path never rises along its direction (node 1 to n).", new JPanel(),
+                () -> PathOperations.onlyDownhill(base, selection));
     }
 
     private String operationTitle;
 
-    /**
-     * Labels and notes inside an operation panel: light text on the dark surface.
-     */
-    private static void styleOperationControls(java.awt.Container container) {
-        // the controls may be a bare text (Only downhill's note), not a panel of them
-        if (container instanceof JLabel label) {
-            styleOperationLabel(label);
-            return;
-        }
-        if (container instanceof JComponent component && !(container instanceof JSpinner))
-            component.setOpaque(false);
-        for (Component child : container.getComponents()) {
-            if (child instanceof JLabel label)
-                styleOperationLabel(label);
-            else if (child instanceof AbstractButton button)
-                org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.button(button);
-            else if (child instanceof java.awt.Container inner && !(child instanceof JSpinner))
-                styleOperationControls(inner);
-        }
-    }
-
-    /**
-     * Texts on the operation panel: muted light text (unless coloured on purpose).
-     */
-    private static void styleOperationLabel(JLabel label) {
-        label.setOpaque(false);
-        if (label.getForeground() == null || label.getForeground() instanceof javax.swing.plaf.UIResource)
-            org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.label(label, true);
-    }
-
-    private void openOperation(String title, JComponent controls, Supplier<PathOperations.Result> compute) {
+    private void openOperation(String title, String description, JComponent controls,
+            Supplier<PathOperations.Result> compute) {
         closeOperation();
         cancelGesture();
         operationTitle = title;
-        JPanel panel = new org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.SurfacePanel(new BorderLayout(8, 8));
-        panel.setName("PathTool.OperationPanel");
-        var heading = new JLabel(title);
-        heading.setForeground(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT);
-        heading.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.BOLD, 15f));
-        panel.add(heading, BorderLayout.NORTH);
-        styleOperationControls(controls);
-        panel.add(controls, BorderLayout.CENTER);
         operationMergeNote = new JLabel();
         operationMergeNote.setName("PathTool.OperationMergeNote");
         operationMergeNote.setForeground(WARNING_COLOR);
         operationMergeNote.setFont(org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.font(Font.PLAIN, 13.5f));
         operationMergeNote.setVisible(false);
-        var buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
-        buttons.setOpaque(false);
-        var cancel = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.button(new JButton("Cancel"));
-        cancel.setName("PathTool.OperationCancel");
-        cancel.addActionListener(event -> closeOperation());
-        var apply = org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.primaryButton(new JButton("Apply"));
-        apply.setName("PathTool.OperationApply");
-        apply.addActionListener(event -> applyOperation());
-        buttons.add(cancel);
-        buttons.add(apply);
-        var south = new JPanel(new BorderLayout(0, 4));
-        south.setOpaque(false);
-        south.add(operationMergeNote, BorderLayout.NORTH);
-        south.add(buttons, BorderLayout.SOUTH);
-        panel.add(south, BorderLayout.SOUTH);
+        JPanel panel = org.ironsight.wpplugin.macromachine.Gui.OperationPanel.create("PathTool", title, description,
+                controls, operationMergeNote, this::closeOperation, this::applyOperation);
         operationPanel = panel;
         operationBase = getCurrentPath();
         operationRefresh = () -> {
@@ -1610,7 +1502,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return gestureHeader;
     }
 
-    static boolean allowsMapShortcut(Component view, Component focus) {
+    public static boolean allowsMapShortcut(Component view, Component focus) {
         if (view == null)
             return false;
         if (focus == null)
@@ -1770,12 +1662,9 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
                     strengthHandleSide = hit.side();
                 }
                 case HEIGHT -> heightHandleNode = hit.node();
-                case TRANSFORM_MOVE, TRANSFORM_ROTATE, TRANSFORM_SCALE, TRANSFORM_PIVOT -> {
-                    transformKind = hit.kind();
-                    transformScaleAxis = hit.side();
-                    transformPivotStart = transformPivotWorld();
-                    transformGrabWorld = toWorldExact(point);
-                }
+                case TRANSFORM_MOVE, TRANSFORM_ROTATE, TRANSFORM_SCALE, TRANSFORM_PIVOT ->
+                    transformEditor.start(new TransformBoxEditor.Hit(handleOf(hit.kind()), hit.side()),
+                            transformPivotWorld(), toWorldExact(point), false);
                 case OPERATION_RADIUS -> {
                     randomizeHandleNode = hit.node();
                     circleHandleIndex = hit.side();
@@ -1908,35 +1797,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             if (showOverlays.isSelected() && operationPreview == null) {
                 double angle = transformBoxAngle();
                 var box = PathTransformBox.box(view, selectedNodes, angle);
-                var frame = PathTransformBox.frame(angle);
-                if (box != null && selectedNodes.size() < 2) {
-                    double distance = frame.transform(PathTransformBox.singleMoveHandle(box), null).distanceSq(point);
-                    if (distance <= best)
-                        hit = new Hit(HitKind.TRANSFORM_MOVE, -1, 0);
-                } else if (box != null) {
-                    var candidates = new ArrayList<Hit>();
-                    var points = new ArrayList<Point2D>();
-                    for (int axis : new int[]{PathTransformBox.SCALE_UNIFORM, PathTransformBox.SCALE_X,
-                            PathTransformBox.SCALE_Y}) {
-                        candidates.add(new Hit(HitKind.TRANSFORM_SCALE, -1, axis));
-                        points.add(frame.transform(PathTransformBox.scaleHandle(box, axis), null));
-                    }
-                    candidates.add(new Hit(HitKind.TRANSFORM_ROTATE, -1, 0));
-                    points.add(frame.transform(PathTransformBox.rotateHandle(box), null));
-                    candidates.add(new Hit(HitKind.TRANSFORM_MOVE, -1, 0));
-                    points.add(frame.transform(PathTransformBox.moveHandle(box), null));
-                    candidates.add(new Hit(HitKind.TRANSFORM_PIVOT, -1, 0));
-                    points.add(toViewExact(transformPivotWorld()));
-                    for (int k = 0; k < candidates.size(); k++) {
-                        double distance = points.get(k).distance(point);
-                        distance *= distance;
-                        // a handle exactly over a node wins the tie: nodes do not drag here
-                        if (distance <= best + 2e-9) {
-                            best = distance;
-                            hit = candidates.get(k);
-                        }
-                    }
-                }
+                var shown = box == null ? null : new TransformBoxEditor.ShownBox(PathTransformBox.frame(angle), box);
+                var handle = transformEditor.hitTest(point, shown, selectedNodes.size() < 2, false,
+                        selectedNodes.size() < 2 ? null : toViewExact(transformPivotWorld()), best);
+                if (handle != null)
+                    hit = new Hit(hitKindOf(handle.handle()), -1, handle.axis());
             }
             return hit != null ? hit : node >= 0 ? new Hit(HitKind.NODE, node, 0) : null;
         }
@@ -2125,7 +1990,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         if (gestureStart.distanceSq(point) >= 9)
             gestureDragged = true;
         boolean editsGeometry = radiusHandleNode >= 0 || strengthHandleNode >= 0 || heightHandleNode >= 0
-                || randomizeHandleNode >= 0 || pressedNode >= 0 || transformKind != null;
+                || randomizeHandleNode >= 0 || pressedNode >= 0 || transformEditor.dragging();
         if (editsGeometry && precise && !gesturePrecise)
             overlay.showTransientInfoText("Precise drag", 1200);
         gesturePrecise = precise;
@@ -2149,7 +2014,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             }
             return;
         }
-        if (transformKind != null) {
+        if (transformEditor.dragging()) {
             if (gestureDragged)
                 updateTransformDrag();
             return;
@@ -2212,28 +2077,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             handleSelectionDrag(point, precise);
             if (randomizeHandleNode >= 0)
                 return; // the spinner already holds the new radius; Apply commits the operation
-            if (transformKind != null) {
-                if (!gestureDragged) {
-                    if (transformKind == HitKind.TRANSFORM_PIVOT)
-                        pivotClicked();
-                    return;
-                }
-                if (transformKind == HitKind.TRANSFORM_PIVOT) {
-                    if (draggedPivot != null) {
-                        transformPivot = draggedPivot;
-                        transformPivotSelection = Set.copyOf(selectedNodes);
-                    }
-                    return;
-                }
-                if (movedPath != null && !movedPath.equals(gesturePath)) {
-                    // a placed pivot travels with a moved selection
-                    if (transformKind == HitKind.TRANSFORM_MOVE && customPivot())
-                        transformPivot = new Point2D.Double(transformPivot.x + transformMoveX,
-                                transformPivot.y + transformMoveY);
-                    // the box keeps its orientation (rotating turns it further)
-                    turnTransformBox(transformKind == HitKind.TRANSFORM_ROTATE ? transformDegrees : 0);
-                    completeEdit(movedPath);
-                }
+            if (transformEditor.dragging()) {
+                boolean applied = transformEditor.kind() != TransformBoxEditor.Handle.PIVOT && gestureDragged
+                        && movedPath != null && !movedPath.equals(gesturePath);
+                var moved = movedPath;
+                // the box keeps its orientation, a placed pivot travels with a move
+                if (transformEditor.finish(selectionKey(), gestureDragged, applied))
+                    overlay.showTransientInfoText("Pivot reset to the centre", 1500);
+                if (applied)
+                    completeEdit(moved);
                 return;
             }
             if (radiusHandleNode >= 0 || heightHandleNode >= 0) {
@@ -2331,15 +2183,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         strengthHandleNode = -1;
         heightHandleNode = -1;
         randomizeHandleNode = -1;
-        transformKind = null;
-        transformOp = null;
-        transformPivotStart = null;
-        transformGrabWorld = null;
-        transformScaleX = transformScaleY = 1;
-        transformScaleAxis = 0;
-        transformDegrees = 0;
-        draggedPivot = null;
-        transformMoveX = transformMoveY = 0;
+        transformEditor.cancel();
         circleHandleIndex = -1;
         strengthHandleSide = 0;
         dragStrength = null;
@@ -2400,24 +2244,39 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         return handleStrength;
     }
 
+    /** The selection as the transform editor's owner key (a copy). */
+    private Set<Integer> selectionKey() {
+        return Set.copyOf(selectedNodes);
+    }
+
+    private static TransformBoxEditor.Handle handleOf(HitKind kind) {
+        return switch (kind) {
+            case TRANSFORM_MOVE -> TransformBoxEditor.Handle.MOVE;
+            case TRANSFORM_ROTATE -> TransformBoxEditor.Handle.ROTATE;
+            case TRANSFORM_SCALE -> TransformBoxEditor.Handle.SCALE;
+            case TRANSFORM_PIVOT -> TransformBoxEditor.Handle.PIVOT;
+            default -> null;
+        };
+    }
+
+    private static HitKind hitKindOf(TransformBoxEditor.Handle handle) {
+        return switch (handle) {
+            case MOVE -> HitKind.TRANSFORM_MOVE;
+            case ROTATE -> HitKind.TRANSFORM_ROTATE;
+            case SCALE -> HitKind.TRANSFORM_SCALE;
+            case PIVOT -> HitKind.TRANSFORM_PIVOT;
+        };
+    }
+
     /**
      * Pivot as shown (world): while it is dragged, where it is dragged to; during a
      * move, carried along with the selection; otherwise where it is.
      */
     Point2D.Double displayedPivot() {
-        if (draggedPivot != null)
-            return draggedPivot;
-        if (transformPivotStart == null)
-            return transformPivotWorld();
-        if (transformOp == HitKind.TRANSFORM_MOVE)
-            return new Point2D.Double(transformPivotStart.x + transformMoveX, transformPivotStart.y + transformMoveY);
-        return transformPivotStart;
+        return transformEditor.displayedPivot(selectionKey(), this::selectionBoxCentre);
     }
 
-    /**
-     * The transform box as drawn: {@code box} in the frame that {@code frame} maps
-     * to the view.
-     */
+    /** The transform box as drawn. */
     record ShownBox(java.awt.geom.AffineTransform frame, java.awt.geom.Rectangle2D.Double box) {
     }
 
@@ -2428,14 +2287,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * selection.
      */
     ShownBox shownTransformBox(List<Point4f> path) {
-        double angle = transformBoxAngle() + (transformOp == HitKind.TRANSFORM_ROTATE ? transformDegrees : 0);
+        double angle = transformEditor.shownAngle(selectionKey());
         var box = PathTransformBox.box(viewNodes(path), selectedNodes, angle);
         return box == null ? null : new ShownBox(PathTransformBox.frame(angle), box);
     }
 
     /** Angle of the transform box: 0 (axis aligned) for a new selection. */
     double transformBoxAngle() {
-        return transformAngleSelection.equals(selectedNodes) ? transformAngle : 0;
+        return transformEditor.boxAngle(selectionKey());
     }
 
     /**
@@ -2443,32 +2302,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * {@code degrees}.
      */
     private void turnTransformBox(double degrees) {
-        double angle = transformBoxAngle() + degrees;
-        transformAngle = angle - 360 * Math.floor((angle + 180) / 360);
-        transformAngleSelection = Set.copyOf(selectedNodes);
-    }
-
-    private long lastPivotClickAt;
-
-    /**
-     * A click on the pivot; the second of a double click puts it back on the box
-     * centre.
-     */
-    private void pivotClicked() {
-        long now = System.currentTimeMillis();
-        Object interval = Toolkit.getDefaultToolkit().getDesktopProperty("awt.multiClickInterval");
-        long limit = interval instanceof Integer value ? value : 500;
-        if (now - lastPivotClickAt <= limit) {
-            lastPivotClickAt = 0;
-            transformPivot = null;
-            overlay.showTransientInfoText("Pivot reset to the centre", 1500);
-        } else
-            lastPivotClickAt = now;
-    }
-
-    /** The pivot was placed by the user for the current selection. */
-    private boolean customPivot() {
-        return transformPivot != null && transformPivotSelection.equals(selectedNodes);
+        transformEditor.turnBox(selectionKey(), degrees);
     }
 
     /**
@@ -2476,8 +2310,11 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * selection's centre.
      */
     Point2D.Double transformPivotWorld() {
-        if (customPivot())
-            return new Point2D.Double(transformPivot.x, transformPivot.y);
+        return transformEditor.pivot(selectionKey(), this::selectionBoxCentre);
+    }
+
+    /** Centre of the (possibly turned) box around the selected nodes (world). */
+    private Point2D.Double selectionBoxCentre() {
         var path = getCurrentPath();
         if (overlayView != null) {
             double angle = transformBoxAngle();
@@ -2545,20 +2382,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * terms on every use), or {@code null} before anything was transformed.
      */
     java.awt.geom.AffineTransform transformViewNow() {
-        if (transformOp == null || transformPivotStart == null)
-            return null;
-        var pivot = toViewExact(transformPivotStart);
-        return switch (transformOp) {
-            case TRANSFORM_ROTATE -> PathTransformBox.rotation(pivot, transformDegrees);
-            case TRANSFORM_SCALE ->
-                PathTransformBox.axisScaling(pivot, transformScaleX, transformScaleY, transformBoxAngle());
-            case TRANSFORM_MOVE -> {
-                var from = toViewExact(new Point2D.Double(0, 0));
-                var to = toViewExact(new Point2D.Double(transformMoveX, transformMoveY));
-                yield java.awt.geom.AffineTransform.getTranslateInstance(to.x - from.x, to.y - from.y);
-            }
-            default -> null;
-        };
+        return transformEditor.viewTransform(this::toViewExact, transformBoxAngle());
     }
 
     /**
@@ -2567,49 +2391,15 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * moved since (Shift: precise).
      */
     private void updateTransformDrag() {
-        var grab = transformGrabWorld;
+        var grab = transformEditor.grab();
         var now = new Point2D.Double(grab.x + (gestureCursor.x - gestureStart.x) * worldPerPixelX,
                 grab.y + (gestureCursor.y - gestureStart.y) * worldPerPixelY);
-        switch (transformKind) {
-            case TRANSFORM_PIVOT -> {
-                draggedPivot = new Point2D.Double(Math.round(transformPivotStart.x + now.x - grab.x),
-                        Math.round(transformPivotStart.y + now.y - grab.y));
-                gestureHeader = "Pivot: " + Math.round(draggedPivot.x) + ", " + Math.round(draggedPivot.y);
-            }
-            case TRANSFORM_MOVE -> {
-                transformMoveX = (int) Math.round(now.x - grab.x);
-                transformMoveY = (int) Math.round(now.y - grab.y);
-                transformOp = HitKind.TRANSFORM_MOVE;
-                movedPath = transformedPath(transformViewNow());
-                gestureHeader = "Move: " + transformMoveX + ", " + transformMoveY;
-            }
-            case TRANSFORM_ROTATE -> {
-                double mouse = PathTransformBox.rotationDegrees(transformPivotStart, grab, now);
-                transformDegrees = typing() ? numericInput.apply(mouse) : mouse;
-                transformOp = HitKind.TRANSFORM_ROTATE;
-                movedPath = transformedPath(transformViewNow());
-                gestureHeader = header("Rotate", formatValue((float) mouse) + "\u00b0");
-            }
-            case TRANSFORM_SCALE -> {
-                int axis = transformScaleAxis;
-                double mouse = axis == PathTransformBox.SCALE_UNIFORM
-                        ? PathTransformBox.scaleFactor(transformPivotStart, grab, now)
-                        : PathTransformBox.axisScaleFactor(transformPivotStart, grab, now, transformBoxAngle(), axis);
-                double factor = typing() ? PathTransformBox.clampScale(numericInput.apply(mouse)) : mouse;
-                transformScaleX = axis == PathTransformBox.SCALE_Y ? 1 : factor;
-                transformScaleY = axis == PathTransformBox.SCALE_X ? 1 : factor;
-                transformOp = HitKind.TRANSFORM_SCALE;
-                movedPath = transformedPath(transformViewNow());
-                String label = switch (axis) {
-                    case PathTransformBox.SCALE_X -> "Scale X";
-                    case PathTransformBox.SCALE_Y -> "Scale Y";
-                    default -> "Scale";
-                };
-                gestureHeader = header(label, String.format(Locale.ROOT, "%.2f", mouse) + "\u00d7");
-            }
-            default -> {
-            }
-        }
+        var readout = transformEditor.update(now, transformBoxAngle(), typing() ? numericInput::apply : value -> value);
+        if (transformEditor.kind() != TransformBoxEditor.Handle.PIVOT)
+            movedPath = transformedPath(transformViewNow());
+        gestureHeader = readout.typeable()
+                ? header(readout.label(), readout.value())
+                : readout.label() + ": " + readout.value();
         overlay.repaint();
     }
 
@@ -2683,7 +2473,6 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         private final DropdownButton nodeMenuButton = new DropdownButton("Node");
         private final DropdownButton segmentMenuButton = new DropdownButton("Segment");
         private final DropdownButton pathMenuButton = new DropdownButton("Path");
-        private JPanel shownOperationPanel;
         private final JToggleButton addButton = new JToggleButton("Add", addIcon());
 
         PathOverlay() {
@@ -2868,42 +2657,10 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             return modeButton.getY() + modeButton.getHeight();
         }
 
-        /** Right edge of the open operation panel, or 0. */
-        int operationPanelRight() {
-            return shownOperationPanel == null ? 0 : shownOperationPanel.getX() + shownOperationPanel.getWidth();
-        }
-
-        void relayoutOperationPanel() {
-            layoutOperationPanel();
-            repaint();
-        }
-
-        void showOperationPanel(JPanel panel) {
-            shownOperationPanel = panel;
-            add(panel);
-            layoutOperationPanel();
-            revalidate();
-            repaint();
-        }
-
-        void hideOperationPanel(JPanel panel) {
-            remove(panel);
-            if (shownOperationPanel == panel)
-                shownOperationPanel = null;
-            repaint();
-        }
-
-        /**
-         * Top left, right below the toolbar. (Blender puts its "Adjust Last Operation"
-         * panel bottom left, but there WorldPainter draws its compass and scale bar.)
-         */
-        private void layoutOperationPanel() {
-            if (shownOperationPanel == null)
-                return;
-            java.awt.Dimension size = shownOperationPanel.getPreferredSize();
-            int y = modeButton.getY() + modeButton.getHeight() + 8;
-            shownOperationPanel.setBounds(8, y, size.width, size.height);
-            shownOperationPanel.validate();
+        /** The operation panel goes right below the toolbar. */
+        @Override
+        protected int operationPanelTop() {
+            return modeButton.getY() + modeButton.getHeight() + 8;
         }
 
         @Override
@@ -2919,7 +2676,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             // it)
             if (lastBottomReserve > 0 && unravelledBounds().contains(x, y))
                 return true;
-            if (shownOperationPanel != null && shownOperationPanel.getBounds().contains(x, y))
+            if (operationPanelContains(x, y))
                 return true;
             for (Component control : List.of(nodeMenuButton, segmentMenuButton, pathMenuButton, modeButton,
                     overlaysButton, overlaysMenuButton, addButton))
@@ -3926,39 +3683,12 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             var shown = shownTransformBox(path);
             if (shown == null)
                 return;
-            var box = shown.box();
-            var transform = shown.frame();
-            java.util.function.UnaryOperator<Point2D> at = p -> transform.transform(p, null);
-            if (selectedNodes.size() < 2) {
-                // a single node only moves: no box, rotate, scale or pivot
-                paintIconHandle(g, "move", at.apply(PathTransformBox.singleMoveHandle(box)), 0,
-                        isHovered(HitKind.TRANSFORM_MOVE, -1, 0));
-                return;
-            }
-            Shape outline = transform.createTransformedShape(box);
-            g.setStroke(new BasicStroke(1.5f)); // solid, not dashed
-            g.setColor(HANDLE_COLOR);
-            g.draw(outline);
-            strokeHandle(g, new Line2D.Double(at.apply(PathTransformBox.topCentre(box)),
-                    at.apply(PathTransformBox.rotateHandle(box))), 1.5f);
-            strokeHandle(g, new Line2D.Double(at.apply(PathTransformBox.leftCentre(box)),
-                    at.apply(PathTransformBox.moveHandle(box))), 1.5f);
-            // handles are Lucide icons turned with the box (scale arrows point along
-            // their axis)
-            double turned = -Math.toDegrees(Math.atan2(transform.getShearY(), transform.getScaleX()));
-            paintIconHandle(g, "move-diagonal-2",
-                    at.apply(PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_UNIFORM)), turned,
-                    isHovered(HitKind.TRANSFORM_SCALE, -1, PathTransformBox.SCALE_UNIFORM));
-            paintIconHandle(g, "move-horizontal", at.apply(PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_X)),
-                    turned, isHovered(HitKind.TRANSFORM_SCALE, -1, PathTransformBox.SCALE_X));
-            paintIconHandle(g, "move-vertical", at.apply(PathTransformBox.scaleHandle(box, PathTransformBox.SCALE_Y)),
-                    turned, isHovered(HitKind.TRANSFORM_SCALE, -1, PathTransformBox.SCALE_Y));
-            paintIconHandle(g, "rotate-ccw", at.apply(PathTransformBox.rotateHandle(box)), turned,
-                    isHovered(HitKind.TRANSFORM_ROTATE, -1, 0));
-            paintIconHandle(g, "move", at.apply(PathTransformBox.moveHandle(box)), turned,
-                    isHovered(HitKind.TRANSFORM_MOVE, -1, 0));
-            paintIconHandle(g, "crosshair", toViewExact(displayedPivot()), 0,
-                    isHovered(HitKind.TRANSFORM_PIVOT, -1, 0));
+            var hoveredHandle = hovered == null || handleOf(hovered.kind()) == null
+                    ? null
+                    : new TransformBoxEditor.Hit(handleOf(hovered.kind()), hovered.side());
+            boolean single = selectedNodes.size() < 2;
+            TransformBoxEditor.paint(g, new TransformBoxEditor.ShownBox(shown.frame(), shown.box()), single, false,
+                    single ? null : toViewExact(displayedPivot()), hoveredHandle);
         }
 
         private void paintEditHandles(Graphics2D g, List<Point4f> path) {
@@ -4213,7 +3943,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * A handle drawn as a Lucide icon in the handle styling: cyan with a dark
      * outline, white and larger while hovered.
      */
-    static void paintIconHandle(Graphics2D g, String icon, Point2D center, double degrees, boolean hovered) {
+    public static void paintIconHandle(Graphics2D g, String icon, Point2D center, double degrees, boolean hovered) {
         LucideIcons.paint(g, icon, center, hovered ? HOVERED_ICON_HANDLE_SIZE : ICON_HANDLE_SIZE, degrees,
                 hovered ? HANDLE_HOVER : HANDLE_COLOR, null);
     }
@@ -4410,14 +4140,14 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
      * such as U+25BE, which WorldPainter's UI font lacks (it showed as an empty
      * box).
      */
-    static final Icon DROPDOWN_ARROW = LucideIcons.icon("chevron-down", 14,
+    public static final Icon DROPDOWN_ARROW = LucideIcons.icon("chevron-down", 14,
             org.ironsight.wpplugin.macromachine.Gui.OverlayStyle.TEXT_MUTED);
 
     /**
      * Button with a painted dropdown arrow on its right (text glyphs may be missing
      * in the font).
      */
-    static class DropdownButton extends JButton
+    public static class DropdownButton extends JButton
     {
         /*
          * Text/icon and arrow are child labels laid out side by side, so they can never
@@ -4429,7 +4159,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
         private final JLabel content = new JLabel();
         private final JLabel arrow = new JLabel(DROPDOWN_ARROW);
 
-        DropdownButton(String text) {
+        public DropdownButton(String text) {
             setLayout(new BorderLayout(6, 0));
             setFocusable(false);
             content.setText(text);
@@ -4438,7 +4168,7 @@ public class PathTool extends AbstractBrushOperation implements PaintOperation, 
             add(arrow, BorderLayout.EAST);
         }
 
-        void setContent(String text, Icon icon) {
+        public void setContent(String text, Icon icon) {
             content.setText(text);
             content.setIcon(icon);
             revalidate();
