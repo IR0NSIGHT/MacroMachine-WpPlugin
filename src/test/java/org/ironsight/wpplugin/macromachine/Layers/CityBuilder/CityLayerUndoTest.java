@@ -177,6 +177,86 @@ class CityLayerUndoTest
         assertEquals(List.of(house(0, 100, 100)), layer.getAllObjectStates());
     }
 
+    /**
+     * The house list joins the undo history at the City Tool's first edit, so
+     * earlier undo steps do not have it. Undoing past that step and then editing
+     * once handed back no list (null): every house was gone and the tool threw on
+     * each mouse move.
+     */
+    @Test
+    void anEditAfterUndoingPastTheFirstCityEditKeepsTheHouses() {
+        // a house from before (placed without undo, e.g. loaded with the world)
+        Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500),
+                -256, 512, 70, 123456789, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
+                org.pepsoft.worldpainter.Terrain.GRASS));
+        CityLayer layer = layerWithObjects();
+        layer.setDataAt(dimension, 300, 300, house(0, 300, 300));
+        UndoManager manager = new UndoManager(50);
+        dimension.registerUndoManager(manager);
+
+        // two other WorldPainter edits, then the first City edit
+        dimension.setHeightAt(10, 10, 80);
+        dimension.armSavePoint();
+        dimension.setHeightAt(20, 20, 90);
+        dimension.armSavePoint();
+        layer.setDataAt(dimension, 100, 100, house(1, 100, 100));
+        dimension.armSavePoint();
+
+        // undo the house and one more step (as WorldPainter's Undo: undo, then arm)
+        assertTrue(manager.undo());
+        manager.armSavePoint();
+        assertTrue(manager.undo());
+        manager.armSavePoint();
+        assertEquals(List.of(house(0, 300, 300)), layer.getAllObjectStates());
+
+        // edit again
+        layer.setDataAt(dimension, 140, 100, house(2, 140, 100));
+        dimension.armSavePoint();
+        assertEquals(List.of(house(2, 140, 100), house(0, 300, 300)), sorted(layer.getAllObjectStates()));
+
+        // undo / redo still work around it, and the old house never goes
+        assertTrue(manager.undo());
+        assertEquals(List.of(house(0, 300, 300)), layer.getAllObjectStates());
+        assertFalse(manager.undo(), "the first height edit went into the starting step");
+        assertEquals(List.of(house(0, 300, 300)), layer.getAllObjectStates());
+        assertTrue(manager.redo());
+        assertEquals(List.of(house(2, 140, 100), house(0, 300, 300)), sorted(layer.getAllObjectStates()));
+        assertNotEquals(0, layerValue(dimension, layer, 140, 100));
+
+        // and the next edits go on from there
+        layer.removeDataAt(dimension, 140, 100);
+        dimension.armSavePoint();
+        assertEquals(List.of(house(0, 300, 300)), layer.getAllObjectStates());
+        assertTrue(manager.undo());
+        assertEquals(List.of(house(2, 140, 100), house(0, 300, 300)), sorted(layer.getAllObjectStates()));
+    }
+
+    /** The same through the City Tool, the way the bug showed (on the next mouse move). */
+    @Test
+    void theToolKeepsWorkingAfterUndoingPastItsFirstEdit() {
+        Dimension dimension = dimensionWithUndo();
+        UndoManager manager = CityLayer.undoManagerOf(dimension);
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(viewOn(dimension));
+        operation.setPaint(new NibbleLayerPaint(layer));
+        dimension.setHeightAt(10, 10, 80);
+        dimension.armSavePoint();
+        dimension.setHeightAt(20, 20, 90);
+        dimension.armSavePoint();
+        operation.placeAt(100, 100);
+        assertEquals(1, layer.getAllObjectStates().size());
+
+        manager.undo();
+        manager.armSavePoint();
+        manager.undo();
+        manager.armSavePoint();
+        operation.placeAt(200, 200);
+        assertEquals(1, layer.getAllObjectStates().size());
+        operation.handleClick(200, 200, false); // hit test, as on a mouse move
+        assertEquals(1, operation.selection().size());
+    }
+
     @Test
     void withoutAnUndoManagerTheLayerEditsAsBefore() {
         Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams());

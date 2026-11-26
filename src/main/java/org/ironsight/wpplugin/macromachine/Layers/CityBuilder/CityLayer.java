@@ -545,8 +545,20 @@ public class CityLayer extends CustomLayer implements UndoListener
      * (it keeps the previous one), else the list itself.
      */
     private CityInfoDatabase editableDatabase() {
-        if (undoManager != null)
-            database = undoManager.getBufferForEditing(undoKey);
+        if (undoManager == null)
+            return database;
+        CityInfoDatabase editable = undoManager.getBufferForEditing(undoKey);
+        if (editable == null) {
+            // The list joined the history at the first tracked edit (addBuffer puts
+            // it in the newest step only). Undone past that step and edited again,
+            // the step that had it is gone and the manager has no list to copy: it
+            // hands back null. Here the houses are as they were before tracking
+            // (bufferChanged showed undoBaseline): add a copy of that to the current
+            // step. A copy, so undoBaseline stays what earlier steps fall back to.
+            editable = undoBaseline != null ? undoBaseline.clone() : new CityInfoDatabase();
+            undoManager.addBuffer(undoKey, editable, this);
+        }
+        database = editable;
         return database;
     }
 
