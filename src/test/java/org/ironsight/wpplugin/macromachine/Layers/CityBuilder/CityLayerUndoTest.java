@@ -257,6 +257,99 @@ class CityLayerUndoTest
         assertEquals(1, operation.selection().size());
     }
 
+    /**
+     * Picking up the City Tool (any key, even Esc) must not throw away what the
+     * user can still redo: only an edit does.
+     */
+    @Test
+    void usingTheToolWithoutEditingKeepsTheRedo() {
+        Dimension dimension = dimensionWithUndo();
+        UndoManager manager = CityLayer.undoManagerOf(dimension);
+        dimension.armSavePoint();
+        dimension.setHeightAt(10, 10, 80);
+        dimension.armSavePoint();
+        assertTrue(manager.undo());
+        manager.armSavePoint();
+
+        CityLayer layer = layerWithObjects();
+        CityEditToolOperation operation = new CityEditToolOperation();
+        operation.setView(viewOn(dimension));
+        operation.setPaint(new NibbleLayerPaint(layer));
+        operation.handleKeyInteraction(KeyEvent.VK_ESCAPE);
+        layer.trackUndo(manager);
+        assertTrue(manager.redo(), "the height edit can still be redone");
+        assertEquals(80, dimension.getHeightAt(10, 10), 0.01);
+
+        // the first real edit after it is an undo step of its own
+        layer.setDataAt(dimension, 100, 100, house(1, 100, 100));
+        dimension.armSavePoint();
+        assertTrue(manager.undo());
+        assertTrue(layer.getAllObjectStates().isEmpty());
+        assertEquals(80, dimension.getHeightAt(10, 10), 0.01, "only the house was undone");
+        assertTrue(manager.redo());
+        assertEquals(List.of(house(1, 100, 100)), layer.getAllObjectStates());
+    }
+
+    /**
+     * An edit in the step that is still open (no save point armed) joins that
+     * step; undoing it returns to the houses from before, not to the edited list.
+     */
+    @Test
+    void aFirstEditIntoAnOpenStepUndoesToTheHousesFromBefore() {
+        Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500),
+                -256, 512, 70, 123456789, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
+                org.pepsoft.worldpainter.Terrain.GRASS));
+        CityLayer layer = layerWithObjects();
+        layer.setDataAt(dimension, 300, 300, house(0, 300, 300)); // before undo existed
+        UndoManager manager = new UndoManager(50);
+        dimension.registerUndoManager(manager);
+        dimension.armSavePoint();
+        dimension.setHeightAt(10, 10, 80); // opens a step and leaves it open
+        layer.setDataAt(dimension, 100, 100, house(1, 100, 100)); // joins it
+        dimension.armSavePoint();
+
+        assertTrue(manager.undo());
+        assertEquals(List.of(house(0, 300, 300)), layer.getAllObjectStates());
+        assertTrue(manager.redo());
+        assertEquals(List.of(house(1, 100, 100), house(0, 300, 300)), sorted(layer.getAllObjectStates()));
+    }
+
+    /**
+     * A step reopened without a save point (WorldPainter's Fill does this when
+     * cancelled: save point, edit, undo, no new one) makes the manager hand back
+     * the stored list itself for editing. That must not be the list earlier steps
+     * return to, or undo could never take the next house away again.
+     */
+    @Test
+    void aHouseEditedIntoAReopenedStepCanStillBeUndone() {
+        Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams(new Rectangle(500, 500),
+                -256, 512, 70, 123456789, 62, org.pepsoft.worldpainter.DefaultPlugin.JAVA_ANVIL_1_19,
+                org.pepsoft.worldpainter.Terrain.GRASS));
+        CityLayer layer = layerWithObjects();
+        layer.setDataAt(dimension, 300, 300, house(0, 300, 300)); // before undo existed
+        UndoManager manager = new UndoManager(50);
+        dimension.registerUndoManager(manager);
+        dimension.armSavePoint(); // the world as loaded is the first step
+        dimension.setHeightAt(10, 10, 80);
+        dimension.armSavePoint();
+        layer.setDataAt(dimension, 100, 100, house(1, 100, 100)); // the list joins the height edit's step
+        dimension.armSavePoint();
+        assertTrue(manager.undo()); // Ctrl+Z: undo, then arm
+        manager.armSavePoint();
+
+        // a Fill, cancelled: save point, change, undo, drop the redo, nothing armed
+        manager.savePoint();
+        dimension.setHeightAt(20, 20, 90);
+        assertTrue(manager.undo());
+        manager.clearRedo();
+
+        layer.setDataAt(dimension, 140, 100, house(2, 140, 100));
+        dimension.armSavePoint();
+        assertEquals(List.of(house(2, 140, 100), house(0, 300, 300)), sorted(layer.getAllObjectStates()));
+        assertTrue(manager.undo());
+        assertEquals(List.of(house(0, 300, 300)), layer.getAllObjectStates(), "the new house is undone");
+    }
+
     @Test
     void withoutAnUndoManagerTheLayerEditsAsBefore() {
         Dimension dimension = TestDimension.createDimension(new TestDimension.DimensionParams());

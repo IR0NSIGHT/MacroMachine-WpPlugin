@@ -61,7 +61,16 @@ public class CityLayer extends CustomLayer implements UndoListener
     private transient UndoManager undoManager;
     /** The house list's key in {@link #undoManager}. */
     private transient BufferKey<CityInfoDatabase> undoKey;
-    /** The house list as it was when registered: undo beyond that returns to it. */
+    /**
+     * Whether the house list is in {@link #undoManager}'s history yet: it joins at
+     * the first edit, not when the tool picks the manager up (adding a buffer
+     * throws away what can be redone, an edit does that anyway).
+     */
+    private transient boolean undoBufferAdded;
+    /**
+     * A copy of the house list from just before it joined the history: undo steps
+     * from before that do not have it and return to this. Never edited.
+     */
     private transient CityInfoDatabase undoBaseline;
     /** Told after undo / redo restored the house list (the City Tool). */
     private transient Runnable afterUndoRestored;
@@ -489,15 +498,17 @@ public class CityLayer extends CustomLayer implements UndoListener
     }
 
     /**
-     * Registers the house list with {@code manager} (the undo manager of the
-     * dimension being edited), so undo / redo take it along with the tiles. Moving
-     * to another manager (another world or dimension) leaves the old one. A null
+     * Ties the house list to {@code manager} (the undo manager of the dimension
+     * being edited), so undo / redo take it along with the tiles. It joins the
+     * history at the next edit (see {@link #editableDatabase()}): picking the
+     * manager up changes nothing, so what the user can redo stays. Moving to
+     * another manager (another world or dimension) leaves the old one. A null
      * manager (none, e.g. in tests) changes nothing.
      */
     public void trackUndo(UndoManager manager) {
         if (manager == null || manager == undoManager)
             return;
-        if (undoManager != null)
+        if (undoManager != null && undoBufferAdded)
             undoManager.removeBuffer(undoKey);
         undoManager = manager;
         undoKey = new BufferKey<>() {
@@ -506,10 +517,8 @@ public class CityLayer extends CustomLayer implements UndoListener
                 return "CityLayer houses of " + getName();
             }
         };
-        undoBaseline = database;
-        manager.addBuffer(undoKey, database, this);
-        // the next change starts a new undo step: the registered list stays as it was
-        manager.armSavePoint();
+        undoBufferAdded = false;
+        undoBaseline = null;
     }
 
     /**
@@ -532,7 +541,8 @@ public class CityLayer extends CustomLayer implements UndoListener
             dimensionManager.armSavePoint();
         if (undoManager != null && undoManager != dimensionManager)
             undoManager.armSavePoint();
-        undoBaseline = database;
+        if (undoBufferAdded)
+            undoBaseline = database.clone();
     }
 
     /** The undo manager the house list is registered with (null: none). */
@@ -547,15 +557,26 @@ public class CityLayer extends CustomLayer implements UndoListener
     private CityInfoDatabase editableDatabase() {
         if (undoManager == null)
             return database;
+        if (!undoBufferAdded) {
+            // the first edit: the list joins the history now (adding throws away
+            // the redo steps, as this edit does anyway), and the edit starts an
+            // undo step of its own, the list as it was stays in the step before.
+            // The baseline is a separate copy: the manager may hand the stored
+            // list back for editing in place (a step reopened without a save
+            // point), which must not change what earlier steps return to.
+            undoBaseline = database.clone();
+            undoManager.addBuffer(undoKey, database, this);
+            undoManager.armSavePoint();
+            undoBufferAdded = true;
+        }
         CityInfoDatabase editable = undoManager.getBufferForEditing(undoKey);
         if (editable == null) {
-            // The list joined the history at the first tracked edit (addBuffer puts
-            // it in the newest step only). Undone past that step and edited again,
-            // the step that had it is gone and the manager has no list to copy: it
-            // hands back null. Here the houses are as they were before tracking
-            // (bufferChanged showed undoBaseline): add a copy of that to the current
-            // step. A copy, so undoBaseline stays what earlier steps fall back to.
-            editable = undoBaseline != null ? undoBaseline.clone() : new CityInfoDatabase();
+            // addBuffer puts the list in the newest step only. Undone past that
+            // step and edited again, the step that had it is gone and the manager
+            // has no list to copy: it hands back null. Here the houses are as they
+            // were before (bufferChanged showed undoBaseline): add a copy of that to
+            // the current step, so undoBaseline stays what earlier steps return to.
+            editable = undoBaseline.clone();
             undoManager.addBuffer(undoKey, editable, this);
         }
         database = editable;
