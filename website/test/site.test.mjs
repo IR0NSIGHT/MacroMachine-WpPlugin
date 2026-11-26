@@ -491,9 +491,26 @@ test('CityLayer emphasizes deliberate city layouts and continuous schematic wall
 });
 
 test('important CityLayer and preview limitations are retained', () => {
-  assert.match(html.get('citylayer.html'), /undo\/redo does not restore CityLayer building placements/);
-  assert.match(html.get('citylayer.html'), /same CityLayer/);
+  const city = html.get('citylayer.html');
+  assert.match(city, /same CityLayer/);
+  assert.match(city, /clears the whole undo history of the map/);
+  assert.match(city, /houses of the removed schematics and of every schematic listed below them/);
   assert.match(html.get('3d-preview.html'), /Large selections can cause lag/);
+});
+
+test('CityLayer guide describes the City Tool merged in PR #127', () => {
+  const city = html.get('citylayer.html');
+  assert.match(city, /PR #127/);
+  assert.match(city, /undo \/ redo restores building placements/);
+  assert.match(city, /Layer → Tutorial layer/);
+  for (const id of ['layer-menu', 'picker', 'select-and-place', 'transform', 'randomize', 'overlays', 'undo', 'controls']) {
+    assert.match(city, new RegExp(`id="${id}"`), id);
+  }
+  for (const image of ['picker.png', 'schematics-menu.png', 'layer-menu.png', 'remove-schematics-warning.png']) {
+    assert.ok(city.includes(`citytool/${image}`), image);
+  }
+  // the retired tool-settings panel and its controls are gone
+  assert.doesNotMatch(city, /undo\/redo does not restore CityLayer building placements|Choose the house in the tool options|Right click to move the selection center|City Tool options|brush type with no selection/);
 });
 
 test('3D Preview explains the live export view and distinguishes its renderer from Minecraft', () => {
