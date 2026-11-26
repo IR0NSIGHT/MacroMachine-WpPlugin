@@ -506,7 +506,7 @@ test('CityLayer guide describes the City Tool merged in PR #127', () => {
   for (const id of ['layer-menu', 'picker', 'select-and-place', 'transform', 'randomize', 'overlays', 'undo', 'controls']) {
     assert.match(city, new RegExp(`id="${id}"`), id);
   }
-  for (const image of ['picker.png', 'schematics-menu.png', 'layer-menu.png', 'remove-schematics-warning.png']) {
+  for (const image of ['picker.png', 'transform.png', 'randomize-rotation.png', 'overlays-menu.png', 'layer-menu.png', 'remove-schematics-warning.png']) {
     assert.ok(city.includes(`citytool/${image}`), image);
   }
   // the retired tool-settings panel and its controls are gone
