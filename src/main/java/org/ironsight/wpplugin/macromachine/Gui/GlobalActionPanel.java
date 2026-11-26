@@ -43,7 +43,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     public static final String INPUT_OUTPUT_DESIGNER = "inputoutputdesigner";
     static final int MAX_LOG_LINES = 2000;
     static JTextArea logPanel;
-    private static GlobalActionPanel INSTANCE;
     private static WPObject surfaceObject = new SurfaceObject();
     MacroTreePanel macroTreePanel;
     MacroDesigner macroDesigner;
@@ -59,11 +58,9 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     private Window dialog;
     private JTabbedPane tabbedPane;
     private boolean showTabbedPane = true;
-    private boolean rerender3d = false;
     private Dimension[] expandedStateSizes = new Dimension[2];
 
     public GlobalActionPanel(MacroApplicator applyToMap, Window dialog) {
-        INSTANCE = this;
         this.applyMacro = applyToMap;
         this.dialog = dialog;
         init();
@@ -186,12 +183,13 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
     }
 
     public static void flagForChangedSurfaceObject() {
-        if (INSTANCE == null)
-            return; // gui wasnt opened before.
-        INSTANCE.rerender3d = true;
-        SwingUtilities.invokeLater(() -> {
-            INSTANCE.doRender3d();
-        });
+        CubeArrayRenderer.getInstance().render(getSurfaceObject()).whenComplete(GlobalActionPanel::renderCompleted);
+    }
+
+    static void renderCompleted(CubeArrayRenderer.RenderOutcome outcome, Throwable error) {
+        if (error != null)
+            System.getLogger(GlobalActionPanel.class.getName())
+                    .log(System.Logger.Level.ERROR, "3D preview failed", error);
     }
 
     public synchronized static WPObject getSurfaceObject() {
@@ -239,11 +237,6 @@ public class GlobalActionPanel extends JPanel implements ISelectItemCallback
                 layout.show(editorPanel, INVALID_SELECTION);
                 break;
         }
-    }
-
-    private void doRender3d() {
-        CubeArrayRenderer.getInstance().render(surfaceObject);
-        rerender3d = false;
     }
 
     private void init() {

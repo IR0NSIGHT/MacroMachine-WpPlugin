@@ -11,6 +11,7 @@ import org.ironsight.wpplugin.macromachine.Layers.HeatMapLayer;
 import org.ironsight.wpplugin.macromachine.Layers.PathBuilder.PathTool;
 import org.ironsight.wpplugin.macromachine.operations.MacroDialogOperation;
 import org.ironsight.wpplugin.macromachine.operations.PreviewOperation;
+import org.ironsight.wpplugin.macromachine.threeDRendering.PreviewWarmUp;
 import org.pepsoft.worldpainter.Platform;
 import org.pepsoft.worldpainter.WPContext;
 import org.pepsoft.worldpainter.WorldPainterView;
@@ -51,6 +52,7 @@ public class MacroMachinePlugin extends AbstractPlugin
     @Override
     public void init(WPContext context) {
         super.init(context);
+        PreviewWarmUp.startInBackground();
     }
 
     public static MacroMachinePlugin getInstance() {

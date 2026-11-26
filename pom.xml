@@ -350,7 +350,7 @@
         <dependency>
             <groupId>com.github.IR0NSIGHT.CubeArray</groupId>
             <artifactId>cubearray-core</artifactId>
-            <version>v1.7.5</version>
+            <version>v1.7.9</version>
         </dependency>
 
         <!-- LWJGL base + Windows natives — shaded into final JAR for cubearray 3D rendering -->
@@ -404,6 +404,37 @@
     </dependencies>
 
     <profiles>
+        <profile>
+            <id>native-preview-tests</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.2.5</version>
+                        <configuration>
+                            <includes>
+                                <include>**/*NativeIT.java</include>
+                            </includes>
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
+                            <failIfNoTests>true</failIfNoTests>
+                            <environmentVariables>
+                                <LOCALAPPDATA>${project.build.directory}/native-preview-data</LOCALAPPDATA>
+                            </environmentVariables>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <!-- Enable this profile and execute the test phase in order to run your plugin with WorldPainter. -->
         <profile>
             <id>testWithWorldPainter</id>

@@ -1,7 +1,9 @@
 package org.ironsight.wpplugin.macromachine.operations;
 
 import jakarta.annotation.Nullable;
-import org.ironsight.wpplugin.macromachine.Gui.GlobalActionPanel;
+import org.ironsight.wpplugin.macromachine.threeDRendering.CubeArrayRenderer;
+import org.ironsight.wpplugin.macromachine.threeDRendering.CubeArrayRenderer.RenderOutcome;
+import org.ironsight.wpplugin.macromachine.threeDRendering.Export3DViewHelper;
 import org.pepsoft.worldpainter.CoordinateTransform;
 import org.pepsoft.worldpainter.Dimension;
 import org.pepsoft.worldpainter.Tile;
@@ -11,10 +13,14 @@ import org.pepsoft.worldpainter.operations.AbstractBrushOperation;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyVetoException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import org.pepsoft.worldpainter.objects.WPObject;
 
-import static org.ironsight.wpplugin.macromachine.threeDRendering.Export3DViewHelper.renderTileToSurfaceObject;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE;
 import static org.pepsoft.worldpainter.Constants.TILE_SIZE_BITS;
 
@@ -38,17 +44,30 @@ public class PreviewOperation extends AbstractBrushOperation
     static final String DESCRIPTION = "Show terrain, height and waterheight in a 3d preview";
 
     private TileChangedListener listener = new TileChangedListener(this);
-    private Set<Point> lastTileCoords;
-    private Dimension lastDim;
-    private JButton rerenderButton;
-    private JLabel statusLabel;
-    private JCheckBox autoUpdateCheckbox;
+    Set<Point> lastTileCoords;
+    Dimension lastDim;
+    JButton rerenderButton;
+    JLabel statusLabel;
+    JCheckBox autoUpdateCheckbox;
     private Set<Point> subscribedTileCoords = new HashSet<>();
     private boolean useFullExport;
     private final JPanel optionsPanel;
+    final Function<Supplier<? extends WPObject>, CompletableFuture<RenderOutcome>> renderer;
+    final SelectionExporter exporter;
+    final Supplier<CompletableFuture<RenderOutcome>> opener;
+    long latestRequest;
 
     public PreviewOperation() {
+        this(PreviewOperation::renderSelection, Export3DViewHelper::renderTileToSurfaceObject,
+                PreviewOperation::openRenderer);
+    }
+
+    PreviewOperation(Function<Supplier<? extends WPObject>, CompletableFuture<RenderOutcome>> renderer,
+            SelectionExporter exporter, Supplier<CompletableFuture<RenderOutcome>> opener) {
         super(NAME, DESCRIPTION, ID);
+        this.renderer = renderer;
+        this.exporter = exporter;
+        this.opener = opener;
         optionsPanel = new JPanel();
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
         JLabel title = new JLabel(NAME);
@@ -94,7 +113,21 @@ public class PreviewOperation extends AbstractBrushOperation
         return optionsPanel;
     }
 
-    private void rerenderLastSelection(@Nullable ActionEvent e) {
+    @Override
+    protected void activate() throws PropertyVetoException {
+        super.activate();
+        long request = ++latestRequest;
+        statusLabel.setText("Opening preview...");
+        statusLabel.setToolTipText(null);
+        try {
+            opener.get()
+                    .whenComplete((outcome, error) -> SwingUtilities.invokeLater(() -> finishRender(request, error)));
+        } catch (Exception error) {
+            finishRender(request, error);
+        }
+    }
+
+    void rerenderLastSelection(@Nullable ActionEvent e) {
         if (lastTileCoords == null || lastTileCoords.isEmpty() || lastDim == null) {
             return;
         }
@@ -102,57 +135,60 @@ public class PreviewOperation extends AbstractBrushOperation
         for (Point coord : lastTileCoords) {
             Tile liveTile = lastDim.getTile(coord.x, coord.y);
             if (liveTile != null) {
-                tiles.add(liveTile.transform(CoordinateTransform.NOOP));
+                tiles.add(liveTile);
             }
         }
         if (tiles.isEmpty()) {
             statusLabel.setText("Idle");
             return;
         }
-        startExportAndRenderThread(tiles, lastDim, useFullExport);
-    }
-    private long lastRenderStart = 0;
-
-    private synchronized long flagNewRenderRequested() {
-        lastRenderStart = System.currentTimeMillis();
-        return lastRenderStart;
-    };
-
-    private synchronized boolean isCurrentRender(long renderStart) {
-        return lastRenderStart == renderStart;
+        requestRender(tiles, lastDim, useFullExport);
     }
 
-    private void startExportAndRenderThread(Set<Tile> referenceTiles, Dimension referenceDimension,
-            boolean fullExport) {
-
-        final long thisRenderStart = flagNewRenderRequested();
-        statusLabel.setText("Copying Data...");
-        HashSet<Tile> clonedTiles = new HashSet<>();
-        for (Tile tile : referenceTiles) {
-            clonedTiles.add(tile.transform(CoordinateTransform.NOOP));
-        }
-        if (!isCurrentRender(thisRenderStart)) // abort if another render was requested later
+    void requestRender(Set<Tile> referenceTiles, Dimension referenceDimension, boolean fullExport) {
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> requestRender(referenceTiles, referenceDimension, fullExport));
             return;
+        }
+        long request = ++latestRequest;
+        Set<Tile> clonedTiles = new HashSet<>();
+        for (Tile tile : referenceTiles) {
+            if (tile != null)
+                clonedTiles.add(tile.transform(CoordinateTransform.NOOP));
+        }
+        if (clonedTiles.isEmpty()) {
+            statusLabel.setText("Idle");
+            return;
+        }
+        statusLabel.setText("Preparing preview...");
+        statusLabel.setToolTipText(null);
+        renderer.apply(() -> exporter.export(clonedTiles, referenceDimension, fullExport))
+                .whenComplete((outcome, error) -> SwingUtilities.invokeLater(() -> finishRender(request, error)));
+    }
 
-        Runnable exportAndPassToRenderer = () -> {
-            try {
-                statusLabel.setText("Exporting...");
-                var schemObj = renderTileToSurfaceObject(clonedTiles, referenceDimension, useFullExport);
+    void finishRender(long request, Throwable error) {
+        if (request != latestRequest)
+            return;
+        statusLabel.setText(error == null ? "Idle" : "Preview failed");
+        if (error != null) {
+            statusLabel.setToolTipText(error.getMessage());
+            System.getLogger(PreviewOperation.class.getName())
+                    .log(System.Logger.Level.ERROR, "3D preview failed", error);
+        }
+    }
 
-                if (!isCurrentRender(thisRenderStart)) // abort if another render was requested later
-                    return;
+    static CompletableFuture<RenderOutcome> renderSelection(Supplier<? extends WPObject> selection) {
+        return CubeArrayRenderer.getInstance().render(selection);
+    }
 
-                statusLabel.setText("Rendering...");
-                GlobalActionPanel.renderSurfaceObject(schemObj);
-                SwingUtilities.invokeLater(() -> statusLabel.setText("Idle"));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            SwingUtilities.invokeLater(() -> {
-                statusLabel.setText("Idle");
-            });
-        };
-        new Thread(exportAndPassToRenderer).start();
+    static CompletableFuture<RenderOutcome> openRenderer() {
+        return CubeArrayRenderer.getInstance().openPreview();
+    }
+
+    @FunctionalInterface
+    interface SelectionExporter
+    {
+        WPObject export(Set<Tile> tiles, Dimension dimension, boolean fullExport);
     }
 
     // HIGHLIGHT AREA
@@ -201,6 +237,8 @@ public class PreviewOperation extends AbstractBrushOperation
         float tileRadius = 1f * radius / TILE_SIZE;
         int tileRadiusMax = (int) Math.ceil(tileRadius);
         Dimension dim = getDimension();
+        if (dim == null)
+            return;
 
         Rectangle selectedSquare = new Rectangle(centreX - radius, centreY - radius, 2 * radius, 2 * radius);
 
@@ -208,7 +246,9 @@ public class PreviewOperation extends AbstractBrushOperation
 
         // the tile in which the click position is
         int centreXTile = centreX >> TILE_SIZE_BITS, centreYTile = centreY >> TILE_SIZE_BITS;
-        tiles.add(dim.getTile(centreXTile, centreYTile)); // always add the clicked tile itself.
+        Tile centreTile = dim.getTile(centreXTile, centreYTile);
+        if (centreTile != null)
+            tiles.add(centreTile);
         for (int x = centreXTile - tileRadiusMax; x <= centreXTile + tileRadiusMax; x++) {
             for (int y = centreYTile - tileRadiusMax; y <= centreYTile + tileRadiusMax; y++) {
                 if (!dim.getExtent().contains(x, y))
@@ -224,11 +264,13 @@ public class PreviewOperation extends AbstractBrushOperation
                 }
 
                 Tile t = dim.getTile(x, y);
-                assert t != null;
-                tiles.add(t);
+                if (t != null)
+                    tiles.add(t);
             }
         }
 
+        if (tiles.isEmpty())
+            return;
         lastTileCoords = new HashSet<>();
         for (Tile tile : tiles) {
             lastTileCoords.add(new Point(tile.getX(), tile.getY()));
@@ -271,13 +313,13 @@ public class PreviewOperation extends AbstractBrushOperation
         if (dim.isEventsInhibited())
             dim.setEventsInhibited(false);
 
-        startExportAndRenderThread(tiles, dim, useFullExport);
+        requestRender(tiles, dim, useFullExport);
     }
 
     static class TileChangedListener implements Tile.Listener
     {
         private PreviewOperation op;
-        private Timer debounceTimer;
+        Timer debounceTimer;
 
         TileChangedListener(PreviewOperation op) {
             this.op = op;
@@ -290,6 +332,10 @@ public class PreviewOperation extends AbstractBrushOperation
         }
 
         private void onTileChanged(Tile tile) {
+            if (!SwingUtilities.isEventDispatchThread()) {
+                SwingUtilities.invokeLater(() -> onTileChanged(tile));
+                return;
+            }
             if (op.lastTileCoords == null || op.lastTileCoords.isEmpty())
                 return;
             Point tileCoord = new Point(tile.getX(), tile.getY());
