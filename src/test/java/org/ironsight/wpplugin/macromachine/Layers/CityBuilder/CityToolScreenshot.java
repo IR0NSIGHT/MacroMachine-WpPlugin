@@ -24,7 +24,7 @@ public final class CityToolScreenshot
     /** WorldPainter's New World defaults (Minecraft 1.18+ heights). */
     private static final int MIN_HEIGHT = -64, MAX_HEIGHT = 320, BASE_HEIGHT = 58, WATER_LEVEL = 62;
     /** The houses: x, z offsets from the village centre, schematic index. */
-    private static final int[][] HOUSES = {{-60, -40, 0}, {0, -40, 1}, {60, -30, 2}, {-30, 40, 3}, {50, 50, 4}};
+    private static final int[][] HOUSES = {{-60, -40, 0}, {0, -40, 7}, {60, -30, 14}, {-30, 40, 21}, {50, 50, 28}};
     /** The view's zoom (WorldPainter's zoom steps: 1 is 2:1, 2 is 4:1). */
     private static final int ZOOM = 2;
 
@@ -43,15 +43,10 @@ public final class CityToolScreenshot
             dimension = noiseWorld(seed);
             centre = dryVillageCentre(dimension);
         }
-        CityLayer layer = new CityLayer("Ukrainian village", "test");
-        var schematics = new java.util.ArrayList<org.pepsoft.worldpainter.objects.WPObject>();
-        var provider = new DefaultCustomObjectProvider();
-        var folder = new File(CityToolScreenshot.class.getResource("/CityBuilder/Houses").toURI());
-        var files = folder.listFiles((dir, name) -> name.endsWith(".schem"));
-        java.util.Arrays.sort(files);
-        for (File file : files)
-            schematics.add(provider.loadObject(file));
-        layer.setObjectList(schematics);
+        // the bundled tutorial layer, as Layer > Tutorial layer imports it
+        CityLayer layer = CityLayerLibrary.readTutorialLayer();
+        // the houses' own blocks, not the layer's highlight color (the tool takes this over)
+        layer.setUseHighlightColors(false);
         CityLayer other = new CityLayer("Harbour", "test");
         dimension.setCustomLayers(List.of(layer, other));
 
