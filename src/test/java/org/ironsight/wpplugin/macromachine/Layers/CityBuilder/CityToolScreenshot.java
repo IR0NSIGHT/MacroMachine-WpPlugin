@@ -45,7 +45,8 @@ public final class CityToolScreenshot
         }
         // the bundled tutorial layer, as Layer > Tutorial layer imports it
         CityLayer layer = CityLayerLibrary.readTutorialLayer();
-        // the houses' own blocks, not the layer's highlight color (the tool takes this over)
+        // the houses' own blocks, not the layer's highlight color (the tool takes this
+        // over)
         layer.setUseHighlightColors(false);
         CityLayer other = new CityLayer("Harbour", "test");
         dimension.setCustomLayers(List.of(layer, other));
@@ -136,8 +137,8 @@ public final class CityToolScreenshot
      * 1024 blocks.
      */
     private static Dimension noiseWorld(long seed) {
-        TileFactory tileFactory = TileFactoryFactory.createNoiseTileFactory(seed, Terrain.GRASS, MIN_HEIGHT,
-                MAX_HEIGHT, BASE_HEIGHT, WATER_LEVEL, false, true, 20f, 1.0);
+        TileFactory tileFactory = TileFactoryFactory.createNoiseTileFactory(seed, Terrain.GRASS, MIN_HEIGHT, MAX_HEIGHT,
+                BASE_HEIGHT, WATER_LEVEL, false, true, 20f, 1.0);
         World2 world = new World2(DefaultPlugin.JAVA_ANVIL_1_19, MIN_HEIGHT, MAX_HEIGHT);
         Dimension dimension = new Dimension(world, "Surface", seed, tileFactory, Dimension.Anchor.NORMAL_DETAIL);
         int tiles = 1024 / Constants.TILE_SIZE;
