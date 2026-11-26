@@ -20,7 +20,7 @@ public enum HelpCatalog {
                     Click the card showing the current schematic to pick another one from a grid: it becomes the type of the selected houses (or of the next house you add). The Schematics menu rotates, mirrors and randomizes them.
                     Selected houses get a transform box: drag the move handle to move them, the rotate handle to turn them (a group turns by any angle, each house facing the nearest quarter turn), the scale handles to spread them apart or pack them together. The crosshair is the pivot: drag it, click it to centre it again.
 
-                    City Layers are not compatible with undo/redo. Do not use undo/redo while editing one.
+                    Undo / redo take the buildings along: each action is one undo step. Removing schematics in the layer settings clears the undo history (it asks first).
                     """,
             List.of(new HelpItem("Left click", "Select the building under the cursor"),
                     new HelpItem("Ctrl + left click",
