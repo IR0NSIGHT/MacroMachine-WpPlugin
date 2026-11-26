@@ -34,7 +34,7 @@ Paint your whole map with one click: snowy peaks, beaches, alpine mountains, mes
 **[CityLayer](#citylayer)**<br>
 Place buildings (schematics) exactly where you want them, then move, rotate and copy them.
 
-<img src="imgs/tutorial/CityLayer/citylayer_setup.gif" width="100%" alt="CityLayer">
+<img src="imgs/tutorial/CityLayer/macromachine_citylayer_house-along-the-river.gif" width="100%" alt="CityLayer">
 </td>
 </tr>
 </table>
@@ -128,95 +128,36 @@ CityLayer works like a Custom Object Layer, but places individual schematics at 
 
 CityLayer uses each schematic's offset. Center the offset in the options for each schematic for predictable placement.
 
-> Tip: press the `?` button in the City Tool options for the live help dialog. The full control list is defined in `OptionsPanel.HELP_ITEMS` / `HelpCatalog.CITY` and rendered to `target/help-screenshots/city-tool.png` during `mvn verify`.
+![City Tool with three houses in the transform box](./imgs/citytool/transform.png)
 
-<table>
-<tr>
-<td width="50%" valign="top"><img src="imgs/tutorial/CityLayer/citylayer_createLayer.gif" width="100%" alt="Create CityLayer"></td>
-<td width="50%" valign="top">
+#### Setting up
+- Create a custom layer with **+ → Add a CityLayer layer** and add schematics, or use **Layer > Tutorial layer** in the City Tool: it imports `tutorial_houses`, a Ukrainian peasant village of 32 schematics by Ektelion.
+- Select the house-icon City Tool and pick the layer in its **Layer** menu. Everything happens on the map: the **Schematics**, **Layer**, overlay (eye) and **Add** controls sit at the top left, with the schematic card below them. **Layer > Help** shows all controls.
+- Using the 3D Preview with Auto Update is recommended.
 
-**Setup — Create & Select**
-- Create a new custom layer named `CityLayer` and add schematics.
-- Select the `CityLayer` and the House-icon City Tool, then select a schematic in the tool options.
-- Place with `Ctrl` + left click. Using the 3D Preview with Auto Update is recommended.
+#### Placing and selecting
+- `Ctrl` + left click on empty map places a building of the current type. **Add**, or tapping `Ctrl` twice, switches to placing with plain clicks; `Escape` leaves it. **Add random** (Add dropdown) places a random pick of the schematics ticked in the picker.
+- Left click selects the building under the cursor, `Ctrl` + left click adds or removes one, dragging on empty map selects the buildings inside the rectangle. `Ctrl+A` selects all, `Escape` clears the selection.
+- With nothing selected, or in add mode, `C`, `X` and the card's buttons turn and mirror the next building before you place it.
 
-</td>
-</tr>
-</table>
+#### The schematic picker
+Click the schematic card to open the picker: front, side and top views with sizes, search by name, size filters, and **Bright** for dark schematics. With buildings selected it changes their type, otherwise it chooses the next building's. `Shift` + mouse wheel also changes the type of the selection.
 
-#### Selection
+![Schematic picker](./imgs/citytool/picker.png)
 
-<table>
-<tr>
-<td width="50%" valign="top">
-<img src="imgs/tutorial/CityLayer/citylayer_setup.gif" width="100%" alt="Drag to select"><br>
-<img src="imgs/tutorial/CityLayer/citylayer_selectBuildingType.gif" width="100%" alt="Select building type" style="margin-top:8px;">
-</td>
-<td width="50%" valign="top">
+#### Moving, rotating and spreading
+Selected buildings get the transform box (shared with the Path Tool): drag a building or the move handle to move them, the rotate handle to turn them (a group turns by any angle, each building facing the nearest quarter turn), the scale handles to spread them apart or pack them together. The crosshair is the pivot; click it to centre it again. `Shift` while dragging moves at 1/10 speed. `W`/`A`/`S`/`D` move by one block, `C` rotates by 90°, `X` mirrors, `Delete` deletes.
 
-- `Ctrl` + left click: place a new building.
-- `Left click`: select or deselect the building under the cursor. Clicking an already selected building toggles it off; clicking empty space clears the selection.
-- `Left-button drag`: select buildings fully inside the drag rectangle. Outlines are shown while dragging.
-- `Ctrl + A`: select all buildings in the layer.
-- `Escape`: clear the selection.
-- `Shift` + mouse wheel: change the selected building type for the whole selection (or the brush when nothing is selected).
-- Selection count and status messages are shown in the tool options and as a transient overlay on the map.
+#### Randomizing
+**Schematics > Randomize rotation / mirroring / type** opens a panel for the selection with the allowed results and a seed. The **Add** dropdown's random switches give new buildings a random rotation, mirroring or type; `Q` applies them to the selection.
 
-</td>
-</tr>
-</table>
-
-#### Transforming the selection
-
-<table>
-<tr>
-<td width="50%" valign="top"><img src="imgs/tutorial/CityLayer/citylayer_transform.gif" width="100%" alt="Transform selection"></td>
-<td width="50%" valign="top">
-
-- `Right click`: move the selection center to the cursor position.
-- `W`/`A`/`S`/`D`: move selected buildings by one block.
-- `C`: rotate selected buildings around the selection center.
-- `X`: mirror selected buildings.
-- `Q`: randomize selected buildings using the enabled random options.
-- `Delete`: delete selected buildings.
-
-</td>
-</tr>
-</table>
+![Randomize rotation](./imgs/citytool/randomize-rotation.png)
 
 #### Clipboard
+- `Ctrl + C` / `Ctrl + X` copy / cut the selected buildings (their relative positions are kept); `Ctrl + V` pastes them at the cursor, in the same `CityLayer`.
 
-<table>
-<tr>
-<td width="50%" valign="top"><img src="imgs/tutorial/CityLayer/citylayer_copypaste.gif" width="100%" alt="Copy paste clipboard"></td>
-<td width="50%" valign="top">
-
-- `Ctrl + C`: copy selected buildings to the clipboard (offsets relative to the active building are preserved).
-- `Ctrl + X`: cut selected buildings to the clipboard.
-- `Ctrl + V`: paste the clipboard at the cursor position. Paste requires the cursor over the map and the same `CityLayer`; otherwise `Clipboard is empty` or `Move the cursor over the map to paste` is shown.
-- Clipboard count is shown in the tool options.
-
-</td>
-</tr>
-</table>
-
-#### Tool options
-
-<table>
-<tr>
-<td width="50%" valign="top"><img src="imgs/tutorial/CityLayer/citylayer_randomize.gif" width="100%" alt="Randomize"></td>
-<td width="50%" valign="top">
-
-- `random rotate`: randomly rotate after each placement or when pressing `Q` on a selection.
-- `random select`: randomly select a new schematic after each placement or when pressing `Q`.
-- `random mirrored`: randomly mirror after each placement or when pressing `Q`.
-- `use highlight colors`: show the layer color instead of the schematic.
-
-</td>
-</tr>
-</table>
-
-CityLayer is not compatible with WorldPainter undo/redo. Do not use undo/redo while editing it.
+#### Undo and redo
+WorldPainter undo and redo take the buildings along: each City Tool action is one undo step. Removing schematics from a CityLayer in its layer settings asks first: it deletes the houses of the removed schematics and of every schematic listed below them, and clears the whole undo history of the map.
 
 ### 3D Preview
 1. Open MacroMachine with the `M` tool.
