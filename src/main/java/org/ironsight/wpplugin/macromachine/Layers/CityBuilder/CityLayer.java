@@ -13,7 +13,9 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.vecmath.Point3i;
@@ -273,35 +275,50 @@ public class CityLayer extends CustomLayer implements UndoListener
     }
 
     void setObjectList(ArrayList<WPObject> newObjects, Set<Integer> preservedIndices) {
-        ArrayList<Integer> oldIndicesToDelete = new ArrayList<>();
-        // todo: make possible to map old idx to new idx, f.e. if index 5 of size 10 was
-        // deleted, to not clear 6,7,8,9 indices bc of shift
+        for (int i : preservedIndices)
+            if (i < getObjectList().size() && i < newObjects.size())
+                copyObjectSettings(getObjectList().get(i), newObjects.get(i));
 
-        for (int i = 0; i < getObjectList().size(); i++) {
-            WPObject oldObj = getObjectList().get(i);
-            WPObject newObj = i < newObjects.size() ? newObjects.get(i) : null;
-            if (newObj == null) { // the old item doesnt exist anymore in the new list
-                oldIndicesToDelete.add(i);
-                continue;
-            }
-
-            if (preservedIndices.contains(i)) {
-                copyObjectSettings(oldObj, newObj);
-                continue;
-            }
-
-            File oldFile = oldObj.getAttribute(ATTRIBUTE_FILE);
-            File newFile = newObj.getAttribute(ATTRIBUTE_FILE);
-            if (oldFile == null || !oldFile.equals(newFile)) { // the new item points to a different file
-                oldIndicesToDelete.add(i);
-            }
-        }
-
-        for (int schematicIdx : oldIndicesToDelete)
+        for (int schematicIdx : positionsLosingHouses(newObjects, preservedIndices))
             editableDatabase().deleteAllWithValue(getValueForState(Direction.NORTH, false, schematicIdx), ID_BIT_MASK);
 
         this.objects = newObjects;
         resetLastEdited();
+    }
+
+    /**
+     * The positions in the current schematic list whose houses
+     * {@link #setObjectList(ArrayList, Set)} deletes for {@code newObjects}: houses
+     * keep their schematic by its position, so a position that is gone or now
+     * holds another file loses its houses. Removing a schematic shifts all below
+     * it, so their houses go too.
+     */
+    // todo: map old to new positions (removing 5 of 10 need not clear 6..9)
+    List<Integer> positionsLosingHouses(List<WPObject> newObjects, Set<Integer> preservedIndices) {
+        List<Integer> positions = new ArrayList<>();
+        for (int i = 0; i < getObjectList().size(); i++) {
+            WPObject newObj = i < newObjects.size() ? newObjects.get(i) : null;
+            if (newObj == null) { // the position is gone
+                positions.add(i);
+                continue;
+            }
+            if (preservedIndices.contains(i)) // replaced on purpose: houses take the new schematic
+                continue;
+            File oldFile = getObjectList().get(i).getAttribute(ATTRIBUTE_FILE);
+            File newFile = newObj.getAttribute(ATTRIBUTE_FILE);
+            if (oldFile == null || !oldFile.equals(newFile)) // another file at this position
+                positions.add(i);
+        }
+        return positions;
+    }
+
+    /** How many houses stand on the map with a schematic at one of {@code positions}. */
+    int housesAt(Collection<Integer> positions) {
+        int count = 0;
+        for (ObjectState state : getAllObjectStates())
+            if (positions.contains(state.objectIndex))
+                count++;
+        return count;
     }
 
     static void copyObjectSettings(WPObject source, WPObject target) {
@@ -493,6 +510,29 @@ public class CityLayer extends CustomLayer implements UndoListener
         manager.addBuffer(undoKey, database, this);
         // the next change starts a new undo step: the registered list stays as it was
         manager.armSavePoint();
+    }
+
+    /**
+     * Clears the undo history of {@code dimension} (and of the undo manager the
+     * house list is registered with, if another one): after the schematic list
+     * changed, the house lists of earlier undo steps name schematics by positions
+     * that now hold others or none, so undo would bring houses back as the wrong
+     * schematic or as invisible ones. The current state stays; the next change
+     * starts a new undo step.
+     */
+    public void clearUndoHistory(Dimension dimension) {
+        UndoManager dimensionManager = undoManagerOf(dimension);
+        if (dimension != null)
+            dimension.clearUndo();
+        if (undoManager != null && undoManager != dimensionManager)
+            undoManager.clear();
+        // clear() disarms the save point: without this the next action would
+        // change the remaining step in place and could not be undone
+        if (dimensionManager != null)
+            dimensionManager.armSavePoint();
+        if (undoManager != null && undoManager != dimensionManager)
+            undoManager.armSavePoint();
+        undoBaseline = database;
     }
 
     /** The undo manager the house list is registered with (null: none). */

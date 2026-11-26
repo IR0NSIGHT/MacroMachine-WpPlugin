@@ -250,7 +250,188 @@ class CityLayerUndoTest
         assertTrue(operation.selection().isEmpty(), "the pasted (selected) house is gone");
     }
 
+    // ---- changing the schematic list clears the undo history ----
+
+    @Test
+    void afterTheSchematicListChangedUndoCannotBringBackHousesAsOtherSchematics() {
+        Dimension dimension = dimensionWithUndo();
+        UndoManager manager = CityLayer.undoManagerOf(dimension);
+        CityLayer layer = layerWithSchematicFiles();
+        layer.setDataAt(dimension, 100, 100, house(1, 100, 100));
+        dimension.armSavePoint();
+        layer.setDataAt(dimension, 140, 100, house(2, 140, 100));
+        dimension.armSavePoint();
+
+        // remove schematic 0: 1 and 2 move up, so their houses go
+        ArrayList<WPObject> withoutFirst = new ArrayList<>(layer.getObjectList().subList(1, 3));
+        assertEquals(List.of(0, 1, 2), layer.positionsLosingHouses(withoutFirst, Set.of()));
+        assertEquals(2, layer.housesAt(layer.positionsLosingHouses(withoutFirst, Set.of())));
+        layer.setObjectList(withoutFirst, Set.of());
+        layer.clearUndoHistory(dimension);
+        assertTrue(layer.getAllObjectStates().isEmpty());
+
+        // without the clear, undo would bring them back as the schematics now at 1 and (none) 2
+        assertFalse(manager.undo(), "nothing before the change is left to undo");
+        assertTrue(layer.getAllObjectStates().isEmpty());
+
+        // the first action after it is its own undo step
+        layer.setDataAt(dimension, 180, 100, house(0, 180, 100));
+        dimension.armSavePoint();
+        assertTrue(manager.undo());
+        assertTrue(layer.getAllObjectStates().isEmpty());
+        assertTrue(manager.redo());
+        assertEquals(List.of(house(0, 180, 100)), layer.getAllObjectStates());
+    }
+
+    @Test
+    void addingOrReplacingASchematicKeepsEveryHouse() {
+        CityLayer layer = layerWithSchematicFiles();
+        ArrayList<WPObject> added = new ArrayList<>(layer.getObjectList());
+        added.add(schematic("building-3", 3));
+        assertEquals(List.of(), layer.positionsLosingHouses(added, Set.of()));
+        ArrayList<WPObject> replaced = new ArrayList<>(layer.getObjectList());
+        replaced.set(1, schematic("other", 1));
+        assertEquals(List.of(1), layer.positionsLosingHouses(replaced, Set.of()));
+        assertEquals(List.of(), layer.positionsLosingHouses(replaced, Set.of(1)), "replaced on purpose");
+    }
+
+    @Test
+    void removingASchematicInTheEditorAsksAndCancelKeepsEverything() {
+        Dimension dimension = dimensionWithUndo();
+        UndoManager manager = CityLayer.undoManagerOf(dimension);
+        CityLayer layer = layerWithSchematicFiles();
+        layer.setDataAt(dimension, 100, 100, house(1, 100, 100));
+        dimension.armSavePoint();
+        CityLayerEditor editor = editorFor(layer, dimension);
+        List<Integer> asked = new ArrayList<>();
+        editor.removalConfirmation = (e, housesDeleted) -> {
+            asked.add(housesDeleted);
+            return false;
+        };
+
+        schematicList(editor).setSelectedIndex(0);
+        editor.removeFiles();
+        assertEquals(List.of(1), asked, "warned, with the one house that would go");
+        assertEquals(3, schematicList(editor).getModel().getSize(), "Cancel removes nothing");
+        editor.commit();
+        assertEquals(List.of(house(1, 100, 100)), layer.getAllObjectStates());
+        // the history is kept: the placing can still be undone (OK's repaint may add a step first)
+        for (int steps = 0; steps < 3 && !layer.getAllObjectStates().isEmpty(); steps++)
+            assertTrue(manager.undo(), "the undo history is kept");
+        assertTrue(layer.getAllObjectStates().isEmpty());
+    }
+
+    @Test
+    void removingASchematicInTheEditorClearsTheUndoHistoryOnOk() {
+        Dimension dimension = dimensionWithUndo();
+        UndoManager manager = CityLayer.undoManagerOf(dimension);
+        CityLayer layer = layerWithSchematicFiles();
+        layer.setDataAt(dimension, 100, 100, house(0, 100, 100));
+        dimension.armSavePoint();
+        layer.setDataAt(dimension, 140, 100, house(2, 140, 100));
+        dimension.armSavePoint();
+        CityLayerEditor editor = editorFor(layer, dimension);
+        editor.removalConfirmation = (e, housesDeleted) -> true;
+
+        schematicList(editor).setSelectedIndex(1); // building-1: building-2 moves up
+        editor.removeFiles();
+        assertEquals(2, schematicList(editor).getModel().getSize());
+        assertTrue(manager.undo(), "nothing cleared before OK");
+        manager.redo();
+
+        editor.commit();
+        assertEquals(List.of(house(0, 100, 100)), layer.getAllObjectStates());
+        assertFalse(manager.undo(), "OK cleared the undo history");
+        assertEquals(List.of(house(0, 100, 100)), layer.getAllObjectStates());
+    }
+
+    @Test
+    void anEditorResetForgetsAnAgreedRemoval() {
+        Dimension dimension = dimensionWithUndo();
+        UndoManager manager = CityLayer.undoManagerOf(dimension);
+        CityLayer layer = layerWithSchematicFiles();
+        layer.setDataAt(dimension, 100, 100, house(0, 100, 100));
+        dimension.armSavePoint();
+        CityLayerEditor editor = editorFor(layer, dimension);
+        editor.removalConfirmation = (e, housesDeleted) -> true;
+        schematicList(editor).setSelectedIndex(2);
+        editor.removeFiles();
+
+        editor.reset(); // Reset in the layer settings: back to the layer's schematics
+        editor.commit();
+        assertEquals(3, layer.getObjectList().size());
+        assertTrue(manager.undo(), "the undo history is kept");
+    }
+
     // ---- helpers ----
+
+    private static CityLayerEditor editorFor(CityLayer layer, Dimension dimension) {
+        CityLayerEditor editor = new CityLayerEditor();
+        editor.setContext(new org.pepsoft.worldpainter.layers.LayerEditor.LayerEditorContext() {
+            @Override
+            public org.pepsoft.worldpainter.ColourScheme getColourScheme() {
+                return null;
+            }
+
+            @Override
+            public boolean isExtendedBlockIds() {
+                return false;
+            }
+
+            @Override
+            public org.pepsoft.worldpainter.biomeschemes.CustomBiomeManager getCustomBiomeManager() {
+                return null;
+            }
+
+            @Override
+            public List<org.pepsoft.worldpainter.layers.Layer> getAllLayers() {
+                return List.of(layer);
+            }
+
+            @Override
+            public void settingsChanged() {
+            }
+
+            @Override
+            public Dimension getDimension() {
+                return dimension;
+            }
+        });
+        editor.setLayer(layer);
+        return editor;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static javax.swing.JList<WPObject> schematicList(java.awt.Container container) {
+        for (java.awt.Component child : container.getComponents()) {
+            if (child instanceof javax.swing.JList<?> list)
+                return (javax.swing.JList<WPObject>) list;
+            if (child instanceof java.awt.Container inner) {
+                var found = schematicList(inner);
+                if (found != null)
+                    return found;
+            }
+        }
+        return null;
+    }
+
+    /** Three schematics loaded from files (the layer tells them apart by file). */
+    private static CityLayer layerWithSchematicFiles() {
+        CityLayer layer = new CityLayer("test", "test");
+        ArrayList<WPObject> objects = new ArrayList<>();
+        for (int i = 0; i < 3; i++)
+            objects.add(schematic("building-" + i, i));
+        layer.setObjectList(objects);
+        return layer;
+    }
+
+    private static WPObject schematic(String name, int size) {
+        Material[] blocks = new Material[size + 2];
+        Arrays.fill(blocks, Material.STONE);
+        WPObject object = new GenericObject(name, size + 2, 1, 1, blocks);
+        object.setAttribute(WPObject.ATTRIBUTE_FILE, new File(name + ".schem"));
+        return object;
+    }
 
     /**
      * The one test view (WorldPainter allows one per JVM), on {@code dimension} for
