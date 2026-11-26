@@ -291,8 +291,10 @@ class CityLayerUndoTest
     }
 
     /**
-     * An edit in the step that is still open (no save point armed) joins that
-     * step; undoing it returns to the houses from before, not to the edited list.
+     * The first house edit while another change's step is still open (no save
+     * point armed) starts an undo step of its own: undo takes the house away and
+     * leaves that change, the next undo takes the change, and the houses are the
+     * ones from before, not the edited list.
      */
     @Test
     void aFirstEditIntoAnOpenStepUndoesToTheHousesFromBefore() {
@@ -304,14 +306,21 @@ class CityLayerUndoTest
         UndoManager manager = new UndoManager(50);
         dimension.registerUndoManager(manager);
         dimension.armSavePoint();
+        float heightBefore = dimension.getHeightAt(10, 10);
         dimension.setHeightAt(10, 10, 80); // opens a step and leaves it open
-        layer.setDataAt(dimension, 100, 100, house(1, 100, 100)); // joins it
+        layer.setDataAt(dimension, 100, 100, house(1, 100, 100)); // starts its own step
         dimension.armSavePoint();
 
         assertTrue(manager.undo());
         assertEquals(List.of(house(0, 300, 300)), layer.getAllObjectStates());
+        assertEquals(80, dimension.getHeightAt(10, 10), 0.01, "the height change is a step of its own");
+        assertTrue(manager.undo());
+        assertEquals(heightBefore, dimension.getHeightAt(10, 10), 0.01);
+        assertEquals(List.of(house(0, 300, 300)), layer.getAllObjectStates());
+        assertTrue(manager.redo());
         assertTrue(manager.redo());
         assertEquals(List.of(house(1, 100, 100), house(0, 300, 300)), sorted(layer.getAllObjectStates()));
+        assertEquals(80, dimension.getHeightAt(10, 10), 0.01);
     }
 
     /**
