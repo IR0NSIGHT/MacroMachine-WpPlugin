@@ -8,6 +8,7 @@ on:
     paths:
       - website/**
       - imgs/**
+      - pom.xml
       - .github/workflows/website-pages.yml
   pull_request:
     branches:
@@ -15,6 +16,7 @@ on:
     paths:
       - website/**
       - imgs/**
+      - pom.xml
       - .github/workflows/website-pages.yml
   workflow_dispatch:
 
@@ -56,6 +58,12 @@ jobs:
 
       - name: Check desktop, mobile, and accessibility
         run: npm run test:browser
+
+      - name: Build deployment artifact with optional installer report
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
+        env:
+          VIRUSTOTAL_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
+        run: npm run build
 
       - name: Upload website artifact
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/master'

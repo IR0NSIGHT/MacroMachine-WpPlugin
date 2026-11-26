@@ -7,7 +7,7 @@
     "build": "node build.mjs",
     "dev": "node build.mjs && node serve.mjs",
     "preview": "node serve.mjs",
-    "test": "node --test test/site.test.mjs",
+    "test": "node --test test/site.test.mjs test/virustotal.test.mjs",
     "verify": "npm run build && npm test",
     "test:browser": "playwright test"
   },

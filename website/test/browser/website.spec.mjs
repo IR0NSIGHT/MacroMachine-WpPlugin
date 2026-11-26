@@ -1,7 +1,132 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { installerReport } from '../../src/content.mjs';
 
-const pages = ['index', 'citylayer', 'paths', '3d-preview', 'macros', 'gradient-editor', 'filters', 'gallery', 'get-started'];
+const pages = ['index', 'citylayer', 'paths', '3d-preview', 'macros', 'gradient-editor', 'filters', 'get-started', 'documentation'];
+
+test('documentation directly opens each tool and allows switching tools without returning to the index', async ({ page }) => {
+  await page.goto('/documentation.html');
+  for (const [name, slug] of [['3D Preview', '3d-preview'], ['Path Tool', 'paths'], ['CityLayer', 'citylayer'], ['Macros', 'macros']]) {
+    const navigation = page.getByRole('navigation', { name: 'Browse by tool', exact: true });
+    await navigation.getByRole('link', { name, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${slug}\\.html$`));
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(`${name} guide`);
+    await expect(page.getByRole('navigation', { name: 'Browse by tool', exact: true }).getByRole('link', { name, exact: true })).toHaveAttribute('aria-current', 'page');
+  }
+  const navigation = page.getByRole('navigation', { name: 'Browse by tool', exact: true });
+  await navigation.getByRole('link', { name: 'Gradient Editor reference', exact: true }).click();
+  await expect(page.getByRole('navigation', { name: 'Browse by tool', exact: true }).getByRole('link', { name: 'Gradient Editor reference', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.locator('.doc-tool-current > .doc-tool-name')).toHaveText('Macros');
+});
+
+test('primary navigation exposes Get started, Documentation, GitHub, Discord, and Download', async ({ page }) => {
+  await page.goto('/');
+  const menu = page.getByRole('button', { name: 'Menu', exact: true });
+  if (await menu.isVisible()) await menu.click();
+  const nav = page.getByRole('navigation', { name: 'Main navigation', exact: true });
+  await expect(nav.getByRole('link')).toHaveText(['Get started', 'Documentation', 'GitHub', 'Discord', 'Download']);
+  await expect(nav.getByRole('link', { name: 'GitHub', exact: true })).toHaveAttribute('href', 'https://github.com/IR0NSIGHT/MacroMachine-WpPlugin');
+  await expect(nav.getByRole('link', { name: 'Discord', exact: true })).toHaveAttribute('href', 'https://discord.gg/9kRJEMfGeE');
+  await nav.getByRole('link', { name: 'Download', exact: true }).click();
+  await expect(page).toHaveURL(/get-started\.html#download$/);
+});
+
+test('macro references are nested documentation with a breadcrumb back to the Macros guide', async ({ page }) => {
+  await page.goto('/documentation.html#reference');
+  const references = page.getByRole('list', { name: 'Macros references', exact: true });
+  await references.getByRole('link', { name: 'Gradient Editor reference', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Gradient Editor reference');
+  await page.getByRole('navigation', { name: 'Breadcrumb', exact: true }).getByRole('link', { name: 'Macros', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Macros guide');
+  await page.locator('#macro-reference').getByRole('link', { name: 'Filters & Layers', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Filters & Layers reference');
+  await expect(page.locator('.feature-hero, .benefits, .related-section')).toHaveCount(0);
+});
+
+test('installer report links and expandable checksums are available without browser API requests', async ({ page }) => {
+  const apiRequests = [];
+  page.on('request', (request) => { if (request.url().startsWith('https://www.virustotal.com/api/')) apiRequests.push(request.url()); });
+  for (const slug of ['index', 'get-started']) {
+    await page.goto(`/${slug}.html`);
+    const report = page.locator('.installer-report');
+    await expect(report.getByRole('link', { name: `VirusTotal report for installer ${installerReport.version}`, exact: true })).toHaveAttribute('href', installerReport.url);
+    await report.locator('summary').click();
+    await expect(report.locator('code')).toBeVisible();
+    await expect(report.locator('code')).toHaveText(installerReport.sha256);
+    await expect(report.locator('details')).toContainText(installerReport.fileName);
+  }
+  expect(apiRequests).toEqual([]);
+});
+
+test('documentation tasks navigate to anchored guides and control references', async ({ page }) => {
+  await page.goto('/');
+  const menu = page.getByRole('button', { name: 'Menu' });
+  if (await menu.isVisible()) await menu.click();
+  await page.locator('#main-nav').getByRole('link', { name: 'Documentation', exact: true }).click();
+  await expect(page).toHaveURL(/documentation\.html$/);
+  await expect(page.locator('#main-nav a[href="documentation.html"]')).toHaveAttribute('aria-current', 'page');
+  await page.getByRole('link', { name: 'Place a riverside house', exact: true }).click();
+  await expect(page).toHaveURL(/citylayer\.html#place-a-building$/);
+  await expect(page.locator('#place-a-building')).toBeVisible();
+  await page.getByRole('navigation', { name: 'On this page', exact: true }).getByRole('link', { name: 'CityLayer controls reference.', exact: true }).click();
+  await expect(page).toHaveURL(/citylayer\.html#controls$/);
+  await expect(page.getByRole('table', { name: 'CityLayer controls reference.', exact: true })).toBeVisible();
+});
+
+test('CityLayer sample downloads directly with its creator and source visible', async ({ page }) => {
+  await page.goto('/citylayer.html#sample-schematic');
+  const sample = page.locator('#sample-schematic');
+  await expect(sample).toContainText('Ektelion');
+  await expect(sample.getByRole('link', { name: 'Original project by Ektelion on Planet Minecraft', exact: true })).toHaveAttribute('href', 'https://www.planetminecraft.com/project/2-9-ukrainian-rural-house-by-ektelion/');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    sample.getByRole('link', { name: 'Download peasant_house_1.schem', exact: true }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe('peasant_house_1.schem');
+  expect(await download.failure()).toBeNull();
+  const response = await page.request.get('/downloads/peasant_house_1.schem');
+  expect(response.ok()).toBe(true);
+  expect((await response.body()).length).toBeGreaterThan(0);
+});
+
+test('first-use guide leads with Auto Update and support offers a reusable report', async ({ page }) => {
+  await page.goto('/get-started.html#first-preview');
+  await expect(page.locator('#first-preview')).toContainText(/enable Auto Update/i);
+  await expect(page.locator('#requirements')).toContainText('WorldPainter must run Java');
+  await page.goto('/documentation.html#help');
+  await expect(page.locator('.report-template')).toContainText('When I [action or steps]');
+  await expect(page.locator('.report-template')).toContainText('Instead, [what actually happens]');
+  await expect(page.locator('#help')).toContainText('no GitHub account is required');
+  await expect(page.locator('#help').getByRole('link', { name: 'Discord', exact: true })).toHaveAttribute('href', 'https://discord.gg/9kRJEMfGeE');
+});
+
+test('updated path tutorials and references are reachable from documentation', async ({ page }) => {
+  for (const [label, id] of [['Build a road', 'road-tutorial'], ['Build a river', 'river-tutorial'], ['Paint along a path', 'paint-along-path']]) {
+    await page.goto('/documentation.html');
+    await page.getByRole('link', { name: label, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`paths\\.html#${id}$`));
+    await expect(page.locator(`#${id} .step-list li`)).not.toHaveCount(0);
+    await expect(page.locator('.planned-tutorial')).toHaveCount(0);
+  }
+  await page.getByRole('navigation', { name: 'On this page', exact: true }).getByRole('link', { name: 'Path Tool controls reference.', exact: true }).click();
+  await expect(page).toHaveURL(/paths\.html#controls$/);
+  await expect(page.getByRole('table', { name: 'Path Tool controls reference.', exact: true })).toBeVisible();
+  await expect(page.locator('#save-and-undo')).toContainText('clear the selection first');
+});
+
+test('Path Tool screenshots enlarge beside the instructions they illustrate', async ({ page }) => {
+  await page.goto('/paths.html#height-profile');
+  const preview = page.locator('#height-profile .image-expand');
+  await preview.click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.locator('.dialog-image')).toHaveAttribute('src', 'assets/images/pathtool/height-editor.png');
+  await page.keyboard.press('Escape');
+  await expect(preview).toBeFocused();
+  await expect(page.locator('main img[src*="/pathtool/"]')).toHaveCount(8);
+  const image = page.locator('#river-tutorial .image-expand');
+  await image.click();
+  await expect(page.locator('.dialog-image')).toHaveAttribute('src', 'assets/images/pathtool/apply-river.png');
+});
 
 for (const slug of pages) {
   test(`${slug}: no broken images, horizontal overflow, or accessibility violations`, async ({ page }) => {
@@ -28,40 +153,43 @@ for (const slug of pages) {
   });
 }
 
-test('showcase switches content and supports arrow-key navigation', async ({ page }) => {
+test('landing presents one introduction, prominent facts, and a single closing installation section', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('tab', { name: 'CityLayer', exact: true }).click();
-  await expect(page.locator('#showcase-name')).toHaveText('CityLayer');
-  await expect(page.locator('#showcase-link')).toHaveAttribute('href', 'citylayer.html');
-  await page.keyboard.press('ArrowRight');
-  await expect(page.getByRole('tab', { name: 'Path Tool', exact: true })).toBeFocused();
-  await expect(page.locator('#showcase-name')).toHaveText('Path Tool');
+  await expect(page.locator('.hero-description')).toHaveCount(1);
+  await expect(page.locator('.hero-capabilities, .tool-strip, .showcase-section')).toHaveCount(0);
+  await expect(page.locator('.feature-grid')).toHaveCount(1);
+  await expect(page.locator('.feature-card')).toHaveCount(4);
+  await expect(page.getByRole('tablist')).toHaveCount(0);
+  await expect(page.locator('.fact-list li')).toHaveCount(5);
+  await expect(page.locator('.intro-context')).toContainText('Endorsed by WorldPainter');
+  await expect(page.locator('.workflow-list')).toHaveCount(0);
+  await expect(page.locator('#project')).toContainText('IR0NSIGHT started the project as a river tool');
+  await expect(page.locator('.resources-section')).toHaveCount(1);
+  await expect(page.locator('.resources-section').getByRole('link', { name: 'Guides and reference', exact: true })).toHaveAttribute('href', 'documentation.html');
+  await expect(page.locator('.footer-resources')).toHaveCount(0);
+  await page.locator('.resources-section').getByRole('link', { name: 'Installation guide', exact: true }).click();
+  await expect(page).toHaveURL(/get-started\.html$/);
+  await expect(page.locator('.footer-resources')).toHaveCount(0);
 });
 
-test('icon-led tool shortcuts navigate to their feature pages', async ({ page }) => {
+test('the four-tool catalog navigates directly to documentation', async ({ page }) => {
   await page.goto('/');
-  const tools = page.getByRole('navigation', { name: 'Included tools', exact: true });
-  await expect(tools.locator('.tool-shortcut')).toHaveCount(4);
-  await expect(tools.locator('.tool-shortcut-icon img[src$=".svg"]')).toHaveCount(4);
-  await expect(tools.locator('.tool-shortcut-image')).toHaveCount(0);
-  await tools.getByRole('link', { name: 'CityLayer Position schematics', exact: true }).click();
+  const tools = page.locator('#tools');
+  await expect(tools.locator('.feature-card')).toHaveCount(4);
+  await expect(tools.locator('.tool-mark img[src$=".svg"]')).toHaveCount(4);
+  await tools.locator('a[href="citylayer.html"]').click();
   await expect(page).toHaveURL(/citylayer\.html$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('CityLayer guide');
 });
 
-test('gallery filtering and image dialog work with focus restoration', async ({ page }) => {
-  await page.goto('/gallery.html');
-  await page.getByRole('button', { name: 'CityLayer', exact: true }).click();
-  await expect(page.locator('.gallery-item:visible')).toHaveCount(10);
-  await expect(page.locator('#gallery-count')).toHaveText('10');
-  const image = page.locator('.gallery-item:visible .image-expand').first();
+test('guide image dialogs restore focus when closed', async ({ page }) => {
+  await page.goto('/citylayer.html');
+  const image = page.locator('.feature-story .image-expand').first();
   await image.click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).not.toBeVisible();
   await expect(image).toBeFocused();
-  await page.getByRole('button', { name: 'Everything', exact: true }).click();
-  const manifest = await (await page.request.get('/media-manifest.json')).json();
-  await expect(page.locator('.gallery-item:visible')).toHaveCount(manifest.filter((src) => src.startsWith('tutorial/') && !src.toLowerCase().endsWith('.svg')).length);
 });
 
 test('placeholder is honest and feature links lead to real pages', async ({ page }) => {
@@ -70,7 +198,7 @@ test('placeholder is honest and feature links lead to real pages', async ({ page
   await expect(page.locator('#download-note')).toContainText('placeholder');
   await page.locator('.feature-card[href="citylayer.html"]').click();
   await expect(page).toHaveURL(/citylayer\.html$/);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Choose which building goes where.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('CityLayer guide');
 });
 
 test('website works under the GitHub Pages repository subdirectory', async ({ page }) => {
@@ -88,8 +216,18 @@ test('website works under the GitHub Pages repository subdirectory', async ({ pa
   await page.locator('.home-preview [data-active] img').evaluate((image) => image.decode());
   await page.locator('.feature-card[href="citylayer.html"]').click();
   await expect(page).toHaveURL(/\/MacroMachine-WpPlugin\/citylayer\.html$/);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Choose which building goes where.');
-  await page.locator('.feature-hero-image img').evaluate((image) => image.decode());
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('CityLayer guide');
+  await page.locator('.guide-example img').scrollIntoViewIfNeeded();
+  await page.locator('.guide-example img').evaluate((image) => image.decode());
+  // Chromium cancels navigation downloads fulfilled by a route; verify bytes through the simulated mount instead.
+  const sample = await page.getByRole('link', { name: 'Download peasant_house_1.schem', exact: true }).evaluate(async (link) => {
+    const response = await fetch(link.href);
+    return { url: response.url, ok: response.ok, length: (await response.arrayBuffer()).byteLength };
+  });
+  expect(sample.url).toContain('/MacroMachine-WpPlugin/downloads/peasant_house_1.schem');
+  expect(sample.ok).toBe(true);
+  expect(sample.length).toBeGreaterThan(0);
+  await page.unrouteAll({ behavior: 'wait' });
 });
 
 test('landing screenshot keeps its proportions and does not move on hover', async ({ page }) => {
@@ -196,13 +334,13 @@ test('hero is media-first with a centered dock and separate tool context', async
   }
 });
 
-for (const [name, slug, path, tabName = name] of [
+for (const [name, slug, path] of [
   ['3D Preview', '3d-preview', 'tutorial/macromachine_3d_preview_mountain-and-jungle.gif'],
   ['CityLayer', 'citylayer', 'tutorial/CityLayer/macromachine_citylayer_house-along-the-river.gif'],
-  ['Roads', 'paths', 'tutorial/macromachine_roadtool_gravel-road-over-hill.gif', 'Path Tool'],
+  ['Roads', 'paths', 'tutorial/macromachine_roadtool_gravel-road-over-hill.gif'],
   ['Macros', 'macros', 'tutorial/macromachine_macros_paint-slopes-alpine.gif'],
 ]) {
-  test(`${name} presents the GIF in the carousel, lightbox, showcase, and feature page`, async ({ page }) => {
+  test(`${name} presents the GIF in the carousel, lightbox, and guide example`, async ({ page }) => {
     await page.goto('/');
     const src = `assets/images/${path}`;
     await page.getByRole('button', { name: `Show ${name}`, exact: true }).click();
@@ -214,11 +352,10 @@ for (const [name, slug, path, tabName = name] of [
     await page.locator('.home-preview [data-hero-slide][data-active] .image-expand').click();
     await expect(page.locator('.dialog-image')).toHaveAttribute('src', src);
     await page.keyboard.press('Escape');
-    await page.getByRole('tab', { name: tabName, exact: true }).click();
-    await expect(page.locator('#showcase-image')).toHaveAttribute('src', src);
     await page.goto(`/${slug}.html`);
-    await expect(page.locator('.feature-hero-image img')).toHaveAttribute('src', src);
-    await page.locator('.feature-hero-image img').evaluate((element) => element.decode());
+    await expect(page.locator('.guide-example img')).toHaveAttribute('src', src);
+    await page.locator('.guide-example img').scrollIntoViewIfNeeded();
+    await page.locator('.guide-example img').evaluate((element) => element.decode());
   });
 }
 
@@ -242,10 +379,8 @@ test('roads and rivers select different presentations of the Path Tool', async (
   await page.goto('/paths.html');
   const riverSection = page.locator('.feature-story').filter({ has: page.getByRole('heading', { name: 'Keep rivers downhill.', exact: true }) });
   await expect(riverSection.locator('img')).toHaveAttribute('src', riverSrc);
+  await riverSection.locator('img').scrollIntoViewIfNeeded();
   await riverSection.locator('img').evaluate((element) => element.decode());
-  await page.goto('/gallery.html');
-  await page.getByRole('button', { name: 'Paths', exact: true }).click();
-  await expect(page.locator(`.gallery-item:visible img[src="${riverSrc}"]`)).toBeVisible();
 });
 
 test('reduced motion navigates instantly without automatic advance', async ({ page }) => {
@@ -259,7 +394,7 @@ test('reduced motion navigates instantly without automatic advance', async ({ pa
 });
 
 test('review pages render at the current viewport', async ({ page }, testInfo) => {
-  for (const slug of ['index', 'citylayer', '3d-preview', 'gallery', 'get-started']) {
+  for (const slug of ['index', 'citylayer', '3d-preview', 'macros', 'paths', 'gradient-editor', 'filters', 'get-started', 'documentation']) {
     await page.goto(`/${slug}.html`);
     await page.locator('img').evaluateAll(async (images) => {
       await Promise.all(images.map((image) => {
@@ -270,10 +405,21 @@ test('review pages render at the current viewport', async ({ page }, testInfo) =
     if (slug === 'citylayer') await expect(page.locator('.feature-story.with-media').first()).toBeVisible();
     if (slug === '3d-preview') await expect(page.locator('.feature-story.text-story').first()).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`${slug}.png`), fullPage: true });
+    if (await page.locator('.guide-intro').count()) {
+      await page.locator('.guide-intro').screenshot({ path: testInfo.outputPath(`${slug}-intro.png`) });
+    }
+    if (slug === 'documentation') {
+      await page.locator('#reference').screenshot({ path: testInfo.outputPath('documentation-guides.png') });
+    }
     if (slug === 'index') {
       await page.locator('.home-preview').screenshot({ path: testInfo.outputPath('hero-carousel.png') });
       await page.locator('.hero-copy').screenshot({ path: testInfo.outputPath('intro-detail.png') });
       await page.locator('.intro-facts').screenshot({ path: testInfo.outputPath('facts-detail.png') });
+    }
+    if (slug === 'paths') {
+      for (const id of ['road-tutorial', 'river-tutorial', 'height-profile', 'river-settings', 'controls']) {
+        await page.locator(`#${id}`).screenshot({ path: testInfo.outputPath(`paths-${id}.png`) });
+      }
     }
   }
 });
@@ -299,7 +445,7 @@ test('landing page is usable without JavaScript and respects reduced motion', as
   await expect(page.locator('.home-preview [data-hero-detail]:visible a')).toHaveAttribute('href', '3d-preview.html');
   await expect(page.locator('[data-hero-controls]')).toBeHidden();
   await page.locator('.feature-card[href="citylayer.html"]').click();
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Choose which building goes where.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('CityLayer guide');
   await context.close();
 });
 
@@ -329,6 +475,14 @@ test('responsive layouts fit narrow phones, breakpoint edges, tablets, and wide 
           await page.locator('.intro-facts').screenshot({ path: testInfo.outputPath('facts-320.png') });
           await page.locator('.home-preview').screenshot({ path: testInfo.outputPath('hero-320.png') });
         }
+      }
+      if (slug === 'paths' && width === 320) {
+        await page.locator('#road-tutorial img').evaluate(async (image) => {
+          image.loading = 'eager';
+          await image.decode();
+        });
+        await page.locator('#road-tutorial').screenshot({ path: testInfo.outputPath('paths-road-320.png') });
+        await page.locator('#river-settings').screenshot({ path: testInfo.outputPath('paths-settings-320.png') });
       }
     }
   }
