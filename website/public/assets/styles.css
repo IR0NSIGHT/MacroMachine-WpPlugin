@@ -112,6 +112,9 @@ h3 { font-size: 1.25rem; letter-spacing: -.015em; }
 .guide-content { padding-bottom: 64px; }
 .guide-example, .macro-reference { border-top: 1px solid var(--line); padding-block: 32px; }
 .guide-example .screenshot { max-width: 900px; }
+.guide-showcase { padding-block: 0 32px; }
+.guide-showcase .screenshot { max-width: 1100px; margin: 0; }
+.guide-showcase .image-expand img { max-height: none; }
 .macro-reference p { color: var(--muted); }
 .doc-tool-nav { border-block: 1px solid var(--line); padding-block: 24px; margin-bottom: 40px; }
 .doc-tool-nav h2 { font-size: 1.25rem; margin-bottom: 20px; }

@@ -95,10 +95,18 @@ function renderToolNavigation(features, active = '') {
   }).join('')}</ul></nav>`;
 }
 
+/**
+ * The home carousel's slides for one feature: its own presentations, or the
+ * feature itself with its hero. A tool guide shows the first slide's GIF on top.
+ * @param {import('./content.mjs').Feature} feature
+ */
+export function carouselSlides(feature) {
+  return (feature.carousel ?? [{ id: feature.slug, name: feature.name, hero: feature.hero }]).map((presentation) => ({ ...feature, ...presentation }));
+}
+
 export function renderHome({ features, installerScan }) {
   const preview = features.find((f) => f.slug === '3d-preview');
-  const slides = [preview, ...features.filter((feature) => feature !== preview)].flatMap((feature) =>
-    (feature.carousel ?? [{ id: feature.slug, name: feature.name, hero: feature.hero }]).map((presentation) => ({ ...feature, ...presentation })));
+  const slides = [preview, ...features.filter((feature) => feature !== preview)].flatMap(carouselSlides);
   const cardDescriptions = {
     macros: 'Build reusable sequences of global operations without programming. Run them across your map or inspect each action with the debugger.',
     citylayer: 'Choose each schematic’s position instead of random placement. Arrange individual buildings or assemble continuous walls.',
@@ -129,15 +137,17 @@ export function renderGuide(feature, { features }) {
   const parent = features.find((item) => item.slug === feature.parent);
   const references = features.filter((item) => item.parent === feature.slug);
   const title = `${feature.name} ${parent ? 'reference' : 'guide'}`;
+  const showcase = carouselSlides(feature)[0]?.hero;
   const body = `<section class="page-intro wrap guide-intro"><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="documentation.html">Documentation</a>${parent ? `<span aria-hidden="true">/</span><a href="${parent.slug}.html">${escape(parent.name)}</a>` : ''}<span aria-hidden="true">/</span><span aria-current="page">${escape(feature.name)}</span></nav><h1>${escape(title)}</h1><p>${escape(feature.guideIntro)}</p><p class="feature-jump-links"><a href="#workflow">Contents</a>${feature.sections.some((section) => section.id === 'controls') ? '<a href="#controls">Controls reference</a>' : ''}</p></section>
+  ${showcase ? `<section class="wrap guide-showcase" id="showcase" aria-label="Showcase">${picture(showcase, { eager: true })}</section>` : ''}
   ${renderToolNavigation(features, feature.slug)}
   <div class="wrap guide-content" id="workflow">${feature.notice ? `<aside class="notice"><strong>Before you begin</strong><p>${escape(feature.notice)}</p></aside>` : ''}
-    <nav class="feature-contents" aria-label="On this page"><h2>On this page</h2><ul>${feature.sections.map((section) => `<li><a href="#${sectionAnchor(section)}">${escape(section.title)}</a></li>`).join('')}${references.length ? '<li><a href="#macro-reference">Macro references</a></li>' : ''}<li><a href="#example">Example</a></li></ul></nav>
+    <nav class="feature-contents" aria-label="On this page"><h2>On this page</h2><ul>${feature.sections.map((section) => `<li><a href="#${sectionAnchor(section)}">${escape(section.title)}</a></li>`).join('')}${references.length ? '<li><a href="#macro-reference">Macro references</a></li>' : ''}${showcase ? '' : '<li><a href="#example">Example</a></li>'}</ul></nav>
     ${references.length ? `<section class="macro-reference" id="macro-reference"><h2>Macro references</h2><p>Use these references while configuring an action or restricting where a macro applies.</p><ul class="doc-links">${references.map((item) => `<li><a href="${item.slug}.html">${escape(item.name)}</a></li>`).join('')}</ul></section>` : ''}
     ${feature.sections.map(renderFeatureSection).join('')}
-    <section class="guide-example" id="example"><h2>Example</h2>${picture(feature.hero)}</section>
+    ${showcase ? '' : `<section class="guide-example" id="example"><h2>Example</h2>${picture(feature.hero)}</section>`}
   </div>`;
-  return layout({ title: `${title} — MacroMachine`, description: feature.guideIntro, active: feature.slug, body, features, image: feature.hero.src });
+  return layout({ title: `${title} — MacroMachine`, description: feature.guideIntro, active: feature.slug, body, features, image: (showcase ?? feature.hero).src });
 }
 
 /** @param {import('./content.mjs').Section} section */
@@ -163,7 +173,7 @@ export function renderStart({ features, compatibility, installerScan }) {
 export function renderDocumentation({ features }) {
   const tasks = [
     ['Get started', [['get-started.html#requirements', 'Check requirements and downloads'], ['get-started.html#first-preview', 'Preview my world with Auto Update'], ['3d-preview.html#preview-limits', 'Understand preview limits']]],
-    ['Place and shape', [['citylayer.html#place-a-building', 'Place a riverside house'], ['citylayer.html#sample-schematic', 'Download the example schematic'], ['citylayer.html#city-walls', 'Build continuous city walls'], ['paths.html#road-tutorial', 'Build a road'], ['paths.html#river-tutorial', 'Build a river'], ['paths.html#paint-along-path', 'Paint along a path']]],
+    ['Place and shape', [['citylayer.html#place-a-building', 'Place a house'], ['citylayer.html#sample-schematic', 'Download the example schematic'], ['citylayer.html#city-walls', 'Build continuous city walls'], ['paths.html#road-tutorial', 'Build a road'], ['paths.html#river-tutorial', 'Build a river'], ['paths.html#paint-along-path', 'Paint along a path']]],
     ['Edit a path', [['paths.html#start-a-path', 'Start and place path nodes'], ['paths.html#transform', 'Move, rotate, and scale a node group'], ['paths.html#height-profile', 'Inspect heights along the route'], ['paths.html#operations-reference', 'Randomize, snap, or subdivide nodes'], ['paths.html#road-settings', 'Road settings and slope limits'], ['paths.html#river-settings', 'River settings, water, and bank paint'], ['paths.html#save-and-undo', 'Apply, undo, and save a path']]],
     ['Reuse global operations', [['macros.html#default-macros', 'Inspect the optional example macros'], ['macros.html#first-macro', 'Paint stone, grass, and underwater sand'], ['macros.html#limit-to-selection', 'Restrict a macro to a selection'], ['macros.html#debugger', 'Step through a macro'], ['macros.html#share-macros', 'Export and share macros'], ['macros.html#save-and-back-up', 'Back up my macro library']]],
   ];

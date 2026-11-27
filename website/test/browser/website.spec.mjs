@@ -65,7 +65,7 @@ test('documentation tasks navigate to anchored guides and control references', a
   await page.locator('#main-nav').getByRole('link', { name: 'Documentation', exact: true }).click();
   await expect(page).toHaveURL(/documentation\.html$/);
   await expect(page.locator('#main-nav a[href="documentation.html"]')).toHaveAttribute('aria-current', 'page');
-  await page.getByRole('link', { name: 'Place a riverside house', exact: true }).click();
+  await page.getByRole('link', { name: 'Place a house', exact: true }).click();
   await expect(page).toHaveURL(/citylayer\.html#place-a-building$/);
   await expect(page.locator('#place-a-building')).toBeVisible();
   await page.getByRole('navigation', { name: 'On this page', exact: true }).getByRole('link', { name: 'CityLayer controls reference.', exact: true }).click();
@@ -123,7 +123,7 @@ test('Path Tool screenshots enlarge beside the instructions they illustrate', as
   await page.keyboard.press('Escape');
   await expect(preview).toBeFocused();
   await expect(page.locator('main img[src*="/pathtool/"]')).toHaveCount(8);
-  const image = page.locator('#river-tutorial .image-expand');
+  const image = page.locator('#river-settings .image-expand');
   await image.click();
   await expect(page.locator('.dialog-image')).toHaveAttribute('src', 'assets/images/pathtool/apply-river.png');
 });
@@ -212,13 +212,13 @@ test('website works under the GitHub Pages repository subdirectory', async ({ pa
   await expect(page.locator('.home-preview [data-active] img')).toBeVisible();
   await page.locator('.home-preview [data-active] img').evaluate((image) => image.decode());
   await page.getByRole('button', { name: 'Show Roads', exact: true }).click();
-  await expect(page.locator('.home-preview [data-active] img')).toHaveAttribute('src', /macromachine_roadtool_gravel-road-over-hill\.gif$/);
+  await expect(page.locator('.home-preview [data-active] img')).toHaveAttribute('src', /macromachine_roadtool_dark-mode-basic-road-down-the-hill\.webp$/);
   await page.locator('.home-preview [data-active] img').evaluate((image) => image.decode());
   await page.locator('.feature-card[href="citylayer.html"]').click();
   await expect(page).toHaveURL(/\/MacroMachine-WpPlugin\/citylayer\.html$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('CityLayer guide');
-  await page.locator('.guide-example img').scrollIntoViewIfNeeded();
-  await page.locator('.guide-example img').evaluate((image) => image.decode());
+  await page.locator('.guide-showcase img').scrollIntoViewIfNeeded();
+  await page.locator('.guide-showcase img').evaluate((image) => image.decode());
   // Chromium cancels navigation downloads fulfilled by a route; verify bytes through the simulated mount instead.
   const sample = await page.getByRole('link', { name: 'Download peasant_house_1.schem', exact: true }).evaluate(async (link) => {
     const response = await fetch(link.href);
@@ -336,11 +336,11 @@ test('hero is media-first with a centered dock and separate tool context', async
 
 for (const [name, slug, path] of [
   ['3D Preview', '3d-preview', 'tutorial/macromachine_3d_preview_mountain-and-jungle.gif'],
-  ['CityLayer', 'citylayer', 'tutorial/CityLayer/macromachine_citylayer_house-along-the-river.gif'],
-  ['Roads', 'paths', 'tutorial/macromachine_roadtool_gravel-road-over-hill.gif'],
+  ['CityLayer', 'citylayer', 'tutorial/CityLayer/macromachine_citylayer-dark-mode-house-fresh-start.webp'],
+  ['Roads', 'paths', 'tutorial/macromachine_roadtool_dark-mode-basic-road-down-the-hill.webp'],
   ['Macros', 'macros', 'tutorial/macromachine_macros_paint-slopes-alpine.gif'],
 ]) {
-  test(`${name} presents the GIF in the carousel, lightbox, and guide example`, async ({ page }) => {
+  test(`${name} presents the GIF in the carousel, lightbox, and on top of its guide`, async ({ page }) => {
     await page.goto('/');
     const src = `assets/images/${path}`;
     await page.getByRole('button', { name: `Show ${name}`, exact: true }).click();
@@ -353,9 +353,9 @@ for (const [name, slug, path] of [
     await expect(page.locator('.dialog-image')).toHaveAttribute('src', src);
     await page.keyboard.press('Escape');
     await page.goto(`/${slug}.html`);
-    await expect(page.locator('.guide-example img')).toHaveAttribute('src', src);
-    await page.locator('.guide-example img').scrollIntoViewIfNeeded();
-    await page.locator('.guide-example img').evaluate((element) => element.decode());
+    await expect(page.locator('.guide-showcase img')).toHaveAttribute('src', src);
+    await page.locator('.guide-showcase img').scrollIntoViewIfNeeded();
+    await page.locator('.guide-showcase img').evaluate((element) => element.decode());
   });
 }
 
@@ -364,15 +364,15 @@ test('roads and rivers select different presentations of the Path Tool', async (
   const hero = page.locator('.home-preview');
   await hero.getByRole('button', { name: 'Show Roads', exact: true }).click();
   await expect(hero.locator('[data-hero-detail]:visible .hero-slide-link a')).toHaveAttribute('href', 'paths.html');
-  await expect(hero.locator('[data-hero-slide][data-active] img')).toHaveAttribute('src', /macromachine_roadtool_gravel-road-over-hill\.gif$/);
+  await expect(hero.locator('[data-hero-slide][data-active] img')).toHaveAttribute('src', /macromachine_roadtool_dark-mode-basic-road-down-the-hill\.webp$/);
   await hero.getByRole('button', { name: 'Show Rivers', exact: true }).click();
   await expect(hero.getByRole('button', { name: 'Show Rivers', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(hero.locator('[data-hero-detail]:visible .hero-slide-link a')).toHaveAttribute('href', 'paths.html');
-  const riverSrc = 'assets/images/tutorial/macromachine_rivertool_stream-down-the-hill-into-river.gif';
+  const riverSrc = 'assets/images/tutorial/macromachine_rivertool_dark-mode-super-basic-river.webp';
   const riverImage = hero.locator('[data-hero-slide][data-active] img');
   await expect(riverImage).toHaveAttribute('src', riverSrc);
   await riverImage.evaluate((element) => element.decode());
-  await expect(hero.locator('[data-hero-detail]:visible .hero-media-caption')).toContainText('Creating a stream down a hill into a river');
+  await expect(hero.locator('[data-hero-detail]:visible .hero-media-caption')).toContainText('Drawing a simple river with the Path Tool');
   await hero.locator('[data-hero-slide][data-active] .image-expand').click();
   await expect(page.locator('.dialog-image')).toHaveAttribute('src', riverSrc);
   await page.keyboard.press('Escape');

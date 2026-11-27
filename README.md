@@ -34,7 +34,7 @@ Paint your whole map with one click: snowy peaks, beaches, alpine mountains, mes
 **[CityLayer](#citylayer)**<br>
 Place buildings (schematics) exactly where you want them, then move, rotate and copy them.
 
-<img src="imgs/tutorial/CityLayer/macromachine_citylayer_house-along-the-river.gif" width="100%" alt="CityLayer">
+<img src="imgs/tutorial/CityLayer/macromachine_citylayer-dark-mode-house-fresh-start.webp" width="100%" alt="CityLayer">
 </td>
 </tr>
 </table>

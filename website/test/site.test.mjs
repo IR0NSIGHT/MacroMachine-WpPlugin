@@ -4,7 +4,7 @@ import { readFile, access, mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 import { build, root, output, imageRoot, listImages, readCompatibility } from '../build.mjs';
 import { features, projectFacts, sampleSchematic, reportTemplate, installerReport } from '../src/content.mjs';
-import { escape, imageUrl, sectionAnchor } from '../src/templates.mjs';
+import { carouselSlides, escape, imageUrl, sectionAnchor } from '../src/templates.mjs';
 
 // Simulate an incremental build over an older deployment artifact.
 await mkdir(output, { recursive: true });
@@ -296,8 +296,8 @@ test('hero carousel renders the five configured presentations on a scrollable tr
 test('feature showcases use the supplied GIFs with their original bytes preserved', async () => {
   for (const [slug, src] of [
     ['3d-preview', 'tutorial/macromachine_3d_preview_mountain-and-jungle.gif'],
-    ['citylayer', 'tutorial/CityLayer/macromachine_citylayer_house-along-the-river.gif'],
-    ['paths', 'tutorial/macromachine_roadtool_gravel-road-over-hill.gif'],
+    ['citylayer', 'tutorial/CityLayer/macromachine_citylayer-dark-mode-house-fresh-start.webp'],
+    ['paths', 'tutorial/macromachine_roadtool_dark-mode-basic-road-down-the-hill.webp'],
     ['macros', 'tutorial/macromachine_macros_paint-slopes-alpine.gif'],
   ]) {
     assert.equal(features.find((feature) => feature.slug === slug).hero.src, src);
@@ -320,10 +320,14 @@ test('roads and rivers have separate carousel entries linking to the same tool',
 });
 
 test('rivers use the supplied GIF in the carousel and guide without conversion', async () => {
-  const src = 'tutorial/macromachine_rivertool_stream-down-the-hill-into-river.gif';
+  const src = 'tutorial/macromachine_rivertool_dark-mode-super-basic-river.webp';
   const paths = features.find((feature) => feature.slug === 'paths');
   assert.equal(paths.carousel.find((presentation) => presentation.id === 'paths-rivers').hero.src, src);
   assert.equal(paths.sections.find((section) => section.title === 'Keep rivers downhill.').media.src, src);
+  const waterfall = 'tutorial/macromachine_rivertool_dark-mode-river-with-waterfall.webp';
+  assert.equal(paths.sections.find((section) => section.id === 'river-tutorial').media.src, waterfall);
+  assert.ok(html.get('paths.html').includes(`src="${imageUrl(waterfall)}"`));
+  assert.deepEqual(await readFile(join(output, 'assets/images', waterfall)), await readFile(join(imageRoot, waterfall)));
   for (const page of ['index.html', 'paths.html']) {
     assert.ok(html.get(page).includes(`src="${imageUrl(src)}"`), page);
   }
@@ -536,4 +540,17 @@ test('provided SVG tool icons appear on catalog cards and remain copied assets',
 test('HTML escaping and image URLs handle special characters and spaces', () => {
   assert.equal(escape('<a "x" & \'y\'>'), '&lt;a &quot;x&quot; &amp; &#39;y&#39;&gt;');
   assert.equal(imageUrl('tutorial/a b.PNG'), 'assets/images/tutorial/a%20b.PNG');
+});
+
+test('each tool guide shows its main carousel GIF on top', () => {
+  const tools = features.filter((feature) => carouselSlides(feature).length);
+  assert.deepEqual(tools.map((feature) => feature.slug).sort(), ['3d-preview', 'citylayer', 'macros', 'paths']);
+  for (const feature of tools) {
+    const page = html.get(`${feature.slug}.html`);
+    const main = page.slice(page.indexOf('<main'));
+    const firstImage = main.match(/<img [^>]*src="([^"]+)"/)[1];
+    assert.equal(firstImage, imageUrl(carouselSlides(feature)[0].hero.src), feature.slug);
+    assert.ok(main.indexOf('class="wrap guide-showcase"') < main.indexOf('id="workflow"'), feature.slug);
+    assert.ok(!main.includes('id="example"'), `${feature.slug} repeats the showcase as a bottom example`);
+  }
 });
