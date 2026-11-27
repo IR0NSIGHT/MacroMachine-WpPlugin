@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, access, mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 import { build, root, output, imageRoot, listImages, readCompatibility } from '../build.mjs';
-import { features, projectFacts, sampleSchematic, reportTemplate, installerReport } from '../src/content.mjs';
+import { features, projectFacts, sampleSchematic, reportTemplate, installerReport, downloads, releaseVersion, readReleaseVersion, repository } from '../src/content.mjs';
 import { carouselSlides, escape, imageUrl, sectionAnchor } from '../src/templates.mjs';
 
 // Simulate an incremental build over an older deployment artifact.
@@ -26,7 +26,7 @@ test('primary navigation has the agreed destinations and a distinct download act
   for (const [name, page] of html) {
     const nav = page.match(/<nav class="main-nav"[\s\S]*?<\/nav>/)[0];
     assert.deepEqual([...nav.matchAll(/<a[^>]*>([^<]+)<\/a>/g)].map((match) => match[1]), ['Get started', 'Documentation', 'GitHub', 'Discord', 'Download'], name);
-    assert.match(nav, /class="nav-download" href="get-started\.html#download"/);
+    assert.ok(nav.includes(`class="nav-download" href="${downloads.installer}"`));
     assert.match(nav, /href="https:\/\/github\.com\/IR0NSIGHT\/MacroMachine-WpPlugin"/);
     assert.match(nav, /href="https:\/\/discord\.gg\/9kRJEMfGeE"/);
     assert.match(page, /href="index\.html" aria-label="MacroMachine home"/);
@@ -229,8 +229,8 @@ test('landing uses a plain introduction, project facts, one tool catalog, and pr
   assert.ok(home.indexOf('class="intro-facts wrap"') < home.indexOf('id="tools"'));
   assert.ok(home.indexOf('id="tools"') < home.indexOf('id="project"'));
   assert.match(home, /<div class="home-preview" role="group"/);
-  assert.match(home, /id="download"><button[^>]*disabled/);
-  assert.equal([...home.matchAll(/<button[^>]*disabled/g)].length, 1);
+  assert.ok(home.includes(`id="download"><a class="button button-primary" href="${downloads.installer}"`));
+  assert.equal([...home.matchAll(/<button[^>]*disabled/g)].length, 0);
   for (const content of html.values()) assert.doesNotMatch(content, /closing-cta|cta-orbit|world-window|window-chrome|art-ribbon|floating-label|gradient-text|card-arrow/);
   for (const feature of features) {
     const page = html.get(`${feature.slug}.html`);
@@ -345,7 +345,8 @@ test('landing describes missing capabilities, not a World Machine integration', 
 });
 
 test('download areas link to the exact version-specific installer report without fabricated scan counts', () => {
-  assert.equal(installerReport.sha256, 'df719e2cfc8303f9e6b6c36093e860bf7c71cad016ed5d4c22420b4a46914f02');
+  // SHA-256 of MacroMachine-Setup-0.4.21.exe as published in that release's SHA256SUMS.txt
+  assert.equal(installerReport.sha256, '0d1799cb3529690c2c69a8001c123fb8ec05b1b424c19d22b41dfb17a64b38ff');
   assert.ok(installerReport.url.includes(`/file/${installerReport.sha256}/`));
   assert.ok(installerReport.fileName.includes(installerReport.version));
   for (const page of ['index.html', 'get-started.html']) {
@@ -438,12 +439,28 @@ test('each page has exactly one H1, unique IDs, a title, language, and a descrip
   }
 });
 
-test('download placeholders are explicit and disabled, never fake download links', () => {
+test('every download button points to the latest release: the plugin version in pom.xml', async () => {
+  const pom = await readFile(join(root, '../pom.xml'), 'utf8');
+  assert.equal(releaseVersion, readReleaseVersion(pom));
+  assert.equal(downloads.installer, `${repository}/releases/download/release-${releaseVersion}/MacroMachine-Setup-${releaseVersion}.exe`);
+  assert.equal(downloads.macros, `${repository}/releases/download/release-${releaseVersion}/default-macros.zip`);
+  assert.throws(() => readReleaseVersion('<project/>'), /plugin version/);
   for (const page of ['index.html', 'get-started.html']) {
     const content = html.get(page);
-    assert.match(content, /<button[^>]*disabled[^>]*aria-describedby="download-note"/);
-    assert.match(content, /[Pp]laceholder/);
-    assert.doesNotMatch(content, /href="#"/);
+    assert.ok(content.includes(`<a class="button button-primary" href="${downloads.installer}"`), page);
+    assert.doesNotMatch(content, /<button[^>]*disabled[^>]*aria-describedby="download-note"/, page);
+    assert.doesNotMatch(content, /[Pp]laceholder/, page);
+    assert.doesNotMatch(content, /href="#"/, page);
+  }
+  const readme = await readFile(join(root, '../README.md'), 'utf8');
+  assert.ok(readme.includes(downloads.installer), 'README installer button');
+  assert.ok(readme.includes(downloads.macros), 'README macros button');
+  // no download link anywhere names another release
+  for (const [name, content] of [...html, ['README.md', readme]]) {
+    for (const [link, version, file] of content.matchAll(/releases\/download\/release-([^/"')\s]+)\/([^"')\s]+)/g)) {
+      assert.equal(version, releaseVersion, `${name}: ${link}`);
+      assert.ok([`MacroMachine-Setup-${releaseVersion}.exe`, 'default-macros.zip'].includes(file), `${name}: ${link}`);
+    }
   }
 });
 

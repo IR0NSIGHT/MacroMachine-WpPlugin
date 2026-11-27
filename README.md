@@ -56,6 +56,7 @@ Showcase animations are published as animated WebP, 1360 px wide; see [website/C
 
 1. Bump the version in `pom.xml` and, in the same commit, both DOWNLOAD links above (CI checks they match).
 2. Merge into `master`. The `merge-release` workflow creates the `release-X.Y.Z` tag and updates the `release` branch.
+3. The website's download buttons follow the `pom.xml` version on their own. Once the release build has published `MacroMachine-Setup-X.Y.Z.exe`, put its SHA-256 (from the release's `SHA256SUMS.txt`) into `installerReport` in `website/src/content.mjs` for the VirusTotal link.
 
 Details: [agents.md](agents.md).
 

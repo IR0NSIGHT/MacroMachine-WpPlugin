@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { installerReport } from '../../src/content.mjs';
+import { installerReport, downloads } from '../../src/content.mjs';
 
 const pages = ['index', 'citylayer', 'paths', '3d-preview', 'macros', 'gradient-editor', 'filters', 'get-started', 'documentation'];
 
@@ -27,8 +27,7 @@ test('primary navigation exposes Get started, Documentation, GitHub, Discord, an
   await expect(nav.getByRole('link')).toHaveText(['Get started', 'Documentation', 'GitHub', 'Discord', 'Download']);
   await expect(nav.getByRole('link', { name: 'GitHub', exact: true })).toHaveAttribute('href', 'https://github.com/IR0NSIGHT/MacroMachine-WpPlugin');
   await expect(nav.getByRole('link', { name: 'Discord', exact: true })).toHaveAttribute('href', 'https://discord.gg/9kRJEMfGeE');
-  await nav.getByRole('link', { name: 'Download', exact: true }).click();
-  await expect(page).toHaveURL(/get-started\.html#download$/);
+  await expect(nav.getByRole('link', { name: 'Download', exact: true })).toHaveAttribute('href', downloads.installer);
 });
 
 test('macro references are nested documentation with a breadcrumb back to the Macros guide', async ({ page }) => {
@@ -192,10 +191,11 @@ test('guide image dialogs restore focus when closed', async ({ page }) => {
   await expect(image).toBeFocused();
 });
 
-test('placeholder is honest and feature links lead to real pages', async ({ page }) => {
+test('download buttons link to the latest installer and feature links lead to real pages', async ({ page }) => {
+  await page.goto('/get-started.html');
+  await expect(page.getByRole('link', { name: 'Download for Windows', exact: true })).toHaveAttribute('href', downloads.installer);
   await page.goto('/');
-  await expect(page.locator('#download button')).toBeDisabled();
-  await expect(page.locator('#download-note')).toContainText('placeholder');
+  await expect(page.getByRole('link', { name: 'Download MacroMachine', exact: true })).toHaveAttribute('href', downloads.installer);
   await page.locator('.feature-card[href="citylayer.html"]').click();
   await expect(page).toHaveURL(/citylayer\.html$/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('CityLayer guide');

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 /** @typedef {{src: string, alt: string, caption: string}} Media */
 /** @typedef {{href: string, label: string, download?: boolean}} ContentLink */
 /** @typedef {{headings: string[], rows: string[][]}} ReferenceTable */
@@ -6,14 +7,32 @@
 /** @typedef {{slug: string, name: string, title: string, description: string, guideIntro: string, parent?: string, accent: string, number: string, tag: string, hero: Media, benefits: string[], sections: Section[], notice?: string, icon?: string, carousel?: CarouselPresentation[]}} Feature */
 
 export const repository = 'https://github.com/IR0NSIGHT/MacroMachine-WpPlugin';
+
+/**
+ * The plugin version in pom.xml. The merge-release workflow tags `release-<version>` from it, so it
+ * is the latest release once a version change is merged.
+ * @param {string} pom
+ */
+export function readReleaseVersion(pom) {
+  const version = pom.match(/<artifactId>Macro-Machine-Plugin<\/artifactId>\s*<version>\s*([0-9]+(?:\.[0-9]+)*)\s*<\/version>/)?.[1];
+  if (!version) throw new Error('Website downloads need the plugin version in pom.xml');
+  return version;
+}
+export const releaseVersion = readReleaseVersion(readFileSync(new URL('../../pom.xml', import.meta.url), 'utf8'));
+/** Direct downloads from the latest release: every download button links here. */
+export const downloads = {
+  installer: `${repository}/releases/download/release-${releaseVersion}/MacroMachine-Setup-${releaseVersion}.exe`,
+  macros: `${repository}/releases/download/release-${releaseVersion}/default-macros.zip`,
+  releases: `${repository}/releases/latest`,
+};
 export const playlist = 'https://youtube.com/playlist?list=PLyNqTiCLQP-gTNoBJlvTK3xeIs6RQjUkl';
 export const discord = 'https://discord.gg/9kRJEMfGeE';
 /** Report for this exact release asset; update all fields together when replacing it. */
 export const installerReport = {
-  version: '0.4.20',
-  fileName: 'MacroMachine-Setup-0.4.20.exe',
-  sha256: 'df719e2cfc8303f9e6b6c36093e860bf7c71cad016ed5d4c22420b4a46914f02',
-  url: 'https://www.virustotal.com/gui/file/df719e2cfc8303f9e6b6c36093e860bf7c71cad016ed5d4c22420b4a46914f02/behavior',
+  version: '0.4.21',
+  fileName: 'MacroMachine-Setup-0.4.21.exe',
+  sha256: '0d1799cb3529690c2c69a8001c123fb8ec05b1b424c19d22b41dfb17a64b38ff',
+  url: 'https://www.virustotal.com/gui/file/0d1799cb3529690c2c69a8001c123fb8ec05b1b424c19d22b41dfb17a64b38ff/behavior',
 };
 export const sampleSchematic = {
   href: 'downloads/peasant_house_1.schem',
@@ -50,7 +69,7 @@ export const features = [
     benefits: ['Reusable workflows', 'Whole-map execution', 'Visual action designer', 'Debugger stepper', 'Shareable .macro files'],
     sections: [
       { id: 'run-a-macro', title: 'Run a saved macro.', body: 'A macro is a stored sequence of global operations, represented as actions and executed from top to bottom. Macros run across the current dimension, subject to their filters—not every dimension in the world. Start with an example, adapt one to your map, or create your own from scratch.', media: media('tutorial/apply_macro.PNG', 'MacroMachine macro tree with a macro selected'), bullets: ['Open the M tool in WorldPainter.', 'Import an example macro or choose an existing macro.', 'Inspect its actions and filters, then press ▶ to run it on the current dimension.'] },
-      { id: 'default-macros', title: 'Try an example macro.', body: 'The optional default-macros.zip download contains examples to inspect and adapt. The collection may be outdated and needs updating and testing; it is not a verified set of presets for the current release. Try examples on a copy of your world. Some need coastlines or painted annotations; others change heights, terrain, or layers. The current collection has twelve files:', links: [{ href: `${repository}/releases/latest`, label: 'Find the optional default macros download' }], table: { headings: ['Example', 'Starting point and effect'], rows: [['Apply: Alpine mountains', 'Use existing slopes. The supplied configuration enables paint slopes; its other included stages are disabled. It paints terrain, rather than generating mountains.'], ['Apply: auto beach', 'Needs an existing coastline or water. Paints terrain near water and uses Macro Selection.'], ['Color: waterdistance to heatmap', 'Uses cyan annotations and water to build Macro Selection and Heatmap data; not terrain shaping.'], ['Decorate: Mesa Terrain', 'Terrain painting and Heatmap-driven vegetation/custom layers. Inspect the masks and bundled layers before running.'], ['Decorate: Snow tops', 'Applies snow terrain and Frost, using Heatmap as an intermediate layer.'], ['Decorate: Swamp', 'Uses annotations, Heatmap, and custom vegetation layers. Several supplied steps are disabled.'], ['Decorate Tropical Islands', 'Applies biomes, slope-based terrain, and a custom rainforest object layer.'], ['desert dune', 'Adds height rather than only painting sand. Running it again adds height again.'], ['Fence around Cyan Annotation', 'Paint cyan annotations first; applies a fencing layer around the marked area.'], ['Place Wheat Fields', 'Uses cyan-marked areas and intermediate masks to apply crop, tree, and fencing layers.'], ['Shadow Map', 'Writes shadow-derived values to Heatmap. Values accumulate on repeated runs.'], ['Table-ify Heightmap', 'Remaps existing heights into terraces or table mountains.']] } },
+      { id: 'default-macros', title: 'Try an example macro.', body: 'The optional default-macros.zip download contains examples to inspect and adapt. The collection may be outdated and needs updating and testing; it is not a verified set of presets for the current release. Try examples on a copy of your world. Some need coastlines or painted annotations; others change heights, terrain, or layers. The current collection has twelve files:', links: [{ href: downloads.macros, label: `Download default-macros.zip (release ${releaseVersion})` }], table: { headings: ['Example', 'Starting point and effect'], rows: [['Apply: Alpine mountains', 'Use existing slopes. The supplied configuration enables paint slopes; its other included stages are disabled. It paints terrain, rather than generating mountains.'], ['Apply: auto beach', 'Needs an existing coastline or water. Paints terrain near water and uses Macro Selection.'], ['Color: waterdistance to heatmap', 'Uses cyan annotations and water to build Macro Selection and Heatmap data; not terrain shaping.'], ['Decorate: Mesa Terrain', 'Terrain painting and Heatmap-driven vegetation/custom layers. Inspect the masks and bundled layers before running.'], ['Decorate: Snow tops', 'Applies snow terrain and Frost, using Heatmap as an intermediate layer.'], ['Decorate: Swamp', 'Uses annotations, Heatmap, and custom vegetation layers. Several supplied steps are disabled.'], ['Decorate Tropical Islands', 'Applies biomes, slope-based terrain, and a custom rainforest object layer.'], ['desert dune', 'Adds height rather than only painting sand. Running it again adds height again.'], ['Fence around Cyan Annotation', 'Paint cyan annotations first; applies a fencing layer around the marked area.'], ['Place Wheat Fields', 'Uses cyan-marked areas and intermediate masks to apply crop, tree, and fencing layers.'], ['Shadow Map', 'Writes shadow-derived values to Heatmap. Values accumulate on repeated runs.'], ['Table-ify Heightmap', 'Remaps existing heights into terraces or table mountains.']] } },
       { title: 'Arrange actions in the designer.', body: 'Use the macro designer to arrange actions. Each action connects an input, an operation, and an output. Save your changes before running the macro.', media: media('tutorial/macro_designer.PNG', 'The visual macro designer and ordered action list') },
       { title: 'Add actions or call another macro.', body: 'Add a new action to your macro, then select it in the tree to open the action designer. You can also call macros from other macros; nested macros inherit the current filter state.', media: media('tutorial/tree_view_new_action.PNG', 'A new action nested underneath its parent macro') },
       { id: 'first-macro', title: 'Create your first terrain-painting macro.', body: 'Build a visual workflow that paints stone on steep slopes, grass on flatter land, and sand below water. This changes terrain materials, not the shape of the hills. The slope threshold is a design choice; 45° is an example, not a required value.', bullets: ['Open M, select a tree item, then right-click it and choose New, empty macro. Give the macro a name.', 'In the action list, right-click → Add → create new action. Set Slope as the input, Set as the action type, and Terrain as the output. Use discrete ranges for Grass below your chosen steepness and Stone above it. Save the action and the parent macro.', 'Add a second action after the slope action: Water Depth → Set → Terrain. Map Land (0) to skip and positive depths to Sand. Cover the full positive input range so deeper water also gets sand.', 'Save both the action and the parent macro. Run the debugger on a copy of a world containing slopes and water, and inspect the result in 3D Preview.', 'The second action replaces the underwater slope-painting result with Sand. On land, skip leaves the first action’s Grass or Stone unchanged.'] },

@@ -75,6 +75,8 @@ Versioning and release process
 3. Commit the version change and merge it into `master`.
 4. The `merge-release` GitHub Actions workflow compares the `master` version with the `release` branch. When it changes, the workflow creates and pushes the `release-X.Y.Z` tag, then updates the `release` branch to match `master`.
 
+5. The website's download buttons are built from the `pom.xml` version (`website/src/content.mjs`, `downloads`), so they need no change. After the release build has published the installer, update `installerReport` in `website/src/content.mjs` to its version and SHA-256 from the release's `SHA256SUMS.txt`.
+
 The `wp-build-N` tags are separate build/deployment markers and should not be used in place of the versioned `release-X.Y.Z` tag.
 
 Merging

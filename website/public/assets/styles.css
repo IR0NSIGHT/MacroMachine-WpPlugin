@@ -59,6 +59,7 @@ h3 { font-size: 1.25rem; letter-spacing: -.015em; }
 .hero-description { max-width: 65ch; color: var(--muted); margin-bottom: 24px; }
 .intro-download p { color: var(--muted); font-size: var(--font-caption); margin: 12px 0; }
 .intro-download a { color: var(--link); font-size: var(--font-small); }
+.intro-download a.button, .download-panel a.button { color: var(--accent-ink); text-decoration: none; }
 .installer-report { margin-block: 14px 20px; font-size: var(--font-caption); line-height: 1.6; }
 .installer-report a { color: var(--link); }
 .installer-report summary { width: fit-content; margin-top: 6px; cursor: pointer; color: var(--muted); }
